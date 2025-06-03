@@ -7,13 +7,10 @@ import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { useAuthUser } from "../../hooks/useAuthUser";
 
-const Sidebar = ({authUser}) => {
-  // const data = {
-  //   fullName: "John Doe",
-  //   username: "johndoe",
-  //   profileImg: "/avatars/boy1.png",
-  // };
+const Sidebar = () => {
+  const {authUser} = useAuthUser()
 
   const queryClient = useQueryClient();
 
@@ -38,8 +35,6 @@ const Sidebar = ({authUser}) => {
       toast.error("Logout failed");
     },
   });
-
-  // const { data: authUser } = useQuery({ queryKey: ["authUser"] });
 
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
@@ -79,7 +74,7 @@ const Sidebar = ({authUser}) => {
         </ul>
         {authUser && (
           <Link
-            to={`/profile/${authUser.username}`}
+            to={`/profile/${authUser?.username}`}
             className="mt-auto mb-10 flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-4 rounded-full"
           >
             <div className="avatar hidden md:inline-flex">

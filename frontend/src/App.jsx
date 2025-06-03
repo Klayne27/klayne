@@ -7,31 +7,11 @@ import RightPanel from "./components/common/RightPanel";
 import ProfilePage from "./pages/profile/ProfilePage";
 import NotificationPage from "./pages/notification/NotifcationPage";
 import { Toaster } from "react-hot-toast";
-import { useQuery } from "@tanstack/react-query";
 import LoadingSpinner from "./components/common/LoadingSpinner";
+import { useAuthUser } from "./hooks/useAuthUser";
 
 function App() {
-  const {
-    data: authUser,
-    isLoading,
-  } = useQuery({
-    queryKey: ["authUser"],
-    queryFn: async () => {
-      try {
-        const res = await fetch("/api/auth/me");
-        const data = await res.json();
-        if(data.error) return null
-        if (!res.ok) {
-          throw new Error(data.error || "Something went wrong");
-        }
-        console.log("authUser is here: ", data);
-        return data;
-      } catch (error) {
-        throw new Error(error);
-      }
-    },
-    retry: false
-  });
+  const {authUser, isLoading} = useAuthUser()
 
   if (isLoading) {
     return (
@@ -43,9 +23,9 @@ function App() {
 
   return (
     <div className="flex max-w-6xl mx-auto">
-      {authUser && <Sidebar authUser={authUser} />}
+      {authUser && <Sidebar />}
       <Routes>
-        <Route path="/" element={authUser ? <HomePage authUser={authUser} /> : <Navigate to="/login" />} />
+        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
         <Route
           path="/signup"
           element={!authUser ? <SignupPage /> : <Navigate to="/" />}

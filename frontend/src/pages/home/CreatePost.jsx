@@ -5,14 +5,15 @@ import { IoCloseSharp } from "react-icons/io5";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { PiSmiley } from "react-icons/pi";
+import { useAuthUser } from "../../hooks/useAuthUser";
 
 
-const CreatePost = ({ authUser }) => {
+const CreatePost = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
   const imgRef = useRef(null);
 
-  // const { data: authUser } = useQuery({ queryKey: ["authUser"] });
+  const {authUser} = useAuthUser()
   const queryClient = useQueryClient();
 
   const {

@@ -9,9 +9,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../common/LoadingSpinner";
 import toast from "react-hot-toast";
 import { formatPostDate } from "../../utils/date";
+import { useAuthUser } from "../../hooks/useAuthUser";
 
-const Post = ({ post, authUser }) => {
+const Post = ({ post }) => {
   const [comment, setComment] = useState("");
+
+  const {authUser} = useAuthUser()
 
   const queryClient = useQueryClient();
   const { mutate: deletePostMutation, isPending: isDeleting } = useMutation({

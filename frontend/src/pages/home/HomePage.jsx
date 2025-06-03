@@ -3,8 +3,10 @@ import { useState } from "react";
 import Posts from "../../components/common/Posts";
 import CreatePost from "./CreatePost";
 
-const HomePage = ({ authUser }) => {
+const HomePage = () => {
   const [feedType, setFeedType] = useState("forYou");
+
+
 
   return (
     <>
@@ -34,10 +36,10 @@ const HomePage = ({ authUser }) => {
         </div>
 
         {/*  CREATE POST INPUT */}
-        <CreatePost authUser={authUser} />
+        <CreatePost />
 
         {/* POSTS */}
-        <Posts feedType={feedType} authUser={authUser} />
+        <Posts feedType={feedType} />
       </div>
     </>
   );
