@@ -8,12 +8,13 @@ import { Link } from "react-router-dom";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../common/LoadingSpinner";
 import toast from "react-hot-toast";
+import { formatPostDate } from "../../utils/date";
 
 const Post = ({ post, authUser }) => {
   const [comment, setComment] = useState("");
 
   const queryClient = useQueryClient();
-  const { mutate: deletePost, isPending: isDeleting } = useMutation({
+  const { mutate: deletePostMutation, isPending: isDeleting } = useMutation({
     mutationFn: async () => {
       const res = await fetch(`/api/posts/${post._id}`, {
         method: "DELETE",
@@ -51,13 +52,38 @@ const Post = ({ post, authUser }) => {
 
       // instead, update the cahce directly for that post
       queryClient.setQueryData(["posts"], (oldData) => {
-        return oldData.map(p => {
+        return oldData.map((p) => {
           if (p._id === post._id) {
-            return {...p, likes: updatedLikes}
+            return { ...p, likes: updatedLikes };
           }
-          return p
-        })
-      })
+          return p;
+        });
+      });
+    },
+    onError: (error) => {
+      toast.error(error.message);
+    },
+  });
+
+  const { mutate: commentPostMutation, isPending: isCommenting } = useMutation({
+    mutationFn: async () => {
+      const res = await fetch(`/api/posts/comment/${post._id}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ text: comment }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Comment posted successfully")
+      setComment("")
+      queryClient.invalidateQueries({queryKey: ["posts"]})
     },
     onError: (error) => {
       toast.error(error.message);
@@ -69,16 +95,18 @@ const Post = ({ post, authUser }) => {
 
   const isMyPost = authUser?._id === post?.user?._id;
 
-  const formattedDate = "1h";
+  const formattedDate = formatPostDate(post.createdAt)
 
-  const isCommenting = false;
+  // const isCommenting = false;
 
   const handleDeletePost = () => {
-    deletePost(post);
+    deletePostMutation(post);
   };
 
   const handlePostComment = (e) => {
     e.preventDefault();
+    if (isCommenting) return;
+    commentPostMutation();
   };
 
   const handleLikePost = () => {
