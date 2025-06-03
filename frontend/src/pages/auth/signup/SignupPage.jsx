@@ -26,25 +26,23 @@ const SignUpPage = () => {
     error,
   } = useMutation({
     mutationFn: async ({ email, username, fullName, password }) => {
-      try {
-        const res = await fetch("/api/auth/signup", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({ email, username, fullName, password }),
-        });
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, username, fullName, password }),
+      });
 
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error || "Failed to create account");
-        return data;
-      } catch (error) {
-        console.log(error);
-        throw error;
-      }
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Failed to create account");
+      return data;
     },
     onSuccess: () => {
       toast.success("Account created successfully");
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to create account");
     },
   });
 

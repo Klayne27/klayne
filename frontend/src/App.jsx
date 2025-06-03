@@ -43,9 +43,9 @@ function App() {
 
   return (
     <div className="flex max-w-6xl mx-auto">
-      {authUser && <Sidebar />}
+      {authUser && <Sidebar authUser={authUser} />}
       <Routes>
-        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+        <Route path="/" element={authUser ? <HomePage authUser={authUser} /> : <Navigate to="/login" />} />
         <Route
           path="/signup"
           element={!authUser ? <SignupPage /> : <Navigate to="/" />}
