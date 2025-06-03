@@ -4,7 +4,7 @@ import { POSTS } from "../../utils/db/dummy";
 import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
 
-const Posts = ({ feedType }) => {
+const Posts = ({ feedType, authUser }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -55,7 +55,7 @@ const Posts = ({ feedType }) => {
       {!isLoading && !isRefetching && posts && (
         <div>
           {posts.map((post) => (
-            <Post key={post._id} post={post} />
+            <Post key={post._id} post={post} authUser={authUser} />
           ))}
         </div>
       )}
