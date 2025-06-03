@@ -37,7 +37,7 @@ const Post = ({ post, authUser }) => {
   const postOwner = post.user;
   const isLiked = false;
 
-  const isMyPost = authUser._id === post.user._id
+  const isMyPost = authUser?._id === post?.user?._id
 
   const formattedDate = "1h";
 
