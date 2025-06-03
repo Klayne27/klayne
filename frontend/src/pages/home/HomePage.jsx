@@ -34,7 +34,7 @@ const HomePage = ({ authUser }) => {
         </div>
 
         {/*  CREATE POST INPUT */}
-        <CreatePost />
+        <CreatePost authUser={authUser} />
 
         {/* POSTS */}
         <Posts feedType={feedType} authUser={authUser} />
