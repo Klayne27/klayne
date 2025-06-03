@@ -1,9 +1,11 @@
 import { CiImageOn } from "react-icons/ci";
-import { BsEmojiSmileFill } from "react-icons/bs";
+// import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
+import { PiSmiley } from "react-icons/pi";
+
 
 const CreatePost = ({ authUser }) => {
   const [text, setText] = useState("");
@@ -93,13 +95,13 @@ const CreatePost = ({ authUser }) => {
           </div>
         )}
 
-        <div className="flex justify-between border-t pt-3 border-t-gray-700">
+        <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
             <CiImageOn
-              className="fill-primary w-6 h-6 cursor-pointer"
+              className="fill-primary w-6 h-6 cursor-pointer "
               onClick={() => imgRef.current.click()}
             />
-            <BsEmojiSmileFill className="fill-primary w-5 h-5 cursor-pointer" />
+            <PiSmiley className="fill-primary w-6 h-6 cursor-pointer" />
           </div>
           <input
             type="file"
