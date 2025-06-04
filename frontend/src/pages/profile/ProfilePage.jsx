@@ -12,10 +12,10 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/useAuthUser";
-import toast from "react-hot-toast";
+import { useUpdateUserProfile } from "../../hooks/useUpdateUserProfile";
 
 const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
@@ -27,7 +27,6 @@ const ProfilePage = () => {
 
   const { authUser } = useAuthUser();
   const { username } = useParams();
-  const queryClient = useQueryClient()
 
   const { followMutation, isPending } = useFollow();
 
@@ -46,33 +45,7 @@ const ProfilePage = () => {
     },
   });
 
-  const { mutate: updateProfileMutation, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/users/update`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          coverImg,
-          profileImg,
-        }),
-      });
-      const data = res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Profile updated successfully");
-      Promise.all([
-        queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-        queryClient.invalidateQueries({ queryKey: ["userProfile"] }),
-      ]);
-    },
-    onError: () => {
-      toast.error("Failed to update profile");
-    },
-  });
+  const { updateProfileMutation, isUpdatingProfile } = useUpdateUserProfile();
 
   const isMyProfile = authUser._id === user?._id;
   const amIFollowing = authUser?.following.includes(user?._id);
@@ -175,7 +148,14 @@ const ProfilePage = () => {
                 {(coverImg || profileImg) && (
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
-                    onClick={() => updateProfileMutation()}
+                    onClick={async () => {
+                      await updateProfileMutation({
+                        coverImg,
+                        profileImg,
+                      });
+                      setProfileImg(null);
+                      setCoverImg(null)
+                    }}
                   >
                     {isUpdatingProfile ? "Updating..." : "Update"}
                   </button>
