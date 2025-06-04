@@ -20,16 +20,16 @@ const RightPanel = () => {
     },
   });
 
-  const {followMutation, isPending} = useFollow()
+  const {followMutation} = useFollow()
 
-  if(suggestedUsers?.length === 0) return <div className="md:64 w-0"></div>
+  if(suggestedUsers?.length === 0) return <div className="md:w-[275px] w-0 ml-2"></div>;
 
   return (
-    <div className="hidden lg:block my-4 mx-2">
-      <div className="bg-[#16181C] p-4 rounded-md sticky top-2">
-        <p className="font-bold">Who to follow</p>
+    <div className="hidden lg:block  mx-2 h-[105vh]">
+      <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
+        <p className="font-bold mb-4 text-xl">Who to follow</p>
+        {/* {suggestedUsers?.length === 0 && <div className="md:w-64 w-0 border"></div>} */}
         <div className="flex flex-col gap-4">
-          {/* item */}
           {isLoading && (
             <>
               <RightPanelSkeleton />
@@ -52,7 +52,7 @@ const RightPanel = () => {
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold tracking-tight truncate w-28">
+                    <span className="font-semibold tracking-tight truncate w-28 hover:underline">
                       {user.fullName}
                     </span>
                     <span className="text-sm text-slate-500">@{user.username}</span>
@@ -60,13 +60,13 @@ const RightPanel = () => {
                 </div>
                 <div>
                   <button
-                    className="btn bg-white text-black hover:bg-white hover:opacity-90 rounded-full btn-sm"
+                    className="btn bg-white text-black hover:bg-gray-400 hover:opacity-90 rounded-full btn-sm active:bg-gray-500 "
                     onClick={(e) => {
-                      e.preventDefault()
-                      followMutation(user._id)
+                      e.preventDefault();
+                      followMutation(user._id);
                     }}
                   >
-                    {isPending ? <LoadingSpinner size="sm" /> : "Follow"}
+                     Follow
                   </button>
                 </div>
               </Link>

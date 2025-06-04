@@ -5,8 +5,7 @@ import useFollow from "../../hooks/useFollow";
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
-
-import { POSTS } from "../../utils/db/dummy";
+import FollowListModal from "../../components/common/FollowListModal"; // Import the new modal component
 
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -21,6 +20,8 @@ const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [feedType, setFeedType] = useState("posts");
+  // State to control which list is open
+  const [modalType, setModalType] = useState(null); // 'following' or 'followers'
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
@@ -36,19 +37,27 @@ const ProfilePage = () => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["userProfile"],
+    queryKey: ["userProfile", username], // Include username in query key
     queryFn: async () => {
-      const res = await fetch(`/api/users/profile/${username}`);
-      const data = res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
+      try {
+        const res = await fetch(`/api/users/profile/${username}`);
+        const data = await res.json();
+        if (!res.ok) {
+          throw new Error(data.error || "Something went wrong");
+        }
+        return data;
+      } catch (error) {
+        console.error(error);
+        throw error;
+      }
     },
   });
 
   const { updateProfileMutation, isUpdatingProfile } = useUpdateUserProfile();
 
   const isMyProfile = authUser._id === user?._id;
-  const amIFollowing = authUser?.following.includes(user?._id);
+  // Make sure user?.following is an array before calling .includes
+  const amIFollowing = authUser?.following?.includes(user?._id);
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -66,9 +75,20 @@ const ProfilePage = () => {
     refetch();
   }, [username, refetch]);
 
+  // Functions to open and close modals
+  const openFollowListModal = (type) => {
+    setModalType(type);
+    document.getElementById(`follow_list_modal_${type}`).showModal();
+  };
+
+  const closeFollowListModal = (type) => {
+    document.getElementById(`follow_list_modal_${type}`).close();
+    setModalType(null); // Reset modal type when closed
+  };
+
   return (
     <>
-      <div className="flex-[4_4_0]  border-r border-gray-700 min-h-screen ">
+      <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
         {/* HEADER */}
         {(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
         {!isLoading && !isRefetching && !user && (
@@ -83,7 +103,10 @@ const ProfilePage = () => {
                 </Link>
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
-                  <span className="text-sm text-slate-500">{POSTS?.length} posts</span>
+                  <span className="text-sm text-slate-500">
+                    {user?.posts?.length || 0} posts
+                  </span>{" "}
+                  {/* Use actual post count */}
                 </div>
               </div>
               {/* COVER IMG */}
@@ -121,6 +144,7 @@ const ProfilePage = () => {
                   <div className="w-32 rounded-full relative group/avatar">
                     <img
                       src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+                      alt="user avatar"
                     />
                     {isMyProfile && (
                       <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
@@ -154,7 +178,7 @@ const ProfilePage = () => {
                         profileImg,
                       });
                       setProfileImg(null);
-                      setCoverImg(null)
+                      setCoverImg(null);
                     }}
                   >
                     {isUpdatingProfile ? "Updating..." : "Update"}
@@ -192,14 +216,26 @@ const ProfilePage = () => {
                     </span>
                   </div>
                 </div>
-                <div className="flex gap-2">
-                  <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">{user?.following.length}</span>
-                    <span className="text-slate-500 text-xs">Following</span>
+                <div className="flex gap-4">
+                  {" "}
+                  {/* Increased gap for better spacing */}
+                  <div
+                    className="flex gap-1 items-center cursor-pointer hover:underline"
+                    onClick={() => openFollowListModal("following")}
+                  >
+                    <span className="font-bold text-sm">{user?.following.length}</span>{" "}
+                    {/* Changed to text-sm */}
+                    <span className="text-slate-500 text-sm">Following</span>{" "}
+                    {/* Changed to text-sm */}
                   </div>
-                  <div className="flex gap-1 items-center">
-                    <span className="font-bold text-xs">{user?.followers.length}</span>
-                    <span className="text-slate-500 text-xs">Followers</span>
+                  <div
+                    className="flex gap-1 items-center cursor-pointer hover:underline"
+                    onClick={() => openFollowListModal("followers")}
+                  >
+                    <span className="font-bold text-sm">{user?.followers.length}</span>{" "}
+                    {/* Changed to text-sm */}
+                    <span className="text-slate-500 text-sm">Followers</span>{" "}
+                    {/* Changed to text-sm */}
                   </div>
                 </div>
               </div>
@@ -214,12 +250,12 @@ const ProfilePage = () => {
                   )}
                 </div>
                 <div
-                  className="flex justify-center flex-1 p-3 text-slate-500 hover:bg-secondary transition duration-300 relative cursor-pointer"
+                  className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
                   onClick={() => setFeedType("likes")}
                 >
                   Likes
                   {feedType === "likes" && (
-                    <div className="absolute bottom-0 w-10  h-1 rounded-full bg-primary" />
+                    <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
                   )}
                 </div>
               </div>
@@ -229,6 +265,24 @@ const ProfilePage = () => {
           <Posts feedType={feedType} username={username} userId={user?._id} />
         </div>
       </div>
+
+      {/* Following List Modal */}
+      {user && (
+        <FollowListModal
+          userId={user._id}
+          type="following"
+          onClose={() => closeFollowListModal("following")}
+        />
+      )}
+
+      {/* Followers List Modal */}
+      {user && (
+        <FollowListModal
+          userId={user._id}
+          type="followers"
+          onClose={() => closeFollowListModal("followers")}
+        />
+      )}
     </>
   );
 };

@@ -11,7 +11,7 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/useAuthUser";
 
 function App() {
-  const {authUser, isLoading} = useAuthUser()
+  const { authUser, isLoading } = useAuthUser();
 
   if (isLoading) {
     return (

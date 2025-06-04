@@ -153,3 +153,41 @@ export const updateUser = async (req, res) => {
     return res.status(200).json(user);
   } catch (error) {}
 };
+
+export const getFollowingUsers = async (req, res) => {
+  try {
+    const { id } = req.params; // The ID of the user whose following list we want
+    const user = await User.findById(id).populate(
+      "following",
+      "username fullName profileImg"
+    ); // Populate 'following' array with necessary user details
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.following); // Return the populated following array
+  } catch (error) {
+    console.log("Error in getFollowingUsers: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getFollowers = async (req, res) => {
+  try {
+    const { id } = req.params; // The ID of the user whose followers list we want
+    const user = await User.findById(id).populate(
+      "followers",
+      "username fullName profileImg"
+    ); // Populate 'followers' array with necessary user details
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.followers); // Return the populated followers array
+  } catch (error) {
+    console.log("Error in getFollowers: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

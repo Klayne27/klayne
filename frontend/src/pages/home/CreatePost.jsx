@@ -1,5 +1,4 @@
 import { CiImageOn } from "react-icons/ci";
-// import { BsEmojiSmileFill } from "react-icons/bs";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
@@ -7,14 +6,22 @@ import toast from "react-hot-toast";
 import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/useAuthUser";
 
+import EmojiPicker from "emoji-picker-react";
+import { useEffect } from "react";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
   const imgRef = useRef(null);
 
-  const {authUser} = useAuthUser()
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
+
+  const { authUser } = useAuthUser();
   const queryClient = useQueryClient();
+
+  const emojiPickerRef = useRef(null);
+  const emojiButtonRef = useRef(null); 
 
   const {
     mutate: createPost,
@@ -35,7 +42,7 @@ const CreatePost = () => {
     },
     onSuccess: () => {
       setText("");
-      setImg("");
+      setImg(null); 
       toast.success("Post created successfully");
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
@@ -60,14 +67,56 @@ const CreatePost = () => {
     }
   };
 
+  const onEmojiClick = (emojiObject) => {
+    setText((prevText) => prevText + emojiObject.emoji);
+
+  };
+
   const isButtonDisabled = (text.trim() === "" && !img) || isPending;
 
-  // Dynamic classes for the button
   const buttonClasses = `rounded-full btn-sm px-4 text-md ${
     isButtonDisabled
       ? "bg-gray-400 font-bold text-black text-sm flex items-center cursor-default"
-      : "btn btn-primary  btn-sm text-white"
+      : "btn btn-primary btn-sm text-white"
   }`;
+
+  useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth < 640) {
+        setEmojiPickerWidth(50);
+      } else {
+        setEmojiPickerWidth(350);
+      }
+    };
+
+    handleResize();
+
+    window.addEventListener("resize", handleResize);
+
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showEmojiPicker &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   return (
     <div className="flex p-4 items-start gap-4 border-b border-gray-700">
@@ -78,7 +127,7 @@ const CreatePost = () => {
       </div>
       <form className="flex flex-col gap-2 w-full" onSubmit={handleSubmit}>
         <textarea
-          className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none  border-gray-800"
+          className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none border-gray-800"
           placeholder="What is happening?"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -102,7 +151,25 @@ const CreatePost = () => {
               className="fill-primary w-6 h-6 cursor-pointer "
               onClick={() => imgRef.current.click()}
             />
-            <PiSmiley className="fill-primary w-6 h-6 cursor-pointer" />
+            <div className="relative">
+              <PiSmiley
+                ref={emojiButtonRef}
+                className="fill-primary w-6 h-6 cursor-pointer"
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              />
+              {showEmojiPicker && (
+                <div
+                  className="absolute z-10 mt-2 top-full -left-28 md:left-0  md:translate-x-0 "
+                  ref={emojiPickerRef}
+                >
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    theme="dark"
+                    width={emojiPickerWidth}
+                  />{" "}
+                </div>
+              )}
+            </div>
           </div>
           <input
             type="file"

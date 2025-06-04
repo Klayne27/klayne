@@ -65,7 +65,7 @@ export const deletePost = async (req, res) => {
 
 export const commentOnPost = async (req, res) => {
   try {
-    const { text } = req.body;
+    const { text, createdAt } = req.body;
     const postId = req.params.id;
     const userId = req.user._id;
 
@@ -79,7 +79,7 @@ export const commentOnPost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    const comment = { user: userId, text };
+    const comment = { user: userId, text, createdAt};
 
     post.comments.push(comment);
     await post.save();

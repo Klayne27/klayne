@@ -14,7 +14,7 @@ import { useAuthUser } from "../../hooks/useAuthUser";
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
 
-  const {authUser} = useAuthUser()
+  const { authUser } = useAuthUser();
 
   const queryClient = useQueryClient();
   const { mutate: deletePostMutation, isPending: isDeleting } = useMutation({
@@ -84,9 +84,9 @@ const Post = ({ post }) => {
       return data;
     },
     onSuccess: () => {
-      toast.success("Comment posted successfully")
-      setComment("")
-      queryClient.invalidateQueries({queryKey: ["posts"]})
+      toast.success("Comment posted successfully");
+      setComment("");
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (error) => {
       toast.error(error.message);
@@ -98,7 +98,7 @@ const Post = ({ post }) => {
 
   const isMyPost = authUser?._id === post?.user?._id;
 
-  const formattedDate = formatPostDate(post.createdAt)
+  const formattedDate = formatPostDate(post.createdAt);
 
   // const isCommenting = false;
 
@@ -116,6 +116,8 @@ const Post = ({ post }) => {
     if (isLiking) return;
     likePostMutation();
   };
+
+  console.log(post.comments);
 
   return (
     <>
@@ -178,7 +180,7 @@ const Post = ({ post }) => {
                 id={`comments_modal${post._id}`}
                 className="modal border-none outline-none"
               >
-                <div className="modal-box rounded border border-gray-600">
+                <div className="modal-box border border-gray-700 rounded-2xl">
                   <h3 className="font-bold text-lg mb-4">COMMENTS</h3>
                   <div className="flex flex-col gap-3 max-h-60 overflow-auto">
                     {post.comments.length === 0 && (
@@ -208,7 +210,7 @@ const Post = ({ post }) => {
                     ))}
                   </div>
                   <form
-                    className="flex gap-2 items-center mt-4 border-t border-gray-600 pt-2"
+                    className="flex gap-2 items-center mt-4  border-gray-600 pt-2"
                     onSubmit={handlePostComment}
                   >
                     <textarea
@@ -253,9 +255,9 @@ const Post = ({ post }) => {
                 </span>
               </div>
             </div>
-            <div className="flex w-1/3 justify-end gap-2 items-center">
+            {/* <div className="flex w-1/3 justify-end gap-2 items-center">
               <FaRegBookmark className="w-4 h-4 text-slate-500 cursor-pointer" />
-            </div>
+            </div> */}
           </div>
         </div>
       </div>
