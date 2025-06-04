@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaUser } from "react-icons/fa";
+import { FaTrash, FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
@@ -39,6 +39,32 @@ const NotificationPage = () => {
     },
   });
 
+  const { mutate: deleteNotification, isPending: isDeleting } = useMutation({
+    mutationFn: async (notificationId) => {
+      const res = await fetch(`/api/notifications/${notificationId}`, {
+        method: "DELETE",
+      });
+
+      const data = res.json();
+
+      if (!res.ok) throw new Error(data.error || "Something went wrong");
+      return data;
+    },
+    onSuccess: () => {
+      toast.success("Notification deleted successfully");
+
+      queryClient.invalidateQueries({ queryKey: ["notifications"] });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete notification");
+      console.error("Delete notification error:", error);
+    },
+  });
+
+  const handleDeleteNotification = (notificationId) => {
+    deleteNotification(notificationId);
+  };
+
   return (
     <>
       <div className="flex-[4_4_0] border-l border-r border-gray-700 min-h-screen">
@@ -67,7 +93,19 @@ const NotificationPage = () => {
           <div className="text-center p-4 font-bold">No notifications 🤔</div>
         )}
         {notifications?.map((notification) => (
-          <div className="border-b border-gray-700" key={notification._id}>
+          <div className="border-b border-gray-700 relative" key={notification._id}>
+            {isDeleting ? (
+              <div className="absolute right-4 top-4">
+                <LoadingSpinner size="xs" />
+              </div>
+            ) : (
+              <button
+                className=" absolute right-5 top-5"
+                onClick={() => handleDeleteNotification(notification._id)}
+              >
+                <FaTrash className="cursor-pointer hover:text-red-500" />
+              </button>
+            )}
             <div className="flex gap-2 p-4">
               {notification.type === "follow" && (
                 <FaUser className="w-7 h-7 text-primary" />

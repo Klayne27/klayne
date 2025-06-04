@@ -33,28 +33,25 @@ export const deleteNotifications = async (req, res) => {
   }
 };
 
-// export const deleteNotification = async (req, res) => {
-//   try {
-//     const notificationId = req.params._id;
-//     const userId = req.user._id;
+export const deleteNotification = async (req, res) => {
+  try {
+    const notification = await Notification.findById(req.params.id);
 
-//     const notification = await Notification.findById(notificationId);
+    if (!notification) {
+      return res.status(404).json({ error: "Notification not found" });
+    }
 
-//     if (!notification) {
-//       return res.status(404).json({ error: "Notification not found" });
-//     }
+    if (notification.to.toString() !== req.user._id.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not allowed to delete this notification" });
+    }
 
-//     if (notification.toString() !== userId.toString()) {
-//       return res
-//         .status(403)
-//         .json({ error: "You are not allowed to delete this notification" });
-//     }
+    await Notification.findByIdAndDelete(req.params.id);
 
-//     await Notification.findByIdAndDelete(notificationId);
-
-//     res.status(200).json({ message: "Notification deleted successfully" });
-//   } catch (error) {
-//     console.log("Error in deleteNotification controller", error.message);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
+    res.status(200).json({ message: "Notification deleted successfully" });
+  } catch (error) {
+    console.log("Error in deleteNotification controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

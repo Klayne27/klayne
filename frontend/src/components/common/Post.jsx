@@ -103,7 +103,7 @@ const Post = ({ post }) => {
   // const isCommenting = false;
 
   const handleDeletePost = () => {
-    deletePostMutation(post);
+    deletePostMutation();
   };
 
   const handlePostComment = (e) => {
