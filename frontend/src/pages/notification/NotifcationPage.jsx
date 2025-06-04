@@ -61,6 +61,8 @@ const NotificationPage = () => {
     },
   });
 
+  
+
   const handleDeleteNotification = (notificationId) => {
     deleteNotification(notificationId);
   };
