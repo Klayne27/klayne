@@ -10,9 +10,7 @@ import postRoutes from "./routes/post.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import connectMongoDB from "./db/connectMongoDB.js";
 
-
 dotenv.config();
-
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

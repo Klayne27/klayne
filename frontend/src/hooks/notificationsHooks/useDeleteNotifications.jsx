@@ -6,7 +6,7 @@ export const useDeleteNotifications = () => {
   const queryClient = useQueryClient();
 
   const { mutate: deleteNotifications } = useMutation({
-    mutationFn: deleteNotificationsApi(),
+    mutationFn: deleteNotificationsApi,
     onSuccess: () => {
       toast.success("Notifications deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

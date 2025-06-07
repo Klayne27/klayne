@@ -10,6 +10,7 @@ export const useFetchPosts = (POST_ENDPOINT) => {
   } = useQuery({
     queryKey: ["posts"],
     queryFn: () => fetchPostsApi(POST_ENDPOINT),
+    
   });
 
   return { posts, isLoading, refetch, isRefetching };

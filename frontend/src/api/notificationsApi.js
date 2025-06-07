@@ -1,5 +1,6 @@
 export const fetchNotificationsApi = async () => {
-  const res = await fetch("/api/notifications");
+  const res = await fetch("/api/notifications", { credentials: "include" });
+
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Something went wrong");
 

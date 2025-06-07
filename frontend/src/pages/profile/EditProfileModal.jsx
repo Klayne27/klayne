@@ -21,11 +21,11 @@ const EditProfileModal = ({ authUser }) => {
   useEffect(() => {
     if (authUser) {
       setFormData({
-        fullName: authUser.fullName,
-        username: authUser.username,
-        email: authUser.email,
-        bio: authUser.bio,
-        link: authUser.link,
+        fullName: authUser?.fullName,
+        username: authUser?.username,
+        email: authUser?.email,
+        bio: authUser?.bio,
+        link: authUser?.link,
         newPassword: "",
         currentPassword: "",
       });

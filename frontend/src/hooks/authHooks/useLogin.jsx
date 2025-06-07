@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { loginApi } from "../../api/authHooks";
 
-export const useLogin = (username, password) => {
+export const useLogin = (formData) => {
   const queryClient = useQueryClient();
 
   const {
@@ -11,7 +11,7 @@ export const useLogin = (username, password) => {
     isError,
     error,
   } = useMutation({
-    mutationFn: () => loginApi(username, password),
+    mutationFn: () => loginApi(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },

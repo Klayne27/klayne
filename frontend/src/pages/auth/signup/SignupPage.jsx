@@ -18,12 +18,7 @@ const SignUpPage = () => {
     password: "",
   });
 
-  const { signup, isPending, isError, error } = useSignup(
-    formData.email,
-    formData.username,
-    formData.fullName,
-    formData.password
-  );
+  const { signup, isPending, isError, error } = useSignup(formData);
 
   const handleSubmit = (e) => {
     e.preventDefault();

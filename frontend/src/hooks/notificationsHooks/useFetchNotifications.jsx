@@ -6,6 +6,10 @@ export const useFetchNotifications = () => {
     queryKey: ["notifications"],
     queryFn: fetchNotificationsApi,
     retry: false,
+    staleTime: Infinity,
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false, 
+    refetchOnMount: true,
   });
 
   return { notifications, isLoading };

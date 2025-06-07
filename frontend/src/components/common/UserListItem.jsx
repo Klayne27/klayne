@@ -11,7 +11,7 @@ const UserListItem = ({ user: listUser }) => {
   const amIFollowing = authUser?.following.includes(listUser?._id);
 
   // Don't show follow/unfollow button if it's the current user's own profile
-  const isMyProfile = authUser._id === listUser?._id;
+  const isMyProfile = authUser?._id === listUser?._id;
 
   return (
     <div className="flex items-center justify-between p-2 border-b border-gray-700 last:border-b-0">

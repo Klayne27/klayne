@@ -13,10 +13,7 @@ const LoginPage = () => {
     password: "",
   });
 
-  const { login, isPending, isError, error } = useLogin(
-    formData.username,
-    formData.password
-  );
+  const { login, isPending, isError, error } = useLogin(formData);
 
   const handleSubmit = (e) => {
     e.preventDefault();

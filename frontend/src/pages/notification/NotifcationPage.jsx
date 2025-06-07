@@ -14,12 +14,6 @@ const NotificationPage = () => {
   const { deleteNotification } = useDeleteNotification();
   const { deleteNotifications, isDeleting } = useDeleteNotifications();
 
-  const handleDeleteNotification = (notificationId) => {
-    deleteNotification(notificationId);
-  };
-
-  console.log(notifications);
-
   return (
     <>
       <div className="flex-[4_4_0]  border-r border-gray-700 min-h-screen">
@@ -56,7 +50,7 @@ const NotificationPage = () => {
             ) : (
               <button
                 className=" absolute right-5 top-5"
-                onClick={() => handleDeleteNotification(notification._id)}
+                onClick={() => deleteNotification(notification._id)}
               >
                 <FaTrash className="cursor-pointer hover:text-red-500" />
               </button>

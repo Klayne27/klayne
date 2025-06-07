@@ -1,5 +1,6 @@
 export const fetchPostsApi = async (POST_ENDPOINT) => {
   const res = await fetch(POST_ENDPOINT);
+
   const data = await res.json();
 
   if (!res.ok) throw new Error(data.error || "Something went wrong");

@@ -1,10 +1,10 @@
-export const signupApi = async (email, username, fullName, password) => {
+export const signupApi = async (formData) => {
   const res = await fetch("/api/auth/signup", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ email, username, fullName, password }),
+    body: JSON.stringify(formData),
   });
 
   const data = await res.json();
@@ -12,11 +12,11 @@ export const signupApi = async (email, username, fullName, password) => {
   return data;
 };
 
-export const loginApi = async (username, password) => {
+export const loginApi = async (formData) => {
   const res = await fetch("/api/auth/login", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ username, password }),
+    body: JSON.stringify(formData),
   });
 
   const data = await res.json();
