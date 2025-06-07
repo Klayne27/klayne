@@ -8,8 +8,7 @@ import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
 
-import { useMutation } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useSignup } from "../../../hooks/authHooks/useSignup";
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -19,36 +18,16 @@ const SignUpPage = () => {
     password: "",
   });
 
-  const {
-    mutate: signupMutation,
-    isPending,
-    isError,
-    error,
-  } = useMutation({
-    mutationFn: async ({ email, username, fullName, password }) => {
-      const res = await fetch("/api/auth/signup", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ email, username, fullName, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Failed to create account");
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Account created successfully");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to create account");
-    },
-  });
+  const { signup, isPending, isError, error } = useSignup(
+    formData.email,
+    formData.username,
+    formData.fullName,
+    formData.password
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    signupMutation(formData);
+    signup(formData);
   };
 
   const handleInputChange = (e) => {

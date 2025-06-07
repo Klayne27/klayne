@@ -1,9 +1,9 @@
 import Post from "./Post";
 import PostSkeleton from "../skeletons/PostSkeleton";
-import { useQuery } from "@tanstack/react-query";
 import { useEffect } from "react";
+import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 
-const Posts = ({ feedType, username, userId }) => {
+const Posts = ({ feedType, username, userId, onPostsFetched }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -11,9 +11,9 @@ const Posts = ({ feedType, username, userId }) => {
       case "following":
         return "api/posts/following";
       case "posts":
-        return `/api/posts/user/${username}`
+        return `/api/posts/user/${username}`;
       case "likes":
-        return `/api/posts/likes/${userId}`
+        return `/api/posts/likes/${userId}`;
       default:
         return "/api/posts/all";
     }
@@ -21,26 +21,20 @@ const Posts = ({ feedType, username, userId }) => {
 
   const POST_ENDPOINT = getPostEndpoint();
 
-  const {
-    data: posts,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useQuery({
-    queryKey: ["posts"],
-    queryFn: async () => {
-      const res = await fetch(POST_ENDPOINT);
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-  });
+  const { posts, isLoading, refetch, isRefetching } = useFetchPosts(POST_ENDPOINT);
 
   useEffect(() => {
     refetch();
   }, [feedType, refetch, username]);
+
+  // Use another useEffect to call the callback when posts data changes
+  useEffect(() => {
+    // Only call the callback if posts is not loading and not refetching, and is available
+    if (!isLoading && !isRefetching && posts !== undefined) {
+      // Ensure onPostsFetched exists before calling it
+      onPostsFetched?.(posts);
+    }
+  }, [posts, isLoading, isRefetching, onPostsFetched, feedType]); // Add feedType to dependencies if you want to update count specifically for "posts" tab
 
   return (
     <>

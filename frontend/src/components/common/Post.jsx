@@ -1,97 +1,23 @@
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
-import { FaRegBookmark } from "react-icons/fa6";
 import { FaTrash } from "react-icons/fa";
 import { useState } from "react";
 import { Link } from "react-router-dom";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../common/LoadingSpinner";
-import toast from "react-hot-toast";
 import { formatPostDate } from "../../utils/date";
-import { useAuthUser } from "../../hooks/useAuthUser";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
+import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
+import { useCommentPost } from "../../hooks/postsHooks/useCommentPosts";
 
 const Post = ({ post }) => {
   const [comment, setComment] = useState("");
 
   const { authUser } = useAuthUser();
-
-  const queryClient = useQueryClient();
-  const { mutate: deletePostMutation, isPending: isDeleting } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/posts/${post._id}`, {
-        method: "DELETE",
-      });
-
-      const data = res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Post deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: () => {
-      toast.error("Failed to delete post");
-    },
-  });
-
-  const { mutate: likePostMutation, isPending: isLiking } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/posts/like/${post._id}`, {
-        method: "POST",
-      });
-
-      const data = res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
-    },
-    onSuccess: (updatedLikes) => {
-      // this is not the best UX, bc it will refetch all posts
-      // queryClient.invalidateQueries({ queryKey: ["posts"] });
-
-      // instead, update the cahce directly for that post
-      queryClient.setQueryData(["posts"], (oldData) => {
-        return oldData.map((p) => {
-          if (p._id === post._id) {
-            return { ...p, likes: updatedLikes };
-          }
-          return p;
-        });
-      });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
-
-  const { mutate: commentPostMutation, isPending: isCommenting } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch(`/api/posts/comment/${post._id}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ text: comment }),
-      });
-      const data = await res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-    onSuccess: () => {
-      toast.success("Comment posted successfully");
-      setComment("");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-    onError: (error) => {
-      toast.error(error.message);
-    },
-  });
+  const {deletePost, isDeleting} = useDeletePosts(post)
+  const {likePost, isLiking} = useLikePost(post)
+  const {commentPost, isCommenting} = useCommentPost(post, comment, setComment)
 
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser?._id);
@@ -100,24 +26,20 @@ const Post = ({ post }) => {
 
   const formattedDate = formatPostDate(post.createdAt);
 
-  // const isCommenting = false;
-
   const handleDeletePost = () => {
-    deletePostMutation();
+    deletePost();
   };
 
   const handlePostComment = (e) => {
     e.preventDefault();
     if (isCommenting) return;
-    commentPostMutation();
+    commentPost();
   };
 
   const handleLikePost = () => {
     if (isLiking) return;
-    likePostMutation();
+    likePost();
   };
-
-  console.log(post.comments);
 
   return (
     <>

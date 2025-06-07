@@ -1,10 +1,9 @@
 import { CiImageOn } from "react-icons/ci";
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { PiSmiley } from "react-icons/pi";
-import { useAuthUser } from "../../hooks/useAuthUser";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 
 import EmojiPicker from "emoji-picker-react";
 import { useEffect } from "react";
@@ -12,48 +11,31 @@ import { useEffect } from "react";
 const CreatePost = () => {
   const [text, setText] = useState("");
   const [img, setImg] = useState(null);
-  const imgRef = useRef(null);
-
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
   const { authUser } = useAuthUser();
-  const queryClient = useQueryClient();
 
+  const imgRef = useRef(null);
   const emojiPickerRef = useRef(null);
-  const emojiButtonRef = useRef(null); 
+  const emojiButtonRef = useRef(null);
 
-  const {
-    mutate: createPost,
-    isPending,
-    isError,
-    error,
-  } = useMutation({
-    mutationFn: async ({ text, img }) => {
-      const res = await fetch("/api/posts/create", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ text, img }),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-    onSuccess: () => {
-      setText("");
-      setImg(null); 
-      toast.success("Post created successfully");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-    },
-  });
+  const { createPost, isPending, isError, error } = useCreatePosts(text, img);
 
   const handleSubmit = (e) => {
     e.preventDefault();
     if (text.trim() === "" && !img) {
       return;
     }
-    createPost({ text, img });
+    createPost(
+      { text, img },
+      {
+        onSuccess: () => {
+          setText("");
+          setImg(null);
+        },
+      }
+    );
   };
 
   const handleImgChange = (e) => {
@@ -69,7 +51,6 @@ const CreatePost = () => {
 
   const onEmojiClick = (emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
-
   };
 
   const isButtonDisabled = (text.trim() === "" && !img) || isPending;

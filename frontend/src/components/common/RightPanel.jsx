@@ -1,28 +1,15 @@
 import { Link } from "react-router-dom";
 
-// import { USERS_FOR_RIGHT_PANEL } from "../../utils/db/dummy";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
-import { useQuery } from "@tanstack/react-query";
-import useFollow from "../../hooks/useFollow";
+import useFollow from "../../hooks/usersHooks/useFollow";
+import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
 import LoadingSpinner from "./LoadingSpinner";
 
 const RightPanel = () => {
-  const { data: suggestedUsers, isLoading } = useQuery({
-    queryKey: ["suggestedUsers"],
-    queryFn: async () => {
-      const res = await fetch("/api/users/suggested");
+  const { suggestedUsers, isLoading } = useSuggestedUsers();
+  const { follow, isPending } = useFollow();
 
-      const data = res.json();
-
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-      return data;
-    },
-  });
-
-  const {followMutation} = useFollow()
-
-  if(suggestedUsers?.length === 0) return <div className="md:w-[275px] w-0 ml-2"></div>;
+  if (suggestedUsers?.length === 0) return <div className="md:w-[275px] w-0 ml-2"></div>;
 
   return (
     <div className="hidden lg:block  mx-2 h-[105vh]">
@@ -63,10 +50,10 @@ const RightPanel = () => {
                     className="btn bg-white text-black hover:bg-gray-400 hover:opacity-90 rounded-full btn-sm active:bg-gray-500 "
                     onClick={(e) => {
                       e.preventDefault();
-                      followMutation(user._id);
+                      follow(user._id);
                     }}
                   >
-                     Follow
+                    {isPending ? <LoadingSpinner size="sm" /> : "Follow"}
                   </button>
                 </div>
               </Link>

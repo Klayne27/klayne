@@ -1,9 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
-import UserListItem from "./UserListItem"; // Import the UserListItem component
-import LoadingSpinner from "./LoadingSpinner"; // Import LoadingSpinner
+import UserListItem from "./UserListItem";
+import LoadingSpinner from "./LoadingSpinner";
+import { useFetchUsers } from "../../hooks/usersHooks/useFetchUsers";
 
 const FollowListModal = ({ userId, type, onClose }) => {
-  // Added onClose prop
   const queryKey =
     type === "following" ? ["followingList", userId] : ["followersList", userId];
   const endpoint =
@@ -12,27 +11,14 @@ const FollowListModal = ({ userId, type, onClose }) => {
       : `/api/users/followers/${userId}`;
   const modalTitle = type === "following" ? "Following" : "Followers";
 
-  const {
-    data: users,
-    isLoading,
-    error,
-  } = useQuery({
-    queryKey: queryKey,
-    queryFn: async () => {
-      const res = await fetch(endpoint);
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || `Failed to fetch ${type} list`);
-      return data;
-    },
-    enabled: !!userId, // Only run the query if userId is available
-  });
+  const { users, isLoading, error } = useFetchUsers(userId, queryKey, endpoint, type);
 
   return (
     <dialog
       id={`follow_list_modal_${type}`}
       className="modal modal-bottom sm:modal-middle"
       onMouseDown={(e) => {
-        // Close modal when clicking outside of modal-box
+
         if (e.target.id === `follow_list_modal_${type}`) {
           onClose();
         }
@@ -60,7 +46,6 @@ const FollowListModal = ({ userId, type, onClose }) => {
         )}
         <div className="modal-action">
           <form method="dialog">
-            {/* if there is a button in form, it will close the modal */}
             <button
               className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
               onClick={onClose}

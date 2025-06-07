@@ -5,46 +5,18 @@ import { IoNotifications } from "react-icons/io5";
 import { FaUser } from "react-icons/fa";
 import { Link } from "react-router-dom";
 import { BiLogOut } from "react-icons/bi";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { useAuthUser } from "../../hooks/useAuthUser";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useLogout } from "../../hooks/authHooks/useLogout";
 
 const Sidebar = () => {
   const {authUser} = useAuthUser()
-
-  const queryClient = useQueryClient();
-
-  const { mutate: logoutMutation } = useMutation({
-    mutationFn: async () => {
-      const res = await fetch("/api/auth/logout", {
-        method: "POST",
-      });
-      const data = await res.json();
-
-      if (!res.ok) {
-        throw new Error(data.error || "Something went wrong");
-      }
-
-      return data;
-    },
-    onSuccess: () => {
-      // refetch the authUser to update the UI
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
-    onError: () => {
-      toast.error("Logout failed");
-    },
-  });
+  const {logout} = useLogout()
 
   return (
     <div className="md:flex-[2_2_0] w-18 max-w-52">
       <div className="sticky top-0 left-0 h-screen flex flex-col border-r border-gray-700 w-20 md:w-full">
         <Link to="/" className="flex justify-center md:justify-start">
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
-          {/* <img
-            src="logo.png"
-            className="mt-4 ml-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900"
-          /> */}
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
           <li className="flex justify-center md:justify-start">
@@ -97,7 +69,7 @@ const Sidebar = () => {
                 className="w-5 h-5 cursor-pointer"
                 onClick={(e) => {
                   e.preventDefault();
-                  logoutMutation();
+                  logout();
                 }}
               />
             </div>

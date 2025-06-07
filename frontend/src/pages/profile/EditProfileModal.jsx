@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useUpdateUserProfile } from "../../hooks/useUpdateUserProfile";
+import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -12,8 +12,7 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
   });
 
-
-  const { updateProfileMutation, isUpdatingProfile } = useUpdateUserProfile();
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile(formData);
 
   const handleInputChange = (e) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -48,7 +47,7 @@ const EditProfileModal = ({ authUser }) => {
             className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
-              updateProfileMutation(formData);
+              updateProfile(formData);
             }}
           >
             <div className="flex flex-wrap gap-2">

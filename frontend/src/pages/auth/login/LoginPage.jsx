@@ -5,8 +5,7 @@ import XSvg from "../../../components/svgs/X";
 
 import { MdOutlineMail } from "react-icons/md";
 import { MdPassword } from "react-icons/md";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import { useLogin } from "../../../hooks/authHooks/useLogin";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -14,37 +13,14 @@ const LoginPage = () => {
     password: "",
   });
 
-  const queryClient = useQueryClient();
-
-  const {
-    mutate: loginMutation,
-    isPending,
-    isError,
-    error,
-  } = useMutation({
-    mutationFn: async ({ username, password }) => {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ username, password }),
-      });
-
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      return data;
-    },
-    onSuccess: () => {
-      // refetch the authUser to update the UI
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-    },
-    onError: (error) => {
-      toast.error(error.message || "Login failed");
-    },
-  });
+  const { login, isPending, isError, error } = useLogin(
+    formData.username,
+    formData.password
+  );
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    loginMutation(formData);
+    login(formData);
   };
 
   const handleInputChange = (e) => {

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useParams } from "react-router-dom";
-import useFollow from "../../hooks/useFollow";
+import useFollow from "../../hooks/usersHooks/useFollow";
 
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
@@ -11,52 +11,31 @@ import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
 import { MdEdit } from "react-icons/md";
-import { useQuery } from "@tanstack/react-query";
 import { formatMemberSinceDate } from "../../utils/date";
-import { useAuthUser } from "../../hooks/useAuthUser";
-import { useUpdateUserProfile } from "../../hooks/useUpdateUserProfile";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
+import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 
 const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [feedType, setFeedType] = useState("posts");
-  // State to control which list is open
-  const [modalType, setModalType] = useState(null); // 'following' or 'followers'
+  const [modalType, setModalType] = useState(null);
+
+  const [userPostsCount, setUserPostsCount] = useState(0);
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
-  const { authUser } = useAuthUser();
   const { username } = useParams();
 
-  const { followMutation, isPending } = useFollow();
+  const { authUser } = useAuthUser();
+  const { follow, isPending } = useFollow();
 
-  const {
-    data: user,
-    isLoading,
-    refetch,
-    isRefetching,
-  } = useQuery({
-    queryKey: ["userProfile", username], // Include username in query key
-    queryFn: async () => {
-      try {
-        const res = await fetch(`/api/users/profile/${username}`);
-        const data = await res.json();
-        if (!res.ok) {
-          throw new Error(data.error || "Something went wrong");
-        }
-        return data;
-      } catch (error) {
-        console.error(error);
-        throw error;
-      }
-    },
-  });
-
-  const { updateProfileMutation, isUpdatingProfile } = useUpdateUserProfile();
+  const { user, isLoading, refetch, isRefetching } = useFetchUserProfile(username);
+  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
 
   const isMyProfile = authUser._id === user?._id;
-  // Make sure user?.following is an array before calling .includes
   const amIFollowing = authUser?.following?.includes(user?._id);
 
   const handleImgChange = (e, state) => {
@@ -75,7 +54,6 @@ const ProfilePage = () => {
     refetch();
   }, [username, refetch]);
 
-  // Functions to open and close modals
   const openFollowListModal = (type) => {
     setModalType(type);
     document.getElementById(`follow_list_modal_${type}`).showModal();
@@ -83,8 +61,19 @@ const ProfilePage = () => {
 
   const closeFollowListModal = (type) => {
     document.getElementById(`follow_list_modal_${type}`).close();
-    setModalType(null); // Reset modal type when closed
+    setModalType(null);
   };
+
+  // Callback function to receive the posts array from the Posts component
+  const handlePostsFetched = (postsArray) => {
+    if (postsArray) {
+      setUserPostsCount(postsArray.length);
+    } else {
+      setUserPostsCount(0);
+    }
+  };
+
+  console.log(user);
 
   return (
     <>
@@ -104,12 +93,10 @@ const ProfilePage = () => {
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
                   <span className="text-sm text-slate-500">
-                    {user?.posts?.length || 0} posts
+                    {feedType === "posts" ? `${userPostsCount} posts` : ""}
                   </span>{" "}
-                  {/* Use actual post count */}
                 </div>
               </div>
-              {/* COVER IMG */}
               <div className="relative group/cover">
                 <img
                   src={coverImg || user?.coverImg || "/cover.png"}
@@ -139,7 +126,6 @@ const ProfilePage = () => {
                   ref={profileImgRef}
                   onChange={(e) => handleImgChange(e, "profileImg")}
                 />
-                {/* USER AVATAR */}
                 <div className="avatar absolute -bottom-16 left-4">
                   <div className="w-32 rounded-full relative group/avatar">
                     <img
@@ -162,7 +148,7 @@ const ProfilePage = () => {
                 {!isMyProfile && (
                   <button
                     className="btn btn-outline rounded-full btn-sm"
-                    onClick={() => followMutation(user?._id)}
+                    onClick={() => follow(user?._id)}
                   >
                     {isPending && "Loading..."}
                     {!isPending && amIFollowing && "Unfollow"}
@@ -173,7 +159,7 @@ const ProfilePage = () => {
                   <button
                     className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
                     onClick={async () => {
-                      await updateProfileMutation({
+                      await updateProfile({
                         coverImg,
                         profileImg,
                       });
@@ -218,24 +204,19 @@ const ProfilePage = () => {
                 </div>
                 <div className="flex gap-4">
                   {" "}
-                  {/* Increased gap for better spacing */}
                   <div
                     className="flex gap-1 items-center cursor-pointer hover:underline"
                     onClick={() => openFollowListModal("following")}
                   >
                     <span className="font-bold text-sm">{user?.following.length}</span>{" "}
-                    {/* Changed to text-sm */}
                     <span className="text-slate-500 text-sm">Following</span>{" "}
-                    {/* Changed to text-sm */}
                   </div>
                   <div
                     className="flex gap-1 items-center cursor-pointer hover:underline"
                     onClick={() => openFollowListModal("followers")}
                   >
                     <span className="font-bold text-sm">{user?.followers.length}</span>{" "}
-                    {/* Changed to text-sm */}
                     <span className="text-slate-500 text-sm">Followers</span>{" "}
-                    {/* Changed to text-sm */}
                   </div>
                 </div>
               </div>
@@ -262,11 +243,10 @@ const ProfilePage = () => {
             </>
           )}
 
-          <Posts feedType={feedType} username={username} userId={user?._id} />
+          <Posts feedType={feedType} username={username} userId={user?._id} onPostsFetched={handlePostsFetched} />
         </div>
       </div>
 
-      {/* Following List Modal */}
       {user && (
         <FollowListModal
           userId={user._id}
@@ -275,7 +255,6 @@ const ProfilePage = () => {
         />
       )}
 
-      {/* Followers List Modal */}
       {user && (
         <FollowListModal
           userId={user._id}

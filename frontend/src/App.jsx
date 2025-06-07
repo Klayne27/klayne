@@ -8,7 +8,7 @@ import ProfilePage from "./pages/profile/ProfilePage";
 import NotificationPage from "./pages/notification/NotifcationPage";
 import { Toaster } from "react-hot-toast";
 import LoadingSpinner from "./components/common/LoadingSpinner";
-import { useAuthUser } from "./hooks/useAuthUser";
+import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 
 function App() {
   const { authUser, isLoading } = useAuthUser();

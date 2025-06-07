@@ -1,11 +1,11 @@
 import { Link } from "react-router-dom";
-import useFollow from "../../hooks/useFollow"; // Assuming you want follow/unfollow buttons here
-import { useAuthUser } from "../../hooks/useAuthUser";
+import useFollow from "../../hooks/usersHooks/useFollow"; // Assuming you want follow/unfollow buttons here
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import LoadingSpinner from "./LoadingSpinner"; // Make sure path is correct
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();
-  const { followMutation, isPending } = useFollow();
+  const { follow, isPending } = useFollow();
 
   // Determine if the currently logged-in user is following this user in the list
   const amIFollowing = authUser?.following.includes(listUser?._id);
@@ -32,7 +32,7 @@ const UserListItem = ({ user: listUser }) => {
       {!isMyProfile && (
         <button
           className="btn btn-sm rounded-full btn-outline"
-          onClick={() => followMutation(listUser?._id)}
+          onClick={() => follow(listUser?._id)}
           disabled={isPending}
         >
           {isPending ? (
