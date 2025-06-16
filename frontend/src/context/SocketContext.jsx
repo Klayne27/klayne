@@ -1,6 +1,4 @@
-// src/context/SocketContext.jsx
-
-import React, { createContext, useState, useEffect, useContext, useRef } from "react";
+import { createContext, useState, useEffect, useContext, useRef } from "react";
 import io from "socket.io-client";
 import { useAuthUser } from "../hooks/authHooks/useAuthUser";
 
@@ -11,15 +9,13 @@ export const useSocket = () => {
 };
 
 export const SocketContextProvider = ({ children }) => {
-  const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser(); // <--- Use authUser from your hook
+  const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser();
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const socketRef = useRef(null);
 
   useEffect(() => {
-    // Only proceed if authUser data is loaded and available
     if (!isLoadingAuthUser && user) {
-      // <--- Check isLoadingAuthUser
       const newSocket = io("http://localhost:5000", {
         query: {
           userId: user._id,
@@ -50,7 +46,6 @@ export const SocketContextProvider = ({ children }) => {
         }
       };
     } else if (!isLoadingAuthUser && !user) {
-      // If auth data loaded but no user (logged out)
       if (socketRef.current) {
         socketRef.current.close();
         socketRef.current = null;
@@ -58,7 +53,7 @@ export const SocketContextProvider = ({ children }) => {
       }
       setOnlineUsers([]);
     }
-  }, [user, isLoadingAuthUser]); // <--- Add isLoadingAuthUser to dependency array
+  }, [user, isLoadingAuthUser]);
 
   return (
     <SocketContext.Provider value={{ socket, onlineUsers }}>

@@ -1,16 +1,14 @@
 import { Link } from "react-router-dom";
-import useFollow from "../../hooks/usersHooks/useFollow"; // Assuming you want follow/unfollow buttons here
+import useFollow from "../../hooks/usersHooks/useFollow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import LoadingSpinner from "./LoadingSpinner"; // Make sure path is correct
+import LoadingSpinner from "./LoadingSpinner";
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();
   const { follow, isPending } = useFollow();
 
-  // Determine if the currently logged-in user is following this user in the list
   const amIFollowing = authUser?.following.includes(listUser?._id);
-
-  // Don't show follow/unfollow button if it's the current user's own profile
+  
   const isMyProfile = authUser?._id === listUser?._id;
 
   return (

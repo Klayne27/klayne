@@ -1,6 +1,4 @@
-// src/pages/messages/MessagesPage.jsx
-
-import React, { useState } from "react";
+import { useState } from "react";
 import ConversationsList from "../../components/common/ConversationsList";
 import ChatWindow from "../../components/common/ChatWindow";
 
@@ -18,20 +16,17 @@ const MessagesPage = () => {
   return (
     <div className="flex min-h-screen bg-black text-white">
       <div
-        className={`md:w-[350px] w-full flex-shrink-0 border-r border-gray-700
-                       ${
-                         selectedConversation ? "hidden md:flex" : "flex"
-                       } flex-col h-screen`}
+        className={`md:w-[430px] w-full flex-shrink-0 border-r border-gray-700
+        ${selectedConversation ? "hidden md:flex" : "flex"} flex-col h-screen`}
       >
         <ConversationsList
           onSelectConversation={handleSelectConversation}
-          selectedConversation={selectedConversation} // Pass the full object
+          selectedConversation={selectedConversation}
         />
       </div>
 
-      {/* Right panel for chat window - responsive visibility */}
       <div
-        className={`flex-1 w-[578px]  ${
+        className={`flex-1 w-[626px]  ${
           selectedConversation ? "flex" : "hidden md:flex"
         } flex-col h-screen`}
       >

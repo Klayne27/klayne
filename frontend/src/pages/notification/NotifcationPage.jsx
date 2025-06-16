@@ -2,11 +2,12 @@ import { Link } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaTrash, FaUser } from "react-icons/fa";
+import { FaUser } from "react-icons/fa";
 import { FaHeart } from "react-icons/fa6";
 import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications";
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications";
+import { FiTrash } from "react-icons/fi";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
@@ -52,7 +53,7 @@ const NotificationPage = () => {
                 className=" absolute right-5 top-5"
                 onClick={() => deleteNotification(notification._id)}
               >
-                <FaTrash className="cursor-pointer hover:text-red-500" />
+                <FiTrash className="cursor-pointer hover:text-red-500" size={20} />
               </button>
             )}
             <div className="flex gap-2 p-4">

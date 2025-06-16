@@ -30,6 +30,15 @@ const postSchema = new mongoose.Schema(
           ref: "User",
           required: true,
         },
+        createdAt: {
+          type: Date,
+          default: Date.now,
+          immutable: true,
+        },
+        updatedAt: {
+          type: Date,
+          default: Date.now,
+        },
       },
     ],
   },
@@ -38,4 +47,4 @@ const postSchema = new mongoose.Schema(
 
 const Post = mongoose.model("Post", postSchema);
 
-export default Post
+export default Post;

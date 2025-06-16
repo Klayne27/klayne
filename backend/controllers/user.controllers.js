@@ -65,26 +65,39 @@ export const getSuggestedUsers = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const usersFollowedByMe = await User.findById(userId).select("following");
-    const users = await User.aggregate([
+    const user = await User.findById(userId).select("following").lean();
+    const usersFollowedByMe = user ? user.following : []
+
+    const suggestedUsers = await User.aggregate([
       {
         $match: {
-          _id: { $ne: userId },
+          _id: {
+            $ne: userId,
+            $nin: usersFollowedByMe,
+          },
         },
       },
       { $sample: { size: 10 } },
+      {
+        $limit: 4,
+      },
+      {
+        $project: {
+          username: 1,
+          fullName: 1,
+          profileImg: 1,
+          _id: 1,
+        },
+      },
     ]);
 
-    const filteredUsers = users.filter(
-      (user) => !usersFollowedByMe.following.includes(user._id)
-    );
-    const suggestedUsers = filteredUsers.slice(0, 4);
-
-    suggestedUsers.forEach((user) => (user.password = null));
+    suggestedUsers.forEach((user) => {
+      delete user.password;
+    });
 
     res.status(200).json(suggestedUsers);
   } catch (error) {
-    console.log("Error in getSuggestedUsers: ", error.message);
+    console.error("Error in getSuggestedUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -156,17 +169,17 @@ export const updateUser = async (req, res) => {
 
 export const getFollowingUsers = async (req, res) => {
   try {
-    const { id } = req.params; // The ID of the user whose following list we want
+    const { id } = req.params;
     const user = await User.findById(id).populate(
       "following",
       "username fullName profileImg"
-    ); // Populate 'following' array with necessary user details
+    );
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user.following); // Return the populated following array
+    res.status(200).json(user.following);
   } catch (error) {
     console.log("Error in getFollowingUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -175,17 +188,17 @@ export const getFollowingUsers = async (req, res) => {
 
 export const getFollowers = async (req, res) => {
   try {
-    const { id } = req.params; // The ID of the user whose followers list we want
+    const { id } = req.params;
     const user = await User.findById(id).populate(
       "followers",
       "username fullName profileImg"
-    ); // Populate 'followers' array with necessary user details
+    );
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user.followers); // Return the populated followers array
+    res.status(200).json(user.followers);
   } catch (error) {
     console.log("Error in getFollowers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });

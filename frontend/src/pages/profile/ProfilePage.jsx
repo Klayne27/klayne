@@ -5,7 +5,7 @@ import useFollow from "../../hooks/usersHooks/useFollow";
 import Posts from "../../components/common/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
-import FollowListModal from "../../components/common/FollowListModal"; // Import the new modal component
+import FollowListModal from "../../components/common/FollowListModal";
 
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -64,7 +64,6 @@ const ProfilePage = () => {
     setModalType(null);
   };
 
-  // Callback function to receive the posts array from the Posts component
   const handlePostsFetched = (postsArray) => {
     if (postsArray) {
       setUserPostsCount(postsArray.length);
@@ -76,7 +75,6 @@ const ProfilePage = () => {
   return (
     <>
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        {/* HEADER */}
         {(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
         {!isLoading && !isRefetching && !user && (
           <p className="text-center text-lg mt-4">User not found</p>

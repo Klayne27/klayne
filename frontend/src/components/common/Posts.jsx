@@ -27,14 +27,11 @@ const Posts = ({ feedType, username, userId, onPostsFetched }) => {
     refetch();
   }, [feedType, refetch, username]);
 
-  // Use another useEffect to call the callback when posts data changes
   useEffect(() => {
-    // Only call the callback if posts is not loading and not refetching, and is available
     if (!isLoading && !isRefetching && posts !== undefined) {
-      // Ensure onPostsFetched exists before calling it
       onPostsFetched?.(posts);
     }
-  }, [posts, isLoading, isRefetching, onPostsFetched, feedType]); // Add feedType to dependencies if you want to update count specifically for "posts" tab
+  }, [posts, isLoading, isRefetching, onPostsFetched, feedType]);
 
   return (
     <>

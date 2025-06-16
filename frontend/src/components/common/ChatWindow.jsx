@@ -111,16 +111,13 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
         queryClient.setQueryData(["messages", conversationId], context.previousMessages);
       }
     },
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["conversations"]);
 
       // If a new conversation was created, and we sent the first message,
       // the `newMessage` socket event will usually update the UI and the `conversationId`
       // will be propagated, allowing the `messages` query to fetch.
       // --- FOCUS THE INPUT HERE AFTER EVERYTHING IS SETTLED ---
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
       // Also clear the file input's visual state (important for image sending)
       if (imageInputRef.current) {
         imageInputRef.current.value = "";
@@ -170,12 +167,6 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  //   useEffect(() => {
-  //     if (messageInputRef.current) {
-  //       messageInputRef.current.focus();
-  //     }
-  //   }, [selectedConversation]);
-
   // Effect to listen for new messages via Socket.IO
   useEffect(() => {
     if (socket) {
@@ -205,7 +196,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
           newMessage.conversationId?.toString() === conversationId?.toString() ||
           (selectedConversation?.isNewChat &&
             newMessage.sender._id.toString() === currentUser._id.toString() &&
-            newMessage.recipientId.toString() === otherUser?._id.toString())
+            newMessage.recipientId?.toString() === otherUser?._id.toString())
         ) {
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || conversationId],
@@ -311,6 +302,8 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   const isNewChat =
     selectedConversation.isNewChat || (!messages?.length && !isLoading && !error);
 
+  console.log("messages here:", messages);
+
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       {/* Chat Header */}
@@ -359,12 +352,6 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
           messages.length > 0 &&
           messages.map((msg) => {
             const isSentByCurrentUser = msg.sender._id === currentUser._id;
-
-            if (isSentByCurrentUser) {
-              if (messageInputRef.current) {
-                messageInputRef.current.focus();
-              }
-            }
 
             return (
               <div
@@ -424,12 +411,12 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
               onClick={() => setImageFile(null)}
               className="absolute right-1 top-1 p-1 text-white rounded-full bg-black hover:bg-gray-700"
             >
-              <IoClose size={25} />
+              <IoClose size={15} />
             </button>
           </div>
         </div>
       )}
-
+ 
       {/* Message Input Area */}
       <form
         onSubmit={handleSendMessage}

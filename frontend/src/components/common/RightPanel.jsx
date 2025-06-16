@@ -9,13 +9,12 @@ const RightPanel = () => {
   const { suggestedUsers, isLoading } = useSuggestedUsers();
   const { follow, isPending } = useFollow();
 
-  if (suggestedUsers?.length === 0) return <div className="md:w-[275px] w-0 ml-2"></div>;
+  if (suggestedUsers?.length === 0) return <div className="md:w-[390px] w-0 ml-2"></div>;
 
   return (
-    <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[320px]">
+    <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[350px]">
       <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
         <p className="font-bold mb-4 text-xl">Who to follow</p>
-        {/* {suggestedUsers?.length === 0 && <div className="md:w-64 w-0 border"></div>} */}
         <div className="flex flex-col gap-4">
           {isLoading && (
             <>
@@ -32,15 +31,18 @@ const RightPanel = () => {
                 className="flex items-center justify-between gap-4"
                 key={user._id}
               >
-                <div className="flex gap-2 items-center">
+                <div className="flex gap-2 items-center flex-grow">
                   <div className="avatar">
                     <div className="w-8 rounded-full">
                       <img src={user.profileImg || "/avatar-placeholder.png"} />
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold tracking-tight truncate w-28 hover:underline flex items-center gap-1">
-                      {user.fullName} <img src="verified.png" className="size-[17px]" />
+                    <span className="font-bold tracking-tight truncate w-full hover:underline flex items-center gap-1">
+                      {user.fullName.length > 15
+                        ? user.fullName.slice(0, 15) + "..."
+                        : user.fullName}{" "}
+                      <img src="verified.png" className="size-[17px]" />
                     </span>
 
                     <span className="text-sm text-slate-500">@{user.username}</span>

@@ -9,7 +9,7 @@ import {
 
 const router = express.Router();
 
-router.get("/followed-users-for-messaging", protectRoute, getFollowedUsersForMessaging); // <--- NEW ROUTE
+router.get("/followed-users-for-messaging", protectRoute, getFollowedUsersForMessaging);
 router.get("/conversations", protectRoute, getConversations);
 router.get("/:otherUserId", protectRoute, getMessages);
 router.post("/", protectRoute, sendMessage);

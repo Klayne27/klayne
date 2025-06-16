@@ -73,6 +73,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
     conversations.flatMap((conv) => conv.participants.map((p) => p?._id.toString()))
   );
 
+
   // Filter out followed users who already have an existing conversation
   const newChatUsers = followedUsers.filter((followedUser) => {
     // Ensure we don't list ourselves
@@ -97,8 +98,8 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
   // Combine existing conversations with pseudo-conversations and sort
   // Sort by last message date (or creation date if new chat)
   const allConversations = [...conversations, ...pseudoConversations].sort((a, b) => {
-    const dateA = new Date(a.lastMessage?.createdAt || a.updatedAt);
-    const dateB = new Date(b.lastMessage?.createdAt || b.updatedAt);
+    const dateA = new Date(a.lastMessage?.updatedAt || a.createdAt);
+    const dateB = new Date(b.lastMessage?.updatedAt || b.createdAt);
     return dateB.getTime() - dateA.getTime(); // Newest first
   });
 
@@ -133,7 +134,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
       </div>
 
       {/* Conversations List */}
-      <div className="flex-1 overflow-y-auto custom-scrollbar">
+      <div className="flex-1 overflow-y-auto scrollbar-on-hover">
         {filteredConversations.length === 0 && (
           <div className="p-4 text-center text-gray-400">
             <p className="text-lg font-bold mb-2">Welcome to your inbox!</p>
@@ -148,7 +149,6 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
         )}
         {filteredConversations.map((conv) => {
           // Determine the 'other' user for display
-          console.log(conv);
           const otherUser = conv.participants.find(
             (p) => p?._id.toString() !== currentUser._id.toString()
           );
@@ -221,25 +221,25 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
               </div>
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between">
-                  <div className="flex gap-1">
-                    <span className="font-bold text-white text-xs">
+                  <div className="flex gap-1 items-center">
+                    <span className="font-bold text-white">
                       {otherUser.fullName}
                     </span>
                     <img src="verified.png" className="size-[17px]" />
-                    <span className="text-gray-400 text-xs">@{otherUser?.username}</span>
+                    <span className="text-gray-400 ">@{otherUser?.username}</span>
                     {conv.isNewChat ? (
                       ""
                     ) : (
-                      <span className="text-[10px] text-gray-400">●</span>
+                      <span className="text-[7px] text-gray-400">●</span>
                     )}
-                    <span className="text-xs text-gray-400">
+                    <span className=" text-gray-400">
                       {conv.isNewChat ? "" : formatPostDate(conv.updatedAt)}
                     </span>
                   </div>
                 </div>
                 <div className="flex items-center justify-between">
                   <p
-                    className={`text-xs ${
+                    className={`text-sm ${
                       isLastMessageUnread ? "text-white font-semibold" : "text-gray-400"
                     }`}
                   >

@@ -65,7 +65,7 @@ export const deletePost = async (req, res) => {
 
 export const commentOnPost = async (req, res) => {
   try {
-    const { text, createdAt } = req.body;
+    const { text } = req.body; 
     const postId = req.params.id;
     const userId = req.user._id;
 
@@ -79,12 +79,14 @@ export const commentOnPost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    const comment = { user: userId, text, createdAt};
+    const comment = { user: userId, text };
 
     post.comments.push(comment);
     await post.save();
 
-    res.status(200).json(post);
+    const newComment = post.comments[post.comments.length - 1];
+
+    res.status(200).json(newComment);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in commentOnPost controller: ", error);
@@ -105,7 +107,7 @@ export const likeUnlikePost = async (req, res) => {
     const userLikedPost = post.likes.includes(userId);
 
     if (userLikedPost) {
-      // Unlike post
+
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
 
@@ -210,5 +212,28 @@ export const getUserPosts = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getUserPosts controller: ", error);
+  }
+};
+
+export const getPost = async (req, res) => {
+  try {
+    const post = await Post.findById(req.params.id)
+      .populate({
+        path: "user",
+        select: "username profileImg fullName",
+      })
+      .populate({
+        path: "comments.user",
+        select: "username profileImg fullName",
+      });
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error("Error in getPost controller", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

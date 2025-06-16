@@ -10,10 +10,11 @@ import { Toaster } from "react-hot-toast";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import MessagesPage from "./pages/message/MessagePage";
+import PostPage from "./pages/post/PostPage";
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
-  const location = useLocation()
+  const location = useLocation();
 
   if (isLoading) {
     return (
@@ -23,10 +24,10 @@ function App() {
     );
   }
 
-  const isMessagePage = location.pathname === "/messages"
+  const isMessagePage = location.pathname === "/messages";
 
   return (
-    <div className="flex max-w-6xl mx-auto">
+    <div className="flex max-w-7xl mx-auto">
       {authUser && <Sidebar />}
       <Routes>
         <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
@@ -46,6 +47,10 @@ function App() {
         <Route
           path="/messages"
           element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/:username/post/:pid"
+          element={authUser ? <PostPage /> : <Navigate to="/login" />}
         />
       </Routes>
       {authUser && !isMessagePage && <RightPanel />}
