@@ -1,7 +1,8 @@
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
-import { FaTrash } from "react-icons/fa";
+import { FiTrash } from "react-icons/fi";
+
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
@@ -15,9 +16,9 @@ const Post = ({ post }) => {
   const [comment, setComment] = useState("");
 
   const { authUser } = useAuthUser();
-  const {deletePost, isDeleting} = useDeletePosts(post)
-  const {likePost, isLiking} = useLikePost(post)
-  const {commentPost, isCommenting} = useCommentPost(post, comment, setComment)
+  const { deletePost, isDeleting } = useDeletePosts(post);
+  const { likePost, isLiking } = useLikePost(post);
+  const { commentPost, isCommenting } = useCommentPost(post, comment, setComment);
 
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser?._id);
@@ -43,8 +44,8 @@ const Post = ({ post }) => {
 
   return (
     <>
-      <div className="flex gap-2 items-start p-4 border-b border-gray-700">
-        <div className="avatar">
+      <div className="flex gap-2 items-start py-3 px-4 border-b border-gray-700">
+        <div className="avatar mt-1">
           <Link
             to={`/profile/${postOwner.username}`}
             className="w-8 rounded-full overflow-hidden"
@@ -54,10 +55,13 @@ const Post = ({ post }) => {
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex gap-2 items-center">
-            <Link to={`/profile/${postOwner.username}`} className="font-bold">
-              {postOwner.fullName}
+            <Link
+              to={`/profile/${postOwner.username}`}
+              className="font-bold flex items-center gap-1"
+            >
+              {postOwner.fullName} <img src="verified.png" className="size-[17px]" />
             </Link>
-            <span className="text-gray-700 flex gap-1 text-sm">
+            <span className="text-gray-500 flex gap-1 text-sm">
               <Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>
               <span>·</span>
               <span>{formattedDate}</span>
@@ -65,7 +69,7 @@ const Post = ({ post }) => {
             {isMyPost && (
               <span className="flex justify-end flex-1">
                 {!isDeleting && (
-                  <FaTrash
+                  <FiTrash
                     className="cursor-pointer hover:text-red-500"
                     onClick={handleDeletePost}
                   />

@@ -186,7 +186,7 @@ const ProfilePage = () => {
                           href={user?.link}
                           target="_blank"
                           rel="noreferrer"
-                          className="text-sm text-blue-500 hover:underline"
+                          className="text-sm text-primary hover:underline"
                         >
                           {user?.link.slice(12)}
                         </a>
@@ -241,7 +241,12 @@ const ProfilePage = () => {
             </>
           )}
 
-          <Posts feedType={feedType} username={username} userId={user?._id} onPostsFetched={handlePostsFetched} />
+          <Posts
+            feedType={feedType}
+            username={username}
+            userId={user?._id}
+            onPostsFetched={handlePostsFetched}
+          />
         </div>
       </div>
 

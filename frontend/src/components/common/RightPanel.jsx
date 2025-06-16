@@ -12,7 +12,7 @@ const RightPanel = () => {
   if (suggestedUsers?.length === 0) return <div className="md:w-[275px] w-0 ml-2"></div>;
 
   return (
-    <div className="hidden lg:block  mx-2 h-[105vh]">
+    <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[320px]">
       <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
         <p className="font-bold mb-4 text-xl">Who to follow</p>
         {/* {suggestedUsers?.length === 0 && <div className="md:w-64 w-0 border"></div>} */}
@@ -39,9 +39,10 @@ const RightPanel = () => {
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-semibold tracking-tight truncate w-28 hover:underline">
-                      {user.fullName}
+                    <span className="font-bold tracking-tight truncate w-28 hover:underline flex items-center gap-1">
+                      {user.fullName} <img src="verified.png" className="size-[17px]" />
                     </span>
+
                     <span className="text-sm text-slate-500">@{user.username}</span>
                   </div>
                 </div>

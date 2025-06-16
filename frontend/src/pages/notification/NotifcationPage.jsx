@@ -17,8 +17,8 @@ const NotificationPage = () => {
   return (
     <>
       <div className="flex-[4_4_0]  border-r border-gray-700 min-h-screen">
-        <div className="flex justify-between items-center p-4 border-b border-gray-700">
-          <p className="font-bold">Notifications</p>
+        <div className="flex justify-between items-center p-4  border-b border-gray-700">
+          <p className="font-bold text-xl">Notifications</p>
           <div className="dropdown ">
             <div tabIndex={0} role="button" className="m-1">
               <IoSettingsOutline className="w-4" />
@@ -42,7 +42,7 @@ const NotificationPage = () => {
           <div className="text-center p-4 font-bold">No notifications 🤔</div>
         )}
         {notifications?.map((notification) => (
-          <div className="border-b border-gray-700 relative" key={notification._id}>
+          <div className="border-b border-gray-700 px-3 relative" key={notification._id}>
             {isDeleting ? (
               <div className="absolute right-4 top-4">
                 <LoadingSpinner size="xs" />

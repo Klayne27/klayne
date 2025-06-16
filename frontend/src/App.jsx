@@ -1,4 +1,4 @@
-import { Navigate, Route, Routes } from "react-router-dom";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import HomePage from "./pages/home/HomePage";
 import LoginPage from "./pages/auth/login/LoginPage";
 import SignupPage from "./pages/auth/signup/SignupPage";
@@ -9,9 +9,11 @@ import NotificationPage from "./pages/notification/NotifcationPage";
 import { Toaster } from "react-hot-toast";
 import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
+import MessagesPage from "./pages/message/MessagePage";
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
+  const location = useLocation()
 
   if (isLoading) {
     return (
@@ -20,6 +22,8 @@ function App() {
       </div>
     );
   }
+
+  const isMessagePage = location.pathname === "/messages"
 
   return (
     <div className="flex max-w-6xl mx-auto">
@@ -39,8 +43,12 @@ function App() {
           path="/profile/:username"
           element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
         />
+        <Route
+          path="/messages"
+          element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
+        />
       </Routes>
-      {authUser && <RightPanel />}
+      {authUser && !isMessagePage && <RightPanel />}
       <Toaster />
     </div>
   );
