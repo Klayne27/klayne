@@ -1,85 +1,36 @@
 import { useEffect, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa6";
 
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import Post from "../../components/common/Post";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
-
-const fetchPost = async (postId) => {
-  const res = await fetch(`/api/posts/${postId}`);
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to fetch post");
-  }
-  return res.json();
-};
-
-// New mutation function for adding comments
-const addCommentApi = async ({ postId, text }) => {
-  const res = await fetch(`/api/posts/comment/${postId}`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ text }),
-  });
-  if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to add comment");
-  }
-  return res.json(); // Backend should return the updated post or the new comment
-};
+import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
+import { useAddComment } from "../../hooks/postsHooks/useAddComment";
 
 const PostPage = () => {
-  const { pid } = useParams(); // 'pid' corresponds to ':pid' in your route
+  const { pid } = useParams();
   const navigate = useNavigate();
-  const queryClient = useQueryClient();
-  const { authUser } = useAuthUser(); // Get current logged-in user for comments
+  const { authUser } = useAuthUser();
 
-  const [commentText, setCommentText] = useState(""); // State for comment input
+  const [commentText, setCommentText] = useState("");
 
-  const {
-    data: post,
-    isLoading,
-    isError,
-    error,
-  } = useQuery({
-    queryKey: ["post", pid], // Query key includes post ID for unique caching
-    queryFn: () => fetchPost(pid),
-    enabled: !!pid, // Only fetch if pid is available
-  });
-
-  // Mutation for adding a comment
-  const addCommentMutation = useMutation({
-    mutationFn: addCommentApi,
-    onSuccess: (updatedPost) => {
-      // Backend should ideally return the updated post
-      toast.success("Comment added successfully!");
-      setCommentText(""); // Clear the input field
-      // Invalidate the 'post' query to refetch the updated post data
-      queryClient.invalidateQueries(["post", pid]);
-      // Also invalidate the 'posts' query if you have a feed that shows comment counts
-      queryClient.invalidateQueries(["posts"]);
-    },
-    onError: (err) => {
-      toast.error(err.message || "Failed to add comment.");
-    },
-  });
+  const { post, isLoading, isError, error } = useFetchPost(pid);
+  const { addComment, isAddingComment } = useAddComment(pid);
 
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    addCommentMutation.mutate({ postId: pid, text: commentText });
+    addComment({ postId: pid, text: commentText });
+    setCommentText("")
   };
 
   useEffect(() => {
     if (isError) {
       toast.error(error.message || "Could not load post.");
-      navigate("/"); // Redirect to home if post not found or error
+      navigate("/");
     }
   }, [isError, error, navigate]);
 
@@ -110,24 +61,21 @@ const PostPage = () => {
 
   return (
     <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-      {/* Header with back button and title */}
-      <div className="flex items-center gap-2 p-4 border-gray-700">
+      <div className="flex items-center gap-10 px-4 py-3.5 border-gray-700">
         <button
           onClick={() => navigate(-1)}
-          className="p-2 rounded-full hover:bg-gray-800 transition-colors"
+          className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
         >
-          <FaArrowLeft className="w-5 h-5 text-white" />
+          <FaArrowLeft className="w-4 h-4" />
         </button>
-        <h1 className="font-bold text-xl text-white">Post</h1>
+        <h1 className="font-bold text-xl">Post</h1>
       </div>
 
-      {/* Display the main post */}
       <div className="border-gray-700">
         <Post post={post} />
       </div>
 
-      {/* Comment Input Section */}
-      {authUser && ( // Only show comment input if user is logged in
+      {authUser && (
         <form
           onSubmit={handleAddComment}
           className="p-4 border-b border-gray-700 flex items-center gap-2"
@@ -146,28 +94,25 @@ const PostPage = () => {
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Post your reply"
             className="flex-1 px-1 py-6 rounded-full bg-black text-white placeholder-gray-400  focus:outline-none text-xl"
-            disabled={addCommentMutation.isPending}
+            disabled={isAddingComment}
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-primary text-white rounded-full hover:bg-blue-600 transition duration-300 disabled:bg-gray-600 disabled:text-black font-bold disabled:cursor-default"
-            disabled={addCommentMutation.isPending || !commentText.trim()}
+            className="px-4 py-2 bg-primary hover:bg-[#1d9cf0d8] text-white rounded-full hover:bg-blue-600 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+            disabled={isAddingComment || !commentText.trim()}
           >
             Reply
           </button>
         </form>
       )}
 
-      {/* Comments List */}
       <div className=" flex flex-col">
         {post.comments && post.comments.length > 0 ? (
           post.comments.map((comment) => (
-            <div key={comment._id} className="flex gap-3 text-white border-b border-gray-700 p-4">
-              {/*
-                IMPORTANT: For `comment.user.username` and `comment.user.profilePic` to work,
-                your backend MUST populate the 'user' field in the comments array.
-                See the "Backend Enhancement" section below.
-              */}
+            <div
+              key={comment._id}
+              className="flex gap-3 text-white border-b border-gray-700 p-4"
+            >
               <Link to={`/profile/${comment.user?.username || ""}`}>
                 <div className="avatar">
                   <div className="w-8 rounded-full">

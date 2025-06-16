@@ -10,16 +10,13 @@ import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
-import { useCommentPost } from "../../hooks/postsHooks/useCommentPosts";
 
 const Post = ({ post }) => {
-  const [comment, setComment] = useState("");
   const navigate = useNavigate();
 
   const { authUser } = useAuthUser();
   const { deletePost, isDeleting } = useDeletePosts(post);
   const { likePost, isLiking } = useLikePost(post);
-  const { commentPost, isCommenting } = useCommentPost(post, comment, setComment);
 
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser?._id);
@@ -83,13 +80,15 @@ const Post = ({ post }) => {
             <span>{formattedDate}</span>
           </span>
           {isMyPost && (
-            <span className="flex justify-end flex-1">
+            <span className="flex justify-end flex-1 ">
               {!isDeleting && (
-                <FiTrash
-                  className="cursor-pointer hover:text-red-500"
-                  onClick={handleDeletePostClick}
-                  size={20}
-                />
+                <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
+                  <FiTrash
+                    className="cursor-pointer "
+                    onClick={handleDeletePostClick}
+                    size={20}
+                  />
+                </div>
               )}
               {isDeleting && <LoadingSpinner size="sm" />}
             </span>
@@ -112,35 +111,39 @@ const Post = ({ post }) => {
               className="flex items-center cursor-pointer group"
               onClick={navigateToPostPage}
             >
-              <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15">
+              <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
                 <FaRegComment
-                  className="w-4 h-4 text-slate-500 group-hover:text-sky-400"
+                  className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
                   strokeWidth={10}
                 />
               </div>
-              <span className="text-sm text-slate-500 group-hover:text-sky-400">
+              <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
                 {post.comments.length}
               </span>
             </div>
             <div
-              className="flex items-center group cursor-pointer"
+              className="flex items-center group cursor-pointer "
               onClick={handleInteractiveClick}
             >
-              <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1">
-                <BiRepost className="w-6 h-6 text-slate-500 group-hover:text-green-500 " />
+              <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
+                <BiRepost className="w-6 h-6 text-slate-500 group-hover:text-green-500  duration-200 transition" />
               </div>
-              <span className="text-sm text-slate-500 group-hover:text-green-500">0</span>
+              <span className="text-sm text-slate-500 group-hover:text-green-500 duration-200 transition">
+                0
+              </span>
             </div>
 
             <div
               className="flex items-center group cursor-pointer rounded-full"
               onClick={handleLikePostClick}
             >
-              <div className="group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2">
+              <div className="group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition">
                 {!isLiked && (
-                  <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600" />
+                  <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
                 )}
-                {isLiked && <FaHeart className="w-4 h-4 cursor-pointer text-pink-600 " />}
+                {isLiked && (
+                  <FaHeart className="w-4 h-4 cursor-pointer text-pink-600  duration-200 transition" />
+                )}
               </div>
               <span
                 className={`text-sm group-hover:text-pink-600 ${

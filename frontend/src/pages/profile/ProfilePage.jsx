@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
 
 import Posts from "../../components/common/Posts";
@@ -21,6 +21,7 @@ const ProfilePage = () => {
   const [profileImg, setProfileImg] = useState(null);
   const [feedType, setFeedType] = useState("posts");
   const [modalType, setModalType] = useState(null);
+  const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
 
@@ -83,9 +84,12 @@ const ProfilePage = () => {
           {!isLoading && !isRefetching && user && (
             <>
               <div className="flex gap-10 px-4 py-2 items-center">
-                <Link to="/">
+                <button
+                  onClick={() => navigate(-1)}
+                  className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
+                >
                   <FaArrowLeft className="w-4 h-4" />
-                </Link>
+                </button>
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
                   <span className="text-sm text-slate-500">

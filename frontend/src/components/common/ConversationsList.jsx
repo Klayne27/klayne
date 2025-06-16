@@ -1,13 +1,10 @@
-// src/components/messages/ConversationsList.jsx
-
-import React, { useState } from "react";
+import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { Link } from "react-router-dom";
 import { formatPostDate } from "../../utils/date/index";
-import { LuMailPlus } from "react-icons/lu";
 
 // --- API Functions ---
 const fetchConversations = async () => {
@@ -73,7 +70,6 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
     conversations.flatMap((conv) => conv.participants.map((p) => p?._id.toString()))
   );
 
-
   // Filter out followed users who already have an existing conversation
   const newChatUsers = followedUsers.filter((followedUser) => {
     // Ensure we don't list ourselves
@@ -109,6 +105,8 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
       .includes(searchTerm.toLowerCase());
   });
 
+  console.log(filteredConversations);
+
   return (
     <div className="flex flex-col h-full bg-black border-gray-700">
       {/* Header with "Messages" title and icons */}
@@ -127,7 +125,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
         <input
           type="text"
           placeholder="Search Direct Messages"
-          className="text-sm w-full p-2 px-3 rounded-full bg-black text-white placeholder-white border-gray-600 border focus:border-blue-500 focus:outline-none pl-8"
+          className="text-sm w-full p-2 px-3 rounded-full bg-black text-white placeholder-white border-gray-600 border focus:border-primary focus:outline-none pl-8"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -185,11 +183,10 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
           return (
             <div
               key={conv._id} // Use conv._id (real or pseudo) as key
-              className={`flex items-center gap-1 p-3 cursor-pointer border-b border-gray-800 hover:bg-gray-900
+              className={`flex items-center gap-1 p-3 cursor-pointer  border-gray-700 hover:bg-stone-900 hover:bg-opacity-70 duration-300 transition
                           ${
-                            isSelected
-                              ? "bg-gray-900 border-r-2 border-r-primary"
-                              : "hover:bg-gray-900"
+                            isSelected &&
+                            "bg-stone-900 border-r-2 border-r-primary"
                           }
                           transition-colors duration-200`}
               // Pass the full conversation object (or pseudo-object) to the parent
@@ -222,9 +219,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
               <div className="flex flex-col flex-1">
                 <div className="flex items-center justify-between">
                   <div className="flex gap-1 items-center">
-                    <span className="font-bold text-white">
-                      {otherUser.fullName}
-                    </span>
+                    <span className="font-bold text-white">{otherUser.fullName}</span>
                     <img src="verified.png" className="size-[17px]" />
                     <span className="text-gray-400 ">@{otherUser?.username}</span>
                     {conv.isNewChat ? (

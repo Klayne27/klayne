@@ -43,17 +43,26 @@ export const likePostApi = async (post) => {
   return data;
 };
 
-export const commentPostApi = async (post, comment) => {
-  const res = await fetch(`/api/posts/comment/${post._id}`, {
+export const addCommentApi = async ({ postId, text }) => {
+  const res = await fetch(`/api/posts/comment/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text: comment }),
+    body: JSON.stringify({ text }),
   });
-  const data = await res.json();
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to add comment");
+  }
+  return res.json();
+};
 
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-  return data;
+export const fetchPostApi = async (postId) => {
+  const res = await fetch(`/api/posts/${postId}`);
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to fetch post");
+  }
+  return res.json();
 };

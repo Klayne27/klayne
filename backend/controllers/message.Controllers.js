@@ -133,34 +133,46 @@ export const getConversations = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const conversations = await Conversation.find({ participants: userId }).populate({
-      path: "participants",
-      select: "username profilePic fullName",
-    });
+    const conversations = await Conversation.find({ participants: userId })
+      .populate({
+        path: "participants",
+        select: "username profilePic fullName",
+      })
+      .sort({ updatedAt: -1 });
 
-    const processedConversations = conversations.map((conversation) => {
-      const otherParticipant = conversation.participants.find(
-        (participant) => participant._id.toString() !== userId.toString()
-      );
+    const processedConversations = conversations
+      .map((conversation) => {
+        const otherParticipant = conversation.participants.find(
+          (participant) => participant && participant._id.toString() !== userId.toString()
+        );
 
-      let lastMessage = null;
-      if (conversation.lastMessage && conversation.lastMessage.sender) {
-        lastMessage = {
-          ...conversation.lastMessage.toObject(),
-          sender: conversation.lastMessage.sender,
+        if (!otherParticipant) {
+          console.warn(
+            `Conversation ${conversation._id} has no other participant for user ${userId}`
+          );
+          return null;
+        }
+
+        const lastMessageData = conversation.lastMessage
+          ? {
+              text: conversation.lastMessage.text,
+              sender: conversation.lastMessage.sender,
+              seen: conversation.lastMessage.seen,
+              createdAt: conversation.lastMessage.createdAt,
+              img: conversation.lastMessage.img,
+              updatedAt: conversation.updatedAt,
+            }
+          : null;
+
+        return {
+          _id: conversation._id,
+          participants: [otherParticipant],
+          lastMessage: lastMessageData,
+          createdAt: conversation.createdAt,
+          updatedAt: conversation.updatedAt,
         };
-      }
-
-      return {
-        _id: conversation._id,
-        participants: [otherParticipant],
-        lastMessage: {
-          ...conversation.lastMessage?.toObject(),
-        },
-        createdAt: conversation.createdAt,
-        updatedAt: conversation.updatedAt,
-      };
-    });
+      })
+      .filter(Boolean);
 
     res.status(200).json(processedConversations);
   } catch (error) {

@@ -50,7 +50,7 @@ const NotificationPage = () => {
               </div>
             ) : (
               <button
-                className=" absolute right-5 top-5"
+                className=" absolute right-5 top-5 hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2"
                 onClick={() => deleteNotification(notification._id)}
               >
                 <FiTrash className="cursor-pointer hover:text-red-500" size={20} />

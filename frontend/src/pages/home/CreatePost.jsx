@@ -55,11 +55,12 @@ const CreatePost = () => {
 
   const isButtonDisabled = (text.trim() === "" && !img) || isPending;
 
-  const buttonClasses = `rounded-full btn-sm px-4 text-md ${
+  const buttonClasses = `rounded-full btn-sm px-4 py-2 text-lg transition duration-300 ${
     isButtonDisabled
       ? "bg-gray-400 font-bold text-black text-sm flex items-center cursor-default"
       : "btn btn-primary btn-sm text-white"
   }`;
+
 
   useEffect(() => {
     const handleResize = () => {
@@ -100,15 +101,15 @@ const CreatePost = () => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="flex p-4 items-start gap-4 border-b border-gray-700">
+    <div className="flex p-4 items-start gap-3 border-b border-gray-700">
       <div className="avatar">
         <div className="w-8 rounded-full">
           <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
         </div>
       </div>
-      <form className="flex flex-col gap-2 w-full" onSubmit={handleSubmit}>
-        <textarea
-          className="textarea w-full p-0 text-lg resize-none border-none focus:outline-none border-gray-800"
+      <form className="flex flex-col w-full" onSubmit={handleSubmit}>
+        <input
+          className="textarea w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
           placeholder="What is happening?"
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -159,7 +160,13 @@ const CreatePost = () => {
             ref={imgRef}
             onChange={handleImgChange}
           />
-          <button className={buttonClasses}>{isPending ? "Posting..." : "Post"}</button>
+          <button
+            type="submit"
+            className="px-4 py-2 bg-primary text-white rounded-full hover:bg-[#1d9cf0d8] transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+            disabled={isButtonDisabled}
+          >
+            {isPending ? "Posting..." : "Post"}
+          </button>
         </div>
         {isError && <div className="text-red-500">{error.message}</div>}
       </form>

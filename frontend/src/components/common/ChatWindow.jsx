@@ -71,57 +71,13 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
 
   const sendMessageMutation = useMutation({
     mutationFn: sendMessageApi,
-    onMutate: async (newMessageData) => {
-      // Optimistic update logic
-      // For new chats, we don't have a conversationId yet, so we can't update that specific cache.
-      // The socket.on("newMessage") will handle adding the *actual* message after the DB save.
-      // For now, if it's a new chat (conversationId is null), we can skip optimistic update to the *messages* list.
-      // We still clear inputs and show a pending state.
-      if (conversationId) {
-        // Only perform optimistic update if it's an existing conversation
-        await queryClient.cancelQueries(["messages", conversationId]);
-        const previousMessages = queryClient.getQueryData(["messages", conversationId]);
+    onSuccess: async () => {
+      queryClient.invalidateQueries(["messages"]);
+      await queryClient.invalidateQueries(["conversations"]);
 
-        const tempMessage = {
-          _id: `temp-${Date.now()}`,
-          conversationId: conversationId, // This might still be null for new chats
-          sender: {
-            _id: currentUser._id,
-            username: currentUser.username,
-            profilePic: currentUser.profilePic,
-          },
-          text: newMessageData.message,
-          img: newMessageData.img,
-          seen: false,
-          createdAt: new Date().toISOString(),
-          isOptimistic: true,
-        };
-        queryClient.setQueryData(["messages", conversationId], (old) =>
-          old ? [...old, tempMessage] : [tempMessage]
-        );
-        return { previousMessages };
-      }
-      return {}; // No rollback context if not optimistically updating messages
     },
-    onError: (err, newMessageData, context) => {
-      console.error("Error sending message:", err);
-      toast.error(err.message || "Failed to send message.");
-      if (context.previousMessages) {
-        // Only rollback if optimistic update occurred
-        queryClient.setQueryData(["messages", conversationId], context.previousMessages);
-      }
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries(["conversations"]);
-
-      // If a new conversation was created, and we sent the first message,
-      // the `newMessage` socket event will usually update the UI and the `conversationId`
-      // will be propagated, allowing the `messages` query to fetch.
-      // --- FOCUS THE INPUT HERE AFTER EVERYTHING IS SETTLED ---
-      // Also clear the file input's visual state (important for image sending)
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
-      }
+    onError: (error) => {
+      toast.error(error.message || "Failed to send message.");
     },
   });
 
