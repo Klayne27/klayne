@@ -24,7 +24,7 @@ const PostPage = () => {
     e.preventDefault();
     if (!commentText.trim()) return;
     addComment({ postId: pid, text: commentText });
-    setCommentText("")
+    setCommentText("");
   };
 
   useEffect(() => {
@@ -36,8 +36,8 @@ const PostPage = () => {
 
   if (isLoading) {
     return (
-      <div className="flex justify-center items-center h-screen">
-        <LoadingSpinner size="lg" />
+      <div className="flex-[4_4_0] flex justify-center items-center h-screen ">
+        <LoadingSpinner className="w-20 h-20" />
       </div>
     );
   }
@@ -128,7 +128,9 @@ const PostPage = () => {
                   >
                     {comment.user?.fullName}
                   </Link>
-                  {comment.user.isVerified && <img src="/verified.png" className="size-[17px]" />}
+                  {comment.user.isVerified && (
+                    <img src="/verified.png" className="size-[17px]" />
+                  )}
                   <Link
                     to={`/profile/${comment.user?.username || ""}`}
                     className="text-gray-500 text-sm"

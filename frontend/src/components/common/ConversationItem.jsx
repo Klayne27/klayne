@@ -18,7 +18,6 @@ function ConversationItem({
     return null;
   }
 
-  // Derived state/flags
   const isOnline = onlineUsers.includes(otherUser._id);
   const isSelected =
     selectedConversation &&

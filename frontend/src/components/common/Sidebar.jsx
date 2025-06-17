@@ -28,7 +28,7 @@ const Sidebar = () => {
                 pathname === "/" ? "font-bold text-white" : ""
               } flex gap-2.5 items-center hover:bg-stone-900 transition-all rounded-full py-2 pl-2 pr-4 max-w-fit cursor-pointer`}
             >
-              <PiHouseThin className="w-7 h-7 fill-white" strokeWidth={12} />
+              <PiHouseThin className="w-7 h-7 fill-white" strokeWidth={pathname === "/" ? 18 : 12} />
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
@@ -39,7 +39,7 @@ const Sidebar = () => {
                 pathname.startsWith("/messages") ? "font-bold text-white" : ""
               } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 pl-2.5 pr-4 max-w-fit cursor-pointer`}
             >
-              <CiMail className="w-6 h-6" strokeWidth={1} />
+              <CiMail className="w-6 h-6" strokeWidth={pathname.startsWith("/messages") ? 2 : 1} />
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
@@ -50,7 +50,7 @@ const Sidebar = () => {
                 pathname === "/notifications" ? "font-bold text-white" : ""
               } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 pl-2.5 pr-4 max-w-fit cursor-pointer`}
             >
-              <PiBellThin className="w-6 h-6" strokeWidth={15} />
+              <PiBellThin className="w-6 h-6" strokeWidth={pathname === '/notifications' ? 25 : 15} />
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
           </li>
@@ -62,7 +62,7 @@ const Sidebar = () => {
                 pathname === `/profile/${authUser?.username}` ? "font-bold text-white" : ""
               } flex gap-[10px] items-center hover:bg-stone-900 transition-all rounded-full py-2 pl-2 pr-4 max-w-fit cursor-pointer`}
             >
-              <CiUser className="w-7 h-7" strokeWidth={1} />
+              <CiUser className="w-7 h-7" strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1} />
               <span className="text-lg hidden md:block">Profile</span>
             </Link>
           </li>
