@@ -377,7 +377,7 @@ const ChatWindow = ({
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       <div className="sticky top-0 bg-black w-full z-20 p-4 shadow-lg flex items-center">
         {onBackToConversations && (
-          <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
+          <button onClick={() => navigate(-1)} className="md:hidden mr-2 text-white">
             <BiArrowBack className="w-6 h-6" />
           </button>
         )}

@@ -168,7 +168,7 @@ const ProfilePage = () => {
                 {!isMyProfile && amIFollowing && (
                   <button
                     onClick={handleMessageClick}
-                    className=" p-2 border rounded-full hover:bg-gray-800 transition duration-200"
+                    className=" p-2 border rounded-full hover:bg-gray-800 transition duration-200 z-20 bg-black"
                   >
                     <CiMail size={20} strokeWidth={1} />
                   </button>
