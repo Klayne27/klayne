@@ -7,11 +7,13 @@ import Conversation from "../models/conversation.model.js";
 const app = express();
 const server = http.createServer(app);
 
+const allowedOrigin = process.env.CLIENT_URL || "http://localhost:3000"; // Use your default local FE port
+
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:3000", "http://localhost:5173"],
+    origin: allowedOrigin,
     methods: ["GET", "POST"],
-    credentials: true, 
+    credentials: true,
   },
 });
 
