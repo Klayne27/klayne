@@ -183,9 +183,9 @@ const MessagePage = () => {
     navigate("/messages"); // Go to base messages URL
   };
 
-  if (isLoadingConversations || isLoadingFollowedUsers) {
+  if (!isLoadingConversations || isLoadingFollowedUsers) {
     return (
-      <div className="flex min-h-screen bg-black text-white items-center justify-center">
+      <div className="flex min-h-screen bg-black text-white items-center justify-center absolute w-full">
         <LoadingSpinner size="lg" />
       </div>
     );

@@ -440,13 +440,13 @@ const ChatWindow = ({
 
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
-        {isLoading &&
-          !isNewChat &&
-          !isTemporaryChat && ( // Only show loading if it's an existing chat and loading
+        {/* {!isLoading &&
+          isNewChat &&
+          isTemporaryChat && ( // Only show loading if it's an existing chat and loading
             <div className="flex justify-center items-center h-full">
               <LoadingSpinner size="lg" />
             </div>
-          )}
+          )} */}
         {error &&
           !isNewChat && ( // Only show error if it's an existing chat and error
             <div className="flex justify-center items-center h-full text-red-500">
@@ -458,7 +458,6 @@ const ChatWindow = ({
           messagesToRender.length > 0 &&
           messagesToRender.map((msg) => {
             const isSentByCurrentUser = msg.sender._id === currentUser._id;
-            const isOptimistic = msg.isOptimistic; // You can still use this for conditional styling/indicators
 
             return (
               <div key={msg._id}>
