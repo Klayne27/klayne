@@ -18,14 +18,16 @@ const FollowListModal = ({ userId, type, onClose }) => {
       id={`follow_list_modal_${type}`}
       className="modal modal-bottom sm:modal-middle"
       onMouseDown={(e) => {
-
         if (e.target.id === `follow_list_modal_${type}`) {
           onClose();
         }
       }}
     >
-      <div className="modal-box rounded-lg border border-gray-700">
-        <h3 className="font-bold text-lg mb-4">{modalTitle}</h3>
+      <div className="w-[500px] bg-black rounded-2xl border border-gray-700 relative">
+        <h3 className="font-bold text-lg border-b border-gray-700 px-4 py-2 text-center mb-5">
+          {modalTitle}
+        </h3>
+
         {isLoading && (
           <div className="flex justify-center items-center h-48">
             <LoadingSpinner size="lg" />

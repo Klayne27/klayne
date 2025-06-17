@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react"; // Import useRef
+import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import ConversationsList from "../../components/common/ConversationsList";
 import ChatWindow from "../../components/common/ChatWindow";
@@ -13,6 +13,8 @@ const MessagePage = () => {
   const { conversationId: urlConversationId } = useParams();
   const navigate = useNavigate();
 
+  // targetUserId is still needed for initiating a NEW chat from a profile
+  // It's the key to knowing who the "other user" is for a brand new conversation.
   const { targetUserId } = location.state || {};
 
   const {
@@ -20,164 +22,150 @@ const MessagePage = () => {
     isLoadingConversations,
     errorConversations,
     refetchConversations,
-  } = useFetchConversations(); // Get refetchConversations
+  } = useFetchConversations();
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
 
   const [selectedConversation, setSelectedConversation] = useState(null);
-  const initialLoadHandled = useRef(false); // To prevent multiple initial navigations
+  const initialLoadAttempted = useRef(false); // Tracks if the initial selection logic has run once
 
-  useEffect(() => {
-    if (isLoadingConversations || isLoadingFollowedUsers || !currentUser) {
-      return;
-    }
-
-    let desiredConversation = null;
-
-    // --- Priority 1: Handle conversationId from URL params ---
-    if (urlConversationId) {
-      desiredConversation = conversations.find((conv) => conv._id === urlConversationId);
-
-      if (!desiredConversation) {
-        // SCENARIO: URL has a real ID, but conversations hasn't loaded it yet (e.g., first message sent)
-        // OR: It's an invalid ID (but that's less likely if it just came from a successful send)
-        console.warn(
-          "MessagesPage: Conversation ID from URL not found in current conversations list. Attempting to create placeholder if user found:",
-          urlConversationId
-        );
-
-        // Try to find the recipient user based on the conversation participants if possible.
-        // This is a bit of a guess, but better than nothing for a temporary display.
-        // The real conversation from `useFetchConversations` will eventually override this.
-        const allUsersInConversations = conversations.flatMap((conv) =>
-          conv.participants.filter(
-            (p) => p?._id.toString() !== currentUser._id.toString()
-          )
-        );
-        const uniqueOtherUsers = Array.from(
-          new Map(allUsersInConversations.map((user) => [user?._id, user])).values()
-        ).filter(Boolean);
-
-        // Try to find a user among followedUsers or existing conversations' participants
-        // This part is heuristic and might need fine-tuning if your user base is very complex.
-        const potentialOtherUser =
-          uniqueOtherUsers.find(
-            (user) => user && urlConversationId.includes(user._id.toString()) // Simplistic check if ID contains other user's ID
-          ) ||
-          followedUsers.find(
-            (user) => user && urlConversationId.includes(user._id.toString())
-          );
-
-        if (potentialOtherUser) {
-          // Create a temporary pseudo-conversation object to display in ChatWindow
-          desiredConversation = {
-            _id: urlConversationId, // Use the real ID, but mark it as temporarily missing
-            participants: [
-              potentialOtherUser,
-              {
-                _id: currentUser._id,
-                username: currentUser.username,
-                fullName: currentUser.fullName,
-                profileImg: currentUser.profileImg,
-              },
-            ],
-            lastMessage: { text: "Loading messages...", seen: true, img: "" },
-            isTemporary: true, // Custom flag to indicate it's a temporary placeholder
-            updatedAt: new Date(),
-          };
-        } else {
-          // If we can't even guess the other user, then it might genuinely be an invalid ID.
-          // In this case, redirect to base messages.
-          console.warn(
-            "MessagesPage: Could not find potential other user for URL conversation ID. Redirecting."
-          );
-          if (!initialLoadHandled.current) {
-            // Prevent multiple redirects on first load
-            navigate("/messages", { replace: true });
-            initialLoadHandled.current = true;
-          }
-          return;
-        }
-      }
-    }
-
-    // --- Priority 2: Handle "new chat" request from profile via location.state.targetUserId ---
-    if (!desiredConversation && targetUserId) {
-      const existingConv = conversations.find((conv) =>
-        conv.participants.some((p) => p?._id.toString() === targetUserId)
-      );
-
-      if (existingConv) {
-        navigate(`/messages/${existingConv._id}`, { replace: true });
+  useEffect(
+    () => {
+      // Only run if all necessary data is loaded and currentUser is available
+      if (isLoadingConversations || isLoadingFollowedUsers || !currentUser) {
         return;
-      } else {
-        const targetUser = followedUsers.find(
-          (user) => user._id.toString() === targetUserId
-        );
-        if (targetUser) {
-          desiredConversation = {
-            _id: `new-${targetUser._id}`,
-            participants: [
-              targetUser,
-              {
-                _id: currentUser._id,
-                username: currentUser.username,
-                fullName: currentUser.fullName,
-                profileImg: currentUser.profileImg,
-              },
-            ],
-            isNewChat: true,
-            lastMessage: { text: "Start a new message", seen: true, img: "" },
-            updatedAt: new Date(),
-          };
-        } else {
-          console.warn("MessagesPage: Target user for new chat not found:", targetUserId);
-        }
       }
-    }
 
-    // --- Priority 3: Default to the first conversation ---
-    if (!desiredConversation && conversations.length > 0) {
-      desiredConversation = conversations[0];
+      // This ref ensures the initial selection logic runs only once after data is loaded,
+      // or when URL/state dependencies truly change, preventing excessive re-runs and navigations.
       if (
+        initialLoadAttempted.current &&
         !urlConversationId &&
         !targetUserId &&
-        desiredConversation &&
-        !desiredConversation.isNewChat
+        selectedConversation
       ) {
-        navigate(`/messages/${desiredConversation._id}`, { replace: true });
+        // If we've already handled initial load and there's no specific URL/target,
+        // and a conversation is already selected, don't re-run the whole logic.
+        return;
       }
-    }
 
-    setSelectedConversation(desiredConversation);
+      let desiredConversation = null;
 
-    // After initial processing, mark as handled
-    if (!initialLoadHandled.current) {
-      initialLoadHandled.current = true;
-    }
+      // --- Priority 1: Handle "new chat" request via location.state.targetUserId ---
+      // This must come first as it explicitly defines a new conversation's recipient.
+      if (targetUserId) {
+        const existingConv = conversations.find((conv) =>
+          conv.participants.some((p) => p?._id.toString() === targetUserId)
+        );
 
-    // Clear the location state after processing
-    if (location.state?.targetUserId) {
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-  }, [
-    urlConversationId,
-    targetUserId,
-    conversations, // This dependency is key for re-running when conversations update
-    followedUsers,
-    isLoadingConversations,
-    isLoadingFollowedUsers,
-    currentUser,
-    navigate,
-    location.state,
-  ]);
+        if (existingConv) {
+          // If targetUserId corresponds to an *existing* conversation, redirect to its specific URL
+          navigate(`/messages/${existingConv._id}`, { replace: true });
+          return; // Exit effect as we're navigating
+        } else {
+          // If it's truly a new chat, create a pseudo-conversation object
+          const targetUser = followedUsers.find(
+            (user) => user._id.toString() === targetUserId
+          );
+          if (targetUser) {
+            desiredConversation = {
+              _id: `new-${targetUser._id}`, // Pseudo ID for a truly new chat
+              participants: [
+                targetUser,
+                {
+                  _id: currentUser._id,
+                  username: currentUser.username,
+                  fullName: currentUser.fullName,
+                  profileImg: currentUser.profileImg,
+                },
+              ],
+              isNewChat: true,
+              lastMessage: { text: "Start a new message", seen: true, img: "" },
+              updatedAt: new Date(),
+            };
+          } else {
+            console.warn(
+              "MessagesPage: Target user for new chat not found:",
+              targetUserId
+            );
+          }
+        }
+      }
+
+      // --- Priority 2: Use conversationId from URL params (for existing or just-created chats) ---
+      // This runs if no specific new chat target was identified, or if a new chat target was found
+      // but the URL already points to a conversation ID.
+      if (urlConversationId) {
+        desiredConversation = conversations.find(
+          (conv) => conv._id === urlConversationId
+        );
+
+        if (!desiredConversation) {
+          // SCENARIO: URL has a real ID (e.g., after first message), but conversations hasn't updated yet.
+          // Or it's an invalid ID.
+          console.warn(
+            "MessagesPage: Conversation ID from URL not found in current conversations list. Waiting for refetch or handling as invalid."
+          );
+          // We DO NOT try to build a placeholder here with a "guessed" other user from URL_ID.
+          // That was the source of the "Could not find potential other user" warning.
+          // Instead, we just wait for `conversations` to update, which will trigger this effect again.
+          // If after a short delay it's still not found (meaning it's genuinely invalid or unauthorized),
+          // the `initialLoadAttempted` ref combined with the lack of selection might trigger the redirect later.
+
+          // To avoid showing an empty chat window briefly for a new conversation that's about to load,
+          // we can try to find the other user from the `targetUserId` if it was just cleared from location.state.
+          // This is a subtle point, but if the flow is:
+          // Profile -> MessagesPage (targetUserId pseudo) -> ChatWindow Send (new conv ID) -> navigate('/messages/:newConvId')
+          // Then `targetUserId` will be cleared from location.state, but we *still* know the other user.
+          // However, relying on `conversations` to refetch is usually sufficient.
+        }
+      }
+
+      // --- Priority 3: Default to the first conversation if nothing specific is selected ---
+      if (!desiredConversation && conversations.length > 0) {
+        desiredConversation = conversations[0];
+        // If we default, update the URL to reflect the selected conversation
+        if (
+          !urlConversationId &&
+          !targetUserId &&
+          desiredConversation &&
+          !desiredConversation.isNewChat
+        ) {
+          navigate(`/messages/${desiredConversation._id}`, { replace: true });
+        }
+      }
+
+      setSelectedConversation(desiredConversation);
+      initialLoadAttempted.current = true; // Mark initial load logic as attempted
+
+      // Clear the location state after processing to prevent re-triggering new chat logic
+      // on subsequent renders or if user navigates back and forth within messages.
+      if (location.state?.targetUserId) {
+        window.history.replaceState({}, document.title, window.location.pathname);
+      }
+    },
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [
+      urlConversationId, // Reacts to changes in URL param
+      targetUserId, // Reacts to changes in navigation state (crucial for new chat)
+      conversations, // Reacts when conversations data updates (e.g., after refetch)
+      followedUsers,
+      isLoadingConversations,
+      isLoadingFollowedUsers,
+      currentUser,
+      navigate,
+      location.state, // To track changes to location.state itself
+    ]
+  );
 
   // Handler for when a conversation is selected from the list
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
     if (conversation && !conversation.isNewChat) {
-      navigate(`/messages/${conversation._id}`);
+      navigate(`/messages/${conversation._id}`); // Navigate to specific URL for existing
     } else if (conversation?.isNewChat) {
+      // For new chats initiated from the ConversationsList (e.g., from "New Message" button),
+      // we navigate to the base with state.
       navigate("/messages", {
         state: {
           targetUserId: conversation.participants.find((p) => p?._id !== currentUser._id)
@@ -185,13 +173,14 @@ const MessagePage = () => {
         },
       });
     } else {
-      navigate("/messages");
+      navigate("/messages"); // Fallback to general inbox
     }
   };
 
+  // Handler for back button on mobile view
   const handleBackToConversations = () => {
     setSelectedConversation(null);
-    navigate("/messages");
+    navigate("/messages"); // Go to base messages URL
   };
 
   if (isLoadingConversations || isLoadingFollowedUsers) {
@@ -232,6 +221,18 @@ const MessagePage = () => {
         <ChatWindow
           selectedConversation={selectedConversation}
           onBackToConversations={handleBackToConversations}
+          // The onNewConversationCreated prop will be called by ChatWindow after the first message is sent
+          // and the conversation ID is received from the backend.
+          onNewConversationCreated={(newConversationId) => {
+            // Once ChatWindow confirms the conversation is created, we can tell queryClient
+            // to re-fetch the conversations list. This is key!
+            refetchConversations();
+            // Then, navigate to the correct URL to reflect the new conversation.
+            // This might re-trigger the useEffect, but this time 'conversations' should have the new ID.
+            if (urlConversationId !== newConversationId) {
+              navigate(`/messages/${newConversationId}`, { replace: true });
+            }
+          }}
         />
       </div>
     </div>

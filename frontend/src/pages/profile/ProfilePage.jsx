@@ -168,14 +168,18 @@ const ProfilePage = () => {
                 {!isMyProfile && amIFollowing && (
                   <button
                     onClick={handleMessageClick}
-                    className=" p-2 border rounded-full hover:bg-gray-800 transition-opacity"
+                    className=" p-2 border rounded-full hover:bg-gray-800 transition duration-200"
                   >
                     <CiMail size={20} strokeWidth={1} />
                   </button>
                 )}
                 {!isMyProfile && (
                   <button
-                    className="border px-4 rounded-full py-1.5"
+                    className={`${
+                      !amIFollowing
+                        ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
+                        : "hover:bg-gray-800"
+                    } font-bold border px-4 rounded-full py-1.5  transition duration-200`}
                     onClick={() => follow(user?._id)}
                   >
                     {isPending && "Loading..."}

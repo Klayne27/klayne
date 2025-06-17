@@ -56,7 +56,7 @@ function ConversationItem({
     <div
       key={conv._id}
       className={`flex items-center gap-1 p-3 cursor-pointer border-gray-700 hover:bg-stone-900 hover:bg-opacity-70 duration-300 transition
-        ${isSelected ? "bg-gray-800 bg-opacity-80 border-r-2 border-r-primary" : ""}
+        ${isSelected ? "bg-[#2F3336] bg-opacity-80 border-r-2 border-r-primary" : ""}
         transition-colors duration-200`}
       onClick={() => onSelectConversation(conversationToSelect)}
     >
@@ -69,14 +69,16 @@ function ConversationItem({
           />
         </Link>
         {isOnline && (
-          <span className="absolute bottom-0 right-0 w-3 h-3 bg-green-500 rounded-full border-2 border-black"></span>
+          <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2F3336]"></span>
         )}
       </div>
       <div className="flex flex-col flex-1">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 items-center">
             <span className="font-bold text-white">{otherUser.fullName}</span>
-            {conv.participants[0].isVerified && <img src="/verified.png" className="size-[17px]" alt="Verified badge" />}
+            {conv.participants[0].isVerified && (
+              <img src="/verified.png" className="size-[17px]" alt="Verified badge" />
+            )}
             <span className="text-gray-400 ">@{otherUser?.username}</span>
             {!conv.isNewChat && (
               <>
