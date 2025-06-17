@@ -62,7 +62,7 @@ function ConversationItem({
       <div className="relative p-1">
         <Link to={`/profile/${otherUser.username}`} onClick={(e) => e.stopPropagation()}>
           <img
-            src={otherUser?.profilePic || "/avatar-placeholder.png"}
+            src={otherUser?.profileImg || "/avatar-placeholder.png"}
             alt={otherUser.username}
             className="w-8 h-8 rounded-full object-cover"
           />
