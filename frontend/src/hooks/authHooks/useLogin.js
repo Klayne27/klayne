@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
-import { loginApi } from "../../api/authHooks";
+import { loginApi } from "../../api/authApi";
 
 export const useLogin = (formData) => {
   const queryClient = useQueryClient();

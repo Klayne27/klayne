@@ -27,7 +27,7 @@ export const sendMessage = async (req, res) => {
       conversation = new Conversation({
         participants: [senderId, recipientId],
         lastMessage: {
-          text: message || (img ? "Image" : ""),
+          text: message,
           sender: senderId,
           seen: false,
           createdAt: new Date(),
@@ -36,23 +36,25 @@ export const sendMessage = async (req, res) => {
       await conversation.save();
     }
 
+    let uploadedImgUrl = "";
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img);
-      img = uploadedResponse.secure_url;
+      uploadedImgUrl = uploadedResponse.secure_url;
     }
 
     const newMessage = new Message({
       conversationId: conversation._id,
       sender: senderId,
-      text: message,
-      img: img || "",
+      text: message || "",
+      img: uploadedImgUrl,
       seen: false,
     });
 
     await newMessage.save();
 
     conversation.lastMessage = {
-      text: message || (img ? "Image" : ""),
+      text: message || "",
+      img: uploadedImgUrl,
       sender: senderId,
       seen: false,
       createdAt: newMessage.createdAt,
@@ -106,7 +108,7 @@ export const getMessages = async (req, res) => {
       conversationId: conversation._id,
     })
       .sort({ createdAt: 1 })
-      .populate("sender", "username profilePic");
+      .populate("sender", "username profileImg");
 
     await Message.updateMany(
       { conversationId: conversation._id, sender: otherUserId, seen: false },
@@ -136,7 +138,7 @@ export const getConversations = async (req, res) => {
     const conversations = await Conversation.find({ participants: userId })
       .populate({
         path: "participants",
-        select: "username profilePic fullName",
+        select: "username profileImg fullName",
       })
       .sort({ updatedAt: -1 });
 
@@ -187,7 +189,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
     const currentUser = await User.findById(userId).populate({
       path: "following",
-      select: "username profilePic fullName",
+      select: "username profileImg fullName",
     });
 
     if (!currentUser) {

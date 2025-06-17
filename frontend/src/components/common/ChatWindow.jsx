@@ -1,10 +1,7 @@
-// src/components/messages/ChatWindow.jsx (Re-confirm and minor tweaks)
-
 import { IoClose } from "react-icons/io5";
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
-import { FaPaperclip, FaRegSmile } from "react-icons/fa";
 import { IoImageOutline } from "react-icons/io5";
 import { HiOutlineGif } from "react-icons/hi2";
 import { MdSend } from "react-icons/md";
@@ -18,7 +15,7 @@ import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 
 const fetchMessages = async (conversationId, otherUserId) => {
-  if (!conversationId || !otherUserId) return []; // No messages for new or undefined chat
+  if (!conversationId || !otherUserId) return [];
   const res = await fetch(`/api/messages/${otherUserId}`);
   if (!res.ok) {
     throw new Error("Failed to fetch messages");
@@ -47,15 +44,15 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   const messagesEndRef = useRef(null);
   const [imageFile, setImageFile] = useState(null);
   const imageInputRef = useRef(null);
-  const messageInputRef = useRef(null); // <-- Add this ref
+  const messageInputRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
-  // Extract otherUser and conversationId safely
+
   const otherUser = selectedConversation?.participants[0];
-  const conversationId = selectedConversation?._id; // Will be null for new chats
+  const conversationId = selectedConversation?._id;
 
   const {
     data: messages,
@@ -64,7 +61,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   } = useQuery({
     queryKey: ["messages", conversationId],
     queryFn: () => fetchMessages(conversationId, otherUser?._id),
-    enabled: !!conversationId, // Only fetch messages if conversationId exists (i.e., not a new chat)
+    enabled: !!conversationId,
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   });
@@ -258,8 +255,6 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   const isNewChat =
     selectedConversation.isNewChat || (!messages?.length && !isLoading && !error);
 
-  console.log("messages here:", messages);
-
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       {/* Chat Header */}
@@ -272,7 +267,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
         )}
         <Link to={`/profile/${otherUser.username}`}>
           <img
-            src={otherUser?.profilePic || "/avatar-placeholder.png"}
+            src={otherUser?.profileImg || "/avatar-placeholder.png"}
             alt={otherUser?.username}
             className="w-8 h-8 rounded-full object-cover mr-2"
           />
