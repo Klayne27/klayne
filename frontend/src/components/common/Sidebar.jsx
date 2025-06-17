@@ -36,7 +36,7 @@ const Sidebar = () => {
             <Link
               to="/messages"
               className={`${
-                pathname === "/messages" ? "font-bold text-white" : ""
+                pathname.startsWith("/messages") ? "font-bold text-white" : ""
               } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 pl-2.5 pr-4 max-w-fit cursor-pointer`}
             >
               <CiMail className="w-6 h-6" strokeWidth={1} />

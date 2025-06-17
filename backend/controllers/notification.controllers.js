@@ -8,7 +8,7 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username profileImg",
+        select: "username profileImg isVerified",
       });
 
     await Notification.updateMany({ to: userId }, { read: true });

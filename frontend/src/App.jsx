@@ -24,7 +24,7 @@ function App() {
     );
   }
 
-  const isMessagePage = location.pathname === "/messages";
+  const isMessagePage = location.pathname.includes("/messages");
 
   return (
     <div className="flex max-w-7xl mx-auto">
@@ -46,6 +46,10 @@ function App() {
         />
         <Route
           path="/messages"
+          element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/messages/:conversationId"
           element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
         />
         <Route

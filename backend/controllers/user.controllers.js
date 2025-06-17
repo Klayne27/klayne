@@ -87,6 +87,7 @@ export const getSuggestedUsers = async (req, res) => {
           fullName: 1,
           profileImg: 1,
           _id: 1,
+          isVerified: 1,
         },
       },
     ]);
@@ -172,7 +173,7 @@ export const getFollowingUsers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate(
       "following",
-      "username fullName profileImg"
+      "username fullName profileImg isVerified"
     );
 
     if (!user) {
@@ -191,7 +192,7 @@ export const getFollowers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate(
       "followers",
-      "username fullName profileImg"
+      "username fullName profileImg isVerified"
     );
 
     if (!user) {

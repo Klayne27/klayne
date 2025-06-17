@@ -72,7 +72,7 @@ const Post = ({ post }) => {
             {postOwner.fullName.length > 15
               ? postOwner.fullName.slice(0, 15) + "..."
               : postOwner.fullName}{" "}
-            <img src="/verified.png" className="size-[17px]" alt="Verified" />
+            {postOwner.isVerified && <img src="/verified.png" className="size-[17px]" alt="Verified" />}
           </Link>
           <span className="text-gray-500 flex gap-1 text-sm">
             <Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>

@@ -76,7 +76,7 @@ function ConversationItem({
         <div className="flex items-center justify-between">
           <div className="flex gap-1 items-center">
             <span className="font-bold text-white">{otherUser.fullName}</span>
-            <img src="verified.png" className="size-[17px]" alt="Verified badge" />
+            {conv.participants[0].isVerified && <img src="/verified.png" className="size-[17px]" alt="Verified badge" />}
             <span className="text-gray-400 ">@{otherUser?.username}</span>
             {!conv.isNewChat && (
               <>

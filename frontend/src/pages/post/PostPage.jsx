@@ -128,7 +128,7 @@ const PostPage = () => {
                   >
                     {comment.user?.fullName}
                   </Link>
-                  <img src="/verified.png" className="size-[17px]" />
+                  {comment.user.isVerified && <img src="/verified.png" className="size-[17px]" />}
                   <Link
                     to={`/profile/${comment.user?.username || ""}`}
                     className="text-gray-500 text-sm"

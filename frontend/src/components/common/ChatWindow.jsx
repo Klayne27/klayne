@@ -6,33 +6,44 @@ import { IoImageOutline } from "react-icons/io5";
 import { HiOutlineGif } from "react-icons/hi2";
 import { MdSend } from "react-icons/md";
 import { BiArrowBack } from "react-icons/bi";
-import LoadingSpinner from "../common/LoadingSpinner";
+import LoadingSpinner from "./LoadingSpinner"; // Assuming path is correct
 import { toast } from "react-hot-toast";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { BsCheck2All } from "react-icons/bs";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 
-const fetchMessages = async (conversationId, otherUserId) => {
-  if (!conversationId || !otherUserId) return [];
-  const res = await fetch(`/api/messages/${otherUserId}`);
+// Backend Recommendation #1: Fetch messages using conversationId
+// This endpoint assumes: GET /api/messages/conversation/:conversationId
+const fetchMessages = async (conversationId) => {
+  // Frontend check: don't attempt to fetch for pseudo-conversations
+  if (!conversationId || conversationId.startsWith("new-")) return [];
+
+  // Backend endpoint is now /api/messages/conversation/:conversationId
+  const res = await fetch(`/api/messages/conversations/${conversationId}`);
   if (!res.ok) {
-    throw new Error("Failed to fetch messages");
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to fetch messages");
   }
   return res.json();
 };
 
-const sendMessageApi = async ({ recipientId, message, img }) => {
+// Backend Recommendation #2: Send message API now handles new conversation creation and returns its ID
+// This endpoint assumes: POST /api/messages with body { recipientId, message, img, conversationId (optional) }
+// And returns: { newMessage: { ... }, conversationId: "real_conversation_id" }
+const sendMessageApi = async ({ recipientId, message, img, conversationId }) => {
   const res = await fetch("/api/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ recipientId, message, img }),
+    // Pass conversationId to backend, which will handle existing vs. new
+    body: JSON.stringify({ recipientId, message, img, conversationId }),
   });
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || "Failed to send message");
   }
+  // Backend is expected to return { newMessage, conversationId }
   return res.json();
 };
 
@@ -40,6 +51,8 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
   const { socket } = useSocket();
+  const navigate = useNavigate(); // For updating URL after new chat creation
+
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef(null);
   const [imageFile, setImageFile] = useState(null);
@@ -51,30 +64,102 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
 
-  const otherUser = selectedConversation?.participants[0];
-  const conversationId = selectedConversation?._id;
+  // Determine the 'otherUser' correctly. 'participants' should contain current user and other user.
+  const otherUser = selectedConversation?.participants.find(
+    (p) => p?._id !== currentUser?._id
+  );
+
+  // The actual conversation ID to use for API calls (null for pseudo-chats)
+  const actualConversationId = selectedConversation?.isNewChat
+    ? null
+    : selectedConversation?._id;
 
   const {
     data: messages,
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["messages", conversationId],
-    queryFn: () => fetchMessages(conversationId, otherUser?._id),
-    enabled: !!conversationId,
+    queryKey: ["messages", actualConversationId], // Query key now uses actualConversationId
+    queryFn: () => fetchMessages(actualConversationId), // Fetch only if actual ID exists
+    enabled: !!actualConversationId, // Only enable query if it's a real conversation
     refetchInterval: 5000,
     refetchIntervalInBackground: true,
   });
 
   const sendMessageMutation = useMutation({
     mutationFn: sendMessageApi,
-    onSuccess: async () => {
-      queryClient.invalidateQueries(["messages"]);
-      await queryClient.invalidateQueries(["conversations"]);
+    onSuccess: async (data) => {
+      // Data now contains newMessage and the actual conversationId
+      const { newMessage, conversationId: returnedConversationId } = data;
 
+      // If it was a new chat (`isNewChat` was true) and backend returned a real ID
+      if (selectedConversation.isNewChat && returnedConversationId) {
+        // Update URL to the real conversation ID
+        navigate(`/messages/${returnedConversationId}`, { replace: true });
+
+        // Force a refetch of conversations to get the newly created one in the list,
+        // and its `_id` will then correctly be picked up by MessagesPage's useEffect.
+        await queryClient.invalidateQueries(["conversations"]);
+      } else {
+        // If it's an existing chat, just invalidate messages/conversations
+        await queryClient.invalidateQueries(["conversations"]);
+      }
+
+      // Optimistically update messages list (optional, but good for UX)
+      queryClient.setQueryData(
+        ["messages", returnedConversationId || actualConversationId], // Use the real ID if available
+        (oldMessages) => {
+          const filteredOldMessages =
+            oldMessages?.filter((msg) => !msg.isOptimistic) || [];
+          if (!filteredOldMessages.some((msg) => msg._id === newMessage._id)) {
+            return [...filteredOldMessages, { ...newMessage, isOptimistic: false }];
+          }
+          return filteredOldMessages;
+        }
+      );
+
+      setMessageInput("");
+      setImageFile(null);
+      if (imageInputRef.current) imageInputRef.current.value = "";
+      scrollToBottom();
     },
     onError: (error) => {
       toast.error(error.message || "Failed to send message.");
+      queryClient.invalidateQueries(["messages"]); // Invalidate on error to revert optimistic updates
+    },
+    onMutate: async (newMessageData) => {
+      // Use the potentially new conversation ID for optimistic update key
+      const targetConvId =
+        newMessageData.conversationId || `new-${newMessageData.recipientId}`; // Use pseudo-id for new chat
+      await queryClient.cancelQueries(["messages", targetConvId]);
+      const previousMessages = queryClient.getQueryData(["messages", targetConvId]);
+
+      const optimisticMessage = {
+        _id: `temp-${Date.now()}`,
+        sender: {
+          _id: currentUser._id,
+          username: currentUser.username,
+          fullName: currentUser.fullName,
+          profileImg: currentUser.profileImg,
+        },
+        recipientId: newMessageData.recipientId,
+        text: newMessageData.message,
+        img: newMessageData.img,
+        createdAt: new Date().toISOString(),
+        seen: false,
+        isOptimistic: true,
+      };
+
+      queryClient.setQueryData(["messages", targetConvId], (old) =>
+        old ? [...old, optimisticMessage] : [optimisticMessage]
+      );
+
+      return { previousMessages, targetConvId }; // Return targetConvId in context
+    },
+    onSettled: (data, error, variables, context) => {
+      // Invalidate the query to ensure we fetch the latest state from the server
+      // after the mutation is settled, whether successful or not.
+      queryClient.invalidateQueries(["messages", context.targetConvId]);
     },
   });
 
@@ -97,10 +182,8 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
           recipientId: otherUser._id,
           message: messageInput.trim(),
           img: imgBase64,
+          conversationId: actualConversationId, // Pass actual ID (null for new chat)
         });
-        setMessageInput("");
-        setImageFile(null);
-        if (imageInputRef.current) imageInputRef.current.value = "";
       };
       reader.onerror = (error) => {
         console.error("Error converting image:", error);
@@ -111,8 +194,8 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
         recipientId: otherUser._id,
         message: messageInput.trim(),
         img: null,
+        conversationId: actualConversationId, // Pass actual ID (null for new chat)
       });
-      setMessageInput("");
     }
   };
 
@@ -124,35 +207,15 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
   useEffect(() => {
     if (socket) {
       const handleNewMessage = (newMessage) => {
-        // If a new conversation was just created, update the selectedConversation in parent (MessagesPage)
-        // so that the ChatWindow's `conversationId` becomes non-null and it starts fetching messages.
-        // This is important if the first message *creates* the conversation.
-        if (
-          selectedConversation?.isNewChat &&
-          newMessage.conversationId &&
-          newMessage.sender._id === currentUser._id
-        ) {
-          // This is the actual message we just sent that created the conversation
-          // We need to find the full conversation object now.
-          // A more robust solution might involve the backend sending the full conversation object
-          // back with the `newMessage` event for the sender.
-          // For now, we'll rely on the conversations query invalidation.
-          queryClient.invalidateQueries(["conversations"]).then(() => {
-            // After conversations are refetched, you might need to update the parent's `selectedConversation` state
-            // This might need `onSelectConversation` passed from MessagesPage
-            // For simplicity for now, the socket will directly push the new message.
-          });
-        }
-
-        // Apply message to the current chat window if it matches
-        if (
-          newMessage.conversationId?.toString() === conversationId?.toString() ||
+        const isMessageForThisChat =
+          newMessage.conversationId === actualConversationId ||
           (selectedConversation?.isNewChat &&
-            newMessage.sender._id.toString() === currentUser._id.toString() &&
-            newMessage.recipientId?.toString() === otherUser?._id.toString())
-        ) {
+            newMessage.sender._id.toString() === otherUser?._id.toString() && // Message from other user for this new chat
+            newMessage.recipientId?.toString() === currentUser._id.toString()); // And sent to current user
+
+        if (isMessageForThisChat) {
           queryClient.setQueryData(
-            ["messages", newMessage.conversationId || conversationId],
+            ["messages", newMessage.conversationId || actualConversationId],
             (oldMessages) => {
               const filteredOldMessages =
                 oldMessages?.filter((msg) => !msg.isOptimistic) || [];
@@ -165,7 +228,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
 
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
-              conversationId: newMessage.conversationId || conversationId,
+              conversationId: newMessage.conversationId,
             });
           }
           scrollToBottom();
@@ -174,9 +237,8 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
       };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        if (seenConversationId.toString() === conversationId?.toString()) {
-          // Check against current convId
-          queryClient.setQueryData(["messages", conversationId], (oldMessages) => {
+        if (seenConversationId.toString() === actualConversationId?.toString()) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
             return oldMessages?.map((msg) =>
               msg.sender._id.toString() === currentUser._id.toString() &&
               readerId.toString() === otherUser?._id.toString()
@@ -196,21 +258,21 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
         socket.off("messagesSeen", handleMessagesSeen);
       };
     }
-  }, [socket, conversationId, queryClient, otherUser, currentUser, selectedConversation]); // Added selectedConversation to deps
+  }, [
+    socket,
+    actualConversationId,
+    queryClient,
+    otherUser,
+    currentUser,
+    selectedConversation,
+  ]);
 
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setEmojiPickerWidth(50);
-      } else {
-        setEmojiPickerWidth(350);
-      }
+      setEmojiPickerWidth(window.innerWidth < 640 ? 250 : 350);
     };
-
     handleResize();
-
     window.addEventListener("resize", handleResize);
-
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
@@ -230,7 +292,6 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
     if (showEmojiPicker) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
@@ -251,21 +312,22 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
     );
   }
 
-  // Determine if it's a new chat (no messages loaded yet)
+  // A new chat is either explicitly marked `isNewChat` or it's a "real" conversation
+  // but has no messages yet.
   const isNewChat =
-    selectedConversation.isNewChat || (!messages?.length && !isLoading && !error);
+    selectedConversation.isNewChat ||
+    (!messages?.length && !isLoading && !error && actualConversationId);
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       {/* Chat Header */}
-      <div className="sticky top-0 bg-black w-full  z-20 p-4 shadow-lg flex items-center">
-        {/* Optional: Back button for mobile */}
-        {onBackToConversations && ( // Only show if prop is provided
+      <div className="sticky top-0 bg-black w-full z-20 p-4 shadow-lg flex items-center">
+        {onBackToConversations && (
           <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
             <BiArrowBack className="w-6 h-6" />
           </button>
         )}
-        <Link to={`/profile/${otherUser.username}`}>
+        <Link to={`/profile/${otherUser?.username}`}>
           <img
             src={otherUser?.profileImg || "/avatar-placeholder.png"}
             alt={otherUser?.username}
@@ -273,37 +335,31 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
           />
         </Link>
         <h3 className="text-lg font-bold">{otherUser?.fullName}</h3>
+        {otherUser?.isVerified && (
+          <img src="/verified.png" className="size-[17px] ml-1" alt="Verified badge" />
+        )}
       </div>
 
       {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
-        {isLoading && (
-          <div className="flex justify-center items-center h-full">
-            <LoadingSpinner size="lg" />
-          </div>
-        )}
-        {error && (
-          <div className="flex justify-center items-center h-full text-red-500">
-            <p>Error loading messages: {error.message}</p>
-          </div>
-        )}
-        {isNewChat &&
-          !isLoading && ( // Show new chat message only if no messages and not loading
-            <div className="flex flex-col items-center justify-center h-full text-gray-400 text-center">
-              <p className="text-xl font-bold mb-2">
-                Say hello to {otherUser?.fullName}!
-              </p>
-              <p className="text-sm">
-                This is the start of your direct message conversation.
-              </p>
+        {isLoading &&
+          !isNewChat && ( // Only show loading if it's an existing chat and loading
+            <div className="flex justify-center items-center h-full">
+              <LoadingSpinner size="lg" />
             </div>
           )}
+        {error &&
+          !isNewChat && ( // Only show error if it's an existing chat and error
+            <div className="flex justify-center items-center h-full text-red-500">
+              <p>Error loading messages: {error.message}</p>
+            </div>
+          )}
+
         {!isNewChat &&
           messages &&
           messages.length > 0 &&
           messages.map((msg) => {
             const isSentByCurrentUser = msg.sender._id === currentUser._id;
-
             return (
               <div
                 key={msg._id}
@@ -313,11 +369,11 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
               >
                 <div
                   className={`flex flex-col max-w-[70%] p-3 rounded-3xl
-                            ${
-                              isSentByCurrentUser
-                                ? "bg-primary text-white rounded-br-[4px]"
-                                : "bg-gray-800 text-white rounded-bl-[4px]"
-                            }`}
+                                ${
+                                  isSentByCurrentUser
+                                    ? "bg-primary text-white rounded-br-[4px]"
+                                    : "bg-gray-800 text-white rounded-bl-[4px]"
+                                }`}
                 >
                   {msg.img && (
                     <img
@@ -350,7 +406,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {imageFile && ( // Preview selected image
+      {imageFile && (
         <div className="mt-4 border-t border-gray-700 p-5 flex">
           <div className="relative">
             <img
@@ -367,7 +423,7 @@ const ChatWindow = ({ selectedConversation, onBackToConversations }) => {
           </div>
         </div>
       )}
- 
+
       {/* Message Input Area */}
       <form
         onSubmit={handleSendMessage}

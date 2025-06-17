@@ -220,11 +220,11 @@ export const getPost = async (req, res) => {
     const post = await Post.findById(req.params.id)
       .populate({
         path: "user",
-        select: "username profileImg fullName",
+        select: "username profileImg fullName isVerified",
       })
       .populate({
         path: "comments.user",
-        select: "username profileImg fullName",
+        select: "username profileImg fullName isVerified",
       });
 
     if (!post) {

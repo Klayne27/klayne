@@ -11,6 +11,7 @@ const RightPanel = () => {
 
   if (suggestedUsers?.length === 0) return <div className="md:w-[390px] w-0 ml-2"></div>;
 
+
   return (
     <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[350px]">
       <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
@@ -42,7 +43,7 @@ const RightPanel = () => {
                       {user.fullName.length > 15
                         ? user.fullName.slice(0, 15) + "..."
                         : user.fullName}{" "}
-                      <img src="verified.png" className="size-[17px]" />
+                      {user.isVerified && <img src="/verified.png" className="size-[17px]" />}
                     </span>
 
                     <span className="text-sm text-slate-500">@{user.username}</span>

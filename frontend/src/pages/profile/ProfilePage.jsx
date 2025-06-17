@@ -15,6 +15,8 @@ import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
+import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
+import { CiMail } from "react-icons/ci";
 
 const ProfilePage = () => {
   const [coverImg, setCoverImg] = useState(null);
@@ -35,6 +37,7 @@ const ProfilePage = () => {
 
   const { user, isLoading, refetch, isRefetching } = useFetchUserProfile(username);
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
+  const { conversations, isLoadingConversations } = useFetchConversations();
 
   const isMyProfile = authUser?._id === user?._id;
   const amIFollowing = authUser?.following?.includes(user?._id);
@@ -48,6 +51,23 @@ const ProfilePage = () => {
         state === "profileImg" && setProfileImg(reader.result);
       };
       reader.readAsDataURL(file);
+    }
+  };
+
+  const handleMessageClick = () => {
+    // Find if a conversation already exists with this profile user
+    const existingConversation = conversations.find((conv) =>
+      conv.participants.some((p) => p?._id.toString() === user._id.toString())
+    );
+
+    if (existingConversation) {
+      // If conversation exists, navigate directly to its ID
+      navigate(`/messages/${existingConversation._id}`);
+    } else {
+      // If no conversation exists, navigate to the base messages page
+      // and pass the target user ID via state.
+      // The MessagesPage will then create a pseudo-conversation.
+      navigate("/messages", { state: { targetUserId: user._id } });
     }
   };
 
@@ -143,11 +163,19 @@ const ProfilePage = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex justify-end px-4 mt-5">
+              <div className="flex justify-end px-4 mt-5 gap-2">
                 {isMyProfile && <EditProfileModal authUser={authUser} />}
+                {!isMyProfile && amIFollowing && (
+                  <button
+                    onClick={handleMessageClick}
+                    className=" p-2 border rounded-full hover:bg-gray-800 transition-opacity"
+                  >
+                    <CiMail size={20} strokeWidth={1} />
+                  </button>
+                )}
                 {!isMyProfile && (
                   <button
-                    className="btn btn-outline rounded-full btn-sm"
+                    className="border px-4 rounded-full py-1.5"
                     onClick={() => follow(user?._id)}
                   >
                     {isPending && "Loading..."}
