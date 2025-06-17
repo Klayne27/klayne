@@ -3,8 +3,7 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 
-import { useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
@@ -17,6 +16,7 @@ const Post = ({ post }) => {
   const { authUser } = useAuthUser();
   const { deletePost, isDeleting } = useDeletePosts(post);
   const { likePost, isLiking } = useLikePost(post);
+  const { pathname } = useLocation();
 
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser?._id);
@@ -72,7 +72,9 @@ const Post = ({ post }) => {
             {postOwner.fullName.length > 15
               ? postOwner.fullName.slice(0, 15) + "..."
               : postOwner.fullName}{" "}
-            {postOwner.isVerified && <img src="/verified.png" className="size-[17px]" alt="Verified" />}
+            {postOwner.isVerified && (
+              <img src="/verified.png" className="size-[17px]" alt="Verified" />
+            )}
           </Link>
           <span className="text-gray-500 flex gap-1 text-sm">
             <Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>

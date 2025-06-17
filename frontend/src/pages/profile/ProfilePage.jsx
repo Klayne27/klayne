@@ -55,18 +55,13 @@ const ProfilePage = () => {
   };
 
   const handleMessageClick = () => {
-    // Find if a conversation already exists with this profile user
     const existingConversation = conversations.find((conv) =>
       conv.participants.some((p) => p?._id.toString() === user._id.toString())
     );
 
     if (existingConversation) {
-      // If conversation exists, navigate directly to its ID
       navigate(`/messages/${existingConversation._id}`);
     } else {
-      // If no conversation exists, navigate to the base messages page
-      // and pass the target user ID via state.
-      // The MessagesPage will then create a pseudo-conversation.
       navigate("/messages", { state: { targetUserId: user._id } });
     }
   };
@@ -168,7 +163,7 @@ const ProfilePage = () => {
                 {!isMyProfile && amIFollowing && (
                   <button
                     onClick={handleMessageClick}
-                    className=" p-2 border rounded-full hover:bg-gray-800 transition duration-200 z-20 bg-black"
+                    className=" p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black"
                   >
                     <CiMail size={20} strokeWidth={1} />
                   </button>
@@ -178,7 +173,7 @@ const ProfilePage = () => {
                     className={`${
                       !amIFollowing
                         ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
-                        : "hover:bg-gray-800"
+                        : "hover:bg-secondary"
                     } font-bold border px-4 rounded-full py-1.5  transition duration-200`}
                     onClick={() => follow(user?._id)}
                   >

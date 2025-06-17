@@ -1,5 +1,3 @@
-// backend/controllers/message.Controllers.js
-
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { getReceiverSocketIds, io } from "../lib/socket.js";
@@ -8,7 +6,7 @@ import User from "../models/user.model.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { recipientId, message, conversationId: incomingConversationId } = req.body; // Get incomingConversationId
+    const { recipientId, message, conversationId: incomingConversationId } = req.body;
     let { img } = req.body;
     const senderId = req.user._id;
 
@@ -24,7 +22,6 @@ export const sendMessage = async (req, res) => {
     let conversation;
 
     if (incomingConversationId) {
-      // If a conversationId is provided, try to find it
       conversation = await Conversation.findById(incomingConversationId);
       if (!conversation || !conversation.participants.includes(senderId)) {
         return res
@@ -32,18 +29,16 @@ export const sendMessage = async (req, res) => {
           .json({ error: "Unauthorized or invalid conversation ID." });
       }
     } else {
-      // If no conversationId is provided, find or create based on participants
       conversation = await Conversation.findOne({
         participants: { $all: [senderId, recipientId] },
       });
 
       if (!conversation) {
-        // Create new conversation if it doesn't exist
         conversation = new Conversation({
           participants: [senderId, recipientId],
-          lastMessage: null, // Will be updated by the new message
+          lastMessage: null,
         });
-        await conversation.save(); // Save to get the _id for the message
+        await conversation.save();
       }
     }
 
@@ -58,17 +53,16 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       text: message || "",
       img: uploadedImgUrl,
-      seen: false, // Messages are initially unseen by recipient
+      seen: false,
     });
 
     await newMessage.save();
 
-    // Update the lastMessage of the conversation
     conversation.lastMessage = {
       text: message || "",
       img: uploadedImgUrl,
       sender: senderId,
-      seen: false, // Last message is unseen by recipient
+      seen: false,
       createdAt: newMessage.createdAt,
     };
     await conversation.save();

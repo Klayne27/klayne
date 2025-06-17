@@ -29,7 +29,11 @@ const UserListItem = ({ user: listUser }) => {
       </Link>
       {!isMyProfile && (
         <button
-          className={`${!amIFollowing ? 'bg-white text-black hover:bg-gray-400 duration-200 transition' : ''} font-bold px-4 py-1.5 hover:bg-gray-800 duration-200 transition rounded-full border border-gray-700`}
+          className={`${
+            !amIFollowing
+              ? "bg-white text-black hover:bg-gray-400 duration-200 transition"
+              : "hover:bg-secondary"
+          } font-bold px-4 py-1.5  duration-200 transition rounded-full border border-gray-700`}
           onClick={() => follow(listUser?._id)}
           disabled={isPending}
         >
