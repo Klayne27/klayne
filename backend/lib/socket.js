@@ -7,11 +7,23 @@ import Conversation from "../models/conversation.model.js";
 const app = express();
 const server = http.createServer(app);
 
-const allowedOrigin = process.env.CLIENT_URL || "http://localhost:3000"; // Use your default local FE port
+const allowedOrigins = [
+  "http://localhost:3000", // For local React development
+  "http://localhost:5173", // Another common local React port
+  process.env.RENDER_EXTERNAL_URL, // This environment variable is provided by Render
+];
 
 const io = new Server(server, {
   cors: {
-    origin: allowedOrigin,
+    origin: (origin, callback) => {
+      // Allow requests with no origin (like mobile apps or curl requests)
+      // and requests from allowedOrigins list
+      if (!origin || allowedOrigins.includes(origin)) {
+        callback(null, true);
+      } else {
+        callback(new Error("Not allowed by CORS"));
+      }
+    },
     methods: ["GET", "POST"],
     credentials: true,
   },
