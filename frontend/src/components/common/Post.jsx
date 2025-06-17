@@ -64,7 +64,7 @@ const Post = ({ post }) => {
       </div>
 
       <div className="flex flex-col flex-1">
-        <div className="flex gap-2 items-center">
+        <div className="flex gap-1 items-center">
           <Link
             to={`/profile/${postOwner.username}`}
             className="font-bold flex items-center gap-1 hover:underline"
