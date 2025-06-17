@@ -18,50 +18,38 @@ function ConversationItem({
     return null;
   }
 
+  // Derived state/flags
   const isOnline = onlineUsers.includes(otherUser._id);
-
   const isSelected =
     selectedConversation &&
     (selectedConversation._id === conv._id ||
       (selectedConversation.isNewChat &&
-        selectedConversation.participants[0]._id === otherUser._id));
+        selectedConversation.participants[0]?._id === otherUser._id)); 
 
-  let lastMessageDisplayContent;
-  let isLastMessageUnread = false;
+  const isLastMessageFromOtherUser =
+    conv.lastMessage?.sender?.toString() === otherUser._id.toString();
+  const isLastMessageUnread = isLastMessageFromOtherUser && !conv.lastMessage?.seen;
 
+  let lastMessageContent;
   if (conv.isNewChat) {
-    lastMessageDisplayContent = "Start a new message";
+    lastMessageContent = "Start a new message";
   } else if (conv.lastMessage?.img) {
-    lastMessageDisplayContent = (
+    lastMessageContent = (
       <span className="flex items-center gap-1">
-        <MdImage
-        className="inline-block text-lg" /> Image
+        <MdImage className="inline-block text-lg" /> Image
       </span>
     );
   } else {
-    lastMessageDisplayContent = conv.lastMessage?.text || "";
+    lastMessageContent = conv.lastMessage?.text || "";
   }
 
-  if (conv.lastMessage && conv.lastMessage.sender) {
-    if (
-      conv.lastMessage.sender.toString() === otherUser._id.toString() &&
-      !conv.lastMessage.seen
-    ) {
-      isLastMessageUnread = true;
-    }
-  }
-
-  const finalLastMessageText =
-    typeof lastMessageDisplayContent === "string" && lastMessageDisplayContent.length > 35
-      ? lastMessageDisplayContent.slice(0, 35) + "..."
-      : lastMessageDisplayContent;
+  const truncatedLastMessage =
+    typeof lastMessageContent === "string" && lastMessageContent.length > 35
+      ? lastMessageContent.slice(0, 35) + "..."
+      : lastMessageContent;
 
   const conversationToSelect = conv.isNewChat
-    ? {
-        _id: null,
-        participants: [otherUser],
-        isNewChat: true,
-      }
+    ? { _id: null, participants: [otherUser], isNewChat: true }
     : conv;
 
   return (
@@ -90,10 +78,12 @@ function ConversationItem({
             <span className="font-bold text-white">{otherUser.fullName}</span>
             <img src="verified.png" className="size-[17px]" alt="Verified badge" />
             <span className="text-gray-400 ">@{otherUser?.username}</span>
-            {conv.isNewChat ? "" : <span className="text-[7px] text-gray-400">●</span>}
-            <span className=" text-gray-400">
-              {conv.isNewChat ? "" : formatPostDate(conv.updatedAt)}
-            </span>
+            {!conv.isNewChat && (
+              <>
+                <span className="text-[7px] text-gray-400">●</span>
+                <span className=" text-gray-400">{formatPostDate(conv.updatedAt)}</span>
+              </>
+            )}
           </div>
         </div>
         <div className="flex items-center justify-between">
@@ -103,7 +93,7 @@ function ConversationItem({
             }`}
           >
             {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
-            {finalLastMessageText}
+            {truncatedLastMessage}
           </p>
         </div>
       </div>

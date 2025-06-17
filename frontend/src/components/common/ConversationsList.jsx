@@ -39,7 +39,7 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
     participants: [user],
     isNewChat: true,
     lastMessage: { text: "Start a new message", seen: true, img: "" },
-    updatedAt: new Date(),
+    updatedAt: new Date(0),
   }));
 
   const allConversations = [...conversations, ...pseudoConversations].sort((a, b) => {
