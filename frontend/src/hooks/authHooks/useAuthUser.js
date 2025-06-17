@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { authUserApi } from "../../api/authApi";
 
 export const useAuthUser = () => {
-  const { data: authUser, isLoading } = useQuery({
+  const { data: authUser, isLoading, refetch: refetchAuthUser } = useQuery({
     queryKey: ["authUser"],
     queryFn: authUserApi,
     retry: false,
@@ -12,5 +12,5 @@ export const useAuthUser = () => {
     refetchOnMount: true, // Crucial: Refetch on mount to check session
   });
 
-  return { authUser, isLoading };
+  return { authUser, isLoading, refetchAuthUser };
 };

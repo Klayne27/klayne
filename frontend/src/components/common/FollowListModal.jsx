@@ -29,8 +29,8 @@ const FollowListModal = ({ userId, type, onClose }) => {
         </h3>
 
         {isLoading && (
-          <div className="flex justify-center items-center h-48">
-            <LoadingSpinner size="lg" />
+          <div className="flex justify-center items-center h-40">
+            <LoadingSpinner size="sm" />
           </div>
         )}
         {error && <p className="text-red-500 text-center">{error.message}</p>}

@@ -1,14 +1,13 @@
 import { Link } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import LoadingSpinner from "./LoadingSpinner";
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();
   const { follow, isPending } = useFollow();
 
   const amIFollowing = authUser?.following.includes(listUser?._id);
-  
+
   const isMyProfile = authUser?._id === listUser?._id;
 
   return (
@@ -27,18 +26,21 @@ const UserListItem = ({ user: listUser }) => {
           <span className="text-gray-500 text-xs">@{listUser.username}</span>
         </div>
       </Link>
+
       {!isMyProfile && (
         <button
-          className={`${
+          className={` text-sm ${
             !amIFollowing
               ? "bg-white text-black hover:bg-gray-400 duration-200 transition"
               : "hover:bg-secondary"
-          } font-bold px-4 py-1.5  duration-200 transition rounded-full border border-gray-700`}
+          } font-semibold px-3.5 py-1  duration-200 transition rounded-full border border-gray-700`}
           onClick={() => follow(listUser?._id)}
           disabled={isPending}
         >
           {isPending ? (
-            <LoadingSpinner size="sm" />
+            <span
+              className={`flex items-center justify-center loading loading-spinner loading-md`}
+            />
           ) : amIFollowing ? (
             "Unfollow"
           ) : (
