@@ -6,7 +6,7 @@ import User from "../models/user.model.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { recipientId, message, conversationId: incomingConversationId } = req.body;
+    const { recipientId, message, conversationId: incomingConversationId, repliedTo } = req.body;
     let { img } = req.body;
     const senderId = req.user._id;
 
@@ -54,6 +54,7 @@ export const sendMessage = async (req, res) => {
       text: message || "",
       img: uploadedImgUrl,
       seen: false,
+      repliedTo: repliedTo || null
     });
 
     await newMessage.save();
@@ -69,6 +70,18 @@ export const sendMessage = async (req, res) => {
 
     // Populate sender details for the new message before sending via socket
     await newMessage.populate("sender", "username profileImg fullName isVerified");
+
+    if (newMessage.repliedTo) {
+      await newMessage.populate("repliedTo", "sender text img"); // Populate the repliedTo message's details
+      // Further populate the sender of the repliedTo message
+      await newMessage.populate({
+        path: "repliedTo",
+        populate: {
+          path: "sender",
+          select: "username fullName profileImg isVerified",
+        },
+      });
+    }
 
     // Socket.io emission
     // Emit to recipient
@@ -120,7 +133,17 @@ export const getMessagesByConversationId = async (req, res) => {
       conversationId: conversation._id,
     })
       .sort({ createdAt: 1 })
-      .populate("sender", "username profileImg fullName isVerified"); // Also populate fullName
+      .populate("sender", "username profileImg fullName isVerified")
+      .populate({
+        // Populate repliedTo message and its sender
+        path: "repliedTo",
+        select: "sender text img", // Select only necessary fields from the repliedTo message
+        populate: {
+          path: "sender",
+          select: "username fullName profileImg isVerified", // Select sender details for repliedTo message
+        },
+      })
+      .sort({ createdAt: 1 }); // Also populate fullName
 
     // Find the other participant in the conversation
     const otherParticipantId = conversation.participants.find(

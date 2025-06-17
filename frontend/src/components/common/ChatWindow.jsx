@@ -1,5 +1,5 @@
 import { IoClose } from "react-icons/io5";
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
 import { IoImageOutline } from "react-icons/io5";
@@ -13,6 +13,16 @@ import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { BsCheck2All } from "react-icons/bs";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
+import { LuReply } from "react-icons/lu";
+import { FaReply } from "react-icons/fa6";
+import { formatPostDate } from "../../utils/date";
+
+// Utility function to truncate text
+const truncateText = (text, maxLength = 30) => {
+  if (!text) return "";
+  if (text.length <= maxLength) return text;
+  return text.substring(0, maxLength) + "...";
+};
 
 // Backend Recommendation #1: Fetch messages using conversationId
 // This endpoint assumes: GET /api/messages/conversation/:conversationId
@@ -32,12 +42,18 @@ const fetchMessages = async (conversationId) => {
 // Backend Recommendation #2: Send message API now handles new conversation creation and returns its ID
 // This endpoint assumes: POST /api/messages with body { recipientId, message, img, conversationId (optional) }
 // And returns: { newMessage: { ... }, conversationId: "real_conversation_id" }
-const sendMessageApi = async ({ recipientId, message, img, conversationId }) => {
+const sendMessageApi = async ({
+  recipientId,
+  message,
+  img,
+  conversationId,
+  repliedTo,
+}) => {
   const res = await fetch("/api/messages", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     // Pass conversationId to backend, which will handle existing vs. new
-    body: JSON.stringify({ recipientId, message, img, conversationId }),
+    body: JSON.stringify({ recipientId, message, img, conversationId, repliedTo }),
   });
   if (!res.ok) {
     const errorData = await res.json();
@@ -64,6 +80,8 @@ const ChatWindow = ({
   const messageInputRef = useRef(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
+
+  const [replyingToMessage, setReplyingToMessage] = useState(null); // Stores the message object being replied to
 
   const isNewOrTemporaryChat =
     selectedConversation?.isNewChat || selectedConversation?.isTemporary;
@@ -135,6 +153,21 @@ const ChatWindow = ({
         img: newMessageData.img || null,
         seen: false,
         isOptimistic: true,
+        repliedTo: replyingToMessage
+          ? {
+              // Add optimistic repliedTo structure
+              _id: replyingToMessage._id,
+              text: replyingToMessage.text,
+              img: replyingToMessage.img,
+              sender: {
+                _id: replyingToMessage.sender._id,
+                username: replyingToMessage.sender.username,
+                fullName: replyingToMessage.sender.fullName,
+                profileImg: replyingToMessage.sender.profileImg,
+                isVerified: replyingToMessage.sender.isVerified,
+              },
+            }
+          : null,
       };
 
       queryClient.setQueryData(["messages", selectedConversation?._id], (oldMessages) => {
@@ -185,6 +218,7 @@ const ChatWindow = ({
 
       setMessageInput(""); // Clear input field
       currentOptimisticIdRef.current = null; // Clear the ref after success
+      setReplyingToMessage(null); // Clear replyingToMessage on success
     },
     onError: (error, variables, context) => {
       // Access context here
@@ -212,6 +246,8 @@ const ChatWindow = ({
     if (!messageInput.trim() && !imageFile) return;
     if (!otherUser) return toast.error("No recipient selected.");
 
+    const repliedToId = replyingToMessage ? replyingToMessage._id : null; // Get ID if replying
+
     let imgBase64 = null;
     if (imageFile) {
       const reader = new FileReader();
@@ -223,6 +259,7 @@ const ChatWindow = ({
           message: messageInput.trim(),
           img: imgBase64,
           conversationId: actualConversationId, // Pass actual ID (null for new chat)
+          repliedTo: repliedToId, // Pass repliedTo ID
         });
       };
       reader.onerror = (error) => {
@@ -235,10 +272,11 @@ const ChatWindow = ({
         message: messageInput.trim(),
         img: null,
         conversationId: actualConversationId, // Pass actual ID (null for new chat)
+        repliedTo: repliedToId, // Pass repliedTo ID
       });
     }
-    setMessageInput("");
-    setImageFile("")
+    // setMessageInput("");
+    setImageFile("");
   };
 
   const scrollToBottom = () => {
@@ -343,6 +381,13 @@ const ChatWindow = ({
     scrollToBottom();
   }, [messages]);
 
+  const handleReplyClick = useCallback((message) => {
+    setReplyingToMessage(message);
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  }, []); // useCallback to memoize
+
   useEffect(() => {
     if (selectedConversation && messageInputRef.current) {
       messageInputRef.current.focus();
@@ -371,7 +416,6 @@ const ChatWindow = ({
   const messagesToRender = messagesToDisplay.filter(
     (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
   );
-
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
@@ -411,50 +455,104 @@ const ChatWindow = ({
           )}
 
         {!isNewChat &&
-          messagesToRender &&
           messagesToRender.length > 0 &&
           messagesToRender.map((msg) => {
             const isSentByCurrentUser = msg.sender._id === currentUser._id;
+            const isOptimistic = msg.isOptimistic; // You can still use this for conditional styling/indicators
+
             return (
-              <div
-                key={msg._id}
-                className={`flex ${
-                  isSentByCurrentUser ? "justify-end" : "justify-start"
-                } items-start`}
-              >
+              <div key={msg._id}>
                 <div
-                  className={`flex flex-col max-w-[70%] p-3 rounded-3xl
+                  className={`flex ${
+                    isSentByCurrentUser ? "justify-end" : "justify-start"
+                  } items-start group relative`} // Added group and relative for reply icon positioning
+                >
+                  <div
+                    className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative
                                 ${
                                   isSentByCurrentUser
                                     ? "bg-primary text-white rounded-br-[4px]"
                                     : "bg-[#2F3336] text-white rounded-bl-[4px]"
                                 }`}
-                >
-                  {msg.img && (
-                    <img
-                      src={msg.img}
-                      alt="message attachment"
-                      className="mt-2 rounded-lg w-60 h-auto object-cover"
-                    />
-                  )}
-                  {msg.text && <p className="break-words text-sm">{msg.text}</p>}
-
-                  <span
-                    className={`text-xs mt-1 flex ${
-                      isSentByCurrentUser ? "text-blue-200" : "text-gray-400"
-                    } self-end`}
                   >
-                    {new Date(msg.createdAt).toLocaleTimeString([], {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                    })}
-                    {/* {isSentByCurrentUser && msg.seen && (
+                    <div
+                      className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
+                    transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
+                     ${
+                       isSentByCurrentUser
+                         ? "right-[calc(100%+8px)]"
+                         : "scale-x-[-1] left-[calc(100%+8px)]"
+                     } `}
+                      // Adjusted positioning: 'right-[calc(100%+8px)]' for sent, 'left-[calc(100%+8px)]' for received
+                      onClick={() => handleReplyClick(msg)}
+                    >
+                      <FaReply size={18} />
+                    </div>
+                    {msg.repliedTo && (
+                      <div
+                        className={`
+                            mb-2 p-2 rounded-md text-xs border
+                            ${
+                              isSentByCurrentUser
+                                ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                            }
+                            flex flex-col
+                        `}
+                      >
+                        <span
+                          className={`font-bold ${
+                            isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
+                          }`}
+                        >
+                          Replying to:
+                        </span>
+                        {msg.repliedTo.text && (
+                          <span
+                            className={`font-bold ${
+                              isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
+                            } mt-1 italic`}
+                          >
+                            {truncateText(msg.repliedTo.text, 50)}
+                          </span>
+                        )}
+                        {msg.repliedTo.img && (
+                          <img
+                            src={msg.repliedTo.img}
+                            alt="replied message attachment"
+                            className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
+                          />
+                        )}
+                      </div>
+                    )}
+                    {msg.img && (
+                      <img
+                        src={msg.img}
+                        alt="message attachment"
+                        className="mt-2 rounded-lg w-60 h-auto object-cover"
+                      />
+                    )}
+                    {msg.text && <p className="break-words text-sm">{msg.text}</p>}
+                  </div>
+                  {/* {isSentByCurrentUser && msg.seen && (
                       <span className={`self-end ml-1`}>
                         <BsCheck2All size={16} />
                       </span>
                     )} */}
-                  </span>
                 </div>
+                <span
+                  className={`text-xs mt-1 flex text-gray-500 ${
+                    isSentByCurrentUser ? "justify-self-end" : "self-start"
+                  }`}
+                >
+                  {new Date(msg.createdAt).toLocaleTimeString([], {
+                    hour: "2-digit",
+                    minute: "2-digit",
+                    day: "numeric",
+                    month: "long",
+                    year: "numeric",
+                  })}
+                </span>
               </div>
             );
           })}
@@ -476,6 +574,25 @@ const ChatWindow = ({
               <IoClose size={15} />
             </button>
           </div>
+        </div>
+      )}
+
+      {/* REPLY PREVIEW IN INPUT AREA */}
+      {replyingToMessage && (
+        <div className="p-2 pt-0 border-t border-gray-700 bg-black flex items-center justify-between">
+          <div className="flex-1 p-3  rounded-md flex flex-col">
+            <div className="text-sm text-primary font-bold">Replying to</div>
+            <div className="text-xs text-gray-400 mt-1 italic">
+              {truncateText(replyingToMessage.text, 40)}
+              {replyingToMessage.img && !replyingToMessage.text && " (Image)"}
+            </div>
+          </div>
+          <button
+            onClick={() => setReplyingToMessage(null)}
+            className="ml-2 p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700"
+          >
+            <IoClose size={18} />
+          </button>
         </div>
       )}
 
