@@ -31,7 +31,7 @@ function ConversationItem({
 
   let lastMessageContent;
   if (conv.isNewChat) {
-    lastMessageContent = "Start a new message";
+    lastMessageContent = <span className="italic">Start a new message</span>;
   } else if (conv.lastMessage?.img) {
     lastMessageContent = (
       <span className="flex items-center gap-1">
