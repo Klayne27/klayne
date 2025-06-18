@@ -4,11 +4,21 @@ import bcrypt from "bcryptjs";
 
 export const signup = async (req, res) => {
   try {
-    const { fullName, username, email, password } = req.body;
+    let { fullName, username, email, password } = req.body;
+
+    fullName = fullName.trim();
+    username = username.trim();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
+    }
+
+    if (username.length === 0) {
+      return res.status(400).json({ error: "Username cannot be empty." });
+    }
+    if (fullName.length === 0) {
+      return res.status(400).json({ error: "Full Name cannot be empty." });
     }
 
     const existingUser = await User.findOne({ username });

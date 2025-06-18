@@ -15,7 +15,13 @@ const EditProfileModal = ({ authUser }) => {
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile(formData);
 
   const handleInputChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+
+    if (name === "username") {
+      setFormData({ ...formData, [name]: value.replace(/\s/g, "") }); // Remove all whitespace characters
+    } else {
+      setFormData({ ...formData, [name]: value });
+    }
   };
 
   useEffect(() => {
