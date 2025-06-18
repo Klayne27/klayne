@@ -177,93 +177,48 @@ const ChatWindow = ({
       return { previousMessages, optimisticId: tempMessageId }; // Pass optimisticId to context
     },
     onSuccess: (data, variables, context) => {
+      // Access context here
       const { newMessage, conversationId: newRealConversationId } = data;
 
+      // Update the messages cache for the REAL conversation ID
+      // This is crucial: if a new conversation was created, the query key changes.
       queryClient.setQueryData(["messages", newRealConversationId], (oldMessages) => {
         const messagesArray = oldMessages || [];
+
+        // Try to find and replace the specific optimistic message
         const updatedMessages = messagesArray.map((msg) =>
           msg._id === context.optimisticId ? newMessage : msg
         );
+
+        // If the optimistic message wasn't found (e.g., in a very fast response or if cache was cleared/updated),
+        // or if it's a completely new list, append the new message.
         if (!updatedMessages.some((msg) => msg._id === newMessage._id)) {
           return [...updatedMessages, newMessage];
         }
+
         return updatedMessages;
       });
 
+      // --- Handle conversation ID change for new chats ---
+      // If the selected conversation was a pseudo-ID ('new-...') or temporary,
+      // and now we have a real conversationId from the backend:
       if (isNewOrTemporaryChat && selectedConversation._id !== newRealConversationId) {
+        // Remove the old pseudo-ID's cache if it exists, to avoid stale data
         queryClient.removeQueries(["messages", selectedConversation._id]);
+
+        // Notify parent (MessagesPage) to navigate to the real URL and refetch conversations list
         if (onNewConversationCreated) {
           onNewConversationCreated(newRealConversationId);
         }
-      } // Direct update for conversations cache (for both new and existing)
+      } else {
+        // If it was already a real conversation, ensure parent refetches conversations
+        // to update lastMessage, updatedAt etc.
+        queryClient.invalidateQueries(["conversations"]);
+      }
 
-      queryClient.setQueryData(["conversations"], (oldConversations) => {
-        const convs = oldConversations || [];
-        let updatedConvList = convs; // Find the conversation to update or add it if new
-
-        const existingConvIndex = convs.findIndex((c) => c._id === newRealConversationId);
-
-        const newLastMessage = {
-          text: newMessage.text,
-          img: newMessage.img,
-          sender: newMessage.sender._id, // Assuming lastMessage.sender stores only ID
-          seen: newMessage.seen,
-          createdAt: newMessage.createdAt,
-        };
-
-        if (existingConvIndex > -1) {
-          // Update existing conversation
-          const updatedConv = {
-            ...convs[existingConvIndex],
-            lastMessage: newLastMessage,
-            updatedAt: new Date().toISOString(), // Update updatedAt to move it to top
-          }; // Put updated conversation at the top for sorting (if sorted by updatedAt)
-          updatedConvList = [
-            updatedConv,
-            ...convs.filter((_, idx) => idx !== existingConvIndex),
-          ];
-        } else if (isNewOrTemporaryChat) {
-          // Create a new conversation object for the cache (if it was a new chat)
-          // You might need to fetch the otherParticipant details for this new conversation
-          // if your conversation list shows participant details.
-          // For now, let's create a minimal structure.
-          const newConv = {
-            _id: newRealConversationId,
-            participants: [
-              {
-                _id: currentUser._id,
-                username: currentUser.username,
-                fullName: currentUser.fullName,
-                profileImg: currentUser.profileImg,
-                isVerified: currentUser.isVerified,
-              },
-              {
-                _id: otherUser._id,
-                username: otherUser.username,
-                fullName: otherUser.fullName,
-                profileImg: otherUser.profileImg,
-                isVerified: otherUser.isVerified,
-              },
-            ],
-            lastMessage: newLastMessage,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-          };
-          updatedConvList = [newConv, ...convs]; // Add new conversation to the top
-        }
-        // If it was temporary, filter out the temporary placeholder conversation
-        if (selectedConversation.isTemporary) {
-          updatedConvList = updatedConvList.filter(
-            (c) => c._id !== selectedConversation._id
-          );
-        }
-
-        return updatedConvList;
-      });
-
-      // setMessageInput("");
-      // currentOptimisticIdRef.current = null;
-      // setReplyingToMessage(null);
+      setMessageInput(""); // Clear input field
+      currentOptimisticIdRef.current = null; // Clear the ref after success
+      setReplyingToMessage(null); // Clear replyingToMessage on success
     },
     onError: (error, variables, context) => {
       // Access context here
@@ -274,6 +229,11 @@ const ChatWindow = ({
       });
       currentOptimisticIdRef.current = null; // Clear the ref on error
       // toast.error("Failed to send message."); // Re-enable if you have a toast library
+    },
+    onSettled: (data, error, variables, context) => {
+      // Invalidate the query to ensure we fetch the latest state from the server
+      // after the mutation is settled, whether successful or not.
+      queryClient.invalidateQueries(["messages", context.targetConvId]);
     },
   });
 
@@ -315,9 +275,7 @@ const ChatWindow = ({
         repliedTo: repliedToId, // Pass repliedTo ID
       });
     }
-    setMessageInput(""); // Clear input field
-    currentOptimisticIdRef.current = null; // Clear the ref after success
-    setReplyingToMessage(null); // Clear replyingToMessage on success
+    // setMessageInput("");
     setImageFile("");
   };
 
@@ -332,8 +290,8 @@ const ChatWindow = ({
         const isMessageForThisChat =
           newMessage.conversationId === actualConversationId ||
           (selectedConversation?.isNewChat &&
-            newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            newMessage.recipientId?.toString() === currentUser._id.toString());
+            newMessage.sender._id.toString() === otherUser?._id.toString() && // Message from other user for this new chat
+            newMessage.recipientId?.toString() === currentUser._id.toString()); // And sent to current user
 
         if (isMessageForThisChat) {
           queryClient.setQueryData(
@@ -354,30 +312,8 @@ const ChatWindow = ({
             });
           }
           scrollToBottom();
-        } // Update conversations cache for new message (received from others)
-
-        queryClient.setQueryData(["conversations"], (oldConversations) => {
-          if (!oldConversations) return [];
-          const newLastMessage = {
-            text: newMessage.text,
-            img: newMessage.img,
-            sender: newMessage.sender._id, // Assuming lastMessage.sender stores only ID
-            seen: newMessage.seen,
-            createdAt: newMessage.createdAt,
-          };
-
-          let updatedConvList = oldConversations.map((conv) => {
-            if (conv._id === newMessage.conversationId) {
-              return {
-                ...conv,
-                lastMessage: newLastMessage,
-                updatedAt: new Date().toISOString(), // Update updatedAt to move it to top
-              };
-            }
-            return conv;
-          });
-          return updatedConvList;
-        });
+        }
+        queryClient.invalidateQueries(["conversations"]);
       };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
@@ -390,30 +326,8 @@ const ChatWindow = ({
                 : msg
             );
           });
-        } // Update conversations cache for seen status
-        queryClient.setQueryData(["conversations"], (oldConversations) => {
-          if (!oldConversations) return [];
-          return oldConversations.map((conv) => {
-            if (conv._id === seenConversationId) {
-              // Only update lastMessage.seen if the last message was sent by the current user
-              // and its seen status needs to change.
-              if (
-                conv.lastMessage &&
-                conv.lastMessage.sender.toString() === currentUser._id.toString() &&
-                !conv.lastMessage.seen
-              ) {
-                return {
-                  ...conv,
-                  lastMessage: {
-                    ...conv.lastMessage,
-                    seen: true,
-                  },
-                };
-              }
-            }
-            return conv;
-          });
-        });
+        }
+        queryClient.invalidateQueries(["conversations"]);
       };
 
       socket.on("newMessage", handleNewMessage);
