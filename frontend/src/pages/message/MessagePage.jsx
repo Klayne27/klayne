@@ -214,7 +214,7 @@ const MessagePage = () => {
       </div>
 
       <div
-        className={`flex-1 w-[626px] ${
+        className={`flex-1 md:w-[626px] ${
           selectedConversation ? "flex" : "hidden md:flex"
         } flex-col h-screen`}
       >

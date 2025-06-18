@@ -396,8 +396,6 @@ const ChatWindow = ({
     }
   }, [selectedConversation]);
 
-  console.log("user here", currentUser);
-
   if (!selectedConversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-black text-gray-400">
