@@ -64,3 +64,14 @@ export const deleteUserAccountApi = async (userId) => {
   }
   return data;
 };
+
+export const searchUsersApi = async (query) => {
+  const res = await fetch(`/api/users/search?q=${encodeURIComponent(query)}`);
+  const data = await res.json();
+
+  if (!res.ok) {
+    // Throw an error if the response status is not OK (e.g., 400, 500)
+    throw new Error(data.error || "Failed to search users");
+  }
+  return data;
+};

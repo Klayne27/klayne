@@ -287,3 +287,27 @@ export const deleteUserAccount = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const searchUsers = async (req, res) => {
+  try {
+    const { q } = req.query;
+
+    if (!q) {
+      return res.status(200).json([]);
+    }
+
+    const users = await User.find({
+      $or: [
+        { username: { $regex: q, $options: "i" } },
+        { fullName: { $regex: q, $options: "i" } },
+      ],
+    })
+      .select("-password")
+      .limit(10);
+
+    res.status(200).json(users);
+  } catch (error) {
+    console.error("Error in searchUsers controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

@@ -5,6 +5,7 @@ import useFollow from "../../hooks/usersHooks/useFollow";
 import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
 import LoadingSpinner from "./LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import SearchPanel from "./SearchPanel";
 
 const RightPanel = () => {
   const { suggestedUsers, isLoading } = useSuggestedUsers();
@@ -16,6 +17,7 @@ const RightPanel = () => {
 
   return (
     <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[350px]">
+        <SearchPanel />
       <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
         <p className="font-bold mb-4 text-xl">Who to follow</p>
         <div className="flex flex-col gap-4">

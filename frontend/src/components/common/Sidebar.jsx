@@ -18,11 +18,11 @@ const Sidebar = () => {
 
   const { pathname } = useLocation();
 
-  const [showPopover, setShowPopover] = useState(false); // State for the small popover modal
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false); // State for the larger confirmation modal
+  const [showPopover, setShowPopover] = useState(false);
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
 
-  const profileButtonRef = useRef(null); // Ref to the profile button
-  const popoverRef = useRef(null); // Ref to the popover itself
+  const profileButtonRef = useRef(null);
+  const popoverRef = useRef(null);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -59,11 +59,9 @@ const Sidebar = () => {
   };
 
   const handleDeleteAccount = async () => {
-    // Add a check to ensure authUser and its _id exist before proceeding
     if (authUser && authUser._id) {
-      await deleteAccount(authUser._id); // <--- THIS IS THE CRUCIAL CHANGE
+      await deleteAccount(authUser._id);
     } else {
-      // Handle case where user ID is not available (e.g., show a toast error)
       toast.error("User ID not available. Cannot proceed with deletion.");
     }
   };
@@ -167,8 +165,9 @@ const Sidebar = () => {
                 ref={popoverRef}
                 className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
-                bg-black py-3 rounded-2xl shadow-lg border border-gray-700
-                min-w-[150px] md:min-w-[250px] z-[60] flex flex-col gap-1" // Increased z-index
+                bg-black py-3 rounded-2xl border border-gray-700
+                min-w-[150px] md:min-w-[250px] z-[60] flex flex-col gap-1
+                shadow-md shadow-gray-400" // Increased z-index
               >
                 <button
                   onClick={handleConfirmDeleteClick}
