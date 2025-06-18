@@ -216,9 +216,7 @@ const ChatWindow = ({
         queryClient.invalidateQueries(["conversations"]);
       }
 
-      setMessageInput(""); // Clear input field
-      currentOptimisticIdRef.current = null; // Clear the ref after success
-      setReplyingToMessage(null); // Clear replyingToMessage on success
+
     },
     onError: (error, variables, context) => {
       // Access context here
@@ -229,11 +227,6 @@ const ChatWindow = ({
       });
       currentOptimisticIdRef.current = null; // Clear the ref on error
       // toast.error("Failed to send message."); // Re-enable if you have a toast library
-    },
-    onSettled: (data, error, variables, context) => {
-      // Invalidate the query to ensure we fetch the latest state from the server
-      // after the mutation is settled, whether successful or not.
-      queryClient.invalidateQueries(["messages", context.targetConvId]);
     },
   });
 
@@ -275,7 +268,9 @@ const ChatWindow = ({
         repliedTo: repliedToId, // Pass repliedTo ID
       });
     }
-    // setMessageInput("");
+    setMessageInput(""); // Clear input field
+    currentOptimisticIdRef.current = null; // Clear the ref after success
+    setReplyingToMessage(null); // Clear replyingToMessage on success
     setImageFile("");
   };
 
