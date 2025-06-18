@@ -5,6 +5,7 @@ import {
   sendMessage,
   getFollowedUsersForMessaging,
   getMessagesByConversationId,
+  deleteMessage,
 } from "../controllers/message.Controllers.js";
 
 const router = express.Router();
@@ -14,5 +15,6 @@ router.get("/conversations", protectRoute, getConversations);
 router.get("/conversations/:conversationId", protectRoute, getMessagesByConversationId);
 
 router.post("/", protectRoute, sendMessage);
+router.delete("/:messageId", protectRoute, deleteMessage); // NEW ROUTE FOR DELETING MESSAGES
 
 export default router;

@@ -12,6 +12,9 @@ import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { FaReply } from "react-icons/fa6";
+import { useDeleteMessage } from "../../hooks/messagesHooks/useDeleteMessage";
+import { FiTrash } from "react-icons/fi";
+import LoadingSpinner from "./LoadingSpinner";
 
 const truncateText = (text, maxLength = 30) => {
   if (!text) return "";
@@ -31,7 +34,9 @@ const fetchMessages = async (conversationId) => {
     const errorData = await res.json();
     throw new Error(errorData.error || "Failed to fetch messages");
   }
-  return res.json();
+  const data = await res.json();
+  // Ensure it always returns an array, even if backend sends null/undefined/{}
+  return Array.isArray(data) ? data : [];
 };
 
 // Backend Recommendation #2: Send message API now handles new conversation creation and returns its ID
@@ -67,6 +72,7 @@ const ChatWindow = ({
   const { authUser: currentUser } = useAuthUser();
   const { socket } = useSocket();
   const navigate = useNavigate(); // For updating URL after new chat creation
+  const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
 
   const [messageInput, setMessageInput] = useState("");
   const messagesEndRef = useRef(null);
@@ -78,8 +84,16 @@ const ChatWindow = ({
 
   const [replyingToMessage, setReplyingToMessage] = useState(null); // Stores the message object being replied to
 
+  
+  // The actual conversation ID to use for API calls (null for pseudo-chats)
+  const actualConversationId = selectedConversation?.isNewChat
+  ? null
+  : selectedConversation?._id;
+  
   const isNewOrTemporaryChat =
-    selectedConversation?.isNewChat || selectedConversation?.isTemporary;
+  selectedConversation?.isNewChat || selectedConversation?.isTemporary;
+  
+  const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
 
   // Track the ID of the optimistic message for the *currently pending* send.
   const currentOptimisticIdRef = useRef(null);
@@ -91,11 +105,6 @@ const ChatWindow = ({
   const otherUser = selectedConversation?.participants.find(
     (p) => p?._id !== currentUser?._id
   );
-
-  // The actual conversation ID to use for API calls (null for pseudo-chats)
-  const actualConversationId = selectedConversation?.isNewChat
-    ? null
-    : selectedConversation?._id;
 
   const {
     data: messages,
@@ -129,6 +138,7 @@ const ChatWindow = ({
         "messages",
         selectedConversation?._id,
       ]);
+      setShouldScrollToBottom(true);
 
       const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
       currentOptimisticIdRef.current = tempMessageId; // Store the ID of this specific optimistic message
@@ -308,7 +318,7 @@ const ChatWindow = ({
               conversationId: newMessage.conversationId,
             });
           }
-          scrollToBottom();
+          setShouldScrollToBottom(true);
         }
         queryClient.invalidateQueries(["conversations"]);
       };
@@ -327,12 +337,26 @@ const ChatWindow = ({
         queryClient.invalidateQueries(["conversations"]);
       };
 
+      const handleMessageDeleted = ({
+        messageId,
+        conversationId: deletedConversationId,
+      }) => {
+        if (deletedConversationId.toString() === actualConversationId?.toString()) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
+            return oldMessages?.filter((msg) => msg._id !== messageId);
+          });
+        }
+        queryClient.invalidateQueries(["conversations"]);
+      };
+
       socket.on("newMessage", handleNewMessage);
       socket.on("messagesSeen", handleMessagesSeen);
+      socket.on("messageDeleted", handleMessageDeleted); // Register new listener
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messagesSeen", handleMessagesSeen);
+        socket.off("messageDeleted", handleMessageDeleted); // Register new listener
       };
     }
   }, [
@@ -374,9 +398,31 @@ const ChatWindow = ({
     };
   }, [showEmojiPicker]);
 
+  // useEffect(() => {
+  //   scrollToBottom();
+  // }, [messages]);
+
+  // Keep this for initial scroll on chat load/change
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    if (!isLoading) {
+      // Only scroll on initial load if not loading
+      scrollToBottom();
+    }
+  }, [selectedConversation?._id, isLoading]); // Scroll when conversation changes or initial load finishes
+
+  const handleDeleteClick = useCallback(
+    (messageId) => {
+      deleteMessage(messageId);
+    },
+    [deleteMessage]
+  );
+
+  useEffect(() => {
+    if (shouldScrollToBottom) {
+      scrollToBottom();
+      setShouldScrollToBottom(false); // Reset the flag after scrolling
+    }
+  }, [messages, shouldScrollToBottom]); // Rerun when messages or flag changes
 
   const handleReplyClick = useCallback((message) => {
     setReplyingToMessage(message);
@@ -413,7 +459,6 @@ const ChatWindow = ({
   const messagesToRender = messagesToDisplay.filter(
     (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
   );
-
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
@@ -485,6 +530,33 @@ const ChatWindow = ({
                     >
                       <FaReply size={18} />
                     </div>
+                    {/* NEW: Delete Button */}
+                    {isSentByCurrentUser && (
+                      <button
+                        onClick={() => handleDeleteClick(msg._id)}
+                        className={`absolute top-1/2 -translate-y-1/2 text-xs  rounded-full text-red-600 hover:bg-red-600 hover:bg-opacity-25 p-1.5
+                                                    opacity-0 group-hover:opacity-100 transition duration-200 z-10
+                                                    ${
+                                                      isSentByCurrentUser
+                                                        ? "right-[calc(100%+30px)]"
+                                                        : ""
+                                                    }
+                                                    ${
+                                                      isDeletingMessage
+                                                        ? "cursor-not-allowed"
+                                                        : "cursor-pointer"
+                                                    }
+                                                `}
+                        title="Delete message"
+                        disabled={isDeletingMessage}
+                      >
+                        {isDeletingMessage ? (
+                          <span className={`loading loading-spinner loading-xs`} />
+                        ) : (
+                          <FiTrash size={20} />
+                        )}
+                      </button>
+                    )}
                     {msg.repliedTo && (
                       <div
                         className={`

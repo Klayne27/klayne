@@ -231,3 +231,76 @@ export const getFollowedUsersForMessaging = async (req, res) => {
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
+
+export const deleteMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params; // Get messageId from URL parameters
+    const userId = req.user._id; // ID of the logged-in user
+
+    const messageToDelete = await Message.findById(messageId);
+
+    if (!messageToDelete) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    // Authorization: Only the sender can delete their own message
+    if (messageToDelete.sender.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this message." });
+    }
+
+    // If the message has an image, delete it from Cloudinary
+    if (messageToDelete.img) {
+      const imgId = messageToDelete.img.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(imgId);
+    }
+
+    await Message.findByIdAndDelete(messageId); // Hard delete the message
+
+    // Update the lastMessage of the conversation if the deleted message was the last one
+    const conversation = await Conversation.findById(messageToDelete.conversationId);
+    if (conversation) {
+      if (
+        conversation.lastMessage &&
+        conversation.lastMessage.text === messageToDelete.text &&
+        conversation.lastMessage.sender.toString() === messageToDelete.sender.toString()
+      ) {
+        // Find the new last message in the conversation
+        const newLastMessage = await Message.findOne({ conversationId: conversation._id })
+          .sort({ createdAt: -1 })
+          .limit(1);
+
+        if (newLastMessage) {
+          conversation.lastMessage = {
+            text: newLastMessage.text,
+            img: newLastMessage.img,
+            sender: newLastMessage.sender,
+            seen: newLastMessage.seen,
+            createdAt: newLastMessage.createdAt,
+          };
+        } else {
+          conversation.lastMessage = null; // No more messages in this conversation
+        }
+        await conversation.save();
+      }
+    }
+
+    // Emit a Socket.io event to all participants in the conversation to notify them of the deletion
+    const participants = conversation ? conversation.participants : [];
+    participants.forEach((participantId) => {
+      const socketIds = getReceiverSocketIds(participantId.toString());
+      socketIds.forEach((socketId) => {
+        io.to(socketId).emit("messageDeleted", {
+          messageId,
+          conversationId: messageToDelete.conversationId,
+        });
+      });
+    });
+
+    res.status(200).json({ message: "Message deleted successfully." });
+  } catch (error) {
+    console.error("Error in deleteMessage controller:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
