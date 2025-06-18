@@ -215,10 +215,6 @@ const ChatWindow = ({
         // to update lastMessage, updatedAt etc.
         queryClient.invalidateQueries(["conversations"]);
       }
-
-      setMessageInput(""); // Clear input field
-      currentOptimisticIdRef.current = null; // Clear the ref after success
-      setReplyingToMessage(null); // Clear replyingToMessage on success
     },
     onError: (error, variables, context) => {
       // Access context here
@@ -275,7 +271,9 @@ const ChatWindow = ({
         repliedTo: repliedToId, // Pass repliedTo ID
       });
     }
-    // setMessageInput("");
+    setMessageInput(""); // Clear input field
+    currentOptimisticIdRef.current = null; // Clear the ref after success
+    setReplyingToMessage(null); // Clear replyingToMessage on success
     setImageFile("");
   };
 
