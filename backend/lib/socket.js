@@ -13,6 +13,7 @@ const allowedOrigins = [
   process.env.RENDER_EXTERNAL_URL, // This environment variable is provided by Render
 ];
 
+
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
