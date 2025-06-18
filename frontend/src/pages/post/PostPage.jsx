@@ -103,7 +103,7 @@ const PostPage = () => {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Post your reply"
-            className="flex-1 px-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg" // Adjusted padding, font size, flex-1
+            className="flex-1 pl-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg" // Adjusted padding, font size, flex-1
             disabled={isAddingComment}
           />
           <button
