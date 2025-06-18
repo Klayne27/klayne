@@ -6,18 +6,13 @@ import { IoImageOutline } from "react-icons/io5";
 import { HiOutlineGif } from "react-icons/hi2";
 import { MdSend } from "react-icons/md";
 import { BiArrowBack } from "react-icons/bi";
-import LoadingSpinner from "./LoadingSpinner"; // Assuming path is correct
 import { toast } from "react-hot-toast";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
-import { BsCheck2All } from "react-icons/bs";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
-import { LuReply } from "react-icons/lu";
 import { FaReply } from "react-icons/fa6";
-import { formatPostDate } from "../../utils/date";
 
-// Utility function to truncate text
 const truncateText = (text, maxLength = 30) => {
   if (!text) return "";
   if (text.length <= maxLength) return text;

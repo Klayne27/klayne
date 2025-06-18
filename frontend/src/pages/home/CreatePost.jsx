@@ -55,13 +55,6 @@ const CreatePost = () => {
 
   const isButtonDisabled = (text.trim() === "" && !img) || isPending;
 
-  const buttonClasses = `rounded-full btn-sm px-4 py-2 text-lg transition duration-300 ${
-    isButtonDisabled
-      ? "bg-gray-400 font-bold text-black text-sm flex items-center cursor-default"
-      : "btn btn-primary btn-sm text-white"
-  }`;
-
-
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {

@@ -2,10 +2,10 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { updateUserProfileApi } from "../../api/usersApi";
 
-export const useUpdateUserProfile = (formData) => {
+export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
   const { mutateAsync: updateProfile, isPending: isUpdatingProfile } = useMutation({
-    mutationFn: () => updateUserProfileApi(formData),
+    mutationFn: (formData) => updateUserProfileApi(formData),
     onSuccess: () => {
       toast.success("Profile updated successfully");
       Promise.all([

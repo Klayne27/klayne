@@ -68,12 +68,10 @@ export const sendMessage = async (req, res) => {
     };
     await conversation.save();
 
-    // Populate sender details for the new message before sending via socket
     await newMessage.populate("sender", "username profileImg fullName isVerified");
 
     if (newMessage.repliedTo) {
-      await newMessage.populate("repliedTo", "sender text img"); // Populate the repliedTo message's details
-      // Further populate the sender of the repliedTo message
+      await newMessage.populate("repliedTo", "sender text img");
       await newMessage.populate({
         path: "repliedTo",
         populate: {
@@ -83,8 +81,6 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // Socket.io emission
-    // Emit to recipient
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
       recipientSocketIds.forEach((socketId) => {
@@ -92,19 +88,13 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // Emit to sender's other devices (if any)
     const senderSocketIds = getReceiverSocketIds(senderId.toString());
     if (senderSocketIds.length > 0) {
       senderSocketIds.forEach((socketId) => {
-        // Avoid sending duplicate if already sent to own device via recipient
-        // This is a subtle point: if sender is also recipient, this might be redundant.
-        // For 1-on-1, only recipientSocketIds is strictly necessary for real-time update.
-        // But for consistency across multiple sender devices, it's good to also emit.
         io.to(socketId).emit("newMessage", newMessage);
       });
     }
 
-    // NEW: Return both the new message and the conversation ID
     res.status(201).json({ newMessage, conversationId: conversation._id });
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
@@ -112,9 +102,8 @@ export const sendMessage = async (req, res) => {
   }
 };
 
-// NEW: Controller to get messages by conversation ID
 export const getMessagesByConversationId = async (req, res) => {
-  const { conversationId } = req.params; // Get conversationId from params
+  const { conversationId } = req.params;
   const userId = req.user._id;
 
   try {
@@ -124,7 +113,6 @@ export const getMessagesByConversationId = async (req, res) => {
       return res.status(404).json({ error: "Conversation not found." });
     }
 
-    // Ensure the current user is a participant of this conversation
     if (!conversation.participants.includes(userId)) {
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
@@ -135,32 +123,28 @@ export const getMessagesByConversationId = async (req, res) => {
       .sort({ createdAt: 1 })
       .populate("sender", "username profileImg fullName isVerified")
       .populate({
-        // Populate repliedTo message and its sender
         path: "repliedTo",
-        select: "sender text img", // Select only necessary fields from the repliedTo message
+        select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified", // Select sender details for repliedTo message
+          select: "username fullName profileImg isVerified",
         },
       })
-      .sort({ createdAt: 1 }); // Also populate fullName
+      .sort({ createdAt: 1 });
 
-    // Find the other participant in the conversation
     const otherParticipantId = conversation.participants.find(
       (participantId) => participantId.toString() !== userId.toString()
     );
 
-    // Mark messages as seen only if they were sent by the other user and are currently unseen
     await Message.updateMany(
       { conversationId: conversation._id, sender: otherParticipantId, seen: false },
       { $set: { seen: true } }
     );
 
-    // Mark the last message in the conversation as seen if it was sent by the other user
     if (
       conversation.lastMessage &&
       conversation.lastMessage.sender.toString() === otherParticipantId.toString() &&
-      !conversation.lastMessage.seen // Only update if it's currently unseen
+      !conversation.lastMessage.seen
     ) {
       await Conversation.updateOne(
         { _id: conversation._id },
@@ -207,17 +191,17 @@ export const getConversations = async (req, res) => {
               createdAt: conversation.lastMessage.createdAt,
               img: conversation.lastMessage.img,
             }
-          : null; // `updatedAt` is on the conversation object directly
+          : null;
 
         return {
           _id: conversation._id,
           participants: [otherParticipant],
           lastMessage: lastMessageData,
           createdAt: conversation.createdAt,
-          updatedAt: conversation.updatedAt, // Correctly use conversation's updatedAt
+          updatedAt: conversation.updatedAt,
         };
       })
-      .filter(Boolean); // Filter out any null conversations
+      .filter(Boolean);
 
     res.status(200).json(processedConversations);
   } catch (error) {
@@ -239,7 +223,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    const followedUsers = currentUser.following.filter(Boolean); // Ensure no nulls in following array
+    const followedUsers = currentUser.following.filter(Boolean);
 
     res.status(200).json(followedUsers);
   } catch (error) {

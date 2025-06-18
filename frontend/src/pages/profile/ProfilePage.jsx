@@ -184,7 +184,7 @@ const ProfilePage = () => {
                 )}
                 {(coverImg || profileImg) && (
                   <button
-                    className="btn btn-primary rounded-full btn-sm text-white px-4 ml-2"
+                    className=" rounded-full px-4 py-1.5 bg-primary text-white font-semibold hover:bg-[#1d9cf0d8] transition duration-300"
                     onClick={async () => {
                       await updateProfile({
                         coverImg,
