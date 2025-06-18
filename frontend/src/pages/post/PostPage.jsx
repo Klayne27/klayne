@@ -9,6 +9,8 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
 import { useAddComment } from "../../hooks/postsHooks/useAddComment";
+import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
+import { FiTrash } from "react-icons/fi";
 
 const PostPage = () => {
   const { pid } = useParams();
@@ -19,12 +21,17 @@ const PostPage = () => {
 
   const { post, isLoading, isError, error } = useFetchPost(pid);
   const { addComment, isAddingComment } = useAddComment(pid);
+  const { deleteComment, isDeletingComment } = useDeleteComment();
 
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
     addComment({ postId: pid, text: commentText });
     setCommentText("");
+  };
+
+  const handleDeleteComment = (commentId) => {
+    deleteComment({ postId: pid, commentId });
   };
 
   useEffect(() => {
@@ -120,7 +127,7 @@ const PostPage = () => {
                   </div>
                 </div>
               </Link>
-              <div className="flex flex-col">
+              <div className="flex flex-col flex-grow">
                 <div className="flex gap-1 items-center">
                   <Link
                     to={`/profile/${comment.user?.username || ""}`}
@@ -142,6 +149,15 @@ const PostPage = () => {
                       <span className="text-[7px]">●</span>{" "}
                       {formatPostDate(comment.createdAt)}
                     </span>
+                  )}
+                  {authUser?._id === comment.user?._id && (
+                    <button
+                      className="text-red-500 ml-auto hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2"
+                      onClick={() => handleDeleteComment(comment._id)}
+                      disabled={isDeletingComment}
+                    >
+                      {isDeletingComment ? <LoadingSpinner size="sm" /> : <FiTrash />}
+                    </button>
                   )}
                 </div>
                 <p className="text-sm">{comment.text}</p>

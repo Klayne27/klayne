@@ -66,3 +66,16 @@ export const fetchPostApi = async (postId) => {
   }
   return res.json();
 };
+
+export const deleteCommentApi = async ({ postId, commentId }) => {
+  const res = await fetch(`/api/posts/comment/${postId}/${commentId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete comment");
+  }
+  return data;
+};

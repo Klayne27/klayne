@@ -3,7 +3,7 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useParams, Link, useLocation, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
@@ -16,7 +16,7 @@ const Post = ({ post }) => {
   const { authUser } = useAuthUser();
   const { deletePost, isDeleting } = useDeletePosts(post);
   const { likePost, isLiking } = useLikePost(post);
-  const { pathname } = useLocation();
+  const { pid } = useParams();
 
   const postOwner = post.user;
   const isLiked = post.likes.includes(authUser?._id);
@@ -28,6 +28,8 @@ const Post = ({ post }) => {
     e.preventDefault();
     e.stopPropagation();
   };
+
+
 
   const handleDeletePostClick = (e) => {
     handleInteractiveClick(e);
