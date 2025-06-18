@@ -275,6 +275,10 @@ const ChatWindow = ({
     currentOptimisticIdRef.current = null; // Clear the ref after success
     setReplyingToMessage(null); // Clear replyingToMessage on success
     setImageFile("");
+
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
   };
 
   const scrollToBottom = () => {
@@ -392,6 +396,8 @@ const ChatWindow = ({
     }
   }, [selectedConversation]);
 
+  console.log("user here", currentUser);
+
   if (!selectedConversation) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-black text-gray-400">
@@ -414,6 +420,7 @@ const ChatWindow = ({
   const messagesToRender = messagesToDisplay.filter(
     (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
   );
+
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
