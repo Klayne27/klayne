@@ -16,9 +16,9 @@ const RightPanel = () => {
   if (suggestedUsers?.length === 0) return <div className="md:w-[390px] w-0 ml-2"></div>;
 
   return (
-    <div className="hidden lg:block mt-4 mx-6 h-[105vh] w-[350px]">
+    <div className="hidden lg:block sticky pt-4 mx-6 h-[105vh] w-[350px] top-0">
         <SearchPanel />
-      <div className="p-4 rounded-2xl sticky top-2 border border-gray-700 ">
+      <div className="p-4 rounded-2xl  top-2 border border-gray-700 ">
         <p className="font-bold mb-4 text-xl">Who to follow</p>
         <div className="flex flex-col gap-4">
           {isLoading && (

@@ -24,7 +24,7 @@ const SearchPanel = () => {
   const { users, isLoading, isError, error, isFetching } = useSearchUsers(debouncedQuery);
 
   return (
-    <div className="bg-black rounded-lg sticky top-0 right-0 z-10 hidden md:block">
+    <div className="bg-black rounded-lg sticky top-0  right-0 z-10 md:block">
       <div className="relative mb-4 w-full">
         <input
           type="text"
