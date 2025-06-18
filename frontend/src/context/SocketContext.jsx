@@ -8,6 +8,8 @@ export const useSocket = () => {
   return useContext(SocketContext);
 };
 
+const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+
 export const SocketContextProvider = ({ children }) => {
   const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser();
   const [socket, setSocket] = useState(null);
@@ -16,9 +18,8 @@ export const SocketContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (!isLoadingAuthUser && user) {
-      const socketServerUrl = import.meta.env.VITE_SOCKET_SERVER_URL || "/";
 
-      const newSocket = io(socketServerUrl, {
+      const newSocket = io(BASE_URL, {
         query: {
           userId: user._id,
         },
