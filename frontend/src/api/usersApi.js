@@ -51,3 +51,16 @@ export const followApi = async (userId) => {
   if (!res.ok) throw new Error(data.error || "Something went wrong");
   return data;
 };
+
+export const deleteUserAccountApi = async (userId) => {
+  const res = await fetch(`/api/users/delete/${userId}`, {
+    method: "DELETE",
+    headers: { "Content-Type": "application/json" },
+  });
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete account");
+  }
+  return data;
+};

@@ -2,6 +2,7 @@ import Notification from "../models/notification.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
+import Post from "../models/post.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -66,7 +67,7 @@ export const getSuggestedUsers = async (req, res) => {
     const userId = req.user._id;
 
     const user = await User.findById(userId).select("following").lean();
-    const usersFollowedByMe = user ? user.following : []
+    const usersFollowedByMe = user ? user.following : [];
 
     const suggestedUsers = await User.aggregate([
       {
@@ -202,6 +203,87 @@ export const getFollowers = async (req, res) => {
     res.status(200).json(user.followers);
   } catch (error) {
     console.log("Error in getFollowers: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+// NEW FUNCTION: deleteUserAccount
+export const deleteUserAccount = async (req, res) => {
+  try {
+    const { id } = req.params; // The ID of the user to delete (from URL)
+
+    // 1. Authorization: Ensure the logged-in user is deleting their own account
+    // This is the CRUCIAL check when removing password confirmation.
+    if (id !== req.user._id.toString()) {
+      return res
+        .status(401)
+        .json({ error: "You are not authorized to delete this account." });
+    }
+
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    if (userToDelete.profileImg) {
+      const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(profileImgId);
+    }
+    if (userToDelete.coverImg) {
+      const coverImgId = userToDelete.coverImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(coverImgId);
+    }
+
+    // 3. Delete all posts created by this user and their images
+    const userPosts = await Post.find({ user: userToDelete._id });
+    for (const post of userPosts) {
+      if (post.img) {
+        const postId = post.img.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(postId);
+      }
+      await Post.findByIdAndDelete(post._id); // Delete the post document
+    }
+
+    // 4. Remove user from 'likes' arrays on all other posts
+    await Post.updateMany(
+      { likes: userToDelete._id },
+      { $pull: { likes: userToDelete._id } }
+    );
+
+    // 5. Remove user from 'comments' arrays on all other posts
+    await Post.updateMany(
+      { "comments.user": userToDelete._id },
+      { $pull: { comments: { user: userToDelete._id } } }
+    );
+
+    // 6. Remove user from 'followers' and 'following' arrays of other users
+    // For users who follow this user, remove this user from their 'following' list
+    await User.updateMany(
+      { following: userToDelete._id },
+      { $pull: { following: userToDelete._id } }
+    );
+    // For users this user was following, remove this user from their 'followers' list
+    await User.updateMany(
+      { followers: userToDelete._id },
+      { $pull: { followers: userToDelete._id } }
+    );
+
+    // 7. Delete all notifications related to this user
+    await Notification.deleteMany({
+      $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
+    });
+
+    // 8. Finally, delete the user document
+    await User.findByIdAndDelete(id);
+
+    // 9. Clear session/cookie (handled by client after successful response, or by your auth middleware on successful deletion)
+    res
+      .status(200)
+      .json({
+        message: "Account deleted successfully. All associated data has been removed.",
+      });
+  } catch (error) {
+    console.error("Error in deleteUserAccount: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

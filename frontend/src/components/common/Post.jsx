@@ -29,8 +29,6 @@ const Post = ({ post }) => {
     e.stopPropagation();
   };
 
-
-
   const handleDeletePostClick = (e) => {
     handleInteractiveClick(e);
     deletePost();
