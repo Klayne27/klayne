@@ -390,14 +390,11 @@ const ChatWindow = ({
     };
   }, [showEmojiPicker]);
 
-
-  // Keep this for initial scroll on chat load/change
   useEffect(() => {
     if (!isLoading) {
-      // Only scroll on initial load if not loading
       scrollToBottom();
     }
-  }, [selectedConversation?._id, isLoading]); // Scroll when conversation changes or initial load finishes
+  }, [selectedConversation?._id, isLoading]);
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -409,9 +406,9 @@ const ChatWindow = ({
   useEffect(() => {
     if (shouldScrollToBottom) {
       scrollToBottom();
-      setShouldScrollToBottom(false); // Reset the flag after scrolling
+      setShouldScrollToBottom(false);
     }
-  }, [messages, shouldScrollToBottom]); // Rerun when messages or flag changes
+  }, [messages, shouldScrollToBottom]);
 
   const handleReplyClick = useCallback((message) => {
     setReplyingToMessage(message);
@@ -470,9 +467,17 @@ const ChatWindow = ({
         )}
       </div>
 
+      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
+        {/* {!isLoading &&
+          isNewChat &&
+          isTemporaryChat && ( // Only show loading if it's an existing chat and loading
+            <div className="flex justify-center items-center h-full">
+              <LoadingSpinner size="lg" />
+            </div>
+          )} */}
         {error &&
-          !isNewChat && ( 
+          !isNewChat && ( // Only show error if it's an existing chat and error
             <div className="flex justify-center items-center h-full text-red-500">
               <p>Error loading messages: {error.message}</p>
             </div>
@@ -488,7 +493,7 @@ const ChatWindow = ({
                 <div
                   className={`flex ${
                     isSentByCurrentUser ? "justify-end" : "justify-start"
-                  } items-start group relative`}
+                  } items-start group relative`} // Added group and relative for reply icon positioning
                 >
                   <div
                     className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative
@@ -506,10 +511,12 @@ const ChatWindow = ({
                          ? "right-[calc(100%+8px)]"
                          : "scale-x-[-1] left-[calc(100%+8px)]"
                      } `}
+                      // Adjusted positioning: 'right-[calc(100%+8px)]' for sent, 'left-[calc(100%+8px)]' for received
                       onClick={() => handleReplyClick(msg)}
                     >
                       <FaReply size={18} />
                     </div>
+                    {/* NEW: Delete Button */}
                     {isSentByCurrentUser && (
                       <button
                         onClick={() => handleDeleteClick(msg._id)}
@@ -625,6 +632,7 @@ const ChatWindow = ({
         </div>
       )}
 
+      {/* REPLY PREVIEW IN INPUT AREA */}
       {replyingToMessage && (
         <div className="p-2 pt-0 border-t border-gray-700 bg-black flex items-center justify-between">
           <div className="flex-1 p-3  rounded-md flex flex-col">
@@ -643,6 +651,7 @@ const ChatWindow = ({
         </div>
       )}
 
+      {/* Message Input Area */}
       <form
         onSubmit={handleSendMessage}
         className="p-2 border-t border-gray-700 bg-black flex items-center "

@@ -10,7 +10,7 @@ html {
 /* src/index.css or src/App.css */
 
 
-/* :root {
+:root {
     --dvh: 100vh;
   }
   
@@ -23,4 +23,4 @@ html {
   html, body {
     height: 100vh;
     height: 100dvh;
-  } */
+  }

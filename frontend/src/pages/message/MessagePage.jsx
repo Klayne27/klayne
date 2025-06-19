@@ -150,7 +150,6 @@ const MessagePage = () => {
     navigate("/messages"); // Go to base messages URL, clearing URL param
   };
 
-
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
       <div className="flex min-h-screen bg-black text-white items-center justify-center absolute w-full">
@@ -174,8 +173,8 @@ const MessagePage = () => {
     <div className="flex min-h-screen bg-black text-white w-full overflow-hidden">
       <div
         className={`
-          w-full
-          md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700 
+          w-full /* Always full width on mobile */
+          md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700 /* Desktop specific styles */
           ${
             showChatWindow ? "hidden" : "flex"
           } /* Hide on mobile if chat window is active */
@@ -191,10 +190,12 @@ const MessagePage = () => {
 
       <div
         className={`
-          w-full
-          md:w-[626px] md:flex-1
-          ${showChatWindow ? "flex" : "hidden"}
-          md:flex
+          w-full /* Always full width on mobile */
+          md:w-[626px] md:flex-1 /* Desktop specific styles */
+          ${
+            showChatWindow ? "flex" : "hidden"
+          } /* Show on mobile if chat window is active */
+          md:flex /* Always show on desktop */
           flex-col h-screen
         `}
       >
