@@ -151,13 +151,13 @@ const MessagePage = () => {
   };
 
 
-  if (isLoadingConversations || isLoadingFollowedUsers) {
-    return (
-      <div className="flex min-h-screen bg-black text-white items-center justify-center absolute w-full">
-        <LoadingSpinner size="lg" />
-      </div>
-    );
-  }
+  // if (isLoadingConversations || isLoadingFollowedUsers) {
+  //   return (
+  //     <div className="flex min-h-screen bg-black text-white items-center justify-center absolute w-full">
+  //       <LoadingSpinner size="lg" />
+  //     </div>
+  //   );
+  // }
 
   if (errorConversations || errorFollowedUsers) {
     return (
@@ -173,9 +173,9 @@ const MessagePage = () => {
   return (
     <div
       className="flex min-h-screen bg-black text-white overflow-hidden      
-        w-full  // Default: let content/flex determine width (or add a max-w-*)
-        lg:w-auto // From LG up: revert to default (no explicit w-full)
-        xl:w-auto // From XL up: revert to default (no explicit w-full)"
+        w-full
+        lg:w-auto
+        xl:w-auto"
     >
       <div
         className={`
