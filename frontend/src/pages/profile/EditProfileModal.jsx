@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -12,13 +13,17 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
   });
 
-  const { updateProfile, isUpdatingProfile } = useUpdateUserProfile(formData);
+  const navigate = useNavigate(); 
+
+  // Pass setFormData to the hook so it can update the local state if needed
+  const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
+    useUpdateUserProfile(formData); // Assume newUsername is returned on success
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
 
     if (name === "username") {
-      setFormData({ ...formData, [name]: value.replace(/\s/g, "") }); // Remove all whitespace characters
+      setFormData({ ...formData, [name]: value.replace(/\s/g, "") });
     } else {
       setFormData({ ...formData, [name]: value });
     }
@@ -38,6 +43,15 @@ const EditProfileModal = ({ authUser }) => {
     }
   }, [authUser]);
 
+  // Effect to handle navigation after successful update
+  useEffect(() => {
+    if (isSuccess && newUsername) {
+      // Assuming your user profile URLs are like /profile/:username
+      navigate(`/profile/${newUsername}`);
+      document.getElementById("edit_profile_modal").close(); // Close the modal
+    }
+  }, [isSuccess, newUsername, navigate]);
+
   return (
     <>
       <button
@@ -47,7 +61,7 @@ const EditProfileModal = ({ authUser }) => {
         Edit profile
       </button>
       <dialog id="edit_profile_modal" className="modal">
-        <div className="modal-box border  border-gray-700 shadow-md rounded-2xl">
+        <div className="modal-box border  border-gray-700 shadow-md rounded-2xl">
           <h3 className="font-bold text-lg mb-4">Update Profile</h3>
           <form
             className="flex flex-col gap-4 "

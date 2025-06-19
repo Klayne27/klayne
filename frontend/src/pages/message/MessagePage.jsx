@@ -221,14 +221,8 @@ const MessagePage = () => {
         <ChatWindow
           selectedConversation={selectedConversation}
           onBackToConversations={handleBackToConversations}
-          // The onNewConversationCreated prop will be called by ChatWindow after the first message is sent
-          // and the conversation ID is received from the backend.
           onNewConversationCreated={(newConversationId) => {
-            // Once ChatWindow confirms the conversation is created, we can tell queryClient
-            // to re-fetch the conversations list. This is key!
             refetchConversations();
-            // Then, navigate to the correct URL to reflect the new conversation.
-            // This might re-trigger the useEffect, but this time 'conversations' should have the new ID.
             if (urlConversationId !== newConversationId) {
               navigate(`/messages/${newConversationId}`, { replace: true });
             }
