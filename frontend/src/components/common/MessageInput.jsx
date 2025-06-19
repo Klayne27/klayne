@@ -20,11 +20,11 @@ function MessageInput({
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
   const imageInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const emojiPickerRef = useRef(null);
-  const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
   const handleSendMessage = async (e) => {
     e.preventDefault();

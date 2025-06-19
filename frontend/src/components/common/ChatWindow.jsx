@@ -104,13 +104,13 @@ const ChatWindow = ({
       };
 
       socket.on("newMessage", handleNewMessage);
-      // socket.on("messagesSeen", handleMessagesSeen);
       socket.on("messageDeleted", handleMessageDeleted);
+      // socket.on("messagesSeen", handleMessagesSeen);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
-        // socket.off("messagesSeen", handleMessagesSeen);
         socket.off("messageDeleted", handleMessageDeleted);
+        // socket.off("messagesSeen", handleMessagesSeen);
       };
     }
   }, [
@@ -136,6 +136,7 @@ const ChatWindow = ({
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
+      
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
