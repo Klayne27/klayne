@@ -16,6 +16,7 @@ function MessageInput({
   messageInputRef,
   isSendingMessage,
   sendMessage,
+  selectedConversation,
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -70,6 +71,12 @@ function MessageInput({
   };
 
   useEffect(() => {
+    if (selectedConversation && messageInputRef) {
+      messageInputRef.current.focus();
+    }
+  }, [selectedConversation, messageInputRef]);
+
+  useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         showEmojiPicker &&
@@ -101,7 +108,6 @@ function MessageInput({
 
   return (
     <>
-      {/*IMAGE PREVIEW*/}
       {imageFile && (
         <div className="mt-4 border-t border-gray-700 p-5 flex">
           <div className="relative">
@@ -120,7 +126,6 @@ function MessageInput({
         </div>
       )}
 
-      {/* REPLY PREVIEW IN INPUT AREA */}
       {replyingToMessage && (
         <div className="p-2 pt-0 border-t border-gray-700 bg-black flex items-center justify-between">
           <div className="flex-1 p-3  rounded-md flex flex-col">

@@ -136,7 +136,6 @@ const ChatWindow = ({
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
-      
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
@@ -159,6 +158,7 @@ const ChatWindow = ({
         messageInputRef={messageInputRef}
         sendMessage={sendMessage}
         isSendingMessage={isSendingMessage}
+        selectedConversation={selectedConversation}
       />
     </div>
   );
