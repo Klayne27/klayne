@@ -9,19 +9,18 @@ html {
 
 /* src/index.css or src/App.css */
 
-/* Define --dvh for dynamic viewport height */
-:root {
+
+/* :root {
     --dvh: 100vh;
   }
   
-  @media (max-width: 767px) { /* Apply only on smaller screens (mobile) */
+  @media (max-width: 767px) {
     :root {
-      --dvh: 1dvh; /* Or 100dvh depending on how you use it. 1dvh is 1% of the dynamic viewport height */
+      --dvh: 1dvh;
     }
   }
   
-  /* Optional: Fallback for older browsers if you use 100dvh directly */
   html, body {
-    height: 100vh; /* Fallback for browsers that don't support dvh */
-    height: 100dvh; /* Dynamic viewport height */
-  }
+    height: 100vh;
+    height: 100dvh;
+  } */
