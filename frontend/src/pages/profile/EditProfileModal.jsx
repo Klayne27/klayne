@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
-import { useNavigate } from "react-router-dom"; // Import useNavigate
+import { useNavigate } from "react-router-dom";
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -15,9 +15,8 @@ const EditProfileModal = ({ authUser }) => {
 
   const navigate = useNavigate(); 
 
-  // Pass setFormData to the hook so it can update the local state if needed
   const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
-    useUpdateUserProfile(formData); // Assume newUsername is returned on success
+    useUpdateUserProfile(formData);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -43,12 +42,10 @@ const EditProfileModal = ({ authUser }) => {
     }
   }, [authUser]);
 
-  // Effect to handle navigation after successful update
   useEffect(() => {
     if (isSuccess && newUsername) {
-      // Assuming your user profile URLs are like /profile/:username
       navigate(`/profile/${newUsername}`);
-      document.getElementById("edit_profile_modal").close(); // Close the modal
+      document.getElementById("edit_profile_modal").close();
     }
   }, [isSuccess, newUsername, navigate]);
 

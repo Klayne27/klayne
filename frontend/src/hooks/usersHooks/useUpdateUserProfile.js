@@ -5,7 +5,7 @@ import { useState } from "react";
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
-  const [newUsername, setNewUsername] = useState(null); 
+  const [newUsername, setNewUsername] = useState(null);
 
   const {
     mutateAsync: updateProfile,
@@ -19,13 +19,13 @@ export const useUpdateUserProfile = () => {
       toast.success("Profile updated successfully");
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-
+        queryClient.invalidateQueries({ queryKey: ["posts"] }),
         queryClient.invalidateQueries({ queryKey: ["userProfile", data.username] }),
       ]);
     },
     onError: (error) => {
       toast.error(error.message);
-      setNewUsername(null); 
+      setNewUsername(null);
     },
   });
 
