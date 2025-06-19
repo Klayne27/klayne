@@ -4,6 +4,7 @@ import { IoCloseSharp } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
+import { Link } from "react-router-dom";
 
 import EmojiPicker from "emoji-picker-react";
 import { useEffect } from "react";
@@ -95,11 +96,13 @@ const CreatePost = () => {
 
   return (
     <div className="flex p-4 items-start gap-3 border-b border-gray-700">
-      <div className="avatar">
-        <div className="w-10 rounded-full">
-          <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+      <Link to={`/profile/${authUser.username}`}>
+        <div className="avatar">
+          <div className="w-10 rounded-full">
+            <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+          </div>
         </div>
-      </div>
+      </Link>
       <form className="flex flex-col w-full" onSubmit={handleSubmit}>
         <textarea
           className="textarea w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
