@@ -4,7 +4,16 @@ import daisyUIThemes from "daisyui/src/theming/themes";
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
-    extend: {},
+    extend: {
+      height: {
+        dvh: "100dvh",
+        "screen-d": "var(--dvh)",
+      },
+      minHeight: {
+        dvh: "100dvh",
+        "screen-d": "var(--dvh)",
+      },
+    },
   },
   plugins: [daisyui],
 

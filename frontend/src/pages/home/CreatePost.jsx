@@ -101,7 +101,7 @@ const CreatePost = () => {
         </div>
       </div>
       <form className="flex flex-col w-full" onSubmit={handleSubmit}>
-        <input
+        <textarea
           className="textarea w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
           placeholder="What is happening?"
           value={text}

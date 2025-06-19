@@ -14,7 +14,6 @@ import EmojiPicker from "emoji-picker-react";
 import { FaReply } from "react-icons/fa6";
 import { useDeleteMessage } from "../../hooks/messagesHooks/useDeleteMessage";
 import { FiTrash } from "react-icons/fi";
-import LoadingSpinner from "./LoadingSpinner";
 
 const truncateText = (text, maxLength = 30) => {
   if (!text) return "";
@@ -39,9 +38,6 @@ const fetchMessages = async (conversationId) => {
   return Array.isArray(data) ? data : [];
 };
 
-// Backend Recommendation #2: Send message API now handles new conversation creation and returns its ID
-// This endpoint assumes: POST /api/messages with body { recipientId, message, img, conversationId (optional) }
-// And returns: { newMessage: { ... }, conversationId: "real_conversation_id" }
 const sendMessageApi = async ({
   recipientId,
   message,
@@ -82,26 +78,22 @@ const ChatWindow = ({
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
-  const [replyingToMessage, setReplyingToMessage] = useState(null); // Stores the message object being replied to
+  const [replyingToMessage, setReplyingToMessage] = useState(null);
 
-  
-  // The actual conversation ID to use for API calls (null for pseudo-chats)
   const actualConversationId = selectedConversation?.isNewChat
-  ? null
-  : selectedConversation?._id;
-  
+    ? null
+    : selectedConversation?._id;
+
   const isNewOrTemporaryChat =
-  selectedConversation?.isNewChat || selectedConversation?.isTemporary;
-  
+    selectedConversation?.isNewChat || selectedConversation?.isTemporary;
+
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
 
-  // Track the ID of the optimistic message for the *currently pending* send.
   const currentOptimisticIdRef = useRef(null);
 
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
 
-  // Determine the 'otherUser' correctly. 'participants' should contain current user and other user.
   const otherUser = selectedConversation?.participants.find(
     (p) => p?._id !== currentUser?._id
   );
@@ -234,7 +226,11 @@ const ChatWindow = ({
     onSettled: (data, error, variables, context) => {
       // Invalidate the query to ensure we fetch the latest state from the server
       // after the mutation is settled, whether successful or not.
+
       queryClient.invalidateQueries(["messages", context.targetConvId]);
+      if (messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
     },
   });
 
@@ -280,10 +276,6 @@ const ChatWindow = ({
     currentOptimisticIdRef.current = null; // Clear the ref after success
     setReplyingToMessage(null); // Clear replyingToMessage on success
     setImageFile("");
-
-    if (messageInputRef.current) {
-      messageInputRef.current.focus();
-    }
   };
 
   const scrollToBottom = () => {
@@ -398,9 +390,6 @@ const ChatWindow = ({
     };
   }, [showEmojiPicker]);
 
-  // useEffect(() => {
-  //   scrollToBottom();
-  // }, [messages]);
 
   // Keep this for initial scroll on chat load/change
   useEffect(() => {
@@ -431,11 +420,11 @@ const ChatWindow = ({
     }
   }, []); // useCallback to memoize
 
-  useEffect(() => {
-    if (selectedConversation && messageInputRef.current) {
-      messageInputRef.current.focus();
-    }
-  }, [selectedConversation]);
+  // useEffect(() => {
+  //   if (selectedConversation && messageInputRef.current) {
+  //     messageInputRef.current.focus();
+  //   }
+  // }, [selectedConversation]);
 
   if (!selectedConversation) {
     return (

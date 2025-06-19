@@ -6,3 +6,22 @@ html {
     overflow-y: scroll; 
     overflow-x: hidden; 
 }
+
+/* src/index.css or src/App.css */
+
+/* Define --dvh for dynamic viewport height */
+:root {
+    --dvh: 100vh;
+  }
+  
+  @media (max-width: 767px) { /* Apply only on smaller screens (mobile) */
+    :root {
+      --dvh: 1dvh; /* Or 100dvh depending on how you use it. 1dvh is 1% of the dynamic viewport height */
+    }
+  }
+  
+  /* Optional: Fallback for older browsers if you use 100dvh directly */
+  html, body {
+    height: 100vh; /* Fallback for browsers that don't support dvh */
+    height: 100dvh; /* Dynamic viewport height */
+  }
