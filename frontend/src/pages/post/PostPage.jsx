@@ -99,12 +99,12 @@ const PostPage = () => {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Post your reply"
-            className="flex-1 pl-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg" // Adjusted padding, font size, flex-1
+            className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg" // Adjusted padding, font size, flex-1
             disabled={isAddingComment}
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-primary hover:bg-[#1d9cf0d8] text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
+            className="px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
             disabled={isAddingComment || !commentText.trim()}
           >
             Reply
