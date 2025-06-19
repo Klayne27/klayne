@@ -171,7 +171,12 @@ const MessagePage = () => {
   const showChatWindow = !!urlConversationId || !!selectedConversation;
 
   return (
-    <div className="flex min-h-screen bg-black text-white overflow-hidden">
+    <div
+      className="flex min-h-screen bg-black text-white overflow-hidden      
+        w-full  // Default: let content/flex determine width (or add a max-w-*)
+        lg:w-auto // From LG up: revert to default (no explicit w-full)
+        xl:w-auto // From XL up: revert to default (no explicit w-full)"
+    >
       <div
         className={`
           w-full /* Always full width on mobile */
