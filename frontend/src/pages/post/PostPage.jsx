@@ -84,11 +84,10 @@ const PostPage = () => {
         <Post post={post} />
       </div>
 
-      {/* Add Comment Form */}
       {authUser && (
         <form
           onSubmit={handleAddComment}
-          className="p-4 border-b  border-gray-700 flex items-center sm:gap-4"
+          className="p-4 border-b border-gray-700 flex items-center justify-between sm:gap-4"
         >
           <div className="avatar flex-shrink-0">
             <div className="w-9 rounded-full">

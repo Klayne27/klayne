@@ -448,7 +448,7 @@ const ChatWindow = ({
 
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
-      <div className="sticky top-0 bg-black w-full z-20 p-4 shadow-lg flex items-center">
+      <div className="fixed top-0 bg-black w-[680px] z-20 p-4 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md ">
         {onBackToConversations && (
           <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
             <BiArrowBack className="w-6 h-6" />
@@ -468,7 +468,7 @@ const ChatWindow = ({
       </div>
 
       {/* Messages Container */}
-      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
+      <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20">
         {/* {!isLoading &&
           isNewChat &&
           isTemporaryChat && ( // Only show loading if it's an existing chat and loading
