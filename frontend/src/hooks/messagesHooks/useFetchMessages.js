@@ -7,7 +7,9 @@ export const useFetchMessages = (selectedConversation) => {
     isLoading,
     error,
   } = useQuery({
-    queryKey: ["messages", selectedConversation?.id],
-    queryFn: () => fetchMessagesApi,
+    queryKey: ["messages", selectedConversation?._id],
+    queryFn: () => fetchMessagesApi(selectedConversation?._id),
   });
+
+  return { messages, isLoading, error };
 };

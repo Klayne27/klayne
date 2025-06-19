@@ -15,7 +15,6 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
     conversations,
     isLoadingConversations,
     errorConversations,
-    refetchConversations,
   } = useFetchConversations();
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
