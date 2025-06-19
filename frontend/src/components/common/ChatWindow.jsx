@@ -654,8 +654,10 @@ const ChatWindow = ({
       {/* Message Input Area */}
       <form
         onSubmit={handleSendMessage}
-        className="p-2 border-t border-gray-700 bg-black flex items-center "
+        // The form itself acts as a flex container for the main message box
+        className="p-2 border-t border-gray-700 bg-black flex items-center"
       >
+        {/* Hidden file input */}
         <input
           type="file"
           accept="image/*"
@@ -663,60 +665,67 @@ const ChatWindow = ({
           ref={imageInputRef}
           className="hidden"
         />
-        <button
-          type="button"
-          onClick={() => imageInputRef.current.click()}
-          className="p-2 text-primary rounded-full hover:bg-gray-900 transition-colors duration-200"
-        >
-          <IoImageOutline className="w-5 h-5" />
-        </button>
-        <button
-          type="button"
-          className="p-2 text-primary rounded-full hover:bg-gray-900 transition-colors duration-200"
-        >
-          <HiOutlineGif className="w-5 h-5" />
-        </button>
-        <button
-          type="button"
-          className="p-2 relative text-primary rounded-full hover:bg-gray-900 transition-colors duration-200"
-        >
-          <PiSmiley
-            className="w-5 h-5"
-            ref={emojiButtonRef}
-            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-          />
-          {showEmojiPicker && (
-            <div className="absolute bottom-full -left-40 z-10" ref={emojiPickerRef}>
-              <EmojiPicker
-                onEmojiClick={onEmojiClick}
-                width={emojiPickerWidth}
-                theme="dark"
-              />{" "}
-            </div>
-          )}
-        </button>
 
-        <input
-          type="text"
-          value={messageInput}
-          onChange={(e) => setMessageInput(e.target.value)}
-          placeholder="Start a new message"
-          className="flex-1 px-3 py-2 mr-2 rounded-full bg-gray-800 text-white placeholder-gray-400 border border-transparent focus:border-primary focus:outline-none"
-          disabled={sendMessageMutation.isPending}
-          ref={messageInputRef}
-        />
-        <button
-          type="submit"
-          disabled={sendMessageMutation.isPending || (!messageInput.trim() && !imageFile)}
-          className={`p-2 rounded-full ${
-            messageInput.trim() || imageFile
-              ? "bg-primary text-white"
-              : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
-          }
-            transition-colors duration-200`}
-        >
-          <MdSend className="w-5 h-5" />
-        </button>
+        <div className="flex-1 relative flex items-center rounded-full bg-gray-800 border border-transparent focus-within:border-primary">
+          <div className="flex pl-1">
+            <button
+              type="button"
+              onClick={() => imageInputRef.current.click()}
+              className="p-1 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+            >
+              <IoImageOutline className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              className=" text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+            >
+              <HiOutlineGif className="w-5 h-5" />
+            </button>
+            <button
+              type="button"
+              className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 hidden md:block"
+            >
+              <PiSmiley
+                className="w-5 h-5"
+                ref={emojiButtonRef}
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+              />
+              {showEmojiPicker && (
+                <div className="absolute bottom-full -left-40 z-10" ref={emojiPickerRef}>
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    width={emojiPickerWidth}
+                    theme="dark"
+                  />{" "}
+                </div>
+              )}
+            </button>
+          </div>
+
+          <input
+            type="text"
+            value={messageInput}
+            onChange={(e) => setMessageInput(e.target.value)}
+            placeholder="Start a new message"
+            className="flex-1 py-2 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
+            disabled={sendMessageMutation.isPending}
+            ref={messageInputRef}
+          />
+
+          <button
+            type="submit"
+            disabled={
+              sendMessageMutation.isPending || (!messageInput.trim() && !imageFile)
+            }
+            className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+              messageInput.trim() || imageFile
+                ? "bg-primary text-white"
+                : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
+            } transition-colors duration-200`}
+          >
+            <MdSend className="w-5 h-5" />
+          </button>
+        </div>
       </form>
     </div>
   );

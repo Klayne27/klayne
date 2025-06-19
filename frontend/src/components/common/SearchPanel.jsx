@@ -6,7 +6,7 @@ import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 const SearchPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [showResults, setShowResults] = useState(false); // New state to control dropdown visibility
+  const [showResults, setShowResults] = useState(false); 
 
   // Effect for debouncing the search query.
   useEffect(() => {
@@ -62,7 +62,7 @@ const SearchPanel = () => {
         <CiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
       </div>
 
-      {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? ( 
+      {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (
         <div className="max-h-[500px] w-full overflow-y-auto custom-scrollbar border rounded-2xl absolute top-[43px] left-0 z-50 bg-black border-gray-700 shadow-md shadow-gray-400">
           {(isLoading || isFetching) && debouncedQuery ? (
             <p className="p-4 text-gray-400 text-center">Searching...</p>
@@ -96,7 +96,7 @@ const SearchPanel = () => {
                 </Link>
               ))}
             </>
-          ) : debouncedQuery && !isLoading && !isFetching && users.length === 0 ? ( 
+          ) : debouncedQuery && !isLoading && !isFetching && users.length === 0 ? (
             <p className="p-4 text-gray-400 text-center">No users found.</p>
           ) : null}
         </div>

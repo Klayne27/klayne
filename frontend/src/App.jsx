@@ -11,6 +11,7 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import MessagesPage from "./pages/message/MessagePage";
 import PostPage from "./pages/post/PostPage";
+import SearchPage from "./pages/search/SearchPage";
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
@@ -55,6 +56,10 @@ function App() {
         <Route
           path="/:username/post/:pid"
           element={authUser ? <PostPage /> : <Navigate to="/login" />}
+        />
+        <Route
+          path="/search"
+          element={authUser ? <SearchPage /> : <Navigate to="/login" />}
         />
       </Routes>
       {authUser && !isMessagePage && <RightPanel />}

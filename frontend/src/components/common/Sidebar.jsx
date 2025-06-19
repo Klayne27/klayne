@@ -1,10 +1,10 @@
 import XSvg from "../svgs/X";
 import { PiBellThin } from "react-icons/pi";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
-import { CiMail, CiUser } from "react-icons/ci";
+import { CiMail, CiSearch, CiUser } from "react-icons/ci";
 import { PiHouseThin } from "react-icons/pi";
 import { useState, useRef, useEffect } from "react"; // Import useRef and useEffect
 import Modal from "./Modal";
@@ -23,6 +23,12 @@ const Sidebar = () => {
 
   const profileButtonRef = useRef(null);
   const popoverRef = useRef(null);
+
+  const navigate = useNavigate();
+
+  const handleMobileSearchClick = () => {
+    navigate("/search"); // Navigate to the dedicated search page on mobile
+  };
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -115,6 +121,17 @@ const Sidebar = () => {
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
           </li>
+          <li className="flex justify-start md:justify-start md:hidden">
+            <div
+              className={`${
+                pathname === "/search" ? "font-bold text-white" : ""
+              }  flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+            >
+              <button onClick={handleMobileSearchClick}>
+                <CiSearch className="w-6 h-6" strokeWidth={pathname === "/search" ? 2 : 1} />
+              </button>
+            </div>
+          </li>
 
           <li className="flex justify-start md:justify-start">
             <Link
@@ -149,7 +166,7 @@ const Sidebar = () => {
                   />
                 </div>
               </div>
-              <div className="flex justify-between flex-1 items-center">
+              <div className="flex justify-center md:justify-between flex-1 items-center">
                 <div className="hidden md:block">
                   <p className="text-white font-bold text-sm w-20 truncate">
                     {authUser?.fullName}
