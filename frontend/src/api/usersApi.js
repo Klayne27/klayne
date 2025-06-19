@@ -70,7 +70,6 @@ export const searchUsersApi = async (query) => {
   const data = await res.json();
 
   if (!res.ok) {
-    // Throw an error if the response status is not OK (e.g., 400, 500)
     throw new Error(data.error || "Failed to search users");
   }
   return data;

@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post"; // Assuming this Post component is already responsive
+import Post from "../../components/common/Post"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
@@ -36,12 +36,10 @@ const PostPage = () => {
   useEffect(() => {
     if (isError) {
       toast.error(error.message || "Could not load post.");
-      // Use replace here to avoid adding a broken page to history
       navigate("/", { replace: true });
     }
   }, [isError, error, navigate]);
 
-  // Loading state for the entire page
   if (isLoading) {
     return (
       <div className="flex-1 flex justify-center items-center h-screen w-full">
@@ -50,7 +48,6 @@ const PostPage = () => {
     );
   }
 
-  // Error/Not Found state for the entire page
   if (isError || !post) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen w-full text-white p-4">
@@ -115,7 +112,6 @@ const PostPage = () => {
         </form>
       )}
 
-      {/* Comments Section */}
       <div className="flex flex-col">
         {post.comments && post.comments.length > 0 ? (
           post.comments.map((comment) => (
@@ -123,7 +119,6 @@ const PostPage = () => {
               key={comment._id}
               className="flex gap-3 text-white border-b border-gray-700 p-4 relative items-start"
             >
-              {/* Avatar and Link */}
               <Link
                 to={`/profile/${comment.user?.username || ""}`}
                 className="flex-shrink-0"
@@ -138,28 +133,27 @@ const PostPage = () => {
                 </div>
               </Link>
 
-              {/* Comment Content Area */}
               <div className="flex flex-col flex-grow min-w-0">
                 <div className="flex flex-wrap gap-1 items-center relative">
                   <div className="flex gap-1">
                     <Link
                       to={`/profile/${comment.user?.username || ""}`}
-                      className="font-semibold text-sm hover:underline flex-shrink-0" // flex-shrink-0
+                      className="font-semibold text-sm hover:underline flex-shrink-0"
                     >
                       {comment.user?.fullName}
                     </Link>
                     {comment.user.isVerified && (
-                      <img src="/verified.png" className="size-[17px] flex-shrink-0" /> // flex-shrink-0
+                      <img src="/verified.png" className="size-[17px] flex-shrink-0" />
                     )}
                     <Link
                       to={`/profile/${comment.user?.username || ""}`}
-                      className="text-gray-500 text-sm truncate flex-grow min-w-0" // truncate long usernames, flex-grow to take remaining space
+                      className="text-gray-500 text-sm truncate flex-grow min-w-0"
                     >
                       @{comment.user?.username}
                     </Link>
                     {comment.createdAt && (
                       <span className="text-gray-500 text-xs text-center flex items-center justify-center gap-1 flex-shrink-0 ml-auto">
-                        <span className="text-[7px]">●</span>{" "}
+                        <span className="text-[7px]">●</span>
                         {formatPostDate(comment.createdAt)}
                       </span>
                     )}
@@ -179,7 +173,7 @@ const PostPage = () => {
                     </button>
                   )}
                 </div>
-                <p className="text-sm break-words mt-1">{comment.text}</p>{" "}
+                <p className="text-sm break-words mt-1">{comment.text}</p>
               </div>
             </div>
           ))

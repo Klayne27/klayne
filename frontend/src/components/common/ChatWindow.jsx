@@ -8,7 +8,7 @@ import { MdSend } from "react-icons/md";
 import { BiArrowBack } from "react-icons/bi";
 import { toast } from "react-hot-toast";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { Link, useNavigate } from "react-router-dom"; // Import useNavigate
+import { Link } from "react-router-dom";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { FaReply } from "react-icons/fa6";
@@ -67,7 +67,6 @@ const ChatWindow = ({
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
   const { socket } = useSocket();
-  const navigate = useNavigate(); // For updating URL after new chat creation
   const [shouldScrollToBottom, setShouldScrollToBottom] = useState(false);
 
   const [messageInput, setMessageInput] = useState("");
@@ -152,7 +151,6 @@ const ChatWindow = ({
         isOptimistic: true,
         repliedTo: replyingToMessage
           ? {
-              // Add optimistic repliedTo structure
               _id: replyingToMessage._id,
               text: replyingToMessage.text,
               img: replyingToMessage.img,
@@ -171,7 +169,7 @@ const ChatWindow = ({
         return [...(oldMessages || []), tempMessage];
       });
 
-      return { previousMessages, optimisticId: tempMessageId }; // Pass optimisticId to context
+      return { previousMessages, optimisticId: tempMessageId };
     },
     onSuccess: (data, variables, context) => {
       // Access context here

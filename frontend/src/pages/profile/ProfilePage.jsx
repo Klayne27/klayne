@@ -37,7 +37,7 @@ const ProfilePage = () => {
 
   const { user, isLoading, refetch, isRefetching } = useFetchUserProfile(username);
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
-  const { conversations, isLoadingConversations } = useFetchConversations();
+  const { conversations } = useFetchConversations();
 
   const isMyProfile = authUser?._id === user?._id;
   const amIFollowing = authUser?.following?.includes(user?._id);

@@ -15,10 +15,10 @@ export const SocketContextProvider = ({ children }) => {
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
   const socketRef = useRef(null);
+  const [lastReceivedMessage, setLastReceivedMessage] = useState(null); // NEW: State to store the last message
 
   useEffect(() => {
     if (!isLoadingAuthUser && user) {
-
       const newSocket = io(BASE_URL, {
         query: {
           userId: user._id,
@@ -32,6 +32,11 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
+      newSocket.on("newMessage", (message) => {
+        setLastReceivedMessage(message);
+        console.log("SocketContext: Received new message:", message);
+      });
+
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
       });
@@ -43,6 +48,7 @@ export const SocketContextProvider = ({ children }) => {
       return () => {
         if (newSocket) {
           newSocket.off("getOnlineUsers");
+          newSocket.off("newMessage");
           newSocket.off("disconnect");
           newSocket.off("connect_error");
           newSocket.close();
@@ -55,11 +61,12 @@ export const SocketContextProvider = ({ children }) => {
         setSocket(null);
       }
       setOnlineUsers([]);
+      setLastReceivedMessage(null);
     }
   }, [user, isLoadingAuthUser]);
 
   return (
-    <SocketContext.Provider value={{ socket, onlineUsers }}>
+    <SocketContext.Provider value={{ socket, onlineUsers, lastReceivedMessage }}>
       {children}
     </SocketContext.Provider>
   );

@@ -8,17 +8,15 @@ const app = express();
 const server = http.createServer(app);
 
 const allowedOrigins = [
-  "http://localhost:3000", // For local React development
-  "http://localhost:5173", // Another common local React port
-  process.env.RENDER_EXTERNAL_URL, // This environment variable is provided by Render
+  "http://localhost:3000",
+  "http://localhost:5173",
+  process.env.RENDER_EXTERNAL_URL,
 ];
 
 
 const io = new Server(server, {
   cors: {
     origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps or curl requests)
-      // and requests from allowedOrigins list
       if (!origin || allowedOrigins.includes(origin)) {
         callback(null, true);
       } else {
@@ -30,10 +28,6 @@ const io = new Server(server, {
   },
 });
 
-// ========================================================================
-// 1. Online Users Tracking: Robustly store userId -> Set of socketIds
-//    This allows a single user to have multiple open tabs/devices.
-// ========================================================================
 const onlineUsersMap = new Map();
 
 export function getReceiverSocketIds(userId) {
@@ -47,9 +41,6 @@ function getOnlineUserIds() {
   });
 }
 
-// ========================================================================
-// 2. Socket.IO Connection Handling
-// ========================================================================
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
@@ -84,9 +75,6 @@ io.on("connection", (socket) => {
   io.emit("getOnlineUsers", getOnlineUserIds());
   console.log("Updated online user IDs after connection:", getOnlineUserIds());
 
-  // ========================================================================
-  // 3. 'markMessagesAsSeen' Event Handling
-  // ========================================================================
   socket.on("markMessagesAsSeen", async ({ conversationId }) => {
     try {
       const readerId = socket.userId;
@@ -123,9 +111,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // ========================================================================
-  // 4. Disconnection Handling
-  // ========================================================================
   socket.on("disconnect", () => {
     console.log(`Socket disconnected: ${socket.id}`);
 
@@ -153,25 +138,6 @@ io.on("connection", (socket) => {
     console.log("Updated online user IDs after disconnect:", getOnlineUserIds());
   });
 
-  // ========================================================================
-  // 5. Placeholder for Other Real-time Messaging Events
-  //    (e.g., sendMessage, typing indicators, delete message)
-  // ========================================================================
-  // Example: Listen for a 'sendMessage' event from a client
-  // socket.on("sendMessage", async (messageData) => {
-  //   // 1. Validate messageData and sender (socket.userId)
-  //   // 2. Save the message to your Message and update Conversation models in DB
-  //   // 3. Get receiver(s) socket IDs using getReceiverSocketIds(receiverId)
-  //   // 4. Emit a 'newMessage' event to all recipient's sockets AND sender's other sockets
-  // });
-
-  // socket.on("typing", ({ conversationId, isTyping }) => {
-  //   // Emit 'typing' event to other participants in the conversation
-  //   // (Excluding the user who is typing)
-  // });
 });
 
-// ========================================================================
-// 6. Exports
-// ========================================================================
 export { io, server, app };

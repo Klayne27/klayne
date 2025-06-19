@@ -13,9 +13,9 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
   });
 
-  const navigate = useNavigate(); 
+  const navigate = useNavigate();
 
-  const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
+  const { updateProfile, isUpdatingProfile, isSuccess, newUsername, error, isError } =
     useUpdateUserProfile(formData);
 
   const handleInputChange = (e) => {

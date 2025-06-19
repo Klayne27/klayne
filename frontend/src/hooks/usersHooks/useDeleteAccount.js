@@ -9,9 +9,9 @@ export const useDeleteAccount = () => {
     mutationFn: deleteUserAccountApi,
     onSuccess: () => {
       toast.success("Account deleted successfully!");
-      localStorage.removeItem("authUser"); // Remove user from local storage
-      queryClient.removeQueries(); // Invalidate and remove all queries from cache
-      window.location.href = "/login"; // Redirect to login page or home page
+      localStorage.removeItem("authUser");
+      queryClient.removeQueries();
+      window.location.href = "/login";
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete account.");

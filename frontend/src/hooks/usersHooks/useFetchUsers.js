@@ -9,7 +9,7 @@ export const useFetchUsers = (userId, queryKey, endpoint, type) => {
   } = useQuery({
     queryKey: queryKey,
     queryFn: () => fetchUsersApi(endpoint, type),
-    enabled: !!userId, // Only run the query if userId is available
+    enabled: !!userId,
   });
 
   return { users, isLoading, error };

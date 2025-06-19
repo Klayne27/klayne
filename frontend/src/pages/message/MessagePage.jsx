@@ -5,7 +5,6 @@ import ChatWindow from "../../components/common/ChatWindow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const MessagePage = () => {
   const { authUser: currentUser } = useAuthUser();
@@ -93,20 +92,6 @@ const MessagePage = () => {
         }
       }
 
-      // --- Priority 3: Default to the first conversation if nothing specific is selected ---
-      // if (!desiredConversation && conversations.length > 0) {
-      //   desiredConversation = conversations[0];
-      //   // If we default, update the URL to reflect the selected conversation
-      //   if (
-      //     !urlConversationId &&
-      //     !targetUserId &&
-      //     desiredConversation &&
-      //     !desiredConversation.isNewChat
-      //   ) {
-      //     navigate(`/messages/${desiredConversation._id}`, { replace: true });
-      //   }
-      // }
-
       setSelectedConversation(desiredConversation);
       initialLoadAttempted.current = true;
 
@@ -144,20 +129,10 @@ const MessagePage = () => {
     }
   };
 
-  // Handler for back button on mobile view
   const handleBackToConversations = () => {
     setSelectedConversation(null);
-    navigate("/messages"); // Go to base messages URL, clearing URL param
+    navigate("/messages");
   };
-
-
-  // if (isLoadingConversations || isLoadingFollowedUsers) {
-  //   return (
-  //     <div className="flex min-h-screen bg-black text-white items-center justify-center absolute w-full">
-  //       <LoadingSpinner size="lg" />
-  //     </div>
-  //   );
-  // }
 
   if (errorConversations || errorFollowedUsers) {
     return (

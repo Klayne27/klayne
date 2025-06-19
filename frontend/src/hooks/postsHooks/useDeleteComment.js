@@ -8,8 +8,8 @@ export const useDeleteComment = () => {
     mutationFn: deleteCommentApi,
     onSuccess: () => {
       toast.success("Comment deleted successfully");
-      queryClient.invalidateQueries({ queryKey: ["post"] }); // Refetch the specific post
-      queryClient.invalidateQueries({ queryKey: ["posts"] }); // Invalidate all posts to update feeds
+      queryClient.invalidateQueries({ queryKey: ["post"] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete comment.");

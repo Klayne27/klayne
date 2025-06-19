@@ -1,22 +1,26 @@
-import { useState } from "react";
-
+import { useEffect, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import ConversationItem from "./ConversationItem";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
   const { authUser: currentUser } = useAuthUser();
-  const { onlineUsers } = useSocket();
+  const { onlineUsers, lastReceivedMessage } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
+  const queryClient = useQueryClient();
 
-  const { conversations, isLoadingConversations, errorConversations } =
-    useFetchConversations();
+  const {
+    conversations,
+    isLoadingConversations,
+    errorConversations,
+    refetchConversations,
+  } = useFetchConversations();
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
-
 
   const conversationParticipantsSet = new Set();
   conversations.forEach((conv) => {
@@ -58,6 +62,58 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
       otherUserForFilter.fullName.toLowerCase().includes(searchTerm.toLowerCase())
     );
   });
+
+  // --- NEW useEffect for real-time message updates ---
+  useEffect(() => {
+    if (lastReceivedMessage) {
+      console.log(
+        "ConversationsList: Reacting to lastReceivedMessage:",
+        lastReceivedMessage
+      ); // For debugging
+
+      // Update the conversations in react-query cache
+      queryClient.setQueryData(["conversations"], (oldConversations) => {
+        // Ensure oldConversations is an array, fallback if undefined
+        const currentConversations = oldConversations || [];
+
+        // Check if the message belongs to an existing conversation
+        const existingConvIndex = currentConversations.findIndex(
+          (conv) => conv._id === lastReceivedMessage.conversationId
+        );
+
+        if (existingConvIndex !== -1) {
+          // If conversation exists, update its last message and updatedAt
+          const updatedConversations = [...currentConversations];
+          const convToUpdate = { ...updatedConversations[existingConvIndex] };
+
+          convToUpdate.lastMessage = {
+            _id: lastReceivedMessage._id,
+            text: lastReceivedMessage.text,
+            img: lastReceivedMessage.img,
+            sender: lastReceivedMessage.sender,
+            seen: false, // Mark as unread initially if it's from the other user
+          };
+          convToUpdate.updatedAt = lastReceivedMessage.createdAt; // Use message's creation time
+
+          // Move the updated conversation to the top
+          updatedConversations.splice(existingConvIndex, 1); // Remove from current position
+          updatedConversations.unshift(convToUpdate); // Add to the beginning
+
+          console.log("ConversationsList: Cache updated for existing conversation."); // Debug
+          return updatedConversations;
+        } else {
+          // If the conversation doesn't exist (e.g., first message in a new chat)
+          // or if the list might be incomplete, refetch conversations.
+          // This ensures new conversations appear.
+          console.log(
+            "ConversationsList: New conversation or not found in cache, refetching..."
+          ); // Debug
+          refetchConversations(); // Trigger a full refetch
+          return currentConversations; // Return current cache, refetch will update it
+        }
+      });
+    }
+  }, [lastReceivedMessage, queryClient, refetchConversations]); // Dependencies
 
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (

@@ -11,6 +11,8 @@ export const useUpdateUserProfile = () => {
     mutateAsync: updateProfile,
     isPending: isUpdatingProfile,
     isSuccess,
+    isError,
+    error
   } = useMutation({
     mutationFn: (formData) => updateUserProfileApi(formData),
     onSuccess: (data) => {
@@ -29,5 +31,5 @@ export const useUpdateUserProfile = () => {
     },
   });
 
-  return { updateProfile, isUpdatingProfile, isSuccess, newUsername };
+  return { updateProfile, isUpdatingProfile, isSuccess, newUsername, error, isError };
 };

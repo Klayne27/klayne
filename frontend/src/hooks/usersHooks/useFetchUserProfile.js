@@ -8,7 +8,7 @@ export const useFetchUserProfile = (username) => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["userProfile", username], // Include username in query key
+    queryKey: ["userProfile", username],
     queryFn: () => fetchUserPofileApi(username),
   });
 

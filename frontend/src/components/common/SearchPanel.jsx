@@ -8,7 +8,6 @@ const SearchPanel = () => {
   const [debouncedQuery, setDebouncedQuery] = useState("");
   const [showResults, setShowResults] = useState(false); 
 
-  // Effect for debouncing the search query.
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedQuery(searchQuery);
@@ -19,13 +18,9 @@ const SearchPanel = () => {
     };
   }, [searchQuery]);
 
-  // Use the custom hook to fetch search results based on the debounced query
   const { users, isLoading, isError, error, isFetching } = useSearchUsers(debouncedQuery);
 
-  // Effect to control dropdown visibility
   useEffect(() => {
-    // Show results if there's a debounced query and not loading, or if there are results
-    // or if there's an error. Basically, if we've attempted a search, show the panel.
     if (debouncedQuery || users?.length > 0 || isError) {
       setShowResults(true);
     } else {
@@ -34,12 +29,7 @@ const SearchPanel = () => {
   }, [debouncedQuery, users, isError]);
 
   return (
-    // The main container. Its position relative will be the anchor for the absolute dropdown.
-    // Removed sticky, top-0, right-0 from here as it might conflict if this panel
-    // is part of a larger layout that's already sticky. Keeping it simple.
-    // If you need the entire panel to be sticky, apply sticky to a parent that wraps this.
     <div className="bg-black rounded-lg relative w-full md:block">
-      {/* Search Input */}
       <div className="relative mb-4 w-full">
         <input
           type="text"
@@ -48,14 +38,11 @@ const SearchPanel = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
-            // Show results when input is focused, even if no query yet
             if (debouncedQuery || users?.length > 0 || isError) {
               setShowResults(true);
             }
           }}
           onBlur={() => {
-            // Hide results when focus leaves, with a small delay
-            // Use a timeout to allow click on results before hiding
             setTimeout(() => setShowResults(false), 100);
           }}
         />

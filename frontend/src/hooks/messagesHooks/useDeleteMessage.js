@@ -7,7 +7,6 @@ export const useDeleteMessage = () => {
   const { mutate: deleteMessage, isPending: isDeletingMessage } = useMutation({
     mutationFn: deleteMessageApi,
     onSuccess: () => {
-    //   toast.success("Message deleted!");
       queryClient.invalidateQueries(["messages"]);
       queryClient.invalidateQueries(["conversations"]);
     },

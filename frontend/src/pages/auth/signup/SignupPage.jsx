@@ -32,10 +32,17 @@ const SignUpPage = () => {
 
   return (
     <div className="max-w-screen-xl mx-auto flex h-screen px-10">
-      <div className="flex-1 hidden lg:flex items-center  justify-center">
+      <div className="flex-1 hidden lg:flex items-center justify-center">
         <XSvg className=" lg:w-2/3 fill-white" />
       </div>
       <div className="flex-1 flex flex-col justify-center items-center">
+        <div className="bg-yellow-800 bg-opacity-30 border border-yellow-700 text-yellow-100 p-3 rounded-lg mb-6 max-w-sm text-center ">
+          <p className="font-semibold mb-1">Important Note:</p>
+          <p className="text-sm">
+            For your security, I recommend <strong>**not**</strong> using your real email address or a
+            password you use for other important accounts. This is a demo application.
+          </p>
+        </div>
         <form
           className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
           onSubmit={handleSubmit}
@@ -94,7 +101,7 @@ const SignUpPage = () => {
           {isError && <p className="text-red-500">{error.message}</p>}
         </form>
         <div className="flex flex-col lg:w-2/3 gap-2 mt-4">
-          <p className="text-white text-lg">Already have an account?</p>
+          <p className="text-white text-lg text-center">Already have an account?</p>
           <Link to="/login">
             <button className="btn rounded-full btn-primary text-white btn-outline w-full">
               Sign in

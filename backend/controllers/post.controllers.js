@@ -238,10 +238,9 @@ export const getPost = async (req, res) => {
   }
 };
 
-// NEW FUNCTION: deleteComment
 export const deleteComment = async (req, res) => {
   try {
-      const { postId, commentId } = req.params; // Expect postId and commentId from URL
+      const { postId, commentId } = req.params;
 
       const post = await Post.findById(postId);
 
@@ -249,20 +248,17 @@ export const deleteComment = async (req, res) => {
           return res.status(404).json({ error: "Post not found" });
       }
 
-      // Find the specific comment
-      const commentToDelete = post.comments.id(commentId); // Mongoose subdocument .id() method
+      const commentToDelete = post.comments.id(commentId);
 
       if (!commentToDelete) {
           return res.status(404).json({ error: "Comment not found" });
       }
 
-      // Check if the authenticated user is the author of the comment
       if (commentToDelete.user.toString() !== req.user._id.toString()) {
           return res.status(401).json({ error: "You are not authorized to delete this comment" });
       }
 
-      // Remove the comment from the array
-      post.comments.pull({ _id: commentId }); // Mongoose array method to remove subdocument
+      post.comments.pull({ _id: commentId });
       await post.save();
 
       res.status(200).json({ message: "Comment deleted successfully", commentId });

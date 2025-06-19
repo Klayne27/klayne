@@ -6,7 +6,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
 import { CiMail, CiSearch, CiUser } from "react-icons/ci";
 import { PiHouseThin } from "react-icons/pi";
-import { useState, useRef, useEffect } from "react"; // Import useRef and useEffect
+import { useState, useRef, useEffect } from "react";
 import Modal from "./Modal";
 import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
 import toast from "react-hot-toast";
@@ -27,7 +27,7 @@ const Sidebar = () => {
   const navigate = useNavigate();
 
   const handleMobileSearchClick = () => {
-    navigate("/search"); // Navigate to the dedicated search page on mobile
+    navigate("/search");
   };
 
   useEffect(() => {
@@ -184,7 +184,7 @@ const Sidebar = () => {
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
                 bg-black py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-[60] flex flex-col gap-1
-                shadow-md shadow-gray-400" // Increased z-index
+                shadow-md shadow-gray-400"
               >
                 <button
                   onClick={handleConfirmDeleteClick}
