@@ -343,12 +343,12 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messagesSeen", handleMessagesSeen);
-      socket.on("messageDeleted", handleMessageDeleted); // Register new listener
+      socket.on("messageDeleted", handleMessageDeleted);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messagesSeen", handleMessagesSeen);
-        socket.off("messageDeleted", handleMessageDeleted); // Register new listener
+        socket.off("messageDeleted", handleMessageDeleted);
       };
     }
   }, [
@@ -453,7 +453,7 @@ const ChatWindow = ({
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       <div className="sticky top-0 bg-black w-full z-20 p-4 shadow-lg flex items-center">
         {onBackToConversations && (
-          <button onClick={() => navigate(-1)} className="md:hidden mr-2 text-white">
+          <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
             <BiArrowBack className="w-6 h-6" />
           </button>
         )}
@@ -470,17 +470,9 @@ const ChatWindow = ({
         )}
       </div>
 
-      {/* Messages Container */}
       <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar">
-        {/* {!isLoading &&
-          isNewChat &&
-          isTemporaryChat && ( // Only show loading if it's an existing chat and loading
-            <div className="flex justify-center items-center h-full">
-              <LoadingSpinner size="lg" />
-            </div>
-          )} */}
         {error &&
-          !isNewChat && ( // Only show error if it's an existing chat and error
+          !isNewChat && ( 
             <div className="flex justify-center items-center h-full text-red-500">
               <p>Error loading messages: {error.message}</p>
             </div>
@@ -496,7 +488,7 @@ const ChatWindow = ({
                 <div
                   className={`flex ${
                     isSentByCurrentUser ? "justify-end" : "justify-start"
-                  } items-start group relative`} // Added group and relative for reply icon positioning
+                  } items-start group relative`}
                 >
                   <div
                     className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative
@@ -514,12 +506,10 @@ const ChatWindow = ({
                          ? "right-[calc(100%+8px)]"
                          : "scale-x-[-1] left-[calc(100%+8px)]"
                      } `}
-                      // Adjusted positioning: 'right-[calc(100%+8px)]' for sent, 'left-[calc(100%+8px)]' for received
                       onClick={() => handleReplyClick(msg)}
                     >
                       <FaReply size={18} />
                     </div>
-                    {/* NEW: Delete Button */}
                     {isSentByCurrentUser && (
                       <button
                         onClick={() => handleDeleteClick(msg._id)}
@@ -635,7 +625,6 @@ const ChatWindow = ({
         </div>
       )}
 
-      {/* REPLY PREVIEW IN INPUT AREA */}
       {replyingToMessage && (
         <div className="p-2 pt-0 border-t border-gray-700 bg-black flex items-center justify-between">
           <div className="flex-1 p-3  rounded-md flex flex-col">
@@ -654,7 +643,6 @@ const ChatWindow = ({
         </div>
       )}
 
-      {/* Message Input Area */}
       <form
         onSubmit={handleSendMessage}
         className="p-2 border-t border-gray-700 bg-black flex items-center "

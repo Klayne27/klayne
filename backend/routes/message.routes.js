@@ -15,6 +15,6 @@ router.get("/conversations", protectRoute, getConversations);
 router.get("/conversations/:conversationId", protectRoute, getMessagesByConversationId);
 
 router.post("/", protectRoute, sendMessage);
-router.delete("/:messageId", protectRoute, deleteMessage); // NEW ROUTE FOR DELETING MESSAGES
+router.delete("/:messageId", protectRoute, deleteMessage);
 
 export default router;
