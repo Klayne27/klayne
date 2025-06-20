@@ -8,6 +8,7 @@ import { FiTrash } from "react-icons/fi";
 import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications";
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications";
+import { formatPostDate } from "../../utils/date";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
@@ -42,7 +43,7 @@ const NotificationPage = () => {
           </div>
         )}
 
-        {notifications?.length === 0 && !isLoading && ( 
+        {notifications?.length === 0 && !isLoading && (
           <div className="text-center p-4 font-bold">No notifications 🤔</div>
         )}
 
@@ -81,14 +82,18 @@ const NotificationPage = () => {
                 <div className="w-8 rounded-full">
                   <img
                     src={notification.from?.profileImg || "/avatar-placeholder.png"}
-                    alt={`${notification.from?.username}'s profile`} 
+                    alt={`${notification.from?.username}'s profile`}
                   />
                 </div>
               </div>
               <div className="flex flex-col min-w-0">
-                <span className="font-bold truncate w-fit max-w-full">
-                  @{notification.from?.username}
-                </span>{" "}
+                <div className="flex gap-1 items-center justify-center">
+                  <span className="font-bold truncate w-fit max-w-full">
+                    @{notification.from?.username}
+                  </span>
+                  <span className="text-[8px]">●</span>
+                  <span>{formatPostDate(notification.createdAt)}</span>
+                </div>
                 <span className="text-gray-400 text-sm overflow-hidden text-ellipsis">
                   {notification.type === "follow" ? "followed you" : "liked your post"}
                 </span>

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
 import { FaReply } from "react-icons/fa";
@@ -50,11 +50,11 @@ function MessageList({
     prevMessagesLength.current = 0;
   }, [selectedConversation?._id]);
 
-  useEffect(() => {
-    if (selectedConversation && messageInputRef.current) {
-      messageInputRef.current.focus();
-    }
-  }, [selectedConversation, messageInputRef]);
+  // useEffect(() => {
+  //   if (selectedConversation && messageInputRef.current) {
+  //     messageInputRef.current.focus();
+  //   }
+  // }, [selectedConversation, messageInputRef]);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20">
@@ -191,4 +191,4 @@ function MessageList({
   );
 }
 
-export default MessageList;
+export default React.memo(MessageList);

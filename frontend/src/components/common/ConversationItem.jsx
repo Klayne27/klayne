@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { formatPostDate } from "../../utils/date";
 import { MdImage } from "react-icons/md";
+import React from "react";
 
 function ConversationItem({
   conv,
@@ -102,4 +103,4 @@ function ConversationItem({
   );
 }
 
-export default ConversationItem;
+export default React.memo(ConversationItem);

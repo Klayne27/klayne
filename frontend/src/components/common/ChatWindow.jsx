@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
@@ -42,8 +42,8 @@ const ChatWindow = ({
     isNewOrTemporaryChat,
     onNewConversationCreated,
     replyingToMessage,
-    messageInputRef,
     currentOptimisticIdRef,
+    actualConversationId,
   });
 
   useEffect(() => {
@@ -54,6 +54,9 @@ const ChatWindow = ({
           (selectedConversation?.isNewChat &&
             newMessage.sender._id.toString() === otherUser?._id.toString() &&
             newMessage.recipientId?.toString() === currentUser._id.toString());
+
+        const shouldInvalidateConversations =
+          isMessageForThisChat || newMessage.conversationId;
 
         if (isMessageForThisChat) {
           queryClient.setQueryData(
@@ -74,7 +77,9 @@ const ChatWindow = ({
             });
           }
         }
-        queryClient.invalidateQueries(["conversations"]);
+        if (shouldInvalidateConversations) {
+          queryClient.invalidateQueries(["conversations"]);
+        }
       };
 
       // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
@@ -120,31 +125,61 @@ const ChatWindow = ({
     otherUser,
     currentUser,
     selectedConversation,
+    currentOptimisticIdRef,
   ]);
 
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);
 
-  const isTemporaryChat = selectedConversation?.isTemporary;
+  // 1. Memoize messagesToDisplay if it involves creating new arrays/objects
+  const messagesToDisplay = useMemo(() => {
+    return isLoading || isNewOrTemporaryChat ? [] : messages || [];
+  }, [isLoading, isNewOrTemporaryChat, messages]); // Dependencies: only re-run if these change
 
-  const messagesToDisplay = isLoading || isTemporaryChat ? [] : messages || [];
+  // 2. Memoize messagesToRender for React.memo to work effectively
+  const messagesToRender = useMemo(() => {
+    // Filter the messagesToDisplay array
+    return messagesToDisplay.filter(
+      (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
+    );
+  }, [messagesToDisplay, currentOptimisticIdRef.current]); // Dependencies: only re-run if these change
 
-  const messagesToRender = messagesToDisplay.filter(
-    (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
-  );
+  // 3. Memoize the setReplyingToMessage handler if it's passed down and often causes re-renders
+  // Note: useState setters are already stable, but if you wrap it in useCallback for any reason,
+  // ensure you don't break stability.
+  const memoizedSetReplyingToMessage = useCallback((message) => {
+    setReplyingToMessage(message);
+  }, []); // Empty dependency array means this function never changes
 
+  // 4. Memoize the deleteMessage handler if it's from a custom hook and causes instability
+  // (useDeleteMessage should ideally return a stable function, but double-checking is good)
+  const memoizedDeleteMessage = useCallback(
+    (messageId) => {
+      deleteMessage(messageId);
+    },
+    [deleteMessage]
+  ); // Dependency on deleteMessage itself, ensuring stability if hook ever re-creates it
+
+  // --- Existing useEffect for focusing input when conversation changes ---
+  useEffect(() => {
+    if (messageInputRef.current) {
+      const timer = setTimeout(() => {
+        messageInputRef.current.focus();
+      }, 0);
+      return () => clearTimeout(timer);
+    }
+  }, [selectedConversation, messageInputRef]);
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
-      
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
         error={error}
         isNewChat={isNewChat}
         messagesToRender={messagesToRender}
-        setReplyingToMessage={setReplyingToMessage}
-        deleteMessage={deleteMessage}
+        setReplyingToMessage={memoizedSetReplyingToMessage}
+        deleteMessage={memoizedDeleteMessage}
         messageInputRef={messageInputRef}
         isDeletingMessage={isDeletingMessage}
         messages={messages}
@@ -153,7 +188,7 @@ const ChatWindow = ({
       <MessageInput
         otherUser={otherUser}
         replyingToMessage={replyingToMessage}
-        setReplyingToMessage={setReplyingToMessage}
+        setReplyingToMessage={memoizedSetReplyingToMessage}
         actualConversationId={actualConversationId}
         currentOptimisticIdRef={currentOptimisticIdRef}
         messageInputRef={messageInputRef}

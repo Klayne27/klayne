@@ -95,7 +95,7 @@ const CreatePost = () => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="flex p-4 items-start gap-3 border-b border-gray-700">
+    <div className="flex p-4 items-start gap-3 border-b border-gray-700  mt-12">
       <Link to={`/profile/${authUser.username}`}>
         <div className="avatar">
           <div className="w-10 rounded-full">

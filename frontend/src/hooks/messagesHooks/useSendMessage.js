@@ -1,19 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
-import { useRef } from "react";
 
 export const useSendMessage = ({
   selectedConversation,
-//   setShouldScrollToBottom,
   isNewOrTemporaryChat,
   onNewConversationCreated,
   replyingToMessage,
-  messageInputRef,
-  currentOptimisticIdRef
+  currentOptimisticIdRef,
 }) => {
   const { authUser: currentUser } = useAuthUser();
-//   const currentOptimisticIdRef = useRef(null);
 
   const queryClient = useQueryClient();
   const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
@@ -24,7 +20,6 @@ export const useSendMessage = ({
         "messages",
         selectedConversation?._id,
       ]);
-    //   setShouldScrollToBottom(true);
 
       const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
       currentOptimisticIdRef.current = tempMessageId;
@@ -99,11 +94,8 @@ export const useSendMessage = ({
       });
       currentOptimisticIdRef.current = null;
     },
-    onSettled: (data, error, variables, context) => {
-      queryClient.invalidateQueries(["messages", context.targetConvId]);
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
   return { sendMessage, isSendingMessage };

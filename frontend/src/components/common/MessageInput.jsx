@@ -28,10 +28,20 @@ function MessageInput({
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
+  
+    setMessageInput("");
+    setImageFile(null);
+    setReplyingToMessage(null);
+    currentOptimisticIdRef.current = null; // Clear optimistic ID reference
+
     if (!messageInput.trim() && !imageFile) return;
     if (!otherUser) return toast.error("No recipient selected.");
 
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
+
+    if (messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
 
     let imgBase64 = null;
     if (imageFile) {
@@ -60,10 +70,6 @@ function MessageInput({
         repliedTo: repliedToId,
       });
     }
-    setMessageInput("");
-    currentOptimisticIdRef.current = null;
-    setReplyingToMessage(null);
-    setImageFile("");
   };
 
   const onEmojiClick = (emojiObject) => {
