@@ -163,14 +163,14 @@ const ChatWindow = ({
   ); // Dependency on deleteMessage itself, ensuring stability if hook ever re-creates it
 
   // --- Existing useEffect for focusing input when conversation changes ---
-  useEffect(() => {
-    if (messageInputRef.current) {
-      const timer = setTimeout(() => {
-        messageInputRef.current.focus();
-      }, 0);
-      return () => clearTimeout(timer);
-    }
-  }, [selectedConversation, messageInputRef]);
+  // useEffect(() => {
+  //   if (messageInputRef.current) {
+  //     const timer = setTimeout(() => {
+  //       messageInputRef.current.focus();
+  //     }, 0);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [selectedConversation, messageInputRef]);
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />

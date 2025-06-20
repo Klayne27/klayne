@@ -76,11 +76,11 @@ function MessageInput({
     setMessageInput((prevText) => prevText + emojiObject.emoji);
   };
 
-  useEffect(() => {
-    if (selectedConversation && messageInputRef) {
-      messageInputRef.current.focus();
-    }
-  }, [selectedConversation, messageInputRef]);
+  // useEffect(() => {
+  //   if (selectedConversation && messageInputRef) {
+  //     messageInputRef.current.focus();
+  //   }
+  // }, [selectedConversation, messageInputRef]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {

@@ -107,7 +107,7 @@ const Post = ({ post, openImageModal }) => {
 
   return (
     <div
-      className="flex flex-col gap-0 py-2 px-4 border-b border-gray-700 cursor-pointer" // Changed to flex-col
+      className="flex flex-col gap-0 py-3 px-4 border-b border-gray-700 cursor-pointer" // Changed to flex-col
       onClick={navigateToPostPage}
     >
       {isRepost && repostingUser && (
