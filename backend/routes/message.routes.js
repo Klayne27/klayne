@@ -7,7 +7,7 @@ import {
   getMessagesByConversationId,
   deleteMessage,
   deleteConversationForUser,
-} from "../controllers/message.controllers.js";
+} from "../controllers/message.Controllers.js";
 
 const router = express.Router();
 
