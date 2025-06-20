@@ -1,6 +1,6 @@
 // src/utils/textUtils.js
 
-export const renderClickableText = (text) => {
+export const renderClickableText = (text, currentUser) => {
   if (!text) return null;
 
   // Regex to find URLs: https:// or http:// or www.
@@ -30,7 +30,7 @@ export const renderClickableText = (text) => {
         href={formattedUrl}
         target="_blank" // Open in new tab
         rel="noopener noreferrer" // Security best practice for target="_blank"
-        className="text-blue-600 hover:underline" // Tailwind classes for link styling
+        className={`hover:underline ${currentUser ? "text-white" : "text-blue-500"}`} // Tailwind classes for link styling
         onClick={(e) => e.stopPropagation()} // Prevent parent click handler (e.g., post navigation)
       >
         {url}

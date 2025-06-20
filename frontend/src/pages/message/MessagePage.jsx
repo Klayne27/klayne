@@ -172,8 +172,6 @@ const MessagePage = ({ openImageModal }) => {
     }
     setShowConfirmDeleteDialog(false);
     setConversationToDeleteId(null);
-    console.log("Selected Conversation ID:", selectedConversation?._id);
-    console.log("Conversation To Delete ID:", conversationToDeleteId);
   };
 
   const handleCancelDelete = () => {

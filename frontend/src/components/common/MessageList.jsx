@@ -21,8 +21,6 @@ function MessageList({
   const messagesEndRef = useRef(null);
   const prevMessagesLength = useRef(0);
 
-  console.log(openImageModal);
-
   const handleDeleteClick = useCallback(
     (messageId) => {
       deleteMessage(messageId);
@@ -179,7 +177,9 @@ function MessageList({
                     />
                   )}
                   {msg.text && (
-                    <p className="break-words text-sm">{renderClickableText(msg.text)}</p>
+                    <p className={`break-words text-sm `}>
+                      {renderClickableText(msg.text, isSentByCurrentUser)}
+                    </p>
                   )}
                 </div>
                 {/* {isSentByCurrentUser && msg.seen && (
