@@ -9,6 +9,7 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 10) =>
 
   return data; // This `data` will now contain { posts: [...], hasNextPage: true/false }
 };
+
 export const createPostApi = async (text, img) => {
   const res = await fetch("/api/posts/create", {
     method: "POST",

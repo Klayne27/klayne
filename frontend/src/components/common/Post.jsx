@@ -1,28 +1,58 @@
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
-import { FiTrash } from "react-icons/fi";
+import { FiTrash } from "react-icons/fi"; // Assuming this is your trash icon
 
 import { Link, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
-import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
+import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts"; // Assuming this is for deleting *any* post
+import { useLikePost } from "../../hooks/postsHooks/useLikePosts"; // Assuming this handles liking
+import { useRepostPost } from "../../hooks/postsHooks/useRepostPost"; // <--- NEW: Import the repost hook
 import { renderClickableText } from "../../utils/textUtils";
 
 const Post = ({ post, openImageModal }) => {
   const navigate = useNavigate();
-
   const { authUser } = useAuthUser();
+
+  // Determine if this post object itself is a repost
+  const isRepost = !!post.repostedFrom;
+
+  // The 'originalPost' object is the one whose content (text, img, likes, comments, actual creation date) we display.
+  // If 'post' is a repost, 'originalPost' is the populated 'repostedFrom' object.
+  // Otherwise, 'post' IS the original post.
+  const originalPost = isRepost ? post.repostedFrom : post;
+
+  const originalPostOwner = originalPost?.user; // Ensure originalPost.user exists
+
+  // The 'repostingUser' is the user who performed the repost (this is 'post.user').
+  // Only relevant if `isRepost` is true.
+  const repostingUser = isRepost ? post.user : null;
+
+  // Check if the current user is the author of the original content
+  const isMyOriginalPost = authUser?._id === originalPostOwner?._id;
+
+  // Check if the current user is the one who performed *this specific repost*
+  const isMyRepost = isRepost && authUser?._id === repostingUser?._id;
+
+  // Is the original post liked by the authUser?
+  const isLiked = originalPost?.likes?.includes(authUser?._id);
+
+  // Repost functionality
+  const { repostPost, isReposting } = useRepostPost();
+
+  const { likePost, isLiking } = useLikePost(originalPost); // Pass originalPost to hook
+
   const { deletePost, isDeleting } = useDeletePosts(post);
-  const { likePost, isLiking } = useLikePost(post);
 
-  const postOwner = post.user;
-  const isLiked = post.likes.includes(authUser?._id);
-  const isMyPost = authUser?._id === post?.user?._id;
+  // Safegaurd: If for some reason originalPost or originalPostOwner isn't populated, don't render.
+  if (!originalPost || !originalPostOwner) {
+    console.warn("Post or originalPostOwner not fully populated:", post);
+    return null; // Or render a fallback UI/error message
+  }
 
-  const formattedDate = formatPostDate(post.createdAt);
+  const formattedDate = formatPostDate(originalPost.createdAt); // Date of original post creation
 
   const handleInteractiveClick = (e) => {
     e.preventDefault();
@@ -31,17 +61,31 @@ const Post = ({ post, openImageModal }) => {
 
   const handleDeletePostClick = (e) => {
     handleInteractiveClick(e);
-    deletePost();
+    deletePost(); // Deletes THIS specific post object (either original or a repost)
   };
 
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e);
     if (isLiking) return;
-    likePost();
+    // When liking, always send the ID of the ORIGINAL content
+    // Assuming useLikePost hook takes the post object and extracts its ID,
+    // or you can explicitly pass originalPost._id: `likePost(originalPost._id);`
+    likePost(originalPost.id);
   };
+
+  // New: Handle repost click
+  const handleRepostClick = (e) => {
+    handleInteractiveClick(e);
+    if (isReposting) return;
+    repostPost(originalPost._id); // Always repost the ID of the ORIGINAL content
+  };
+
+
 
   const navigateToPostPage = (e) => {
     if (!e.defaultPrevented) {
+      // Navigate to the post page using the ID of THIS specific post (original or repost)
+      // The PostPage will then correctly render the content based on its 'repostedFrom' property.
       navigate(`/${post.user.username}/post/${post._id}`);
     }
   };
@@ -53,115 +97,156 @@ const Post = ({ post, openImageModal }) => {
     }
   };
 
+  // New: Navigate to the profile of the user who reposted
+  const navigateToReposterProfile = (e) => {
+    e.stopPropagation(); // Crucial to prevent navigating to the post page
+    if (repostingUser) {
+      navigate(`/profile/${repostingUser.username}`);
+    }
+  };
+
   return (
     <div
-      className="flex gap-2 items-start py-3 px-4 border-b border-gray-700 cursor-pointer"
+      className="flex flex-col gap-0 py-2 px-4 border-b border-gray-700 cursor-pointer" // Changed to flex-col
       onClick={navigateToPostPage}
     >
-      <div className="avatar mt-1">
-        <Link
-          to={`/profile/${postOwner.username}`}
-          className="w-10 h-10 rounded-full overflow-hidden"
-        >
-          <img
-            src={postOwner.profileImg || "/avatar-placeholder.png"}
-            alt={`${postOwner.username}'s profile`}
-          />
-        </Link>
-      </div>
-
-      <div className="flex flex-col flex-1">
-        <div className="flex gap-1 items-center">
-          <Link
-            to={`/profile/${postOwner.username}`}
-            className="font-bold flex items-center gap-1 hover:underline"
+      {isRepost && repostingUser && (
+        <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
+          <BiRepost className="inline-block text-lg" size={20} />
+          <span
+            className="hover:underline cursor-pointer"
+            onClick={navigateToReposterProfile}
           >
-            {postOwner.fullName.length > 15
-              ? postOwner.fullName.slice(0, 15) + "..."
-              : postOwner.fullName}{" "}
-            {postOwner.isVerified && (
-              <img src="/verified.png" className="size-[17px]" alt="Verified" />
-            )}
-          </Link>
-          <span className="text-gray-500 flex gap-1 text-sm">
-            <Link to={`/profile/${postOwner.username}`}>@{postOwner.username}</Link>
-            <span>·</span>
-            <span>{formattedDate}</span>
+            {repostingUser.fullName.length > 15
+              ? repostingUser.fullName.slice(0, 15) + "..."
+              : repostingUser.fullName}{" "}
+            reposted
           </span>
-          {isMyPost && (
-            <span className="flex justify-end flex-1 ">
-              {!isDeleting && (
-                <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
-                  <FiTrash
-                    className="cursor-pointer "
-                    onClick={handleDeletePostClick}
-                    size={20}
+        </div>
+      )}
+
+      <div className="flex gap-2 items-start">
+        <div className="avatar mt-1">
+          <Link
+            to={`/profile/${originalPostOwner.username}`}
+            className="w-10 h-10 rounded-full overflow-hidden"
+          >
+            <img
+              src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
+              alt={`${originalPostOwner.username}'s profile`}
+            />
+          </Link>
+        </div>
+        <div className="flex flex-col flex-1">
+          <div className="flex gap-1 items-center">
+            <Link
+              to={`/profile/${originalPostOwner.username}`}
+              className="font-bold flex items-center gap-1 hover:underline"
+            >
+              {originalPostOwner.fullName.length > 15
+                ? originalPostOwner.fullName.slice(0, 15) + "..."
+                : originalPostOwner.fullName}{" "}
+              {originalPostOwner.isVerified && (
+                <img src="/verified.png" className="size-[17px]" alt="Verified" />
+              )}
+            </Link>
+            <span className="text-gray-500 flex gap-1 text-sm">
+              <Link to={`/profile/${originalPostOwner.username}`}>
+                @{originalPostOwner.username}
+              </Link>
+              <span>·</span>
+              <span>{formattedDate}</span>
+            </span>
+            {/* Delete button: only show if it's MY original post or MY specific repost */}
+            {(isMyOriginalPost || isMyRepost) && (
+              <span className="flex justify-end flex-1">
+                {!isDeleting && (
+                  <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
+                    <FiTrash
+                      className="cursor-pointer"
+                      onClick={handleDeletePostClick}
+                      size={20}
+                    />
+                  </div>
+                )}
+                {isDeleting && <LoadingSpinner size="sm" />}
+              </span>
+            )}
+          </div>
+          <div className="flex flex-col gap-3 overflow-hidden">
+            {/* Display original post's text */}
+            <span className="whitespace-pre-wrap">
+              {renderClickableText(originalPost.text)}
+            </span>
+            {/* Display original post's image */}
+            {originalPost.img && (
+              <img
+                src={originalPost.img}
+                className="h-80 object-contain rounded-2xl border border-gray-700"
+                alt="post image"
+                onClick={(e) => handleImageClick(originalPost.img, e)}
+              />
+            )}
+          </div>
+
+          {/* Interaction buttons (comments, reposts, likes) - these apply to the ORIGINAL post counts */}
+          <div className="flex justify-between mt-3">
+            <div className="flex gap-4 items-center w-2/3 justify-between">
+              <div
+                className="flex items-center cursor-pointer group"
+                onClick={navigateToPostPage} // Still navigates to this post's ID for comments
+              >
+                <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
+                  <FaRegComment
+                    className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
+                    strokeWidth={10}
                   />
                 </div>
-              )}
-              {isDeleting && <LoadingSpinner size="sm" />}
-            </span>
-          )}
-        </div>
-        <div className="flex flex-col gap-3 overflow-hidden">
-          <span className="whitespace-pre-wrap">{renderClickableText(post.text)}</span>
-          {post.img && (
-            <img
-              src={post.img}
-              className="h-80 object-contain rounded-2xl border border-gray-700"
-              alt="post image"
-              onClick={(e) => handleImageClick(post.img, e)}
-            />
-          )}
-        </div>
+                <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
+                  {originalPost.comments?.length || 0}{" "}
+                  {/* Use originalPost comments count */}
+                </span>
+              </div>
 
-        <div className="flex justify-between mt-3">
-          <div className="flex gap-4 items-center w-2/3 justify-between">
-            <div
-              className="flex items-center cursor-pointer group"
-              onClick={navigateToPostPage}
-            >
-              <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
-                <FaRegComment
-                  className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
-                  strokeWidth={10}
-                />
-              </div>
-              <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
-                {post.comments.length}
-              </span>
-            </div>
-            <div
-              className="flex items-center group cursor-pointer "
-              onClick={handleInteractiveClick}
-            >
-              <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
-                <BiRepost className="w-6 h-6 text-slate-500 group-hover:text-green-500  duration-200 transition" />
-              </div>
-              <span className="text-sm text-slate-500 group-hover:text-green-500 duration-200 transition">
-                0
-              </span>
-            </div>
-
-            <div
-              className="flex items-center group cursor-pointer rounded-full"
-              onClick={handleLikePostClick}
-            >
-              <div className="group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition">
-                {!isLiked && (
-                  <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
-                )}
-                {isLiked && (
-                  <FaHeart className="w-4 h-4 cursor-pointer text-pink-600  duration-200 transition" />
-                )}
-              </div>
-              <span
-                className={`text-sm group-hover:text-pink-600 ${
-                  isLiked ? "text-pink-600 " : "text-slate-500"
-                }`}
+              {/* Repost Button */}
+              <div
+                className="flex items-center group cursor-pointer"
+                onClick={handleRepostClick} // New repost handler
               >
-                {post.likes.length}
-              </span>
+                <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
+                  <BiRepost
+                    className={`w-6 h-6 text-slate-500 group-hover:text-green-500 duration-200 transition ${
+                      isReposting ? "animate-spin" : ""
+                    }`}
+                  />
+                </div>
+                <span className="text-sm text-slate-500 group-hover:text-green-500 duration-200 transition">
+                  {originalPost.reposts || 0}{" "}
+                  {/* Display count from originalPost.reposts virtual */}
+                </span>
+              </div>
+
+              {/* Like Button */}
+              <div
+                className="flex items-center group cursor-pointer rounded-full"
+                onClick={handleLikePostClick}
+              >
+                <div className="group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition">
+                  {!isLiked && (
+                    <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
+                  )}
+                  {isLiked && (
+                    <FaHeart className="w-4 h-4 cursor-pointer text-pink-600 duration-200 transition" />
+                  )}
+                </div>
+                <span
+                  className={`text-sm group-hover:text-pink-600 ${
+                    isLiked ? "text-pink-600 " : "text-slate-500"
+                  }`}
+                >
+                  {originalPost.likes?.length || 0} {/* Use originalPost likes count */}
+                </span>
+              </div>
             </div>
           </div>
         </div>
@@ -169,4 +254,5 @@ const Post = ({ post, openImageModal }) => {
     </div>
   );
 };
+
 export default Post;

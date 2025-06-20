@@ -41,9 +41,28 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
+    // --- NEW FIELDS FOR REPOST ---
+    repostedFrom: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null, // Null for original posts
+    },
+
   },
   { timestamps: true }
 );
+
+// Add a virtual to count reposts for an original post (optional, but good for querying)
+postSchema.virtual("reposts", {
+  ref: "Post",
+  localField: "_id",
+  foreignField: "repostedFrom",
+  count: true,
+});
+
+// Ensure virtuals are included when converting to JSON
+postSchema.set("toJSON", { virtuals: true });
+postSchema.set("toObject", { virtuals: true });
 
 const Post = mongoose.model("Post", postSchema);
 

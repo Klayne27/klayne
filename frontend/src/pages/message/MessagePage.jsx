@@ -246,14 +246,13 @@ const MessagePage = ({ openImageModal }) => {
           </div>
         )}
       </div>
-      {/* --- NEW CONFIRMATION DIALOG --- */}
+      
       <ConfirmationDialog
         isOpen={showConfirmDeleteDialog}
         message="Are you sure you want to delete this conversation for yourself? This action cannot be undone."
         onConfirm={handleConfirmDelete}
         onCancel={handleCancelDelete}
       />
-      {/* --- END NEW CONFIRMATION DIALOG --- */}
     </div>
   );
 };

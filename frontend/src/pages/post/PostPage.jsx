@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post"
+import Post from "../../components/common/Post";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
@@ -33,13 +33,22 @@ const PostPage = ({ openImageModal }) => {
     deleteComment({ postId: pid, commentId });
   };
 
-
   useEffect(() => {
-    if (isError) {
-      toast.error(error.message || "Could not load post.");
+    // If there's an explicit error from fetching, or if the post becomes null/undefined after loading,
+    // it means the post doesn't exist or was deleted.
+    // Ensure `isLoading` is false before navigating, otherwise, it might navigate too early.
+    if (!isLoading && (isError || !post)) {
+      // Added !isLoading check
+      if (isError) {
+        toast.error(error?.message || "Could not load post.");
+      } else if (!post) {
+        // This toast message is for when the post disappears after a successful initial fetch
+        // (e.g., deleted by another user, or an invalidation caused a refetch that returned null)
+        toast.error("The post you are looking for does not exist or has been deleted.");
+      }
       navigate("/", { replace: true });
     }
-  }, [isError, error, navigate]);
+  }, [isLoading, isError, error, post, navigate]); // Added 'post' to dependency array
 
   if (isLoading) {
     return (
@@ -49,7 +58,10 @@ const PostPage = ({ openImageModal }) => {
     );
   }
 
-  if (isError || !post) {
+  // This block is crucial for handling cases where post becomes null/undefined after loading
+  // (e.g., if it was deleted and useFetchPost refetched and returned null)
+  if (!post) {
+    // This condition will catch cases where the post object is null after loading
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen w-full text-white p-4">
         <h2 className="text-2xl font-bold mb-4 text-center">Post Not Found</h2>
@@ -66,6 +78,7 @@ const PostPage = ({ openImageModal }) => {
     );
   }
 
+  // Rest of your component remains the same
   return (
     <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
       <div className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-700">
@@ -79,6 +92,7 @@ const PostPage = ({ openImageModal }) => {
       </div>
 
       <div className="border-b border-gray-700">
+        {/* The Post component itself will handle whether it's an original or repost */}
         <Post post={post} openImageModal={openImageModal} />
       </div>
 
@@ -92,7 +106,6 @@ const PostPage = ({ openImageModal }) => {
               <img
                 src={authUser?.profileImg || "/avatar-placeholder.png"}
                 alt="Your profile"
-               
               />
             </div>
           </div>
