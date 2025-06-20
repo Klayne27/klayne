@@ -2,6 +2,7 @@ import { Link } from "react-router-dom";
 import { formatPostDate } from "../../utils/date";
 import { MdImage } from "react-icons/md";
 import React from "react";
+import { FiTrash } from "react-icons/fi";
 
 function ConversationItem({
   conv,
@@ -9,6 +10,7 @@ function ConversationItem({
   onlineUsers,
   selectedConversation,
   onSelectConversation,
+  onDeleteInitiate,
 }) {
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -24,7 +26,7 @@ function ConversationItem({
     selectedConversation &&
     (selectedConversation._id === conv._id ||
       (selectedConversation.isNewChat &&
-        selectedConversation.participants[0]?._id === otherUser._id)); 
+        selectedConversation.participants[0]?._id === otherUser._id));
 
   const isLastMessageFromOtherUser =
     conv.lastMessage?.sender?.toString() === otherUser._id.toString();
@@ -51,6 +53,14 @@ function ConversationItem({
   const conversationToSelect = conv.isNewChat
     ? { _id: null, participants: [otherUser], isNewChat: true }
     : conv;
+
+  // --- NEW HANDLER FOR DELETE ICON CLICK ---
+  const handleDeleteClick = (e) => {
+    e.preventDefault(); // Prevent default Link behavior (navigation)
+    e.stopPropagation(); // Stop event from bubbling up to the ConversationItem's onClick (onSelectConversation)
+    onDeleteInitiate(conv._id); // Call the prop function with the conversation ID
+  };
+  // --- END NEW HANDLER ---
 
   return (
     <div
@@ -99,6 +109,20 @@ function ConversationItem({
           </p>
         </div>
       </div>
+      {/* --- NEW DELETE BUTTON/ICON --- */}
+      {/* Only show delete option for existing conversations */}
+      {!conv.isNewChat && (
+        <div
+          className="p-2 rounded-full hover:bg-red-600 hover:bg-opacity-15 duration-200 transition"
+          onClick={handleDeleteClick} // Attach the handler here
+        >
+          <FiTrash
+            className="text-gray-500 hover:text-red-500 cursor-pointer"
+            size={18}
+          />
+        </div>
+      )}
+      {/* --- END NEW DELETE BUTTON/ICON --- */}
     </div>
   );
 }

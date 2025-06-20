@@ -59,3 +59,25 @@ export const sendMessageApi = async ({
   }
   return res.json();
 };
+
+export const deleteConversationApi = async (conversationId) => {
+  try {
+    const res = await fetch(`/api/messages/conversations/${conversationId}`, {
+      method: "DELETE",
+      headers: {
+        "Content-Type": "application/json",
+      },
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      throw new Error(data.error || "Something went wrong during deletion");
+    }
+
+    return data;
+  } catch (error) {
+    console.error("Error in deleteConversation mutation:", error);
+    throw error;
+  }
+};

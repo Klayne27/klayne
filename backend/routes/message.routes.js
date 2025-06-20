@@ -6,7 +6,8 @@ import {
   getFollowedUsersForMessaging,
   getMessagesByConversationId,
   deleteMessage,
-} from "../controllers/message.Controllers.js";
+  deleteConversationForUser,
+} from "../controllers/message.controllers.js";
 
 const router = express.Router();
 
@@ -15,5 +16,6 @@ router.get("/conversations", protectRoute, getConversations);
 router.get("/conversations/:conversationId", protectRoute, getMessagesByConversationId);
 router.post("/", protectRoute, sendMessage);
 router.delete("/:messageId", protectRoute, deleteMessage);
+router.delete("/conversations/:conversationId", protectRoute, deleteConversationForUser); // Corrected to use conversationId
 
 export default router;

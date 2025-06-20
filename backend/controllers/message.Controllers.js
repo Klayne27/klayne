@@ -6,7 +6,12 @@ import User from "../models/user.model.js";
 
 export const sendMessage = async (req, res) => {
   try {
-    const { recipientId, message, conversationId: incomingConversationId, repliedTo } = req.body;
+    const {
+      recipientId,
+      message,
+      conversationId: incomingConversationId,
+      repliedTo,
+    } = req.body;
     let { img } = req.body;
     const senderId = req.user._id;
 
@@ -54,7 +59,7 @@ export const sendMessage = async (req, res) => {
       text: message || "",
       img: uploadedImgUrl,
       seen: false,
-      repliedTo: repliedTo || null
+      repliedTo: repliedTo || null,
     });
 
     await newMessage.save();
@@ -66,6 +71,9 @@ export const sendMessage = async (req, res) => {
       seen: false,
       createdAt: newMessage.createdAt,
     };
+
+    conversation.deletedFor = [];
+
     await conversation.save();
 
     await newMessage.populate("sender", "username profileImg fullName isVerified");
@@ -163,7 +171,13 @@ export const getConversations = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const conversations = await Conversation.find({ participants: userId })
+    const conversations = await Conversation.find({
+      participants: userId, // User must be a participant
+      // Add this filter to exclude conversations marked as deleted for the current user
+      // This assumes 'deletedFor' is an array of objects, e.g., [{ user: userId, deletedAt: Date }]
+      // or just [{ user: userId }]
+      "deletedFor.user": { $ne: userId }, // Exclude if any entry in 'deletedFor' array has this user's ID
+    })
       .populate({
         path: "participants",
         select: "username profileImg fullName isVerified",
@@ -172,6 +186,14 @@ export const getConversations = async (req, res) => {
 
     const processedConversations = conversations
       .map((conversation) => {
+        // Ensure conversation.participants is not empty after populate
+        if (!conversation.participants || conversation.participants.length < 2) {
+          console.warn(
+            `Conversation ${conversation._id} missing participants or only one participant.`
+          );
+          return null; // Skip this conversation if it's malformed or only has one participant
+        }
+
         const otherParticipant = conversation.participants.find(
           (participant) => participant && participant._id.toString() !== userId.toString()
         );
@@ -195,13 +217,13 @@ export const getConversations = async (req, res) => {
 
         return {
           _id: conversation._id,
-          participants: [otherParticipant],
+          participants: [otherParticipant], // Return only the other participant
           lastMessage: lastMessageData,
           createdAt: conversation.createdAt,
           updatedAt: conversation.updatedAt,
         };
       })
-      .filter(Boolean);
+      .filter(Boolean); // Filter out any null values resulting from the map function
 
     res.status(200).json(processedConversations);
   } catch (error) {
@@ -210,6 +232,8 @@ export const getConversations = async (req, res) => {
   }
 };
 
+// Your getFollowedUsersForMessaging controller seems fine as it's not directly related
+// to displaying active conversations or their deletion status.
 export const getFollowedUsersForMessaging = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -234,7 +258,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
 export const deleteMessage = async (req, res) => {
   try {
-    const { messageId } = req.params; 
+    const { messageId } = req.params;
     const userId = req.user._id;
 
     const messageToDelete = await Message.findById(messageId);
@@ -297,5 +321,40 @@ export const deleteMessage = async (req, res) => {
   } catch (error) {
     console.error("Error in deleteMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const deleteConversationForUser = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" }); // Changed to 404 for clarity
+    }
+
+    if (!conversation.participants.includes(userId)) {
+      return res
+        .status(403)
+        .json({ error: "You are not a participant in this conversation" });
+    }
+
+    const isAlreadyDeletedForUser = conversation.deletedFor.some(
+      (entry) => entry.user.toString() === userId.toString()
+    );
+
+    if (isAlreadyDeletedForUser) {
+      return res
+        .status(200)
+        .json({ message: "Conversation already marked as deleted for this user" });
+    }
+
+    conversation.deletedFor.push({ user: userId });
+    await conversation.save();
+    res.status(200).json({ message: "Conversation deleted successfully" });
+  } catch (error) {
+    console.error("Error deleting conversation for user:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

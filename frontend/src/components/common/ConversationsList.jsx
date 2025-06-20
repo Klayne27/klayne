@@ -1,3 +1,4 @@
+// src/components/common/ConversationsList.jsx
 import { useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
@@ -5,22 +6,43 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import ConversationItem from "./ConversationItem";
+import LoadingSpinner from "../common/LoadingSpinner"; // Make sure LoadingSpinner is imported correctly
 
-const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
+// --- ADD onDeleteInitiate PROP ---
+const ConversationsList = ({
+  onSelectConversation,
+  selectedConversation,
+  onDeleteInitiate,
+}) => {
   const { authUser: currentUser } = useAuthUser();
   const { onlineUsers } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
 
-  const {
-    conversations,
-    isLoadingConversations,
-    errorConversations,
-  } = useFetchConversations();
+  const { conversations, isLoadingConversations, errorConversations } =
+    useFetchConversations();
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
 
+  // Filter out conversations marked as deleted for the current user
+  // --- CRITICAL FILTERING STEP ---
+  // Ensure this `activeConversations` filter is correctly applied
+  const activeConversations =
+    conversations?.filter((conv) => {
+      const isDeletedForMe =
+        conv.deletedFor &&
+        conv.deletedFor.some(
+          (entry) => entry.user.toString() === currentUser._id.toString()
+        );
+      // Return true if it's NOT deleted for me, or if `deletedFor` array is empty/null
+      return !isDeletedForMe;
+    }) || [];
+
+  // ... rest of your code ...
+
+  // Use `activeConversations` when building `allConversations`
   const conversationParticipantsSet = new Set();
-  conversations.forEach((conv) => {
+  activeConversations.forEach((conv) => {
+    // <--- Make sure this uses activeConversations
     conv.participants.forEach((p) => {
       if (p && p._id) {
         conversationParticipantsSet.add(p._id.toString());
@@ -37,17 +59,29 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
 
   const pseudoConversations = newChatUsers.map((user) => ({
     _id: `new-${user._id}`,
-    participants: [user],
+    // Ensure both participants are included for a new chat
+    participants: [
+      user,
+      {
+        _id: currentUser._id,
+        username: currentUser.username,
+        fullName: currentUser.fullName,
+        profileImg: currentUser.profileImg,
+      },
+    ],
     isNewChat: true,
     lastMessage: { text: "Start a new message", seen: true, img: "" },
     updatedAt: new Date(0),
   }));
 
-  const allConversations = [...conversations, ...pseudoConversations].sort((a, b) => {
-    const dateA = new Date(a.updatedAt || a.createdAt || 0);
-    const dateB = new Date(b.updatedAt || b.createdAt || 0);
-    return dateB.getTime() - dateA.getTime();
-  });
+  // Combine active conversations with pseudo conversations
+  const allConversations = [...activeConversations, ...pseudoConversations].sort(
+    (a, b) => {
+      const dateA = new Date(a.updatedAt || a.createdAt || 0);
+      const dateB = new Date(b.updatedAt || b.createdAt || 0);
+      return dateB.getTime() - dateA.getTime();
+    }
+  );
 
   const filteredConversations = allConversations.filter((conv) => {
     const otherUserForFilter = conv.participants.find(
@@ -60,10 +94,10 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
     );
   });
 
-
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
       <div className="flex items-center justify-center h-full text-gray-400">
+        <LoadingSpinner size="md" /> {/* Use your LoadingSpinner */}
         Loading inbox...
       </div>
     );
@@ -120,6 +154,9 @@ const ConversationsList = ({ onSelectConversation, selectedConversation }) => {
             currentUser={currentUser}
             selectedConversation={selectedConversation}
             onSelectConversation={onSelectConversation}
+            // --- PASS THE NEW PROP HERE ---
+            onDeleteInitiate={onDeleteInitiate}
+            // --- END PASSING NEW PROP ---
           />
         ))}
       </div>

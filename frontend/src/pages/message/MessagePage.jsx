@@ -5,6 +5,8 @@ import ChatWindow from "../../components/common/ChatWindow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
+import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConversation";
+import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 
 const MessagePage = ({ openImageModal }) => {
   const { authUser: currentUser } = useAuthUser();
@@ -25,6 +27,15 @@ const MessagePage = ({ openImageModal }) => {
 
   const [selectedConversation, setSelectedConversation] = useState(null);
   const initialLoadAttempted = useRef(false);
+
+  // --- NEW STATE FOR DELETION CONFIRMATION ---
+  const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
+  const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
+  // --- END NEW STATE ---
+
+  // --- NEW HOOK INVOCATION ---
+  const { deleteConversation, isDeleting } = useDeleteConversation();
+  // --- END NEW HOOK ---
 
   useEffect(
     () => {
@@ -134,6 +145,43 @@ const MessagePage = ({ openImageModal }) => {
     navigate("/messages");
   };
 
+  // --- NEW HANDLERS FOR DELETE CONFIRMATION ---
+  const handleDeleteInitiate = (id) => {
+    setConversationToDeleteId(id);
+    setShowConfirmDeleteDialog(true);
+  };
+
+  const handleConfirmDelete = async () => {
+    if (conversationToDeleteId) {
+      await deleteConversation(conversationToDeleteId);
+      // After deletion, if the currently selected conversation was the one deleted,
+      // navigate back to the main messages list and unselect it.
+      if (selectedConversation?._id === conversationToDeleteId) {
+        // <--- This check
+        setSelectedConversation(null);
+        navigate("/messages", { replace: true });
+      }
+      // Also, if a new chat with the deleted user was 'selected', unselect it.
+      if (
+        selectedConversation?.isNewChat &&
+        selectedConversation.participants.some((p) => p._id === conversationToDeleteId)
+      ) {
+        setSelectedConversation(null);
+        navigate("/messages", { replace: true });
+      }
+    }
+    setShowConfirmDeleteDialog(false);
+    setConversationToDeleteId(null);
+    console.log("Selected Conversation ID:", selectedConversation?._id);
+    console.log("Conversation To Delete ID:", conversationToDeleteId);
+  };
+
+  const handleCancelDelete = () => {
+    setShowConfirmDeleteDialog(false);
+    setConversationToDeleteId(null);
+  };
+  // --- END NEW HANDLERS ---
+
   if (errorConversations || errorFollowedUsers) {
     return (
       <div className="flex min-h-screen bg-black text-red-500 items-center justify-center">
@@ -166,6 +214,7 @@ const MessagePage = ({ openImageModal }) => {
         <ConversationsList
           onSelectConversation={handleSelectConversation}
           selectedConversation={selectedConversation}
+          onDeleteInitiate={handleDeleteInitiate}
         />
       </div>
 
@@ -199,6 +248,14 @@ const MessagePage = ({ openImageModal }) => {
           </div>
         )}
       </div>
+      {/* --- NEW CONFIRMATION DIALOG --- */}
+      <ConfirmationDialog
+        isOpen={showConfirmDeleteDialog}
+        message="Are you sure you want to delete this conversation for yourself? This action cannot be undone."
+        onConfirm={handleConfirmDelete}
+        onCancel={handleCancelDelete}
+      />
+      {/* --- END NEW CONFIRMATION DIALOG --- */}
     </div>
   );
 };
