@@ -134,18 +134,25 @@ export const likeUnlikePost = async (req, res) => {
   }
 };
 
+// In your controller file (e.g., postsController.js)
 export const getAllPosts = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 1; // Default to page 1
+    const limit = parseInt(req.query.limit) || 10; // Default to 10 posts per page
+    const skip = (page - 1) * limit;
+
     const posts = await Post.find()
       .sort({ createdAt: -1 })
+      .skip(skip) // Skip posts already fetched
+      .limit(limit) // Limit the number of posts fetched
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
 
-    if (posts.length === 0) {
-      return res.status(200).json([]);
-    }
+    // Optional: Send a flag indicating if there are more posts
+    const totalPosts = await Post.countDocuments(); // Consider caching this for performance
+    const hasNextPage = (page * limit) < totalPosts;
 
-    res.status(200).json(posts);
+    res.status(200).json({ posts, hasNextPage }); // Return posts and hasNextPage
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getAllPosts controller: ", error);
@@ -153,13 +160,19 @@ export const getAllPosts = async (req, res) => {
 };
 
 export const getLikedPosts = async (req, res) => {
-  const userId = req.params.id;
-
+  const userId = req.params.id; // Expecting userId from URL parameters
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+      .sort({ createdAt: -1 }) // Assuming you want liked posts sorted by creation date
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: "user",
         select: "-password",
@@ -169,7 +182,11 @@ export const getLikedPosts = async (req, res) => {
         select: "-password",
       });
 
-    res.status(200).json(likedPosts);
+    // CRITICAL: Count only the posts that match the likedPosts array
+    const totalLikedPosts = await Post.countDocuments({ _id: { $in: user.likedPosts } });
+    const hasNextPage = page * limit < totalLikedPosts;
+
+    res.status(200).json({ posts: likedPosts, hasNextPage });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getLikedPosts controller: ", error);
@@ -184,31 +201,52 @@ export const getFollowingPosts = async (req, res) => {
 
     const following = user.following;
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const feedPosts = await Post.find({ user: { $in: following } })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
 
-    res.status(200).json(feedPosts);
+    const totalPostsForFollowing = await Post.countDocuments({
+      user: { $in: following },
+    });
+    const hasNextPage = page * limit < totalPostsForFollowing;
+
+    res.status(200).json({ posts: feedPosts, hasNextPage });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("Error in getLikedPosts controller: ", error);
+    console.log("Error in getFollowingPosts controller: ", error);
   }
 };
 
 export const getUserPosts = async (req, res) => {
   try {
-    const { username } = req.params;
+    const { username } = req.params; // Expecting username from URL parameters
     const user = await User.findOne({ username });
 
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const posts = await Post.find({ user: user._id })
       .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
       .populate({ path: "user", select: "-password" })
       .populate({ path: "comments.user", select: "-password" });
 
-    res.status(200).json(posts);
+    // CRITICAL: Count only the posts belonging to this specific user
+    const totalUserPosts = await Post.countDocuments({ user: user._id });
+    const hasNextPage = page * limit < totalUserPosts;
+
+    res.status(200).json({ posts, hasNextPage });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getUserPosts controller: ", error);
