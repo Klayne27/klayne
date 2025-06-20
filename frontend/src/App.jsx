@@ -12,10 +12,23 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import MessagesPage from "./pages/message/MessagePage";
 import PostPage from "./pages/post/PostPage";
 import SearchPage from "./pages/search/SearchPage";
+import { useState } from "react";
+import ImageModal from "./components/common/ImageModal";
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
   const location = useLocation();
+
+  const [selectedImage, setSelectedImage] = useState(null);
+
+  const openImageModal = (imageUrl) => {
+    setSelectedImage(imageUrl);
+  };
+
+  const closeImageModal = () => {
+    setSelectedImage(null);
+  };
+
 
   if (isLoading) {
     return (
@@ -31,7 +44,16 @@ function App() {
     <div className="flex max-w-7xl mx-auto">
       {authUser && <Sidebar />}
       <Routes>
-        <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+        <Route
+          path="/"
+          element={
+            authUser ? (
+              <HomePage openImageModal={openImageModal} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
+        />
         <Route
           path="/signup"
           element={!authUser ? <SignupPage /> : <Navigate to="/" />}
@@ -43,19 +65,43 @@ function App() {
         />
         <Route
           path="/profile/:username"
-          element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+          element={
+            authUser ? (
+              <ProfilePage openImageModal={openImageModal} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
         <Route
           path="/messages"
-          element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
+          element={
+            authUser ? (
+              <MessagesPage openImageModal={openImageModal} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
         <Route
           path="/messages/:conversationId"
-          element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
+          element={
+            authUser ? (
+              <MessagesPage openImageModal={openImageModal} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
         <Route
           path="/:username/post/:pid"
-          element={authUser ? <PostPage /> : <Navigate to="/login" />}
+          element={
+            authUser ? (
+              <PostPage openImageModal={openImageModal} />
+            ) : (
+              <Navigate to="/login" />
+            )
+          }
         />
         <Route
           path="/search"
@@ -64,6 +110,7 @@ function App() {
       </Routes>
       {authUser && !isMessagePage && <RightPanel />}
       <Toaster />
+      <ImageModal src={selectedImage} onClose={closeImageModal} />
     </div>
   );
 }

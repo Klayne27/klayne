@@ -3,7 +3,7 @@ import PostSkeleton from "../skeletons/PostSkeleton";
 import { useEffect, useRef, useCallback } from "react";
 import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 
-const Posts = ({ feedType, username, userId, onPostsFetched }) => {
+const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -30,7 +30,7 @@ const Posts = ({ feedType, username, userId, onPostsFetched }) => {
     hasNextPage,
     isFetchingNextPage,
     isError,
-    error
+    error,
   } = useFetchPosts(POST_ENDPOINT);
 
   const lastPostRef = useRef();
@@ -49,7 +49,7 @@ const Posts = ({ feedType, username, userId, onPostsFetched }) => {
         },
         {
           rootMargin: "0px",
-          threshold: 0.1, 
+          threshold: 0.1,
         }
       );
 
@@ -99,7 +99,7 @@ const Posts = ({ feedType, username, userId, onPostsFetched }) => {
         // The key prop must be on the outermost element returned by map
         return (
           <div ref={elementRef} key={post._id}>
-            <Post post={post} />
+            <Post post={post} openImageModal={openImageModal} />
           </div>
         );
       })}

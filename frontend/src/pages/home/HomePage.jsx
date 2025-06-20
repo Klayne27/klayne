@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from "react";
 import Posts from "../../components/common/Posts";
 import CreatePost from "./CreatePost";
 
-const HomePage = () => {
+const HomePage = ({ openImageModal }) => {
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
@@ -71,8 +71,7 @@ const HomePage = () => {
 
         <div ref={scrollableContentRef}>
           <CreatePost />
-          {/* onPostsFetched prop on Posts is NOT directly causing the scroll back */}
-          <Posts feedType={feedType} />
+          <Posts feedType={feedType} openImageModal={openImageModal} />
         </div>
       </div>
     </>

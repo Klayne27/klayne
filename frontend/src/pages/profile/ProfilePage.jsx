@@ -18,7 +18,7 @@ import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile"
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
 
-const ProfilePage = () => {
+const ProfilePage = ({ openImageModal }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [feedType, setFeedType] = useState("posts");
@@ -275,6 +275,7 @@ const ProfilePage = () => {
             username={username}
             userId={user?._id}
             onPostsFetched={handlePostsFetched}
+            openImageModal={openImageModal}
           />
         </div>
       </div>

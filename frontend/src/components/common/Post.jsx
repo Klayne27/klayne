@@ -9,8 +9,9 @@ import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
+import { renderClickableText } from "../../utils/textUtils";
 
-const Post = ({ post }) => {
+const Post = ({ post, openImageModal }) => {
   const navigate = useNavigate();
 
   const { authUser } = useAuthUser();
@@ -42,6 +43,13 @@ const Post = ({ post }) => {
   const navigateToPostPage = (e) => {
     if (!e.defaultPrevented) {
       navigate(`/${post.user.username}/post/${post._id}`);
+    }
+  };
+
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation();
+    if (openImageModal) {
+      openImageModal(imageUrl);
     }
   };
 
@@ -96,12 +104,13 @@ const Post = ({ post }) => {
           )}
         </div>
         <div className="flex flex-col gap-3 overflow-hidden">
-          <span>{post.text}</span>
+          <span className="whitespace-pre-wrap">{renderClickableText(post.text)}</span>
           {post.img && (
             <img
               src={post.img}
               className="h-80 object-contain rounded-2xl border border-gray-700"
               alt="post image"
+              onClick={(e) => handleImageClick(post.img, e)}
             />
           )}
         </div>

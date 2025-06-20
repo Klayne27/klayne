@@ -11,7 +11,7 @@ import { useAddComment } from "../../hooks/postsHooks/useAddComment";
 import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
 import { FiTrash } from "react-icons/fi";
 
-const PostPage = () => {
+const PostPage = ({ openImageModal }) => {
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
@@ -32,6 +32,7 @@ const PostPage = () => {
   const handleDeleteComment = (commentId) => {
     deleteComment({ postId: pid, commentId });
   };
+
 
   useEffect(() => {
     if (isError) {
@@ -70,7 +71,7 @@ const PostPage = () => {
       <div className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-700">
         <button
           onClick={() => navigate(-1)}
-          className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0" // flex-shrink-0 to prevent button squishing
+          className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
         >
           <FaArrowLeft className="w-4 h-4" />
         </button>
@@ -78,7 +79,7 @@ const PostPage = () => {
       </div>
 
       <div className="border-b border-gray-700">
-        <Post post={post} />
+        <Post post={post} openImageModal={openImageModal} />
       </div>
 
       {authUser && (
@@ -91,6 +92,7 @@ const PostPage = () => {
               <img
                 src={authUser?.profileImg || "/avatar-placeholder.png"}
                 alt="Your profile"
+               
               />
             </div>
           </div>
@@ -99,7 +101,7 @@ const PostPage = () => {
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
             placeholder="Post your reply"
-            className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg" 
+            className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
             disabled={isAddingComment}
           />
           <button

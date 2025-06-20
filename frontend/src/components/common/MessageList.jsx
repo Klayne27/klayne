@@ -3,6 +3,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
+import { renderClickableText } from "../../utils/textUtils";
 
 function MessageList({
   error,
@@ -14,10 +15,13 @@ function MessageList({
   isDeletingMessage,
   selectedConversation,
   messages,
+  openImageModal,
 }) {
   const { authUser: currentUser } = useAuthUser();
   const messagesEndRef = useRef(null);
   const prevMessagesLength = useRef(0);
+
+  console.log(openImageModal);
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -35,6 +39,17 @@ function MessageList({
     },
     [setReplyingToMessage, messageInputRef]
   );
+
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation(); // Prevent any parent message click from triggering
+    if (openImageModal) {
+      openImageModal(imageUrl);
+    } else {
+      console.warn(
+        "openImageModal prop is undefined in Message component. Image modal will not open."
+      );
+    }
+  };
 
   useEffect(() => {
     if (messagesEndRef.current && messages) {
@@ -143,7 +158,7 @@ function MessageList({
                             isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
                           } mt-1 italic`}
                         >
-                          {truncateText(msg.repliedTo.text, 50)}
+                          {renderClickableText(truncateText(msg.repliedTo.text, 50))}
                         </span>
                       )}
                       {msg.repliedTo.img && (
@@ -159,10 +174,13 @@ function MessageList({
                     <img
                       src={msg.img}
                       alt="message attachment"
-                      className="mt-2 rounded-lg w-60 h-auto object-cover"
+                      className="mt-2 rounded-lg w-60 h-auto object-cover cursor-pointer"
+                      onClick={(e) => handleImageClick(msg.img, e)}
                     />
                   )}
-                  {msg.text && <p className="break-words text-sm">{msg.text}</p>}
+                  {msg.text && (
+                    <p className="break-words text-sm">{renderClickableText(msg.text)}</p>
+                  )}
                 </div>
                 {/* {isSentByCurrentUser && msg.seen && (
                               <span className={`self-end ml-1`}>

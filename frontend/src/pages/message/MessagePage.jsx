@@ -6,7 +6,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 
-const MessagePage = () => {
+const MessagePage = ({ openImageModal }) => {
   const { authUser: currentUser } = useAuthUser();
   const location = useLocation();
   const { conversationId: urlConversationId } = useParams();
@@ -183,6 +183,7 @@ const MessagePage = () => {
         {selectedConversation ? (
           <ChatWindow
             selectedConversation={selectedConversation}
+            openImageModal={openImageModal}
             onBackToConversations={handleBackToConversations}
             onNewConversationCreated={(newConversationId) => {
               refetchConversations();
