@@ -1,6 +1,7 @@
 import { createContext, useState, useEffect, useContext, useRef } from "react";
 import io from "socket.io-client";
 import { useAuthUser } from "../hooks/authHooks/useAuthUser";
+import { useQueryClient } from "@tanstack/react-query";
 
 const SocketContext = createContext();
 
@@ -18,6 +19,7 @@ export const SocketContextProvider = ({ children }) => {
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false); // New state for unread messages
   const socketRef = useRef(null);
+  const queryClient = useQueryClient(); // Initialize useQueryClient
 
   useEffect(() => {
     if (!isLoadingAuthUser && user) {
@@ -40,6 +42,18 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadMessages(hasUnread);
       });
 
+      // --- NEW: Add global newMessage listener here ---
+      newSocket.on("newMessage", (newMessage) => {
+        console.log("SocketContext: Received new message globally:", newMessage);
+        // Invalidate the conversations list query whenever ANY new message arrives
+        // This will cause components using useQuery(['conversations']) to refetch.
+        queryClient.invalidateQueries(["conversations"]);
+
+        // OPTIONAL: If you want to update the message list in an *active* chat
+        // from here, you would add logic like the one in ChatWindow.jsx
+        // But for simplicity and separation of concerns, ChatWindow handles its own list.
+      });
+
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
         // When disconnected, assume no unread messages until reconnected
@@ -55,6 +69,7 @@ export const SocketContextProvider = ({ children }) => {
         if (newSocket) {
           newSocket.off("getOnlineUsers");
           newSocket.off("unreadMessageStatus"); // Clean up listener
+          newSocket.off("newMessage"); // Clean up the new listener
           newSocket.off("disconnect");
           newSocket.off("connect_error");
           newSocket.close();
@@ -70,7 +85,7 @@ export const SocketContextProvider = ({ children }) => {
       setHasUnreadMessages(false); // No user, no unread messages
       setActiveConversationId(null); // Reset active conversation on logout
     }
-  }, [user, isLoadingAuthUser]);
+  }, [user, isLoadingAuthUser, queryClient]);
 
   // NEW useEffect: Emit active conversation ID to the backend
   useEffect(() => {

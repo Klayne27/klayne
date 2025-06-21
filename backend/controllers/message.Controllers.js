@@ -106,6 +106,8 @@ export const sendMessage = async (req, res) => {
 
     // Emit unread message status to the recipient to show the red dot
     await emitUnreadMessageStatus(recipientId.toString());
+    // await emitUnreadMessageStatus(receiverId);
+    await emitUnreadMessageStatus(senderId.toString());
 
     res.status(201).json({ newMessage, conversationId: conversation._id });
   } catch (error) {
