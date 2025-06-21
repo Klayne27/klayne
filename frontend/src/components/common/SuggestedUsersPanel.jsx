@@ -23,7 +23,7 @@ const SuggestedUsersPanel = () => {
     <div className="p-4 rounded-2xl border border-gray-700">
       <p className="font-bold mb-4 text-xl">Who to follow</p>
       <div className="flex flex-col gap-4">
-        {(isLoading || isRefetching) && (
+        {!suggestedUsers && isLoading && (
           <>
             <RightPanelSkeleton />
             <RightPanelSkeleton />

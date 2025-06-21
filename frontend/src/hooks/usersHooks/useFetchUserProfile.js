@@ -1,3 +1,5 @@
+// frontend/src/hooks/usersHooks/useFetchUserProfile.js
+
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserPofileApi } from "../../api/usersApi";
 
@@ -10,6 +12,8 @@ export const useFetchUserProfile = (username) => {
   } = useQuery({
     queryKey: ["userProfile", username],
     queryFn: () => fetchUserPofileApi(username),
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
   });
 
   return { user, isLoading, refetch, isRefetching };

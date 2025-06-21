@@ -42,7 +42,6 @@ export const SocketContextProvider = ({ children }) => {
       });
 
       newSocket.on("newMessage", (newMessage) => {
-        console.log("SocketContext: Received new message globally:", newMessage);
         queryClient.invalidateQueries(["conversations"]);
       });
 

@@ -10,7 +10,11 @@ export const useSuggestedUsers = () => {
   } = useQuery({
     queryKey: ["suggestedUsers"],
     queryFn: fetchSuggestedUsersApi,
+    staleTime: 1000 * 60 * 30,
+    refetchOnWindowFocus: false,
+    refetchOnMount: false,
   });
+  
 
   return { suggestedUsers, isLoading, refetch, isRefetching };
 };

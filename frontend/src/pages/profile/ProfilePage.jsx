@@ -102,12 +102,12 @@ const ProfilePage = ({ openImageModal }) => {
   return (
     <>
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        {(isLoading || isRefetching) && <ProfileHeaderSkeleton />}
+        {!user && (isLoading || isRefetching) && <ProfileHeaderSkeleton />}
         {!isLoading && !isRefetching && !user && (
           <p className="text-center text-lg mt-4">User not found</p>
         )}
         <div className="flex flex-col">
-          {!isLoading && !isRefetching && user && (
+          { user && (
             <>
               <div className="flex gap-10 px-4 py-2 items-center">
                 <button
