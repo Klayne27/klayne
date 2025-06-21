@@ -173,11 +173,6 @@ export const getAllPosts = async (req, res) => {
           select: "-password",
         },
         select: "text img likes comments repostsCount createdAt user", // Include repostsCount
-      })
-      .populate({
-        // Populate the reposts virtual field on original posts
-        path: "reposts",
-        select: "user createdAt", // Select specific fields from reposts if needed, or just count
       });
 
     // Filter out reposts of reposts, and potentially posts marked as deleted for the current user.
@@ -250,11 +245,6 @@ export const getLikedPosts = async (req, res) => {
         },
         // *** FIX 2: Add repostsCount to select for original post ***
         select: "text img likes comments repostsCount createdAt user", // Include repostsCount
-      })
-      .populate({
-        // Populate the reposts virtual field on original posts
-        path: "reposts",
-        select: "user createdAt", // Select specific fields from reposts if needed, or just count
       });
 
     // CRITICAL: Count only the posts that match the likedPosts array
@@ -324,11 +314,6 @@ export const getFollowingPosts = async (req, res) => {
           select: "-password",
         },
         select: "text img likes comments repostsCount createdAt user", // Include repostsCount
-      })
-      .populate({
-        // Populate the reposts virtual field on original posts
-        path: "reposts",
-        select: "user createdAt", // You might only need user and createdAt for basic info
       });
 
     // --- Post-fetch filtering to refine the feed ---
@@ -428,11 +413,6 @@ export const getUserPosts = async (req, res) => {
           select: "-password",
         },
         select: "text img likes comments repostsCount createdAt user", // Include repostsCount
-      })
-      .populate({
-        // Populate the reposts virtual field on original posts
-        path: "reposts",
-        select: "user createdAt", // You might only need user and createdAt
       });
 
     // Filter out reposts of reposts, and posts marked as deleted for the current authenticated user
@@ -491,11 +471,7 @@ export const getPost = async (req, res) => {
           path: "user", // And populate the user who created that original post
           select: "username profileImg fullName isVerified",
         },
-      })
-      .populate({
-        // Populate the reposts virtual field on original posts
-        path: "reposts",
-        select: "user createdAt", // You might only need user and createdAt
+        select: "text img likes comments repostsCount createdAt user",
       });
 
     if (!post) {
@@ -510,77 +486,82 @@ export const getPost = async (req, res) => {
 };
 
 export const repostPost = async (req, res) => {
+  // Renamed from repostPost
   try {
-    const { postId } = req.params; // Get the ID of the post to be reposted from the URL params
-    const userId = req.user._id; // Get the ID of the authenticated user (the one reposting)
+    const { postId } = req.params; // This is the ID of the original post
+    const userId = req.user._id;
 
-    // 1. Find the original post
+    // 1. Find the original post (to update its count)
     const originalPost = await Post.findById(postId);
-
     if (!originalPost) {
       return res.status(404).json({ error: "Original post not found." });
     }
 
-    // Optional: Prevent users from reposting their own posts (or limit to one repost per original post)
-    // You might want to add a check here if the `repostedFrom` already exists for this user.
-    // For simplicity, we'll allow multiple reposts for now, but not if they're literally the same post.
-    if (originalPost.user.toString() === userId.toString()) {
+    if (
+      !originalPost.repostedFrom &&
+      originalPost.user.toString() === userId.toString()
+    ) {
       return res.status(400).json({ error: "You cannot repost your own post." });
     }
 
-    // Optional: Check if this exact repost already exists to prevent duplicates for the same user
+    // 2. Check if the user has already reposted this post
     const existingRepost = await Post.findOne({
       user: userId,
       repostedFrom: originalPost._id,
-      // You might also check if text or img is empty if a repost implies no new content
-      // If a repost can have new text/img, this check becomes more complex.
-      // For a simple 'repost' action without new content, this is good.
-      text: "", // Assuming a pure repost has empty text
-      img: "", // Assuming a pure repost has empty image
     });
 
+    let message;
     if (existingRepost) {
-      return res.status(400).json({ error: "You have already reposted this content." });
+      // User has already reposted -> Unrepost it
+      await Post.deleteOne({ _id: existingRepost._id }); // Delete the repost document
+      originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1); // Decrement count, ensure not negative
+      message = "Repost removed successfully.";
+    } else {
+      // User has NOT reposted -> Repost it
+      const newRepost = new Post({
+        user: userId,
+        text: "",
+        img: "",
+        repostedFrom: originalPost._id,
+        likes: [],
+        comments: [],
+        repostsCount: 0, // A repost itself starts with 0
+      });
+      await newRepost.save();
+      originalPost.repostsCount = (originalPost.repostsCount || 0) + 1; // Increment count
+      message = "Post reposted successfully.";
     }
 
-    // 2. Create a new post document representing the repost
-    const newRepost = new Post({
-      user: userId, // The user who is reposting
-      text: "", // Reposts typically don't have new text unless it's a "quote post"
-      img: "", // Reposts typically don't have new image unless it's a "quote post"
-      repostedFrom: originalPost._id, // Link to the original post
-      likes: [], // No likes initially
-      comments: [], // No comments initially
+    await originalPost.save(); // Save the updated original post
+
+    // Send back the new count and success message
+    // You might want to populate originalPost here if your frontend needs it immediately
+    // But for just the count and status, a simple message is fine.
+    res.status(200).json({
+      message: message,
+      newRepostsCount: originalPost.repostsCount,
+      hasUserReposted: !existingRepost, // True if it was just reposted, false if just unreposted
     });
-    console.log('newrepost', newRepost);
-
-    await newRepost.save();
-
-    // 3. Increment the repost count on the original post
-    originalPost.repostsCount = (originalPost.repostsCount || 0) + 1; // Initialize if null/undefined
-    await originalPost.save();
-
-    // 4. Populate the new repost for the response, including the original post and its user
-    // This allows the frontend to display the original post content within the repost.
-    await newRepost.populate({
-      path: "user", // The user who created the *repost*
-      select: "-password",
-    });
-    await newRepost
-      .populate({
-        path: "repostedFrom", // The original post being reposted
-        populate: {
-          path: "user", // The user who created the *original* post
-          select: "-password",
-        },
-        select: "text img likes comments repostsCount createdAt user", // Include repostsCount
-      })
-
-    // Send the newly created repost back to the client
-    res.status(201).json(newRepost);
   } catch (error) {
-    console.error("Error in repostPost controller:", error.message);
+    console.error("Error in toggleRepost controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const checkIfUserReposted = async (req, res) => {
+  try {
+    const { originalPostId } = req.params;
+    const userId = req.user._id;
+
+    const existingRepost = await Post.findOne({
+      user: userId,
+      repostedFrom: originalPostId,
+    });
+
+    res.status(200).json({ hasReposted: !!existingRepost });
+  } catch (error) {
+    console.error("Error in checkIfUserReposted controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -604,6 +585,15 @@ export const deleteComment = async (req, res) => {
       return res
         .status(401)
         .json({ error: "You are not authorized to delete this comment" });
+    }
+
+    // If it's a repost being deleted, decrement the original post's count
+    if (postToDelete.repostedFrom) {
+      const originalPost = await Post.findById(postToDelete.repostedFrom);
+      if (originalPost) {
+        originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1); // Ensure count doesn't go below 0
+        await originalPost.save();
+      }
     }
 
     post.comments.pull({ _id: commentId });

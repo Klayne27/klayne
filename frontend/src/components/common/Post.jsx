@@ -11,6 +11,7 @@ import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts"; // Assum
 import { useLikePost } from "../../hooks/postsHooks/useLikePosts"; // Assuming this handles liking
 import { useRepostPost } from "../../hooks/postsHooks/useRepostPost"; // <--- NEW: Import the repost hook
 import { renderClickableText } from "../../utils/textUtils";
+import { useEffect, useState } from "react";
 
 const Post = ({ post, openImageModal }) => {
   const navigate = useNavigate();
@@ -31,26 +32,23 @@ const Post = ({ post, openImageModal }) => {
   const repostingUser = isRepost ? post.user : null;
 
   // Check if the current user is the author of the original content
-  const isMyOriginalPost = authUser?._id === originalPostOwner?._id;
+  // const isMyOriginalPost = authUser?._id === originalPostOwner?._id;
 
   // Check if the current user is the one who performed *this specific repost*
-  const isMyRepost = isRepost && authUser?._id === repostingUser?._id;
+  // const isMyRepost = isRepost && authUser?._id === repostingUser?._id;
 
   // Is the original post liked by the authUser?
   const isLiked = originalPost?.likes?.includes(authUser?._id);
 
+  const canDelete = authUser && authUser._id === post.user._id;
+
+
+  const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
+
   // Repost functionality
   const { repostPost, isReposting } = useRepostPost();
-
   const { likePost, isLiking } = useLikePost(originalPost); // Pass originalPost to hook
-
   const { deletePost, isDeleting } = useDeletePosts(post);
-
-  // Safegaurd: If for some reason originalPost or originalPostOwner isn't populated, don't render.
-  if (!originalPost || !originalPostOwner) {
-    console.warn("Post or originalPostOwner not fully populated:", post);
-    return null; // Or render a fallback UI/error message
-  }
 
   const formattedDate = formatPostDate(originalPost.createdAt); // Date of original post creation
 
@@ -73,14 +71,19 @@ const Post = ({ post, openImageModal }) => {
     likePost(originalPost.id);
   };
 
-  // New: Handle repost click
+  // ... inside handleRepostClick for optimistic update ...
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
-    repostPost(originalPost._id); // Always repost the ID of the ORIGINAL content
+    setHasUserRepostedOriginal((prev) => {
+      if(originalPost?.reposts?.includes(authUser?._id)) {
+        return
+      }
+      return !prev
+    });
+    repostPost(originalPost._id);
+    // Optimistic UI update: Toggle the state
   };
-
-
 
   const navigateToPostPage = (e) => {
     if (!e.defaultPrevented) {
@@ -104,6 +107,36 @@ const Post = ({ post, openImageModal }) => {
       navigate(`/profile/${repostingUser.username}`);
     }
   };
+  useEffect(() => {
+    const checkIfUserRepostedStatus = async () => {
+      if (!authUser || !originalPost?._id) {
+        setHasUserRepostedOriginal(false);
+        return;
+      }
+      try {
+        const response = await fetch(`/api/posts/checkrepost/${originalPost._id}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (!response.ok) {
+          console.warn("Authentication issue checking repost status or other error.");
+          setHasUserRepostedOriginal(false);
+          return;
+        }
+        const data = await response.json();
+        setHasUserRepostedOriginal(data.hasReposted);
+      } catch (error) {
+        console.error("Error checking if user reposted:", error);
+        setHasUserRepostedOriginal(false);
+      }
+    };
+    checkIfUserRepostedStatus();
+  }, [authUser, originalPost?._id]);
+
+  if (!originalPost || !originalPostOwner) {
+    console.warn("Post or originalPostOwner not fully populated:", post);
+    return null; // Or render a fallback UI/error message
+  }
+
 
   return (
     <div
@@ -138,7 +171,7 @@ const Post = ({ post, openImageModal }) => {
           </Link>
         </div>
         <div className="flex flex-col flex-1">
-          <div className="flex gap-1 items-center">
+          <div className="flex gap-1 items-center relative">
             <Link
               to={`/profile/${originalPostOwner.username}`}
               className="font-bold flex items-center gap-1 hover:underline"
@@ -158,10 +191,10 @@ const Post = ({ post, openImageModal }) => {
               <span>{formattedDate}</span>
             </span>
             {/* Delete button: only show if it's MY original post or MY specific repost */}
-            {(isMyOriginalPost || isMyRepost) && (
+            {(canDelete) && (
               <span className="flex justify-end flex-1">
                 {!isDeleting && (
-                  <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
+                  <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
                     <FiTrash
                       className="cursor-pointer"
                       onClick={handleDeletePostClick}
@@ -215,14 +248,21 @@ const Post = ({ post, openImageModal }) => {
               >
                 <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
                   <BiRepost
-                    className={`w-6 h-6 text-slate-500 group-hover:text-green-500 duration-200 transition ${
-                      isReposting ? "animate-spin" : ""
-                    }`}
+                    className={`w-6 h-6 duration-200 transition ${
+                      hasUserRepostedOriginal
+                        ? "text-green-500"
+                        : "text-slate-500 group-hover:text-green-500"
+                    } ${isReposting ? "animate-spin" : ""}`}
                   />
                 </div>
-                <span className="text-sm text-slate-500 group-hover:text-green-500 duration-200 transition">
-                  {originalPost.reposts || 0}{" "}
-                  {/* Display count from originalPost.reposts virtual */}
+                <span
+                  className={`text-sm duration-200 transition ${
+                    hasUserRepostedOriginal
+                      ? "text-green-500"
+                      : "text-slate-500 group-hover:text-green-500"
+                  }`}
+                >
+                  {originalPost.repostsCount || 0}{" "}
                 </span>
               </div>
 
@@ -231,12 +271,20 @@ const Post = ({ post, openImageModal }) => {
                 className="flex items-center group cursor-pointer rounded-full"
                 onClick={handleLikePostClick}
               >
-                <div className="group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition">
+                <div
+                  className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
+                    isLiking ? "animate-spin" : ""
+                  }`}
+                >
                   {!isLiked && (
                     <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
                   )}
                   {isLiked && (
-                    <FaHeart className="w-4 h-4 cursor-pointer text-pink-600 duration-200 transition" />
+                    <FaHeart
+                      className={`w-4 h-4 cursor-pointer text-pink-600 duration-200 transition ${
+                        isLiking ? "animate-spin" : ""
+                      }`}
+                    />
                   )}
                 </div>
                 <span

@@ -12,6 +12,7 @@ import {
   getPost,
   deleteComment,
   repostPost,
+  checkIfUserReposted,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -29,6 +30,8 @@ router.get("/:id", protectRoute, getPost);
 router.delete("/comment/:postId/:commentId", protectRoute, deleteComment)
 
 router.post("/repost/:postId", protectRoute, repostPost); // `:id` is the ID of the original post
+router.get("/checkrepost/:originalPostId", protectRoute, checkIfUserReposted);
+
 
 
 export default router;
