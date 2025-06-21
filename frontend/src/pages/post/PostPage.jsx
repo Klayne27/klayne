@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post";
+import Post from "../../components/common/Post"; // This component should handle rendering original vs repost content
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
@@ -12,43 +12,50 @@ import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
 import { FiTrash } from "react-icons/fi";
 
 const PostPage = ({ openImageModal }) => {
-  const { pid } = useParams();
+  const { pid } = useParams(); // 'pid' is the ID of the post (or repost) from the URL
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
   const [commentText, setCommentText] = useState("");
 
-  const { post, isLoading, isError, error } = useFetchPost(pid);
-  const { addComment, isAddingComment } = useAddComment(pid);
-  const { deleteComment, isDeletingComment } = useDeleteComment();
+  const { post, isLoading, isError, error } = useFetchPost(pid); // 'post' is the raw data fetched for 'pid'
+  const { addComment, isAddingComment } = useAddComment(pid); // addComment currently uses 'pid' (the repost ID if applicable)
+  const { deleteComment, isDeletingComment } = useDeleteComment(); // deleteComment currently uses 'pid' (the repost ID if applicable)
+
+  // Determine the post whose content and comments should actually be displayed
+  // If 'post' is a repost (has a 'repostedFrom' field), then 'displayPost' should be the original post.
+  // Otherwise, 'displayPost' is just the 'post' itself.
+  const displayPost = post?.repostedFrom || post;
 
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
-    addComment({ postId: pid, text: commentText });
+
+    // IMPORTANT: If comments added via a reposted page should attach to the ORIGINAL post,
+    // then use displayPost._id. Otherwise, if they attach to the repost itself, use pid.
+    // Given the previous conversation, it's highly likely you want them on the original post.
+    addComment({ postId: displayPost._id, text: commentText }); // Use displayPost._id here
     setCommentText("");
   };
 
   const handleDeleteComment = (commentId) => {
-    deleteComment({ postId: pid, commentId });
+    // IMPORTANT: If deleting a comment (which is from the original post)
+    // needs the original postId, then use displayPost._id.
+    // Your backend's deleteComment controller expects postId and commentId.
+    // If the comment is from the 'displayPost', its postId is 'displayPost._id'.
+    deleteComment({ postId: displayPost._id, commentId }); // Use displayPost._id here
   };
 
   useEffect(() => {
-    // If there's an explicit error from fetching, or if the post becomes null/undefined after loading,
-    // it means the post doesn't exist or was deleted.
-    // Ensure `isLoading` is false before navigating, otherwise, it might navigate too early.
     if (!isLoading && (isError || !post)) {
-      // Added !isLoading check
       if (isError) {
         toast.error(error?.message || "Could not load post.");
       } else if (!post) {
-        // This toast message is for when the post disappears after a successful initial fetch
-        // (e.g., deleted by another user, or an invalidation caused a refetch that returned null)
         toast.error("The post you are looking for does not exist or has been deleted.");
       }
       navigate("/", { replace: true });
     }
-  }, [isLoading, isError, error, post, navigate]); // Added 'post' to dependency array
+  }, [isLoading, isError, error, post, navigate]);
 
   if (isLoading) {
     return (
@@ -58,10 +65,8 @@ const PostPage = ({ openImageModal }) => {
     );
   }
 
-  // This block is crucial for handling cases where post becomes null/undefined after loading
-  // (e.g., if it was deleted and useFetchPost refetched and returned null)
   if (!post) {
-    // This condition will catch cases where the post object is null after loading
+    // This means the initial fetch returned null/undefined
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen w-full text-white p-4">
         <h2 className="text-2xl font-bold mb-4 text-center">Post Not Found</h2>
@@ -78,7 +83,6 @@ const PostPage = ({ openImageModal }) => {
     );
   }
 
-  // Rest of your component remains the same
   return (
     <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
       <div className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-700">
@@ -88,12 +92,12 @@ const PostPage = ({ openImageModal }) => {
         >
           <FaArrowLeft className="w-4 h-4" />
         </button>
-        <h1 className="font-bold text-xl flex-1 truncate">Post</h1>{" "}
+        <h1 className="font-bold text-xl flex-1 truncate">Post</h1>
       </div>
 
       <div className="border-b border-gray-700">
-        {/* The Post component itself will handle whether it's an original or repost */}
-        <Post post={post} openImageModal={openImageModal} />
+        {/* Pass 'displayPost' to the Post component so it renders the correct content */}
+        <Post post={displayPost} openImageModal={openImageModal} />
       </div>
 
       {authUser && (
@@ -128,8 +132,9 @@ const PostPage = ({ openImageModal }) => {
       )}
 
       <div className="flex flex-col">
-        {post.comments && post.comments.length > 0 ? (
-          post.comments.map((comment) => (
+        {/* Use displayPost.comments for rendering comments */}
+        {displayPost.comments && displayPost.comments.length > 0 ? (
+          displayPost.comments.map((comment) => (
             <div
               key={comment._id}
               className="flex gap-3 text-white border-b border-gray-700 p-4 relative items-start"
@@ -177,7 +182,7 @@ const PostPage = ({ openImageModal }) => {
                   {authUser?._id === comment.user?._id && (
                     <button
                       className="absolute right-0 top-0 text-red-500 p-1 rounded-full hover:bg-red-600 hover:bg-opacity-15 transition duration-200"
-                      onClick={() => handleDeleteComment(comment._id)}
+                      onClick={() => handleDeleteComment(comment._id)} // This now uses displayPost._id from the handler
                       disabled={isDeletingComment}
                     >
                       {isDeletingComment ? (

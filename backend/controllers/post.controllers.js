@@ -150,7 +150,6 @@ export const likeUnlikePost = async (req, res) => {
   }
 };
 
-// In your controller file (e.g., postsController.js)
 export const getAllPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1; // Default to page 1
@@ -455,21 +454,28 @@ export const getPost = async (req, res) => {
   try {
     const post = await Post.findById(req.params.id)
       .populate({
-        path: "user", // Populates the user who created *this* post
+        path: "user", // Populates the user who created *this* post (the repost or original)
         select: "username profileImg fullName isVerified",
       })
       .populate({
-        path: "comments.user", // Populates the users who commented on this post
+        path: "comments.user", // Populates the users who commented on this *directly fetched* post
         select: "username profileImg fullName isVerified",
       })
       .populate({
-        // <<< THIS IS THE ABSOLUTELY ESSENTIAL ADDITION
         path: "repostedFrom", // If this post is a repost, populate the original post
-        populate: {
-          path: "user", // And populate the user who created that original post
-          select: "username profileImg fullName isVerified",
-        },
-        select: "text img likes comments repostsCount createdAt user",
+        populate: [
+          // <--- CHANGE THIS: Use an array for multiple nested populations
+          {
+            path: "user", // Populate the user who created that original post
+            select: "username profileImg fullName isVerified",
+          },
+          {
+            // <--- NEW ADDITION: Populate users for comments WITHIN the repostedFrom post
+            path: "comments.user", // Path is relative to the 'repostedFrom' document
+            select: "username profileImg fullName isVerified",
+          },
+        ],
+        select: "text img likes comments repostsCount createdAt user", // 'comments' is selected, now its users will be populated
       });
 
     if (!post) {
@@ -586,13 +592,13 @@ export const deleteComment = async (req, res) => {
     }
 
     // If it's a repost being deleted, decrement the original post's count
-    if (postToDelete.repostedFrom) {
-      const originalPost = await Post.findById(postToDelete.repostedFrom);
-      if (originalPost) {
-        originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1); // Ensure count doesn't go below 0
-        await originalPost.save();
-      }
-    }
+    // if (postToDelete.repostedFrom) {
+    //   const originalPost = await Post.findById(postToDelete.repostedFrom);
+    //   if (originalPost) {
+    //     originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1); // Ensure count doesn't go below 0
+    //     await originalPost.save();
+    //   }
+    // }
 
     post.comments.pull({ _id: commentId });
     await post.save();
