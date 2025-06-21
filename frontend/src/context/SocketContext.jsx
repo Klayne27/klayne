@@ -17,9 +17,9 @@ export const SocketContextProvider = ({ children }) => {
   const [onlineUsers, setOnlineUsers] = useState([]);
   const [activeConversationId, setActiveConversationId] = useState(null);
 
-  const [hasUnreadMessages, setHasUnreadMessages] = useState(false); // New state for unread messages
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const socketRef = useRef(null);
-  const queryClient = useQueryClient(); // Initialize useQueryClient
+  const queryClient = useQueryClient();
 
   useEffect(() => {
     if (!isLoadingAuthUser && user) {
@@ -27,7 +27,7 @@ export const SocketContextProvider = ({ children }) => {
         query: {
           userId: user._id,
         },
-        withCredentials: true, // Important for sending cookies if you use them for auth
+        withCredentials: true,
       });
 
       socketRef.current = newSocket;
@@ -37,26 +37,17 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
-      // Listen for the new unreadMessageStatus event
       newSocket.on("unreadMessageStatus", ({ hasUnread }) => {
         setHasUnreadMessages(hasUnread);
       });
 
-      // --- NEW: Add global newMessage listener here ---
       newSocket.on("newMessage", (newMessage) => {
         console.log("SocketContext: Received new message globally:", newMessage);
-        // Invalidate the conversations list query whenever ANY new message arrives
-        // This will cause components using useQuery(['conversations']) to refetch.
         queryClient.invalidateQueries(["conversations"]);
-
-        // OPTIONAL: If you want to update the message list in an *active* chat
-        // from here, you would add logic like the one in ChatWindow.jsx
-        // But for simplicity and separation of concerns, ChatWindow handles its own list.
       });
 
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
-        // When disconnected, assume no unread messages until reconnected
         setHasUnreadMessages(false);
       });
 
@@ -68,8 +59,8 @@ export const SocketContextProvider = ({ children }) => {
       return () => {
         if (newSocket) {
           newSocket.off("getOnlineUsers");
-          newSocket.off("unreadMessageStatus"); // Clean up listener
-          newSocket.off("newMessage"); // Clean up the new listener
+          newSocket.off("unreadMessageStatus");
+          newSocket.off("newMessage");
           newSocket.off("disconnect");
           newSocket.off("connect_error");
           newSocket.close();
@@ -82,19 +73,17 @@ export const SocketContextProvider = ({ children }) => {
         setSocket(null);
       }
       setOnlineUsers([]);
-      setHasUnreadMessages(false); // No user, no unread messages
-      setActiveConversationId(null); // Reset active conversation on logout
+      setHasUnreadMessages(false);
+      setActiveConversationId(null);
     }
   }, [user, isLoadingAuthUser, queryClient]);
 
-  // NEW useEffect: Emit active conversation ID to the backend
   useEffect(() => {
     if (socket && user) {
-      // Emit the current activeConversationId. It will be null if no chat is open.
 
       socket.emit("userActiveInChat", { conversationId: activeConversationId });
     }
-  }, [socket, activeConversationId, user]); // Re-run when these dependencies change
+  }, [socket, activeConversationId, user]);
 
   return (
     <SocketContext.Provider

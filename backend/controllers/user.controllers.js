@@ -38,16 +38,12 @@ export const followUnfollowUser = async (req, res) => {
     const isFollowing = currentUser.following.includes(id);
 
     if (isFollowing) {
-      // Unfollow the user
       await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
-      // Send notification to the user
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
-      // Follow the user
       await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
-      // Send notification to the user
       const newNotification = new Notification({
         type: "follow",
         from: req.user._id,
@@ -274,16 +270,12 @@ export const deleteUserAccount = async (req, res) => {
       $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
     });
 
-    // Find all conversations where the user is a participant
     const conversationsToDelete = await Conversation.find({
       participants: userToDelete._id,
     });
 
     for (const conversation of conversationsToDelete) {
-      // Delete all messages associated with this conversation
       await Message.deleteMany({ conversationId: conversation._id });
-
-      // Delete the conversation itself
       await Conversation.findByIdAndDelete(conversation._id);
     }
 

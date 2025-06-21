@@ -5,24 +5,19 @@ import { useAuthUser } from "../authHooks/useAuthUser";
 
 export const useLikePost = (post) => {
   const queryClient = useQueryClient();
-  const { authUser } = useAuthUser(); // Get the current authenticated user
+  const { authUser } = useAuthUser();
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: () => likePostApi(post),
     onMutate: async (postId) => {
-      // 1. Cancel any outgoing refetches for this query to avoid race conditions
       await queryClient.cancelQueries({ queryKey: ["posts"] });
-      await queryClient.cancelQueries({ queryKey: ["posts", postId] }); // For single post view
+      await queryClient.cancelQueries({ queryKey: ["posts", postId] });
 
-      // 2. Snapshot the current cached data
       const previousPostsData = queryClient.getQueryData(["posts"]);
       const previousPostDetailData = queryClient.getQueryData(["posts", postId]);
 
-      // 3. Optimistically update the 'posts' list (e.g., from useInfiniteQuery)
       queryClient.setQueryData(["posts"], (oldData) => {
-        // Essential: Check if oldData or its 'pages' property exists and is an array
         if (!oldData || !Array.isArray(oldData.pages)) {
-          // If no data in cache, or unexpected format, return it as is or a default structure
           return oldData;
         }
 
@@ -30,30 +25,29 @@ export const useLikePost = (post) => {
           ...oldData,
           pages: oldData.pages.map((page) => ({
             ...page,
-            posts: Array.isArray(page.posts) // Essential: Check if page.posts is an array
+            posts: Array.isArray(page.posts)
               ? page.posts.map((post) => {
                   if (post._id === postId) {
-                    const isLiked = post.likes?.includes(authUser?._id); // Safety: post.likes?.
+                    const isLiked = post.likes?.includes(authUser?._id);
                     return {
                       ...post,
                       likes: isLiked
-                        ? (post.likes || []).filter((id) => id !== authUser?._id) // Filter from existing array
-                        : [...(post.likes || []), authUser?._id], // Add to existing array
+                        ? (post.likes || []).filter((id) => id !== authUser?._id)
+                        : [...(post.likes || []), authUser?._id],
                     };
                   }
                   return post;
                 })
-              : page.posts, // If not an array, return as is
+              : page.posts,
           })),
         };
       });
 
       queryClient.setQueryData(["posts", postId], (oldData) => {
-        // Essential: Check if oldData exists
         if (!oldData) {
           return oldData;
         }
-        const isLiked = oldData.likes?.includes(authUser?._id); // Safety: oldData.likes?.
+        const isLiked = oldData.likes?.includes(authUser?._id);
         return {
           ...oldData,
           likes: isLiked
@@ -62,7 +56,6 @@ export const useLikePost = (post) => {
         };
       });
 
-      // Return context for potential rollback in onError
       return { previousPostsData, previousPostDetailData };
     },
 
@@ -74,7 +67,6 @@ export const useLikePost = (post) => {
 
     onError: (error, postId, context) => {
       toast.error(error.message || "Failed to like/unlike post.");
-      // Rollback optimistic updates on error
       if (context?.previousPostsData) {
         queryClient.setQueryData(["posts"], context.previousPostsData);
       }

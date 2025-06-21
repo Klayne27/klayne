@@ -32,7 +32,7 @@ function MessageInput({
     setMessageInput("");
     setImageFile(null);
     setReplyingToMessage(null);
-    currentOptimisticIdRef.current = null; // Clear optimistic ID reference
+    currentOptimisticIdRef.current = null;
 
     if (!messageInput.trim() && !imageFile) return;
     if (!otherUser) return toast.error("No recipient selected.");

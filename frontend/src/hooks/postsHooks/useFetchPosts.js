@@ -1,4 +1,3 @@
-// src/hooks/postsHooks/useFetchPosts.js
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchPostsApi } from "../../api/postsApi";
 
@@ -18,14 +17,14 @@ export const useFetchPosts = (POST_ENDPOINT) => {
     queryFn: ({ pageParam }) => fetchPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
-      return lastPage?.hasNextPage ? allPages.length + 1 : undefined; // Add optional chaining here too
+      return lastPage?.hasNextPage ? allPages.length + 1 : undefined;
     },
-    enabled: !!POST_ENDPOINT, // <-- Crucial: Only run the query if POST_ENDPOINT is not null/undefined
+    enabled: !!POST_ENDPOINT,
     staleTime: 1000 * 60,
     gcTime: 1000 * 60 * 5,
   });
 
-  const posts = data?.pages.flatMap((page) => page?.posts || []) || []; // Add optional chaining and fallback
+  const posts = data?.pages.flatMap((page) => page?.posts || []) || [];
 
   return {
     posts,

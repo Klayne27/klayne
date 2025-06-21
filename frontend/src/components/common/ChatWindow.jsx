@@ -48,27 +48,18 @@ const ChatWindow = ({
   });
 
   useEffect(() => {
-    // When ChatWindow is active and a conversation is selected (or null if it's a new chat init)
-    // Inform SocketContext (and thus the backend) about the currently active conversation ID.
-    // `actualConversationId` will be null for brand new chats until first message.
     setActiveConversationId(actualConversationId);
-
-    // Cleanup: When ChatWindow unmounts or selectedConversation becomes null,
-    // inform SocketContext to set active conversation to null.
     return () => {
       setActiveConversationId(null);
     };
-  }, [actualConversationId, setActiveConversationId]); // Re-run when actualConversationId changes
+  }, [actualConversationId, setActiveConversationId]);
 
-  // --- CRITICAL FIX FOR NOTIFICATION BADGE: Mark messages as seen when conversation is opened ---
-  // This useEffect will run whenever the selected conversation changes, ensuring that
-  // any unread messages in the newly opened chat are marked as seen.
   useEffect(() => {
     if (socket && actualConversationId && currentUser?._id) {
 
       socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
     }
-  }, [socket, actualConversationId, currentUser]); // Dependencies: Re-run when socket, current conversation, or current user changes
+  }, [socket, actualConversationId, currentUser]);
 
   useEffect(() => {
     if (socket) {
@@ -155,35 +146,27 @@ const ChatWindow = ({
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);
-
-  // 1. Memoize messagesToDisplay if it involves creating new arrays/objects
+ 
   const messagesToDisplay = useMemo(() => {
     return isLoading || isNewOrTemporaryChat ? [] : messages || [];
-  }, [isLoading, isNewOrTemporaryChat, messages]); // Dependencies: only re-run if these change
+  }, [isLoading, isNewOrTemporaryChat, messages]);
 
-  // 2. Memoize messagesToRender for React.memo to work effectively
   const messagesToRender = useMemo(() => {
-    // Filter the messagesToDisplay array
     return messagesToDisplay.filter(
       (msg) => !msg.isOptimistic || msg._id === currentOptimisticIdRef.current
     );
-  }, [messagesToDisplay, currentOptimisticIdRef.current]); // Dependencies: only re-run if these change
+  }, [messagesToDisplay, currentOptimisticIdRef.current]);
 
-  // 3. Memoize the setReplyingToMessage handler if it's passed down and often causes re-renders
-  // Note: useState setters are already stable, but if you wrap it in useCallback for any reason,
-  // ensure you don't break stability.
   const memoizedSetReplyingToMessage = useCallback((message) => {
     setReplyingToMessage(message);
-  }, []); // Empty dependency array means this function never changes
+  }, []);
 
-  // 4. Memoize the deleteMessage handler if it's from a custom hook and causes instability
-  // (useDeleteMessage should ideally return a stable function, but double-checking is good)
   const memoizedDeleteMessage = useCallback(
     (messageId) => {
       deleteMessage(messageId);
     },
     [deleteMessage]
-  ); // Dependency on deleteMessage itself, ensuring stability if hook ever re-creates it
+  );
 
   // --- Existing useEffect for focusing input when conversation changes ---
   // useEffect(() => {

@@ -56,25 +56,21 @@ const CreatePost = () => {
     setText((prevText) => prevText + emojiObject.emoji);
   };
 
-  // --- MODIFIED handleKeyDown FUNCTION ---
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (e.shiftKey) {
-        // Shift + Enter: Insert a new line
-        e.preventDefault(); // Prevent default (which would be form submission or simple newline)
+        e.preventDefault();
         const start = e.target.selectionStart;
         const end = e.target.selectionEnd;
         setText((prevText) => {
           return prevText.substring(0, start) + "\n" + prevText.substring(end);
         });
-        // Set the cursor position after the new line
         setTimeout(() => {
           e.target.selectionStart = e.target.selectionEnd = start + 1;
         }, 0);
       } else {
-        // Only Enter: Submit the form
-        e.preventDefault(); // Prevent the default textarea newline
-        handleSubmit(e); // Manually trigger the submit handler
+        e.preventDefault();
+        handleSubmit(e);
       }
     }
   };
@@ -134,8 +130,8 @@ const CreatePost = () => {
           placeholder="What is happening?"
           value={text}
           onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown} // Add the onKeyDown handler here
-          ref={textareaRef} // Assign the ref to the textarea
+          onKeyDown={handleKeyDown}
+          ref={textareaRef}
         />
         {img && (
           <div className="relative w-72 mx-auto">

@@ -33,8 +33,6 @@ const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) =
     error,
   } = useFetchPosts(POST_ENDPOINT);
 
-  const lastPostRef = useRef();
-
   const observer = useRef();
   const lastPostElementRef = useCallback(
     (node) => {
@@ -93,10 +91,7 @@ const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) =
   return (
     <div>
       {posts.map((post, index) => {
-        // Create a ref for this specific element
         const elementRef = posts.length === index + 1 ? lastPostElementRef : null;
-
-        // The key prop must be on the outermost element returned by map
         return (
           <div ref={elementRef} key={post._id}>
             <Post post={post} openImageModal={openImageModal} />

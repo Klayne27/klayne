@@ -15,8 +15,8 @@ const messageSchema = new mongoose.Schema(
     },
     repliedTo: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Message", // References another Message document
-      default: null, // It's optional; not all messages are replies
+      ref: "Message",
+      default: null,
     },
   },
   { timestamps: true }

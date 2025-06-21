@@ -109,7 +109,7 @@ const Sidebar = () => {
               {hasUnreadMessages && (
                 <div
                   className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
-                  style={{ transform: "translate(50%, -50%)" }} // Adjust positioning as needed
+                  style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
             </Link>

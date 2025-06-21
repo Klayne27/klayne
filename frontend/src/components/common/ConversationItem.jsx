@@ -54,13 +54,11 @@ function ConversationItem({
     ? { _id: null, participants: [otherUser], isNewChat: true }
     : conv;
 
-  // --- NEW HANDLER FOR DELETE ICON CLICK ---
   const handleDeleteClick = (e) => {
-    e.preventDefault(); // Prevent default Link behavior (navigation)
-    e.stopPropagation(); // Stop event from bubbling up to the ConversationItem's onClick (onSelectConversation)
-    onDeleteInitiate(conv._id); // Call the prop function with the conversation ID
+    e.preventDefault();
+    e.stopPropagation();
+    onDeleteInitiate(conv._id);
   };
-  // --- END NEW HANDLER ---
 
   return (
     <div
@@ -109,12 +107,10 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      {/* --- NEW DELETE BUTTON/ICON --- */}
-      {/* Only show delete option for existing conversations */}
       {!conv.isNewChat && (
         <div
           className="p-2 rounded-full hover:bg-red-600 hover:bg-opacity-15 duration-200 transition"
-          onClick={handleDeleteClick} // Attach the handler here
+          onClick={handleDeleteClick}
         >
           <FiTrash
             className="text-gray-500 hover:text-red-500 cursor-pointer"
@@ -122,7 +118,6 @@ function ConversationItem({
           />
         </div>
       )}
-      {/* --- END NEW DELETE BUTTON/ICON --- */}
     </div>
   );
 }

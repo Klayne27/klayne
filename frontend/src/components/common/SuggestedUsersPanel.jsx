@@ -1,11 +1,10 @@
-// components/common/SuggestedUsersPanel.jsx
 import { Link } from "react-router-dom";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
 import useFollow from "../../hooks/usersHooks/useFollow";
 import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
 import LoadingSpinner from "./LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { BiRefresh } from "react-icons/bi"; // Import refresh icon
+import { BiRefresh } from "react-icons/bi";
 
 const SuggestedUsersPanel = () => {
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
@@ -16,9 +15,8 @@ const SuggestedUsersPanel = () => {
     refetch();
   };
 
-  // Only render if there are suggested users or if loading
   if (!isLoading && !isRefetching && suggestedUsers?.length === 0) {
-    return null; // Or return a message like "No suggestions"
+    return null;
   }
 
   return (
@@ -87,7 +85,6 @@ const SuggestedUsersPanel = () => {
               </Link>
             );
           })}
-        {/* Refresh Button */}
         <button
           onClick={handleRefreshClick}
           className="flex items-center justify-center gap-1 text-primary "

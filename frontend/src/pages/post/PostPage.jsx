@@ -132,7 +132,6 @@ const PostPage = ({ openImageModal }) => {
       )}
 
       <div className="flex flex-col">
-        {/* Use displayPost.comments for rendering comments */}
         {displayPost.comments && displayPost.comments.length > 0 ? (
           displayPost.comments.map((comment) => (
             <div
@@ -182,7 +181,7 @@ const PostPage = ({ openImageModal }) => {
                   {authUser?._id === comment.user?._id && (
                     <button
                       className="absolute right-0 top-0 text-red-500 p-1 rounded-full hover:bg-red-600 hover:bg-opacity-15 transition duration-200"
-                      onClick={() => handleDeleteComment(comment._id)} // This now uses displayPost._id from the handler
+                      onClick={() => handleDeleteComment(comment._id)}
                       disabled={isDeletingComment}
                     >
                       {isDeletingComment ? (

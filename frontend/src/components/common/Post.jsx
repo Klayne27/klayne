@@ -16,41 +16,26 @@ import { useEffect, useState } from "react";
 const Post = ({ post, openImageModal }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
-
-  // Determine if this post object itself is a repost
-  const isRepost = !!post.repostedFrom;
-
-  // The 'originalPost' object is the one whose content (text, img, likes, comments, actual creation date) we display.
-  // If 'post' is a repost, 'originalPost' is the populated 'repostedFrom' object.
-  // Otherwise, 'post' IS the original post.
-  const originalPost = isRepost ? post.repostedFrom : post;
-
-  const originalPostOwner = originalPost?.user; // Ensure originalPost.user exists
-
-  // The 'repostingUser' is the user who performed the repost (this is 'post.user').
-  // Only relevant if `isRepost` is true.
-  const repostingUser = isRepost ? post.user : null;
-
-  // Check if the current user is the author of the original content
-  // const isMyOriginalPost = authUser?._id === originalPostOwner?._id;
-
-  // Check if the current user is the one who performed *this specific repost*
-  // const isMyRepost = isRepost && authUser?._id === repostingUser?._id;
-
-  // Is the original post liked by the authUser?
-  const isLiked = originalPost?.likes?.includes(authUser?._id);
-
-  const canDelete = authUser && authUser._id === post.user._id;
-
-
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
 
-  // Repost functionality
+  const isRepost = !!post.repostedFrom;
+  const originalPost = isRepost ? post.repostedFrom : post;
+  const originalPostOwner = originalPost?.user;
+  const repostingUser = isRepost ? post.user : null;
+  const isLiked = originalPost?.likes?.includes(authUser?._id);
+  const canDelete = authUser && authUser._id === post.user._id;
+
   const { repostPost, isReposting } = useRepostPost();
-  const { likePost, isLiking } = useLikePost(originalPost); // Pass originalPost to hook
+  const { likePost, isLiking } = useLikePost(originalPost);
   const { deletePost, isDeleting } = useDeletePosts(post);
 
-  const formattedDate = formatPostDate(originalPost.createdAt); // Date of original post creation
+  const formattedDate = formatPostDate(originalPost.createdAt);
+
+  const navigateToPostPage = (e) => {
+    if (!e.defaultPrevented) {
+      navigate(`/${post.user.username}/post/${post._id}`);
+    }
+  };
 
   const handleInteractiveClick = (e) => {
     e.preventDefault();
@@ -59,38 +44,25 @@ const Post = ({ post, openImageModal }) => {
 
   const handleDeletePostClick = (e) => {
     handleInteractiveClick(e);
-    deletePost(); // Deletes THIS specific post object (either original or a repost)
+    deletePost();
   };
 
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e);
     if (isLiking) return;
-    // When liking, always send the ID of the ORIGINAL content
-    // Assuming useLikePost hook takes the post object and extracts its ID,
-    // or you can explicitly pass originalPost._id: `likePost(originalPost._id);`
     likePost(originalPost.id);
   };
 
-  // ... inside handleRepostClick for optimistic update ...
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
     setHasUserRepostedOriginal((prev) => {
-      if(originalPost?.reposts?.includes(authUser?._id)) {
-        return
+      if (originalPost?.reposts?.includes(authUser?._id)) {
+        return;
       }
-      return !prev
+      return !prev;
     });
     repostPost(originalPost._id);
-    // Optimistic UI update: Toggle the state
-  };
-
-  const navigateToPostPage = (e) => {
-    if (!e.defaultPrevented) {
-      // Navigate to the post page using the ID of THIS specific post (original or repost)
-      // The PostPage will then correctly render the content based on its 'repostedFrom' property.
-      navigate(`/${post.user.username}/post/${post._id}`);
-    }
   };
 
   const handleImageClick = (imageUrl, event) => {
@@ -100,13 +72,13 @@ const Post = ({ post, openImageModal }) => {
     }
   };
 
-  // New: Navigate to the profile of the user who reposted
   const navigateToReposterProfile = (e) => {
-    e.stopPropagation(); // Crucial to prevent navigating to the post page
+    e.stopPropagation();
     if (repostingUser) {
       navigate(`/profile/${repostingUser.username}`);
     }
   };
+
   useEffect(() => {
     const checkIfUserRepostedStatus = async () => {
       if (!authUser || !originalPost?._id) {
@@ -137,10 +109,9 @@ const Post = ({ post, openImageModal }) => {
     return null; // Or render a fallback UI/error message
   }
 
-
   return (
     <div
-      className="flex flex-col gap-0 py-3 px-4 border-b border-gray-700 cursor-pointer" // Changed to flex-col
+      className="flex flex-col gap-0 py-3 px-4 border-b border-gray-700 cursor-pointer"
       onClick={navigateToPostPage}
     >
       {isRepost && repostingUser && (
@@ -190,8 +161,7 @@ const Post = ({ post, openImageModal }) => {
               <span>·</span>
               <span>{formattedDate}</span>
             </span>
-            {/* Delete button: only show if it's MY original post or MY specific repost */}
-            {(canDelete) && (
+            {canDelete && (
               <span className="flex justify-end flex-1">
                 {!isDeleting && (
                   <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
@@ -207,11 +177,9 @@ const Post = ({ post, openImageModal }) => {
             )}
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
-            {/* Display original post's text */}
             <span className="whitespace-pre-wrap">
               {renderClickableText(originalPost.text)}
             </span>
-            {/* Display original post's image */}
             {originalPost.img && (
               <img
                 src={originalPost.img}
@@ -222,12 +190,11 @@ const Post = ({ post, openImageModal }) => {
             )}
           </div>
 
-          {/* Interaction buttons (comments, reposts, likes) - these apply to the ORIGINAL post counts */}
           <div className="flex justify-between mt-3">
             <div className="flex gap-4 items-center w-2/3 justify-between">
               <div
                 className="flex items-center cursor-pointer group"
-                onClick={navigateToPostPage} // Still navigates to this post's ID for comments
+                onClick={navigateToPostPage}
               >
                 <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
                   <FaRegComment
@@ -237,14 +204,12 @@ const Post = ({ post, openImageModal }) => {
                 </div>
                 <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
                   {originalPost.comments?.length || 0}{" "}
-                  {/* Use originalPost comments count */}
                 </span>
               </div>
 
-              {/* Repost Button */}
               <div
                 className="flex items-center group cursor-pointer"
-                onClick={handleRepostClick} // New repost handler
+                onClick={handleRepostClick}
               >
                 <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
                   <BiRepost
@@ -266,7 +231,6 @@ const Post = ({ post, openImageModal }) => {
                 </span>
               </div>
 
-              {/* Like Button */}
               <div
                 className="flex items-center group cursor-pointer rounded-full"
                 onClick={handleLikePostClick}
@@ -292,7 +256,7 @@ const Post = ({ post, openImageModal }) => {
                     isLiked ? "text-pink-600 " : "text-slate-500"
                   }`}
                 >
-                  {originalPost.likes?.length || 0} {/* Use originalPost likes count */}
+                  {originalPost.likes?.length || 0}
                 </span>
               </div>
             </div>

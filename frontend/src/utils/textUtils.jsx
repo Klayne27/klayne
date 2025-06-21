@@ -1,10 +1,6 @@
-// src/utils/textUtils.js
-
 export const renderClickableText = (text, currentUser) => {
   if (!text) return null;
 
-  // Regex to find URLs: https:// or http:// or www.
-  // It captures the URL part to be used in the href.
   const urlRegex =
     /(\b(https?|ftp|file):\/\/[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])|(www\.[-A-Z0-9+&@#/%?=~_|!:,.;]*[-A-Z0-9+&@#/%=~_|])/gi;
 
@@ -13,25 +9,23 @@ export const renderClickableText = (text, currentUser) => {
   let match;
 
   while ((match = urlRegex.exec(text)) !== null) {
-    const url = match[0]; // The matched URL string
+    const url = match[0];
     const urlStartIndex = match.index;
     const urlEndIndex = urlRegex.lastIndex;
 
-    // Add the text before the URL
     if (urlStartIndex > lastIndex) {
       parts.push(text.substring(lastIndex, urlStartIndex));
     }
 
-    // Add the clickable link
-    const formattedUrl = url.startsWith("http") ? url : `http://${url}`; // Ensure http/https prefix
+    const formattedUrl = url.startsWith("http") ? url : `http://${url}`;
     parts.push(
       <a
-        key={urlStartIndex} // Unique key for React list rendering
+        key={urlStartIndex}
         href={formattedUrl}
-        target="_blank" // Open in new tab
-        rel="noopener noreferrer" // Security best practice for target="_blank"
-        className={`hover:underline ${currentUser ? "text-white" : "text-blue-500"}`} // Tailwind classes for link styling
-        onClick={(e) => e.stopPropagation()} // Prevent parent click handler (e.g., post navigation)
+        target="_blank"
+        rel="noopener noreferrer"
+        className={`hover:underline ${currentUser ? "text-white" : "text-blue-500"}`}
+        onClick={(e) => e.stopPropagation()}
       >
         {url}
       </a>
@@ -40,10 +34,9 @@ export const renderClickableText = (text, currentUser) => {
     lastIndex = urlEndIndex;
   }
 
-  // Add any remaining text after the last URL
   if (lastIndex < text.length) {
     parts.push(text.substring(lastIndex));
   }
 
-  return <>{parts}</>; // Return as a Fragment to avoid unnecessary div wrappers
+  return <>{parts}</>;
 };

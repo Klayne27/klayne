@@ -67,7 +67,7 @@ const ProfilePage = ({ openImageModal }) => {
   };
 
   const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation(); // Prevent any parent message click from triggering
+    event.stopPropagation();
     if (openImageModal) {
       openImageModal(imageUrl);
     } else {

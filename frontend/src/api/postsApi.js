@@ -1,5 +1,4 @@
 export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 10) => {
-  // Construct the URL with query parameters for pagination
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
   const res = await fetch(url);
 
@@ -7,7 +6,7 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 10) =>
 
   if (!res.ok) throw new Error(data.error || "Something went wrong");
 
-  return data; // This `data` will now contain { posts: [...], hasNextPage: true/false }
+  return data;
 };
 
 export const createPostApi = async (text, img) => {

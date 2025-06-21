@@ -28,14 +28,10 @@ const MessagePage = ({ openImageModal }) => {
   const [selectedConversation, setSelectedConversation] = useState(null);
   const initialLoadAttempted = useRef(false);
 
-  // --- NEW STATE FOR DELETION CONFIRMATION ---
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
-  // --- END NEW STATE ---
 
-  // --- NEW HOOK INVOCATION ---
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  // --- END NEW HOOK ---
 
   useEffect(
     () => {
@@ -145,7 +141,6 @@ const MessagePage = ({ openImageModal }) => {
     navigate("/messages");
   };
 
-  // --- NEW HANDLERS FOR DELETE CONFIRMATION ---
   const handleDeleteInitiate = (id) => {
     setConversationToDeleteId(id);
     setShowConfirmDeleteDialog(true);
@@ -154,14 +149,10 @@ const MessagePage = ({ openImageModal }) => {
   const handleConfirmDelete = async () => {
     if (conversationToDeleteId) {
       await deleteConversation(conversationToDeleteId);
-      // After deletion, if the currently selected conversation was the one deleted,
-      // navigate back to the main messages list and unselect it.
       if (selectedConversation?._id === conversationToDeleteId) {
-        // <--- This check
         setSelectedConversation(null);
         navigate("/messages", { replace: true });
       }
-      // Also, if a new chat with the deleted user was 'selected', unselect it.
       if (
         selectedConversation?.isNewChat &&
         selectedConversation.participants.some((p) => p._id === conversationToDeleteId)
@@ -178,7 +169,6 @@ const MessagePage = ({ openImageModal }) => {
     setShowConfirmDeleteDialog(false);
     setConversationToDeleteId(null);
   };
-  // --- END NEW HANDLERS ---
 
   if (errorConversations || errorFollowedUsers) {
     return (

@@ -29,7 +29,7 @@ router.delete("/:id", protectRoute, deletePost);
 router.get("/:id", protectRoute, getPost);
 router.delete("/comment/:postId/:commentId", protectRoute, deleteComment)
 
-router.post("/repost/:postId", protectRoute, repostPost); // `:id` is the ID of the original post
+router.post("/repost/:postId", protectRoute, repostPost);
 router.get("/checkrepost/:originalPostId", protectRoute, checkIfUserReposted);
 
 
