@@ -252,7 +252,7 @@ const Post = ({ post, openImageModal }) => {
                   )}
                 </div>
                 <span
-                  className={`text-sm group-hover:text-pink-600 ${
+                  className={`text-sm group-hover:text-pink-600 duration-200 transition ${
                     isLiked ? "text-pink-600 " : "text-slate-500"
                   }`}
                 >
