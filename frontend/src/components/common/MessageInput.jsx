@@ -167,16 +167,16 @@ function MessageInput({
             <button
               type="button"
               onClick={() => imageInputRef.current.click()}
-              className="p-1 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
             >
               <IoImageOutline className="w-5 h-5" />
             </button>
-            <button
+            {/* <button
               type="button"
-              className=" text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+              className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
             >
               <HiOutlineGif className="w-5 h-5" />
-            </button>
+            </button> */}
             <button
               type="button"
               className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 hidden md:block"
