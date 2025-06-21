@@ -3,6 +3,8 @@ import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
+import Conversation from "../models/conversation.model.js";
+import Message from "../models/message.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -245,7 +247,7 @@ export const deleteUserAccount = async (req, res) => {
         const postId = post.img.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(postId);
       }
-      await Post.findByIdAndDelete(post._id); 
+      await Post.findByIdAndDelete(post._id);
     }
 
     await Post.updateMany(
@@ -272,13 +274,24 @@ export const deleteUserAccount = async (req, res) => {
       $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
     });
 
+    // Find all conversations where the user is a participant
+    const conversationsToDelete = await Conversation.find({
+      participants: userToDelete._id,
+    });
+
+    for (const conversation of conversationsToDelete) {
+      // Delete all messages associated with this conversation
+      await Message.deleteMany({ conversationId: conversation._id });
+
+      // Delete the conversation itself
+      await Conversation.findByIdAndDelete(conversation._id);
+    }
+
     await User.findByIdAndDelete(id);
 
-    res
-      .status(200)
-      .json({
-        message: "Account deleted successfully. All associated data has been removed.",
-      });
+    res.status(200).json({
+      message: "Account deleted successfully. All associated data has been removed.",
+    });
   } catch (error) {
     console.error("Error in deleteUserAccount: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -308,4 +321,3 @@ export const searchUsers = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
