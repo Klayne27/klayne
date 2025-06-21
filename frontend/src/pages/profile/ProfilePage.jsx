@@ -66,6 +66,17 @@ const ProfilePage = ({ openImageModal }) => {
     }
   };
 
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation(); // Prevent any parent message click from triggering
+    if (openImageModal) {
+      openImageModal(imageUrl);
+    } else {
+      console.warn(
+        "openImageModal prop is undefined in Message component. Image modal will not open."
+      );
+    }
+  };
+
   useEffect(() => {
     refetch();
   }, [username, refetch]);
@@ -115,8 +126,9 @@ const ProfilePage = ({ openImageModal }) => {
               <div className="relative group/cover">
                 <img
                   src={coverImg || user?.coverImg || "/cover.png"}
-                  className="h-52 w-full object-cover"
+                  className="h-52 w-full object-cover cursor-pointer"
                   alt="cover image"
+                  onClick={(e) => handleImageClick(user?.coverImg, e)}
                 />
                 {isMyProfile && (
                   <div
@@ -146,6 +158,8 @@ const ProfilePage = ({ openImageModal }) => {
                     <img
                       src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
                       alt="user avatar"
+                      className="cursor-pointer"
+                      onClick={(e) => handleImageClick(user?.profileImg, e)}
                     />
                     {isMyProfile && (
                       <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
