@@ -31,8 +31,7 @@ const SuggestedUsersPanel = () => {
             <RightPanelSkeleton />
           </>
         )}
-        {!isLoading &&
-          !isRefetching &&
+        {
           suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
             const isFollowing = currentUser?.following?.includes(user._id);
@@ -90,12 +89,12 @@ const SuggestedUsersPanel = () => {
           className="flex items-center justify-center gap-1 text-primary "
           disabled={isRefetching || isLoading}
         >
-          {isRefetching ? (
+          {isLoading ? (
             <LoadingSpinner size="sm" />
           ) : (
             <BiRefresh className="w-5 h-5" />
           )}
-          {isRefetching ? "Refreshing..." : "Refresh Suggestions"}
+          {isLoading ? "Refreshing..." : "Refresh Suggestions"}
         </button>
       </div>
     </div>
