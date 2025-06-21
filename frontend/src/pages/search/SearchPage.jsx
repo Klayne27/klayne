@@ -1,6 +1,7 @@
 import { BiArrowBack } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import SearchPanel from "../../components/common/SearchPanel";
+import SuggestedUsersPanel from "../../components/common/SuggestedUsersPanel";
 
 const SearchPage = () => {
   const navigate = useNavigate();
@@ -18,6 +19,10 @@ const SearchPage = () => {
         <h1 className="text-xl font-bold">Search</h1>
       </div>
       <SearchPanel />
+      <div className="mt-4">
+
+        <SuggestedUsersPanel />
+      </div>
     </div>
   );
 };
