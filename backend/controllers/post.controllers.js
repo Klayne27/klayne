@@ -266,34 +266,31 @@ export const getFollowingPosts = async (req, res) => {
 
     const following = user.following;
 
+    // If the user isn't following anyone, there are no "following" posts to show.
+    // This prevents unnecessary database queries.
+    if (following.length === 0) {
+      return res.status(200).json({ posts: [], hasNextPage: false });
+    }
+
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Query for posts by users the current user is following OR
-    // posts created by the current user.
-    // We will then populate reposts.
+    // Base query: ONLY posts from users the current user is following
     const baseQuery = {
-      $or: [
-        { user: { $in: following } }, // Posts from followed users
-        { user: userId }, // Posts from the current user
-      ],
+      user: { $in: following }, // Posts from *followed* users
     };
 
-    // Fetch posts that match the base query (original posts by relevant users)
-    // AND also fetch posts that are reposts
-    // To accurately get all relevant posts for the feed (originals AND reposts),
-    // we might need to adjust the initial `find` query to include reposts by `userId` or of `following` posts.
-    // A more robust approach for mixed feeds like this often uses an aggregation pipeline.
-    // For `find`, we'll fetch a wider net and filter strictly afterwards.
-
+    // The rawFeedPosts query should only consider posts made by followed users
+    // OR reposts made by followed users.
     const rawFeedPosts = await Post.find({
       $or: [
-        baseQuery, // Original posts by followed/self
-        { user: userId, repostedFrom: { $ne: null } }, // Reposts made by current user
-        // Reposts made by followed users of any post (if you want to show that)
-        // { user: { $in: following }, repostedFrom: { $ne: null } }
+        baseQuery, // Original posts by followed users
+        // Reposts made by followed users of *any* post
+        { user: { $in: following }, repostedFrom: { $ne: null } },
       ],
+      // Add criteria to exclude posts that have been 'deletedFor' the current user
+      "deletedFor.user": { $ne: userId }, // Exclude posts that were specifically deleted for this user
     })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -318,60 +315,61 @@ export const getFollowingPosts = async (req, res) => {
 
     // --- Post-fetch filtering to refine the feed ---
     const finalFeedPosts = rawFeedPosts.filter((post) => {
-      // First, filter out any post (original or repost) that is deleted for the current user
-      const isDeletedForMe = post.deletedFor?.some(
-        (entry) => entry.user.toString() === userId.toString()
-      );
+      // The `deletedFor` check is now handled in the main query for efficiency: "deletedFor.user": { $ne: userId }
+      // So, if `rawFeedPosts` included this, no need for `isDeletedForMe` here.
+      // But ensure your `deletedFor` array lookup is correctly checking sub-documents if it's an array of objects.
+      // If `deletedFor` is just an array of user IDs on the Post schema:
+      const isDeletedForMe = post.deletedFor?.includes(userId.toString()); // If it's just array of IDs
+      // If `deletedFor` is array of { user: ObjectId, date: Date } objects, like you had:
+      // const isDeletedForMe = post.deletedFor?.some(entry => entry.user.toString() === userId.toString());
       if (isDeletedForMe) {
         return false; // Exclude if deleted for current user
       }
 
       // Handle Reposts
       if (post.repostedFrom) {
-        // Exclude reposts of reposts (X typically doesn't allow this)
+        // Exclude reposts of reposts
         if (post.repostedFrom.repostedFrom) {
           return false;
         }
 
         // Ensure the original post exists (wasn't deleted from the DB)
+        // If post.repostedFrom is null/undefined after populate, it means original was deleted.
+        if (!post.repostedFrom) {
+          // Check if it was successfully populated
+          return false;
+        }
         if (!post.repostedFrom._id) {
+          // Check if _id exists on the populated object
           return false;
         }
 
-        // Ensure the repost itself is by me OR
-        // Ensure the repost is by someone I follow OR
-        // Ensure the original post's author is someone I follow OR
-        // the original post's author is me.
+        // Ensure the repost itself is by someone I follow
         const repostingUserId = post.user._id.toString();
-        const originalPostAuthorId = post.repostedFrom.user?._id.toString();
-
-        const isRepostByMe = repostingUserId === userId.toString();
+        // The original post author is only relevant if it's THEIR post being reposted by someone else.
+        // We only want posts/reposts by those we *follow*.
         const isRepostByFollowed = following.includes(repostingUserId);
-        const isOriginalAuthorFollowed =
-          originalPostAuthorId && following.includes(originalPostAuthorId);
-        const isOriginalAuthorMe = originalPostAuthorId === userId.toString();
 
-        return (
-          isRepostByMe ||
-          isRepostByFollowed ||
-          isOriginalAuthorFollowed ||
-          isOriginalAuthorMe
-        );
+        // If the original author is NOT among followers, but the person who reposted IS, then include it.
+        // If the original author IS among followers, and the repost is NOT by me, then include it.
+        // If the original post is made by someone *not* followed, but *reposted by* someone who IS followed: include the repost.
+        // If the original post is made by someone *followed*, and reposted by ANYONE (even not followed), we might include it (depending on desired behavior)
+        // For "Following" tab, it's typically: "Posts by people I follow" OR "Reposts by people I follow".
+        // It does NOT include posts from people you don't follow, even if they're reposted by someone you *do* follow.
+
+        // So, simplified logic for "Following" tab:
+        // A repost is shown IF the user who *made the repost* is among `following`.
+        return isRepostByFollowed;
       } else {
         // Handle Original Posts
-        // Only include original posts if they are by me or someone I follow
-        const isOriginalByMe = post.user._id.toString() === userId.toString();
+        // Only include original posts if they are by someone I follow
         const isOriginalByFollowed = following.includes(post.user._id.toString());
-        return isOriginalByMe || isOriginalByFollowed;
+        return isOriginalByFollowed;
       }
     });
 
-    // CRITICAL: Pagination count needs to match the final filtered array for `hasNextPage`
-    // This is complex to do with `countDocuments` after this kind of filtering.
-    // For accurate pagination, you would typically use an aggregation pipeline for both data and count.
-    // For now, let's return a simpler hasNextPage based on the actual fetched items.
-    const hasNextPage = finalFeedPosts.length === limit; // Simple check: if we got 'limit' items, there might be more.
-    // This is not precise but works for basic infinite scrolling.
+    // Pagination count remains the same.
+    const hasNextPage = finalFeedPosts.length === limit;
 
     res.status(200).json({ posts: finalFeedPosts, hasNextPage });
   } catch (error) {
