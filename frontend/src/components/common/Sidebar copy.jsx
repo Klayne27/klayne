@@ -10,13 +10,11 @@ import { useState, useRef, useEffect } from "react";
 import Modal from "./Modal";
 import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
 import toast from "react-hot-toast";
-import { useSocket } from "../../context/SocketContext";
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
-  const { hasUnreadMessages } = useSocket();
 
   const { pathname } = useLocation();
 
@@ -95,30 +93,17 @@ const Sidebar = () => {
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start items-center gap-1">
+          <li className="flex justify-start md:justify-start">
             <Link
               to="/messages"
               className={`${
                 pathname.startsWith("/messages") ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
               <CiMail
-                className="w-6 h-6 "
+                className="w-6 h-6"
                 strokeWidth={pathname.startsWith("/messages") ? 2 : 1}
               />
-              {hasUnreadMessages && (
-                <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
-                  style={{ transform: "translate(50%, -50%)" }} // Adjust positioning as needed
-                ></div>
-              )}
-            </Link>
-            <Link
-              to="/messages"
-              className={`${
-                pathname.startsWith("/messages") ? "font-bold text-white" : ""
-              } `}
-            >
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
@@ -143,10 +128,7 @@ const Sidebar = () => {
               }  flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
               <button onClick={handleMobileSearchClick}>
-                <CiSearch
-                  className="w-6 h-6"
-                  strokeWidth={pathname === "/search" ? 2 : 1}
-                />
+                <CiSearch className="w-6 h-6" strokeWidth={pathname === "/search" ? 2 : 1} />
               </button>
             </div>
           </li>

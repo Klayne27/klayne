@@ -14,6 +14,9 @@ export const SocketContextProvider = ({ children }) => {
   const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser();
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+
+  const [hasUnreadMessages, setHasUnreadMessages] = useState(false); // New state for unread messages
   const socketRef = useRef(null);
 
   useEffect(() => {
@@ -22,6 +25,7 @@ export const SocketContextProvider = ({ children }) => {
         query: {
           userId: user._id,
         },
+        withCredentials: true, // Important for sending cookies if you use them for auth
       });
 
       socketRef.current = newSocket;
@@ -31,17 +35,26 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
+      // Listen for the new unreadMessageStatus event
+      newSocket.on("unreadMessageStatus", ({ hasUnread }) => {
+        setHasUnreadMessages(hasUnread);
+      });
+
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
+        // When disconnected, assume no unread messages until reconnected
+        setHasUnreadMessages(false);
       });
 
       newSocket.on("connect_error", (error) => {
         console.error("Socket connection error:", error.message);
+        setHasUnreadMessages(false);
       });
 
       return () => {
         if (newSocket) {
           newSocket.off("getOnlineUsers");
+          newSocket.off("unreadMessageStatus"); // Clean up listener
           newSocket.off("disconnect");
           newSocket.off("connect_error");
           newSocket.close();
@@ -54,11 +67,24 @@ export const SocketContextProvider = ({ children }) => {
         setSocket(null);
       }
       setOnlineUsers([]);
+      setHasUnreadMessages(false); // No user, no unread messages
+      setActiveConversationId(null); // Reset active conversation on logout
     }
   }, [user, isLoadingAuthUser]);
 
+  // NEW useEffect: Emit active conversation ID to the backend
+  useEffect(() => {
+    if (socket && user) {
+      // Emit the current activeConversationId. It will be null if no chat is open.
+
+      socket.emit("userActiveInChat", { conversationId: activeConversationId });
+    }
+  }, [socket, activeConversationId, user]); // Re-run when these dependencies change
+
   return (
-    <SocketContext.Provider value={{ socket, onlineUsers }}>
+    <SocketContext.Provider
+      value={{ socket, onlineUsers, hasUnreadMessages, setActiveConversationId }}
+    >
       {children}
     </SocketContext.Provider>
   );

@@ -18,7 +18,7 @@ const ChatWindow = ({
 }) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
-  const { socket } = useSocket();
+  const { socket, setActiveConversationId } = useSocket();
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
 
@@ -46,6 +46,29 @@ const ChatWindow = ({
     currentOptimisticIdRef,
     actualConversationId,
   });
+
+  useEffect(() => {
+    // When ChatWindow is active and a conversation is selected (or null if it's a new chat init)
+    // Inform SocketContext (and thus the backend) about the currently active conversation ID.
+    // `actualConversationId` will be null for brand new chats until first message.
+    setActiveConversationId(actualConversationId);
+
+    // Cleanup: When ChatWindow unmounts or selectedConversation becomes null,
+    // inform SocketContext to set active conversation to null.
+    return () => {
+      setActiveConversationId(null);
+    };
+  }, [actualConversationId, setActiveConversationId]); // Re-run when actualConversationId changes
+
+  // --- CRITICAL FIX FOR NOTIFICATION BADGE: Mark messages as seen when conversation is opened ---
+  // This useEffect will run whenever the selected conversation changes, ensuring that
+  // any unread messages in the newly opened chat are marked as seen.
+  useEffect(() => {
+    if (socket && actualConversationId && currentUser?._id) {
+
+      socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
+    }
+  }, [socket, actualConversationId, currentUser]); // Dependencies: Re-run when socket, current conversation, or current user changes
 
   useEffect(() => {
     if (socket) {

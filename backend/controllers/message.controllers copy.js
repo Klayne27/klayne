@@ -1,6 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { getReceiverSocketIds, io, emitUnreadMessageStatus } from "../lib/socket.js"; // Import emitUnreadMessageStatus
+import { getReceiverSocketIds, io } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 
@@ -58,7 +58,7 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       text: message || "",
       img: uploadedImgUrl,
-      seen: false, // New messages are always initially unseen
+      seen: false,
       repliedTo: repliedTo || null,
     });
 
@@ -68,11 +68,11 @@ export const sendMessage = async (req, res) => {
       text: message || "",
       img: uploadedImgUrl,
       sender: senderId,
-      seen: false, // Last message in conversation is unseen for the recipient
+      seen: false,
       createdAt: newMessage.createdAt,
     };
 
-    conversation.deletedFor = []; // Reset deletedFor for new messages in conversation
+    conversation.deletedFor = [];
 
     await conversation.save();
 
@@ -89,7 +89,6 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // Emit 'newMessage' to both sender and recipient
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
       recipientSocketIds.forEach((socketId) => {
@@ -104,8 +103,7 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // Emit unread message status to the recipient to show the red dot
-    await emitUnreadMessageStatus(recipientId.toString());
+    await emitUnreadMessageCount(recipientId.toString());
 
     res.status(201).json({ newMessage, conversationId: conversation._id });
   } catch (error) {
@@ -129,44 +127,6 @@ export const getMessagesByConversationId = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
 
-    // Find messages where the sender is not the current user and they are unseen
-    const otherParticipantId = conversation.participants.find(
-      (participantId) => participantId.toString() !== userId.toString()
-    );
-
-    if (otherParticipantId) {
-      await Message.updateMany(
-        { conversationId: conversation._id, sender: otherParticipantId, seen: false },
-        { $set: { seen: true } }
-      );
-
-      // Update lastMessage.seen in conversation if the last message was from the other participant and unseen
-      if (
-        conversation.lastMessage &&
-        conversation.lastMessage.sender.toString() === otherParticipantId.toString() &&
-        !conversation.lastMessage.seen
-      ) {
-        await Conversation.updateOne(
-          { _id: conversation._id },
-          { $set: { "lastMessage.seen": true } }
-        );
-      }
-
-      // After marking messages as seen, emit updated unread status for the current user (reader)
-      await emitUnreadMessageStatus(userId.toString());
-
-      // Also, inform the other participant that their messages have been seen by the current user
-      // This will also trigger an unread status update for the other participant (if they had any messages marked as unseen by current user)
-      const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
-      recipientSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("messagesSeen", {
-          conversationId,
-          readerId: userId.toString(),
-        });
-      });
-      await emitUnreadMessageStatus(otherParticipantId.toString());
-    }
-
     const messages = await Message.find({
       conversationId: conversation._id,
     })
@@ -180,7 +140,27 @@ export const getMessagesByConversationId = async (req, res) => {
           select: "username fullName profileImg isVerified",
         },
       })
-      .sort({ createdAt: 1 }); // Sort again to ensure correct order
+      .sort({ createdAt: 1 });
+
+    const otherParticipantId = conversation.participants.find(
+      (participantId) => participantId.toString() !== userId.toString()
+    );
+
+    await Message.updateMany(
+      { conversationId: conversation._id, sender: otherParticipantId, seen: false },
+      { $set: { seen: true } }
+    );
+
+    if (
+      conversation.lastMessage &&
+      conversation.lastMessage.sender.toString() === otherParticipantId.toString() &&
+      !conversation.lastMessage.seen
+    ) {
+      await Conversation.updateOne(
+        { _id: conversation._id },
+        { $set: { "lastMessage.seen": true } }
+      );
+    }
 
     res.status(200).json(messages);
   } catch (error) {
@@ -331,8 +311,7 @@ export const deleteMessage = async (req, res) => {
     }
 
     const participants = conversation ? conversation.participants : [];
-    for (const participantId of participants) {
-      // Use for...of for async operations
+    participants.forEach((participantId) => {
       const socketIds = getReceiverSocketIds(participantId.toString());
       socketIds.forEach((socketId) => {
         io.to(socketId).emit("messageDeleted", {
@@ -340,9 +319,7 @@ export const deleteMessage = async (req, res) => {
           conversationId: messageToDelete.conversationId,
         });
       });
-      // Emit updated unread status for each participant after message deletion
-      await emitUnreadMessageStatus(participantId.toString());
-    }
+    });
 
     res.status(200).json({ message: "Message deleted successfully." });
   } catch (error) {
@@ -369,7 +346,7 @@ export const deleteConversationForUser = async (req, res) => {
 
     const isAlreadyDeletedForUser = conversation.deletedFor.some(
       (entry) => entry.user.toString() === userId.toString()
-    ); 
+    );
 
     if (isAlreadyDeletedForUser) {
       return res
@@ -379,10 +356,6 @@ export const deleteConversationForUser = async (req, res) => {
 
     conversation.deletedFor.push({ user: userId });
     await conversation.save();
-
-    // Emit unread status for the user after conversation is marked as deleted (could change their unread count)
-    await emitUnreadMessageStatus(userId.toString());
-
     res.status(200).json({ message: "Conversation deleted successfully" });
   } catch (error) {
     console.error("Error deleting conversation for user:", error.message);

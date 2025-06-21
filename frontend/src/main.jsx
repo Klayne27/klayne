@@ -10,12 +10,12 @@ import ScrollToTop from "./utils/ScrollToTop.js";
 const queryClient = new QueryClient();
 
 createRoot(document.getElementById("root")).render(
-  <StrictMode>
+  <StrictMode> 
     <BrowserRouter>
       <ScrollToTop />
       <QueryClientProvider client={queryClient}>
         <SocketContextProvider>
-          <App />
+            <App />
         </SocketContextProvider>
       </QueryClientProvider>
     </BrowserRouter>
