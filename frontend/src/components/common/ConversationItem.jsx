@@ -109,11 +109,11 @@ function ConversationItem({
       </div>
       {!conv.isNewChat && (
         <div
-          className="p-2 rounded-full hover:bg-red-600 hover:bg-opacity-15 duration-200 transition"
+          className="group p-2 rounded-full hover:bg-red-600 hover:text-red-500 hover:bg-opacity-15 duration-200 transition"
           onClick={handleDeleteClick}
         >
           <FiTrash
-            className="text-gray-500 hover:text-red-500 cursor-pointer"
+            className="text-gray-500 group-hover:text-red-500 cursor-pointer transition duration-200"
             size={18}
           />
         </div>

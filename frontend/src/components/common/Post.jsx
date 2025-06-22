@@ -166,7 +166,7 @@ const Post = ({ post, openImageModal }) => {
                 {!isDeleting && (
                   <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
                     <FiTrash
-                      className="cursor-pointer"
+                      className="cursor-pointer text-gray-500"
                       onClick={handleDeletePostClick}
                       size={20}
                     />
