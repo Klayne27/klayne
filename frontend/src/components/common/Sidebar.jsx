@@ -114,7 +114,7 @@ const Sidebar = ({ setFeedType }) => {
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
-          <li className="flex justify-start md:justify-start items-center gap-0.5">
+          <li className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]">
             <Link
               to="/"
               onClick={handleHomeClick}
@@ -141,7 +141,7 @@ const Sidebar = ({ setFeedType }) => {
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start items-center gap-1">
+          <li className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[140px]">
             <Link
               to="/messages"
               className={`${
@@ -168,7 +168,7 @@ const Sidebar = ({ setFeedType }) => {
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start items-center gap-1">
+          <li className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[164px]">
             <Link
               to="/notifications"
               className={`${
@@ -179,14 +179,14 @@ const Sidebar = ({ setFeedType }) => {
                 className="w-6 h-6"
                 strokeWidth={pathname === "/notifications" ? 25 : 15}
               />
-              {hasUnreadNotifications && ( // NEW: Conditional rendering for red dot
+              {hasUnreadNotifications && (
                 <div
                   className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
             </Link>
-            <Link // Wrapped the span in a Link for the text part
+            <Link
               to="/notifications"
               className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
             >
@@ -208,7 +208,7 @@ const Sidebar = ({ setFeedType }) => {
             </div>
           </li>
 
-          <li className="flex justify-start md:justify-start">
+          <li className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]">
             <Link
               to={`/profile/${authUser?.username}`}
               className={`${
