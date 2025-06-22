@@ -41,7 +41,6 @@ const Sidebar = ({ setFeedType }) => {
 
   const handleHomeClick = () => {
     queryClient.invalidateQueries({ queryKey: ["posts"] });
-    setFeedType("forYou");
 
     if (hasNewFeedPosts) {
       console.log("Home clicked, resetting hasNewFeedPosts to false.");
