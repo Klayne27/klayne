@@ -40,9 +40,9 @@ const PostPage = ({ openImageModal }) => {
     deleteComment({ postId: displayPost._id, commentId });
   };
 
-  const handleLikeCommentClick = (commentId) => {
-    likeComment({ postId: displayPost._id, commentId }); // Use the likeComment from the hook
-  };
+  // const handleLikeCommentClick = (commentId) => {
+  //   likeComment({ postId: displayPost._id, commentId }); // Use the likeComment from the hook
+  // };
 
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
