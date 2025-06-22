@@ -99,14 +99,13 @@ export const commentOnPost = async (req, res) => {
     await post.save();
 
     const newComment = post.comments[post.comments.length - 1];
-    const newCommentId = newComment._id; // <--- THIS IS THE FIX
+    const newCommentId = newComment._id;
 
-    // Send notification if the comment is not from the post owner themselves
     if (post.user.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
-        to: post.user, // Owner of the post
-        type: "comment", // <--- Ensure this type is 'comment'
+        to: post.user,
+        type: "comment",
         postId: post._id,
         commentId: newCommentId, // Pass the correct ID
       });

@@ -15,7 +15,6 @@ const NotificationPage = () => {
   const { deleteNotification } = useDeleteNotification(); // Assuming this hook handles single notification deletion
   const { deleteNotifications, isDeleting } = useDeleteNotifications(); // Assuming this hook handles deleting all
   const { authUser } = useAuthUser();
-  console.log(notifications);
 
   const filteredNotifications = notifications?.filter((notification) => {
     // You're currently filtering out 'like' notifications that are from the user themselves.
@@ -38,7 +37,6 @@ const NotificationPage = () => {
     return true;
   });
 
-  console.log(filteredNotifications);
   return (
     <>
       <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
@@ -112,8 +110,7 @@ const NotificationPage = () => {
               )}
             </div>
 
-            {/* User Profile Link (avatar and username) and Notification Text */}
-            <div className="flex flex-col min-w-0 flex-1"> {/* Adjusted to flex-1 */}
+            <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex gap-1 items-center">
                     <Link
                         to={`/profile/${notification.from?.username}`}

@@ -38,7 +38,6 @@ export const useFetchNotifications = () => {
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (newNotification) => {
-        console.log("Received newNotification from socket:", newNotification);
         // Optimistically add the new notification to the existing cache data
         queryClient.setQueryData(["notifications"], (oldNotifications) => {
           if (!oldNotifications) return [newNotification];

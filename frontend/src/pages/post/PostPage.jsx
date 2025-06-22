@@ -40,10 +40,6 @@ const PostPage = ({ openImageModal }) => {
     deleteComment({ postId: displayPost._id, commentId });
   };
 
-
-  console.log(displayPost);
-
-
   const handleLikeCommentClick = (commentId) => {
     likeComment({ postId: displayPost._id, commentId }); // Use the likeComment from the hook
   };
