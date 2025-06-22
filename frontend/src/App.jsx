@@ -20,7 +20,7 @@ function App() {
   const location = useLocation();
 
   const [selectedImage, setSelectedImage] = useState(null);
-  const [feedType, setFeedType] = useState("post");
+  const [feedType, setFeedType] = useState("posts");
 
   const openImageModal = (imageUrl) => {
     setSelectedImage(imageUrl);
