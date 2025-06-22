@@ -28,8 +28,6 @@ const PostPage = ({ openImageModal }) => {
 
   const displayPost = post?.repostedFrom || post;
 
-
-
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
@@ -41,6 +39,9 @@ const PostPage = ({ openImageModal }) => {
   const handleDeleteComment = (commentId) => {
     deleteComment({ postId: displayPost._id, commentId });
   };
+
+
+  console.log(displayPost);
 
 
   const handleLikeCommentClick = (commentId) => {

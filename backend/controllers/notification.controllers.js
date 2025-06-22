@@ -3,14 +3,24 @@ import Notification from "../models/notification.model.js";
 
 export const getNotifications = async (req, res) => {
   try {
-    const userId = req.user._id; 
+    const userId = req.user._id;
 
     const notifications = await Notification.find({ to: userId })
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
         select: "username fullName profileImg isVerified",
-      });
+      })
+      .populate({
+        path: "postId", // Populate the post related to the notification
+        select: "text img user", // Select text, image, and CRUCIALLY the 'user' field of the post
+        populate: {
+          path: "user", // FURTHER POPULATE the 'user' field *within* the populated postId
+          select: "username", // Select the username from the post's owner
+        },
+      })
+      .sort({ createdAt: -1 }) // Second sort, redundant but harmless
+      .limit(50); // Optional: limit the number of notifications
 
     res.status(200).json(notifications);
 

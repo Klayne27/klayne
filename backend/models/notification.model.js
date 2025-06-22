@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["follow", "like", "commentLike"],
+      enum: ["follow", "like", "comment", "repost"],
     },
     read: {
       type: Boolean,
@@ -24,10 +24,17 @@ const notificationSchema = new mongoose.Schema(
     postId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
+      required: function () {
+        return ["comment", "repost", "like"].includes(this.type);
+      },
     },
     commentId: {
       type: mongoose.Schema.Types.ObjectId,
-      ref: "Comment",
+      // REMOVE `ref: "Comment"` because there is no separate Comment model.
+      // This field will simply store the ObjectId of the comment subdocument.
+      required: function () {
+        return ["comment", "commentLike"].includes(this.type); // Keep this for data integrity
+      },
     },
   },
   { timestamps: true }

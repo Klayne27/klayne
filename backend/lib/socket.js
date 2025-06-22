@@ -109,6 +109,63 @@ export async function emitUnreadNotificationStatus(userId) {
   }
 }
 
+export const createAndSendNotification = async ({
+  from,
+  to,
+  type,
+  postId,
+  commentId,
+}) => {
+  try {
+    if (from.toString() === to.toString()) {
+      // Don't send notification to self (e.g., commenting on your own post)
+      return;
+    }
+
+    const newNotification = new Notification({
+      from,
+      to,
+      type,
+      postId,
+      commentId,
+    });
+    await newNotification.save();
+
+    // Populate the 'from' user and 'postId' for real-time display on frontend
+    await newNotification.populate({
+      path: "from",
+      select: "username fullName profileImg",
+    });
+    if (postId) {
+      await newNotification.populate({
+        path: "postId",
+        select: "text img user", // Add other fields if needed for frontend display
+      });
+    }
+    // if (commentId) {
+    //   // Populate comment if relevant
+    //   await newNotification.populate({
+    //     path: "commentId",
+    //     select: "text user", // Select comment text and owner for context
+    //   });
+    // }
+
+    // Send real-time notification via Socket.IO
+    const receiverSocketIds = getReceiverSocketIds(to.toString()); // Use your existing helper
+    receiverSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newNotification", newNotification); // Emit a newNotification event
+      console.log(
+        `Real-time notification sent to ${to.toString()} (socket: ${socketId}) for type ${type}`
+      );
+    });
+
+    // Also update the unread status for the receiver
+    await emitUnreadNotificationStatus(to.toString());
+  } catch (error) {
+    console.error("Error in createAndSendNotification (socket.js): ", error.message);
+  }
+};
+
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 

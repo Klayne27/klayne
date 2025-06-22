@@ -2,7 +2,7 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { emitUnreadNotificationStatus, io, onlineUsersMap } from "../lib/socket.js";
+import { createAndSendNotification, emitUnreadNotificationStatus, io, onlineUsersMap } from "../lib/socket.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -99,6 +99,18 @@ export const commentOnPost = async (req, res) => {
     await post.save();
 
     const newComment = post.comments[post.comments.length - 1];
+    const newCommentId = newComment._id; // <--- THIS IS THE FIX
+
+    // Send notification if the comment is not from the post owner themselves
+    if (post.user.toString() !== userId.toString()) {
+      await createAndSendNotification({
+        from: userId,
+        to: post.user, // Owner of the post
+        type: "comment", // <--- Ensure this type is 'comment'
+        postId: post._id,
+        commentId: newCommentId, // Pass the correct ID
+      });
+    }
 
     res.status(200).json(newComment);
   } catch (error) {
@@ -469,6 +481,16 @@ export const repostPost = async (req, res) => {
 
     await originalPost.save();
 
+    if (originalPost.user.toString() !== userId.toString()) {
+      await createAndSendNotification({
+        from: userId,
+        to: originalPost.user, // Owner of the original post
+        type: "repost",
+        postId: originalPost._id,
+        commentId: null, // No comment ID for reposts
+      });
+    }
+
     res.status(200).json({
       message: message,
       newRepostsCount: originalPost.repostsCount,
@@ -560,26 +582,26 @@ export const likeUnlikeComment = async (req, res) => {
 
     if (userLikedComment) {
       // Unlike the comment
-      comment.likes.pull(userId); // Use .pull() to remove element from array
-      await post.save();
+      comment.likes.pull(userId);
+      await post.save(); // This save is fine as no notification is created
       res.status(200).json({ message: "Comment unliked successfully!" });
     } else {
       // Like the comment
-      comment.likes.push(userId); // Add user to likes array
+      comment.likes.push(userId);
 
       // Create a notification for the comment owner if they are not the current user
-      // and they are not liking their own comment
       if (comment.user.toString() !== userId.toString()) {
         await Notification.create({
           from: userId,
           to: comment.user, // The owner of the comment
-          type: "commentLike", // New type for comment likes
+          type: "commentLike",
+          postId: postId,     // <-- ADDED THIS
+          commentId: commentId, // <-- ADDED THIS
         });
-        // Emit real-time unread notification status
         await emitUnreadNotificationStatus(comment.user.toString());
       }
 
-      await post.save();
+      await post.save(); // This save will now be reached if notification creation passes
       res.status(200).json({ message: "Comment liked successfully!" });
     }
   } catch (error) {
