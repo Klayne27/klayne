@@ -12,38 +12,28 @@ import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
 import { FiTrash } from "react-icons/fi";
 
 const PostPage = ({ openImageModal }) => {
-  const { pid } = useParams(); // 'pid' is the ID of the post (or repost) from the URL
+  const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
   const [commentText, setCommentText] = useState("");
 
-  const { post, isLoading, isError, error } = useFetchPost(pid); // 'post' is the raw data fetched for 'pid'
-  const { addComment, isAddingComment } = useAddComment(pid); // addComment currently uses 'pid' (the repost ID if applicable)
-  const { deleteComment, isDeletingComment } = useDeleteComment(); // deleteComment currently uses 'pid' (the repost ID if applicable)
+  const { post, isLoading, isError, error } = useFetchPost(pid);
+  const { addComment, isAddingComment } = useAddComment(pid);
+  const { deleteComment, isDeletingComment } = useDeleteComment();
 
-  // Determine the post whose content and comments should actually be displayed
-  // If 'post' is a repost (has a 'repostedFrom' field), then 'displayPost' should be the original post.
-  // Otherwise, 'displayPost' is just the 'post' itself.
   const displayPost = post?.repostedFrom || post;
 
   const handleAddComment = (e) => {
     e.preventDefault();
     if (!commentText.trim()) return;
 
-    // IMPORTANT: If comments added via a reposted page should attach to the ORIGINAL post,
-    // then use displayPost._id. Otherwise, if they attach to the repost itself, use pid.
-    // Given the previous conversation, it's highly likely you want them on the original post.
-    addComment({ postId: displayPost._id, text: commentText }); // Use displayPost._id here
+    addComment({ postId: displayPost._id, text: commentText });
     setCommentText("");
   };
 
   const handleDeleteComment = (commentId) => {
-    // IMPORTANT: If deleting a comment (which is from the original post)
-    // needs the original postId, then use displayPost._id.
-    // Your backend's deleteComment controller expects postId and commentId.
-    // If the comment is from the 'displayPost', its postId is 'displayPost._id'.
-    deleteComment({ postId: displayPost._id, commentId }); // Use displayPost._id here
+    deleteComment({ postId: displayPost._id, commentId });
   };
 
   useEffect(() => {
@@ -96,7 +86,6 @@ const PostPage = ({ openImageModal }) => {
       </div>
 
       <div className="border-b border-gray-700">
-        {/* Pass 'displayPost' to the Post component so it renders the correct content */}
         <Post post={displayPost} openImageModal={openImageModal} />
       </div>
 

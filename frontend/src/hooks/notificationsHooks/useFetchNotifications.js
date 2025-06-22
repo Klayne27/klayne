@@ -4,7 +4,7 @@ import { useSocket } from "../../context/SocketContext";
 import toast from "react-hot-toast";
 
 export const useFetchNotifications = () => {
-  const { socket, setHasUnreadNotifications } = useSocket(); // Get socket and its setter
+  const { socket, setHasUnreadNotifications } = useSocket();
 
   const { data: notifications, isLoading } = useQuery({
     queryKey: ["notifications"],

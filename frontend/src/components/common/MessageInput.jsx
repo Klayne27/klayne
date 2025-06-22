@@ -2,7 +2,6 @@ import { useEffect, useRef, useState } from "react";
 import toast from "react-hot-toast";
 import { truncateText } from "../../utils/truncateText";
 import { IoClose, IoImageOutline } from "react-icons/io5";
-import { HiOutlineGif } from "react-icons/hi2";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { MdSend } from "react-icons/md";
@@ -171,12 +170,6 @@ function MessageInput({
             >
               <IoImageOutline className="w-5 h-5" />
             </button>
-            {/* <button
-              type="button"
-              className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
-            >
-              <HiOutlineGif className="w-5 h-5" />
-            </button> */}
             <button
               type="button"
               className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 hidden md:block"

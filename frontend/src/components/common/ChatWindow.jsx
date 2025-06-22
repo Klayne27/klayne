@@ -177,6 +177,7 @@ const ChatWindow = ({
   //     return () => clearTimeout(timer);
   //   }
   // }, [selectedConversation, messageInputRef]);
+  
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />

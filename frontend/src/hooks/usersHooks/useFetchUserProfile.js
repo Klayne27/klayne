@@ -1,5 +1,3 @@
-// frontend/src/hooks/usersHooks/useFetchUserProfile.js
-
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserPofileApi } from "../../api/usersApi";
 

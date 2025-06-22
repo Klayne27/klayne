@@ -42,7 +42,7 @@ function App() {
 
   return (
     <div className="flex max-w-7xl mx-auto">
-      {authUser && <Sidebar feedType={feedType} setFeedType={setFeedType} />}
+      {authUser && <Sidebar />}
       <Routes>
         <Route
           path="/"

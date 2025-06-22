@@ -1,15 +1,15 @@
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
-import { FiTrash } from "react-icons/fi"; // Assuming this is your trash icon
+import { FiTrash } from "react-icons/fi";
 
 import { Link, useNavigate } from "react-router-dom";
 import LoadingSpinner from "../common/LoadingSpinner";
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts"; // Assuming this is for deleting *any* post
-import { useLikePost } from "../../hooks/postsHooks/useLikePosts"; // Assuming this handles liking
-import { useRepostPost } from "../../hooks/postsHooks/useRepostPost"; // <--- NEW: Import the repost hook
+import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
+import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
+import { useRepostPost } from "../../hooks/postsHooks/useRepostPost"; 
 import { renderClickableText } from "../../utils/textUtils";
 import { useEffect, useState } from "react";
 
@@ -106,7 +106,7 @@ const Post = ({ post, openImageModal }) => {
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
-    return null; // Or render a fallback UI/error message
+    return null;
   }
 
   return (

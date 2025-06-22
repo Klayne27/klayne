@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 
-const Sidebar = ({ setFeedType }) => {
+const Sidebar = () => {
   const { authUser } = useAuthUser();
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();

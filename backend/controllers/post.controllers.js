@@ -31,7 +31,6 @@ export const createPost = async (req, res) => {
     await newPost.save();
 
     for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-      // If the online user is NOT the one who just posted, send them the notification
       if (onlineUserId.toString() !== userId.toString()) {
         socketIdsSet.forEach((socketId) => {
           io.to(socketId).emit("newPostAvailable");
@@ -134,21 +133,17 @@ export const likeUnlikePost = async (req, res) => {
 
       if (post.user.toString() !== userId.toString()) {
         const notification = new Notification({
-          from: userId, // The user who liked the post
-          to: post.user, // The owner of the post
+          from: userId,
+          to: post.user,
           type: "like",
-          postId: postId, // Associate the notification with the post
-          read: false, // New notifications are always unread
+          postId: postId,
+          read: false,
         });
 
         await notification.save();
 
-        // Emit real-time notification status to the post owner
         await emitUnreadNotificationStatus(post.user.toString());
       }
-
-      // await notification.save();
-      // await emitUnreadNotificationStatus(post.user.toString());
       res.status(200).json(post.likes);
     }
   } catch (error) {

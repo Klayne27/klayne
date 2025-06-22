@@ -15,19 +15,16 @@ const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
   const { deleteNotification } = useDeleteNotification();
   const { deleteNotifications, isDeleting } = useDeleteNotifications();
-  const { authUser } = useAuthUser(); // Get the authenticated user
+  const { authUser } = useAuthUser();
 
-  // Filter notifications on the frontend (as an extra safeguard, though backend should prevent this)
   const filteredNotifications = notifications?.filter((notification) => {
-    // If it's a 'like' notification AND the 'from' user is the same as the 'to' user (authUser)
-    // then filter it out.
     if (
       notification.type === "like" &&
       notification.from?._id.toString() === authUser?._id.toString()
     ) {
-      return false; // Exclude this notification
+      return false;
     }
-    return true; // Include other notifications
+    return true; 
   });
 
   return (

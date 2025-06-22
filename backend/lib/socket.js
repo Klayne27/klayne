@@ -87,7 +87,6 @@ export async function emitUnreadMessageStatus(userId) {
   }
 }
 
-// NEW FUNCTION: Emit unread notification status
 export async function emitUnreadNotificationStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
@@ -96,11 +95,10 @@ export async function emitUnreadNotificationStatus(userId) {
       read: false,
     });
 
-    const hasUnreadNotifications = unreadNotificationsCount > 0; // This will be true if a new one was added
+    const hasUnreadNotifications = unreadNotificationsCount > 0;
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     recipientSocketIds.forEach((socketId) => {
-      // This emits { hasUnreadNotifications: true } if there are unread
       io.to(socketId).emit("unreadNotificationStatus", { hasUnreadNotifications });
     });
   } catch (error) {
@@ -130,7 +128,7 @@ io.on("connection", (socket) => {
     socket.userId = userId;
 
     emitUnreadMessageStatus(userId);
-    emitUnreadNotificationStatus(userId); // NEW: Emit notification status on connection
+    emitUnreadNotificationStatus(userId);
   } else {
     console.warn(
       `Client connected with invalid or missing userId: '${userId}' (socket ID: ${socket.id}). Disconnecting.`
@@ -177,7 +175,6 @@ io.on("connection", (socket) => {
     }
   });
 
-  // NEW: Socket event to mark notifications as read
   socket.on("markNotificationsAsRead", async () => {
     try {
       const userId = socket.userId;
@@ -189,7 +186,7 @@ io.on("connection", (socket) => {
         { to: userId, read: false },
         { $set: { read: true } }
       );
-      await emitUnreadNotificationStatus(userId); // Update status for the user
+      await emitUnreadNotificationStatus(userId);
       console.log(`User ${userId} marked all notifications as read.`);
     } catch (error) {
       console.error("Error marking notifications as read:", error);

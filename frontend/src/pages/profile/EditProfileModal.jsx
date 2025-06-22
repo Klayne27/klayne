@@ -15,7 +15,7 @@ const EditProfileModal = ({ authUser }) => {
 
   const navigate = useNavigate();
 
-  const { updateProfile, isUpdatingProfile, isSuccess, newUsername, error, isError } =
+  const { updateProfile, isUpdatingProfile, isSuccess, newUsername} =
     useUpdateUserProfile(formData);
 
   const handleInputChange = (e) => {
