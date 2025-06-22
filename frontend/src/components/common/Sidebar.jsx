@@ -43,7 +43,6 @@ const Sidebar = () => {
     queryClient.invalidateQueries({ queryKey: ["posts"] });
 
     if (hasNewFeedPosts) {
-      console.log("Home clicked, resetting hasNewFeedPosts to false.");
       setHasNewFeedPosts(false);
     }
 
@@ -114,7 +113,7 @@ const Sidebar = () => {
               navigate("/");
               handleHomeClick();
             }}
-            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]"
+            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to="/"
@@ -144,7 +143,7 @@ const Sidebar = () => {
           </li>
           <li
             onClick={() => navigate("/messages")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[140px]"
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
           >
             <Link
               to="/messages"
@@ -174,7 +173,7 @@ const Sidebar = () => {
           </li>
           <li
             onClick={() => navigate("/notifications")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[168px]"
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
           >
             <Link
               to="/notifications"
@@ -217,7 +216,7 @@ const Sidebar = () => {
 
           <li
             onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]"
+            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to={`/profile/${authUser?.username}`}

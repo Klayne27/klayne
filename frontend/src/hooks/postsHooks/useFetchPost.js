@@ -7,11 +7,13 @@ export const useFetchPost = (pid) => {
     isLoading,
     isError,
     error,
+    refetch
   } = useQuery({
     queryKey: ["post", pid],
     queryFn: () => fetchPostApi(pid),
     enabled: !!pid,
+    staleTime: 0, 
   });
 
-  return { post, isLoading, isError, error };
+  return { post, isLoading, isError, error, refetch };
 };

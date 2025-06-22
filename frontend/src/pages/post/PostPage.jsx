@@ -3,7 +3,7 @@ import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post"; // This component should handle rendering original vs repost content
+import Post from "../../components/common/Post"; 
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../utils/date";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
@@ -18,14 +18,17 @@ const PostPage = ({ openImageModal }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
+
   const [commentText, setCommentText] = useState("");
 
-  const { post, isLoading, isError, error } = useFetchPost(pid);
+  const { post, isLoading, isError, error, refetch } = useFetchPost(pid);
   const { addComment, isAddingComment } = useAddComment(pid);
   const { deleteComment, isDeletingComment } = useDeleteComment();
   const { likeComment, isLikingComment } = useLikeComment();
 
   const displayPost = post?.repostedFrom || post;
+
+
 
   const handleAddComment = (e) => {
     e.preventDefault();
@@ -39,8 +42,9 @@ const PostPage = ({ openImageModal }) => {
     deleteComment({ postId: displayPost._id, commentId });
   };
 
+
   const handleLikeCommentClick = (commentId) => {
-    likeComment({ postId: displayPost._id, commentId });
+    likeComment({ postId: displayPost._id, commentId }); // Use the likeComment from the hook
   };
 
   useEffect(() => {
@@ -63,7 +67,6 @@ const PostPage = ({ openImageModal }) => {
   }
 
   if (!post) {
-    // This means the initial fetch returned null/undefined
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen w-full text-white p-4">
         <h2 className="text-2xl font-bold mb-4 text-center">Post Not Found</h2>
@@ -206,7 +209,7 @@ const PostPage = ({ openImageModal }) => {
                     onClick={() => handleLikeCommentClick(comment._id)}
                   >
                     <div
-                      className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition`}
+                      className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition`}
                     >
                       {isLikingComment ? ( // Show spinner if any comment like is in progress
                         <LoadingSpinner size="xs" /> // Or a small custom spinner/icon
