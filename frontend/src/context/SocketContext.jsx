@@ -21,7 +21,6 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // NEW STATE
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
 
-
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -48,18 +47,10 @@ export const SocketContextProvider = ({ children }) => {
       // NEW LISTENER: Listen for unread notification status
       newSocket.on("unreadNotificationStatus", ({ hasUnreadNotifications }) => {
         setHasUnreadNotifications(hasUnreadNotifications);
-        if (status) {
-          queryClient.invalidateQueries({ queryKey: ["notifications"] });
-        }
       });
 
       // ****** NEW LISTENER FOR NEW POSTS ******
       newSocket.on("newPostAvailable", () => {
-        // Only set to true if the user is not currently on the home page / feed
-        // This prevents the dot from flashing if they are already there and it auto-refetches
-        // A more robust solution might check if the 'posts' query is already loading/fetching
-        // but for a simple dot, this works.
-        // We set it to true, and it will be cleared when "Home" is clicked.
         console.log("Received newPostAvailable event. Setting hasNewFeedPosts to true.");
         setHasNewFeedPosts(true);
       });
@@ -84,6 +75,7 @@ export const SocketContextProvider = ({ children }) => {
           newSocket.off("unreadMessageStatus");
           newSocket.off("unreadNotificationStatus");
           newSocket.off("newMessage");
+          newSocket.off("newPostAvailable");
           newSocket.off("disconnect");
           newSocket.off("connect_error");
           newSocket.close();
@@ -98,6 +90,8 @@ export const SocketContextProvider = ({ children }) => {
       setOnlineUsers([]);
       setHasUnreadMessages(false);
       setActiveConversationId(null);
+      setHasUnreadNotifications(false);
+      setHasNewFeedPosts(false);
     }
   }, [user, isLoadingAuthUser, queryClient]);
 
@@ -117,7 +111,7 @@ export const SocketContextProvider = ({ children }) => {
         hasUnreadNotifications,
         setHasUnreadNotifications,
         hasNewFeedPosts,
-        setHasNewFeedPosts
+        setHasNewFeedPosts,
       }}
     >
       {children}

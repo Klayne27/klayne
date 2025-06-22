@@ -31,7 +31,7 @@ const io = new Server(server, {
   },
 });
 
-const onlineUsersMap = new Map();
+export const onlineUsersMap = new Map();
 
 export function getReceiverSocketIds(userId) {
   return onlineUsersMap.has(userId) ? Array.from(onlineUsersMap.get(userId)) : [];
@@ -96,10 +96,11 @@ export async function emitUnreadNotificationStatus(userId) {
       read: false,
     });
 
-    const hasUnreadNotifications = unreadNotificationsCount > 0;
+    const hasUnreadNotifications = unreadNotificationsCount > 0; // This will be true if a new one was added
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     recipientSocketIds.forEach((socketId) => {
+      // This emits { hasUnreadNotifications: true } if there are unread
       io.to(socketId).emit("unreadNotificationStatus", { hasUnreadNotifications });
     });
   } catch (error) {

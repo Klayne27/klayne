@@ -9,8 +9,8 @@ export const useDeleteNotification = () => {
     mutationFn: (notificationId) => deleteNotificationApi(notificationId),
     onSuccess: () => {
       toast.success("Notification deleted successfully");
-
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
+      queryClient.refetchQueries({ queryKey: ["notifications"] });
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete notification");

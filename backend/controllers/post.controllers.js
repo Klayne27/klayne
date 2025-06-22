@@ -2,7 +2,7 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { emitUnreadNotificationStatus, io } from "../lib/socket.js";
+import { emitUnreadNotificationStatus, io, onlineUsersMap } from "../lib/socket.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -29,7 +29,15 @@ export const createPost = async (req, res) => {
     });
 
     await newPost.save();
-    io.emit("newPostAvailable");
+
+    for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+      // If the online user is NOT the one who just posted, send them the notification
+      if (onlineUserId.toString() !== userId.toString()) {
+        socketIdsSet.forEach((socketId) => {
+          io.to(socketId).emit("newPostAvailable");
+        });
+      }
+    }
     res.status(201).json(newPost);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -124,15 +132,23 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      const notification = new Notification({
-        from: userId,
-        to: post.user,
-        type: "like",
-        read: false, // New notifications are always unread
-      });
+      if (post.user.toString() !== userId.toString()) {
+        const notification = new Notification({
+          from: userId, // The user who liked the post
+          to: post.user, // The owner of the post
+          type: "like",
+          postId: postId, // Associate the notification with the post
+          read: false, // New notifications are always unread
+        });
 
-      await notification.save();
-      await emitUnreadNotificationStatus(post.user.toString());
+        await notification.save();
+
+        // Emit real-time notification status to the post owner
+        await emitUnreadNotificationStatus(post.user.toString());
+      }
+
+      // await notification.save();
+      // await emitUnreadNotificationStatus(post.user.toString());
       res.status(200).json(post.likes);
     }
   } catch (error) {

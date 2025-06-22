@@ -21,7 +21,7 @@ export const useFetchNotifications = () => {
     retry: false,
     staleTime: Infinity,
     cacheTime: Infinity,
-    refetchOnWindowFocus: false,
+    refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
 

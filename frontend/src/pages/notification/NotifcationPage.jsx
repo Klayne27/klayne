@@ -9,11 +9,26 @@ import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNo
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications";
 import { formatPostDate } from "../../utils/date";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
   const { deleteNotification } = useDeleteNotification();
   const { deleteNotifications, isDeleting } = useDeleteNotifications();
+  const { authUser } = useAuthUser(); // Get the authenticated user
+
+  // Filter notifications on the frontend (as an extra safeguard, though backend should prevent this)
+  const filteredNotifications = notifications?.filter((notification) => {
+    // If it's a 'like' notification AND the 'from' user is the same as the 'to' user (authUser)
+    // then filter it out.
+    if (
+      notification.type === "like" &&
+      notification.from?._id.toString() === authUser?._id.toString()
+    ) {
+      return false; // Exclude this notification
+    }
+    return true; // Include other notifications
+  });
 
   return (
     <>
@@ -43,11 +58,11 @@ const NotificationPage = () => {
           </div>
         )}
 
-        {notifications?.length === 0 && !isLoading && (
+        {filteredNotifications?.length === 0 && !isLoading && (
           <div className="text-center p-4 font-bold">No notifications 🤔</div>
         )}
 
-        {notifications?.map((notification) => (
+        {filteredNotifications?.map((notification) => (
           <div
             className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4"
             key={notification._id}

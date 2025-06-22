@@ -39,10 +39,7 @@ const Sidebar = ({ setFeedType }) => {
     navigate("/search");
   };
 
-  // Function to handle clicking the logo/home link
   const handleHomeClick = () => {
-    // Invalidate the query key for your main feed posts
-    // Adjust ["posts"] to whatever queryKey your feed uses (e.g., ["feedPosts"])
     queryClient.invalidateQueries({ queryKey: ["posts"] });
     setFeedType("forYou");
 
@@ -51,7 +48,6 @@ const Sidebar = ({ setFeedType }) => {
       setHasNewFeedPosts(false);
     }
 
-    // Scroll to top only if already on the home page
     if (pathname === "/") {
       window.scrollTo({
         top: 0,
@@ -114,7 +110,13 @@ const Sidebar = ({ setFeedType }) => {
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
-          <li className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]">
+          <li
+            onClick={() => {
+              navigate("/");
+              handleHomeClick();
+            }}
+            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]"
+          >
             <Link
               to="/"
               onClick={handleHomeClick}
@@ -141,7 +143,10 @@ const Sidebar = ({ setFeedType }) => {
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[140px]">
+          <li
+            onClick={() => navigate("/messages")}
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[140px]"
+          >
             <Link
               to="/messages"
               className={`${
@@ -168,7 +173,10 @@ const Sidebar = ({ setFeedType }) => {
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[164px]">
+          <li
+            onClick={() => navigate("/notifications")}
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[168px]"
+          >
             <Link
               to="/notifications"
               className={`${
@@ -208,7 +216,10 @@ const Sidebar = ({ setFeedType }) => {
             </div>
           </li>
 
-          <li className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]">
+          <li
+            onClick={() => navigate(`/profile/${authUser?.username}`)}
+            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[115px]"
+          >
             <Link
               to={`/profile/${authUser?.username}`}
               className={`${
