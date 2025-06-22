@@ -72,7 +72,10 @@ const NotificationPage = () => {
                   className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
                   onClick={() => deleteNotification(notification._id)}
                 >
-                  <FiTrash className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500" size={20} />
+                  <FiTrash
+                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                    size={20}
+                  />
                 </button>
               )}
             </div>
@@ -83,6 +86,9 @@ const NotificationPage = () => {
               )}
               {notification.type === "like" && (
                 <FaHeart className="w-7 h-7 text-red-500 mt-1" />
+              )}
+              {notification.type === "commentLike" && (
+                <FaHeart className="w-7 h-7 text-pink-500 mt-1" /> // Using a slightly different shade of pink/red
               )}
             </div>
 
@@ -107,7 +113,9 @@ const NotificationPage = () => {
                   <span>{formatPostDate(notification.createdAt)}</span>
                 </div>
                 <span className="text-gray-400 text-sm overflow-hidden text-ellipsis">
-                  {notification.type === "follow" ? "followed you" : "liked your post"}
+                  {notification.type === "follow" && "followed you"}
+                  {notification.type === "like" && "liked your post"}
+                  {notification.type === "commentLike" && "liked your comment"}
                 </span>
               </div>
             </Link>

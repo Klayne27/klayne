@@ -537,3 +537,53 @@ export const deleteComment = async (req, res) => {
     console.log("Error in deleteComment controller: ", error);
   }
 };
+
+export const likeUnlikeComment = async (req, res) => {
+  try {
+    const { postId, commentId } = req.params; // Get post ID and comment ID from params
+    const userId = req.user._id; // Authenticated user ID
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Find the specific comment within the post
+    const comment = post.comments.id(commentId);
+
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    const userLikedComment = comment.likes.includes(userId);
+
+    if (userLikedComment) {
+      // Unlike the comment
+      comment.likes.pull(userId); // Use .pull() to remove element from array
+      await post.save();
+      res.status(200).json({ message: "Comment unliked successfully!" });
+    } else {
+      // Like the comment
+      comment.likes.push(userId); // Add user to likes array
+
+      // Create a notification for the comment owner if they are not the current user
+      // and they are not liking their own comment
+      if (comment.user.toString() !== userId.toString()) {
+        await Notification.create({
+          from: userId,
+          to: comment.user, // The owner of the comment
+          type: "commentLike", // New type for comment likes
+        });
+        // Emit real-time unread notification status
+        await emitUnreadNotificationStatus(comment.user.toString());
+      }
+
+      await post.save();
+      res.status(200).json({ message: "Comment liked successfully!" });
+    }
+  } catch (error) {
+    console.log("Error in likeUnlikeComment controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};

@@ -80,3 +80,24 @@ export const deleteCommentApi = async ({ postId, commentId }) => {
   }
   return data;
 };
+
+export const likeUnlikeCommentApi = async (postId, commentId) => {
+  try {
+    const res = await fetch(`/api/posts/like-comment/${postId}/${commentId}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      credentials: "include", // Important for sending cookies/auth token
+    });
+
+    const data = await res.json();
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to like/unlike comment");
+    }
+    return data; // Typically returns a success message or updated data
+  } catch (error) {
+    console.error("Error liking/unliking comment:", error);
+    throw error;
+  }
+};

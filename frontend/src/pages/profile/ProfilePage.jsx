@@ -17,6 +17,7 @@ import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfil
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
+import ScrollToTop from "../../utils/ScrollToTop";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -101,6 +102,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   return (
     <>
+      <ScrollToTop />
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
         {!user && (isLoading || isRefetching) && <ProfileHeaderSkeleton />}
         {!isLoading && !isRefetching && !user && (

@@ -39,6 +39,12 @@ const postSchema = new mongoose.Schema(
           type: Date,
           default: Date.now,
         },
+        likes: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+          },
+        ],
       },
     ],
     repostedFrom: {

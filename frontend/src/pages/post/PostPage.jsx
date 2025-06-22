@@ -10,6 +10,8 @@ import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
 import { useAddComment } from "../../hooks/postsHooks/useAddComment";
 import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
 import { FiTrash } from "react-icons/fi";
+import { useLikeComment } from "../../hooks/postsHooks/useLikeComment";
+import { FaHeart, FaRegHeart } from "react-icons/fa";
 
 const PostPage = ({ openImageModal }) => {
   const { pid } = useParams();
@@ -21,6 +23,7 @@ const PostPage = ({ openImageModal }) => {
   const { post, isLoading, isError, error } = useFetchPost(pid);
   const { addComment, isAddingComment } = useAddComment(pid);
   const { deleteComment, isDeletingComment } = useDeleteComment();
+  const { likeComment, isLikingComment } = useLikeComment();
 
   const displayPost = post?.repostedFrom || post;
 
@@ -34,6 +37,10 @@ const PostPage = ({ openImageModal }) => {
 
   const handleDeleteComment = (commentId) => {
     deleteComment({ postId: displayPost._id, commentId });
+  };
+
+  const handleLikeCommentClick = (commentId) => {
+    likeComment({ postId: displayPost._id, commentId });
   };
 
   useEffect(() => {
@@ -122,72 +129,110 @@ const PostPage = ({ openImageModal }) => {
 
       <div className="flex flex-col">
         {displayPost.comments && displayPost.comments.length > 0 ? (
-          displayPost.comments.map((comment) => (
-            <div
-              key={comment._id}
-              className="flex gap-3 text-white border-b border-gray-700 p-4 relative items-start"
-            >
-              <Link
-                to={`/profile/${comment.user?.username || ""}`}
-                className="flex-shrink-0"
+          displayPost.comments.map((comment) => {
+            const isCommentLiked = comment.likes?.includes(authUser?._id);
+
+            return (
+              <div
+                key={comment._id}
+                className="flex gap-3 text-white border-b border-gray-700 p-4 relative items-start"
               >
-                <div className="avatar">
-                  <div className="w-8 rounded-full">
-                    <img
-                      src={comment.user?.profileImg || "/avatar-placeholder.png"}
-                      alt={`${comment.user?.username}'s profile`}
-                    />
+                <Link
+                  to={`/profile/${comment.user?.username || ""}`}
+                  className="flex-shrink-0"
+                >
+                  <div className="avatar">
+                    <div className="w-8 rounded-full">
+                      <img
+                        src={comment.user?.profileImg || "/avatar-placeholder.png"}
+                        alt={`${comment.user?.username}'s profile`}
+                      />
+                    </div>
                   </div>
-                </div>
-              </Link>
+                </Link>
 
-              <div className="flex flex-col flex-grow min-w-0">
-                <div className="flex flex-wrap gap-1 items-center relative">
-                  <div className="flex gap-1">
-                    <Link
-                      to={`/profile/${comment.user?.username || ""}`}
-                      className="font-semibold text-sm hover:underline flex-shrink-0"
-                    >
-                      {comment.user?.fullName}
-                    </Link>
-                    {comment.user.isVerified && (
-                      <img src="/verified.png" className="size-[17px] flex-shrink-0" />
-                    )}
-                    <Link
-                      to={`/profile/${comment.user?.username || ""}`}
-                      className="text-gray-500 text-sm truncate flex-grow min-w-0"
-                    >
-                      @{comment.user?.username}
-                    </Link>
-                    {comment.createdAt && (
-                      <span className="text-gray-500 text-xs text-center flex items-center justify-center gap-1 flex-shrink-0 ml-auto">
-                        <span className="text-[7px]">●</span>
-                        {formatPostDate(comment.createdAt)}
-                      </span>
-                    )}
-                  </div>
-
-                  {authUser?._id === comment.user?._id && (
-                    <button
-                      className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 transition duration-200"
-                      onClick={() => handleDeleteComment(comment._id)}
-                      disabled={isDeletingComment}
-                    >
-                      {isDeletingComment ? (
-                        <LoadingSpinner size="sm" />
-                      ) : (
-                        <FiTrash
-                          size={16}
-                          className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                <div className="flex flex-col flex-grow min-w-0">
+                  <div className="flex flex-wrap gap-1 items-center relative">
+                    <div className="flex gap-1">
+                      <Link
+                        to={`/profile/${comment.user?.username || ""}`}
+                        className="font-semibold text-sm hover:underline flex-shrink-0"
+                      >
+                        {comment.user?.fullName}
+                      </Link>
+                      {comment.user?.isVerified && ( // Ensure comment.user is populated
+                        <img
+                          src="/verified.png"
+                          className="size-[17px] flex-shrink-0"
+                          alt="Verified"
                         />
-                      )}{" "}
-                    </button>
-                  )}
+                      )}
+                      <Link
+                        to={`/profile/${comment.user?.username || ""}`}
+                        className="text-gray-500 text-sm truncate flex-grow min-w-0"
+                      >
+                        @{comment.user?.username}
+                      </Link>
+                      {comment.createdAt && (
+                        <span className="text-gray-500 text-xs text-center flex items-center justify-center gap-1 flex-shrink-0 ml-auto">
+                          <span className="text-[7px]">●</span>
+                          {formatPostDate(comment.createdAt)}
+                        </span>
+                      )}
+                    </div>
+
+                    {authUser?._id === comment.user?._id && (
+                      <button
+                        className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 p-1 transition duration-200" // Added p-1 for better hit area
+                        onClick={() => handleDeleteComment(comment._id)}
+                        disabled={isDeletingComment} // Assuming useDeleteComment has a general isDeletingComment state
+                      >
+                        {isDeletingComment ? ( // Could improve this to show spinner only for the specific comment being deleted
+                          <LoadingSpinner size="sm" />
+                        ) : (
+                          <FiTrash
+                            size={16}
+                            className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                          />
+                        )}{" "}
+                      </button>
+                    )}
+                  </div>
+                  <p className="text-sm break-words mt-1">{comment.text}</p>
+
+                  {/* NEW: Comment like section */}
+                  <div
+                    className="flex items-center group cursor-pointer mt-2"
+                    onClick={() => handleLikeCommentClick(comment._id)}
+                  >
+                    <div
+                      className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition`}
+                    >
+                      {isLikingComment ? ( // Show spinner if any comment like is in progress
+                        <LoadingSpinner size="xs" /> // Or a small custom spinner/icon
+                      ) : (
+                        <>
+                          {!isCommentLiked && (
+                            <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
+                          )}
+                          {isCommentLiked && (
+                            <FaHeart className="w-4 h-4 cursor-pointer text-pink-600 duration-200 transition" />
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <span
+                      className={`text-sm group-hover:text-pink-600 duration-200 transition ${
+                        isCommentLiked ? "text-pink-600" : "text-slate-500"
+                      }`}
+                    >
+                      {comment.likes?.length || 0}
+                    </span>
+                  </div>
                 </div>
-                <p className="text-sm break-words mt-1">{comment.text}</p>
               </div>
-            </div>
-          ))
+            );
+          })
         ) : (
           <p className="text-gray-400 text-center mt-4 p-4">
             No comments yet. Be the first to reply!

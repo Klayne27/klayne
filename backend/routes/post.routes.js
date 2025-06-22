@@ -13,6 +13,7 @@ import {
   deleteComment,
   repostPost,
   checkIfUserReposted,
+  likeUnlikeComment,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -31,6 +32,7 @@ router.delete("/comment/:postId/:commentId", protectRoute, deleteComment)
 
 router.post("/repost/:postId", protectRoute, repostPost);
 router.get("/checkrepost/:originalPostId", protectRoute, checkIfUserReposted);
+router.put("/like-comment/:postId/:commentId", protectRoute, likeUnlikeComment);
 
 
 
