@@ -205,29 +205,7 @@ const PostPage = ({ openImageModal }) => {
                     className="flex items-center group cursor-pointer mt-2"
                     onClick={() => handleLikeCommentClick(comment._id)}
                   >
-                    <div
-                      className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition`}
-                    >
-                      {isLikingComment ? ( // Show spinner if any comment like is in progress
-                        <LoadingSpinner size="xs" /> // Or a small custom spinner/icon
-                      ) : (
-                        <>
-                          {!isCommentLiked && (
-                            <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
-                          )}
-                          {isCommentLiked && (
-                            <FaHeart className="w-4 h-4 cursor-pointer text-pink-600 duration-200 transition" />
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <span
-                      className={`text-sm group-hover:text-pink-600 duration-200 transition ${
-                        isCommentLiked ? "text-pink-600" : "text-slate-500"
-                      }`}
-                    >
-                      {comment.likes?.length || 0}
-                    </span>
+ 
                   </div>
                 </div>
               </div>
