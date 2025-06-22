@@ -199,14 +199,6 @@ const PostPage = ({ openImageModal }) => {
                     )}
                   </div>
                   <p className="text-sm break-words mt-1">{comment.text}</p>
-
-                  {/* NEW: Comment like section */}
-                  <div
-                    className="flex items-center group cursor-pointer mt-2"
-                    onClick={() => handleLikeCommentClick(comment._id)}
-                  >
- 
-                  </div>
                 </div>
               </div>
             );

@@ -12,15 +12,15 @@ export const getNotifications = async (req, res) => {
         select: "username fullName profileImg isVerified",
       })
       .populate({
-        path: "postId", // Populate the post related to the notification
-        select: "text img user", // Select text, image, and CRUCIALLY the 'user' field of the post
+        path: "postId",
+        select: "text img user", 
         populate: {
-          path: "user", // FURTHER POPULATE the 'user' field *within* the populated postId
-          select: "username", // Select the username from the post's owner
+          path: "user",
+          select: "username", 
         },
       })
-      .sort({ createdAt: -1 }) // Second sort, redundant but harmless
-      .limit(50); // Optional: limit the number of notifications
+      .sort({ createdAt: -1 })
+      .limit(50); 
 
     res.status(200).json(notifications);
 

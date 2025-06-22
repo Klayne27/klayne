@@ -44,12 +44,10 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadMessages(hasUnread);
       });
 
-      // NEW LISTENER: Listen for unread notification status
       newSocket.on("unreadNotificationStatus", ({ hasUnreadNotifications }) => {
         setHasUnreadNotifications(hasUnreadNotifications);
       });
 
-      // ****** NEW LISTENER FOR NEW POSTS ******
       newSocket.on("newPostAvailable", () => {
         console.log("Received newPostAvailable event. Setting hasNewFeedPosts to true.");
         setHasNewFeedPosts(true);
