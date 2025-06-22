@@ -72,10 +72,10 @@ const NotificationPage = () => {
                 <LoadingSpinner size="xs" />
               ) : (
                 <button
-                  className="hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
+                  className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
                   onClick={() => deleteNotification(notification._id)}
                 >
-                  <FiTrash className="cursor-pointer text-gray-500" size={20} />
+                  <FiTrash className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500" size={20} />
                 </button>
               )}
             </div>

@@ -164,9 +164,9 @@ const Post = ({ post, openImageModal }) => {
             {canDelete && (
               <span className="flex justify-end flex-1">
                 {!isDeleting && (
-                  <div className="hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
+                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
                     <FiTrash
-                      className="cursor-pointer text-gray-500"
+                      className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
                       onClick={handleDeletePostClick}
                       size={20}
                     />

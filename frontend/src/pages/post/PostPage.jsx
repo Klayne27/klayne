@@ -180,14 +180,17 @@ const PostPage = ({ openImageModal }) => {
 
                   {authUser?._id === comment.user?._id && (
                     <button
-                      className="absolute right-0 top-0 text-red-500 p-1 rounded-full hover:bg-red-600 hover:bg-opacity-15 transition duration-200"
+                      className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 transition duration-200"
                       onClick={() => handleDeleteComment(comment._id)}
                       disabled={isDeletingComment}
                     >
                       {isDeletingComment ? (
                         <LoadingSpinner size="sm" />
                       ) : (
-                        <FiTrash size={16} />
+                        <FiTrash
+                          size={16}
+                          className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                        />
                       )}{" "}
                     </button>
                   )}
