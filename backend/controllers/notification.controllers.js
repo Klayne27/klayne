@@ -1,3 +1,4 @@
+import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import Notification from "../models/notification.model.js";
 
 export const getNotifications = async (req, res) => {
@@ -12,6 +13,7 @@ export const getNotifications = async (req, res) => {
       });
 
     await Notification.updateMany({ to: userId }, { read: true });
+    await emitUnreadNotificationStatus(userId.toString());
 
     res.status(200).json(notifications);
   } catch (error) {

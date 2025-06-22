@@ -4,6 +4,7 @@ import express from "express";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
+import Notification from "../models/notification.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -86,6 +87,29 @@ export async function emitUnreadMessageStatus(userId) {
   }
 }
 
+// NEW FUNCTION: Emit unread notification status
+export async function emitUnreadNotificationStatus(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const unreadNotificationsCount = await Notification.countDocuments({
+      to: userIdObj,
+      read: false,
+    });
+
+    const hasUnreadNotifications = unreadNotificationsCount > 0;
+
+    const recipientSocketIds = getReceiverSocketIds(userId);
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("unreadNotificationStatus", { hasUnreadNotifications });
+    });
+  } catch (error) {
+    console.error(
+      `Unhandled error in emitUnreadNotificationStatus for user ${userId}:`,
+      error
+    );
+  }
+}
+
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
@@ -104,8 +128,8 @@ io.on("connection", (socket) => {
 
     socket.userId = userId;
 
-
     emitUnreadMessageStatus(userId);
+    emitUnreadNotificationStatus(userId); // NEW: Emit notification status on connection
   } else {
     console.warn(
       `Client connected with invalid or missing userId: '${userId}' (socket ID: ${socket.id}). Disconnecting.`
@@ -147,9 +171,27 @@ io.on("connection", (socket) => {
 
         await emitUnreadMessageStatus(readerId);
       }
-
     } catch (error) {
       console.error("Error marking messages as seen:", error);
+    }
+  });
+
+  // NEW: Socket event to mark notifications as read
+  socket.on("markNotificationsAsRead", async () => {
+    try {
+      const userId = socket.userId;
+      if (!userId) {
+        console.warn("Attempted to mark notifications as read without a userId.");
+        return;
+      }
+      await Notification.updateMany(
+        { to: userId, read: false },
+        { $set: { read: true } }
+      );
+      await emitUnreadNotificationStatus(userId); // Update status for the user
+      console.log(`User ${userId} marked all notifications as read.`);
+    } catch (error) {
+      console.error("Error marking notifications as read:", error);
     }
   });
 

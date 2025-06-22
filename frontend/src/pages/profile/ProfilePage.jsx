@@ -18,10 +18,10 @@ import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile"
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
 
-const ProfilePage = ({ openImageModal }) => {
+const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
-  const [feedType, setFeedType] = useState("posts");
+  // const [feedType, setFeedType] = useState("posts");
   const [modalType, setModalType] = useState(null);
   const navigate = useNavigate();
 

@@ -25,13 +25,11 @@ const HomePage = ({ openImageModal }) => {
   const handleTabClick = (type) => {
     setFeedType(type);
 
-    if (scrollableContentRef.current) {
-      setTimeout(() => {
-        if (scrollableContentRef.current) {
-          scrollableContentRef.current.scrollTop = 0;
-        }
-      }, 50);
-    }
+    window.scrollTo({
+      top: 0,
+      left: 0,
+      behavior: "instant",
+    });
   };
 
   return (

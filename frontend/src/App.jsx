@@ -20,6 +20,7 @@ function App() {
   const location = useLocation();
 
   const [selectedImage, setSelectedImage] = useState(null);
+  const [feedType, setFeedType] = useState("post");
 
   const openImageModal = (imageUrl) => {
     setSelectedImage(imageUrl);
@@ -28,7 +29,6 @@ function App() {
   const closeImageModal = () => {
     setSelectedImage(null);
   };
-
 
   if (isLoading) {
     return (
@@ -42,7 +42,7 @@ function App() {
 
   return (
     <div className="flex max-w-7xl mx-auto">
-      {authUser && <Sidebar />}
+      {authUser && <Sidebar feedType={feedType} setFeedType={setFeedType} />}
       <Routes>
         <Route
           path="/"
@@ -67,7 +67,11 @@ function App() {
           path="/profile/:username"
           element={
             authUser ? (
-              <ProfilePage openImageModal={openImageModal} />
+              <ProfilePage
+                openImageModal={openImageModal}
+                feedType={feedType}
+                setFeedType={setFeedType}
+              />
             ) : (
               <Navigate to="/login" />
             )

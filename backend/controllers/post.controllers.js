@@ -2,6 +2,7 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import { emitUnreadNotificationStatus } from "../lib/socket.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -56,7 +57,7 @@ export const deletePost = async (req, res) => {
       await Post.findByIdAndUpdate(
         postToDelete.repostedFrom,
         { $inc: { repostsCount: -1 } },
-        { new: true } 
+        { new: true }
       );
     }
     await Post.deleteOne({ _id: id });
@@ -126,9 +127,11 @@ export const likeUnlikePost = async (req, res) => {
         from: userId,
         to: post.user,
         type: "like",
+        read: false, // New notifications are always unread
       });
 
       await notification.save();
+      await emitUnreadNotificationStatus(post.user.toString());
       res.status(200).json(post.likes);
     }
   } catch (error) {
@@ -177,7 +180,7 @@ export const getAllPosts = async (req, res) => {
     });
 
     const totalPosts = await Post.countDocuments({});
-    const hasNextPage = page * limit < totalPosts; 
+    const hasNextPage = page * limit < totalPosts;
 
     res.status(200).json({ posts: filteredPosts, hasNextPage });
   } catch (error) {
@@ -248,17 +251,14 @@ export const getFollowingPosts = async (req, res) => {
     };
 
     const rawFeedPosts = await Post.find({
-      $or: [
-        baseQuery, 
-        { user: { $in: following }, repostedFrom: { $ne: null } },
-      ],
+      $or: [baseQuery, { user: { $in: following }, repostedFrom: { $ne: null } }],
       "deletedFor.user": { $ne: userId },
     })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
-        path: "user", 
+        path: "user",
         select: "-password",
       })
       .populate({
@@ -313,7 +313,7 @@ export const getFollowingPosts = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
   try {
-    const { username } = req.params; 
+    const { username } = req.params;
     const user = await User.findOne({ username });
 
     if (!user) return res.status(404).json({ error: "User not found" });
@@ -415,7 +415,7 @@ export const getPost = async (req, res) => {
 
 export const repostPost = async (req, res) => {
   try {
-    const { postId } = req.params; 
+    const { postId } = req.params;
     const userId = req.user._id;
 
     const originalPost = await Post.findById(postId);
@@ -437,7 +437,7 @@ export const repostPost = async (req, res) => {
 
     let message;
     if (existingRepost) {
-      await Post.deleteOne({ _id: existingRepost._id }); 
+      await Post.deleteOne({ _id: existingRepost._id });
       originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1);
       message = "Repost removed successfully.";
     } else {
@@ -460,7 +460,7 @@ export const repostPost = async (req, res) => {
     res.status(200).json({
       message: message,
       newRepostsCount: originalPost.repostsCount,
-      hasUserReposted: !existingRepost, 
+      hasUserReposted: !existingRepost,
     });
   } catch (error) {
     console.error("Error in toggleRepost controller:", error.message);

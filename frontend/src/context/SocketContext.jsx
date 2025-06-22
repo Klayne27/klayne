@@ -18,6 +18,8 @@ export const SocketContextProvider = ({ children }) => {
   const [activeConversationId, setActiveConversationId] = useState(null);
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
+  const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // NEW STATE
+
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
 
@@ -41,6 +43,14 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadMessages(hasUnread);
       });
 
+      // NEW LISTENER: Listen for unread notification status
+      newSocket.on("unreadNotificationStatus", ({ hasUnreadNotifications }) => {
+        setHasUnreadNotifications(hasUnreadNotifications);
+        if (status) {
+          queryClient.invalidateQueries({ queryKey: ["notifications"] });
+        }
+      });
+
       newSocket.on("newMessage", (newMessage) => {
         queryClient.invalidateQueries(["conversations"]);
       });
@@ -59,6 +69,7 @@ export const SocketContextProvider = ({ children }) => {
         if (newSocket) {
           newSocket.off("getOnlineUsers");
           newSocket.off("unreadMessageStatus");
+          newSocket.off("unreadNotificationStatus");
           newSocket.off("newMessage");
           newSocket.off("disconnect");
           newSocket.off("connect_error");
@@ -79,14 +90,20 @@ export const SocketContextProvider = ({ children }) => {
 
   useEffect(() => {
     if (socket && user) {
-
       socket.emit("userActiveInChat", { conversationId: activeConversationId });
     }
   }, [socket, activeConversationId, user]);
 
   return (
     <SocketContext.Provider
-      value={{ socket, onlineUsers, hasUnreadMessages, setActiveConversationId }}
+      value={{
+        socket,
+        onlineUsers,
+        hasUnreadMessages,
+        setActiveConversationId,
+        hasUnreadNotifications,
+        setHasUnreadNotifications,
+      }}
     >
       {children}
     </SocketContext.Provider>

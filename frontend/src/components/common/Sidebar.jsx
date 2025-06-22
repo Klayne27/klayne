@@ -11,12 +11,14 @@ import Modal from "./Modal";
 import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
 import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
+import { useQueryClient } from "@tanstack/react-query";
 
-const Sidebar = () => {
+const Sidebar = ({ setFeedType }) => {
   const { authUser } = useAuthUser();
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
-  const { hasUnreadMessages } = useSocket();
+  const { hasUnreadMessages, hasUnreadNotifications } = useSocket();
+  const queryClient = useQueryClient();
 
   const { pathname } = useLocation();
 
@@ -30,6 +32,23 @@ const Sidebar = () => {
 
   const handleMobileSearchClick = () => {
     navigate("/search");
+  };
+
+  // Function to handle clicking the logo/home link
+  const handleHomeClick = () => {
+    // Invalidate the query key for your main feed posts
+    // Adjust ["posts"] to whatever queryKey your feed uses (e.g., ["feedPosts"])
+    queryClient.invalidateQueries({ queryKey: ["posts"] });
+    setFeedType("forYou");
+
+    // Scroll to top only if already on the home page
+    if (pathname === "/") {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
+    }
   };
 
   useEffect(() => {
@@ -77,13 +96,18 @@ const Sidebar = () => {
   return (
     <div className="md:flex-[2_2_0] max-w-56">
       <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full">
-        <Link to="/" className="flex justify-start md:justify-start">
+        <Link
+          to="/"
+          onClick={handleHomeClick}
+          className="flex justify-start md:justify-start"
+        >
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
           <li className="flex justify-start md:justify-start">
             <Link
               to="/"
+              onClick={handleHomeClick}
               className={`${
                 pathname === "/" ? "font-bold text-white" : ""
               } flex gap-2.5 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
@@ -122,17 +146,28 @@ const Sidebar = () => {
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
-          <li className="flex justify-start md:justify-start">
+          <li className="flex justify-start md:justify-start items-center gap-1">
             <Link
               to="/notifications"
               className={`${
                 pathname === "/notifications" ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <PiBellThin
                 className="w-6 h-6"
                 strokeWidth={pathname === "/notifications" ? 25 : 15}
               />
+              {hasUnreadNotifications && ( // NEW: Conditional rendering for red dot
+                <div
+                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  style={{ transform: "translate(50%, -50%)" }}
+                ></div>
+              )}
+            </Link>
+            <Link // Wrapped the span in a Link for the text part
+              to="/notifications"
+              className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
+            >
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
           </li>

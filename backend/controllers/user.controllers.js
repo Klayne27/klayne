@@ -5,6 +5,7 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
+import { emitUnreadNotificationStatus } from "../lib/socket.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -48,9 +49,11 @@ export const followUnfollowUser = async (req, res) => {
         type: "follow",
         from: req.user._id,
         to: userToModify._id,
+        read: false, // New notifications are always unread
       });
 
       await newNotification.save();
+      await emitUnreadNotificationStatus(userToModify._id.toString());
 
       res.status(200).json({ message: "User followed successfully" });
     }
