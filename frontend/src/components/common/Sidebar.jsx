@@ -17,7 +17,12 @@ const Sidebar = ({ setFeedType }) => {
   const { authUser } = useAuthUser();
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
-  const { hasUnreadMessages, hasUnreadNotifications } = useSocket();
+  const {
+    hasUnreadMessages,
+    hasUnreadNotifications,
+    hasNewFeedPosts,
+    setHasNewFeedPosts,
+  } = useSocket();
   const queryClient = useQueryClient();
 
   const { pathname } = useLocation();
@@ -40,6 +45,11 @@ const Sidebar = ({ setFeedType }) => {
     // Adjust ["posts"] to whatever queryKey your feed uses (e.g., ["feedPosts"])
     queryClient.invalidateQueries({ queryKey: ["posts"] });
     setFeedType("forYou");
+
+    if (hasNewFeedPosts) {
+      console.log("Home clicked, resetting hasNewFeedPosts to false.");
+      setHasNewFeedPosts(false);
+    }
 
     // Scroll to top only if already on the home page
     if (pathname === "/") {
@@ -104,18 +114,30 @@ const Sidebar = ({ setFeedType }) => {
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
-          <li className="flex justify-start md:justify-start">
+          <li className="flex justify-start md:justify-start items-center gap-0.5">
             <Link
               to="/"
               onClick={handleHomeClick}
               className={`${
                 pathname === "/" ? "font-bold text-white" : ""
-              } flex gap-2.5 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
+              } relative flex gap-2.5 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
             >
               <PiHouseThin
                 className="w-7 h-7 fill-white"
                 strokeWidth={pathname === "/" ? 18 : 12}
               />
+              {hasNewFeedPosts && (
+                <div
+                  className="absolute top-3 right-3 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  style={{ transform: "translate(50%, -50%)" }}
+                ></div>
+              )}
+            </Link>
+            <Link
+              to="/"
+              onClick={handleHomeClick}
+              className={`${pathname === "/" ? "font-bold text-white" : ""} `}
+            >
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>

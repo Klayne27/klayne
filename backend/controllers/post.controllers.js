@@ -2,7 +2,7 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { emitUnreadNotificationStatus } from "../lib/socket.js";
+import { emitUnreadNotificationStatus, io } from "../lib/socket.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -29,6 +29,7 @@ export const createPost = async (req, res) => {
     });
 
     await newPost.save();
+    io.emit("newPostAvailable");
     res.status(201).json(newPost);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });

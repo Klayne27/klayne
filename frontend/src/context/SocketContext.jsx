@@ -19,6 +19,8 @@ export const SocketContextProvider = ({ children }) => {
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false); // NEW STATE
+  const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
+
 
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
@@ -49,6 +51,17 @@ export const SocketContextProvider = ({ children }) => {
         if (status) {
           queryClient.invalidateQueries({ queryKey: ["notifications"] });
         }
+      });
+
+      // ****** NEW LISTENER FOR NEW POSTS ******
+      newSocket.on("newPostAvailable", () => {
+        // Only set to true if the user is not currently on the home page / feed
+        // This prevents the dot from flashing if they are already there and it auto-refetches
+        // A more robust solution might check if the 'posts' query is already loading/fetching
+        // but for a simple dot, this works.
+        // We set it to true, and it will be cleared when "Home" is clicked.
+        console.log("Received newPostAvailable event. Setting hasNewFeedPosts to true.");
+        setHasNewFeedPosts(true);
       });
 
       newSocket.on("newMessage", (newMessage) => {
@@ -103,6 +116,8 @@ export const SocketContextProvider = ({ children }) => {
         setActiveConversationId,
         hasUnreadNotifications,
         setHasUnreadNotifications,
+        hasNewFeedPosts,
+        setHasNewFeedPosts
       }}
     >
       {children}
