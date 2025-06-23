@@ -70,9 +70,7 @@ const ChatWindow = ({
             newMessage.sender._id.toString() === otherUser?._id.toString() &&
             newMessage.recipientId?.toString() === currentUser._id.toString());
 
-        const shouldInvalidateConversations =
-          isMessageForThisChat || newMessage.conversationId;
-
+        // Only setQueryData for messages if it's the current chat
         if (isMessageForThisChat) {
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || actualConversationId],
@@ -92,9 +90,15 @@ const ChatWindow = ({
             });
           }
         }
-        if (shouldInvalidateConversations) {
-          queryClient.invalidateQueries(["conversations"]);
-        }
+
+        // **Refined Invalidation Logic:**
+        // Invalidate specific conversation, and then the general conversations list.
+        // This is generally a better pattern for react-query.
+        queryClient.invalidateQueries(["conversations", newMessage.conversationId]); // Invalidate specific convo cache
+        queryClient.invalidateQueries(["conversations"]); // Then invalidate the list
+
+        // You could even try to update the conversations cache directly for the specific message
+        // without invalidating the whole list, but that's more complex.
       };
 
       // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {

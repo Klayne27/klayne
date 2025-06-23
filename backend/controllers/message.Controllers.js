@@ -133,24 +133,28 @@ export const getMessagesByConversationId = async (req, res) => {
     );
 
     if (otherParticipantId) {
+      // Mark individual messages as seen
       await Message.updateMany(
         { conversationId: conversation._id, sender: otherParticipantId, seen: false },
         { $set: { seen: true } }
       );
 
+      // Only update lastMessage.seen if the last message was from the other participant and unseen
       if (
         conversation.lastMessage &&
         conversation.lastMessage.sender.toString() === otherParticipantId.toString() &&
         !conversation.lastMessage.seen
       ) {
+        // Option 1: Use `{ timestamps: false }` to prevent `updatedAt` from changing
+        // This is the cleanest fix if you only want to update `lastMessage.seen`
         await Conversation.updateOne(
           { _id: conversation._id },
-          { $set: { "lastMessage.seen": true } }
+          { $set: { "lastMessage.seen": true } },
+          { timestamps: false }
         );
       }
 
       await emitUnreadMessageStatus(userId.toString());
-
       const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
       recipientSocketIds.forEach((socketId) => {
         io.to(socketId).emit("messagesSeen", {
@@ -174,7 +178,7 @@ export const getMessagesByConversationId = async (req, res) => {
           select: "username fullName profileImg isVerified",
         },
       })
-      .sort({ createdAt: 1 });
+      .sort({ createdAt: 1 }); // Duplicate sort, remove one if not needed
 
     res.status(200).json(messages);
   } catch (error) {

@@ -207,7 +207,8 @@ io.on("connection", (socket) => {
       );
       await Conversation.updateOne(
         { _id: conversationId, "lastMessage.sender": { $ne: readerId } },
-        { $set: { "lastMessage.seen": true } }
+        { $set: { "lastMessage.seen": true } },
+        { timestamps: false }
       );
 
       const conversation = await Conversation.findById(conversationId);
