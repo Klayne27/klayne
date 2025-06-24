@@ -1,13 +1,14 @@
-export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 10) => {
+export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
   const res = await fetch(url);
 
   const data = await res.json();
 
   if (!res.ok) throw new Error(data.error || "Something went wrong");
-
+  console.log(data);
   return data;
 };
+
 
 export const createPostApi = async (text, img) => {
   const res = await fetch("/api/posts/create", {

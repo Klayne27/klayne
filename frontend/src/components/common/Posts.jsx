@@ -3,7 +3,14 @@ import PostSkeleton from "../skeletons/PostSkeleton";
 import { useEffect, useRef, useCallback } from "react";
 import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 
-const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) => {
+const Posts = ({
+  feedType,
+  username,
+  userId,
+  onPostsFetched,
+  openImageModal,
+  onLikedPostsFetched,
+}) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -31,7 +38,11 @@ const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) =
     isFetchingNextPage,
     isError,
     error,
+    totalPostsCount,
+    totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
+
+  console.log(totalPostsCount);
 
   const observer = useRef();
   const lastPostElementRef = useCallback(
@@ -57,16 +68,34 @@ const Posts = ({ feedType, username, userId, onPostsFetched, openImageModal }) =
   );
 
   useEffect(() => {
-    refetch();
-  }, [feedType, refetch, username, userId]);
+    if (POST_ENDPOINT) {
+      refetch();
+    }
+  }, [feedType, refetch, username, userId, POST_ENDPOINT]);
 
   useEffect(() => {
-    if (!isLoading && !isRefetching && posts !== undefined && posts.length > 0) {
-      onPostsFetched?.(posts);
-    }
-  }, [posts, isLoading, isRefetching, onPostsFetched, feedType]);
 
-  if (isLoading) {
+    if (
+      (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) 
+    ) {
+      onPostsFetched(totalPostsCount || totalLikedPostsCount);
+    }
+  }, [
+    posts,
+    isLoading,
+    isRefetching,
+    onPostsFetched,
+    feedType,
+    totalPostsCount,
+    totalLikedPostsCount,
+    onLikedPostsFetched,
+  ]);
+  console.log(totalLikedPostsCount);
+
+  const isWaitingForUserData =
+    (feedType === "posts" || feedType === "likes") && !POST_ENDPOINT;
+
+  if (isWaitingForUserData) {
     return (
       <div className="flex flex-col justify-center">
         <PostSkeleton />

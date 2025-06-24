@@ -1,4 +1,3 @@
-// src/controllers/post.controller.js
 import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
@@ -148,6 +147,8 @@ export const getAllPosts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const userId = req.user?._id;
+    const totalPosts = await Post.countDocuments({}); 
+
 
     const posts = await Post.find({})
       .sort({ createdAt: -1 })
@@ -181,10 +182,9 @@ export const getAllPosts = async (req, res) => {
       return !isOriginalPostDeletedForMe;
     });
 
-    const totalPosts = await Post.countDocuments({});
     const hasNextPage = page * limit < totalPosts;
 
-    res.status(200).json({ posts: filteredPosts, hasNextPage });
+    res.status(200).json({ posts: filteredPosts, hasNextPage, totalPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getAllPosts controller: ", error);
@@ -223,7 +223,7 @@ export const getLikedPosts = async (req, res) => {
     const totalLikedPosts = await Post.countDocuments({ _id: { $in: user.likedPosts } });
     const hasNextPage = page * limit < totalLikedPosts;
 
-    res.status(200).json({ posts: likedPosts, hasNextPage });
+    res.status(200).json({ posts: likedPosts, hasNextPage, totalLikedPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getLikedPosts controller: ", error);
@@ -368,7 +368,7 @@ export const getUserPosts = async (req, res) => {
     });
     const hasNextPage = page * limit < totalUserPosts;
 
-    res.status(200).json({ posts: finalUserPosts, hasNextPage });
+    res.status(200).json({ posts: finalUserPosts, hasNextPage, totalUserPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getUserPosts controller: ", error);

@@ -1,4 +1,3 @@
-// src/components/common/Post.jsx
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
@@ -32,10 +31,7 @@ const Post = ({ post, openImageModal }) => {
 
   const formattedDate = formatPostDate(originalPost.createdAt);
 
-  // Updated navigateToPostPage to correctly handle comment linking if needed
   const navigateToPostPage = (e) => {
-    // Check if the event was prevented by another handler (e.g., button click)
-    // This is crucial to allow nested clickable elements to work.
     if (e.target.closest("a") || e.target.closest("button")) {
       return; // Do not navigate if the click originated from a Link or Button
     }
@@ -119,7 +115,7 @@ const Post = ({ post, openImageModal }) => {
           <BiRepost className="inline-block text-lg" size={20} />
           <span
             className="hover:underline cursor-pointer"
-            onClick={navigateToReposterProfile} // Ensure this stops propagation
+            onClick={navigateToReposterProfile} 
           >
             {repostingUser.fullName.length > 15
               ? repostingUser.fullName.slice(0, 15) + "..."
@@ -201,7 +197,10 @@ const Post = ({ post, openImageModal }) => {
                 className="flex items-center cursor-pointer group"
                 onClick={handleInteractiveClick} // Added to prevent post navigation when clicking comment icon area
               >
-                <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
+                <div
+                  onClick={navigateToPostPage}
+                  className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition"
+                >
                   <FaRegComment
                     className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
                     strokeWidth={10}

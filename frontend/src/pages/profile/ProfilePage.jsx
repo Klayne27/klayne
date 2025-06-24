@@ -27,6 +27,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
+  const [userLikedPostsCount, setUserLikedPostsCount] = useState(0);
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
@@ -92,12 +93,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     setModalType(null);
   };
 
-  const handlePostsFetched = (postsArray) => {
-    if (postsArray) {
-      setUserPostsCount(postsArray.length);
-    } else {
-      setUserPostsCount(0);
-    }
+  const handlePostsFetched = (count) => {
+    setUserPostsCount(count);
+    setUserLikedPostsCount(count)
   };
 
   return (
@@ -109,7 +107,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           <p className="text-center text-lg mt-4">User not found</p>
         )}
         <div className="flex flex-col">
-          { user && (
+          {user && (
             <>
               <div className="flex gap-10 px-4 py-2 items-center">
                 <button
@@ -121,7 +119,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
                   <span className="text-sm text-slate-500">
-                    {feedType === "posts" ? `${userPostsCount} posts` : ""}
+                    {feedType === "posts" ? `${userPostsCount} posts` : `${userLikedPostsCount} likes`}
                   </span>{" "}
                 </div>
               </div>
