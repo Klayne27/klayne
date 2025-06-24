@@ -14,7 +14,7 @@ import { useFetchPost } from "../../hooks/postsHooks/useFetchPost"; // For fetch
 import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
 
-const PostPage = ({ openImageModal }) => {
+const PostPage = ({ openImageModal, setFeedType }) => {
   const { pid } = useParams(); // Post ID
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
@@ -131,7 +131,11 @@ const PostPage = ({ openImageModal }) => {
       </div>
 
       <div className="border-gray-700">
-        <Post post={displayPost} openImageModal={openImageModal} />
+        <Post
+          post={displayPost}
+          openImageModal={openImageModal}
+          setFeedType={setFeedType}
+        />
       </div>
 
       {authUser && (
@@ -160,7 +164,7 @@ const PostPage = ({ openImageModal }) => {
             className="px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
             disabled={isCreatingComment || !commentText.trim()}
           >
-            { "Comment"}
+            {"Comment"}
           </button>
         </form>
       )}

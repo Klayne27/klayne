@@ -107,7 +107,7 @@ function App() {
             path="/:username/post/:pid"
             element={
               authUser ? (
-                <PostPage openImageModal={openImageModal} />
+                <PostPage openImageModal={openImageModal} setFeedType={setFeedType} />
               ) : (
                 <Navigate to="/login" />
               )

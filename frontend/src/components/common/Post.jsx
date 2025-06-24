@@ -13,7 +13,7 @@ import { useRepostPost } from "../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../utils/textUtils";
 import { useEffect, useState } from "react";
 
-const Post = ({ post, openImageModal }) => {
+const Post = ({ post, openImageModal, setFeedType }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
@@ -33,7 +33,7 @@ const Post = ({ post, openImageModal }) => {
 
   const navigateToPostPage = (e) => {
     if (e.target.closest("a") || e.target.closest("button")) {
-      return; // Do not navigate if the click originated from a Link or Button
+      return;
     }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
   };
@@ -115,7 +115,7 @@ const Post = ({ post, openImageModal }) => {
           <BiRepost className="inline-block text-lg" size={20} />
           <span
             className="hover:underline cursor-pointer"
-            onClick={navigateToReposterProfile} 
+            onClick={navigateToReposterProfile}
           >
             {repostingUser.fullName.length > 15
               ? repostingUser.fullName.slice(0, 15) + "..."
@@ -130,7 +130,10 @@ const Post = ({ post, openImageModal }) => {
           <Link
             to={`/profile/${originalPostOwner.username}`}
             className="w-10 h-10 rounded-full overflow-hidden"
-            onClick={handleInteractiveClick} // Stop propagation for the Link
+            onClick={() => {
+              setFeedType("posts");
+              handleInteractiveClick();
+            }}
           >
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
@@ -143,7 +146,10 @@ const Post = ({ post, openImageModal }) => {
             <Link
               to={`/profile/${originalPostOwner.username}`}
               className="font-bold flex items-center gap-1 hover:underline"
-              onClick={handleInteractiveClick} // Stop propagation for the Link
+              onClick={() => {
+                setFeedType("posts");
+                handleInteractiveClick();
+              }}
             >
               {originalPostOwner.fullName.length > 15
                 ? originalPostOwner.fullName.slice(0, 15) + "..."
@@ -155,7 +161,10 @@ const Post = ({ post, openImageModal }) => {
             <span className="text-gray-500 flex gap-1 text-sm">
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                onClick={handleInteractiveClick} // Stop propagation for the Link
+                onClick={() => {
+                  setFeedType("posts");
+                  handleInteractiveClick();
+                }}
               >
                 @{originalPostOwner.username}
               </Link>
