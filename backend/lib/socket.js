@@ -1,12 +1,10 @@
-// src/lib/socket.js
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
-import Notification from "../models/notification.model.js"; // Ensure Notification model is imported
-import Comment from "../models/comment.model.js"; // Import the new Comment model
+import Notification from "../models/notification.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -114,12 +112,11 @@ export const createAndSendNotification = async ({
   to,
   type,
   postId,
-  commentId = null, // Default to null for flexibility
-  parentCommentId = null, // Default to null for flexibility
+  commentId = null,
+  parentCommentId = null,
 }) => {
   try {
     if (from.toString() === to.toString()) {
-      // Don't send notification to self (e.g., commenting on your own post)
       return;
     }
 
@@ -129,11 +126,10 @@ export const createAndSendNotification = async ({
       type,
       postId,
       commentId,
-      parentCommentId, // Include parentCommentId here
+      parentCommentId,
     });
     await newNotification.save();
 
-    // Populate the 'from' user and 'postId' for real-time display on frontend
     await newNotification.populate({
       path: "from",
       select: "username fullName profileImg",
@@ -141,35 +137,30 @@ export const createAndSendNotification = async ({
     if (postId) {
       await newNotification.populate({
         path: "postId",
-        select: "text img user", // Add other fields if needed for frontend display
+        select: "text img user", 
       });
     }
-    // Populate comment or parentComment if relevant for context
     if (commentId && newNotification.type !== "commentReply") {
-      // Populate direct comment if not a reply notification
       await newNotification.populate({
         path: "commentId",
-        select: "text user", // Select comment text and owner for context
+        select: "text user",
       });
     }
     if (parentCommentId && newNotification.type === "commentReply") {
-      // Populate parent comment for reply notifications
       await newNotification.populate({
         path: "parentCommentId",
-        select: "text user", // Select parent comment text and owner for context
+        select: "text user",
       });
     }
 
-    // Send real-time notification via Socket.IO
-    const receiverSocketIds = getReceiverSocketIds(to.toString()); // Use your existing helper
+    const receiverSocketIds = getReceiverSocketIds(to.toString());
     receiverSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("newNotification", newNotification); // Emit a newNotification event
+      io.to(socketId).emit("newNotification", newNotification);
       console.log(
         `Real-time notification sent to ${to.toString()} (socket: ${socketId}) for type ${type}`
       );
     });
 
-    // Also update the unread status for the receiver
     await emitUnreadNotificationStatus(to.toString());
   } catch (error) {
     console.error("Error in createAndSendNotification (socket.js): ", error.message);
@@ -211,7 +202,6 @@ io.on("connection", (socket) => {
     try {
       const readerId = socket.userId;
 
-      // Ensure ObjectIds are used for queries
       const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
       const readerObjectId = new mongoose.Types.ObjectId(readerId);
 
@@ -223,7 +213,6 @@ io.on("connection", (socket) => {
         },
         { $set: { seen: true } }
       );
-      // Added `lastMessage: { $ne: null }` as a good practice from earlier discussion
       await Conversation.updateOne(
         {
           _id: conversationObjectId,
@@ -236,7 +225,7 @@ io.on("connection", (socket) => {
 
       const conversation = await Conversation.findById(conversationObjectId).select(
         "participants"
-      ); // Select only participants
+      );
 
       if (conversation) {
         const otherParticipantId = conversation.participants.find(
@@ -248,7 +237,6 @@ io.on("connection", (socket) => {
           recipientSocketIds.forEach((sockId) => {
             io.to(sockId).emit("messagesSeen", { conversationId, readerId });
           });
-          // Defer non-critical status update slightly to prioritize messagesSeen event
           process.nextTick(async () => {
             await emitUnreadMessageStatus(otherParticipantId.toString());
           });

@@ -31,7 +31,7 @@ export const createPost = async (req, res) => {
       user: userId,
       text,
       img,
-      commentsCount: 0, // Initialize commentsCount for new posts
+      commentsCount: 0,
     });
 
     await newPost.save();
@@ -66,23 +66,15 @@ export const deletePost = async (req, res) => {
         .json({ error: "You are not authorized to delete this post" });
     }
     if (!postToDelete.repostedFrom) {
-      // If it's an original post, delete its reposts
       await Post.deleteMany({ repostedFrom: postToDelete._id });
     } else {
-      // If it's a repost, decrement the original post's repostsCount
       await Post.findByIdAndUpdate(
         postToDelete.repostedFrom,
         { $inc: { repostsCount: -1 } },
         { new: true }
       );
     }
-    // Delete the post itself
     await Post.deleteOne({ _id: id });
-
-    // Optional: Delete all comments associated with this post
-    // Make sure to import the Comment model at the top if you enable this
-    // import Comment from "../models/comment.model.js";
-    // await Comment.deleteMany({ post: id });
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
@@ -91,7 +83,6 @@ export const deletePost = async (req, res) => {
   }
 };
 
-// REMOVED old `commentOnPost` function as it's now handled in comment.controller.js
 
 export const likeUnlikePost = async (req, res) => {
   try {
@@ -155,14 +146,12 @@ export const getAllPosts = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate({ path: "user", select: "-password" })
-      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        // Updated 'comments' to 'commentsCount'
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
@@ -209,14 +198,12 @@ export const getLikedPosts = async (req, res) => {
         path: "user",
         select: "-password",
       })
-      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        // Updated 'comments' to 'commentsCount'
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
@@ -261,14 +248,12 @@ export const getFollowingPosts = async (req, res) => {
         path: "user",
         select: "-password",
       })
-      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        // Updated 'comments' to 'commentsCount'
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
@@ -332,15 +317,13 @@ export const getUserPosts = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate({ path: "user", select: "-password" })
-      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        // Updated 'comments' to 'commentsCount'
-        select: "text img likes commentsCount repostsCount createdAt user", // Include repostsCount
+        select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const finalUserPosts = rawUserPosts.filter((post) => {
@@ -382,7 +365,6 @@ export const getPost = async (req, res) => {
         path: "user",
         select: "username profileImg fullName isVerified",
       })
-      // REMOVED: .populate({ path: "comments.user", select: "username profileImg fullName isVerified" })
       .populate({
         path: "repostedFrom",
         populate: [
@@ -390,13 +372,7 @@ export const getPost = async (req, res) => {
             path: "user",
             select: "username profileImg fullName isVerified",
           },
-          // REMOVED: old embedded comment population
-          // {
-          //   path: "comments.user",
-          //   select: "username profileImg fullName isVerified",
-          // },
         ],
-        // Updated 'comments' to 'commentsCount'
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
@@ -445,7 +421,7 @@ export const repostPost = async (req, res) => {
         img: "",
         repostedFrom: originalPost._id,
         likes: [],
-        commentsCount: 0, // Initialize commentsCount for reposts
+        commentsCount: 0,
         repostsCount: 0,
       });
       await newRepost.save();
@@ -458,10 +434,10 @@ export const repostPost = async (req, res) => {
     if (originalPost.user.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
-        to: originalPost.user, // Owner of the original post
+        to: originalPost.user,
         type: "repost",
         postId: originalPost._id,
-        commentId: null, // No comment ID for reposts
+        commentId: null,
       });
     }
 

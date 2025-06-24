@@ -1,42 +1,29 @@
-// src/controllers/comment.controller.js
 import Post from "../models/post.model.js";
 import Comment from "../models/comment.model.js";
 import Notification from "../models/notification.model.js";
 import {
   createAndSendNotification,
-  emitUnreadNotificationStatus,
 } from "../lib/socket.js";
-import mongoose from "mongoose"; // Import mongoose for ObjectId
+import mongoose from "mongoose";
 
-// Helper function to validate ObjectId
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
-/**
- * Recursively deletes a comment and all its nested replies.
- * Returns the total count of comments deleted (including the initial comment).
- * @param {string | mongoose.Types.ObjectId} commentId The ID of the comment to start deletion from.
- * @returns {Promise<number>} The total number of comments deleted.
- */
 async function deleteAllChildComments(commentId) {
   let deletedCount = 0;
-  const commentsToDeleteQueue = [commentId]; // Start with the initial comment
+  const commentsToDeleteQueue = [commentId];
 
   while (commentsToDeleteQueue.length > 0) {
     const currentCommentId = commentsToDeleteQueue.shift();
 
-    // Find all direct replies to the current comment
     const directReplies = await Comment.find({ parentComment: currentCommentId }).select(
       "_id"
     );
 
-    // Add their IDs to the queue for further processing
     directReplies.forEach((reply) => commentsToDeleteQueue.push(reply._id));
 
-    // Delete the current comment and count it
     const deleteResult = await Comment.deleteOne({ _id: currentCommentId });
     if (deleteResult.deletedCount > 0) {
       deletedCount++;
-      // Optional: Delete notifications related to this specific comment
       await Notification.deleteMany({
         $or: [{ commentId: currentCommentId }, { parentCommentId: currentCommentId }],
       });
@@ -45,10 +32,6 @@ async function deleteAllChildComments(commentId) {
   return deletedCount;
 }
 
-// @desc    Get comments for a post (paginated, top-level comments or replies)
-// @route   GET /api/comments/:postId/comments
-// @route   GET /api/comments/:postId/comments/:parentCommentId/replies
-// @access  Public
 export const getComments = async (req, res) => {
   try {
     const { postId, parentCommentId } = req.params;
@@ -62,31 +45,29 @@ export const getComments = async (req, res) => {
 
     const query = { post: postId };
 
-    // Determine if fetching top-level comments or replies
-    // parentCommentId will be undefined for top-level comments in this route setup
     if (parentCommentId) {
       if (!isValidObjectId(parentCommentId)) {
         return res.status(400).json({ error: "Invalid Parent Comment ID" });
       }
       query.parentComment = parentCommentId;
     } else {
-      query.parentComment = null; // Fetching top-level comments
+      query.parentComment = null;
     }
 
     const comments = await Comment.find(query)
-      .sort({ createdAt: 1 }) // Sort by oldest first for comment threads
+      .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName profileImg isVerified", // Populate sender details
+        select: "username fullName profileImg isVerified",
       })
       .populate({
-        path: "parentComment", // Populate parent comment for context if needed
-        select: "text user", // Only select necessary fields to avoid deep nesting
+        path: "parentComment",
+        select: "text user",
         populate: {
           path: "user",
-          select: "username fullName", // Populate user for parent comment
+          select: "username fullName",
         },
       });
 
@@ -100,9 +81,6 @@ export const getComments = async (req, res) => {
   }
 };
 
-// @desc    Create a new comment on a post
-// @route   POST /api/comments/:postId
-// @access  Protected
 export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
@@ -121,32 +99,28 @@ export const createComment = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Create the new comment
     const newComment = new Comment({
       user: userId,
       post: postId,
       text,
-      parentComment: null, // This is a top-level comment
+      parentComment: null,
     });
 
     await newComment.save();
 
-    // Increment commentsCount on the Post
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    // Populate the new comment for the response
     await newComment.populate({
       path: "user",
       select: "username fullName profileImg isVerified",
     });
 
-    // Send notification to the post owner if it's not their own comment
     if (post.user.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
         to: post.user,
-        type: "comment", // Notification type for a new comment
+        type: "comment",
         postId: post._id,
         commentId: newComment._id,
       });
@@ -159,9 +133,6 @@ export const createComment = async (req, res) => {
   }
 };
 
-// @desc    Reply to an existing comment
-// @route   POST /api/comments/:postId/:parentCommentId/reply
-// @access  Protected
 export const replyToComment = async (req, res) => {
   try {
     const { text } = req.body;
@@ -185,38 +156,33 @@ export const replyToComment = async (req, res) => {
       return res.status(404).json({ error: "Comment not found" });
     }
 
-    // Ensure the parent comment belongs to the specified post
     if (parentComment.post.toString() !== postId) {
       return res
         .status(400)
         .json({ error: "Parent comment does not belong to this post" });
     }
 
-    // Create the new reply comment
     const newReply = new Comment({
       user: userId,
       post: postId,
       text,
-      parentComment: parentCommentId, // Link to the parent comment
+      parentComment: parentCommentId,
     });
 
     await newReply.save();
 
-    // Increment commentsCount on the Post (total comments)
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    // Increment repliesCount on the parent comment
     parentComment.repliesCount = (parentComment.repliesCount || 0) + 1;
     await parentComment.save();
 
-    // Populate the new reply for the response
     await newReply.populate({
       path: "user",
       select: "username fullName profileImg isVerified",
     });
     await newReply.populate({
-      path: "parentComment", // Populate parent comment details for context
+      path: "parentComment",
       select: "text user",
       populate: {
         path: "user",
@@ -224,12 +190,11 @@ export const replyToComment = async (req, res) => {
       },
     });
 
-    // Send notification to the parent comment owner if it's not their own reply
     if (parentComment.user.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
         to: parentComment.user,
-        type: "commentReply", // Notification type for a reply
+        type: "commentReply",
         postId: post._id,
         commentId: newReply._id,
         parentCommentId: parentComment._id,
@@ -243,9 +208,6 @@ export const replyToComment = async (req, res) => {
   }
 };
 
-// @desc    Like or Unlike a comment
-// @route   POST /api/comments/:commentId/like
-// @access  Protected
 export const likeUnlikeComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -263,23 +225,20 @@ export const likeUnlikeComment = async (req, res) => {
     const userLikedComment = comment.likes.includes(userId);
 
     if (userLikedComment) {
-      // Unlike the comment
       comment.likes.pull(userId);
       await comment.save();
       res
         .status(200)
         .json({ message: "Comment unliked successfully!", likes: comment.likes });
     } else {
-      // Like the comment
       comment.likes.push(userId);
 
-      // Send notification to the comment owner if not their own comment
       if (comment.user.toString() !== userId.toString()) {
         await createAndSendNotification({
           from: userId,
           to: comment.user,
-          type: "commentLike", // Notification type for a comment like
-          postId: comment.post, // Post ID is taken from the comment
+          type: "commentLike",
+          postId: comment.post, 
           commentId: comment._id,
         });
       }
@@ -295,9 +254,6 @@ export const likeUnlikeComment = async (req, res) => {
   }
 };
 
-// @desc    Delete a comment (and its replies recursively)
-// @route   DELETE /api/comments/:commentId
-// @access  Protected
 export const deleteComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -312,7 +268,6 @@ export const deleteComment = async (req, res) => {
       return res.status(404).json({ error: "Comment not found" });
     }
 
-    // Ensure only the comment owner or post owner can delete the comment
     const post = await Post.findById(commentToDelete.post);
     if (!post) {
       return res.status(404).json({ error: "Associated Post not found" });
@@ -327,14 +282,11 @@ export const deleteComment = async (req, res) => {
         .json({ error: "You are not authorized to delete this comment" });
     }
 
-    // Call the recursive deletion function
     const totalDeletedComments = await deleteAllChildComments(commentId);
 
-    // Decrement commentsCount on the parent Post by the total number of comments deleted
     post.commentsCount = Math.max(0, post.commentsCount - totalDeletedComments);
     await post.save();
 
-    // If the *initial* comment being deleted was a reply, decrement repliesCount on its parent
     if (commentToDelete.parentComment) {
       const parentComment = await Comment.findById(commentToDelete.parentComment);
       if (parentComment) {

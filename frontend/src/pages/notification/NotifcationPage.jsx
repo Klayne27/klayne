@@ -18,7 +18,6 @@ const NotificationPage = () => {
   const navigate = useNavigate();
 
   const filteredNotifications = notifications?.filter((notification) => {
-    // Filter out self-interactions for certain notification types
     if (
       (notification.type === "like" ||
         notification.type === "comment" ||
@@ -32,45 +31,32 @@ const NotificationPage = () => {
     return true;
   });
 
-  /**
-   * Handles navigation to a user's profile page.
-   * Stops event propagation to prevent triggering the parent notification item's click.
-   * @param {React.MouseEvent} e - The click event.
-   * @param {string} username - The username of the profile to navigate to.
-   */
+
   const handleProfileClick = (e, username) => {
     e.stopPropagation(); // Prevent the parent div from navigating to the post
     navigate(`/profile/${username}`);
   };
 
-  /**
-   * Handles navigation for the entire notification item.
-   * This function is attached to the outermost div of each notification.
-   * It determines the navigation target based on the notification type.
-   * @param {React.MouseEvent} e - The click event.
-   * @param {object} notification - The notification object.
-   */
+
   const handleNotificationItemClick = (e, notification) => {
-    // Check if the clicked element (or any of its parents) is a button.
-    // This is to ensure that clicking the delete button doesn't trigger post navigation.
-    // e.target.closest() checks if the event target itself or any of its ancestors is a button.
+    // If a button (like the delete icon) was clicked, prevent navigation.
     if (e.target.closest("button")) {
-      return; // Do not navigate if a button (like the delete icon) was clicked.
+      return;
     }
 
-    // Construct the target link for the post/comment or profile.
     let targetLink = "";
-    if (notification.postId && notification.postId._id) {
-      // If there's a postId, navigate to the post page.
-      // Ensure notification.postId.user.username is correctly populated from backend.
-      targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
-      if (notification.commentId) {
-        // If it's comment-related, add commentId as a query parameter for deep linking.
-        targetLink += `?commentId=${notification.commentId._id}`;
-      }
-    } else {
-      // Fallback: If no postId (e.g., follow notification), navigate to the 'from' user's profile.
+
+    // If it's a 'follow' notification, navigate to the user's profile.
+    if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`;
+    }
+    // For all other notifications, navigate to the associated post.
+    else if (notification.postId && notification.postId._id) {
+      targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
+    } else {
+      // Fallback for unexpected notification structures.
+      console.warn("Could not determine navigation link for notification:", notification);
+      return;
     }
 
     navigate(targetLink);

@@ -42,7 +42,6 @@ const Posts = ({
     totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
 
-
   const observer = useRef();
   const lastPostElementRef = useCallback(
     (node) => {
@@ -73,10 +72,7 @@ const Posts = ({
   }, [feedType, refetch, username, userId, POST_ENDPOINT]);
 
   useEffect(() => {
-
-    if (
-      (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) 
-    ) {
+    if (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) {
       onPostsFetched(totalPostsCount || totalLikedPostsCount);
     }
   }, [
