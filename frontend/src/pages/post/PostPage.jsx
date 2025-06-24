@@ -32,47 +32,30 @@ const PostPage = ({ openImageModal }) => {
     isFetchingNextPage: isFetchingNextCommentsPage,
     hasNextPage: hasNextCommentsPage,
     fetchNextPage: fetchNextCommentsPage,
-    refetch: refetchComments, // To manually refetch comments if needed
-  } = useFetchComments(pid, null); // Fetch top-level comments for this post
+    refetch: refetchComments,
+  } = useFetchComments(pid, null);
 
-  // useCreateComment hook instance for top-level comments
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 
-  // useDeleteComment and useLikeComment are generic, no need to re-instantiate here,
-  // they are passed down to CommentItem
+  const displayPost = post?.repostedFrom || post;
 
-  const displayPost = post?.repostedFrom || post; // Use original post if it's a repost
-
-  // Handler for submitting a new top-level comment or a reply
   const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
     if (!commentText.trim() || isCreatingComment) return;
 
     if (replyingToComment) {
-      // Logic for replying to a specific comment
-      // The CommentItem component's internal useCreateComment already handles this.
-      // This PostPage's form is only for top-level comments.
-      // If you want this form to also handle replies, you'd need another instance of useCreateComment
-      // or modify the existing one to accept parentCommentId dynamically.
-      // For simplicity, let's keep this form for top-level comments only for now.
-      // The CommentItem will manage its own reply input.
-      await createComment({ text: commentText, parentCommentId: replyingToComment._id }); // This assumes createComment is smart enough
+      await createComment({ text: commentText, parentCommentId: replyingToComment._id });
     } else {
-      // Logic for adding a new top-level comment
       await createComment({ text: commentText });
     }
     setCommentText("");
-    setReplyingToComment(null); // Clear reply state
+    setReplyingToComment(null);
   };
 
-  // Handler to set which comment is being replied to from a CommentItem
   const handleSetReplyingToComment = useCallback((comment) => {
     setReplyingToComment(comment);
-    // Optionally focus the input field
-    // You might need a ref for the input field to do this.
   }, []);
 
-  // --- Error Handling and Navigation for Post ---
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
       if (isError) {
@@ -84,7 +67,6 @@ const PostPage = ({ openImageModal }) => {
     }
   }, [isLoading, isError, error, post, navigate]);
 
-  // --- Infinite Scroll for Top-Level Comments ---
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)
       return;
@@ -99,7 +81,7 @@ const PostPage = ({ openImageModal }) => {
           fetchNextCommentsPage();
         }
       },
-      { threshold: 0.1 } // Trigger when 10% of the target is visible
+      { threshold: 0.1 }
     );
 
     observer.observe(observerTarget.current);
@@ -110,31 +92,6 @@ const PostPage = ({ openImageModal }) => {
       }
     };
   }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
-
-  // Effect to scroll to a specific comment if commentId query param is present
-  useEffect(() => {
-    const query = new URLSearchParams(location.search);
-    const commentIdFromUrl = query.get("commentId");
-
-    if (commentIdFromUrl && comments.length > 0) {
-      // Using a small delay to ensure comments are rendered
-      const timer = setTimeout(() => {
-        const targetCommentElement = document.getElementById(
-          `comment-${commentIdFromUrl}`
-        );
-        if (targetCommentElement) {
-          targetCommentElement.scrollIntoView({ behavior: "smooth", block: "center" });
-          // Optional: Highlight the comment for a brief period
-          targetCommentElement.classList.add("highlight-comment");
-          setTimeout(() => {
-            targetCommentElement.classList.remove("highlight-comment");
-          }, 3000);
-        }
-      }, 100); // Small delay
-
-      return () => clearTimeout(timer);
-    }
-  }, [comments, location.search]); // Depend on comments array and URL search params
 
   if (isLoading) {
     return (
@@ -208,10 +165,7 @@ const PostPage = ({ openImageModal }) => {
         </form>
       )}
 
-      {/* Main Comments Section */}
       <div className="flex flex-col" ref={commentsListRef}>
-        {" "}
-        {/* Assign ref here */}
         {isLoadingComments ? (
           <div className="flex justify-center h-full items-center py-4">
             <LoadingSpinner size="md" />
@@ -220,8 +174,6 @@ const PostPage = ({ openImageModal }) => {
           <>
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
-                {" "}
-                {/* Add ID for deep linking */}
                 <CommentItem
                   comment={comment}
                   postId={displayPost._id}

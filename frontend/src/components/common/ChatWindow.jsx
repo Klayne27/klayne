@@ -8,7 +8,6 @@ import { useFetchMessages } from "../../hooks/messagesHooks/useFetchMessages";
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
-// import { BsCheck2All, BsCheck2 } from "react-icons/bs";
 
 const ChatWindow = ({
   selectedConversation,

@@ -1,22 +1,21 @@
-// src/components/common/CommentItem.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { formatPostDate } from "../../utils/date"; // Assuming this utility exists
+import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { FiTrash } from "react-icons/fi";
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa";
-import LoadingSpinner from "./LoadingSpinner"; // Assuming you have this
-import { useLikeComment } from "../../hooks/commentHooks/useLikeComment"; // New hook
-import { useDeleteComment } from "../../hooks/commentHooks/useDeleteComment"; // New hook
-import { useCreateComment } from "../../hooks/commentHooks/useCreateComment"; // New hook for replies
-import { useFetchComments } from "../../hooks/commentHooks/useFetchComments"; // New hook for replies fetching
-import { renderClickableText } from "../../utils/textUtils"; // Assuming this utility exists
+import LoadingSpinner from "./LoadingSpinner";
+import { useLikeComment } from "../../hooks/commentHooks/useLikeComment";
+import { useDeleteComment } from "../../hooks/commentHooks/useDeleteComment";
+import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
+import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
+import { renderClickableText } from "../../utils/textUtils";
 
 const CommentItem = ({
   comment,
   postId,
-  onReplyClick, // Function to set replyingToComment in PostPage
-  isPostOwner, // Prop to determine if the current user owns the main post
+  onReplyClick,
+  isPostOwner,
 }) => {
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
@@ -27,18 +26,17 @@ const CommentItem = ({
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
-  const { createComment, isCreatingComment } = useCreateComment(postId, comment._id); // Hook for creating replies
+  const { createComment, isCreatingComment } = useCreateComment(postId, comment._id);
   const {
     comments: replies,
     isLoading: isLoadingReplies,
     isFetchingNextPage: isFetchingNextRepliesPage,
     hasNextPage: hasNextRepliesPage,
     fetchNextPage: fetchNextRepliesPage,
-  } = useFetchComments(postId, comment._id); // Hook for fetching replies
+  } = useFetchComments(postId, comment._id);
 
-  const observerTarget = useRef(null); // For infinite scroll on replies
+  const observerTarget = useRef(null);
 
-  // Infinite scroll for replies
   useEffect(() => {
     if (!observerTarget.current || !hasNextRepliesPage || isFetchingNextRepliesPage)
       return;
@@ -66,15 +64,14 @@ const CommentItem = ({
   }, [hasNextRepliesPage, isFetchingNextRepliesPage, fetchNextRepliesPage, comment._id]);
 
   const handleLikeCommentClick = (e) => {
-    e.stopPropagation(); // Prevent navigating to post page
+    e.stopPropagation();
     if (isLikingComment) return;
     likeComment({ commentId: comment._id, postId: postId });
   };
 
   const handleDeleteCommentClick = (e) => {
-    e.stopPropagation(); // Prevent navigating to post page
+    e.stopPropagation();
     if (isDeletingComment) return;
-    // Pass parentCommentId if this is a reply (not a top-level comment)
     deleteComment({
       commentId: comment._id,
       postId: postId,
@@ -86,7 +83,6 @@ const CommentItem = ({
     (e) => {
       e.stopPropagation();
       setShowReplyInput((prev) => !prev);
-      // Optionally, if onReplyClick is provided, pass the comment to it
       if (onReplyClick) {
         onReplyClick(comment);
       }
@@ -98,25 +94,23 @@ const CommentItem = ({
     e.preventDefault();
     e.stopPropagation();
     if (!replyText.trim() || isCreatingComment) return;
-    await createComment({ text: replyText }); // Use the hook's mutate function
+    await createComment({ text: replyText });
     setReplyText("");
     setShowReplyInput(false);
   };
 
-  // Ensure comment.user is populated for safe access
   if (!comment || !comment.user) {
     console.warn("Comment or comment user not populated:", comment);
-    return null; // Or a placeholder if rendering partial data is acceptable
+    return null;
   }
 
   return (
     <div className="flex flex-col gap-2 text-white  border-gray-700 p-4 relative">
-      {/* Main Comment Content */}
       <div className="flex gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
           className="flex-shrink-0"
-          onClick={(e) => e.stopPropagation()} // Prevent parent click from navigating
+          onClick={(e) => e.stopPropagation()}
         >
           <div className="avatar">
             <div className="w-8 rounded-full">
@@ -271,9 +265,8 @@ const CommentItem = ({
         </div>
       </div>
 
-      {/* Nested Replies Section */}
       {comment.repliesCount > 0 && (
-        <div className="ml-4 border-l border-gray-700 pl-4 mt-2">
+        <div className="ml-8 border-l border-gray-700 pl-4 mt-2">
           {isLoadingReplies ? (
             <div className="flex justify-center py-2">
               <LoadingSpinner size="md" />
@@ -285,7 +278,7 @@ const CommentItem = ({
                   key={reply._id}
                   comment={reply}
                   postId={postId}
-                  onReplyClick={onReplyClick} // Pass down onReplyClick for nested replies
+                  onReplyClick={onReplyClick}
                   isPostOwner={isPostOwner}
                 />
               ))}

@@ -16,5 +16,5 @@ export const useDeleteNotifications = () => {
     },
   });
 
-  return { deleteNotifications };
+  return { deleteNotifications};
 };

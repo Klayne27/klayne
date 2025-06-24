@@ -1,9 +1,8 @@
-// src/pages/NotificationPage.jsx
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom"; // Link is no longer needed for the outermost wrapper
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaUser, FaHeart, FaCommentDots, FaRetweet, FaReply } from "react-icons/fa"; // Added FaReply for comment replies
+import { FaUser, FaHeart, FaCommentDots, FaRetweet, FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications";
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
@@ -13,15 +12,13 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
-  const { deleteNotification } = useDeleteNotification(); // Assuming this hook handles single notification deletion
-  const { deleteNotifications, isDeleting } = useDeleteNotifications(); // Assuming this hook handles deleting all
+  const { deleteNotification, isDeleting } = useDeleteNotification();
+  const { deleteNotifications } = useDeleteNotifications();
   const { authUser } = useAuthUser();
+  const navigate = useNavigate();
 
   const filteredNotifications = notifications?.filter((notification) => {
-    // Generally, notifications should not be sent for self-interactions from the backend.
-    // If the backend prevents sending notifications to 'from === to', these client-side filters
-    // might be redundant but act as a safeguard.
-    // Keeping existing filter for 'like', 'comment', 'repost'.
+    // Filter out self-interactions for certain notification types
     if (
       (notification.type === "like" ||
         notification.type === "comment" ||
@@ -34,6 +31,50 @@ const NotificationPage = () => {
     }
     return true;
   });
+
+  /**
+   * Handles navigation to a user's profile page.
+   * Stops event propagation to prevent triggering the parent notification item's click.
+   * @param {React.MouseEvent} e - The click event.
+   * @param {string} username - The username of the profile to navigate to.
+   */
+  const handleProfileClick = (e, username) => {
+    e.stopPropagation(); // Prevent the parent div from navigating to the post
+    navigate(`/profile/${username}`);
+  };
+
+  /**
+   * Handles navigation for the entire notification item.
+   * This function is attached to the outermost div of each notification.
+   * It determines the navigation target based on the notification type.
+   * @param {React.MouseEvent} e - The click event.
+   * @param {object} notification - The notification object.
+   */
+  const handleNotificationItemClick = (e, notification) => {
+    // Check if the clicked element (or any of its parents) is a button.
+    // This is to ensure that clicking the delete button doesn't trigger post navigation.
+    // e.target.closest() checks if the event target itself or any of its ancestors is a button.
+    if (e.target.closest("button")) {
+      return; // Do not navigate if a button (like the delete icon) was clicked.
+    }
+
+    // Construct the target link for the post/comment or profile.
+    let targetLink = "";
+    if (notification.postId && notification.postId._id) {
+      // If there's a postId, navigate to the post page.
+      // Ensure notification.postId.user.username is correctly populated from backend.
+      targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
+      if (notification.commentId) {
+        // If it's comment-related, add commentId as a query parameter for deep linking.
+        targetLink += `?commentId=${notification.commentId._id}`;
+      }
+    } else {
+      // Fallback: If no postId (e.g., follow notification), navigate to the 'from' user's profile.
+      targetLink = `/profile/${notification.from?.username}`;
+    }
+
+    navigate(targetLink);
+  };
 
   return (
     <>
@@ -49,6 +90,7 @@ const NotificationPage = () => {
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li>
+                {/* Ensure deleteNotifications is properly called */}
                 <a onClick={deleteNotifications}>
                   {isDeleting ? <LoadingSpinner size="sm" /> : "Delete all notifications"}
                 </a>
@@ -68,38 +110,29 @@ const NotificationPage = () => {
         )}
 
         {filteredNotifications?.map((notification) => {
-          // Construct the base link for posts
-          let postLink = "";
-          if (notification.postId && notification.from?.username) {
-            postLink = `/${notification.from.username}/post/${notification.postId._id}`;
-          }
-
-          // Add commentId query param if it's a comment-related notification
-          if (notification.commentId) {
-            // For comment, commentLike, commentReply, link to the post and add commentId as query param
-            postLink += `?commentId=${
-              notification.commentId._id || notification.commentId
-            }`;
-            // If it's a reply notification, and parentCommentId is provided, you might want to link to that instead
-            // For now, linking to the actual reply comment is more direct.
-          }
-
           return (
-            <Link
-              to={postLink || `/profile/${notification.from?.username}`} // Fallback to profile link
-              className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-gray-800 transition-colors"
+            // Changed from Link to div. The navigation logic is now in handleNotificationItemClick.
+            // Added cursor-pointer to indicate it's clickable.
+            <div
+              className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-gray-800 transition-colors cursor-pointer"
               key={notification._id}
+              onClick={(e) => handleNotificationItemClick(e, notification)} // Centralized navigation
             >
               {/* Delete Single Notification Button */}
-              <div className="absolute right-3 top-3" onClick={(e) => e.preventDefault()}>
-                {" "}
-                {/* Prevent link navigation */}
-                {isDeleting ? (
+              {/* This div stops propagation for its children, making sure clicks inside it are handled here */}
+              <div
+                className="absolute right-3 top-3"
+                onClick={(e) => e.stopPropagation()}
+              >
+                {isDeleting ? ( // Using isDeleting from useDeleteNotifications for loading state on single delete
                   <LoadingSpinner size="xs" />
                 ) : (
                   <button
                     className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
-                    onClick={() => deleteNotification(notification._id)}
+                    onClick={(e) => {
+                      e.stopPropagation(); // Crucial: Prevent parent div click from navigating
+                      deleteNotification(notification._id); // Call individual delete hook
+                    }}
                   >
                     <FiTrash
                       className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
@@ -118,13 +151,13 @@ const NotificationPage = () => {
                   <FaHeart className="w-7 h-7 text-red-500" />
                 )}
                 {notification.type === "commentLike" && (
-                  <FaHeart className="w-7 h-7 text-pink-500" /> // Distinct color for comment likes
+                  <FaHeart className="w-7 h-7 text-pink-500" />
                 )}
                 {notification.type === "comment" && (
                   <FaCommentDots className="w-7 h-7 text-blue-500" />
                 )}
                 {notification.type === "commentReply" && (
-                  <FaReply className="w-7 h-7 text-sky-500" /> // Icon for replies
+                  <FaReply className="w-7 h-7 text-sky-500" />
                 )}
                 {notification.type === "repost" && (
                   <FaRetweet className="w-7 h-7 text-green-500" />
@@ -133,10 +166,10 @@ const NotificationPage = () => {
 
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex gap-1 items-center">
-                  <Link
-                    to={`/profile/${notification.from?.username}`}
-                    className="avatar flex-shrink-0"
-                    onClick={(e) => e.stopPropagation()} // Prevent parent link from interfering
+                  {/* Avatar - now a div with onClick handler that stops propagation */}
+                  <div
+                    className="avatar flex-shrink-0 cursor-pointer"
+                    onClick={(e) => handleProfileClick(e, notification.from?.username)}
                   >
                     <div className="w-8 rounded-full">
                       <img
@@ -144,14 +177,14 @@ const NotificationPage = () => {
                         alt={`${notification.from?.username}'s profile`}
                       />
                     </div>
-                  </Link>
-                  <Link
-                    to={`/profile/${notification.from?.username}`}
-                    className="font-bold truncate w-fit max-w-full"
-                    onClick={(e) => e.stopPropagation()}
+                  </div>
+                  {/* Username - now a span with onClick handler that stops propagation */}
+                  <span
+                    className="font-bold truncate w-fit max-w-full cursor-pointer hover:underline"
+                    onClick={(e) => handleProfileClick(e, notification.from?.username)}
                   >
                     @{notification.from?.username}
-                  </Link>
+                  </span>
                   <span className="text-[8px]">●</span>
                   <span className="text-gray-500 text-sm">
                     {formatPostDate(notification.createdAt)}
@@ -163,7 +196,7 @@ const NotificationPage = () => {
                     <>
                       liked your post{" "}
                       {notification.postId && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           {notification.postId.text
                             ? `"${notification.postId.text.substring(0, 30)}${
                                 notification.postId.text.length > 30 ? "..." : ""
@@ -177,7 +210,7 @@ const NotificationPage = () => {
                     <>
                       commented on your post{" "}
                       {notification.postId && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           {notification.postId.text
                             ? `"${notification.postId.text.substring(0, 30)}${
                                 notification.postId.text.length > 30 ? "..." : ""
@@ -191,14 +224,14 @@ const NotificationPage = () => {
                     <>
                       liked your comment{" "}
                       {notification.commentId?.text && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           `"${notification.commentId.text.substring(0, 30)}$
                           {notification.commentId.text.length > 30 ? "..." : ""}"`
                         </span>
-                      )}
+                      )}{" "}
                       on post{" "}
                       {notification.postId && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           {notification.postId.text
                             ? `"${notification.postId.text.substring(0, 30)}${
                                 notification.postId.text.length > 30 ? "..." : ""
@@ -212,14 +245,14 @@ const NotificationPage = () => {
                     <>
                       replied to your comment{" "}
                       {notification.parentCommentId?.text && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           `"${notification.parentCommentId.text.substring(0, 30)}$
                           {notification.parentCommentId.text.length > 30 ? "..." : ""}"`
                         </span>
-                      )}
+                      )}{" "}
                       on post{" "}
                       {notification.postId && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           {notification.postId.text
                             ? `"${notification.postId.text.substring(0, 30)}${
                                 notification.postId.text.length > 30 ? "..." : ""
@@ -233,7 +266,7 @@ const NotificationPage = () => {
                     <>
                       reposted your post{" "}
                       {notification.postId && (
-                        <span className="text-blue-400  hover:underline">
+                        <span className="text-blue-400 hover:underline">
                           {notification.postId.text
                             ? `"${notification.postId.text.substring(0, 30)}${
                                 notification.postId.text.length > 30 ? "..." : ""
@@ -245,7 +278,7 @@ const NotificationPage = () => {
                   )}
                 </span>
               </div>
-            </Link>
+            </div>
           );
         })}
       </div>
