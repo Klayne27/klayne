@@ -105,7 +105,7 @@ const CommentItem = ({
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 text-white  border-gray-700 p-2 md:p-4 relative border"> {/* border for visuals */}
+    <div className="flex flex-col gap-0 md:gap-2 text-white  border-gray-700 p-2 md:p-4 relative"> {/* border for visuals */}
       <div className="flex gap-1 md:gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
@@ -260,7 +260,7 @@ const CommentItem = ({
       </div>
 
       {comment.repliesCount > 0 && (
-        <div className="ml-8 border-l border-gray-700 pl-4 mt-2">
+        <div className=" border-l pl-1 md:pl-2 border-gray-700  mt-2">
           {isLoadingReplies ? (
             <div className="flex justify-center py-2">
               <LoadingSpinner size="md" />
