@@ -35,13 +35,15 @@ const Post = ({ post, openImageModal }) => {
   // Updated navigateToPostPage to correctly handle comment linking if needed
   const navigateToPostPage = (e) => {
     // Check if the event was prevented by another handler (e.g., button click)
-    if (e.defaultPrevented) return;
+    // This is crucial to allow nested clickable elements to work.
+    if (e.target.closest("a") || e.target.closest("button")) {
+      return; // Do not navigate if the click originated from a Link or Button
+    }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
   };
 
   const handleInteractiveClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent the click from bubbling up to the parent post div
   };
 
   const handleDeletePostClick = (e) => {
@@ -58,17 +60,6 @@ const Post = ({ post, openImageModal }) => {
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
-    // The previous logic for setHasUserRepostedOriginal based on originalPost.reposts was incorrect
-    // as originalPost.reposts is not a field. It should rely on the state from the API check.
-    // The useRepostPost hook itself should handle the optimistic update if needed,
-    // or the invalidateQueries will update the state.
-    // Removing the direct state manipulation here:
-    // setHasUserRepostedOriginal((prev) => {
-    //   if (originalPost?.reposts?.includes(authUser?._id)) {
-    //     return;
-    //   }
-    //   return !prev;
-    // });
     repostPost(originalPost._id);
   };
 
@@ -80,7 +71,7 @@ const Post = ({ post, openImageModal }) => {
   };
 
   const navigateToReposterProfile = (e) => {
-    e.stopPropagation();
+    e.stopPropagation(); // Essential to prevent parent post navigation
     if (repostingUser) {
       navigate(`/profile/${repostingUser.username}`);
     }
@@ -93,7 +84,6 @@ const Post = ({ post, openImageModal }) => {
         return;
       }
       try {
-        // Ensure you send the JWT token for authentication
         const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {
           // Assuming your `protectRoute` uses cookies, no explicit header needed for credentials: 'include'
           // If you use Bearer tokens from localStorage, uncomment and add it
@@ -112,7 +102,7 @@ const Post = ({ post, openImageModal }) => {
       }
     };
     checkIfUserRepostedStatus();
-  }, [authUser, originalPost?._id, isReposting]); // Add isReposting to dependencies to re-check after a repost action
+  }, [authUser, originalPost?._id, isReposting]);
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -129,7 +119,7 @@ const Post = ({ post, openImageModal }) => {
           <BiRepost className="inline-block text-lg" size={20} />
           <span
             className="hover:underline cursor-pointer"
-            onClick={navigateToReposterProfile}
+            onClick={navigateToReposterProfile} // Ensure this stops propagation
           >
             {repostingUser.fullName.length > 15
               ? repostingUser.fullName.slice(0, 15) + "..."
@@ -144,7 +134,7 @@ const Post = ({ post, openImageModal }) => {
           <Link
             to={`/profile/${originalPostOwner.username}`}
             className="w-10 h-10 rounded-full overflow-hidden"
-            onClick={handleInteractiveClick} // Prevent parent click from navigating to post page
+            onClick={handleInteractiveClick} // Stop propagation for the Link
           >
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
@@ -157,7 +147,7 @@ const Post = ({ post, openImageModal }) => {
             <Link
               to={`/profile/${originalPostOwner.username}`}
               className="font-bold flex items-center gap-1 hover:underline"
-              onClick={handleInteractiveClick}
+              onClick={handleInteractiveClick} // Stop propagation for the Link
             >
               {originalPostOwner.fullName.length > 15
                 ? originalPostOwner.fullName.slice(0, 15) + "..."
@@ -169,7 +159,7 @@ const Post = ({ post, openImageModal }) => {
             <span className="text-gray-500 flex gap-1 text-sm">
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                onClick={handleInteractiveClick}
+                onClick={handleInteractiveClick} // Stop propagation for the Link
               >
                 @{originalPostOwner.username}
               </Link>
@@ -209,7 +199,7 @@ const Post = ({ post, openImageModal }) => {
             <div className="flex gap-4 items-center w-2/3 justify-between">
               <div
                 className="flex items-center cursor-pointer group"
-                // onClick={navigateToPostPage} // This caused double navigation. Removed.
+                onClick={handleInteractiveClick} // Added to prevent post navigation when clicking comment icon area
               >
                 <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
                   <FaRegComment
@@ -218,7 +208,7 @@ const Post = ({ post, openImageModal }) => {
                   />
                 </div>
                 <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
-                  {originalPost.commentsCount || 0} {/* Changed from comments?.length */}
+                  {originalPost.commentsCount || 0}
                 </span>
               </div>
 

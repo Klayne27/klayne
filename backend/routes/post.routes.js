@@ -28,7 +28,7 @@ router.delete("/:id", protectRoute, deletePost);
 router.post("/like/:id", protectRoute, likeUnlikePost); // This route is for liking posts, so it remains
 
 router.get("/all", protectRoute, getAllPosts); // You might want to protect this based on your app's logic
-router.get("/liked/:id", protectRoute, getLikedPosts);
+router.get("/likes/:id", protectRoute, getLikedPosts);
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/user/:username", protectRoute, getUserPosts);
 router.get("/:id", protectRoute, getPost);
