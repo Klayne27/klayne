@@ -42,7 +42,6 @@ const Posts = ({
     totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
 
-  console.log(totalPostsCount);
 
   const observer = useRef();
   const lastPostElementRef = useCallback(
@@ -90,12 +89,8 @@ const Posts = ({
     totalLikedPostsCount,
     onLikedPostsFetched,
   ]);
-  console.log(totalLikedPostsCount);
 
-  const isWaitingForUserData =
-    (feedType === "posts" || feedType === "likes") && !POST_ENDPOINT;
-
-  if (isWaitingForUserData) {
+  if (isLoading) {
     return (
       <div className="flex flex-col justify-center">
         <PostSkeleton />
