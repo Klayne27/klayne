@@ -70,7 +70,6 @@ const ChatWindow = ({
             newMessage.sender._id.toString() === otherUser?._id.toString() &&
             newMessage.recipientId?.toString() === currentUser._id.toString());
 
-        // Only setQueryData for messages if it's the current chat
         if (isMessageForThisChat) {
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || actualConversationId],
@@ -90,30 +89,23 @@ const ChatWindow = ({
             });
           }
         }
-
-        // **Refined Invalidation Logic:**
-        // Invalidate specific conversation, and then the general conversations list.
-        // This is generally a better pattern for react-query.
-        queryClient.invalidateQueries(["conversations", newMessage.conversationId]); // Invalidate specific convo cache
-        queryClient.invalidateQueries(["conversations"]); // Then invalidate the list
-
-        // You could even try to update the conversations cache directly for the specific message
-        // without invalidating the whole list, but that's more complex.
-      };
-
-      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        if (seenConversationId.toString() === actualConversationId?.toString()) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
-            return oldMessages?.map((msg) =>
-              msg.sender._id.toString() === currentUser._id.toString() &&
-              readerId.toString() === otherUser?._id.toString()
-                ? { ...msg, seen: true }
-                : msg
-            );
-          });
-        }
+        queryClient.invalidateQueries(["conversations", newMessage.conversationId]);
         queryClient.invalidateQueries(["conversations"]);
       };
+
+      // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+      //   if (seenConversationId.toString() === actualConversationId?.toString()) {
+      //     queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
+      //       return oldMessages?.map((msg) =>
+      //         msg.sender._id.toString() === currentUser._id.toString() &&
+      //         readerId.toString() === otherUser?._id.toString()
+      //           ? { ...msg, seen: true }
+      //           : msg
+      //       );
+      //     });
+      //   }
+      //   queryClient.invalidateQueries(["conversations"]);
+      // };
 
       const handleMessageDeleted = ({
         messageId,
@@ -129,12 +121,12 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
-      socket.on("messagesSeen", handleMessagesSeen);
+      // socket.on("messagesSeen", handleMessagesSeen);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
-        socket.off("messagesSeen", handleMessagesSeen);
+        // socket.off("messagesSeen", handleMessagesSeen);
       };
     }
   }, [

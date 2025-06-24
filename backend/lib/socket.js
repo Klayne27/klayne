@@ -1,10 +1,12 @@
+// src/lib/socket.js
 import { Server } from "socket.io";
 import http from "http";
 import express from "express";
 import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
-import Notification from "../models/notification.model.js";
+import Notification from "../models/notification.model.js"; // Ensure Notification model is imported
+import Comment from "../models/comment.model.js"; // Import the new Comment model
 
 const app = express();
 const server = http.createServer(app);
@@ -61,7 +63,6 @@ export async function emitUnreadMessageStatus(userId) {
       try {
         activeConversationIdObj = new mongoose.Types.ObjectId(activeConversationId);
         query._id = { $ne: activeConversationIdObj };
-
       } catch (objIdError) {
         console.error(
           `Error converting activeConversationId '${activeConversationId}' to ObjectId for user ${userId}:`,
@@ -73,7 +74,6 @@ export async function emitUnreadMessageStatus(userId) {
     const conversationsWithUnseenLastMessage = await Conversation.countDocuments(query);
 
     const hasUnread = conversationsWithUnseenLastMessage > 0;
-
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     recipientSocketIds.forEach((socketId) => {
@@ -114,7 +114,8 @@ export const createAndSendNotification = async ({
   to,
   type,
   postId,
-  commentId,
+  commentId = null, // Default to null for flexibility
+  parentCommentId = null, // Default to null for flexibility
 }) => {
   try {
     if (from.toString() === to.toString()) {
@@ -128,6 +129,7 @@ export const createAndSendNotification = async ({
       type,
       postId,
       commentId,
+      parentCommentId, // Include parentCommentId here
     });
     await newNotification.save();
 
@@ -142,13 +144,21 @@ export const createAndSendNotification = async ({
         select: "text img user", // Add other fields if needed for frontend display
       });
     }
-    // if (commentId) {
-    //   // Populate comment if relevant
-    //   await newNotification.populate({
-    //     path: "commentId",
-    //     select: "text user", // Select comment text and owner for context
-    //   });
-    // }
+    // Populate comment or parentComment if relevant for context
+    if (commentId && newNotification.type !== "commentReply") {
+      // Populate direct comment if not a reply notification
+      await newNotification.populate({
+        path: "commentId",
+        select: "text user", // Select comment text and owner for context
+      });
+    }
+    if (parentCommentId && newNotification.type === "commentReply") {
+      // Populate parent comment for reply notifications
+      await newNotification.populate({
+        path: "parentCommentId",
+        select: "text user", // Select parent comment text and owner for context
+      });
+    }
 
     // Send real-time notification via Socket.IO
     const receiverSocketIds = getReceiverSocketIds(to.toString()); // Use your existing helper
@@ -201,17 +211,32 @@ io.on("connection", (socket) => {
     try {
       const readerId = socket.userId;
 
+      // Ensure ObjectIds are used for queries
+      const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
+      const readerObjectId = new mongoose.Types.ObjectId(readerId);
+
       await Message.updateMany(
-        { conversationId: conversationId, sender: { $ne: readerId }, seen: false },
+        {
+          conversationId: conversationObjectId,
+          sender: { $ne: readerObjectId },
+          seen: false,
+        },
         { $set: { seen: true } }
       );
+      // Added `lastMessage: { $ne: null }` as a good practice from earlier discussion
       await Conversation.updateOne(
-        { _id: conversationId, "lastMessage.sender": { $ne: readerId } },
+        {
+          _id: conversationObjectId,
+          lastMessage: { $ne: null },
+          "lastMessage.sender": { $ne: readerObjectId },
+        },
         { $set: { "lastMessage.seen": true } },
         { timestamps: false }
       );
 
-      const conversation = await Conversation.findById(conversationId);
+      const conversation = await Conversation.findById(conversationObjectId).select(
+        "participants"
+      ); // Select only participants
 
       if (conversation) {
         const otherParticipantId = conversation.participants.find(
@@ -223,10 +248,14 @@ io.on("connection", (socket) => {
           recipientSocketIds.forEach((sockId) => {
             io.to(sockId).emit("messagesSeen", { conversationId, readerId });
           });
-          await emitUnreadMessageStatus(otherParticipantId.toString());
+          // Defer non-critical status update slightly to prioritize messagesSeen event
+          process.nextTick(async () => {
+            await emitUnreadMessageStatus(otherParticipantId.toString());
+          });
         }
-
-        await emitUnreadMessageStatus(readerId);
+        process.nextTick(async () => {
+          await emitUnreadMessageStatus(readerId);
+        });
       }
     } catch (error) {
       console.error("Error marking messages as seen:", error);
@@ -272,11 +301,11 @@ io.on("connection", (socket) => {
         console.log(
           `User ${disconnectedUserId} still has ${userSockets.size} active connections.`
         );
+
+        console.warn(
+          `Disconnected socket ${socket.id} had no associated valid userId in map or was already removed.`
+        );
       }
-    } else {
-      console.warn(
-        `Disconnected socket ${socket.id} had no associated valid userId in map or was already removed.`
-      );
     }
 
     io.emit("getOnlineUsers", getOnlineUserIds());

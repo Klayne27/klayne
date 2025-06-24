@@ -1,8 +1,14 @@
+// src/controllers/post.controller.js
 import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
-import { createAndSendNotification, emitUnreadNotificationStatus, io, onlineUsersMap } from "../lib/socket.js";
+import {
+  createAndSendNotification,
+  emitUnreadNotificationStatus,
+  io,
+  onlineUsersMap,
+} from "../lib/socket.js";
 
 export const createPost = async (req, res) => {
   try {
@@ -14,7 +20,7 @@ export const createPost = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
     if (!text && !img) {
-      return res.status(404).json({ error: "Post must have a text or image" });
+      return res.status(400).json({ error: "Post must have a text or image" });
     }
 
     if (img) {
@@ -26,6 +32,7 @@ export const createPost = async (req, res) => {
       user: userId,
       text,
       img,
+      commentsCount: 0, // Initialize commentsCount for new posts
     });
 
     await newPost.save();
@@ -60,15 +67,23 @@ export const deletePost = async (req, res) => {
         .json({ error: "You are not authorized to delete this post" });
     }
     if (!postToDelete.repostedFrom) {
+      // If it's an original post, delete its reposts
       await Post.deleteMany({ repostedFrom: postToDelete._id });
     } else {
+      // If it's a repost, decrement the original post's repostsCount
       await Post.findByIdAndUpdate(
         postToDelete.repostedFrom,
         { $inc: { repostsCount: -1 } },
         { new: true }
       );
     }
+    // Delete the post itself
     await Post.deleteOne({ _id: id });
+
+    // Optional: Delete all comments associated with this post
+    // Make sure to import the Comment model at the top if you enable this
+    // import Comment from "../models/comment.model.js";
+    // await Comment.deleteMany({ post: id });
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
@@ -77,46 +92,7 @@ export const deletePost = async (req, res) => {
   }
 };
 
-export const commentOnPost = async (req, res) => {
-  try {
-    const { text } = req.body;
-    const postId = req.params.id;
-    const userId = req.user._id;
-
-    if (!text) {
-      return res.status(400).json({ error: "Text field is required" });
-    }
-
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    const comment = { user: userId, text };
-
-    post.comments.push(comment);
-    await post.save();
-
-    const newComment = post.comments[post.comments.length - 1];
-    const newCommentId = newComment._id;
-
-    if (post.user.toString() !== userId.toString()) {
-      await createAndSendNotification({
-        from: userId,
-        to: post.user,
-        type: "comment",
-        postId: post._id,
-        commentId: newCommentId, // Pass the correct ID
-      });
-    }
-
-    res.status(200).json(newComment);
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-    console.log("Error in commentOnPost controller: ", error);
-  }
-};
+// REMOVED old `commentOnPost` function as it's now handled in comment.controller.js
 
 export const likeUnlikePost = async (req, res) => {
   try {
@@ -132,12 +108,14 @@ export const likeUnlikePost = async (req, res) => {
     const userLikedPost = post.likes.includes(userId);
 
     if (userLikedPost) {
+      // Unlike the post
       await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
       await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
 
       const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
       res.status(200).json(updatedLikes);
     } else {
+      // Like the post
       post.likes.push(userId);
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
@@ -176,14 +154,15 @@ export const getAllPosts = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate({ path: "user", select: "-password" })
-      .populate({ path: "comments.user", select: "-password" })
+      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        select: "text img likes comments repostsCount createdAt user",
+        // Updated 'comments' to 'commentsCount'
+        select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const filteredPosts = posts.filter((post) => {
@@ -230,17 +209,15 @@ export const getLikedPosts = async (req, res) => {
         path: "user",
         select: "-password",
       })
-      .populate({
-        path: "comments.user",
-        select: "-password",
-      })
+      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        select: "text img likes comments repostsCount createdAt user",
+        // Updated 'comments' to 'commentsCount'
+        select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const totalLikedPosts = await Post.countDocuments({ _id: { $in: user.likedPosts } });
@@ -284,17 +261,15 @@ export const getFollowingPosts = async (req, res) => {
         path: "user",
         select: "-password",
       })
-      .populate({
-        path: "comments.user",
-        select: "-password",
-      })
+      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        select: "text img likes comments repostsCount createdAt user",
+        // Updated 'comments' to 'commentsCount'
+        select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const finalFeedPosts = rawFeedPosts.filter((post) => {
@@ -357,14 +332,15 @@ export const getUserPosts = async (req, res) => {
       .skip(skip)
       .limit(limit)
       .populate({ path: "user", select: "-password" })
-      .populate({ path: "comments.user", select: "-password" })
+      // REMOVED: .populate({ path: "comments.user", select: "-password" })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
         },
-        select: "text img likes comments repostsCount createdAt user", // Include repostsCount
+        // Updated 'comments' to 'commentsCount'
+        select: "text img likes commentsCount repostsCount createdAt user", // Include repostsCount
       });
 
     const finalUserPosts = rawUserPosts.filter((post) => {
@@ -406,10 +382,7 @@ export const getPost = async (req, res) => {
         path: "user",
         select: "username profileImg fullName isVerified",
       })
-      .populate({
-        path: "comments.user",
-        select: "username profileImg fullName isVerified",
-      })
+      // REMOVED: .populate({ path: "comments.user", select: "username profileImg fullName isVerified" })
       .populate({
         path: "repostedFrom",
         populate: [
@@ -417,12 +390,14 @@ export const getPost = async (req, res) => {
             path: "user",
             select: "username profileImg fullName isVerified",
           },
-          {
-            path: "comments.user",
-            select: "username profileImg fullName isVerified",
-          },
+          // REMOVED: old embedded comment population
+          // {
+          //   path: "comments.user",
+          //   select: "username profileImg fullName isVerified",
+          // },
         ],
-        select: "text img likes comments repostsCount createdAt user",
+        // Updated 'comments' to 'commentsCount'
+        select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     if (!post) {
@@ -470,7 +445,7 @@ export const repostPost = async (req, res) => {
         img: "",
         repostedFrom: originalPost._id,
         likes: [],
-        comments: [],
+        commentsCount: 0, // Initialize commentsCount for reposts
         repostsCount: 0,
       });
       await newRepost.save();
@@ -515,96 +490,5 @@ export const checkIfUserReposted = async (req, res) => {
   } catch (error) {
     console.error("Error in checkIfUserReposted controller:", error.message);
     res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const deleteComment = async (req, res) => {
-  try {
-    const { postId, commentId } = req.params;
-
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    const commentToDelete = post.comments.id(commentId);
-
-    if (!commentToDelete) {
-      return res.status(404).json({ error: "Comment not found" });
-    }
-
-    if (commentToDelete.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(401)
-        .json({ error: "You are not authorized to delete this comment" });
-    }
-
-    // If it's a repost being deleted, decrement the original post's count
-    // if (postToDelete.repostedFrom) {
-    //   const originalPost = await Post.findById(postToDelete.repostedFrom);
-    //   if (originalPost) {
-    //     originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1); // Ensure count doesn't go below 0
-    //     await originalPost.save();
-    //   }
-    // }
-
-    post.comments.pull({ _id: commentId });
-    await post.save();
-
-    res.status(200).json({ message: "Comment deleted successfully", commentId });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-    console.log("Error in deleteComment controller: ", error);
-  }
-};
-
-export const likeUnlikeComment = async (req, res) => {
-  try {
-    const { postId, commentId } = req.params; // Get post ID and comment ID from params
-    const userId = req.user._id; // Authenticated user ID
-
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    // Find the specific comment within the post
-    const comment = post.comments.id(commentId);
-
-    if (!comment) {
-      return res.status(404).json({ error: "Comment not found" });
-    }
-
-    const userLikedComment = comment.likes.includes(userId);
-
-    if (userLikedComment) {
-      // Unlike the comment
-      comment.likes.pull(userId);
-      await post.save(); // This save is fine as no notification is created
-      res.status(200).json({ message: "Comment unliked successfully!" });
-    } else {
-      // Like the comment
-      comment.likes.push(userId);
-
-      // Create a notification for the comment owner if they are not the current user
-      if (comment.user.toString() !== userId.toString()) {
-        await Notification.create({
-          from: userId,
-          to: comment.user, // The owner of the comment
-          type: "commentLike",
-          postId: postId,     // <-- ADDED THIS
-          commentId: commentId, // <-- ADDED THIS
-        });
-        await emitUnreadNotificationStatus(comment.user.toString());
-      }
-
-      await post.save(); // This save will now be reached if notification creation passes
-      res.status(200).json({ message: "Comment liked successfully!" });
-    }
-  } catch (error) {
-    console.log("Error in likeUnlikeComment controller", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
   }
 };

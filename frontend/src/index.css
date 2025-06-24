@@ -3,21 +3,35 @@
 @tailwind utilities;
 
 html {
-    overflow-y: scroll; 
-    overflow-x: hidden; 
+  overflow-y: scroll;
+  overflow-x: hidden;
 }
 
 :root {
-    --dvh: 100vh;
+  --dvh: 100vh;
+}
+
+@media (max-width: 767px) {
+  :root {
+    --dvh: 1dvh;
   }
-  
-  @media (max-width: 767px) {
-    :root {
-      --dvh: 1dvh;
-    }
+}
+
+html,
+body {
+  height: 100vh;
+  height: 100dvh;
+}
+
+.highlight-comment {
+  animation: highlight-fade 3s ease-out forwards;
+}
+
+@keyframes highlight-fade {
+  0% {
+    background-color: rgba(60, 140, 255, 0.2); /* Light blue highlight */
   }
-  
-  html, body {
-    height: 100vh;
-    height: 100dvh;
+  100% {
+    background-color: transparent;
   }
+}

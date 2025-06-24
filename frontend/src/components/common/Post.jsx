@@ -1,3 +1,4 @@
+// src/components/common/Post.jsx
 import { FaHeart, FaRegComment } from "react-icons/fa";
 import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
@@ -9,7 +10,7 @@ import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
-import { useRepostPost } from "../../hooks/postsHooks/useRepostPost"; 
+import { useRepostPost } from "../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../utils/textUtils";
 import { useEffect, useState } from "react";
 
@@ -31,10 +32,11 @@ const Post = ({ post, openImageModal }) => {
 
   const formattedDate = formatPostDate(originalPost.createdAt);
 
+  // Updated navigateToPostPage to correctly handle comment linking if needed
   const navigateToPostPage = (e) => {
-    if (!e.defaultPrevented) {
-      navigate(`/${post.user.username}/post/${post._id}`);
-    }
+    // Check if the event was prevented by another handler (e.g., button click)
+    if (e.defaultPrevented) return;
+    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
   };
 
   const handleInteractiveClick = (e) => {
@@ -56,12 +58,17 @@ const Post = ({ post, openImageModal }) => {
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
-    setHasUserRepostedOriginal((prev) => {
-      if (originalPost?.reposts?.includes(authUser?._id)) {
-        return;
-      }
-      return !prev;
-    });
+    // The previous logic for setHasUserRepostedOriginal based on originalPost.reposts was incorrect
+    // as originalPost.reposts is not a field. It should rely on the state from the API check.
+    // The useRepostPost hook itself should handle the optimistic update if needed,
+    // or the invalidateQueries will update the state.
+    // Removing the direct state manipulation here:
+    // setHasUserRepostedOriginal((prev) => {
+    //   if (originalPost?.reposts?.includes(authUser?._id)) {
+    //     return;
+    //   }
+    //   return !prev;
+    // });
     repostPost(originalPost._id);
   };
 
@@ -86,8 +93,11 @@ const Post = ({ post, openImageModal }) => {
         return;
       }
       try {
-        const response = await fetch(`/api/posts/checkrepost/${originalPost._id}`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        // Ensure you send the JWT token for authentication
+        const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {
+          // Assuming your `protectRoute` uses cookies, no explicit header needed for credentials: 'include'
+          // If you use Bearer tokens from localStorage, uncomment and add it
+          // headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (!response.ok) {
           console.warn("Authentication issue checking repost status or other error.");
@@ -102,7 +112,7 @@ const Post = ({ post, openImageModal }) => {
       }
     };
     checkIfUserRepostedStatus();
-  }, [authUser, originalPost?._id]);
+  }, [authUser, originalPost?._id, isReposting]); // Add isReposting to dependencies to re-check after a repost action
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -134,6 +144,7 @@ const Post = ({ post, openImageModal }) => {
           <Link
             to={`/profile/${originalPostOwner.username}`}
             className="w-10 h-10 rounded-full overflow-hidden"
+            onClick={handleInteractiveClick} // Prevent parent click from navigating to post page
           >
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
@@ -146,6 +157,7 @@ const Post = ({ post, openImageModal }) => {
             <Link
               to={`/profile/${originalPostOwner.username}`}
               className="font-bold flex items-center gap-1 hover:underline"
+              onClick={handleInteractiveClick}
             >
               {originalPostOwner.fullName.length > 15
                 ? originalPostOwner.fullName.slice(0, 15) + "..."
@@ -155,7 +167,10 @@ const Post = ({ post, openImageModal }) => {
               )}
             </Link>
             <span className="text-gray-500 flex gap-1 text-sm">
-              <Link to={`/profile/${originalPostOwner.username}`}>
+              <Link
+                to={`/profile/${originalPostOwner.username}`}
+                onClick={handleInteractiveClick}
+              >
                 @{originalPostOwner.username}
               </Link>
               <span>·</span>
@@ -194,7 +209,7 @@ const Post = ({ post, openImageModal }) => {
             <div className="flex gap-4 items-center w-2/3 justify-between">
               <div
                 className="flex items-center cursor-pointer group"
-                onClick={navigateToPostPage}
+                // onClick={navigateToPostPage} // This caused double navigation. Removed.
               >
                 <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
                   <FaRegComment
@@ -203,7 +218,7 @@ const Post = ({ post, openImageModal }) => {
                   />
                 </div>
                 <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
-                  {originalPost.comments?.length || 0}{" "}
+                  {originalPost.commentsCount || 0} {/* Changed from comments?.length */}
                 </span>
               </div>
 

@@ -1,49 +1,78 @@
-import { useEffect, useState } from "react";
+// src/pages/PostPage.jsx
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post"; 
+import Post from "../../components/common/Post"; // Re-using existing Post component
+import CommentItem from "../../components/common/CommentItem"; // NEW: Import CommentItem
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { formatPostDate } from "../../utils/date";
-import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
-import { useAddComment } from "../../hooks/postsHooks/useAddComment";
-import { useDeleteComment } from "../../hooks/postsHooks/useDeleteComment";
-import { FiTrash } from "react-icons/fi";
-import { useLikeComment } from "../../hooks/postsHooks/useLikeComment";
-import { FaHeart, FaRegHeart } from "react-icons/fa";
+import { formatPostDate } from "../../utils/date"; // Utility for date formatting
+import { useFetchPost } from "../../hooks/postsHooks/useFetchPost"; // For fetching the main post
+// import { useDeleteComment } from "../../hooks/commentsHooks/useDeleteComment"; // NEW: For deleting comments
+// import { useLikeComment } from "../../hooks/commentsHooks/useLikeComment"; // NEW: For liking comments
+import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
+import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
 
 const PostPage = ({ openImageModal }) => {
-  const { pid } = useParams();
+  const { pid } = useParams(); // Post ID
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
-
   const [commentText, setCommentText] = useState("");
+  const [replyingToComment, setReplyingToComment] = useState(null); // State to store which comment is being replied to
 
-  const { post, isLoading, isError, error, refetch } = useFetchPost(pid);
-  const { addComment, isAddingComment } = useAddComment(pid);
-  const { deleteComment, isDeletingComment } = useDeleteComment();
-  const { likeComment, isLikingComment } = useLikeComment();
+  const commentsListRef = useRef(null); // Ref for the comments scroll container
+  const observerTarget = useRef(null); // For infinite scroll trigger
 
-  const displayPost = post?.repostedFrom || post;
+  const { post, isLoading, isError, error, refetch: refetchPost } = useFetchPost(pid);
+  const {
+    comments,
+    isLoading: isLoadingComments,
+    isFetchingNextPage: isFetchingNextCommentsPage,
+    hasNextPage: hasNextCommentsPage,
+    fetchNextPage: fetchNextCommentsPage,
+    refetch: refetchComments, // To manually refetch comments if needed
+  } = useFetchComments(pid, null); // Fetch top-level comments for this post
 
-  const handleAddComment = (e) => {
+  // useCreateComment hook instance for top-level comments
+  const { createComment, isCreatingComment } = useCreateComment(pid, null);
+
+  // useDeleteComment and useLikeComment are generic, no need to re-instantiate here,
+  // they are passed down to CommentItem
+
+  const displayPost = post?.repostedFrom || post; // Use original post if it's a repost
+
+  // Handler for submitting a new top-level comment or a reply
+  const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
-    if (!commentText.trim()) return;
+    if (!commentText.trim() || isCreatingComment) return;
 
-    addComment({ postId: displayPost._id, text: commentText });
+    if (replyingToComment) {
+      // Logic for replying to a specific comment
+      // The CommentItem component's internal useCreateComment already handles this.
+      // This PostPage's form is only for top-level comments.
+      // If you want this form to also handle replies, you'd need another instance of useCreateComment
+      // or modify the existing one to accept parentCommentId dynamically.
+      // For simplicity, let's keep this form for top-level comments only for now.
+      // The CommentItem will manage its own reply input.
+      await createComment({ text: commentText, parentCommentId: replyingToComment._id }); // This assumes createComment is smart enough
+    } else {
+      // Logic for adding a new top-level comment
+      await createComment({ text: commentText });
+    }
     setCommentText("");
+    setReplyingToComment(null); // Clear reply state
   };
 
-  const handleDeleteComment = (commentId) => {
-    deleteComment({ postId: displayPost._id, commentId });
-  };
+  // Handler to set which comment is being replied to from a CommentItem
+  const handleSetReplyingToComment = useCallback((comment) => {
+    setReplyingToComment(comment);
+    // Optionally focus the input field
+    // You might need a ref for the input field to do this.
+  }, []);
 
-  // const handleLikeCommentClick = (commentId) => {
-  //   likeComment({ postId: displayPost._id, commentId }); // Use the likeComment from the hook
-  // };
-
+  // --- Error Handling and Navigation for Post ---
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
       if (isError) {
@@ -55,10 +84,62 @@ const PostPage = ({ openImageModal }) => {
     }
   }, [isLoading, isError, error, post, navigate]);
 
+  // --- Infinite Scroll for Top-Level Comments ---
+  useEffect(() => {
+    if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)
+      return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (
+          entries[0].isIntersecting &&
+          hasNextCommentsPage &&
+          !isFetchingNextCommentsPage
+        ) {
+          fetchNextCommentsPage();
+        }
+      },
+      { threshold: 0.1 } // Trigger when 10% of the target is visible
+    );
+
+    observer.observe(observerTarget.current);
+
+    return () => {
+      if (observerTarget.current) {
+        observer.unobserve(observerTarget.current);
+      }
+    };
+  }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
+
+  // Effect to scroll to a specific comment if commentId query param is present
+  useEffect(() => {
+    const query = new URLSearchParams(location.search);
+    const commentIdFromUrl = query.get("commentId");
+
+    if (commentIdFromUrl && comments.length > 0) {
+      // Using a small delay to ensure comments are rendered
+      const timer = setTimeout(() => {
+        const targetCommentElement = document.getElementById(
+          `comment-${commentIdFromUrl}`
+        );
+        if (targetCommentElement) {
+          targetCommentElement.scrollIntoView({ behavior: "smooth", block: "center" });
+          // Optional: Highlight the comment for a brief period
+          targetCommentElement.classList.add("highlight-comment");
+          setTimeout(() => {
+            targetCommentElement.classList.remove("highlight-comment");
+          }, 3000);
+        }
+      }, 100); // Small delay
+
+      return () => clearTimeout(timer);
+    }
+  }, [comments, location.search]); // Depend on comments array and URL search params
+
   if (isLoading) {
     return (
       <div className="flex-1 flex justify-center items-center h-screen w-full">
-        <LoadingSpinner className="w-20 h-20" />
+        <LoadingSpinner size="lg" />
       </div>
     );
   }
@@ -92,13 +173,13 @@ const PostPage = ({ openImageModal }) => {
         <h1 className="font-bold text-xl flex-1 truncate">Post</h1>
       </div>
 
-      <div className="border-b border-gray-700">
+      <div className="border-gray-700">
         <Post post={displayPost} openImageModal={openImageModal} />
       </div>
 
       {authUser && (
         <form
-          onSubmit={handleAddComment}
+          onSubmit={handleAddOrReplyComment}
           className="p-4 border-b border-gray-700 flex items-center justify-between sm:gap-4"
         >
           <div className="avatar flex-shrink-0">
@@ -113,99 +194,61 @@ const PostPage = ({ openImageModal }) => {
             type="text"
             value={commentText}
             onChange={(e) => setCommentText(e.target.value)}
-            placeholder="Post your reply"
+            placeholder={"Post your comment"}
             className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
-            disabled={isAddingComment}
+            disabled={isCreatingComment}
           />
           <button
             type="submit"
             className="px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
-            disabled={isAddingComment || !commentText.trim()}
+            disabled={isCreatingComment || !commentText.trim()}
           >
-            Reply
+            { "Comment"}
           </button>
         </form>
       )}
 
-      <div className="flex flex-col">
-        {displayPost.comments && displayPost.comments.length > 0 ? (
-          displayPost.comments.map((comment) => {
-            const isCommentLiked = comment.likes?.includes(authUser?._id);
-
-            return (
-              <div
-                key={comment._id}
-                className="flex gap-3 text-white border-b border-gray-700 p-4 relative items-start"
-              >
-                <Link
-                  to={`/profile/${comment.user?.username || ""}`}
-                  className="flex-shrink-0"
-                >
-                  <div className="avatar">
-                    <div className="w-8 rounded-full">
-                      <img
-                        src={comment.user?.profileImg || "/avatar-placeholder.png"}
-                        alt={`${comment.user?.username}'s profile`}
-                      />
-                    </div>
-                  </div>
-                </Link>
-
-                <div className="flex flex-col flex-grow min-w-0">
-                  <div className="flex flex-wrap gap-1 items-center relative">
-                    <div className="flex gap-1">
-                      <Link
-                        to={`/profile/${comment.user?.username || ""}`}
-                        className="font-semibold text-sm hover:underline flex-shrink-0"
-                      >
-                        {comment.user?.fullName}
-                      </Link>
-                      {comment.user?.isVerified && ( // Ensure comment.user is populated
-                        <img
-                          src="/verified.png"
-                          className="size-[17px] flex-shrink-0"
-                          alt="Verified"
-                        />
-                      )}
-                      <Link
-                        to={`/profile/${comment.user?.username || ""}`}
-                        className="text-gray-500 text-sm truncate flex-grow min-w-0"
-                      >
-                        @{comment.user?.username}
-                      </Link>
-                      {comment.createdAt && (
-                        <span className="text-gray-500 text-xs text-center flex items-center justify-center gap-1 flex-shrink-0 ml-auto">
-                          <span className="text-[7px]">●</span>
-                          {formatPostDate(comment.createdAt)}
-                        </span>
-                      )}
-                    </div>
-
-                    {authUser?._id === comment.user?._id && (
-                      <button
-                        className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 p-1 transition duration-200" // Added p-1 for better hit area
-                        onClick={() => handleDeleteComment(comment._id)}
-                        disabled={isDeletingComment} // Assuming useDeleteComment has a general isDeletingComment state
-                      >
-                        {isDeletingComment ? ( // Could improve this to show spinner only for the specific comment being deleted
-                          <LoadingSpinner size="sm" />
-                        ) : (
-                          <FiTrash
-                            size={16}
-                            className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
-                          />
-                        )}{" "}
-                      </button>
-                    )}
-                  </div>
-                  <p className="text-sm break-words mt-1">{comment.text}</p>
-                </div>
+      {/* Main Comments Section */}
+      <div className="flex flex-col" ref={commentsListRef}>
+        {" "}
+        {/* Assign ref here */}
+        {isLoadingComments ? (
+          <div className="flex justify-center h-full items-center py-4">
+            <LoadingSpinner size="md" />
+          </div>
+        ) : comments.length > 0 ? (
+          <>
+            {comments.map((comment) => (
+              <div key={comment._id} id={`comment-${comment._id}`}>
+                {" "}
+                {/* Add ID for deep linking */}
+                <CommentItem
+                  comment={comment}
+                  postId={displayPost._id}
+                  onReplyClick={handleSetReplyingToComment}
+                  isPostOwner={authUser?._id === displayPost.user?._id}
+                />
               </div>
-            );
-          })
+            ))}
+            {hasNextCommentsPage && (
+              <div className="flex justify-center py-4" ref={observerTarget}>
+                <button
+                  onClick={() => fetchNextCommentsPage()}
+                  disabled={isFetchingNextCommentsPage}
+                  className="text-primary hover:underline"
+                >
+                  {isFetchingNextCommentsPage ? (
+                    <LoadingSpinner size="sm" />
+                  ) : (
+                    "Load more comments"
+                  )}
+                </button>
+              </div>
+            )}
+          </>
         ) : (
           <p className="text-gray-400 text-center mt-4 p-4">
-            No comments yet. Be the first to reply!
+            No comments yet. Be the first to add one!
           </p>
         )}
       </div>
