@@ -31,7 +31,6 @@ export const fetchCommentsApi = async ({
   url += `?page=${page}&limit=${limit}`;
 
   // Log the URL being fetched for debugging
-  console.log("Fetching comments from URL:", url);
 
   const res = await fetch(url);
   const data = await res.json();

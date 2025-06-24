@@ -182,7 +182,7 @@ export const replyToComment = async (req, res) => {
 
     const parentComment = await Comment.findById(parentCommentId);
     if (!parentComment) {
-      return res.status(404).json({ error: "Parent comment not found" });
+      return res.status(404).json({ error: "Comment not found" });
     }
 
     // Ensure the parent comment belongs to the specified post

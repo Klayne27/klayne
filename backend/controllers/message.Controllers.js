@@ -135,7 +135,7 @@ export const getMessagesByConversationId = async (req, res) => {
     if (otherParticipantId) {
       // Mark individual messages as seen
       await Message.updateMany(
-        { conversationId: conversation._id, sender: otherParticipantId, seen: false },
+        { conversationId: conversationId, sender: otherParticipantId, seen: false },
         { $set: { seen: true } }
       );
 
@@ -148,7 +148,7 @@ export const getMessagesByConversationId = async (req, res) => {
         // Option 1: Use `{ timestamps: false }` to prevent `updatedAt` from changing
         // This is the cleanest fix if you only want to update `lastMessage.seen`
         await Conversation.updateOne(
-          { _id: conversation._id },
+          { _id: conversationId },
           { $set: { "lastMessage.seen": true } },
           { timestamps: false }
         );
@@ -166,7 +166,7 @@ export const getMessagesByConversationId = async (req, res) => {
     }
 
     const messages = await Message.find({
-      conversationId: conversation._id,
+      conversationId: conversationId,
     })
       .sort({ createdAt: 1 })
       .populate("sender", "username profileImg fullName isVerified")
@@ -178,7 +178,6 @@ export const getMessagesByConversationId = async (req, res) => {
           select: "username fullName profileImg isVerified",
         },
       })
-      .sort({ createdAt: 1 }); // Duplicate sort, remove one if not needed
 
     res.status(200).json(messages);
   } catch (error) {

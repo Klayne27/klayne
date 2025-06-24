@@ -38,9 +38,11 @@ export const likePostApi = async (post) => {
     method: "POST",
   });
 
-  const data = res.json();
+  const data = await res.json();
 
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to like/unlike post: Something went wrong");
+  }
   return data;
 };
 

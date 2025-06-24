@@ -5,7 +5,6 @@ import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 
-
 function MessageList({
   error,
   isNewChat,

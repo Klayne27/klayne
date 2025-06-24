@@ -37,7 +37,7 @@ const ChatWindow = ({
   );
 
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
-  const { messages, isLoading, error } = useFetchMessages(selectedConversation);
+  const { messages, isLoading, error, refetchMessages } = useFetchMessages(selectedConversation);
   const { sendMessage, isSendingMessage } = useSendMessage({
     selectedConversation,
     isNewOrTemporaryChat,
@@ -60,6 +60,12 @@ const ChatWindow = ({
       socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
     }
   }, [socket, actualConversationId, currentUser]);
+
+  useEffect(() => {
+    if (actualConversationId) {
+      refetchMessages()
+    }
+  }, [actualConversationId, refetchMessages])
 
   useEffect(() => {
     if (socket) {
@@ -101,19 +107,19 @@ const ChatWindow = ({
         // without invalidating the whole list, but that's more complex.
       };
 
-      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        if (seenConversationId.toString() === actualConversationId?.toString()) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
-            return oldMessages?.map((msg) =>
-              msg.sender._id.toString() === currentUser._id.toString() &&
-              readerId.toString() === otherUser?._id.toString()
-                ? { ...msg, seen: true }
-                : msg
-            );
-          });
-        }
-        queryClient.invalidateQueries(["conversations"]);
-      };
+      // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+      //   if (seenConversationId.toString() === actualConversationId?.toString()) {
+      //     queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
+      //       return oldMessages?.map((msg) =>
+      //         msg.sender._id.toString() === currentUser._id.toString() &&
+      //         readerId.toString() === otherUser?._id.toString()
+      //           ? { ...msg, seen: true }
+      //           : msg
+      //       );
+      //     });
+      //   }
+      //   queryClient.invalidateQueries(["conversations"]);
+      // };
 
       const handleMessageDeleted = ({
         messageId,
@@ -129,12 +135,12 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
-      socket.on("messagesSeen", handleMessagesSeen);
+      // socket.on("messagesSeen", handleMessagesSeen);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
-        socket.off("messagesSeen", handleMessagesSeen);
+        // socket.off("messagesSeen", handleMessagesSeen);
       };
     }
   }, [

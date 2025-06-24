@@ -48,7 +48,6 @@ export const useLikeComment = () => {
     },
     onSuccess: (data, { postId, commentId }) => {
       // Data from API usually confirms success, no extra mutation here unless specific return needed
-      toast.success(data.message || "Comment like status updated!");
 
       // Invalidate queries to ensure fresh data in case of complex interactions or other views
       queryClient.invalidateQueries(["comments", postId]);
