@@ -9,12 +9,6 @@ export const useSocket = () => {
   return useContext(SocketContext);
 };
 
-// Use the environment variable directly. Ensure VITE_BACKEND_URL is set
-// correctly in your .env.development and .env.production files.
-// For example:
-// .env.development: VITE_BACKEND_URL=http://localhost:5000
-// .env.production: VITE_BACKEND_URL=https://your-production-backend.com
-// If your backend is proxied to "/" in production, then your current logic `"/ "` is fine.
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
 
 export const SocketContextProvider = ({ children }) => {
@@ -71,11 +65,6 @@ export const SocketContextProvider = ({ children }) => {
 
       newSocket.on("newMessage", (newMessage) => {
         queryClient.invalidateQueries(["conversations"]);
-        // Optional: If the new message is for the currently active conversation,
-        // you might also want to invalidate the 'messages' query for that conversation.
-        // if (activeConversationId && newMessage.conversation === activeConversationId) {
-        //   queryClient.invalidateQueries(["messages", activeConversationId]);
-        // }
       });
 
       newSocket.on("disconnect", (reason) => {

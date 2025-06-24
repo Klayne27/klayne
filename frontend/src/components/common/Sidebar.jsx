@@ -35,6 +35,106 @@ const Sidebar = () => {
 
   const navigate = useNavigate();
 
+  const originalTitle = useRef(document.title);
+  const originalFaviconHref = useRef(null);
+
+  useEffect(() => {
+    let faviconLink = document.querySelector('link[rel="icon"]');
+    if (faviconLink && !originalFaviconHref.current) {
+      originalFaviconHref.current = faviconLink.href;
+    } else if (!faviconLink) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 32;
+      canvas.height = 32;
+      canvas.getContext("2d").clearRect(0, 0, 32, 32);
+      originalFaviconHref.current = canvas.toDataURL();
+      faviconLink = document.createElement("link");
+      faviconLink.rel = "icon";
+      document.head.appendChild(faviconLink);
+    }
+  }, []);
+
+  useEffect(() => {
+    const hasAnyNotification =
+      hasUnreadMessages || hasUnreadNotifications || hasNewFeedPosts;
+
+    if (hasAnyNotification) {
+      document.title = `(New) ${originalTitle.current}`;
+    } else {
+      document.title = originalTitle.current;
+    }
+
+    const faviconLink = document.querySelector('link[rel="icon"]');
+    if (!faviconLink || !originalFaviconHref.current) {
+      console.warn(
+        "Favicon link not found or original favicon not captured. Cannot apply badge."
+      );
+      return;
+    }
+
+    if (hasAnyNotification) {
+      const canvas = document.createElement("canvas");
+      canvas.width = 32;
+      canvas.height = 32;
+      const ctx = canvas.getContext("2d");
+
+      const img = new Image();
+      img.src = originalFaviconHref.current;
+      img.crossOrigin = "anonymous";
+
+      const drawFaviconWithBadge = () => {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+
+        const badgeSize = 13;
+        const padding = 0;
+        ctx.beginPath();
+        ctx.arc(
+          canvas.width - badgeSize / 2 - padding,
+          badgeSize / 2 + padding,
+          badgeSize / 2,
+          0,
+          Math.PI * 2,
+          false
+        );
+        ctx.fillStyle = "red";
+        ctx.fill();
+        ctx.lineWidth = 1;
+        ctx.strokeStyle = "#000";
+        ctx.stroke();
+
+        faviconLink.href = canvas.toDataURL("image/png");
+      };
+
+      img.onload = drawFaviconWithBadge;
+
+      img.onerror = () => {
+        console.warn(
+          "Could not load original favicon for badging. Reverting to basic red dot as fallback."
+        );
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        ctx.beginPath();
+        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false); 
+        ctx.fillStyle = "red";
+        ctx.fill();
+        faviconLink.href = canvas.toDataURL("image/png");
+      };
+
+      if (img.complete) {
+        drawFaviconWithBadge();
+      }
+    } else {
+      faviconLink.href = originalFaviconHref.current;
+    }
+
+    return () => {
+      document.title = originalTitle.current;
+      if (faviconLink && originalFaviconHref.current) {
+        faviconLink.href = originalFaviconHref.current;
+      }
+    };
+  }, [hasUnreadMessages, hasUnreadNotifications, hasNewFeedPosts]);
+
   const handleMobileSearchClick = () => {
     navigate("/search");
   };

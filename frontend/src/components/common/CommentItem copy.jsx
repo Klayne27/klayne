@@ -105,15 +105,15 @@ const CommentItem = ({
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 text-white  border-gray-700 p-2 md:p-4 relative border"> {/* border for visuals */}
-      <div className="flex gap-1 md:gap-3 items-start">
+    <div className="flex flex-col gap-2 text-white  border-gray-700 p-4 relative">
+      <div className="flex gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
           className="flex-shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="avatar">
-            <div className="w-8 md:w-9 rounded-full">
+            <div className="w-8 rounded-full">
               <img
                 src={comment.user.profileImg || "/avatar-placeholder.png"}
                 alt={`${comment.user.username}'s profile`}
@@ -184,11 +184,11 @@ const CommentItem = ({
           )}
           <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
 
-          <div className="flex gap-4 mt-0 md:mt-2 items-center">
+          <div className="flex gap-4 mt-2 items-center">
             <button
               onClick={handleLikeCommentClick}
               disabled={isLikingComment}
-              className="flex items-center  cursor-pointer group"
+              className="flex items-center gap-1 cursor-pointer group"
             >
               <div
                 className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
@@ -214,7 +214,7 @@ const CommentItem = ({
             {authUser && ( 
               <button
                 onClick={handleReplyClick}
-                className="flex items-center cursor-pointer group"
+                className="flex items-center gap-1 cursor-pointer group"
               >
                 <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
                   <FaReply
