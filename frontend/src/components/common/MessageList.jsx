@@ -205,11 +205,11 @@ function MessageList({
                     </p>
                   )}
                 </div>
-                {isSentByCurrentUser && msg.seen && (
+                {/* {isSentByCurrentUser && msg.seen && (
                               <span className={`self-end ml-1`}>
                                 <BsCheck2All size={16} />
                               </span>
-                            )}
+                            )} */}
               </div>
               <span
                 className={`text-xs mt-1 flex text-gray-500 ${
