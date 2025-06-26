@@ -76,9 +76,9 @@ function ConversationItem({
             className="w-8 h-8 rounded-full object-cover"
           />
         </Link>
-        {isOnline && (
+        {/* {isOnline && (
           <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2F3336]"></span>
-        )}
+        )} */}
       </div>
       <div className="flex flex-col flex-1">
         <div className="flex items-center justify-between">
