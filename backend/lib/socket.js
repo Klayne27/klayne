@@ -16,6 +16,9 @@ const allowedOrigins = [
 ];
 
 const userActiveChats = new Map();
+// New Map to track users who are currently typing in a conversation
+// Map<conversationId, Set<userId>>
+const typingUsersInConversation = new Map();
 
 const io = new Server(server, {
   cors: {
@@ -137,7 +140,7 @@ export const createAndSendNotification = async ({
     if (postId) {
       await newNotification.populate({
         path: "postId",
-        select: "text img user", 
+        select: "text img user",
       });
     }
     if (commentId && newNotification.type !== "commentReply") {
@@ -197,6 +200,75 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", getOnlineUserIds());
   console.log("Updated online user IDs after connection:", getOnlineUserIds());
+
+  // Handle typing event from client
+  socket.on("typing", async ({ conversationId }) => {
+    const senderId = socket.userId;
+    if (!conversationId || !senderId) return;
+
+    if (!typingUsersInConversation.has(conversationId)) {
+      typingUsersInConversation.set(conversationId, new Set());
+    }
+    const typingUsers = typingUsersInConversation.get(conversationId);
+
+    // Only add and emit if this user wasn't already marked as typing
+    if (!typingUsers.has(senderId)) {
+      typingUsers.add(senderId);
+
+      try {
+        const conversation = await Conversation.findById(conversationId).select(
+          "participants"
+        );
+        if (conversation) {
+          conversation.participants.forEach((participantId) => {
+            if (participantId.toString() !== senderId.toString()) {
+              const receiverSocketIds = getReceiverSocketIds(participantId.toString());
+              receiverSocketIds.forEach((sockId) => {
+                io.to(sockId).emit("typing", { conversationId, userId: senderId });
+              });
+            }
+          });
+        }
+      } catch (err) {
+        console.error("Error fetching conversation for typing status:", err);
+      }
+    }
+  });
+
+  // Handle stop typing event from client
+  socket.on("stopTyping", async ({ conversationId }) => {
+    const senderId = socket.userId;
+    if (!conversationId || !senderId) return;
+
+    if (typingUsersInConversation.has(conversationId)) {
+      const typingUsers = typingUsersInConversation.get(conversationId);
+      // Only remove and emit if this user was actually marked as typing
+      if (typingUsers.has(senderId)) {
+        typingUsers.delete(senderId);
+        if (typingUsers.size === 0) {
+          typingUsersInConversation.delete(conversationId);
+        }
+
+        try {
+          const conversation = await Conversation.findById(conversationId).select(
+            "participants"
+          );
+          if (conversation) {
+            conversation.participants.forEach((participantId) => {
+              if (participantId.toString() !== senderId.toString()) {
+                const receiverSocketIds = getReceiverSocketIds(participantId.toString());
+                receiverSocketIds.forEach((sockId) => {
+                  io.to(sockId).emit("stopTyping", { conversationId, userId: senderId });
+                });
+              }
+            });
+          }
+        } catch (err) {
+          console.error("Error fetching conversation for stop typing status:", err);
+        }
+      }
+    }
+  });
 
   socket.on("markMessagesAsSeen", async ({ conversationId }) => {
     try {
@@ -285,20 +357,57 @@ io.on("connection", (socket) => {
       if (userSockets.size === 0) {
         onlineUsersMap.delete(disconnectedUserId);
         console.log(`User ${disconnectedUserId} is now completely offline.`);
+
+        // When a user fully disconnects, ensure their typing status is cleared
+        typingUsersInConversation.forEach(async (typingUsers, convId) => {
+          if (typingUsers.has(disconnectedUserId)) {
+            typingUsers.delete(disconnectedUserId);
+            if (typingUsers.size === 0) {
+              typingUsersInConversation.delete(convId);
+            }
+            // Notify other participants in that conversation that this user stopped typing
+            try {
+              const conversation = await Conversation.findById(convId).select(
+                "participants"
+              );
+              if (conversation) {
+                conversation.participants.forEach((participantId) => {
+                  if (participantId.toString() !== disconnectedUserId.toString()) {
+                    const receiverSocketIds = getReceiverSocketIds(
+                      participantId.toString()
+                    );
+                    receiverSocketIds.forEach((sockId) => {
+                      io.to(sockId).emit("stopTyping", {
+                        conversationId: convId,
+                        userId: disconnectedUserId,
+                      });
+                    });
+                  }
+                });
+              }
+            } catch (err) {
+              console.error(
+                "Error fetching conversation for disconnect stop typing:",
+                err
+              );
+            }
+          }
+        });
       } else {
         console.log(
           `User ${disconnectedUserId} still has ${userSockets.size} active connections.`
         );
-
-        console.warn(
-          `Disconnected socket ${socket.id} had no associated valid userId in map or was already removed.`
-        );
       }
+    } else {
+      console.warn(
+        `Disconnected socket ${socket.id} had no associated valid userId in map or was already removed.`
+      );
     }
 
     io.emit("getOnlineUsers", getOnlineUserIds());
 
     if (userId) {
+      // This userId is the one from connection, not necessarily disconnectedUserId from map
       console.log(`Backend: User ${userId} disconnected. Clearing active chat status.`);
       userActiveChats.delete(userId);
     }

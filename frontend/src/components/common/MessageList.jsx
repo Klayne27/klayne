@@ -5,22 +5,24 @@ import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
-
+// Note: LoadingSpinner is no longer imported or used here as per your request
+// to disregard infinite scroll logic for this feature.
 
 function MessageList({
   error,
   isNewChat,
-  messagesToRender,
+  messagesToRender, // Using this prop as provided in your latest code
   setReplyingToMessage,
   deleteMessage,
   messageInputRef,
   isDeletingMessage,
   selectedConversation,
   openImageModal,
+  isTypingOtherUser, // NEW: Prop to show typing indicator
 }) {
   const { authUser: currentUser } = useAuthUser();
-  const messagesEndRef = useRef(null);
-  const prevMessagesLength = useRef(0);
+  const messagesEndRef = useRef(null); // Used for simple scroll-to-bottom
+  const prevMessagesLength = useRef(0); // Kept for consistency with original code, but could be removed
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -51,43 +53,34 @@ function MessageList({
   };
 
   useEffect(() => {
-    if (messagesEndRef.current && messagesToRender) {
-      const currentLength = messagesToRender.length;
-      let scrollBehavior = "auto";
-
-      messagesEndRef.current.scrollIntoView({ behavior: scrollBehavior });
+    if (messagesEndRef.current) {
+      const currentLength = messagesToRender ? messagesToRender.length : 0;
+      if (currentLength > prevMessagesLength.current || isNewChat || isTypingOtherUser) {
+        messagesEndRef.current.scrollIntoView({ behavior: "instant" }); 
+      }
       prevMessagesLength.current = currentLength;
     }
-  }, [messagesToRender, selectedConversation?._id]);
+  }, [messagesToRender, selectedConversation?._id, isNewChat, isTypingOtherUser]); 
 
   useEffect(() => {
     prevMessagesLength.current = 0;
   }, [selectedConversation?._id]);
 
-  // New handler for clicking on the replied-to message div
   const handleJumpToOriginalMessage = useCallback((originalMessageId) => {
-    // Find the message element by its ID
     const originalMessageElement = document.getElementById(
       `message-${originalMessageId}`
     );
     if (originalMessageElement) {
       originalMessageElement.scrollIntoView({
-        behavior: "smooth", // Smooth scroll
-        block: "center", // Align the message in the middle of the view
+        behavior: "instant",
+        block: "center",
       });
-      // Optional: Add a temporary highlight to the message
       originalMessageElement.classList.add("highlight-message");
       setTimeout(() => {
         originalMessageElement.classList.remove("highlight-message");
-      }, 1500); // Remove highlight after 1.5 seconds
+      }, 1500);
     }
   }, []);
-
-  // useEffect(() => {
-  //   if (selectedConversation && messageInputRef.current) {
-  //     messageInputRef.current.focus();
-  //   }
-  // }, [selectedConversation, messageInputRef]);
 
   return (
     <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20">
@@ -96,7 +89,6 @@ function MessageList({
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
-
       {!isNewChat &&
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
@@ -117,52 +109,56 @@ function MessageList({
                         : "bg-[#2F3336] text-white rounded-bl-[4px]"
                     }`}
                 >
+                  {/* Reply icon */}
                   <div
                     className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
-                          transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
-                           ${
-                             isSentByCurrentUser
-                               ? "right-[calc(100%+8px)]"
-                               : "scale-x-[-1] left-[calc(100%+8px)]"
-                           } `}
+                              transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
+                               ${
+                                 isSentByCurrentUser
+                                   ? "right-[calc(100%+8px)]"
+                                   : "scale-x-[-1] left-[calc(100%+8px)]"
+                               } `}
                     onClick={() => handleReplyClick(msg)}
                   >
                     <FaReply size={18} />
                   </div>
+                  {/* Delete button (only for current user's messages) */}
                   {isSentByCurrentUser && (
                     <button
                       onClick={() => handleDeleteClick(msg._id)}
-                      className={`absolute top-1/2 -translate-y-1/2 text-xs  rounded-full text-red-600 hover:bg-red-600 hover:bg-opacity-25 p-1.5
-                                  opacity-0 group-hover:opacity-100 transition duration-200 z-10
-                                  ${isSentByCurrentUser ? "right-[calc(100%+30px)]" : ""}
-                                  ${
-                                    isDeletingMessage
-                                      ? "cursor-not-allowed"
-                                      : "cursor-pointer"
-                                  }
-                                   `}
+                      className={`absolute top-1/2 -translate-y-1/2 text-xs rounded-full text-red-600 hover:bg-red-600 hover:bg-opacity-25 p-1.5
+                                 opacity-0 group-hover:opacity-100 transition duration-200 z-10
+                                 ${isSentByCurrentUser ? "right-[calc(100%+30px)]" : ""}
+                                 ${
+                                   isDeletingMessage
+                                     ? "cursor-not-allowed"
+                                     : "cursor-pointer"
+                                 }
+                                  `}
                       title="Delete message"
                       disabled={isDeletingMessage}
                     >
                       {isDeletingMessage ? (
+                        // Assuming you have a LoadingSpinner or similar UI for this
                         <span className={`loading loading-spinner loading-xs`} />
                       ) : (
                         <FiTrash size={20} />
                       )}
                     </button>
                   )}
+                  {/* Replied-to message preview */}
                   {msg.repliedTo && (
                     <div
                       className={`
-                                  mb-2 p-2 rounded-md text-xs border
-                                  ${
-                                    isSentByCurrentUser
-                                      ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
-                                      : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
-                                  }
-                                 flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
-                                hover:border-blue-400 hover:bg-opacity-40
-                              `}
+                                mb-2 p-2 rounded-md text-xs border
+                                ${
+                                  isSentByCurrentUser
+                                    ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                    : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                                }
+                                flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                              hover:border-blue-400 hover:bg-opacity-40
+                                `}
                       onClick={() => handleJumpToOriginalMessage(msg.repliedTo._id)}
                     >
                       <span
@@ -190,6 +186,7 @@ function MessageList({
                       )}
                     </div>
                   )}
+                  {/* Message image attachment */}
                   {msg.img && (
                     <img
                       src={msg.img}
@@ -198,18 +195,21 @@ function MessageList({
                       onClick={(e) => handleImageClick(msg.img, e)}
                     />
                   )}
+                  {/* Message text content */}
                   {msg.text && (
                     <p className={`break-words text-sm `}>
                       {renderClickableText(msg.text, isSentByCurrentUser)}
                     </p>
                   )}
                 </div>
+                {/* Seen status for current user's messages */}
                 {isSentByCurrentUser && msg.seen && (
-                              <span className={`self-end ml-1`}>
-                                <BsCheck2All size={16} />
-                              </span>
-                            )}
+                  <span className={`self-end ml-1`}>
+                    <BsCheck2All size={16} />
+                  </span>
+                )}
               </div>
+              {/* Message timestamp */}
               <span
                 className={`text-xs mt-1 flex text-gray-500 ${
                   isSentByCurrentUser ? "justify-self-end" : "self-start"
@@ -226,7 +226,39 @@ function MessageList({
             </div>
           );
         })}
-      <div ref={messagesEndRef} />
+      {isTypingOtherUser && (
+        <div className="flex justify-start items-center text-gray-400 animate-pulse text-sm mt-2">
+          {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
+            ?.fullName || "Other user"}{" "}
+          is typing
+          <span className="ml-1">
+            <span className="inline-block animate-bounce dot1">.</span>
+            <span className="inline-block animate-bounce dot2">.</span>
+            <span className="inline-block animate-bounce dot3">.</span>
+          </span>
+        </div>
+      )}
+      <style jsx>{`
+        @keyframes bounce {
+          0%,
+          100% {
+            transform: translateY(0);
+          }
+          50% {
+            transform: translateY(-3px);
+          }
+        }
+        .dot1 {
+          animation: bounce 1.4s infinite;
+        }
+        .dot2 {
+          animation: bounce 1.4s infinite 0.2s; /* Delay for second dot */
+        }
+        .dot3 {
+          animation: bounce 1.4s infinite 0.4s; /* Delay for third dot */
+        }
+      `}</style>
+      <div ref={messagesEndRef} /> {/* This div ensures scrolling to the bottom */}
     </div>
   );
 }

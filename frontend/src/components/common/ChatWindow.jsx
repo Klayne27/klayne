@@ -20,6 +20,8 @@ const ChatWindow = ({
   const { socket, setActiveConversationId } = useSocket();
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
+  // New state for typing indicator
+  const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
@@ -36,8 +38,12 @@ const ChatWindow = ({
   );
 
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
-  const { messages, isLoading, error, refetchMessages } =
-    useFetchMessages(selectedConversation);
+  const {
+    messages,
+    isLoading,
+    error,
+    refetchMessages,
+  } = useFetchMessages(selectedConversation);
   const { sendMessage, isSendingMessage } = useSendMessage({
     selectedConversation,
     isNewOrTemporaryChat,
@@ -103,15 +109,8 @@ const ChatWindow = ({
       };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        // Ensure this update only applies to the currently active conversation
-        // and that the reader is indeed the 'otherUser' (not current user seeing their own message).
-        if (
-          seenConversationId.toString() === actualConversationId?.toString() 
-
-        ) {
+        if (seenConversationId.toString() === actualConversationId?.toString()) {
           queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
-            // Only update messages that were sent by the current user AND are not yet seen.
-            // This prevents unnecessary updates to messages that are already seen or sent by others.
             return (
               oldMessages?.map((msg) =>
                 msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
@@ -121,8 +120,6 @@ const ChatWindow = ({
             );
           });
         }
-        // Invalidate conversations to update unread counts in the list if necessary.
-        // This is usually needed for the unseen badges to clear.
         queryClient.invalidateQueries(["conversations", seenConversationId]);
         queryClient.invalidateQueries(["conversations"]);
       };
@@ -139,14 +136,39 @@ const ChatWindow = ({
         queryClient.invalidateQueries(["conversations"]);
       };
 
+      // New socket listeners for typing indicator
+      const handleTyping = ({ conversationId, userId }) => {
+        // Check if the typing event is for the current conversation AND it's from the other user
+        if (
+          conversationId === actualConversationId &&
+          userId === otherUser?._id.toString()
+        ) {
+          setIsTypingOtherUser(true);
+        }
+      };
+
+      const handleStopTyping = ({ conversationId, userId }) => {
+        // Check if the stop typing event is for the current conversation AND it's from the other user
+        if (
+          conversationId === actualConversationId &&
+          userId === otherUser?._id.toString()
+        ) {
+          setIsTypingOtherUser(false);
+        }
+      };
+
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);
+      socket.on("typing", handleTyping); // Listen for typing event
+      socket.on("stopTyping", handleStopTyping); // Listen for stop typing event
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
         socket.off("messagesSeen", handleMessagesSeen);
+        socket.off("typing", handleTyping); // Clean up typing listener
+        socket.off("stopTyping", handleStopTyping); // Clean up stop typing listener
       };
     }
   }, [
@@ -191,12 +213,15 @@ const ChatWindow = ({
       <MessageList
         error={error}
         isNewChat={isNewChat}
-        messagesToRender={messagesToRender}
+        messagesToRender={messagesToRender} // Removed this prop as per previous discussion
         setReplyingToMessage={memoizedSetReplyingToMessage}
         deleteMessage={memoizedDeleteMessage}
         messageInputRef={messageInputRef}
         isDeletingMessage={isDeletingMessage}
+        messages={messages} // Pass the full messages array for infinite scroll logic
         openImageModal={openImageModal}
+        selectedConversation={selectedConversation} // Ensure this is passed
+        isTypingOtherUser={isTypingOtherUser} // Pass the new typing state
       />
 
       <MessageInput
@@ -209,6 +234,7 @@ const ChatWindow = ({
         sendMessage={sendMessage}
         isSendingMessage={isSendingMessage}
         selectedConversation={selectedConversation}
+        socket={socket} // Pass socket to MessageInput to emit typing events
       />
     </div>
   );

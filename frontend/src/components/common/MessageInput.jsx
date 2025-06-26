@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
 import { truncateText } from "../../utils/truncateText";
 import { IoClose, IoImageOutline } from "react-icons/io5";
@@ -12,10 +12,11 @@ function MessageInput({
   setReplyingToMessage,
   actualConversationId,
   currentOptimisticIdRef,
-  messageInputRef,
+  messageInputRef, // Ref for the actual text input element
   isSendingMessage,
-  sendMessage,
-  selectedConversation,
+  sendMessage, // Function to send the message
+  selectedConversation, // Kept this prop, though not directly used for typing logic
+  socket,
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -24,17 +25,63 @@ function MessageInput({
   const imageInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const emojiPickerRef = useRef(null);
+  const typingTimeoutRef = useRef(null); // Ref to manage typing debounce
+
+  // Functions to emit typing/stopTyping events via socket
+  const emitTyping = useCallback(() => {
+    if (socket && actualConversationId) {
+      socket.emit("typing", { conversationId: actualConversationId });
+    }
+  }, [socket, actualConversationId]);
+
+  const emitStopTyping = useCallback(() => {
+    if (socket && actualConversationId) {
+      socket.emit("stopTyping", { conversationId: actualConversationId });
+    }
+  }, [socket, actualConversationId]);
+
+  const handleMessageInputChange = (e) => {
+    const text = e.target.value;
+    setMessageInput(text);
+
+    if (text.trim() === "") {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      emitStopTyping();
+      return;
+    }
+
+    if (!typingTimeoutRef.current) {
+      emitTyping();
+    }
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+    }
+
+    typingTimeoutRef.current = setTimeout(() => {
+      emitStopTyping();
+      typingTimeoutRef.current = null;
+    }, 1500);
+  };
 
   const handleSendMessage = async (e) => {
     e.preventDefault();
-  
-    setMessageInput("");
-    setImageFile(null);
-    setReplyingToMessage(null);
-    currentOptimisticIdRef.current = null;
+
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    emitStopTyping();
 
     if (!messageInput.trim() && !imageFile) return;
-    if (!otherUser) return toast.error("No recipient selected.");
+
+    if (!otherUser) {
+      toast.error("No recipient selected.");
+      return;
+    }
 
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
@@ -42,44 +89,38 @@ function MessageInput({
       messageInputRef.current.focus();
     }
 
-    let imgBase64 = null;
+    const messagePayload = {
+      recipientId: otherUser._id,
+      message: messageInput.trim(),
+      img: null,
+      conversationId: actualConversationId,
+      repliedTo: repliedToId,
+    };
+
     if (imageFile) {
       const reader = new FileReader();
       reader.readAsDataURL(imageFile);
       reader.onloadend = () => {
-        imgBase64 = reader.result;
-        sendMessage({
-          recipientId: otherUser._id,
-          message: messageInput.trim(),
-          img: imgBase64,
-          conversationId: actualConversationId,
-          repliedTo: repliedToId,
-        });
+        messagePayload.img = reader.result; 
+        sendMessage(messagePayload);
       };
       reader.onerror = (error) => {
         console.error("Error converting image:", error);
         toast.error("Failed to process image.");
       };
     } else {
-      sendMessage({
-        recipientId: otherUser._id,
-        message: messageInput.trim(),
-        img: null,
-        conversationId: actualConversationId,
-        repliedTo: repliedToId,
-      });
+      sendMessage(messagePayload);
     }
+
+    setMessageInput("");
+    setImageFile(null);
+    setReplyingToMessage(null);
+    currentOptimisticIdRef.current = null;
   };
 
   const onEmojiClick = (emojiObject) => {
     setMessageInput((prevText) => prevText + emojiObject.emoji);
   };
-
-  // useEffect(() => {
-  //   if (selectedConversation && messageInputRef) {
-  //     messageInputRef.current.focus();
-  //   }
-  // }, [selectedConversation, messageInputRef]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -111,6 +152,15 @@ function MessageInput({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
+  useEffect(() => {
+    return () => {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      emitStopTyping();
+    };
+  }, [actualConversationId, emitStopTyping]);
   return (
     <>
       {imageFile && (
@@ -133,7 +183,7 @@ function MessageInput({
 
       {replyingToMessage && (
         <div className="p-2 pt-0 border-t border-gray-700 bg-black flex items-center justify-between">
-          <div className="flex-1 p-3  rounded-md flex flex-col">
+          <div className="flex-1 p-3 rounded-md flex flex-col">
             <div className="text-sm text-primary font-bold">Replying to</div>
             <div className="text-xs text-gray-400 mt-1 italic">
               {truncateText(replyingToMessage.text, 40)}
@@ -194,7 +244,7 @@ function MessageInput({
           <input
             type="text"
             value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
+            onChange={handleMessageInputChange} 
             placeholder="Start a new message"
             className="flex-1 py-2 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
             disabled={isSendingMessage}
