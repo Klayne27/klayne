@@ -207,7 +207,7 @@ function MessageInput({
         onSubmit={handleSendMessage}
         className="p-2 border-gray-700 bg-black flex items-center relative"
       >
-        {!isTypingOtherUser && (
+        {isTypingOtherUser && (
           <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
             <span className="animate-pulse font-semibold">
               {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
