@@ -196,7 +196,6 @@ const ChatWindow = ({
         deleteMessage={memoizedDeleteMessage}
         messageInputRef={messageInputRef}
         isDeletingMessage={isDeletingMessage}
-        messages={messages}
         openImageModal={openImageModal}
       />
 

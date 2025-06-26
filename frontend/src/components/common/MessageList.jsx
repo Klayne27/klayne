@@ -16,7 +16,6 @@ function MessageList({
   messageInputRef,
   isDeletingMessage,
   selectedConversation,
-  messages,
   openImageModal,
 }) {
   const { authUser: currentUser } = useAuthUser();
@@ -52,14 +51,14 @@ function MessageList({
   };
 
   useEffect(() => {
-    if (messagesEndRef.current && messages) {
-      const currentLength = messages.length;
+    if (messagesEndRef.current && messagesToRender) {
+      const currentLength = messagesToRender.length;
       let scrollBehavior = "auto";
 
       messagesEndRef.current.scrollIntoView({ behavior: scrollBehavior });
       prevMessagesLength.current = currentLength;
     }
-  }, [messages, selectedConversation?._id]);
+  }, [messagesToRender, selectedConversation?._id]);
 
   useEffect(() => {
     prevMessagesLength.current = 0;

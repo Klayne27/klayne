@@ -173,7 +173,7 @@ export const getMessagesByConversationId = async (req, res) => {
           path: "sender",
           select: "username fullName profileImg isVerified",
         },
-      })
+      });
 
     res.status(200).json(messages);
   } catch (error) {
