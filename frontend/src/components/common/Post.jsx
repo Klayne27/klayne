@@ -39,7 +39,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   };
 
   const handleInteractiveClick = (e) => {
-    e.stopPropagation(); // Prevent the click from bubbling up to the parent post div
+    e.stopPropagation();
   };
 
   const handleDeletePostClick = (e) => {
@@ -67,7 +67,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   };
 
   const navigateToReposterProfile = (e) => {
-    e.stopPropagation(); // Essential to prevent parent post navigation
+    e.stopPropagation();
     if (repostingUser) {
       navigate(`/profile/${repostingUser.username}`);
     }
@@ -81,9 +81,6 @@ const Post = ({ post, openImageModal, setFeedType }) => {
       }
       try {
         const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {
-          // Assuming your `protectRoute` uses cookies, no explicit header needed for credentials: 'include'
-          // If you use Bearer tokens from localStorage, uncomment and add it
-          // headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (!response.ok) {
           console.warn("Authentication issue checking repost status or other error.");
@@ -204,7 +201,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             <div className="flex gap-4 items-center w-2/3 justify-between">
               <div
                 className="flex items-center cursor-pointer group"
-                onClick={handleInteractiveClick} // Added to prevent post navigation when clicking comment icon area
+                onClick={handleInteractiveClick}
               >
                 <div
                   onClick={navigateToPostPage}

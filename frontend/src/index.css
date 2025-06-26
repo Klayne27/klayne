@@ -29,7 +29,7 @@ body {
 
 @keyframes highlight-fade {
   0% {
-    background-color: rgba(60, 140, 255, 0.2); /* Light blue highlight */
+    background-color: rgba(60, 140, 255, 0.2);
   }
   100% {
     background-color: transparent;

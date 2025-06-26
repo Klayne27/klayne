@@ -12,6 +12,8 @@ import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
 import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
+// import ReactDOM from "react-dom";
+import { useCallback } from "react";
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
@@ -37,6 +39,11 @@ const Sidebar = () => {
 
   const originalTitle = useRef(document.title);
   const originalFaviconHref = useRef(null);
+
+  const togglePopover = useCallback((e) => {
+    e.stopPropagation();
+    setShowPopover((prev) => !prev);
+  }, []);
 
   useEffect(() => {
     let faviconLink = document.querySelector('link[rel="icon"]');
@@ -114,7 +121,7 @@ const Sidebar = () => {
         );
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.beginPath();
-        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false); 
+        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false);
         ctx.fillStyle = "red";
         ctx.fill();
         faviconLink.href = canvas.toDataURL("image/png");
@@ -339,7 +346,7 @@ const Sidebar = () => {
           <div className="mt-auto mb-3 relative w-full flex justify-center md:justify-start">
             <button
               ref={profileButtonRef}
-              onClick={() => setShowPopover(!showPopover)}
+              onClick={togglePopover}
               className="flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-2 rounded-full w-full max-w-[220px]"
             >
               <div className="avatar hidden md:inline-flex">
@@ -361,29 +368,31 @@ const Sidebar = () => {
               </div>
             </button>
 
-            {showPopover && (
-              <div
-                ref={popoverRef}
-                className="fixed bottom-4 left-[40px]
+            {showPopover &&
+              (
+                <div
+                  ref={popoverRef}
+                  className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
                 bg-black py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-1000 flex flex-col gap-1
                 shadow-md shadow-gray-400"
-              >
-                <button
-                  onClick={handleConfirmDeleteClick}
-                  className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-gray-800 transition-colors font-bold"
                 >
-                  Delete Account
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-white text-md hover:bg-gray-800 transition-colors font-bold"
-                >
-                  Logout @{authUser?.username}
-                </button>
-              </div>
-            )}
+                  <button
+                    onClick={handleConfirmDeleteClick}
+                    className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-gray-800 transition-colors font-bold"
+                  >
+                    Delete Account
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className="w-full text-left px-3 py-2 text-white text-md hover:bg-gray-800 transition-colors font-bold"
+                  >
+                    Logout @{authUser?.username}
+                  </button>
+                </div>
+
+              )}
           </div>
         )}
       </div>

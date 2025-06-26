@@ -36,7 +36,8 @@ const ChatWindow = ({
   );
 
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
-  const { messages, isLoading, error, refetchMessages } = useFetchMessages(selectedConversation);
+  const { messages, isLoading, error, refetchMessages } =
+    useFetchMessages(selectedConversation);
   const { sendMessage, isSendingMessage } = useSendMessage({
     selectedConversation,
     isNewOrTemporaryChat,
@@ -62,9 +63,9 @@ const ChatWindow = ({
 
   useEffect(() => {
     if (actualConversationId) {
-      refetchMessages()
+      refetchMessages();
     }
-  }, [actualConversationId, refetchMessages])
+  }, [actualConversationId, refetchMessages]);
 
   useEffect(() => {
     if (socket) {
@@ -75,7 +76,6 @@ const ChatWindow = ({
             newMessage.sender._id.toString() === otherUser?._id.toString() &&
             newMessage.recipientId?.toString() === currentUser._id.toString());
 
-        // Only setQueryData for messages if it's the current chat
         if (isMessageForThisChat) {
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || actualConversationId],
@@ -96,29 +96,34 @@ const ChatWindow = ({
           }
         }
 
-        // **Refined Invalidation Logic:**
-        // Invalidate specific conversation, and then the general conversations list.
-        // This is generally a better pattern for react-query.
-        queryClient.invalidateQueries(["conversations", newMessage.conversationId]); // Invalidate specific convo cache
-        queryClient.invalidateQueries(["conversations"]); // Then invalidate the list
-
-        // You could even try to update the conversations cache directly for the specific message
-        // without invalidating the whole list, but that's more complex.
+        queryClient.invalidateQueries(["conversations", newMessage.conversationId]);
+        queryClient.invalidateQueries(["conversations"]);
       };
 
-      // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-      //   if (seenConversationId.toString() === actualConversationId?.toString()) {
-      //     queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
-      //       return oldMessages?.map((msg) =>
-      //         msg.sender._id.toString() === currentUser._id.toString() &&
-      //         readerId.toString() === otherUser?._id.toString()
-      //           ? { ...msg, seen: true }
-      //           : msg
-      //       );
-      //     });
-      //   }
-      //   queryClient.invalidateQueries(["conversations"]);
-      // };
+      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+        // Ensure this update only applies to the currently active conversation
+        // and that the reader is indeed the 'otherUser' (not current user seeing their own message).
+        if (
+          seenConversationId.toString() === actualConversationId?.toString() &&
+          readerId.toString() === otherUser?._id.toString()
+        ) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
+            // Only update messages that were sent by the current user AND are not yet seen.
+            // This prevents unnecessary updates to messages that are already seen or sent by others.
+            return (
+              oldMessages?.map((msg) =>
+                msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
+                  ? { ...msg, seen: true }
+                  : msg
+              ) || []
+            );
+          });
+        }
+        // Invalidate conversations to update unread counts in the list if necessary.
+        // This is usually needed for the unseen badges to clear.
+        queryClient.invalidateQueries(["conversations", seenConversationId]);
+        queryClient.invalidateQueries(["conversations"]);
+      };
 
       const handleMessageDeleted = ({
         messageId,
@@ -134,12 +139,12 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
-      // socket.on("messagesSeen", handleMessagesSeen);
+      socket.on("messagesSeen", handleMessagesSeen);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
-        // socket.off("messagesSeen", handleMessagesSeen);
+        socket.off("messagesSeen", handleMessagesSeen);
       };
     }
   }, [
@@ -155,7 +160,7 @@ const ChatWindow = ({
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);
- 
+
   const messagesToDisplay = useMemo(() => {
     return isLoading || isNewOrTemporaryChat ? [] : messages || [];
   }, [isLoading, isNewOrTemporaryChat, messages]);
@@ -177,16 +182,6 @@ const ChatWindow = ({
     [deleteMessage]
   );
 
-  // --- Existing useEffect for focusing input when conversation changes ---
-  // useEffect(() => {
-  //   if (messageInputRef.current) {
-  //     const timer = setTimeout(() => {
-  //       messageInputRef.current.focus();
-  //     }, 0);
-  //     return () => clearTimeout(timer);
-  //   }
-  // }, [selectedConversation, messageInputRef]);
-  
   return (
     <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />

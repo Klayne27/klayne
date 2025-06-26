@@ -22,7 +22,6 @@ import ScrollToTop from "../../utils/ScrollToTop";
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
-  // const [feedType, setFeedType] = useState("posts");
   const [modalType, setModalType] = useState(null);
   const navigate = useNavigate();
 

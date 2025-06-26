@@ -1,4 +1,4 @@
-import { useNavigate } from "react-router-dom"; // Link is no longer needed for the outermost wrapper
+import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
@@ -33,28 +33,24 @@ const NotificationPage = () => {
 
 
   const handleProfileClick = (e, username) => {
-    e.stopPropagation(); // Prevent the parent div from navigating to the post
+    e.stopPropagation();
     navigate(`/profile/${username}`);
   };
 
 
   const handleNotificationItemClick = (e, notification) => {
-    // If a button (like the delete icon) was clicked, prevent navigation.
     if (e.target.closest("button")) {
       return;
     }
 
     let targetLink = "";
 
-    // If it's a 'follow' notification, navigate to the user's profile.
     if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`;
     }
-    // For all other notifications, navigate to the associated post.
     else if (notification.postId && notification.postId._id) {
       targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
     } else {
-      // Fallback for unexpected notification structures.
       console.warn("Could not determine navigation link for notification:", notification);
       return;
     }
@@ -76,7 +72,6 @@ const NotificationPage = () => {
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
             >
               <li>
-                {/* Ensure deleteNotifications is properly called */}
                 <a onClick={deleteNotifications}>
                   {isDeleting ? <LoadingSpinner size="sm" /> : "Delete all notifications"}
                 </a>
@@ -97,27 +92,23 @@ const NotificationPage = () => {
 
         {filteredNotifications?.map((notification) => {
           return (
-            // Changed from Link to div. The navigation logic is now in handleNotificationItemClick.
-            // Added cursor-pointer to indicate it's clickable.
             <div
               className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-gray-800 transition-colors cursor-pointer"
               key={notification._id}
-              onClick={(e) => handleNotificationItemClick(e, notification)} // Centralized navigation
+              onClick={(e) => handleNotificationItemClick(e, notification)}
             >
-              {/* Delete Single Notification Button */}
-              {/* This div stops propagation for its children, making sure clicks inside it are handled here */}
               <div
                 className="absolute right-3 top-3"
                 onClick={(e) => e.stopPropagation()}
               >
-                {isDeleting ? ( // Using isDeleting from useDeleteNotifications for loading state on single delete
+                {isDeleting ? ( 
                   <LoadingSpinner size="xs" />
                 ) : (
                   <button
                     className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
                     onClick={(e) => {
-                      e.stopPropagation(); // Crucial: Prevent parent div click from navigating
-                      deleteNotification(notification._id); // Call individual delete hook
+                      e.stopPropagation();
+                      deleteNotification(notification._id);
                     }}
                   >
                     <FiTrash
@@ -128,7 +119,6 @@ const NotificationPage = () => {
                 )}
               </div>
 
-              {/* Notification Type Icon */}
               <div className="flex-shrink-0 mt-1">
                 {notification.type === "follow" && (
                   <FaUser className="w-7 h-7 text-primary" />
@@ -152,7 +142,6 @@ const NotificationPage = () => {
 
               <div className="flex flex-col min-w-0 flex-1">
                 <div className="flex gap-1 items-center">
-                  {/* Avatar - now a div with onClick handler that stops propagation */}
                   <div
                     className="avatar flex-shrink-0 cursor-pointer"
                     onClick={(e) => handleProfileClick(e, notification.from?.username)}
@@ -164,7 +153,6 @@ const NotificationPage = () => {
                       />
                     </div>
                   </div>
-                  {/* Username - now a span with onClick handler that stops propagation */}
                   <span
                     className="font-bold truncate w-fit max-w-full cursor-pointer hover:underline"
                     onClick={(e) => handleProfileClick(e, notification.from?.username)}

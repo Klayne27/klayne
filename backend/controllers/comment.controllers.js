@@ -290,7 +290,7 @@ export const deleteComment = async (req, res) => {
     if (commentToDelete.parentComment) {
       const parentComment = await Comment.findById(commentToDelete.parentComment);
       if (parentComment) {
-        parentComment.repliesCount = Math.max(0, parentComment.repliesCount - 1); // Decrement by 1 as the direct child is removed
+        parentComment.repliesCount = Math.max(0, parentComment.repliesCount - 1);
         await parentComment.save();
       }
     }

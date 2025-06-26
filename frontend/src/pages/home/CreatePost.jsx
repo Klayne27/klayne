@@ -80,7 +80,7 @@ const CreatePost = () => {
   useEffect(() => {
     const handleResize = () => {
       if (window.innerWidth < 640) {
-        setEmojiPickerWidth(50);
+        setEmojiPickerWidth(300);
       } else {
         setEmojiPickerWidth(350);
       }

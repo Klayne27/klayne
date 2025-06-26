@@ -44,7 +44,7 @@ export const useDeleteComment = () => {
       if (parentCommentId) {
         const parentCommentsQueryKey = ["comments", postId];
         await queryClient.cancelQueries({ queryKey: parentCommentsQueryKey });
-        previousParentCommentsData = queryClient.getQueryData(parentCommentsQueryKey); // Assign to the already declared variable
+        previousParentCommentsData = queryClient.getQueryData(parentCommentsQueryKey);
 
         if (previousParentCommentsData) {
           queryClient.setQueryData(parentCommentsQueryKey, (oldParentCommentsData) => {

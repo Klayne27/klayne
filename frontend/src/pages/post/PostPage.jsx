@@ -1,29 +1,25 @@
-// src/pages/PostPage.jsx
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useParams, Link, useNavigate } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
-import Post from "../../components/common/Post"; // Re-using existing Post component
-import CommentItem from "../../components/common/CommentItem"; // NEW: Import CommentItem
+import Post from "../../components/common/Post";
+import CommentItem from "../../components/common/CommentItem";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { formatPostDate } from "../../utils/date"; // Utility for date formatting
-import { useFetchPost } from "../../hooks/postsHooks/useFetchPost"; // For fetching the main post
-// import { useDeleteComment } from "../../hooks/commentsHooks/useDeleteComment"; // NEW: For deleting comments
-// import { useLikeComment } from "../../hooks/commentsHooks/useLikeComment"; // NEW: For liking comments
+import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
 import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
-  const { pid } = useParams(); // Post ID
+  const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
 
   const [commentText, setCommentText] = useState("");
-  const [replyingToComment, setReplyingToComment] = useState(null); // State to store which comment is being replied to
+  const [replyingToComment, setReplyingToComment] = useState(null);
 
-  const commentsListRef = useRef(null); // Ref for the comments scroll container
-  const observerTarget = useRef(null); // For infinite scroll trigger
+  const commentsListRef = useRef(null);
+  const observerTarget = useRef(null);
 
   const { post, isLoading, isError, error, refetch: refetchPost } = useFetchPost(pid);
   const {
@@ -66,6 +62,13 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       navigate("/", { replace: true });
     }
   }, [isLoading, isError, error, post, navigate]);
+
+  useEffect(() => {
+    if (pid) {
+      refetchComments();
+      refetchPost();
+    }
+  }, [pid, refetchComments, refetchPost]);
 
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)

@@ -153,7 +153,7 @@ const CommentItem = ({
                 </span>
               )}
             </div>
-            {(isCommentOwner) && (
+            {(isCommentOwner || isPostOwner) && (
               <button
                 className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 p-1 transition duration-200"
                 onClick={handleDeleteCommentClick}

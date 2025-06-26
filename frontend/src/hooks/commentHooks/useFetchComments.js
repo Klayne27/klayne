@@ -37,7 +37,8 @@ export const useFetchComments = (postId, parentCommentId = null) => {
       return lastPage.hasNextPage ? allPages.length + 1 : undefined;
     },
     initialPageParam: 1,
-    staleTime: 5 * 60 * 1000,
+    staleTime: 0,
+    cacheTime: 5 * 60 * 1000,
     enabled: !!postId && !isOptimisticId,
   });
 

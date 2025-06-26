@@ -190,11 +190,11 @@ const MessagePage = ({ openImageModal }) => {
     >
       <div
         className={`
-          w-full /* Always full width on mobile */
-          md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700 /* Desktop specific styles */
+          w-full
+          md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700
           ${
             showChatWindow ? "hidden" : "flex"
-          } /* Hide on mobile if chat window is active */
+          }
           md:flex 
           flex-col h-screen
         `}
@@ -212,7 +212,7 @@ const MessagePage = ({ openImageModal }) => {
           md:w-[626px] md:flex-1 
           ${
             showChatWindow ? "flex" : "hidden"
-          } /* Show on mobile if chat window is active */
+          } 
           md:flex 
           flex-col h-screen
         `}

@@ -15,15 +15,12 @@ export const useLikeComment = () => {
         return;
       }
 
-      // 1. Cancel any outgoing refetches for the specific post
       await queryClient.cancelQueries({ queryKey: ["posts", postId] });
-      await queryClient.cancelQueries({ queryKey: ["posts"] }); // Cancel general posts list if affected
+      await queryClient.cancelQueries({ queryKey: ["posts"] });
 
-      // 2. Snapshot the current post data
       const previousPostData = queryClient.getQueryData(["posts", postId]);
-      const previousAllPostsData = queryClient.getQueryData(["posts"]); // For paginated list
+      const previousAllPostsData = queryClient.getQueryData(["posts"]);
 
-      // 3. Optimistically update the single post's comments cache
       queryClient.setQueryData(["posts", postId], (oldPost) => {
         if (!oldPost || !oldPost.comments) return oldPost;
 
@@ -46,7 +43,6 @@ export const useLikeComment = () => {
         };
       });
 
-      // 4. Optimistically update the paginated list of posts (if the current post is in it)
       queryClient.setQueryData(["posts"], (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData;
 
@@ -78,7 +74,6 @@ export const useLikeComment = () => {
         };
       });
 
-      // Return snapshot for rollback
       return { previousPostData, previousAllPostsData };
     },
     onError: (error, { postId }, context) => {

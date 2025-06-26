@@ -4,6 +4,8 @@ import { truncateText } from "../../utils/truncateText";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
+import { BsCheck2All } from "react-icons/bs";
+
 
 function MessageList({
   error,
@@ -63,6 +65,25 @@ function MessageList({
     prevMessagesLength.current = 0;
   }, [selectedConversation?._id]);
 
+  // New handler for clicking on the replied-to message div
+  const handleJumpToOriginalMessage = useCallback((originalMessageId) => {
+    // Find the message element by its ID
+    const originalMessageElement = document.getElementById(
+      `message-${originalMessageId}`
+    );
+    if (originalMessageElement) {
+      originalMessageElement.scrollIntoView({
+        behavior: "smooth", // Smooth scroll
+        block: "center", // Align the message in the middle of the view
+      });
+      // Optional: Add a temporary highlight to the message
+      originalMessageElement.classList.add("highlight-message");
+      setTimeout(() => {
+        originalMessageElement.classList.remove("highlight-message");
+      }, 1500); // Remove highlight after 1.5 seconds
+    }
+  }, []);
+
   // useEffect(() => {
   //   if (selectedConversation && messageInputRef.current) {
   //     messageInputRef.current.focus();
@@ -83,7 +104,7 @@ function MessageList({
           const isSentByCurrentUser = msg.sender._id === currentUser._id;
 
           return (
-            <div key={msg._id}>
+            <div key={msg._id} id={`message-${msg._id}`}>
               <div
                 className={`flex ${
                   isSentByCurrentUser ? "justify-end" : "justify-start"
@@ -140,8 +161,10 @@ function MessageList({
                                       ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
                                       : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
                                   }
-                                  flex flex-col
+                                 flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                                hover:border-blue-400 hover:bg-opacity-40
                               `}
+                      onClick={() => handleJumpToOriginalMessage(msg.repliedTo._id)}
                     >
                       <span
                         className={`font-bold ${
@@ -182,11 +205,11 @@ function MessageList({
                     </p>
                   )}
                 </div>
-                {/* {isSentByCurrentUser && msg.seen && (
+                {isSentByCurrentUser && msg.seen && (
                               <span className={`self-end ml-1`}>
                                 <BsCheck2All size={16} />
                               </span>
-                            )} */}
+                            )}
               </div>
               <span
                 className={`text-xs mt-1 flex text-gray-500 ${
