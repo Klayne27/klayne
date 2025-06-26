@@ -28,10 +28,13 @@ export const deleteMessageApi = async (messageId) => {
   return data;
 };
 
-export const fetchMessagesApi = async (conversationId) => {
+export const fetchMessagesApi = async (conversationId, page = 1, limit = 20) => {
   if (!conversationId || conversationId.startsWith("new-")) return [];
 
-  const res = await fetch(`/api/messages/conversations/${conversationId}`);
+  const res = await fetch(
+    `/api/messages/conversations/${conversationId}?page=${page}&limit=${limit}`
+  );
+
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || "Failed to fetch messages");

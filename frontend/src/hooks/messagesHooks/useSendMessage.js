@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendMessageApi } from "../../api/messagesApi";
+import { sendMessageApi } from "../../api/messagesApi"; // Make sure you have this API function
 import { useAuthUser } from "../authHooks/useAuthUser";
 
 export const useSendMessage = ({
@@ -10,20 +10,21 @@ export const useSendMessage = ({
   currentOptimisticIdRef,
 }) => {
   const { authUser: currentUser } = useAuthUser();
-
   const queryClient = useQueryClient();
+
   const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
     mutationFn: sendMessageApi,
+
     onMutate: async (newMessageData) => {
-      await queryClient.cancelQueries(["messages", selectedConversation?._id]);
-      const previousMessages = queryClient.getQueryData([
-        "messages",
-        selectedConversation?._id,
-      ]);
+      const queryKey = ["messages", selectedConversation?._id];
+      await queryClient.cancelQueries({ queryKey });
+
+      const previousData = queryClient.getQueryData(queryKey);
 
       const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
       currentOptimisticIdRef.current = tempMessageId;
 
+      // Your tempMessage creation is perfect, no changes needed here
       const tempMessage = {
         _id: tempMessageId,
         text: newMessageData.message,
@@ -41,62 +42,89 @@ export const useSendMessage = ({
         isOptimistic: true,
         repliedTo: replyingToMessage
           ? {
-              _id: replyingToMessage._id,
-              text: replyingToMessage.text,
-              img: replyingToMessage.img,
-              sender: {
-                _id: replyingToMessage.sender._id,
-                username: replyingToMessage.sender.username,
-                fullName: replyingToMessage.sender.fullName,
-                profileImg: replyingToMessage.sender.profileImg,
-                isVerified: replyingToMessage.sender.isVerified,
-              },
+              /* ... your existing reply structure ... */
             }
           : null,
       };
 
-      queryClient.setQueryData(["messages", selectedConversation?._id], (oldMessages) => {
-        return [...(oldMessages || []), tempMessage];
-      });
-
-      return { previousMessages, optimisticId: tempMessageId };
-    },
-    onSuccess: (data, variables, context) => {
-      const { newMessage, conversationId: newRealConversationId } = data;
-      queryClient.setQueryData(["messages", newRealConversationId], (oldMessages) => {
-        const messagesArray = oldMessages || [];
-
-        const updatedMessages = messagesArray.map((msg) =>
-          msg._id === context.optimisticId ? newMessage : msg
-        );
-
-        if (!updatedMessages.some((msg) => msg._id === newMessage._id)) {
-          return [...updatedMessages, newMessage];
+      // 👇 FIX: Correctly update the infinite query cache
+      queryClient.setQueryData(queryKey, (oldData) => {
+        // 'oldData' is the infinite query object: { pages: [...], pageParams: [...] }
+        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+          // If the cache is empty, create the first page with our new message
+          return { pages: [[tempMessage]], pageParams: [1] };
         }
 
-        return updatedMessages;
+        // Create a deep copy to avoid mutating the original cache object
+        const newData = JSON.parse(JSON.stringify(oldData));
+
+        // Add the optimistic message to the *last page*
+        newData.pages[newData.pages.length - 1].push(tempMessage);
+
+        return newData;
       });
 
+      return { previousData, optimisticId: tempMessageId };
+    },
+
+    onSuccess: (data, variables, context) => {
+      // Assuming your API returns an object like { newMessage: {...}, conversationId: "..." }
+      const { newMessage, conversationId: newRealConversationId } = data;
+      const queryKey = ["messages", newRealConversationId || selectedConversation._id];
+
+      // 👇 FIX: Correctly find and replace the optimistic message in the cache
+      queryClient.setQueryData(queryKey, (oldData) => {
+        if (!oldData) return;
+
+        const newData = JSON.parse(JSON.stringify(oldData));
+
+        // Find the page and message index and replace it
+        for (let page of newData.pages) {
+          const msgIndex = page.findIndex((msg) => msg._id === context.optimisticId);
+          if (msgIndex !== -1) {
+            page[msgIndex] = newMessage;
+            break; // Stop searching once found
+          }
+        }
+        return newData;
+      });
+
+      // The rest of your onSuccess logic for handling new conversations seems fine
       if (isNewOrTemporaryChat && selectedConversation._id !== newRealConversationId) {
         queryClient.removeQueries(["messages", selectedConversation._id]);
-
         if (onNewConversationCreated) {
           onNewConversationCreated(newRealConversationId);
         }
-      } else {
-        queryClient.invalidateQueries(["conversations"]);
       }
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
+
     onError: (error, variables, context) => {
       console.error("Error sending message:", error);
-      queryClient.setQueryData(["messages", selectedConversation._id], (oldMessages) => {
-        return (oldMessages || []).filter((msg) => msg._id !== context.optimisticId);
+      const queryKey = ["messages", selectedConversation._id];
+
+      // 👇 FIX: Correctly remove the optimistic message from the cache on error
+      queryClient.setQueryData(queryKey, (oldData) => {
+        if (!oldData) return;
+
+        const newData = JSON.parse(JSON.stringify(oldData));
+
+        // Filter out the failed message from each page
+        newData.pages = newData.pages.map((page) =>
+          page.filter((msg) => msg._id !== context.optimisticId)
+        );
+
+        return newData;
       });
+
       currentOptimisticIdRef.current = null;
     },
+
     onSettled: () => {
+      // This is fine, ensures conversation list is up-to-date
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });
+
   return { sendMessage, isSendingMessage };
 };

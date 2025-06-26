@@ -115,6 +115,7 @@ export const sendMessage = async (req, res) => {
 
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params;
+  const { page = 1, limit = 20 } = req.query; // Added page and limit query parameters
   const userId = req.user._id;
 
   try {
@@ -151,20 +152,17 @@ export const getMessagesByConversationId = async (req, res) => {
       }
 
       await emitUnreadMessageStatus(userId.toString());
-      // const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
-      // recipientSocketIds.forEach((socketId) => {
-      //   io.to(socketId).emit("messagesSeen", {
-      //     conversationId,
-      //     readerId: userId.toString(),
-      //   });
-      // });
       await emitUnreadMessageStatus(otherParticipantId.toString());
     }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit); // Calculate how many documents to skip
 
     const messages = await Message.find({
       conversationId: conversationId,
     })
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 }) // Sort by createdAt in descending order for infinite scrolling
+      .skip(skip) // Skip messages
+      .limit(parseInt(limit)) // Limit the number of messages
       .populate("sender", "username profileImg fullName isVerified")
       .populate({
         path: "repliedTo",
@@ -175,7 +173,9 @@ export const getMessagesByConversationId = async (req, res) => {
         },
       });
 
-    res.status(200).json(messages);
+    // We'll reverse the messages before sending to maintain chronological order on the client
+    // while still fetching the latest messages first from the database.
+    res.status(200).json(messages.reverse()); 
   } catch (error) {
     console.error("Error in getMessagesByConversationId controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });

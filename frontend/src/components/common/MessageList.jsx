@@ -1,28 +1,34 @@
-import React, { useCallback, useEffect, useRef } from "react";
+import React, { useCallback, useEffect, useRef, forwardRef } from "react"; // Import forwardRef
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
-// Note: LoadingSpinner is no longer imported or used here as per your request
-// to disregard infinite scroll logic for this feature.
+import LoadingSpinner from "./LoadingSpinner";
 
-function MessageList({
-  error,
-  isNewChat,
-  messagesToRender, // Using this prop as provided in your latest code
-  setReplyingToMessage,
-  deleteMessage,
-  messageInputRef,
-  isDeletingMessage,
-  selectedConversation,
-  openImageModal,
-  isTypingOtherUser, // NEW: Prop to show typing indicator
-}) {
+// Use forwardRef to allow the parent component (ChatWindow) to attach a ref to this component's DOM element
+const MessageList = forwardRef(function MessageList( // Changed to named function for better dev tools
+  {
+    error,
+    isNewChat,
+    messagesToRender,
+    setReplyingToMessage,
+    deleteMessage,
+    messageInputRef,
+    isDeletingMessage,
+    selectedConversation,
+    openImageModal,
+    isTypingOtherUser,
+    isLoadingInitialMessages, // NEW prop: For initial full page load
+    isFetchingOlderMessages, // NEW prop: For loading older messages when scrolling up
+    hasNextPage, // NEW prop: To know if there are more pages
+  },
+  ref // The ref forwarded from the parent
+) {
   const { authUser: currentUser } = useAuthUser();
-  const messagesEndRef = useRef(null); // Used for simple scroll-to-bottom
-  const prevMessagesLength = useRef(0); // Kept for consistency with original code, but could be removed
+  // const prevMessagesLength = useRef(0); // This can still be useful for managing scroll behavior
+  // const initialLoadRef = useRef(true); // Flag to handle initial scroll correctly
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -52,20 +58,6 @@ function MessageList({
     }
   };
 
-  useEffect(() => {
-    if (messagesEndRef.current) {
-      const currentLength = messagesToRender ? messagesToRender.length : 0;
-      if (currentLength > prevMessagesLength.current || isNewChat || isTypingOtherUser) {
-        messagesEndRef.current.scrollIntoView({ behavior: "instant" }); 
-      }
-      prevMessagesLength.current = currentLength;
-    }
-  }, [messagesToRender, selectedConversation?._id, isNewChat, isTypingOtherUser]); 
-
-  useEffect(() => {
-    prevMessagesLength.current = 0;
-  }, [selectedConversation?._id]);
-
   const handleJumpToOriginalMessage = useCallback((originalMessageId) => {
     const originalMessageElement = document.getElementById(
       `message-${originalMessageId}`
@@ -82,13 +74,64 @@ function MessageList({
     }
   }, []);
 
+  // Adjusted useEffect for initial scroll and new messages
+  // useEffect(() => {
+  //   if (ref.current) {
+  //     const currentLength = messagesToRender ? messagesToRender.length : 0;
+
+  //     // Logic for initial load or new messages (scroll to bottom)
+  //     // Only scroll to bottom if it's the very first load or if new messages have arrived
+  //     // AND we are not currently fetching older messages (which means we scrolled up)
+  //     if (initialLoadRef.current && !isLoadingInitialMessages) {
+  //       ref.current.scrollTop = ref.current.scrollHeight;
+  //       initialLoadRef.current = false; // Reset after initial scroll
+  //     } else if (currentLength > prevMessagesLength.current && !isFetchingOlderMessages) {
+  //       // Only scroll to bottom if new messages are added AND we are not fetching older ones
+  //       ref.current.scrollTop = ref.current.scrollHeight;
+  //     }
+
+  //     prevMessagesLength.current = currentLength;
+  //   }
+  // }, [messagesToRender, ref, isLoadingInitialMessages, isFetchingOlderMessages]);
+
+  // // Reset prevMessagesLength and initialLoadRef when conversation changes
+  // useEffect(() => {
+  //   prevMessagesLength.current = 0;
+  //   initialLoadRef.current = true; // Set to true for the new conversation
+  // }, [selectedConversation?._id]);
+
   return (
-    <div className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20">
-      {error && !isNewChat && (
+    // Attach the forwarded ref to the main scrollable div
+    <div
+      ref={ref}
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
+    >
+      {/* Loading indicator for initial messages */}
+      {isLoadingInitialMessages && (
+        <div className="flex justify-center items-center h-full">
+          <LoadingSpinner size="md" /> {/* Adjust size as needed */}
+        </div>
+      )}
+      {error && !isNewChat && !isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full text-red-500">
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
+      {/* Loading indicator for older messages (when scrolling up) */}
+      {isFetchingOlderMessages && (
+        <div className="flex justify-center py-2">
+          <LoadingSpinner size="sm" /> {/* Smaller spinner for loading more */}
+        </div>
+      )}
+      {/* "No more messages" indicator */}
+      {!hasNextPage &&
+        !isLoadingInitialMessages &&
+        !isFetchingOlderMessages &&
+        messagesToRender.length > 0 && (
+          <div className="flex justify-center text-gray-500 text-sm my-2">
+            <p>No more messages</p>
+          </div>
+        )}
       {!isNewChat &&
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
@@ -109,44 +152,40 @@ function MessageList({
                         : "bg-[#2F3336] text-white rounded-bl-[4px]"
                     }`}
                 >
-                  {/* Reply icon */}
                   <div
                     className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
-                              transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
-                               ${
-                                 isSentByCurrentUser
-                                   ? "right-[calc(100%+8px)]"
-                                   : "scale-x-[-1] left-[calc(100%+8px)]"
-                               } `}
+                                  transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
+                                   ${
+                                     isSentByCurrentUser
+                                       ? "right-[calc(100%+8px)]"
+                                       : "scale-x-[-1] left-[calc(100%+8px)]"
+                                   } `}
                     onClick={() => handleReplyClick(msg)}
                   >
                     <FaReply size={18} />
                   </div>
-                  {/* Delete button (only for current user's messages) */}
                   {isSentByCurrentUser && (
                     <button
                       onClick={() => handleDeleteClick(msg._id)}
                       className={`absolute top-1/2 -translate-y-1/2 text-xs rounded-full text-red-600 hover:bg-red-600 hover:bg-opacity-25 p-1.5
-                                 opacity-0 group-hover:opacity-100 transition duration-200 z-10
-                                 ${isSentByCurrentUser ? "right-[calc(100%+30px)]" : ""}
-                                 ${
-                                   isDeletingMessage
-                                     ? "cursor-not-allowed"
-                                     : "cursor-pointer"
-                                 }
-                                  `}
+                                  opacity-0 group-hover:opacity-100 transition duration-200 z-10
+                                  ${isSentByCurrentUser ? "right-[calc(100%+30px)]" : ""}
+                                  ${
+                                    isDeletingMessage
+                                      ? "cursor-not-allowed"
+                                      : "cursor-pointer"
+                                  }
+                                   `}
                       title="Delete message"
                       disabled={isDeletingMessage}
                     >
                       {isDeletingMessage ? (
-                        // Assuming you have a LoadingSpinner or similar UI for this
                         <span className={`loading loading-spinner loading-xs`} />
                       ) : (
                         <FiTrash size={20} />
                       )}
                     </button>
                   )}
-                  {/* Replied-to message preview */}
                   {msg.repliedTo && (
                     <div
                       className={`
@@ -186,7 +225,6 @@ function MessageList({
                       )}
                     </div>
                   )}
-                  {/* Message image attachment */}
                   {msg.img && (
                     <img
                       src={msg.img}
@@ -195,21 +233,18 @@ function MessageList({
                       onClick={(e) => handleImageClick(msg.img, e)}
                     />
                   )}
-                  {/* Message text content */}
                   {msg.text && (
                     <p className={`break-words text-sm `}>
                       {renderClickableText(msg.text, isSentByCurrentUser)}
                     </p>
                   )}
                 </div>
-                {/* Seen status for current user's messages */}
                 {isSentByCurrentUser && msg.seen && (
                   <span className={`self-end ml-1`}>
                     <BsCheck2All size={16} />
                   </span>
                 )}
               </div>
-              {/* Message timestamp */}
               <span
                 className={`text-xs mt-1 flex text-gray-500 ${
                   isSentByCurrentUser ? "justify-self-end" : "self-start"
@@ -238,29 +273,9 @@ function MessageList({
           </span>
         </div>
       )}
-      <style jsx>{`
-        @keyframes bounce {
-          0%,
-          100% {
-            transform: translateY(0);
-          }
-          50% {
-            transform: translateY(-3px);
-          }
-        }
-        .dot1 {
-          animation: bounce 1.4s infinite;
-        }
-        .dot2 {
-          animation: bounce 1.4s infinite 0.2s; /* Delay for second dot */
-        }
-        .dot3 {
-          animation: bounce 1.4s infinite 0.4s; /* Delay for third dot */
-        }
-      `}</style>
-      <div ref={messagesEndRef} /> {/* This div ensures scrolling to the bottom */}
+      {/* <div ref={messagesEndRef} /> This div ensures scrolling to the bottom */}
     </div>
   );
-}
+}); // End of forwardRef
 
 export default React.memo(MessageList);
