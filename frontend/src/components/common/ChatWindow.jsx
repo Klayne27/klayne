@@ -56,8 +56,10 @@ const ChatWindow = ({
 
   useEffect(() => {
     if (socket && actualConversationId && currentUser?._id) {
-
       socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
+      socket.emit("userActiveInChat", { conversationId: actualConversationId });
+    } else {
+      socket.emit("userActiveInChat", { conversationId: null });
     }
   }, [socket, actualConversationId, currentUser]);
 
@@ -104,8 +106,8 @@ const ChatWindow = ({
         // Ensure this update only applies to the currently active conversation
         // and that the reader is indeed the 'otherUser' (not current user seeing their own message).
         if (
-          seenConversationId.toString() === actualConversationId?.toString() &&
-          readerId.toString() === otherUser?._id.toString()
+          seenConversationId.toString() === actualConversationId?.toString() 
+
         ) {
           queryClient.setQueryData(["messages", actualConversationId], (oldMessages) => {
             // Only update messages that were sent by the current user AND are not yet seen.

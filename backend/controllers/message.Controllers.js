@@ -151,13 +151,13 @@ export const getMessagesByConversationId = async (req, res) => {
       }
 
       await emitUnreadMessageStatus(userId.toString());
-      const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
-      recipientSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("messagesSeen", {
-          conversationId,
-          readerId: userId.toString(),
-        });
-      });
+      // const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
+      // recipientSocketIds.forEach((socketId) => {
+      //   io.to(socketId).emit("messagesSeen", {
+      //     conversationId,
+      //     readerId: userId.toString(),
+      //   });
+      // });
       await emitUnreadMessageStatus(otherParticipantId.toString());
     }
 
