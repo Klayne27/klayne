@@ -19,12 +19,11 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
     isDeletingMessage,
     selectedConversation,
     openImageModal,
-    isTypingOtherUser,
     isLoadingInitialMessages, // NEW prop: For initial full page load
     isFetchingOlderMessages, // NEW prop: For loading older messages when scrolling up
     hasNextPage, // NEW prop: To know if there are more pages
   },
-  ref // The ref forwarded from the parent
+  ref 
 ) {
   const { authUser: currentUser } = useAuthUser();
   // const prevMessagesLength = useRef(0); // This can still be useful for managing scroll behavior
@@ -261,18 +260,6 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
             </div>
           );
         })}
-      {isTypingOtherUser && (
-        <div className="flex justify-start items-center text-gray-400 animate-pulse text-sm mt-2">
-          {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
-            ?.fullName || "Other user"}{" "}
-          is typing
-          <span className="ml-1">
-            <span className="inline-block animate-bounce dot1">.</span>
-            <span className="inline-block animate-bounce dot2">.</span>
-            <span className="inline-block animate-bounce dot3">.</span>
-          </span>
-        </div>
-      )}
       {/* <div ref={messagesEndRef} /> This div ensures scrolling to the bottom */}
     </div>
   );

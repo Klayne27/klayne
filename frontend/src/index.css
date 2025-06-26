@@ -38,7 +38,7 @@ body {
 
 
 
-@keyframes bounce {
+/* @keyframes bounce {
   0%,
   100% {
     transform: translateY(0);
@@ -53,14 +53,58 @@ body {
 }
 
 .dot2 {
-  animation: bounce 1.4s infinite 0.2s; /* Delay for second dot */
+  animation: bounce 1.4s infinite 0.2s
 }
 
 .dot3 {
-  animation: bounce 1.4s infinite 0.4s; /* Delay for third dot */
+  animation: bounce 1.4s infinite 0.4s;
 }
 
 .highlight-message {
-  box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.5); /* blue-500 with opacity */
+  box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.5);
+  transition: box-shadow 0.3s ease-in-out;
+} */
+
+@keyframes discord-pulse {
+  0% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  20% {
+    transform: translateY(-4px);
+    opacity: 1;
+  }
+  40% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 0.5;
+  }
+}
+
+/* 2. Create helper classes to apply the animation with staggered delays.
+  This creates the wave effect across the three dots.
+*/
+.pulsing-dot {
+  animation: discord-pulse 1.4s infinite;
+}
+
+.pulsing-dot-1 {
+  animation-delay: 0s;
+}
+
+.pulsing-dot-2 {
+  animation-delay: 0.2s;
+}
+
+.pulsing-dot-3 {
+  animation-delay: 0.4s;
+}
+
+/* Your existing highlight-message class is fine */
+.highlight-message {
+  box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.5);
   transition: box-shadow 0.3s ease-in-out;
 }

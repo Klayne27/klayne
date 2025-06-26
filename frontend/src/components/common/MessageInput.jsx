@@ -5,6 +5,8 @@ import { IoClose, IoImageOutline } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { MdSend } from "react-icons/md";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { FaCircle } from "react-icons/fa";
 
 function MessageInput({
   otherUser,
@@ -17,6 +19,7 @@ function MessageInput({
   sendMessage, // Function to send the message
   selectedConversation, // Kept this prop, though not directly used for typing logic
   socket,
+  isTypingOtherUser,
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -26,6 +29,7 @@ function MessageInput({
   const emojiButtonRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const typingTimeoutRef = useRef(null); // Ref to manage typing debounce
+  const { authUser: currentUser } = useAuthUser();
 
   // Functions to emit typing/stopTyping events via socket
   const emitTyping = useCallback(() => {
@@ -101,7 +105,7 @@ function MessageInput({
       const reader = new FileReader();
       reader.readAsDataURL(imageFile);
       reader.onloadend = () => {
-        messagePayload.img = reader.result; 
+        messagePayload.img = reader.result;
         sendMessage(messagePayload);
       };
       reader.onerror = (error) => {
@@ -201,8 +205,28 @@ function MessageInput({
 
       <form
         onSubmit={handleSendMessage}
-        className="p-2 border-t border-gray-700 bg-black flex items-center"
+        className="p-2 border-gray-700 bg-black flex items-center relative"
       >
+        {!isTypingOtherUser && (
+          <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
+            <span className="animate-pulse font-semibold">
+              {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
+                ?.fullName || "Other user"}{" "}
+              is typing
+            </span>
+            <span className="flex ml-1 gap-0.5 mt-2.5">
+              <span className="inline-block pulsing-dot pulsing-dot-1">
+                <FaCircle size={6} />
+              </span>
+              <span className="inline-block pulsing-dot pulsing-dot-2">
+                <FaCircle size={6} />
+              </span>
+              <span className="inline-block pulsing-dot pulsing-dot-3">
+                <FaCircle size={6} />
+              </span>
+            </span>
+          </div>
+        )}
         <input
           type="file"
           accept="image/*"
@@ -211,7 +235,7 @@ function MessageInput({
           className="hidden"
         />
 
-        <div className="flex-1 relative flex items-center rounded-full bg-gray-800 border border-transparent focus-within:border-primary">
+        <div className="flex-1 relative mb-4 flex items-center rounded-full bg-gray-800 border border-transparent focus-within:border-primary">
           <div className="flex pl-1">
             <button
               type="button"
@@ -244,7 +268,7 @@ function MessageInput({
           <input
             type="text"
             value={messageInput}
-            onChange={handleMessageInputChange} 
+            onChange={handleMessageInputChange}
             placeholder="Start a new message"
             className="flex-1 py-2 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
             disabled={isSendingMessage}

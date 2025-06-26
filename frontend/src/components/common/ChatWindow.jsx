@@ -317,8 +317,6 @@ const ChatWindow = ({
         messages={messages} // Pass the full messages array
         openImageModal={openImageModal}
         selectedConversation={selectedConversation}
-        isTypingOtherUser={isTypingOtherUser}
-        // New props for infinite scrolling UI:
         isLoadingInitialMessages={isLoading && !isFetchingNextPage} // For initial full page load
         isFetchingOlderMessages={isFetchingNextPage} // For loading older messages
         hasNextPage={hasNextPage} // To show "load more" or "no more messages"
@@ -331,6 +329,7 @@ const ChatWindow = ({
         actualConversationId={actualConversationId}
         currentOptimisticIdRef={currentOptimisticIdRef}
         messageInputRef={messageInputRef}
+        isTypingOtherUser={isTypingOtherUser}
         sendMessage={sendMessage}
         isSendingMessage={isSendingMessage}
         selectedConversation={selectedConversation}
