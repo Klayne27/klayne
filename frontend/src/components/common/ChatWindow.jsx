@@ -15,6 +15,7 @@ import { useFetchMessages } from "../../hooks/messagesHooks/useFetchMessages";
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
+import { FaCaretDown } from "react-icons/fa";
 
 const ChatWindow = ({
   selectedConversation,
@@ -28,6 +29,8 @@ const ChatWindow = ({
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+
+  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
@@ -91,10 +94,10 @@ const ChatWindow = ({
   useEffect(() => {
     if (shouldOptimisticScroll) {
       const id = requestAnimationFrame(() => {
-        scrollToBottom()
-        setShouldOptimisticScroll(false)
-      })
-      return () => cancelAnimationFrame(id)
+        scrollToBottom();
+        setShouldOptimisticScroll(false);
+      });
+      return () => cancelAnimationFrame(id);
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
 
@@ -133,7 +136,15 @@ const ChatWindow = ({
     const handleScroll = () => {
       const listEl = messageListRef.current;
       if (listEl) {
-        const { scrollTop } = listEl;
+        const { scrollTop, scrollHeight, clientHeight } = listEl;
+        const scrollThreshold = 100; // Match this with the threshold used above
+
+        // Hide button if user manually scrolls close enough to the bottom
+        if (scrollHeight - scrollTop <= clientHeight + scrollThreshold) {
+          setShowNewMessageButton(false);
+        }
+
+        // ... (existing logic for fetching older messages) ...
         if (scrollTop < 200 && hasNextPage && !isFetchingNextPage) {
           scrollHeightBeforeFetch.current = listEl.scrollHeight;
           fetchNextPage();
@@ -150,17 +161,11 @@ const ChatWindow = ({
         currentMessageListRef.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, setShowNewMessageButton]); // Ensure setShowNewMessageButton is also a dependency if you put it inside handleScroll
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
 
-    // Conditions for scroll adjustment:
-    // 1. We have the scrollable element.
-    // 2. We previously recorded a scroll height (meaning a fetchNextPage was triggered).
-    // 3. We are no longer fetching new pages (new content has rendered).
-    // 4. CRITICAL: The user was at or very near the top when the fetch was triggered.
-    //    This prevents over-correction when the user is still actively scrolling up.
     const wasAtTopOrNear =
       scrollHeightBeforeFetch.current > 0 &&
       (listEl.scrollHeight - scrollHeightBeforeFetch.current <= 0 || // No new content, or already handled
@@ -231,21 +236,10 @@ const ChatWindow = ({
               );
 
               newData.pages[0] = [...firstPageMessages, newMessage];
-
-              // --- IMPORTANT: Remove the unconditional `shouldScrollToBottomRef.current = true;` from here ---
-              // It was causing the second jump for your own messages.
-              // The `shouldOptimisticScroll` useEffect handles your own messages.
-              // The general `messages.length` useEffect handles others' messages if already at bottom.
-              // So, this line is no longer needed here.
-
               return newData;
             }
           );
 
-          // --- Add a conditional shouldScrollToBottomRef.current setting for *incoming* messages ---
-          // (i.e., not your own message confirmation, but a message from another user)
-          // This makes sure that the `messages.length` useEffect triggers a scroll ONLY if
-          // the user is already at the bottom when an *other user's* message arrives.
           if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
             const listEl = messageListRef.current;
             if (listEl) {
@@ -253,8 +247,23 @@ const ChatWindow = ({
               const isAtBottom =
                 listEl.scrollHeight - listEl.scrollTop <=
                 listEl.clientHeight + scrollThreshold;
-              if (isAtBottom) {
-                shouldScrollToBottomRef.current = true;
+
+              // Logic for the new message button:
+              // If the message is from the other user AND the current user is NOT at the bottom
+              if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
+                if (!isAtBottom) {
+                  setShowNewMessageButton(true); // Show the button!
+                } else {
+                  // If a new message from other user arrives and we are at the bottom,
+                  // then automatically scroll down and ensure button is hidden.
+                  shouldScrollToBottomRef.current = true; // Trigger auto-scroll for incoming messages if already at bottom
+                  setShowNewMessageButton(false); // Hide button if we auto-scroll
+                }
+              } else {
+                // If it's the current user's message (confirmation of send)
+                // Ensure the button is hidden, as we're handling this with optimistic scroll
+                setShowNewMessageButton(false);
+                shouldScrollToBottomRef.current = true; // Still trigger auto-scroll for own messages
               }
             }
           }
@@ -364,8 +373,13 @@ const ChatWindow = ({
     [deleteMessage]
   );
 
+  const handleNewMessageButtonClick = useCallback(() => {
+    scrollToBottom(); // Use your existing scrollToBottom function
+    setShowNewMessageButton(false); // Hide the button after clicking
+  }, [scrollToBottom]);
+
   return (
-    <div className="flex flex-col h-full bg-black text-white border-r border-gray-700">
+    <div className="flex flex-col h-full relative bg-black text-white border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
@@ -384,6 +398,18 @@ const ChatWindow = ({
         isFetchingOlderMessages={isFetchingNextPage}
         hasNextPage={hasNextPage}
       />
+
+      {showNewMessageButton && (
+        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+          <button
+            onClick={handleNewMessageButtonClick}
+            className="bg-primary text-sm text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-2 animate-bounce-custom" // You might need to define animate-bounce-custom in your CSS
+          >
+            <span>New Message</span>
+            <FaCaretDown />
+          </button>
+        </div>
+      )}
 
       <MessageInput
         otherUser={otherUser}

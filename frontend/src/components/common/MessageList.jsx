@@ -1,7 +1,7 @@
 import React, { useCallback, forwardRef } from "react"; // Import forwardRef
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
-import { FaReply } from "react-icons/fa";
+import { FaCaretDown, FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
@@ -74,11 +74,11 @@ const MessageList = forwardRef(function MessageList(
   return (
     <div
       ref={ref}
-      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
+      className="flex-1  overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
     >
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full">
-          <LoadingSpinner size="md" /> 
+          <LoadingSpinner size="md" />
         </div>
       )}
       {error && !isNewChat && !isLoadingInitialMessages && (
@@ -87,11 +87,11 @@ const MessageList = forwardRef(function MessageList(
         </div>
       )}
       {/* Loading indicator for older messages (when scrolling up) */}
-      {/* {isFetchingOlderMessages && (
+      {isFetchingOlderMessages && (
         <div className="flex justify-center py-2">
           <LoadingSpinner size="sm" />
         </div>
-      )} */}
+      )}
       {/* "No more messages" indicator */}
       {!hasNextPage &&
         !isLoadingInitialMessages &&
