@@ -28,7 +28,7 @@ export const deleteMessageApi = async (messageId) => {
   return data;
 };
 
-export const fetchMessagesApi = async (conversationId, page = 1, limit = 20) => {
+export const fetchMessagesApi = async (conversationId, page = 1, limit = 40) => {
   if (!conversationId || conversationId.startsWith("new-")) return [];
 
   const res = await fetch(

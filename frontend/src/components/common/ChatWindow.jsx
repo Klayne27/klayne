@@ -93,8 +93,8 @@ const ChatWindow = ({
 
   useEffect(() => {
     if (shouldOptimisticScroll) {
-        scrollToBottom();
-        setShouldOptimisticScroll(false);
+      scrollToBottom();
+      setShouldOptimisticScroll(false);
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
 
@@ -102,14 +102,14 @@ const ChatWindow = ({
     const listEl = messageListRef.current;
     if (!listEl) return;
 
-    const scrollThreshold = 100; 
+    const scrollThreshold = 100;
 
     const isAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
     if (isAtBottom || shouldScrollToBottomRef.current) {
-        scrollToBottom();
-        shouldScrollToBottomRef.current = false; // Reset the flag after scrolling
+      scrollToBottom();
+      shouldScrollToBottomRef.current = false; // Reset the flag after scrolling
     }
   }, [messages.length, scrollToBottom]); // Depend on messages.length to detect new messages
 
