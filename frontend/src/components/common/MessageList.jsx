@@ -272,11 +272,10 @@ const MessageList = forwardRef(function MessageList(
                       `}
                 >
                   {Object.entries(groupedReactions).map(([emoji, data]) => {
-                    const hasCurrentUserReactedToThisEmoji = data.users.some(
+                    const hasCurrentUserReactedToThisEmoji = data.userIds.some(
                       (userId) => userId === currentUser._id?.toString()
                     );
 
-                    console.log(groupedReactions);
                     return (
                       <div
                         key={emoji}

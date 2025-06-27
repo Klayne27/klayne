@@ -439,9 +439,7 @@ export const reactToMessage = async (req, res) => {
       });
     }
 
-    return res
-      .status(200)
-      .json({ message: `Reaction ${action} successfully.`, message: populatedMessage });
+    return res.status(200).json(populatedMessage);
   } catch (error) {
     console.error("Error in reactToMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });

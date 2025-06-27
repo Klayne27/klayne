@@ -1,8 +1,8 @@
 // src/hooks/messagesHooks/useReactToMessage.js
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"; // Ensure this path is correct
-import { reactToMessageApi } from "../../api/messagesApi"; // Ensure this path is correct
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { reactToMessageApi } from "../../api/messagesApi";
 
 export const useReactToMessage = () => {
   const queryClient = useQueryClient();
@@ -11,14 +11,10 @@ export const useReactToMessage = () => {
   return useMutation({
     mutationFn: ({ messageId, emoji }) => reactToMessageApi(messageId, emoji),
     onMutate: async ({ messageId, emoji }) => {
-      // 1. Cancel any outgoing refetches to prevent them from overwriting our optimistic update
-      //    This is crucial. Ensure no other queries are currently fetching 'messages'.
       await queryClient.cancelQueries({ queryKey: ["messages"] });
 
-      // 2. Snapshot the current data before modifying it
       const previousMessages = queryClient.getQueryData(["messages"]);
 
-      // 3. Optimistically update the cache for the 'messages' query
       queryClient.setQueryData(["messages"], (oldData) => {
         if (!oldData || !currentUser) return oldData;
 
@@ -30,11 +26,7 @@ export const useReactToMessage = () => {
             if (message._id === messageId) {
               const newReactions = [...message.reactions];
 
-              const existingUserReactionIndex = newReactions.findIndex(
-                (r) =>
-                  (r.user?._id?.toString() || r.user?.toString()) === userId.toString()
-              );
-
+              // Find if the user has already reacted with THIS SPECIFIC emoji
               const existingSpecificReactionIndex = newReactions.findIndex(
                 (r) =>
                   (r.user?._id?.toString() || r.user?.toString()) === userId.toString() &&
@@ -44,19 +36,18 @@ export const useReactToMessage = () => {
               if (existingSpecificReactionIndex !== -1) {
                 // If user reacted with THIS emoji, remove it (toggle off)
                 newReactions.splice(existingSpecificReactionIndex, 1);
-              } else if (existingUserReactionIndex !== -1) {
-                // If user reacted with a DIFFERENT emoji, replace it
-                newReactions[existingUserReactionIndex] = {
-                  _id: `optimistic-${Date.now()}-${userId}`, // Temp ID for optimistic state
-                  emoji: emoji,
-                  user: { _id: userId, username: userUsername }, // Mimic populated user for UI
-                };
               } else {
-                // No existing reaction from this user, add the new one
+                // User has not reacted with this emoji, so add it
+                // Make sure to mimic the populated user structure for the UI
                 newReactions.push({
-                  _id: `optimistic-${Date.now()}-${userId}`,
+                  _id: `optimistic-${Date.now()}-${userId}-${emoji}`, // More unique optimistic ID
                   emoji: emoji,
-                  user: { _id: userId, username: userUsername },
+                  user: {
+                    _id: userId,
+                    username: userUsername,
+                    fullName: currentUser.fullName,
+                    profileImg: currentUser.profileImg,
+                  }, // Mimic populated user data for accurate display
                 });
               }
 
@@ -68,13 +59,11 @@ export const useReactToMessage = () => {
         return { ...oldData, pages: updatedPages };
       });
 
-      // 4. Return context for potential rollback
       return { previousMessages };
     },
-    onSuccess: (updatedMessageFromServer, variables) => {
-      // The server successfully reacted. Now, CONFIRM/RECONCILE the cache.
-      // This is crucial: the server's response (updatedMessageFromServer)
-      // should contain the *final, correct* state of the message.
+    onSuccess: (updatedMessageFromServer) => {
+      // Destructure directly
+      // Server response is the fully updated message object
       queryClient.setQueryData(["messages"], (oldData) => {
         if (!oldData) return oldData;
 
@@ -88,22 +77,15 @@ export const useReactToMessage = () => {
         );
         return { ...oldData, pages: updatedPages };
       });
-      // No toast.success here, as it might feel redundant with instant UI update.
     },
     onError: (err, variables, context) => {
       toast.error(err.message || "Failed to react.");
-      // Rollback the cache if the mutation failed
       if (context?.previousMessages) {
         queryClient.setQueryData(["messages"], context.previousMessages);
       }
     },
-    // IMPORTANT: Keep onSettled empty or remove the invalidateQueries from here.
-    // We want onSuccess to handle the precise cache update.
     onSettled: () => {
-      // If you absolutely need a refetch after every reaction (e.g., if there are
-      // other complex side effects), make sure it doesn't cause a flicker.
-      // For a simple reaction toggle, direct cache update in onSuccess is best.
-      // queryClient.invalidateQueries(["messages"]); // Avoid this here!
+      // No invalidateQueries here, rely on direct cache update and socket event
     },
   });
 };

@@ -333,13 +333,40 @@ const ChatWindow = ({
         }
       };
 
+      const handleMessageReacted = (updatedMessage) => {
+        console.log("Received messageReacted event:", updatedMessage);
+        // Only update if the reaction is for the currently open conversation
+        if (updatedMessage.conversationId === actualConversationId) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+            if (!oldData) return oldData;
 
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((message) =>
+                message._id === updatedMessage._id ? updatedMessage : message
+              )
+            );
+            return { ...oldData, pages: updatedPages };
+          });
+        }
+        // Invalidate conversations to update lastMessage reaction status if applicable
+        queryClient.invalidateQueries(["conversations"]);
+        queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
+      };
+
+      socket.on("newMessage", handleNewMessage);
+      socket.on("messageDeleted", handleMessageDeleted);
+      socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
+      socket.on("messageReacted", handleMessageReacted); // <-- AND REMOVE IT HERE!
 
       return () => {
+        socket.off("newMessage", handleNewMessage);
+        socket.off("messageDeleted", handleMessageDeleted);
+        socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
+        socket.off("messageReacted", handleMessageReacted); // <-- AND REMOVE IT HERE!
       };
     }
   }, [
