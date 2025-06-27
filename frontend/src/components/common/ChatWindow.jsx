@@ -333,16 +333,11 @@ const ChatWindow = ({
         }
       };
 
-      socket.on("newMessage", handleNewMessage);
-      socket.on("messageDeleted", handleMessageDeleted);
-      socket.on("messagesSeen", handleMessagesSeen);
+
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
 
       return () => {
-        socket.off("newMessage", handleNewMessage);
-        socket.off("messageDeleted", handleMessageDeleted);
-        socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
       };
