@@ -130,22 +130,34 @@ const ChatWindow = ({
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
 
-    // We only want to adjust scroll when we've finished fetching new pages
-    // AND there was a scrollHeight recorded before the fetch started.
-    if (listEl && scrollHeightBeforeFetch.current > 0 && !isFetchingNextPage) {
+    // Conditions for scroll adjustment:
+    // 1. We have the scrollable element.
+    // 2. We previously recorded a scroll height (meaning a fetchNextPage was triggered).
+    // 3. We are no longer fetching new pages (new content has rendered).
+    // 4. CRITICAL: The user was at or very near the top when the fetch was triggered.
+    //    This prevents over-correction when the user is still actively scrolling up.
+    const wasAtTopOrNear =
+      scrollHeightBeforeFetch.current > 0 &&
+      (listEl.scrollHeight - scrollHeightBeforeFetch.current <= 0 || // No new content, or already handled
+        listEl.scrollTop <= 50); // Or whatever small threshold defines "near the top"
+
+    if (
+      listEl &&
+      scrollHeightBeforeFetch.current > 0 &&
+      !isFetchingNextPage &&
+      wasAtTopOrNear
+    ) {
       const newScrollHeight = listEl.scrollHeight;
       const heightDifference = newScrollHeight - scrollHeightBeforeFetch.current;
 
-      // Check if new content was actually added (height increased)
+      // Only adjust if there's an actual increase in height and the user was "at the top"
       if (heightDifference > 0) {
-        // Restore scroll position based on the new content added
         listEl.scrollTop += heightDifference;
       }
 
-      // Reset the stored scroll height after adjustment
       scrollHeightBeforeFetch.current = 0;
     }
-  }, [messages, isFetchingNextPage]); // Keep these dependencies as they are.
+  }, [messages, isFetchingNextPage]);
 
   useEffect(() => {
     setActiveConversationId(actualConversationId);
