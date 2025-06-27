@@ -117,7 +117,7 @@ const MessageList = forwardRef(function MessageList(
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
           const isSentByCurrentUser = msg.sender._id === currentUser._id;
-          const isReactedByCurrentUser = msg.reactions.find(
+          const isReactedByCurrentUser = msg.reactions?.find(
             (react) => react.user === currentUser._id
           );
           const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
