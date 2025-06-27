@@ -7,8 +7,7 @@ import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
 import LoadingSpinner from "./LoadingSpinner";
 
-// Use forwardRef to allow the parent component (ChatWindow) to attach a ref to this component's DOM element
-const MessageList = forwardRef(function MessageList( // Changed to named function for better dev tools
+const MessageList = forwardRef(function MessageList(
   {
     error,
     isNewChat,
@@ -19,15 +18,13 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
     isDeletingMessage,
     selectedConversation,
     openImageModal,
-    isLoadingInitialMessages, // NEW prop: For initial full page load
-    isFetchingOlderMessages, // NEW prop: For loading older messages when scrolling up
-    hasNextPage, // NEW prop: To know if there are more pages
+    isLoadingInitialMessages,
+    isFetchingOlderMessages,
+    hasNextPage,
   },
   ref 
 ) {
   const { authUser: currentUser } = useAuthUser();
-  // const prevMessagesLength = useRef(0); // This can still be useful for managing scroll behavior
-  // const initialLoadRef = useRef(true); // Flag to handle initial scroll correctly
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -73,42 +70,15 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
     }
   }, []);
 
-  // Adjusted useEffect for initial scroll and new messages
-  // useEffect(() => {
-  //   if (ref.current) {
-  //     const currentLength = messagesToRender ? messagesToRender.length : 0;
-
-  //     // Logic for initial load or new messages (scroll to bottom)
-  //     // Only scroll to bottom if it's the very first load or if new messages have arrived
-  //     // AND we are not currently fetching older messages (which means we scrolled up)
-  //     if (initialLoadRef.current && !isLoadingInitialMessages) {
-  //       ref.current.scrollTop = ref.current.scrollHeight;
-  //       initialLoadRef.current = false; // Reset after initial scroll
-  //     } else if (currentLength > prevMessagesLength.current && !isFetchingOlderMessages) {
-  //       // Only scroll to bottom if new messages are added AND we are not fetching older ones
-  //       ref.current.scrollTop = ref.current.scrollHeight;
-  //     }
-
-  //     prevMessagesLength.current = currentLength;
-  //   }
-  // }, [messagesToRender, ref, isLoadingInitialMessages, isFetchingOlderMessages]);
-
-  // // Reset prevMessagesLength and initialLoadRef when conversation changes
-  // useEffect(() => {
-  //   prevMessagesLength.current = 0;
-  //   initialLoadRef.current = true; // Set to true for the new conversation
-  // }, [selectedConversation?._id]);
 
   return (
-    // Attach the forwarded ref to the main scrollable div
     <div
       ref={ref}
       className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
     >
-      {/* Loading indicator for initial messages */}
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full">
-          <LoadingSpinner size="md" /> {/* Adjust size as needed */}
+          <LoadingSpinner size="md" /> 
         </div>
       )}
       {error && !isNewChat && !isLoadingInitialMessages && (
@@ -117,11 +87,11 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
         </div>
       )}
       {/* Loading indicator for older messages (when scrolling up) */}
-      {isFetchingOlderMessages && (
+      {/* {isFetchingOlderMessages && (
         <div className="flex justify-center py-2">
-          <LoadingSpinner size="sm" /> {/* Smaller spinner for loading more */}
+          <LoadingSpinner size="sm" />
         </div>
-      )}
+      )} */}
       {/* "No more messages" indicator */}
       {!hasNextPage &&
         !isLoadingInitialMessages &&
@@ -260,7 +230,6 @@ const MessageList = forwardRef(function MessageList( // Changed to named functio
             </div>
           );
         })}
-      {/* <div ref={messagesEndRef} /> This div ensures scrolling to the bottom */}
     </div>
   );
 }); // End of forwardRef

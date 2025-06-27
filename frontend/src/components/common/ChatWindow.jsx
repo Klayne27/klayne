@@ -34,7 +34,7 @@ const ChatWindow = ({
   const messageListRef = useRef(null);
   const scrollHeightBeforeFetch = useRef(0);
   const shouldScrollToBottomRef = useRef(true);
-  const [shouldOptimisticScroll, setShouldOptimisticScroll] = useState(false); // New state for optimistic scroll
+  const [shouldOptimisticScroll, setShouldOptimisticScroll] = useState(false);
 
   const actualConversationId = selectedConversation?.isNewChat
     ? null
@@ -58,7 +58,6 @@ const ChatWindow = ({
     isFetchingNextPage,
   } = useFetchMessages(selectedConversation);
 
-  // Callback to trigger optimistic scroll
   const handleOptimisticScroll = useCallback(() => {
     setShouldOptimisticScroll(true);
   }, []);
@@ -70,7 +69,7 @@ const ChatWindow = ({
     replyingToMessage,
     currentOptimisticIdRef,
     actualConversationId,
-    onMessageSentOptimistically: handleOptimisticScroll, // Pass the new callback
+    onMessageSentOptimistically: handleOptimisticScroll,
   });
 
   const scrollToBottom = useCallback(() => {
@@ -80,30 +79,23 @@ const ChatWindow = ({
   }, []);
 
   useEffect(() => {
-    if (!isLoading && shouldScrollToBottomRef.current) {
-      setTimeout(() => {
+    if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
+      const id = setTimeout(() => {
         scrollToBottom();
         shouldScrollToBottomRef.current = false;
-      }, 50);
+      }, 0);
+      return () => clearTimeout(id);
     }
-  }, [messages, isLoading, scrollToBottom]);
+  }, [messages.length, isLoading, scrollToBottom]);
 
-  // Effect for immediate optimistic scroll
   useEffect(() => {
     if (shouldOptimisticScroll) {
       setTimeout(() => {
         scrollToBottom();
-        setShouldOptimisticScroll(false); // Reset the flag
-      }, 0); // Immediate execution
+        setShouldOptimisticScroll(false);
+      }, 0);
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
-
-  useEffect(() => {
-    if (actualConversationId) {
-      shouldScrollToBottomRef.current = true;
-      refetchMessages();
-    }
-  }, [actualConversationId, refetchMessages]);
 
   useEffect(() => {
     if (actualConversationId) {
@@ -117,7 +109,6 @@ const ChatWindow = ({
       const listEl = messageListRef.current;
       if (listEl) {
         const { scrollTop } = listEl;
-        // Adjust this threshold if needed. 200px from top to trigger fetch.
         if (scrollTop < 200 && hasNextPage && !isFetchingNextPage) {
           scrollHeightBeforeFetch.current = listEl.scrollHeight;
           fetchNextPage();
@@ -138,16 +129,23 @@ const ChatWindow = ({
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
-    if (listEl && scrollHeightBeforeFetch.current > 0) {
+
+    // We only want to adjust scroll when we've finished fetching new pages
+    // AND there was a scrollHeight recorded before the fetch started.
+    if (listEl && scrollHeightBeforeFetch.current > 0 && !isFetchingNextPage) {
       const newScrollHeight = listEl.scrollHeight;
       const heightDifference = newScrollHeight - scrollHeightBeforeFetch.current;
 
+      // Check if new content was actually added (height increased)
       if (heightDifference > 0) {
+        // Restore scroll position based on the new content added
         listEl.scrollTop += heightDifference;
       }
+
+      // Reset the stored scroll height after adjustment
       scrollHeightBeforeFetch.current = 0;
     }
-  }, [messages]);
+  }, [messages, isFetchingNextPage]); // Keep these dependencies as they are.
 
   useEffect(() => {
     setActiveConversationId(actualConversationId);
@@ -180,41 +178,31 @@ const ChatWindow = ({
             (oldData) => {
               const newPages = oldData ? [...oldData.pages] : [];
 
-              // If there's no data or no pages, initialize with the new message
               if (newPages.length === 0) {
                 return { pages: [[newMessage]], pageParams: [1] };
               }
 
-              // 🔥 CRITICAL CHANGE: Add the new incoming message to the *first page* (index 0)
-              // This is where new messages should always go.
-              const firstPage = [...newPages[0]]; // Copy the first page
+              const firstPage = [...newPages[0]];
               const updatedFirstPage = firstPage.filter(
                 (msg) =>
                   msg.isOptimistic !== true || msg._id !== currentOptimisticIdRef.current
-              ); // Filter out any pending optimistic message with the same ID if it happens to be there
-              // (though onSuccess should have handled it, this is a safeguard)
+              );
 
-              newPages[0] = [...updatedFirstPage, newMessage]; // Add the new message to the first page
+              newPages[0] = [...updatedFirstPage, newMessage];
 
-              // Ensure optimistic message (if present) is replaced by the real one
-              // This logic is important to ensure the real message replaces the optimistic placeholder
-              // even if the socket event arrives slightly before the mutation's onSuccess.
-              // This entire mapping is a bit redundant if onSuccess handles it perfectly,
-              // but it serves as a robust fallback.
               const finalPages = newPages.map((page) =>
                 page.map((msg) =>
                   msg._id === currentOptimisticIdRef.current
-                    ? { ...newMessage, isOptimistic: undefined } // Replace and remove optimistic flag
+                    ? { ...newMessage, isOptimistic: undefined }
                     : msg
                 )
               );
 
-              shouldScrollToBottomRef.current = true; // Still set this for new incoming socket messages
+              shouldScrollToBottomRef.current = true;
               return { ...oldData, pages: finalPages };
             }
           );
 
-          // ... rest of handleNewMessage (seen status, invalidate conversations) ...
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
               conversationId: newMessage.conversationId,
@@ -251,7 +239,6 @@ const ChatWindow = ({
       }) => {
         if (deletedConversationId.toString() === actualConversationId?.toString()) {
           queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-            // oldData is the useInfiniteQuery data object
             if (!oldData) return oldData;
 
             const updatedPages = oldData.pages.map((page) =>
@@ -303,17 +290,12 @@ const ChatWindow = ({
     currentUser,
     selectedConversation,
     currentOptimisticIdRef,
-    shouldScrollToBottomRef, // Add this ref to dependencies
+    shouldScrollToBottomRef,
   ]);
 
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);
-
-  // `messages` from useFetchMessages is already flattened.
-  // We remove the `messagesToDisplay` and `messagesToRender` useMemos
-  // and directly use the `messages` array from the hook.
-  // You might want to adjust the optimistic filtering if `sendMessage` is also managing it.
 
   const memoizedSetReplyingToMessage = useCallback((message) => {
     setReplyingToMessage(message);
@@ -331,20 +313,20 @@ const ChatWindow = ({
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
-        ref={messageListRef} // Attach the ref here!
+        ref={messageListRef}
         error={error}
         isNewChat={isNewChat}
-        messagesToRender={messages} // Use the flattened messages directly
+        messagesToRender={messages}
         setReplyingToMessage={memoizedSetReplyingToMessage}
         deleteMessage={memoizedDeleteMessage}
         messageInputRef={messageInputRef}
         isDeletingMessage={isDeletingMessage}
-        messages={messages} // Pass the full messages array
+        messages={messages}
         openImageModal={openImageModal}
         selectedConversation={selectedConversation}
-        isLoadingInitialMessages={isLoading && !isFetchingNextPage} // For initial full page load
-        isFetchingOlderMessages={isFetchingNextPage} // For loading older messages
-        hasNextPage={hasNextPage} // To show "load more" or "no more messages"
+        isLoadingInitialMessages={isLoading && !isFetchingNextPage}
+        isFetchingOlderMessages={isFetchingNextPage}
+        hasNextPage={hasNextPage}
       />
 
       <MessageInput
