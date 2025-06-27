@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { sendMessageApi } from "../../api/messagesApi"; // Make sure you have this API function
+import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
 export const useSendMessage = ({
@@ -8,6 +8,7 @@ export const useSendMessage = ({
   onNewConversationCreated,
   replyingToMessage,
   currentOptimisticIdRef,
+  onMessageSentOptimistically, // Keep this prop
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const queryClient = useQueryClient();
@@ -16,15 +17,19 @@ export const useSendMessage = ({
     mutationFn: sendMessageApi,
 
     onMutate: async (newMessageData) => {
-      const queryKey = ["messages", selectedConversation?._id];
+      const queryKeyConversationId = isNewOrTemporaryChat
+        ? `temp-${selectedConversation.participants[0]._id}`
+        : selectedConversation?._id;
+
+      const queryKey = ["messages", queryKeyConversationId];
+
       await queryClient.cancelQueries({ queryKey });
 
       const previousData = queryClient.getQueryData(queryKey);
 
-      const tempMessageId = `temp-${Date.now()}-${Math.random()}`;
+      const tempMessageId = `optimistic-${Date.now()}-${Math.random()}`;
       currentOptimisticIdRef.current = tempMessageId;
 
-      // Your tempMessage creation is perfect, no changes needed here
       const tempMessage = {
         _id: tempMessageId,
         text: newMessageData.message,
@@ -35,94 +40,102 @@ export const useSendMessage = ({
           profileImg: currentUser.profileImg,
           isVerified: currentUser.isVerified,
         },
-        conversationId: selectedConversation._id,
+        conversationId: selectedConversation?._id || queryKeyConversationId,
         createdAt: new Date().toISOString(),
         img: newMessageData.img || null,
         seen: false,
         isOptimistic: true,
         repliedTo: replyingToMessage
           ? {
-              /* ... your existing reply structure ... */
+              _id: replyingToMessage._id,
+              text: replyingToMessage.text,
+              sender: {
+                _id: replyingToMessage.sender._id,
+                username: replyingToMessage.sender.username,
+              },
+              img: replyingToMessage.img,
             }
           : null,
       };
 
-      // 👇 FIX: Correctly update the infinite query cache
       queryClient.setQueryData(queryKey, (oldData) => {
-        // 'oldData' is the infinite query object: { pages: [...], pageParams: [...] }
         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          // If the cache is empty, create the first page with our new message
           return { pages: [[tempMessage]], pageParams: [1] };
         }
 
-        // Create a deep copy to avoid mutating the original cache object
-        const newData = JSON.parse(JSON.stringify(oldData));
+        const newData = { ...oldData };
+        newData.pages = [...newData.pages];
 
-        // Add the optimistic message to the *last page*
-        newData.pages[newData.pages.length - 1].push(tempMessage);
+        // 🔥 CRITICAL CHANGE: Add the optimistic message to the *first page* (index 0)
+        // This page represents the most recent messages.
+        newData.pages[0] = [...newData.pages[0], tempMessage];
 
         return newData;
       });
 
-      return { previousData, optimisticId: tempMessageId };
+      if (onMessageSentOptimistically) {
+        onMessageSentOptimistically();
+      }
+
+      return { previousData, optimisticId: tempMessageId, queryKey };
     },
 
     onSuccess: (data, variables, context) => {
-      // Assuming your API returns an object like { newMessage: {...}, conversationId: "..." }
       const { newMessage, conversationId: newRealConversationId } = data;
-      const queryKey = ["messages", newRealConversationId || selectedConversation._id];
 
-      // 👇 FIX: Correctly find and replace the optimistic message in the cache
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return;
+      const finalQueryKeyConversationId =
+        newRealConversationId || selectedConversation._id;
+      const finalQueryKey = ["messages", finalQueryKeyConversationId];
 
-        const newData = JSON.parse(JSON.stringify(oldData));
+      queryClient.setQueryData(finalQueryKey, (oldData) => {
+        if (!oldData) return oldData;
 
-        // Find the page and message index and replace it
-        for (let page of newData.pages) {
-          const msgIndex = page.findIndex((msg) => msg._id === context.optimisticId);
-          if (msgIndex !== -1) {
-            page[msgIndex] = newMessage;
-            break; // Stop searching once found
-          }
-        }
+        // 🔥 CRITICAL CHANGE: Replace the optimistic message in the *first page*
+        // This assumes the optimistic message was correctly placed in the first page.
+        const newData = {
+          ...oldData,
+          pages: oldData.pages.map((page) =>
+            page.map((msg) =>
+              msg._id === context.optimisticId
+                ? { ...newMessage, isOptimistic: undefined }
+                : msg
+            )
+          ),
+        };
         return newData;
       });
 
-      // The rest of your onSuccess logic for handling new conversations seems fine
-      if (isNewOrTemporaryChat && selectedConversation._id !== newRealConversationId) {
-        queryClient.removeQueries(["messages", selectedConversation._id]);
+      if (
+        isNewOrTemporaryChat &&
+        newRealConversationId &&
+        selectedConversation._id !== newRealConversationId
+      ) {
+        queryClient.removeQueries(["messages", context.queryKey[1]]);
         if (onNewConversationCreated) {
           onNewConversationCreated(newRealConversationId);
         }
       }
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
-    },
-
-    onError: (error, variables, context) => {
-      console.error("Error sending message:", error);
-      const queryKey = ["messages", selectedConversation._id];
-
-      // 👇 FIX: Correctly remove the optimistic message from the cache on error
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return;
-
-        const newData = JSON.parse(JSON.stringify(oldData));
-
-        // Filter out the failed message from each page
-        newData.pages = newData.pages.map((page) =>
-          page.filter((msg) => msg._id !== context.optimisticId)
-        );
-
-        return newData;
-      });
 
       currentOptimisticIdRef.current = null;
     },
 
-    onSettled: () => {
-      // This is fine, ensures conversation list is up-to-date
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    onError: (error, variables, context) => {
+      console.error("Error sending message:", error);
+      const { previousData, optimisticId, queryKey } = context;
+
+      if (previousData) {
+        queryClient.setQueryData(queryKey, previousData);
+      } else {
+        queryClient.removeQueries(queryKey);
+      }
+
+      currentOptimisticIdRef.current = null;
+    },
+
+    onSettled: (data, error, variables, context) => {
+      const settledQueryKey = ["messages", data?.conversationId || context.queryKey[1]];
+      queryClient.invalidateQueries({ queryKey: settledQueryKey, exact: true });
     },
   });
 

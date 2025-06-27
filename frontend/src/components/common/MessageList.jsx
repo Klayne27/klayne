@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useRef, forwardRef } from "react"; // Import forwardRef
+import React, { useCallback, forwardRef } from "react"; // Import forwardRef
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
 import { FaReply } from "react-icons/fa";

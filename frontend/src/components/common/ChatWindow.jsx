@@ -1,4 +1,11 @@
-import { useState, useEffect, useRef, useMemo, useCallback, useLayoutEffect } from "react";
+import {
+  useState,
+  useEffect,
+  useRef,
+  useMemo,
+  useCallback,
+  useLayoutEffect,
+} from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
@@ -24,9 +31,10 @@ const ChatWindow = ({
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
-  const messageListRef = useRef(null); // Ref for the scrollable message list
-  const scrollHeightBeforeFetch = useRef(0); // Ref to store scroll height for scroll preservation
+  const messageListRef = useRef(null);
+  const scrollHeightBeforeFetch = useRef(0);
   const shouldScrollToBottomRef = useRef(true);
+  const [shouldOptimisticScroll, setShouldOptimisticScroll] = useState(false); // New state for optimistic scroll
 
   const actualConversationId = selectedConversation?.isNewChat
     ? null
@@ -41,14 +49,19 @@ const ChatWindow = ({
 
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
   const {
-    messages, // This is now the flattened array from useInfiniteQuery
+    messages,
     isLoading,
     error,
-    refetchMessages, // This is `refetch` from useInfiniteQuery
-    fetchNextPage, // Function to load next page of messages
-    hasNextPage, // Boolean: true if there are more pages
-    isFetchingNextPage, // Boolean: true if a new page is being fetched
+    refetchMessages,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
   } = useFetchMessages(selectedConversation);
+
+  // Callback to trigger optimistic scroll
+  const handleOptimisticScroll = useCallback(() => {
+    setShouldOptimisticScroll(true);
+  }, []);
 
   const { sendMessage, isSendingMessage } = useSendMessage({
     selectedConversation,
@@ -57,9 +70,9 @@ const ChatWindow = ({
     replyingToMessage,
     currentOptimisticIdRef,
     actualConversationId,
+    onMessageSentOptimistically: handleOptimisticScroll, // Pass the new callback
   });
 
-  // --- Scroll to Bottom Logic ---
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
@@ -67,34 +80,45 @@ const ChatWindow = ({
   }, []);
 
   useEffect(() => {
-    // Scroll to bottom only when the conversation changes or a new message is added,
-    // but NOT when loading older messages.
     if (!isLoading && shouldScrollToBottomRef.current) {
-      // We delay this slightly to ensure images and other content have rendered
       setTimeout(() => {
         scrollToBottom();
         shouldScrollToBottomRef.current = false;
-      }, 0);
+      }, 50);
     }
   }, [messages, isLoading, scrollToBottom]);
 
-  // When a new conversation is selected, mark for scroll to bottom
+  // Effect for immediate optimistic scroll
+  useEffect(() => {
+    if (shouldOptimisticScroll) {
+      setTimeout(() => {
+        scrollToBottom();
+        setShouldOptimisticScroll(false); // Reset the flag
+      }, 0); // Immediate execution
+    }
+  }, [shouldOptimisticScroll, scrollToBottom]);
+
   useEffect(() => {
     if (actualConversationId) {
       shouldScrollToBottomRef.current = true;
-      refetchMessages(); // Re-fetch messages for the new conversation
+      refetchMessages();
     }
   }, [actualConversationId, refetchMessages]);
 
-  // --- Infinite Scroll (Load More) Logic ---
+  useEffect(() => {
+    if (actualConversationId) {
+      shouldScrollToBottomRef.current = true;
+      refetchMessages();
+    }
+  }, [actualConversationId, refetchMessages]);
+
   useEffect(() => {
     const handleScroll = () => {
       const listEl = messageListRef.current;
       if (listEl) {
         const { scrollTop } = listEl;
-        // Load more messages when scrolled near the top
+        // Adjust this threshold if needed. 200px from top to trigger fetch.
         if (scrollTop < 200 && hasNextPage && !isFetchingNextPage) {
-          // 👇 FIX: Before fetching, store the current scroll height.
           scrollHeightBeforeFetch.current = listEl.scrollHeight;
           fetchNextPage();
         }
@@ -116,14 +140,15 @@ const ChatWindow = ({
     const listEl = messageListRef.current;
     if (listEl && scrollHeightBeforeFetch.current > 0) {
       const newScrollHeight = listEl.scrollHeight;
-      // Adjust scrollTop to keep the user's view stable
-      listEl.scrollTop += newScrollHeight - scrollHeightBeforeFetch.current;
-      // Reset the stored height
+      const heightDifference = newScrollHeight - scrollHeightBeforeFetch.current;
+
+      if (heightDifference > 0) {
+        listEl.scrollTop += heightDifference;
+      }
       scrollHeightBeforeFetch.current = 0;
     }
-  }, [messages]); // Run this effect whenever the messages array changes
+  }, [messages]);
 
-  // --- Socket and Optimistic Updates (Crucial changes here) ---
   useEffect(() => {
     setActiveConversationId(actualConversationId);
     return () => {
@@ -153,43 +178,43 @@ const ChatWindow = ({
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || actualConversationId],
             (oldData) => {
-              // oldData is now the useInfiniteQuery data object: { pages: [], pageParams: [] }
               const newPages = oldData ? [...oldData.pages] : [];
-              const lastPage = newPages[newPages.length - 1] || [];
 
-              // Check if the message already exists in the last page (e.g., optimistic update replaced by actual)
-              if (
-                !lastPage.some(
-                  (msg) =>
-                    msg._id === newMessage._id ||
-                    msg._id === currentOptimisticIdRef.current
-                )
-              ) {
-                // If it's a new message, append it to the last page
-                // Or if it's the actual message replacing an optimistic one, replace it
-                const updatedLastPage = lastPage.filter(
-                  (msg) =>
-                    msg.isOptimistic !== true ||
-                    msg._id !== currentOptimisticIdRef.current
-                );
-                newPages[newPages.length - 1] = [...updatedLastPage, newMessage];
-              } else {
-                // If the message already exists (e.g., optimistic update getting its real ID),
-                // find and update it. This is important if you use optimistic IDs.
-                newPages[newPages.length - 1] = lastPage.map((msg) =>
-                  msg._id === newMessage._id || msg._id === currentOptimisticIdRef.current
-                    ? { ...newMessage, isOptimistic: undefined } // Remove optimistic flag
-                    : msg
-                );
+              // If there's no data or no pages, initialize with the new message
+              if (newPages.length === 0) {
+                return { pages: [[newMessage]], pageParams: [1] };
               }
-              shouldScrollToBottomRef.current = true; // Mark for scroll after adding new message
-              return { ...oldData, pages: newPages };
+
+              // 🔥 CRITICAL CHANGE: Add the new incoming message to the *first page* (index 0)
+              // This is where new messages should always go.
+              const firstPage = [...newPages[0]]; // Copy the first page
+              const updatedFirstPage = firstPage.filter(
+                (msg) =>
+                  msg.isOptimistic !== true || msg._id !== currentOptimisticIdRef.current
+              ); // Filter out any pending optimistic message with the same ID if it happens to be there
+              // (though onSuccess should have handled it, this is a safeguard)
+
+              newPages[0] = [...updatedFirstPage, newMessage]; // Add the new message to the first page
+
+              // Ensure optimistic message (if present) is replaced by the real one
+              // This logic is important to ensure the real message replaces the optimistic placeholder
+              // even if the socket event arrives slightly before the mutation's onSuccess.
+              // This entire mapping is a bit redundant if onSuccess handles it perfectly,
+              // but it serves as a robust fallback.
+              const finalPages = newPages.map((page) =>
+                page.map((msg) =>
+                  msg._id === currentOptimisticIdRef.current
+                    ? { ...newMessage, isOptimistic: undefined } // Replace and remove optimistic flag
+                    : msg
+                )
+              );
+
+              shouldScrollToBottomRef.current = true; // Still set this for new incoming socket messages
+              return { ...oldData, pages: finalPages };
             }
           );
 
-          shouldScrollToBottomRef.current = true;
-
-
+          // ... rest of handleNewMessage (seen status, invalidate conversations) ...
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
               conversationId: newMessage.conversationId,
