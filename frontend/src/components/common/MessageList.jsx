@@ -1,7 +1,7 @@
 import React, { useCallback, forwardRef, useState } from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
-import { FaReply } from "react-icons/fa"; // Removed FaCaretDown
+import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
@@ -117,16 +117,26 @@ const MessageList = forwardRef(function MessageList(
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
           const isSentByCurrentUser = msg.sender._id === currentUser._id;
-          const isReactedByCurrentUser = msg.reactions?.find(
-            (react) => react.user === currentUser._id
-          );
           const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
-            acc[reaction.emoji] = acc[reaction.emoji] || { count: 0, users: [] };
+            acc[reaction.emoji] = acc[reaction.emoji] || {
+              count: 0,
+              users: [],
+              userIds: [],
+            };
             acc[reaction.emoji].count++;
-            acc[reaction.emoji].users.push(reaction.user.username || reaction.user._id);
+
+            // Ensure we get the user ID for comparison
+            const reactorId = reaction.user?._id?.toString() || reaction.user?.toString();
+            if (reactorId) {
+              acc[reaction.emoji].userIds.push(reactorId);
+            }
+
+            // Ensure we get the username for the tooltip
+            const reactorName = reaction.user?.username || reactorId || "Unknown User";
+            acc[reaction.emoji].users.push(reactorName);
+
             return acc;
           }, {});
-
           return (
             <div
               key={msg._id}
@@ -261,24 +271,33 @@ const MessageList = forwardRef(function MessageList(
                        ${isSentByCurrentUser ? "justify-self-end" : "justify-self-start"}
                       `}
                 >
-                  {Object.entries(groupedReactions).map(([emoji, data]) => (
-                    <div
-                      key={emoji}
-                      className={`flex items-center cursor-pointer text-md rounded-lg  px-1.5 py-1.5 ${
-                        isReactedByCurrentUser ? "bg-primary/30 border-primary border" : "bg-gray-800"
-                      }`}
-                      // You can add a tooltip here to show user names
-                      title={
-                        data.users.length > 0
-                          ? `Reacted by: ${data.users.join(", ")}`
-                          : ""
-                      }
-                      onClick={() => handleReactionClick(msg._id, emoji)}
-                    >
-                      <span className="text-[16px]">{emoji}</span>
-                      <span className="ml-1 font-bold">{data.count}</span>
-                    </div>
-                  ))}
+                  {Object.entries(groupedReactions).map(([emoji, data]) => {
+                    const hasCurrentUserReactedToThisEmoji = data.users.some(
+                      (userId) => userId === currentUser._id?.toString()
+                    );
+
+                    console.log(groupedReactions);
+                    return (
+                      <div
+                        key={emoji}
+                        className={`flex items-center cursor-pointer text-md rounded-lg  px-1.5 py-1.5 ${
+                          hasCurrentUserReactedToThisEmoji
+                            ? "bg-primary/30 border-primary border"
+                            : "bg-gray-800 border border-gray-800"
+                        }`}
+                        // You can add a tooltip here to show user names
+                        title={
+                          data.users.length > 0
+                            ? `Reacted by: ${data.users.join(", ")}`
+                            : ""
+                        }
+                        onClick={() => handleReactionClick(msg._id, emoji)}
+                      >
+                        <span className="text-[16px]">{emoji}</span>
+                        <span className="ml-1 font-bold">{data.count}</span>
+                      </div>
+                    );
+                  })}
                 </div>
               )}
 

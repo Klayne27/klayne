@@ -372,8 +372,8 @@ export const deleteConversationForUser = async (req, res) => {
 export const reactToMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { emoji } = req.body; // The emoji string from the frontend
-    const userId = req.user._id; // The authenticated user reacting
+    const { emoji } = req.body;
+    const userId = req.user._id;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized: No user authenticated" });
@@ -383,65 +383,72 @@ export const reactToMessage = async (req, res) => {
       return res.status(400).json({ error: "Message ID and emoji are required." });
     }
 
-    if (!["❤️", "👍", "😂", "😭", "😡"].includes(emoji)) {
+    const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+    if (!allowedEmojis.includes(emoji)) {
       return res.status(400).json({ error: "Invalid emoji provided." });
     }
 
-    const message = await Message.findById(messageId);
+    let message = await Message.findById(messageId); // Use 'let' because we might reassign after population
 
     if (!message) {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    // Find the index of the reaction by this user with this specific emoji
-    const reactionIndex = message.reactions.findIndex(
-      (reaction) =>
-        reaction.user.toString() === userId.toString() && reaction.emoji === emoji
+    // Find the reaction by this user, regardless of emoji
+    const existingUserReactionIndex = message.reactions.findIndex(
+      (reaction) => reaction.user.toString() === userId.toString()
     );
 
-    let action = ""; // To track if reaction was added or removed
+    let action = ""; // To track if reaction was added, removed, or changed
 
-    if (reactionIndex !== -1) {
-      // User has already reacted with this emoji, so remove it (toggle off)
-      message.reactions.splice(reactionIndex, 1);
-      action = "removed";
+    if (existingUserReactionIndex !== -1) {
+      const existingReaction = message.reactions[existingUserReactionIndex];
+      if (existingReaction.emoji === emoji) {
+        // User has already reacted with this exact emoji, so remove it (toggle off)
+        message.reactions.splice(existingUserReactionIndex, 1);
+        action = "removed";
+      } else {
+        // User reacted with a different emoji, so change it
+        message.reactions[existingUserReactionIndex].emoji = emoji;
+        action = "changed";
+      }
     } else {
-      // User has not reacted with this emoji, so add it
+      // User has no reactions on this message, so add the new one
       message.reactions.push({ emoji, user: userId });
       action = "added";
     }
 
     await message.save();
 
-    // After saving, re-fetch or populate the message to include sender and reactions.user
+    // After saving, populate the message to include all necessary fields for the frontend
+    // This is CRUCIAL for the client-side optimistic update to be confirmed correctly.
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select: "-password", // Exclude password
+        select: "-password",
       })
       .populate({
         path: "repliedTo",
         select: "text img",
       })
       .populate({
-        path: "reactions.user", // Crucial for populating user data in reactions
-        select: "username fullName profileImg", // Select user fields you need on frontend
+        path: "reactions.user", // Ensure user data within reactions is populated
+        select: "username fullName profileImg", // Select relevant user fields
       });
 
     // Send updated message via socket to all participants
     const conversation = await Conversation.findById(message.conversationId);
     if (conversation) {
       conversation.participants.forEach((participantId) => {
-        const receiverSocketIds = getReceiverSocketIds(participantId.toString()); // Use getReceiverSocketIds
+        const receiverSocketIds = getReceiverSocketIds(participantId.toString());
         receiverSocketIds.forEach((socketId) => {
           io.to(socketId).emit("messageReacted", populatedMessage); // Emit the full updated populated message
         });
       });
     }
 
-    return res
-      .status(200)
-      .json({ message: `Reaction ${action} successfully.`, message: populatedMessage });
+    // Return the fully populated message to the client for React Query's onSuccess
+    return res.status(200).json(populatedMessage); // Send the populated message directly
   } catch (error) {
     console.error("Error in reactToMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
