@@ -11,6 +11,7 @@ export const sendMessage = async (req, res) => {
       message,
       conversationId: incomingConversationId,
       repliedTo,
+      tempId
     } = req.body;
     let { img } = req.body;
     const senderId = req.user._id;
@@ -60,6 +61,7 @@ export const sendMessage = async (req, res) => {
       img: uploadedImgUrl,
       seen: false,
       repliedTo: repliedTo || null,
+      tempId,
     });
 
     await newMessage.save();
@@ -89,24 +91,33 @@ export const sendMessage = async (req, res) => {
       });
     }
 
+    const messageToSend = { ...newMessage.toObject() }; // Convert Mongoose document to plain object
+    if (tempId) {
+      // Only add tempId if it was provided by the client
+      messageToSend.tempId = tempId;
+    }
+
+
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
       recipientSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("newMessage", newMessage);
+        io.to(socketId).emit("newMessage", messageToSend);
       });
     }
 
     const senderSocketIds = getReceiverSocketIds(senderId.toString());
     if (senderSocketIds.length > 0) {
       senderSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("newMessage", newMessage);
+        io.to(socketId).emit("newMessage", messageToSend);
       });
     }
 
     await emitUnreadMessageStatus(recipientId.toString());
     await emitUnreadMessageStatus(senderId.toString());
 
-    res.status(201).json({ newMessage, conversationId: conversation._id });
+    res
+      .status(201)
+      .json({ newMessage: newMessage.toObject(), conversationId: conversation._id });
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -115,7 +126,7 @@ export const sendMessage = async (req, res) => {
 
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params;
-  const { page = 1, limit = 20 } = req.query; // Added page and limit query parameters
+  const { page = 1, limit = 20 } = req.query;
   const userId = req.user._id;
 
   try {
@@ -155,14 +166,14 @@ export const getMessagesByConversationId = async (req, res) => {
       await emitUnreadMessageStatus(otherParticipantId.toString());
     }
 
-    const skip = (parseInt(page) - 1) * parseInt(limit); // Calculate how many documents to skip
+    const skip = (parseInt(page) - 1) * parseInt(limit);
 
     const messages = await Message.find({
       conversationId: conversationId,
     })
-      .sort({ createdAt: -1 }) // Sort by createdAt in descending order for infinite scrolling
-      .skip(skip) // Skip messages
-      .limit(parseInt(limit)) // Limit the number of messages
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
       .populate("sender", "username profileImg fullName isVerified")
       .populate({
         path: "repliedTo",
@@ -173,8 +184,6 @@ export const getMessagesByConversationId = async (req, res) => {
         },
       });
 
-    // We'll reverse the messages before sending to maintain chronological order on the client
-    // while still fetching the latest messages first from the database.
     res.status(200).json(messages.reverse()); 
   } catch (error) {
     console.error("Error in getMessagesByConversationId controller:", error.message);
@@ -372,8 +381,8 @@ export const deleteConversationForUser = async (req, res) => {
 export const reactToMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { emoji } = req.body; // The emoji string from the frontend
-    const userId = req.user._id; // The authenticated user reacting
+    const { emoji } = req.body;
+    const userId = req.user._id;
 
     if (!userId) {
       return res.status(401).json({ error: "Unauthorized: No user authenticated" });
@@ -393,48 +402,43 @@ export const reactToMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    // Find the index of the reaction by this user with this specific emoji
     const reactionIndex = message.reactions.findIndex(
       (reaction) =>
         reaction.user.toString() === userId.toString() && reaction.emoji === emoji
     );
 
-    let action = ""; // To track if reaction was added or removed
+    let action = "";
 
     if (reactionIndex !== -1) {
-      // User has already reacted with this emoji, so remove it (toggle off)
       message.reactions.splice(reactionIndex, 1);
       action = "removed";
     } else {
-      // User has not reacted with this emoji, so add it
       message.reactions.push({ emoji, user: userId });
       action = "added";
     }
 
     await message.save();
 
-    // After saving, re-fetch or populate the message to include sender and reactions.user
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select: "-password", // Exclude password
+        select: "-password",
       })
       .populate({
         path: "repliedTo",
         select: "text img",
       })
       .populate({
-        path: "reactions.user", // Crucial for populating user data in reactions
-        select: "username fullName profileImg", // Select user fields you need on frontend
+        path: "reactions.user",
+        select: "username fullName profileImg",
       });
 
-    // Send updated message via socket to all participants
     const conversation = await Conversation.findById(message.conversationId);
     if (conversation) {
       conversation.participants.forEach((participantId) => {
-        const receiverSocketIds = getReceiverSocketIds(participantId.toString()); // Use getReceiverSocketIds
+        const receiverSocketIds = getReceiverSocketIds(participantId.toString());
         receiverSocketIds.forEach((socketId) => {
-          io.to(socketId).emit("messageReacted", populatedMessage); // Emit the full updated populated message
+          io.to(socketId).emit("messageReacted", populatedMessage);
         });
       });
     }

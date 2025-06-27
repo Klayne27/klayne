@@ -8,7 +8,7 @@ export const useSendMessage = ({
   onNewConversationCreated,
   replyingToMessage,
   currentOptimisticIdRef,
-  onMessageSentOptimistically, // Keep this prop
+  onMessageSentOptimistically,
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const queryClient = useQueryClient();
@@ -66,8 +66,6 @@ export const useSendMessage = ({
         const newData = { ...oldData };
         newData.pages = [...newData.pages];
 
-        // 🔥 CRITICAL CHANGE: Add the optimistic message to the *first page* (index 0)
-        // This page represents the most recent messages.
         newData.pages[0] = [...newData.pages[0], tempMessage];
 
         return newData;
@@ -90,8 +88,7 @@ export const useSendMessage = ({
       queryClient.setQueryData(finalQueryKey, (oldData) => {
         if (!oldData) return oldData;
 
-        // 🔥 CRITICAL CHANGE: Replace the optimistic message in the *first page*
-        // This assumes the optimistic message was correctly placed in the first page.
+
         const newData = {
           ...oldData,
           pages: oldData.pages.map((page) =>

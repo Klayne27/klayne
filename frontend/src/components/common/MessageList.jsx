@@ -8,9 +8,6 @@ import { BsCheck2All } from "react-icons/bs";
 import LoadingSpinner from "./LoadingSpinner";
 import { useReactToMessage } from "../../hooks/messagesHooks/useReactToMessage";
 
-// New Icon for adding reactions
-import { MdOutlineAddReaction } from "react-icons/md";
-
 const MessageList = forwardRef(function MessageList(
   {
     error,
@@ -117,6 +114,7 @@ const MessageList = forwardRef(function MessageList(
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
           const isSentByCurrentUser = msg.sender._id === currentUser._id;
+          
           const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
             acc[reaction.emoji] = acc[reaction.emoji] || {
               count: 0,
@@ -125,15 +123,10 @@ const MessageList = forwardRef(function MessageList(
             };
             acc[reaction.emoji].count++;
 
-            // Ensure we get the user ID for comparison
             const reactorId = reaction.user?._id?.toString() || reaction.user?.toString();
             if (reactorId) {
               acc[reaction.emoji].userIds.push(reactorId);
             }
-
-            // Ensure we get the username for the tooltip
-            const reactorName = reaction.user?.username || reactorId || "Unknown User";
-            acc[reaction.emoji].users.push(reactorName);
 
             return acc;
           }, {});
@@ -147,8 +140,8 @@ const MessageList = forwardRef(function MessageList(
                 className={`absolute -top-5 bg-gray-800 shadow-xl rounded-xl px-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10
                     ${
                       isSentByCurrentUser
-                        ? "-left-28 translate-x-1/2" // Adjust position for sender's messages
-                        : "-right-24 -translate-x-1/2" // Adjust position for receiver's messages
+                        ? "-left-28 translate-x-1/2"
+                        : "-right-24 -translate-x-1/2"
                     }
                   `}
               >

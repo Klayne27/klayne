@@ -12,7 +12,6 @@ import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
 import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
-// import ReactDOM from "react-dom";
 import { useCallback } from "react";
 
 const Sidebar = () => {

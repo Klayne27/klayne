@@ -81,23 +81,20 @@ const ChatWindow = ({
     }
   }, []);
 
-  // useEffect(() => {
-  //   if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
-  //     const id = setTimeout(() => {
-  //       scrollToBottom();
-  //       shouldScrollToBottomRef.current = false;
-  //     }, 0);
-  //     return () => clearTimeout(id);
-  //   }
-  // }, [messages.length, isLoading, scrollToBottom]);
+  useEffect(() => {
+    if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
+      const id = setTimeout(() => {
+        scrollToBottom();
+        shouldScrollToBottomRef.current = false;
+      }, 0);
+      return () => clearTimeout(id);
+    }
+  }, [messages.length, isLoading, scrollToBottom]);
 
   useEffect(() => {
     if (shouldOptimisticScroll) {
-      const id = requestAnimationFrame(() => {
         scrollToBottom();
         setShouldOptimisticScroll(false);
-      });
-      return () => cancelAnimationFrame(id);
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
 
@@ -105,23 +102,14 @@ const ChatWindow = ({
     const listEl = messageListRef.current;
     if (!listEl) return;
 
-    // Define a threshold for "being at the bottom"
-    const scrollThreshold = 100; // e.g., within 100px of the bottom
+    const scrollThreshold = 100; 
 
-    // Check if the user is currently at or very near the bottom
     const isAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
-    // When new messages arrive (messages.length changes)
-    // And the user *was* at the bottom when the new message arrived
-    // Or if it's the very first load of messages for the conversation (`shouldScrollToBottomRef.current` is true)
     if (isAtBottom || shouldScrollToBottomRef.current) {
-      // Use requestAnimationFrame for smoother scroll after render
-      const id = requestAnimationFrame(() => {
         scrollToBottom();
         shouldScrollToBottomRef.current = false; // Reset the flag after scrolling
-      });
-      return () => cancelAnimationFrame(id);
     }
   }, [messages.length, scrollToBottom]); // Depend on messages.length to detect new messages
 
@@ -334,8 +322,6 @@ const ChatWindow = ({
       };
 
       const handleMessageReacted = (updatedMessage) => {
-        console.log("Received messageReacted event:", updatedMessage);
-        // Only update if the reaction is for the currently open conversation
         if (updatedMessage.conversationId === actualConversationId) {
           queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
             if (!oldData) return oldData;
@@ -348,7 +334,6 @@ const ChatWindow = ({
             return { ...oldData, pages: updatedPages };
           });
         }
-        // Invalidate conversations to update lastMessage reaction status if applicable
         queryClient.invalidateQueries(["conversations"]);
         queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
       };
@@ -358,7 +343,7 @@ const ChatWindow = ({
       socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
-      socket.on("messageReacted", handleMessageReacted); // <-- AND REMOVE IT HERE!
+      // socket.on("messageReacted", handleMessageReacted);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
@@ -366,7 +351,7 @@ const ChatWindow = ({
         socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
-        socket.off("messageReacted", handleMessageReacted); // <-- AND REMOVE IT HERE!
+        // socket.off("messageReacted", handleMessageReacted);
       };
     }
   }, [

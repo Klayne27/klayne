@@ -290,7 +290,7 @@ export const getFollowingPosts = async (req, res) => {
     res.status(200).json({ posts: finalFeedPosts, hasNextPage });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("Error in getFollowingPosts controller: ", error);
+    ("Error in getFollowingPosts controller: ", error);
   }
 };
 
