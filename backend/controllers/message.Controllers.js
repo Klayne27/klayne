@@ -368,3 +368,82 @@ export const deleteConversationForUser = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const reactToMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { emoji } = req.body; // The emoji string from the frontend
+    const userId = req.user._id; // The authenticated user reacting
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: No user authenticated" });
+    }
+
+    if (!messageId || !emoji) {
+      return res.status(400).json({ error: "Message ID and emoji are required." });
+    }
+
+    if (!["❤️", "👍", "😂", "😭", "😡"].includes(emoji)) {
+      return res.status(400).json({ error: "Invalid emoji provided." });
+    }
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    // Find the index of the reaction by this user with this specific emoji
+    const reactionIndex = message.reactions.findIndex(
+      (reaction) =>
+        reaction.user.toString() === userId.toString() && reaction.emoji === emoji
+    );
+
+    let action = ""; // To track if reaction was added or removed
+
+    if (reactionIndex !== -1) {
+      // User has already reacted with this emoji, so remove it (toggle off)
+      message.reactions.splice(reactionIndex, 1);
+      action = "removed";
+    } else {
+      // User has not reacted with this emoji, so add it
+      message.reactions.push({ emoji, user: userId });
+      action = "added";
+    }
+
+    await message.save();
+
+    // After saving, re-fetch or populate the message to include sender and reactions.user
+    const populatedMessage = await Message.findById(message._id)
+      .populate({
+        path: "sender",
+        select: "-password", // Exclude password
+      })
+      .populate({
+        path: "repliedTo",
+        select: "text img",
+      })
+      .populate({
+        path: "reactions.user", // Crucial for populating user data in reactions
+        select: "username fullName profileImg", // Select user fields you need on frontend
+      });
+
+    // Send updated message via socket to all participants
+    const conversation = await Conversation.findById(message.conversationId);
+    if (conversation) {
+      conversation.participants.forEach((participantId) => {
+        const receiverSocketIds = getReceiverSocketIds(participantId.toString()); // Use getReceiverSocketIds
+        receiverSocketIds.forEach((socketId) => {
+          io.to(socketId).emit("messageReacted", populatedMessage); // Emit the full updated populated message
+        });
+      });
+    }
+
+    return res
+      .status(200)
+      .json({ message: `Reaction ${action} successfully.`, message: populatedMessage });
+  } catch (error) {
+    console.error("Error in reactToMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

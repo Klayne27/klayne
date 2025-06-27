@@ -7,7 +7,8 @@ import {
   getMessagesByConversationId,
   deleteMessage,
   deleteConversationForUser,
-} from "../controllers/message.Controllers.js";
+  reactToMessage,
+} from "../controllers/message.controllers.js";
 
 const router = express.Router();
 
@@ -17,5 +18,6 @@ router.get("/conversations/:conversationId", protectRoute, getMessagesByConversa
 router.post("/", protectRoute, sendMessage);
 router.delete("/:messageId", protectRoute, deleteMessage);
 router.delete("/conversations/:conversationId", protectRoute, deleteConversationForUser);
+router.post("/react/:messageId", protectRoute, reactToMessage);
 
 export default router;

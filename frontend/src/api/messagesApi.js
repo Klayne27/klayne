@@ -84,3 +84,16 @@ export const deleteConversationApi = async (conversationId) => {
     throw error;
   }
 };
+
+export const reactToMessageApi = async (messageId, emoji) => {
+  const res = await fetch(`/api/messages/react/${messageId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ emoji }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to react to message");
+
+  return data;
+};

@@ -1,11 +1,15 @@
-import React, { useCallback, forwardRef } from "react"; // Import forwardRef
+import React, { useCallback, forwardRef, useState } from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { truncateText } from "../../utils/truncateText";
-import { FaCaretDown, FaReply } from "react-icons/fa";
+import { FaReply } from "react-icons/fa"; // Removed FaCaretDown
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
 import LoadingSpinner from "./LoadingSpinner";
+import { useReactToMessage } from "../../hooks/messagesHooks/useReactToMessage";
+
+// New Icon for adding reactions
+import { MdOutlineAddReaction } from "react-icons/md";
 
 const MessageList = forwardRef(function MessageList(
   {
@@ -22,9 +26,13 @@ const MessageList = forwardRef(function MessageList(
     isFetchingOlderMessages,
     hasNextPage,
   },
-  ref 
+  ref
 ) {
   const { authUser: currentUser } = useAuthUser();
+
+  const { mutate: reactToMessage, isLoading: isReacting } = useReactToMessage();
+
+  const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
 
   const handleDeleteClick = useCallback(
     (messageId) => {
@@ -70,11 +78,17 @@ const MessageList = forwardRef(function MessageList(
     }
   }, []);
 
+  const handleReactionClick = useCallback(
+    (messageId, emoji) => {
+      reactToMessage({ messageId, emoji });
+    },
+    [reactToMessage]
+  );
 
   return (
     <div
       ref={ref}
-      className="flex-1  overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
     >
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full">
@@ -86,13 +100,11 @@ const MessageList = forwardRef(function MessageList(
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
-      {/* Loading indicator for older messages (when scrolling up) */}
       {isFetchingOlderMessages && (
         <div className="flex justify-center py-2">
           <LoadingSpinner size="sm" />
         </div>
       )}
-      {/* "No more messages" indicator */}
       {!hasNextPage &&
         !isLoadingInitialMessages &&
         !isFetchingOlderMessages &&
@@ -105,56 +117,84 @@ const MessageList = forwardRef(function MessageList(
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => {
           const isSentByCurrentUser = msg.sender._id === currentUser._id;
+          const isReactedByCurrentUser = msg.reactions.find(
+            (react) => react.user === currentUser._id
+          );
+          const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
+            acc[reaction.emoji] = acc[reaction.emoji] || { count: 0, users: [] };
+            acc[reaction.emoji].count++;
+            acc[reaction.emoji].users.push(reaction.user.username || reaction.user._id);
+            return acc;
+          }, {});
 
           return (
-            <div key={msg._id} id={`message-${msg._id}`}>
+            <div
+              key={msg._id}
+              id={`message-${msg._id}`}
+              className="hover:bg-gray-900 p-1 rounded-lg group relative"
+            >
+              <div
+                className={`absolute -top-5 bg-gray-800 shadow-xl rounded-xl px-2 flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 z-10
+                    ${
+                      isSentByCurrentUser
+                        ? "-left-28 translate-x-1/2" // Adjust position for sender's messages
+                        : "-right-24 -translate-x-1/2" // Adjust position for receiver's messages
+                    }
+                  `}
+              >
+                {/* Reaction Emojis */}
+                {allowedEmojis.map((emoji) => (
+                  <button
+                    key={emoji}
+                    onClick={() => handleReactionClick(msg._id, emoji)}
+                    className={`text-xl hover:scale-125 py-1  transition duration-100`}
+                    disabled={isReacting}
+                    title={`React with ${emoji}`}
+                  >
+                    {emoji}
+                  </button>
+                ))}
+
+                <button
+                  onClick={() => handleReplyClick(msg)}
+                  className="text-gray-300 hover:text-white hover:scale-125 rounded-full p-1 ml-1"
+                  title="Reply"
+                >
+                  <FaReply size={18} />
+                </button>
+
+                {/* Delete Button (only for current user's messages) */}
+                {isSentByCurrentUser && (
+                  <button
+                    onClick={() => handleDeleteClick(msg._id)}
+                    className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 ${
+                      isDeletingMessage ? "cursor-not-allowed" : "cursor-pointer"
+                    }`}
+                    title="Delete message"
+                    disabled={isDeletingMessage}
+                  >
+                    {isDeletingMessage ? (
+                      <span className="loading loading-spinner loading-xs" />
+                    ) : (
+                      <FiTrash size={18} />
+                    )}
+                  </button>
+                )}
+              </div>
               <div
                 className={`flex ${
                   isSentByCurrentUser ? "justify-end" : "justify-start"
                 } items-start group relative`}
               >
+                {/* Message Bubble Content */}
                 <div
-                  className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative
+                  className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative 
                     ${
                       isSentByCurrentUser
                         ? "bg-primary text-white rounded-br-[4px]"
                         : "bg-[#2F3336] text-white rounded-bl-[4px]"
                     }`}
                 >
-                  <div
-                    className={`absolute top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-100
-                                  transition-opacity duration-200 cursor-pointer text-gray-400 hover:text-primary
-                                   ${
-                                     isSentByCurrentUser
-                                       ? "right-[calc(100%+8px)]"
-                                       : "scale-x-[-1] left-[calc(100%+8px)]"
-                                   } `}
-                    onClick={() => handleReplyClick(msg)}
-                  >
-                    <FaReply size={18} />
-                  </div>
-                  {isSentByCurrentUser && (
-                    <button
-                      onClick={() => handleDeleteClick(msg._id)}
-                      className={`absolute top-1/2 -translate-y-1/2 text-xs rounded-full text-red-600 hover:bg-red-600 hover:bg-opacity-25 p-1.5
-                                  opacity-0 group-hover:opacity-100 transition duration-200 z-10
-                                  ${isSentByCurrentUser ? "right-[calc(100%+30px)]" : ""}
-                                  ${
-                                    isDeletingMessage
-                                      ? "cursor-not-allowed"
-                                      : "cursor-pointer"
-                                  }
-                                   `}
-                      title="Delete message"
-                      disabled={isDeletingMessage}
-                    >
-                      {isDeletingMessage ? (
-                        <span className={`loading loading-spinner loading-xs`} />
-                      ) : (
-                        <FiTrash size={20} />
-                      )}
-                    </button>
-                  )}
                   {msg.repliedTo && (
                     <div
                       className={`
@@ -214,6 +254,34 @@ const MessageList = forwardRef(function MessageList(
                   </span>
                 )}
               </div>
+              {/* Display Reactions */}
+              {Object.keys(groupedReactions || {}).length > 0 && (
+                <div
+                  className={`flex gap-1 -bottom-3 items-center py-1 rounded-full text-xs font-semibold
+                       ${isSentByCurrentUser ? "justify-self-end" : "justify-self-start"}
+                      `}
+                >
+                  {Object.entries(groupedReactions).map(([emoji, data]) => (
+                    <div
+                      key={emoji}
+                      className={`flex items-center cursor-pointer text-md rounded-lg  px-1.5 py-1.5 ${
+                        isReactedByCurrentUser ? "bg-primary/30 border-primary border" : "bg-gray-800"
+                      }`}
+                      // You can add a tooltip here to show user names
+                      title={
+                        data.users.length > 0
+                          ? `Reacted by: ${data.users.join(", ")}`
+                          : ""
+                      }
+                      onClick={() => handleReactionClick(msg._id, emoji)}
+                    >
+                      <span className="text-[16px]">{emoji}</span>
+                      <span className="ml-1 font-bold">{data.count}</span>
+                    </div>
+                  ))}
+                </div>
+              )}
+
               <span
                 className={`text-xs mt-1 flex text-gray-500 ${
                   isSentByCurrentUser ? "justify-self-end" : "self-start"
@@ -232,6 +300,6 @@ const MessageList = forwardRef(function MessageList(
         })}
     </div>
   );
-}); // End of forwardRef
+});
 
 export default React.memo(MessageList);

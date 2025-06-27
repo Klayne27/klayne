@@ -59,11 +59,56 @@ export const SocketContextProvider = ({ children }) => {
       });
 
       newSocket.on("newPostAvailable", () => {
-        console.log("Received newPostAvailable event. Setting hasNewFeedPosts to true.");
         setHasNewFeedPosts(true);
       });
 
       newSocket.on("newMessage", (newMessage) => {
+        // This logic is for new messages. We need a similar one for reactions.
+        // If the new message is for the currently active conversation, we update messages query.
+        // Otherwise, we just invalidate conversations to update unread counts etc.
+        if (activeConversationId && newMessage.conversationId === activeConversationId) {
+          queryClient.setQueryData(["messages"], (oldData) => {
+            if (oldData) {
+              // Assuming messages are in pages, add to the first page
+              const updatedPages = oldData.pages.map((page, index) =>
+                index === 0 ? [...page, newMessage] : page
+              );
+              return { ...oldData, pages: updatedPages };
+            }
+            return { pages: [[newMessage]] };
+          });
+        }
+        queryClient.invalidateQueries(["conversations"]);
+      });
+
+      // NEW: Handle messageReacted event
+      newSocket.on("messageReacted", (updatedMessage) => {
+        queryClient.setQueryData(["messages"], (oldData) => {
+          if (!oldData) return oldData; // If no old data, do nothing
+
+          const updatedPages = oldData.pages.map((page) =>
+            page.map((message) =>
+              message._id === updatedMessage._id ? updatedMessage : message
+            )
+          );
+          return { ...oldData, pages: updatedPages };
+        });
+        // Invalidate conversations to potentially update lastMessage.seen status if a reaction was on it
+        // and it affected the seen status. Though typically reactions don't change seen status,
+        // it's good practice for general message updates.
+        queryClient.invalidateQueries(["conversations"]);
+      });
+
+      // NEW: Handle messageDeleted event
+      newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
+        queryClient.setQueryData(["messages"], (oldData) => {
+          if (!oldData) return oldData;
+          const updatedPages = oldData.pages.map((page) =>
+            page.filter((message) => message._id !== messageId)
+          );
+          return { ...oldData, pages: updatedPages };
+        });
+        // Invalidate conversations to ensure lastMessage updates if the deleted message was the last one
         queryClient.invalidateQueries(["conversations"]);
       });
 
@@ -102,7 +147,7 @@ export const SocketContextProvider = ({ children }) => {
       setHasUnreadNotifications(false);
       setHasNewFeedPosts(false);
     }
-  }, [user, isLoadingAuthUser, queryClient]);
+  }, [user, isLoadingAuthUser, queryClient, activeConversationId]); // activeConversationId added to dependency array
 
   useEffect(() => {
     if (socket && user) {
