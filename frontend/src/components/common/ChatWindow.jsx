@@ -78,24 +78,49 @@ const ChatWindow = ({
     }
   }, []);
 
-  useEffect(() => {
-    if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
-      const id = setTimeout(() => {
-        scrollToBottom();
-        shouldScrollToBottomRef.current = false;
-      }, 0);
-      return () => clearTimeout(id);
-    }
-  }, [messages.length, isLoading, scrollToBottom]);
+  // useEffect(() => {
+  //   if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
+  //     const id = setTimeout(() => {
+  //       scrollToBottom();
+  //       shouldScrollToBottomRef.current = false;
+  //     }, 0);
+  //     return () => clearTimeout(id);
+  //   }
+  // }, [messages.length, isLoading, scrollToBottom]);
 
   useEffect(() => {
     if (shouldOptimisticScroll) {
-      setTimeout(() => {
-        scrollToBottom();
-        setShouldOptimisticScroll(false);
-      }, 0);
+      const id = requestAnimationFrame(() => {
+        scrollToBottom()
+        setShouldOptimisticScroll(false)
+      })
+      return () => cancelAnimationFrame(id)
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
+
+  useEffect(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
+
+    // Define a threshold for "being at the bottom"
+    const scrollThreshold = 100; // e.g., within 100px of the bottom
+
+    // Check if the user is currently at or very near the bottom
+    const isAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+    // When new messages arrive (messages.length changes)
+    // And the user *was* at the bottom when the new message arrived
+    // Or if it's the very first load of messages for the conversation (`shouldScrollToBottomRef.current` is true)
+    if (isAtBottom || shouldScrollToBottomRef.current) {
+      // Use requestAnimationFrame for smoother scroll after render
+      const id = requestAnimationFrame(() => {
+        scrollToBottom();
+        shouldScrollToBottomRef.current = false; // Reset the flag after scrolling
+      });
+      return () => cancelAnimationFrame(id);
+    }
+  }, [messages.length, scrollToBottom]); // Depend on messages.length to detect new messages
 
   useEffect(() => {
     if (actualConversationId) {
@@ -150,7 +175,6 @@ const ChatWindow = ({
       const newScrollHeight = listEl.scrollHeight;
       const heightDifference = newScrollHeight - scrollHeightBeforeFetch.current;
 
-      // Only adjust if there's an actual increase in height and the user was "at the top"
       if (heightDifference > 0) {
         listEl.scrollTop += heightDifference;
       }
@@ -188,32 +212,52 @@ const ChatWindow = ({
           queryClient.setQueryData(
             ["messages", newMessage.conversationId || actualConversationId],
             (oldData) => {
-              const newPages = oldData ? [...oldData.pages] : [];
-
-              if (newPages.length === 0) {
+              if (!oldData) {
                 return { pages: [[newMessage]], pageParams: [1] };
               }
 
-              const firstPage = [...newPages[0]];
-              const updatedFirstPage = firstPage.filter(
+              const newData = { ...oldData };
+              newData.pages = [...oldData.pages];
+
+              if (newData.pages.length === 0) {
+                newData.pages.push([]);
+              }
+
+              const firstPageMessages = newData.pages[0].filter(
                 (msg) =>
-                  msg.isOptimistic !== true || msg._id !== currentOptimisticIdRef.current
+                  msg._id !== newMessage._id && // Filter out if real message matches existing ID
+                  (msg.isOptimistic !== true ||
+                    msg._id !== currentOptimisticIdRef.current) // Filter out old optimistic
               );
 
-              newPages[0] = [...updatedFirstPage, newMessage];
+              newData.pages[0] = [...firstPageMessages, newMessage];
 
-              const finalPages = newPages.map((page) =>
-                page.map((msg) =>
-                  msg._id === currentOptimisticIdRef.current
-                    ? { ...newMessage, isOptimistic: undefined }
-                    : msg
-                )
-              );
+              // --- IMPORTANT: Remove the unconditional `shouldScrollToBottomRef.current = true;` from here ---
+              // It was causing the second jump for your own messages.
+              // The `shouldOptimisticScroll` useEffect handles your own messages.
+              // The general `messages.length` useEffect handles others' messages if already at bottom.
+              // So, this line is no longer needed here.
 
-              shouldScrollToBottomRef.current = true;
-              return { ...oldData, pages: finalPages };
+              return newData;
             }
           );
+
+          // --- Add a conditional shouldScrollToBottomRef.current setting for *incoming* messages ---
+          // (i.e., not your own message confirmation, but a message from another user)
+          // This makes sure that the `messages.length` useEffect triggers a scroll ONLY if
+          // the user is already at the bottom when an *other user's* message arrives.
+          if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
+            const listEl = messageListRef.current;
+            if (listEl) {
+              const scrollThreshold = 100;
+              const isAtBottom =
+                listEl.scrollHeight - listEl.scrollTop <=
+                listEl.clientHeight + scrollThreshold;
+              if (isAtBottom) {
+                shouldScrollToBottomRef.current = true;
+              }
+            }
+          }
 
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
