@@ -10,6 +10,7 @@ export const useFetchMessages = (selectedConversation) => {
     isLoading,
     error,
     refetch,
+    isFetching,
   } = useInfiniteQuery({
     queryKey: ["messages", selectedConversation?._id],
     queryFn: ({ pageParam = 1 }) =>
@@ -21,9 +22,12 @@ export const useFetchMessages = (selectedConversation) => {
       }
       return allPages.length + 1;
     },
-    enabled: !!selectedConversation?._id && !selectedConversation._id.startsWith("new-"), 
-    staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    enabled: !!selectedConversation?._id && !selectedConversation._id.startsWith("new-"),
+    staleTime: 0,
+    // cacheTime: 10 * 60 * 1000,
+    // refetchOnMount: true,
+    // refetchOnWindowFocus: true,
+    // refetchOnReconnect: true,
   });
 
   const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
@@ -36,5 +40,6 @@ export const useFetchMessages = (selectedConversation) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
   };
 };

@@ -24,8 +24,6 @@ export const SocketContextProvider = ({ children }) => {
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
 
-  // Use a ref for activeConversationId to prevent re-running the main useEffect
-  // when only activeConversationId changes, but still allowing access to its latest value.
   const activeConversationIdRef = useRef(activeConversationId);
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
@@ -66,57 +64,64 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewFeedPosts(true);
       });
 
-      // --- CRITICAL CHANGE FOR NEW MESSAGES ---
       newSocket.on("newMessage", (newMessage) => {
-        // Update the specific conversation's messages cache
-        // Use the actual conversationId from the newMessage object
+        const targetConversationId = newMessage.conversationId;
+        const queryKey = ["messages", targetConversationId];
 
-        queryClient.setQueryData(["messages", newMessage.conversationId], (oldData) => {
-          if (!oldData) {
-            return { pages: [[newMessage]], pageParams: [1] };
-          }
+        const isMessageForCurrentlyActiveChat =
+          activeConversationIdRef.current === targetConversationId;
 
-          const newData = { ...oldData };
-          newData.pages = [...oldData.pages];
-          if (newData.pages.length === 0) newData.pages.push([]);
-
-          const firstPageMessages = newData.pages[0].filter((msg) => {
-            // If the incoming message has a tempId and matches an existing optimistic message's tempId,
-            // filter out the existing optimistic message.
-            if (
-              newMessage.tempId &&
-              msg.tempId === newMessage.tempId &&
-              msg.isOptimistic
-            ) {
-              return false; // Remove the optimistic message
+        if (isMessageForCurrentlyActiveChat) {
+          queryClient.setQueryData(queryKey, (oldData) => {
+            if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+              return { pages: [[newMessage]], pageParams: [1] };
             }
-            // Also, prevent true duplicates based on the real _id from the server
-            if (msg._id === newMessage._id) {
-              return false; // This is a true duplicate, remove the existing one (shouldn't happen with tempId logic but good fallback)
-            }
-            return true; // Keep other messages
+
+            const newData = { ...oldData };
+            newData.pages = [...oldData.pages]; // Ensure immutability
+
+            // Assuming pages[0] is the most recent page in your flatMap
+            const mostRecentPageMessages = [...newData.pages[0]].filter((msg) => {
+              // Filter out optimistic message if this new message is its server-confirmed version (using tempId if available)
+              // Note: newMessage from socket usually won't have tempId, but good to be defensive
+              if (
+                newMessage.tempId &&
+                msg.tempId === newMessage.tempId &&
+                msg.isOptimistic
+              ) {
+                return false;
+              }
+              // Filter out exact duplicates by _id (shouldn't happen with server-assigned unique IDs, but defensive)
+              if (msg._id === newMessage._id) {
+                return false;
+              }
+              return true;
+            });
+
+            newData.pages[0] = [...mostRecentPageMessages, newMessage];
+            return newData;
           });
 
-          // Add the new, real message
-          newData.pages[0] = [...firstPageMessages, newMessage];
-          return newData;
-        });
+          // After immediate UI update, invalidate for a background refetch
+          // This ensures full consistency with the server's data without blocking.
+          queryClient.invalidateQueries({
+            queryKey,
+            exact: true,
+            refetchType: "background", // Triggers refetch but doesn't block UI
+          });
+        } else {
+          // If message is for an inactive chat, just invalidate.
+          // This ensures a fresh fetch when that chat is opened later, preventing flicker.
+          queryClient.invalidateQueries({ queryKey, exact: true });
+        }
 
-        // Invalidate conversation list to update last message, unread counts, etc.
+        // Always invalidate conversations for sidebar updates (unread counts, last message)
         queryClient.invalidateQueries(["conversations"]);
-
-        // Optional: If the new message is for the *currently active* chat,
-        // and the user is NOT at the bottom, you might want to show a "New Message" button
-        // or trigger a subtle scroll. However, your ChatWindow already handles this.
-        // We only add the data here; the ChatWindow's useEffects will pick it up.
       });
-      // --- END CRITICAL CHANGE ---
 
-      // --- REVISED messageReacted and messageDeleted handlers ---
-      // Apply the same principle: target the specific conversation's messages
       newSocket.on("messageReacted", (updatedMessage) => {
         queryClient.setQueryData(
-          ["messages", updatedMessage.conversationId], // Target specific conversation
+          ["messages", updatedMessage.conversationId],
           (oldData) => {
             if (!oldData) return oldData;
 
@@ -128,25 +133,21 @@ export const SocketContextProvider = ({ children }) => {
             return { ...oldData, pages: updatedPages };
           }
         );
-        queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]); // More specific invalidation
+        queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
         queryClient.invalidateQueries(["conversations"]);
       });
 
       newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
-        queryClient.setQueryData(
-          ["messages", conversationId], // Target specific conversation
-          (oldData) => {
-            if (!oldData) return oldData;
-            const updatedPages = oldData.pages.map((page) =>
-              page.filter((message) => message._id !== messageId)
-            );
-            return { ...oldData, pages: updatedPages };
-          }
-        );
-        queryClient.invalidateQueries(["conversations", conversationId]); // More specific invalidation
+        queryClient.setQueryData(["messages", conversationId], (oldData) => {
+          if (!oldData) return oldData;
+          const updatedPages = oldData.pages.map((page) =>
+            page.filter((message) => message._id !== messageId)
+          );
+          return { ...oldData, pages: updatedPages };
+        });
+        queryClient.invalidateQueries(["conversations", conversationId]);
         queryClient.invalidateQueries(["conversations"]);
       });
-      // --- END REVISION ---
 
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);

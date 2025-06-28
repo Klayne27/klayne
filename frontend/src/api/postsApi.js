@@ -9,7 +9,6 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) =>
   return data;
 };
 
-
 export const createPostApi = async (text, img) => {
   const res = await fetch("/api/posts/create", {
     method: "POST",
@@ -46,7 +45,6 @@ export const likePostApi = async (post) => {
   }
   return data;
 };
-
 
 export const fetchPostApi = async (postId) => {
   const res = await fetch(`/api/posts/${postId}`);

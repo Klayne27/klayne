@@ -59,6 +59,7 @@ const ChatWindow = ({
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
+    isFetching,
   } = useFetchMessages(selectedConversation);
 
   const handleOptimisticScroll = useCallback(() => {
@@ -81,6 +82,59 @@ const ChatWindow = ({
     }
   }, []);
 
+  // This ref controls the *initial* scroll on conversation load/switch.
+  const shouldScrollOnFirstFullLoad = useRef(true);
+  const prevActualConversationIdRef = useRef(actualConversationId); // To detect conversation changes
+
+  // Scroll logic using useLayoutEffect
+  useLayoutEffect(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
+
+    // Detect if conversation just changed
+    const conversationChanged =
+      prevActualConversationIdRef.current !== actualConversationId;
+    if (conversationChanged) {
+      shouldScrollOnFirstFullLoad.current = true; // Reset flag for new conversation
+      prevActualConversationIdRef.current = actualConversationId; // Update ref
+    }
+
+    // Condition 1: Initial load/conversation switch has fully settled (no more fetching).
+    // isFetching covers both initial load and background refetches.
+    const isReadyForInitialScroll =
+      shouldScrollOnFirstFullLoad.current &&
+      !isLoading &&
+      !isFetching &&
+      messages.length > 0;
+
+    // Condition 2: An optimistic message was sent, or an incoming message arrived,
+    // AND the user is near the bottom.
+    const scrollThreshold = 100;
+    const isUserAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+    // Only trigger new message scroll if it's not the initial load and a new message was added,
+    // or if shouldOptimisticScroll is specifically requested.
+    const isNewMessageCausedScroll =
+      shouldOptimisticScroll ||
+      (isUserAtBottom && messages.length > 0 && !conversationChanged);
+
+    if (isReadyForInitialScroll || isNewMessageCausedScroll) {
+      scrollToBottom();
+      // Reset flags after scrolling
+      shouldScrollOnFirstFullLoad.current = false;
+      setShouldOptimisticScroll(false);
+      setShowNewMessageButton(false);
+    }
+  }, [
+    messages.length, // Trigger when messages array changes (new messages added)
+    isLoading, // Trigger when initial loading finishes
+    isFetching, // Trigger when background refetch finishes
+    shouldOptimisticScroll, // Trigger for immediate optimistic scrolls
+    actualConversationId, // Important to trigger for new conversations
+    scrollToBottom,
+  ]);
+
   useEffect(() => {
     if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
       const id = setTimeout(() => {
@@ -98,20 +152,6 @@ const ChatWindow = ({
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
 
-  useEffect(() => {
-    const listEl = messageListRef.current;
-    if (!listEl) return;
-
-    const scrollThreshold = 100;
-
-    const isAtBottom =
-      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
-
-    if (isAtBottom || shouldScrollToBottomRef.current) {
-      scrollToBottom();
-      shouldScrollToBottomRef.current = false; // Reset the flag after scrolling
-    }
-  }, [messages.length, scrollToBottom]); // Depend on messages.length to detect new messages
 
   useEffect(() => {
     if (actualConversationId) {
@@ -125,14 +165,12 @@ const ChatWindow = ({
       const listEl = messageListRef.current;
       if (listEl) {
         const { scrollTop, scrollHeight, clientHeight } = listEl;
-        const scrollThreshold = 100; // Match this with the threshold used above
+        const scrollThreshold = 100;
 
-        // Hide button if user manually scrolls close enough to the bottom
         if (scrollHeight - scrollTop <= clientHeight + scrollThreshold) {
           setShowNewMessageButton(false);
         }
 
-        // ... (existing logic for fetching older messages) ...
         if (scrollTop < 200 && hasNextPage && !isFetchingNextPage) {
           scrollHeightBeforeFetch.current = listEl.scrollHeight;
           fetchNextPage();
@@ -149,15 +187,15 @@ const ChatWindow = ({
         currentMessageListRef.removeEventListener("scroll", handleScroll);
       }
     };
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage, setShowNewMessageButton]); // Ensure setShowNewMessageButton is also a dependency if you put it inside handleScroll
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, setShowNewMessageButton]);
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
 
     const wasAtTopOrNear =
       scrollHeightBeforeFetch.current > 0 &&
-      (listEl.scrollHeight - scrollHeightBeforeFetch.current <= 0 || // No new content, or already handled
-        listEl.scrollTop <= 50); // Or whatever small threshold defines "near the top"
+      (listEl.scrollHeight - scrollHeightBeforeFetch.current <= 0 ||
+        listEl.scrollTop <= 50);
 
     if (
       listEl &&
@@ -218,9 +256,9 @@ const ChatWindow = ({
 
               const firstPageMessages = newData.pages[0].filter(
                 (msg) =>
-                  msg._id !== newMessage._id && // Filter out if real message matches existing ID
+                  msg._id !== newMessage._id &&
                   (msg.isOptimistic !== true ||
-                    msg._id !== currentOptimisticIdRef.current) // Filter out old optimistic
+                    msg._id !== currentOptimisticIdRef.current)
               );
 
               newData.pages[0] = [...firstPageMessages, newMessage];
@@ -236,22 +274,16 @@ const ChatWindow = ({
                 listEl.scrollHeight - listEl.scrollTop <=
                 listEl.clientHeight + scrollThreshold;
 
-              // Logic for the new message button:
-              // If the message is from the other user AND the current user is NOT at the bottom
               if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
                 if (!isAtBottom) {
-                  setShowNewMessageButton(true); // Show the button!
+                  setShowNewMessageButton(true);
                 } else {
-                  // If a new message from other user arrives and we are at the bottom,
-                  // then automatically scroll down and ensure button is hidden.
-                  shouldScrollToBottomRef.current = true; // Trigger auto-scroll for incoming messages if already at bottom
-                  setShowNewMessageButton(false); // Hide button if we auto-scroll
+                  shouldScrollToBottomRef.current = true;
+                  setShowNewMessageButton(false);
                 }
               } else {
-                // If it's the current user's message (confirmation of send)
-                // Ensure the button is hidden, as we're handling this with optimistic scroll
                 setShowNewMessageButton(false);
-                shouldScrollToBottomRef.current = true; // Still trigger auto-scroll for own messages
+                shouldScrollToBottomRef.current = true;
               }
             }
           }
@@ -321,22 +353,22 @@ const ChatWindow = ({
         }
       };
 
-      const handleMessageReacted = (updatedMessage) => {
-        if (updatedMessage.conversationId === actualConversationId) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-            if (!oldData) return oldData;
+      // const handleMessageReacted = (updatedMessage) => {
+      //   if (updatedMessage.conversationId === actualConversationId) {
+      //     queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+      //       if (!oldData) return oldData;
 
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((message) =>
-                message._id === updatedMessage._id ? updatedMessage : message
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          });
-        }
-        queryClient.invalidateQueries(["conversations"]);
-        queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
-      };
+      //       const updatedPages = oldData.pages.map((page) =>
+      //         page.map((message) =>
+      //           message._id === updatedMessage._id ? updatedMessage : message
+      //         )
+      //       );
+      //       return { ...oldData, pages: updatedPages };
+      //     });
+      //   }
+      //   queryClient.invalidateQueries(["conversations"]);
+      //   queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
+      // };
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
@@ -381,8 +413,8 @@ const ChatWindow = ({
   );
 
   const handleNewMessageButtonClick = useCallback(() => {
-    scrollToBottom(); // Use your existing scrollToBottom function
-    setShowNewMessageButton(false); // Hide the button after clicking
+    scrollToBottom();
+    setShowNewMessageButton(false);
   }, [scrollToBottom]);
 
   return (
