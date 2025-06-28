@@ -33,16 +33,16 @@ function MessageInput({
   const { authUser: currentUser } = useAuthUser();
 
   // --- START: NEW useEffect FOR INITIAL FOCUS IN MessageInput.jsx ---
-  useEffect(() => {
+  // useEffect(() => {
 
-    if (messageInputRef.current) {
-      const focusTimer = setTimeout(() => {
-        messageInputRef.current.focus();
-      }, 0);
+  //   if (messageInputRef.current) {
+  //     const focusTimer = setTimeout(() => {
+  //       messageInputRef.current.focus();
+  //     }, 0);
 
-      return () => clearTimeout(focusTimer); // Cleanup the timer on unmount
-    }
-  }, [messageInputRef]); // Dependency on messageInputRef to ensure it's available
+  //     return () => clearTimeout(focusTimer); // Cleanup the timer on unmount
+  //   }
+  // }, [messageInputRef]); // Dependency on messageInputRef to ensure it's available
 
   // Functions to emit typing/stopTyping events via socket
   const emitTyping = useCallback(() => {
