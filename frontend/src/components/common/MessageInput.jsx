@@ -101,6 +101,9 @@ function MessageInput({
       return;
     }
 
+    const wasInputFocused = messageInputRef.current === document.activeElement;
+
+
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
     const messagePayload = {
@@ -137,7 +140,7 @@ function MessageInput({
 
       // Optimistically focus the input AFTER the state has been set to empty.
       // Use setTimeout(0) to ensure the DOM has updated before attempting to focus.
-      if (messageInputRef.current) {
+      if (messageInputRef.current && wasInputFocused) {
         setTimeout(() => {
           messageInputRef.current.focus();
         }, 0);

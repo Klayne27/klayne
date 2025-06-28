@@ -15,7 +15,7 @@ export const SocketContextProvider = ({ children }) => {
   const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser();
   const [socket, setSocket] = useState(null);
   const [onlineUsers, setOnlineUsers] = useState([]);
-  const [activeConversationId, setActiveConversationId] = useState(null); // Keep this state, it's useful
+  const [activeConversationId, setActiveConversationId] = useState(null);
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
@@ -78,7 +78,7 @@ export const SocketContextProvider = ({ children }) => {
             }
 
             const newData = { ...oldData };
-            newData.pages = [...oldData.pages]; // Ensure immutability
+            newData.pages = [...oldData.pages];
 
             const mostRecentPageMessages = [...newData.pages[0]].filter((msg) => {
               if (

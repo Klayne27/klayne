@@ -1,5 +1,3 @@
-// hooks/messagesHooks/useSendMessage.js
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
