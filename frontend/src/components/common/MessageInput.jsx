@@ -20,6 +20,7 @@ function MessageInput({
   selectedConversation, // Kept this prop, though not directly used for typing logic
   socket,
   isTypingOtherUser,
+  // Removed onMessageSent prop here as MessageInput will manage its own focus
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -30,6 +31,18 @@ function MessageInput({
   const emojiPickerRef = useRef(null);
   const typingTimeoutRef = useRef(null); // Ref to manage typing debounce
   const { authUser: currentUser } = useAuthUser();
+
+  // --- START: NEW useEffect FOR INITIAL FOCUS IN MessageInput.jsx ---
+  useEffect(() => {
+
+    if (messageInputRef.current) {
+      const focusTimer = setTimeout(() => {
+        messageInputRef.current.focus();
+      }, 0);
+
+      return () => clearTimeout(focusTimer); // Cleanup the timer on unmount
+    }
+  }, [messageInputRef]); // Dependency on messageInputRef to ensure it's available
 
   // Functions to emit typing/stopTyping events via socket
   const emitTyping = useCallback(() => {
@@ -74,6 +87,7 @@ function MessageInput({
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
+    // Clear typing timeout and emit stop typing immediately
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -89,37 +103,50 @@ function MessageInput({
 
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
-    if (messageInputRef.current) {
-      messageInputRef.current.focus();
-    }
-
     const messagePayload = {
       recipientId: otherUser._id,
       message: messageInput.trim(),
-      img: null,
+      img: null, // Will be updated if imageFile exists
       conversationId: actualConversationId,
-      repliedTo: repliedToId,
+      repliedTo: repliedToId, // <--- UNCOMMENTED AND CORRECTED THIS LINE
     };
 
-    if (imageFile) {
-      const reader = new FileReader();
-      reader.readAsDataURL(imageFile);
-      reader.onloadend = () => {
-        messagePayload.img = reader.result;
-        sendMessage(messagePayload);
-      };
-      reader.onerror = (error) => {
-        console.error("Error converting image:", error);
-        toast.error("Failed to process image.");
-      };
-    } else {
-      sendMessage(messagePayload);
-    }
+    try {
+      if (imageFile) {
+        const reader = new FileReader();
+        // Await the FileReader result directly using a Promise wrapper
+        const imageDataUrl = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result);
+          reader.onerror = reject;
+          reader.readAsDataURL(imageFile);
+        });
+        messagePayload.img = imageDataUrl;
+      }
 
-    setMessageInput("");
-    setImageFile(null);
-    setReplyingToMessage(null);
-    currentOptimisticIdRef.current = null;
+      // --- START: MESSAGESEND & FOCUSING CHANGES ---
+      // Call sendMessage (mutate from useMutation). Do NOT await it here
+      // as it's an optimistic update. The `onMutate` in useSendMessage handles
+      // adding the message to the cache immediately.
+      sendMessage(messagePayload);
+
+      // Clear the input fields immediately for an optimistic feel
+      setMessageInput("");
+      setImageFile(null);
+      setReplyingToMessage(null);
+      currentOptimisticIdRef.current = null;
+
+      // Optimistically focus the input AFTER the state has been set to empty.
+      // Use setTimeout(0) to ensure the DOM has updated before attempting to focus.
+      if (messageInputRef.current) {
+        setTimeout(() => {
+          messageInputRef.current.focus();
+        }, 0);
+      }
+      // --- END: MESSAGESEND & FOCUSING CHANGES ---
+    } catch (error) {
+      console.error("Error during message send process:", error);
+      toast.error("Failed to send message."); // General error toast
+    }
   };
 
   const onEmojiClick = (emojiObject) => {
@@ -165,6 +192,7 @@ function MessageInput({
       emitStopTyping();
     };
   }, [actualConversationId, emitStopTyping]);
+
   return (
     <>
       {imageFile && (
@@ -208,7 +236,7 @@ function MessageInput({
         className="p-2 border-gray-700 bg-black flex items-center relative"
       >
         {isTypingOtherUser && (
-          <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
+          <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
             <span className="animate-pulse font-semibold">
               {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
                 ?.fullName || "Other user"}{" "}
@@ -271,7 +299,7 @@ function MessageInput({
             onChange={handleMessageInputChange}
             placeholder="Start a new message"
             className="flex-1 py-2 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
-            disabled={isSendingMessage}
+            // disabled={isSendingMessage}
             ref={messageInputRef}
           />
 

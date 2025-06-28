@@ -91,7 +91,7 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    const messageToSend = { ...newMessage.toObject() }; // Convert Mongoose document to plain object
+    const messageToSend = { ...newMessage.toObject() };
     if (tempId) {
       messageToSend.tempId = tempId;
     }

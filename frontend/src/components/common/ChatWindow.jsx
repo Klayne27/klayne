@@ -152,7 +152,6 @@ const ChatWindow = ({
     }
   }, [shouldOptimisticScroll, scrollToBottom]);
 
-
   useEffect(() => {
     if (actualConversationId) {
       shouldScrollToBottomRef.current = true;
@@ -353,29 +352,11 @@ const ChatWindow = ({
         }
       };
 
-      // const handleMessageReacted = (updatedMessage) => {
-      //   if (updatedMessage.conversationId === actualConversationId) {
-      //     queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-      //       if (!oldData) return oldData;
-
-      //       const updatedPages = oldData.pages.map((page) =>
-      //         page.map((message) =>
-      //           message._id === updatedMessage._id ? updatedMessage : message
-      //         )
-      //       );
-      //       return { ...oldData, pages: updatedPages };
-      //     });
-      //   }
-      //   queryClient.invalidateQueries(["conversations"]);
-      //   queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]);
-      // };
-
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
-      // socket.on("messageReacted", handleMessageReacted);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
@@ -383,7 +364,6 @@ const ChatWindow = ({
         socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
-        // socket.off("messageReacted", handleMessageReacted);
       };
     }
   }, [

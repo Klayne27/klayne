@@ -80,10 +80,7 @@ export const SocketContextProvider = ({ children }) => {
             const newData = { ...oldData };
             newData.pages = [...oldData.pages]; // Ensure immutability
 
-            // Assuming pages[0] is the most recent page in your flatMap
             const mostRecentPageMessages = [...newData.pages[0]].filter((msg) => {
-              // Filter out optimistic message if this new message is its server-confirmed version (using tempId if available)
-              // Note: newMessage from socket usually won't have tempId, but good to be defensive
               if (
                 newMessage.tempId &&
                 msg.tempId === newMessage.tempId &&
@@ -91,7 +88,6 @@ export const SocketContextProvider = ({ children }) => {
               ) {
                 return false;
               }
-              // Filter out exact duplicates by _id (shouldn't happen with server-assigned unique IDs, but defensive)
               if (msg._id === newMessage._id) {
                 return false;
               }
@@ -102,20 +98,15 @@ export const SocketContextProvider = ({ children }) => {
             return newData;
           });
 
-          // After immediate UI update, invalidate for a background refetch
-          // This ensures full consistency with the server's data without blocking.
           queryClient.invalidateQueries({
             queryKey,
             exact: true,
             refetchType: "background", // Triggers refetch but doesn't block UI
           });
         } else {
-          // If message is for an inactive chat, just invalidate.
-          // This ensures a fresh fetch when that chat is opened later, preventing flicker.
           queryClient.invalidateQueries({ queryKey, exact: true });
         }
 
-        // Always invalidate conversations for sidebar updates (unread counts, last message)
         queryClient.invalidateQueries(["conversations"]);
       });
 
