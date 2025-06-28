@@ -302,14 +302,13 @@ function MessageInput({
             onChange={handleMessageInputChange}
             placeholder="Start a new message"
             className="flex-1 py-2 bg-gray-800 rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
-            // disabled={isSendingMessage}
             ref={messageInputRef}
           />
 
           <button
             type="submit"
             disabled={isSendingMessage || (!messageInput.trim() && !imageFile)}
-            className={`absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+            className={`hidden md:block absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
               messageInput.trim() || imageFile
                 ? "bg-primary text-white"
                 : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
