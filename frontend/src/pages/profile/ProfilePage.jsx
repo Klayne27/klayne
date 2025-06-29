@@ -27,6 +27,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [modalType, setModalType] = useState(null);
+  // const [showFullProfileContent, setShowFullProfileContent] = useState(false)
+  // const [showFullProfileHeader, setShowFullProfileHeader] = useState(false)
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
@@ -60,17 +62,13 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const isMyProfile = authUser?._id === user?._id;
   const amIFollowing = authUser?.following?.includes(user?._id);
 
-  // isBlockedByYou: You (authUser) blocked THIS user (profile being viewed) - comes from hook
-  // hasBlockedYou: THIS user (profile being viewed) blocked YOU (authUser) - comes from hook
-
-  // Combined blocking status for disabling interactions.
-  // This is true if EITHER you blocked them OR they blocked you.
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
 
   const handleBlockUnblock = () => {
     if (!user?._id) return;
     blockUnblockUser(user._id);
   };
+
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -128,250 +126,269 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   };
 
   // Determine the message to display and control profile rendering
-  let displayMessage = null;
-  let showFullProfile = false; // Flag to control rendering of the main profile section
+  let displayMessage = ''
+  let showFullProfileHeader = false; // New flag for just the header
+  let showFullProfileContent = false; // New flag for actual content (posts, followers, etc.)
 
   if (isLoading || isRefetching) {
-    // Still fetching data, will show skeleton below
+    // While loading, show skeleton and no messages yet
+    // showFullProfileHeader and showFullProfileContent remain false by default.
   } else if (hasBlockedYou) {
-    // This check now relies on the `hasBlockedYou` flag from the hook
+    // Scenario 1: The user *viewing* this profile is blocked by the *profile owner*.
+    // Show a message, but no profile content or header.
     displayMessage =
       "You are blocked by this user. You cannot view their profile content.";
-    // showFullProfile remains false, preventing the rest of the profile from rendering.
-    showFullProfile = true
+    showFullProfileHeader = false; // Hide header
+    showFullProfileContent = false; // Hide content
   } else if (!user) {
-    // If user is null, and not blocked by them (already handled)
-    displayMessage = error || "User not found."; // Use error message if available, otherwise default
+    // Scenario 2: User not found (and not due to blocking, handled above).
+    displayMessage = error || "User not found.";
+    showFullProfileHeader = false; // Hide header
+    showFullProfileContent = false; // Hide content
   } else if (isBlockedByYou) {
-    // If YOU blocked THEM
+    // Scenario 3: The *current user* has blocked the *profile owner*.
+    // Show the header (as the blocker, you can see basic info), but no content.
     displayMessage = "Content is unavailable because you have blocked this user.";
-    showFullProfile = true; // Still render the main profile header for the blocker
+    showFullProfileHeader = true; // Show header
+    showFullProfileContent = false; // Hide content
   } else {
-    // No blocking relationship, user exists, no errors. Render full profile.
-    showFullProfile = true;
+    // Scenario 4: Normal interaction (no blocking relationship or you are the profile owner).
+    showFullProfileHeader = true; // Show header
+    showFullProfileContent = true; // Show content
   }
 
   return (
     <>
       <ScrollToTop />
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        {/* Skeleton Loader during initial fetch/refetch, but only if not blocked by them */}
-        {(isLoading || isRefetching) && !hasBlockedYou && <ProfileHeaderSkeleton />}
+        {/* Skeleton Loader during initial fetch/refetch, but only if we expect to show a profile. */}
+        {!hasBlockedYou && (isLoading || isRefetching) && !isError && (
+          <ProfileHeaderSkeleton />
+        )}
 
-        {/* Display messages for user not found, blocked, or other errors */}
-
-        {/* Render the full profile content ONLY if showFullProfile is true */}
-        {showFullProfile &&
-          user && ( // `user` check is important as it might be null if 'User not found'
-            <>
-              <div className="flex gap-10 px-4 py-2 items-center">
-                <button
-                  onClick={() => navigate(-1)}
-                  className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
+        {/* Render the profile header if allowed */}
+        {showFullProfileHeader && user && (
+          <>
+            <div className="flex gap-10 px-4 py-2 items-center">
+              <button
+                onClick={() => navigate(-1)}
+                className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
+              >
+                <FaArrowLeft className="w-4 h-4" />
+              </button>
+              <div className="flex flex-col">
+                <p className="font-bold text-lg">{user?.fullName}</p>
+                <span className="text-sm text-slate-500">
+                  {feedType === "posts"
+                    ? `${userPostsCount} posts`
+                    : `${userLikedPostsCount} likes`}
+                </span>{" "}
+              </div>
+            </div>
+            <div className="relative group/cover">
+              <img
+                src={coverImg || user?.coverImg || "/cover.png"}
+                className="h-52 w-full object-cover cursor-pointer"
+                alt="cover image"
+                onClick={(e) => handleImageClick(user?.coverImg, e)}
+                loading="lazy"
+              />
+              {isMyProfile && (
+                <div
+                  className="absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
+                  onClick={() => coverImgRef.current.click()}
                 >
-                  <FaArrowLeft className="w-4 h-4" />
-                </button>
-                <div className="flex flex-col">
-                  <p className="font-bold text-lg">{user?.fullName}</p>
-                  <span className="text-sm text-slate-500">
-                    {feedType === "posts"
-                      ? `${userPostsCount} posts`
-                      : `${userLikedPostsCount} likes`}
-                  </span>{" "}
+                  <MdEdit className="w-5 h-5 text-white" />
+                </div>
+              )}
+
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                ref={coverImgRef}
+                onChange={(e) => handleImgChange(e, "coverImg")}
+              />
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                ref={profileImgRef}
+                onChange={(e) => handleImgChange(e, "profileImg")}
+              />
+              <div className="avatar absolute -bottom-16 left-4">
+                <div className="w-32 rounded-full relative group/avatar">
+                  <img
+                    src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+                    alt="user avatar"
+                    className="cursor-pointer"
+                    onClick={(e) => handleImageClick(user?.profileImg, e)}
+                    loading="lazy"
+                  />
+                  {isMyProfile && (
+                    <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
+                      <MdEdit
+                        className="w-4 h-4 text-white"
+                        onClick={() => profileImgRef.current.click()}
+                      />
+                    </div>
+                  )}
                 </div>
               </div>
-              <div className="relative group/cover">
-                <img
-                  src={coverImg || user?.coverImg || "/cover.png"}
-                  className="h-52 w-full object-cover cursor-pointer"
-                  alt="cover image"
-                  onClick={(e) => handleImageClick(user?.coverImg, e)}
-                  loading="lazy"
-                />
-                {isMyProfile && (
-                  <div
-                    className="absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
-                    onClick={() => coverImgRef.current.click()}
-                  >
-                    <MdEdit className="w-5 h-5 text-white" />
-                  </div>
-                )}
+            </div>
+            <div className="flex justify-end px-4 mt-5 gap-2">
+              {isMyProfile && <EditProfileModal authUser={authUser} />}
 
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  ref={coverImgRef}
-                  onChange={(e) => handleImgChange(e, "coverImg")}
-                />
-                <input
-                  type="file"
-                  hidden
-                  accept="image/*"
-                  ref={profileImgRef}
-                  onChange={(e) => handleImgChange(e, "profileImg")}
-                />
-                <div className="avatar absolute -bottom-16 left-4">
-                  <div className="w-32 rounded-full relative group/avatar">
-                    <img
-                      src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
-                      alt="user avatar"
-                      className="cursor-pointer"
-                      onClick={(e) => handleImageClick(user?.profileImg, e)}
-                      loading="lazy"
-                    />
-                    {isMyProfile && (
-                      <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
-                        <MdEdit
-                          className="w-4 h-4 text-white"
-                          onClick={() => profileImgRef.current.click()}
-                        />
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-              <div className="flex justify-end px-4 mt-5 gap-2">
-                {isMyProfile && <EditProfileModal authUser={authUser} />}
-
-                {/* Block/Unblock Button: Always visible if not own profile and they haven't blocked you */}
-                {!isMyProfile && !hasBlockedYou && (
-                  <button
-                    className={`font-bold border px-4 rounded-full py-1.5 transition duration-200
+              {/* Block/Unblock Button logic remains the same, it correctly uses isBlockedByYou and hasBlockedYou */}
+              {!isMyProfile && !hasBlockedYou && (
+                <button
+                  className={`font-bold border px-4 rounded-full py-1.5 transition duration-200
                                         ${
                                           isBlockedByYou
                                             ? "bg-red-600 text-white hover:bg-red-700"
                                             : "bg-gray-700 text-white hover:bg-gray-800"
                                         }
                                     `}
-                    onClick={handleBlockUnblock}
-                    disabled={isBlocking}
-                  >
-                    {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
-                  </button>
-                )}
-
-                {/* Message button conditional rendering: Hidden if any blocking relationship exists */}
-                {!isMyProfile && amIFollowing && !isBlockingRelationship && (
-                  <button
-                    onClick={handleMessageClick}
-                    className=" p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black"
-                    disabled={isBlockingRelationship}
-                  >
-                    <CiMail size={20} strokeWidth={1} />
-                  </button>
-                )}
-
-                {/* Follow/Unfollow button conditional rendering: Hidden if any blocking relationship exists */}
-                {!isMyProfile && !isBlockingRelationship && (
-                  <button
-                    className={`${
-                      !amIFollowing
-                        ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
-                        : "hover:bg-secondary"
-                    } font-bold border px-4 rounded-full py-1.5 transition duration-200`}
-                    onClick={() => follow(user?._id)}
-                    disabled={isPending || isBlockingRelationship}
-                  >
-                    {isPending && "Loading..."}
-                    {!isPending && amIFollowing && "Unfollow"}
-                    {!isPending && !amIFollowing && "Follow"}
-                  </button>
-                )}
-
-                {(coverImg || profileImg) && (
-                  <button
-                    className=" rounded-full px-4 py-1.5 bg-primary text-white font-semibold hover:bg-[#1d9cf0d8] transition duration-300"
-                    onClick={async () => {
-                      await updateProfile({
-                        coverImg,
-                        profileImg,
-                      });
-                      setProfileImg(null);
-                      setCoverImg(null);
-                    }}
-                    disabled={isUpdatingProfile}
-                  >
-                    {isUpdatingProfile ? "Updating..." : "Update"}
-                  </button>
-                )}
-              </div>
-
-              <div className="flex flex-col gap-4 mt-14 px-4">
-                <div className="flex flex-col">
-                  <span className="font-bold text-lg">{user?.fullName}</span>
-                  <span className="text-sm text-slate-500">@{user?.username}</span>
-                  <span className="text-sm my-1">{user?.bio}</span>
-                </div>
-
-                <div className="flex gap-2 flex-wrap">
-                  {user?.link && (
-                    <div className="flex gap-1 items-center ">
-                      <>
-                        <FaLink className="w-3 h-3 text-slate-500" />
-                        <a
-                          href={user?.link}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-primary hover:underline"
-                        >
-                          {user?.link.slice(12)}
-                        </a>
-                      </>
-                    </div>
-                  )}
-                  <div className="flex gap-2 items-center">
-                    <IoCalendarOutline className="w-4 h-4 text-slate-500" />
-                    <span className="text-sm text-slate-500">
-                      {formatMemberSinceDate(user?.createdAt)}
-                    </span>
-                  </div>
-                </div>
-                <div className="flex gap-4">
-                  {" "}
-                  <div
-                    className="flex gap-1 items-center cursor-pointer hover:underline"
-                    onClick={() => openFollowListModal("following")}
-                  >
-                    <span className="font-bold text-sm">{user?.following?.length}</span>{" "}
-                    <span className="text-slate-500 text-sm">Following</span>{" "}
-                  </div>
-                  <div
-                    className="flex gap-1 items-center cursor-pointer hover:underline"
-                    onClick={() => openFollowListModal("followers")}
-                  >
-                    <span className="font-bold text-sm">{user?.followers?.length}</span>{" "}
-                    <span className="text-slate-500 text-sm">Followers</span>{" "}
-                  </div>
-                </div>
-              </div>
-              <div className="flex w-full border-b border-gray-700 mt-4">
-                <div
-                  className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
-                  onClick={() => setFeedType("posts")}
+                  onClick={handleBlockUnblock}
+                  disabled={isBlocking}
                 >
-                  Posts
-                  {feedType === "posts" && (
-                    <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
-                  )}
-                </div>
-                <div
-                  className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
-                  onClick={() => setFeedType("likes")}
+                  {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
+                </button>
+              )}
+
+              {/* Message button: Only shown if not my profile, I'm following, AND no blocking relationship */}
+              {!isMyProfile && amIFollowing && !isBlockingRelationship && (
+                <button
+                  onClick={handleMessageClick}
+                  className=" p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black"
+                  disabled={isBlockingRelationship}
                 >
-                  Likes
-                  {feedType === "likes" && (
-                    <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
-                  )}
-                </div>
-              </div>
-            </>
-          )}
+                  <CiMail size={20} strokeWidth={1} />
+                </button>
+              )}
+
+              {/* Follow/Unfollow button: Only shown if not my profile AND no blocking relationship */}
+              {!isMyProfile && !isBlockingRelationship && (
+                <button
+                  className={`${
+                    !amIFollowing
+                      ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
+                      : "hover:bg-secondary"
+                  } font-bold border px-4 rounded-full py-1.5 transition duration-200`}
+                  onClick={() => follow(user?._id)}
+                  disabled={isPending || isBlockingRelationship}
+                >
+                  {isPending && "Loading..."}
+                  {!isPending && amIFollowing && "Unfollow"}
+                  {!isPending && !amIFollowing && "Follow"}
+                </button>
+              )}
+
+              {(coverImg || profileImg) && (
+                <button
+                  className=" rounded-full px-4 py-1.5 bg-primary text-white font-semibold hover:bg-[#1d9cf0d8] transition duration-300"
+                  onClick={async () => {
+                    await updateProfile({
+                      coverImg,
+                      profileImg,
+                    });
+                    setProfileImg(null);
+                    setCoverImg(null);
+                  }}
+                  disabled={isUpdatingProfile}
+                >
+                  {isUpdatingProfile ? "Updating..." : "Update"}
+                </button>
+              )}
+            </div>
+          </>
+        )}
+
+        {/* Display messages when content is not shown (user blocked by them, user not found, or you blocked them and content is hidden) */}
         {!isLoading && !isRefetching && displayMessage && (
+          // This conditional ensures the specific messages are shown when applicable
+          // It will show 'You are blocked by this user' if hasBlockedYou is true
+          // It will show 'User not found' if user is null
+          // It will show 'Content is unavailable...' if isBlockedByYou is true (and showFullProfileContent is false)
           <p className="text-center text-lg mt-4 text-slate-400">{displayMessage}</p>
         )}
 
-        {showFullProfile && user && !isBlockedByYou && (
+        {/* Render the full profile content (bio, links, followers, posts) ONLY if showFullProfileContent is true */}
+        {showFullProfileContent && user && (
+          <>
+            <div className="flex flex-col gap-4 mt-14 px-4">
+              <div className="flex flex-col">
+                <span className="font-bold text-lg">{user?.fullName}</span>
+                <span className="text-sm text-slate-500">@{user?.username}</span>
+                <span className="text-sm my-1">{user?.bio}</span>
+              </div>
+
+              <div className="flex gap-2 flex-wrap">
+                {user?.link && (
+                  <div className="flex gap-1 items-center ">
+                    <>
+                      <FaLink className="w-3 h-3 text-slate-500" />
+                      <a
+                        href={user?.link}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="text-sm text-primary hover:underline"
+                      >
+                        {user?.link.slice(12)}
+                      </a>
+                    </>
+                  </div>
+                )}
+                <div className="flex gap-2 items-center">
+                  <IoCalendarOutline className="w-4 h-4 text-slate-500" />
+                  <span className="text-sm text-slate-500">
+                    {formatMemberSinceDate(user?.createdAt)}
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-4">
+                {" "}
+                <div
+                  className="flex gap-1 items-center cursor-pointer hover:underline"
+                  onClick={() => openFollowListModal("following")}
+                >
+                  <span className="font-bold text-sm">{user?.following?.length}</span>{" "}
+                  <span className="text-slate-500 text-sm">Following</span>{" "}
+                </div>
+                <div
+                  className="flex gap-1 items-center cursor-pointer hover:underline"
+                  onClick={() => openFollowListModal("followers")}
+                >
+                  <span className="font-bold text-sm">{user?.followers?.length}</span>{" "}
+                  <span className="text-slate-500 text-sm">Followers</span>{" "}
+                </div>
+              </div>
+            </div>
+            <div className="flex w-full border-b border-gray-700 mt-4">
+              <div
+                className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
+                onClick={() => setFeedType("posts")}
+              >
+                Posts
+                {feedType === "posts" && (
+                  <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
+                )}
+              </div>
+              <div
+                className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
+                onClick={() => setFeedType("likes")}
+              >
+                Likes
+                {feedType === "likes" && (
+                  <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
+                )}
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Posts component: Only if full content is shown AND not blocked by you */}
+        {showFullProfileContent && user && !isBlockedByYou && (
           <Posts
             feedType={feedType}
             username={username}

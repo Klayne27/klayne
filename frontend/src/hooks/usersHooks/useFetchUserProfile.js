@@ -20,7 +20,7 @@ export const useFetchUserProfile = (username) => {
       return failureCount < 3;
     },
     // Use 'staleTime' for caching. Adjust as needed.
-    staleTime: 5 * 60 * 1000, // 5 minutes
+    staleTime: 0,
     cacheTime: 10 * 60 * 1000, // 10 minutes
   });
 

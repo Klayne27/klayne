@@ -2,11 +2,13 @@ import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CiSearch } from "react-icons/ci";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 
 const SearchPanel = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [debouncedQuery, setDebouncedQuery] = useState("");
-  const [showResults, setShowResults] = useState(false); 
+  const [showResults, setShowResults] = useState(false);
+  const { authUser } = useAuthUser();
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -57,31 +59,39 @@ const SearchPanel = () => {
             <p className="p-4 text-red-500 text-center">Error: {error.message}</p>
           ) : users && users.length > 0 ? (
             <>
-              {users.map((user) => (
-                <Link
-                  to={`/profile/${user.username}`}
-                  key={user._id}
-                  className="flex items-center gap-3 py-2 hover:bg-gray-800 px-2 transition-colors"
-                  onClick={() => setSearchQuery("")}
-                >
-                  <div className="avatar">
-                    <div className="w-8 rounded-full">
-                      <img
-                        src={user.profileImg || "/avatar-placeholder.png"}
-                        alt={`${user.username}'s profile`}
-                      />
+              {users.map((user) => {
+                const hasBlockedYou = user.blockedUsers.includes(authUser._id);
+
+                return (
+                  <Link
+                    to={`/profile/${user.username}`}
+                    key={user._id}
+                    className="flex items-center gap-3 py-2 hover:bg-gray-800 px-2 transition-colors"
+                    onClick={() => setSearchQuery("")}
+                  >
+                    <div className="avatar">
+                      <div className="w-8 rounded-full">
+                        <img
+                          src={
+                            hasBlockedYou || !user.profileImg
+                              ? "/avatar-placeholder.png"
+                              : user.profileImg
+                          }
+                          alt={`${user.username}'s profile`}
+                        />
+                      </div>
                     </div>
-                  </div>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-white truncate max-w-[120px]">
-                      {user.fullName}
-                    </span>
-                    <span className="text-sm text-gray-500 truncate max-w-[120px]">
-                      @{user.username}
-                    </span>
-                  </div>
-                </Link>
-              ))}
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-white truncate max-w-[120px]">
+                        {user.fullName}
+                      </span>
+                      <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                        @{user.username}
+                      </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </>
           ) : debouncedQuery && !isLoading && !isFetching && users.length === 0 ? (
             <p className="p-4 text-gray-400 text-center">No users found.</p>

@@ -32,24 +32,18 @@ export const fetchUserPofileApi = async (username) => {
   try {
     const res = await fetch(`/api/users/profile/${username}`);
 
-    // If the response is not OK, we'll check the status
     if (!res.ok) {
-      // Parse the error response to get the message and any blocking flags
       const errorData = await res.json();
 
       if (res.status === 403 && errorData.hasBlockedYou) {
-        // This is the specific "You are blocked" scenario.
-        // We return this special object instead of throwing,
-        // so React Query doesn't retry, and the frontend can read these flags.
         return {
-          user: null, // No actual user data available for a blocked user
+          user: null,
           isBlockedByYou: errorData.isBlockedByYou, // false in this case
           hasBlockedYou: errorData.hasBlockedYou, // true
           message: errorData.error, // "You are blocked by this user."
           status: 403, // Indicate the HTTP status for the frontend
         };
       } else if (res.status === 404) {
-        // Handle "User not found" explicitly
         return {
           user: null,
           message: errorData.error, // "User not found"

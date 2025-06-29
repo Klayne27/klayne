@@ -5,7 +5,6 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) =>
   const data = await res.json();
 
   if (!res.ok) throw new Error(data.error || "Something went wrong");
-  console.log(data);
   return data;
 };
 
