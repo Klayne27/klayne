@@ -39,6 +39,23 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    // --- START: NEW FIELDS FOR BLOCKING ---
+    blockedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+    blockedBy: [
+      // Users who have blocked this user
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+    // --- END: NEW FIELDS FOR BLOCKING ---
 
     profileImg: {
       type: String,

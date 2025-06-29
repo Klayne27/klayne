@@ -9,12 +9,55 @@ import { emitUnreadNotificationStatus } from "../lib/socket.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
+  const currentUserId = req.user?._id
 
   try {
     const user = await User.findOne({ username }).select("-password");
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
+
+    // --- START: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
+    let isBlockedByYou = false;
+    let hasBlockedYou = false;
+
+    if (currentUserId && currentUserId.toString() !== user._id.toString()) {
+      const currentUser = await User.findById(currentUserId).select(
+        "blockedUsers blockedBy"
+      );
+      if (currentUser) {
+        // Check if current user has blocked the viewed user
+        isBlockedByYou = currentUser.blockedUsers.includes(user._id);
+        // Check if the viewed user has blocked the current user
+        hasBlockedYou = currentUser.blockedBy.includes(user._id);
+      }
+    }
+
+    // If the current user is blocked by the target user, or vice versa,
+    // we should signify this. For "Transparency", if `user` (the profile being viewed)
+    // has blocked `currentUserId`, we need to return this information.
+    // The frontend will then display the "You are blocked" message.
+    if (hasBlockedYou) {
+      return res.status(403).json({
+        error: "You are blocked by this user.",
+        isBlockedByYou: false, // You haven't blocked them
+        hasBlockedYou: true, // They have blocked you
+        username: user.username, // Provide minimal info for transparency
+        fullName: user.fullName, // Provide minimal info for transparency
+        profileImg: user.profileImg, // For displaying the profile itself, but no content
+      });
+    }
+    // If current user blocked the other user, we can include this in the profile data
+    // to inform the frontend (e.g., to disable follow/message buttons).
+    const profileData = {
+      ...user.toObject(), // Convert mongoose document to plain object
+      isBlockedByYou: isBlockedByYou, // True if YOU blocked THEM
+      hasBlockedYou: hasBlockedYou, // True if THEY blocked YOU
+    };
+
+    res.status(200).json(profileData);
+    // --- END: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
+
     res.status(200).json(user);
   } catch (error) {
     console.log("Error in getUserProfile: ", error.message);
@@ -35,6 +78,21 @@ export const followUnfollowUser = async (req, res) => {
     if (!userToModify || !currentUser) {
       return res.status(400).json({ error: "User not found" });
     }
+
+    // --- START: BLOCKING CHECK IN FOLLOW/UNFOLLOW ---
+    // Check if current user has blocked userToModify
+    if (currentUser.blockedUsers.includes(userToModify._id)) {
+      return res
+        .status(400)
+        .json({ error: "You have blocked this user. Unblock them to follow/unfollow." });
+    }
+    // Check if userToModify has blocked current user
+    if (userToModify.blockedUsers.includes(currentUser._id)) {
+      return res
+        .status(400)
+        .json({ error: "This user has blocked you. You cannot follow them." });
+    }
+    // --- END: BLOCKING CHECK IN FOLLOW/UNFOLLOW ---
 
     const isFollowing = currentUser.following.includes(id);
 
@@ -69,6 +127,7 @@ export const getSuggestedUsers = async (req, res) => {
 
     const user = await User.findById(userId).select("following").lean();
     const usersFollowedByMe = user ? user.following : [];
+    const usersBlockedByMe = currentUser ? currentUser.blockedUsers : []; // New: get blocked users
 
     const suggestedUsers = await User.aggregate([
       {
@@ -76,7 +135,9 @@ export const getSuggestedUsers = async (req, res) => {
           _id: {
             $ne: userId,
             $nin: usersFollowedByMe,
+            $nin: usersBlockedByMe, // NEW: Not someone I have blocked
           },
+          blockedBy: { $nin: [userId] }, // Check if my ID is NOT in their blockedBy list
         },
       },
       { $sample: { size: 10 } },
@@ -231,6 +292,18 @@ export const deleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
+    // --- START: CLEANUP BLOCKING ARRAYS ON ACCOUNT DELETION ---
+    // Remove deleted user from all other users' blockedUsers and blockedBy lists
+    await User.updateMany(
+      { blockedUsers: userToDelete._id },
+      { $pull: { blockedUsers: userToDelete._id } }
+    );
+    await User.updateMany(
+      { blockedBy: userToDelete._id },
+      { $pull: { blockedBy: userToDelete._id } }
+    );
+    // --- END: CLEANUP BLOCKING ARRAYS ON ACCOUNT DELETION ---
+
     if (userToDelete.profileImg) {
       const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(profileImgId);
@@ -293,19 +366,32 @@ export const deleteUserAccount = async (req, res) => {
   }
 };
 
+// uncomment if users dont want to be searched by blocked users
 export const searchUsers = async (req, res) => {
   try {
     const { q } = req.query;
+    // const currentUserId = req.user._id; // Get the ID of the authenticated user
 
     if (!q) {
       return res.status(200).json([]);
     }
+
+    // const currentUser = await User.findById(currentUserId)
+    //   .select("blockedUsers blockedBy")
+    //   .lean();
+    // const usersBlockedByMe = currentUser ? currentUser.blockedUsers : [];
+    // const usersWhoBlockedMe = currentUser ? currentUser.blockedBy : [];
 
     const users = await User.find({
       $or: [
         { username: { $regex: q, $options: "i" } },
         { fullName: { $regex: q, $options: "i" } },
       ],
+      // _id: {
+      //   $ne: currentUserId, // Don't show self in search
+      //   $nin: usersBlockedByMe, // Don't show users I've blocked
+      //   $nin: usersWhoBlockedMe, // Don't show users who have blocked me
+      // },
     })
       .select("-password")
       .limit(10);
@@ -316,3 +402,84 @@ export const searchUsers = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+// --- START: NEW BLOCK/UNBLOCK CONTROLLER ---
+export const blockUnblockUser = async (req, res) => {
+  try {
+    const { id: userToBlockId } = req.params; // ID of the user to block/unblock
+    const currentUserId = req.user._id; // ID of the authenticated user
+
+    if (userToBlockId.toString() === currentUserId.toString()) {
+      return res.status(400).json({ error: "You cannot block yourself." });
+    }
+
+    const currentUser = await User.findById(currentUserId);
+    const userToBlock = await User.findById(userToBlockId);
+
+    if (!currentUser || !userToBlock) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    const isCurrentlyBlocked = currentUser.blockedUsers.includes(userToBlockId);
+
+    if (isCurrentlyBlocked) {
+      // UNBLOCK LOGIC
+      // Remove from current user's blockedUsers
+      await User.findByIdAndUpdate(currentUserId, { $pull: { blockedUsers: userToBlockId } });
+      // Remove current user from blocked user's blockedBy
+      await User.findByIdAndUpdate(userToBlockId, { $pull: { blockedBy: currentUserId } });
+
+      res.status(200).json({ message: "User unblocked successfully." });
+
+    } else {
+      // BLOCK LOGIC
+      // Add to current user's blockedUsers
+      await User.findByIdAndUpdate(currentUserId, { $push: { blockedUsers: userToBlockId } });
+      // Add current user to blocked user's blockedBy
+      await User.findByIdAndUpdate(userToBlockId, { $push: { blockedBy: currentUserId } });
+
+      // --- Engagement & Following Restrictions (Automatic Unfollow) ---
+      // If either user follows the other, unfollow them
+      const currentUserWasFollowing = currentUser.following.includes(userToBlockId);
+      const userToBlockWasFollowing = userToBlock.following.includes(currentUserId);
+
+      // Unfollow logic
+      if (currentUserWasFollowing) {
+        await User.findByIdAndUpdate(currentUserId, { $pull: { following: userToBlockId } });
+        await User.findByIdAndUpdate(userToBlockId, { $pull: { followers: currentUserId } });
+      }
+      if (userToBlockWasFollowing) {
+        await User.findByIdAndUpdate(userToBlockId, { $pull: { following: currentUserId } });
+        await User.findByIdAndUpdate(currentUserId, { $pull: { followers: userToBlockId } });
+      }
+
+      // DELETE WHOLE CONVERSATION/MESSAGES //
+
+      // --- Messaging Restrictions (Remove conversations and messages) ---
+      // Find and delete direct conversations between these two users
+      // const conversation = await Conversation.findOne({
+      //   participants: { $all: [currentUserId, userToBlockId] },
+      //   isGroup: false, // Ensure it's a direct message
+      // });
+
+      // if (conversation) {
+      //   await Message.deleteMany({ conversationId: conversation._id });
+      //   await Conversation.findByIdAndDelete(conversation._id);
+      //   // You might need to emit a socket event here to inform clients that a conversation was deleted
+      //   // This is crucial for real-time updates in chat window.
+      //   // For example: io.to(currentUserId).emit('conversationDeleted', conversation._id);
+      //   // And io.to(userToBlockId).emit('conversationDeleted', conversation._id);
+      //   // But this depends on your socket implementation.
+      // }
+
+      // --- Notification Blocking: Handled at source of notification creation & retrieval
+      // No explicit deletion of past notifications needed here, new ones will be blocked.
+
+      res.status(200).json({ message: "User blocked successfully." });
+    }
+  } catch (error) {
+    console.error("Error in blockUnblockUser: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+// --- END: NEW BLOCK/UNBLOCK CONTROLLER ---
