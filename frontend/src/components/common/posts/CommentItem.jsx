@@ -1,15 +1,15 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
-import { formatPostDate } from "../../utils/date";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { formatPostDate } from "../../../utils/date";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { FiTrash } from "react-icons/fi";
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa";
-import LoadingSpinner from "./LoadingSpinner";
-import { useLikeComment } from "../../hooks/commentHooks/useLikeComment";
-import { useDeleteComment } from "../../hooks/commentHooks/useDeleteComment";
-import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
-import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
-import { renderClickableText } from "../../utils/textUtils";
+import LoadingSpinner from "../LoadingSpinner";
+import { useLikeComment } from "../../../hooks/commentHooks/useLikeComment";
+import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment";
+import { useCreateComment } from "../../../hooks/commentHooks/useCreateComment";
+import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments";
+import { renderClickableText } from "../../../utils/textUtils";
 
 const CommentItem = ({
   comment,

@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 
-import Posts from "../../components/common/Posts";
+import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
 
 const HomePage = ({ openImageModal }) => {

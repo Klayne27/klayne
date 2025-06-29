@@ -1,11 +1,11 @@
 import { useEffect, useRef, useState, useCallback } from "react";
 import toast from "react-hot-toast";
-import { truncateText } from "../../utils/truncateText";
+import { truncateText } from "../../../utils/truncateText";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { MdSend } from "react-icons/md";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { FaCircle } from "react-icons/fa";
 
 function MessageInput({
@@ -14,13 +14,12 @@ function MessageInput({
   setReplyingToMessage,
   actualConversationId,
   currentOptimisticIdRef,
-  messageInputRef, // Ref for the actual text input element
+  messageInputRef,
   isSendingMessage,
-  sendMessage, // Function to send the message
-  selectedConversation, // Kept this prop, though not directly used for typing logic
+  sendMessage,
+  selectedConversation,
   socket,
   isTypingOtherUser,
-  // Removed onMessageSent prop here as MessageInput will manage its own focus
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -29,22 +28,9 @@ function MessageInput({
   const imageInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const emojiPickerRef = useRef(null);
-  const typingTimeoutRef = useRef(null); // Ref to manage typing debounce
+  const typingTimeoutRef = useRef(null);
   const { authUser: currentUser } = useAuthUser();
 
-  // --- START: NEW useEffect FOR INITIAL FOCUS IN MessageInput.jsx ---
-  // useEffect(() => {
-
-  //   if (messageInputRef.current) {
-  //     const focusTimer = setTimeout(() => {
-  //       messageInputRef.current.focus();
-  //     }, 0);
-
-  //     return () => clearTimeout(focusTimer); // Cleanup the timer on unmount
-  //   }
-  // }, [messageInputRef]); // Dependency on messageInputRef to ensure it's available
-
-  // Functions to emit typing/stopTyping events via socket
   const emitTyping = useCallback(() => {
     if (socket && actualConversationId) {
       socket.emit("typing", { conversationId: actualConversationId });
@@ -87,7 +73,6 @@ function MessageInput({
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
-    // Clear typing timeout and emit stop typing immediately
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
       typingTimeoutRef.current = null;
@@ -103,21 +88,19 @@ function MessageInput({
 
     const wasInputFocused = messageInputRef.current === document.activeElement;
 
-
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
     const messagePayload = {
       recipientId: otherUser._id,
       message: messageInput.trim(),
-      img: null, // Will be updated if imageFile exists
+      img: null,
       conversationId: actualConversationId,
-      repliedTo: repliedToId, // <--- UNCOMMENTED AND CORRECTED THIS LINE
+      repliedTo: repliedToId,
     };
 
     try {
       if (imageFile) {
         const reader = new FileReader();
-        // Await the FileReader result directly using a Promise wrapper
         const imageDataUrl = await new Promise((resolve, reject) => {
           reader.onloadend = () => resolve(reader.result);
           reader.onerror = reject;
@@ -126,29 +109,21 @@ function MessageInput({
         messagePayload.img = imageDataUrl;
       }
 
-      // --- START: MESSAGESEND & FOCUSING CHANGES ---
-      // Call sendMessage (mutate from useMutation). Do NOT await it here
-      // as it's an optimistic update. The `onMutate` in useSendMessage handles
-      // adding the message to the cache immediately.
       sendMessage(messagePayload);
 
-      // Clear the input fields immediately for an optimistic feel
       setMessageInput("");
       setImageFile(null);
       setReplyingToMessage(null);
       currentOptimisticIdRef.current = null;
 
-      // Optimistically focus the input AFTER the state has been set to empty.
-      // Use setTimeout(0) to ensure the DOM has updated before attempting to focus.
       if (messageInputRef.current && wasInputFocused) {
         setTimeout(() => {
           messageInputRef.current.focus();
         }, 0);
       }
-      // --- END: MESSAGESEND & FOCUSING CHANGES ---
     } catch (error) {
       console.error("Error during message send process:", error);
-      toast.error("Failed to send message."); // General error toast
+      toast.error("Failed to send message.");
     }
   };
 

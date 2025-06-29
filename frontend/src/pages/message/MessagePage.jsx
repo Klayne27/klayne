@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
-import ConversationsList from "../../components/common/ConversationsList";
-import ChatWindow from "../../components/common/ChatWindow";
+import ConversationsList from "../../components/common/messages/ConversationsList";
+import ChatWindow from "../../components/common/messages/ChatWindow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";

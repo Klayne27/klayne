@@ -1,12 +1,12 @@
 import React, { useCallback, forwardRef, useState } from "react";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { truncateText } from "../../utils/truncateText";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { truncateText } from "../../../utils/truncateText";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
-import { renderClickableText } from "../../utils/textUtils";
+import { renderClickableText } from "../../../utils/textUtils";
 import { BsCheck2All } from "react-icons/bs";
-import LoadingSpinner from "./LoadingSpinner";
-import { useReactToMessage } from "../../hooks/messagesHooks/useReactToMessage";
+import LoadingSpinner from "../LoadingSpinner";
+import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 
 const MessageList = forwardRef(function MessageList(
   {
@@ -145,7 +145,6 @@ const MessageList = forwardRef(function MessageList(
                     }
                   `}
               >
-                {/* Reaction Emojis */}
                 {allowedEmojis.map((emoji) => (
                   <button
                     key={emoji}
@@ -166,7 +165,6 @@ const MessageList = forwardRef(function MessageList(
                   <FaReply size={18} />
                 </button>
 
-                {/* Delete Button (only for current user's messages) */}
                 {isSentByCurrentUser && (
                   <button
                     onClick={() => handleDeleteClick(msg._id)}
@@ -189,7 +187,6 @@ const MessageList = forwardRef(function MessageList(
                   isSentByCurrentUser ? "justify-end" : "justify-start"
                 } items-start group relative`}
               >
-                {/* Message Bubble Content */}
                 <div
                   className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative 
                     ${
@@ -257,7 +254,6 @@ const MessageList = forwardRef(function MessageList(
                   </span>
                 )}
               </div>
-              {/* Display Reactions */}
               {Object.keys(groupedReactions || {}).length > 0 && (
                 <div
                   className={`flex gap-1 -bottom-3 items-center py-1 rounded-full text-xs font-semibold
@@ -277,7 +273,6 @@ const MessageList = forwardRef(function MessageList(
                             ? "bg-primary/30 border-primary border"
                             : "bg-gray-800 border border-gray-800"
                         }`}
-                        // You can add a tooltip here to show user names
                         title={
                           data.users.length > 0
                             ? `Reacted by: ${data.users.join(", ")}`

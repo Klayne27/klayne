@@ -101,7 +101,7 @@ export const SocketContextProvider = ({ children }) => {
           queryClient.invalidateQueries({
             queryKey,
             exact: true,
-            refetchType: "background", // Triggers refetch but doesn't block UI
+            refetchType: "background",
           });
         } else {
           queryClient.invalidateQueries({ queryKey, exact: true });
@@ -169,12 +169,9 @@ export const SocketContextProvider = ({ children }) => {
       setHasUnreadNotifications(false);
       setHasNewFeedPosts(false);
     }
-    // Removed activeConversationId from dependencies to avoid re-initializing socket.
-    // Use activeConversationIdRef.current inside the listeners if needed.
-  }, [user, isLoadingAuthUser, queryClient]); // Keep only user, isLoadingAuthUser, queryClient as dependencies
+  }, [user, isLoadingAuthUser, queryClient]);
 
   useEffect(() => {
-    // This useEffect remains specific to the active chat status
     if (socket && user) {
       socket.emit("userActiveInChat", { conversationId: activeConversationId });
     }

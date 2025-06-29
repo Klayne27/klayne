@@ -2,7 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
 
-import Posts from "../../components/common/Posts";
+import Posts from "../../components/common/posts/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
 import FollowListModal from "../../components/common/FollowListModal";

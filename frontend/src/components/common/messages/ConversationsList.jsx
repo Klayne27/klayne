@@ -1,11 +1,11 @@
 import { useState } from "react";
-import { useSocket } from "../../context/SocketContext";
+import { useSocket } from "../../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
-import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useFetchConversations } from "../../../hooks/messagesHooks/useFetchConversations";
+import { useFetchFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import ConversationItem from "./ConversationItem";
-import LoadingSpinner from "../common/LoadingSpinner";
+import LoadingSpinner from "../LoadingSpinner";
 
 const ConversationsList = ({
   onSelectConversation,

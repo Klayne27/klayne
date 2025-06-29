@@ -7,11 +7,11 @@ import {
   useLayoutEffect,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSocket } from "../../context/SocketContext";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useDeleteMessage } from "../../hooks/messagesHooks/useDeleteMessage";
-import { useSendMessage } from "../../hooks/messagesHooks/useSendMessage";
-import { useFetchMessages } from "../../hooks/messagesHooks/useFetchMessages";
+import { useSocket } from "../../../context/SocketContext";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage";
+import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage";
+import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages";
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
@@ -82,56 +82,46 @@ const ChatWindow = ({
     }
   }, []);
 
-  // This ref controls the *initial* scroll on conversation load/switch.
   const shouldScrollOnFirstFullLoad = useRef(true);
-  const prevActualConversationIdRef = useRef(actualConversationId); // To detect conversation changes
+  const prevActualConversationIdRef = useRef(actualConversationId);
 
-  // Scroll logic using useLayoutEffect
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;
 
-    // Detect if conversation just changed
     const conversationChanged =
       prevActualConversationIdRef.current !== actualConversationId;
     if (conversationChanged) {
-      shouldScrollOnFirstFullLoad.current = true; // Reset flag for new conversation
-      prevActualConversationIdRef.current = actualConversationId; // Update ref
+      shouldScrollOnFirstFullLoad.current = true;
+      prevActualConversationIdRef.current = actualConversationId;
     }
 
-    // Condition 1: Initial load/conversation switch has fully settled (no more fetching).
-    // isFetching covers both initial load and background refetches.
     const isReadyForInitialScroll =
       shouldScrollOnFirstFullLoad.current &&
       !isLoading &&
       !isFetching &&
       messages.length > 0;
 
-    // Condition 2: An optimistic message was sent, or an incoming message arrived,
-    // AND the user is near the bottom.
     const scrollThreshold = 100;
     const isUserAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
-    // Only trigger new message scroll if it's not the initial load and a new message was added,
-    // or if shouldOptimisticScroll is specifically requested.
     const isNewMessageCausedScroll =
       shouldOptimisticScroll ||
       (isUserAtBottom && messages.length > 0 && !conversationChanged);
 
     if (isReadyForInitialScroll || isNewMessageCausedScroll) {
       scrollToBottom();
-      // Reset flags after scrolling
       shouldScrollOnFirstFullLoad.current = false;
       setShouldOptimisticScroll(false);
       setShowNewMessageButton(false);
     }
   }, [
-    messages.length, // Trigger when messages array changes (new messages added)
-    isLoading, // Trigger when initial loading finishes
-    isFetching, // Trigger when background refetch finishes
-    shouldOptimisticScroll, // Trigger for immediate optimistic scrolls
-    actualConversationId, // Important to trigger for new conversations
+    messages.length,
+    isLoading,
+    isFetching,
+    shouldOptimisticScroll,
+    actualConversationId,
     scrollToBottom,
   ]);
 

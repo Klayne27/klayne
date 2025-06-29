@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { formatPostDate } from "../../utils/date";
+import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
 import React from "react";
 import { FiTrash } from "react-icons/fi";

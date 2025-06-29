@@ -1,7 +1,7 @@
 import Post from "./Post";
-import PostSkeleton from "../skeletons/PostSkeleton";
+import PostSkeleton from "../../skeletons/PostSkeleton";
 import { useEffect, useRef, useCallback } from "react";
-import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
+import { useFetchPosts } from "../../../hooks/postsHooks/useFetchPosts";
 
 const Posts = ({
   feedType,

@@ -4,13 +4,13 @@ import { FaRegHeart } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 
 import { Link, useNavigate } from "react-router-dom";
-import LoadingSpinner from "../common/LoadingSpinner";
-import { formatPostDate } from "../../utils/date";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useDeletePosts } from "../../hooks/postsHooks/useDeletePosts";
-import { useLikePost } from "../../hooks/postsHooks/useLikePosts";
-import { useRepostPost } from "../../hooks/postsHooks/useRepostPost";
-import { renderClickableText } from "../../utils/textUtils";
+import LoadingSpinner from "../LoadingSpinner";
+import { formatPostDate } from "../../../utils/date";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
+import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
+import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
+import { renderClickableText } from "../../../utils/textUtils";
 import { useEffect, useState } from "react";
 
 const Post = ({ post, openImageModal, setFeedType }) => {
