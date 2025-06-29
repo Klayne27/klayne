@@ -74,3 +74,18 @@ export const searchUsersApi = async (query) => {
   }
   return data;
 };
+
+// --- START: NEW API FUNCTION FOR BLOCKING ---
+export const blockUnblockUserApi = async (userId) => {
+  const res = await fetch(`/api/users/block/${userId}`, {
+    method: "POST",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to block/unblock user");
+  }
+  return data;
+};
+// --- END: NEW API FUNCTION FOR BLOCKING ---

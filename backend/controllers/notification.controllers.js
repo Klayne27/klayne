@@ -9,8 +9,9 @@ const getBlockingUsers = async (userId) => {
   }
   const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
   return {
-    blockedByMe: user ? user.blockedUsers.map(id => id.toString()) : [],
-    blockedMe: user ? user.blockedBy.map(id => id.toString()) : [],
+    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
+    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
+    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
   };
 };
 

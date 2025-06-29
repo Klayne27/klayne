@@ -5,6 +5,7 @@ import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
+import User from "../models/user.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -46,19 +47,28 @@ function getOnlineUserIds() {
 }
 
 // --- START: Helper function for blocking (should ideally be in a shared utils file) ---
-const isBlockedOrBlockedBy = async (userId1, userId2) => {
-  if (!userId1 || !userId2) return false;
-  if (userId1.toString() === userId2.toString()) return false;
+const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+  if (!currentUserId || !targetUserId) return false;
+  if (currentUserId.toString() === targetUserId.toString()) return false;
 
-  const userOne = await User.findById(userId1).select("blockedUsers blockedBy").lean();
-  const userTwo = await User.findById(userId2).select("blockedUsers blockedBy").lean();
+  const currentUser = await User.findById(currentUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
+  const targetUser = await User.findById(targetUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
 
-  if (!userOne || !userTwo) return false;
+  if (!currentUser || !targetUser) return false;
 
-  const userOneBlockedTwo = userOne.blockedUsers.some(id => id.toString() === userId2.toString());
-  const userTwoBlockedOne = userTwo.blockedUsers.some(id => id.toString() === userId1.toString());
+  // FIX IS HERE: Use || [] to ensure it's an array before .some()
+  const currentUserBlockedTarget = (currentUser.blockedUsers || []).some(
+    (id) => id.toString() === targetUserId.toString()
+  );
+  const targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(
+    (id) => id.toString() === currentUserId.toString()
+  );
 
-  return userOneBlockedTwo || userTwoBlockedOne;
+  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 // --- END: Helper function for blocking ---
 
@@ -72,12 +82,12 @@ export async function emitUnreadMessageStatus(userId) {
     const currentUserBlockingData = await User.findById(userIdObj)
       .select("blockedUsers blockedBy")
       .lean();
-    const blockedByMe = currentUserBlockingData
-      ? currentUserBlockingData.blockedUsers.map((id) => id.toString())
-      : [];
-    const blockedMe = currentUserBlockingData
-      ? currentUserBlockingData.blockedBy.map((id) => id.toString())
-      : [];
+
+    // Fix applied here: Ensure blockedUsers and blockedBy are arrays before mapping
+    const blockedByMe =
+      currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
+    const blockedMe =
+      currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
     // --- End: Fetch blocking relationships ---
 
@@ -129,12 +139,11 @@ export async function emitUnreadNotificationStatus(userId) {
     const currentUserBlockingData = await User.findById(userIdObj)
       .select("blockedUsers blockedBy")
       .lean();
-    const blockedByMe = currentUserBlockingData
-      ? currentUserBlockingData.blockedUsers.map((id) => id.toString())
-      : [];
-    const blockedMe = currentUserBlockingData
-      ? currentUserBlockingData.blockedBy.map((id) => id.toString())
-      : [];
+    // Fix applied here: Ensure blockedUsers and blockedBy are arrays before mapping
+    const blockedByMe =
+      currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
+    const blockedMe =
+      currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
     // --- End: Fetch blocking relationships ---
 

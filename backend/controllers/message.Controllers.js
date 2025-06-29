@@ -12,27 +12,69 @@ const getBlockingUsers = async (userId) => {
   }
   const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
   return {
-    blockedByMe: user ? user.blockedUsers.map(id => id.toString()) : [],
-    blockedMe: user ? user.blockedBy.map(id => id.toString()) : [],
+    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
+    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
+    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
   };
 };
 
 // Helper function to check if a user is involved in a block relationship
 // targetUserId is the user whose content or profile we are interacting with
 // currentUserId is the authenticated user
+// Make sure this is the DEFINITIVE isBlockedOrBlockedBy function that your controllers are using
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) return false;
-  if (currentUserId.toString() === targetUserId.toString()) return false;
+  console.log(`[isBlockedOrBlockedBy] Checking block status for current: ${currentUserId}, target: ${targetUserId}`);
+
+  if (!currentUserId || !targetUserId) {
+      console.warn(`[isBlockedOrBlockedBy] Invalid IDs: current=${currentUserId}, target=${targetUserId}`);
+      return false;
+  }
+  if (currentUserId.toString() === targetUserId.toString()) {
+      console.log(`[isBlockedOrBlockedBy] IDs are the same, no blocking check needed.`);
+      return false;
+  }
 
   const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
   const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
 
-  if (!currentUser || !targetUser) return false;
+  console.log(`[isBlockedOrBlockedBy] Fetched currentUser: ${currentUser ? JSON.stringify(currentUser.blockedUsers) : 'null/undefined'}`);
+  console.log(`[isBlockedOrBlockedBy] Fetched targetUser: ${targetUser ? JSON.stringify(targetUser.blockedUsers) : 'null/undefined'}`);
 
-  // Current user has blocked target user OR target user has blocked current user
-  const currentUserBlockedTarget = currentUser.blockedUsers.some(id => id.toString() === targetUserId.toString());
-  const targetUserBlockedCurrentUser = targetUser.blockedUsers.some(id => id.toString() === currentUserId.toString());
 
+  if (!currentUser || !targetUser) {
+      console.warn(`[isBlockedOrBlockedBy] One or both users not found. currentUser found: ${!!currentUser}, targetUser found: ${!!targetUser}`);
+      return false;
+  }
+
+  // !! THIS IS THE CRITICAL SECTION !!
+  let currentUserBlockedTarget;
+  try {
+      currentUserBlockedTarget = (currentUser.blockedUsers || []).some(id => {
+          const result = id.toString() === targetUserId.toString();
+          // console.log(`  [isBlockedOrBlockedBy] Current user blocked check - id: ${id}, target: ${targetUserId}, match: ${result}`);
+          return result;
+      });
+  } catch (e) {
+      console.error(`[isBlockedOrBlockedBy] Error in currentUserBlockedTarget check for user ${currentUserId}:`, e.message);
+      console.error(`[isBlockedOrBlockedBy] currentUser.blockedUsers was: ${currentUser.blockedUsers}`);
+      throw e; // Re-throw to see the original stack trace if needed
+  }
+
+  let targetUserBlockedCurrentUser;
+  try {
+      targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(id => {
+          const result = id.toString() === currentUserId.toString();
+          // console.log(`  [isBlockedOrBlockedBy] Target user blocked check - id: ${id}, current: ${currentUserId}, match: ${result}`);
+          return result;
+      });
+  } catch (e) {
+      console.error(`[isBlockedOrBlockedBy] Error in targetUserBlockedCurrentUser check for user ${targetUserId}:`, e.message);
+      console.error(`[isBlockedOrBlockedBy] targetUser.blockedUsers was: ${targetUser.blockedUsers}`);
+      throw e; // Re-throw to see the original stack trace if needed
+  }
+
+
+  console.log(`[isBlockedOrBlockedBy] currentUserBlockedTarget: ${currentUserBlockedTarget}, targetUserBlockedCurrentUser: ${targetUserBlockedCurrentUser}`);
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
@@ -127,15 +169,17 @@ export const sendMessage = async (req, res) => {
 
     await conversation.save();
 
+    // Corrected select for sender
     await newMessage.populate("sender", "username profileImg fullName isVerified");
 
     if (newMessage.repliedTo) {
-      await newMessage.populate("repliedTo", "sender text img");
+      // Corrected select for repliedTo.sender
       await newMessage.populate({
         path: "repliedTo",
+        select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
         },
       });
     }
@@ -177,27 +221,52 @@ export const getMessagesByConversationId = async (req, res) => {
   const userId = req.user._id;
 
   try {
+    console.log(`[getMessages] User: ${userId}, ConvId: ${conversationId}`);
+
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
+      console.log("[getMessages] Conversation not found.");
+
       return res.status(404).json({ error: "Conversation not found." });
     }
+    console.log(
+      `[getMessages] Conversation participants: ${conversation.participants.map((p) =>
+        p.toString()
+      )}`
+    );
 
     if (!conversation.participants.includes(userId)) {
+      console.log("[getMessages] Unauthorized access to conversation.");
+
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
 
     const otherParticipantId = conversation.participants.find(
       (participantId) => participantId.toString() !== userId.toString()
     );
+    console.log(`[getMessages] Other participant ID: ${otherParticipantId}`);
 
     // --- START: BLOCKING CHECK FOR GETTING MESSAGES ---
-    if (await isBlockedOrBlockedBy(userId, otherParticipantId)) {
-      return res
-        .status(403)
-        .json({
+    // Crucial: Only call isBlockedOrBlockedBy if otherParticipantId is found
+    if (otherParticipantId) {
+      // Check if otherParticipantId exists BEFORE passing to blocking check
+      const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
+      console.log(
+        `[getMessages] isBlockedOrBlockedBy(${userId}, ${otherParticipantId}) returned: ${isBlocked}`
+      );
+      if (isBlocked) {
+        return res.status(403).json({
           error: "You cannot view this conversation due to blocking restrictions.",
         });
+      }
+    } else {
+      console.warn(
+        "[getMessages] otherParticipantId is undefined. This conversation might be malformed (e.g., only one participant). Skipping blocking check."
+      );
+      // Depending on your application logic, you might want to return an error here
+      // if a conversation *must* have two distinct participants.
+      // For now, let's allow it to proceed to fetch messages if blocking check is skipped.
     }
     // --- END: BLOCKING CHECK FOR GETTING MESSAGES ---
 
@@ -219,6 +288,8 @@ export const getMessagesByConversationId = async (req, res) => {
         );
       }
 
+      // These emits are called within the controller, so they're part of the HTTP response flow.
+      // The error is coming from socket.js, so the problem might be in a separate Socket.IO event listener.
       await emitUnreadMessageStatus(userId.toString());
       await emitUnreadMessageStatus(otherParticipantId.toString());
     }
@@ -264,7 +335,7 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username profileImg fullName isVerified blockedUsers blockedBy",
+        select: "username profileImg fullName isVerified", // Corrected: Only specify inclusions
       })
       .sort({ updatedAt: -1 });
 
@@ -329,7 +400,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
     const currentUser = await User.findById(userId).populate({
       path: "following",
-      select: "username profileImg fullName isVerified blockedUsers blockedBy",
+      select: "username profileImg fullName isVerified", // Corrected: Only specify inclusions
     });
 
     if (!currentUser) {
@@ -464,11 +535,9 @@ export const deleteConversationForUser = async (req, res) => {
       (p) => p.toString() !== userId.toString()
     );
     if (otherParticipantId && (await isBlockedOrBlockedBy(userId, otherParticipantId))) {
-      return res
-        .status(403)
-        .json({
-          error: "You cannot delete this conversation due to blocking restrictions.",
-        });
+      return res.status(403).json({
+        error: "You cannot delete this conversation due to blocking restrictions.",
+      });
     }
     // --- END: BLOCKING CHECK FOR DELETING CONVERSATION ---
 
@@ -521,11 +590,9 @@ export const reactToMessage = async (req, res) => {
     // --- START: BLOCKING CHECK FOR REACTING TO MESSAGE ---
     const messageSenderId = message.sender.toString();
     if (await isBlockedOrBlockedBy(userId, messageSenderId)) {
-      return res
-        .status(403)
-        .json({
-          error: "You cannot react to this message due to blocking restrictions.",
-        });
+      return res.status(403).json({
+        error: "You cannot react to this message due to blocking restrictions.",
+      });
     }
     // --- END: BLOCKING CHECK FOR REACTING TO MESSAGE ---
 
@@ -549,15 +616,20 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select: "-password",
+        select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
       })
       .populate({
         path: "repliedTo",
         select: "text img",
+        // Nested populate
+        populate: {
+          path: "sender",
+          select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
+        },
       })
       .populate({
         path: "reactions.user",
-        select: "username fullName profileImg",
+        select: "username fullName profileImg", // Corrected: Specific inclusions only
       });
 
     const conversation = await Conversation.findById(message.conversationId);
@@ -576,3 +648,274 @@ export const reactToMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// --- START: COMMENT CONTROLLERS (provided in previous response, included for completeness) ---
+
+// Assuming you have a Comment model and Post model imported
+// import Comment from "../models/comment.model.js";
+// import Post from "../models/post.model.js"; // Needed for comment controllers
+
+export const createComment = async (req, res) => {
+  try {
+    const { text, postId, parentCommentId } = req.body;
+    const userId = req.user._id;
+
+    if (!text) {
+      return res.status(400).json({ error: "Comment text is required" });
+    }
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Blocking check for commenting on a post
+    if (await isBlockedOrBlockedBy(userId, post.user)) {
+      return res
+        .status(403)
+        .json({ error: "You cannot comment on this post due to blocking restrictions." });
+    }
+
+    let newComment;
+    if (parentCommentId) {
+      const parentComment = await Comment.findById(parentCommentId);
+      if (!parentComment) {
+        return res.status(404).json({ error: "Parent comment not found" });
+      }
+      // Blocking check for replying to a comment
+      if (await isBlockedOrBlockedBy(userId, parentComment.user)) {
+        return res
+          .status(403)
+          .json({
+            error: "You cannot reply to this comment due to blocking restrictions.",
+          });
+      }
+
+      newComment = new Comment({
+        user: userId,
+        post: postId,
+        text,
+        parent: parentCommentId,
+      });
+      await newComment.save();
+      parentComment.replies.push(newComment._id);
+      await parentComment.save();
+    } else {
+      newComment = new Comment({
+        user: userId,
+        post: postId,
+        text,
+      });
+      await newComment.save();
+      post.comments.push(newComment._id);
+      post.commentsCount += 1;
+      await post.save();
+    }
+
+    // Populate the new comment for sending back
+    await newComment.populate({
+      path: "user",
+      select: "username fullName profileImg isVerified",
+    });
+    if (newComment.parent) {
+      await newComment.populate({
+        path: "parent",
+        populate: {
+          path: "user",
+          select: "username fullName profileImg isVerified",
+        },
+        select: "user text",
+      });
+    }
+
+    // Emit new comment to relevant users
+    const postOwnerSocketIds = getReceiverSocketIds(post.user.toString());
+    postOwnerSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newComment", newComment);
+    });
+
+    res.status(201).json(newComment);
+  } catch (error) {
+    console.error("Error in createComment controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getCommentsForPost = async (req, res) => {
+  try {
+    const { postId } = req.params;
+    const { page = 1, limit = 10 } = req.query;
+    const userId = req.user?._id;
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Blocking check for viewing comments on a post
+    if (userId && (await isBlockedOrBlockedBy(userId, post.user))) {
+      return res
+        .status(403)
+        .json({
+          error: "You cannot view comments on this post due to blocking restrictions.",
+        });
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const comments = await Comment.find({ post: postId, parent: null }) // Only fetch top-level comments initially
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate({
+        path: "user",
+        select: "username fullName profileImg isVerified",
+      })
+      .populate({
+        path: "replies",
+        populate: {
+          path: "user",
+          select: "username fullName profileImg isVerified",
+        },
+        options: { sort: { createdAt: 1 } },
+      });
+
+    // Filter out comments by blocked/blocking users after population if needed,
+    // though blocking logic should primarily prevent access to conversations/posts entirely.
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlockingObjectIds = [...new Set([...blockedByMe, ...blockedMe])];
+
+    const filteredComments = comments.filter((comment) => {
+      if (blockedAndBlockingObjectIds.includes(comment.user._id.toString())) {
+        return false;
+      }
+      comment.replies = comment.replies.filter((reply) => {
+        return !blockedAndBlockingObjectIds.includes(reply.user._id.toString());
+      });
+      return true;
+    });
+
+    const totalComments = await Comment.countDocuments({ post: postId, parent: null });
+    const hasNextPage = page * limit < totalComments;
+
+    res
+      .status(200)
+      .json({ comments: filteredComments.reverse(), hasNextPage, totalComments });
+  } catch (error) {
+    console.error("Error in getCommentsForPost controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const userId = req.user._id;
+
+    const commentToDelete = await Comment.findById(commentId);
+
+    if (!commentToDelete) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    if (commentToDelete.user.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this comment" });
+    }
+
+    // Blocking check for deleting a comment
+    const post = await Post.findById(commentToDelete.post);
+    if (post && (await isBlockedOrBlockedBy(userId, post.user))) {
+      return res
+        .status(403)
+        .json({
+          error:
+            "You cannot delete comments related to this post due to blocking restrictions.",
+        });
+    }
+
+    // If it's a top-level comment, remove from post's comments array
+    if (!commentToDelete.parent) {
+      await Post.findByIdAndUpdate(
+        commentToDelete.post,
+        { $pull: { comments: commentId }, $inc: { commentsCount: -1 } },
+        { new: true }
+      );
+    } else {
+      // If it's a reply, remove from parent comment's replies array
+      await Comment.findByIdAndUpdate(
+        commentToDelete.parent,
+        { $pull: { replies: commentId } },
+        { new: true }
+      );
+    }
+
+    // Delete the comment and all its nested replies (if any)
+    await Comment.deleteMany({
+      $or: [{ _id: commentId }, { parent: commentId }],
+    });
+
+    res.status(200).json({ message: "Comment and its replies deleted successfully" });
+  } catch (error) {
+    console.error("Error in deleteComment controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const likeUnlikeComment = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { commentId } = req.params;
+
+    const comment = await Comment.findById(commentId);
+
+    if (!comment) {
+      return res.status(404).json({ error: "Comment not found" });
+    }
+
+    // Blocking check for liking/unliking a comment
+    if (await isBlockedOrBlockedBy(userId, comment.user)) {
+      return res
+        .status(403)
+        .json({
+          error: "You cannot like/unlike this comment due to blocking restrictions.",
+        });
+    }
+
+    const userLikedComment = comment.likes.includes(userId);
+
+    if (userLikedComment) {
+      // Unlike the comment
+      await Comment.updateOne({ _id: commentId }, { $pull: { likes: userId } });
+      res.status(200).json({ message: "Comment unliked successfully" });
+    } else {
+      // Like the comment
+      comment.likes.push(userId);
+      await comment.save();
+
+      // Create notification if not liking your own comment and not blocked
+      if (
+        comment.user.toString() !== userId.toString() &&
+        !(await isBlockedOrBlockedBy(userId, comment.user))
+      ) {
+        // Assuming you have a Notification model and a createAndSendNotification helper
+        // import Notification from "../models/notification.model.js";
+        // import { createAndSendNotification } from "../lib/socket.js";
+        // Add notification for comment like
+        await createAndSendNotification({
+          from: userId,
+          to: comment.user,
+          type: "likeComment",
+          commentId: comment._id,
+          postId: comment.post,
+        });
+      }
+      res.status(200).json({ message: "Comment liked successfully" });
+    }
+  } catch (error) {
+    console.error("Error in likeUnlikeComment controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+// --- END: COMMENT CONTROLLERS ---

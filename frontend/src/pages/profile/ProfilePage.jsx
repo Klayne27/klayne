@@ -18,6 +18,7 @@ import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile"
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
 import ScrollToTop from "../../utils/ScrollToTop";
+import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -36,12 +37,34 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const { authUser } = useAuthUser();
   const { follow, isPending } = useFollow();
 
+  // BLOCKING HOOK
+  const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
+
   const { user, isLoading, refetch, isRefetching } = useFetchUserProfile(username);
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
   const { conversations } = useFetchConversations();
 
   const isMyProfile = authUser?._id === user?._id;
   const amIFollowing = authUser?.following?.includes(user?._id);
+
+  // --- NEW: Blocking status derivation ---
+  // Check if authUser has blocked the currently viewed 'user'
+  const isBlockedByAuthUser = authUser?.blockedUsers?.includes(user?._id);
+
+  // Check if the currently viewed 'user' has blocked the authUser
+  // This typically comes as a flag from the backend on the 'user' object for security/simplicity
+  // E.g., your fetchUserProfileApi response for 'user' might include `user.hasBlockedMe`
+  const hasAuthUserBlockedMe = user?.hasBlockedMe; // Assuming `user.hasBlockedMe` boolean from backend
+
+  // Combined blocking status for disabling interactions
+  const isBlockingRelationship = isBlockedByAuthUser || hasAuthUserBlockedMe;
+
+  // Handler for the block/unblock button
+  const handleBlockUnblock = () => {
+    if (!user?._id) return; // Ensure user ID is available
+    blockUnblockUser(user._id);
+  };
+  // --- END NEW ---
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -56,6 +79,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   };
 
   const handleMessageClick = () => {
+    // Prevent messaging if there's a blocking relationship
+    if (isBlockingRelationship) return;
+
     const existingConversation = conversations.find((conv) =>
       conv.participants.some((p) => p?._id.toString() === user._id.toString())
     );
@@ -79,6 +105,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   };
 
   useEffect(() => {
+    // Only refetch if username changes or component mounts
+    // user will be available after the first fetch, then `refetch` will update on invalidation
+    // This useEffect is good for ensuring data is fresh when navigating to a new profile.
     refetch();
   }, [username, refetch]);
 
@@ -94,7 +123,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const handlePostsFetched = (count) => {
     setUserPostsCount(count);
-    setUserLikedPostsCount(count)
+    setUserLikedPostsCount(count); // Assuming this is for liked posts count
   };
 
   return (
@@ -118,7 +147,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <div className="flex flex-col">
                   <p className="font-bold text-lg">{user?.fullName}</p>
                   <span className="text-sm text-slate-500">
-                    {feedType === "posts" ? `${userPostsCount} posts` : `${userLikedPostsCount} likes`}
+                    {feedType === "posts"
+                      ? `${userPostsCount} posts`
+                      : `${userLikedPostsCount} likes`}
                   </span>{" "}
                 </div>
               </div>
@@ -173,28 +204,60 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               </div>
               <div className="flex justify-end px-4 mt-5 gap-2">
                 {isMyProfile && <EditProfileModal authUser={authUser} />}
-                {!isMyProfile && amIFollowing && (
+
+                {/* --- NEW: Block/Unblock Button --- */}
+                {!isMyProfile && (
+                  <button
+                    className={`font-bold border px-4 rounded-full py-1.5 transition duration-200
+                      ${
+                        isBlockedByAuthUser
+                          ? "bg-red-600 text-white hover:bg-red-700"
+                          : "bg-gray-700 text-white hover:bg-gray-800"
+                      }
+                    `}
+                    onClick={handleBlockUnblock}
+                    disabled={isBlocking}
+                  >
+                    {isBlocking
+                      ? "Loading..."
+                      : isBlockedByAuthUser
+                      ? "Unblock"
+                      : "Block"}
+                  </button>
+                )}
+                {/* --- END NEW --- */}
+
+                {/* --- MODIFIED: Message button conditional rendering --- */}
+                {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                   <button
                     onClick={handleMessageClick}
                     className=" p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black"
+                    disabled={isBlockingRelationship} // Explicitly disable if blocking relationship
                   >
                     <CiMail size={20} strokeWidth={1} />
                   </button>
                 )}
-                {!isMyProfile && (
-                  <button
-                    className={`${
-                      !amIFollowing
-                        ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
-                        : "hover:bg-secondary"
-                    } font-bold border px-4 rounded-full py-1.5  transition duration-200`}
-                    onClick={() => follow(user?._id)}
-                  >
-                    {isPending && "Loading..."}
-                    {!isPending && amIFollowing && "Unfollow"}
-                    {!isPending && !amIFollowing && "Follow"}
-                  </button>
-                )}
+                {/* --- END MODIFIED --- */}
+
+                {/* --- MODIFIED: Follow/Unfollow button conditional rendering --- */}
+                {!isMyProfile &&
+                  !isBlockingRelationship && ( // Only show if no blocking relationship
+                    <button
+                      className={`${
+                        !amIFollowing
+                          ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
+                          : "hover:bg-secondary"
+                      } font-bold border px-4 rounded-full py-1.5 transition duration-200`}
+                      onClick={() => follow(user?._id)}
+                      disabled={isPending || isBlockingRelationship} // Disable if blocking as well
+                    >
+                      {isPending && "Loading..."}
+                      {!isPending && amIFollowing && "Unfollow"}
+                      {!isPending && !amIFollowing && "Follow"}
+                    </button>
+                  )}
+                {/* --- END MODIFIED --- */}
+
                 {(coverImg || profileImg) && (
                   <button
                     className=" rounded-full px-4 py-1.5 bg-primary text-white font-semibold hover:bg-[#1d9cf0d8] transition duration-300"
@@ -206,6 +269,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                       setProfileImg(null);
                       setCoverImg(null);
                     }}
+                    disabled={isUpdatingProfile} // Add disable for updating profile
                   >
                     {isUpdatingProfile ? "Updating..." : "Update"}
                   </button>
@@ -283,13 +347,25 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             </>
           )}
 
-          <Posts
-            feedType={feedType}
-            username={username}
-            userId={user?._id}
-            onPostsFetched={handlePostsFetched}
-            openImageModal={openImageModal}
-          />
+          {/* --- NEW: Conditional rendering for Posts component --- */}
+          {/* Posts from a blocked user, or if you've blocked them, should not appear */}
+          {/* The backend should already filter this, but we can prevent fetching if explicitly blocked by client */}
+          {!isLoading && !isRefetching && user && !isBlockingRelationship && (
+            <Posts
+              feedType={feedType}
+              username={username}
+              userId={user?._id}
+              onPostsFetched={handlePostsFetched}
+              openImageModal={openImageModal}
+            />
+          )}
+          {/* Optional: Message when posts are not shown due to blocking */}
+          {!isLoading && !isRefetching && user && isBlockingRelationship && (
+            <p className="text-center text-lg mt-4 text-slate-400">
+              Content is unavailable due to blocking.
+            </p>
+          )}
+          {/* --- END NEW --- */}
         </div>
       </div>
 

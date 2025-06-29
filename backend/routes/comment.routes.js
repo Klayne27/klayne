@@ -11,8 +11,8 @@ import {
 const router = express.Router();
 
 
-router.get("/:postId/comments", getComments);
-router.get("/:postId/comments/:parentCommentId/replies", getComments);
+router.get("/:postId/comments", protectRoute, getComments);
+router.get("/:postId/comments/:parentCommentId/replies", protectRoute, getComments);
 router.post("/:postId", protectRoute, createComment);
 router.post("/:postId/:parentCommentId/reply", protectRoute, replyToComment);
 router.post("/:commentId/like", protectRoute, likeUnlikeComment);

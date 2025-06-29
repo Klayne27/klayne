@@ -6,6 +6,20 @@ import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
+import mongoose from "mongoose";
+
+// Helper function to get blocking relationships for the current user
+const getBlockingUsers = async (userId) => {
+  if (!userId) {
+    return { blockedByMe: [], blockedMe: [] };
+  }
+  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
+  return {
+    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
+    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
+    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
+  };
+};
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -58,7 +72,6 @@ export const getUserProfile = async (req, res) => {
     res.status(200).json(profileData);
     // --- END: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
 
-    res.status(200).json(user);
   } catch (error) {
     console.log("Error in getUserProfile: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -123,27 +136,42 @@ export const followUnfollowUser = async (req, res) => {
 
 export const getSuggestedUsers = async (req, res) => {
   try {
-    const userId = req.user._id;
+    const userId = req.user?._id; // Safely access userId
 
-    const user = await User.findById(userId).select("following blockedUsers").lean();
-    const usersFollowedByMe = user ? user.following : [];
-    const usersBlockedByMe = currentUser ? currentUser.blockedUsers : []; // New: get blocked users
+    if (!userId) {
+      console.warn("Attempted to get suggested users without authenticated userId.");
+      return res.status(200).json([]); // Return empty array if not logged in
+    }
+
+    // Use the reliable getBlockingUsers helper
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+
+    // Get users the current user is already following
+    const currentUserDoc = await User.findById(userId).select("following").lean();
+    const usersFollowedByMe = currentUserDoc?.following?.map((id) => id.toString()) || [];
+
+    // Combine all IDs to exclude from suggestions
+    const excludeUserIds = [
+      new mongoose.Types.ObjectId(userId), // Exclude current user
+      ...usersFollowedByMe.map((id) => new mongoose.Types.ObjectId(id)), // Exclude followed users
+      ...blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)), // Exclude blocked/blocking users
+    ];
 
     const suggestedUsers = await User.aggregate([
       {
         $match: {
-          _id: {
-            $ne: userId,
-            $nin: usersFollowedByMe,
-            $nin: usersBlockedByMe, // NEW: Not someone I have blocked
-          },
-          blockedBy: { $nin: [userId] }, // Check if my ID is NOT in their blockedBy list
+          _id: { $nin: excludeUserIds }, // Consolidated exclusion list
+          blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] }, // Users who haven't blocked me
+          // You might also want to ensure they haven't blocked me on their 'blockedUsers' list
+          // This would require checking the `blockedUsers` array of the *suggested user*
+          // which is harder in a single $match without an additional lookup.
+          // For now, the `excludeUserIds` should cover if *I* blocked *them*.
+          // The `blockedBy` filter covers if *they* blocked *me*.
         },
       },
-      { $sample: { size: 10 } },
-      {
-        $limit: 4,
-      },
+      { $sample: { size: 10 } }, // Sample more than needed to ensure enough options after filtering
+      { $limit: 4 }, // Limit to the desired number of suggestions
       {
         $project: {
           username: 1,
@@ -151,17 +179,19 @@ export const getSuggestedUsers = async (req, res) => {
           profileImg: 1,
           _id: 1,
           isVerified: 1,
+          // Do not include password here (already handled by select in findById for current user)
         },
       },
     ]);
 
-    suggestedUsers.forEach((user) => {
-      delete user.password;
-    });
+    // No need to delete user.password if you're explicitly projecting fields
+    // suggestedUsers.forEach((user) => {
+    //   delete user.password;
+    // });
 
     res.status(200).json(suggestedUsers);
   } catch (error) {
-    console.error("Error in getSuggestedUsers: ", error.message);
+    console.error("Error in getSuggestedUsers: ", error.message); // Log the specific error message
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -236,7 +266,10 @@ export const updateUser = async (req, res) => {
     user.password = null;
 
     return res.status(200).json(user);
-  } catch (error) {}
+  } catch (error) {
+    console.error("Error in updateUser: ", error.message); // Add this
+    res.status(500).json({ error: "Internal Server Error" }); // Add this
+  }
 };
 
 export const getFollowingUsers = async (req, res) => {
