@@ -53,3 +53,4 @@ export const fetchPostApi = async (postId) => {
   }
   return res.json();
 };
+

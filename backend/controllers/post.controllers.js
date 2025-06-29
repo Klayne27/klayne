@@ -2,12 +2,45 @@ import Post from "../models/post.model.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
+import mongoose from "mongoose"; // <--- Make sure to import mongoose for ObjectId
+
 import {
   createAndSendNotification,
   emitUnreadNotificationStatus,
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
+
+// Helper function to get blocking relationships for the current user
+const getBlockingUsers = async (userId) => {
+  if (!userId) {
+    return { blockedByMe: [], blockedMe: [] };
+  }
+  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
+  return {
+    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
+    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
+  };
+};
+
+// Helper function to check if a user is involved in a block relationship
+// targetUserId is the user whose content or profile we are interacting with
+// currentUserId is the authenticated user
+const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+  if (!currentUserId || !targetUserId) return false;
+  if (currentUserId.toString() === targetUserId.toString()) return false;
+
+  const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy");
+  const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy");
+
+  if (!currentUser || !targetUser) return false;
+
+  // Current user has blocked target user OR target user has blocked current user
+  return (
+    currentUser.blockedUsers.includes(targetUserId) ||
+    targetUser.blockedUsers.includes(currentUserId)
+  );
+};
 
 export const createPost = async (req, res) => {
   try {
@@ -83,7 +116,6 @@ export const deletePost = async (req, res) => {
   }
 };
 
-
 export const likeUnlikePost = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -94,6 +126,15 @@ export const likeUnlikePost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+
+    // --- START: BLOCKING CHECK FOR LIKING ---
+    const postOwnerId = post.user.toString();
+    if (await isBlockedOrBlockedBy(userId, postOwnerId)) {
+      return res.status(403).json({
+        error: "You cannot like/unlike this post due to blocking restrictions.",
+      });
+    }
+    // --- END: BLOCKING CHECK FOR LIKING ---
 
     const userLikedPost = post.likes.includes(userId);
 
@@ -110,7 +151,11 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      if (post.user.toString() !== userId.toString()) {
+      // Only create notification if not blocked, and not liking your own post
+      if (
+        post.user.toString() !== userId.toString() &&
+        !(await isBlockedOrBlockedBy(userId, post.user))
+      ) {
         const notification = new Notification({
           from: userId,
           to: post.user,
@@ -138,42 +183,103 @@ export const getAllPosts = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const userId = req.user?._id;
-    const totalPosts = await Post.countDocuments({}); 
 
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
 
-    const posts = await Post.find({})
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({ path: "user", select: "-password" })
-      .populate({
-        path: "repostedFrom",
-        populate: {
-          path: "user",
-          select: "-password",
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
+
+    const matchConditions = {
+      $and: [
+        { "deletedFor.user": { $ne: userId } },
+        {
+          $or: [
+            { user: { $nin: blockedAndBlockingObjectIds } },
+            {
+              $and: [
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+              ],
+            },
+          ],
         },
-        select: "text img likes commentsCount repostsCount createdAt user",
-      });
+      ],
+    };
 
-    const filteredPosts = posts.filter((post) => {
-      if (post.repostedFrom) {
-        if (post.repostedFrom.repostedFrom) {
-          return false;
-        }
-        const isRepostDeletedForMe =
-          userId &&
-          post.deletedFor?.some((entry) => entry.user.toString() === userId.toString());
-        return !isRepostDeletedForMe;
+    const totalPostsResult = await Post.aggregate([
+      { $match: matchConditions },
+      { $count: "count" },
+    ]);
+    const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
+
+    const posts = await Post.aggregate([
+      { $match: matchConditions },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [{ $project: { password: 0 } }],
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFrom",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [{ $project: { password: 0 } }],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                text: 1,
+                img: 1,
+                likes: 1,
+                commentsCount: 1,
+                repostsCount: 1,
+                createdAt: 1,
+                user: 1,
+              },
+            },
+          ],
+        },
+      },
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+    ]);
+
+    const finalFilteredPosts = posts.filter((post) => {
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+        return false;
       }
-      const isOriginalPostDeletedForMe =
-        userId &&
-        post.deletedFor?.some((entry) => entry.user.toString() === userId.toString());
-      return !isOriginalPostDeletedForMe;
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        return false;
+      }
+      return true;
     });
 
-    const hasNextPage = page * limit < totalPosts;
+    const hasNextPage = page * limit < totalCount;
 
-    res.status(200).json({ posts: filteredPosts, hasNextPage, totalPosts });
+    res
+      .status(200)
+      .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getAllPosts controller: ", error);
@@ -182,35 +288,97 @@ export const getAllPosts = async (req, res) => {
 
 export const getLikedPosts = async (req, res) => {
   const userId = req.params.id;
+  const currentUserId = req.user?._id; // The authenticated user viewing
+
   try {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
+
+    // --- START: BLOCKING CHECK FOR LIKED POSTS VIEW ---
+    // If the user whose liked posts are being viewed (userId) is blocked by the current user (currentUserId)
+    // OR if the current user (currentUserId) is blocked by the user whose liked posts are being viewed (userId)
+    if (await isBlockedOrBlockedBy(currentUserId, userId)) {
+      return res.status(403).json({
+        error: "You cannot view liked posts of this user due to blocking restrictions.",
+      });
+    }
+
+    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
+    // --- END: BLOCKING CHECK FOR LIKED POSTS VIEW ---
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const likedPosts = await Post.find({ _id: { $in: user.likedPosts } })
+    // Build the query for liked posts, integrating blocking filter
+    const query = {
+      _id: { $in: user.likedPosts },
+      $and: [
+        // Ensure the post owner is not blocked/blocking
+        { user: { $nin: blockedAndBlockingObjectIds } },
+        // Ensure the original post owner (if it's a repost) is not blocked/blocking
+        {
+          $or: [
+            { repostedFrom: null }, // If not a repost, this condition doesn't apply
+            { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } }, // If it's a repost, filter by original owner
+          ],
+        },
+      ],
+    };
+
+    const totalLikedPosts = await Post.countDocuments(query);
+
+    const likedPosts = await Post.find(query)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
         path: "user",
-        select: "-password",
+        // Change to exclusion only
+        select: "-password", // Only exclude password
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          // Change to exclusion only
+          select: "-password", // Only exclude password
         },
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
-    const totalLikedPosts = await Post.countDocuments({ _id: { $in: user.likedPosts } });
+    // Client-side filtering for edge cases or complex scenarios,
+    // though initial query should handle most.
+    const finalLikedPosts = likedPosts.filter((post) => {
+      const postOwnerId = post.user?._id; // This is already an ObjectId from populate
+      const repostedFromOwnerId = post.repostedFrom?.user?._id;
+
+      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
+      if (
+        post.repostedFrom &&
+        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
+      )
+        return false;
+
+      // Existing deletedFor logic (if any specific to liked posts)
+      const isOriginalPostDeletedForMe =
+        currentUserId &&
+        post.deletedFor?.some((entry) => entry.user.equals(currentUserId));
+      if (isOriginalPostDeletedForMe) {
+        return false;
+      }
+      return true;
+    });
+
     const hasNextPage = page * limit < totalLikedPosts;
 
-    res.status(200).json({ posts: likedPosts, hasNextPage, totalLikedPosts });
+    res.status(200).json({ posts: finalLikedPosts, hasNextPage, totalLikedPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getLikedPosts controller: ", error);
@@ -223,74 +391,112 @@ export const getFollowingPosts = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    const following = user.following;
+    // --- START: BLOCKING FILTERING FOR FOLLOWING FEED ---
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
 
-    if (following.length === 0) {
+    const followingObjectIds = user.following.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
+
+    // Exclude blocked/blocking users from the list of users whose posts we want to see
+    const effectiveFollowing = followingObjectIds.filter(
+      (id) => !blockedAndBlockingObjectIds.some((blockedId) => blockedId.equals(id))
+    );
+
+    if (effectiveFollowing.length === 0) {
       return res.status(200).json({ posts: [], hasNextPage: false });
     }
+    // --- END: BLOCKING FILTERING FOR FOLLOWING FEED ---
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const baseQuery = {
-      user: { $in: following },
+    const queryConditions = {
+      $and: [
+        { "deletedFor.user": { $ne: userId } },
+        {
+          $or: [
+            // Posts directly by effectively followed users (not blocked)
+            { user: { $in: effectiveFollowing } },
+            // Reposts where the user who reposted is effectively followed
+            // AND the original post owner is NOT blocked/blocking
+            {
+              $and: [
+                { user: { $in: effectiveFollowing } },
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+              ],
+            },
+          ],
+        },
+      ],
     };
 
-    const rawFeedPosts = await Post.find({
-      $or: [baseQuery, { user: { $in: following }, repostedFrom: { $ne: null } }],
-      "deletedFor.user": { $ne: userId },
-    })
+    const totalCount = await Post.countDocuments(queryConditions);
+
+    const rawFeedPosts = await Post.find(queryConditions)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
         path: "user",
-        select: "-password",
+        select: "-password", // Only exclude password
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          select: "-password", // Only exclude password
         },
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const finalFeedPosts = rawFeedPosts.filter((post) => {
-      const isDeletedForMe = post.deletedFor?.includes(userId.toString());
+      // Redundant if query is perfect, but good as a final safeguard
+      const postOwnerId = post.user?._id; // This is already an ObjectId from populate
+      const repostedFromOwnerId = post.repostedFrom?.user?._id;
+
+      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
+      if (
+        post.repostedFrom &&
+        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
+      )
+        return false;
+
+      // Existing logic for 'deletedFor' and double reposts
+      const isDeletedForMe = post.deletedFor?.some((entry) => entry.user.equals(userId));
       if (isDeletedForMe) {
         return false;
       }
 
-      if (post.repostedFrom) {
-        if (post.repostedFrom.repostedFrom) {
-          return false;
-        }
-
-        if (!post.repostedFrom) {
-          return false;
-        }
-        if (!post.repostedFrom._id) {
-          return false;
-        }
-
-        const repostingUserId = post.user._id.toString();
-        const isRepostByFollowed = following.includes(repostingUserId);
-
-        return isRepostByFollowed;
-      } else {
-        const isOriginalByFollowed = following.includes(post.user._id.toString());
-        return isOriginalByFollowed;
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+        return false;
       }
+      // Additional check if original post is null after populate for reposts (should ideally not happen if query is good)
+      if (post.repostedFrom && !post.repostedFrom._id) {
+        return false;
+      }
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        // Ensure original post owner is populated
+        return false;
+      }
+
+      return true;
     });
 
-    const hasNextPage = finalFeedPosts.length === limit;
+    const hasNextPage = page * limit < totalCount;
 
-    res.status(200).json({ posts: finalFeedPosts, hasNextPage });
+    res.status(200).json({ posts: finalFeedPosts, hasNextPage, totalPosts: totalCount });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    ("Error in getFollowingPosts controller: ", error);
+    console.log("Error in getFollowingPosts controller: ", error);
   }
 };
 
@@ -307,29 +513,79 @@ export const getUserPosts = async (req, res) => {
 
     const currentUserId = req.user?._id;
 
-    const rawUserPosts = await Post.find({
-      $or: [
-        { user: user._id, repostedFrom: null },
-        { user: user._id, repostedFrom: { $ne: null } },
+    // --- START: BLOCKING CHECK FOR USER PROFILE POSTS VIEW ---
+    // Check if the profile owner (user._id) is blocked by the viewer (currentUserId)
+    // OR if the viewer (currentUserId) is blocked by the profile owner (user._id)
+    if (await isBlockedOrBlockedBy(currentUserId, user._id)) {
+      return res.status(403).json({
+        error: "You cannot view posts from this user due to blocking restrictions.",
+      });
+    }
+
+    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
+    // --- END: BLOCKING CHECK FOR USER PROFILE POSTS VIEW ---
+
+    const queryConditions = {
+      $and: [
+        { "deletedFor.user": { $ne: currentUserId } }, // Your existing filter
+        {
+          $or: [
+            // Posts directly by the profile owner (user._id) - they are already not blocked based on initial check
+            { user: user._id },
+            // Reposts made by the profile owner (user._id)
+            // AND ensure the original post owner is NOT blocked/blocking
+            {
+              $and: [
+                { user: user._id },
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+              ],
+            },
+          ],
+        },
       ],
-    })
+    };
+
+    const totalUserPosts = await Post.countDocuments(queryConditions);
+
+    const rawUserPosts = await Post.find(queryConditions)
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate({ path: "user", select: "-password" })
+      .populate({
+        path: "user",
+        select: "-password", // Corrected: only exclude password
+      })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          select: "-password", // Corrected: only exclude password
         },
         select: "text img likes commentsCount repostsCount createdAt user",
       });
 
     const finalUserPosts = rawUserPosts.filter((post) => {
+      // Re-check blocking after populate, especially for reposts of posts by blocked users
+      const postOwnerId = post.user?._id;
+      const repostedFromOwnerId = post.repostedFrom?.user?._id;
+
+      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
+      if (
+        post.repostedFrom &&
+        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
+      )
+        return false;
+
       if (currentUserId) {
-        const isDeletedForMe = post.deletedFor?.some(
-          (entry) => entry.user.toString() === currentUserId.toString()
+        const isDeletedForMe = post.deletedFor?.some((entry) =>
+          entry.user.equals(currentUserId)
         );
         if (isDeletedForMe) {
           return false;
@@ -337,21 +593,21 @@ export const getUserPosts = async (req, res) => {
       }
 
       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+        return false; // No reposts of reposts
+      }
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        // Ensure original post owner is populated
         return false;
       }
 
       return true;
     });
 
-    const totalUserPosts = await Post.countDocuments({
-      $or: [
-        { user: user._id, repostedFrom: null },
-        { user: user._id, repostedFrom: { $ne: null } },
-      ],
-    });
     const hasNextPage = page * limit < totalUserPosts;
 
-    res.status(200).json({ posts: finalUserPosts, hasNextPage, totalUserPosts });
+    res
+      .status(200)
+      .json({ posts: finalUserPosts, hasNextPage, totalPosts: totalUserPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getUserPosts controller: ", error);
@@ -360,17 +616,19 @@ export const getUserPosts = async (req, res) => {
 
 export const getPost = async (req, res) => {
   try {
+    const currentUserId = req.user?._id;
+
     const post = await Post.findById(req.params.id)
       .populate({
         path: "user",
-        select: "username profileImg fullName isVerified",
+        select: "-password", // Corrected: only exclude password
       })
       .populate({
         path: "repostedFrom",
         populate: [
           {
             path: "user",
-            select: "username profileImg fullName isVerified",
+            select: "-password", // Corrected: only exclude password
           },
         ],
         select: "text img likes commentsCount repostsCount createdAt user",
@@ -379,6 +637,27 @@ export const getPost = async (req, res) => {
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
+
+    // --- START: BLOCKING CHECK FOR SINGLE POST VIEW ---
+    const postOwnerId = post.user?._id;
+    const repostedFromOwnerId = post.repostedFrom?.user?._id;
+
+    // Check if the current user is blocked by or has blocked the post owner
+    if (await isBlockedOrBlockedBy(currentUserId, postOwnerId)) {
+      return res
+        .status(403)
+        .json({ error: "You cannot view this post due to blocking restrictions." });
+    }
+    // If it's a repost, check if the current user is blocked by or has blocked the original post owner
+    if (
+      post.repostedFrom &&
+      (await isBlockedOrBlockedBy(currentUserId, repostedFromOwnerId))
+    ) {
+      return res
+        .status(403)
+        .json({ error: "You cannot view this post due to blocking restrictions." });
+    }
+    // --- END: BLOCKING CHECK FOR SINGLE POST VIEW ---
 
     res.status(200).json(post);
   } catch (error) {
@@ -396,6 +675,15 @@ export const repostPost = async (req, res) => {
     if (!originalPost) {
       return res.status(404).json({ error: "Original post not found." });
     }
+
+    // --- START: BLOCKING CHECK FOR REPOSTING ---
+    const originalPostOwnerId = originalPost.user.toString();
+    if (await isBlockedOrBlockedBy(userId, originalPostOwnerId)) {
+      return res
+        .status(403)
+        .json({ error: "You cannot repost this content due to blocking restrictions." });
+    }
+    // --- END: BLOCKING CHECK FOR REPOSTING ---
 
     if (
       !originalPost.repostedFrom &&
@@ -456,6 +744,17 @@ export const checkIfUserReposted = async (req, res) => {
   try {
     const { originalPostId } = req.params;
     const userId = req.user._id;
+
+    // --- START: BLOCKING CHECK FOR CHECK IF REPOSTED ---
+    const originalPost = await Post.findById(originalPostId).select("user");
+    if (!originalPost) return res.status(404).json({ error: "Original post not found." });
+
+    if (await isBlockedOrBlockedBy(userId, originalPost.user)) {
+      return res.status(403).json({
+        error: "You cannot interact with this content due to blocking restrictions.",
+      });
+    }
+    // --- END: BLOCKING CHECK FOR CHECK IF REPOSTED ---
 
     const existingRepost = await Post.findOne({
       user: userId,

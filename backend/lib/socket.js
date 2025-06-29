@@ -5,6 +5,7 @@ import Message from "../models/message.model.js";
 import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
+import User from "../models/user.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -45,23 +46,76 @@ function getOnlineUserIds() {
   });
 }
 
+// --- START: Helper function for blocking (should ideally be in a shared utils file) ---
+const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+  if (!currentUserId || !targetUserId) return false;
+  if (currentUserId.toString() === targetUserId.toString()) return false;
+
+  const currentUser = await User.findById(currentUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
+  const targetUser = await User.findById(targetUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
+
+  if (!currentUser || !targetUser) return false;
+
+  // FIX IS HERE: Use || [] to ensure it's an array before .some()
+  const currentUserBlockedTarget = (currentUser.blockedUsers || []).some(
+    (id) => id.toString() === targetUserId.toString()
+  );
+  const targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(
+    (id) => id.toString() === currentUserId.toString()
+  );
+
+  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+};
+// --- END: Helper function for blocking ---
+
 export async function emitUnreadMessageStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
     const activeConversationId = userActiveChats.get(userId.toString());
     let activeConversationIdObj = null;
 
-    const query = {
-      participants: userIdObj,
-      "lastMessage.sender": { $ne: userIdObj },
-      "lastMessage.seen": false,
-      "lastMessage.text": { $exists: true, $ne: "" },
-    };
+    // --- Start: Fetch blocking relationships for the current user ---
+    const currentUserBlockingData = await User.findById(userIdObj)
+      .select("blockedUsers blockedBy")
+      .lean();
+
+    const blockedByMe =
+      currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
+    const blockedMe =
+      currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
+    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+    // --- End: Fetch blocking relationships ---
+
+    const baseQueryConditions = [
+      { participants: userIdObj }, // The user MUST be a participant in the conversation
+      { "lastMessage.sender": { $ne: userIdObj } }, // Last message was sent by someone else
+      { "lastMessage.seen": false }, // Last message is unseen
+      { "lastMessage.text": { $exists: true, $ne: "" } }, // Ensure last message exists and is not empty
+      { "deletedFor.user": { $ne: userIdObj } }, // Exclude conversations "deleted" by this user
+    ];
+
+    // Filter out conversations where the *other participant* is in the blocked/blocking list
+    // This is a more complex filter that you want to apply to the *other* participant
+    // For `countDocuments`, it's generally easier to filter the participants array itself.
+    // The current approach of using $nin on `participants` array is okay,
+    // as it means if *any* participant is in the blocked list, it's filtered.
+    // If you specifically want to check if the *other* participant is blocked,
+    // you might need a more complex aggregation or a two-step process,
+    // but for "unread status", simply hiding conversations with blocked users is standard.
+    baseQueryConditions.push({
+      participants: {
+        $nin: blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
+      },
+    });
 
     if (activeConversationId) {
       try {
         activeConversationIdObj = new mongoose.Types.ObjectId(activeConversationId);
-        query._id = { $ne: activeConversationIdObj };
+        baseQueryConditions.push({ _id: { $ne: activeConversationIdObj } }); // Exclude the currently active chat
       } catch (objIdError) {
         console.error(
           `Error converting activeConversationId '${activeConversationId}' to ObjectId for user ${userId}:`,
@@ -70,7 +124,9 @@ export async function emitUnreadMessageStatus(userId) {
       }
     }
 
-    const conversationsWithUnseenLastMessage = await Conversation.countDocuments(query);
+    const conversationsWithUnseenLastMessage = await Conversation.countDocuments({
+      $and: baseQueryConditions, // Combine all conditions with $and
+    });
 
     const hasUnread = conversationsWithUnseenLastMessage > 0;
 
@@ -89,9 +145,26 @@ export async function emitUnreadMessageStatus(userId) {
 export async function emitUnreadNotificationStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
+    // --- Start: Fetch blocking relationships for the current user ---
+    const currentUserBlockingData = await User.findById(userIdObj)
+      .select("blockedUsers blockedBy")
+      .lean();
+    // Fix applied here: Ensure blockedUsers and blockedBy are arrays before mapping
+    const blockedByMe =
+      currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
+    const blockedMe =
+      currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
+    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+    // --- End: Fetch blocking relationships ---
+
     const unreadNotificationsCount = await Notification.countDocuments({
       to: userIdObj,
       read: false,
+      // --- START: Filter out notifications from blocked/blocking users ---
+      from: {
+        $nin: blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
+      },
+      // --- END: Filter out notifications from blocked/blocking users ---
     });
 
     const hasUnreadNotifications = unreadNotificationsCount > 0;
@@ -120,6 +193,17 @@ export const createAndSendNotification = async ({
     if (from.toString() === to.toString()) {
       return;
     }
+
+    // --- START: Blocking check for notification creation ---
+    // If 'from' user is blocked by 'to' user OR 'to' user is blocked by 'from' user
+    const blocked = await isBlockedOrBlockedBy(from, to);
+    if (blocked) {
+      console.log(
+        `Notification from ${from} to ${to} of type ${type} blocked due to existing block relationship.`
+      );
+      return; // Do not create or send notification
+    }
+    // --- END: Blocking check ---
 
     const newNotification = new Notification({
       from,
@@ -218,14 +302,22 @@ io.on("connection", (socket) => {
           "participants"
         );
         if (conversation) {
-          conversation.participants.forEach((participantId) => {
-            if (participantId.toString() !== senderId.toString()) {
-              const receiverSocketIds = getReceiverSocketIds(participantId.toString());
+          // --- START: Blocking check before emitting typing status ---
+          const participantIds = conversation.participants.map((p) => p.toString());
+          for (const participantId of participantIds) {
+            if (participantId.toString() === senderId.toString()) continue;
+
+            const blocked = await isBlockedOrBlockedBy(senderId, participantId);
+            if (!blocked) {
+              const receiverSocketIds = getReceiverSocketIds(participantId);
               receiverSocketIds.forEach((sockId) => {
                 io.to(sockId).emit("typing", { conversationId, userId: senderId });
               });
+            } else {
+              console.log(`Typing status from ${senderId} to ${participantId} blocked.`);
             }
-          });
+          }
+          // --- END: Blocking check ---
         }
       } catch (err) {
         console.error("Error fetching conversation for typing status:", err);
@@ -250,14 +342,24 @@ io.on("connection", (socket) => {
             "participants"
           );
           if (conversation) {
-            conversation.participants.forEach((participantId) => {
-              if (participantId.toString() !== senderId.toString()) {
-                const receiverSocketIds = getReceiverSocketIds(participantId.toString());
+            // --- START: Blocking check before emitting stop typing status ---
+            const participantIds = conversation.participants.map((p) => p.toString());
+            for (const participantId of participantIds) {
+              if (participantId.toString() === senderId.toString()) continue;
+
+              const blocked = await isBlockedOrBlockedBy(senderId, participantId);
+              if (!blocked) {
+                const receiverSocketIds = getReceiverSocketIds(participantId);
                 receiverSocketIds.forEach((sockId) => {
                   io.to(sockId).emit("stopTyping", { conversationId, userId: senderId });
                 });
+              } else {
+                console.log(
+                  `Stop typing status from ${senderId} to ${participantId} blocked.`
+                );
               }
-            });
+            }
+            // --- END: Blocking check ---
           }
         } catch (err) {
           console.error("Error fetching conversation for stop typing status:", err);
@@ -272,6 +374,30 @@ io.on("connection", (socket) => {
 
       const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
       const readerObjectId = new mongoose.Types.ObjectId(readerId);
+
+      // --- START: Blocking check before marking messages as seen ---
+      const conversation = await Conversation.findById(conversationObjectId).select(
+        "participants"
+      );
+      if (!conversation) {
+        return console.error("Conversation not found for marking messages as seen.");
+      }
+      const otherParticipantId = conversation.participants.find(
+        (pId) => pId.toString() !== readerId.toString()
+      );
+
+      if (
+        otherParticipantId &&
+        (await isBlockedOrBlockedBy(readerId, otherParticipantId))
+      ) {
+        console.log(
+          `Messages in conversation ${conversationId} not marked as seen for ${readerId} due to blocking.`
+        );
+        return res
+          .status(403)
+          .json({ error: "Cannot mark messages as seen due to blocking restrictions." }); // although it's socket, we can log and prevent action
+      }
+      // --- END: Blocking check ---
 
       await Message.updateMany(
         {
@@ -291,22 +417,23 @@ io.on("connection", (socket) => {
         { timestamps: false }
       );
 
-      const conversation = await Conversation.findById(conversationObjectId).select(
-        "participants"
-      );
-
+      // Re-fetch conversation to ensure `otherParticipantId` is current for emission
+      // (already fetched above for blocking check, can reuse if exists)
       if (conversation) {
-        const otherParticipantId = conversation.participants.find(
-          (pId) => pId.toString() !== readerId.toString()
-        );
+        // Find other participant again, using the already fetched conversation object
+        const otherParticipantIdString = conversation.participants
+          .find((pId) => pId.toString() !== readerId.toString())
+          ?.toString(); // Ensure it's a string
 
-        if (otherParticipantId) {
-          const recipientSocketIds = getReceiverSocketIds(otherParticipantId.toString());
+        if (otherParticipantIdString) {
+          // No need for blocking check here, as the action itself was prevented if blocked.
+          // The other participant should receive the seen status.
+          const recipientSocketIds = getReceiverSocketIds(otherParticipantIdString);
           recipientSocketIds.forEach((sockId) => {
             io.to(sockId).emit("messagesSeen", { conversationId, readerId });
           });
           process.nextTick(async () => {
-            await emitUnreadMessageStatus(otherParticipantId.toString());
+            await emitUnreadMessageStatus(otherParticipantIdString);
           });
         }
         process.nextTick(async () => {
@@ -365,8 +492,17 @@ io.on("connection", (socket) => {
                 "participants"
               );
               if (conversation) {
-                conversation.participants.forEach((participantId) => {
-                  if (participantId.toString() !== disconnectedUserId.toString()) {
+                // --- START: Blocking check before emitting disconnect stop typing ---
+                const participantIds = conversation.participants.map((p) => p.toString());
+                for (const participantId of participantIds) {
+                  if (participantId.toString() === disconnectedUserId.toString())
+                    continue;
+
+                  const blocked = await isBlockedOrBlockedBy(
+                    disconnectedUserId,
+                    participantId
+                  );
+                  if (!blocked) {
                     const receiverSocketIds = getReceiverSocketIds(
                       participantId.toString()
                     );
@@ -376,8 +512,13 @@ io.on("connection", (socket) => {
                         userId: disconnectedUserId,
                       });
                     });
+                  } else {
+                    console.log(
+                      `Disconnect stop typing from ${disconnectedUserId} to ${participantId} blocked.`
+                    );
                   }
-                });
+                }
+                // --- END: Blocking check ---
               }
             } catch (err) {
               console.error(
