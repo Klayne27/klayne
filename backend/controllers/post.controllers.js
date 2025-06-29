@@ -302,13 +302,13 @@ export const getLikedPosts = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "-password",
+        select: "-password blockedUsers blockedBy",
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          select: "-password blockedUsers blockedBy",
         },
         select: "text img likes commentsCount repostsCount createdAt user",
       });
@@ -555,14 +555,14 @@ export const getPost = async (req, res) => {
     const post = await Post.findById(req.params.id)
       .populate({
         path: "user",
-        select: "username profileImg fullName isVerified",
+        select: "username profileImg fullName isVerified blockedUsers blockedBy",
       })
       .populate({
         path: "repostedFrom",
         populate: [
           {
             path: "user",
-            select: "username profileImg fullName isVerified",
+            select: "username profileImg fullName isVerified blockedUsers blockedBy",
           },
         ],
         select: "text img likes commentsCount repostsCount createdAt user",

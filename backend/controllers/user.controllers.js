@@ -125,7 +125,7 @@ export const getSuggestedUsers = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    const user = await User.findById(userId).select("following").lean();
+    const user = await User.findById(userId).select("following blockedUsers").lean();
     const usersFollowedByMe = user ? user.following : [];
     const usersBlockedByMe = currentUser ? currentUser.blockedUsers : []; // New: get blocked users
 
