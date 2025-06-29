@@ -184,9 +184,8 @@ export const getAllPosts = async (req, res) => {
 
     const userId = req.user?._id;
 
-    console.time("getBlockingUsers");
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-    console.timeEnd("getBlockingUsers");
+
     const blockedAndBlockingObjectIds = [
       ...new Set([
         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
@@ -194,16 +193,13 @@ export const getAllPosts = async (req, res) => {
       ]),
     ];
 
-    // Build the $match stage for the aggregation pipeline
     const matchConditions = {
       $and: [
-        { "deletedFor.user": { $ne: userId } }, // Existing deletedFor filter
+        { "deletedFor.user": { $ne: userId } },
         {
           $or: [
-            // Original posts from users who are NOT in the blocked/blocking list
             { user: { $nin: blockedAndBlockingObjectIds } },
             {
-              // Reposts: ensure the reposted user is NOT in the blocked/blocking list
               $and: [
                 { repostedFrom: { $ne: null } },
                 { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
@@ -214,7 +210,6 @@ export const getAllPosts = async (req, res) => {
       ],
     };
 
-    // Get total count first using the same match conditions
     const totalPostsResult = await Post.aggregate([
       { $match: matchConditions },
       { $count: "count" },
@@ -228,35 +223,31 @@ export const getAllPosts = async (req, res) => {
       { $limit: limit },
       {
         $lookup: {
-          from: "users", // The collection name for the User model
+          from: "users",
           localField: "user",
           foreignField: "_id",
           as: "user",
-          // Change this to exclusion only if you want to also include blockedUsers/blockedBy for some reason
-          // If not, just exclude password
           pipeline: [{ $project: { password: 0 } }],
         },
       },
-      { $unwind: "$user" }, // Deconstructs the user array
+      { $unwind: "$user" },
       {
         $lookup: {
-          from: "posts", // The collection name for the Post model (for repostedFrom)
+          from: "posts",
           localField: "repostedFrom",
           foreignField: "_id",
           as: "repostedFrom",
           pipeline: [
             {
               $lookup: {
-                from: "users", // Lookup original post user
+                from: "users",
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                // Change this to exclusion only if you want to also include blockedUsers/blockedBy for some reason
-                // If not, just exclude password
                 pipeline: [{ $project: { password: 0 } }],
               },
             },
-            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } }, // Deconstruct and keep non-reposts
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
             {
               $project: {
                 text: 1,
@@ -271,17 +262,13 @@ export const getAllPosts = async (req, res) => {
           ],
         },
       },
-      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } }, // For reposts, keep null if not a repost
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
     ]);
 
-    // Apply the client-side filters for `deletedFor` and double reposts, if not fully covered by aggregation.
-    // The `matchConditions` should handle most of this.
     const finalFilteredPosts = posts.filter((post) => {
-      // Double repost protection. This check might be easier to do here if not complex to add to aggregation
       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
         return false;
       }
-      // Ensure that if it's a repost, the original user still exists after population
       if (post.repostedFrom && !post.repostedFrom.user) {
         return false;
       }

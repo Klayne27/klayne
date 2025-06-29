@@ -23,7 +23,7 @@ const getBlockingUsers = async (userId) => {
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
-  const currentUserId = req.user?._id
+  const currentUserId = req.user?._id;
 
   try {
     const user = await User.findOne({ username }).select("-password");
@@ -71,7 +71,6 @@ export const getUserProfile = async (req, res) => {
 
     res.status(200).json(profileData);
     // --- END: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
-
   } catch (error) {
     console.log("Error in getUserProfile: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -256,8 +255,8 @@ export const updateUser = async (req, res) => {
     user.fullName = fullName || user.fullName;
     user.email = email || user.email;
     user.username = username || user.username;
-    user.bio = bio
-    user.link = link
+    user.bio = bio;
+    user.link = link;
     user.profileImg = profileImg || user.profileImg;
     user.coverImg = coverImg || user.coverImg;
 

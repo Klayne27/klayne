@@ -135,6 +135,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
               alt={`${originalPostOwner.username}'s profile`}
+              loading="lazy"
             />
           </Link>
         </div>
@@ -193,6 +194,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
                 className="h-80 object-contain rounded-2xl border border-gray-700"
                 alt="post image"
                 onClick={(e) => handleImageClick(originalPost.img, e)}
+                loading="lazy"
               />
             )}
           </div>

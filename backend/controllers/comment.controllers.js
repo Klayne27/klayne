@@ -160,7 +160,7 @@ export const getComments = async (req, res) => {
     }
 
     const comments = await Comment.find(query)
-      .sort({ createdAt: 1 })
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({

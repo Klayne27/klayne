@@ -1,34 +1,40 @@
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import Notification from "../models/notification.model.js";
+import User from "../models/user.model.js";
+import mongoose from "mongoose"; // Import mongoose for ObjectId if needed
 
 // Helper function to get blocking relationships for the current user
-// (Re-added here for completeness, ideally would be in a shared utils file)
 const getBlockingUsers = async (userId) => {
   if (!userId) {
     return { blockedByMe: [], blockedMe: [] };
   }
   const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
   return {
-    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
-    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
-    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
+    blockedByMe: user?.blockedUsers?.map((id) => id.toString()) || [],
+    blockedMe: user?.blockedBy?.map((id) => id.toString()) || [],
   };
 };
 
 // Helper function to check if a user is involved in a block relationship
-// (Re-added here for completeness, ideally would be in a shared utils file)
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) return false;
   if (currentUserId.toString() === targetUserId.toString()) return false;
 
-  const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
-  const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
+  const currentUser = await User.findById(currentUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
+  const targetUser = await User.findById(targetUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
 
   if (!currentUser || !targetUser) return false;
 
-  // Current user has blocked target user OR target user has blocked current user
-  const currentUserBlockedTarget = currentUser.blockedUsers.some(id => id.toString() === targetUserId.toString());
-  const targetUserBlockedCurrentUser = targetUser.blockedUsers.some(id => id.toString() === currentUserId.toString());
+  const currentUserBlockedTarget = currentUser.blockedUsers.some(
+    (id) => id.toString() === targetUserId.toString()
+  );
+  const targetUserBlockedCurrentUser = targetUser.blockedUsers.some(
+    (id) => id.toString() === currentUserId.toString()
+  );
 
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
@@ -37,16 +43,14 @@ export const getNotifications = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // --- START: Fetch blocking relationships for the current user ---
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
-    // --- END: Fetch blocking relationships ---
 
     const notifications = await Notification.find({ to: userId })
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username fullName profileImg isVerified", // We will manually filter, so no need for blockedUsers here
+        select: "username fullName profileImg isVerified",
       })
       .populate({
         path: "postId",
@@ -56,26 +60,36 @@ export const getNotifications = async (req, res) => {
           select: "username",
         },
       })
-      .limit(50); // Limit applies before filtering
+      .limit(50);
 
-    // --- START: Filter notifications based on blocking relationships ---
     const filteredNotifications = notifications.filter((notification) => {
-      // If the 'from' user (initiator of the action) is blocked by the 'to' user (recipient)
-      // or if the 'from' user has blocked the 'to' user, hide the notification.
+      // First, check if 'from' user was successfully populated.
+      // If notification.from is null (meaning the user doesn't exist), we should filter this notification out.
+      if (!notification.from) {
+        return false;
+      }
+
+      // Now that we know notification.from is not null, we can safely access its properties.
       if (blockedAndBlockingUsers.includes(notification.from._id.toString())) {
         return false;
       }
+
+      // Additionally, consider if the postId exists or if its user exists
+      // (e.g., if a post or the user who created it was deleted)
+      // Depending on your requirements, you might also want to filter out notifications
+      // for deleted posts or posts from deleted users.
+      if (notification.postId && !notification.postId.user) {
+        // If there's a postId, but the user who created that post is null
+        return false;
+      }
+
       return true;
     });
-    // --- END: Filter notifications based on blocking relationships ---
 
-    res.status(200).json(filteredNotifications); // Send the filtered list
+    res.status(200).json(filteredNotifications);
 
-    // Mark as read AFTER sending response, and only for the ones that were visible
-    // This part requires careful consideration: Do we mark ALL fetched (including filtered out) as read,
-    // or only the ones shown? For simplicity and to prevent repeat notifications,
-    // we generally mark all as read. If only visible ones should be marked,
-    // you'd need to modify `updateMany` query or update in a loop.
+    // Mark all fetched notifications as read, regardless of whether they were filtered out or not.
+    // This prevents the same problematic notifications from reappearing as unread.
     await Notification.updateMany({ to: userId, read: false }, { read: true });
 
     await emitUnreadNotificationStatus(userId.toString());
