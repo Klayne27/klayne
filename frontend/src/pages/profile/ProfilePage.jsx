@@ -12,7 +12,7 @@ import FollowListModal from "../../components/common/FollowListModal";
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
-import { MdEdit } from "react-icons/md";
+import { MdBlock, MdEdit } from "react-icons/md";
 import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
@@ -22,13 +22,13 @@ import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConvers
 import { CiMail } from "react-icons/ci";
 import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
+import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [modalType, setModalType] = useState(null);
-  // const [showFullProfileContent, setShowFullProfileContent] = useState(false)
-  // const [showFullProfileHeader, setShowFullProfileHeader] = useState(false)
+  const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false);
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
@@ -64,10 +64,24 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
 
-  const handleBlockUnblock = () => {
+  const openBlockConfirmationModal = () => {
     if (!user?._id) return;
-    blockUnblockUser(user._id);
+    setShowBlockConfirmationModal(true);
   };
+
+  // Function to close the confirmation modal
+  const closeBlockConfirmationModal = () => {
+    setShowBlockConfirmationModal(false);
+  };
+
+  // Function to handle the actual block/unblock action AFTER modal confirmation
+  const handleConfirmBlockUnblock = () => {
+    closeBlockConfirmationModal(); // Close the modal
+    if (!user?._id) return;
+    blockUnblockUser(user._id); // Trigger the mutation
+    // No refetch() here, rely on optimistic updates and invalidateQueries
+  };
+
 
 
   const handleImgChange = (e, state) => {
@@ -242,16 +256,17 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {/* Block/Unblock Button logic remains the same, it correctly uses isBlockedByYou and hasBlockedYou */}
               {!isMyProfile && !hasBlockedYou && (
                 <button
-                  className={`font-bold border px-4 rounded-full py-1.5 transition duration-200
+                  className={`flex items-center gap-1 font-bold px-3 rounded-full py-1.5 transition duration-200
                                         ${
                                           isBlockedByYou
-                                            ? "bg-red-600 text-white hover:bg-red-700"
-                                            : "bg-gray-700 text-white hover:bg-gray-800"
+                                            ? "bg-red-700  hover:bg-red-800"
+                                            : "bg-red-700  hover:bg-red-800"
                                         }
                                     `}
-                  onClick={handleBlockUnblock}
+                  onClick={openBlockConfirmationModal} // Open modal instead of direct mutation
                   disabled={isBlocking}
                 >
+                  <MdBlock size={20} />
                   {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
                 </button>
               )}
@@ -414,6 +429,16 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           onClose={() => closeFollowListModal("followers")}
         />
       )}
+
+      {/* RENDER THE BLOCK CONFIRMATION MODAL */}
+      <BlockConfirmationModal
+        isOpen={showBlockConfirmationModal}
+        onClose={closeBlockConfirmationModal}
+        onConfirm={handleConfirmBlockUnblock}
+        username={user?.username} // Pass the username to the modal
+        isBlocking={isBlockedByYou} // Pass the current block status to determine modal text
+        isBlockedByYou={isBlockedByYou}
+      />
     </>
   );
 };

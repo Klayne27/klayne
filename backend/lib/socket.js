@@ -83,7 +83,6 @@ export async function emitUnreadMessageStatus(userId) {
       .select("blockedUsers blockedBy")
       .lean();
 
-    // Fix applied here: Ensure blockedUsers and blockedBy are arrays before mapping
     const blockedByMe =
       currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
     const blockedMe =
@@ -91,23 +90,32 @@ export async function emitUnreadMessageStatus(userId) {
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
     // --- End: Fetch blocking relationships ---
 
-    const query = {
-      participants: userIdObj,
-      "lastMessage.sender": { $ne: userIdObj },
-      "lastMessage.seen": false,
-      "lastMessage.text": { $exists: true, $ne: "" },
-      // --- START: Exclude conversations with blocked users from unread count ---
+    const baseQueryConditions = [
+      { participants: userIdObj }, // The user MUST be a participant in the conversation
+      { "lastMessage.sender": { $ne: userIdObj } }, // Last message was sent by someone else
+      { "lastMessage.seen": false }, // Last message is unseen
+      { "lastMessage.text": { $exists: true, $ne: "" } }, // Ensure last message exists and is not empty
+      { "deletedFor.user": { $ne: userIdObj } }, // Exclude conversations "deleted" by this user
+    ];
+
+    // Filter out conversations where the *other participant* is in the blocked/blocking list
+    // This is a more complex filter that you want to apply to the *other* participant
+    // For `countDocuments`, it's generally easier to filter the participants array itself.
+    // The current approach of using $nin on `participants` array is okay,
+    // as it means if *any* participant is in the blocked list, it's filtered.
+    // If you specifically want to check if the *other* participant is blocked,
+    // you might need a more complex aggregation or a two-step process,
+    // but for "unread status", simply hiding conversations with blocked users is standard.
+    baseQueryConditions.push({
       participants: {
         $nin: blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
       },
-      // --- END: Exclude conversations with blocked users from unread count ---
-      "deletedFor.user": { $ne: userIdObj }, // Exclude conversations "deleted" by this user
-    };
+    });
 
     if (activeConversationId) {
       try {
         activeConversationIdObj = new mongoose.Types.ObjectId(activeConversationId);
-        query._id = { $ne: activeConversationIdObj };
+        baseQueryConditions.push({ _id: { $ne: activeConversationIdObj } }); // Exclude the currently active chat
       } catch (objIdError) {
         console.error(
           `Error converting activeConversationId '${activeConversationId}' to ObjectId for user ${userId}:`,
@@ -116,7 +124,9 @@ export async function emitUnreadMessageStatus(userId) {
       }
     }
 
-    const conversationsWithUnseenLastMessage = await Conversation.countDocuments(query);
+    const conversationsWithUnseenLastMessage = await Conversation.countDocuments({
+      $and: baseQueryConditions, // Combine all conditions with $and
+    });
 
     const hasUnread = conversationsWithUnseenLastMessage > 0;
 
