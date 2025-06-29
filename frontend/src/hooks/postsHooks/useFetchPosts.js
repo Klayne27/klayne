@@ -26,8 +26,9 @@ export const useFetchPosts = (POST_ENDPOINT) => {
 
   const posts = data?.pages.flatMap((page) => page?.posts || []) || [];
 
-  const totalPostsCount = data?.pages[0]?.totalUserPosts || 0;
+  const totalPostsCount = data?.pages[0]?.totalPosts || 0;
   const totalLikedPostsCount = data?.pages[0]?.totalLikedPosts || 0
+
 
   return {
     posts,

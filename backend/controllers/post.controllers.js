@@ -287,7 +287,7 @@ export const getAllPosts = async (req, res) => {
 };
 
 export const getLikedPosts = async (req, res) => {
-  const userId = req.params.id;
+  const userId = req.params.id; // The user whose liked posts we want to fetch
   const currentUserId = req.user?._id; // The authenticated user viewing
 
   try {
@@ -295,8 +295,6 @@ export const getLikedPosts = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     // --- START: BLOCKING CHECK FOR LIKED POSTS VIEW ---
-    // If the user whose liked posts are being viewed (userId) is blocked by the current user (currentUserId)
-    // OR if the current user (currentUserId) is blocked by the user whose liked posts are being viewed (userId)
     if (await isBlockedOrBlockedBy(currentUserId, userId)) {
       return res.status(403).json({
         error: "You cannot view liked posts of this user due to blocking restrictions.",
@@ -316,69 +314,106 @@ export const getLikedPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Build the query for liked posts, integrating blocking filter
-    const query = {
-      _id: { $in: user.likedPosts },
-      $and: [
-        // Ensure the post owner is not blocked/blocking
-        { user: { $nin: blockedAndBlockingObjectIds } },
-        // Ensure the original post owner (if it's a repost) is not blocked/blocking
-        {
-          $or: [
-            { repostedFrom: null }, // If not a repost, this condition doesn't apply
-            { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } }, // If it's a repost, filter by original owner
-          ],
-        },
-      ],
+    // Base match condition for posts liked by the user, and not deleted for the current user
+    const baseMatchConditions = {
+      _id: { $in: user.likedPosts }, // Posts must be in the likedPosts array of the target user
+      "deletedFor.user": {
+        $ne: currentUserId ? new mongoose.Types.ObjectId(currentUserId) : null,
+      },
     };
 
-    const totalLikedPosts = await Post.countDocuments(query);
-
-    const likedPosts = await Post.find(query)
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: "user",
-        // Change to exclusion only
-        select: "-password", // Only exclude password
-      })
-      .populate({
-        path: "repostedFrom",
-        populate: {
-          path: "user",
-          // Change to exclusion only
-          select: "-password", // Only exclude password
+    // Aggregation pipeline for both counting and fetching posts
+    const pipeline = [
+      { $match: baseMatchConditions },
+      // Populate the user of the post
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [{ $project: { password: 0 } }],
         },
-        select: "text img likes commentsCount repostsCount createdAt user",
-      });
+      },
+      { $unwind: "$user" }, // Unwind the user array
 
-    // Client-side filtering for edge cases or complex scenarios,
-    // though initial query should handle most.
-    const finalLikedPosts = likedPosts.filter((post) => {
-      const postOwnerId = post.user?._id; // This is already an ObjectId from populate
-      const repostedFromOwnerId = post.repostedFrom?.user?._id;
+      // Populate the repostedFrom post
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFrom",
+          pipeline: [
+            // Populate the user of the repostedFrom post
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [{ $project: { password: 0 } }],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                text: 1,
+                img: 1,
+                likes: 1,
+                commentsCount: 1,
+                repostsCount: 1,
+                createdAt: 1,
+                user: 1, // Include populated user here
+              },
+            },
+          ],
+        },
+      },
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } }, // Unwind repostedFrom, allowing nulls
 
-      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
-      if (
-        post.repostedFrom &&
-        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
-      )
-        return false;
+      // Add the blocking filters AFTER population
+      {
+        $match: {
+          $and: [
+            // Filter out posts whose direct owner is blocked
+            { "user._id": { $nin: blockedAndBlockingObjectIds } },
+            // Filter out reposts whose original owner (repostedFrom.user) is blocked
+            {
+              $or: [
+                { repostedFrom: null }, // If not a repost, this is true
+                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } }, // If repost, check its original owner
+              ],
+            },
+            // Filter out reposts of reposts (nested reposts) if you don't want them
+            { "repostedFrom.repostedFrom": { $eq: null } },
+            // Filter out posts where repostedFrom user is null (e.g., original post/user deleted)
+            { $or: [{ repostedFrom: null }, { "repostedFrom.user": { $ne: null } }] },
+          ],
+        },
+      },
+      // Sort, skip, and limit for fetching posts
+      { $sort: { createdAt: -1 } },
+    ];
 
-      // Existing deletedFor logic (if any specific to liked posts)
-      const isOriginalPostDeletedForMe =
-        currentUserId &&
-        post.deletedFor?.some((entry) => entry.user.equals(currentUserId));
-      if (isOriginalPostDeletedForMe) {
-        return false;
-      }
-      return true;
-    });
+    // --- Calculate totalLikedPosts using a separate pipeline for count ---
+    const totalLikedPostsResult = await Post.aggregate([
+      ...pipeline, // Use the same filtering stages as the main pipeline
+      { $count: "count" },
+    ]);
+    const totalLikedPosts =
+      totalLikedPostsResult.length > 0 ? totalLikedPostsResult[0].count : 0;
+
+    // Fetch paginated liked posts
+    const likedPosts = await Post.aggregate([
+      ...pipeline, // Use the same filtering stages
+      { $skip: skip },
+      { $limit: limit },
+    ]);
 
     const hasNextPage = page * limit < totalLikedPosts;
 
-    res.status(200).json({ posts: finalLikedPosts, hasNextPage, totalLikedPosts });
+    res.status(200).json({ posts: likedPosts, hasNextPage, totalLikedPosts });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.log("Error in getLikedPosts controller: ", error);

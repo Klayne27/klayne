@@ -137,6 +137,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const handlePostsFetched = (count) => {
     setUserPostsCount(count);
+    setUserLikedPostsCount(count)
   };
 
   // Determine the message to display and control profile rendering

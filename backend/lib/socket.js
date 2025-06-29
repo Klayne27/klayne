@@ -98,14 +98,6 @@ export async function emitUnreadMessageStatus(userId) {
       { "deletedFor.user": { $ne: userIdObj } }, // Exclude conversations "deleted" by this user
     ];
 
-    // Filter out conversations where the *other participant* is in the blocked/blocking list
-    // This is a more complex filter that you want to apply to the *other* participant
-    // For `countDocuments`, it's generally easier to filter the participants array itself.
-    // The current approach of using $nin on `participants` array is okay,
-    // as it means if *any* participant is in the blocked list, it's filtered.
-    // If you specifically want to check if the *other* participant is blocked,
-    // you might need a more complex aggregation or a two-step process,
-    // but for "unread status", simply hiding conversations with blocked users is standard.
     baseQueryConditions.push({
       participants: {
         $nin: blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
