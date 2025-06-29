@@ -403,7 +403,6 @@ export const searchUsers = async (req, res) => {
   }
 };
 
-// --- START: NEW BLOCK/UNBLOCK CONTROLLER ---
 export const blockUnblockUser = async (req, res) => {
   try {
     const { id: userToBlockId } = req.params; // ID of the user to block/unblock
@@ -425,18 +424,41 @@ export const blockUnblockUser = async (req, res) => {
     if (isCurrentlyBlocked) {
       // UNBLOCK LOGIC
       // Remove from current user's blockedUsers
-      await User.findByIdAndUpdate(currentUserId, { $pull: { blockedUsers: userToBlockId } });
+      await User.findByIdAndUpdate(currentUserId, {
+        $pull: { blockedUsers: userToBlockId },
+      });
       // Remove current user from blocked user's blockedBy
-      await User.findByIdAndUpdate(userToBlockId, { $pull: { blockedBy: currentUserId } });
+      await User.findByIdAndUpdate(userToBlockId, {
+        $pull: { blockedBy: currentUserId },
+      });
+
+      // --- Messaging Restrictions (Un-hide conversations) ---
+      // When unblocked, clear the 'deletedFor' status for both users for their conversation
+      const conversation = await Conversation.findOne({
+        participants: { $all: [currentUserId, userToBlockId] },
+      });
+
+      if (conversation) {
+        // Remove both currentUserId and userToBlockId from deletedFor array
+        conversation.deletedFor = conversation.deletedFor.filter(
+          (entry) =>
+            entry.user.toString() !== currentUserId.toString() &&
+            entry.user.toString() !== userToBlockId.toString()
+        );
+        await conversation.save();
+      }
 
       res.status(200).json({ message: "User unblocked successfully." });
-
     } else {
       // BLOCK LOGIC
       // Add to current user's blockedUsers
-      await User.findByIdAndUpdate(currentUserId, { $push: { blockedUsers: userToBlockId } });
+      await User.findByIdAndUpdate(currentUserId, {
+        $push: { blockedUsers: userToBlockId },
+      });
       // Add current user to blocked user's blockedBy
-      await User.findByIdAndUpdate(userToBlockId, { $push: { blockedBy: currentUserId } });
+      await User.findByIdAndUpdate(userToBlockId, {
+        $push: { blockedBy: currentUserId },
+      });
 
       // --- Engagement & Following Restrictions (Automatic Unfollow) ---
       // If either user follows the other, unfollow them
@@ -445,32 +467,47 @@ export const blockUnblockUser = async (req, res) => {
 
       // Unfollow logic
       if (currentUserWasFollowing) {
-        await User.findByIdAndUpdate(currentUserId, { $pull: { following: userToBlockId } });
-        await User.findByIdAndUpdate(userToBlockId, { $pull: { followers: currentUserId } });
+        await User.findByIdAndUpdate(currentUserId, {
+          $pull: { following: userToBlockId },
+        });
+        await User.findByIdAndUpdate(userToBlockId, {
+          $pull: { followers: currentUserId },
+        });
       }
       if (userToBlockWasFollowing) {
-        await User.findByIdAndUpdate(userToBlockId, { $pull: { following: currentUserId } });
-        await User.findByIdAndUpdate(currentUserId, { $pull: { followers: userToBlockId } });
+        await User.findByIdAndUpdate(userToBlockId, {
+          $pull: { following: currentUserId },
+        });
+        await User.findByIdAndUpdate(currentUserId, {
+          $pull: { followers: userToBlockId },
+        });
       }
 
-      // DELETE WHOLE CONVERSATION/MESSAGES //
+      // --- Messaging Restrictions (Soft-delete conversations for both users) ---
+      // Find the direct conversation between these two users
+      const conversation = await Conversation.findOne({
+        participants: { $all: [currentUserId, userToBlockId] },
+      });
 
-      // --- Messaging Restrictions (Remove conversations and messages) ---
-      // Find and delete direct conversations between these two users
-      // const conversation = await Conversation.findOne({
-      //   participants: { $all: [currentUserId, userToBlockId] },
-      //   isGroup: false, // Ensure it's a direct message
-      // });
-
-      // if (conversation) {
-      //   await Message.deleteMany({ conversationId: conversation._id });
-      //   await Conversation.findByIdAndDelete(conversation._id);
-      //   // You might need to emit a socket event here to inform clients that a conversation was deleted
-      //   // This is crucial for real-time updates in chat window.
-      //   // For example: io.to(currentUserId).emit('conversationDeleted', conversation._id);
-      //   // And io.to(userToBlockId).emit('conversationDeleted', conversation._id);
-      //   // But this depends on your socket implementation.
-      // }
+      if (conversation) {
+        // Mark conversation as 'deletedFor' both users
+        // This makes it disappear from their inboxes without deleting messages
+        if (
+          !conversation.deletedFor.some(
+            (entry) => entry.user.toString() === currentUserId.toString()
+          )
+        ) {
+          conversation.deletedFor.push({ user: currentUserId });
+        }
+        if (
+          !conversation.deletedFor.some(
+            (entry) => entry.user.toString() === userToBlockId.toString()
+          )
+        ) {
+          conversation.deletedFor.push({ user: userToBlockId });
+        }
+        await conversation.save();
+      }
 
       // --- Notification Blocking: Handled at source of notification creation & retrieval
       // No explicit deletion of past notifications needed here, new ones will be blocked.
@@ -482,4 +519,3 @@ export const blockUnblockUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-// --- END: NEW BLOCK/UNBLOCK CONTROLLER ---

@@ -5,6 +5,38 @@ import {
   createAndSendNotification,
 } from "../lib/socket.js";
 import mongoose from "mongoose";
+import User from "../models/user.model.js";
+
+// Helper function to get blocking relationships for the current user
+const getBlockingUsers = async (userId) => {
+  if (!userId) {
+    return { blockedByMe: [], blockedMe: [] };
+  }
+  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
+  return {
+    blockedByMe: user ? user.blockedUsers.map(id => id.toString()) : [],
+    blockedMe: user ? user.blockedBy.map(id => id.toString()) : [],
+  };
+};
+
+// Helper function to check if a user is involved in a block relationship
+// targetUserId is the user whose content or profile we are interacting with
+// currentUserId is the authenticated user
+const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
+  if (!currentUserId || !targetUserId) return false;
+  if (currentUserId.toString() === targetUserId.toString()) return false;
+
+  const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
+  const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
+
+  if (!currentUser || !targetUser) return false;
+
+  // Current user has blocked target user OR target user has blocked current user
+  const currentUserBlockedTarget = currentUser.blockedUsers.some(id => id.toString() === targetUserId.toString());
+  const targetUserBlockedCurrentUser = targetUser.blockedUsers.some(id => id.toString() === currentUserId.toString());
+
+  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+};
 
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
 
@@ -38,10 +70,23 @@ export const getComments = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
+    const userId = req.user._id; // Current authenticated user
 
     if (!isValidObjectId(postId)) {
       return res.status(400).json({ error: "Invalid Post ID" });
     }
+
+    // --- START: Blocking check for the post itself ---
+    const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+    if (await isBlockedOrBlockedBy(userId, post.user._id)) {
+      return res.status(403).json({
+        error: "Cannot view comments on this post due to blocking restrictions.",
+      });
+    }
+    // --- END: Blocking check for the post itself ---
 
     const query = { post: postId };
 
@@ -60,17 +105,41 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName profileImg isVerified",
+        select: "username fullName profileImg isVerified blockedUsers blockedBy",
       })
       .populate({
         path: "parentComment",
         select: "text user",
         populate: {
           path: "user",
-          select: "username fullName",
+          select: "username fullName blockedUsers blockedBy",
         },
       });
 
+    // --- START: Filter comments based on blocking relationships ---
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+
+    const filteredComments = comments.filter((comment) => {
+      // 1. Filter out comments from users blocked by me or who blocked me
+      if (blockedAndBlockingUsers.includes(comment.user._id.toString())) {
+        return false;
+      }
+      // 2. If it's a reply, filter out replies to comments by users blocked by me or who blocked me
+      if (
+        comment.parentComment &&
+        blockedAndBlockingUsers.includes(comment.parentComment.user._id.toString())
+      ) {
+        return false;
+      }
+      return true;
+    });
+    // --- END: Filter comments based on blocking relationships ---
+
+    // Note: totalComments count might not reflect filtered results,
+    // but typically for pagination, it's based on the full query.
+    // If the frontend needs a count of *displayable* comments,
+    // you'd count after filtering. For now, we'll keep it as is.
     const totalComments = await Comment.countDocuments(query);
     const hasNextPage = page * limit < totalComments;
 
@@ -99,6 +168,16 @@ export const createComment = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
+    // --- START: Blocking check before creating a comment ---
+    // Check if the commenter (userId) is blocked by the post owner (post.user)
+    // OR if the post owner (post.user) is blocked by the commenter (userId)
+    if (await isBlockedOrBlockedBy(userId, post.user._id)) {
+      return res
+        .status(403)
+        .json({ error: "You cannot comment on this post due to blocking restrictions." });
+    }
+    // --- END: Blocking check ---
+
     const newComment = new Comment({
       user: userId,
       post: postId,
@@ -116,7 +195,11 @@ export const createComment = async (req, res) => {
       select: "username fullName profileImg isVerified",
     });
 
-    if (post.user.toString() !== userId.toString()) {
+    // Send notification only if the post owner is not the commenter and no blocking
+    if (
+      post.user.toString() !== userId.toString() &&
+      !(await isBlockedOrBlockedBy(userId, post.user._id))
+    ) {
       await createAndSendNotification({
         from: userId,
         to: post.user,
@@ -162,6 +245,23 @@ export const replyToComment = async (req, res) => {
         .json({ error: "Parent comment does not belong to this post" });
     }
 
+    // --- START: Blocking check before creating a reply ---
+    // Check if the replier (userId) is blocked by the post owner (post.user)
+    // OR if the post owner (post.user) is blocked by the replier (userId)
+    if (await isBlockedOrBlockedBy(userId, post.user._id)) {
+      return res
+        .status(403)
+        .json({ error: "You cannot reply on this post due to blocking restrictions." });
+    }
+    // Check if the replier (userId) is blocked by the parent comment owner (parentComment.user)
+    // OR if the parent comment owner (parentComment.user) is blocked by the replier (userId)
+    if (await isBlockedOrBlockedBy(userId, parentComment.user._id)) {
+      return res.status(403).json({
+        error: "You cannot reply to this comment due to blocking restrictions.",
+      });
+    }
+    // --- END: Blocking check ---
+
     const newReply = new Comment({
       user: userId,
       post: postId,
@@ -189,8 +289,11 @@ export const replyToComment = async (req, res) => {
         select: "username fullName",
       },
     });
-
-    if (parentComment.user.toString() !== userId.toString()) {
+    // Send notification only if parent comment owner is not the replier and no blocking
+    if (
+      parentComment.user.toString() !== userId.toString() &&
+      !(await isBlockedOrBlockedBy(userId, parentComment.user._id))
+    ) {
       await createAndSendNotification({
         from: userId,
         to: parentComment.user,
@@ -222,6 +325,18 @@ export const likeUnlikeComment = async (req, res) => {
       return res.status(404).json({ error: "Comment not found" });
     }
 
+    // --- START: Blocking check before liking/unliking a comment ---
+    // Check if the liker (userId) is blocked by the comment owner (comment.user)
+    // OR if the comment owner (comment.user) is blocked by the liker (userId)
+    if (await isBlockedOrBlockedBy(userId, comment.user._id)) {
+      return res
+        .status(403)
+        .json({
+          error: "You cannot like/unlike this comment due to blocking restrictions.",
+        });
+    }
+    // --- END: Blocking check ---
+
     const userLikedComment = comment.likes.includes(userId);
 
     if (userLikedComment) {
@@ -233,12 +348,16 @@ export const likeUnlikeComment = async (req, res) => {
     } else {
       comment.likes.push(userId);
 
-      if (comment.user.toString() !== userId.toString()) {
+      // Send notification only if comment owner is not the liker and no blocking
+      if (
+        comment.user.toString() !== userId.toString() &&
+        !(await isBlockedOrBlockedBy(userId, comment.user._id))
+      ) {
         await createAndSendNotification({
           from: userId,
           to: comment.user,
           type: "commentLike",
-          postId: comment.post, 
+          postId: comment.post,
           commentId: comment._id,
         });
       }
@@ -281,6 +400,29 @@ export const deleteComment = async (req, res) => {
         .status(401)
         .json({ error: "You are not authorized to delete this comment" });
     }
+
+    // --- START: Blocking check before deleting a comment ---
+    // Check if the deleter (userId) is blocked by the comment owner (commentToDelete.user)
+    // OR if the comment owner (commentToDelete.user) is blocked by the deleter (userId)
+    if (
+      !isCommentOwner &&
+      (await isBlockedOrBlockedBy(userId, commentToDelete.user._id))
+    ) {
+      return res
+        .status(403)
+        .json({ error: "You cannot delete this comment due to blocking restrictions." });
+    }
+    // If the deleter is the post owner, check against the comment owner
+    if (
+      isPostOwner &&
+      commentToDelete.user.toString() !== userId.toString() &&
+      (await isBlockedOrBlockedBy(userId, commentToDelete.user._id))
+    ) {
+      return res
+        .status(403)
+        .json({ error: "You cannot delete this comment due to blocking restrictions." });
+    }
+    // --- END: Blocking check ---
 
     const totalDeletedComments = await deleteAllChildComments(commentId);
 
