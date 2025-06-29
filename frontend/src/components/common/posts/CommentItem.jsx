@@ -105,6 +105,7 @@ const CommentItem = ({
   }
 
   console.log('test');
+  console.log('test2');
 
   return (
     <div className="flex flex-col gap-0 md:gap-2 text-white  border-gray-700 p-2 md:p-4 relative">
