@@ -17,6 +17,7 @@ export const signup = async (req, res) => {
     if (username.length === 0) {
       return res.status(400).json({ error: "Username cannot be empty." });
     }
+    
     if (fullName.length === 0) {
       return res.status(400).json({ error: "Full Name cannot be empty." });
     }

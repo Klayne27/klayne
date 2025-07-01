@@ -126,8 +126,8 @@ const ConversationsList = ({
           <div className="p-4 text-center text-gray-400">
             <p className="text-lg font-bold mb-2">Welcome to your inbox!</p>
             <p>
-              Drop a line, share posts and more with private conversations between you and
-              others on X.
+              Share posts and more with private conversations between you and
+              others on X-ayne.
             </p>
             <p className="mt-4">
               Start by following someone or selecting a user you follow.

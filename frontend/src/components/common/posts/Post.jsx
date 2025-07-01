@@ -51,7 +51,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e);
     if (isLiking) return;
-    likePost(originalPost.id);
+    likePost(originalPost._id);
   };
 
   const handleRepostClick = (e) => {

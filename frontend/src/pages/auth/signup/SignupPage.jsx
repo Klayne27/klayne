@@ -39,8 +39,9 @@ const SignUpPage = () => {
         <div className="bg-yellow-800 bg-opacity-30 border border-yellow-700 text-yellow-100 p-3 rounded-lg mb-6 max-w-sm text-center ">
           <p className="font-semibold mb-1">Important Note:</p>
           <p className="text-sm">
-            For your security, I recommend <strong>**not**</strong> using your real email address or a
-            password you use for other important accounts. This is a demo application.
+            For your security, I recommend <strong>**not**</strong> using your real email
+            address or a password you use for other important accounts. This is a demo
+            application.
           </p>
         </div>
         <form
