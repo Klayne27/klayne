@@ -136,15 +136,9 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // Invalidate broader queries to ensure all related data is fresh
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["followingPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["likedPosts"] });
 
-      // If it's a reply, also invalidate the main comments list to ensure parent's repliesCount is updated
-      // (though optimistic update handles this, invalidation ensures eventual consistency)
       if (parentCommentId) {
         queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       }
@@ -167,6 +161,15 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
   });
+
+  const createCommentWithReturn = async ({ text, img }) => {
+    try {
+      await createComment({ text, img }); // Here, createComment IS mutateAsync, which returns a Promise
+      return true;
+    } catch (error) {
+      return false;
+    }
+  };
 
   return { createComment, isCreatingComment };
 };

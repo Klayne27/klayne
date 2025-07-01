@@ -20,12 +20,13 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
 
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyText, setReplyText] = useState("");
-  const [replyImagePreview, setReplyImagePreview] = useState(null); // Stores Base64 for preview
-  const [replyImageFile, setReplyImageFile] = useState(null); // Stores the actual File object to convert
+  const [replyImagePreview, setReplyImagePreview] = useState(null);
+  const [replyImageFile, setReplyImageFile] = useState(null);
   const imageInputRef = useRef(null);
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
+  // isCreatingComment comes from useCreateComment hook
   const { createComment, isCreatingComment } = useCreateComment(postId, comment._id);
   const {
     comments: replies,
@@ -121,18 +122,19 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
       // Check against file, not preview
       return;
     }
-    if (isCreatingComment) return;
+    if (isCreatingComment) return; // Prevent multiple submissions
 
     // Send the Base64 string for the image
     await createComment({ text: replyText, img: replyImagePreview });
 
+    // Reset form after successful submission
     setReplyText("");
     setReplyImagePreview(null);
     setReplyImageFile(null);
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
-    setShowReplyInput(false);
+    setShowReplyInput(false); // Optionally close the reply input after sending
   };
 
   if (!comment || !comment.user) {
@@ -296,7 +298,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold"
+                  className="px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold flex items-center justify-center" // Added flex classes
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply
@@ -333,6 +335,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
                 onClick={() => imageInputRef.current.click()}
                 className="mt-2 text-primary hover:text-blue-400 transition duration-200 self-start p-1 rounded-full"
                 title="Add image"
+                disabled={isCreatingComment} // Disable image button during submission
               >
                 <BiImageAdd size={24} />
               </button>
@@ -340,7 +343,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
           )}
         </div>
       </div>
-
+      <div className="flex justify-center mt-5 items-center">
+        {isCreatingComment && <LoadingSpinner />}
+      </div>
       {comment.repliesCount > 0 && (
         <div className="border-l border-gray-700 mt-2">
           {isLoadingReplies ? (
@@ -350,13 +355,16 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
           ) : (
             <>
               {replies.map((reply) => (
-                <CommentItem
-                  key={reply._id}
-                  comment={reply}
-                  postId={postId}
-                  onReplyClick={onReplyClick}
-                  isPostOwner={isPostOwner}
-                />
+                <div key={reply._id} className="ml-2">
+                  {" "}
+                  {/* Added ml-2 for indenting replies visually */}
+                  <CommentItem
+                    comment={reply}
+                    postId={postId}
+                    onReplyClick={onReplyClick}
+                    isPostOwner={isPostOwner}
+                  />
+                </div>
               ))}
               {hasNextRepliesPage && (
                 <div className="flex justify-center py-2" ref={observerTarget}>

@@ -73,8 +73,6 @@ export const useDeleteComment = () => {
       queryClient.invalidateQueries(["comments", postId]);
       queryClient.invalidateQueries(["post", postId]);
       queryClient.invalidateQueries(["posts"]);
-      queryClient.invalidateQueries(["followingPosts"]);
-      queryClient.invalidateQueries(["userPosts"]);
       queryClient.invalidateQueries(["notifications"]);
     },
     onError: (error, { postId }, context) => {
