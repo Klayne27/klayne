@@ -36,7 +36,7 @@ function App() {
   const isMessagePage = location.pathname.includes("/messages");
 
   return (
-    <div className="flex max-w-7xl mx-auto">
+    <div className="flex md:max-w-7xl mx-auto">
       {authUser && <Sidebar />}
       <Suspense
         fallback={

@@ -205,7 +205,7 @@ const Sidebar = () => {
 
   return (
     <div className="md:flex-[2_2_0] max-w-56">
-      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full">
+      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full ">
         <Link
           to="/"
           onClick={handleHomeClick}
@@ -367,31 +367,29 @@ const Sidebar = () => {
               </div>
             </button>
 
-            {showPopover &&
-              (
-                <div
-                  ref={popoverRef}
-                  className="fixed bottom-4 left-[40px]
+            {showPopover && (
+              <div
+                ref={popoverRef}
+                className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
                 bg-black py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-1000 flex flex-col gap-1
                 shadow-md shadow-gray-400"
+              >
+                <button
+                  onClick={handleConfirmDeleteClick}
+                  className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-gray-800 transition-colors font-bold"
                 >
-                  <button
-                    onClick={handleConfirmDeleteClick}
-                    className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-gray-800 transition-colors font-bold"
-                  >
-                    Delete Account
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className="w-full text-left px-3 py-2 text-white text-md hover:bg-gray-800 transition-colors font-bold"
-                  >
-                    Logout @{authUser?.username}
-                  </button>
-                </div>
-
-              )}
+                  Delete Account
+                </button>
+                <button
+                  onClick={handleLogout}
+                  className="w-full text-left px-3 py-2 text-white text-md hover:bg-gray-800 transition-colors font-bold"
+                >
+                  Logout @{authUser?.username}
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>

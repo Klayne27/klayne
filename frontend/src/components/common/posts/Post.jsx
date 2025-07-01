@@ -80,8 +80,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
         return;
       }
       try {
-        const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {
-        });
+        const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {});
         if (!response.ok) {
           console.warn("Authentication issue checking repost status or other error.");
           setHasUserRepostedOriginal(false);
@@ -127,10 +126,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
           <Link
             to={`/profile/${originalPostOwner.username}`}
             className="w-10 h-10 rounded-full overflow-hidden"
-            onClick={() => {
-              setFeedType("posts");
-              handleInteractiveClick();
-            }}
+            onClick={() => handleInteractiveClick()}
           >
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
@@ -141,38 +137,42 @@ const Post = ({ post, openImageModal, setFeedType }) => {
         </div>
         <div className="flex flex-col flex-1">
           <div className="flex gap-1 items-center relative">
-            <Link
-              to={`/profile/${originalPostOwner.username}`}
-              className="font-bold flex items-center gap-1 hover:underline"
-              onClick={() => {
-                setFeedType("posts");
-                handleInteractiveClick();
-              }}
-            >
-              {originalPostOwner.fullName.length > 15
-                ? originalPostOwner.fullName.slice(0, 15) + "..."
-                : originalPostOwner.fullName}{" "}
-              {originalPostOwner.isVerified && (
-                <img src="/verified.png" className="size-[17px]" alt="Verified" />
-              )}
-            </Link>
-            <span className="text-gray-500 flex gap-1 text-sm">
+            {/* Wrap name/username/date in a flex container that allows shrinking */}
+            <div className="flex-1 min-w-0 flex items-center gap-1 overflow-hidden">
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                onClick={() => {
-                  setFeedType("posts");
-                  handleInteractiveClick();
-                }}
+                className="font-bold flex items-center gap-1 hover:underline truncate" // Added truncate
+                onClick={handleInteractiveClick} // Pass the event if needed
               >
-                @{originalPostOwner.username}
+                {originalPostOwner.fullName}
+                {originalPostOwner.isVerified && (
+                  <img src="/verified.png" className="size-[17px]" alt="Verified" />
+                )}
               </Link>
-              <span>·</span>
-              <span>{formattedDate}</span>
-            </span>
+              <span className="text-gray-500 flex gap-1 text-sm min-w-0">
+                {" "}
+                {/* min-w-0 added */}
+                <Link
+                  to={`/profile/${originalPostOwner.username}`}
+                  className="truncate" // Added truncate
+                  onClick={handleInteractiveClick} // Pass the event if needed
+                >
+                  @{originalPostOwner.username}
+                </Link>
+                <span>·</span>
+                <span className="shrink-0">{formattedDate}</span>{" "}
+                {/* shrink-0 to prevent date from shrinking too much */}
+              </span>
+            </div>
+
             {canDelete && (
-              <span className="flex justify-end flex-1">
+              <span className="flex justify-end ml-auto">
+                {" "}
+                {/* Use ml-auto instead of flex-1 to push it to the right */}
                 {!isDeleting && (
-                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 absolute -right-4 -top-2">
+                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 ml-auto">
+                    {" "}
+                    {/* Changed absolute to relative within this span, or adjust -right-4 carefully */}
                     <FiTrash
                       className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
                       onClick={handleDeletePostClick}
@@ -185,13 +185,13 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             )}
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
-            <span className="whitespace-pre-wrap">
+            <span className="whitespace-pre-wrap break-words min-w-0">
               {renderClickableText(originalPost.text)}
             </span>
             {originalPost.img && (
               <img
                 src={originalPost.img}
-                className="h-80 object-contain rounded-2xl border border-gray-700"
+                className="w-full h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
                 alt="post image"
                 onClick={(e) => handleImageClick(originalPost.img, e)}
                 loading="lazy"

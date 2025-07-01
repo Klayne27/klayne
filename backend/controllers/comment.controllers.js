@@ -528,8 +528,17 @@ export const deleteComment = async (req, res) => {
       return res.status(404).json({ error: "Associated Post not found" });
     }
 
-    const isCommentOwner = commentToDelete.user.toString() === userId.toString();
-    const isPostOwner = post.user.toString() === userId.toString();
+    const isCommentOwner = commentToDelete.user._id.toString() === userId.toString();
+    const isPostOwner = post.user._id.toString() === userId.toString();
+
+    console.log(`--- DELETE COMMENT DEBUG ---`);
+    console.log(`Requesting User ID (req.user._id): ${userId}`);
+    console.log(`Comment ID: ${commentId}`);
+    console.log(`Comment Owner ID: ${commentToDelete.user._id}`);
+    console.log(`Post Owner ID: ${post.user._id}`);
+    console.log(`Is Comment Owner? ${isCommentOwner}`);
+    console.log(`Is Post Owner? ${isPostOwner}`);
+    console.log(`--- END DEBUG ---`);
 
     if (!isCommentOwner && !isPostOwner) {
       return res

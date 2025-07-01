@@ -40,13 +40,15 @@ const HomePage = ({ openImageModal }) => {
       >
         <div
           className="fixed top-0 z-10
-                     border-b border-gray-700 bg-opacity-20 backdrop-blur-md"
-          style={{ width: headerWidth }}
+                     border-b border-gray-700"
         >
-          <div className="flex w-full">
+          <div
+            className="flex w-full bg-opacity-20 backdrop-blur-md"
+            style={{ width: headerWidth }}
+          >
             <div
               className={
-                "flex justify-center flex-1 p-3 hover:bg-secondary hover:bg-opacity-50 transition duration-300 cursor-pointer relative"
+                "flex justify-center flex-1 p-3 hover:bg-secondary hover:bg-opacity-50 transition duration-300 cursor-pointer "
               }
               onClick={() => handleTabClick("forYou")}
             >
@@ -56,7 +58,7 @@ const HomePage = ({ openImageModal }) => {
               )}
             </div>
             <div
-              className="flex justify-center flex-1 p-3 hover:bg-secondary hover:bg-opacity-50 transition duration-300 cursor-pointer relative"
+              className="flex justify-center flex-1 p-3 hover:bg-secondary hover:bg-opacity-50 transition duration-300 cursor-pointer "
               onClick={() => handleTabClick("following")}
             >
               Following
@@ -67,7 +69,7 @@ const HomePage = ({ openImageModal }) => {
           </div>
         </div>
 
-        <div ref={scrollableContentRef}>
+        <div ref={scrollableContentRef} className="">
           <CreatePost />
           <Posts feedType={feedType} openImageModal={openImageModal} />
         </div>

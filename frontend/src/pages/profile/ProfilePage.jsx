@@ -254,43 +254,40 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             <div className="flex justify-end px-4 mt-5 gap-2">
               {isMyProfile && <EditProfileModal authUser={authUser} />}
 
-              {/* Block/Unblock Button logic remains the same, it correctly uses isBlockedByYou and hasBlockedYou */}
               {!isMyProfile && !hasBlockedYou && (
                 <button
-                  className={`flex items-center gap-1 font-bold px-3 rounded-full py-1.5 transition duration-200
+                  className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:py-1.5 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
                                         ${
                                           isBlockedByYou
                                             ? "bg-red-700  hover:bg-red-800"
                                             : "bg-red-700  hover:bg-red-800"
                                         }
                                     `}
-                  onClick={openBlockConfirmationModal} // Open modal instead of direct mutation
+                  onClick={openBlockConfirmationModal}
                   disabled={isBlocking}
                 >
-                  <MdBlock size={20} />
+                  {!isBlockedByYou && <MdBlock size={20} />}
                   {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
                 </button>
               )}
 
-              {/* Message button: Only shown if not my profile, I'm following, AND no blocking relationship */}
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className=" p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black"
+                  className="p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black md:text-md text-xs"
                   disabled={isBlockingRelationship}
                 >
                   <CiMail size={20} strokeWidth={1} />
                 </button>
               )}
 
-              {/* Follow/Unfollow button: Only shown if not my profile AND no blocking relationship */}
               {!isMyProfile && !isBlockingRelationship && (
                 <button
                   className={`${
                     !amIFollowing
                       ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
                       : "hover:bg-secondary"
-                  } font-bold border px-4 rounded-full py-1.5 transition duration-200`}
+                  } font-bold border px-2 md:px-4 rounded-full py-0.5 md:py-1.5 transition duration-200  md:text-base text-xs`}
                   onClick={() => follow(user?._id)}
                   disabled={isPending || isBlockingRelationship}
                 >
@@ -326,7 +323,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           // It will show 'You are blocked by this user' if hasBlockedYou is true
           // It will show 'User not found' if user is null
           // It will show 'Content is unavailable...' if isBlockedByYou is true (and showFullProfileContent is false)
-          <p className="text-center text-lg mt-4 text-slate-400">{displayMessage}</p>
+          <p className="text-center text-lg mt-16 text-slate-400">{displayMessage}</p>
         )}
 
         {/* Render the full profile content (bio, links, followers, posts) ONLY if showFullProfileContent is true */}
@@ -403,7 +400,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           </>
         )}
 
-        {/* Posts component: Only if full content is shown AND not blocked by you */}
         {showFullProfileContent && user && !isBlockedByYou && (
           <Posts
             feedType={feedType}

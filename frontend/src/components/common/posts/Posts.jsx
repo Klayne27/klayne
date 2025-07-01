@@ -42,10 +42,6 @@ const Posts = ({
     totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
 
-  console.log('totalposts', totalPostsCount);
-  console.log("totallikedposts", totalLikedPostsCount);
-
-
   const observer = useRef();
   const lastPostElementRef = useCallback(
     (node) => {

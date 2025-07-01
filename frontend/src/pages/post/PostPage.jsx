@@ -70,6 +70,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     }
   }, [pid, refetchComments, refetchPost]);
 
+
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)
       return;
@@ -95,6 +96,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       }
     };
   }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
+
+  console.log('authuser', authUser);
+  console.log('displaypost', displayPost);
 
   if (isLoading) {
     return (
