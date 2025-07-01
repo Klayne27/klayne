@@ -24,7 +24,9 @@ export const renderClickableText = (text, currentUser) => {
         href={formattedUrl}
         target="_blank"
         rel="noopener noreferrer"
-        className={`hover:underline ${currentUser ? "text-white" : "text-blue-500"}`}
+        className={`hover:underline ${
+          currentUser ? "text-white" : "text-blue-500"
+        } break-all`}
         onClick={(e) => e.stopPropagation()}
       >
         {url}

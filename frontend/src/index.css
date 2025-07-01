@@ -89,3 +89,7 @@ body {
 .animate-bounce-custom {
   animation: bounce-custom 1s infinite;
 }
+
+.word-break-anywhere {
+  overflow-wrap: anywhere;
+}

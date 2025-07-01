@@ -17,6 +17,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
+  const [isSmallScreen, setIsSmallScreen] = useState(false); // New state for screen size
 
   const isRepost = !!post.repostedFrom;
   const originalPost = isRepost ? post.repostedFrom : post;
@@ -73,6 +74,19 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     }
   };
 
+  // Effect to check and update screen size for username truncation
+  useEffect(() => {
+    const checkScreenSize = () => {
+      // Define your "small device" threshold here, e.g., anything less than Tailwind's 'sm' (640px)
+      setIsSmallScreen(window.innerWidth < 640);
+    };
+
+    checkScreenSize(); // Set initial state
+    window.addEventListener("resize", checkScreenSize);
+
+    return () => window.removeEventListener("resize", checkScreenSize);
+  }, []);
+
   useEffect(() => {
     const checkIfUserRepostedStatus = async () => {
       if (!authUser || !originalPost?._id) {
@@ -95,6 +109,13 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     };
     checkIfUserRepostedStatus();
   }, [authUser, originalPost?._id, isReposting]);
+
+  const getDisplayUsername = (username) => {
+    if (isSmallScreen && username.length > 5) {
+      return username.slice(0, 5) + "...";
+    }
+    return username;
+  };
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -125,7 +146,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
         <div className="avatar mt-1">
           <Link
             to={`/profile/${originalPostOwner.username}`}
-            className="w-10 h-10 rounded-full overflow-hidden"
+            className="size-8 md:size-10 rounded-full overflow-hidden"
             onClick={() => handleInteractiveClick()}
           >
             <img
@@ -135,10 +156,10 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             />
           </Link>
         </div>
-        <div className="flex flex-col flex-1">
-          <div className="flex gap-1 items-center relative">
+        <div className="flex flex-col flex-1 min-w-0">
+          <div className="flex gap-1 items-center">
             {/* Wrap name/username/date in a flex container that allows shrinking */}
-            <div className="flex-1 min-w-0 flex items-center gap-1 overflow-hidden">
+            <div className="flex min-w-0 items-center gap-1 overflow-hidden">
               <Link
                 to={`/profile/${originalPostOwner.username}`}
                 className="font-bold flex items-center gap-1 hover:underline truncate" // Added truncate
@@ -146,7 +167,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
-                  <img src="/verified.png" className="size-[17px]" alt="Verified" />
+                  <img src="/verified.png" className="size-[17px] mr-1" alt="Verified" />
                 )}
               </Link>
               <span className="text-gray-500 flex gap-1 text-sm min-w-0">
@@ -157,7 +178,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
                   className="truncate" // Added truncate
                   onClick={handleInteractiveClick} // Pass the event if needed
                 >
-                  @{originalPostOwner.username}
+                  @{getDisplayUsername(originalPostOwner.username)}
                 </Link>
                 <span>·</span>
                 <span className="shrink-0">{formattedDate}</span>{" "}
@@ -166,13 +187,9 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             </div>
 
             {canDelete && (
-              <span className="flex justify-end ml-auto">
-                {" "}
-                {/* Use ml-auto instead of flex-1 to push it to the right */}
+              <span className="flex ml-auto">
                 {!isDeleting && (
-                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2 ml-auto">
-                    {" "}
-                    {/* Changed absolute to relative within this span, or adjust -right-4 carefully */}
+                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
                     <FiTrash
                       className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
                       onClick={handleDeletePostClick}
@@ -185,7 +202,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             )}
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
-            <span className="whitespace-pre-wrap break-words min-w-0">
+            <span className="whitespace-pre-wrap word-break-anywhere min-w-0">
               {renderClickableText(originalPost.text)}
             </span>
             {originalPost.img && (

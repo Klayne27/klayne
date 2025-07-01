@@ -155,7 +155,7 @@ const CreatePost = () => {
             <div className="relative">
               <PiSmiley
                 ref={emojiButtonRef}
-                className="fill-primary w-6 h-6 cursor-pointer"
+                className="fill-primary w-6 h-6 cursor-pointer hidden md:block"
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
               />
               {showEmojiPicker && (
