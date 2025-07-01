@@ -161,8 +161,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     };
   }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
 
-  console.log("authuser", authUser);
-  console.log("displaypost", displayPost);
 
   if (isLoading) {
     return (
@@ -301,6 +299,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
                 <CommentItem
+                  openImageModal={openImageModal}
                   comment={comment}
                   postId={displayPost._id}
                   onReplyClick={handleSetReplyingToComment}

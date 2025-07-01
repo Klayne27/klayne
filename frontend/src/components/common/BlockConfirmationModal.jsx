@@ -1,6 +1,3 @@
-// src/components/common/BlockConfirmationModal.jsx
-import React from "react";
-
 const BlockConfirmationModal = ({ isOpen, onClose, onConfirm, username, isBlocking, isBlockedByYou }) => {
   if (!isOpen) return null;
 

@@ -13,7 +13,7 @@ import { renderClickableText } from "../../../utils/textUtils";
 import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 
-const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
+const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
   const isCommentLiked = authUser && comment.likes?.includes(authUser._id);
@@ -124,18 +124,24 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
     }
     if (isCreatingComment) return; // Prevent multiple submissions
 
-    // Send the Base64 string for the image
     await createComment({ text: replyText, img: replyImagePreview });
 
-    // Reset form after successful submission
     setReplyText("");
     setReplyImagePreview(null);
     setReplyImageFile(null);
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
-    setShowReplyInput(false); // Optionally close the reply input after sending
+    setShowReplyInput(false);
   };
+
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation();
+    if (openImageModal) {
+      openImageModal(imageUrl);
+    }
+  };
+
 
   if (!comment || !comment.user) {
     console.warn("Comment or comment user not populated:", comment);
@@ -222,13 +228,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
           )}
           <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
 
-          {/* Display Comment Image if it exists */}
           {comment.img && (
             <img
               src={comment.img}
               alt="Comment attachment"
               className="mt-2 rounded-lg max-w-xs max-h-48 object-cover cursor-pointer"
-              // Add openImageModal prop here if needed
+              onClick={(e) => handleImageClick(comment.img, e)}
             />
           )}
 
