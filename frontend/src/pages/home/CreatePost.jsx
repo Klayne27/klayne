@@ -5,6 +5,8 @@ import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { Link } from "react-router-dom";
+import { BiImageAdd } from "react-icons/bi";
+
 
 import EmojiPicker from "emoji-picker-react";
 import { useEffect } from "react";
@@ -148,15 +150,17 @@ const CreatePost = () => {
 
         <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
-            <CiImageOn
-              className="fill-primary w-6 h-6 cursor-pointer "
+            <BiImageAdd
+              className="text-primary w-6 h-6 cursor-pointer hover:text-blue-400"
               onClick={() => imgRef.current.click()}
             />
             <div className="relative">
               <PiSmiley
                 ref={emojiButtonRef}
-                className="fill-primary w-6 h-6 cursor-pointer hidden md:block"
+                className="text-primary cursor-pointer hidden md:block hover:text-blue-400"
+                size={22}
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                strokeWidth={10}
               />
               {showEmojiPicker && (
                 <div
