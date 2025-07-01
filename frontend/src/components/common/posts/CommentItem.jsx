@@ -298,7 +298,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
                 />
                 <button
                   type="submit"
-                  className="px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold flex items-center justify-center" // Added flex classes
+                  className="hidden md:block px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold flex items-center justify-center" // Added flex classes
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply
