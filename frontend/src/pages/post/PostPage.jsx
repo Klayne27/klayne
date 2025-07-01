@@ -9,6 +9,8 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
 import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
+import { BiImageAdd } from "react-icons/bi"; // Import the icon
+import { IoClose } from "react-icons/io5";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
   const { pid } = useParams();
@@ -17,6 +19,11 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
   const [commentText, setCommentText] = useState("");
   const [replyingToComment, setReplyingToComment] = useState(null);
+
+  // NEW STATES AND REF FOR IMAGE UPLOAD IN MAIN COMMENT FORM
+  const [mainCommentImagePreview, setMainCommentImagePreview] = useState(null); // Stores Base64 for preview
+  const [mainCommentImageFile, setMainCommentImageFile] = useState(null); // Stores the actual File object
+  const mainCommentImageInputRef = useRef(null); // Ref for the hidden file input
 
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
@@ -31,25 +38,83 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     refetch: refetchComments,
   } = useFetchComments(pid, null);
 
+  // useCreateComment for top-level comments (parentCommentId is null)
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 
   const displayPost = post?.repostedFrom || post;
 
+  // NEW: handleImageChange for the main comment input
+  const handleMainCommentImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setMainCommentImageFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setMainCommentImagePreview(reader.result);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setMainCommentImageFile(null);
+      setMainCommentImagePreview(null);
+    }
+  };
+
+  // NEW: handleRemoveImage for the main comment input
+  const handleRemoveMainCommentImage = () => {
+    setMainCommentImageFile(null);
+    setMainCommentImagePreview(null);
+    if (mainCommentImageInputRef.current) {
+      mainCommentImageInputRef.current.value = ""; // Clear file input
+    }
+  };
+
   const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
-    if (!commentText.trim() || isCreatingComment) return;
+
+    // MODIFIED: Condition to allow either text OR image
+    if (!commentText.trim() && !mainCommentImageFile) {
+      // Check against mainCommentImageFile
+      console.warn("Attempted to send empty comment with no image.");
+      return;
+    }
+    if (isCreatingComment) return;
 
     if (replyingToComment) {
-      await createComment({ text: commentText, parentCommentId: replyingToComment._id });
+      // NOTE: Replies will use the replyText/replyImagePreview states from CommentItem
+      // This form is for top-level comments only. If you want this form to also handle replies,
+      // you'd need to adapt it, but currently, CommentItem handles its own reply input.
+      // For now, if replyingToComment is set, this form should probably not be visible or functional.
+      // However, for consistency, if you were to use this form for replies, you'd pass the same image logic.
+      // As per the original structure, this form is for adding a NEW top-level comment.
+      await createComment({
+        text: commentText,
+        parentCommentId: replyingToComment._id,
+        img: mainCommentImagePreview,
+      });
     } else {
-      await createComment({ text: commentText });
+      // MODIFIED: Pass img for top-level comment
+      await createComment({ text: commentText, img: mainCommentImagePreview });
     }
+
+    // Reset all states for the main comment input form
     setCommentText("");
-    setReplyingToComment(null);
+    setReplyingToComment(null); // Clear replying state
+    setMainCommentImagePreview(null);
+    setMainCommentImageFile(null);
+    if (mainCommentImageInputRef.current) {
+      mainCommentImageInputRef.current.value = "";
+    }
   };
 
   const handleSetReplyingToComment = useCallback((comment) => {
     setReplyingToComment(comment);
+    // Optionally clear main comment input when switching to reply context
+    setCommentText("");
+    setMainCommentImagePreview(null);
+    setMainCommentImageFile(null);
+    if (mainCommentImageInputRef.current) {
+      mainCommentImageInputRef.current.value = "";
+    }
   }, []);
 
   useEffect(() => {
@@ -69,7 +134,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       refetchPost();
     }
   }, [pid, refetchComments, refetchPost]);
-
 
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)
@@ -97,8 +161,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     };
   }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
 
-  console.log('authuser', authUser);
-  console.log('displaypost', displayPost);
+  console.log("authuser", authUser);
+  console.log("displaypost", displayPost);
 
   if (isLoading) {
     return (
@@ -146,33 +210,84 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       </div>
 
       {authUser && (
+        // MODIFIED: Form structure to accommodate image input and preview
         <form
           onSubmit={handleAddOrReplyComment}
-          className="p-4 border-b border-gray-700 flex items-center justify-between sm:gap-4"
+          className="p-4 border-b border-gray-700 flex flex-col gap-2" // Changed to flex-col
         >
-          <div className="avatar flex-shrink-0">
-            <div className="w-9 rounded-full">
-              <img
-                src={authUser?.profileImg || "/avatar-placeholder.png"}
-                alt="Your profile"
-              />
+          {/* Main input row */}
+          <div className="flex items-center justify-between gap-2 sm:gap-4">
+            {" "}
+            {/* Keep items-center and gap */}
+            <div className="avatar flex-shrink-0">
+              <div className="w-9 rounded-full">
+                <img
+                  src={authUser?.profileImg || "/avatar-placeholder.png"}
+                  alt="Your profile"
+                />
+              </div>
             </div>
+            <input
+              type="text"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              placeholder={
+                replyingToComment
+                  ? `Replying to @${replyingToComment.user.username}...`
+                  : "Post your comment"
+              }
+              className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
+              disabled={isCreatingComment}
+            />
+            {/* Hidden file input for main comment */}
+            <input
+              type="file"
+              accept="image/*"
+              hidden
+              ref={mainCommentImageInputRef}
+              onChange={handleMainCommentImageChange}
+            />
+            {/* Button to trigger image input */}
+            <button
+              type="button"
+              onClick={() => mainCommentImageInputRef.current.click()}
+              className="p-2 rounded-full text-primary hover:text-blue-400 transition duration-200 flex-shrink-0"
+              title="Add image to comment"
+            >
+              <BiImageAdd size={24} />
+            </button>
+            <button
+              type="submit"
+              className="px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
+              // MODIFIED: Enable if either text OR image is present
+              disabled={
+                isCreatingComment || (!commentText.trim() && !mainCommentImagePreview)
+              }
+            >
+              {isCreatingComment ? <LoadingSpinner size="sm" /> : "Comment"}
+            </button>
           </div>
-          <input
-            type="text"
-            value={commentText}
-            onChange={(e) => setCommentText(e.target.value)}
-            placeholder={"Post your comment"}
-            className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
-            disabled={isCreatingComment}
-          />
-          <button
-            type="submit"
-            className="px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
-            disabled={isCreatingComment || !commentText.trim()}
-          >
-            {"Comment"}
-          </button>
+
+          {/* NEW: Image preview section for the main comment */}
+          {mainCommentImagePreview && (
+            <div className="relative size-40 mt-2 self-start ml-12">
+              {" "}
+              {/* Adjust ml as needed for alignment */}
+              <img
+                src={mainCommentImagePreview}
+                alt="Comment preview"
+                className="w-full h-full object-contain rounded-lg"
+              />
+              <button
+                type="button"
+                onClick={handleRemoveMainCommentImage}
+                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
+                title="Remove image"
+              >
+                <IoClose />
+              </button>
+            </div>
+          )}
         </form>
       )}
 

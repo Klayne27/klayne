@@ -10,19 +10,19 @@ import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment";
 import { useCreateComment } from "../../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments";
 import { renderClickableText } from "../../../utils/textUtils";
+import { BiImageAdd } from "react-icons/bi";
+import { IoClose } from "react-icons/io5";
 
-const CommentItem = ({
-  comment,
-  postId,
-  onReplyClick,
-  isPostOwner,
-}) => {
+const CommentItem = ({ comment, postId, onReplyClick, isPostOwner }) => {
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
   const isCommentLiked = authUser && comment.likes?.includes(authUser._id);
 
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyText, setReplyText] = useState("");
+  const [replyImagePreview, setReplyImagePreview] = useState(null); // Stores Base64 for preview
+  const [replyImageFile, setReplyImageFile] = useState(null); // Stores the actual File object to convert
+  const imageInputRef = useRef(null);
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
@@ -83,19 +83,55 @@ const CommentItem = ({
     (e) => {
       e.stopPropagation();
       setShowReplyInput((prev) => !prev);
-      if (onReplyClick) {
-        onReplyClick(comment);
-      }
+      setReplyText("");
+      setReplyImagePreview(null);
+      setReplyImageFile(null); // Clear the actual file as well
     },
-    [onReplyClick, comment]
+    [] // No dependencies if clearing state directly
   );
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setReplyImageFile(file); // Store the file
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setReplyImagePreview(reader.result); // Store Base64 for preview
+      };
+      reader.readAsDataURL(file);
+    } else {
+      setReplyImageFile(null);
+      setReplyImagePreview(null);
+    }
+  };
+
+  const handleRemoveImage = () => {
+    setReplyImageFile(null);
+    setReplyImagePreview(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = ""; // Clear file input
+    }
+  };
 
   const handleSendReply = async (e) => {
     e.preventDefault();
     e.stopPropagation();
-    if (!replyText.trim() || isCreatingComment) return;
-    await createComment({ text: replyText });
+
+    if (!replyText.trim() && !replyImageFile) {
+      // Check against file, not preview
+      return;
+    }
+    if (isCreatingComment) return;
+
+    // Send the Base64 string for the image
+    await createComment({ text: replyText, img: replyImagePreview });
+
     setReplyText("");
+    setReplyImagePreview(null);
+    setReplyImageFile(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
     setShowReplyInput(false);
   };
 
@@ -105,7 +141,7 @@ const CommentItem = ({
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 text-white  border-gray-700 p-2 md:p-4 relative">
+    <div className="flex flex-col gap-0 md:gap-2 text-white border-gray-700 p-2 md:p-4 relative">
       <div className="flex gap-1 md:gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
@@ -184,11 +220,21 @@ const CommentItem = ({
           )}
           <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
 
+          {/* Display Comment Image if it exists */}
+          {comment.img && (
+            <img
+              src={comment.img}
+              alt="Comment attachment"
+              className="mt-2 rounded-lg max-w-xs max-h-48 object-cover cursor-pointer"
+              // Add openImageModal prop here if needed
+            />
+          )}
+
           <div className="flex gap-4 mt-0 md:mt-2 items-center">
             <button
               onClick={handleLikeCommentClick}
               disabled={isLikingComment}
-              className="flex items-center  cursor-pointer group"
+              className="flex items-center cursor-pointer group"
             >
               <div
                 className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
@@ -211,7 +257,7 @@ const CommentItem = ({
               </span>
             </button>
 
-            {authUser && ( 
+            {authUser && (
               <button
                 onClick={handleReplyClick}
                 className="flex items-center cursor-pointer group"
@@ -230,29 +276,65 @@ const CommentItem = ({
           </div>
 
           {showReplyInput && authUser && (
-            <form onSubmit={handleSendReply} className="mt-4 flex items-center gap-2">
-              <div className="avatar flex-shrink-0">
-                <div className="w-7 rounded-full">
-                  <img
-                    src={authUser.profileImg || "/avatar-placeholder.png"}
-                    alt="Your profile"
-                  />
+            <form onSubmit={handleSendReply} className="mt-4 flex flex-col gap-2">
+              <div className="flex items-center gap-2">
+                <div className="avatar flex-shrink-0">
+                  <div className="w-7 rounded-full">
+                    <img
+                      src={authUser.profileImg || "/avatar-placeholder.png"}
+                      alt="Your profile"
+                    />
+                  </div>
                 </div>
+                <input
+                  type="text"
+                  value={replyText}
+                  onChange={(e) => setReplyText(e.target.value)}
+                  placeholder={`Replying to @${comment.user.username}...`}
+                  className="flex-1 pl-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-sm"
+                  disabled={isCreatingComment}
+                />
+                <button
+                  type="submit"
+                  className="px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold"
+                  disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
+                >
+                  Reply
+                </button>
               </div>
+
+              {/* Image preview section */}
+              {replyImagePreview && (
+                <div className="relative size-40 mt-2 self-start">
+                  <img
+                    src={replyImagePreview} // Use the Base64 string for preview
+                    alt="Reply preview"
+                    className="w-full h-full object-contain rounded-lg"
+                  />
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
+                    title="Remove image"
+                  >
+                    <IoClose />
+                  </button>
+                </div>
+              )}
               <input
-                type="text"
-                value={replyText}
-                onChange={(e) => setReplyText(e.target.value)}
-                placeholder={`Replying to @${comment.user.username}...`}
-                className="flex-1 pl-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-sm"
-                disabled={isCreatingComment}
+                type="file"
+                accept="image/*"
+                hidden
+                ref={imageInputRef}
+                onChange={handleImageChange}
               />
               <button
-                type="submit"
-                className="px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold"
-                disabled={isCreatingComment || !replyText.trim()}
+                type="button"
+                onClick={() => imageInputRef.current.click()}
+                className="mt-2 text-primary hover:text-blue-400 transition duration-200 self-start p-1 rounded-full"
+                title="Add image"
               >
-                Reply
+                <BiImageAdd size={24} />
               </button>
             </form>
           )}
@@ -260,7 +342,7 @@ const CommentItem = ({
       </div>
 
       {comment.repliesCount > 0 && (
-        <div className="border-l  border-gray-700  mt-2">
+        <div className="border-l border-gray-700 mt-2">
           {isLoadingReplies ? (
             <div className="flex justify-center py-2">
               <LoadingSpinner size="md" />

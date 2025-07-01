@@ -14,7 +14,11 @@ const commentSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      required: true,
+      required: false,
+    },
+    img: {
+      type: String,
+      default: null
     },
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,

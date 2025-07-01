@@ -6,6 +6,7 @@ import {
 } from "../lib/socket.js";
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
+import { v2 as cloudinary } from "cloudinary";
 
 // Helper function to get blocking relationships for the current user
 const getBlockingUsers = async (userId) => {
@@ -234,23 +235,25 @@ export const getComments = async (req, res) => {
 export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
+    let { img } = req.body; // 'img' is now the Base64 string from frontend
+
     const postId = req.params.postId;
     const userId = req.user._id;
 
-    if (!text) {
-      return res.status(400).json({ error: "Text field is required for comment" });
+    if (!text && !img) {
+      return res
+        .status(400)
+        .json({ error: "Comment must contain either text or an image." });
     }
     if (!isValidObjectId(postId)) {
       return res.status(400).json({ error: "Invalid Post ID" });
     }
 
-    // Populate the post owner to get their blocking status
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // CRITICAL FIX: Ensure post.user exists before blocking check
     if (!post.user) {
       console.error(
         `[createComment] Post ${postId} has no associated user. Cannot perform blocking check.`
@@ -260,18 +263,29 @@ export const createComment = async (req, res) => {
         .json({ error: "Internal server error: Post owner information missing." });
     }
 
-    // --- START: Blocking check before creating a comment ---
     if (await isBlockedOrBlockedBy(userId, post.user._id)) {
       return res
         .status(403)
         .json({ error: "You cannot comment on this post due to blocking restrictions." });
     }
-    // --- END: Blocking check ---
+
+    // --- Image Upload Logic (replicated from your createPost) ---
+    if (img) {
+      try {
+        const uploadedResponse = await cloudinary.uploader.upload(img);
+        img = uploadedResponse.secure_url; // Update img to the Cloudinary URL
+      } catch (uploadError) {
+        console.error("Cloudinary upload error in createComment:", uploadError);
+        return res.status(500).json({ error: "Image upload failed." });
+      }
+    }
+    // --- End Image Upload Logic ---
 
     const newComment = new Comment({
       user: userId,
       post: postId,
       text,
+      img, // This will now be the Cloudinary URL or null
       parentComment: null,
     });
 
@@ -285,8 +299,6 @@ export const createComment = async (req, res) => {
       select: "username fullName profileImg isVerified",
     });
 
-    // Send notification only if the post owner is not the commenter and no blocking
-    // CRITICAL FIX: Ensure post.user exists before sending notification
     if (
       post.user &&
       post.user.toString() !== userId.toString() &&
@@ -311,23 +323,24 @@ export const createComment = async (req, res) => {
 export const replyToComment = async (req, res) => {
   try {
     const { text } = req.body;
+    let { img } = req.body; // 'img' is now the Base64 string from frontend
     const { postId, parentCommentId } = req.params;
     const userId = req.user._id;
 
-    if (!text) {
-      return res.status(400).json({ error: "Text field is required for reply" });
+    if (!text && !img) {
+      return res
+        .status(400)
+        .json({ error: "Reply must contain either text or an image." });
     }
     if (!isValidObjectId(postId) || !isValidObjectId(parentCommentId)) {
       return res.status(400).json({ error: "Invalid Post ID or Parent Comment ID" });
     }
 
-    // Populate the post owner to get their blocking status
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Populate the parent comment owner to get their blocking status
     const parentComment = await Comment.findById(parentCommentId).populate(
       "user",
       "blockedUsers blockedBy"
@@ -342,8 +355,6 @@ export const replyToComment = async (req, res) => {
         .json({ error: "Parent comment does not belong to this post" });
     }
 
-    // --- START: Blocking check before creating a reply ---
-    // CRITICAL FIX: Ensure post.user exists
     if (!post.user) {
       console.error(
         `[replyToComment] Post ${postId} has no associated user. Cannot perform blocking check for post owner.`
@@ -358,28 +369,37 @@ export const replyToComment = async (req, res) => {
         .json({ error: "You cannot reply on this post due to blocking restrictions." });
     }
 
-    // CRITICAL FIX: Ensure parentComment.user exists
     if (!parentComment.user) {
       console.error(
         `[replyToComment] Parent comment ${parentCommentId} has no associated user. Cannot perform blocking check for parent comment owner.`
       );
-      return res
-        .status(500)
-        .json({
-          error: "Internal server error: Parent comment owner information missing.",
-        });
+      return res.status(500).json({
+        error: "Internal server error: Parent comment owner information missing.",
+      });
     }
     if (await isBlockedOrBlockedBy(userId, parentComment.user._id)) {
       return res.status(403).json({
         error: "You cannot reply to this comment due to blocking restrictions.",
       });
     }
-    // --- END: Blocking check ---
+
+    // --- Image Upload Logic (replicated from your createPost) ---
+    if (img) {
+      try {
+        const uploadedResponse = await cloudinary.uploader.upload(img);
+        img = uploadedResponse.secure_url; // Update img to the Cloudinary URL
+      } catch (uploadError) {
+        console.error("Cloudinary upload error in replyToComment:", uploadError);
+        return res.status(500).json({ error: "Image upload failed." });
+      }
+    }
+    // --- End Image Upload Logic ---
 
     const newReply = new Comment({
       user: userId,
       post: postId,
       text,
+      img, // This will now be the Cloudinary URL or null
       parentComment: parentCommentId,
     });
 
@@ -397,15 +417,13 @@ export const replyToComment = async (req, res) => {
     });
     await newReply.populate({
       path: "parentComment",
-      select: "text user",
+      select: "text img user",
       populate: {
         path: "user",
         select: "username fullName",
       },
     });
 
-    // Send notification only if parent comment owner is not the replier and no blocking
-    // CRITICAL FIX: Ensure parentComment.user exists before sending notification
     if (
       parentComment.user &&
       parentComment.user.toString() !== userId.toString() &&

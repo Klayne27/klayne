@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addCommentApi, replyToCommentApi } from "../../api/commentsApi";
+import { addCommentApi, replyToCommentApi } from "../../api/commentsApi"; // Make sure these functions can accept an 'img' argument
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
@@ -8,18 +8,20 @@ export const useCreateComment = (postId, parentCommentId = null) => {
   const { authUser: currentUser } = useAuthUser();
 
   const commentsQueryKey = parentCommentId
-    ? ["comments", postId, parentCommentId]
-    : ["comments", postId]; 
+    ? ["comments", postId, parentCommentId, "replies"] // Adjust key for replies if needed. This was "comments", postId, parentCommentId in the example, adding "replies" makes it more specific if your fetchComments uses it.
+    : ["comments", postId];
 
   const { mutate: createComment, isPending: isCreatingComment } = useMutation({
-    mutationFn: async ({ text }) => {
+    mutationFn: async ({ text, img }) => {
+      // <--- MODIFIED: Accept 'img' here
       if (parentCommentId) {
-        return replyToCommentApi({ postId, parentCommentId, text });
+        return replyToCommentApi({ postId, parentCommentId, text, img }); // <--- MODIFIED: Pass 'img'
       } else {
-        return addCommentApi({ postId, text });
+        return addCommentApi({ postId, text, img }); // <--- MODIFIED: Pass 'img'
       }
     },
-    onMutate: async ({ text }) => {
+    onMutate: async ({ text, img }) => {
+      // <--- MODIFIED: Accept 'img' here
       await queryClient.cancelQueries({ queryKey: commentsQueryKey });
 
       const previousComments = queryClient.getQueryData(commentsQueryKey);
@@ -36,6 +38,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         },
         post: postId,
         text: text,
+        img: img, // <--- MODIFIED: Include 'img' in optimistic comment
         parentComment: parentCommentId,
         likes: [],
         repliesCount: 0,
@@ -46,10 +49,12 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
         const newPages = oldData?.pages ? [...oldData.pages] : [];
         if (newPages.length === 0) {
+          // If there are no pages, initialize the first page correctly
           newPages.push({ comments: [], hasNextPage: false });
         }
         newPages[0] = {
           ...newPages[0],
+          // Ensure optimistic comment is added to the correct page, typically the first page (most recent)
           comments: [...newPages[0].comments, newOptimisticComment].sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           ),
@@ -57,6 +62,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
+      // Optimistically update the main post's comment count
       const postQueryKey = ["post", postId];
       await queryClient.cancelQueries({ queryKey: postQueryKey });
       const previousPostData = queryClient.getQueryData(postQueryKey);
@@ -71,29 +77,42 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         });
       }
 
+      // Optimistically update the parent comment's repliesCount if it's a reply
       if (parentCommentId) {
-        const parentCommentsQueryKey = ["comments", postId];
-        await queryClient.cancelQueries({ queryKey: parentCommentsQueryKey });
-        const previousParentCommentsData =
-          queryClient.getQueryData(parentCommentsQueryKey);
+        // This query key should target the specific parent comment within the main comments list
+        const parentCommentsListQueryKey = ["comments", postId];
+        await queryClient.cancelQueries({ queryKey: parentCommentsListQueryKey });
+        const previousParentCommentsData = queryClient.getQueryData(
+          parentCommentsListQueryKey
+        );
 
         if (previousParentCommentsData) {
-          queryClient.setQueryData(parentCommentsQueryKey, (oldParentCommentsData) => {
-            if (!oldParentCommentsData) return oldParentCommentsData;
-            const updatedPages = oldParentCommentsData.pages.map((page) => ({
-              ...page,
-              comments: page.comments.map((comment) =>
-                comment._id === parentCommentId
-                  ? { ...comment, repliesCount: (comment.repliesCount || 0) + 1 }
-                  : comment
-              ),
-            }));
-            return { ...oldParentCommentsData, pages: updatedPages };
-          });
+          queryClient.setQueryData(
+            parentCommentsListQueryKey,
+            (oldParentCommentsData) => {
+              if (!oldParentCommentsData) return oldParentCommentsData;
+              const updatedPages = oldParentCommentsData.pages.map((page) => ({
+                ...page,
+                comments: page.comments.map((comment) =>
+                  comment._id === parentCommentId
+                    ? { ...comment, repliesCount: (comment.repliesCount || 0) + 1 }
+                    : comment
+                ),
+              }));
+              return { ...oldParentCommentsData, pages: updatedPages };
+            }
+          );
         }
       }
 
-      return { previousComments, previousPostData, newOptimisticCommentId: tempId };
+      return {
+        previousComments,
+        previousPostData,
+        previousParentCommentsData: parentCommentId
+          ? queryClient.getQueryData(["comments", postId])
+          : undefined, // Capture parent comments list data for rollback
+        newOptimisticCommentId: tempId,
+      };
     },
     onSuccess: (newRealComment, variables, context) => {
       toast.success(parentCommentId ? "Reply added!" : "Comment added!");
@@ -107,7 +126,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
           ...newPages[0],
           comments: newPages[0].comments.map((comment) =>
             comment._id === context.newOptimisticCommentId
-              ? { ...newRealComment, isOptimistic: false } 
+              ? { ...newRealComment, isOptimistic: false }
               : comment
           ),
         };
@@ -117,18 +136,22 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      queryClient.invalidateQueries(["post", postId]);
-      queryClient.invalidateQueries(["posts"]);
-      queryClient.invalidateQueries(["followingPosts"]);
-      queryClient.invalidateQueries(["userPosts"]);
-      queryClient.invalidateQueries(["likedPosts"]);
+      // Invalidate broader queries to ensure all related data is fresh
+      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["followingPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["userPosts"] });
+      queryClient.invalidateQueries({ queryKey: ["likedPosts"] });
 
+      // If it's a reply, also invalidate the main comments list to ensure parent's repliesCount is updated
+      // (though optimistic update handles this, invalidation ensures eventual consistency)
       if (parentCommentId) {
-        queryClient.invalidateQueries(["comments", postId]); 
+        queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       }
     },
     onError: (error, variables, context) => {
       toast.error(error.message || "Failed to add comment.");
+      // Rollback optimistic updates
       if (context.previousComments) {
         queryClient.setQueryData(commentsQueryKey, context.previousComments);
       }
@@ -136,8 +159,9 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         queryClient.setQueryData(["post", postId], context.previousPostData);
       }
       if (parentCommentId && context.previousParentCommentsData) {
+        // Rollback parent comment repliesCount
         queryClient.setQueryData(
-          ["comments", postId],
+          ["comments", postId], // This key points to the list of top-level comments for the post
           context.previousParentCommentsData
         );
       }
