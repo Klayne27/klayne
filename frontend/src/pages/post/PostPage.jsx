@@ -20,10 +20,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const [commentText, setCommentText] = useState("");
   const [replyingToComment, setReplyingToComment] = useState(null);
 
-  // NEW STATES AND REF FOR IMAGE UPLOAD IN MAIN COMMENT FORM
-  const [mainCommentImagePreview, setMainCommentImagePreview] = useState(null); // Stores Base64 for preview
-  const [mainCommentImageFile, setMainCommentImageFile] = useState(null); // Stores the actual File object
-  const mainCommentImageInputRef = useRef(null); // Ref for the hidden file input
+  // NEW STATES AND REF FOR MEDIA UPLOAD IN MAIN COMMENT FORM (can be image or video)
+  const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null); // Stores URL.createObjectURL for preview
+  const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null); // Stores the actual File object
+  const mainCommentMediaInputRef = useRef(null); // Ref for the hidden file input (renamed from mainCommentImageInputRef)
 
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
@@ -43,66 +43,96 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
   const displayPost = post?.repostedFrom || post;
 
-  // NEW: handleImageChange for the main comment input
-  const handleMainCommentImageChange = (e) => {
+  // NEW: handleMediaChange for the main comment input (modified from handleMainCommentImageChange)
+  const handleMainCommentMediaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setMainCommentImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setMainCommentImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      // Client-side validation for file type and size
+      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+        toast.error(
+          "Unsupported file type. Please select an image or a video for your comment."
+        );
+        setMainCommentMediaFile(null);
+        setMainCommentMediaPreview(null);
+        if (mainCommentMediaInputRef.current) mainCommentMediaInputRef.current.value = "";
+        return;
+      }
+
+      // Adjust 20 * 1024 * 1024 (20MB) as per your server limit for comments
+      if (file.size > 20 * 1024 * 1024) {
+        toast.error("Comment media size exceeds 20MB limit.");
+        setMainCommentMediaFile(null);
+        setMainCommentMediaPreview(null);
+        if (mainCommentMediaInputRef.current) mainCommentMediaInputRef.current.value = "";
+        return;
+      }
+
+      setMainCommentMediaFile(file);
+      setMainCommentMediaPreview(URL.createObjectURL(file)); // Create URL for preview
     } else {
-      setMainCommentImageFile(null);
-      setMainCommentImagePreview(null);
+      setMainCommentMediaFile(null);
+      setMainCommentMediaPreview(null);
     }
   };
 
-  // NEW: handleRemoveImage for the main comment input
-  const handleRemoveMainCommentImage = () => {
-    setMainCommentImageFile(null);
-    setMainCommentImagePreview(null);
-    if (mainCommentImageInputRef.current) {
-      mainCommentImageInputRef.current.value = ""; // Clear file input
+  // NEW: handleRemoveMedia for the main comment input (modified from handleRemoveMainCommentImage)
+  const handleRemoveMainCommentMedia = () => {
+    setMainCommentMediaFile(null);
+    setMainCommentMediaPreview(null);
+    if (mainCommentMediaInputRef.current) {
+      mainCommentMediaInputRef.current.value = ""; // Clear file input
     }
   };
 
   const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
 
-    // MODIFIED: Condition to allow either text OR image
-    if (!commentText.trim() && !mainCommentImageFile) {
-      // Check against mainCommentImageFile
-      console.warn("Attempted to send empty comment with no image.");
+    // MODIFIED: Condition to allow either text OR media file
+    if (!commentText.trim() && !mainCommentMediaFile) {
+      console.warn("Attempted to send empty comment with no media.");
       return;
     }
     if (isCreatingComment) return;
 
-    if (replyingToComment) {
-      // NOTE: Replies will use the replyText/replyImagePreview states from CommentItem
-      // This form is for top-level comments only. If you want this form to also handle replies,
-      // you'd need to adapt it, but currently, CommentItem handles its own reply input.
-      // For now, if replyingToComment is set, this form should probably not be visible or functional.
-      // However, for consistency, if you were to use this form for replies, you'd pass the same image logic.
-      // As per the original structure, this form is for adding a NEW top-level comment.
-      await createComment({
-        text: commentText,
-        parentCommentId: replyingToComment._id,
-        img: mainCommentImagePreview,
-      });
-    } else {
-      // MODIFIED: Pass img for top-level comment
-      await createComment({ text: commentText, img: mainCommentImagePreview });
-    }
+    let commentPayload = { text: commentText };
 
-    // Reset all states for the main comment input form
-    setCommentText("");
-    setReplyingToComment(null); // Clear replying state
-    setMainCommentImagePreview(null);
-    setMainCommentImageFile(null);
-    if (mainCommentImageInputRef.current) {
-      mainCommentImageInputRef.current.value = "";
+    // If a media file is selected, read it as Base64 and add to payload
+    if (mainCommentMediaFile) {
+      const reader = new FileReader();
+      reader.onloadend = async () => {
+        if (mainCommentMediaFile.type.startsWith("image/")) {
+          commentPayload.img = reader.result;
+        } else if (mainCommentMediaFile.type.startsWith("video/")) {
+          commentPayload.video = reader.result;
+        }
+
+        // Add parentCommentId if replying
+        if (replyingToComment) {
+          commentPayload.parentCommentId = replyingToComment._id;
+        }
+
+        await createComment(commentPayload); // Call the mutation
+
+        // Reset all states for the main comment input form after successful creation
+        setCommentText("");
+        setReplyingToComment(null);
+        setMainCommentMediaPreview(null);
+        setMainCommentMediaFile(null);
+        if (mainCommentMediaInputRef.current) {
+          mainCommentMediaInputRef.current.value = "";
+        }
+      };
+      reader.readAsDataURL(mainCommentMediaFile); // Read the file as Base64
+    } else {
+      // If no media file, just send text comment
+      if (replyingToComment) {
+        commentPayload.parentCommentId = replyingToComment._id;
+      }
+      await createComment(commentPayload);
+
+      // Reset all states for the main comment input form
+      setCommentText("");
+      setReplyingToComment(null);
     }
   };
 
@@ -110,10 +140,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     setReplyingToComment(comment);
     // Optionally clear main comment input when switching to reply context
     setCommentText("");
-    setMainCommentImagePreview(null);
-    setMainCommentImageFile(null);
-    if (mainCommentImageInputRef.current) {
-      mainCommentImageInputRef.current.value = "";
+    setMainCommentMediaPreview(null); // Clear media for new reply context
+    setMainCommentMediaFile(null);
+    if (mainCommentMediaInputRef.current) {
+      mainCommentMediaInputRef.current.value = "";
     }
   }, []);
 
@@ -161,7 +191,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     };
   }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid]);
 
-
   if (isLoading) {
     return (
       <div className="flex-1 flex justify-center items-center h-screen w-full">
@@ -208,15 +237,12 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       </div>
 
       {authUser && (
-        // MODIFIED: Form structure to accommodate image input and preview
         <form
           onSubmit={handleAddOrReplyComment}
-          className="p-4 border-b border-gray-700 flex flex-col gap-2" // Changed to flex-col
+          className="p-4 border-b border-gray-700 flex flex-col gap-2"
         >
           {/* Main input row */}
           <div className="flex items-center justify-between gap-2 sm:gap-4">
-            {" "}
-            {/* Keep items-center and gap */}
             <div className="avatar flex-shrink-0">
               <div className="w-9 rounded-full">
                 <img
@@ -237,50 +263,58 @@ const PostPage = ({ openImageModal, setFeedType }) => {
               className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
               disabled={isCreatingComment}
             />
-            {/* Hidden file input for main comment */}
+            {/* Hidden file input for main comment - MODIFIED accept attribute */}
             <input
               type="file"
-              accept="image/*"
+              accept="image/*,video/*" // Allow both image and video
               hidden
-              ref={mainCommentImageInputRef}
-              onChange={handleMainCommentImageChange}
+              ref={mainCommentMediaInputRef} // Renamed ref
+              onChange={handleMainCommentMediaChange} // Renamed handler
             />
-            {/* Button to trigger image input */}
+            {/* Button to trigger media input */}
             <button
               type="button"
-              onClick={() => mainCommentImageInputRef.current.click()}
+              onClick={() => mainCommentMediaInputRef.current.click()} // Renamed ref
               className="p-2 rounded-full text-primary hover:text-blue-400 transition duration-200 flex-shrink-0"
-              title="Add image to comment"
+              title="Add image or video to comment" // Updated title
             >
               <BiImageAdd size={24} />
             </button>
             <button
               type="submit"
               className="hidden md:block px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
-              // MODIFIED: Enable if either text OR image is present
               disabled={
-                isCreatingComment || (!commentText.trim() && !mainCommentImagePreview)
+                isCreatingComment || (!commentText.trim() && !mainCommentMediaPreview)
               }
             >
               {isCreatingComment ? <LoadingSpinner size="sm" /> : "Comment"}
             </button>
           </div>
 
-          {/* NEW: Image preview section for the main comment */}
-          {mainCommentImagePreview && (
+          {/* NEW: Media preview section for the main comment (image or video) */}
+          {mainCommentMediaPreview && (
             <div className="relative size-40 mt-2 self-start ml-12">
-              {" "}
-              {/* Adjust ml as needed for alignment */}
-              <img
-                src={mainCommentImagePreview}
-                alt="Comment preview"
-                className="w-full h-full object-contain rounded-lg"
-              />
+              {mainCommentMediaFile.type.startsWith("image/") ? (
+                <img
+                  src={mainCommentMediaPreview}
+                  alt="Comment preview"
+                  className="w-full h-full object-contain rounded-lg"
+                />
+              ) : (
+                <video
+                  controls
+                  src={mainCommentMediaPreview}
+                  className="w-full h-full object-contain rounded-lg"
+                  preload="metadata" // For faster loading of metadata
+                >
+                  Your browser does not support the video tag.
+                </video>
+              )}
               <button
                 type="button"
-                onClick={handleRemoveMainCommentImage}
+                onClick={handleRemoveMainCommentMedia} // Renamed handler
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
-                title="Remove image"
+                title="Remove media"
               >
                 <IoClose />
               </button>
@@ -299,7 +333,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
                 <CommentItem
-                  openImageModal={openImageModal}
+                  openImageModal={openImageModal} // --- ADDED: Pass openImageModal ---
                   comment={comment}
                   postId={displayPost._id}
                   onReplyClick={handleSetReplyingToComment}

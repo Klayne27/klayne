@@ -43,77 +43,151 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 };
 
 export const createPost = async (req, res) => {
-  try {
-    const { text } = req.body;
-    let { img } = req.body;
+    try {
+        const { text } = req.body;
+        let { img, video } = req.body; // Destructure 'video' from req.body
 
-    const userId = req.user._id.toString();
+        const userId = req.user._id.toString();
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-    if (!text && !img) {
-      return res.status(400).json({ error: "Post must have a text or image" });
-    }
+        const user = await User.findById(userId);
+        if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (img) {
-      const uploadedResponse = await cloudinary.uploader.upload(img);
-      img = uploadedResponse.secure_url;
-    }
+        // Validate that either text, img, or video is present
+        if (!text && !img && !video) {
+            return res.status(400).json({ error: "Post must have a text, image, or video" });
+        }
 
-    const newPost = new Post({
-      user: userId,
-      text,
-      img,
-      commentsCount: 0,
-    });
+        let uploadedImgUrl = null;
+        let uploadedVideoUrl = null;
+        let imgPublicId = null;   // NEW: Variable for image public ID
+        let videoPublicId = null; // NEW: Variable for video public ID
+        let mediaType = null;     // Changed default to null, will be set below if media exists
 
-    await newPost.save();
+        if (img) {
+            // Assuming 'img' comes as a base64 string
+            const uploadedResponse = await cloudinary.uploader.upload(img);
+            uploadedImgUrl = uploadedResponse.secure_url;
+            imgPublicId = uploadedResponse.public_id; // NEW: Store public ID
+            mediaType = "image";
+        } else if (video) {
+            // Handle video upload if 'video' field is present
+            const uploadedResponse = await cloudinary.uploader.upload(video, {
+                resource_type: "video",
+                // You might want to add other options for videos here, e.g.,
+                // transformation: { width: 800, crop: "limit" }, // Example for scaling
+                // quality: "auto:eco", // Example for optimizing quality
+            });
+            uploadedVideoUrl = uploadedResponse.secure_url;
+            videoPublicId = uploadedResponse.public_id; // NEW: Store public ID
+            mediaType = "video";
+        }
 
-    for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-      if (onlineUserId.toString() !== userId.toString()) {
-        socketIdsSet.forEach((socketId) => {
-          io.to(socketId).emit("newPostAvailable");
+        // The logic below 'Ensure only one media type is set'
+        // is redundant if your frontend correctly sends only 'img' OR 'video'.
+        // If your frontend *could* send both (e.g., if a user uploads an image then a video
+        // without clearing the image), then this explicit prioritization is good.
+        // Given your previous frontend code for `CreatePost.jsx`, it correctly sends
+        // only one, so this block isn't strictly necessary but harmless.
+        if (uploadedVideoUrl) {
+            uploadedImgUrl = null; // Clear img if video is uploaded
+            imgPublicId = null;    // NEW: Clear img public ID if video is uploaded
+        } else if (uploadedImgUrl) { // If it's an image, make sure video fields are null
+            uploadedVideoUrl = null;
+            videoPublicId = null;
+        }
+
+
+        const newPost = new Post({
+            user: userId,
+            text,
+            img: uploadedImgUrl,      // Store processed image URL
+            video: uploadedVideoUrl,  // Store processed video URL
+            imgPublicId: imgPublicId, // NEW: Store image public ID
+            videoPublicId: videoPublicId, // NEW: Store video public ID
+            mediaType,                // Set the determined media type
+            commentsCount: 0,
+            // likes and repostsCount will default to [] and 0 per schema definition
         });
-      }
+
+        await newPost.save();
+
+        // Increment user's posts count (if you maintain this on the User model)
+        await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
+
+
+        // Emit "newPostAvailable" to all online users except the sender
+        // Assuming `io` and `onlineUsersMap` are available in this scope (e.g., from socket setup)
+        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+            if (onlineUserId.toString() !== userId.toString()) {
+                socketIdsSet.forEach((socketId) => {
+                    io.to(socketId).emit("newPostAvailable", newPost); // Consider sending the new post object
+                });
+            }
+        }
+
+        res.status(201).json(newPost);
+    } catch (error) {
+        res.status(500).json({ error: "Internal server error" });
+        console.log("Error in createPost controller: ", error);
     }
-    res.status(201).json(newPost);
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-    console.log("Error in createPost controller: ", error);
-  }
 };
 
 export const deletePost = async (req, res) => {
-  try {
-    const { id } = req.params;
+    try {
+        const { id } = req.params;
 
-    const postToDelete = await Post.findById(id);
+        const postToDelete = await Post.findById(id);
 
-    if (!postToDelete) {
-      return res.status(404).json({ error: "Post not found" });
+        if (!postToDelete) {
+            return res.status(404).json({ error: "Post not found" });
+        }
+
+        // Authorization check: Ensure the user deleting the post is the owner
+        if (postToDelete.user.toString() !== req.user._id.toString()) {
+            return res.status(401).json({ error: "You are not authorized to delete this post" });
+        }
+
+        // --- MODIFIED: Cloudinary Deletion Logic using stored public_ids ---
+        if (postToDelete.mediaType === "image" && postToDelete.imgPublicId) {
+            await cloudinary.uploader.destroy(postToDelete.imgPublicId);
+        } else if (postToDelete.mediaType === "video" && postToDelete.videoPublicId) {
+            // Cloudinary's destroy method needs resource_type: "video" for videos
+            await cloudinary.uploader.destroy(postToDelete.videoPublicId, { resource_type: "video" });
+        }
+        // --- END MODIFIED: Cloudinary Deletion Logic ---
+
+        // Logic for handling reposts
+        // If it's an original post, delete all its reposts.
+        // Note: Reposts typically don't have their own media, but if your design
+        // allows "quote posts" with new media, you'd need to extend this.
+        // For standard reposts, they just reference the original post's content.
+        if (!postToDelete.repostedFrom) {
+            // Find and delete all reposts associated with this original post
+            await Post.deleteMany({ repostedFrom: postToDelete._id });
+
+            // Decrement the user's *original* posts count if you track it
+            // (assuming `postToDelete.user` is the creator of the original post)
+            await User.findByIdAndUpdate(postToDelete.user, { $inc: { postsCount: -1 } });
+
+        } else {
+            // This is a repost. Decrement the repostsCount on the original post it refers to.
+            await Post.findByIdAndUpdate(
+                postToDelete.repostedFrom,
+                { $inc: { repostsCount: -1 } },
+                { new: true } // Return the updated document (optional for this context but good practice)
+            );
+            // Note: If you have a separate "repostsCount" for users (i.e. how many times they reposted),
+            // you might want to decrement that here as well for `req.user`.
+        }
+
+        // Finally, delete the post (or repost) itself from the database
+        await Post.deleteOne({ _id: id });
+
+        res.status(200).json({ message: "Post deleted successfully" });
+    } catch (error) {
+        console.error("Error in deletePost controller:", error.message);
+        res.status(500).json({ error: "Internal server error" });
     }
-
-    if (postToDelete.user.toString() !== req.user._id.toString()) {
-      return res
-        .status(401)
-        .json({ error: "You are not authorized to delete this post" });
-    }
-    if (!postToDelete.repostedFrom) {
-      await Post.deleteMany({ repostedFrom: postToDelete._id });
-    } else {
-      await Post.findByIdAndUpdate(
-        postToDelete.repostedFrom,
-        { $inc: { repostsCount: -1 } },
-        { new: true }
-      );
-    }
-    await Post.deleteOne({ _id: id });
-
-    res.status(200).json({ message: "Post deleted successfully" });
-  } catch (error) {
-    console.error("Error in deletePost controller:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
 };
 
 export const likeUnlikePost = async (req, res) => {

@@ -20,20 +20,31 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   const [isSmallScreen, setIsSmallScreen] = useState(false); // New state for screen size
 
   const isRepost = !!post.repostedFrom;
+  // Use originalPost to determine which post's content to display (original or current if not a repost)
   const originalPost = isRepost ? post.repostedFrom : post;
   const originalPostOwner = originalPost?.user;
   const repostingUser = isRepost ? post.user : null;
   const isLiked = originalPost?.likes?.includes(authUser?._id);
+  // `canDelete` should check if the currently displayed post is owned by authUser
+  // For a repost, `post` is the actual repost, `originalPost` is the one it refers to.
+  // The user can delete their OWN post or THEIR OWN repost.
   const canDelete = authUser && authUser._id === post.user._id;
 
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(originalPost);
+  // Pass the `post` object for deletion, as we want to delete the specific post (repost or original)
   const { deletePost, isDeleting } = useDeletePosts(post);
 
   const formattedDate = formatPostDate(originalPost.createdAt);
 
   const navigateToPostPage = (e) => {
-    if (e.target.closest("a") || e.target.closest("button")) {
+    if (
+      e.target.closest("a") ||
+      e.target.closest("button") ||
+      e.target.closest("img") ||
+      e.target.closest("video")
+    ) {
+      // Don't navigate if clicking on media
       return;
     }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
@@ -60,12 +71,17 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     repostPost(originalPost._id);
   };
 
-  const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation();
-    if (openImageModal) {
-      openImageModal(imageUrl);
+  // --- MODIFIED: handleMediaClick to differentiate between image and video ---
+  const handleMediaClick = (mediaUrl, mediaType, event) => {
+    event.stopPropagation(); // Prevent navigating to post page
+    if (openImageModal && mediaType === "image") {
+      openImageModal(mediaUrl);
     }
+    // For video, we might want a different modal or just let the native controls handle it
+    // If you have a `openVideoModal` prop, you'd use it here.
+    // For now, if it's a video, we just let the default video controls handle playback.
   };
+  // --- END MODIFIED ---
 
   const navigateToReposterProfile = (e) => {
     e.stopPropagation();
@@ -77,11 +93,10 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   // Effect to check and update screen size for username truncation
   useEffect(() => {
     const checkScreenSize = () => {
-      // Define your "small device" threshold here, e.g., anything less than Tailwind's 'sm' (640px)
       setIsSmallScreen(window.innerWidth < 640);
     };
 
-    checkScreenSize(); // Set initial state
+    checkScreenSize();
     window.addEventListener("resize", checkScreenSize);
 
     return () => window.removeEventListener("resize", checkScreenSize);
@@ -158,12 +173,11 @@ const Post = ({ post, openImageModal, setFeedType }) => {
         </div>
         <div className="flex flex-col flex-1 min-w-0">
           <div className="flex gap-1 items-center">
-            {/* Wrap name/username/date in a flex container that allows shrinking */}
             <div className="flex min-w-0 items-center gap-1 overflow-hidden">
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                className="font-bold flex items-center gap-1 hover:underline truncate" // Added truncate
-                onClick={handleInteractiveClick} // Pass the event if needed
+                className="font-bold flex items-center gap-1 hover:underline truncate"
+                onClick={handleInteractiveClick}
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
@@ -172,17 +186,15 @@ const Post = ({ post, openImageModal, setFeedType }) => {
               </Link>
               <span className="text-gray-500 flex gap-1 text-sm min-w-0">
                 {" "}
-                {/* min-w-0 added */}
                 <Link
                   to={`/profile/${originalPostOwner.username}`}
-                  className="truncate" // Added truncate
-                  onClick={handleInteractiveClick} // Pass the event if needed
+                  className="truncate"
+                  onClick={handleInteractiveClick}
                 >
                   @{getDisplayUsername(originalPostOwner.username)}
                 </Link>
                 <span>·</span>
                 <span className="shrink-0">{formattedDate}</span>{" "}
-                {/* shrink-0 to prevent date from shrinking too much */}
               </span>
             </div>
 
@@ -205,15 +217,29 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             <span className="whitespace-pre-wrap word-break-anywhere min-w-0">
               {renderClickableText(originalPost.text)}
             </span>
-            {originalPost.img && (
+            {/* --- MODIFIED: Conditional rendering for image or video based on mediaType --- */}
+            {originalPost.mediaType === "image" && originalPost.img && (
               <img
                 src={originalPost.img}
-                className="w-full h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
+                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
                 alt="post image"
-                onClick={(e) => handleImageClick(originalPost.img, e)}
+                onClick={(e) => handleMediaClick(originalPost.img, "image", e)} // Pass mediaType
                 loading="lazy"
               />
             )}
+            {originalPost.mediaType === "video" && originalPost.video && (
+              <video
+                controls
+                src={originalPost.video}
+                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
+                alt="post video"
+                preload="metadata" // Useful for showing controls and first frame faster
+                onClick={(e) => handleMediaClick(originalPost.video, "video", e)} // Pass mediaType
+              >
+                Your browser does not support the video tag.
+              </video>
+            )}
+            {/* --- END MODIFIED --- */}
           </div>
 
           <div className="flex justify-between mt-3">

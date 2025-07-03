@@ -13,6 +13,24 @@ const postSchema = new mongoose.Schema(
     img: {
       type: String,
     },
+    video: {
+      // NEW FIELD FOR VIDEO URL
+      type: String,
+    },
+    mediaType: {
+      // NEW FIELD to easily distinguish (optional but recommended)
+      type: String,
+      enum: ["image", "video", "none"], // 'none' if only text
+      default: "none",
+    },
+    imgPublicId: {
+      // To store public_id for image
+      type: String,
+    },
+    videoPublicId: {
+      // To store public_id for video
+      type: String,
+    },
     likes: [
       {
         type: mongoose.Schema.Types.ObjectId,

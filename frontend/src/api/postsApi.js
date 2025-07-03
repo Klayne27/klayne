@@ -8,11 +8,11 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) =>
   return data;
 };
 
-export const createPostApi = async (text, img) => {
+export const createPostApi = async ({text, img, video}) => {
   const res = await fetch("/api/posts/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img }),
+    body: JSON.stringify({ text, img, video }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Something went wrong");
