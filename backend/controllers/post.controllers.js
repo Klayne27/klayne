@@ -900,37 +900,75 @@ export const toggleBookmark = async (req, res) => {
 };
 
 export const getBookmarkedPosts = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { query } = req.query;
+    try {
+        const userId = req.user._id; // Assuming userId is available from authentication middleware
+        // Add page and limit parameters, with default values
+        const { query, page = 1, limit = 10 } = req.query; 
 
-    let filter = { bookmarkedBy: userId };
+        const parsedPage = parseInt(page);
+        const parsedLimit = parseInt(limit);
 
-    if (query) {
-      filter.text = { $regex: query, $options: "i" };
+        // Start with the base filter for bookmarked posts by the user
+        let filter = { bookmarkedBy: userId };
+
+        // Apply substring search if a query is provided
+        if (query) {
+            // This is the case-insensitive substring search (as per your clarification)
+            filter.text = { $regex: query, $options: "i" };
+            // If you need to search other fields (e.g., in reposted content), use $or:
+            // filter.$or = [
+            //     { text: { $regex: query, $options: "i" } },
+            //     { 'repostedFrom.text': { $regex: query, $options: "i" } } // Example: search text of original post if it's a repost
+            // ];
+        }
+
+        // Get the total count of documents matching the filter (before pagination)
+        // This is crucial to determine total pages and if there's a next page
+        const totalPostsCount = await Post.countDocuments(filter); 
+
+        // Fetch the bookmarked posts with pagination
+        const bookmarkedPosts = await Post.find(filter)
+            .sort({ createdAt: -1 }) // Sort by creation date, newest first
+            .skip((parsedPage - 1) * parsedLimit) // Skip documents for previous pages
+            .limit(parsedLimit) // Limit the number of documents returned for the current page
+            .populate({
+                path: "user", // Populating the user who created the post
+                select: "-password", // Exclude password field
+            })
+            .populate({
+                path: "repostedFrom", // Populating the original post if the current post is a repost
+                populate: {
+                    path: "user", // Then, within the original post, populate its user
+                    select: "-password",
+                },
+                // Crucially, include img, video, mediaType in the select for repostedFrom
+                // so the frontend has all necessary data for the original post
+                select: "text img video mediaType likes commentsCount repostsCount createdAt user",
+            })
+            .populate({
+                path: "comments", // Populating the 'comments' array
+                populate: {
+                    path: "user", // Then, within each populated comment, populate its 'user' field
+                    select: "-password",
+                },
+            })
+            .lean(); // Use .lean() for faster query results if you don't need Mongoose Document methods
+
+        // Calculate if there are more pages
+        const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
+
+        // Send the paginated data along with pagination information
+        res.status(200).json({
+            posts: bookmarkedPosts,
+            currentPage: parsedPage,
+            totalPages: Math.ceil(totalPostsCount / parsedLimit),
+            hasNextPage: hasNextPage,
+            totalPosts: totalPostsCount // Optional, but useful for frontend debugging/display
+        });
+
+    } catch (error) {
+        console.error("Error in getBookmarkedPosts controller:", error.message);
+        // Include error.message in the response for better debugging on the frontend
+        res.status(500).json({ error: "Internal server error: " + error.message });
     }
-
-    const bookmarkedPosts = await Post.find(filter)
-      .sort({ createdAt: -1 })
-      .populate({
-        path: "user", // Populating the user who created the post
-        select: "-password",
-      })
-      // --- START: MODIFIED POPULATE FOR COMMENTS ---
-      .populate({
-        path: "comments", // First, populate the 'comments' array (which contains Comment _ids)
-        populate: {
-          // Then, within each populated comment, populate its 'user' field
-          path: "user",
-          select: "-password",
-        },
-      })
-      // --- END: MODIFIED POPULATE FOR COMMENTS ---
-      .lean();
-
-    res.status(200).json(bookmarkedPosts);
-  } catch (error) {
-    console.error("Error in getBookmarkedPosts controller:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
 };

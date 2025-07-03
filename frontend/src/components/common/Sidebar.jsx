@@ -316,7 +316,7 @@ const Sidebar = () => {
               } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
               <CiBookmark
-                className="w-6 h-6"
+                className="size-6"
                 strokeWidth={pathname === "/bookmarks" ? 2 : 1}
               />
             </Link>
