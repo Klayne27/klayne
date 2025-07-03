@@ -32,7 +32,6 @@ export const useFetchNotifications = () => {
           if (!oldNotifications) return [newNotification];
           return [newNotification, ...oldNotifications];
         });
-        toast.info("New notification!");
         setHasUnreadNotifications(true);
       };
 

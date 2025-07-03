@@ -786,7 +786,7 @@ export const repostPost = async (req, res) => {
     // --- END: BLOCKING CHECK FOR REPOSTING ---
 
     if (
-      !originalPost.repostedFrom &&
+      !originalPost.repostedFrom && // Ensure it's not a repost of a repost
       originalPost.user.toString() === userId.toString()
     ) {
       return res.status(400).json({ error: "You cannot repost your own post." });
@@ -798,14 +798,20 @@ export const repostPost = async (req, res) => {
     });
 
     let message;
+    let hasUserReposted; // This will indicate the state *after* the operation
+
     if (existingRepost) {
+      // User is UNREPOSTING
       await Post.deleteOne({ _id: existingRepost._id });
       originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1);
       message = "Repost removed successfully.";
+      hasUserReposted = false; // User has now unreposted
+      // NO NOTIFICATION IS CREATED WHEN UNREPOSTING
     } else {
+      // User is REPOSTING
       const newRepost = new Post({
         user: userId,
-        text: "",
+        text: "", // Reposts typically don't have new text/img, they reference the original
         img: "",
         repostedFrom: originalPost._id,
         likes: [],
@@ -815,24 +821,26 @@ export const repostPost = async (req, res) => {
       await newRepost.save();
       originalPost.repostsCount = (originalPost.repostsCount || 0) + 1;
       message = "Post reposted successfully.";
+      hasUserReposted = true; // User has now reposted
+
+      // ONLY CREATE NOTIFICATION IF IT'S A NEW REPOST AND NOTIFYING SELF
+      if (originalPost.user.toString() !== userId.toString()) {
+        await createAndSendNotification({
+          from: userId,
+          to: originalPost.user,
+          type: "repost",
+          postId: originalPost._id,
+          commentId: null,
+        });
+      }
     }
 
     await originalPost.save();
 
-    if (originalPost.user.toString() !== userId.toString()) {
-      await createAndSendNotification({
-        from: userId,
-        to: originalPost.user,
-        type: "repost",
-        postId: originalPost._id,
-        commentId: null,
-      });
-    }
-
     res.status(200).json({
       message: message,
       newRepostsCount: originalPost.repostsCount,
-      hasUserReposted: !existingRepost,
+      hasUserReposted: hasUserReposted, // Use the explicitly set boolean
     });
   } catch (error) {
     console.error("Error in toggleRepost controller:", error.message);
