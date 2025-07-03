@@ -62,6 +62,12 @@ const ChatWindow = ({
     isFetching,
   } = useFetchMessages(selectedConversation);
 
+  const scrollToBottom = useCallback(() => {
+    if (messageListRef.current) {
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+    }
+  }, []);
+
   const handleOptimisticScroll = useCallback(() => {
     setShouldOptimisticScroll(true);
   }, []);
@@ -75,12 +81,6 @@ const ChatWindow = ({
     actualConversationId,
     onMessageSentOptimistically: handleOptimisticScroll,
   });
-
-  const scrollToBottom = useCallback(() => {
-    if (messageListRef.current) {
-      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-    }
-  }, []);
 
   const shouldScrollOnFirstFullLoad = useRef(true);
   const prevActualConversationIdRef = useRef(actualConversationId);
@@ -224,7 +224,7 @@ const ChatWindow = ({
       // const handleNewMessage = (newMessage) => {
       //   const isMessageForThisChat =
       //     newMessage.conversationId === actualConversationId ||
-      //     (selectedConversation?.isNewChat &&
+      //     (selectedConversation?.isNewChat && // Handles first message in a new chat
       //       newMessage.sender._id.toString() === otherUser?._id.toString() &&
       //       newMessage.recipientId?.toString() === currentUser._id.toString());
 
@@ -233,59 +233,67 @@ const ChatWindow = ({
       //       ["messages", newMessage.conversationId || actualConversationId],
       //       (oldData) => {
       //         if (!oldData) {
+      //           // If there's no old data, this is the very first page of messages
       //           return { pages: [[newMessage]], pageParams: [1] };
       //         }
 
       //         const newData = { ...oldData };
+      //         // Ensure pages array exists and is mutable
       //         newData.pages = [...oldData.pages];
 
       //         if (newData.pages.length === 0) {
-      //           newData.pages.push([]);
+      //           newData.pages.push([]); // Add an empty page if none exists
       //         }
 
+      //         // Filter out the optimistic message if its _id matches the new message's _id
+      //         // or if it matches the currentOptimisticIdRef (for sent messages)
       //         const firstPageMessages = newData.pages[0].filter(
       //           (msg) =>
-      //             msg._id !== newMessage._id &&
-      //             (msg.isOptimistic !== true ||
-      //               msg._id !== currentOptimisticIdRef.current)
+      //             msg._id !== newMessage._id && // Remove if server-ID replaces optimistic-ID
+      //             (msg.isOptimistic !== true || // Keep non-optimistic messages
+      //               msg._id !== currentOptimisticIdRef.current) // Remove if optimistic ID matches
       //         );
 
+      //         // Add the new message to the first page (or create it)
       //         newData.pages[0] = [...firstPageMessages, newMessage];
+
       //         return newData;
       //       }
       //     );
 
-      //     if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
-      //       const listEl = messageListRef.current;
-      //       if (listEl) {
-      //         const scrollThreshold = 100;
-      //         const isAtBottom =
-      //           listEl.scrollHeight - listEl.scrollTop <=
-      //           listEl.clientHeight + scrollThreshold;
+      //     // After updating messages, check scroll position and handle button/scroll
+      //     const listEl = messageListRef.current;
+      //     if (listEl) {
+      //       const scrollThreshold = 100; // Adjust as needed
+      //       const isAtBottom =
+      //         listEl.scrollHeight - listEl.scrollTop <=
+      //         listEl.clientHeight + scrollThreshold;
 
-      //         if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
-      //           if (!isAtBottom) {
-      //             setShowNewMessageButton(true);
-      //           } else {
-      //             shouldScrollToBottomRef.current = true;
-      //             setShowNewMessageButton(false);
-      //           }
-      //         } else {
-      //           setShowNewMessageButton(false);
-      //           shouldScrollToBottomRef.current = true;
-      //         }
+      //       if (
+      //         isAtBottom ||
+      //         newMessage.sender._id.toString() === currentUser._id.toString()
+      //       ) {
+      //         // If user is at bottom or it's our own message, scroll to bottom
+      //         scrollToBottom();
+      //         setShowNewMessageButton(false);
+      //       } else {
+      //         // If user is scrolled up and it's a message from others, show "New Message" button
+      //         setShowNewMessageButton(true);
       //       }
       //     }
 
+      //     // Mark messages as seen if the other user sent them and we are in this chat
       //     if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
       //       socket.emit("markMessagesAsSeen", {
       //         conversationId: newMessage.conversationId,
       //       });
       //     }
       //   }
-
-      //   queryClient.invalidateQueries(["conversations", newMessage.conversationId]);
-      //   queryClient.invalidateQueries(["conversations"]);
+      //   // Invalidate conversations to update unread counts or last message preview
+      //   queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["conversations", newMessage.conversationId],
+      //   });
       // };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
@@ -303,8 +311,10 @@ const ChatWindow = ({
             return { ...oldData, pages: updatedPages };
           });
         }
-        queryClient.invalidateQueries(["conversations", seenConversationId]);
-        queryClient.invalidateQueries(["conversations"]);
+        queryClient.invalidateQueries({
+          queryKey: ["conversations", seenConversationId],
+        });
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       };
 
       const handleMessageDeleted = ({
@@ -321,7 +331,7 @@ const ChatWindow = ({
             return { ...oldData, pages: updatedPages };
           });
         }
-        queryClient.invalidateQueries(["conversations"]);
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       };
 
       const handleTyping = ({ conversationId, userId }) => {
@@ -360,11 +370,12 @@ const ChatWindow = ({
     socket,
     actualConversationId,
     queryClient,
-    otherUser,
-    currentUser,
+    otherUser?._id, // Add otherUser._id to deps
+    currentUser._id, // Add currentUser._id to deps
     selectedConversation,
     currentOptimisticIdRef,
-    shouldScrollToBottomRef,
+    scrollToBottom, // Add scrollToBottom to deps
+    setShowNewMessageButton, // Add setShowNewMessageButton to deps
   ]);
 
   const isNewChat =
