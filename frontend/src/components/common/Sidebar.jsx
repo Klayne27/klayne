@@ -228,7 +228,13 @@ const Sidebar = () => {
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
-          <li>
+          <li
+            onClick={() => {
+              navigate("/");
+              handleHomeClick();
+            }}
+            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+          >
             <Link
               to="/"
               onClick={handleHomeClick}
@@ -246,10 +252,19 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
+            </Link>
+            <Link
+              to="/"
+              onClick={handleHomeClick}
+              className={`${pathname === "/" ? "font-bold text-white" : ""} `}
+            >
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
-          <li>
+          <li
+            onClick={() => navigate("/messages")}
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
+          >
             <Link
               to="/messages"
               className={`${
@@ -266,10 +281,20 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
+            </Link>
+            <Link
+              to="/messages"
+              className={`${
+                pathname.startsWith("/messages") ? "font-bold text-white" : ""
+              } `}
+            >
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
-          <li>
+          <li
+            onClick={() => navigate("/notifications")}
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
+          >
             <Link
               to="/notifications"
               className={`${
@@ -286,13 +311,18 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
+            </Link>
+            <Link
+              to="/notifications"
+              className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
+            >
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
           </li>
           <li>
             <Link
               to="/bookmarks"
-              onClick={handleBookmarksClick} // Keep this onClick for query invalidation
+              onClick={handleBookmarksClick}
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-white" : ""
               } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
@@ -305,21 +335,24 @@ const Sidebar = () => {
             </Link>
           </li>
           <li className="flex justify-start md:justify-start md:hidden">
-            <button
-              onClick={handleMobileSearchClick}
+            <div
               className={`${
                 pathname === "/search" ? "font-bold text-white" : ""
               }  flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
-              <CiSearch
-                className="w-6 h-6"
-                strokeWidth={pathname === "/search" ? 2 : 1}
-              />
-              {/* No text for mobile search */}
-            </button>
+              <button onClick={handleMobileSearchClick}>
+                <CiSearch
+                  className="w-6 h-6"
+                  strokeWidth={pathname === "/search" ? 2 : 1}
+                />
+              </button>
+            </div>
           </li>
 
-          <li>
+          <li
+            onClick={() => navigate(`/profile/${authUser?.username}`)}
+            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+          >
             <Link
               to={`/profile/${authUser?.username}`}
               className={`${
