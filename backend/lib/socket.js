@@ -265,9 +265,7 @@ io.on("connection", (socket) => {
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
   } else {
-    console.warn(
-      `Client connected with invalid or missing userId: '${userId}' (socket ID: ${socket.id}). Disconnecting.`
-    );
+
     socket.disconnect(true);
     return;
   }
@@ -441,7 +439,6 @@ io.on("connection", (socket) => {
     try {
       const userId = socket.userId;
       if (!userId) {
-        console.warn("Attempted to mark notifications as read without a userId.");
         return;
       }
       await Notification.updateMany(

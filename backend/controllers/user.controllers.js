@@ -138,7 +138,6 @@ export const getSuggestedUsers = async (req, res) => {
     const userId = req.user?._id; // Safely access userId
 
     if (!userId) {
-      console.warn("Attempted to get suggested users without authenticated userId.");
       return res.status(200).json([]); // Return empty array if not logged in
     }
 

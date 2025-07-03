@@ -136,8 +136,6 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     checkIfUserRepostedStatus();
   }, [authUser, originalPost?._id, isReposting]);
 
-  console.log(originalPost);
-
   const getDisplayUsername = (username) => {
     if (isSmallScreen && username.length > 5) {
       return username.slice(0, 5) + "...";

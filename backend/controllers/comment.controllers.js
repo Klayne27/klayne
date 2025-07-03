@@ -30,9 +30,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
     !mongoose.Types.ObjectId.isValid(currentUserId) ||
     !mongoose.Types.ObjectId.isValid(targetUserId)
   ) {
-    console.warn(
-      `[isBlockedOrBlockedBy] Invalid or missing IDs: current=${currentUserId}, target=${targetUserId}`
-    );
+
     return false;
   }
   if (currentUserId.toString() === targetUserId.toString()) return false;
@@ -47,9 +45,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   // CRITICAL FIX: If either user is not found, they cannot be blocked/blocking.
   // This prevents errors like accessing `null.blockedUsers`.
   if (!currentUser || !targetUser) {
-    console.warn(
-      `[isBlockedOrBlockedBy] One or both users not found during blocking check. currentUser exists: ${!!currentUser}, targetUser exists: ${!!targetUser}`
-    );
+
     return false;
   }
 
@@ -120,7 +116,6 @@ export const getComments = async (req, res) => {
     // --- START: Blocking check for the post itself ---
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
-      console.warn(`[getComments] Post not found for ID: ${postId}`);
       return res.status(404).json({ error: "Post not found" });
     }
 
@@ -137,9 +132,7 @@ export const getComments = async (req, res) => {
     }
 
     if (await isBlockedOrBlockedBy(userId, post.user._id)) {
-      console.warn(
-        `[getComments] Blocking restriction: User ${userId} is blocked from viewing comments on post ${postId} by owner ${post.user._id}.`
-      );
+
       return res.status(403).json({
         error: "Cannot view comments on this post due to blocking restrictions.",
       });
@@ -184,9 +177,7 @@ export const getComments = async (req, res) => {
     const filteredComments = comments.filter((comment) => {
       // CRITICAL FIX 2: Ensure `comment.user` exists before accessing `_id` on it.
       if (!comment.user) {
-        console.warn(
-          `[getComments] Comment ${comment._id} has a null/undefined user after population. Skipping comment.`
-        );
+
         return false; // Exclude comments with no valid user
       }
 
@@ -202,9 +193,7 @@ export const getComments = async (req, res) => {
       if (comment.parentComment) {
         // CRITICAL FIX 3: Ensure `comment.parentComment.user` exists before accessing `_id` on it.
         if (!comment.parentComment.user) {
-          console.warn(
-            `[getComments] Comment ${comment._id} has a parentComment but its user is null/undefined after population. Skipping comment.`
-          );
+
           return false; // Exclude replies if parent user is missing
         }
         if (blockedAndBlockingUsers.includes(comment.parentComment.user._id.toString())) {
@@ -548,15 +537,6 @@ export const deleteComment = async (req, res) => {
 
     const isCommentOwner = commentToDelete.user._id.toString() === userId.toString();
     const isPostOwner = post.user._id.toString() === userId.toString();
-
-    console.log(`--- DELETE COMMENT DEBUG ---`);
-    console.log(`Requesting User ID (req.user._id): ${userId}`);
-    console.log(`Comment ID: ${commentId}`);
-    console.log(`Comment Owner ID: ${commentToDelete.user._id}`);
-    console.log(`Post Owner ID: ${post.user._id}`);
-    console.log(`Is Comment Owner? ${isCommentOwner}`);
-    console.log(`Is Post Owner? ${isPostOwner}`);
-    console.log(`--- END DEBUG ---`);
 
     if (!isCommentOwner && !isPostOwner) {
       return res

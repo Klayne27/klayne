@@ -26,7 +26,7 @@ const Sidebar = () => {
   } = useSocket();
   const queryClient = useQueryClient();
 
-  const { pathname } = useLocation();
+  const { pathname } = useLocation(); // Keep useLocation to get current path
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
@@ -147,19 +147,33 @@ const Sidebar = () => {
 
   const handleHomeClick = () => {
     queryClient.invalidateQueries({ queryKey: ["posts"] });
-
     if (hasNewFeedPosts) {
       setHasNewFeedPosts(false);
     }
+  };
 
+  const handleBookmarksClick = () => {
+    queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
+    navigate("/bookmarks");
+  };
+
+  // New useEffect to handle scroll to top on route change
+  useEffect(() => {
     if (pathname === "/") {
       window.scrollTo({
         top: 0,
         left: 0,
         behavior: "instant",
       });
+    } else if (pathname === "/bookmarks") {
+      window.scrollTo({
+        top: 0,
+        left: 0,
+        behavior: "instant",
+      });
     }
-  };
+    // You can add more paths here if needed
+  }, [pathname]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -214,13 +228,7 @@ const Sidebar = () => {
           <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
-          <li
-            onClick={() => {
-              navigate("/");
-              handleHomeClick();
-            }}
-            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
-          >
+          <li>
             <Link
               to="/"
               onClick={handleHomeClick}
@@ -238,19 +246,10 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
-            <Link
-              to="/"
-              onClick={handleHomeClick}
-              className={`${pathname === "/" ? "font-bold text-white" : ""} `}
-            >
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
-          <li
-            onClick={() => navigate("/messages")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
-          >
+          <li>
             <Link
               to="/messages"
               className={`${
@@ -267,20 +266,10 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
-            <Link
-              to="/messages"
-              className={`${
-                pathname.startsWith("/messages") ? "font-bold text-white" : ""
-              } `}
-            >
               <span className="text-lg hidden md:block">Messages</span>
             </Link>
           </li>
-          <li
-            onClick={() => navigate("/notifications")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
-          >
+          <li>
             <Link
               to="/notifications"
               className={`${
@@ -297,55 +286,40 @@ const Sidebar = () => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
-            <Link
-              to="/notifications"
-              className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
-            >
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
           </li>
-          <li
-            onClick={() => navigate("/bookmarks")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
-          >
+          <li>
             <Link
               to="/bookmarks"
+              onClick={handleBookmarksClick} // Keep this onClick for query invalidation
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
             >
               <CiBookmark
                 className="size-6"
                 strokeWidth={pathname === "/bookmarks" ? 2 : 1}
               />
-            </Link>
-            <Link
-              to="/bookmarks"
-              className={`${pathname === "/bookmarks" ? "font-bold text-white" : ""}`}
-            >
               <span className="text-lg hidden md:block">Bookmarks</span>
             </Link>
           </li>
           <li className="flex justify-start md:justify-start md:hidden">
-            <div
+            <button
+              onClick={handleMobileSearchClick}
               className={`${
                 pathname === "/search" ? "font-bold text-white" : ""
               }  flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
-              <button onClick={handleMobileSearchClick}>
-                <CiSearch
-                  className="w-6 h-6"
-                  strokeWidth={pathname === "/search" ? 2 : 1}
-                />
-              </button>
-            </div>
+              <CiSearch
+                className="w-6 h-6"
+                strokeWidth={pathname === "/search" ? 2 : 1}
+              />
+              {/* No text for mobile search */}
+            </button>
           </li>
 
-          <li
-            onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
-          >
+          <li>
             <Link
               to={`/profile/${authUser?.username}`}
               className={`${
