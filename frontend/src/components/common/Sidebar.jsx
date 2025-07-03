@@ -26,7 +26,7 @@ const Sidebar = () => {
   } = useSocket();
   const queryClient = useQueryClient();
 
-  const { pathname } = useLocation(); // Keep useLocation to get current path
+  const { pathname } = useLocation();
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
@@ -157,7 +157,6 @@ const Sidebar = () => {
     navigate("/bookmarks");
   };
 
-  // New useEffect to handle scroll to top on route change
   useEffect(() => {
     if (pathname === "/") {
       window.scrollTo({
@@ -172,7 +171,6 @@ const Sidebar = () => {
         behavior: "instant",
       });
     }
-    // You can add more paths here if needed
   }, [pathname]);
 
   useEffect(() => {

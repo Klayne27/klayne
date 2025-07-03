@@ -22,20 +22,17 @@ const MessageItem = ({
   handleJumpToOriginalMessage,
   handleReactionClick,
   isDeletingMessage,
-  currentUser, // Passed as prop from MessageList
-  // isReacting = false, // If passed from MessageList
+  currentUser,
 }) => {
   const isSentByCurrentUser = msg.sender._id === currentUser._id;
   const showModal = activeMessageModalId === msg._id;
   const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
 
-  // Determine highlight class based on device and modal state
-  // This re-applies the logic from your original code.
   const messageHighlightClass = isCurrentlyTouchDevice
     ? showModal
-      ? "bg-gray-900 active-highlight" // Highlight on mobile if modal is active
+      ? "bg-gray-900 active-highlight"
       : ""
-    : "hover:bg-gray-900"; // Always use Tailwind CSS hover effect on PC
+    : "hover:bg-gray-900";
 
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -45,44 +42,39 @@ const MessageItem = ({
     };
     acc[reaction.emoji].count++;
 
-    // Ensure user ID is correctly accessed, handling potential variations
     const reactorId = reaction.user?._id?.toString() || reaction.user?.toString();
     if (reactorId) {
       acc[reaction.emoji].userIds.push(reactorId);
     }
-    // You might want to populate `users` array with full user objects/names for title attribute
-    // Example: acc[reaction.emoji].users.push(reaction.user?.username || 'Unknown');
     return acc;
   }, {});
 
   return (
     <div
-      key={msg._id} // Key is on the parent div rendered by map
-      id={`message-${msg._id}`} // ID for scroll-to and click-outside detection
-      className={`p-1 rounded-lg relative message-item-container ${messageHighlightClass}`} // Apply highlight here
-      onMouseEnter={() => handleMouseEnter(msg._id)} // Pass ID to parent handler
+      key={msg._id}
+      id={`message-${msg._id}`}
+      className={`p-1 rounded-lg relative message-item-container ${messageHighlightClass}`}
+      onMouseEnter={() => handleMouseEnter(msg._id)}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={(e) => handleTouchStart(e, msg._id)} // Pass ID to parent handler
+      onTouchStart={(e) => handleTouchStart(e, msg._id)}
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {/* Message Modal (Reactions, Reply, Delete) */}
       <div
-        id={`message-modal-${msg._id}`} // Unique ID for modal for click outside logic
+        id={`message-modal-${msg._id}`}
         className={`absolute -top-5 bg-gray-800 shadow-xl rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
                 ${
                   isSentByCurrentUser
-                    ? "-left-28 translate-x-1/2" // Original positioning logic
-                    : "-right-24 -translate-x-1/2" // Original positioning logic
+                    ? "-left-28 translate-x-1/2"
+                    : "-right-24 -translate-x-1/2"
                 }
-                ${showModal ? "opacity-100" : "opacity-0 pointer-events-none"} `} // pointer-events-none to disable interaction when hidden
+                ${showModal ? "opacity-100" : "opacity-0 pointer-events-none"} `}
       >
         {allowedEmojis.map((emoji) => (
           <button
             key={emoji}
             onClick={() => handleReactionClick(msg._id, emoji)}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
-            // disabled={isReacting} // Uncomment if you pass isReacting prop
             title={`React with ${emoji}`}
           >
             {emoji}
@@ -186,7 +178,6 @@ const MessageItem = ({
           </span>
         )}
       </div>
-      {/* Reactions Display */}
       {Object.keys(groupedReactions || {}).length > 0 && (
         <div
           className={`flex gap-1 -bottom-3 items-center py-1 rounded-full text-xs font-semibold

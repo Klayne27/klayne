@@ -24,14 +24,11 @@ export const fetchCommentsApi = async ({
   return data;
 };
 
-// Assuming BASE_URL is defined elsewhere, e.g.,
-// const BASE_URL = "/api/comments"; // or whatever your base URL is
-
-export const addCommentApi = async ({ postId, text, img }) => { // <--- MODIFIED: Accept 'img'
+export const addCommentApi = async ({ postId, text, img }) => {
   const res = await fetch(`${BASE_URL}/${postId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img }), // <--- MODIFIED: Include 'img' in the body
+    body: JSON.stringify({ text, img }),
   });
   const data = await res.json();
   if (!res.ok) {
@@ -40,11 +37,11 @@ export const addCommentApi = async ({ postId, text, img }) => { // <--- MODIFIED
   return data;
 };
 
-export const replyToCommentApi = async ({ postId, parentCommentId, text, img }) => { // <--- MODIFIED: Accept 'img'
-  const res = await fetch(`${BASE_URL}/${postId}/${parentCommentId}/reply`, { // Corrected URL based on your backend route structure
+export const replyToCommentApi = async ({ postId, parentCommentId, text, img }) => {
+  const res = await fetch(`${BASE_URL}/${postId}/${parentCommentId}/reply`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img }), // <--- MODIFIED: Include 'img' in the body
+    body: JSON.stringify({ text, img }),
   });
   const data = await res.json();
   if (!res.ok) {

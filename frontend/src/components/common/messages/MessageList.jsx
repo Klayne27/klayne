@@ -3,7 +3,7 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import LoadingSpinner from "../LoadingSpinner";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 
-import MessageItem from "./MessageItem"; // Keep MessageItem separate and memoized
+import MessageItem from "./MessageItem";
 
 const isTouchDevice = () => {
   if (typeof window === "undefined") return false;
@@ -23,7 +23,6 @@ const MessageList = forwardRef(function MessageList(
     deleteMessage,
     messageInputRef,
     isDeletingMessage,
-    selectedConversation, // This prop isn't used in MessageList itself, but might be relevant elsewhere.
     openImageModal,
     isLoadingInitialMessages,
     isFetchingOlderMessages,
@@ -37,17 +36,14 @@ const MessageList = forwardRef(function MessageList(
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
 
-  // Refs for managing long press on touch devices
   const longPressTimerRef = useRef(null);
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
-  const LONG_PRESS_DURATION = 500; // milliseconds
+  const LONG_PRESS_DURATION = 500;
 
-  // Ref to store the timeout for mouse leave (for PC hover debounce)
   const mouseLeaveTimeoutRef = useRef(null);
-  const MOUSE_LEAVE_DELAY = 100; // Small delay (ms) before clearing active modal on mouse leave for PC
+  const MOUSE_LEAVE_DELAY = 100;
 
-  // Detect touch device on mount and re-evaluate on pointer type changes
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
     const handlePointerTypeChange = () => {
@@ -62,7 +58,7 @@ const MessageList = forwardRef(function MessageList(
   const handleDeleteClick = useCallback(
     (messageId) => {
       deleteMessage(messageId);
-      setActiveMessageModalId(null); // Close modal after action
+      setActiveMessageModalId(null);
     },
     [deleteMessage]
   );
@@ -73,14 +69,14 @@ const MessageList = forwardRef(function MessageList(
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
-      setActiveMessageModalId(null); // Close modal after action
+      setActiveMessageModalId(null);
     },
     [setReplyingToMessage, messageInputRef]
   );
 
   const handleImageClick = useCallback(
     (imageUrl, event) => {
-      event.stopPropagation(); // Prevent this click from bubbling up and closing modal if it's open
+      event.stopPropagation();
       if (openImageModal) {
         openImageModal(imageUrl);
       } else {
@@ -98,29 +94,27 @@ const MessageList = forwardRef(function MessageList(
     );
     if (originalMessageElement) {
       originalMessageElement.scrollIntoView({
-        behavior: "instant", // Use 'instant' for smooth scroll or 'auto'
-        block: "center", // Scroll to the center of the viewport
+        behavior: "instant",
+        block: "center",
       });
       originalMessageElement.classList.add("highlight-message");
       setTimeout(() => {
         originalMessageElement.classList.remove("highlight-message");
-      }, 1500); // Remove highlight after 1.5 seconds
+      }, 1500);
     }
   }, []);
 
   const handleReactionClick = useCallback(
     (messageId, emoji) => {
       reactToMessage({ messageId, emoji });
-      setActiveMessageModalId(null); // Close modal after reaction
+      setActiveMessageModalId(null);
     },
     [reactToMessage]
   );
 
-  // --- PC Hover Handlers (debounced mouse leave) ---
   const handleMouseEnter = useCallback(
     (messageId) => {
       if (!isCurrentlyTouchDevice) {
-        // Clear any pending mouse leave timeout to prevent flickering
         if (mouseLeaveTimeoutRef.current) {
           clearTimeout(mouseLeaveTimeoutRef.current);
           mouseLeaveTimeoutRef.current = null;
@@ -133,26 +127,21 @@ const MessageList = forwardRef(function MessageList(
 
   const handleMouseLeave = useCallback(() => {
     if (!isCurrentlyTouchDevice) {
-      // Set a timeout before clearing the active modal ID.
-      // This allows moving between closely spaced messages without immediate modal disappearance.
       mouseLeaveTimeoutRef.current = setTimeout(() => {
         setActiveMessageModalId(null);
       }, MOUSE_LEAVE_DELAY);
     }
   }, [isCurrentlyTouchDevice]);
 
-  // --- Mobile Long Press Handlers ---
   const handleTouchStart = useCallback(
     (e, messageId) => {
       if (isCurrentlyTouchDevice) {
-        // If a modal is already open and this is a tap on a different message, close it immediately
         if (activeMessageModalId && activeMessageModalId !== messageId) {
           setActiveMessageModalId(null);
-          clearTimeout(longPressTimerRef.current); // Clear any previous long press timer
+          clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
-          return; // Don't start a new timer, just close the previous modal
+          return;
         }
-        // If it's a tap on the *same* message that has an active modal, close it
         if (activeMessageModalId === messageId) {
           setActiveMessageModalId(null);
           clearTimeout(longPressTimerRef.current);
@@ -160,7 +149,6 @@ const MessageList = forwardRef(function MessageList(
           return;
         }
 
-        // Start timer for long press
         longPressTimerRef.current = setTimeout(() => {
           setActiveMessageModalId(messageId);
         }, LONG_PRESS_DURATION);
@@ -168,7 +156,7 @@ const MessageList = forwardRef(function MessageList(
         touchStartYRef.current = e.touches[0].clientY;
       }
     },
-    [isCurrentlyTouchDevice, activeMessageModalId] // Depend on activeMessageModalId to correctly handle tap on other message
+    [isCurrentlyTouchDevice, activeMessageModalId]
   );
 
   const handleTouchMove = useCallback(
@@ -178,9 +166,7 @@ const MessageList = forwardRef(function MessageList(
         const currentY = e.touches[0].clientY;
         const deltaX = Math.abs(currentX - touchStartXRef.current);
         const deltaY = Math.abs(currentY - touchStartYRef.current);
-        // If finger moves significantly, cancel long press
         if (deltaX > 10 || deltaY > 10) {
-          // 10px tolerance
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
         }
@@ -195,19 +181,14 @@ const MessageList = forwardRef(function MessageList(
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
-          // If the timer was cleared here, it means it was a short tap.
-          // We do NOT set activeMessageModalId here; long press sets it.
-          // This prevents a tap from opening the modal.
         }
       }
     },
     [isCurrentlyTouchDevice]
   );
 
-  // Handle clicks outside the active message/modal to close the modal
   const handleClickOutsideMessage = useCallback(
     (e) => {
-      // Only close if a modal is currently active
       if (activeMessageModalId) {
         const messageItemContainer = document.getElementById(
           `message-${activeMessageModalId}`
@@ -216,9 +197,6 @@ const MessageList = forwardRef(function MessageList(
           `message-modal-${activeMessageModalId}`
         );
 
-        // If the click target is NOT within the currently active message's main container
-        // AND NOT within the message's modal itself, then close the modal.
-        // This ensures clicking on the message content or modal actions doesn't close it.
         if (
           messageItemContainer &&
           !messageItemContainer.contains(e.target) &&
@@ -229,20 +207,18 @@ const MessageList = forwardRef(function MessageList(
         }
       }
     },
-    [activeMessageModalId] // Only re-create if activeMessageModalId changes
+    [activeMessageModalId]
   );
 
-  // Attach global click listener
   useEffect(() => {
     document.addEventListener("click", handleClickOutsideMessage);
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage);
-      // Clean up any pending mouse leave timeout on unmount
       if (mouseLeaveTimeoutRef.current) {
         clearTimeout(mouseLeaveTimeoutRef.current);
       }
     };
-  }, [handleClickOutsideMessage]); // Dependency on memoized callback
+  }, [handleClickOutsideMessage]);
 
   return (
     <div
@@ -279,20 +255,19 @@ const MessageList = forwardRef(function MessageList(
             key={msg._id}
             msg={msg}
             isCurrentlyTouchDevice={isCurrentlyTouchDevice}
-            activeMessageModalId={activeMessageModalId} // Passed down
-            handleMouseEnter={handleMouseEnter} // Passed down
-            handleMouseLeave={handleMouseLeave} // Passed down
-            handleTouchStart={handleTouchStart} // Passed down
-            handleTouchMove={handleTouchMove} // Passed down
-            handleTouchEnd={handleTouchEnd} // Passed down
-            handleDeleteClick={handleDeleteClick} // Passed down
-            handleReplyClick={handleReplyClick} // Passed down
-            handleImageClick={handleImageClick} // Passed down
-            handleJumpToOriginalMessage={handleJumpToOriginalMessage} // Passed down
-            handleReactionClick={handleReactionClick} // Passed down
-            isDeletingMessage={isDeletingMessage} // Passed down
-            currentUser={currentUser} // Passed down
-            // isReacting={isReacting} // If you want to disable reaction buttons, pass this
+            activeMessageModalId={activeMessageModalId}
+            handleMouseEnter={handleMouseEnter}
+            handleMouseLeave={handleMouseLeave}
+            handleTouchStart={handleTouchStart}
+            handleTouchMove={handleTouchMove}
+            handleTouchEnd={handleTouchEnd}
+            handleDeleteClick={handleDeleteClick}
+            handleReplyClick={handleReplyClick}
+            handleImageClick={handleImageClick}
+            handleJumpToOriginalMessage={handleJumpToOriginalMessage}
+            handleReactionClick={handleReactionClick}
+            isDeletingMessage={isDeletingMessage}
+            currentUser={currentUser}
           />
         ))}
     </div>

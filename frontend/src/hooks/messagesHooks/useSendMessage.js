@@ -58,7 +58,6 @@ export const useSendMessage = ({
           : null,
       };
 
-      // Still add optimistic message to cache immediately
       queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
           return { pages: [[tempMessage]], pageParams: [1] };
@@ -66,7 +65,7 @@ export const useSendMessage = ({
 
         const newData = { ...oldData };
         newData.pages = [...oldData.pages];
-        newData.pages[0] = [...newData.pages[0], tempMessage]; // Add to the most recent page
+        newData.pages[0] = [...newData.pages[0], tempMessage];
 
         return newData;
       });
@@ -85,8 +84,6 @@ export const useSendMessage = ({
         newRealConversationId || selectedConversation._id;
       const finalQueryKey = ["messages", finalQueryKeyConversationId];
 
-      // *** REVERT TO setQueryData here to immediately replace optimistic with real message ***
-      // This is crucial for instant display of your own sent messages.
       queryClient.setQueryData(finalQueryKey, (oldData) => {
         if (!oldData) return oldData;
 
@@ -94,8 +91,8 @@ export const useSendMessage = ({
           ...oldData,
           pages: oldData.pages.map((page) =>
             page.map((msg) =>
-              msg._id === context.optimisticId // Find the optimistic message by its temp ID
-                ? { ...newMessage, isOptimistic: undefined } // Replace with real message, clear optimistic flag
+              msg._id === context.optimisticId 
+                ? { ...newMessage, isOptimistic: undefined }
                 : msg
             )
           ),
@@ -103,12 +100,10 @@ export const useSendMessage = ({
         return newData;
       });
 
-      // After updating the UI, you can still invalidate for a background refetch
-      // to ensure consistency, but the UI is already updated.
       queryClient.invalidateQueries({
         queryKey: finalQueryKey,
         exact: true,
-        refetchType: "background", // Suggests a background refetch, doesn't block
+        refetchType: "background",
       });
 
       if (
@@ -130,7 +125,6 @@ export const useSendMessage = ({
       console.error("Error sending message:", error);
       const { previousData, optimisticId, queryKey } = context;
 
-      // On error, revert optimistic message manually
       queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData) return oldData;
         const newData = { ...oldData };
@@ -141,13 +135,6 @@ export const useSendMessage = ({
       });
 
       currentOptimisticIdRef.current = null;
-    },
-
-    onSettled: (data, error, variables, context) => {
-      // This onSettled is typically redundant if onSuccess already invalidates.
-      // If you need it, ensure it's not causing issues.
-      // const settledQueryKey = ["messages", data?.conversationId || context.queryKey[1]];
-      // queryClient.invalidateQueries({ queryKey: settledQueryKey, exact: true });
     },
   });
 

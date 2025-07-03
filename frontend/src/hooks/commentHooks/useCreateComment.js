@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { addCommentApi, replyToCommentApi } from "../../api/commentsApi"; // Make sure these functions can accept an 'img' argument
+import { addCommentApi, replyToCommentApi } from "../../api/commentsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
@@ -8,20 +8,18 @@ export const useCreateComment = (postId, parentCommentId = null) => {
   const { authUser: currentUser } = useAuthUser();
 
   const commentsQueryKey = parentCommentId
-    ? ["comments", postId, parentCommentId, "replies"] // Adjust key for replies if needed. This was "comments", postId, parentCommentId in the example, adding "replies" makes it more specific if your fetchComments uses it.
+    ? ["comments", postId, parentCommentId, "replies"]
     : ["comments", postId];
 
   const { mutate: createComment, isPending: isCreatingComment } = useMutation({
     mutationFn: async ({ text, img }) => {
-      // <--- MODIFIED: Accept 'img' here
       if (parentCommentId) {
-        return replyToCommentApi({ postId, parentCommentId, text, img }); // <--- MODIFIED: Pass 'img'
+        return replyToCommentApi({ postId, parentCommentId, text, img });
       } else {
-        return addCommentApi({ postId, text, img }); // <--- MODIFIED: Pass 'img'
+        return addCommentApi({ postId, text, img });
       }
     },
     onMutate: async ({ text, img }) => {
-      // <--- MODIFIED: Accept 'img' here
       await queryClient.cancelQueries({ queryKey: commentsQueryKey });
 
       const previousComments = queryClient.getQueryData(commentsQueryKey);
@@ -38,7 +36,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         },
         post: postId,
         text: text,
-        img: img, // <--- MODIFIED: Include 'img' in optimistic comment
+        img: img,
         parentComment: parentCommentId,
         likes: [],
         repliesCount: 0,
@@ -49,12 +47,10 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
         const newPages = oldData?.pages ? [...oldData.pages] : [];
         if (newPages.length === 0) {
-          // If there are no pages, initialize the first page correctly
           newPages.push({ comments: [], hasNextPage: false });
         }
         newPages[0] = {
           ...newPages[0],
-          // Ensure optimistic comment is added to the correct page, typically the first page (most recent)
           comments: [...newPages[0].comments, newOptimisticComment].sort(
             (a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
           ),
@@ -62,7 +58,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // Optimistically update the main post's comment count
       const postQueryKey = ["post", postId];
       await queryClient.cancelQueries({ queryKey: postQueryKey });
       const previousPostData = queryClient.getQueryData(postQueryKey);
@@ -77,9 +72,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         });
       }
 
-      // Optimistically update the parent comment's repliesCount if it's a reply
       if (parentCommentId) {
-        // This query key should target the specific parent comment within the main comments list
         const parentCommentsListQueryKey = ["comments", postId];
         await queryClient.cancelQueries({ queryKey: parentCommentsListQueryKey });
         const previousParentCommentsData = queryClient.getQueryData(
@@ -110,7 +103,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         previousPostData,
         previousParentCommentsData: parentCommentId
           ? queryClient.getQueryData(["comments", postId])
-          : undefined, // Capture parent comments list data for rollback
+          : undefined,
         newOptimisticCommentId: tempId,
       };
     },
@@ -145,7 +138,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     },
     onError: (error, variables, context) => {
       toast.error(error.message || "Failed to add comment.");
-      // Rollback optimistic updates
       if (context.previousComments) {
         queryClient.setQueryData(commentsQueryKey, context.previousComments);
       }
@@ -153,23 +145,22 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         queryClient.setQueryData(["post", postId], context.previousPostData);
       }
       if (parentCommentId && context.previousParentCommentsData) {
-        // Rollback parent comment repliesCount
         queryClient.setQueryData(
-          ["comments", postId], // This key points to the list of top-level comments for the post
+          ["comments", postId],
           context.previousParentCommentsData
         );
       }
     },
   });
 
-  const createCommentWithReturn = async ({ text, img }) => {
-    try {
-      await createComment({ text, img }); // Here, createComment IS mutateAsync, which returns a Promise
-      return true;
-    } catch (error) {
-      return false;
-    }
-  };
+  // const createCommentWithReturn = async ({ text, img }) => {
+  //   try {
+  //     await createComment({ text, img }); // Here, createComment IS mutateAsync, which returns a Promise
+  //     return true;
+  //   } catch (error) {
+  //     return false;
+  //   }
+  // };
 
   return { createComment, isCreatingComment };
 };

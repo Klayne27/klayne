@@ -26,7 +26,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
-  // isCreatingComment comes from useCreateComment hook
   const { createComment, isCreatingComment } = useCreateComment(postId, comment._id);
   const {
     comments: replies,
@@ -86,18 +85,18 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       setShowReplyInput((prev) => !prev);
       setReplyText("");
       setReplyImagePreview(null);
-      setReplyImageFile(null); // Clear the actual file as well
+      setReplyImageFile(null);
     },
-    [] // No dependencies if clearing state directly
+    []
   );
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setReplyImageFile(file); // Store the file
+      setReplyImageFile(file);
       const reader = new FileReader();
       reader.onloadend = () => {
-        setReplyImagePreview(reader.result); // Store Base64 for preview
+        setReplyImagePreview(reader.result);
       };
       reader.readAsDataURL(file);
     } else {
@@ -110,7 +109,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     setReplyImageFile(null);
     setReplyImagePreview(null);
     if (imageInputRef.current) {
-      imageInputRef.current.value = ""; // Clear file input
+      imageInputRef.current.value = "";
     }
   };
 
@@ -119,10 +118,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     e.stopPropagation();
 
     if (!replyText.trim() && !replyImageFile) {
-      // Check against file, not preview
       return;
     }
-    if (isCreatingComment) return; // Prevent multiple submissions
+    if (isCreatingComment) return;
 
     await createComment({ text: replyText, img: replyImagePreview });
 
@@ -310,11 +308,10 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 </button>
               </div>
 
-              {/* Image preview section */}
               {replyImagePreview && (
                 <div className="relative size-40 mt-2 self-start">
                   <img
-                    src={replyImagePreview} // Use the Base64 string for preview
+                    src={replyImagePreview}
                     alt="Reply preview"
                     className="w-full h-full object-contain rounded-lg"
                   />
@@ -340,7 +337,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 onClick={() => imageInputRef.current.click()}
                 className="mt-2 text-primary hover:text-blue-400 transition duration-200 self-start p-1 rounded-full"
                 title="Add image"
-                disabled={isCreatingComment} // Disable image button during submission
+                disabled={isCreatingComment}
               >
                 <BiImageAdd size={24} />
               </button>
@@ -361,8 +358,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             <>
               {replies.map((reply) => (
                 <div key={reply._id} className="ml-2">
-                  {" "}
-                  {/* Added ml-2 for indenting replies visually */}
                   <CommentItem
                     comment={reply}
                     postId={postId}

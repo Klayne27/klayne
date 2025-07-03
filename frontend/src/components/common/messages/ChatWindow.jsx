@@ -370,12 +370,12 @@ const ChatWindow = ({
     socket,
     actualConversationId,
     queryClient,
-    otherUser?._id, // Add otherUser._id to deps
-    currentUser._id, // Add currentUser._id to deps
+    otherUser?._id,
+    currentUser._id,
     selectedConversation,
     currentOptimisticIdRef,
-    scrollToBottom, // Add scrollToBottom to deps
-    setShowNewMessageButton, // Add setShowNewMessageButton to deps
+    scrollToBottom,
+    setShowNewMessageButton,
   ]);
 
   const isNewChat =

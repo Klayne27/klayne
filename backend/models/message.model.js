@@ -36,13 +36,7 @@ const messageSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-// --- ADD INDEXES HERE ---
-
-// Index for fetching messages within a conversation, sorted by creation time
-// This is critical for `getMessagesByConversationId` and efficient pagination
 messageSchema.index({ conversationId: 1, createdAt: -1 });
-
-// Index for efficiently updating seen status for messages in a conversation
 messageSchema.index({ conversationId: 1, sender: 1, seen: 1 });
 
 const Message = mongoose.model("Message", messageSchema);

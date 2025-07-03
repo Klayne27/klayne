@@ -64,7 +64,6 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewFeedPosts(true);
       });
 
-      // --- CRITICAL CHANGE HERE: Centralized newMessage handling ---
       newSocket.on("newMessage", (newMessage) => {
         const targetConversationId = newMessage.conversationId;
         const queryKey = ["messages", targetConversationId];
@@ -73,7 +72,6 @@ export const SocketContextProvider = ({ children }) => {
           activeConversationIdRef.current === targetConversationId;
 
         if (isMessageForCurrentlyActiveChat) {
-          // If message is for the active chat, directly update its cache
           queryClient.setQueryData(queryKey, (oldData) => {
             if (!oldData || !oldData.pages || oldData.pages.length === 0) {
               return { pages: [[newMessage]], pageParams: [1] };
@@ -82,8 +80,6 @@ export const SocketContextProvider = ({ children }) => {
             const newData = { ...oldData };
             newData.pages = [...oldData.pages];
 
-            // Filter out the optimistic message if its tempId matches the new message's tempId
-            // Or if its _id matches (in case of server-side deduplication)
             const mostRecentPageMessages = [...newData.pages[0]].filter((msg) => {
               const isOptimisticMatch =
                 newMessage.tempId && msg.tempId === newMessage.tempId && msg.isOptimistic;
@@ -95,16 +91,8 @@ export const SocketContextProvider = ({ children }) => {
             return newData;
           });
         }
-        // else {
-        //   // Do NOT invalidate messages for inactive chats here.
-        //   // This causes unnecessary refetches and could be slow.
-        //   // The conversation preview update below is sufficient.
-        //   // The message data will be fetched when the user clicks that conversation.
-        // }
 
-        // ALWAYS invalidate the conversations list to update inbox preview (last message, unread status)
         queryClient.invalidateQueries(["conversations"]);
-        // Optionally, invalidate specific conversation entry if there's a detailed query for it
         queryClient.invalidateQueries(["conversations", targetConversationId]);
       });
 

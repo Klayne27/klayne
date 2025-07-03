@@ -19,26 +19,20 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
-  const [isSmallScreen, setIsSmallScreen] = useState(false); // New state for screen size
+  const [isSmallScreen, setIsSmallScreen] = useState(false);
 
   const isRepost = !!post.repostedFrom;
-  // Use originalPost to determine which post's content to display (original or current if not a repost)
   const originalPost = isRepost ? post.repostedFrom : post;
   const originalPostOwner = originalPost?.user;
   const repostingUser = isRepost ? post.user : null;
   const isLiked = originalPost?.likes?.includes(authUser?._id);
-  // `canDelete` should check if the currently displayed post is owned by authUser
-  // For a repost, `post` is the actual repost, `originalPost` is the one it refers to.
-  // The user can delete their OWN post or THEIR OWN repost.
   const canDelete = authUser && authUser._id === post.user._id;
-
-  // const isMyPost = authUser?._id === post.user._id;
   const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
+  // const isMyPost = authUser?._id === post.user._id;
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks();
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(originalPost);
-  // Pass the `post` object for deletion, as we want to delete the specific post (repost or original)
   const { deletePost, isDeleting } = useDeletePosts(post);
 
   const formattedDate = formatPostDate(originalPost.createdAt);
@@ -82,17 +76,12 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     repostPost(originalPost._id);
   };
 
-  // --- MODIFIED: handleMediaClick to differentiate between image and video ---
   const handleMediaClick = (mediaUrl, mediaType, event) => {
-    event.stopPropagation(); // Prevent navigating to post page
+    event.stopPropagation();
     if (openImageModal && mediaType === "image") {
       openImageModal(mediaUrl);
     }
-    // For video, we might want a different modal or just let the native controls handle it
-    // If you have a `openVideoModal` prop, you'd use it here.
-    // For now, if it's a video, we just let the default video controls handle playback.
   };
-  // --- END MODIFIED ---
 
   const navigateToReposterProfile = (e) => {
     e.stopPropagation();
@@ -101,7 +90,6 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     }
   };
 
-  // Effect to check and update screen size for username truncation
   useEffect(() => {
     const checkScreenSize = () => {
       setIsSmallScreen(window.innerWidth < 640);
@@ -228,13 +216,12 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             <span className="whitespace-pre-wrap word-break-anywhere min-w-0">
               {renderClickableText(originalPost.text)}
             </span>
-            {/* --- MODIFIED: Conditional rendering for image or video based on mediaType --- */}
             {originalPost.mediaType === "image" && originalPost.img && (
               <img
                 src={originalPost.img}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
                 alt="post image"
-                onClick={(e) => handleMediaClick(originalPost.img, "image", e)} // Pass mediaType
+                onClick={(e) => handleMediaClick(originalPost.img, "image", e)}
                 loading="lazy"
               />
             )}
@@ -244,13 +231,12 @@ const Post = ({ post, openImageModal, setFeedType }) => {
                 src={originalPost.video}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
                 alt="post video"
-                preload="metadata" // Useful for showing controls and first frame faster
-                onClick={(e) => handleMediaClick(originalPost.video, "video", e)} // Pass mediaType
+                preload="metadata" 
+                onClick={(e) => handleMediaClick(originalPost.video, "video", e)}
               >
                 Your browser does not support the video tag.
               </video>
             )}
-            {/* --- END MODIFIED --- */}
           </div>
 
           <div className="flex justify-between mt-3 relative">

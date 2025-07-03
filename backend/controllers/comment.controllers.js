@@ -8,14 +8,12 @@ import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
 
-// Helper function to get blocking relationships for the current user
 const getBlockingUsers = async (userId) => {
   if (!userId) {
     return { blockedByMe: [], blockedMe: [] };
   }
   const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
   return {
-    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
     blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
     blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
   };
@@ -23,7 +21,6 @@ const getBlockingUsers = async (userId) => {
 
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  // Add robustness for input IDs being invalid or missing
   if (
     !currentUserId ||
     !targetUserId ||
@@ -42,15 +39,10 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
     .select("blockedUsers blockedBy")
     .lean();
 
-  // CRITICAL FIX: If either user is not found, they cannot be blocked/blocking.
-  // This prevents errors like accessing `null.blockedUsers`.
   if (!currentUser || !targetUser) {
-
     return false;
   }
 
-  // CRITICAL FIX: Ensure .blockedUsers is treated as an array.
-  // This uses the logical OR operator (||) to default to an empty array if `blockedUsers` is `null` or `undefined`.
   const currentUserBlockedTarget = (currentUser.blockedUsers || []).some(
     (id) => id.toString() === targetUserId.toString()
   );
@@ -93,7 +85,7 @@ export const getComments = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    // Add this check
+
     if (!req.user || !req.user._id) {
       console.error(
         "[getComments] req.user or req.user._id is undefined. Authentication might be missing or failed."
@@ -113,19 +105,15 @@ export const getComments = async (req, res) => {
       return res.status(400).json({ error: "Invalid Post ID" });
     }
 
-    // --- START: Blocking check for the post itself ---
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // CRITICAL FIX 1: Ensure `post.user` exists before accessing `_id`.
     if (!post.user) {
       console.error(
         `[getComments] Post ${postId} has no associated user. Cannot perform blocking check for post owner.`
       );
-      // Decide how to handle: either error or continue without blocking check for post owner
-      // For safety, let's return an error as a missing post owner is data inconsistency.
       return res
         .status(500)
         .json({ error: "Internal server error: Post owner information missing." });
@@ -137,7 +125,6 @@ export const getComments = async (req, res) => {
         error: "Cannot view comments on this post due to blocking restrictions.",
       });
     }
-    // --- END: Blocking check for the post itself ---
 
     const query = { post: postId };
 
@@ -150,7 +137,7 @@ export const getComments = async (req, res) => {
       }
       query.parentComment = parentCommentId;
     } else {
-      query.parentComment = null; // Fetch top-level comments
+      query.parentComment = null;
     }
 
     const comments = await Comment.find(query)
@@ -159,29 +146,25 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName profileImg isVerified blockedUsers blockedBy", // Ensure blockedUsers/blockedBy are populated for comment owners
+        select: "username fullName profileImg isVerified blockedUsers blockedBy",
       })
       .populate({
-        path: "parentComment", // This will be null for top-level comments
+        path: "parentComment",
         select: "text user",
         populate: {
           path: "user",
-          select: "username fullName blockedUsers blockedBy", // Ensure blockedUsers/blockedBy are populated for parent comment owners
+          select: "username fullName blockedUsers blockedBy",
         },
       });
 
-    // --- START: Filter comments based on blocking relationships ---
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
     const filteredComments = comments.filter((comment) => {
-      // CRITICAL FIX 2: Ensure `comment.user` exists before accessing `_id` on it.
       if (!comment.user) {
-
-        return false; // Exclude comments with no valid user
+        return false;
       }
 
-      // 1. Filter out comments from users blocked by me or who blocked me
       if (blockedAndBlockingUsers.includes(comment.user._id.toString())) {
         console.log(
           `[getComments] Filtering comment ${comment._id} because its user (${comment.user._id}) is blocked.`
@@ -189,12 +172,10 @@ export const getComments = async (req, res) => {
         return false;
       }
 
-      // 2. If it's a reply, filter out replies to comments by users blocked by me or who blocked me
       if (comment.parentComment) {
-        // CRITICAL FIX 3: Ensure `comment.parentComment.user` exists before accessing `_id` on it.
         if (!comment.parentComment.user) {
 
-          return false; // Exclude replies if parent user is missing
+          return false;
         }
         if (blockedAndBlockingUsers.includes(comment.parentComment.user._id.toString())) {
           console.log(
@@ -205,18 +186,14 @@ export const getComments = async (req, res) => {
       }
       return true;
     });
-    // --- END: Filter comments based on blocking relationships ---
 
-    const totalComments = await Comment.countDocuments(query); // Total count based on original query
+    const totalComments = await Comment.countDocuments(query);
     const hasNextPage = page * limit < totalComments;
-
-    // CRITICAL FIX: Send `filteredComments` to the client, not the original `comments`.
     res
       .status(200)
       .json({ comments: filteredComments.reverse(), hasNextPage, totalComments });
   } catch (error) {
     console.error("Error in getComments controller:", error.message);
-    // Include the actual error message in the response for better debugging on the client-side during development
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
@@ -224,7 +201,7 @@ export const getComments = async (req, res) => {
 export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
-    let { img } = req.body; // 'img' is now the Base64 string from frontend
+    let { img } = req.body;
 
     const postId = req.params.postId;
     const userId = req.user._id;
@@ -258,23 +235,21 @@ export const createComment = async (req, res) => {
         .json({ error: "You cannot comment on this post due to blocking restrictions." });
     }
 
-    // --- Image Upload Logic (replicated from your createPost) ---
     if (img) {
       try {
         const uploadedResponse = await cloudinary.uploader.upload(img);
-        img = uploadedResponse.secure_url; // Update img to the Cloudinary URL
+        img = uploadedResponse.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary upload error in createComment:", uploadError);
         return res.status(500).json({ error: "Image upload failed." });
       }
     }
-    // --- End Image Upload Logic ---
 
     const newComment = new Comment({
       user: userId,
       post: postId,
       text,
-      img, // This will now be the Cloudinary URL or null
+      img,
       parentComment: null,
     });
 
@@ -312,7 +287,7 @@ export const createComment = async (req, res) => {
 export const replyToComment = async (req, res) => {
   try {
     const { text } = req.body;
-    let { img } = req.body; // 'img' is now the Base64 string from frontend
+    let { img } = req.body;
     const { postId, parentCommentId } = req.params;
     const userId = req.user._id;
 
@@ -372,23 +347,21 @@ export const replyToComment = async (req, res) => {
       });
     }
 
-    // --- Image Upload Logic (replicated from your createPost) ---
     if (img) {
       try {
         const uploadedResponse = await cloudinary.uploader.upload(img);
-        img = uploadedResponse.secure_url; // Update img to the Cloudinary URL
+        img = uploadedResponse.secure_url;
       } catch (uploadError) {
         console.error("Cloudinary upload error in replyToComment:", uploadError);
         return res.status(500).json({ error: "Image upload failed." });
       }
     }
-    // --- End Image Upload Logic ---
 
     const newReply = new Comment({
       user: userId,
       post: postId,
       text,
-      img, // This will now be the Cloudinary URL or null
+      img,
       parentComment: parentCommentId,
     });
 
@@ -443,8 +416,6 @@ export const likeUnlikeComment = async (req, res) => {
     if (!isValidObjectId(commentId)) {
       return res.status(400).json({ error: "Invalid Comment ID" });
     }
-
-    // Populate comment owner to get their blocking status
     const comment = await Comment.findById(commentId).populate(
       "user",
       "blockedUsers blockedBy"
@@ -453,8 +424,6 @@ export const likeUnlikeComment = async (req, res) => {
       return res.status(404).json({ error: "Comment not found" });
     }
 
-    // --- START: Blocking check before liking/unliking a comment ---
-    // CRITICAL FIX: Ensure comment.user exists
     if (!comment.user) {
       console.error(
         `[likeUnlikeComment] Comment ${commentId} has no associated user. Cannot perform blocking check.`
@@ -468,7 +437,6 @@ export const likeUnlikeComment = async (req, res) => {
         error: "You cannot like/unlike this comment due to blocking restrictions.",
       });
     }
-    // --- END: Blocking check ---
 
     const userLikedComment = comment.likes.includes(userId);
 
@@ -481,8 +449,6 @@ export const likeUnlikeComment = async (req, res) => {
     } else {
       comment.likes.push(userId);
 
-      // Send notification only if comment owner is not the liker and no blocking
-      // CRITICAL FIX: Ensure comment.user exists before sending notification
       if (
         comment.user &&
         comment.user.toString() !== userId.toString() &&
@@ -517,7 +483,6 @@ export const deleteComment = async (req, res) => {
       return res.status(400).json({ error: "Invalid Comment ID" });
     }
 
-    // Populate comment owner to get their blocking status for checks
     const commentToDelete = await Comment.findById(commentId).populate(
       "user",
       "blockedUsers blockedBy"
@@ -526,7 +491,6 @@ export const deleteComment = async (req, res) => {
       return res.status(404).json({ error: "Comment not found" });
     }
 
-    // Populate post owner to get their blocking status for checks
     const post = await Post.findById(commentToDelete.post).populate(
       "user",
       "blockedUsers blockedBy"
@@ -544,8 +508,6 @@ export const deleteComment = async (req, res) => {
         .json({ error: "You are not authorized to delete this comment" });
     }
 
-    // --- START: Blocking check before deleting a comment ---
-    // CRITICAL FIX: Defensive checks for user existence before performing blocking checks
     if (!commentToDelete.user) {
       console.error(
         `[deleteComment] Comment ${commentId} has no associated user. Cannot perform blocking check for comment owner.`
@@ -563,7 +525,6 @@ export const deleteComment = async (req, res) => {
         .json({ error: "Internal server error: Post owner information missing." });
     }
 
-    // The rest of your blocking logic for delete is sound assuming the above checks pass
     if (
       !isCommentOwner &&
       (await isBlockedOrBlockedBy(userId, commentToDelete.user._id))
@@ -581,7 +542,6 @@ export const deleteComment = async (req, res) => {
         .status(403)
         .json({ error: "You cannot delete this comment due to blocking restrictions." });
     }
-    // --- END: Blocking check ---
 
     const totalDeletedComments = await deleteAllChildComments(commentId);
 

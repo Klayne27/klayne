@@ -4,24 +4,17 @@ import { getReceiverSocketIds, io, emitUnreadMessageStatus } from "../lib/socket
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 
-// Re-using helper functions for blocking status
-// Helper function to get blocking relationships for the current user
 const getBlockingUsers = async (userId) => {
   if (!userId) {
     return { blockedByMe: [], blockedMe: [] };
   }
   const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
   return {
-    // Safely access blockedUsers and blockedBy, defaulting to empty arrays if undefined/null
     blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
     blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
   };
 };
 
-// Helper function to check if a user is involved in a block relationship
-// targetUserId is the user whose content or profile we are interacting with
-// currentUserId is the authenticated user
-// Make sure this is the DEFINITIVE isBlockedOrBlockedBy function that your controllers are using
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 
   if (!currentUserId || !targetUserId) {
@@ -34,13 +27,10 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
   const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
 
-
-
   if (!currentUser || !targetUser) {
       return false;
   }
 
-  // !! THIS IS THE CRITICAL SECTION !!
   let currentUserBlockedTarget;
   try {
       currentUserBlockedTarget = (currentUser.blockedUsers || []).some(id => {
@@ -48,7 +38,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
           return result;
       });
   } catch (e) {
-      throw e; // Re-throw to see the original stack trace if needed
+      throw e;
   }
 
   let targetUserBlockedCurrentUser;
@@ -58,7 +48,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
           return result;
       });
   } catch (e) {
-      throw e; // Re-throw to see the original stack trace if needed
+      throw e;
   }
 
 
@@ -81,13 +71,11 @@ export const sendMessage = async (req, res) => {
       return res.status(400).json({ error: "You cannot message yourself." });
     }
 
-    // --- START: BLOCKING CHECK FOR SENDING MESSAGE ---
     if (await isBlockedOrBlockedBy(senderId, recipientId)) {
       return res.status(403).json({
         error: "You cannot send messages to this user due to blocking restrictions.",
       });
     }
-    // --- END: BLOCKING CHECK FOR SENDING MESSAGE ---
 
     const recipientUser = await User.findById(recipientId);
     if (!recipientUser) {
@@ -112,7 +100,7 @@ export const sendMessage = async (req, res) => {
         conversation = new Conversation({
           participants: [senderId, recipientId],
           lastMessage: null,
-          deletedFor: [], // Initialize deletedFor for new conversations
+          deletedFor: [],
         });
         await conversation.save();
       }
@@ -144,10 +132,6 @@ export const sendMessage = async (req, res) => {
       createdAt: newMessage.createdAt,
     };
 
-    //// this was 'conversaion.deletedFor' before
-
-    // When a new message is sent, ensure conversation is visible to both parties
-    // i.e., clear any 'deletedFor' entries for the participants of this conversation
     conversation.deletedFor = conversation.deletedFor.filter(
       (entry) =>
         entry.user.toString() !== senderId.toString() &&
@@ -156,17 +140,15 @@ export const sendMessage = async (req, res) => {
 
     await conversation.save();
 
-    // Corrected select for sender
     await newMessage.populate("sender", "username profileImg fullName isVerified");
 
     if (newMessage.repliedTo) {
-      // Corrected select for repliedTo.sender
       await newMessage.populate({
         path: "repliedTo",
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
+          select: "username fullName profileImg isVerified",
         },
       });
     }
@@ -225,10 +207,7 @@ export const getMessagesByConversationId = async (req, res) => {
       (participantId) => participantId.toString() !== userId.toString()
     );
 
-    // --- START: BLOCKING CHECK FOR GETTING MESSAGES ---
-    // Crucial: Only call isBlockedOrBlockedBy if otherParticipantId is found
     if (otherParticipantId) {
-      // Check if otherParticipantId exists BEFORE passing to blocking check
       const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
 
       if (isBlocked) {
@@ -236,15 +215,9 @@ export const getMessagesByConversationId = async (req, res) => {
           error: "You cannot view this conversation due to blocking restrictions.",
         });
       }
-    } else {
-
-      // Depending on your application logic, you might want to return an error here
-      // if a conversation *must* have two distinct participants.
-      // For now, let's allow it to proceed to fetch messages if blocking check is skipped.
-    }
+    } 
 
     if (otherParticipantId) {
-      // Defer marking messages as seen and emitting unread status
       process.nextTick(async () => {
         try {
           await Message.updateMany(
@@ -265,7 +238,6 @@ export const getMessagesByConversationId = async (req, res) => {
             );
           }
 
-          // Emit status updates after DB writes are complete
           await emitUnreadMessageStatus(userId.toString());
           await emitUnreadMessageStatus(otherParticipantId.toString());
         } catch (error) {
@@ -303,10 +275,8 @@ export const getConversations = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    // --- START: BLOCKING FILTERING FOR GETTING CONVERSATIONS ---
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
-    // --- END: BLOCKING FILTERING FOR GETTING CONVERSATIONS ---
 
     const conversations = await Conversation.find({
       participants: userId,
@@ -315,7 +285,7 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username profileImg fullName isVerified", // Corrected: Only specify inclusions
+        select: "username profileImg fullName isVerified",
       })
       .sort({ updatedAt: -1 });
 
@@ -335,12 +305,9 @@ export const getConversations = async (req, res) => {
           return null;
         }
 
-        // --- APPLY BLOCKING FILTERING HERE ---
-        // If the other participant is in the blocked/blocking list, filter out this conversation
         if (blockedAndBlockingUsers.includes(otherParticipant._id.toString())) {
           return null;
         }
-        // --- END: APPLY BLOCKING FILTERING ---
 
         const lastMessageData = conversation.lastMessage
           ? {
@@ -373,14 +340,12 @@ export const getFollowedUsersForMessaging = async (req, res) => {
   try {
     const userId = req.user._id;
 
-    // --- START: BLOCKING FILTERING FOR FOLLOWED USERS FOR MESSAGING ---
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
-    // --- END: BLOCKING FILTERING FOR FOLLOWED USERS FOR MESSAGING ---
 
     const currentUser = await User.findById(userId).populate({
       path: "following",
-      select: "username profileImg fullName isVerified", // Corrected: Only specify inclusions
+      select: "username profileImg fullName isVerified",
     });
 
     if (!currentUser) {
@@ -388,7 +353,6 @@ export const getFollowedUsersForMessaging = async (req, res) => {
     }
 
     const followedUsers = currentUser.following.filter((user) => {
-      // Filter out users who are null or are involved in a blocking relationship
       return user && !blockedAndBlockingUsers.includes(user._id.toString());
     });
 
@@ -416,9 +380,6 @@ export const deleteMessage = async (req, res) => {
         .json({ error: "You are not authorized to delete this message." });
     }
 
-    // --- START: BLOCKING CHECK FOR DELETING MESSAGE ---
-    // Although the sender is deleting their own message, if the other participant is blocked,
-    // we should prevent unintended side effects or information leakage.
     const conversation = await Conversation.findById(messageToDelete.conversationId);
     if (conversation) {
       const otherParticipantId = conversation.participants.find(
@@ -434,7 +395,6 @@ export const deleteMessage = async (req, res) => {
         });
       }
     }
-    // --- END: BLOCKING CHECK FOR DELETING MESSAGE ---
 
     if (messageToDelete.img) {
       const imgId = messageToDelete.img.split("/").pop().split(".")[0];
@@ -443,7 +403,6 @@ export const deleteMessage = async (req, res) => {
 
     await Message.findByIdAndDelete(messageId);
 
-    // Re-fetch conversation as it might have been modified by the blocking check
     const updatedConversation = await Conversation.findById(
       messageToDelete.conversationId
     );
@@ -510,7 +469,6 @@ export const deleteConversationForUser = async (req, res) => {
         .json({ error: "You are not a participant in this conversation" });
     }
 
-    // --- START: BLOCKING CHECK FOR DELETING CONVERSATION ---
     const otherParticipantId = conversation.participants.find(
       (p) => p.toString() !== userId.toString()
     );
@@ -519,7 +477,6 @@ export const deleteConversationForUser = async (req, res) => {
         error: "You cannot delete this conversation due to blocking restrictions.",
       });
     }
-    // --- END: BLOCKING CHECK FOR DELETING CONVERSATION ---
 
     const isAlreadyDeletedForUser = conversation.deletedFor.some(
       (entry) => entry.user.toString() === userId.toString()
@@ -567,14 +524,12 @@ export const reactToMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found" });
     }
 
-    // --- START: BLOCKING CHECK FOR REACTING TO MESSAGE ---
     const messageSenderId = message.sender.toString();
     if (await isBlockedOrBlockedBy(userId, messageSenderId)) {
       return res.status(403).json({
         error: "You cannot react to this message due to blocking restrictions.",
       });
     }
-    // --- END: BLOCKING CHECK FOR REACTING TO MESSAGE ---
 
     const reactionIndex = message.reactions.findIndex(
       (reaction) =>
@@ -596,20 +551,19 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
+        select: "username fullName profileImg isVerified",
       })
       .populate({
         path: "repliedTo",
         select: "text img",
-        // Nested populate
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified", // Corrected: Specific inclusions only
+          select: "username fullName profileImg isVerified",
         },
       })
       .populate({
         path: "reactions.user",
-        select: "username fullName profileImg", // Corrected: Specific inclusions only
+        select: "username fullName profileImg",
       });
 
     const conversation = await Conversation.findById(message.conversationId);

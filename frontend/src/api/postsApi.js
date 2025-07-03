@@ -69,23 +69,21 @@ export const toggleBookmarkApi = async (postId) => {
 
 export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
   const url = new URL("/api/posts/bookmarked", window.location.origin);
-  url.searchParams.append("page", pageParam); // Add page parameter
-  url.searchParams.append("limit", 10); // Add limit parameter (adjust as needed)
+  url.searchParams.append("page", pageParam);
+  url.searchParams.append("limit", 10);
 
   if (searchQuery) {
     url.searchParams.append("query", searchQuery);
   }
 
   const res = await fetch(url.toString(), {
-    // Your existing fetch options (headers, etc.)
   });
 
   const data = await res.json();
 
   if (!res.ok) {
-    // Backend now returns error.message, use it if available
     throw new Error(data.error || "Failed to load bookmarks");
   }
 
-  return data; // This will now contain { posts, currentPage, totalPages, hasNextPage, totalPosts }
+  return data;
 };

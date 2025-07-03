@@ -47,6 +47,7 @@ export const useFetchNotifications = () => {
 };
 
 ///// Seems unnecessary but we'll see
+// blocking logic  for notifications. no need for notifs if blocked users cant see your posts
 
 // // hooks/queries/useFetchNotifications.js
 // import { useQuery, useQueryClient } from "@tanstack/react-query";

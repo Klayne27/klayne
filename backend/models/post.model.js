@@ -14,21 +14,17 @@ const postSchema = new mongoose.Schema(
       type: String,
     },
     video: {
-      // NEW FIELD FOR VIDEO URL
       type: String,
     },
     mediaType: {
-      // NEW FIELD to easily distinguish (optional but recommended)
       type: String,
-      enum: ["image", "video", "none"], // 'none' if only text
+      enum: ["image", "video", "none"],
       default: "none",
     },
     imgPublicId: {
-      // To store public_id for image
       type: String,
     },
     videoPublicId: {
-      // To store public_id for video
       type: String,
     },
     likes: [
@@ -40,7 +36,7 @@ const postSchema = new mongoose.Schema(
     comments: [
       {
         type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment", // <-- This is the key: it refers to the Comment model
+        ref: "Comment",
       },
     ],
     commentsCount: {
@@ -56,14 +52,12 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    // --- NEW FIELD FOR BOOKMARKS ---
     bookmarkedBy: [
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
       },
     ],
-    // --- END NEW FIELD ---
     deletedFor: [
       {
         user: {

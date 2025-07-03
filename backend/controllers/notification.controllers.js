@@ -1,9 +1,7 @@
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
-import mongoose from "mongoose"; // Import mongoose for ObjectId if needed
 
-// Helper function to get blocking relationships for the current user
 const getBlockingUsers = async (userId) => {
   if (!userId) {
     return { blockedByMe: [], blockedMe: [] };
@@ -15,7 +13,6 @@ const getBlockingUsers = async (userId) => {
   };
 };
 
-// Helper function to check if a user is involved in a block relationship
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) return false;
   if (currentUserId.toString() === targetUserId.toString()) return false;
@@ -63,23 +60,15 @@ export const getNotifications = async (req, res) => {
       .limit(50);
 
     const filteredNotifications = notifications.filter((notification) => {
-      // First, check if 'from' user was successfully populated.
-      // If notification.from is null (meaning the user doesn't exist), we should filter this notification out.
       if (!notification.from) {
         return false;
       }
 
-      // Now that we know notification.from is not null, we can safely access its properties.
       if (blockedAndBlockingUsers.includes(notification.from._id.toString())) {
         return false;
       }
 
-      // Additionally, consider if the postId exists or if its user exists
-      // (e.g., if a post or the user who created it was deleted)
-      // Depending on your requirements, you might also want to filter out notifications
-      // for deleted posts or posts from deleted users.
       if (notification.postId && !notification.postId.user) {
-        // If there's a postId, but the user who created that post is null
         return false;
       }
 
@@ -88,8 +77,6 @@ export const getNotifications = async (req, res) => {
 
     res.status(200).json(filteredNotifications);
 
-    // Mark all fetched notifications as read, regardless of whether they were filtered out or not.
-    // This prevents the same problematic notifications from reappearing as unread.
     await Notification.updateMany({ to: userId, read: false }, { read: true });
 
     await emitUnreadNotificationStatus(userId.toString());
