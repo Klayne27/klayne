@@ -188,7 +188,7 @@ const CreatePost = () => {
     <div className="flex p-4 items-start gap-3 border-b border-gray-700 mt-12">
       <Link to={`/profile/${authUser.username}`}>
         <div className="avatar">
-          <div className="w-10 rounded-full">
+          <div className="w-8 md:w-10 rounded-full">
             <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
           </div>
         </div>
@@ -274,7 +274,7 @@ const CreatePost = () => {
           />
           <button
             type="submit"
-            className="px-4 py-2 bg-primary text-white rounded-full hover:bg-[#1d9cf0d8] transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+            className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-[#1d9cf0d8] transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
             disabled={isButtonDisabled}
           >
             {isPending ? "Posting..." : "Post"}

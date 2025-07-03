@@ -37,6 +37,12 @@ const postSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    comments: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Comment", // <-- This is the key: it refers to the Comment model
+      },
+    ],
     commentsCount: {
       type: Number,
       default: 0,
@@ -50,6 +56,14 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    // --- NEW FIELD FOR BOOKMARKS ---
+    bookmarkedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
+    // --- END NEW FIELD ---
     deletedFor: [
       {
         user: {

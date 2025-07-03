@@ -4,7 +4,7 @@ import { Link, useLocation, useNavigate } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
-import { CiMail, CiSearch, CiUser } from "react-icons/ci";
+import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci";
 import { PiHouseThin } from "react-icons/pi";
 import { useState, useRef, useEffect } from "react";
 import Modal from "./Modal";
@@ -303,6 +303,28 @@ const Sidebar = () => {
               className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
             >
               <span className="text-lg hidden md:block">Notifications</span>
+            </Link>
+          </li>
+          <li
+            onClick={() => navigate("/bookmarks")}
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
+          >
+            <Link
+              to="/bookmarks"
+              className={`${
+                pathname === "/bookmarks" ? "font-bold text-white" : ""
+              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+            >
+              <CiBookmark
+                className="w-6 h-6"
+                strokeWidth={pathname === "/bookmarks" ? 2 : 1}
+              />
+            </Link>
+            <Link
+              to="/bookmarks"
+              className={`${pathname === "/bookmarks" ? "font-bold text-white" : ""}`}
+            >
+              <span className="text-lg hidden md:block">Bookmarks</span>
             </Link>
           </li>
           <li className="flex justify-start md:justify-start md:hidden">

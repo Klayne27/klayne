@@ -25,8 +25,8 @@ cloudinary.config({
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-app.use(express.json({ limit: '100mb' })); // Adjust this limit as needed for video sizes
-app.use(express.urlencoded({ extended: true, limit: '100mb' })); // For form data
+app.use(express.json({ limit: '100mb' })); 
+app.use(express.urlencoded({ extended: true, limit: '100mb' }));
 
 app.use(cookieParser());
 

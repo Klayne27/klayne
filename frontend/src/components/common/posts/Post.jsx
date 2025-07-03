@@ -12,6 +12,8 @@ import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../../utils/textUtils";
 import { useEffect, useState } from "react";
+import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
+import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 
 const Post = ({ post, openImageModal, setFeedType }) => {
   const navigate = useNavigate();
@@ -30,6 +32,10 @@ const Post = ({ post, openImageModal, setFeedType }) => {
   // The user can delete their OWN post or THEIR OWN repost.
   const canDelete = authUser && authUser._id === post.user._id;
 
+  // const isMyPost = authUser?._id === post.user._id;
+  const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
+
+  const { toggleBookmark, isBookmarking } = useToggleBookmarks();
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(originalPost);
   // Pass the `post` object for deletion, as we want to delete the specific post (repost or original)
@@ -52,6 +58,11 @@ const Post = ({ post, openImageModal, setFeedType }) => {
 
   const handleInteractiveClick = (e) => {
     e.stopPropagation();
+  };
+
+  const handleBookmarkPost = (e) => {
+    handleInteractiveClick(e);
+    toggleBookmark(post._id);
   };
 
   const handleDeletePostClick = (e) => {
@@ -124,6 +135,8 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     };
     checkIfUserRepostedStatus();
   }, [authUser, originalPost?._id, isReposting]);
+
+  console.log(originalPost);
 
   const getDisplayUsername = (username) => {
     if (isSmallScreen && username.length > 5) {
@@ -201,11 +214,11 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             {canDelete && (
               <span className="flex ml-auto">
                 {!isDeleting && (
-                  <div className="group hover:bg-red-600 duration-200 transition hover:text-red-600 hover:bg-opacity-15 rounded-full p-2">
+                  <div className="group  duration-200 transition hover:text-red-600  rounded-full px-2.5">
                     <FiTrash
                       className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
                       onClick={handleDeletePostClick}
-                      size={20}
+                      size={17}
                     />
                   </div>
                 )}
@@ -242,8 +255,8 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             {/* --- END MODIFIED --- */}
           </div>
 
-          <div className="flex justify-between mt-3">
-            <div className="flex gap-4 items-center w-2/3 justify-between">
+          <div className="flex justify-between mt-3 relative">
+            <div className="flex gap-4 items-center w-2/3 justify-between ">
               <div
                 className="flex items-center cursor-pointer group"
                 onClick={handleInteractiveClick}
@@ -313,6 +326,19 @@ const Post = ({ post, openImageModal, setFeedType }) => {
                 >
                   {originalPost.likes?.length || 0}
                 </span>
+              </div>
+
+              <div
+                className="flex gap-1 items-center cursor-pointer group absolute right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
+                onClick={handleBookmarkPost}
+              >
+                {isBookmarking ? (
+                  <LoadingSpinner size="xs" />
+                ) : isBookmarked ? (
+                  <FaBookmark className="size-4 text-primary" />
+                ) : (
+                  <FaRegBookmark className="size-4 text-slate-500 group-hover:text-primary duration-200 transition" /> // Outline if not
+                )}
               </div>
             </div>
           </div>

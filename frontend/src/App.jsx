@@ -7,6 +7,7 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 
+const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage")); // NEW
 const HomePage = lazy(() => import("./pages/home/HomePage"));
 const LoginPage = lazy(() => import("./pages/auth/login/LoginPage"));
 const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"));
@@ -97,6 +98,16 @@ function App() {
             element={
               authUser ? (
                 <MessagesPage openImageModal={openImageModal} />
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+          <Route
+            path="/bookmarks" // NEW ROUTE
+            element={
+              authUser ? (
+                <BookmarksPage openImageModal={openImageModal} />
               ) : (
                 <Navigate to="/login" />
               )

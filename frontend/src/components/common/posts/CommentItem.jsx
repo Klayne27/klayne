@@ -199,7 +199,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             </div>
             {(isCommentOwner || isPostOwner) && (
               <button
-                className="group absolute right-0 top-0 text-red-500 rounded-full hover:bg-red-600 hover:bg-opacity-15 p-1 transition duration-200"
+                className="group absolute right-0 top-0 text-red-500 rounded-full px-2.5 transition duration-200"
                 onClick={handleDeleteCommentClick}
                 disabled={isDeletingComment}
               >
@@ -207,7 +207,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <LoadingSpinner size="sm" />
                 ) : (
                   <FiTrash
-                    size={16}
+                    size={17}
                     className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
                   />
                 )}
@@ -348,7 +348,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           )}
         </div>
       </div>
-      <div className="flex justify-center mt-5 items-center">
+      <div className="flex justify-center items-center">
         {isCreatingComment && <LoadingSpinner />}
       </div>
       {comment.repliesCount > 0 && (

@@ -8,7 +8,7 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) =>
   return data;
 };
 
-export const createPostApi = async ({text, img, video}) => {
+export const createPostApi = async ({ text, img, video }) => {
   const res = await fetch("/api/posts/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -54,3 +54,33 @@ export const fetchPostApi = async (postId) => {
   return res.json();
 };
 
+export const toggleBookmarkApi = async (postId) => {
+  const res = await fetch(`/api/posts/bookmark/${postId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to bookmark post");
+
+  return data;
+};
+
+export const getBookmarkedPostsApi = async (searchQuery = "") => {
+  const url = new URL("/api/posts/bookmarked", window.location.origin); // Use window.location.origin for full path
+  if (searchQuery) {
+    url.searchParams.append("query", searchQuery);
+  }
+
+  const res = await fetch(url.toString(), {
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to load bookmarks");
+  }
+
+  return data;
+};
