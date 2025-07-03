@@ -88,7 +88,7 @@ export const SocketContextProvider = ({ children }) => {
               ) {
                 return false;
               }
-              if (msg._id === newMessage._id) {
+              if (msg._id && msg._id === newMessage._id) {
                 return false;
               }
               return true;
@@ -98,11 +98,11 @@ export const SocketContextProvider = ({ children }) => {
             return newData;
           });
 
-          queryClient.invalidateQueries({
-            queryKey,
-            exact: true,
-            refetchType: "background",
-          });
+          // queryClient.invalidateQueries({
+          //   queryKey,
+          //   exact: true,
+          //   refetchType: "background",
+          // });
         } else {
           queryClient.invalidateQueries({ queryKey, exact: true });
         }

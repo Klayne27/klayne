@@ -23,26 +23,20 @@ const getBlockingUsers = async (userId) => {
 // currentUserId is the authenticated user
 // Make sure this is the DEFINITIVE isBlockedOrBlockedBy function that your controllers are using
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  console.log(`[isBlockedOrBlockedBy] Checking block status for current: ${currentUserId}, target: ${targetUserId}`);
 
   if (!currentUserId || !targetUserId) {
-      console.warn(`[isBlockedOrBlockedBy] Invalid IDs: current=${currentUserId}, target=${targetUserId}`);
       return false;
   }
   if (currentUserId.toString() === targetUserId.toString()) {
-      console.log(`[isBlockedOrBlockedBy] IDs are the same, no blocking check needed.`);
       return false;
   }
 
   const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
   const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
 
-  console.log(`[isBlockedOrBlockedBy] Fetched currentUser: ${currentUser ? JSON.stringify(currentUser.blockedUsers) : 'null/undefined'}`);
-  console.log(`[isBlockedOrBlockedBy] Fetched targetUser: ${targetUser ? JSON.stringify(targetUser.blockedUsers) : 'null/undefined'}`);
 
 
   if (!currentUser || !targetUser) {
-      console.warn(`[isBlockedOrBlockedBy] One or both users not found. currentUser found: ${!!currentUser}, targetUser found: ${!!targetUser}`);
       return false;
   }
 
@@ -51,12 +45,9 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   try {
       currentUserBlockedTarget = (currentUser.blockedUsers || []).some(id => {
           const result = id.toString() === targetUserId.toString();
-          // console.log(`  [isBlockedOrBlockedBy] Current user blocked check - id: ${id}, target: ${targetUserId}, match: ${result}`);
           return result;
       });
   } catch (e) {
-      console.error(`[isBlockedOrBlockedBy] Error in currentUserBlockedTarget check for user ${currentUserId}:`, e.message);
-      console.error(`[isBlockedOrBlockedBy] currentUser.blockedUsers was: ${currentUser.blockedUsers}`);
       throw e; // Re-throw to see the original stack trace if needed
   }
 
@@ -64,17 +55,13 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   try {
       targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(id => {
           const result = id.toString() === currentUserId.toString();
-          // console.log(`  [isBlockedOrBlockedBy] Target user blocked check - id: ${id}, current: ${currentUserId}, match: ${result}`);
           return result;
       });
   } catch (e) {
-      console.error(`[isBlockedOrBlockedBy] Error in targetUserBlockedCurrentUser check for user ${targetUserId}:`, e.message);
-      console.error(`[isBlockedOrBlockedBy] targetUser.blockedUsers was: ${targetUser.blockedUsers}`);
       throw e; // Re-throw to see the original stack trace if needed
   }
 
 
-  console.log(`[isBlockedOrBlockedBy] currentUserBlockedTarget: ${currentUserBlockedTarget}, targetUserBlockedCurrentUser: ${targetUserBlockedCurrentUser}`);
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
@@ -196,12 +183,12 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    const senderSocketIds = getReceiverSocketIds(senderId.toString());
-    if (senderSocketIds.length > 0) {
-      senderSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("newMessage", messageToSend);
-      });
-    }
+    // const senderSocketIds = getReceiverSocketIds(senderId.toString());
+    // if (senderSocketIds.length > 0) {
+    //   senderSocketIds.forEach((socketId) => {
+    //     io.to(socketId).emit("newMessage", messageToSend);
+    //   });
+    // }
 
     await emitUnreadMessageStatus(recipientId.toString());
     await emitUnreadMessageStatus(senderId.toString());
@@ -217,27 +204,19 @@ export const sendMessage = async (req, res) => {
 
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params;
-  const { page = 1, limit = 40 } = req.query;
+  const { page = 1, limit = 20 } = req.query;
   const userId = req.user._id;
 
   try {
-    console.log(`[getMessages] User: ${userId}, ConvId: ${conversationId}`);
 
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
-      console.log("[getMessages] Conversation not found.");
 
       return res.status(404).json({ error: "Conversation not found." });
     }
-    console.log(
-      `[getMessages] Conversation participants: ${conversation.participants.map((p) =>
-        p.toString()
-      )}`
-    );
 
     if (!conversation.participants.includes(userId)) {
-      console.log("[getMessages] Unauthorized access to conversation.");
 
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
@@ -245,53 +224,54 @@ export const getMessagesByConversationId = async (req, res) => {
     const otherParticipantId = conversation.participants.find(
       (participantId) => participantId.toString() !== userId.toString()
     );
-    console.log(`[getMessages] Other participant ID: ${otherParticipantId}`);
 
     // --- START: BLOCKING CHECK FOR GETTING MESSAGES ---
     // Crucial: Only call isBlockedOrBlockedBy if otherParticipantId is found
     if (otherParticipantId) {
       // Check if otherParticipantId exists BEFORE passing to blocking check
       const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
-      console.log(
-        `[getMessages] isBlockedOrBlockedBy(${userId}, ${otherParticipantId}) returned: ${isBlocked}`
-      );
+
       if (isBlocked) {
         return res.status(403).json({
           error: "You cannot view this conversation due to blocking restrictions.",
         });
       }
     } else {
-      console.warn(
-        "[getMessages] otherParticipantId is undefined. This conversation might be malformed (e.g., only one participant). Skipping blocking check."
-      );
+
       // Depending on your application logic, you might want to return an error here
       // if a conversation *must* have two distinct participants.
       // For now, let's allow it to proceed to fetch messages if blocking check is skipped.
     }
-    // --- END: BLOCKING CHECK FOR GETTING MESSAGES ---
 
     if (otherParticipantId) {
-      await Message.updateMany(
-        { conversationId: conversationId, sender: otherParticipantId, seen: false },
-        { $set: { seen: true } }
-      );
+      // Defer marking messages as seen and emitting unread status
+      process.nextTick(async () => {
+        try {
+          await Message.updateMany(
+            { conversationId: conversationId, sender: otherParticipantId, seen: false },
+            { $set: { seen: true } }
+          );
 
-      if (
-        conversation.lastMessage &&
-        conversation.lastMessage.sender.toString() === otherParticipantId.toString() &&
-        !conversation.lastMessage.seen
-      ) {
-        await Conversation.updateOne(
-          { _id: conversationId },
-          { $set: { "lastMessage.seen": true } },
-          { timestamps: false }
-        );
-      }
+          if (
+            conversation.lastMessage &&
+            conversation.lastMessage.sender.toString() ===
+              otherParticipantId.toString() &&
+            !conversation.lastMessage.seen
+          ) {
+            await Conversation.updateOne(
+              { _id: conversationId },
+              { $set: { "lastMessage.seen": true } },
+              { timestamps: false }
+            );
+          }
 
-      // These emits are called within the controller, so they're part of the HTTP response flow.
-      // The error is coming from socket.js, so the problem might be in a separate Socket.IO event listener.
-      await emitUnreadMessageStatus(userId.toString());
-      await emitUnreadMessageStatus(otherParticipantId.toString());
+          // Emit status updates after DB writes are complete
+          await emitUnreadMessageStatus(userId.toString());
+          await emitUnreadMessageStatus(otherParticipantId.toString());
+        } catch (error) {
+          console.error("Error deferring seen status update:", error);
+        }
+      });
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);

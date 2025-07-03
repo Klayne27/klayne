@@ -221,72 +221,72 @@ const ChatWindow = ({
 
   useEffect(() => {
     if (socket) {
-      const handleNewMessage = (newMessage) => {
-        const isMessageForThisChat =
-          newMessage.conversationId === actualConversationId ||
-          (selectedConversation?.isNewChat &&
-            newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            newMessage.recipientId?.toString() === currentUser._id.toString());
+      // const handleNewMessage = (newMessage) => {
+      //   const isMessageForThisChat =
+      //     newMessage.conversationId === actualConversationId ||
+      //     (selectedConversation?.isNewChat &&
+      //       newMessage.sender._id.toString() === otherUser?._id.toString() &&
+      //       newMessage.recipientId?.toString() === currentUser._id.toString());
 
-        if (isMessageForThisChat) {
-          queryClient.setQueryData(
-            ["messages", newMessage.conversationId || actualConversationId],
-            (oldData) => {
-              if (!oldData) {
-                return { pages: [[newMessage]], pageParams: [1] };
-              }
+      //   if (isMessageForThisChat) {
+      //     queryClient.setQueryData(
+      //       ["messages", newMessage.conversationId || actualConversationId],
+      //       (oldData) => {
+      //         if (!oldData) {
+      //           return { pages: [[newMessage]], pageParams: [1] };
+      //         }
 
-              const newData = { ...oldData };
-              newData.pages = [...oldData.pages];
+      //         const newData = { ...oldData };
+      //         newData.pages = [...oldData.pages];
 
-              if (newData.pages.length === 0) {
-                newData.pages.push([]);
-              }
+      //         if (newData.pages.length === 0) {
+      //           newData.pages.push([]);
+      //         }
 
-              const firstPageMessages = newData.pages[0].filter(
-                (msg) =>
-                  msg._id !== newMessage._id &&
-                  (msg.isOptimistic !== true ||
-                    msg._id !== currentOptimisticIdRef.current)
-              );
+      //         const firstPageMessages = newData.pages[0].filter(
+      //           (msg) =>
+      //             msg._id !== newMessage._id &&
+      //             (msg.isOptimistic !== true ||
+      //               msg._id !== currentOptimisticIdRef.current)
+      //         );
 
-              newData.pages[0] = [...firstPageMessages, newMessage];
-              return newData;
-            }
-          );
+      //         newData.pages[0] = [...firstPageMessages, newMessage];
+      //         return newData;
+      //       }
+      //     );
 
-          if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
-            const listEl = messageListRef.current;
-            if (listEl) {
-              const scrollThreshold = 100;
-              const isAtBottom =
-                listEl.scrollHeight - listEl.scrollTop <=
-                listEl.clientHeight + scrollThreshold;
+      //     if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
+      //       const listEl = messageListRef.current;
+      //       if (listEl) {
+      //         const scrollThreshold = 100;
+      //         const isAtBottom =
+      //           listEl.scrollHeight - listEl.scrollTop <=
+      //           listEl.clientHeight + scrollThreshold;
 
-              if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
-                if (!isAtBottom) {
-                  setShowNewMessageButton(true);
-                } else {
-                  shouldScrollToBottomRef.current = true;
-                  setShowNewMessageButton(false);
-                }
-              } else {
-                setShowNewMessageButton(false);
-                shouldScrollToBottomRef.current = true;
-              }
-            }
-          }
+      //         if (newMessage.sender._id.toString() !== currentUser._id.toString()) {
+      //           if (!isAtBottom) {
+      //             setShowNewMessageButton(true);
+      //           } else {
+      //             shouldScrollToBottomRef.current = true;
+      //             setShowNewMessageButton(false);
+      //           }
+      //         } else {
+      //           setShowNewMessageButton(false);
+      //           shouldScrollToBottomRef.current = true;
+      //         }
+      //       }
+      //     }
 
-          if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-            socket.emit("markMessagesAsSeen", {
-              conversationId: newMessage.conversationId,
-            });
-          }
-        }
+      //     if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
+      //       socket.emit("markMessagesAsSeen", {
+      //         conversationId: newMessage.conversationId,
+      //       });
+      //     }
+      //   }
 
-        queryClient.invalidateQueries(["conversations", newMessage.conversationId]);
-        queryClient.invalidateQueries(["conversations"]);
-      };
+      //   queryClient.invalidateQueries(["conversations", newMessage.conversationId]);
+      //   queryClient.invalidateQueries(["conversations"]);
+      // };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
         if (seenConversationId.toString() === actualConversationId?.toString()) {
@@ -342,14 +342,14 @@ const ChatWindow = ({
         }
       };
 
-      socket.on("newMessage", handleNewMessage);
+      // socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
 
       return () => {
-        socket.off("newMessage", handleNewMessage);
+        // socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
         socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);

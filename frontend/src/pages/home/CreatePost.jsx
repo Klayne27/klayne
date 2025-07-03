@@ -7,7 +7,6 @@ import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { Link } from "react-router-dom";
 import { BiImageAdd } from "react-icons/bi";
 
-
 import EmojiPicker from "emoji-picker-react";
 import { useEffect } from "react";
 
