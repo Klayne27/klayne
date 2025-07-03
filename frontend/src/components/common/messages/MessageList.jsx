@@ -1,19 +1,13 @@
 // src/components/common/messages/MessageList.jsx
 import React, { useCallback, forwardRef, useState, useEffect, useRef } from "react";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-// import { truncateText } from "../../../utils/truncateText"; // No longer needed directly here
-// import { FaReply } from "react-icons/fa"; // No longer needed directly here
-// import { FiTrash } from "react-icons/fi"; // No longer needed directly here
-// import { renderClickableText } from "../../../utils/textUtils"; // No longer needed directly here
-// import { BsCheck2All } from "react-icons/bs"; // No longer needed directly here
 import LoadingSpinner from "../LoadingSpinner";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 
-import MessageItem from "./MessageItem"; // Import the new component!
+import MessageItem from "./MessageItem";
 
-// Utility function to detect touch device (simple check, generally reliable enough)
 const isTouchDevice = () => {
-  if (typeof window === "undefined") return false; // Server-side rendering check
+  if (typeof window === "undefined") return false;
   return (
     "ontouchstart" in window ||
     navigator.maxTouchPoints > 0 ||
@@ -39,23 +33,22 @@ const MessageList = forwardRef(function MessageList(
   ref
 ) {
   const { authUser: currentUser } = useAuthUser();
+  const { mutate: reactToMessage } = useReactToMessage(); // isReacting is not used in MessageItem
 
-  const { mutate: reactToMessage, isLoading: isReacting } = useReactToMessage(); // Keep here to pass down
-
-  // State to manage which message's modal is active
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
 
-  // Ref for long press timer
   const longPressTimerRef = useRef(null);
   const touchStartXRef = useRef(0);
   const touchStartYRef = useRef(0);
-  const LONG_PRESS_DURATION = 500; // milliseconds
+  const LONG_PRESS_DURATION = 500;
 
-  // --- Effect to detect touch device on mount ---
+  // Ref to store the timeout for mouse leave
+  const mouseLeaveTimeoutRef = useRef(null);
+  const MOUSE_LEAVE_DELAY = 100; // Small delay (ms) before clearing active modal on mouse leave
+
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
-
     const handlePointerTypeChange = () => {
       setIsCurrentlyTouchDevice(isTouchDevice());
     };
@@ -85,7 +78,6 @@ const MessageList = forwardRef(function MessageList(
   );
 
   const handleImageClick = useCallback(
-    // Memoize this too
     (imageUrl, event) => {
       event.stopPropagation();
       if (openImageModal) {
@@ -127,6 +119,11 @@ const MessageList = forwardRef(function MessageList(
   const handleMouseEnter = useCallback(
     (messageId) => {
       if (!isCurrentlyTouchDevice) {
+        // Clear any pending mouse leave timeout
+        if (mouseLeaveTimeoutRef.current) {
+          clearTimeout(mouseLeaveTimeoutRef.current);
+          mouseLeaveTimeoutRef.current = null;
+        }
         setActiveMessageModalId(messageId);
       }
     },
@@ -135,7 +132,11 @@ const MessageList = forwardRef(function MessageList(
 
   const handleMouseLeave = useCallback(() => {
     if (!isCurrentlyTouchDevice) {
-      setActiveMessageModalId(null);
+      // Set a timeout before clearing the active modal ID
+      // This prevents the modal from flickering when moving between messages quickly
+      mouseLeaveTimeoutRef.current = setTimeout(() => {
+        setActiveMessageModalId(null);
+      }, MOUSE_LEAVE_DELAY);
     }
   }, [isCurrentlyTouchDevice]);
 
@@ -143,6 +144,14 @@ const MessageList = forwardRef(function MessageList(
   const handleTouchStart = useCallback(
     (e, messageId) => {
       if (isCurrentlyTouchDevice) {
+        // If a modal is already open and this is a tap on a different message, close it
+        if (activeMessageModalId && activeMessageModalId !== messageId) {
+          setActiveMessageModalId(null);
+          clearTimeout(longPressTimerRef.current); // Clear any pending long press from previous
+          longPressTimerRef.current = null;
+          return; // Don't start a new timer for this tap
+        }
+
         longPressTimerRef.current = setTimeout(() => {
           setActiveMessageModalId(messageId);
         }, LONG_PRESS_DURATION);
@@ -150,7 +159,7 @@ const MessageList = forwardRef(function MessageList(
         touchStartYRef.current = e.touches[0].clientY;
       }
     },
-    [isCurrentlyTouchDevice]
+    [isCurrentlyTouchDevice, activeMessageModalId] // Add activeMessageModalId to deps for better tap handling
   );
 
   const handleTouchMove = useCallback(
@@ -175,6 +184,10 @@ const MessageList = forwardRef(function MessageList(
         if (longPressTimerRef.current) {
           clearTimeout(longPressTimerRef.current);
           longPressTimerRef.current = null;
+          // If a long press was prevented, it means it was a tap.
+          // If modal is *already* open for this message, a tap on it should close it.
+          // But if it's a tap on another message, the handleTouchStart logic should close previous.
+          // This handleTouchEnd primarily ensures the timer is cleared if it didn't fire.
         }
       }
     },
@@ -184,14 +197,11 @@ const MessageList = forwardRef(function MessageList(
   const handleClickOutsideMessage = useCallback(
     (e) => {
       if (isCurrentlyTouchDevice && activeMessageModalId) {
-        const modalElement = document.getElementById(
-          `message-modal-${activeMessageModalId}`
+        const messageItemContainer = document.getElementById(
+          `message-${activeMessageModalId}`
         );
-        if (
-          modalElement &&
-          !modalElement.contains(e.target) &&
-          !e.target.closest(".message-item-container")
-        ) {
+        // If the click target is NOT within the currently active message's container
+        if (messageItemContainer && !messageItemContainer.contains(e.target)) {
           setActiveMessageModalId(null);
         }
       }
@@ -203,6 +213,10 @@ const MessageList = forwardRef(function MessageList(
     document.addEventListener("click", handleClickOutsideMessage);
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage);
+      // Clean up any pending mouse leave timeout on unmount
+      if (mouseLeaveTimeoutRef.current) {
+        clearTimeout(mouseLeaveTimeoutRef.current);
+      }
     };
   }, [handleClickOutsideMessage]);
 
@@ -238,7 +252,7 @@ const MessageList = forwardRef(function MessageList(
         messagesToRender.length > 0 &&
         messagesToRender.map((msg) => (
           <MessageItem
-            key={msg._id} // Crucial for React's reconciliation
+            key={msg._id}
             msg={msg}
             isCurrentlyTouchDevice={isCurrentlyTouchDevice}
             activeMessageModalId={activeMessageModalId}
@@ -253,8 +267,7 @@ const MessageList = forwardRef(function MessageList(
             handleJumpToOriginalMessage={handleJumpToOriginalMessage}
             handleReactionClick={handleReactionClick}
             isDeletingMessage={isDeletingMessage}
-            currentUser={currentUser} // Pass current user
-            // isReacting={isReacting} // Pass loading state if needed by MessageItem
+            currentUser={currentUser}
           />
         ))}
     </div>
