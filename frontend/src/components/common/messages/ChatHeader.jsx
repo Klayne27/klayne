@@ -5,7 +5,7 @@ function ChatHeader({ onBackToConversations, otherUser }) {
   return (
     <div className="fixed top-0 w-[625px] border-gray-700 z-20 p-4 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md ">
       {onBackToConversations && (
-        <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
+        <button onClick={onBackToConversations} className="md:hidden mr-2 text-primary-content">
           <BiArrowBack className="w-6 h-6" />
         </button>
       )}

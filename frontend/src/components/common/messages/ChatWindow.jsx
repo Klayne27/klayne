@@ -399,7 +399,7 @@ const ChatWindow = ({
   }, [scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-full relative bg-black/0 text-white border-r border-gray-700">
+    <div className="flex flex-col h-full relative border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
