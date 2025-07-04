@@ -77,6 +77,7 @@ export default {
       "cyberpunk",
       "retro",
       "pastel",
+      "sunset"
     ],
   },
 };

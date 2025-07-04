@@ -16,4 +16,5 @@ export const AVAILABLE_THEMES = [
   "dracula",
   "pastel",
   "retro",
+  "sunset",
 ];
