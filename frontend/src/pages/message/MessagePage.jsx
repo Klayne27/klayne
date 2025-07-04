@@ -172,7 +172,7 @@ const MessagePage = ({ openImageModal }) => {
 
   if (errorConversations || errorFollowedUsers) {
     return (
-      <div className="flex min-h-screen bg-black text-red-500 items-center justify-center">
+      <div className="flex min-h-screen text-red-500 items-center justify-center">
         Error loading messages:{" "}
         {errorConversations?.message || errorFollowedUsers?.message}
       </div>
@@ -183,7 +183,7 @@ const MessagePage = ({ openImageModal }) => {
 
   return (
     <div
-      className="flex min-h-screen bg-black text-white overflow-hidden      
+      className="flex min-h-screen text-white overflow-hidden      
         w-full
         lg:w-auto
         xl:w-auto"
@@ -230,7 +230,7 @@ const MessagePage = ({ openImageModal }) => {
             }}
           />
         ) : (
-          <div className="flex-1 flex flex-col items-center justify-center bg-black text-gray-400">
+          <div className="flex-1 flex flex-col items-center justify-center text-gray-400">
             <p className="text-xl font-bold mb-2">Select a message</p>
             <p className="text-sm">Choose an existing conversation or start a new one.</p>
           </div>

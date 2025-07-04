@@ -31,12 +31,12 @@ const SearchPanel = () => {
   }, [debouncedQuery, users, isError]);
 
   return (
-    <div className="bg-black rounded-lg relative w-full md:block">
+    <div className="relative w-full md:block">
       <div className="relative mb-4 w-full">
         <input
           type="text"
           placeholder="Search by username or name"
-          className="w-full bg-black text-white border border-gray-700 rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-primary z-10"
+          className="w-full bg-se text-white border border-gray-700 bg-black rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-primary z-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {

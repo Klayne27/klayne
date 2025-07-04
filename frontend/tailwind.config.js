@@ -27,6 +27,10 @@ export default {
           secondary: "rgb(24, 24, 24)",
         },
       },
+      "coffee",
+      "retro",
+      "aqua",
+      "pastel"
     ],
   },
 };
