@@ -204,8 +204,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   }
 
   return (
-    <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-700">
+    <div className="flex-1 border-r border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
+      <div className="flex items-center gap-4 px-4 py-3.5 border-b border-accent">
         <button
           onClick={() => navigate(-1)}
           className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
@@ -215,7 +215,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
         <h1 className="font-bold text-xl flex-1 truncate">Post</h1>
       </div>
 
-      <div className="border-gray-700">
+      <div className="border-accent">
         <Post
           post={displayPost}
           openImageModal={openImageModal}
@@ -226,7 +226,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       {authUser && (
         <form
           onSubmit={handleAddOrReplyComment}
-          className="p-4 border-b border-gray-700 flex flex-col gap-2"
+          className="p-4 border-b border-accent flex flex-col gap-2"
         >
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             <div className="avatar flex-shrink-0">

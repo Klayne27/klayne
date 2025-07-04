@@ -13,8 +13,8 @@ const ThemesPage = () => {
   const { theme, setTheme } = useTheme();
 
   return (
-    <main className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-      <div className="flex justify-between items-center p-4  border-gray-700">
+    <main className="flex-[4_4_0] border-r border-accent min-h-screen">
+      <div className="flex justify-between items-center p-4  border-accent">
         <p className="font-bold text-xl">Themes</p>
       </div>
 
@@ -25,7 +25,7 @@ const ThemesPage = () => {
               key={t}
               className={`
                 group flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors
-                ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"}
+                ${theme === t ? "bg-base-200" : "hover:bg-base-200"}
               `}
               onClick={() => setTheme(t)}
             >
@@ -36,8 +36,7 @@ const ThemesPage = () => {
                 <div className="absolute inset-0 grid grid-cols-3 gap-px p-1">
                   <div className="rounded bg-primary"></div>
                   <div className="rounded bg-secondary"></div>
-
-                  <div className="rounded bg-neutral"></div>
+                  <div className="rounded bg-accent"></div>
                 </div>
               </div>
               <span className="text-[11px] font-medium truncate w-full text-center">

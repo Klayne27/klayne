@@ -20,7 +20,7 @@ const SuggestedUsersPanel = () => {
   }
 
   return (
-    <div className="p-4 rounded-2xl border border-gray-700">
+    <div className="p-4 rounded-2xl border border-accent">
       <p className="font-bold mb-4 text-xl">Who to follow</p>
       <div className="flex flex-col gap-4">
         {!suggestedUsers && isLoading && (

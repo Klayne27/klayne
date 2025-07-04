@@ -11,7 +11,7 @@ const UserListItem = ({ user: listUser }) => {
   const isMyProfile = authUser?._id === listUser?._id;
 
   return (
-    <div className="flex items-center justify-between  border-gray-700 last:border-b-0  px-4 py-3">
+    <div className="flex items-center justify-between  border-accent last:border-b-0  px-4 py-3">
       <Link to={`/profile/${listUser.username}`} className="flex items-center gap-2">
         <div className="avatar">
           <div className="w-8 rounded-full">
@@ -33,7 +33,7 @@ const UserListItem = ({ user: listUser }) => {
             !amIFollowing
               ? "bg-white text-black hover:bg-gray-400 duration-200 transition"
               : "hover:bg-secondary"
-          } font-semibold px-3.5 py-1  duration-200 transition rounded-full border border-gray-700`}
+          } font-semibold px-3.5 py-1  duration-200 transition rounded-full border border-accent`}
           onClick={() => follow(listUser?._id)}
           disabled={isPending}
         >

@@ -36,11 +36,11 @@ const HomePage = ({ openImageModal }) => {
     <>
       <div
         ref={mainFeedRef}
-        className="flex-[4_4_0] mr-auto border-r border-gray-700 min-h-screen"
+        className="flex-[4_4_0] mr-auto border-r border-accent min-h-screen"
       >
         <div
           className="fixed top-0 z-10
-                     border-b border-gray-700"
+                     border-b border-accent"
         >
           <div
             className="flex w-full bg-opacity-20 backdrop-blur-md"

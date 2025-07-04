@@ -147,7 +147,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 border-gray-700 p-2 md:p-4 relative">
+    <div className="flex flex-col gap-0 md:gap-2 border-accent p-2 md:p-4 relative">
       <div className="flex gap-1 md:gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
@@ -349,7 +349,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
         {isCreatingComment && <LoadingSpinner />}
       </div>
       {comment.repliesCount > 0 && (
-        <div className="border-l border-gray-700 mt-2">
+        <div className="border-l border-accent mt-2">
           {isLoadingReplies ? (
             <div className="flex justify-center py-2">
               <LoadingSpinner size="md" />
