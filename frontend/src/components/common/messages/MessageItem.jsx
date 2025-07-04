@@ -167,7 +167,7 @@ const MessageItem = ({
             />
           )}
           {msg.text && (
-            <p className={`break-words text-sm `}>
+            <p className={`break-words text-sm ${isSentByCurrentUser ? "text-primary-content" : ""}`}>
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>
           )}

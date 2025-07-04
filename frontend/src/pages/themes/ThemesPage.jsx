@@ -14,7 +14,7 @@ const ThemesPage = () => {
 
   return (
     <main className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-      <div className="flex justify-between items-center p-4 border-b border-gray-700">
+      <div className="flex justify-between items-center p-4  border-gray-700">
         <p className="font-bold text-xl">Themes</p>
       </div>
 

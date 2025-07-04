@@ -13,7 +13,7 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { LuPaintbrushVertical } from "react-icons/lu";
+import { LuPaintbrushVertical, LuPalette } from "react-icons/lu";
 import { MdOutlinePalette } from "react-icons/md";
 import { IoColorPaletteOutline } from "react-icons/io5";
 
@@ -227,7 +227,7 @@ const Sidebar = () => {
           onClick={handleHomeClick}
           className="flex justify-start md:justify-start"
         >
-          <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-secondary duration-200 transition" />
+          <XSvg className="px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
           <li
@@ -375,7 +375,7 @@ const Sidebar = () => {
             >
               <CiUser
                 className="w-7 h-7"
-                strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1}
+                strokeWidth={pathname === `/profile/${authUser?.username}` ? 1.5 : 1}
               />
               <span className="text-lg hidden md:block">Profile</span>
             </Link>
@@ -389,8 +389,10 @@ const Sidebar = () => {
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
               } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
             >
-              <IoColorPaletteOutline
-              className="size-6" strokeWidth={pathname === "/themes" ? 2 : 1}
+              <LuPalette
+
+                className="size-6"
+                strokeWidth={pathname === "/themes" ? 2.5 : 2}
               />
               <span className="text-lg hidden md:block">Themes</span>
             </Link>
@@ -426,7 +428,7 @@ const Sidebar = () => {
                 ref={popoverRef}
                 className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
-                bg-[#20161F] py-3 rounded-2xl border border-gray-700
+                bg-black py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-1000 flex flex-col gap-1
                 shadow-md shadow-gray-400"
               >
