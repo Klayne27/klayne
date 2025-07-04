@@ -1,8 +1,8 @@
 // src/constants/themes.js
 
 export const AVAILABLE_THEMES = [
-  "light",
   "black",
+  "light",
   "forest",
   "synthwave",
   "dim",

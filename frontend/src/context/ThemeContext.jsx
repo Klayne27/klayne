@@ -11,17 +11,13 @@ export const useTheme = () => useContext(ThemeContext);
 export const ThemeProvider = ({ children }) => {
   const { authUser, isLoading } = useAuthUser(); // Get authUser and isLoading from your hook
 
-  // Function to determine the initial theme based on user settings, localStorage, or default
   const getInitialTheme = () => {
-    // If authUser data is loading, or not yet available, don't try to read its properties
     if (isLoading || !authUser) {
-      // Fallback to localStorage or default until user data is loaded
       return localStorage.getItem("theme") || "black";
     }
 
-    // 1. Check if the authenticated user has a 'forceBlackTheme' flag
     if (authUser.forceBlackTheme) {
-      return "black"; // Force black theme for this user
+      return "black";
     }
 
     // 2. Fallback to localStorage if no forced theme

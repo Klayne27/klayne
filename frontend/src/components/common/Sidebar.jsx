@@ -13,9 +13,7 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
-import { LuPaintbrushVertical, LuPalette } from "react-icons/lu";
-import { MdOutlinePalette } from "react-icons/md";
-import { IoColorPaletteOutline } from "react-icons/io5";
+import { LuPalette } from "react-icons/lu";
 
 
 const Sidebar = () => {

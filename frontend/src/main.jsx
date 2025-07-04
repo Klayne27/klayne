@@ -15,7 +15,6 @@ createRoot(document.getElementById("root")).render(
       <QueryClientProvider client={queryClient}>
         <SocketContextProvider>
         <ThemeProvider>
-
           <App />
           </ThemeProvider> 
         </SocketContextProvider>

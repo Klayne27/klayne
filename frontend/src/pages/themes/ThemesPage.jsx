@@ -3,6 +3,7 @@ import { AVAILABLE_THEMES } from "../../constants/themes";
 import { useTheme } from "../../context/ThemeContext";
 import { PiSmiley } from "react-icons/pi";
 import { IoImageOutline } from "react-icons/io5";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
@@ -11,32 +12,52 @@ const PREVIEW_MESSAGES = [
 
 const ThemesPage = () => {
   const { theme, setTheme } = useTheme();
+  const { authUser } = useAuthUser(); // Get authUser here too
+
+  const isThemeLocked = authUser && authUser.forceBlackTheme; // Check if theme is locked
 
   return (
-    <main className="flex-[4_4_0] border-r border-accent min-h-screen">
-      <div className="flex justify-between items-center p-4  border-accent">
-        <p className="font-bold text-xl">Themes</p>
+    <main className="flex-[4_4_0] border-x border-gray-700 min-h-screen">
+      <div className="flex justify-between items-center p-4 border-b border-gray-700">
+        <p className="font-bold">Themes</p>
       </div>
 
-      <div className="space-y-6 py-4">
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 border-b border-accent pb-4 px-4">
+      <div className="space-y-6 p-4">
+        <div className="flex flex-col gap-1">
+          <h2 className="text-lg font-semibold">Theme</h2>
+          <p className="text-sm text-base-content/70">
+            Choose a theme for your application interface
+          </p>
+          {isThemeLocked && (
+            <p className="text-sm text-red-400">
+              Your theme setting is currently managed by an administrator.
+            </p>
+          )}
+        </div>
+
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
           {AVAILABLE_THEMES.map((t) => (
             <button
               key={t}
               className={`
-                group flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors
-                ${theme === t ? "bg-base-200" : "hover:bg-base-200"}
-              `}
+                  group flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors
+                  ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"}
+                  ${
+                    isThemeLocked ? "cursor-not-allowed opacity-50" : ""
+                  } // Disable if locked
+                `}
               onClick={() => setTheme(t)}
+              disabled={isThemeLocked} // Disable the button
             >
               <div
                 className="relative h-8 w-full rounded-md overflow-hidden"
                 data-theme={t}
               >
-                <div className="absolute inset-0 grid grid-cols-3 gap-px p-1">
+                <div className="absolute inset-0 grid grid-cols-4 gap-px p-1">
                   <div className="rounded bg-primary"></div>
                   <div className="rounded bg-secondary"></div>
                   <div className="rounded bg-accent"></div>
+                  <div className="rounded bg-neutral"></div>
                 </div>
               </div>
               <span className="text-[11px] font-medium truncate w-full text-center">
