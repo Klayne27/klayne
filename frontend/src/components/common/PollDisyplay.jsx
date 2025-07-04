@@ -89,7 +89,7 @@ const PollDisplay = ({ post }) => {
                   style={{ width: `${percentage ? percentage : 2}%` }}
                 ></div>
               )}
-              <div className="relative flex justify-between items-center z-10 text-white">
+              <div className="relative flex justify-between items-center z-10">
                 <span>{option.text}</span>
                 {(hasVoted || isOwner) && (
                   <span className="text-sm">

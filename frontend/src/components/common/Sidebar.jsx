@@ -221,7 +221,7 @@ const Sidebar = () => {
 
   return (
     <div className="md:flex-[2_2_0] max-w-56">
-      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full ">
+      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full">
         <Link
           to="/"
           onClick={handleHomeClick}
@@ -229,7 +229,7 @@ const Sidebar = () => {
         >
           <XSvg className="px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200" />
         </Link>
-        <ul className="flex flex-col gap-3 mt-4">
+        <ul className="flex flex-col gap-3 mt-4 ">
           <li
             onClick={() => {
               navigate("/");
@@ -267,7 +267,7 @@ const Sidebar = () => {
           </li>
           <li
             onClick={() => navigate("/messages")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
+            className="flex justify-center md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
           >
             <Link
               to="/messages"
@@ -275,10 +275,10 @@ const Sidebar = () => {
                 pathname.startsWith("/messages")
                   ? "font-bold text-opcaity-100"
                   : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              } flex gap-3 items-center justify-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <CiMail
-                className="w-6 h-6 "
+                className="w-6 h-6"
                 strokeWidth={pathname.startsWith("/messages") ? 2 : 1}
               />
               {hasUnreadMessages && (

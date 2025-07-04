@@ -296,12 +296,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Replying to @${comment.user.username}...`}
-                  className="flex-1 pl-3 py-2 rounded-full bg-black/0 text-white placeholder-gray-400 focus:outline-none text-sm"
+                  className="flex-1 pl-3 py-2 rounded-full bg-black/0  placeholder-gray-400 focus:outline-none text-sm"
                   disabled={isCreatingComment}
                 />
                 <button
                   type="submit"
-                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold " // Added flex classes
+                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-primary-content transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold " // Added flex classes
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply

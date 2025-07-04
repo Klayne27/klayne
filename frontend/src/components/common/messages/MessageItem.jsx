@@ -173,7 +173,7 @@ const MessageItem = ({
           )}
         </div>
         {isSentByCurrentUser && msg.seen && (
-          <span className={`self-end ml-1`}>
+          <span className={`self-end ml-1 text-primary`}>
             <BsCheck2All size={16} />
           </span>
         )}
