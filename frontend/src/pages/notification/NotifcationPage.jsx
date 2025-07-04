@@ -164,7 +164,7 @@ const NotificationPage = () => {
                     {formatPostDate(notification.createdAt)}
                   </span>
                 </div>
-                <span className="text-gray-300 text-sm overflow-hidden text-ellipsis whitespace-normal">
+                <span className=" text-sm overflow-hidden text-ellipsis whitespace-normal">
                   {notification.type === "follow" && "followed you."}
                   {notification.type === "like" && (
                     <>

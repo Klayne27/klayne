@@ -83,7 +83,7 @@ const MessageItem = ({
 
         <button
           onClick={() => handleReplyClick(msg)}
-          className="text-gray-300 hover:text-white hover:scale-125 rounded-full p-1 ml-1"
+          className="text-primary/90 hover:text-primary hover:scale-125 rounded-full p-1 ml-1"
           title="Reply"
         >
           <FaReply size={18} />
