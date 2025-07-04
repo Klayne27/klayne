@@ -55,7 +55,12 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    // --- END: NEW FIELDS FOR BLOCKING ---
+    // --- START: NEW FIELD FOR FORCED THEME ---
+    forceBlackTheme: {
+      type: Boolean,
+      default: false, // Default to false for all users
+    },
+    // --- END: NEW FIELD FOR FORCED THEME ---
 
     profileImg: {
       type: String,
