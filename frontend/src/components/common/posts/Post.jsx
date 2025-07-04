@@ -14,6 +14,7 @@ import { renderClickableText } from "../../../utils/textUtils";
 import { useEffect, useState } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
+import PollDisplay from "../PollDisyplay";
 
 const Post = ({ post, openImageModal, setFeedType }) => {
   const navigate = useNavigate();
@@ -231,11 +232,14 @@ const Post = ({ post, openImageModal, setFeedType }) => {
                 src={originalPost.video}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
                 alt="post video"
-                preload="metadata" 
+                preload="metadata"
                 onClick={(e) => handleMediaClick(originalPost.video, "video", e)}
               >
                 Your browser does not support the video tag.
               </video>
+            )}
+            {post.pollOptions && post.pollOptions.length > 0 && (
+              <PollDisplay post={post} />
             )}
           </div>
 

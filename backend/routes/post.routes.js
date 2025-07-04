@@ -13,6 +13,7 @@ import {
   checkIfUserReposted,
   toggleBookmark,
   getBookmarkedPosts,
+  voteOnPoll,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -33,5 +34,8 @@ router.post("/repost/:postId", protectRoute, repostPost);
 router.get("/check-repost/:originalPostId", protectRoute, checkIfUserReposted);
 
 router.post("/bookmark/:id", protectRoute, toggleBookmark);
+
+router.post("/:postId/vote", protectRoute, voteOnPoll);
+
 
 export default router;

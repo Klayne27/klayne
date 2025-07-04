@@ -38,76 +38,109 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 };
 
 export const createPost = async (req, res) => {
-    try {
-        const { text } = req.body;
-        let { img, video } = req.body;
+  try {
+    const { text, pollOptions } = req.body; // Destructure pollOptions from req.body
+    let { img, video } = req.body;
 
-        const userId = req.user._id.toString();
+    const userId = req.user._id.toString();
 
-        const user = await User.findById(userId);
-        if (!user) return res.status(404).json({ error: "User not found" });
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-        if (!text && !img && !video) {
-            return res.status(400).json({ error: "Post must have a text, image, or video" });
-        }
-
-        let uploadedImgUrl = null;
-        let uploadedVideoUrl = null;
-        let imgPublicId = null;
-        let videoPublicId = null;
-        let mediaType = null;
-
-        if (img) {
-            const uploadedResponse = await cloudinary.uploader.upload(img);
-            uploadedImgUrl = uploadedResponse.secure_url;
-            imgPublicId = uploadedResponse.public_id;
-            mediaType = "image";
-        } else if (video) {
-            const uploadedResponse = await cloudinary.uploader.upload(video, {
-                resource_type: "video",
-            });
-            uploadedVideoUrl = uploadedResponse.secure_url;
-            videoPublicId = uploadedResponse.public_id;
-            mediaType = "video";
-        }
-
-        if (uploadedVideoUrl) {
-            uploadedImgUrl = null; 
-            imgPublicId = null;
-        } else if (uploadedImgUrl) {
-            uploadedVideoUrl = null;
-            videoPublicId = null;
-        }
-
-
-        const newPost = new Post({
-            user: userId,
-            text,
-            img: uploadedImgUrl,
-            video: uploadedVideoUrl,
-            imgPublicId: imgPublicId,
-            videoPublicId: videoPublicId,
-            mediaType,
-            commentsCount: 0,
-        });
-
-        await newPost.save();
-
-        await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
-
-        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-            if (onlineUserId.toString() !== userId.toString()) {
-                socketIdsSet.forEach((socketId) => {
-                    io.to(socketId).emit("newPostAvailable", newPost);
-                });
-            }
-        }
-
-        res.status(201).json(newPost);
-    } catch (error) {
-        res.status(500).json({ error: "Internal server error" });
-        console.log("Error in createPost controller: ", error);
+    // Validate based on post type (text, media, or poll)
+    if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
+      return res
+        .status(400)
+        .json({ error: "Post must have text, image, video, or poll options." });
     }
+
+    // Restriction: Cannot post both media and a poll
+    if ((img || video) && pollOptions && pollOptions.length > 0) {
+      return res
+        .status(400)
+        .json({ error: "You cannot post a poll with an image or video." });
+    }
+
+    let uploadedImgUrl = null;
+    let uploadedVideoUrl = null;
+    let imgPublicId = null;
+    let videoPublicId = null;
+    let mediaType = "none"; // Default to none
+
+    if (img) {
+      const uploadedResponse = await cloudinary.uploader.upload(img);
+      uploadedImgUrl = uploadedResponse.secure_url;
+      imgPublicId = uploadedResponse.public_id;
+      mediaType = "image";
+    } else if (video) {
+      const uploadedResponse = await cloudinary.uploader.upload(video, {
+        resource_type: "video",
+      });
+      uploadedVideoUrl = uploadedResponse.secure_url;
+      videoPublicId = uploadedResponse.public_id;
+      mediaType = "video";
+    }
+
+    // Process poll data if present
+    const newPostData = {
+      user: userId,
+      text,
+      commentsCount: 0,
+    };
+
+    if (pollOptions && pollOptions.length > 0) {
+      // Basic poll validation: At least 2 options, and options must have text
+      if (pollOptions.length < 2) {
+        return res.status(400).json({ error: "A poll must have at least two options." });
+      }
+      const validPollOptions = pollOptions.map((option) => {
+        if (!option.text || option.text.trim() === "") {
+          throw new Error("Poll options cannot be empty."); // Throw an error to be caught by catch block
+        }
+        return { text: option.text.trim(), voters: [] }; // Initialize voters array
+      });
+
+      newPostData.pollOptions = validPollOptions;
+      newPostData.pollTotalVotes = 0; // Initialize total votes
+      // Ensure media is not set if it's a poll
+      newPostData.img = null;
+      newPostData.video = null;
+      newPostData.imgPublicId = null;
+      newPostData.videoPublicId = null;
+      newPostData.mediaType = "none"; // Explicitly set mediaType to none for polls
+    } else {
+      // If no poll, include media if present
+      newPostData.img = uploadedImgUrl;
+      newPostData.video = uploadedVideoUrl;
+      newPostData.imgPublicId = imgPublicId;
+      newPostData.videoPublicId = videoPublicId;
+      newPostData.mediaType = mediaType;
+    }
+
+    const newPost = new Post(newPostData);
+
+    await newPost.save();
+
+    await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
+
+    // Emit new post to online users (excluding the sender)
+    for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+      if (onlineUserId.toString() !== userId.toString()) {
+        socketIdsSet.forEach((socketId) => {
+          io.to(socketId).emit("newPostAvailable", newPost);
+        });
+      }
+    }
+
+    res.status(201).json(newPost);
+  } catch (error) {
+    // Catch validation errors from poll processing
+    if (error.message.includes("Poll options cannot be empty.")) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error in createPost controller: ", error);
+  }
 };
 
 export const deletePost = async (req, res) => {
@@ -898,5 +931,78 @@ export const getBookmarkedPosts = async (req, res) => {
     } catch (error) {
         console.error("Error in getBookmarkedPosts controller:", error.message);
         res.status(500).json({ error: "Internal server error: " + error.message });
+    }
+};
+
+export const voteOnPoll = async (req, res) => {
+    try {
+        const { postId } = req.params; // Get post ID from URL parameters
+        const { optionId } = req.body; // Get the ID of the selected poll option from the request body
+        const userId = req.user._id; // Get the ID of the authenticated user
+
+        // 1. Find the Post
+        const post = await Post.findById(postId);
+
+        if (!post) {
+            return res.status(404).json({ error: "Post not found." });
+        }
+
+        // 2. Validate if it's a poll
+        if (!post.pollOptions || post.pollOptions.length === 0) {
+            return res.status(400).json({ error: "This post is not a poll." });
+        }
+
+        // Optional: Add blocking checks here if you want to prevent blocked users from voting
+        // if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
+        //   return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
+        // }
+
+        // 3. Find the specific poll option using its _id (Mongoose subdocument method)
+        const selectedOption = post.pollOptions.id(optionId); // `id()` is a Mongoose array method to find subdocuments by their `_id`
+
+        if (!selectedOption) {
+            return res.status(404).json({ error: "Poll option not found." });
+        }
+
+        // 4. Check if the user has already voted on *any* option in this poll
+        // Iterate through all poll options to see if the current user's ID exists in any 'voters' array
+        const hasUserAlreadyVoted = post.pollOptions.some(option =>
+            option.voters.includes(userId)
+        );
+
+        if (hasUserAlreadyVoted) {
+            return res.status(400).json({ error: "You have already voted on this poll." });
+        }
+
+        // 5. Add the user's ID to the selected option's voters array
+        selectedOption.voters.push(userId);
+
+        // 6. Increment the total votes for the poll
+        post.pollTotalVotes += 1;
+
+        // 7. Save the updated post
+        await post.save();
+
+        // Optional: Send a notification to the post owner that someone voted on their poll
+        // (You might want a new notification `type: "pollVote"` if you implement this)
+        // if (post.user.toString() !== userId.toString()) {
+        //   await createAndSendNotification({
+        //     from: userId,
+        //     to: post.user,
+        //     type: "pollVote", // New notification type
+        //     postId: post._id,
+        //   });
+        // }
+
+        // 8. Send a success response with updated poll data (optional, but useful for frontend)
+        res.status(200).json({
+            message: "Vote cast successfully!",
+            pollOptions: post.pollOptions, // Return the updated options
+            pollTotalVotes: post.pollTotalVotes, // Return the updated total
+        });
+
+    } catch (error) {
+        console.error("Error in voteOnPoll controller:", error.message);
+        res.status(500).json({ error: "Internal server error." });
     }
 };

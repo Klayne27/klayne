@@ -20,7 +20,7 @@ export const useFetchPosts = (POST_ENDPOINT) => {
       return lastPage?.hasNextPage ? allPages.length + 1 : undefined;
     },
     enabled: !!POST_ENDPOINT,
-    staleTime: 1000 * 60,
+    staleTime: 0,
     gcTime: 1000 * 60 * 5,
   });
 
@@ -28,7 +28,6 @@ export const useFetchPosts = (POST_ENDPOINT) => {
 
   const totalPostsCount = data?.pages[0]?.totalPosts || 0;
   const totalLikedPostsCount = data?.pages[0]?.totalLikedPosts || 0
-
 
   return {
     posts,

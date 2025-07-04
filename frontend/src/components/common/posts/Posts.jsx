@@ -65,11 +65,11 @@ const Posts = ({
     [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
   );
 
-  useEffect(() => {
-    if (POST_ENDPOINT) {
-      refetch();
-    }
-  }, [feedType, refetch, username, userId, POST_ENDPOINT]);
+  // useEffect(() => {
+  //   if (POST_ENDPOINT) {
+  //     refetch();
+  //   }
+  // }, [feedType, refetch, username, userId, POST_ENDPOINT]);
 
   useEffect(() => {
     if (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) {

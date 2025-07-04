@@ -1,4 +1,4 @@
-export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) => {
+export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 15) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
   const res = await fetch(url);
 
@@ -8,11 +8,11 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 30) =>
   return data;
 };
 
-export const createPostApi = async ({ text, img, video }) => {
+export const createPostApi = async ({ text, img, video, pollOptions }) => {
   const res = await fetch("/api/posts/create", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, video }),
+    body: JSON.stringify({ text, img, video, pollOptions }),
   });
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || "Something went wrong");
@@ -85,5 +85,21 @@ export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" })
     throw new Error(data.error || "Failed to load bookmarks");
   }
 
+  return data;
+};
+
+export const voteOnPollApi = async ({ postId, optionId }) => {
+  const res = await fetch(`/api/posts/${postId}/vote`, {
+      method: "POST",
+      headers: {
+          "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ optionId }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+      throw new Error(data.error || "Failed to cast vote on poll.");
+  }
   return data;
 };

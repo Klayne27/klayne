@@ -70,6 +70,26 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
+    pollOptions: [
+      {
+        text: {
+          type: String,
+          required: true,
+          trim: true,
+        },
+        voters: [
+          {
+            type: mongoose.Schema.Types.ObjectId,
+            ref: "User",
+            default: [],
+          },
+        ],
+      },
+    ],
+    pollTotalVotes: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );
