@@ -18,8 +18,8 @@ const ThemesPage = () => {
         <p className="font-bold text-xl">Themes</p>
       </div>
 
-      <div className="space-y-6 p-4">
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+      <div className="space-y-6 py-4">
+        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2 border-b border-accent pb-4 px-4">
           {AVAILABLE_THEMES.map((t) => (
             <button
               key={t}
@@ -46,8 +46,8 @@ const ThemesPage = () => {
           ))}
         </div>
         {/* Preview Section */}
-        <h3 className="text-lg font-semibold mb-3">Preview</h3>
-        <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg">
+        <h3 className="text-lg font-semibold mb-3 px-4">Preview</h3>
+        <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg mx-4">
           <div className="p-4 bg-base-200">
             <div className="max-w-lg mx-auto">
               {/* Mock Chat UI */}
