@@ -11,7 +11,7 @@ const SearchPage = () => {
   };
 
   return (
-    <div className="flex flex-col h-screen bg-black text-white p-4 md:hidden w-full">
+    <div className="flex flex-col h-screen bg-black/0 text-white p-4 md:hidden w-full">
       <div className="flex items-center mb-4">
         <button onClick={handleBack} className="text-white mr-4">
           <BiArrowBack className="w-6 h-6" />

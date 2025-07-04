@@ -103,7 +103,7 @@ const PollDisplay = ({ post }) => {
       </div>
       {(hasVoted || isOwner) && (
         <p className="text-gray-400 text-sm mt-4">
-          {post.pollTotalVotes} votes · Final results
+          {post.pollTotalVotes} votes
         </p>
       )}
       {!hasVoted && !isOwner && (

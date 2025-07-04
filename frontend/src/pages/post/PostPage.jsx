@@ -246,7 +246,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                   ? `Replying to @${replyingToComment.user.username}...`
                   : "Post your comment"
               }
-              className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
+              className="flex-1 pl-3 py-2 rounded-full w-1 bg-black/0 text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
               disabled={isCreatingComment}
             />
             <input
@@ -259,14 +259,14 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             <button
               type="button"
               onClick={() => mainCommentMediaInputRef.current.click()}
-              className="p-2 rounded-full text-primary hover:text-blue-400 transition duration-200 flex-shrink-0"
+              className="p-2 rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0"
               title="Add image or video to comment"
             >
               <BiImageAdd size={24} />
             </button>
             <button
               type="submit"
-              className="hidden md:block px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-[#1d9cf0d8] text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
+              className="hidden md:block px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
               disabled={
                 isCreatingComment || (!commentText.trim() && !mainCommentMediaPreview)
               }

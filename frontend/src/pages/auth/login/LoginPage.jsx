@@ -34,7 +34,7 @@ const LoginPage = () => {
 
         <form className="flex gap-4 flex-col" onSubmit={handleSubmit}>
           <XSvg className="w-24 lg:hidden fill-white" />
-          <h1 className="text-4xl font-extrabold text-white">Let's go.</h1>
+          <h1 className="text-4xl font-extrabold ">Let's go.</h1>
           <label className="input input-bordered rounded flex items-center gap-2">
             <MdOutlineMail />
             <input
@@ -64,7 +64,7 @@ const LoginPage = () => {
           {isError && <p className="text-red-500 text-center">{error.message}</p>}
         </form>
         <div className="flex flex-col gap-2 mt-4">
-          <p className="text-white text-lg">{"Don't"} have an account?</p>
+          <p className=" text-lg">{"Don't"} have an account?</p>
           <Link to="/signup">
             <button className="btn rounded-full btn-primary text-white btn-outline w-full">
               Sign up

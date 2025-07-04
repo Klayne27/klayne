@@ -8,7 +8,7 @@ const ConfirmationDialog = ({ isOpen, message, onConfirm, onCancel }) => {
       onClick={onCancel}
     >
       <div
-        className="bg-black p-6 rounded-2xl shadow-xl max-w-xs w-full mx-4"
+        className="bg-black/0 p-6 rounded-2xl shadow-xl max-w-xs w-full mx-4"
         onClick={(e) => e.stopPropagation()}
       >
         <p className="text-lg font-semibold text-white mb-6 text-center">
@@ -17,7 +17,7 @@ const ConfirmationDialog = ({ isOpen, message, onConfirm, onCancel }) => {
         <div className="flex justify-around gap-4">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 px-4 rounded-full bg-black text-white border border-gray-600 font-medium hover:bg-gray-900 transition duration-200"
+            className="flex-1 py-2 px-4 rounded-full bg-black/0 text-white border border-gray-600 font-medium hover:bg-gray-900 transition duration-200"
           >
             Cancel
           </button>

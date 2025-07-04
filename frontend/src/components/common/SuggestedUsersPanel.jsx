@@ -64,7 +64,7 @@ const SuggestedUsersPanel = () => {
                   <button
                     className={`flex items-center font-semibold text-sm ${
                       isFollowing
-                        ? "bg-black text-white border hover:bg-stone-900"
+                        ? "bg-black/0 text-white border hover:bg-stone-900"
                         : "bg-white text-black hover:bg-gray-400"
                     } duration-200 transition rounded-full px-3 py-1`}
                     onClick={(e) => {

@@ -319,7 +319,7 @@ const CreatePost = () => {
       </Link>
       <form className="flex flex-col w-full" onSubmit={handleSubmit} ref={formRef}>
         <textarea
-          className="textarea w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
+          className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
           placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
           value={text}
           onChange={(e) => setText(e.target.value)}
@@ -368,7 +368,7 @@ const CreatePost = () => {
                   <input
                     type="text"
                     placeholder={`Choice ${index + 1}`}
-                    className={`bg-black border p-2 py-3 border-gray-700 ${
+                    className={`bg-black/0 border p-2 py-3 border-gray-700 ${
                       pollChoices.length > 3 ? "w-full" : "w-full mr-7"
                     } placeholder:text-gray-500 focus:outline-none focus:border-primary rounded-[4px] `}
                     value={choice.text}
@@ -424,7 +424,7 @@ const CreatePost = () => {
             {/* Image/Video input - hidden if poll is active */}
             {!showPollInputs && (
               <BiImageAdd
-                className="text-primary w-6 h-6 cursor-pointer hover:text-blue-400"
+                className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
                 onClick={() => fileInputRef.current.click()}
               />
             )}
@@ -439,7 +439,7 @@ const CreatePost = () => {
             {/* Poll icon - hidden if media is selected/previewed */}
             {!selectedFile && (
               <BiPoll
-                className="text-primary size-6 cursor-pointer hover:text-blue-400"
+                className="text-primary size-6 cursor-pointer hover:text-primary/80"
                 onClick={handlePollIconClick}
                 title="Add a poll"
               />
@@ -449,7 +449,7 @@ const CreatePost = () => {
             <div className="relative">
               <PiSmiley
                 ref={emojiButtonRef}
-                className="text-primary cursor-pointer hidden md:block hover:text-blue-400"
+                className="text-primary cursor-pointer hidden md:block hover:text-primary/80"
                 size={22}
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 strokeWidth={10}
@@ -470,7 +470,7 @@ const CreatePost = () => {
           </div>
           <button
             type="submit"
-            className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-[#1d9cf0d8] transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+            className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-secondary rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
             disabled={isButtonDisabled}
           >
             {isPending ? "Posting..." : "Post"}

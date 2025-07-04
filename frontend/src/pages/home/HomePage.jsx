@@ -58,7 +58,7 @@ const HomePage = ({ openImageModal }) => {
               )}
             </div>
             <div
-              className="flex justify-center flex-1 p-3 hover:bg-secondary hover:bg-opacity-50 transition duration-300 cursor-pointer "
+              className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 cursor-pointer "
               onClick={() => handleTabClick("following")}
             >
               Following

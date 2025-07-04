@@ -183,7 +183,7 @@ const MessagePage = ({ openImageModal }) => {
 
   return (
     <div
-      className="flex min-h-screen text-white overflow-hidden      
+      className="flex min-h-screen overflow-hidden      
         w-full
         lg:w-auto
         xl:w-auto"

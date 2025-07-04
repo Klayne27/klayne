@@ -32,7 +32,7 @@ const MessageItem = ({
     ? showModal
       ? "bg-gray-900 active-highlight"
       : ""
-    : "hover:bg-gray-900";
+    : "hover:bg-secondary";
 
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -62,7 +62,7 @@ const MessageItem = ({
     >
       <div
         id={`message-modal-${msg._id}`}
-        className={`absolute -top-5 bg-gray-800 shadow-xl rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
+        className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
                 ${
                   isSentByCurrentUser
                     ? "-left-28 translate-x-1/2"
@@ -198,7 +198,7 @@ const MessageItem = ({
                 key={emoji}
                 className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 ${
                   hasCurrentUserReactedToThisEmoji
-                    ? "bg-primary/30 border-primary border"
+                    ? "bg-violet-600/30 border-violet-600 border"
                     : "bg-gray-800 border border-gray-800"
                 }`}
                 title={

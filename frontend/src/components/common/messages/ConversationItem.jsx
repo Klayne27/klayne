@@ -63,8 +63,8 @@ function ConversationItem({
   return (
     <div
       key={conv._id}
-      className={`flex items-center gap-1 p-3 cursor-pointer border-gray-700 hover:bg-stone-900 hover:bg-opacity-70 duration-300 transition
-        ${isSelected ? "bg-[#2F3336] bg-opacity-80 border-r-2 border-r-primary" : ""}
+      className={`flex items-center gap-1 p-3 cursor-pointer border-gray-700 hover:bg-secondary hover:bg-opacity-60 duration-300 transition
+        ${isSelected ? "bg-secondary border-r-2 border-r-primary" : ""}
         transition-colors duration-200`}
       onClick={() => onSelectConversation(conversationToSelect)}
     >
@@ -83,7 +83,7 @@ function ConversationItem({
       <div className="flex flex-col flex-1">
         <div className="flex items-center justify-between">
           <div className="flex gap-1 items-center">
-            <span className="font-bold text-white">{otherUser.fullName}</span>
+            <span className="font-bold ">{otherUser.fullName}</span>
             {conv.participants[0].isVerified && (
               <img src="/verified.png" className="size-[17px]" alt="Verified badge" />
             )}
@@ -99,7 +99,7 @@ function ConversationItem({
         <div className="flex items-center justify-between">
           <p
             className={`text-sm flex ${
-              isLastMessageUnread ? "text-white font-semibold" : "text-gray-400"
+              isLastMessageUnread ? " font-semibold" : "text-gray-400"
             }`}
           >
             {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}

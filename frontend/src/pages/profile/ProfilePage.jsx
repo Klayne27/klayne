@@ -260,7 +260,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black md:text-md text-xs"
+                  className="p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black/0 md:text-md text-xs"
                   disabled={isBlockingRelationship}
                 >
                   <CiMail size={20} strokeWidth={1} />

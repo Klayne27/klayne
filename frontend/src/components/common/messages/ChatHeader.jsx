@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 
 function ChatHeader({ onBackToConversations, otherUser }) {
   return (
-    <div className="fixed top-0 bg-black w-[680px] z-20 p-4 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md ">
+    <div className="fixed top-0 w-[625px] border-gray-700 z-20 p-4 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md ">
       {onBackToConversations && (
         <button onClick={onBackToConversations} className="md:hidden mr-2 text-white">
           <BiArrowBack className="w-6 h-6" />

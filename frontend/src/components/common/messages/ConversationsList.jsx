@@ -6,6 +6,8 @@ import { useFetchConversations } from "../../../hooks/messagesHooks/useFetchConv
 import { useFetchFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import ConversationItem from "./ConversationItem";
 import LoadingSpinner from "../LoadingSpinner";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa6";
 
 const ConversationsList = ({
   onSelectConversation,
@@ -15,6 +17,7 @@ const ConversationsList = ({
   const { authUser: currentUser } = useAuthUser();
   const { onlineUsers } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
+  const navigate = useNavigate();
 
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
@@ -100,9 +103,11 @@ const ConversationsList = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-black border-gray-700">
-      <div className="sticky top-0 bg-black bg-opacity-90 backdrop-blur-sm z-10 p-4 border-gray-700 flex justify-between items-center">
-        <h2 className="text-lg font-bold text-gray-200 ">Messages</h2>
+    <div className="flex flex-col h-full bg-black/0 border-gray-700">
+      <div className="sticky top-0 bg-black/0 bg-opacity-90 backdrop-blur-sm z-10 p-4 border-gray-700 flex justify-between items-center">
+        <div className="flex items-center gap-4  border-gray-700">
+          <h1 className="font-bold text-xl flex-1 truncate">Messages</h1>
+        </div>
         <div className="flex ">
           <div className="rounded-full hover:bg-gray-800 p-1.5 cursor-pointer">
             <IoSettingsOutline className="w-4" />
@@ -115,7 +120,7 @@ const ConversationsList = ({
         <input
           type="text"
           placeholder="Search Direct Messages"
-          className="text-sm w-full p-2 px-3 rounded-full bg-black text-white placeholder-white border-gray-600 border focus:border-primary focus:outline-none pl-8"
+          className="text-sm w-full p-2 px-3 rounded-full bg-black/0  border-gray-700 border focus:border-primary focus:outline-none pl-8"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
@@ -126,8 +131,8 @@ const ConversationsList = ({
           <div className="p-4 text-center text-gray-400">
             <p className="text-lg font-bold mb-2">Welcome to your inbox!</p>
             <p>
-              Share posts and more with private conversations between you and
-              others on X-ayne.
+              Share posts and more with private conversations between you and others on
+              X-ayne.
             </p>
             <p className="mt-4">
               Start by following someone or selecting a user you follow.

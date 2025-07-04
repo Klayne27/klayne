@@ -69,7 +69,7 @@ const NotificationPage = () => {
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52"
+              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-gray-700"
             >
               <li>
                 <a onClick={deleteNotifications}>
@@ -93,7 +93,7 @@ const NotificationPage = () => {
         {filteredNotifications?.map((notification) => {
           return (
             <div
-              className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-gray-800 transition-colors cursor-pointer"
+              className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-secondary transition-colors cursor-pointer"
               key={notification._id}
               onClick={(e) => handleNotificationItemClick(e, notification)}
             >

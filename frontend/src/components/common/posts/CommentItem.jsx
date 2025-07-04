@@ -147,7 +147,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 text-white border-gray-700 p-2 md:p-4 relative">
+    <div className="flex flex-col gap-0 md:gap-2 border-gray-700 p-2 md:p-4 relative">
       <div className="flex gap-1 md:gap-3 items-start">
         <Link
           to={`/profile/${comment.user.username}`}
@@ -296,12 +296,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   value={replyText}
                   onChange={(e) => setReplyText(e.target.value)}
                   placeholder={`Replying to @${comment.user.username}...`}
-                  className="flex-1 pl-3 py-2 rounded-full bg-black text-white placeholder-gray-400 focus:outline-none text-sm"
+                  className="flex-1 pl-3 py-2 rounded-full bg-black/0 text-white placeholder-gray-400 focus:outline-none text-sm"
                   disabled={isCreatingComment}
                 />
                 <button
                   type="submit"
-                  className="hidden md:block px-3 py-1 bg-primary hover:bg-[#1d9cf0d8] text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold flex items-center justify-center" // Added flex classes
+                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold " // Added flex classes
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply
@@ -335,7 +335,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               <button
                 type="button"
                 onClick={() => imageInputRef.current.click()}
-                className="mt-2 text-primary hover:text-blue-400 transition duration-200 self-start p-1 rounded-full"
+                className="mt-2 text-primary hover:text-primary/80 transition duration-200 self-start p-1 rounded-full"
                 title="Add image"
                 disabled={isCreatingComment}
               >

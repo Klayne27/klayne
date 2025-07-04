@@ -13,6 +13,10 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useCallback } from "react";
+import { LuPaintbrushVertical } from "react-icons/lu";
+import { MdOutlinePalette } from "react-icons/md";
+import { IoColorPaletteOutline } from "react-icons/io5";
+
 
 const Sidebar = () => {
   const { authUser } = useAuthUser();
@@ -223,7 +227,7 @@ const Sidebar = () => {
           onClick={handleHomeClick}
           className="flex justify-start md:justify-start"
         >
-          <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-stone-900" />
+          <XSvg className="px-2 w-12 h-12 rounded-full fill-white hover:bg-secondary duration-200 transition" />
         </Link>
         <ul className="flex flex-col gap-3 mt-4">
           <li
@@ -231,14 +235,14 @@ const Sidebar = () => {
               navigate("/");
               handleHomeClick();
             }}
-            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to="/"
               onClick={handleHomeClick}
               className={`${
-                pathname === "/" ? "font-bold text-white" : ""
-              } relative flex gap-2.5 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
+                pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+              } relative flex gap-2.5 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
             >
               <PiHouseThin
                 className="w-7 h-7 fill-white"
@@ -254,20 +258,24 @@ const Sidebar = () => {
             <Link
               to="/"
               onClick={handleHomeClick}
-              className={`${pathname === "/" ? "font-bold text-white" : ""} `}
+              className={`${
+                pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+              } `}
             >
               <span className="text-lg hidden md:block">Home</span>
             </Link>
           </li>
           <li
             onClick={() => navigate("/messages")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
           >
             <Link
               to="/messages"
               className={`${
-                pathname.startsWith("/messages") ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+                pathname.startsWith("/messages")
+                  ? "font-bold text-opcaity-100"
+                  : "opacity-80"
+              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <CiMail
                 className="w-6 h-6 "
@@ -283,21 +291,23 @@ const Sidebar = () => {
             <Link
               to="/messages"
               className={`${
-                pathname.startsWith("/messages") ? "font-bold text-white" : ""
+                pathname.startsWith("/messages") ? "font-bold opacity-100" : "opacity-80"
               } `}
             >
-              <span className="text-lg hidden md:block">Messages</span>
+              <span className="text-lg hidden md:block ">Messages</span>
             </Link>
           </li>
           <li
             onClick={() => navigate("/notifications")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
           >
             <Link
               to="/notifications"
               className={`${
-                pathname === "/notifications" ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+                pathname === "/notifications"
+                  ? "font-bold text-opacity-100"
+                  : "opacity-80"
+              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <PiBellThin
                 className="w-6 h-6"
@@ -312,7 +322,11 @@ const Sidebar = () => {
             </Link>
             <Link
               to="/notifications"
-              className={`${pathname === "/notifications" ? "font-bold text-white" : ""}`}
+              className={`${
+                pathname === "/notifications"
+                  ? "font-bold text-opacity-100"
+                  : "opacity-80"
+              }`}
             >
               <span className="text-lg hidden md:block">Notifications</span>
             </Link>
@@ -322,8 +336,8 @@ const Sidebar = () => {
               to="/bookmarks"
               onClick={handleBookmarksClick}
               className={`${
-                pathname === "/bookmarks" ? "font-bold text-white" : ""
-              } flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+                pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
             >
               <CiBookmark
                 className="size-6"
@@ -335,8 +349,8 @@ const Sidebar = () => {
           <li className="flex justify-start md:justify-start md:hidden">
             <div
               className={`${
-                pathname === "/search" ? "font-bold text-white" : ""
-              }  flex gap-3 items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+                pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+              }  flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
               <button onClick={handleMobileSearchClick}>
                 <CiSearch
@@ -349,21 +363,36 @@ const Sidebar = () => {
 
           <li
             onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="flex justify-start md:justify-start md:hover:bg-stone-900 transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+            className="flex justify-start md:justify-start md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to={`/profile/${authUser?.username}`}
               className={`${
                 pathname === `/profile/${authUser?.username}`
-                  ? "font-bold text-white"
-                  : ""
-              } flex gap-[10px] items-center hover:bg-stone-900 transition-all rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer`}
+                  ? "font-bold text-opacity-100"
+                  : "opacity-80"
+              } flex gap-[10px] items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer`}
             >
               <CiUser
                 className="w-7 h-7"
                 strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1}
               />
               <span className="text-lg hidden md:block">Profile</span>
+            </Link>
+          </li>
+
+          <li>
+            <Link
+              to="/themes"
+              onClick={handleBookmarksClick}
+              className={`${
+                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+            >
+              <IoColorPaletteOutline
+              className="size-6" strokeWidth={pathname === "/themes" ? 2 : 1}
+              />
+              <span className="text-lg hidden md:block">Themes</span>
             </Link>
           </li>
         </ul>
@@ -373,7 +402,7 @@ const Sidebar = () => {
             <button
               ref={profileButtonRef}
               onClick={togglePopover}
-              className="flex gap-2 items-start transition-all duration-300 hover:bg-[#181818] py-2 px-2 rounded-full w-full max-w-[220px]"
+              className="flex gap-2 items-start transition-all duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]"
             >
               <div className="avatar hidden md:inline-flex">
                 <div className="w-8 rounded-full">
@@ -385,12 +414,10 @@ const Sidebar = () => {
               </div>
               <div className="flex justify-center md:justify-between flex-1 items-center">
                 <div className="hidden md:block">
-                  <p className="text-white font-bold text-sm w-20 truncate">
-                    {authUser?.fullName}
-                  </p>
+                  <p className="font-bold text-sm w-20 truncate">{authUser?.fullName}</p>
                   <p className="text-slate-500 text-sm">@{authUser?.username}</p>
                 </div>
-                <HiDotsHorizontal className="w-5 h-5 cursor-pointer text-white" />
+                <HiDotsHorizontal className="w-5 h-5 cursor-pointer " />
               </div>
             </button>
 
@@ -399,19 +426,19 @@ const Sidebar = () => {
                 ref={popoverRef}
                 className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
-                bg-black py-3 rounded-2xl border border-gray-700
+                bg-[#20161F] py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-1000 flex flex-col gap-1
                 shadow-md shadow-gray-400"
               >
                 <button
                   onClick={handleConfirmDeleteClick}
-                  className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-gray-800 transition-colors font-bold"
+                  className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-secondary transition-colors font-bold"
                 >
                   Delete Account
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-white text-md hover:bg-gray-800 transition-colors font-bold"
+                  className="w-full text-left px-3 py-2 text-white text-md hover:bg-secondary transition-colors font-bold"
                 >
                   Logout @{authUser?.username}
                 </button>
@@ -442,7 +469,7 @@ const Sidebar = () => {
           </button>
           <button
             onClick={() => setShowConfirmDeleteModal(false)}
-            className="w-full bg-gray-700 text-white py-2 rounded-full hover:bg-gray-600 transition-colors"
+            className="w-full bg-gray-700 text-white py-2 rounded-full hover:bg-secondary transition-colors"
           >
             Cancel
           </button>

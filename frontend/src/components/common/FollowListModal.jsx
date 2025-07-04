@@ -23,7 +23,7 @@ const FollowListModal = ({ userId, type, onClose }) => {
         }
       }}
     >
-      <div className="w-[350px] md:w-[500px] bg-black rounded-2xl border border-gray-700 relative">
+      <div className="w-[350px] md:w-[500px] bg-black/0 rounded-2xl border border-gray-700 relative">
         <h3 className="font-bold text-lg border-b border-gray-700 px-4 py-2 text-center mb-5">
           {modalTitle}
         </h3>

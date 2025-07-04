@@ -36,7 +36,7 @@ const SearchPanel = () => {
         <input
           type="text"
           placeholder="Search by username or name"
-          className="w-full bg-se text-white border border-gray-700 bg-black rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-primary z-10"
+          className="w-full bg-se  border border-gray-700 bg-black/0 rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-primary z-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
@@ -52,7 +52,7 @@ const SearchPanel = () => {
       </div>
 
       {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (
-        <div className="max-h-[500px] w-full overflow-y-auto custom-scrollbar border rounded-2xl absolute top-[43px] left-0 z-50 bg-black border-gray-700 shadow-md shadow-gray-400">
+        <div className="max-h-[500px] w-full overflow-y-auto custom-scrollbar border rounded-2xl absolute top-[43px] left-0 z-50 bg-black/0 border-gray-700 shadow-md shadow-gray-400">
           {(isLoading || isFetching) && debouncedQuery ? (
             <p className="p-4 text-gray-400 text-center">Searching...</p>
           ) : isError ? (
@@ -66,7 +66,7 @@ const SearchPanel = () => {
                   <Link
                     to={`/profile/${user.username}`}
                     key={user._id}
-                    className="flex items-center gap-3 py-2 hover:bg-gray-800 px-2 transition-colors"
+                    className="flex items-center gap-3 py-2 hover:bg-secondary px-2 transition-colors"
                     onClick={() => setSearchQuery("")}
                   >
                     <div className="avatar">
@@ -82,7 +82,7 @@ const SearchPanel = () => {
                       </div>
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-semibold text-white truncate max-w-[120px]">
+                      <span className="font-semibold  truncate max-w-[120px]">
                         {user.fullName}
                       </span>
                       <span className="text-sm text-gray-500 truncate max-w-[120px]">

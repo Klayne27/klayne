@@ -19,7 +19,12 @@ export default {
 
   daisyui: {
     themes: [
-      "light",
+      {
+        light: {
+          ...daisyUIThemes["light"],
+          secondary: "#d6d6d6",
+        },
+      },
       {
         black: {
           ...daisyUIThemes["black"],
@@ -27,10 +32,51 @@ export default {
           secondary: "rgb(24, 24, 24)",
         },
       },
+      {
+        forest: {
+          ...daisyUIThemes["forest"],
+          secondary: "hsl(141, 69%, 10%)",
+        },
+      },
+      {
+        synthwave: {
+          ...daisyUIThemes["synthwave"],
+          secondary: "hsl(197, 87%, 20%)",
+        },
+      },
+      {
+        dim: {
+          ...daisyUIThemes["dim"],
+          secondary: "hsl(12, 100%, 30%)",
+        },
+      },
+      {
+        valentine: {
+          ...daisyUIThemes["valentine"],
+          secondary: "hsl(254, 86%, 90%)",
+        },
+      },
+      {
+        night: {
+          ...daisyUIThemes["night"],
+          secondary: "hsl(234, 89%, 24%)",
+        },
+      },
+      {
+        wireframe: {
+          ...daisyUIThemes["wireframe"],
+          secondary: "hsl(0, 0%, 92%)",
+        },
+      },
       "coffee",
+      "halloween",
+      "business",
+      "cupcake",
+      "luxury",
+      "dracula",
+      "cyberpunk",
       "retro",
-      "aqua",
-      "pastel"
+      "pastel",
     ],
   },
 };
