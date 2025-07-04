@@ -16,7 +16,6 @@ import { MdBlock, MdEdit } from "react-icons/md";
 import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
-// IMPORT THE UPDATED HOOK
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
@@ -44,7 +43,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
 
-  // DESTURCTURE NEW FLAGS FROM THE HOOK
   const {
     user,
     isLoading,
@@ -69,17 +67,14 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     setShowBlockConfirmationModal(true);
   };
 
-  // Function to close the confirmation modal
   const closeBlockConfirmationModal = () => {
     setShowBlockConfirmationModal(false);
   };
 
-  // Function to handle the actual block/unblock action AFTER modal confirmation
   const handleConfirmBlockUnblock = () => {
-    closeBlockConfirmationModal(); // Close the modal
+    closeBlockConfirmationModal();
     if (!user?._id) return;
-    blockUnblockUser(user._id); // Trigger the mutation
-    // No refetch() here, rely on optimistic updates and invalidateQueries
+    blockUnblockUser(user._id);
   };
 
 
@@ -140,48 +135,39 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     setUserLikedPostsCount(count)
   };
 
-  // Determine the message to display and control profile rendering
   let displayMessage = ''
-  let showFullProfileHeader = false; // New flag for just the header
-  let showFullProfileContent = false; // New flag for actual content (posts, followers, etc.)
+  let showFullProfileHeader = false;
+  let showFullProfileContent = false;
 
   if (isLoading || isRefetching) {
-    // While loading, show skeleton and no messages yet
-    // showFullProfileHeader and showFullProfileContent remain false by default.
+    showFullProfileHeader = false;
+    showFullProfileContent = false;
   } else if (hasBlockedYou) {
-    // Scenario 1: The user *viewing* this profile is blocked by the *profile owner*.
-    // Show a message, but no profile content or header.
     displayMessage =
       "You are blocked by this user. You cannot view their profile content.";
-    showFullProfileHeader = false; // Hide header
-    showFullProfileContent = false; // Hide content
+    showFullProfileHeader = false;
+    showFullProfileContent = false;
   } else if (!user) {
-    // Scenario 2: User not found (and not due to blocking, handled above).
     displayMessage = error || "User not found.";
-    showFullProfileHeader = false; // Hide header
-    showFullProfileContent = false; // Hide content
+    showFullProfileHeader = false;
+    showFullProfileContent = false;
   } else if (isBlockedByYou) {
-    // Scenario 3: The *current user* has blocked the *profile owner*.
-    // Show the header (as the blocker, you can see basic info), but no content.
     displayMessage = "Content is unavailable because you have blocked this user.";
-    showFullProfileHeader = true; // Show header
-    showFullProfileContent = false; // Hide content
+    showFullProfileHeader = true;
+    showFullProfileContent = false;
   } else {
-    // Scenario 4: Normal interaction (no blocking relationship or you are the profile owner).
-    showFullProfileHeader = true; // Show header
-    showFullProfileContent = true; // Show content
+    showFullProfileHeader = true;
+    showFullProfileContent = true
   }
 
   return (
     <>
       <ScrollToTop />
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        {/* Skeleton Loader during initial fetch/refetch, but only if we expect to show a profile. */}
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && (
           <ProfileHeaderSkeleton />
         )}
 
-        {/* Render the profile header if allowed */}
         {showFullProfileHeader && user && (
           <>
             <div className="flex gap-10 px-4 py-2 items-center">
@@ -317,16 +303,10 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           </>
         )}
 
-        {/* Display messages when content is not shown (user blocked by them, user not found, or you blocked them and content is hidden) */}
         {!isLoading && !isRefetching && displayMessage && (
-          // This conditional ensures the specific messages are shown when applicable
-          // It will show 'You are blocked by this user' if hasBlockedYou is true
-          // It will show 'User not found' if user is null
-          // It will show 'Content is unavailable...' if isBlockedByYou is true (and showFullProfileContent is false)
           <p className="text-center text-lg mt-16 text-slate-400">{displayMessage}</p>
         )}
 
-        {/* Render the full profile content (bio, links, followers, posts) ONLY if showFullProfileContent is true */}
         {showFullProfileContent && user && (
           <>
             <div className="flex flex-col gap-4 mt-14 px-4">
@@ -427,13 +407,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         />
       )}
 
-      {/* RENDER THE BLOCK CONFIRMATION MODAL */}
       <BlockConfirmationModal
         isOpen={showBlockConfirmationModal}
         onClose={closeBlockConfirmationModal}
         onConfirm={handleConfirmBlockUnblock}
-        username={user?.username} // Pass the username to the modal
-        isBlocking={isBlockedByYou} // Pass the current block status to determine modal text
+        username={user?.username}
+        isBlocking={isBlockedByYou}
         isBlockedByYou={isBlockedByYou}
       />
     </>

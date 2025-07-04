@@ -26,15 +26,11 @@ const BookmarksPage = ({ openImageModal }) => {
   const noPostsFound =
     !isLoadingBookmarkedPosts && !bookmarkedPostsError && bookmarkedPosts?.length === 0;
 
-  // --- Infinite Scroll Logic ---
-  // Create a ref specifically for the "load more" sentinel element
   const loadMoreRef = useRef(null);
 
   const handleObserver = useCallback(
     (entries) => {
       const target = entries[0];
-      // Only fetch more if the target is intersecting, there's a next page,
-      // and we're not already fetching the next page.
       if (target.isIntersecting && hasNextPage && !isFetchingNextPage) {
         fetchNextPage();
       }
@@ -44,29 +40,25 @@ const BookmarksPage = ({ openImageModal }) => {
 
   useEffect(() => {
     const observer = new IntersectionObserver(handleObserver, {
-      root: null, // viewport
-      rootMargin: "0px", // no margin
-      threshold: 0.1, // trigger when 10% of the target is visible
+      root: null,
+      rootMargin: "0px",
+      threshold: 0.1,
     });
 
-    // Observe the loadMoreRef if it exists
     if (loadMoreRef.current) {
       observer.observe(loadMoreRef.current);
     }
 
-    // Cleanup observer on component unmount or when handleObserver/loadMoreRef changes
     return () => {
       if (loadMoreRef.current) {
         observer.unobserve(loadMoreRef.current);
       }
     };
-  }, [handleObserver]); // Depend on handleObserver, which itself depends on fetchNextPage, hasNextPage, isFetchingNextPage
-  // --- End Infinite Scroll Logic ---
+  }, [handleObserver]);
 
   return (
     <>
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        {/* Header (sticky) */}
         <div className="flex items-center gap-4 px-4 py-3.5 border-gray-700 sticky top-0 z-10 bg-black backdrop-blur-md bg-opacity-80">
           <button
             onClick={() => navigate(-1)}
@@ -77,7 +69,6 @@ const BookmarksPage = ({ openImageModal }) => {
           <h1 className="font-bold text-xl flex-1 truncate">Bookmarks</h1>
         </div>
 
-        {/* Search Bar (sticky) */}
         <div className="p-4 border-gray-700 top-[60px] z-10 bg-black backdrop-blur-md bg-opacity-80">
           <div className="flex items-center gap-2 bg-black text-white rounded-full px-4 py-3 border border-gray-700 w-full">
             <CiSearch className="size-4 text-gray-400" />{" "}
@@ -91,14 +82,12 @@ const BookmarksPage = ({ openImageModal }) => {
           </div>
         </div>
 
-        {/* Initial Loading Spinner (only shows if no posts loaded yet) */}
         {isLoadingBookmarkedPosts && bookmarkedPosts?.length === 0 && (
           <div className="flex justify-center h-full items-center">
             <LoadingSpinner size="lg" />
           </div>
         )}
 
-        {/* Error Message */}
         {bookmarkedPostsError && (
           <div className="text-center p-4 text-red-500">
             <p className="text-xl font-bold">Error loading bookmarks</p>
@@ -107,7 +96,6 @@ const BookmarksPage = ({ openImageModal }) => {
           </div>
         )}
 
-        {/* Conditional messages for no posts / no search results */}
         {noPostsFound && !isSearchActive && (
           <div className="text-center p-4">
             <p className="text-xl font-bold">No Bookmarked Posts Yet</p>
@@ -124,31 +112,24 @@ const BookmarksPage = ({ openImageModal }) => {
           </div>
         )}
 
-        {/* Display posts */}
         {bookmarkedPosts && bookmarkedPosts.length > 0 && (
           <div>
             {bookmarkedPosts.map((post) => (
-              // No ref on individual posts
               <Post key={post._id} post={post} openImageModal={openImageModal} />
             ))}
           </div>
         )}
 
-        {/* Loader/Sentinel for Infinite Scroll */}
-        {hasNextPage && ( // Only render the loader/sentinel if there are more pages
+        {hasNextPage && (
           <div ref={loadMoreRef} className="flex justify-center py-4">
             {isFetchingNextPage ? (
-              <LoadingSpinner size="md" /> // Show spinner when fetching next page
+              <LoadingSpinner size="md" />
             ) : (
-              // Optional: You can put a "Load more" button here too, for manual trigger
-              // <button onClick={() => fetchNextPage()}>Load More</button>
-              // Or just an empty div to trigger the observer
               <span className="text-gray-500">Loading more...</span>
             )}
           </div>
         )}
 
-        {/* Message when no more pages and initial load is complete, and some posts exist */}
         {!hasNextPage && !isLoadingBookmarkedPosts && bookmarkedPosts?.length > 0 && (
           <div className="text-center py-4 text-gray-500">
             <p>You've reached the end of your bookmarks!</p>

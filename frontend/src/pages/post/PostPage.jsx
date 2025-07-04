@@ -9,7 +9,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchPost } from "../../hooks/postsHooks/useFetchPost";
 import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
-import { BiImageAdd } from "react-icons/bi"; // Import the icon
+import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
@@ -20,10 +20,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const [commentText, setCommentText] = useState("");
   const [replyingToComment, setReplyingToComment] = useState(null);
 
-  // NEW STATES AND REF FOR MEDIA UPLOAD IN MAIN COMMENT FORM (can be image or video)
-  const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null); // Stores URL.createObjectURL for preview
-  const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null); // Stores the actual File object
-  const mainCommentMediaInputRef = useRef(null); // Ref for the hidden file input (renamed from mainCommentImageInputRef)
+  const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null);
+  const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null);
+  const mainCommentMediaInputRef = useRef(null);
 
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
@@ -38,16 +37,13 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     refetch: refetchComments,
   } = useFetchComments(pid, null);
 
-  // useCreateComment for top-level comments (parentCommentId is null)
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 
   const displayPost = post?.repostedFrom || post;
 
-  // NEW: handleMediaChange for the main comment input (modified from handleMainCommentImageChange)
   const handleMainCommentMediaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Client-side validation for file type and size
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         toast.error(
           "Unsupported file type. Please select an image or a video for your comment."
@@ -58,7 +54,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
         return;
       }
 
-      // Adjust 20 * 1024 * 1024 (20MB) as per your server limit for comments
       if (file.size > 20 * 1024 * 1024) {
         toast.error("Comment media size exceeds 20MB limit.");
         setMainCommentMediaFile(null);
@@ -68,26 +63,24 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       }
 
       setMainCommentMediaFile(file);
-      setMainCommentMediaPreview(URL.createObjectURL(file)); // Create URL for preview
+      setMainCommentMediaPreview(URL.createObjectURL(file));
     } else {
       setMainCommentMediaFile(null);
       setMainCommentMediaPreview(null);
     }
   };
 
-  // NEW: handleRemoveMedia for the main comment input (modified from handleRemoveMainCommentImage)
   const handleRemoveMainCommentMedia = () => {
     setMainCommentMediaFile(null);
     setMainCommentMediaPreview(null);
     if (mainCommentMediaInputRef.current) {
-      mainCommentMediaInputRef.current.value = ""; // Clear file input
+      mainCommentMediaInputRef.current.value = "";
     }
   };
 
   const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
 
-    // MODIFIED: Condition to allow either text OR media file
     if (!commentText.trim() && !mainCommentMediaFile) {
       console.warn("Attempted to send empty comment with no media.");
       return;
@@ -96,7 +89,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
     let commentPayload = { text: commentText };
 
-    // If a media file is selected, read it as Base64 and add to payload
     if (mainCommentMediaFile) {
       const reader = new FileReader();
       reader.onloadend = async () => {
@@ -106,14 +98,12 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           commentPayload.video = reader.result;
         }
 
-        // Add parentCommentId if replying
         if (replyingToComment) {
           commentPayload.parentCommentId = replyingToComment._id;
         }
 
-        await createComment(commentPayload); // Call the mutation
+        await createComment(commentPayload);
 
-        // Reset all states for the main comment input form after successful creation
         setCommentText("");
         setReplyingToComment(null);
         setMainCommentMediaPreview(null);
@@ -122,15 +112,13 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           mainCommentMediaInputRef.current.value = "";
         }
       };
-      reader.readAsDataURL(mainCommentMediaFile); // Read the file as Base64
+      reader.readAsDataURL(mainCommentMediaFile);
     } else {
-      // If no media file, just send text comment
       if (replyingToComment) {
         commentPayload.parentCommentId = replyingToComment._id;
       }
       await createComment(commentPayload);
 
-      // Reset all states for the main comment input form
       setCommentText("");
       setReplyingToComment(null);
     }
@@ -138,9 +126,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
   const handleSetReplyingToComment = useCallback((comment) => {
     setReplyingToComment(comment);
-    // Optionally clear main comment input when switching to reply context
     setCommentText("");
-    setMainCommentMediaPreview(null); // Clear media for new reply context
+    setMainCommentMediaPreview(null);
     setMainCommentMediaFile(null);
     if (mainCommentMediaInputRef.current) {
       mainCommentMediaInputRef.current.value = "";
@@ -241,7 +228,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           onSubmit={handleAddOrReplyComment}
           className="p-4 border-b border-gray-700 flex flex-col gap-2"
         >
-          {/* Main input row */}
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             <div className="avatar flex-shrink-0">
               <div className="w-9 rounded-full">
@@ -263,20 +249,18 @@ const PostPage = ({ openImageModal, setFeedType }) => {
               className="flex-1 pl-3 py-2 rounded-full w-1 bg-black text-white placeholder-gray-400 focus:outline-none text-base sm:text-lg"
               disabled={isCreatingComment}
             />
-            {/* Hidden file input for main comment - MODIFIED accept attribute */}
             <input
               type="file"
-              accept="image/*,video/*" // Allow both image and video
+              accept="image/*,video/*"
               hidden
-              ref={mainCommentMediaInputRef} // Renamed ref
-              onChange={handleMainCommentMediaChange} // Renamed handler
+              ref={mainCommentMediaInputRef}
+              onChange={handleMainCommentMediaChange}
             />
-            {/* Button to trigger media input */}
             <button
               type="button"
-              onClick={() => mainCommentMediaInputRef.current.click()} // Renamed ref
+              onClick={() => mainCommentMediaInputRef.current.click()}
               className="p-2 rounded-full text-primary hover:text-blue-400 transition duration-200 flex-shrink-0"
-              title="Add image or video to comment" // Updated title
+              title="Add image or video to comment"
             >
               <BiImageAdd size={24} />
             </button>
@@ -291,7 +275,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             </button>
           </div>
 
-          {/* NEW: Media preview section for the main comment (image or video) */}
           {mainCommentMediaPreview && (
             <div className="relative size-40 mt-2 self-start ml-12">
               {mainCommentMediaFile.type.startsWith("image/") ? (
@@ -305,14 +288,14 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                   controls
                   src={mainCommentMediaPreview}
                   className="w-full h-full object-contain rounded-lg"
-                  preload="metadata" // For faster loading of metadata
+                  preload="metadata"
                 >
                   Your browser does not support the video tag.
                 </video>
               )}
               <button
                 type="button"
-                onClick={handleRemoveMainCommentMedia} // Renamed handler
+                onClick={handleRemoveMainCommentMedia}
                 className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
                 title="Remove media"
               >
@@ -333,7 +316,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
                 <CommentItem
-                  openImageModal={openImageModal} // --- ADDED: Pass openImageModal ---
+                  openImageModal={openImageModal}
                   comment={comment}
                   postId={displayPost._id}
                   onReplyClick={handleSetReplyingToComment}

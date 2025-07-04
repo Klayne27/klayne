@@ -1,81 +1,64 @@
-import { CiImageOn } from "react-icons/ci"; // Not used, can remove if not used elsewhere
 import { useRef, useState } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { Link } from "react-router-dom";
-import { BiImageAdd } from "react-icons/bi"; // Icon for media upload
+import { BiImageAdd } from "react-icons/bi";
 
 import EmojiPicker from "emoji-picker-react";
 import { useEffect } from "react";
 
 const CreatePost = () => {
   const [text, setText] = useState("");
-  // --- MODIFIED: Use a single state for the selected file and its preview URL ---
-  const [selectedFile, setSelectedFile] = useState(null); // Stores the actual File object (image or video)
-  const [previewUrl, setPreviewUrl] = useState(null); // Stores the URL.createObjectURL for preview
-  // --- END MODIFIED ---
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
   const { authUser } = useAuthUser();
 
-  // --- MODIFIED: Rename imgRef to fileInputRef as it handles both ---
-  const fileInputRef = useRef(null); // Renamed from imgRef
-  // --- END MODIFIED ---
+  const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
   const formRef = useRef(null);
 
-  // --- MODIFIED: Pass selectedFile to useCreatePosts ---
-  // The mutationFn will now handle reading the file to base64
   const { createPost, isPending, isError, error } = useCreatePosts();
-  // --- END MODIFIED ---
 
   const handleSubmit = async (e) => {
-    // Added async keyword
     e.preventDefault();
-    // --- MODIFIED: Check for text or selectedFile ---
     if (text.trim() === "" && !selectedFile) {
       return;
     }
-    // --- END MODIFIED ---
 
     let postData = { text };
 
     if (selectedFile) {
-      // --- MODIFIED: Handle both image and video files ---
       const reader = new FileReader();
       reader.onloadend = () => {
-        // Use onloadend to ensure file is fully read
         if (selectedFile.type.startsWith("image/")) {
-          postData.img = reader.result; // Base64 string for image
+          postData.img = reader.result;
         } else if (selectedFile.type.startsWith("video/")) {
-          postData.video = reader.result; // Base64 string for video
+          postData.video = reader.result;
         }
 
-        // Call the mutation after the file is read
         createPost(
-          postData, // Pass the object with text, and either img or video
+          postData,
           {
             onSuccess: () => {
               setText("");
-              setSelectedFile(null); // Clear selected file
-              setPreviewUrl(null); // Clear preview
+              setSelectedFile(null);
+              setPreviewUrl(null);
               if (fileInputRef.current) {
-                // Clear file input value
                 fileInputRef.current.value = null;
               }
             },
           }
         );
       };
-      reader.readAsDataURL(selectedFile); // Read the file as a Data URL (Base64)
-      // --- END MODIFIED ---
+      reader.readAsDataURL(selectedFile);
     } else {
-      // If no file, just create post with text
       createPost(postData, {
         onSuccess: () => {
           setText("");
@@ -86,11 +69,9 @@ const CreatePost = () => {
     }
   };
 
-  // --- MODIFIED: Renamed and adjusted to handle any file type ---
   const handleFileChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      // Basic client-side validation for file type (optional, but good UX)
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         alert("Unsupported file type. Please select an image or a video.");
         setSelectedFile(null);
@@ -99,8 +80,6 @@ const CreatePost = () => {
         return;
       }
 
-      // Basic client-side validation for file size (optional, but good UX)
-      // Adjust 20 * 1024 * 1024 (20MB) as per your server limit
       if (file.size > 20 * 1024 * 1024) {
         alert("File size exceeds 20MB limit.");
         setSelectedFile(null);
@@ -110,13 +89,12 @@ const CreatePost = () => {
       }
 
       setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file)); // Create URL for instant preview
+      setPreviewUrl(URL.createObjectURL(file));
     } else {
       setSelectedFile(null);
       setPreviewUrl(null);
     }
   };
-  // --- END MODIFIED ---
 
   const onEmojiClick = (emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
@@ -136,15 +114,12 @@ const CreatePost = () => {
         }, 0);
       } else {
         e.preventDefault();
-        // Since handleSubmit is now async due to FileReader, call it directly
         handleSubmit(e);
       }
     }
   };
 
-  // --- MODIFIED: Check selectedFile instead of img ---
   const isButtonDisabled = (text.trim() === "" && !selectedFile) || isPending;
-  // --- END MODIFIED ---
 
   useEffect(() => {
     const handleResize = () => {
@@ -202,11 +177,8 @@ const CreatePost = () => {
           onKeyDown={handleKeyDown}
           ref={textareaRef}
         />
-        {/* --- MODIFIED: Conditional render for image or video preview --- */}
         {previewUrl && (
           <div className="relative max-w-full mx-auto sm:w-auto">
-            {" "}
-            {/* sm:w-auto to prevent fixed width on small screens */}
             <IoCloseSharp
               className="absolute top-0 right-0 text-white bg-gray-800 rounded-full w-5 h-5 cursor-pointer z-10" // Added z-10
               onClick={() => {
@@ -220,7 +192,7 @@ const CreatePost = () => {
                 src={previewUrl}
                 className="w-full h-auto max-h-96 object-contain rounded"
                 alt="Image preview"
-              /> // max-h-96 for better scaling
+              />
             ) : (
               <video
                 controls
@@ -228,20 +200,17 @@ const CreatePost = () => {
                 className="w-full h-auto max-h-96 object-contain rounded"
                 preload="metadata"
               >
-                {" "}
-                {/* preload="metadata" for faster loading */}
                 Your browser does not support the video tag.
               </video>
             )}
           </div>
         )}
-        {/* --- END MODIFIED --- */}
 
         <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
             <BiImageAdd
               className="text-primary w-6 h-6 cursor-pointer hover:text-blue-400"
-              onClick={() => fileInputRef.current.click()} // Use fileInputRef
+              onClick={() => fileInputRef.current.click()}
             />
             <div className="relative">
               <PiSmiley
@@ -267,9 +236,9 @@ const CreatePost = () => {
           </div>
           <input
             type="file"
-            accept="image/*,video/*" // --- MODIFIED: Accept both image and video files ---
+            accept="image/*,video/*"
             hidden
-            ref={fileInputRef} // Use fileInputRef
+            ref={fileInputRef}
             onChange={handleFileChange}
           />
           <button
