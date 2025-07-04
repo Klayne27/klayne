@@ -2,7 +2,6 @@
 
 export const AVAILABLE_THEMES = [
   "black",
-  "light",
   "forest",
   "synthwave",
   "dim",

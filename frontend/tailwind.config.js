@@ -26,12 +26,12 @@ export default {
           secondary: "rgb(24, 24, 24)",
         },
       },
-      {
-        light: {
-          ...daisyUIThemes["light"],
-          secondary: "#d6d6d6",
-        },
-      },
+      // {
+      //   light: {
+      //     ...daisyUIThemes["light"],
+      //     secondary: "#d6d6d6",
+      //   },
+      // },
       {
         forest: {
           ...daisyUIThemes["forest"],
