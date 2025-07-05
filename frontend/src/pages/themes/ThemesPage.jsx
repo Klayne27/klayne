@@ -17,8 +17,8 @@ const ThemesPage = () => {
   const isThemeLocked = authUser && authUser.forceBlackTheme; // Check if theme is locked
 
   return (
-    <main className="flex-[4_4_0] border-x border-gray-700 min-h-screen">
-      <div className="flex justify-between items-center p-4 border-b border-gray-700">
+    <main className="flex-[4_4_0] border-r border-accent min-h-screen">
+      <div className="flex justify-between items-center p-4 border-b border-accent">
         <p className="font-bold">Themes</p>
       </div>
 
