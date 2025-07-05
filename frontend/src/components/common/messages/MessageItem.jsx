@@ -6,16 +6,13 @@ import { BsCheck2All } from "react-icons/bs";
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 
-// Re-integrated props and logic based on the principles from the "working" original code
 const MessageItem = ({
   msg,
-  isCurrentlyTouchDevice,
+  isCurrentlyTouchDevice, // Receive this prop
   activeMessageModalId,
   handleMouseEnter,
   handleMouseLeave,
-  handleTouchStart,
-  handleTouchMove,
-  handleTouchEnd,
+  handleMessageTap, // Receive the new tap handler
   handleDeleteClick,
   handleReplyClick,
   handleImageClick,
@@ -28,11 +25,12 @@ const MessageItem = ({
   const showModal = activeMessageModalId === msg._id;
   const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
 
+  // Adjusted highlight class: only apply hover for non-touch
   const messageHighlightClass = isCurrentlyTouchDevice
     ? showModal
-      ? "bg-gray-900 active-highlight"
+      ? "bg-gray-900 active-highlight" // Keep a highlight for active modal on touch
       : ""
-    : "hover:bg-secondary";
+    : "hover:bg-secondary"; // Only apply hover for non-touch
 
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -56,9 +54,18 @@ const MessageItem = ({
       className={`p-1 rounded-lg relative message-item-container ${messageHighlightClass}`}
       onMouseEnter={() => handleMouseEnter(msg._id)}
       onMouseLeave={handleMouseLeave}
-      onTouchStart={(e) => handleTouchStart(e, msg._id)}
-      onTouchMove={handleTouchMove}
-      onTouchEnd={handleTouchEnd}
+      // Use onClick for general message interaction on touch devices
+      // This will trigger the handleMessageTap function
+      onClick={(e) => {
+        // Only trigger message tap if not a button inside the modal
+        // This might be redundant if stopPropagation is on buttons, but acts as a safeguard.
+        const modalElement = document.getElementById(`message-modal-${msg._id}`);
+        if (modalElement && modalElement.contains(e.target)) {
+          // If the click is inside the modal, let the button's onClick handle it
+          return;
+        }
+        handleMessageTap(msg._id);
+      }}
     >
       <div
         id={`message-modal-${msg._id}`}
@@ -68,12 +75,19 @@ const MessageItem = ({
                     ? "-left-28 translate-x-1/2"
                     : "-right-24 -translate-x-1/2"
                 }
-                ${showModal ? "opacity-100" : "opacity-0 pointer-events-none"} `}
+                ${
+                  showModal
+                    ? "opacity-100 pointer-events-auto"
+                    : "opacity-0 pointer-events-none"
+                } `}
       >
         {allowedEmojis.map((emoji) => (
           <button
             key={emoji}
-            onClick={() => handleReactionClick(msg._id, emoji)}
+            onClick={(e) => {
+              e.stopPropagation(); // CRITICAL: Prevent click from bubbling up to message div or document
+              handleReactionClick(msg._id, emoji);
+            }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
             title={`React with ${emoji}`}
           >
@@ -82,7 +96,10 @@ const MessageItem = ({
         ))}
 
         <button
-          onClick={() => handleReplyClick(msg)}
+          onClick={(e) => {
+            e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+            handleReplyClick(msg);
+          }}
           className="text-primary/90 hover:text-primary hover:scale-125 rounded-full p-1 ml-1"
           title="Reply"
         >
@@ -91,7 +108,10 @@ const MessageItem = ({
 
         {isSentByCurrentUser && (
           <button
-            onClick={() => handleDeleteClick(msg._id)}
+            onClick={(e) => {
+              e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+              handleDeleteClick(msg._id);
+            }}
             className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 ${
               isDeletingMessage ? "cursor-not-allowed" : "cursor-pointer"
             }`}
@@ -122,16 +142,19 @@ const MessageItem = ({
           {msg.repliedTo && (
             <div
               className={`
-                                mb-2 p-2 rounded-md text-xs border
-                                ${
-                                  isSentByCurrentUser
-                                    ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
-                                    : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
-                                }
-                                flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
-                              hover:border-blue-400 hover:bg-opacity-40
-                                `}
-              onClick={() => handleJumpToOriginalMessage(msg.repliedTo._id)}
+                                        mb-2 p-2 rounded-md text-xs border
+                                        ${
+                                          isSentByCurrentUser
+                                            ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                            : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                                        }
+                                        flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                                      hover:border-blue-400 hover:bg-opacity-40
+                                        `}
+              onClick={(e) => {
+                e.stopPropagation(); // Prevent reply link click from closing the modal
+                handleJumpToOriginalMessage(msg.repliedTo._id);
+              }}
             >
               <span
                 className={`font-bold ${
@@ -163,11 +186,18 @@ const MessageItem = ({
               src={msg.img}
               alt="message attachment"
               className="mt-2 rounded-lg w-60 h-auto object-cover cursor-pointer"
-              onClick={(e) => handleImageClick(msg.img, e)}
+              onClick={(e) => {
+                e.stopPropagation(); // Keep this for image modal
+                handleImageClick(msg.img, e);
+              }}
             />
           )}
           {msg.text && (
-            <p className={`break-words text-sm ${isSentByCurrentUser ? "text-primary-content" : ""}`}>
+            <p
+              className={`break-words text-sm ${
+                isSentByCurrentUser ? "text-primary-content" : ""
+              }`}
+            >
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>
           )}
@@ -186,7 +216,7 @@ const MessageItem = ({
                                     ? "justify-self-end"
                                     : "justify-self-start"
                                 }
-                              `}
+                                `}
         >
           {Object.entries(groupedReactions).map(([emoji, data]) => {
             const hasCurrentUserReactedToThisEmoji = data.userIds.some(
@@ -204,7 +234,10 @@ const MessageItem = ({
                 title={
                   data.users.length > 0 ? `Reacted by: ${data.users.join(", ")}` : ""
                 }
-                onClick={() => handleReactionClick(msg._id, emoji)}
+                onClick={(e) => {
+                  e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+                  handleReactionClick(msg._id, emoji);
+                }}
               >
                 <span className="text-[16px]">{emoji}</span>
                 <span className="ml-1 font-bold">{data.count}</span>

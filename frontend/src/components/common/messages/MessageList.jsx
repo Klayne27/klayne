@@ -5,6 +5,7 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 
 import MessageItem from "./MessageItem";
 
+// Keep this to differentiate behavior if needed, though we'll simplify its use.
 const isTouchDevice = () => {
   if (typeof window === "undefined") return false;
   return (
@@ -34,31 +35,26 @@ const MessageList = forwardRef(function MessageList(
   const { mutate: reactToMessage } = useReactToMessage();
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); // Keep this state
 
-  const longPressTimerRef = useRef(null);
-  const touchStartXRef = useRef(0);
-  const touchStartYRef = useRef(0);
-  const LONG_PRESS_DURATION = 500;
+  // Removed long press refs and duration - they are not needed for simple tap
+  // const longPressTimerRef = useRef(null);
+  // const touchStartXRef = useRef(0);
+  // const touchStartYRef = useRef(0);
+  // const LONG_PRESS_DURATION = 500;
 
   const mouseLeaveTimeoutRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
 
   useEffect(() => {
+    // Detect touch device once on mount
     setIsCurrentlyTouchDevice(isTouchDevice());
-    const handlePointerTypeChange = () => {
-      setIsCurrentlyTouchDevice(isTouchDevice());
-    };
-    window.addEventListener("pointerdown", handlePointerTypeChange);
-    return () => {
-      window.removeEventListener("pointerdown", handlePointerTypeChange);
-    };
-  }, []);
+  }, []); // Only runs once
 
   const handleDeleteClick = useCallback(
     (messageId) => {
       deleteMessage(messageId);
-      setActiveMessageModalId(null);
+      setActiveMessageModalId(null); // Close modal after action
     },
     [deleteMessage]
   );
@@ -69,14 +65,14 @@ const MessageList = forwardRef(function MessageList(
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
-      setActiveMessageModalId(null);
+      setActiveMessageModalId(null); // Close modal after action
     },
     [setReplyingToMessage, messageInputRef]
   );
 
   const handleImageClick = useCallback(
     (imageUrl, event) => {
-      event.stopPropagation();
+      event.stopPropagation(); // Keep this to prevent image click from closing modal
       if (openImageModal) {
         openImageModal(imageUrl);
       } else {
@@ -107,14 +103,16 @@ const MessageList = forwardRef(function MessageList(
   const handleReactionClick = useCallback(
     (messageId, emoji) => {
       reactToMessage({ messageId, emoji });
-      setActiveMessageModalId(null);
+      setActiveMessageModalId(null); // Close modal after action
     },
     [reactToMessage]
   );
 
+  // Desktop hover logic
   const handleMouseEnter = useCallback(
     (messageId) => {
       if (!isCurrentlyTouchDevice) {
+        // Only for non-touch devices
         if (mouseLeaveTimeoutRef.current) {
           clearTimeout(mouseLeaveTimeoutRef.current);
           mouseLeaveTimeoutRef.current = null;
@@ -122,71 +120,30 @@ const MessageList = forwardRef(function MessageList(
         setActiveMessageModalId(messageId);
       }
     },
-    [isCurrentlyTouchDevice]
+    [isCurrentlyTouchDevice] // Depend on this to ensure correct behavior
   );
 
   const handleMouseLeave = useCallback(() => {
     if (!isCurrentlyTouchDevice) {
+      // Only for non-touch devices
       mouseLeaveTimeoutRef.current = setTimeout(() => {
         setActiveMessageModalId(null);
       }, MOUSE_LEAVE_DELAY);
     }
-  }, [isCurrentlyTouchDevice]);
+  }, [isCurrentlyTouchDevice]); // Depend on this
 
-  const handleTouchStart = useCallback(
-    (e, messageId) => {
+  // NEW: Simple tap handler for mobile to show/hide modal
+  const handleMessageTap = useCallback(
+    (messageId) => {
       if (isCurrentlyTouchDevice) {
-        if (activeMessageModalId && activeMessageModalId !== messageId) {
-          setActiveMessageModalId(null);
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-          return;
-        }
-        if (activeMessageModalId === messageId) {
-          setActiveMessageModalId(null);
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-          return;
-        }
-
-        longPressTimerRef.current = setTimeout(() => {
-          setActiveMessageModalId(messageId);
-        }, LONG_PRESS_DURATION);
-        touchStartXRef.current = e.touches[0].clientX;
-        touchStartYRef.current = e.touches[0].clientY;
-      }
-    },
-    [isCurrentlyTouchDevice, activeMessageModalId]
-  );
-
-  const handleTouchMove = useCallback(
-    (e) => {
-      if (isCurrentlyTouchDevice && longPressTimerRef.current) {
-        const currentX = e.touches[0].clientX;
-        const currentY = e.touches[0].clientY;
-        const deltaX = Math.abs(currentX - touchStartXRef.current);
-        const deltaY = Math.abs(currentY - touchStartYRef.current);
-        if (deltaX > 10 || deltaY > 10) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
+        setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId));
       }
     },
     [isCurrentlyTouchDevice]
   );
 
-  const handleTouchEnd = useCallback(
-    (e) => {
-      if (isCurrentlyTouchDevice) {
-        if (longPressTimerRef.current) {
-          clearTimeout(longPressTimerRef.current);
-          longPressTimerRef.current = null;
-        }
-      }
-    },
-    [isCurrentlyTouchDevice]
-  );
-
+  // The handleClickOutsideMessage logic is crucial.
+  // It needs to correctly distinguish clicks inside the modal vs. outside.
   const handleClickOutsideMessage = useCallback(
     (e) => {
       if (activeMessageModalId) {
@@ -197,6 +154,9 @@ const MessageList = forwardRef(function MessageList(
           `message-modal-${activeMessageModalId}`
         );
 
+        // If the click target is NOT within the message item container AND NOT within the modal element, then close it.
+        // This is key: if e.target is a button *inside* messageModalElement, messageModalElement.contains(e.target) will be true,
+        // and the modal will NOT close.
         if (
           messageItemContainer &&
           !messageItemContainer.contains(e.target) &&
@@ -211,14 +171,22 @@ const MessageList = forwardRef(function MessageList(
   );
 
   useEffect(() => {
-    document.addEventListener("click", handleClickOutsideMessage);
+    // Attach document click listener only when a modal is active.
+    // This avoids conflicts when no modal is expected to be open.
+    if (activeMessageModalId) {
+      document.addEventListener("click", handleClickOutsideMessage);
+      // Consider adding 'touchend' listener for outside clicks on mobile if 'click' isn't sufficient
+      // document.addEventListener("touchend", handleClickOutsideMessage);
+    }
+
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage);
+      // document.removeEventListener("touchend", handleClickOutsideMessage);
       if (mouseLeaveTimeoutRef.current) {
         clearTimeout(mouseLeaveTimeoutRef.current);
       }
     };
-  }, [handleClickOutsideMessage]);
+  }, [activeMessageModalId, handleClickOutsideMessage]);
 
   return (
     <div
@@ -254,13 +222,11 @@ const MessageList = forwardRef(function MessageList(
           <MessageItem
             key={msg._id}
             msg={msg}
-            isCurrentlyTouchDevice={isCurrentlyTouchDevice}
+            isCurrentlyTouchDevice={isCurrentlyTouchDevice} // Pass this prop
             activeMessageModalId={activeMessageModalId}
             handleMouseEnter={handleMouseEnter}
             handleMouseLeave={handleMouseLeave}
-            handleTouchStart={handleTouchStart}
-            handleTouchMove={handleTouchMove}
-            handleTouchEnd={handleTouchEnd}
+            handleMessageTap={handleMessageTap} // Pass the new tap handler
             handleDeleteClick={handleDeleteClick}
             handleReplyClick={handleReplyClick}
             handleImageClick={handleImageClick}
