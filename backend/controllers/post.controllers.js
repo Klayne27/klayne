@@ -144,44 +144,47 @@ export const createPost = async (req, res) => {
 };
 
 export const deletePost = async (req, res) => {
-    try {
-        const { id } = req.params;
+  try {
+    const { id } = req.params;
 
-        const postToDelete = await Post.findById(id);
+    const postToDelete = await Post.findById(id);
 
-        if (!postToDelete) {
-            return res.status(404).json({ error: "Post not found" });
-        }
-
-        if (postToDelete.user.toString() !== req.user._id.toString()) {
-            return res.status(401).json({ error: "You are not authorized to delete this post" });
-        }
-
-        if (postToDelete.mediaType === "image" && postToDelete.imgPublicId) {
-            await cloudinary.uploader.destroy(postToDelete.imgPublicId);
-        } else if (postToDelete.mediaType === "video" && postToDelete.videoPublicId) {
-            await cloudinary.uploader.destroy(postToDelete.videoPublicId, { resource_type: "video" });
-        }
-
-        if (!postToDelete.repostedFrom) {
-            await Post.deleteMany({ repostedFrom: postToDelete._id });
-            await User.findByIdAndUpdate(postToDelete.user, { $inc: { postsCount: -1 } });
-
-        } else {
-            await Post.findByIdAndUpdate(
-                postToDelete.repostedFrom,
-                { $inc: { repostsCount: -1 } },
-                { new: true }
-            );
-        }
-
-        await Post.deleteOne({ _id: id });
-
-        res.status(200).json({ message: "Post deleted successfully" });
-    } catch (error) {
-        console.error("Error in deletePost controller:", error.message);
-        res.status(500).json({ error: "Internal server error" });
+    if (!postToDelete) {
+      return res.status(404).json({ error: "Post not found" });
     }
+
+    if (postToDelete.user.toString() !== req.user._id.toString()) {
+      return res
+        .status(401)
+        .json({ error: "You are not authorized to delete this post" });
+    }
+
+    if (postToDelete.mediaType === "image" && postToDelete.imgPublicId) {
+      await cloudinary.uploader.destroy(postToDelete.imgPublicId);
+    } else if (postToDelete.mediaType === "video" && postToDelete.videoPublicId) {
+      await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
+        resource_type: "video",
+      });
+    }
+
+    if (!postToDelete.repostedFrom) {
+      await Post.deleteMany({ repostedFrom: postToDelete._id });
+      await User.findByIdAndUpdate(postToDelete.user, { $inc: { postsCount: -1 } });
+    } else {
+      await Post.findByIdAndUpdate(
+        postToDelete.repostedFrom,
+        { $inc: { repostsCount: -1 } },
+        { new: true }
+      );
+    }
+
+    await Post.deleteOne({ _id: id });
+
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    console.error("Error in deletePost controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const likeUnlikePost = async (req, res) => {
@@ -596,106 +599,107 @@ export const getFollowingPosts = async (req, res) => {
 
 export const getUserPosts = async (req, res) => {
   try {
-      const { username } = req.params;
-      const user = await User.findOne({ username });
+    const { username } = req.params;
+    const user = await User.findOne({ username });
 
-      if (!user) return res.status(404).json({ error: "User not found" });
+    if (!user) return res.status(404).json({ error: "User not found" });
 
-      const page = parseInt(req.query.page) || 1;
-      const limit = parseInt(req.query.limit) || 10;
-      const skip = (page - 1) * limit;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
 
-      const currentUserId = req.user?._id;
+    const currentUserId = req.user?._id;
 
-      if (await isBlockedOrBlockedBy(currentUserId, user._id)) {
-          return res.status(403).json({
-              error: "You cannot view posts from this user due to blocking restrictions.",
-          });
-      }
+    if (await isBlockedOrBlockedBy(currentUserId, user._id)) {
+      return res.status(403).json({
+        error: "You cannot view posts from this user due to blocking restrictions.",
+      });
+    }
 
-      const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
-      const blockedAndBlockingObjectIds = [
-          ...new Set([
-              ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
-              ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
-          ]),
-      ];
+    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
 
-      const queryConditions = {
-          $and: [
-              { "deletedFor.user": { $ne: currentUserId } },
-              {
-                  $or: [
-                      { user: user._id },
-                      {
-                          $and: [
-                              { user: user._id },
-                              { repostedFrom: { $ne: null } },
-                              { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
-                          ],
-                      },
-                  ],
-              },
+    const queryConditions = {
+      $and: [
+        { "deletedFor.user": { $ne: currentUserId } },
+        {
+          $or: [
+            { user: user._id },
+            {
+              $and: [
+                { user: user._id },
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+              ],
+            },
           ],
-      };
+        },
+      ],
+    };
 
-      const totalUserPosts = await Post.countDocuments(queryConditions);
+    const totalUserPosts = await Post.countDocuments(queryConditions);
 
-      const rawUserPosts = await Post.find(queryConditions)
-          .sort({ createdAt: -1 })
-          .skip(skip)
-          .limit(limit)
-          .populate({
-              path: "user",
-              select: "-password",
-          })
-          .populate({
-              path: "repostedFrom",
-              populate: {
-                  path: "user",
-                  select: "-password",
-              },
-              select: "text img video mediaType likes commentsCount repostsCount createdAt user", // <--- ADDED video and mediaType
-          });
-
-      const finalUserPosts = rawUserPosts.filter((post) => {
-          const postOwnerId = post.user?._id;
-          const repostedFromOwnerId = post.repostedFrom?.user?._id;
-
-          if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
-          if (
-              post.repostedFrom &&
-              blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
-          )
-              return false;
-
-          if (currentUserId) {
-              const isDeletedForMe = post.deletedFor?.some((entry) =>
-                  entry.user.equals(currentUserId)
-              );
-              if (isDeletedForMe) {
-                  return false;
-              }
-          }
-
-          if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-              return false;
-          }
-          if (post.repostedFrom && !post.repostedFrom.user) {
-              return false;
-          }
-
-          return true;
+    const rawUserPosts = await Post.find(queryConditions)
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "repostedFrom",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+        select:
+          "text img video mediaType likes commentsCount repostsCount createdAt user", // <--- ADDED video and mediaType
       });
 
-      const hasNextPage = page * limit < totalUserPosts;
+    const finalUserPosts = rawUserPosts.filter((post) => {
+      const postOwnerId = post.user?._id;
+      const repostedFromOwnerId = post.repostedFrom?.user?._id;
 
-      res
-          .status(200)
-          .json({ posts: finalUserPosts, hasNextPage, totalPosts: totalUserPosts });
+      if (blockedAndBlockingObjectIds.some((id) => id.equals(postOwnerId))) return false;
+      if (
+        post.repostedFrom &&
+        blockedAndBlockingObjectIds.some((id) => id.equals(repostedFromOwnerId))
+      )
+        return false;
+
+      if (currentUserId) {
+        const isDeletedForMe = post.deletedFor?.some((entry) =>
+          entry.user.equals(currentUserId)
+        );
+        if (isDeletedForMe) {
+          return false;
+        }
+      }
+
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+        return false;
+      }
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        return false;
+      }
+
+      return true;
+    });
+
+    const hasNextPage = page * limit < totalUserPosts;
+
+    res
+      .status(200)
+      .json({ posts: finalUserPosts, hasNextPage, totalPosts: totalUserPosts });
   } catch (error) {
-      res.status(500).json({ error: "Internal server error" });
-      console.log("Error in getUserPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error in getUserPosts controller: ", error);
   }
 };
 
@@ -716,7 +720,8 @@ export const getPost = async (req, res) => {
             select: "-password",
           },
         ],
-        select: "text img video mediaType likes commentsCount repostsCount createdAt user",
+        select:
+          "text img video mediaType likes commentsCount repostsCount createdAt user",
       });
 
     if (!post) {
@@ -783,7 +788,7 @@ export const repostPost = async (req, res) => {
       await Post.deleteOne({ _id: existingRepost._id });
       originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1);
       message = "Repost removed successfully.";
-      hasUserReposted = false
+      hasUserReposted = false;
     } else {
       const newRepost = new Post({
         user: userId,
@@ -851,160 +856,159 @@ export const checkIfUserReposted = async (req, res) => {
 
 export const toggleBookmark = async (req, res) => {
   try {
-      const { id: postId } = req.params;
-      const userId = req.user._id;
+    const { id: postId } = req.params;
+    const userId = req.user._id;
 
-      const post = await Post.findById(postId);
+    const post = await Post.findById(postId);
 
-      if (!post) {
-          return res.status(404).json({ error: "Post not found" });
-      }
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
 
-      const isBookmarked = post.bookmarkedBy.includes(userId);
+    const isBookmarked = post.bookmarkedBy.includes(userId);
 
-      if (isBookmarked) {
-          await Post.findByIdAndUpdate(postId, { $pull: { bookmarkedBy: userId } });
-          await User.findByIdAndUpdate(userId, { $pull: { bookmarkedPosts: postId } });
-          res.status(200).json({ message: "Post unbookmarked successfully" });
-      } else {
-          await Post.findByIdAndUpdate(postId, { $push: { bookmarkedBy: userId } });
-          await User.findByIdAndUpdate(userId, { $push: { bookmarkedPosts: postId } });
-          res.status(200).json({ message: "Post bookmarked successfully" });
-      }
+    if (isBookmarked) {
+      await Post.findByIdAndUpdate(postId, { $pull: { bookmarkedBy: userId } });
+      await User.findByIdAndUpdate(userId, { $pull: { bookmarkedPosts: postId } });
+      res.status(200).json({ message: "Post unbookmarked successfully" });
+    } else {
+      await Post.findByIdAndUpdate(postId, { $push: { bookmarkedBy: userId } });
+      await User.findByIdAndUpdate(userId, { $push: { bookmarkedPosts: postId } });
+      res.status(200).json({ message: "Post bookmarked successfully" });
+    }
   } catch (error) {
-      console.error("Error in toggleBookmark controller:", error.message);
-      res.status(500).json({ error: "Internal server error" });
+    console.error("Error in toggleBookmark controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
 export const getBookmarkedPosts = async (req, res) => {
-    try {
-        const userId = req.user._id;
-        const { query, page = 1, limit = 10 } = req.query; 
+  try {
+    const userId = req.user._id;
+    const { query, page = 1, limit = 10 } = req.query;
 
-        const parsedPage = parseInt(page);
-        const parsedLimit = parseInt(limit);
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
 
-        let filter = { bookmarkedBy: userId };
+    let filter = { bookmarkedBy: userId };
 
-        if (query) {
-            filter.text = { $regex: query, $options: "i" };
-        }
-
-        const totalPostsCount = await Post.countDocuments(filter); 
-
-        const bookmarkedPosts = await Post.find(filter)
-            .sort({ createdAt: -1 })
-            .skip((parsedPage - 1) * parsedLimit)
-            .limit(parsedLimit)
-            .populate({
-                path: "user",
-                select: "-password",
-            })
-            .populate({
-                path: "repostedFrom",
-                populate: {
-                    path: "user",
-                    select: "-password",
-                },
-                select: "text img video mediaType likes commentsCount repostsCount createdAt user",
-            })
-            .populate({
-                path: "comments",
-                populate: {
-                    path: "user",
-                    select: "-password",
-                },
-            })
-            .lean();
-
-        const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
-
-        res.status(200).json({
-            posts: bookmarkedPosts,
-            currentPage: parsedPage,
-            totalPages: Math.ceil(totalPostsCount / parsedLimit),
-            hasNextPage: hasNextPage,
-            totalPosts: totalPostsCount
-        });
-
-    } catch (error) {
-        console.error("Error in getBookmarkedPosts controller:", error.message);
-        res.status(500).json({ error: "Internal server error: " + error.message });
+    if (query) {
+      filter.text = { $regex: query, $options: "i" };
     }
+
+    const totalPostsCount = await Post.countDocuments(filter);
+
+    const bookmarkedPosts = await Post.find(filter)
+      .sort({ createdAt: -1 })
+      .skip((parsedPage - 1) * parsedLimit)
+      .limit(parsedLimit)
+      .populate({
+        path: "user",
+        select: "-password",
+      })
+      .populate({
+        path: "repostedFrom",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+        select:
+          "text img video mediaType likes commentsCount repostsCount createdAt user",
+      })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "-password",
+        },
+      })
+      .lean();
+
+    const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
+
+    res.status(200).json({
+      posts: bookmarkedPosts,
+      currentPage: parsedPage,
+      totalPages: Math.ceil(totalPostsCount / parsedLimit),
+      hasNextPage: hasNextPage,
+      totalPosts: totalPostsCount,
+    });
+  } catch (error) {
+    console.error("Error in getBookmarkedPosts controller:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
+  }
 };
 
 export const voteOnPoll = async (req, res) => {
-    try {
-        const { postId } = req.params; // Get post ID from URL parameters
-        const { optionId } = req.body; // Get the ID of the selected poll option from the request body
-        const userId = req.user._id; // Get the ID of the authenticated user
+  try {
+    const { postId } = req.params; // Get post ID from URL parameters
+    const { optionId } = req.body; // Get the ID of the selected poll option from the request body
+    const userId = req.user._id; // Get the ID of the authenticated user
 
-        // 1. Find the Post
-        const post = await Post.findById(postId);
+    // 1. Find the Post
+    const post = await Post.findById(postId);
 
-        if (!post) {
-            return res.status(404).json({ error: "Post not found." });
-        }
-
-        // 2. Validate if it's a poll
-        if (!post.pollOptions || post.pollOptions.length === 0) {
-            return res.status(400).json({ error: "This post is not a poll." });
-        }
-
-        // Optional: Add blocking checks here if you want to prevent blocked users from voting
-        // if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
-        //   return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
-        // }
-
-        // 3. Find the specific poll option using its _id (Mongoose subdocument method)
-        const selectedOption = post.pollOptions.id(optionId); // `id()` is a Mongoose array method to find subdocuments by their `_id`
-
-        if (!selectedOption) {
-            return res.status(404).json({ error: "Poll option not found." });
-        }
-
-        // 4. Check if the user has already voted on *any* option in this poll
-        // Iterate through all poll options to see if the current user's ID exists in any 'voters' array
-        const hasUserAlreadyVoted = post.pollOptions.some(option =>
-            option.voters.includes(userId)
-        );
-
-        if (hasUserAlreadyVoted) {
-            return res.status(400).json({ error: "You have already voted on this poll." });
-        }
-
-        // 5. Add the user's ID to the selected option's voters array
-        selectedOption.voters.push(userId);
-
-        // 6. Increment the total votes for the poll
-        post.pollTotalVotes += 1;
-
-        // 7. Save the updated post
-        await post.save();
-
-        // Optional: Send a notification to the post owner that someone voted on their poll
-        // (You might want a new notification `type: "pollVote"` if you implement this)
-        // if (post.user.toString() !== userId.toString()) {
-        //   await createAndSendNotification({
-        //     from: userId,
-        //     to: post.user,
-        //     type: "pollVote", // New notification type
-        //     postId: post._id,
-        //   });
-        // }
-
-        // 8. Send a success response with updated poll data (optional, but useful for frontend)
-        res.status(200).json({
-            message: "Vote cast successfully!",
-            pollOptions: post.pollOptions, // Return the updated options
-            pollTotalVotes: post.pollTotalVotes, // Return the updated total
-        });
-
-    } catch (error) {
-        console.error("Error in voteOnPoll controller:", error.message);
-        res.status(500).json({ error: "Internal server error." });
+    if (!post) {
+      return res.status(404).json({ error: "Post not found." });
     }
+
+    // 2. Validate if it's a poll
+    if (!post.pollOptions || post.pollOptions.length === 0) {
+      return res.status(400).json({ error: "This post is not a poll." });
+    }
+
+    // Optional: Add blocking checks here if you want to prevent blocked users from voting
+    // if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
+    //   return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
+    // }
+
+    // 3. Find the specific poll option using its _id (Mongoose subdocument method)
+    const selectedOption = post.pollOptions.id(optionId); // `id()` is a Mongoose array method to find subdocuments by their `_id`
+
+    if (!selectedOption) {
+      return res.status(404).json({ error: "Poll option not found." });
+    }
+
+    // 4. Check if the user has already voted on *any* option in this poll
+    // Iterate through all poll options to see if the current user's ID exists in any 'voters' array
+    const hasUserAlreadyVoted = post.pollOptions.some((option) =>
+      option.voters.includes(userId)
+    );
+
+    if (hasUserAlreadyVoted) {
+      return res.status(400).json({ error: "You have already voted on this poll." });
+    }
+
+    // 5. Add the user's ID to the selected option's voters array
+    selectedOption.voters.push(userId);
+
+    // 6. Increment the total votes for the poll
+    post.pollTotalVotes += 1;
+
+    // 7. Save the updated post
+    await post.save();
+
+    // Optional: Send a notification to the post owner that someone voted on their poll
+    // (You might want a new notification `type: "pollVote"` if you implement this)
+    // if (post.user.toString() !== userId.toString()) {
+    //   await createAndSendNotification({
+    //     from: userId,
+    //     to: post.user,
+    //     type: "pollVote", // New notification type
+    //     postId: post._id,
+    //   });
+    // }
+
+    // 8. Send a success response with updated poll data (optional, but useful for frontend)
+    res.status(200).json({
+      message: "Vote cast successfully!",
+      pollOptions: post.pollOptions, // Return the updated options
+      pollTotalVotes: post.pollTotalVotes, // Return the updated total
+    });
+  } catch (error) {
+    console.error("Error in voteOnPoll controller:", error.message);
+    res.status(500).json({ error: "Internal server error." });
+  }
 };
 
 export const pinUnpinPost = async (req, res) => {
@@ -1055,27 +1059,80 @@ export const pinUnpinPost = async (req, res) => {
 // Add this new function to your user controller or a new post controller
 export const getPinnedPosts = async (req, res) => {
   const { username } = req.params;
+  const currentUserId = req.user?._id; // Get the ID of the authenticated user viewing the profile
 
   try {
-      const user = await User.findOne({ username })
-          .select("pinnedPosts") // Only select the pinnedPosts array
-          .populate({
-              path: "pinnedPosts", // Populate the pinnedPosts array
-              populate: {
-                  path: "user", // Populate the 'user' field *within* each pinned post
-                  select: "username fullName profileImg isVerified", // Select desired fields for the post owner
-              },
-          });
+    const user = await User.findOne({ username });
 
-      if (!user) {
-          return res.status(404).json({ error: "User not found" });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    // Check if the current user is blocked by or has blocked the profile owner
+    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
+      return res.status(403).json({
+        error: "You cannot view posts from this user due to blocking restrictions.",
+      });
+    }
+
+    // Determine blocked/blocking users for filtering reposts and general posts if necessary
+    // For pinned posts, we mainly care about the direct blocking between viewer and profile owner.
+    // However, if pinned posts can be reposts, you might need to apply similar logic as getUserPosts.
+    // For now, let's assume pinned posts are always original posts of the user whose profile is being viewed.
+    // If a pinned post is a repost of someone blocked by the viewer, that's a more complex scenario,
+    // which the frontend `Post` component would ideally handle.
+
+    const pinnedPosts = await User.findById(user._id) // Use user._id instead of just 'user'
+      .select("pinnedPosts")
+      .populate({
+        path: "pinnedPosts",
+        populate: {
+          path: "user",
+          select: "username fullName profileImg isVerified",
+        },
+        // IMPORTANT: If pinned posts can be reposts, you'll need to populate repostedFrom here as well
+        // similar to how you do it in getUserPosts.
+        // For example:
+        // populate: [
+        //   { path: "user", select: "username fullName profileImg isVerified" },
+        //   {
+        //     path: "repostedFrom",
+        //     populate: {
+        //       path: "user",
+        //       select: "username fullName profileImg isVerified",
+        //     },
+        //     select: "text img video mediaType likes commentsCount repostsCount createdAt user",
+        //   },
+        // ],
+      })
+      .lean(); // Use .lean() for performance if you don't need Mongoose document methods
+
+    if (!pinnedPosts || !pinnedPosts.pinnedPosts) {
+      return res.status(200).json([]); // No pinned posts found, return empty array
+    }
+
+    // Filter out posts that are deleted for the current user, or if they are reposts of blocked users.
+    // This part should mirror the filtering logic in getUserPosts to ensure consistency.
+    const finalPinnedPosts = pinnedPosts.pinnedPosts.filter((post) => {
+      // If the post itself is deleted for the current user
+      const isDeletedForMe = post.deletedFor?.some((entry) =>
+        entry.user.equals(currentUserId)
+      );
+      if (isDeletedForMe) {
+        return false;
       }
 
-      // Return the populated pinnedPosts
-      res.status(200).json(user.pinnedPosts);
+      // If the pinned post is a repost and the original owner is blocked/blocking
+      // You'll need `getBlockingUsers` here if you populated `repostedFrom`.
+      // For simplicity, assuming pinned posts are always original posts of the profile owner for now.
+      // If you implement the `repostedFrom` population, add filtering for it here.
 
+      return true;
+    });
+
+    res.status(200).json(finalPinnedPosts);
   } catch (error) {
-      console.log("Error in getPinnedPosts: ", error.message);
-      res.status(500).json({ error: "Internal Server Error" });
+    console.log("Error in getPinnedPosts: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

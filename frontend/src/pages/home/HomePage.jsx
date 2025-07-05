@@ -2,12 +2,15 @@ import { useState, useRef, useEffect } from "react";
 
 import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
+// import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
+import { useParams } from "react-router-dom";
 
 const HomePage = ({ openImageModal }) => {
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
   const scrollableContentRef = useRef(null);
+  // const { username } = useParams();
 
   useEffect(() => {
     const updateWidth = () => {
@@ -31,6 +34,12 @@ const HomePage = ({ openImageModal }) => {
       behavior: "instant",
     });
   };
+
+  // const {
+  //   pinnedPosts,
+  //   isLoading: isLoadingPinnedPosts,
+  //   isRefetching: isRefetchingPinnedPosts,
+  // } = useFetchPinnedPosts(username);
 
   return (
     <>
@@ -71,7 +80,11 @@ const HomePage = ({ openImageModal }) => {
 
         <div ref={scrollableContentRef} className="">
           <CreatePost />
-          <Posts feedType={feedType} openImageModal={openImageModal} />
+          <Posts
+            feedType={feedType}
+            openImageModal={openImageModal}
+            // pinnedPosts={pinnedPosts}
+          />
         </div>
       </div>
     </>

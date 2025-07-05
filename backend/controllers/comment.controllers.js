@@ -19,7 +19,6 @@ const getBlockingUsers = async (userId) => {
   };
 };
 
-
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (
     !currentUserId ||

@@ -15,10 +15,10 @@ import { useEffect, useState } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
-import { usePinPost } from "../../../hooks/postsHooks/usePinPost"; // Import the new hook
+import { usePinPost } from "../../../hooks/postsHooks/usePinPost";
 import { BsPin, BsPinFill } from "react-icons/bs";
 
-const Post = ({ post, openImageModal }) => {
+const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
@@ -33,9 +33,15 @@ const Post = ({ post, openImageModal }) => {
   const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
 
   // Check if the post is pinned by the authenticated user
-  const isPinnedByCurrentUser = authUser?.pinnedPosts?.some(
+  const isPinnedOnThisProfile = profilePinnedPosts.some(
+    (pinnedPost) => pinnedPost._id === originalPost._id
+  );
+
+  const isPinned = originalPost?.user?.pinnedPosts?.some(
     (pinnedPost) => pinnedPost === originalPost._id
   );
+
+  console.log(originalPost);
 
   const canDelete = authUser && authUser._id === post.user._id;
   const isMyOriginalPost =
@@ -91,7 +97,7 @@ const Post = ({ post, openImageModal }) => {
   const handlePinToggle = (e) => {
     handleInteractiveClick(e);
     if (isPinning) return;
-    const action = isPinnedByCurrentUser ? "unpin" : "pin";
+    const action = isPinnedOnThisProfile ? "unpin" : "pin";
     pinUnpinPost({ postId: originalPost._id, action, username });
   };
 
@@ -174,7 +180,7 @@ const Post = ({ post, openImageModal }) => {
           </span>
         </div>
       )}
-      {isPinnedByCurrentUser && authUser?.username === username && (
+      {isPinnedOnThisProfile && (
         <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
           <BsPinFill className="inline-block text-lg" size={15} />
           <span className="cursor-pointer">Pinned</span>
@@ -349,7 +355,7 @@ const Post = ({ post, openImageModal }) => {
                     >
                       {isPinning ? (
                         <LoadingSpinner size="xs" />
-                      ) : isPinnedByCurrentUser ? (
+                      ) : isPinnedOnThisProfile || isPinned ? (
                         <BsPinFill className="size-4.5 text-primary" strokeWidth={0.5} />
                       ) : (
                         <BsPin

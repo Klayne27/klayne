@@ -10,7 +10,7 @@ const Posts = ({
   onPostsFetched,
   openImageModal,
   onLikedPostsFetched,
-  pinnedPosts = [], // NEW PROP: Accept pinned posts
+  pinnedPosts = [],
   isLoadingPinnedPosts,
 }) => {
   const getPostEndpoint = () => {
@@ -132,7 +132,12 @@ const Posts = ({
             pinnedPosts.length > 0 && (
               <div>
                 {pinnedPosts.map((post) => (
-                  <Post key={post._id} post={post} openImageModal={openImageModal} />
+                  <Post
+                    key={post._id}
+                    post={post}
+                    openImageModal={openImageModal}
+                    profilePinnedPosts={pinnedPosts}
+                  />
                 ))}
               </div>
             )
@@ -145,7 +150,11 @@ const Posts = ({
         const elementRef = filteredPosts.length === index + 1 ? lastPostElementRef : null; // Only apply ref to the last *filtered* post
         return (
           <div ref={elementRef} key={post._id}>
-            <Post post={post} openImageModal={openImageModal} />
+            <Post
+              post={post}
+              openImageModal={openImageModal}
+              profilePinnedPosts={pinnedPosts} // Also pass to regular posts in case they are also pinned
+            />
           </div>
         );
       })}
