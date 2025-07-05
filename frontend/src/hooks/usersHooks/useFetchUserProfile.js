@@ -24,6 +24,7 @@ export const useFetchUserProfile = (username) => {
   const message = data?.message || error?.message || null;
   const httpStatus = data?.status || error?.status || null;
 
+
   return {
     user,
     isLoading,

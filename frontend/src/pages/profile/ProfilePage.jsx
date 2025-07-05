@@ -122,9 +122,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  useEffect(() => {
-    refetch(); // Keep refetching main user profile on username change
-  }, [username, refetch]);
+  // useEffect(() => {
+  //   refetch(); // Keep refetching main user profile on username change
+  // }, [username, refetch]);
 
   const openFollowListModal = (type) => {
     setModalType(type);
@@ -171,8 +171,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     showFullProfileContent = true;
   }
 
-  // Use the pinnedPosts from the new hook
-  // const userPinnedPosts = pinnedPosts || []; // Already named 'pinnedPosts' from the hook
 
   return (
     <>

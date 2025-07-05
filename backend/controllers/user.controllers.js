@@ -25,10 +25,12 @@ export const getUserProfile = async (req, res) => {
 
   try {
     // Populate pinnedPosts and the user field within each pinned post
+
     const user = await User.findOne({ username })
       .select("-password")
       .populate({
         path: "followers",
+
         select: "username fullName profileImg",
       })
       .populate({
@@ -54,17 +56,17 @@ export const getUserProfile = async (req, res) => {
       const currentUser = await User.findById(currentUserId).select(
         "blockedUsers blockedBy"
       );
+
       if (currentUser) {
         // Check if the profile owner is in the current user's blockedUsers list
-        isBlockedByYou = currentUser.blockedUsers.includes(user._id);
-        // Check if the current user is in the profile owner's blockedBy list
-        // (This means the profile owner has blocked the current user)
+        isBlockedByYou = currentUser.blockedUsers.includes(user._id); // Check if the current user is in the profile owner's blockedBy list // (This means the profile owner has blocked the current user
         hasBlockedYou = user.blockedBy.includes(currentUserId);
       }
     }
 
     if (hasBlockedYou) {
       // If the profile owner has blocked the current user, return limited info
+
       return res.status(403).json({
         error: "You are blocked by this user.",
         isBlockedByYou: false, // You haven't blocked them
@@ -75,12 +77,7 @@ export const getUserProfile = async (req, res) => {
         coverImg: user.coverImg, // Include coverImg for header display
         isVerified: user.isVerified, // Include isVerified
       });
-    }
-
-    // If isBlockedByYou, you (the current user) have blocked this user.
-    // In this case, you might still want to see the basic profile info but
-    // restrict access to some content or interactions.
-    // The current logic passes isBlockedByYou in profileData, which is fine.
+    } // If isBlockedByYou, you (the current user) have blocked this user. // In this case, you might still want to see the basic profile info but // restrict access to some content or interactions. // The current logic passes isBlockedByYou in profileData, which is fine.
 
     const profileData = {
       ...user.toObject(), // Convert Mongoose document to a plain JavaScript object
