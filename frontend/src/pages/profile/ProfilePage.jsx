@@ -1,5 +1,3 @@
-// ProfilePage.jsx
-
 import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
@@ -22,6 +20,7 @@ import { CiMail } from "react-icons/ci";
 import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
 import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
+import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -54,6 +53,15 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     hasBlockedYou,
     httpStatus,
   } = useFetchUserProfile(username);
+
+  // NEW: Fetch pinned posts separately
+  const {
+    pinnedPosts,
+    isLoading: isLoadingPinnedPosts,
+    isRefetching: isRefetchingPinnedPosts,
+    error: pinnedPostsError,
+  } = useFetchPinnedPosts(username);
+
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
   const { conversations } = useFetchConversations();
 
@@ -76,8 +84,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     if (!user?._id) return;
     blockUnblockUser(user._id);
   };
-
-
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0];
@@ -117,7 +123,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   };
 
   useEffect(() => {
-    refetch();
+    refetch(); // Keep refetching main user profile on username change
   }, [username, refetch]);
 
   const openFollowListModal = (type) => {
@@ -132,13 +138,18 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const handlePostsFetched = (count) => {
     setUserPostsCount(count);
-    setUserLikedPostsCount(count)
   };
 
-  let displayMessage = ''
+  // Adjusted to handle liked posts count separately
+  const handleLikedPostsFetched = (count) => {
+    setUserLikedPostsCount(count);
+  };
+
+  let displayMessage = "";
   let showFullProfileHeader = false;
   let showFullProfileContent = false;
 
+  // Use isLoading from useFetchUserProfile for main profile loading state
   if (isLoading || isRefetching) {
     showFullProfileHeader = false;
     showFullProfileContent = false;
@@ -148,7 +159,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     showFullProfileHeader = false;
     showFullProfileContent = false;
   } else if (!user) {
-    displayMessage = error || "User not found.";
+    displayMessage = error?.message || "User not found."; // Access error.message
     showFullProfileHeader = false;
     showFullProfileContent = false;
   } else if (isBlockedByYou) {
@@ -157,8 +168,11 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     showFullProfileContent = false;
   } else {
     showFullProfileHeader = true;
-    showFullProfileContent = true
+    showFullProfileContent = true;
   }
+
+  // Use the pinnedPosts from the new hook
+  // const userPinnedPosts = pinnedPosts || []; // Already named 'pinnedPosts' from the hook
 
   return (
     <>
@@ -243,12 +257,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {!isMyProfile && !hasBlockedYou && (
                 <button
                   className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:py-1.5 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
-                                        ${
-                                          isBlockedByYou
-                                            ? "bg-red-700  hover:bg-red-800"
-                                            : "bg-red-700  hover:bg-red-800"
-                                        }
-                                    `}
+                                  ${
+                                    isBlockedByYou
+                                      ? "bg-red-700  hover:bg-red-800"
+                                      : "bg-red-700  hover:bg-red-800"
+                                  }
+                              `}
                   onClick={openBlockConfirmationModal}
                   disabled={isBlocking}
                 >
@@ -387,6 +401,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             userId={user?._id}
             onPostsFetched={handlePostsFetched}
             openImageModal={openImageModal}
+            pinnedPosts={pinnedPosts || []} // Pass pinned posts from the new hook
+            isLoadingPinnedPosts={isLoadingPinnedPosts || isRefetchingPinnedPosts} // Pass loading state
           />
         )}
       </div>

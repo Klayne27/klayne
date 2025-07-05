@@ -10,6 +10,8 @@ const Posts = ({
   onPostsFetched,
   openImageModal,
   onLikedPostsFetched,
+  pinnedPosts = [], // NEW PROP: Accept pinned posts
+  isLoadingPinnedPosts,
 }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
@@ -65,15 +67,14 @@ const Posts = ({
     [isLoading, isFetchingNextPage, hasNextPage, fetchNextPage]
   );
 
-  // useEffect(() => {
-  //   if (POST_ENDPOINT) {
-  //     refetch();
-  //   }
-  // }, [feedType, refetch, username, userId, POST_ENDPOINT]);
-
   useEffect(() => {
     if (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) {
-      onPostsFetched(totalPostsCount || totalLikedPostsCount);
+      // Adjust total count for 'posts' feed to include pinned posts if they are distinct
+      const combinedCount =
+        feedType === "posts"
+          ? (totalPostsCount || 0) + (pinnedPosts?.length || 0)
+          : totalLikedPostsCount;
+      onPostsFetched(combinedCount);
     }
   }, [
     posts,
@@ -84,6 +85,7 @@ const Posts = ({
     totalPostsCount,
     totalLikedPostsCount,
     onLikedPostsFetched,
+    pinnedPosts?.length, // Add pinnedPosts length as a dependency
   ]);
 
   if (isLoading) {
@@ -104,14 +106,43 @@ const Posts = ({
     );
   }
 
-  if (posts?.length === 0) {
+  // Filter out pinned posts from the main `posts` array to avoid duplicates
+  const filteredPosts =
+    feedType === "posts"
+      ? posts.filter((post) => !pinnedPosts.some((pinned) => pinned._id === post._id))
+      : posts;
+
+  // Combine pinned posts with filtered posts for the 'posts' feed type
+  const combinedPosts = feedType === "posts" ? [...pinnedPosts, ...filteredPosts] : posts;
+
+  if (combinedPosts?.length === 0) {
     return <p className="text-center my-4">No posts in this tab. Switch 👻</p>;
   }
 
   return (
     <div>
-      {posts.map((post, index) => {
-        const elementRef = posts.length === index + 1 ? lastPostElementRef : null;
+      {/* Render Pinned Posts section for 'posts' feed type */}
+      {feedType === "posts" && (
+        <div>
+          {isLoadingPinnedPosts ? (
+            <div className="flex justify-center items-center h-20">
+              Loading Pinned Posts...
+            </div>
+          ) : (
+            pinnedPosts.length > 0 && (
+              <div>
+                {pinnedPosts.map((post) => (
+                  <Post key={post._id} post={post} openImageModal={openImageModal} />
+                ))}
+              </div>
+            )
+          )}
+        </div>
+      )}
+
+      {/* Render regular posts */}
+      {filteredPosts.map((post, index) => {
+        const elementRef = filteredPosts.length === index + 1 ? lastPostElementRef : null; // Only apply ref to the last *filtered* post
         return (
           <div ref={elementRef} key={post._id}>
             <Post post={post} openImageModal={openImageModal} />
@@ -124,9 +155,11 @@ const Posts = ({
           <PostSkeleton />
         </div>
       )}
-      {!hasNextPage && posts.length > 0 && !isFetchingNextPage && (
-        <p className="text-center text-gray-500 my-4">You've reached the end!</p>
-      )}
+      {!hasNextPage &&
+        filteredPosts.length > 0 &&
+        !isFetchingNextPage && ( // Check filteredPosts length
+          <p className="text-center text-gray-500 my-4">You've reached the end!</p>
+        )}
     </div>
   );
 };

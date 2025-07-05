@@ -14,6 +14,8 @@ import {
   toggleBookmark,
   getBookmarkedPosts,
   voteOnPoll,
+  pinUnpinPost,
+  getPinnedPosts,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -36,6 +38,13 @@ router.get("/check-repost/:originalPostId", protectRoute, checkIfUserReposted);
 router.post("/bookmark/:id", protectRoute, toggleBookmark);
 
 router.post("/:postId/vote", protectRoute, voteOnPoll);
+
+// NEW ROUTES FOR PINNING/UNPINNING
+router.post("/pin/:id", protectRoute, pinUnpinPost); // To pin a post
+router.delete("/pin/:id", protectRoute, pinUnpinPost); // To unpin a post
+
+router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts); // Assuming protectRoute is needed
+
 
 
 export default router;

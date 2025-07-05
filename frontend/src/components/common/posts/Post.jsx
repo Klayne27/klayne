@@ -3,7 +3,7 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import { formatPostDate } from "../../../utils/date";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
@@ -15,26 +15,37 @@ import { useEffect, useState } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
+import { usePinPost } from "../../../hooks/postsHooks/usePinPost"; // Import the new hook
+import { BsPin, BsPinFill } from "react-icons/bs";
 
-const Post = ({ post, openImageModal, setFeedType }) => {
+const Post = ({ post, openImageModal }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
+  const { username } = useParams();
 
   const isRepost = !!post.repostedFrom;
   const originalPost = isRepost ? post.repostedFrom : post;
   const originalPostOwner = originalPost?.user;
   const repostingUser = isRepost ? post.user : null;
   const isLiked = originalPost?.likes?.includes(authUser?._id);
-  const canDelete = authUser && authUser._id === post.user._id;
   const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
-  // const isMyPost = authUser?._id === post.user._id;
+
+  // Check if the post is pinned by the authenticated user
+  const isPinnedByCurrentUser = authUser?.pinnedPosts?.some(
+    (pinnedPost) => pinnedPost === originalPost._id
+  );
+
+  const canDelete = authUser && authUser._id === post.user._id;
+  const isMyOriginalPost =
+    authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks();
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(originalPost);
   const { deletePost, isDeleting } = useDeletePosts(post);
+  const { pinUnpinPost, isPinning } = usePinPost(); // Use the new pin hook
 
   const formattedDate = formatPostDate(originalPost.createdAt);
 
@@ -45,7 +56,7 @@ const Post = ({ post, openImageModal, setFeedType }) => {
       e.target.closest("img") ||
       e.target.closest("video")
     ) {
-      // Don't navigate if clicking on media
+      // Don't navigate if clicking on interactive elements
       return;
     }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
@@ -75,6 +86,13 @@ const Post = ({ post, openImageModal, setFeedType }) => {
     handleInteractiveClick(e);
     if (isReposting) return;
     repostPost(originalPost._id);
+  };
+
+  const handlePinToggle = (e) => {
+    handleInteractiveClick(e);
+    if (isPinning) return;
+    const action = isPinnedByCurrentUser ? "unpin" : "pin";
+    pinUnpinPost({ postId: originalPost._id, action, username });
   };
 
   const handleMediaClick = (mediaUrl, mediaType, event) => {
@@ -156,8 +174,14 @@ const Post = ({ post, openImageModal, setFeedType }) => {
           </span>
         </div>
       )}
+      {isPinnedByCurrentUser && authUser?.username === username && (
+        <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
+          <BsPinFill className="inline-block text-lg" size={15} />
+          <span className="cursor-pointer">Pinned</span>
+        </div>
+      )}
 
-      <div className="flex gap-2 items-start">
+      <div className="flex gap-2 items-start relative">
         <div className="avatar mt-1">
           <Link
             to={`/profile/${originalPostOwner.username}`}
@@ -243,90 +267,111 @@ const Post = ({ post, openImageModal, setFeedType }) => {
             )}
           </div>
 
-          <div className="flex justify-between mt-3 relative">
-            <div className="flex gap-4 items-center w-2/3 justify-between ">
-              <div
-                className="flex items-center cursor-pointer group"
-                onClick={handleInteractiveClick}
-              >
+          <div className="w-2/3 mt-3">
+            <div>
+              <div className="flex justify-between">
                 <div
-                  onClick={navigateToPostPage}
-                  className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition"
+                  className="flex items-center cursor-pointer group"
+                  onClick={handleInteractiveClick}
                 >
-                  <FaRegComment
-                    className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
-                    strokeWidth={10}
-                  />
+                  <div
+                    onClick={navigateToPostPage}
+                    className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition"
+                  >
+                    <FaRegComment
+                      className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
+                      strokeWidth={10}
+                    />
+                  </div>
+                  <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
+                    {originalPost.commentsCount || 0}
+                  </span>
                 </div>
-                <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
-                  {originalPost.commentsCount || 0}
-                </span>
-              </div>
 
-              <div
-                className="flex items-center group cursor-pointer"
-                onClick={handleRepostClick}
-              >
-                <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
-                  <BiRepost
-                    className={`w-6 h-6 duration-200 transition ${
+                <div
+                  className="flex items-center group cursor-pointer"
+                  onClick={handleRepostClick}
+                >
+                  <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
+                    <BiRepost
+                      className={`w-6 h-6 duration-200 transition ${
+                        hasUserRepostedOriginal
+                          ? "text-green-500"
+                          : "text-slate-500 group-hover:text-green-500"
+                      } ${isReposting ? "animate-spin" : ""}`}
+                    />
+                  </div>
+                  <span
+                    className={`text-sm duration-200 transition ${
                       hasUserRepostedOriginal
                         ? "text-green-500"
                         : "text-slate-500 group-hover:text-green-500"
-                    } ${isReposting ? "animate-spin" : ""}`}
-                  />
+                    }`}
+                  >
+                    {originalPost.repostsCount || 0}{" "}
+                  </span>
                 </div>
-                <span
-                  className={`text-sm duration-200 transition ${
-                    hasUserRepostedOriginal
-                      ? "text-green-500"
-                      : "text-slate-500 group-hover:text-green-500"
-                  }`}
-                >
-                  {originalPost.repostsCount || 0}{" "}
-                </span>
-              </div>
 
-              <div
-                className="flex items-center group cursor-pointer rounded-full"
-                onClick={handleLikePostClick}
-              >
                 <div
-                  className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
-                    isLiking ? "animate-spin" : ""
-                  }`}
+                  className="flex items-center group cursor-pointer rounded-full"
+                  onClick={handleLikePostClick}
                 >
-                  {!isLiked && (
-                    <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
-                  )}
-                  {isLiked && (
-                    <FaHeart
-                      className={`w-4 h-4 cursor-pointer text-pink-600 duration-200 transition ${
-                        isLiking ? "animate-spin" : ""
-                      }`}
-                    />
-                  )}
+                  <div
+                    className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
+                      isLiking ? "animate-spin" : ""
+                    }`}
+                  >
+                    {!isLiked && (
+                      <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
+                    )}
+                    {isLiked && (
+                      <FaHeart
+                        className={`w-4 h-4 cursor-pointer text-pink-600 duration-200 transition ${
+                          isLiking ? "animate-spin" : ""
+                        }`}
+                      />
+                    )}
+                  </div>
+                  <span
+                    className={`text-sm group-hover:text-pink-600 duration-200 transition ${
+                      isLiked ? "text-pink-600 " : "text-slate-500"
+                    }`}
+                  >
+                    {originalPost.likes?.length || 0}
+                  </span>
                 </div>
-                <span
-                  className={`text-sm group-hover:text-pink-600 duration-200 transition ${
-                    isLiked ? "text-pink-600 " : "text-slate-500"
-                  }`}
-                >
-                  {originalPost.likes?.length || 0}
-                </span>
-              </div>
 
-              <div
-                className="flex gap-1 items-center cursor-pointer group absolute right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
-                onClick={handleBookmarkPost}
-              >
-                {isBookmarking ? (
-                  <LoadingSpinner size="xs" />
-                ) : isBookmarked ? (
-                  <FaBookmark className="size-4 text-primary" />
-                ) : (
-                  <FaRegBookmark className="size-4 text-slate-500 group-hover:text-primary duration-200 transition" /> // Outline if not
-                )}
+                <div className="absolute flex right-0">
+                  {isMyOriginalPost && (
+                    <div
+                      className="flex gap-1 items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
+                      onClick={handlePinToggle}
+                    >
+                      {isPinning ? (
+                        <LoadingSpinner size="xs" />
+                      ) : isPinnedByCurrentUser ? (
+                        <BsPinFill className="size-4.5 text-primary" strokeWidth={0.5} />
+                      ) : (
+                        <BsPin
+                          strokeWidth={0.5}
+                          className="size-4.5 text-slate-500 group-hover:text-primary duration-200 transition"
+                        />
+                      )}
+                    </div>
+                  )}
+                  <div
+                    className="flex  items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
+                    onClick={handleBookmarkPost}
+                  >
+                    {isBookmarking ? (
+                      <LoadingSpinner size="xs" />
+                    ) : isBookmarked ? (
+                      <FaBookmark className="size-4 text-primary" />
+                    ) : (
+                      <FaRegBookmark className="size-4 text-slate-500 group-hover:text-primary duration-200 transition" /> // Outline if not
+                    )}
+                  </div>
+                </div>
               </div>
             </div>
           </div>

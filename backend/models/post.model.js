@@ -70,6 +70,7 @@ const postSchema = new mongoose.Schema(
         },
       },
     ],
+
     pollOptions: [
       {
         text: {

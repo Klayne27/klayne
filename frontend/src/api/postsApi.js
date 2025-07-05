@@ -103,3 +103,31 @@ export const voteOnPollApi = async ({ postId, optionId }) => {
   }
   return data;
 };
+
+export const pinUnpinPostApi = async (postId) => {
+  const res = await fetch(`/api/posts/pin/${postId}`, {
+    method: "POST", // POST for pinning
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to pin post");
+  }
+  return res.json();
+};
+
+export const unpinPostApi = async (postId) => {
+  const res = await fetch(`/api/posts/pin/${postId}`, {
+    method: "DELETE", // DELETE for unpinning
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
+  if (!res.ok) {
+    const errorData = await res.json();
+    throw new Error(errorData.error || "Failed to unpin post");
+  }
+  return res.json();
+};

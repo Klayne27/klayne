@@ -85,6 +85,13 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    pinnedPosts: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Post",
+        default: [],
+      },
+    ],
   },
   { timestamps: true }
 );

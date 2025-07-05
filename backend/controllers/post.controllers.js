@@ -1006,3 +1006,76 @@ export const voteOnPoll = async (req, res) => {
         res.status(500).json({ error: "Internal server error." });
     }
 };
+
+export const pinUnpinPost = async (req, res) => {
+  try {
+    const { id: postId } = req.params;
+    const userId = req.user._id; // Authenticated user's ID
+
+    const post = await Post.findById(postId);
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Ensure only the owner can pin/unpin their own post
+    if (post.user.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to pin/unpin this post" });
+    }
+
+    const user = await User.findById(userId);
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    const isPinned = user.pinnedPosts.includes(postId);
+
+    if (isPinned) {
+      // Unpin the post
+      user.pinnedPosts = user.pinnedPosts.filter(
+        (id) => id.toString() !== postId.toString()
+      );
+      await user.save();
+      res.status(200).json({ message: "Post unpinned successfully" });
+    } else {
+      // Pin the post
+      // Add to the beginning of the array for a LIFO (Last-In, First-Out) display
+      // Or you can append: user.pinnedPosts.push(postId); for FIFO
+      user.pinnedPosts.unshift(postId);
+      await user.save();
+      res.status(200).json({ message: "Post pinned successfully" });
+    }
+  } catch (error) {
+    console.error("Error in pinUnpinPost controller:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Add this new function to your user controller or a new post controller
+export const getPinnedPosts = async (req, res) => {
+  const { username } = req.params;
+
+  try {
+      const user = await User.findOne({ username })
+          .select("pinnedPosts") // Only select the pinnedPosts array
+          .populate({
+              path: "pinnedPosts", // Populate the pinnedPosts array
+              populate: {
+                  path: "user", // Populate the 'user' field *within* each pinned post
+                  select: "username fullName profileImg isVerified", // Select desired fields for the post owner
+              },
+          });
+
+      if (!user) {
+          return res.status(404).json({ error: "User not found" });
+      }
+
+      // Return the populated pinnedPosts
+      res.status(200).json(user.pinnedPosts);
+
+  } catch (error) {
+      console.log("Error in getPinnedPosts: ", error.message);
+      res.status(500).json({ error: "Internal Server Error" });
+  }
+};
