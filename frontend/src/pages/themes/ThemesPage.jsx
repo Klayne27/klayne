@@ -17,8 +17,8 @@ const ThemesPage = () => {
   const isThemeLocked = authUser && authUser.forceBlackTheme; // Check if theme is locked
 
   return (
-    <main className="flex-[4_4_0] border-r border-accent min-h-screen">
-      <div className="flex justify-between items-center p-4 border-b border-accent">
+    <main className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
+      <div className="flex justify-between items-center p-4 border-b border-gray-700">
         <p className="font-bold">Themes</p>
       </div>
 
@@ -40,7 +40,7 @@ const ThemesPage = () => {
             <button
               key={t}
               className={`
-                  group flex flex-col items-center gap-1.5 p-2 rounded-lg transition-colors
+                  group flex flex-col items-center gap-1.5 p-2 rounded-2xl transition duration-200
                   ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"}
                   ${
                     isThemeLocked ? "cursor-not-allowed opacity-50" : ""
@@ -50,14 +50,13 @@ const ThemesPage = () => {
               disabled={isThemeLocked} // Disable the button
             >
               <div
-                className="relative h-8 w-full rounded-md overflow-hidden"
+                className="relative h-8 w-full rounded-2xl overflow-hidden"
                 data-theme={t}
               >
-                <div className="absolute inset-0 grid grid-cols-4 gap-px p-1">
-                  <div className="rounded bg-primary"></div>
-                  <div className="rounded bg-secondary"></div>
-                  <div className="rounded bg-accent"></div>
-                  <div className="rounded bg-neutral"></div>
+                <div className="absolute inset-0 grid grid-cols-2 gap-px p-1">
+                  <div className="rounded-xl bg-primary"></div>
+                  <div className="rounded-xl bg-secondary"></div>
+                  {/* <div className="rounded bg-accent"></div> */}
                 </div>
               </div>
               <span className="text-[11px] font-medium truncate w-full text-center">
@@ -110,7 +109,7 @@ const ThemesPage = () => {
                   ))}
                 </div>
 
-                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-primary mx-4">
+                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent mx-4">
                   <div className="flex pl-1">
                     <button
                       type="button"

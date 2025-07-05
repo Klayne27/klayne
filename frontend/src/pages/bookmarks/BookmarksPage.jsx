@@ -58,8 +58,8 @@ const BookmarksPage = ({ openImageModal }) => {
 
   return (
     <>
-      <div className="flex-[4_4_0] border-r border-accent min-h-screen">
-        <div className="flex items-center gap-4 px-4 py-3.5 border-accent sticky top-0 z-10 backdrop-blur-md bg-opacity-80">
+      <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
+        <div className="flex items-center gap-4 px-4 py-3.5 border-gray-700 sticky top-0 z-10 backdrop-blur-md bg-opacity-80">
           <button
             onClick={() => navigate(-1)}
             className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
@@ -69,8 +69,8 @@ const BookmarksPage = ({ openImageModal }) => {
           <h1 className="font-bold text-xl flex-1 truncate">Bookmarks</h1>
         </div>
 
-        <div className="p-4 border-accent top-[60px] z-10 backdrop-blur-md bg-opacity-80">
-          <div className="flex items-center gap-2  text-white rounded-full px-4 py-3 border border-accent w-full">
+        <div className="p-4 border-gray-700 top-[60px] z-10 backdrop-blur-md bg-opacity-80">
+          <div className="flex items-center gap-2  text-white rounded-full px-4 py-3 border border-gray-700 w-full">
             <CiSearch className="size-4 text-gray-400" />{" "}
             <input
               type="text"

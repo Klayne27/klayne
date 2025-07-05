@@ -28,7 +28,7 @@ const MessageItem = ({
   // Adjusted highlight class: only apply hover for non-touch
   const messageHighlightClass = isCurrentlyTouchDevice
     ? showModal
-      ? "bg-gray-900 active-highlight" // Keep a highlight for active modal on touch
+      ? "active-highlight" // Keep a highlight for active modal on touch
       : ""
     : "hover:bg-secondary"; // Only apply hover for non-touch
 

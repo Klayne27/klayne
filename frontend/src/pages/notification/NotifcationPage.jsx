@@ -60,8 +60,8 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="flex-1 border-r border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
-        <div className="flex justify-between items-center p-4  border-accent">
+      <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
+        <div className="flex justify-between items-center p-4  border-gray-700">
           <p className="font-bold text-xl">Notifications</p>
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm">
@@ -69,7 +69,7 @@ const NotificationPage = () => {
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-accent"
+              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-gray-700"
             >
               <li>
                 <a onClick={deleteNotifications}>
@@ -93,7 +93,7 @@ const NotificationPage = () => {
         {filteredNotifications?.map((notification) => {
           return (
             <div
-              className="border-b border-accent px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-secondary transition-colors cursor-pointer"
+              className="border-b border-gray-700 px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-secondary transition-colors cursor-pointer"
               key={notification._id}
               onClick={(e) => handleNotificationItemClick(e, notification)}
             >

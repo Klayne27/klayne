@@ -103,9 +103,9 @@ const ConversationsList = ({
   }
 
   return (
-    <div className="flex flex-col h-full bg-black/0 border-accent">
-      <div className="sticky top-0 bg-black/0 bg-opacity-90 backdrop-blur-sm z-10 p-4 border-accent flex justify-between items-center">
-        <div className="flex items-center gap-4  border-accent">
+    <div className="flex flex-col h-full bg-black/0 border-gray-700">
+      <div className="sticky top-0 bg-black/0 bg-opacity-90 backdrop-blur-sm z-10 p-4 border-gray-700 flex justify-between items-center">
+        <div className="flex items-center gap-4  border-gray-700">
           <h1 className="font-bold text-xl flex-1 truncate">Messages</h1>
         </div>
         <div className="flex ">
@@ -120,7 +120,7 @@ const ConversationsList = ({
         <input
           type="text"
           placeholder="Search Direct Messages"
-          className="text-sm w-full p-2 px-3 rounded-full bg-black/0  border-accent border focus:border-primary focus:outline-none pl-8"
+          className="text-sm w-full p-2 px-3 rounded-full bg-black/0  border-gray-700 border focus:border-accent focus:outline-none pl-8"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />

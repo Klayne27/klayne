@@ -7,7 +7,7 @@ const Modal = ({ isOpen, onClose, children }) => {
       onClick={onClose}
     >
       <div
-        className="bg-black/0 p-6 rounded-3xl shadow-lg max-w-sm w-full mx-4 border border-accent"
+        className="bg-black/0 p-6 rounded-3xl shadow-lg max-w-sm w-full mx-4 border border-gray-700"
         onClick={(e) => e.stopPropagation()}
       >
         {children}

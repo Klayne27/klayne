@@ -38,7 +38,7 @@ const BlockConfirmationModal = ({ isOpen, onClose, onConfirm, username, isBlocki
             {confirmButtonText}
           </button>
           <button
-            className="w-full py-2.5 rounded-full font-bold text-white border border-gray-600 hover:bg-gray-900 transition duration-200"
+            className="w-full py-2.5 rounded-full font-bold text-white border border-gray-700 hover:bg-gray-900 transition duration-200"
             onClick={onClose}
           >
             Cancel

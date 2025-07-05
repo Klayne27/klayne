@@ -4,6 +4,7 @@ export const AVAILABLE_THEMES = [
   "black",
   "forest",
   "synthwave",
+  "lemonade",
   "dim",
   "valentine",
   "night",
@@ -16,5 +17,4 @@ export const AVAILABLE_THEMES = [
   "dracula",
   "pastel",
   "retro",
-  "sunset",
 ];

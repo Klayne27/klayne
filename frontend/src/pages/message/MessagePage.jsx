@@ -191,7 +191,7 @@ const MessagePage = ({ openImageModal }) => {
       <div
         className={`
           w-full
-          md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent
+          md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700
           ${
             showChatWindow ? "hidden" : "flex"
           }

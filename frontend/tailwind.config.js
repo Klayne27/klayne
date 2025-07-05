@@ -68,16 +68,36 @@ export default {
           secondary: "hsl(0, 0%, 92%)",
         },
       },
+      {
+        dim: {
+          ...daisyUIThemes["dim"],
+          secondary: "hsl(12, 100%, 68%)",
+        },
+      },
+      {
+        halloween: {
+          ...daisyUIThemes["halloween"],
+          secondary: "hsl(278, 100%, 20%)",
+        },
+      },
+      {
+        business: {
+          ...daisyUIThemes["business"],
+          secondary: "hsl(200, 13%, 40%)",
+        },
+      },
+      {
+        dracula: {
+          ...daisyUIThemes["dracula"],
+          secondary: "hsl(265, 89%, 20%)",
+        },
+      },
       "coffee",
-      "halloween",
-      "business",
       "cupcake",
       "luxury",
-      "dracula",
-      "cyberpunk",
       "retro",
       "pastel",
-      "sunset"
+      "lemonade",
     ],
   },
 };

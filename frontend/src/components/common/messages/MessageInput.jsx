@@ -174,7 +174,7 @@ function MessageInput({
   return (
     <>
       {imageFile && (
-        <div className="mt-4 border-t border-accent p-5 flex">
+        <div className="mt-4 border-t border-gray-700 p-5 flex">
           <div className="relative">
             <img
               src={URL.createObjectURL(imageFile)}
@@ -192,7 +192,7 @@ function MessageInput({
       )}
 
       {replyingToMessage && (
-        <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
+        <div className="p-2 pt-0 border-t border-gray-700 bg-black/0 flex items-center justify-between">
           <div className="flex-1 p-3 rounded-md flex flex-col">
             <div className="text-sm text-primary font-bold">Replying to</div>
             <div className="text-xs text-gray-400 mt-1 italic">
@@ -211,7 +211,7 @@ function MessageInput({
 
       <form
         onSubmit={handleSendMessage}
-        className="p-2 border-accent bg-black/0 flex items-center relative"
+        className="p-2 border-gray-700 bg-black/0 flex items-center relative"
       >
         {isTypingOtherUser && (
           <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
@@ -241,7 +241,7 @@ function MessageInput({
           className="hidden"
         />
 
-        <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-primary">
+        <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent">
           <div className="flex pl-1">
             <button
               type="button"
@@ -276,7 +276,7 @@ function MessageInput({
             value={messageInput}
             onChange={handleMessageInputChange}
             placeholder="Start a new message"
-            className="flex-1 py-2  bg-secondary rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
+            className="flex-1 py-2  bg-secondary rounded-full placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
             ref={messageInputRef}
           />
 

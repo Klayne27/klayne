@@ -219,7 +219,7 @@ const Sidebar = () => {
 
   return (
     <div className="md:flex-[2_2_0] max-w-56">
-      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-accent w-[46px] md:w-full">
+      <div className="sticky top-0 left-0 h-dvh flex flex-col border-r border-gray-700 w-[46px] md:w-full">
         <Link
           to="/"
           onClick={handleHomeClick}
@@ -233,14 +233,14 @@ const Sidebar = () => {
               navigate("/");
               handleHomeClick();
             }}
-            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+            className="flex justify-start md:justify-start items-center gap-0.5 md:hover:bg-secondary rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to="/"
               onClick={handleHomeClick}
               className={`${
                 pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
-              } relative flex gap-2.5 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
+              } relative flex gap-2.5 items-center hover:bg-secondary  rounded-full py-2 px-2 pl-2 pr-2 max-w-fit cursor-pointer`}
             >
               <PiHouseThin
                 className="w-7 h-7 fill-white"
@@ -265,7 +265,7 @@ const Sidebar = () => {
           </li>
           <li
             onClick={() => navigate("/messages")}
-            className="flex justify-center md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[140px]"
+            className="flex justify-center md:justify-start items-center gap-1 md:hover:bg-secondary rounded-full cursor-pointer w-[46px] md:w-[140px]"
           >
             <Link
               to="/messages"
@@ -273,7 +273,7 @@ const Sidebar = () => {
                 pathname.startsWith("/messages")
                   ? "font-bold text-opcaity-100"
                   : "opacity-80"
-              } flex gap-3 items-center justify-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              } flex gap-3 items-center justify-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <CiMail
                 className="w-6 h-6"
@@ -297,7 +297,7 @@ const Sidebar = () => {
           </li>
           <li
             onClick={() => navigate("/notifications")}
-            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[168px]"
+            className="flex justify-start md:justify-start items-center gap-1 md:hover:bg-secondary rounded-full cursor-pointer w-[46px] md:w-[168px]"
           >
             <Link
               to="/notifications"
@@ -305,7 +305,7 @@ const Sidebar = () => {
                 pathname === "/notifications"
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
             >
               <PiBellThin
                 className="w-6 h-6"
@@ -335,7 +335,7 @@ const Sidebar = () => {
               onClick={handleBookmarksClick}
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+              } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
             >
               <CiBookmark
                 className="size-6"
@@ -348,7 +348,7 @@ const Sidebar = () => {
             <div
               className={`${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              }  flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+              }  flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
             >
               <button onClick={handleMobileSearchClick}>
                 <CiSearch
@@ -361,7 +361,7 @@ const Sidebar = () => {
 
           <li
             onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="flex justify-start md:justify-start md:hover:bg-secondary transition-all rounded-full cursor-pointer w-[46px] md:w-[115px]"
+            className="flex justify-start md:justify-start md:hover:bg-secondary rounded-full cursor-pointer w-[46px] md:w-[115px]"
           >
             <Link
               to={`/profile/${authUser?.username}`}
@@ -369,7 +369,7 @@ const Sidebar = () => {
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
-              } flex gap-[10px] items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer`}
+              } flex gap-[10px] items-center hover:bg-secondary rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer`}
             >
               <CiUser
                 className="w-7 h-7"
@@ -385,10 +385,9 @@ const Sidebar = () => {
               onClick={handleBookmarksClick}
               className={`${
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary transition-all rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+              } flex gap-3 items-center hover:bg-secondary  rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
             >
               <LuPalette
-
                 className="size-6"
                 strokeWidth={pathname === "/themes" ? 2.5 : 2}
               />
@@ -402,7 +401,7 @@ const Sidebar = () => {
             <button
               ref={profileButtonRef}
               onClick={togglePopover}
-              className="flex gap-2 items-start transition-all duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]"
+              className="flex gap-2 items-start duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]"
             >
               <div className="avatar hidden md:inline-flex">
                 <div className="w-8 rounded-full">
@@ -426,7 +425,7 @@ const Sidebar = () => {
                 ref={popoverRef}
                 className="fixed bottom-4 left-[40px]
                 md:absolute md:bottom-full md:left-1/2 md:-translate-x-1/2 md:mb-2
-                bg-base-100 py-3 rounded-2xl border border-accent
+                bg-base-100 py-3 rounded-2xl border border-gray-700
                 min-w-[150px] md:min-w-[250px] z-1000 flex flex-col gap-1
                 shadow-md shadow-gray-400"
               >
