@@ -52,6 +52,9 @@ export const useBlockUnblockUser = () => {
         );
       }
 
+      console.log("Block/Unblock Success Data:", data);
+      console.log("Target User ID (variables):", variables);
+
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["comments"] });
