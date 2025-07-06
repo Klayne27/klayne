@@ -16,9 +16,11 @@ const FollowListModal = ({ userId, type, onClose }) => {
   return (
     <dialog
       id={`follow_list_modal_${type}`}
-      className="modal modal-bottom sm:modal-middle flex justify-center"
+      className="modal modal-middle sm:modal-middle flex justify-center px-10"
       onMouseDown={(e) => {
+        // Stop propagation if the click is on the dialog itself (outside the content)
         if (e.target.id === `follow_list_modal_${type}`) {
+          e.stopPropagation();
           onClose();
         }
       }}
@@ -47,14 +49,17 @@ const FollowListModal = ({ userId, type, onClose }) => {
           </div>
         )}
         <div className="modal-action">
-          <form method="dialog">
-            <button
-              className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
-              onClick={onClose}
-            >
-              ✕
-            </button>
-          </form>
+          {/* Move the button outside the form or handle its click directly */}
+          <button
+            className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
+            // Add stopPropagation directly to the button's onClick
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent the click from bubbling up
+              onClose(); // Call your close function
+            }}
+          >
+            
+          </button>
         </div>
       </div>
     </dialog>

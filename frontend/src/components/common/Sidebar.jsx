@@ -16,6 +16,7 @@ import { IoClose } from "react-icons/io5"; // Import a close icon
 import { FaUserTimes } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
 import { FaUserXmark } from "react-icons/fa6";
+import FollowListModal from "./FollowListModal";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -36,6 +37,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
   const [showSideModal, setShowSideModal] = useState(false); // New state for side modal
+  const [modalType, setModalType] = useState("");
 
   const lastScrollY = useRef(0);
   const profileButtonRef = useRef(null); // Used for desktop popover
@@ -168,6 +170,16 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const handleBookmarksClick = () => {
     queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
     navigate("/bookmarks");
+  };
+
+  const openFollowListModal = (type) => {
+    setModalType(type);
+    document.getElementById(`follow_list_modal_${type}`).showModal();
+  };
+
+  const closeFollowListModal = (type) => {
+    document.getElementById(`follow_list_modal_${type}`).close();
+    setModalType(null);
   };
 
   useEffect(() => {
@@ -592,14 +604,20 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <div className="p-4 border-b border-gray-700">
               <div className="flex justify-between items-center mb-1">
                 <div className="avatar">
-                  <div className="w-11 rounded-full">
+                  <div
+                    className="w-11 rounded-full cursor-pointer"
+                    onClick={() => {
+                      navigate(`/profile/${authUser?.username}`);
+                      setShowSideModal(false); // Close modal on navigation
+                    }}
+                  >
                     <img
                       src={authUser?.profileImg || "/avatar-placeholder.png"}
                       alt="User Profile"
                     />
                   </div>
                 </div>
-  
+
                 <button
                   onClick={() => setShowSideModal(false)}
                   className="p-1 rounded-full hover:bg-secondary"
@@ -612,11 +630,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 <p className="text-slate-500 text-sm">@{authUser?.username}</p>
               </div>
               <div className="flex gap-4 mt-4 text-sm">
-                <p>
+                <p
+                  onClick={() => openFollowListModal("following")}
+                  className="cursor-pointer"
+                >
                   <span className="font-bold">{authUser?.following.length || 0}</span>{" "}
                   <span className="text-slate-500">Following</span>
                 </p>
-                <p>
+                <p
+                  onClick={() => openFollowListModal("followers")}
+                  className="cursor-pointer"
+                >
                   <span className="font-bold">{authUser?.followers.length || 0}</span>{" "}
                   <span className="text-slate-500">Followers</span>
                 </p>
@@ -693,6 +717,22 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </div>
         )}
       </div>
+
+      {authUser && (
+        <FollowListModal
+          userId={authUser._id}
+          type="following"
+          onClose={() => closeFollowListModal("following")}
+        />
+      )}
+
+      {authUser && (
+        <FollowListModal
+          userId={authUser._id}
+          type="followers"
+          onClose={() => closeFollowListModal("followers")}
+        />
+      )}
 
       {/* Background Overlay for Side Modal */}
       {showSideModal && (
