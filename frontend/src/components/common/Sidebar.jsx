@@ -397,6 +397,25 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </span>
         </li>
 
+        {/* Search (Mobile Only) */}
+        <li
+          className="flex justify-center md:hidden items-center cursor-pointer "
+          onClick={handleMobileSearchClick}
+        >
+          <button
+            className={`${
+              pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+            } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+          >
+            <CiSearch
+              className="size-5 md:size-6"
+              strokeWidth={pathname === "/search" ? 2 : 1}
+            />
+            {/* Optional: Add a text label for search on mobile if you want, currently only icon */}
+            {/* <span className="text-lg">Search</span> */}
+          </button>
+        </li>
+
         {/* Bookmarks - Only visible on desktop now, as per X/Twitter mobile */}
         <li
           className="flex md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
@@ -422,23 +441,28 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </span>
         </li>
 
-        {/* Search (Mobile Only) */}
         <li
-          className="flex justify-center md:hidden items-center cursor-pointer "
-          onClick={handleMobileSearchClick}
+          className="flex md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[120px] md:p-0"
+          onClick={() => navigate("/themes")}
         >
-          <button
+          <Link
+            to="/themes"
             className={`${
-              pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-            } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+              pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+            } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
           >
-            <CiSearch
+            <LuPalette
               className="size-5 md:size-6"
-              strokeWidth={pathname === "/search" ? 2 : 1}
+              strokeWidth={pathname === "/themes" ? 2.5 : 2}
             />
-            {/* Optional: Add a text label for search on mobile if you want, currently only icon */}
-            {/* <span className="text-lg">Search</span> */}
-          </button>
+          </Link>
+          <span
+            className={`text-lg hidden md:block ${
+              pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+            }`}
+          >
+            Themes
+          </span>
         </li>
 
         {/* Profile */}
@@ -468,30 +492,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             }`}
           >
             Profile
-          </span>
-        </li>
-
-        <li
-          className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[120px] p-1 md:p-0"
-          onClick={() => navigate("/themes")}
-        >
-          <Link
-            to="/themes"
-            className={`${
-              pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-            } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
-          >
-            <LuPalette
-              className="size-6"
-              strokeWidth={pathname === "/themes" ? 2.5 : 2}
-            />
-          </Link>
-          <span
-            className={`text-lg ${
-              pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-            }`}
-          >
-            Themes
           </span>
         </li>
       </ul>
