@@ -26,7 +26,7 @@ export const renderClickableText = (text, currentUser) => {
         rel="noopener noreferrer"
         className={`hover:underline ${
           currentUser ? "text-white" : "text-blue-500"
-        } break-all`}
+        } `}
         onClick={(e) => e.stopPropagation()}
       >
         {url}

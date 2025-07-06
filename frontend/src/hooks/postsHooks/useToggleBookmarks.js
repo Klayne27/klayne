@@ -13,6 +13,7 @@ export const useToggleBookmarks = () => {
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
       queryClient.invalidateQueries({ queryKey: ["post"] });
+      queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
     },
     onError: (error) => {
       console.error("Error toggling bookmark: ", error);
