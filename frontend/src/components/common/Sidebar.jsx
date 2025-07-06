@@ -436,7 +436,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
           {/* Search (Mobile Only) */}
           <li
-            className="flex justify-center md:hidden items-center cursor-pointer "
+            className="flex md:flex justify-start lg:hidden items-center cursor-pointer "
             onClick={handleMobileSearchClick}
           >
             <button
@@ -446,6 +446,13 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             >
               <CiSearch className="size-6" strokeWidth={pathname === "/search" ? 2 : 1} />
             </button>
+            <span
+              className={`text-lg hidden md:block ${
+                pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+              }`}
+            >
+              Search
+            </span>
           </li>
 
           {/* Bookmarks - Only visible on desktop now, as per X/Twitter mobile */}
@@ -498,7 +505,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </li>
 
           {/* Mobile Profile Image (to open side modal) */}
-          <li className="flex md:hidden justify-center items-center cursor-pointer">
+          <li className="flex md:hidden justify-center items-center cursor-pointer py-1 pr-2">
             <button
               id="mobile-profile-img-button" // Add an ID for click outside logic
               onClick={toggleSideModal}
@@ -515,7 +522,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           {/* Profile (Desktop Only) */}
           <li
             onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[110px] p-1 md:p-0"
+            className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[110px] p-1 md:p-0"
           >
             <Link
               to={`/profile/${authUser?.username}`}

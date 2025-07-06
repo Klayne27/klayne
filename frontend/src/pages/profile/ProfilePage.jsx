@@ -175,7 +175,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   return (
     <>
       <ScrollToTop />
-      <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
+      <div className="flex-[4_4_0] border-gray-700 min-h-screen">
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && (
           <ProfileHeaderSkeleton />
         )}

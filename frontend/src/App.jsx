@@ -47,7 +47,7 @@ function App() {
   return (
     // On small screens, use flex-col for main content and padding-bottom for the fixed footer
     // On medium screens, use original flex setup
-    <div className="flex flex-col md:flex-row md:max-w-7xl mx-auto min-h-screen">
+    <div className="flex flex-col md:flex-row md:max-w-[1240px] mx-auto min-h-screen">
       {authUser && (
         <Sidebar
           isChatWindowOpen={isChatWindowOpen}
