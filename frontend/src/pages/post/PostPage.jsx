@@ -205,14 +205,14 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
   return (
     <div className="flex-1 border-r border-gray-700 min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
-      <div className="flex items-center gap-4 px-4 py-3.5 border-b border-gray-700">
+      <div className="flex items-center gap-2 px-3 py-2 md:gap-4 md:px-4 md:py-3.5 border-b border-gray-700">
         <button
           onClick={() => navigate(-1)}
           className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
         >
           <FaArrowLeft className="w-4 h-4" />
         </button>
-        <h1 className="font-bold text-xl flex-1 truncate">Post</h1>
+        <h1 className="font-bold text-lg md:text-xl flex-1 truncate">Post</h1>
       </div>
 
       <div className="border-gray-700">

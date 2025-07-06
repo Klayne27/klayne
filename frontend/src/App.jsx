@@ -23,6 +23,11 @@ function App() {
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState(null);
   const [feedType, setFeedType] = useState("posts");
+  const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
+
+  const [isMobileMessagesListScrollingDown, setIsMobileMessagesListScrollingDown] =
+    useState(false);
+
 
   const openImageModal = (imageUrl) => setSelectedImage(imageUrl);
   const closeImageModal = () => setSelectedImage(null);
@@ -36,111 +41,144 @@ function App() {
   }
 
   const isMessagePage = location.pathname.includes("/messages");
+  const isSpecificConversationOpen =
+    isMessagePage && location.pathname.split("/").length > 3;
 
   return (
-    <div className="flex md:max-w-7xl mx-auto">
-      {authUser && <Sidebar />}
-      <Suspense
-        fallback={
-          <div className="flex-grow flex justify-center items-center h-screen">
-            {/* <LoadingSpinner size="lg" /> */}
-          </div>
-        }
-      >
-        <Routes>
-          <Route
-            path="/"
-            element={
-              authUser ? (
-                <HomePage openImageModal={openImageModal} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/signup"
-            element={!authUser ? <SignupPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/login"
-            element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-          />
-          <Route
-            path="/notifications"
-            element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
-          />
-          <Route
-            path="/profile/:username"
-            element={
-              authUser ? (
-                <ProfilePage
-                  openImageModal={openImageModal}
-                  feedType={feedType}
-                  setFeedType={setFeedType}
-                />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/messages"
-            element={
-              authUser ? (
-                <MessagesPage openImageModal={openImageModal} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/messages/:conversationId"
-            element={
-              authUser ? (
-                <MessagesPage openImageModal={openImageModal} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/bookmarks" // NEW ROUTE
-            element={
-              authUser ? (
-                <BookmarksPage openImageModal={openImageModal} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/themes" // NEW ROUTE
-            element={
-              authUser ? (
-                <ThemesPage openImageModal={openImageModal} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/:username/post/:pid"
-            element={
-              authUser ? (
-                <PostPage openImageModal={openImageModal} setFeedType={setFeedType} />
-              ) : (
-                <Navigate to="/login" />
-              )
-            }
-          />
-          <Route
-            path="/search"
-            element={authUser ? <SearchPage /> : <Navigate to="/login" />}
-          />
-        </Routes>
-      </Suspense>
-      {authUser && !isMessagePage && <RightPanel />}
+    // On small screens, use flex-col for main content and padding-bottom for the fixed footer
+    // On medium screens, use original flex setup
+    <div className="flex flex-col md:flex-row md:max-w-7xl mx-auto min-h-screen">
+      {authUser && (
+        <Sidebar
+          isChatWindowOpen={isChatWindowOpen}
+          isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown} // Pass new prop
+        />
+      )}
+
+      {/* Main content area */}
+      {/* On mobile, add pb-[var(--mobile-nav-height)] to ensure content scrolls above the fixed footer */}
+      {/* Set a common height for your mobile nav, e.g., 64px or 4rem (h-16) */}
+      <main className="flex-1 overflow-auto  md:pb-0">
+        {" "}
+        {/* Added pb-16 for mobile */}
+        <Suspense
+          fallback={
+            <div className="flex-grow flex justify-center items-center h-screen">
+              {/* <LoadingSpinner size="lg" /> */}
+            </div>
+          }
+        >
+          <Routes>
+            <Route
+              path="/"
+              element={
+                authUser ? (
+                  <HomePage openImageModal={openImageModal} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/signup"
+              element={!authUser ? <SignupPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/login"
+              element={!authUser ? <LoginPage /> : <Navigate to="/" />}
+            />
+            <Route
+              path="/notifications"
+              element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
+            />
+            <Route
+              path="/profile/:username"
+              element={
+                authUser ? (
+                  <ProfilePage
+                    openImageModal={openImageModal}
+                    feedType={feedType}
+                    setFeedType={setFeedType}
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/messages"
+              element={
+                authUser ? (
+                  <MessagesPage
+                    openImageModal={openImageModal}
+                    setIsChatWindowOpen={setIsChatWindowOpen} // Pass setter to MessagesPage
+                    isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown}
+                    setIsMobileMessagesListScrollingDown={
+                      setIsMobileMessagesListScrollingDown
+                    }
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/messages/:conversationId"
+              element={
+                authUser ? (
+                  <MessagesPage
+                    openImageModal={openImageModal}
+                    setIsChatWindowOpen={setIsChatWindowOpen}
+                    isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown}
+                    setIsMobileMessagesListScrollingDown={
+                      setIsMobileMessagesListScrollingDown
+                    }
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/bookmarks"
+              element={
+                authUser ? (
+                  <BookmarksPage openImageModal={openImageModal} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/themes"
+              element={
+                authUser ? (
+                  <ThemesPage openImageModal={openImageModal} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/:username/post/:pid"
+              element={
+                authUser ? (
+                  <PostPage openImageModal={openImageModal} setFeedType={setFeedType} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            />
+            <Route
+              path="/search"
+              element={authUser ? <SearchPage /> : <Navigate to="/login" />}
+            />
+          </Routes>
+        </Suspense>
+      </main>
+
+      {/* RightPanel - Hidden on mobile */}
+      {authUser && !isMessagePage && <RightPanel className="hidden md:block" />}
       <Toaster />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
     </div>

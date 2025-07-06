@@ -59,7 +59,7 @@ const BookmarksPage = ({ openImageModal }) => {
   return (
     <>
       <div className="flex-[4_4_0] border-r border-gray-700 min-h-screen">
-        <div className="flex items-center gap-4 px-4 py-3.5 border-gray-700 sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+        <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-gray-700 sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
           <button
             onClick={() => navigate(-1)}
             className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"

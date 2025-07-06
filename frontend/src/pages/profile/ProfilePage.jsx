@@ -182,7 +182,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
         {showFullProfileHeader && user && (
           <>
-            <div className="flex gap-10 px-4 py-2 items-center">
+            <div className="flex gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 items-center">
               <button
                 onClick={() => navigate(-1)}
                 className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"

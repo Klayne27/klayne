@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react"; // Add useRef, useEffect
 import { useSocket } from "../../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
@@ -13,11 +13,16 @@ const ConversationsList = ({
   onSelectConversation,
   selectedConversation,
   onDeleteInitiate,
+  onScrollDown, // New prop
+  onScrollUp, // New prop
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const { onlineUsers } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
   const navigate = useNavigate();
+
+  const scrollRef = useRef(null); // Ref for the scrollable div
+  const lastScrollTop = useRef(0); // To track scroll direction
 
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
@@ -85,6 +90,35 @@ const ConversationsList = ({
     );
   });
 
+  // Handle scroll for this specific div
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollTop = scrollRef.current.scrollTop;
+      // Only trigger if scrolling sufficiently
+      if (Math.abs(currentScrollTop - lastScrollTop.current) > 5) {
+        if (currentScrollTop > lastScrollTop.current) {
+          // Scrolling down
+          onScrollDown();
+        } else if (currentScrollTop < lastScrollTop.current) {
+          // Scrolling up
+          onScrollUp();
+        }
+        lastScrollTop.current = currentScrollTop;
+      }
+    };
+
+    const currentScrollDiv = scrollRef.current;
+    if (currentScrollDiv) {
+      currentScrollDiv.addEventListener("scroll", handleScroll);
+    }
+
+    return () => {
+      if (currentScrollDiv) {
+        currentScrollDiv.removeEventListener("scroll", handleScroll);
+      }
+    };
+  }, [onScrollDown, onScrollUp]); // Dependencies
+
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
       <div className="flex items-center justify-center gap-2 h-full text-gray-400">
@@ -105,7 +139,7 @@ const ConversationsList = ({
   return (
     <div className="flex flex-col h-full bg-black/0 border-gray-700">
       <div className="sticky top-0 bg-black/0 bg-opacity-90 backdrop-blur-sm z-10 p-4 border-gray-700 flex justify-between items-center">
-        <div className="flex items-center gap-4  border-gray-700">
+        <div className="flex items-center gap-4 border-gray-700">
           <h1 className="font-bold text-xl flex-1 truncate">Messages</h1>
         </div>
         <div className="flex ">
@@ -120,13 +154,14 @@ const ConversationsList = ({
         <input
           type="text"
           placeholder="Search Direct Messages"
-          className="text-sm w-full p-2 px-3 rounded-full bg-black/0  border-gray-700 border focus:border-accent focus:outline-none pl-8"
+          className="text-sm w-full p-2 px-3 rounded-full bg-black/0 border-gray-700 border focus:border-accent focus:outline-none pl-8"
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
         />
       </div>
 
-      <div className="flex-1 overflow-y-auto scrollbar-on-hover">
+      {/* Add ref to the scrollable div */}
+      <div ref={scrollRef} className="flex-1 overflow-y-auto scrollbar-on-hover">
         {filteredConversations.length === 0 && (
           <div className="p-4 text-center text-gray-400">
             <p className="text-lg font-bold mb-2">Welcome to your inbox!</p>
