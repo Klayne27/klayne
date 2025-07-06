@@ -57,9 +57,7 @@ const FollowListModal = ({ userId, type, onClose }) => {
               e.stopPropagation(); // Prevent the click from bubbling up
               onClose(); // Call your close function
             }}
-          >
-            
-          </button>
+          ></button>
         </div>
       </div>
     </dialog>

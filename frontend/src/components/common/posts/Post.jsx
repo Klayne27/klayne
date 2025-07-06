@@ -190,7 +190,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
           <Link
             to={`/profile/${originalPostOwner.username}`}
             className="size-8 md:size-10 rounded-full overflow-hidden"
-            onClick={() => handleInteractiveClick()}
+            onClick={(e) => handleInteractiveClick(e)}
           >
             <img
               src={originalPostOwner.profileImg || "/avatar-placeholder.png"}

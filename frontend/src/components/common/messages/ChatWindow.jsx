@@ -43,6 +43,7 @@ const ChatWindow = ({
     ? null
     : selectedConversation?._id;
 
+
   const isNewOrTemporaryChat =
     selectedConversation?.isNewChat || selectedConversation?.isTemporary;
 
@@ -211,13 +212,13 @@ const ChatWindow = ({
   }, [actualConversationId, setActiveConversationId]);
 
   useEffect(() => {
-    if (socket && actualConversationId && currentUser?._id) {
+    if (socket && actualConversationId && currentUser?._id && messages) {
       socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
       socket.emit("userActiveInChat", { conversationId: actualConversationId });
     } else {
       socket.emit("userActiveInChat", { conversationId: null });
     }
-  }, [socket, actualConversationId, currentUser]);
+  }, [socket, actualConversationId, currentUser, messages]);
 
   useEffect(() => {
     if (socket) {
@@ -399,7 +400,7 @@ const ChatWindow = ({
   }, [scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-full relative border-r border-accent">
+    <div className="flex flex-col h-full relative border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList

@@ -17,6 +17,7 @@ import { FaUserTimes } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
 import { FaUserXmark } from "react-icons/fa6";
 import FollowListModal from "./FollowListModal";
+import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -32,6 +33,8 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
+
+  const {user} = useFetchUserProfile()
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
@@ -725,17 +728,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         )}
       </div>
 
-      {authUser && (
+      {user && (
         <FollowListModal
-          userId={authUser._id}
+          userId={user._id}
           type="following"
           onClose={() => closeFollowListModal("following")}
         />
       )}
 
-      {authUser && (
+      {user && (
         <FollowListModal
-          userId={authUser._id}
+          userId={user._id}
           type="followers"
           onClose={() => closeFollowListModal("followers")}
         />

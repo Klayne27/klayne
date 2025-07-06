@@ -361,10 +361,7 @@ io.on("connection", (socket) => {
       ) {
         console.log(
           `Messages in conversation ${conversationId} not marked as seen for ${readerId} due to blocking.`
-        );
-        return res
-          .status(403)
-          .json({ error: "Cannot mark messages as seen due to blocking restrictions." });
+        )
       }
 
       await Message.updateMany(

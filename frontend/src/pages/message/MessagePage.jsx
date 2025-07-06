@@ -42,7 +42,7 @@ const MessagePage = ({
   const isMobile = window.innerWidth < 768;
 
   // Determine if a conversation ID is present in the URL
-  const hasConversationIdInUrl = !!urlConversationId;
+  const hasConversationIdInUrl = !!urlConversationId && urlConversationId !== "";
   const showConversationListPanel = !isMobile || !isConversationOpen;
   const showChatWindowPanel = !isMobile || isConversationOpen;
 
@@ -66,28 +66,29 @@ const MessagePage = ({
       return;
     }
 
-    // Prevent re-selection if already loaded and no new explicit target or URL change
+    // Prioritize URL or existing selected conversation if we've already processed
+    // targetUserId and there's no new target.
     if (
       initialLoadAttempted.current &&
-      !urlConversationId &&
-      !targetUserId &&
-      selectedConversation
+      !targetUserId && // No new targetUserId trying to force a new convo
+      urlConversationId === selectedConversation?._id // URL matches current selected convo (for existing chats)
     ) {
-      return;
+      return; // Already in the correct state, prevent unnecessary re-runs
     }
 
     let desiredConversation = null;
 
     // Priority 1: Handle initial navigation to a new chat with a specific user (from profile, etc.)
+    // This logic should primarily set `desiredConversation` but not navigate away yet.
     if (targetUserId) {
       const existingConv = conversations.find((conv) =>
         conv.participants.some((p) => p?._id.toString() === targetUserId)
       );
 
       if (existingConv) {
-        // If a conversation already exists, navigate to it directly
+        desiredConversation = existingConv;
+        // Navigate immediately if an existing conversation is found
         navigate(`/messages/${existingConv._id}`, { replace: true });
-        return; // Exit to let the urlConversationId logic handle the selection
       } else {
         // If no existing conversation, create a "pseudo" conversation for a new chat
         const targetUser = followedUsers.find(
@@ -109,42 +110,63 @@ const MessagePage = ({
             lastMessage: { text: "Start a new message", seen: true, img: "" },
             updatedAt: new Date(),
           };
+          // For a new chat, the URL should just be /messages initially
+          // navigate("/messages", { replace: true, state: { targetUserId } }); // Already handled by initial route
         } else {
           console.warn("MessagesPage: Target user for new chat not found:", targetUserId);
+          // If target user not found, navigate to base messages page
+          navigate("/messages", { replace: true });
         }
       }
     }
 
-    // Priority 2: Handle conversation ID from URL
+    // Priority 2: Handle conversation ID from URL if no targetUserId or no existing convo for target
     if (urlConversationId && !desiredConversation) {
       desiredConversation = conversations.find((conv) => conv._id === urlConversationId);
 
-      if (!desiredConversation) {
+      if (!desiredConversation && urlConversationId !== "undefined") {
+        // Added check for "undefined" string
         console.warn(
           "MessagesPage: Conversation ID from URL not found in current conversations list. This might mean it's loading, or it's an invalid ID."
         );
-        // Optionally, you could redirect to /messages if the URL ID is truly invalid after load
+        // Optionally, if URL ID is truly invalid after data loaded, redirect to base messages
+        // if (!isLoadingConversations && !isLoadingFollowedUsers) {
+        //   navigate("/messages", { replace: true });
+        // }
       }
+    }
+
+    if (
+      !targetUserId &&
+      !urlConversationId &&
+      conversations.length > 0 &&
+      !selectedConversation
+    ) {
+      return;
     }
 
     setSelectedConversation(desiredConversation);
     initialLoadAttempted.current = true;
 
-    // Clean up targetUserId from location state after processing
-    if (location.state?.targetUserId) {
+    // Clean up targetUserId from location state AFTER we've processed it
+    // This is important so refreshing doesn't re-trigger the new chat logic unnecessarily.
+    if (location.state?.targetUserId && targetUserId) {
+      // Only replace state if targetUserId was actually used to find/create a conversation
       window.history.replaceState({}, document.title, window.location.pathname);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     urlConversationId,
-    targetUserId,
+    targetUserId, // Keep targetUserId in dependency array
     conversations,
     followedUsers,
     isLoadingConversations,
     isLoadingFollowedUsers,
     currentUser,
     navigate,
-    location.state,
+    // Do NOT include location.state directly as it might cause infinite loops.
+    // Instead, rely on targetUserId which is derived from it.
+    // selectedConversation?._id, // Include selectedConversation._id to react to its changes
   ]);
 
   const handleSelectConversation = (conversation) => {
@@ -213,6 +235,12 @@ const MessagePage = ({
     setIsMobileMessagesListScrollingDown(false);
   };
 
+  const handleNewConversationCreated = (newConversation) => {
+    refetchConversations(); // Ensure conversations list is updated
+    setSelectedConversation(newConversation); // Set the selected conversation to the real one
+    navigate(`/messages/${newConversation._id}`, { replace: true }); // Navigate to the correct URL
+  };
+
   // Show loading state for initial data fetch
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
@@ -271,11 +299,7 @@ const MessagePage = ({
                 selectedConversation={selectedConversation}
                 openImageModal={openImageModal}
                 onBackToConversations={handleBackToConversations}
-                onNewConversationCreated={(newConversation) => {
-                  refetchConversations(); // Ensure list updates with new real convo
-                  setSelectedConversation(newConversation);
-                  navigate(`/messages/${newConversation._id}`, { replace: true });
-                }}
+                onNewConversationCreated={handleNewConversationCreated}
               />
             ) : (
               <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-4 text-center">
