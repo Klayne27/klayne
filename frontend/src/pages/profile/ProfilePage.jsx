@@ -122,7 +122,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  console.log(user);
   // useEffect(() => {
   //   refetch(); // Keep refetching main user profile on username change
   // }, [username, refetch]);
