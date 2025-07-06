@@ -17,7 +17,7 @@ const ConfirmationDialog = ({ isOpen, message, onConfirm, onCancel }) => {
         <div className="flex justify-around gap-4">
           <button
             onClick={onCancel}
-            className="flex-1 py-2 px-4 rounded-full text-white border border-gray-700 font-medium hover:bg-secondary transition duration-200"
+            className="flex-1 py-2 px-4 rounded-full text-white border border-accent font-medium hover:bg-secondary transition duration-200"
           >
             Cancel
           </button>

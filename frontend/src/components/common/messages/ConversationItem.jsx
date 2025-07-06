@@ -63,7 +63,7 @@ function ConversationItem({
   return (
     <div
       key={conv._id}
-      className={`flex items-center gap-1 p-3 cursor-pointer border-gray-700 hover:bg-secondary hover:bg-opacity-60 duration-300 transition
+      className={`flex items-center gap-1 p-3 cursor-pointer border-accent hover:bg-secondary hover:bg-opacity-60 duration-300 transition
         ${isSelected ? "bg-secondary border-r-2 border-r-accent" : ""}
         transition-colors duration-200`}
       onClick={() => onSelectConversation(conversationToSelect)}

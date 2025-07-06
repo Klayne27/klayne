@@ -161,7 +161,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
 
   return (
     <div
-      className="flex flex-col gap-0 py-3 px-4 border-b border-gray-700 cursor-pointer"
+      className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer"
       onClick={navigateToPostPage}
     >
       {isRepost && repostingUser && (
@@ -248,7 +248,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
             {originalPost.mediaType === "image" && originalPost.img && (
               <img
                 src={originalPost.img}
-                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
+                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
                 alt="post image"
                 onClick={(e) => handleMediaClick(originalPost.img, "image", e)}
                 loading="lazy"
@@ -258,7 +258,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
               <video
                 controls
                 src={originalPost.video}
-                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-gray-700 block max-w-full"
+                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
                 alt="post video"
                 preload="metadata"
                 onClick={(e) => handleMediaClick(originalPost.video, "video", e)}

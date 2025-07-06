@@ -17,8 +17,8 @@ const ThemesPage = () => {
   const isThemeLocked = authUser && authUser.forceBlackTheme; // Check if theme is locked
 
   return (
-    <main className="flex-[4_4_0] border-gray-700 min-h-screen">
-      <div className="flex justify-between items-center px-3 py-2 md:p-4 border-b border-gray-700">
+    <main className="flex-[4_4_0] border-accent min-h-screen">
+      <div className="flex justify-between items-center px-3 py-2 md:p-4 border-b border-accent">
         <p className="font-bold text-lg md:text-xl">Themes</p>
       </div>
 
@@ -109,7 +109,7 @@ const ThemesPage = () => {
                   ))}
                 </div>
 
-                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent mx-4">
+                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent/99 mx-4">
                   <div className="flex pl-1">
                     <button
                       type="button"

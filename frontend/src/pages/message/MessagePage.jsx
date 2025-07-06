@@ -244,7 +244,7 @@ const MessagePage = ({
         {showConversationListPanel && (
           <div
             className={`
-            w-full md:w-[430px] md:flex-shrink-0 md:border-r md:border-gray-700
+            w-full md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent
             flex flex-col h-screen
           `}
           >

@@ -5,7 +5,7 @@ const RightPanel = () => {
 
 
   return (
-    <div className="hidden lg:block sticky pt-4 px-4 h-[100vh] w-[380px] top-0 border-l border-gray-700">
+    <div className="hidden lg:block sticky pt-4 px-4 h-[100vh] w-[380px] top-0 border-l border-accent">
       <SearchPanel />
       <SuggestedUsersPanel />
     </div>

@@ -309,7 +309,7 @@ const CreatePost = () => {
   }, [showEmojiPicker]);
 
   return (
-    <div className="flex p-4 items-start gap-3 border-b border-gray-700 mt-12">
+    <div className="flex p-4 items-start gap-3 border-b border-accent mt-12">
       <Link to={`/profile/${authUser.username}`}>
         <div className="avatar">
           <div className="w-8 md:w-10 rounded-full">
@@ -357,7 +357,7 @@ const CreatePost = () => {
 
         {/* --- POLL INPUTS SECTION START --- */}
         {showPollInputs && (
-          <div className="flex flex-col gap-4 mt-4 p-3 border border-gray-700 rounded-2xl">
+          <div className="flex flex-col gap-4 mt-4 p-3 border border-accent rounded-2xl">
             {pollChoices.map((choice, index) => (
               <div key={index} className="flex items-center gap-1 relative">
                 <div
@@ -368,9 +368,9 @@ const CreatePost = () => {
                   <input
                     type="text"
                     placeholder={`Choice ${index + 1}`}
-                    className={`bg-black/0 border p-2 py-3 border-gray-700 ${
+                    className={`bg-black/0 border p-2 py-3 border-accent ${
                       pollChoices.length > 3 ? "w-full" : "w-full mr-7"
-                    } placeholder:text-gray-500 focus:outline-none focus:border-accent rounded-[4px] `}
+                    } placeholder:text-gray-500 focus:outline-none focus:border-accent/99 rounded-[4px] `}
                     value={choice.text}
                     onChange={(e) => handlePollChoiceChange(index, e.target.value)}
                     onFocus={() => handlePollInputFocus(index)}

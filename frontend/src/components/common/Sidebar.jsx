@@ -314,7 +314,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     <>
       {/* Main Sidebar */}
       <div
-        className={`fixed bottom-0 left-0 w-full md:sticky md:top-0 md:h-dvh flex md:flex-col items-center md:items-start justify-around md:justify-start border-t md:border-t-0 md:border-r border-gray-700 bg-base-100 z-50 md:flex-[2_2_0] md:max-w-56
+        className={`fixed bottom-0 left-0 w-full md:sticky md:top-0 md:h-dvh flex md:flex-col items-center md:items-start justify-around md:justify-start border-t md:border-t-0 md:border-r border-accent bg-base-100 z-50 md:flex-[2_2_0] md:max-w-56
           transition-transform duration-300 ease-out
           ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >
@@ -578,7 +578,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             {showPopover && (
               <div
                 ref={popoverRef}
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-gray-700 min-w-[250px] z-1000 flex flex-col gap-1 shadow-md shadow-gray-400"
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-accent min-w-[250px] z-1000 flex flex-col gap-1 shadow-md shadow-gray-400"
               >
                 <button
                   onClick={handleConfirmDeleteClick}
@@ -601,14 +601,14 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       {/* Mobile Side Modal */}
       <div
         ref={sideModalRef}
-        className={`fixed top-0 left-0 h-full w-[80vw] max-w-[300px] bg-base-100 border-r border-gray-700 z-[1000] transform transition-transform duration-300 ease-out
+        className={`fixed top-0 left-0 h-full w-[80vw] max-w-[300px] bg-base-100 border-r border-accent z-[1000] transform transition-transform duration-300 ease-out
           ${showSideModal ? "translate-x-0" : "-translate-x-full"}
           md:hidden`} // Only show on mobile
       >
         {authUser && (
           <div className="flex flex-col h-full">
             {/* Header with user info and close button */}
-            <div className="p-4 border-b border-gray-700">
+            <div className="p-4 border-b border-accent">
               <div className="flex justify-between items-center mb-1">
                 <div className="avatar">
                   <div
@@ -697,7 +697,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 </li>
 
                 {/* Separator if needed */}
-                <div className="border-t border-gray-700 my-2"></div>
+                <div className="border-t border-accent my-2"></div>
 
                 {/* Delete Account */}
                 <li

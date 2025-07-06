@@ -175,7 +175,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   return (
     <>
       <ScrollToTop />
-      <div className="flex-[4_4_0] border-gray-700 min-h-screen">
+      <div className="flex-[4_4_0] border-accent min-h-screen">
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && (
           <ProfileHeaderSkeleton />
         )}
@@ -369,7 +369,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 </div>
               </div>
             </div>
-            <div className="flex w-full border-b border-gray-700 mt-4">
+            <div className="flex w-full border-b border-accent mt-4">
               <div
                 className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
                 onClick={() => setFeedType("posts")}
