@@ -515,7 +515,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             >
               <LuUserRound
                 className="size-7"
-                strokeWidth={pathname === `/profile/${authUser?.username}` ? 1.5 : 1}
+                strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
               />
             </Link>
             <span
