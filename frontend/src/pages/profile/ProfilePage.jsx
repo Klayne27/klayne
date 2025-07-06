@@ -297,7 +297,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
               {(coverImg || profileImg) && (
                 <button
-                  className=" rounded-full px-4 py-1.5 bg-primary text-white font-semibold hover:bg-[#1d9cf0d8] transition duration-300"
+                  className="border border-accent rounded-full px-2 md:px-4 py-0.5 md:py-1.5 bg-accent/30 hover:bg-secondary transition duration-300"
                   onClick={async () => {
                     await updateProfile({
                       coverImg,

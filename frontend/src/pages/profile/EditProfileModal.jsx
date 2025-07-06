@@ -52,7 +52,7 @@ const EditProfileModal = ({ authUser }) => {
   return (
     <>
       <button
-        className="rounded-full border px-2 md:px-4 py-0.5 md:py-1.5 hover:bg-gray-800 transition duration-200"
+        className="rounded-full border-accent border px-2 md:px-4 py-0.5 md:py-1.5 hover:bg-secondary transition duration-200"
         onClick={() => document.getElementById("edit_profile_modal").showModal()}
       >
         Edit profile

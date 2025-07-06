@@ -53,10 +53,10 @@ const ThemesPage = () => {
                 className="relative h-8 w-full rounded-2xl overflow-hidden"
                 data-theme={t}
               >
-                <div className="absolute inset-0 grid grid-cols-2 gap-px p-1">
+                <div className="absolute inset-0 grid grid-cols-3 gap-px p-1">
                   <div className="rounded-xl bg-primary"></div>
                   <div className="rounded-xl bg-secondary"></div>
-                  {/* <div className="rounded bg-accent"></div> */}
+                  <div className="rounded-xl bg-accent"></div>
                 </div>
               </div>
               <span className="text-[11px] font-medium truncate w-full text-center">
