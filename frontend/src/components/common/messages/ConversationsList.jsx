@@ -119,14 +119,14 @@ const ConversationsList = ({
     };
   }, [onScrollDown, onScrollUp]); // Dependencies
 
-  if (isLoadingConversations || isLoadingFollowedUsers) {
-    return (
-      <div className="flex items-center justify-center gap-2 h-full text-gray-400">
-        <LoadingSpinner size="md" />
-        Loading inbox...
-      </div>
-    );
-  }
+  // if (!isLoadingConversations || isLoadingFollowedUsers) {
+  //   return (
+  //     <div className="flex items-center justify-center gap-2 h-full text-gray-400">
+  //       <LoadingSpinner size="md" />
+  //       Loading inbox...
+  //     </div>
+  //   );
+  // }
 
   if (errorConversations || errorFollowedUsers) {
     return (

@@ -52,13 +52,13 @@ const EditProfileModal = ({ authUser }) => {
   return (
     <>
       <button
-        className="rounded-full border px-4 py-1.5 hover:bg-gray-800 transition duration-200"
+        className="rounded-full border px-2 md:px-4 py-0.5 md:py-1.5 hover:bg-gray-800 transition duration-200"
         onClick={() => document.getElementById("edit_profile_modal").showModal()}
       >
         Edit profile
       </button>
-      <dialog id="edit_profile_modal" className="modal">
-        <div className="modal-box border  border-gray-700 shadow-md rounded-2xl">
+      <dialog id="edit_profile_modal" className="modal ">
+        <div className="modal-box border border-gray-700 shadow-md rounded-2xl">
           <h3 className="font-bold text-lg mb-4">Update Profile</h3>
           <form
             className="flex flex-col gap-4 "

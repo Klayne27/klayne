@@ -321,7 +321,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
         {showFullProfileContent && user && (
           <>
-            <div className="flex flex-col gap-4 mt-14 px-4">
+            <div className="flex flex-col gap-4 mt-3 px-4">
               <div className="flex flex-col">
                 <span className="font-bold text-lg">{user?.fullName}</span>
                 <span className="text-sm text-slate-500">@{user?.username}</span>

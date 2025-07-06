@@ -7,7 +7,7 @@ import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConvers
 import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConversation";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
-import LoadingSpinner from "../../components/common/LoadingSpinner"; // Import LoadingSpinner
+import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 const MessagePage = ({
   openImageModal,
@@ -216,9 +216,9 @@ const MessagePage = ({
   // Show loading state for initial data fetch
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
-      <div className="flex items-center justify-center gap-2 h-full text-gray-400">
+      <div className="flex items-center justify-center gap-2 h-screen ">
         <LoadingSpinner size="md" />
-        Loading messages...
+        Loading inbox...
       </div>
     );
   }
