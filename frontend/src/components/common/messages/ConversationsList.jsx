@@ -87,7 +87,7 @@ const ConversationsList = ({
 
   if (isLoadingConversations || isLoadingFollowedUsers) {
     return (
-      <div className="flex items-center justify-center h-full text-gray-400">
+      <div className="flex items-center justify-center gap-2 h-full text-gray-400">
         <LoadingSpinner size="md" />
         Loading inbox...
       </div>

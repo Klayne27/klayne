@@ -9,6 +9,7 @@ import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteN
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications";
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
@@ -31,12 +32,10 @@ const NotificationPage = () => {
     return true;
   });
 
-
   const handleProfileClick = (e, username) => {
     e.stopPropagation();
     navigate(`/profile/${username}`);
   };
-
 
   const handleNotificationItemClick = (e, notification) => {
     if (e.target.closest("button")) {
@@ -47,8 +46,7 @@ const NotificationPage = () => {
 
     if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`;
-    }
-    else if (notification.postId && notification.postId._id) {
+    } else if (notification.postId && notification.postId._id) {
       targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
     } else {
       console.warn("Could not determine navigation link for notification:", notification);
@@ -81,8 +79,17 @@ const NotificationPage = () => {
         </div>
 
         {isLoading && (
-          <div className="flex justify-center h-full items-center">
-            <LoadingSpinner size="lg" />
+          <div>
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
+            <NotificationsSkeleton />
           </div>
         )}
 
@@ -101,7 +108,7 @@ const NotificationPage = () => {
                 className="absolute right-3 top-3"
                 onClick={(e) => e.stopPropagation()}
               >
-                {isDeleting ? ( 
+                {isDeleting ? (
                   <LoadingSpinner size="xs" />
                 ) : (
                   <button

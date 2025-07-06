@@ -41,8 +41,6 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     (pinnedPost) => pinnedPost === originalPost._id
   );
 
-  console.log(originalPost);
-
   const canDelete = authUser && authUser._id === post.user._id;
   const isMyOriginalPost =
     authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user

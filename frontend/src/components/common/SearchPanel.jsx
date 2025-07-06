@@ -36,7 +36,7 @@ const SearchPanel = () => {
         <input
           type="text"
           placeholder="Search by username or name"
-          className="w-full bg-se  border border-gray-700 bg-black/0 rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-accent z-10"
+          className="w-full bg-se  border border-gray-700 bg-base-100 rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-accent z-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
@@ -52,7 +52,7 @@ const SearchPanel = () => {
       </div>
 
       {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (
-        <div className="max-h-[500px] w-full overflow-y-auto custom-scrollbar border rounded-2xl absolute top-[43px] left-0 z-50 bg-black/0 border-gray-700 shadow-md shadow-gray-400">
+        <div className="max-h-[500px] w-full overflow-y-auto custom-scrollbar border rounded-2xl absolute top-[43px] left-0 z-50 bg-base-100 border-gray-700 shadow-md shadow-gray-400">
           {(isLoading || isFetching) && debouncedQuery ? (
             <p className="p-4 text-gray-400 text-center">Searching...</p>
           ) : isError ? (

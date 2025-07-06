@@ -30,7 +30,7 @@ function App() {
   if (isLoading) {
     return (
       <div className="h-screen flex justify-center items-center">
-        <LoadingSpinner size="lg" />
+        {/* <LoadingSpinner size="lg" /> */}
       </div>
     );
   }
@@ -43,7 +43,7 @@ function App() {
       <Suspense
         fallback={
           <div className="flex-grow flex justify-center items-center h-screen">
-            <LoadingSpinner size="lg" />
+            {/* <LoadingSpinner size="lg" /> */}
           </div>
         }
       >

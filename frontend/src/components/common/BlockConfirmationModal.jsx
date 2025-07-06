@@ -18,7 +18,7 @@ const BlockConfirmationModal = ({ isOpen, onClose, onConfirm, username, isBlocki
       onClick={onClose}
     >
       <div
-        className="bg-black/0 rounded-2xl shadow-lg p-6 w-full max-w-xs mx-auto flex flex-col gap-4"
+        className="bg-base-100 rounded-2xl shadow-lg p-6 w-full max-w-xs mx-auto flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-xl font-bold text-white">{modalTitle}</h2>

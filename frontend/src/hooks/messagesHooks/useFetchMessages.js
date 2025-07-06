@@ -2,6 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchMessagesApi } from "../../api/messagesApi";
 
 export const useFetchMessages = (selectedConversation) => {
+
   const {
     data,
     fetchNextPage,
@@ -29,6 +30,9 @@ export const useFetchMessages = (selectedConversation) => {
     // refetchOnWindowFocus: true,
     // refetchOnReconnect: true,
   });
+
+  
+
 
   const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
 

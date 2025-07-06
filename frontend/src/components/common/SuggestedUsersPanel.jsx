@@ -89,12 +89,12 @@ const SuggestedUsersPanel = () => {
           className="flex items-center justify-center gap-1 text-primary "
           disabled={isRefetching || isLoading}
         >
-          {isLoading ? (
-            <LoadingSpinner size="sm" />
+          {isLoading || isRefetching ? (
+            <LoadingSpinner size="xs" />
           ) : (
             <BiRefresh className="w-5 h-5" />
           )}
-          {isLoading ? "Refreshing..." : "Refresh Suggestions"}
+          {isLoading || isRefetching ? "Refreshing..." : "Refresh Suggestions"}
         </button>
       </div>
     </div>
