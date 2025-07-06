@@ -604,7 +604,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   onClick={() => setShowSideModal(false)}
                   className="p-1 rounded-full hover:bg-secondary"
                 >
-                  <IoClose className="w-6 h-6 text-white" />
+                  <IoClose className="w-6 h-6" />
                 </button>
               </div>
               <div className="flex flex-col">
