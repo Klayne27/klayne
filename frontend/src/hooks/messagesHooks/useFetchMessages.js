@@ -24,15 +24,12 @@ export const useFetchMessages = (selectedConversation) => {
       return allPages.length + 1;
     },
     enabled: !!selectedConversation?._id && !selectedConversation._id.startsWith("new-"),
-    staleTime: 5 * 60 * 1000,
-    gcTime: 10 * 60 * 1000, 
-    // refetchOnMount: true,
-    // refetchOnWindowFocus: true,
-    // refetchOnReconnect: true,
+    // staleTime: Infinity,
+    gcTime: 10 * 60 * 1000,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
-
-  
-
 
   const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
 

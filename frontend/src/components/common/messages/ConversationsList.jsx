@@ -15,17 +15,18 @@ const ConversationsList = ({
   onDeleteInitiate,
   onScrollDown, // New prop
   onScrollUp, // New prop
+  conversations,
+  errorConversations
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const { onlineUsers } = useSocket();
   const [searchTerm, setSearchTerm] = useState("");
-  const navigate = useNavigate();
 
   const scrollRef = useRef(null); // Ref for the scrollable div
   const lastScrollTop = useRef(0); // To track scroll direction
 
-  const { conversations, isLoadingConversations, errorConversations } =
-    useFetchConversations();
+  // const { conversations, isLoadingConversations, errorConversations } =
+  //   useFetchConversations();
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
 

@@ -282,6 +282,8 @@ const MessagePage = ({
               onDeleteInitiate={handleDeleteInitiate}
               onScrollDown={handleConversationsListScrollDown}
               onScrollUp={handleConversationsListScrollUp}
+              conversations={conversations}
+              errorConversations={errorConversations}
             />
           </div>
         )}

@@ -361,7 +361,7 @@ io.on("connection", (socket) => {
       ) {
         console.log(
           `Messages in conversation ${conversationId} not marked as seen for ${readerId} due to blocking.`
-        )
+        );
       }
 
       await Message.updateMany(
@@ -377,6 +377,7 @@ io.on("connection", (socket) => {
           _id: conversationObjectId,
           lastMessage: { $ne: null },
           "lastMessage.sender": { $ne: readerObjectId },
+          "lastMessage.seen": false, // Only update if it's currently unseen
         },
         { $set: { "lastMessage.seen": true } },
         { timestamps: false }
@@ -390,14 +391,20 @@ io.on("connection", (socket) => {
         if (otherParticipantIdString) {
           const recipientSocketIds = getReceiverSocketIds(otherParticipantIdString);
           recipientSocketIds.forEach((sockId) => {
+            // Emit to the *sender* of the messages that *their* messages have been seen.
             io.to(sockId).emit("messagesSeen", { conversationId, readerId });
           });
+          // You might want to consider the context of emitUnreadMessageStatus
+          // Does it need to be a nextTick?
           process.nextTick(async () => {
-            await emitUnreadMessageStatus(otherParticipantIdString);
+            await emitUnreadMessageStatus(otherParticipantIdString); // Update unread status for the other participant
           });
         }
+        // This emitUnreadMessageStatus for the readerId seems redundant here
+        // if the client is already in the conversation and marking them as seen.
+        // It might be better handled when conversation list is fetched or on focus.
         process.nextTick(async () => {
-          await emitUnreadMessageStatus(readerId);
+          await emitUnreadMessageStatus(readerId); // Update unread status for the reader
         });
       }
     } catch (error) {
