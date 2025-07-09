@@ -21,7 +21,7 @@ const BlockConfirmationModal = ({ isOpen, onClose, onConfirm, username, isBlocki
         className="bg-base-100 rounded-2xl shadow-lg p-6 w-full max-w-xs mx-auto flex flex-col gap-4"
         onClick={(e) => e.stopPropagation()}
       >
-        <h2 className="text-xl font-bold text-white">{modalTitle}</h2>
+        <h2 className="text-xl font-bold">{modalTitle}</h2>
         <p className="text-gray-400 text-sm">{message}</p>
 
         <div className="flex flex-col gap-3 mt-4">
@@ -38,7 +38,7 @@ const BlockConfirmationModal = ({ isOpen, onClose, onConfirm, username, isBlocki
             {confirmButtonText}
           </button>
           <button
-            className="w-full py-2.5 rounded-full font-bold text-white border border-accent hover:bg-gray-900 transition duration-200"
+            className="w-full py-2.5 rounded-full font-bold border border-accent hover:bg-gray-900 transition duration-200"
             onClick={onClose}
           >
             Cancel

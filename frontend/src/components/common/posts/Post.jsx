@@ -11,7 +11,7 @@ import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../../utils/textUtils";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
@@ -52,6 +52,44 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   const { pinUnpinPost, isPinning } = usePinPost(); // Use the new pin hook
 
   const formattedDate = formatPostDate(originalPost.createdAt);
+
+  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [activeButton, setActiveButton] = useState(null); // To control the active state for touch feedback on interactive buttons
+
+  useEffect(() => {
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (id) => {
+      if (isTouchDevice) {
+        setActiveButton(id);
+      }
+    },
+    [isTouchDevice]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 150); // Match desired fade-out duration
+    }
+  }, [isTouchDevice]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 150);
+    }
+  }, [isTouchDevice]);
+  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   const navigateToPostPage = (e) => {
     if (
@@ -276,11 +314,25 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
               <div className="flex justify-between">
                 <div
                   className="flex items-center cursor-pointer group"
-                  onClick={handleInteractiveClick}
+                  onClick={() => {
+                    handleInteractiveClick();
+                    navigateToPostPage();
+                  }}
+                  onTouchStart={() => handleTouchStart("comment")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    onClick={navigateToPostPage}
-                    className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition"
+                    className={`p-2 rounded-full duration-200 transition group ${
+                      !isTouchDevice
+                        ? "group-hover:bg-sky-400 group-hover:bg-opacity-15"
+                        : ""
+                    }
+                      ${
+                        isTouchDevice && activeButton === "comment"
+                          ? "bg-sky-400 bg-opacity-15"
+                          : ""
+                      }`}
                   >
                     <FaRegComment
                       className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
@@ -295,8 +347,22 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                 <div
                   className="flex items-center group cursor-pointer"
                   onClick={handleRepostClick}
+                  onTouchStart={() => handleTouchStart("repost")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
-                  <div className="group-hover:bg-green-400 group-hover:bg-opacity-15 rounded-full p-1 duration-200 transition">
+                  <div
+                    className={`rounded-full p-1 duration-200 transition   ${
+                      !isTouchDevice
+                        ? "group-hover:bg-green-400 group-hover:bg-opacity-15"
+                        : ""
+                    }
+                      ${
+                        isTouchDevice && activeButton === "repost"
+                          ? "bg-green-400 bg-opacity-15"
+                          : ""
+                      }`}
+                  >
                     <BiRepost
                       className={`w-6 h-6 duration-200 transition ${
                         hasUserRepostedOriginal
@@ -319,11 +385,23 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                 <div
                   className="flex items-center group cursor-pointer rounded-full"
                   onClick={handleLikePostClick}
+                  onTouchStart={() => handleTouchStart("like")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
+                    className={` rounded-full p-2 duration-200 transition ${
                       isLiking ? "animate-spin" : ""
-                    }`}
+                    }                        ${
+                      !isTouchDevice
+                        ? "group-hover:bg-pink-600 group-hover:bg-opacity-15"
+                        : ""
+                    }
+                      ${
+                        isTouchDevice && activeButton === "like"
+                          ? "bg-pink-600 bg-opacity-15"
+                          : ""
+                      }`}
                   >
                     {!isLiked && (
                       <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />

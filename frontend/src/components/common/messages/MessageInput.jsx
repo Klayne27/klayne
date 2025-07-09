@@ -285,7 +285,7 @@ function MessageInput({
             disabled={isSendingMessage || (!messageInput.trim() && !imageFile)}
             className={`hidden md:block absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
               messageInput.trim() || imageFile
-                ? "bg-primary text-white"
+                ? "bg-primary"
                 : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
             } transition-colors duration-200`}
           >

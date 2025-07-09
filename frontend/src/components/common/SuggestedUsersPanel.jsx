@@ -5,6 +5,7 @@ import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
 import LoadingSpinner from "./LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { BiRefresh } from "react-icons/bi";
+import React from "react";
 
 const SuggestedUsersPanel = () => {
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
@@ -101,4 +102,4 @@ const SuggestedUsersPanel = () => {
   );
 };
 
-export default SuggestedUsersPanel;
+export default React.memo(SuggestedUsersPanel);

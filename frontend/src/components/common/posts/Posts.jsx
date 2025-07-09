@@ -9,7 +9,6 @@ const Posts = ({
   userId,
   onPostsFetched,
   openImageModal,
-  onLikedPostsFetched,
   pinnedPosts = [],
   isLoadingPinnedPosts,
 }) => {
@@ -69,7 +68,6 @@ const Posts = ({
 
   useEffect(() => {
     if (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) {
-      // Adjust total count for 'posts' feed to include pinned posts if they are distinct
       const combinedCount =
         feedType === "posts"
           ? (totalPostsCount || 0) + (pinnedPosts?.length || 0)
@@ -84,9 +82,9 @@ const Posts = ({
     feedType,
     totalPostsCount,
     totalLikedPostsCount,
-    onLikedPostsFetched,
-    pinnedPosts?.length, // Add pinnedPosts length as a dependency
+    pinnedPosts?.length,
   ]);
+
 
   if (isLoading) {
     return (

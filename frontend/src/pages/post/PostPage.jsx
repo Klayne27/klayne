@@ -204,7 +204,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   }
 
   return (
-    <div className="flex-1 border-r border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
+    <div className="flex-1 border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
       <div className="flex items-center gap-2 px-3 py-2 md:gap-4 md:px-4 md:py-3.5 border-b border-accent">
         <button
           onClick={() => navigate(-1)}

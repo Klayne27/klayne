@@ -32,11 +32,12 @@ const SearchPanel = () => {
 
   return (
     <div className="relative w-full md:block">
-      <div className="relative mb-4 w-full">
+      <div className="flex mb-4 items-center gap-2 rounded-full px-3 py-2 border border-accent w-full">
+        <CiSearch className=" text-gray-400 size-5" />
         <input
           type="text"
           placeholder="Search by username or name"
-          className="w-full bg-se  border border-accent bg-base-100 rounded-full py-2 px-4 pl-10 focus:outline-none focus:border-accent/99 z-10"
+          className=" bg-base-100 focus:outline-none grow focus:border-accent/99 z-10"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
@@ -48,7 +49,6 @@ const SearchPanel = () => {
             setTimeout(() => setShowResults(false), 100);
           }}
         />
-        <CiSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 w-5 h-5" />
       </div>
 
       {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (

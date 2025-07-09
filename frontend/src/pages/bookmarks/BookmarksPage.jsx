@@ -4,7 +4,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useGetBookmarkedPosts } from "../../hooks/postsHooks/useGetBookmarkedPosts";
 import { CiSearch } from "react-icons/ci";
 import Post from "../../components/common/posts/Post";
-import { FaArrowLeft } from "react-icons/fa";
+import { FaArrowLeft } from "react-icons/fa6";
 
 const BookmarksPage = ({ openImageModal }) => {
   const navigate = useNavigate();
@@ -64,17 +64,17 @@ const BookmarksPage = ({ openImageModal }) => {
             onClick={() => navigate(-1)}
             className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
           >
-            <FaArrowLeft className="w-4 h-4" />
+            <FaArrowLeft />
           </button>
           <h1 className="font-bold text-xl flex-1 truncate">Bookmarks</h1>
         </div>
 
-        <div className="p-4 border-accent top-[60px] z-10 backdrop-blur-md bg-opacity-80">
-          <div className="flex items-center gap-2  text-white rounded-full px-4 py-3 border border-accent w-full">
-            <CiSearch className="size-4 text-gray-400" />{" "}
+        <div className="py-1 px-3.5 border-accent top-[60px]">
+          <div className="flex items-center gap-2 rounded-full px-3 py-2 border border-accent w-full">
+            <CiSearch className="size-5 text-gray-400" />{" "}
             <input
               type="text"
-              className="grow bg-transparent outline-none placeholder-gray-400 text-white"
+              className="grow bg-transparent outline-none placeholder-gray-400"
               placeholder="Search Bookmarks"
               value={searchQuery}
               onChange={handleSearchChange}

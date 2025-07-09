@@ -516,7 +516,7 @@ const ChatWindow = ({
   }, [scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-full relative border-r border-gray-700">
+    <div className="flex flex-col h-full relative md:border-r border-gray-700">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList
@@ -540,7 +540,7 @@ const ChatWindow = ({
         <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
           <button
             onClick={handleNewMessageButtonClick}
-            className="bg-primary text-sm text-white px-3 py-1 rounded-full shadow-lg flex items-center space-x-2 animate-bounce-custom" // You might need to define animate-bounce-custom in your CSS
+            className="bg-primary text-sm px-3 py-1 text-accent rounded-full shadow-lg flex items-center space-x-2 animate-bounce-custom" // You might need to define animate-bounce-custom in your CSS
           >
             <span>New Message</span>
             <FaCaretDown />

@@ -34,7 +34,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  const {user} = useFetchUserProfile()
+  const { user } = useFetchUserProfile();
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
@@ -49,6 +49,36 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
   const originalTitle = useRef(document.title);
   const originalFaviconHref = useRef(null);
+
+  // --- NEW STATE FOR TOUCH EFFECT ---
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
+
+  // --- NEW TOUCH HANDLERS ---
+  const handleTouchStart = useCallback(
+    (id) => {
+      if (isTouchDevice) {
+        setActiveButton(id);
+      }
+    },
+    [isTouchDevice]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
+    }
+  }, [isTouchDevice]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 200);
+    }
+  }, [isTouchDevice]);
 
   const togglePopover = useCallback((e) => {
     e.stopPropagation();
@@ -76,6 +106,15 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       faviconLink.rel = "icon";
       document.head.appendChild(faviconLink);
     }
+  }, []);
+
+  // --- EFFECT TO DETECT TOUCH DEVICE ---
+  useEffect(() => {
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
   }, []);
 
   useEffect(() => {
@@ -321,8 +360,21 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           transition-transform duration-300 ease-out
           ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >
-        <Link to="/" onClick={handleHomeClick} className="hidden md:flex justify-start">
-          <XSvg className="px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200" />
+        {/* X-SVG button, apply hover & active */}
+        <Link
+          to="/"
+          onClick={handleHomeClick}
+          className={`hidden md:flex justify-start px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
+            ${
+              isTouchDevice && activeButton === "x-logo"
+                ? "bg-secondary bg-opacity-50 transition duration-150"
+                : ""
+            }`}
+          onTouchStart={() => handleTouchStart("x-logo")}
+          onTouchEnd={handleTouchEnd}
+          onTouchCancel={handleTouchCancel}
+        >
+          <XSvg className="fill-primary" />
         </Link>
 
         <ul className="flex flex-row md:flex-col md:gap-4 mt-0 md:mt-4 w-full md:w-auto justify-around md:justify-start">
@@ -337,7 +389,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <Link
               to="/"
               onClick={handleHomeClick}
-              className={`relative flex items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-[9px] pr-[7px] max-w-fit cursor-pointer`}
+              className={`relative flex items-center rounded-full py-2 px-2 pl-[9px] pr-[7px] max-w-fit cursor-pointer
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "home"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("home")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <PiHouseThin
                 className={`size-[26px] ${
@@ -372,7 +434,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           >
             <Link
               to="/messages"
-              className={` flex gap-3 items-center justify-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "messages"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("messages")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <CiMail
                 className={`size-6 ${
@@ -408,7 +480,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           >
             <Link
               to="/notifications"
-              className={`flex gap-3 items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative`}
+              className={`flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "notifications"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("notifications")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <PiBellThin
                 className={`size-6 ${
@@ -443,9 +525,19 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             onClick={handleMobileSearchClick}
           >
             <button
-              className={`${
+              className={` ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer`}
+              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "search"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("search")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <CiSearch className="size-6" strokeWidth={pathname === "/search" ? 2 : 1} />
             </button>
@@ -467,7 +559,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               to="/bookmarks"
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "bookmarks"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("bookmarks")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <CiBookmark
                 className="size-6"
@@ -483,6 +585,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
+          {/* Themes */}
           <li
             className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[120px] md:p-0"
             onClick={() => navigate("/themes")}
@@ -491,7 +594,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               to="/themes"
               className={`${
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center hover:bg-secondary rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full`}
+              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "themes"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("themes")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <LuPalette
                 className="size-6"
@@ -512,7 +625,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <button
               id="mobile-profile-img-button" // Add an ID for click outside logic
               onClick={toggleSideModal}
-              className="p-1 rounded-full hover:bg-secondary"
+              className={`p-1 rounded-full hover:bg-secondary
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
+                ${
+                  isTouchDevice && activeButton === "mobile-profile-img"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+              onTouchStart={() => handleTouchStart("mobile-profile-img")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <img
                 src={authUser?.profileImg || "/avatar-placeholder.png"}
@@ -533,7 +656,15 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
-              } flex gap-[10px] items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer`}
+              } flex gap-[10px] items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer
+                ${
+                  isTouchDevice && activeButton === "desktop-profile"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              onTouchStart={() => handleTouchStart("desktop-profile")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <LuUserRound
                 className="size-7"
@@ -559,7 +690,15 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <button
               ref={profileButtonRef}
               onClick={togglePopover}
-              className="flex gap-2 items-start duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]"
+              className={`flex gap-2 items-start duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]
+                ${
+                  isTouchDevice && activeButton === "user-profile-button"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              onTouchStart={() => handleTouchStart("user-profile-button")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
             >
               <div className="avatar">
                 <div className="w-8 rounded-full">
@@ -583,15 +722,32 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 ref={popoverRef}
                 className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-accent min-w-[250px] z-1000 flex flex-col gap-1 shadow-md shadow-gray-400"
               >
+                {/* Popover buttons also need the touch effect */}
                 <button
                   onClick={handleConfirmDeleteClick}
-                  className="w-full text-left px-3 py-2 text-red-500 text-md hover:bg-secondary transition-colors font-bold"
+                  className={`w-full text-left px-3 py-2 text-red-500 text-md hover:bg-secondary font-bold
+                    ${
+                      isTouchDevice && activeButton === "delete-account-popover"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("delete-account-popover")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   Delete Account
                 </button>
                 <button
                   onClick={handleLogout}
-                  className="w-full text-left px-3 py-2 text-white text-md hover:bg-secondary transition-colors font-bold"
+                  className={`w-full text-left px-3 py-2 text-md hover:bg-secondary font-bold
+                    ${
+                      isTouchDevice && activeButton === "logout-popover"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("logout-popover")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   Logout @{authUser?.username}
                 </button>
@@ -615,11 +771,19 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               <div className="flex justify-between items-center mb-1">
                 <div className="avatar">
                   <div
-                    className="w-11 rounded-full cursor-pointer"
+                    className={`w-11 rounded-full cursor-pointer
+                      ${
+                        isTouchDevice && activeButton === "modal-profile-img"
+                          ? "bg-secondary bg-opacity-50 transition duration-150"
+                          : "transition duration-150"
+                      }`}
                     onClick={() => {
                       navigate(`/profile/${authUser?.username}`);
                       setShowSideModal(false); // Close modal on navigation
                     }}
+                    onTouchStart={() => handleTouchStart("modal-profile-img")}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchCancel}
                   >
                     <img
                       src={authUser?.profileImg || "/avatar-placeholder.png"}
@@ -630,7 +794,15 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
                 <button
                   onClick={() => setShowSideModal(false)}
-                  className="p-1 rounded-full hover:bg-secondary"
+                  className={`p-1 rounded-full hover:bg-secondary
+                    ${
+                      isTouchDevice && activeButton === "modal-close-button"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-close-button")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <IoClose className="w-6 h-6" />
                 </button>
@@ -640,16 +812,33 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 <p className="text-slate-500 text-sm">@{authUser?.username}</p>
               </div>
               <div className="flex gap-4 mt-4 text-sm">
+                {/* Follower/Following links in modal */}
                 <p
                   onClick={() => openFollowListModal("following")}
-                  className="cursor-pointer"
+                  className={`cursor-pointer font-bold p-1 rounded-md
+                    ${
+                      isTouchDevice && activeButton === "modal-following"
+                        ? "underline"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-following")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <span className="font-bold">{authUser?.following.length || 0}</span>{" "}
                   <span className="text-slate-500">Following</span>
                 </p>
                 <p
                   onClick={() => openFollowListModal("followers")}
-                  className="cursor-pointer"
+                  className={`cursor-pointer font-bold p-1 rounded-md
+                    ${
+                      isTouchDevice && activeButton === "modal-followers"
+                        ? "underline"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-followers")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <span className="font-bold">{authUser?.followers.length || 0}</span>{" "}
                   <span className="text-slate-500">Followers</span>
@@ -660,13 +849,21 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             {/* Scrollable navigation links */}
             <div className="flex-1 overflow-y-auto scrollbar-on-hover py-2">
               <ul className="flex flex-col gap-0">
-                {/* Profile Tab */}
+                {/* Profile Tab in Side Modal */}
                 <li
                   onClick={() => {
                     navigate(`/profile/${authUser?.username}`);
                     setShowSideModal(false); // Close modal on navigation
                   }}
-                  className="flex items-center cursor-pointer hover:bg-secondary py-2 px-4"
+                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
+                    ${
+                      isTouchDevice && activeButton === "modal-profile"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-profile")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <LuUserRound
                     className="size-6 mr-4"
@@ -680,13 +877,18 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                     Profile
                   </span>
                 </li>
-                {/* Themes Tab */}
+                {/* Themes Tab in Side Modal */}
                 <li
                   onClick={() => {
                     navigate("/themes");
                     setShowSideModal(false); // Close modal on navigation
                   }}
-                  className="flex items-center cursor-pointer hover:bg-secondary py-2 px-4"
+                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
+                    ${
+                      isTouchDevice && activeButton === "modal-themes"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
                 >
                   <LuPalette
                     className="size-6 mr-4"
@@ -702,20 +904,36 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 {/* Separator if needed */}
                 <div className="border-t border-accent my-2"></div>
 
-                {/* Delete Account */}
+                {/* Delete Account Button in Side Modal */}
                 <li
                   onClick={handleConfirmDeleteClick}
-                  className="flex items-center cursor-pointer hover:bg-secondary  py-2 px-4 text-red-500 font-bold gap-1"
+                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 text-red-500 font-bold gap-1
+                    ${
+                      isTouchDevice && activeButton === "modal-delete-account"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-delete-account")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <span>
                     <LuUserRoundX className="size-6 mr-3" />
                   </span>
                   Delete Account
                 </li>
-                {/* Logout */}
+                {/* Logout Button in Side Modal */}
                 <li
                   onClick={handleLogout}
-                  className="flex items-center cursor-pointer hover:bg-secondary  py-2 px-4 font-bold"
+                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 font-bold
+                    ${
+                      isTouchDevice && activeButton === "modal-logout"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-logout")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   <span>
                     <BiLogOut className="size-6 mr-4" />
@@ -757,24 +975,40 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         isOpen={showConfirmDeleteModal}
         onClose={() => setShowConfirmDeleteModal(false)}
       >
-        <h2 className="text-lg font-bold text-white mb-4 text-center">
+        <h2 className="text-lg font-bold mb-4 text-center">
           Confirm Account Deletion
         </h2>
-        <p className="text-gray-300 mb-6 text-center">
+        <p className="text-gray-500 mb-6 text-center">
           Are you absolutely sure you want to delete your account? This action is
           irreversible and all your data will be permanently removed.
         </p>
         <div className="flex flex-col gap-3">
           <button
             onClick={handleDeleteAccount}
-            className="w-full bg-red-600 text-white py-2 rounded-full hover:bg-red-700 transition-colors"
+            className={`w-full bg-red-600 text-white py-2 rounded-full hover:bg-red-700 transition-colors
+              ${
+                isTouchDevice && activeButton === "confirm-delete"
+                  ? "bg-red-700 transition duration-150"
+                  : "transition duration-150"
+              }`}
+            onTouchStart={() => handleTouchStart("confirm-delete")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
             disabled={isDeletingAccount}
           >
             {isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
           </button>
           <button
             onClick={() => setShowConfirmDeleteModal(false)}
-            className="w-full bg-gray-700 text-white py-2 rounded-full hover:bg-secondary transition-colors"
+            className={`w-full bg-gray-500 text-white py-2 rounded-full hover:bg-gray-600 transition-colors
+              ${
+                isTouchDevice && activeButton === "cancel-delete"
+                  ? "bg-secondary bg-opacity-50 transition duration-150"
+                  : "transition duration-150"
+              }`}
+            onTouchStart={() => handleTouchStart("cancel-delete")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
           >
             Cancel
           </button>

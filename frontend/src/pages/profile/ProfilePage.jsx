@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, useCallback } from "react"; // Import useCallback
 import { useNavigate, useParams } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
 
@@ -21,6 +21,7 @@ import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
 import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
+import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -30,7 +31,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
-  const [userLikedPostsCount, setUserLikedPostsCount] = useState(0);
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
@@ -69,6 +69,45 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const amIFollowing = authUser?.following?.includes(user?._id);
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
+
+  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [activeTab, setActiveTab] = useState(null); // To control the active state for touch feedback
+
+  useEffect(() => {
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (type) => {
+      if (isTouchDevice) {
+        setActiveTab(type);
+      }
+    },
+    [isTouchDevice]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveTab(null);
+      }, 150); // Use 150ms to match common touch feedback duration
+    }
+  }, [isTouchDevice]);
+
+  const handleTouchCancel = useCallback(() => {
+    // Good practice for touches that don't complete
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveTab(null);
+      }, 150);
+    }
+  }, [isTouchDevice]);
+  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   const openBlockConfirmationModal = () => {
     if (!user?._id) return;
@@ -122,10 +161,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  // useEffect(() => {
-  //   refetch(); // Keep refetching main user profile on username change
-  // }, [username, refetch]);
-
   const openFollowListModal = (type) => {
     setModalType(type);
     document.getElementById(`follow_list_modal_${type}`).showModal();
@@ -140,16 +175,10 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     setUserPostsCount(count);
   };
 
-  // Adjusted to handle liked posts count separately
-  const handleLikedPostsFetched = (count) => {
-    setUserLikedPostsCount(count);
-  };
-
   let displayMessage = "";
   let showFullProfileHeader = false;
   let showFullProfileContent = false;
 
-  // Use isLoading from useFetchUserProfile for main profile loading state
   if (isLoading || isRefetching) {
     showFullProfileHeader = false;
     showFullProfileContent = false;
@@ -159,7 +188,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     showFullProfileHeader = false;
     showFullProfileContent = false;
   } else if (!user) {
-    displayMessage = error?.message || "User not found."; // Access error.message
+    displayMessage = error?.message || "User not found.";
     showFullProfileHeader = false;
     showFullProfileContent = false;
   } else if (isBlockedByYou) {
@@ -171,7 +200,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     showFullProfileContent = true;
   }
 
-
   return (
     <>
       <ScrollToTop />
@@ -182,7 +210,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
         {showFullProfileHeader && user && (
           <>
-            <div className="flex gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3 items-center">
+            <div className="flex gap-2 md:gap-4 px-3 md:px-4 py-0.5 md:py-2 items-center">
               <button
                 onClick={() => navigate(-1)}
                 className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
@@ -194,8 +222,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <span className="text-sm text-slate-500">
                   {feedType === "posts"
                     ? `${userPostsCount} posts`
-                    : `${userLikedPostsCount} likes`}
-                </span>{" "}
+                    : `${userPostsCount} likes`}
+                </span>
               </div>
             </div>
             <div className="relative group/cover">
@@ -211,7 +239,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                   className="absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
                   onClick={() => coverImgRef.current.click()}
                 >
-                  <MdEdit className="w-5 h-5 text-white" />
+                  <MdEdit className="w-5 h-5 " />
                 </div>
               )}
 
@@ -241,7 +269,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                   {isMyProfile && (
                     <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
                       <MdEdit
-                        className="w-4 h-4 text-white"
+                        className="w-4 h-4"
                         onClick={() => profileImgRef.current.click()}
                       />
                     </div>
@@ -255,12 +283,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {!isMyProfile && !hasBlockedYou && (
                 <button
                   className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:py-1.5 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
-                                  ${
-                                    isBlockedByYou
-                                      ? "bg-red-700  hover:bg-red-800"
-                                      : "bg-red-700  hover:bg-red-800"
-                                  }
-                              `}
+                    ${
+                      isBlockedByYou
+                        ? "bg-red-700 hover:bg-red-800"
+                        : "bg-red-700 hover:bg-red-800"
+                    }
+                  `}
                   onClick={openBlockConfirmationModal}
                   disabled={isBlocking}
                 >
@@ -279,13 +307,23 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 </button>
               )}
 
+              {!isMyProfile && !amIFollowing && !isBlockingRelationship && (
+                <button
+                  onClick={handleMessageClick}
+                  className="hidden p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black/0 md:text-md text-xs"
+                  disabled={isBlockingRelationship}
+                >
+                  <CiMail size={20} strokeWidth={1} />
+                </button>
+              )}
+
               {!isMyProfile && !isBlockingRelationship && (
                 <button
                   className={`${
                     !amIFollowing
-                      ? "bg-white text-black hover:bg-gray-400 duration-200 transition border-none"
+                      ? "bg-white text-black hover:bg-gray-400 duration-200 transition border"
                       : "hover:bg-secondary"
-                  } font-bold border px-2 md:px-4 rounded-full py-0.5 md:py-1.5 transition duration-200  md:text-base text-xs`}
+                  } font-bold border px-2 md:px-4 rounded-full py-1.5 transition duration-200  md:text-base text-xs`}
                   onClick={() => follow(user?._id)}
                   disabled={isPending || isBlockingRelationship}
                 >
@@ -370,18 +408,55 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               </div>
             </div>
             <div className="flex w-full border-b border-accent mt-4">
+              {/* Posts Tab */}
               <div
-                className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
-                onClick={() => setFeedType("posts")}
+                className={`flex justify-center flex-1 p-3 relative cursor-pointer
+                  transition duration-150                     
+                  ${!isTouchDevice ? "hover:bg-secondary" : ""}
+                  ${
+                    isTouchDevice && activeTab === "posts"
+                      ? "bg-secondary bg-opacity-50"
+                      : ""
+                  }
+                  ${feedType === "posts" ? "font-bold" : "opacity-50"}
+                `}
+                onClick={() => {
+                  setFeedType("posts");
+                  // Optional: if you want immediate touch feedback, you can add setActiveTab here
+                  // but onClick handles the primary navigation which is often enough.
+                }}
+                onTouchStart={() => handleTouchStart("posts")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
               >
                 Posts
                 {feedType === "posts" && (
                   <div className="absolute bottom-0 w-10 h-1 rounded-full bg-primary" />
                 )}
               </div>
+              {/* Likes Tab */}
               <div
-                className="flex justify-center flex-1 p-3 hover:bg-secondary transition duration-300 relative cursor-pointer"
-                onClick={() => setFeedType("likes")}
+                className={`flex justify-center flex-1 p-3 relative cursor-pointer
+                  transition duration-150         
+                  ${
+                    !isTouchDevice ? "hover:bg-secondary" : ""
+                  } {/* Hover only for non-touch */}
+                  ${
+                    isTouchDevice && activeTab === "likes"
+                      ? "bg-secondary bg-opacity-50"
+                      : ""
+                  } {/* Active background for touch */}
+                  ${
+                    feedType === "likes" ? "font-bold" : "opacity-50"
+                  } {/* Existing active text styling */}
+                `}
+                onClick={() => {
+                  setFeedType("likes");
+                  // Optional: if you want immediate touch feedback, you can add setActiveTab here
+                }}
+                onTouchStart={() => handleTouchStart("likes")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
               >
                 Likes
                 {feedType === "likes" && (
@@ -399,8 +474,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             userId={user?._id}
             onPostsFetched={handlePostsFetched}
             openImageModal={openImageModal}
-            pinnedPosts={pinnedPosts || []} // Pass pinned posts from the new hook
-            isLoadingPinnedPosts={isLoadingPinnedPosts || isRefetchingPinnedPosts} // Pass loading state
+            pinnedPosts={pinnedPosts || []}
+            isLoadingPinnedPosts={isLoadingPinnedPosts || isRefetchingPinnedPosts}
           />
         )}
       </div>

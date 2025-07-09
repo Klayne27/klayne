@@ -29,6 +29,7 @@ export const useFetchPosts = (POST_ENDPOINT) => {
   const totalPostsCount = data?.pages[0]?.totalPosts || 0;
   const totalLikedPostsCount = data?.pages[0]?.totalLikedPosts || 0
 
+
   return {
     posts,
     isLoading,
