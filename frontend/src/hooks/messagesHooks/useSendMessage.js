@@ -16,6 +16,7 @@ export const useSendMessage = ({
   const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
     mutationFn: sendMessageApi,
     onMutate: async (newMessageData) => {
+      // ... (your existing onMutate logic - it looks fine for optimistic updates)
       const queryKeyConversationId = isNewOrTemporaryChat
         ? `temp-${selectedConversation.participants[0]._id}`
         : selectedConversation?._id;
@@ -77,7 +78,9 @@ export const useSendMessage = ({
     },
 
     onSuccess: (data, variables, context) => {
-      const { newMessage, conversationId: newRealConversationId } = data;
+      // Assuming 'data' from sendMessageApi contains both 'newMessage' and 'conversation'
+      const { newMessage, conversation: newRealConversation } = data; // <--- IMPORTANT: Destructure 'conversation'
+      const newRealConversationId = newRealConversation?._id; // Get the ID from the new conversation object
 
       const finalQueryKeyConversationId =
         newRealConversationId || selectedConversation._id;
@@ -90,7 +93,7 @@ export const useSendMessage = ({
           ...oldData,
           pages: oldData.pages.map((page) =>
             page.map((msg) =>
-              msg._id === context.optimisticId 
+              msg._id === context.optimisticId
                 ? { ...newMessage, isOptimistic: undefined }
                 : msg
             )
@@ -107,17 +110,22 @@ export const useSendMessage = ({
 
       if (
         isNewOrTemporaryChat &&
-        newRealConversationId &&
-        selectedConversation._id !== newRealConversationId
+        newRealConversationId && // Check if ID exists
+        selectedConversation._id !== newRealConversationId // Check if this is truly a new ID
       ) {
+        // Remove the temporary query cache key for the old 'new chat' ID
+        // This is important to ensure the new conversation uses the real ID for its cache.
         queryClient.removeQueries(["messages", context.queryKey[1]]);
+
+        // THIS IS THE CRUCIAL CHANGE: Pass the full conversation object
         if (onNewConversationCreated) {
-          onNewConversationCreated(newRealConversationId);
+          console.log("Calling onNewConversationCreated with:", newRealConversation); // Debugging
+          onNewConversationCreated(newRealConversation); // <--- Pass the entire object
         }
       }
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Refresh sidebar list
 
-      currentOptimisticIdRef.current = null;
+      currentOptimisticIdRef.current = null; // Clear optimistic ID after replacement
     },
 
     onError: (error, variables, context) => {

@@ -64,9 +64,7 @@ const ChatWindow = ({
 
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
-      setTimeout(() => {
-        messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
-      }, 0);
+      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
   }, []);
 
@@ -147,7 +145,6 @@ const ChatWindow = ({
   useEffect(() => {
     if (actualConversationId) {
       shouldScrollToBottomRef.current = true;
-      // refetchMessages();
     }
   }, [actualConversationId]);
 
