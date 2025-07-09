@@ -15,7 +15,6 @@ export const useSendMessage = ({
 
   const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
     mutationFn: sendMessageApi,
-
     onMutate: async (newMessageData) => {
       const queryKeyConversationId = isNewOrTemporaryChat
         ? `temp-${selectedConversation.participants[0]._id}`

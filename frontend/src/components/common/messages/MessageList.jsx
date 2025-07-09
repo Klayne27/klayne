@@ -90,7 +90,7 @@ const MessageList = forwardRef(function MessageList(
     );
     if (originalMessageElement) {
       originalMessageElement.scrollIntoView({
-        behavior: "instant",
+        behavior: "smooth",
         block: "center",
       });
       originalMessageElement.classList.add("highlight-message");

@@ -64,7 +64,9 @@ const ChatWindow = ({
 
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
-      messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+      setTimeout(() => {
+        messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
+      }, 0);
     }
   }, []);
 
@@ -117,7 +119,7 @@ const ChatWindow = ({
       setShowNewMessageButton(false);
     }
   }, [
-    messages.length,
+    messages,
     isLoading,
     isFetching,
     shouldOptimisticScroll,
@@ -516,7 +518,7 @@ const ChatWindow = ({
   }, [scrollToBottom]);
 
   return (
-    <div className="flex flex-col h-full relative md:border-r border-gray-700">
+    <div className="flex flex-col h-full relative md:border-r border-accent">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
 
       <MessageList

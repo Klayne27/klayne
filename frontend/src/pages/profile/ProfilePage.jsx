@@ -54,6 +54,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     httpStatus,
   } = useFetchUserProfile(username);
 
+  console.log(user?._id);
+
   // NEW: Fetch pinned posts separately
   const {
     pinnedPosts,
@@ -484,6 +486,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         <FollowListModal
           userId={user._id}
           type="following"
+          page="profilePage"
           onClose={() => closeFollowListModal("following")}
         />
       )}
@@ -492,6 +495,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         <FollowListModal
           userId={user._id}
           type="followers"
+          page="profilePage"
           onClose={() => closeFollowListModal("followers")}
         />
       )}

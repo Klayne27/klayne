@@ -12,11 +12,11 @@ const UserListItem = ({ user: listUser }) => {
 
   return (
     <div className="flex items-center justify-between  border-accent last:border-b-0  px-4 py-3">
-      <Link to={`/profile/${listUser.username}`} className="flex items-center gap-2">
+      <Link to={`/profile/${listUser?.username}`} className="flex items-center gap-2">
         <div className="avatar">
           <div className="w-8 rounded-full">
             <img
-              src={listUser.profileImg || "/avatar-placeholder.png"}
+              src={listUser?.profileImg || "/avatar-placeholder.png"}
               alt={`${listUser.username}'s avatar`}
             />
           </div>

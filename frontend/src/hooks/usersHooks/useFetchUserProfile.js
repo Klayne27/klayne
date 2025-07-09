@@ -14,7 +14,7 @@ export const useFetchUserProfile = (username) => {
       }
       return failureCount < 3;
     },
-    staleTime: 0,
+    staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
   });
 

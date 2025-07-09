@@ -219,7 +219,7 @@ export const getSuggestedUsers = async (req, res) => {
           blockedBy: { $nin: [new mongoose.Types.ObjectId(userId)] },
         },
       },
-      { $sample: { size: 10 } },
+      { $sample: { size: 4 } },
       { $limit: 4 },
       {
         $project: {
@@ -327,7 +327,8 @@ export const getFollowingUsers = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user.following);
+    // Wrap the array in an object with a 'users' key
+    res.status(200).json(user.following ); // <--- CHANGE HERE
   } catch (error) {
     console.log("Error in getFollowingUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -346,7 +347,8 @@ export const getFollowers = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    res.status(200).json(user.followers);
+    // Wrap the array in an object with a 'users' key
+    res.status(200).json(user.followers); // <--- CHANGE HERE
   } catch (error) {
     console.log("Error in getFollowers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });

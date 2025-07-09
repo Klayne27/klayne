@@ -1,6 +1,6 @@
 import XSvg from "../svgs/X";
 import { PiBellThin, PiHouseThin } from "react-icons/pi";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import { HiDotsHorizontal } from "react-icons/hi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
@@ -30,17 +30,22 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     setHasNewFeedPosts,
   } = useSocket();
   const queryClient = useQueryClient();
+  // const {username} = useParams()
 
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  const { user } = useFetchUserProfile();
+  // const { user } = useFetchUserProfile();
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
   const [showSideModal, setShowSideModal] = useState(false); // New state for side modal
   const [modalType, setModalType] = useState("");
+
+  // NEW STATE: To track if FollowListModals are open
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
 
   const lastScrollY = useRef(0);
   const profileButtonRef = useRef(null); // Used for desktop popover
@@ -214,14 +219,43 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     navigate("/bookmarks");
   };
 
+  // Function to open FollowListModal
   const openFollowListModal = (type) => {
-    setModalType(type);
-    document.getElementById(`follow_list_modal_${type}`).showModal();
+    // We need to get the specific modal ID to show it
+    const modalId =
+      type === "following"
+        ? `follow_modal_list_following` // Use the fixed IDs from FollowListModal
+        : `follow_modal_list_followers`;
+
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+      modalElement.showModal();
+      if (type === "following") {
+        setIsFollowingModalOpen(true);
+      } else {
+        setIsFollowersModalOpen(true);
+      }
+    }
   };
 
+  // Function to close FollowListModal
   const closeFollowListModal = (type) => {
-    document.getElementById(`follow_list_modal_${type}`).close();
-    setModalType(null);
+    const modalId =
+      type === "following"
+        ? `follow_modal_list_following`
+        : `follow_modal_list_followers`;
+
+    const modalElement = document.getElementById(modalId);
+    if (modalElement) {
+      modalElement.close(); // Use native close
+      if (type === "following") {
+        setIsFollowingModalOpen(false);
+        setShowSideModal(true);
+      } else {
+        setIsFollowersModalOpen(false);
+        setShowSideModal(true);
+      }
+    }
   };
 
   useEffect(() => {
@@ -258,35 +292,30 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     };
   }, [showPopover]);
 
-  // Handle click outside side modal
+  // Logic for handling clicks outside the mobile sidebar itself
   useEffect(() => {
     const handleClickOutsideSideModal = (event) => {
+      // If the side modal is open and the click is outside it AND outside any follow list modal
       if (
+        showSideModal &&
         sideModalRef.current &&
         !sideModalRef.current.contains(event.target) &&
-        showSideModal // Only close if the modal is actually open
+        !isFollowingModalOpen && // Check if following modal is NOT open
+        !isFollowersModalOpen // Check if followers modal is NOT open
       ) {
-        // Prevent closing if the click was on the mobile profile image (which opened it)
-        const mobileProfileImgButton = document.getElementById(
-          "mobile-profile-img-button"
-        );
-        if (mobileProfileImgButton && mobileProfileImgButton.contains(event.target)) {
-          return;
-        }
+        // We only close the sidebar if *no* follow list modal is active
         setShowSideModal(false);
       }
     };
 
-    if (showSideModal) {
-      document.addEventListener("mousedown", handleClickOutsideSideModal);
-    } else {
-      document.removeEventListener("mousedown", handleClickOutsideSideModal);
-    }
+    // Add event listener to the document
+    document.addEventListener("mousedown", handleClickOutsideSideModal);
 
+    // Cleanup the event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutsideSideModal);
     };
-  }, [showSideModal]);
+  }, [showSideModal, isFollowingModalOpen, isFollowersModalOpen]); // Dependencies
 
   const handleLogout = (e) => {
     e.preventDefault();
@@ -311,9 +340,15 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   };
 
   // Modified useEffect for scroll behavior
+  // Modified useEffect for scroll behavior and visibility
   useEffect(() => {
     const handleScroll = () => {
-      if (window.innerWidth < 768 && !pathname.startsWith("/messages")) {
+      // This is generally for hiding on scroll down on certain pages
+      if (
+        window.innerWidth < 768 &&
+        !pathname.startsWith("/messages") &&
+        !pathname.includes("/post/")
+      ) {
         const currentScrollY = window.scrollY;
 
         if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
@@ -326,17 +361,22 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     };
 
     if (window.innerWidth < 768) {
-      if (isChatWindowOpen) {
+      // Prioritize hiding for specific pages on mobile
+      if (isChatWindowOpen || pathname.includes("/post/")) {
+        // <-- ADDED: Hide if on PostPage
         setIsMobileBarVisible(false);
       } else if (pathname.startsWith("/messages")) {
         setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
       } else {
+        // Default visibility for other pages that use scroll-hide behavior
         setIsMobileBarVisible(true);
       }
     } else {
+      // Always visible on desktop
       setIsMobileBarVisible(true);
     }
 
+    // Add/remove event listeners
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", handleScroll);
 
@@ -344,7 +384,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, [isChatWindowOpen, isMobileMessagesListScrollingDown, pathname]);
+  }, [isChatWindowOpen, isMobileMessagesListScrollingDown, pathname]); // Keep pathname in dependencies
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
@@ -814,7 +854,10 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               <div className="flex gap-4 mt-4 text-sm">
                 {/* Follower/Following links in modal */}
                 <p
-                  onClick={() => openFollowListModal("following")}
+                  onClick={() => {
+                    openFollowListModal("following");
+                    // setShowSideModal(false); // Add this line if you want the sidebar to close
+                  }}
                   className={`cursor-pointer font-bold p-1 rounded-md
                     ${
                       isTouchDevice && activeButton === "modal-following"
@@ -829,7 +872,10 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   <span className="text-slate-500">Following</span>
                 </p>
                 <p
-                  onClick={() => openFollowListModal("followers")}
+                  onClick={() => {
+                    openFollowListModal("followers");
+                    // setShowSideModal(false); // Add this line if you want the sidebar to close
+                  }}
                   className={`cursor-pointer font-bold p-1 rounded-md
                     ${
                       isTouchDevice && activeButton === "modal-followers"
@@ -946,24 +992,26 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         )}
       </div>
 
-      {user && (
+      {authUser && (
         <FollowListModal
-          userId={user._id}
+          userId={authUser._id}
           type="following"
+          page="sidebar"
           onClose={() => closeFollowListModal("following")}
         />
       )}
 
-      {user && (
+      {authUser && (
         <FollowListModal
-          userId={user._id}
+          userId={authUser._id}
           type="followers"
+          page="sidebar"
           onClose={() => closeFollowListModal("followers")}
         />
       )}
 
       {/* Background Overlay for Side Modal */}
-      {showSideModal && (
+      {showSideModal && !isFollowingModalOpen && !isFollowersModalOpen && (
         <div
           className="fixed inset-0 bg-black bg-opacity-75 z-[999] md:hidden"
           onClick={() => setShowSideModal(false)}
@@ -975,9 +1023,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         isOpen={showConfirmDeleteModal}
         onClose={() => setShowConfirmDeleteModal(false)}
       >
-        <h2 className="text-lg font-bold mb-4 text-center">
-          Confirm Account Deletion
-        </h2>
+        <h2 className="text-lg font-bold mb-4 text-center">Confirm Account Deletion</h2>
         <p className="text-gray-500 mb-6 text-center">
           Are you absolutely sure you want to delete your account? This action is
           irreversible and all your data will be permanently removed.

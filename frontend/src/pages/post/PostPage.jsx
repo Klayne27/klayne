@@ -133,6 +133,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       mainCommentMediaInputRef.current.value = "";
     }
   }, []);
+  
 
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
