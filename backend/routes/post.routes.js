@@ -39,9 +39,8 @@ router.post("/bookmark/:id", protectRoute, toggleBookmark);
 
 router.post("/:postId/vote", protectRoute, voteOnPoll);
 
-// NEW ROUTES FOR PINNING/UNPINNING
-router.post("/pin/:id", protectRoute, pinUnpinPost); // To pin a post
-router.delete("/pin/:id", protectRoute, pinUnpinPost); // To unpin a post
+router.post("/pin/:id", protectRoute, pinUnpinPost); 
+router.delete("/pin/:id", protectRoute, pinUnpinPost);
 
 router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts); // Assuming protectRoute is needed
 

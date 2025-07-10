@@ -1,16 +1,89 @@
-import { useRef, useState, useEffect } from "react";
+import { useRef, useState, useEffect, useCallback } from "react";
 import { IoCloseSharp } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { Link } from "react-router-dom";
 import { BiImageAdd, BiPoll } from "react-icons/bi";
-
 import EmojiPicker from "emoji-picker-react";
 import toast from "react-hot-toast";
-import { FaPlus } from "react-icons/fa6"; // Assuming you want this plus icon for adding poll choices
+import { FaPlus } from "react-icons/fa6";
 
-const POLL_CHOICE_MAX_LENGTH = 25; // Define max length for poll choices
+// IMPORTS FOR MENTION FEATURE
+import { useQuery } from "@tanstack/react-query";
+import { searchUsersApi } from "../../api/usersApi";
+
+const POLL_CHOICE_MAX_LENGTH = 25;
+
+// Utility function to get caret position in textarea
+// This function needs to be outside the component or memoized properly
+// to avoid recreating it on every render, or it can be a separate file.
+// For simplicity, I'm including it here.
+const getCaretCoordinates = (element, position) => {
+  const div = document.createElement("div");
+  document.body.appendChild(div);
+
+  const style = div.style;
+  const computed = getComputedStyle(element);
+
+  // Transfer font styles and dimensions to the div
+  style.whiteSpace = "pre-wrap";
+  style.wordWrap = "break-word";
+  style.position = "absolute";
+  style.visibility = "hidden";
+  style.overflow = "hidden";
+
+  // Match text area's font styles
+  style.fontFamily = computed.fontFamily;
+  style.fontSize = computed.fontSize;
+  style.lineHeight = computed.lineHeight;
+  style.fontWeight = computed.fontWeight;
+  style.fontStyle = computed.fontStyle;
+  style.letterSpacing = computed.letterSpacing;
+  style.textTransform = computed.textTransform;
+
+  // Match text area's padding, border, and width
+  style.padding = computed.padding;
+  style.border = computed.border;
+  style.width = element.clientWidth + "px"; // Use clientWidth for accurate width
+  style.height = "auto"; // Let height adjust
+
+  // Set content and create a span at the cursor position
+  const textBeforeCaret = element.value.substring(0, position);
+  const textAfterCaret = element.value.substring(position);
+
+  const span = document.createElement("span");
+  span.textContent = textAfterCaret || "."; // Add a character to measure its height
+  div.textContent = textBeforeCaret;
+  div.appendChild(span);
+
+  // Get coordinates relative to the div, then add element's offset
+  const coordinates = {
+    top: span.offsetTop + parseInt(computed.lineHeight), // Position below the current line
+    left: span.offsetLeft,
+    height: span.offsetHeight, // height of a line
+  };
+
+  document.body.removeChild(div);
+
+  // Adjust coordinates relative to the textarea's position within the document
+  const textareaRect = element.getBoundingClientRect();
+  const parentRect = element.parentElement.getBoundingClientRect(); // Get relative to immediate parent
+
+  // Calculate position relative to the form's containing div (the one with position: relative)
+  // Assuming the textarea's direct parent is the 'relative w-full' div
+  // We want the position relative to the *containing* relative element that the suggestion menu will be absolute to.
+  // In your case, that's the div wrapping the textarea: `<div className="relative w-full">`
+  const relativeContainerRect = element.parentElement.getBoundingClientRect();
+
+  return {
+    top: coordinates.top + element.offsetTop, // Add textarea's offset from its parent
+    left: coordinates.left + element.offsetLeft,
+    // The top and left will be relative to the `relativeContainerRect`.
+    // So we need to subtract the container's top/left to get coordinates *within* it.
+    // We'll calculate this in the component for `suggestionMenuPosition`.
+  };
+};
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -21,12 +94,21 @@ const CreatePost = () => {
 
   // --- NEW POLL STATE ---
   const [showPollInputs, setShowPollInputs] = useState(false);
-  // Initialize with 2 choices. We'll add more dynamically as user types/clicks.
   const [pollChoices, setPollChoices] = useState([{ text: "" }, { text: "" }]);
-  const MAX_POLL_CHOICES = 4; // Max options allowed (X/Twitter usually has 4)
-  // State to track which poll choice input is focused for character count display
+  const MAX_POLL_CHOICES = 4;
   const [focusedPollInputIndex, setFocusedPollInputIndex] = useState(null);
   // --- END NEW POLL STATE ---
+
+  // --- MENTION STATE ---
+  const [mentionQuery, setMentionQuery] = useState("");
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const [mentionStartIndex, setMentionStartIndex] = useState(-1);
+  const [suggestionMenuPosition, setSuggestionMenuPosition] = useState({
+    top: 0,
+    left: 0,
+  }); // New state for position
+  const suggestionBoxRef = useRef(null);
+  // --- END MENTION STATE ---
 
   const { authUser } = useAuthUser();
 
@@ -34,16 +116,128 @@ const CreatePost = () => {
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
-  const formRef = useRef(null);
+  const formRef = useRef(null); // Ref for the main form to get its position
 
   const { createPost, isPending, isError, error } = useCreatePosts();
+
+  // Debounced query for mention search
+  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setDebouncedMentionQuery(mentionQuery);
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [mentionQuery]);
+
+  // Fetch mention suggestions using react-query
+  const { data: mentionSuggestions = [], isLoading: isLoadingMentions } = useQuery({
+    queryKey: ["mentionSuggestions", debouncedMentionQuery],
+    queryFn: () => searchUsersApi(debouncedMentionQuery),
+    enabled: !!debouncedMentionQuery && showMentionSuggestions && !showPollInputs,
+  });
+
+  // --- TEXTAREA CHANGE HANDLER ---
+  const handleTextChange = (e) => {
+    const newText = e.target.value;
+    setText(newText);
+
+    // Auto-adjust textarea height
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; // Set to scroll height
+    }
+
+    const cursorPosition = e.target.selectionStart;
+    const textBeforeCursor = newText.substring(0, cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    if (
+      lastAtIndex !== -1 &&
+      !/\S/.test(textBeforeCursor.substring(lastAtIndex - 1, lastAtIndex))
+    ) {
+      const possibleMention = textBeforeCursor.substring(lastAtIndex);
+      const mentionMatch = possibleMention.match(/^@([a-zA-Z0-9_]*)$/);
+
+      if (mentionMatch) {
+        setMentionQuery(mentionMatch[1]);
+        setMentionStartIndex(lastAtIndex);
+        setShowMentionSuggestions(true);
+
+        // Calculate and set suggestion menu position
+        if (textareaRef.current) {
+          const { top, left } = getCaretCoordinates(textareaRef.current, cursorPosition);
+          // The suggestion menu is absolute to the form, which has "position: relative"
+          // So we need to calculate `top` and `left` relative to the form's top-left.
+          const formRect = formRef.current.getBoundingClientRect();
+          const textareaRect = textareaRef.current.getBoundingClientRect();
+
+          // Calculate position relative to the form's top-left
+          // 'top' from getCaretCoordinates is relative to textarea's top.
+          // We need to add textarea's top offset from form, and then textarea's top border/padding if any.
+          const calculatedTop = textareaRect.top - formRect.top + top;
+          const calculatedLeft = textareaRect.left - formRect.left + left;
+
+          setSuggestionMenuPosition({ top: calculatedTop, left: calculatedLeft });
+        }
+        return;
+      }
+    }
+
+    setMentionQuery("");
+    setMentionStartIndex(-1);
+    setShowMentionSuggestions(false);
+  };
+
+  // --- MENTION SELECTION HANDLER ---
+  const handleMentionSelect = (username) => {
+    const currentText = text;
+    const startReplaceIndex = mentionStartIndex;
+    const endReplaceIndex = mentionStartIndex + 1 + mentionQuery.length;
+
+    const newText =
+      currentText.substring(0, startReplaceIndex) +
+      `@${username} ` +
+      currentText.substring(endReplaceIndex);
+
+    setText(newText);
+    setMentionQuery("");
+    setMentionStartIndex(-1);
+    setShowMentionSuggestions(false);
+
+    const newCursorPosition = startReplaceIndex + `@${username} `.length;
+    setTimeout(() => {
+      if (textareaRef.current) {
+        textareaRef.current.focus();
+        textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+        textareaRef.current.style.height = "auto";
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      }
+    }, 0);
+  };
+
+  // --- CLOSE SUGGESTIONS ON CLICK OUTSIDE ---
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showMentionSuggestions &&
+        suggestionBoxRef.current &&
+        !suggestionBoxRef.current.contains(event.target) &&
+        textareaRef.current &&
+        !textareaRef.current.contains(event.target)
+      ) {
+        setShowMentionSuggestions(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showMentionSuggestions]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
 
-    // Poll validation
     if (showPollInputs) {
-      // Filter out empty optional choices to count actual filled choices for submission
       const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "");
 
       if (text.trim() === "") {
@@ -51,13 +245,11 @@ const CreatePost = () => {
         return;
       }
 
-      // Ensure at least the first two choices (mandatory) are filled
       if (pollChoices[0].text.trim() === "" || pollChoices[1].text.trim() === "") {
         toast.error("At least the first two poll options must be filled.");
         return;
       }
 
-      // Check if any *filled* poll choice exceeds the max length
       if (
         filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
       ) {
@@ -65,14 +257,12 @@ const CreatePost = () => {
         return;
       }
 
-      // Prevent submitting media with poll
       if (selectedFile) {
         toast.error("You cannot post a poll with an image or video.");
         return;
       }
 
       let postData = { text };
-      // Pass only the filled poll options to the backend
       postData.pollOptions = filledPollChoices;
 
       createPost(postData, {
@@ -80,21 +270,22 @@ const CreatePost = () => {
           setText("");
           setSelectedFile(null);
           setPreviewUrl(null);
-          setShowPollInputs(false); // Reset poll state
-          // Reset poll choices to their initial state (2 empty choices)
+          setShowPollInputs(false);
           setPollChoices([{ text: "" }, { text: "" }]);
           if (fileInputRef.current) {
             fileInputRef.current.value = null;
+          }
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
           }
         },
         onError: (err) => {
           toast.error(err?.message || "Failed to create post with poll.");
         },
       });
-      return; // Return here after handling poll submission
+      return;
     }
 
-    // General validation (text or media, when NOT a poll)
     if (text.trim() === "" && !selectedFile) {
       toast.error("Post must have text, an image, or a video.");
       return;
@@ -117,9 +308,12 @@ const CreatePost = () => {
             setSelectedFile(null);
             setPreviewUrl(null);
             setShowPollInputs(false);
-            setPollChoices([{ text: "" }, { text: "" }]); // Reset poll choices
+            setPollChoices([{ text: "" }, { text: "" }]);
             if (fileInputRef.current) {
               fileInputRef.current.value = null;
+            }
+            if (textareaRef.current) {
+              textareaRef.current.style.height = "auto";
             }
           },
           onError: (err) => {
@@ -129,14 +323,16 @@ const CreatePost = () => {
       };
       reader.readAsDataURL(selectedFile);
     } else {
-      // For text-only posts (when not a poll and no media)
       createPost(postData, {
         onSuccess: () => {
           setText("");
           setSelectedFile(null);
           setPreviewUrl(null);
           setShowPollInputs(false);
-          setPollChoices([{ text: "" }, { text: "" }]); // Reset poll choices
+          setPollChoices([{ text: "" }, { text: "" }]);
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+          }
         },
         onError: (err) => {
           toast.error(err?.message || "Failed to create post.");
@@ -146,11 +342,10 @@ const CreatePost = () => {
   };
 
   const handleFileChange = (e) => {
-    // If user selects a file, disable poll inputs
     if (e.target.files[0]) {
       setShowPollInputs(false);
-      // Clear poll choices if media is selected
       setPollChoices([{ text: "" }, { text: "" }]);
+      setShowMentionSuggestions(false);
     }
     const file = e.target.files[0];
     if (file) {
@@ -180,23 +375,29 @@ const CreatePost = () => {
 
   const onEmojiClick = (emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
   };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (e.shiftKey) {
-        e.preventDefault();
-        const start = e.target.selectionStart;
-        const end = e.target.selectionEnd;
-        setText((prevText) => {
-          return prevText.substring(0, start) + "\n" + prevText.substring(end);
-        });
         setTimeout(() => {
-          e.target.selectionStart = e.target.selectionEnd = start + 1;
+          if (textareaRef.current) {
+            textareaRef.current.style.height = "auto";
+            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+          }
         }, 0);
       } else {
-        e.preventDefault();
-        handleSubmit(e);
+        if (showMentionSuggestions && mentionSuggestions.length > 0) {
+          e.preventDefault();
+        } else {
+          e.preventDefault();
+          handleSubmit(e);
+        }
       }
     }
   };
@@ -210,14 +411,12 @@ const CreatePost = () => {
 
   const handlePollChoiceChange = (index, value) => {
     const newChoices = [...pollChoices];
-    // Truncate value if it exceeds max length
     newChoices[index].text = value.slice(0, POLL_CHOICE_MAX_LENGTH);
     setPollChoices(newChoices);
   };
 
   const handleRemovePollChoice = (indexToRemove) => {
     const newChoices = pollChoices.filter((_, i) => i !== indexToRemove);
-    // If we remove an option and now have less than 2, add empty ones back
     while (newChoices.length < 2) {
       newChoices.push({ text: "" });
     }
@@ -226,18 +425,25 @@ const CreatePost = () => {
 
   const handleRemovePoll = () => {
     setShowPollInputs(false);
-    // Reset to 2 empty choices when removing the poll
     setPollChoices([{ text: "" }, { text: "" }]);
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
   };
 
   const handlePollIconClick = () => {
     setShowPollInputs(!showPollInputs);
-    // If showing poll inputs, clear any selected media and reset poll choices
     if (!showPollInputs) {
       setSelectedFile(null);
       setPreviewUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = null;
-      setPollChoices([{ text: "" }, { text: "" }]); // Reset to 2 empty choices
+      setPollChoices([{ text: "" }, { text: "" }]);
+      setMentionQuery("");
+      setShowMentionSuggestions(false);
+      setMentionStartIndex(-1);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto";
+      }
     }
   };
 
@@ -250,15 +456,10 @@ const CreatePost = () => {
   };
   // --- END NEW POLL HANDLERS ---
 
-  // Refined isButtonDisabled logic
   const isButtonDisabled =
     isPending ||
     (() => {
       if (showPollInputs) {
-        // If poll is active:
-        // 1. Text (question) must not be empty
-        // 2. First two choices must be filled
-        // 3. No choice (even optional ones) can exceed max length
         return (
           text.trim() === "" ||
           pollChoices[0].text.trim() === "" ||
@@ -266,8 +467,6 @@ const CreatePost = () => {
           pollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         );
       } else {
-        // If poll is NOT active:
-        // Post must have either text OR a selected file
         return text.trim() === "" && !selectedFile;
       }
     })();
@@ -308,8 +507,16 @@ const CreatePost = () => {
     };
   }, [showEmojiPicker]);
 
+  // Effect to manage textarea height dynamically on mount and text changes
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [text]);
+
   return (
-    <div className="flex p-4 items-start gap-3 border-b border-accent mt-12">
+    <div className="flex p-4 items-start gap-3 border-b border-accent mt-12 relative">
       <Link to={`/profile/${authUser.username}`}>
         <div className="avatar">
           <div className="w-8 md:w-10 rounded-full">
@@ -317,15 +524,60 @@ const CreatePost = () => {
           </div>
         </div>
       </Link>
-      <form className="flex flex-col w-full" onSubmit={handleSubmit} ref={formRef}>
-        <textarea
-          className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl"
-          placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
-          value={text}
-          onChange={(e) => setText(e.target.value)}
-          onKeyDown={handleKeyDown}
-          ref={textareaRef}
-        />
+      <form
+        className="flex flex-col w-full relative"
+        onSubmit={handleSubmit}
+        ref={formRef}
+      >
+        <div className="relative w-full">
+          <textarea
+            className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative z-10 overflow-y-auto text-white"
+            placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
+            value={text}
+            onChange={handleTextChange}
+            onKeyDown={handleKeyDown}
+            ref={textareaRef}
+            rows={1}
+            style={{ minHeight: "28px" }}
+          />
+        </div>
+
+        {/* Mention Suggestions Popover */}
+        {showMentionSuggestions && mentionSuggestions.length > 0 && !showPollInputs && (
+          <div
+            ref={suggestionBoxRef}
+            className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-48 md:w-64" // Removed old positioning classes
+            style={{ top: suggestionMenuPosition.top, left: suggestionMenuPosition.left }}
+          >
+            {isLoadingMentions ? (
+              <p className="p-2 text-gray-400">Loading suggestions...</p>
+            ) : mentionSuggestions.length === 0 ? (
+              <p className="p-2 text-gray-500">No users found.</p>
+            ) : (
+              mentionSuggestions.map((user) => (
+                <div
+                  key={user._id}
+                  className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
+                  onClick={() => handleMentionSelect(user.username)}
+                >
+                  <div className="avatar">
+                    <div className="w-8 rounded-full">
+                      <img
+                        src={user.profileImg || "/avatar-placeholder.png"}
+                        alt="profile"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <p className="font-semibold">{user.fullName}</p>
+                    <p className="text-gray-500 text-sm">@{user.username}</p>
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        )}
+
         {previewUrl && (
           <div className="relative max-w-full mx-auto sm:w-auto">
             <IoCloseSharp
@@ -375,9 +627,9 @@ const CreatePost = () => {
                     onChange={(e) => handlePollChoiceChange(index, e.target.value)}
                     onFocus={() => handlePollInputFocus(index)}
                     onBlur={handlePollInputBlur}
-                    maxLength={POLL_CHOICE_MAX_LENGTH} // Enforce max length HTML attribute
+                    maxLength={POLL_CHOICE_MAX_LENGTH}
                   />
-                  
+
                   {focusedPollInputIndex === index && (
                     <span className="absolute top-1 right-2 text-xs text-gray-500">
                       {choice.text.length} / {POLL_CHOICE_MAX_LENGTH}
@@ -394,13 +646,12 @@ const CreatePost = () => {
                     </button>
                   )}
                 </div>
-                {/* Plus icon for adding new choices */}
                 {index === pollChoices.length - 1 &&
                   pollChoices.length < MAX_POLL_CHOICES && (
                     <button
                       type="button"
                       onClick={handleAddPollChoice}
-                      className="text-primary hover:text-blue-400 transition duration-200 absolute right-0" // Add some margin if needed
+                      className="text-primary hover:text-blue-400 transition duration-200 absolute right-0"
                     >
                       <FaPlus size={18} />
                     </button>
@@ -408,13 +659,13 @@ const CreatePost = () => {
               </div>
             ))}
             <div className="flex justify-center items-center">
-            <button
-              type="button"
-              onClick={handleRemovePoll}
-              className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200" // Added some top margin
-            >
-              Remove poll
-            </button>
+              <button
+                type="button"
+                onClick={handleRemovePoll}
+                className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200"
+              >
+                Remove poll
+              </button>
             </div>
           </div>
         )}
@@ -463,7 +714,7 @@ const CreatePost = () => {
                     onEmojiClick={onEmojiClick}
                     theme="dark"
                     width={emojiPickerWidth}
-                  />{" "}
+                  />
                 </div>
               )}
             </div>

@@ -11,6 +11,34 @@ import {
   onlineUsersMap,
 } from "../lib/socket.js";
 
+// Helper function to extract and validate mentions
+const extractAndValidateMentions = async (text) => {
+  // Regex to find @username patterns (adjust based on your username rules)
+  // This regex matches '@' followed by 1 to 30 alphanumeric characters or underscores.
+  const mentionRegex = /@([a-zA-Z0-9_]{1,30})\b/g;
+  let match;
+  const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
+
+  // Extract all unique usernames mentioned in the text
+  while ((match = mentionRegex.exec(text)) !== null) {
+    mentionedUsernames.add(match[1].toLowerCase()); // Store in lowercase for case-insensitive lookup
+  }
+
+  const mentionedUsersIds = [];
+  if (mentionedUsernames.size > 0) {
+    // Find all users by their usernames from the database
+    // Use $in operator to query multiple usernames efficiently
+    // Use $options: 'i' for case-insensitive matching
+    const users = await User.find({
+      username: { $in: Array.from(mentionedUsernames) },
+    }).select('_id username'); // Select only ID and username
+
+    // Map found users to their _id
+    users.forEach((user) => mentionedUsersIds.push(user._id));
+  }
+  return mentionedUsersIds;
+};
+
 const getBlockingUsers = async (userId) => {
   if (!userId) {
     return { blockedByMe: [], blockedMe: [] };
@@ -37,9 +65,10 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   );
 };
 
+
 export const createPost = async (req, res) => {
   try {
-    const { text, pollOptions } = req.body; // Destructure pollOptions from req.body
+    const { text, pollOptions } = req.body;
     let { img, video } = req.body;
 
     const userId = req.user._id.toString();
@@ -47,14 +76,12 @@ export const createPost = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Validate based on post type (text, media, or poll)
     if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
       return res
         .status(400)
         .json({ error: "Post must have text, image, video, or poll options." });
     }
 
-    // Restriction: Cannot post both media and a poll
     if ((img || video) && pollOptions && pollOptions.length > 0) {
       return res
         .status(400)
@@ -65,7 +92,7 @@ export const createPost = async (req, res) => {
     let uploadedVideoUrl = null;
     let imgPublicId = null;
     let videoPublicId = null;
-    let mediaType = "none"; // Default to none
+    let mediaType = "none";
 
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img);
@@ -81,35 +108,35 @@ export const createPost = async (req, res) => {
       mediaType = "video";
     }
 
-    // Process poll data if present
+    // Extract and validate mentioned users from the post text
+    const mentionedUsersIds = await extractAndValidateMentions(text); // Ensure this function correctly returns an array of user IDs
+
     const newPostData = {
       user: userId,
       text,
       commentsCount: 0,
+      mentionedUsers: mentionedUsersIds, // Store the IDs of mentioned users
     };
 
     if (pollOptions && pollOptions.length > 0) {
-      // Basic poll validation: At least 2 options, and options must have text
       if (pollOptions.length < 2) {
         return res.status(400).json({ error: "A poll must have at least two options." });
       }
       const validPollOptions = pollOptions.map((option) => {
         if (!option.text || option.text.trim() === "") {
-          throw new Error("Poll options cannot be empty."); // Throw an error to be caught by catch block
+          throw new Error("Poll options cannot be empty.");
         }
-        return { text: option.text.trim(), voters: [] }; // Initialize voters array
+        return { text: option.text.trim(), voters: [] };
       });
 
       newPostData.pollOptions = validPollOptions;
-      newPostData.pollTotalVotes = 0; // Initialize total votes
-      // Ensure media is not set if it's a poll
+      newPostData.pollTotalVotes = 0;
       newPostData.img = null;
       newPostData.video = null;
       newPostData.imgPublicId = null;
       newPostData.videoPublicId = null;
-      newPostData.mediaType = "none"; // Explicitly set mediaType to none for polls
+      newPostData.mediaType = "none";
     } else {
-      // If no poll, include media if present
       newPostData.img = uploadedImgUrl;
       newPostData.video = uploadedVideoUrl;
       newPostData.imgPublicId = imgPublicId;
@@ -118,12 +145,31 @@ export const createPost = async (req, res) => {
     }
 
     const newPost = new Post(newPostData);
-
     await newPost.save();
 
     await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
 
+    // --- Create Notifications for Mentioned Users and emit status ---
+    for (const mentionedUserId of mentionedUsersIds) {
+      // Ensure you don't notify the post author if they mention themselves
+      if (mentionedUserId.toString() !== userId.toString()) {
+        // You can reuse createAndSendNotification here for consistency
+        // Or keep your direct logic if you prefer, but make sure to call emitUnreadNotificationStatus
+        await createAndSendNotification({
+          from: userId,
+          to: mentionedUserId,
+          type: "mention",
+          postId: newPost._id,
+        });
+        // The createAndSendNotification function already calls emitUnreadNotificationStatus
+        // so you don't need to call it again here if you use it.
+        // If you prefer the direct logic, you *must* add:
+        // await emitUnreadNotificationStatus(mentionedUserId.toString());
+      }
+    }
+
     // Emit new post to online users (excluding the sender)
+    // This is separate from notification badge logic
     for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
       if (onlineUserId.toString() !== userId.toString()) {
         socketIdsSet.forEach((socketId) => {
@@ -134,7 +180,6 @@ export const createPost = async (req, res) => {
 
     res.status(201).json(newPost);
   } catch (error) {
-    // Catch validation errors from poll processing
     if (error.message.includes("Poll options cannot be empty.")) {
       return res.status(400).json({ error: error.message });
     }

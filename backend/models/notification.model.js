@@ -15,7 +15,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["follow", "like", "comment", "repost", "commentLike", "commentReply"],
+      enum: ["follow", "like", "comment", "repost", "commentLike", "commentReply", "mention"],
     },
     read: {
       type: Boolean,
@@ -25,7 +25,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
       required: function () {
-        return ["comment", "repost", "like", "commentLike", "commentReply"].includes(
+        return ["comment", "repost", "like", "commentLike", "commentReply", "mention"].includes(
           this.type
         );
       },

@@ -12,6 +12,8 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton";
 import { FaArrowLeft } from "react-icons/fa6";
 
+import { FaAt } from "react-icons/fa"; // Import an icon for mentions, e.g., FaAt, FaRegBell, or a custom one.
+
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
   const { deleteNotification, isDeleting } = useDeleteNotification();
@@ -20,6 +22,11 @@ const NotificationPage = () => {
   const navigate = useNavigate();
 
   const filteredNotifications = notifications?.filter((notification) => {
+    // Keep this filter. It ensures users don't see notifications
+    // for their own actions (liking their own post, etc.).
+    // For "mention" type, we *do* want to show it if the authUser is mentioned,
+    // even if they are the one making the post, unless you decide otherwise.
+    // However, the backend logic should ideally prevent self-mentions.
     if (
       (notification.type === "like" ||
         notification.type === "comment" ||
@@ -48,6 +55,7 @@ const NotificationPage = () => {
     if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`;
     } else if (notification.postId && notification.postId._id) {
+      // This path is correct for likes, comments, reposts, AND mentions
       targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
     } else {
       console.warn("Could not determine navigation link for notification:", notification);
@@ -61,8 +69,10 @@ const NotificationPage = () => {
     <>
       <div className="flex-1 border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
         <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
-          <button onClick={() => navigate(-1)} className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0">
-            {" "}
+          <button
+            onClick={() => navigate(-1)}
+            className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
+          >
             <FaArrowLeft />
           </button>
           <h1 className="font-bold text-xl flex-1 truncate">Notifications</h1>
@@ -150,6 +160,9 @@ const NotificationPage = () => {
                 {notification.type === "repost" && (
                   <FaRetweet className="w-7 h-7 text-green-500" />
                 )}
+                {notification.type === "mention" && ( // NEW: Mention icon
+                  <FaAt className="w-7 h-7 text-purple-500" />
+                )}
               </div>
 
               <div className="flex flex-col min-w-0 flex-1">
@@ -176,7 +189,7 @@ const NotificationPage = () => {
                     {formatPostDate(notification.createdAt)}
                   </span>
                 </div>
-                <span className=" text-sm overflow-hidden text-ellipsis whitespace-normal">
+                <span className="text-sm overflow-hidden text-ellipsis whitespace-normal">
                   {notification.type === "follow" && "followed you."}
                   {notification.type === "like" && (
                     <>
@@ -258,6 +271,20 @@ const NotificationPage = () => {
                                 notification.postId.text.length > 30 ? "..." : ""
                               }"`
                             : "your post"}
+                        </span>
+                      )}
+                    </>
+                  )}
+                  {notification.type === "mention" && ( // NEW: Render mention text
+                    <>
+                      mentioned you in a post{" "}
+                      {notification.postId && (
+                        <span className="text-blue-400 hover:underline">
+                          {notification.postId.text
+                            ? `"${notification.postId.text.substring(0, 30)}${
+                                notification.postId.text.length > 30 ? "..." : ""
+                              }"`
+                            : "a post"}
                         </span>
                       )}
                     </>
