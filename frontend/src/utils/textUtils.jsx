@@ -42,9 +42,9 @@
 
 //   return <>{parts}</>;
 // };
-
-
-import { Link } from 'react-router-dom';
+// utils/textUtils.js
+import React from "react";
+import { Link } from "react-router-dom";
 
 export const renderClickableText = (text) => {
   if (!text) return [];
@@ -53,15 +53,13 @@ export const renderClickableText = (text) => {
   let lastIndex = 0;
 
   // Regex to match URLs, #hashtags, and @mentions
-  // Mentions: @ followed by alphanumeric characters or underscores, at least 1 character long.
-  // Hashtags: # followed by alphanumeric characters or underscores, at least 1 character long.
-  // URLs: common URL pattern
-  // const regex = /(https?:\/\/[^\s]+)|(#[\w_]+)|(@[\w_]+)/g;
-  // const regex = /(https?:\/\/[^\s]+)|(@[\w_]+)/g;
-  const regex = /(https?:\/\/[^\s]+)|(@[\p{L}\p{N}_]+)/gu; // Added \p{L} for any letter, \p{N} for any number, and 'u' flag
+  // Order matters here for correct capturing group assignment
+  // (1) URLs, (2) Hashtags, (3) Mentions
+  const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(@[\p{L}\p{N}_]+)/gu;
 
   let match;
   while ((match = regex.exec(text)) !== null) {
+    // Correct destructuring based on the order of capturing groups in the regex
     const [fullMatch, url, hashtag, mention] = match;
 
     // Add preceding text as a plain string
@@ -83,10 +81,11 @@ export const renderClickableText = (text) => {
         </a>
       );
     } else if (hashtag) {
+      // This will now correctly receive the hashtag match
       parts.push(
         <Link
           key={match.index}
-          to={`/explore?hashtag=${hashtag.substring(1)}`} // Assuming an explore page for hashtags
+          to={`/explore?hashtag=${hashtag.substring(1)}`} // Remove '#'
           className="text-blue-500 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
@@ -94,6 +93,7 @@ export const renderClickableText = (text) => {
         </Link>
       );
     } else if (mention) {
+      // This will now correctly receive the mention match
       const username = mention.substring(1); // Remove '@'
       parts.push(
         <Link
