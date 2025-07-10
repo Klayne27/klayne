@@ -215,10 +215,15 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { likePostApi } from "../../api/postsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { useParams } from "react-router-dom"; // Import useParams to get username/userId from URL
+import { useFetchUserProfile } from "../usersHooks/useFetchUserProfile";
 
 export const useLikePost = () => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
+  const { username } = useParams(); // Get username and potentially userId from URL params
+
+  const { user } = useFetchUserProfile(username)
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: (postId) => likePostApi(postId),
@@ -229,19 +234,35 @@ export const useLikePost = () => {
         return;
       }
 
+      // Dynamically determine all potential query keys where this post might exist.
+      // This is crucial for comprehensive optimistic updates.
+      const dynamicUserPostsKey = username
+        ? ["posts", `/api/posts/user/${username}`]
+        : null;
+      const dynamicUserLikesKey = user?._id
+        ? ["posts", `/api/posts/likes/${user?._id}`]
+        : null;
+
       const queryKeysToUpdate = [
         ["posts", "/api/posts/all"],
         ["posts", "/api/posts/following"],
-        ["bookmarkedPosts"],
-        // Add other specific keys as needed, e.g., user profile posts
-      ];
+        ["bookmarkedPosts"], // This key is fine as it is
 
+        // Add the dynamic profile page keys if they are currently active or might contain the post
+        ...(dynamicUserPostsKey ? [dynamicUserPostsKey] : []),
+        ...(dynamicUserLikesKey ? [dynamicUserLikesKey] : []),
+      ].filter(Boolean); // Filter out any null entries
+
+      // Cancel all relevant queries
       await Promise.all(
         queryKeysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key }))
       );
+      // Note: "pinnedPosts" query key is ["pinnedPosts", authUser.username]
       await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
+      // Note: Single post query key is ["post", postId]
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
 
+      // 2. Store previous data for potential rollback for ALL potentially affected queries
       const previousDataSnapshots = {};
       previousDataSnapshots["posts_all"] = queryClient.getQueryData([
         "posts",
@@ -260,7 +281,17 @@ export const useLikePost = () => {
       ]);
       previousDataSnapshots["postDetail"] = queryClient.getQueryData(["post", postId]);
 
-      // Helper for updating paginated lists
+      // Add dynamic profile page query data to snapshots
+      if (dynamicUserPostsKey) {
+        previousDataSnapshots["posts_user"] =
+          queryClient.getQueryData(dynamicUserPostsKey);
+      }
+      if (dynamicUserLikesKey) {
+        previousDataSnapshots["posts_likes"] =
+          queryClient.getQueryData(dynamicUserLikesKey);
+      }
+
+      // Helper for updating paginated lists (remains the same as our last good version)
       const updatePaginatedList = (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) {
           return oldData;
@@ -269,8 +300,6 @@ export const useLikePost = () => {
           ...page,
           posts: Array.isArray(page.posts)
             ? page.posts.map((post) => {
-                // Determine if the current 'post' object itself is the one being liked,
-                // or if its 'repostedFrom' property holds the liked post.
                 const isTargetOfLike = post._id === postId;
                 const isOriginalTargetOfRepost =
                   post.repostedFrom && post.repostedFrom._id === postId;
@@ -285,7 +314,6 @@ export const useLikePost = () => {
                     : [...(targetPostForLikes.likes || []), authUser._id];
 
                   if (isOriginalTargetOfRepost) {
-                    // If it's a repost of the liked post, update repostedFrom
                     return {
                       ...post,
                       repostedFrom: {
@@ -294,7 +322,6 @@ export const useLikePost = () => {
                       },
                     };
                   } else {
-                    // If it's the original post being liked, update the post directly
                     return {
                       ...post,
                       likes: newLikes,
@@ -308,7 +335,7 @@ export const useLikePost = () => {
         return { ...oldData, pages: newPages };
       };
 
-      // Helper for updating single post arrays (like pinned or single post view)
+      // Helper for updating single post arrays (like pinned) (remains the same)
       const updateSinglePostArray = (oldData) => {
         if (!oldData || !Array.isArray(oldData)) {
           return oldData;
@@ -346,7 +373,7 @@ export const useLikePost = () => {
         });
       };
 
-      // Helper for updating a single post object (This one was already mostly correct!)
+      // Helper for updating a single post object (remains the same)
       const updateSinglePostObject = (oldData) => {
         if (
           !oldData ||
@@ -355,14 +382,11 @@ export const useLikePost = () => {
         ) {
           return oldData;
         }
-        // If the oldData IS the repostedFrom object (i.e., this is the actual original post in the cache)
-        // or if it's the main post object itself (for a non-repost)
         const targetForLikeUpdate =
           oldData.repostedFrom?._id === postId ? oldData.repostedFrom : oldData;
 
-        // Ensure we are only modifying the specific post being liked
         if (targetForLikeUpdate._id !== postId) {
-          return oldData; // Not the post we're looking for, return original data
+          return oldData;
         }
 
         const isLiked = targetForLikeUpdate.likes?.includes(authUser._id);
@@ -370,18 +394,15 @@ export const useLikePost = () => {
           ? (targetForLikeUpdate.likes || []).filter((id) => id !== authUser._id)
           : [...(targetForLikeUpdate.likes || []), authUser._id];
 
-        // If oldData itself is the original post, update it directly
         if (oldData._id === postId) {
           return { ...oldData, likes: newLikes };
-        }
-        // If oldData is a repost container, update its repostedFrom part
-        else if (oldData.repostedFrom && oldData.repostedFrom._id === postId) {
+        } else if (oldData.repostedFrom && oldData.repostedFrom._id === postId) {
           return {
             ...oldData,
             repostedFrom: { ...oldData.repostedFrom, likes: newLikes },
           };
         }
-        return oldData; // Should not happen if the postId check above is robust
+        return oldData;
       };
 
       // A. OPTIMISTIC UPDATE FOR ALL MAIN FEEDS (For You, Following)
@@ -391,28 +412,38 @@ export const useLikePost = () => {
       // B. OPTIMISTIC UPDATE FOR BOOKMARKED POSTS LIST
       queryClient.setQueryData(["bookmarkedPosts"], updatePaginatedList);
 
-      // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST
+      // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST (Still assuming this is a single array of posts)
       queryClient.setQueryData(["pinnedPosts", authUser.username], updateSinglePostArray);
 
       // D. OPTIMISTIC UPDATE FOR SINGLE POST DETAIL PAGE
-      // For the single post detail page, the 'oldData' passed to updateSinglePostObject
-      // will already be the 'post' object itself, not a wrapper.
       queryClient.setQueryData(["post", postId], updateSinglePostObject);
+
+      // NEW: E. OPTIMISTIC UPDATE FOR USER PROFILE FEEDS
+      if (dynamicUserPostsKey) {
+        queryClient.setQueryData(dynamicUserPostsKey, updatePaginatedList);
+      }
+      if (dynamicUserLikesKey) {
+        queryClient.setQueryData(dynamicUserLikesKey, updatePaginatedList);
+      }
 
       return previousDataSnapshots;
     },
 
     onSuccess: (data, postId) => {
-      // Invalidate queries to refetch fresh data, ensuring consistency
+      // Invalidate all general "posts" keys (will include user profile specific feeds)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
+      // No need to invalidate pinnedPosts here, as its content itself doesn't change on a like,
+      // only its internal post's like count, which was handled optimistically.
+      // queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] }); // REMOVED
+
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
     },
 
     onError: (error, postId, context) => {
       toast.error(error.message || "Failed to like/unlike post.");
       if (context?.previousDataSnapshots) {
+        // Rollback all known general "posts" keys
         queryClient.setQueryData(
           ["posts", "/api/posts/all"],
           context.previousDataSnapshots["posts_all"]
@@ -426,14 +457,31 @@ export const useLikePost = () => {
           context.previousDataSnapshots["bookmarkedPosts"]
         );
 
+        // Rollback dynamic profile page query data
+        if (context.previousDataSnapshots["posts_user"]) {
+          queryClient.setQueryData(
+            ["posts", `/api/posts/user/${username}`],
+            context.previousDataSnapshots["posts_user"]
+          );
+        }
+        if (context.previousDataSnapshots["posts_likes"]) {
+          queryClient.setQueryData(
+            ["posts", `/api/posts/likes/${user?._id}`],
+            context.previousDataSnapshots["posts_likes"]
+          );
+        }
+
+        // Rollback pinned posts
         if (authUser?.username) {
           queryClient.setQueryData(
             ["pinnedPosts", authUser.username],
             context.previousDataSnapshots["pinnedPosts"]
           );
         } else {
+          // If authUser.username is not available for some reason, invalidate as a fallback
           queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
         }
+        // Rollback single post detail page
         queryClient.setQueryData(
           ["post", postId],
           context.previousDataSnapshots["postDetail"]
