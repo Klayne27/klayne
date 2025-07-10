@@ -256,7 +256,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 ) : (
                   <FiTrash
                     size={17}
-                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
                   />
                 )}
               </button>

@@ -10,9 +10,7 @@ export const useAuthUser = () => {
   } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
-      console.log("Fetching authUser..."); // Add this
       const data = await authUserApi();
-      console.log("AuthUser fetched:", data); // And this
       return data;
     },
     retry: false,

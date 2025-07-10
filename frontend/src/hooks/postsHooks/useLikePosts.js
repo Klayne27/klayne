@@ -18,6 +18,7 @@ export const useLikePost = () => {
 
       // Cancel any outgoing refetches for all posts and the specific single post
       await queryClient.cancelQueries({ queryKey: ["posts"] });
+      await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
       // CORRECTED: Use ["post", postId] for single post query key
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
 
@@ -29,9 +30,6 @@ export const useLikePost = () => {
       // OPTIMISTIC UPDATE FOR ALL POSTS LIST (e.g., Feed)
       queryClient.setQueryData(["posts"], (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) {
-          console.warn(
-            "Optimistic update for 'posts' skipped: oldData is invalid or undefined."
-          );
           return oldData;
         }
 
@@ -76,20 +74,8 @@ export const useLikePost = () => {
           typeof oldData !== "object" ||
           Object.keys(oldData).length === 0
         ) {
-          // More robust check
-          console.warn(
-            "Optimistic update for single 'post' skipped: oldData is not a valid object or undefined."
-          );
           return oldData;
         }
-        // When dealing with a single post, it might be the original post or a reposted one.
-        // You need to ensure you're updating the 'likes' array on the *originalPost* data
-        // which your Post component is consuming.
-        // Assuming `oldData` here is the *originalPost* object itself (as fetched by useFetchPost)
-        // If oldData can be a "reposted" post object (i.e. oldData.repostedFrom exists),
-        // you'd need to update oldData.repostedFrom.likes.
-        // Based on useFetchPost, it seems to fetch the original post directly if pid is the original post's ID.
-        // Let's assume oldData *is* the original post or the main post being displayed.
         const targetForLikeUpdate = oldData.repostedFrom || oldData; // Use repostedFrom if it exists, otherwise oldData itself
         const isLiked = targetForLikeUpdate.likes?.includes(authUser._id);
 
@@ -121,6 +107,7 @@ export const useLikePost = () => {
     onSuccess: (data, postId) => {
       // Invalidate queries to refetch fresh data, ensuring consistency
       queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
       // CORRECTED: Invalidate the specific single post query key, which is more precise
       // than invalidating all ["post"] queries. You can keep the general ["post"] if you want
       // to be absolutely sure all single post instances are refetched.

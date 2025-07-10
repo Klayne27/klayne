@@ -13,7 +13,7 @@ const SearchPage = () => {
 
   return (
     <div className="flex-[4_4_0] border-accent min-h-screen py-2 px-0.5">
-      <div className="flex items-center gap-2 md:gap-4 px-2.5 md:px-4 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+      <div className="flex items-center gap-2 md:gap-4 px-2.5 md:px-3.5 md:py-1.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
         <button
           onClick={handleBack}
           className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"

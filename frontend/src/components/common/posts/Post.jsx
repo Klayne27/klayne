@@ -282,7 +282,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                 {!isDeleting && (
                   <div className="group  duration-200 transition hover:text-red-600  rounded-full px-2.5">
                     <FiTrash
-                      className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                      className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
                       onClick={handleDeletePostClick}
                       size={17}
                     />
@@ -444,7 +444,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                   </span>
                 </div>
 
-                <div className="absolute flex right-0">
+                <div className="absolute flex right-0.5">
                   {isMyOriginalPost && (
                     <div
                       className="flex gap-1 items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
