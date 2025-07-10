@@ -8,6 +8,8 @@ import { BiRefresh } from "react-icons/bi";
 import React from "react";
 
 const SuggestedUsersPanel = () => {
+  console.log("SuggestedUsers re-rendered");
+
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
   const { follow, isPending } = useFollow();
   const { authUser: currentUser } = useAuthUser();

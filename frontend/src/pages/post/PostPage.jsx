@@ -13,6 +13,8 @@ import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
+
+
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
@@ -36,6 +38,18 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     fetchNextPage: fetchNextCommentsPage,
     refetch: refetchComments,
   } = useFetchComments(pid, null);
+
+  useEffect(() => {
+    console.log(
+      "useFetchPost status - isLoading:",
+      isLoading,
+      "post data present:",
+      !!post
+    );
+    if (post) {
+      console.log("Fetched single 'post' data:", post);
+    }
+  }, [post, isLoading]);
 
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 

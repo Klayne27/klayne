@@ -23,6 +23,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [replyImagePreview, setReplyImagePreview] = useState(null);
   const [replyImageFile, setReplyImageFile] = useState(null);
   const imageInputRef = useRef(null);
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
@@ -36,6 +37,44 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   } = useFetchComments(postId, comment._id);
 
   const observerTarget = useRef(null);
+
+  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [activeButton, setActiveButton] = useState(null); // To control the active state for touch feedback on interactive buttons
+
+  useEffect(() => {
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
+  }, []);
+
+  const handleTouchStart = useCallback(
+    (id) => {
+      if (isTouchDevice) {
+        setActiveButton(id);
+      }
+    },
+    [isTouchDevice]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 150); // Match desired fade-out duration
+    }
+  }, [isTouchDevice]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 150);
+    }
+  }, [isTouchDevice]);
+  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   useEffect(() => {
     if (!observerTarget.current || !hasNextRepliesPage || isFetchingNextRepliesPage)
@@ -65,8 +104,13 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const handleLikeCommentClick = (e) => {
     e.stopPropagation();
+    setIsAnimating(true);
     if (isLikingComment) return;
-    likeComment({ commentId: comment._id, postId: postId });
+    likeComment({
+      commentId: comment._id,
+      postId: postId,
+      parentCommentId: comment.parentComment?._id || null,
+    });
   };
 
   const handleDeleteCommentClick = (e) => {
@@ -75,20 +119,17 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     deleteComment({
       commentId: comment._id,
       postId: postId,
-      parentCommentId: comment.parentComment,
+      parentCommentId: comment.parentComment?._id || null,
     });
   };
 
-  const handleReplyClick = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setShowReplyInput((prev) => !prev);
-      setReplyText("");
-      setReplyImagePreview(null);
-      setReplyImageFile(null);
-    },
-    []
-  );
+  const handleReplyClick = useCallback((e) => {
+    e.stopPropagation();
+    setShowReplyInput((prev) => !prev);
+    setReplyText("");
+    setReplyImagePreview(null);
+    setReplyImageFile(null);
+  }, []);
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
@@ -140,6 +181,15 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     }
   };
 
+  // Reset animation state after it completes
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300); // Match this duration to the animation duration (0.3s)
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
 
   if (!comment || !comment.user) {
     console.warn("Comment or comment user not populated:", comment);
@@ -238,19 +288,43 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           <div className="flex gap-4 mt-0 md:mt-2 items-center">
             <button
               onClick={handleLikeCommentClick}
+              onTouchStart={() => handleTouchStart("like")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
               disabled={isLikingComment}
               className="flex items-center cursor-pointer group"
             >
               <div
-                className={`group-hover:bg-pink-600 group-hover:bg-opacity-15 rounded-full p-2 duration-200 transition ${
-                  isLikingComment ? "animate-spin" : ""
-                }`}
+                className={`
+              rounded-full p-2 duration-200 transition relative
+              ${!isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""}
+              ${
+                isTouchDevice && activeButton === "like"
+                  ? "bg-pink-600 bg-opacity-15"
+                  : ""
+              }
+              cursor-pointer // Ensure the div itself is clickable
+          `}
               >
                 {!isCommentLiked && (
-                  <FaRegHeart className="w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition" />
+                  <FaRegHeart
+                    className={`
+                        w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
+                        ${
+                          isAnimating && !isCommentLiked ? "animate-like-bounce" : ""
+                        } // Apply animation only when triggered and not liked yet
+                    `}
+                  />
                 )}
                 {isCommentLiked && (
-                  <FaHeart className={`w-4 h-4 text-pink-600 duration-200 transition`} />
+                  <FaHeart
+                    className={`
+                        w-4 h-4 text-pink-600 duration-200 transition
+                        ${
+                          isAnimating && isCommentLiked ? "animate-like-bounce" : ""
+                        } // Apply animation only when triggered and already liked
+                    `}
+                  />
                 )}
               </div>
               <span
@@ -363,6 +437,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     postId={postId}
                     onReplyClick={onReplyClick}
                     isPostOwner={isPostOwner}
+                    openImageModal={openImageModal}
                   />
                 </div>
               ))}

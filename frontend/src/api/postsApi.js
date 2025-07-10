@@ -32,8 +32,8 @@ export const deletePostApi = async (post) => {
   return data;
 };
 
-export const likePostApi = async (post) => {
-  const res = await fetch(`/api/posts/like/${post._id}`, {
+export const likePostApi = async (postId) => {
+  const res = await fetch(`/api/posts/like/${postId}`, {
     method: "POST",
   });
 

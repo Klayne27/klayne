@@ -119,7 +119,6 @@ export const useSendMessage = ({
 
         // THIS IS THE CRUCIAL CHANGE: Pass the full conversation object
         if (onNewConversationCreated) {
-          console.log("Calling onNewConversationCreated with:", newRealConversation); // Debugging
           onNewConversationCreated(newRealConversation); // <--- Pass the entire object
         }
       }

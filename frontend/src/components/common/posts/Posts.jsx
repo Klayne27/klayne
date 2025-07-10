@@ -43,6 +43,18 @@ const Posts = ({
     totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
 
+  useEffect(() => {
+    console.log(
+      "useFetchPosts status - isLoading:",
+      isLoading,
+      "posts data present:",
+      !!posts
+    );
+    if (posts) {
+      console.log("Fetched 'posts' data:", posts);
+    }
+  }, [posts, isLoading]);
+
   const observer = useRef();
   const lastPostElementRef = useCallback(
     (node) => {

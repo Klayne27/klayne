@@ -70,10 +70,10 @@ export const useDeleteComment = () => {
     onSuccess: (data, { postId }) => {
       toast.success(data.message || "Comment deleted!");
 
-      queryClient.invalidateQueries(["comments", postId]);
-      queryClient.invalidateQueries(["post", postId]);
-      queryClient.invalidateQueries(["posts"]);
-      queryClient.invalidateQueries(["notifications"]);
+      // queryClient.invalidateQueries(["comments", postId]);
+      // queryClient.invalidateQueries(["post", postId]);
+      // queryClient.invalidateQueries(["posts"]);
+      // queryClient.invalidateQueries(["notifications"]);
     },
     onError: (error, { postId }, context) => {
       toast.error(error.message || "Failed to delete comment.");

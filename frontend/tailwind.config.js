@@ -13,6 +13,18 @@ export default {
         dvh: "100dvh",
         "screen-d": "var(--dvh)",
       },
+      keyframes: {
+        // Define a 'like-bounce' keyframe animation
+        "like-bounce": {
+          "0%, 100%": { transform: "scale(1)" }, // Start and end at normal size
+          "50%": { transform: "scale(1.4)" }, // Enlarge in the middle
+          "75%": { transform: "scale(0.5)" }, // Slightly shrink for a bounce effect
+        },
+      },
+      animation: {
+        // Apply the keyframe animation
+        "like-bounce": "like-bounce 0.3s ease-in-out", // 0.3 seconds duration, ease-in-out timing
+      },
     },
   },
   plugins: [daisyui],

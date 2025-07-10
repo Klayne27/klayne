@@ -178,9 +178,6 @@ export const createAndSendNotification = async ({
 
     const blocked = await isBlockedOrBlockedBy(from, to);
     if (blocked) {
-      console.log(
-        `Notification from ${from} to ${to} of type ${type} blocked due to existing block relationship.`
-      );
       return;
     }
 
@@ -220,9 +217,6 @@ export const createAndSendNotification = async ({
     const receiverSocketIds = getReceiverSocketIds(to.toString());
     receiverSocketIds.forEach((socketId) => {
       io.to(socketId).emit("newNotification", newNotification);
-      console.log(
-        `Real-time notification sent to ${to.toString()} (socket: ${socketId}) for type ${type}`
-      );
     });
 
     await emitUnreadNotificationStatus(to.toString());
@@ -257,7 +251,6 @@ io.on("connection", (socket) => {
   }
 
   io.emit("getOnlineUsers", getOnlineUserIds());
-  console.log("Updated online user IDs after connection:", getOnlineUserIds());
 
   socket.on("typing", async ({ conversationId }) => {
     const senderId = socket.userId;
@@ -286,9 +279,7 @@ io.on("connection", (socket) => {
               receiverSocketIds.forEach((sockId) => {
                 io.to(sockId).emit("typing", { conversationId, userId: senderId });
               });
-            } else {
-              console.log(`Typing status from ${senderId} to ${participantId} blocked.`);
-            }
+            } 
           }
         }
       } catch (err) {
@@ -324,10 +315,6 @@ io.on("connection", (socket) => {
                 receiverSocketIds.forEach((sockId) => {
                   io.to(sockId).emit("stopTyping", { conversationId, userId: senderId });
                 });
-              } else {
-                console.log(
-                  `Stop typing status from ${senderId} to ${participantId} blocked.`
-                );
               }
             }
           }
@@ -355,14 +342,6 @@ io.on("connection", (socket) => {
         (pId) => pId.toString() !== readerId.toString()
       );
 
-      if (
-        otherParticipantId &&
-        (await isBlockedOrBlockedBy(readerId, otherParticipantId))
-      ) {
-        console.log(
-          `Messages in conversation ${conversationId} not marked as seen for ${readerId} due to blocking.`
-        );
-      }
 
       await Message.updateMany(
         {
@@ -423,7 +402,6 @@ io.on("connection", (socket) => {
         { $set: { read: true } }
       );
       await emitUnreadNotificationStatus(userId);
-      console.log(`User ${userId} marked all notifications as read.`);
     } catch (error) {
       console.error("Error marking notifications as read:", error);
     }
@@ -445,7 +423,6 @@ io.on("connection", (socket) => {
 
       if (userSockets.size === 0) {
         onlineUsersMap.delete(disconnectedUserId);
-        console.log(`User ${disconnectedUserId} is now completely offline.`);
 
         typingUsersInConversation.forEach(async (typingUsers, convId) => {
           if (typingUsers.has(disconnectedUserId)) {
@@ -477,10 +454,6 @@ io.on("connection", (socket) => {
                         userId: disconnectedUserId,
                       });
                     });
-                  } else {
-                    console.log(
-                      `Disconnect stop typing from ${disconnectedUserId} to ${participantId} blocked.`
-                    );
                   }
                 }
               }
@@ -492,10 +465,6 @@ io.on("connection", (socket) => {
             }
           }
         });
-      } else {
-        console.log(
-          `User ${disconnectedUserId} still has ${userSockets.size} active connections.`
-        );
       }
     } else {
       console.warn(
@@ -505,10 +474,6 @@ io.on("connection", (socket) => {
 
     io.emit("getOnlineUsers", getOnlineUserIds());
 
-    if (userId) {
-      console.log(`Backend: User ${userId} disconnected. Clearing active chat status.`);
-      userActiveChats.delete(userId);
-    }
   });
 });
 

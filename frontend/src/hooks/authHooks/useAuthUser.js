@@ -2,9 +2,19 @@ import { useQuery } from "@tanstack/react-query";
 import { authUserApi } from "../../api/authApi";
 
 export const useAuthUser = () => {
-  const { data: authUser, isLoading, refetch: refetchAuthUser } = useQuery({
+  const {
+    data: authUser,
+    isLoading,
+    isError,
+    error,
+  } = useQuery({
     queryKey: ["authUser"],
-    queryFn: authUserApi,
+    queryFn: async () => {
+      console.log("Fetching authUser..."); // Add this
+      const data = await authUserApi();
+      console.log("AuthUser fetched:", data); // And this
+      return data;
+    },
     retry: false,
     staleTime: Infinity, // Or a very long time if you only want to refetch on app mount
     cacheTime: Infinity, // Keep data in cache unless explicitly invalidated
@@ -12,5 +22,5 @@ export const useAuthUser = () => {
     refetchOnMount: true, // Crucial: Refetch on mount to check session
   });
 
-  return { authUser, isLoading, refetchAuthUser };
+  return { authUser, isLoading };
 };

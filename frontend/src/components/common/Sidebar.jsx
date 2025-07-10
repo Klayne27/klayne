@@ -18,9 +18,12 @@ import { BiLogOut } from "react-icons/bi";
 import { FaUserXmark } from "react-icons/fa6";
 import FollowListModal from "./FollowListModal";
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
+import React from "react";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
+  console.log("Sidebar re-rendered, authUser:", authUser);
+
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
   const {
@@ -1063,4 +1066,4 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     </>
   );
 };
-export default Sidebar;
+export default React.memo(Sidebar);

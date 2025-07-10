@@ -494,6 +494,9 @@ const ChatWindow = ({
     setShowNewMessageButton,
   ]);
 
+  console.log('socket chatwindow', socket);
+  console.log('currentuser chatwindow', currentUser);
+
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);

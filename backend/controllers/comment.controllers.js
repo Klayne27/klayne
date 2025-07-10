@@ -3,6 +3,7 @@ import Comment from "../models/comment.model.js";
 import Notification from "../models/notification.model.js";
 import {
   createAndSendNotification,
+  emitUnreadNotificationStatus,
 } from "../lib/socket.js";
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
@@ -26,7 +27,6 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
     !mongoose.Types.ObjectId.isValid(currentUserId) ||
     !mongoose.Types.ObjectId.isValid(targetUserId)
   ) {
-
     return false;
   }
   if (currentUserId.toString() === targetUserId.toString()) return false;
@@ -93,12 +93,6 @@ export const getComments = async (req, res) => {
     }
     const userId = req.user._id;
 
-    console.log(
-      `[getComments] User: ${userId}, Post ID: ${postId}, Parent Comment ID: ${
-        parentCommentId || "none"
-      }`
-    );
-
     if (!isValidObjectId(postId)) {
       console.error(`[getComments] Invalid Post ID provided: ${postId}`);
       return res.status(400).json({ error: "Invalid Post ID" });
@@ -119,7 +113,6 @@ export const getComments = async (req, res) => {
     }
 
     if (await isBlockedOrBlockedBy(userId, post.user._id)) {
-
       return res.status(403).json({
         error: "Cannot view comments on this post due to blocking restrictions.",
       });
@@ -165,21 +158,16 @@ export const getComments = async (req, res) => {
       }
 
       if (blockedAndBlockingUsers.includes(comment.user._id.toString())) {
-        console.log(
-          `[getComments] Filtering comment ${comment._id} because its user (${comment.user._id}) is blocked.`
-        );
+
         return false;
       }
 
       if (comment.parentComment) {
         if (!comment.parentComment.user) {
-
           return false;
         }
         if (blockedAndBlockingUsers.includes(comment.parentComment.user._id.toString())) {
-          console.log(
-            `[getComments] Filtering comment ${comment._id} because its parent comment's user (${comment.parentComment.user._id}) is blocked.`
-          );
+
           return false;
         }
       }
@@ -264,17 +252,20 @@ export const createComment = async (req, res) => {
 
     if (
       post.user &&
-      post.user.toString() !== userId.toString() &&
+      post.user._id.toString() !== userId.toString() &&
       !(await isBlockedOrBlockedBy(userId, post.user._id))
     ) {
       await createAndSendNotification({
         from: userId,
-        to: post.user,
+        to: post.user._id,
         type: "comment",
         postId: post._id,
         commentId: newComment._id,
       });
     }
+
+
+    await emitUnreadNotificationStatus(post.user._id.toString());
 
     res.status(201).json(newComment);
   } catch (error) {
@@ -392,7 +383,7 @@ export const replyToComment = async (req, res) => {
     ) {
       await createAndSendNotification({
         from: userId,
-        to: parentComment.user,
+        to: parentComment.user._id,
         type: "commentReply",
         postId: post._id,
         commentId: newReply._id,
@@ -400,6 +391,8 @@ export const replyToComment = async (req, res) => {
       });
     }
 
+      await emitUnreadNotificationStatus(parentComment.user._id.toString());
+    
     res.status(201).json(newReply);
   } catch (error) {
     console.error("Error in replyToComment controller:", error.message);
@@ -450,17 +443,20 @@ export const likeUnlikeComment = async (req, res) => {
 
       if (
         comment.user &&
-        comment.user.toString() !== userId.toString() &&
+        comment.user._id.toString() !== userId.toString() &&
         !(await isBlockedOrBlockedBy(userId, comment.user._id))
       ) {
         await createAndSendNotification({
           from: userId,
-          to: comment.user,
+          to: comment.user._id,
           type: "commentLike",
           postId: comment.post,
           commentId: comment._id,
         });
       }
+
+        await emitUnreadNotificationStatus(comment.user._id.toString());
+      
 
       await comment.save();
       res

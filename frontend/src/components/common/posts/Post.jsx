@@ -24,6 +24,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const { username } = useParams();
+  const [isAnimating, setIsAnimating] = useState(false);
 
   const isRepost = !!post.repostedFrom;
   const originalPost = isRepost ? post.repostedFrom : post;
@@ -120,6 +121,8 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
 
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e);
+    setIsAnimating(true);
+
     if (isLiking) return;
     likePost(originalPost._id);
   };
@@ -191,6 +194,16 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     }
     return username;
   };
+
+  // Reset animation state after it completes
+  useEffect(() => {
+    if (isAnimating) {
+      const timer = setTimeout(() => {
+        setIsAnimating(false);
+      }, 300); // Match this duration to the animation duration (0.3s)
+      return () => clearTimeout(timer);
+    }
+  }, [isAnimating]);
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -390,27 +403,35 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                   onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    className={` rounded-full p-2 duration-200 transition ${
-                      isLiking ? "animate-spin" : ""
-                    }                        ${
-                      !isTouchDevice
-                        ? "group-hover:bg-pink-600 group-hover:bg-opacity-15"
-                        : ""
-                    }
-                      ${
-                        isTouchDevice && activeButton === "like"
-                          ? "bg-pink-600 bg-opacity-15"
-                          : ""
-                      }`}
+                    className={`
+              rounded-full p-2 duration-200 transition relative
+              ${!isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""}
+              ${
+                isTouchDevice && activeButton === "like"
+                  ? "bg-pink-600 bg-opacity-15"
+                  : ""
+              }
+              cursor-pointer // Ensure the div itself is clickable
+          `}
                   >
                     {!isLiked && (
-                      <FaRegHeart className="w-4 h-4 cursor-pointer text-slate-500 group-hover:text-pink-600 duration-200 transition" />
+                      <FaRegHeart
+                        className={`
+                        w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
+                        ${
+                          isAnimating && !isLiked ? "animate-like-bounce" : ""
+                        } // Apply animation only when triggered and not liked yet
+                    `}
+                      />
                     )}
                     {isLiked && (
                       <FaHeart
-                        className={`w-4 h-4 cursor-pointer text-pink-600 duration-200 transition ${
-                          isLiking ? "animate-spin" : ""
-                        }`}
+                        className={`
+                        w-4 h-4 text-pink-600 duration-200 transition
+                        ${
+                          isAnimating && isLiked ? "animate-like-bounce" : ""
+                        } // Apply animation only when triggered and already liked
+                    `}
                       />
                     )}
                   </div>

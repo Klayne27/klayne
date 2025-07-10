@@ -54,7 +54,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     httpStatus,
   } = useFetchUserProfile(username);
 
-  console.log(user?._id);
 
   // NEW: Fetch pinned posts separately
   const {

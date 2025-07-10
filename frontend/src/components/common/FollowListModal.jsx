@@ -21,7 +21,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
     // 1. User pressing the Escape key.
     // 2. User clicking on the ::backdrop (the dimmed area around the modal content).
     const handleDialogClose = () => {
-      console.log("Dialog 'close' event fired. Closing modal.");
       onClose(); // Call the parent's onClose handler
     };
 
@@ -40,7 +39,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
     // If the click target is exactly the <dialog> element (i.e., the backdrop)
     // and NOT one of its children (like the inner div, or a button inside)
     if (dialogRef.current && e.target === dialogRef.current) {
-      console.log("Click on dialog backdrop detected. Closing modal.");
       onClose();
     }
     // If the click is on a child, let it bubble up normally,
