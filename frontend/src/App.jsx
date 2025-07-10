@@ -20,7 +20,6 @@ const SearchPage = lazy(() => import("./pages/search/SearchPage"));
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
-  console.log("MainLayout re-rendered");
 
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState(null);

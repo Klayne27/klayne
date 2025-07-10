@@ -10,6 +10,7 @@ import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDelete
 import { formatPostDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton";
+import { FaArrowLeft } from "react-icons/fa6";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
@@ -58,9 +59,13 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="flex-1  border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
-        <div className="flex justify-between items-center p-4  border-accent">
-          <p className="font-bold text-xl">Notifications</p>
+      <div className="flex-1 border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
+        <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+          <button onClick={() => navigate(-1)} className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0">
+            {" "}
+            <FaArrowLeft />
+          </button>
+          <h1 className="font-bold text-xl flex-1 truncate">Notifications</h1>
           <div className="dropdown dropdown-end">
             <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm">
               <IoSettingsOutline className="w-5 h-5" />

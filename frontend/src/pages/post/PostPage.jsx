@@ -39,18 +39,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     refetch: refetchComments,
   } = useFetchComments(pid, null);
 
-  useEffect(() => {
-    console.log(
-      "useFetchPost status - isLoading:",
-      isLoading,
-      "post data present:",
-      !!post
-    );
-    if (post) {
-      console.log("Fetched single 'post' data:", post);
-    }
-  }, [post, isLoading]);
-
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 
   const displayPost = post?.repostedFrom || post;

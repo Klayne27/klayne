@@ -22,7 +22,6 @@ import React from "react";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
-  console.log("Sidebar re-rendered, authUser:", authUser);
 
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();

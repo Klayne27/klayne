@@ -4,6 +4,8 @@ import { useTheme } from "../../context/ThemeContext";
 import { PiSmiley } from "react-icons/pi";
 import { IoImageOutline } from "react-icons/io5";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useNavigate } from "react-router-dom";
+import { FaArrowLeft } from "react-icons/fa6";
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
@@ -12,19 +14,26 @@ const PREVIEW_MESSAGES = [
 
 const ThemesPage = () => {
   const { theme, setTheme } = useTheme();
+  const navigate = useNavigate()
   const { authUser } = useAuthUser(); // Get authUser here too
 
   const isThemeLocked = authUser && authUser.forceBlackTheme; // Check if theme is locked
 
   return (
     <main className="flex-[4_4_0] border-accent min-h-screen">
-      <div className="flex justify-between items-center px-3 py-2 md:p-4 border-b border-accent">
-        <p className="font-bold text-lg md:text-xl">Themes</p>
+      <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+        <button
+          onClick={() => navigate(-1)}
+          className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
+        >
+          {" "}
+          <FaArrowLeft />
+        </button>
+        <h1 className="font-bold text-xl flex-1 truncate">Themes</h1>
       </div>
 
       <div className="space-y-6 p-4">
         <div className="flex flex-col gap-1">
-          <h2 className="text-lg font-semibold">Theme</h2>
           <p className="text-sm text-base-content/70">
             Choose a theme for your application interface
           </p>
@@ -109,7 +118,7 @@ const ThemesPage = () => {
                   ))}
                 </div>
 
-                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent/99 mx-4">
+                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary  focus-within:border-accent/99 mx-4">
                   <div className="flex pl-1">
                     <button
                       type="button"

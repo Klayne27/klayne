@@ -11,7 +11,6 @@ export const useLikePost = () => {
     mutationFn: (postId) => likePostApi(postId),
 
     onMutate: async (postId) => {
-      console.log("authUser._id: ", authUser._id);
       if (!authUser?._id) {
         console.warn("No authenticated user ID for optimistic post like update.");
         return;
@@ -27,13 +26,8 @@ export const useLikePost = () => {
       // CORRECTED: Use ["post", postId] for single post query key
       const previousPostDetailData = queryClient.getQueryData(["post", postId]);
 
-      // Log current cache state to debug if data is present
-      console.log('Current cache for "posts":', previousPostsData);
-      console.log('Current cache for "post", postId:', previousPostDetailData);
-
       // OPTIMISTIC UPDATE FOR ALL POSTS LIST (e.g., Feed)
       queryClient.setQueryData(["posts"], (oldData) => {
-        console.log('oldData inside setQueryData for "posts":', oldData);
         if (!oldData || !Array.isArray(oldData.pages)) {
           console.warn(
             "Optimistic update for 'posts' skipped: oldData is invalid or undefined."
@@ -71,14 +65,12 @@ export const useLikePost = () => {
               })
             : page.posts,
         }));
-        console.log('Updated "posts" data:', { ...oldData, pages: newPages });
         return { ...oldData, pages: newPages };
       });
 
       // OPTIMISTIC UPDATE FOR SINGLE POST DETAIL PAGE
       // CORRECTED: Use ["post", postId] for single post query key
       queryClient.setQueryData(["post", postId], (oldData) => {
-        console.log('oldData inside setQueryData for ["post", postId]:', oldData);
         if (
           !oldData ||
           typeof oldData !== "object" ||
@@ -119,7 +111,6 @@ export const useLikePost = () => {
               likes: newLikes,
             };
 
-        console.log('Updated single "post" data:', updatedData);
         return updatedData;
       });
 
