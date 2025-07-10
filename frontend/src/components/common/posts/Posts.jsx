@@ -136,6 +136,7 @@ const Posts = ({
                     post={post}
                     openImageModal={openImageModal}
                     profilePinnedPosts={pinnedPosts}
+                    currentFeedType={feedType}
                   />
                 ))}
               </div>

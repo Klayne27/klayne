@@ -57,7 +57,6 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeButton, setActiveButton] = useState(null); // To control the active state for touch feedback on interactive buttons
-  console.log(originalPost);
   useEffect(() => {
     setIsTouchDevice(
       "ontouchstart" in window ||

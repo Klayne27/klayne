@@ -224,8 +224,8 @@ const NotificationPage = () => {
                       liked your comment{" "}
                       {notification.commentId?.text && (
                         <span className="text-blue-400 hover:underline">
-                          `"{notification.commentId.text.substring(0, 30)}
-                          {notification.commentId.text.length > 30 ? "..." : ""}"`
+                          "{notification.commentId.text.substring(0, 30)}
+                          {notification.commentId.text.length > 30 ? "..." : ""}"
                         </span>
                       )}{" "}
                       on post{" "}

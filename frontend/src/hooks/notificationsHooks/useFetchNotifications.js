@@ -23,7 +23,6 @@ export const useFetchNotifications = () => {
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (newNotification) => {
-        console.log("Real-time notification received:", newNotification);
         queryClient.setQueryData(["notifications"], (oldNotifications) => {
           // Ensure oldNotifications is an array before spreading.
           // New notifications should appear at the top.
