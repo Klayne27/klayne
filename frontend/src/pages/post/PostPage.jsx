@@ -11,10 +11,10 @@ import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
 import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
-
-
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
@@ -25,6 +25,18 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null);
   const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null);
   const mainCommentMediaInputRef = useRef(null);
+
+  // --- NEW STATES FOR MENTIONS ---
+  const [mentionSearchTerm, setMentionSearchTerm] = useState("");
+  const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300);
+  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
+  const mentionInputRef = useRef(null); // Ref for the input to control cursor position
+
+  const { users: suggestedUsers, isLoading: isLoadingSuggestedUsers } = useSearchUsers(
+    debouncedMentionSearchTerm,
+    showMentionSuggestions && debouncedMentionSearchTerm.length > 0 // Enable search only when needed
+  );
+  // --- END NEW STATES ---
 
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
@@ -80,6 +92,76 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     }
   };
 
+  // --- NEW HANDLER FOR MENTION INPUT ---
+  const handleCommentTextChange = (e) => {
+    const newText = e.target.value;
+    setCommentText(newText);
+
+    const lastAtIndex = newText.lastIndexOf("@");
+    if (lastAtIndex !== -1) {
+      const potentialMention = newText.substring(lastAtIndex + 1);
+      // Show suggestions if the character after @ is a letter/number and it's not a space
+      if (potentialMention.length > 0 && !/\s/.test(potentialMention)) {
+        setMentionSearchTerm(potentialMention);
+        setShowMentionSuggestions(true);
+      } else {
+        setMentionSearchTerm("");
+        setShowMentionSuggestions(false);
+      }
+    } else {
+      setMentionSearchTerm("");
+      setShowMentionSuggestions(false);
+    }
+  };
+
+  const handleSelectMention = (username) => {
+    const currentText = commentText;
+    const lastAtIndex = currentText.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      // Get the part of the string from the '@' sign onwards
+      const textFromAt = currentText.substring(lastAtIndex);
+
+      // Find the length of the *partial* username that was typed after '@'
+      // This regex now explicitly matches characters after '@'
+      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
+
+      let partialMentionLength = 0;
+      if (match && match[1]) {
+        // If a match exists and the capture group (the username part) is not empty
+        partialMentionLength = match[1].length;
+      }
+
+      // Calculate the start and end indices of the segment to replace
+      // The start of replacement is `lastAtIndex` (where '@' is)
+      // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
+      const replaceStartIndex = lastAtIndex;
+      const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+
+      // Construct the new text
+      const newText =
+        currentText.substring(0, replaceStartIndex) + // Text before the @
+        `@${username} ` + // The full @username with a space
+        currentText.substring(replaceEndIndex); // Text after the partial mention
+
+      setCommentText(newText);
+      setMentionSearchTerm("");
+      setShowMentionSuggestions(false);
+
+      // Manually set cursor to the end of the newly inserted mention
+      setTimeout(() => {
+        const input = mentionInputRef.current;
+        if (input) {
+          const newCursorPos =
+            currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
+          input.setSelectionRange(newCursorPos, newCursorPos);
+          input.focus();
+        }
+      }, 0);
+    }
+  };
+  // --- END NEW HANDLER ---
+
   const handleAddOrReplyComment = async (e) => {
     e.preventDefault();
 
@@ -113,6 +195,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
         if (mainCommentMediaInputRef.current) {
           mainCommentMediaInputRef.current.value = "";
         }
+        // Reset mention states after sending
+        setMentionSearchTerm("");
+        setShowMentionSuggestions(false);
       };
       reader.readAsDataURL(mainCommentMediaFile);
     } else {
@@ -123,6 +208,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
       setCommentText("");
       setReplyingToComment(null);
+      // Reset mention states after sending
+      setMentionSearchTerm("");
+      setShowMentionSuggestions(false);
     }
   };
 
@@ -134,8 +222,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     if (mainCommentMediaInputRef.current) {
       mainCommentMediaInputRef.current.value = "";
     }
+    // Reset mention states when starting a new reply
+    setMentionSearchTerm("");
+    setShowMentionSuggestions(false);
   }, []);
-  
 
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
@@ -229,7 +319,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       {authUser && (
         <form
           onSubmit={handleAddOrReplyComment}
-          className="p-4 border-b border-accent flex flex-col gap-2"
+          className="p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
         >
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             <div className="avatar flex-shrink-0">
@@ -240,18 +330,57 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 />
               </div>
             </div>
-            <input
-              type="text"
-              value={commentText}
-              onChange={(e) => setCommentText(e.target.value)}
-              placeholder={
-                replyingToComment
-                  ? `Replying to @${replyingToComment.user.username}...`
-                  : "Post your comment"
-              }
-              className="flex-1 pl-3 py-2 rounded-full w-1 bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg"
-              disabled={isCreatingComment}
-            />
+            {/* Wrapper for input and mention suggestions */}
+            <div className="flex-1 relative">
+              <input
+                ref={mentionInputRef} // Attach ref to the input
+                type="text"
+                value={commentText}
+                onChange={handleCommentTextChange} // Use the new handler
+                placeholder={
+                  replyingToComment
+                    ? `Replying to @${replyingToComment.user.username}...`
+                    : "Post your comment"
+                }
+                className="w-full pl-3 py-2 rounded-full bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg"
+                disabled={isCreatingComment}
+              />
+
+              {/* Mention Suggestions Dropdown */}
+              {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
+                <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {isLoadingSuggestedUsers ? (
+                    <div className="p-2 text-center ">
+                      <LoadingSpinner size="sm" />
+                    </div>
+                  ) : suggestedUsers.length > 0 ? (
+                    suggestedUsers.map((user) => (
+                      <div
+                        key={user._id}
+                        className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
+                        onClick={() => handleSelectMention(user.username)}
+                      >
+                        <div className="avatar">
+                          <div className="w-8 rounded-full">
+                            <img
+                              src={user.profileImg || "/avatar-placeholder.png"}
+                              alt={user.username}
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <p className="font-semibold text-sm">{user.fullName}</p>
+                          <p className="text-gray-400 text-xs">@{user.username}</p>
+                        </div>
+                      </div>
+                    ))
+                  ) : (
+                    <p className="p-2 text-gray-400">No users found.</p>
+                  )}
+                </div>
+              )}
+            </div>
+
             <input
               type="file"
               accept="image/*,video/*"

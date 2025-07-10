@@ -18,7 +18,7 @@ const commentSchema = new mongoose.Schema(
     },
     img: {
       type: String,
-      default: null
+      default: null,
     },
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,
@@ -35,6 +35,12 @@ const commentSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    mentionedUsers: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
   },
   {
     timestamps: true,

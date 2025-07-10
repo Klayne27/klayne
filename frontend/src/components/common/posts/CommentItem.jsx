@@ -12,6 +12,8 @@ import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments";
 import { renderClickableText } from "../../../utils/textUtils";
 import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
@@ -24,6 +26,19 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [replyImageFile, setReplyImageFile] = useState(null);
   const imageInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // --- NEW STATES FOR MENTIONS IN REPLIES ---
+  const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
+  const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300);
+  const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false);
+  const replyInputRef = useRef(null); // Ref for reply input
+
+  const { users: suggestedReplyUsers, isLoading: isLoadingSuggestedReplyUsers } =
+    useSearchUsers(
+      debouncedReplyMentionSearchTerm,
+      showReplyMentionSuggestions && debouncedReplyMentionSearchTerm.length > 0
+    );
+  // --- END NEW STATES ---
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
@@ -129,6 +144,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     setReplyText("");
     setReplyImagePreview(null);
     setReplyImageFile(null);
+    if (imageInputRef.current) {
+      imageInputRef.current.value = "";
+    }
+    // Reset mention states for replies when opening/closing
+    setReplyMentionSearchTerm("");
+    setShowReplyMentionSuggestions(false);
   }, []);
 
   const handleImageChange = (e) => {
@@ -154,6 +175,75 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     }
   };
 
+  // --- NEW HANDLER FOR REPLY MENTION INPUT ---
+  const handleReplyTextChange = (e) => {
+    const newText = e.target.value;
+    setReplyText(newText);
+
+    const lastAtIndex = newText.lastIndexOf("@");
+    if (lastAtIndex !== -1) {
+      const potentialMention = newText.substring(lastAtIndex + 1);
+      if (potentialMention.length > 0 && !/\s/.test(potentialMention)) {
+        setReplyMentionSearchTerm(potentialMention);
+        setShowReplyMentionSuggestions(true);
+      } else {
+        setReplyMentionSearchTerm("");
+        setShowReplyMentionSuggestions(false);
+      }
+    } else {
+      setReplyMentionSearchTerm("");
+      setShowReplyMentionSuggestions(false);
+    }
+  };
+
+  const handleSelectReplyMention = (username) => {
+    const currentText = replyText;
+    const lastAtIndex = currentText.lastIndexOf("@");
+
+    if (lastAtIndex !== -1) {
+      // Get the part of the string from the '@' sign onwards
+      const textFromAt = currentText.substring(lastAtIndex);
+
+      // Find the length of the *partial* username that was typed after '@'
+      // This regex now explicitly matches characters after '@'
+      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
+
+      let partialMentionLength = 0;
+      if (match && match[1]) {
+        // If a match exists and the capture group (the username part) is not empty
+        partialMentionLength = match[1].length;
+      }
+
+      // Calculate the start and end indices of the segment to replace
+      // The start of replacement is `lastAtIndex` (where '@' is)
+      // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
+      const replaceStartIndex = lastAtIndex;
+      const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+
+      // Construct the new text
+      const newText =
+        currentText.substring(0, replaceStartIndex) + // Text before the @
+        `@${username} ` + // The full @username with a space
+        currentText.substring(replaceEndIndex); // Text after the partial mention
+
+      setReplyText(newText);
+      setReplyMentionSearchTerm("");
+      setShowReplyMentionSuggestions(false);
+
+      // Manually set cursor to the end of the newly inserted mention
+      setTimeout(() => {
+        const input = replyInputRef.current;
+        if (input) {
+          const newCursorPos =
+            currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
+          input.setSelectionRange(newCursorPos, newCursorPos);
+          input.focus();
+        }
+      }, 0);
+    }
+  };
+  // --- END NEW HANDLER ---
+
   const handleSendReply = async (e) => {
     e.preventDefault();
     e.stopPropagation();
@@ -172,6 +262,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       imageInputRef.current.value = "";
     }
     setShowReplyInput(false);
+    // Reset mention states after sending reply
+    setReplyMentionSearchTerm("");
+    setShowReplyMentionSuggestions(false);
   };
 
   const handleImageClick = (imageUrl, event) => {
@@ -274,6 +367,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </Link>
             </div>
           )}
+          {/* Display comment text with clickable mentions, URLs, and hashtags */}
           <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
 
           {comment.img && (
@@ -303,16 +397,14 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   ? "bg-pink-600 bg-opacity-15"
                   : ""
               }
-              cursor-pointer // Ensure the div itself is clickable
-          `}
+              cursor-pointer
+            `}
               >
                 {!isCommentLiked && (
                   <FaRegHeart
                     className={`
                         w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
-                        ${
-                          isAnimating && !isCommentLiked ? "animate-like-bounce" : ""
-                        } // Apply animation only when triggered and not liked yet
+                        ${isAnimating && !isCommentLiked ? "animate-like-bounce" : ""}
                     `}
                   />
                 )}
@@ -320,9 +412,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <FaHeart
                     className={`
                         w-4 h-4 text-pink-600 duration-200 transition
-                        ${
-                          isAnimating && isCommentLiked ? "animate-like-bounce" : ""
-                        } // Apply animation only when triggered and already liked
+                        ${isAnimating && isCommentLiked ? "animate-like-bounce" : ""}
                     `}
                   />
                 )}
@@ -355,7 +445,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           </div>
 
           {showReplyInput && authUser && (
-            <form onSubmit={handleSendReply} className="mt-4 flex flex-col gap-2">
+            <form
+              onSubmit={handleSendReply}
+              className="mt-4 flex flex-col gap-2 relative"
+            >
+              {" "}
+              {/* Added relative */}
               <div className="flex items-center gap-2">
                 <div className="avatar flex-shrink-0">
                   <div className="w-7 rounded-full">
@@ -365,23 +460,62 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     />
                   </div>
                 </div>
-                <input
-                  type="text"
-                  value={replyText}
-                  onChange={(e) => setReplyText(e.target.value)}
-                  placeholder={`Replying to @${comment.user.username}...`}
-                  className="flex-1 pl-3 py-2 rounded-full bg-black/0  placeholder-gray-400 focus:outline-none text-sm"
-                  disabled={isCreatingComment}
-                />
+                {/* Wrapper for input and mention suggestions */}
+                <div className="flex-1 relative">
+                  <input
+                    ref={replyInputRef} // Attach ref to the reply input
+                    type="text"
+                    value={replyText}
+                    onChange={handleReplyTextChange} // Use the new handler
+                    placeholder={`Replying to @${comment.user.username}...`}
+                    className="w-full pl-3 py-2 rounded-full bg-black/0 placeholder-gray-400 focus:outline-none text-sm"
+                    disabled={isCreatingComment}
+                  />
+
+                  {/* Reply Mention Suggestions Dropdown */}
+                  {showReplyMentionSuggestions &&
+                    debouncedReplyMentionSearchTerm.length > 0 && (
+                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                        {isLoadingSuggestedReplyUsers ? (
+                          <div className="p-2 text-center">
+                            <LoadingSpinner size="sm" />
+                          </div>
+                        ) : suggestedReplyUsers.length > 0 ? (
+                          suggestedReplyUsers.map((user) => (
+                            <div
+                              key={user._id}
+                              className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
+                              onClick={() => handleSelectReplyMention(user.username)}
+                            >
+                              <div className="avatar">
+                                <div className="w-7 rounded-full">
+                                  <img
+                                    src={user.profileImg || "/avatar-placeholder.png"}
+                                    alt={user.username}
+                                  />
+                                </div>
+                              </div>
+                              <div>
+                                <p className="font-semibold text-xs">{user.fullName}</p>
+                                <p className="text-gray-400 text-xs">@{user.username}</p>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <p className="p-2 text-gray-400">No users found.</p>
+                        )}
+                      </div>
+                    )}
+                </div>
+
                 <button
                   type="submit"
-                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-primary-content transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold " // Added flex classes
+                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-primary-content transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply
                 </button>
               </div>
-
               {replyImagePreview && (
                 <div className="relative size-40 mt-2 self-start">
                   <img

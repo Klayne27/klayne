@@ -537,7 +537,7 @@ const CreatePost = () => {
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
             ref={textareaRef}
-            rows={1}
+            rows={2}
             style={{ minHeight: "28px" }}
           />
         </div>
