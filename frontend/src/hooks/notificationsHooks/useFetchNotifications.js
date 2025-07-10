@@ -39,12 +39,6 @@ export const useFetchNotifications = () => {
           return currentNotifications; // Return existing if duplicate
         });
         setHasUnreadNotifications(true); // This correctly updates the badge
-
-        // Optionally, show a toast notification for mentions
-        if (newNotification.type === "mention" && newNotification.from?.username) {
-          toast.info(`@${newNotification.from.username} mentioned you in a post!`);
-        }
-        // You can add more specific toasts for other notification types here
       };
 
       socket.on("newNotification", handleNewNotification);

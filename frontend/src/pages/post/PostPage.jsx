@@ -342,7 +342,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                     ? `Replying to @${replyingToComment.user.username}...`
                     : "Post your comment"
                 }
-                className="w-full pl-3 py-2 rounded-full bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg"
+                className="w-full pl-3 py-2 bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg"
                 disabled={isCreatingComment}
               />
 

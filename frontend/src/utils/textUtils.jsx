@@ -56,7 +56,9 @@ export const renderClickableText = (text) => {
   // Mentions: @ followed by alphanumeric characters or underscores, at least 1 character long.
   // Hashtags: # followed by alphanumeric characters or underscores, at least 1 character long.
   // URLs: common URL pattern
-  const regex = /(https?:\/\/[^\s]+)|(#[\w_]+)|(@[\w_]+)/g;
+  // const regex = /(https?:\/\/[^\s]+)|(#[\w_]+)|(@[\w_]+)/g;
+  // const regex = /(https?:\/\/[^\s]+)|(@[\w_]+)/g;
+  const regex = /(https?:\/\/[^\s]+)|(@[\p{L}\p{N}_]+)/gu; // Added \p{L} for any letter, \p{N} for any number, and 'u' flag
 
   let match;
   while ((match = regex.exec(text)) !== null) {
@@ -74,7 +76,7 @@ export const renderClickableText = (text) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-400 hover:underline"
+          className="text-blue-500 hover:underline"
           onClick={(e) => e.stopPropagation()} // Prevent post navigation on link click
         >
           {url}
@@ -85,7 +87,7 @@ export const renderClickableText = (text) => {
         <Link
           key={match.index}
           to={`/explore?hashtag=${hashtag.substring(1)}`} // Assuming an explore page for hashtags
-          className="text-blue-400 hover:underline"
+          className="text-blue-500 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {hashtag}
@@ -97,7 +99,7 @@ export const renderClickableText = (text) => {
         <Link
           key={match.index}
           to={`/profile/${username}`} // Link to the user's profile page
-          className="text-blue-400 hover:underline"
+          className="text-blue-500 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {mention}

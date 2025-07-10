@@ -15,75 +15,7 @@ import { searchUsersApi } from "../../api/usersApi";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 
-// Utility function to get caret position in textarea
-// This function needs to be outside the component or memoized properly
-// to avoid recreating it on every render, or it can be a separate file.
-// For simplicity, I'm including it here.
-const getCaretCoordinates = (element, position) => {
-  const div = document.createElement("div");
-  document.body.appendChild(div);
-
-  const style = div.style;
-  const computed = getComputedStyle(element);
-
-  // Transfer font styles and dimensions to the div
-  style.whiteSpace = "pre-wrap";
-  style.wordWrap = "break-word";
-  style.position = "absolute";
-  style.visibility = "hidden";
-  style.overflow = "hidden";
-
-  // Match text area's font styles
-  style.fontFamily = computed.fontFamily;
-  style.fontSize = computed.fontSize;
-  style.lineHeight = computed.lineHeight;
-  style.fontWeight = computed.fontWeight;
-  style.fontStyle = computed.fontStyle;
-  style.letterSpacing = computed.letterSpacing;
-  style.textTransform = computed.textTransform;
-
-  // Match text area's padding, border, and width
-  style.padding = computed.padding;
-  style.border = computed.border;
-  style.width = element.clientWidth + "px"; // Use clientWidth for accurate width
-  style.height = "auto"; // Let height adjust
-
-  // Set content and create a span at the cursor position
-  const textBeforeCaret = element.value.substring(0, position);
-  const textAfterCaret = element.value.substring(position);
-
-  const span = document.createElement("span");
-  span.textContent = textAfterCaret || "."; // Add a character to measure its height
-  div.textContent = textBeforeCaret;
-  div.appendChild(span);
-
-  // Get coordinates relative to the div, then add element's offset
-  const coordinates = {
-    top: span.offsetTop + parseInt(computed.lineHeight), // Position below the current line
-    left: span.offsetLeft,
-    height: span.offsetHeight, // height of a line
-  };
-
-  document.body.removeChild(div);
-
-  // Adjust coordinates relative to the textarea's position within the document
-  const textareaRect = element.getBoundingClientRect();
-  const parentRect = element.parentElement.getBoundingClientRect(); // Get relative to immediate parent
-
-  // Calculate position relative to the form's containing div (the one with position: relative)
-  // Assuming the textarea's direct parent is the 'relative w-full' div
-  // We want the position relative to the *containing* relative element that the suggestion menu will be absolute to.
-  // In your case, that's the div wrapping the textarea: `<div className="relative w-full">`
-  const relativeContainerRect = element.parentElement.getBoundingClientRect();
-
-  return {
-    top: coordinates.top + element.offsetTop, // Add textarea's offset from its parent
-    left: coordinates.left + element.offsetLeft,
-    // The top and left will be relative to the `relativeContainerRect`.
-    // So we need to subtract the container's top/left to get coordinates *within* it.
-    // We'll calculate this in the component for `suggestionMenuPosition`.
-  };
-};
+// Removed getCaretCoordinates function entirely
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -103,10 +35,7 @@ const CreatePost = () => {
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-  const [suggestionMenuPosition, setSuggestionMenuPosition] = useState({
-    top: 0,
-    left: 0,
-  }); // New state for position
+  // Removed suggestionMenuPosition state, we'll calculate it directly in JSX
   const suggestionBoxRef = useRef(null);
   // --- END MENTION STATE ---
 
@@ -116,7 +45,7 @@ const CreatePost = () => {
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
-  const formRef = useRef(null); // Ref for the main form to get its position
+  // Removed formRef, as we're positioning relative to the textarea's parent (the `relative w-full` div)
 
   const { createPost, isPending, isError, error } = useCreatePosts();
 
@@ -153,32 +82,17 @@ const CreatePost = () => {
 
     if (
       lastAtIndex !== -1 &&
-      !/\S/.test(textBeforeCursor.substring(lastAtIndex - 1, lastAtIndex))
+      !/\S/.test(textBeforeCursor.substring(lastAtIndex - 1, lastAtIndex)) // Ensures '@' is preceded by whitespace or start of string
     ) {
       const possibleMention = textBeforeCursor.substring(lastAtIndex);
-      const mentionMatch = possibleMention.match(/^@([a-zA-Z0-9_]*)$/);
+      // Updated regex to include Unicode letters and numbers
+      const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u);
 
       if (mentionMatch) {
         setMentionQuery(mentionMatch[1]);
         setMentionStartIndex(lastAtIndex);
         setShowMentionSuggestions(true);
-
-        // Calculate and set suggestion menu position
-        if (textareaRef.current) {
-          const { top, left } = getCaretCoordinates(textareaRef.current, cursorPosition);
-          // The suggestion menu is absolute to the form, which has "position: relative"
-          // So we need to calculate `top` and `left` relative to the form's top-left.
-          const formRect = formRef.current.getBoundingClientRect();
-          const textareaRect = textareaRef.current.getBoundingClientRect();
-
-          // Calculate position relative to the form's top-left
-          // 'top' from getCaretCoordinates is relative to textarea's top.
-          // We need to add textarea's top offset from form, and then textarea's top border/padding if any.
-          const calculatedTop = textareaRect.top - formRect.top + top;
-          const calculatedLeft = textareaRect.left - formRect.left + left;
-
-          setSuggestionMenuPosition({ top: calculatedTop, left: calculatedLeft });
-        }
+        // No need to set suggestionMenuPosition here, it will be calculated in JSX
         return;
       }
     }
@@ -192,11 +106,21 @@ const CreatePost = () => {
   const handleMentionSelect = (username) => {
     const currentText = text;
     const startReplaceIndex = mentionStartIndex;
-    const endReplaceIndex = mentionStartIndex + 1 + mentionQuery.length;
+
+    // Calculate the length of the partial mention (e.g., 'joh' from '@joh')
+    const textFromAt = currentText.substring(mentionStartIndex);
+    const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u); // Use the same broad regex
+    let partialMentionLength = 0;
+    if (match && match[1]) {
+      partialMentionLength = match[1].length;
+    }
+
+    // The end of the segment to replace is just after the partial mention
+    const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength;
 
     const newText =
       currentText.substring(0, startReplaceIndex) +
-      `@${username} ` +
+      `@${username} ` + // Add a space after the username for better UX
       currentText.substring(endReplaceIndex);
 
     setText(newText);
@@ -393,7 +317,8 @@ const CreatePost = () => {
         }, 0);
       } else {
         if (showMentionSuggestions && mentionSuggestions.length > 0) {
-          e.preventDefault();
+          e.preventDefault(); // Prevent new line if suggestions are open
+          // Potentially add logic here to select first suggestion on Enter
         } else {
           e.preventDefault();
           handleSubmit(e);
@@ -527,7 +452,7 @@ const CreatePost = () => {
       <form
         className="flex flex-col w-full relative"
         onSubmit={handleSubmit}
-        ref={formRef}
+        // Removed ref={formRef}
       >
         <div className="relative w-full">
           <textarea
@@ -540,43 +465,43 @@ const CreatePost = () => {
             rows={2}
             style={{ minHeight: "28px" }}
           />
-        </div>
-
-        {/* Mention Suggestions Popover */}
-        {showMentionSuggestions && mentionSuggestions.length > 0 && !showPollInputs && (
-          <div
-            ref={suggestionBoxRef}
-            className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-48 md:w-64" // Removed old positioning classes
-            style={{ top: suggestionMenuPosition.top, left: suggestionMenuPosition.left }}
-          >
-            {isLoadingMentions ? (
-              <p className="p-2 text-gray-400">Loading suggestions...</p>
-            ) : mentionSuggestions.length === 0 ? (
-              <p className="p-2 text-gray-500">No users found.</p>
-            ) : (
-              mentionSuggestions.map((user) => (
-                <div
-                  key={user._id}
-                  className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
-                  onClick={() => handleMentionSelect(user.username)}
-                >
-                  <div className="avatar">
-                    <div className="w-8 rounded-full">
-                      <img
-                        src={user.profileImg || "/avatar-placeholder.png"}
-                        alt="profile"
-                      />
+          {/* Mention Suggestions Popover */}
+          {showMentionSuggestions && mentionSuggestions.length > 0 && !showPollInputs && (
+            <div
+              ref={suggestionBoxRef}
+              className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
+              // Simplified positioning: always at the bottom-left of the textarea's content area
+              style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
+            >
+              {isLoadingMentions ? (
+                <p className="p-2 text-gray-400">Loading suggestions...</p>
+              ) : mentionSuggestions.length === 0 ? (
+                <p className="p-2 text-gray-500">No users found.</p>
+              ) : (
+                mentionSuggestions.map((user) => (
+                  <div
+                    key={user._id}
+                    className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
+                    onClick={() => handleMentionSelect(user.username)}
+                  >
+                    <div className="avatar">
+                      <div className="w-8 rounded-full">
+                        <img
+                          src={user.profileImg || "/avatar-placeholder.png"}
+                          alt="profile"
+                        />
+                      </div>
+                    </div>
+                    <div>
+                      <p className="font-semibold">{user.fullName}</p>
+                      <p className="text-gray-500 text-sm">@{user.username}</p>
                     </div>
                   </div>
-                  <div>
-                    <p className="font-semibold">{user.fullName}</p>
-                    <p className="text-gray-500 text-sm">@{user.username}</p>
-                  </div>
-                </div>
-              ))
-            )}
-          </div>
-        )}
+                ))
+              )}
+            </div>
+          )}
+        </div>
 
         {previewUrl && (
           <div className="relative max-w-full mx-auto sm:w-auto">
@@ -662,7 +587,7 @@ const CreatePost = () => {
               <button
                 type="button"
                 onClick={handleRemovePoll}
-                className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200"
+                className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200"
               >
                 Remove poll
               </button>
