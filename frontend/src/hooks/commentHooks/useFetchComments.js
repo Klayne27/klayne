@@ -1,7 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchCommentsApi } from "../../api/commentsApi";
 
-export const useFetchComments = (postId, parentCommentId = null) => {
+export const useFetchComments = (postId, parentCommentId = null, enabled = true) => {
+  // <--- Add 'enabled' prop
   const isOptimisticId =
     parentCommentId &&
     typeof parentCommentId === "string" &&
@@ -39,7 +40,7 @@ export const useFetchComments = (postId, parentCommentId = null) => {
     initialPageParam: 1,
     staleTime: 15 * 60 * 1000,
     cacheTime: 5 * 60 * 1000,
-    enabled: !!postId && !isOptimisticId,
+    enabled: !!postId && !isOptimisticId && enabled, // <--- Use the new 'enabled' prop here
   });
 
   const comments = data?.pages?.flatMap((page) => page.comments) || [];

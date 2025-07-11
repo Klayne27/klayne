@@ -585,7 +585,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </button>
             <span
               className={`text-lg hidden md:block ${
-                pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+                pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
               Search

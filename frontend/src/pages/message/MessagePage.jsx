@@ -37,23 +37,16 @@ const MessagePage = ({
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
 
   const { deleteConversation, isDeleting } = useDeleteConversation();
-  // Determine if a specific conversation is open based on URL param
   const isConversationOpen = urlConversationId !== undefined;
   const isMobile = window.innerWidth < 768;
 
-  // Determine if a conversation ID is present in the URL
   const hasConversationIdInUrl = !!urlConversationId && urlConversationId !== "";
   const showConversationListPanel = !isMobile || !isConversationOpen;
   const showChatWindowPanel = !isMobile || isConversationOpen;
 
-  // --- Core Logic for Chat Window Visibility and Sidebar Control ---
-  // Effect to manage setIsChatWindowOpen based on the presence of conversationId in the URL
   useEffect(() => {
-    // setIsChatWindowOpen is true if a specific conversation ID is in the URL
-    // This tells the parent (App.jsx) that a chat window is open, so the sidebar should hide.
     setIsChatWindowOpen(hasConversationIdInUrl);
 
-    // Cleanup function: Set to false when component unmounts or path changes away from messages/:id
     return () => {
       setIsChatWindowOpen(false);
     };
@@ -61,13 +54,10 @@ const MessagePage = ({
   // --- End Core Logic ---
 
   useEffect(() => {
-    // If we're still loading data or don't have a current user, just return.
     if (isLoadingConversations || isLoadingFollowedUsers || !currentUser) {
       return;
     }
 
-    // Prioritize URL or existing selected conversation if we've already processed
-    // targetUserId and there's no new target.
     if (
       initialLoadAttempted.current &&
       !targetUserId && // No new targetUserId trying to force a new convo
@@ -78,8 +68,6 @@ const MessagePage = ({
 
     let desiredConversation = null;
 
-    // Priority 1: Handle initial navigation to a new chat with a specific user (from profile, etc.)
-    // This logic should primarily set `desiredConversation` but not navigate away yet.
     if (targetUserId) {
       const existingConv = conversations.find((conv) =>
         conv.participants.some((p) => p?._id.toString() === targetUserId)
@@ -87,7 +75,6 @@ const MessagePage = ({
 
       if (existingConv) {
         desiredConversation = existingConv;
-        // Navigate immediately if an existing conversation is found
         navigate(`/messages/${existingConv._id}`, { replace: true });
       } else {
         // If no existing conversation, create a "pseudo" conversation for a new chat
@@ -110,29 +97,20 @@ const MessagePage = ({
             lastMessage: { text: "Start a new message", seen: true, img: "" },
             updatedAt: new Date(),
           };
-          // For a new chat, the URL should just be /messages initially
-          // navigate("/messages", { replace: true, state: { targetUserId } }); // Already handled by initial route
         } else {
           console.warn("MessagesPage: Target user for new chat not found:", targetUserId);
-          // If target user not found, navigate to base messages page
           navigate("/messages", { replace: true });
         }
       }
     }
 
-    // Priority 2: Handle conversation ID from URL if no targetUserId or no existing convo for target
     if (urlConversationId && !desiredConversation) {
       desiredConversation = conversations.find((conv) => conv._id === urlConversationId);
 
       if (!desiredConversation && urlConversationId !== "undefined") {
-        // Added check for "undefined" string
         console.warn(
           "MessagesPage: Conversation ID from URL not found in current conversations list. This might mean it's loading, or it's an invalid ID."
         );
-        // Optionally, if URL ID is truly invalid after data loaded, redirect to base messages
-        // if (!isLoadingConversations && !isLoadingFollowedUsers) {
-        //   navigate("/messages", { replace: true });
-        // }
       }
     }
 

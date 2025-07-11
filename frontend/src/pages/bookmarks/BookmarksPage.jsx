@@ -5,6 +5,7 @@ import { useGetBookmarkedPosts } from "../../hooks/postsHooks/useGetBookmarkedPo
 import { CiSearch } from "react-icons/ci";
 import Post from "../../components/common/posts/Post";
 import { FaArrowLeft } from "react-icons/fa6";
+import PostSkeleton from "../../components/skeletons/PostSkeleton";
 
 const BookmarksPage = ({ openImageModal }) => {
   const navigate = useNavigate();
@@ -83,8 +84,10 @@ const BookmarksPage = ({ openImageModal }) => {
         </div>
 
         {isLoadingBookmarkedPosts && bookmarkedPosts?.length === 0 && (
-          <div className="flex justify-center h-full items-center">
-            <LoadingSpinner size="lg" />
+          <div className="flex flex-col justify-center h-full items-center">
+            <PostSkeleton />
+            <PostSkeleton />
+            <PostSkeleton />
           </div>
         )}
 
@@ -123,7 +126,7 @@ const BookmarksPage = ({ openImageModal }) => {
         {hasNextPage && (
           <div ref={loadMoreRef} className="flex justify-center py-4">
             {isFetchingNextPage ? (
-              <LoadingSpinner size="md" />
+              <PostSkeleton />
             ) : (
               <span className="text-gray-500">Loading more...</span>
             )}

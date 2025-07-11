@@ -14,6 +14,8 @@ import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
+import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
+import RepliesSkeleton from "../../skeletons/RepliesSkeleton"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
@@ -27,35 +29,38 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const imageInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
-  // --- NEW STATES FOR MENTIONS IN REPLIES ---
+  // --- STATES FOR MENTIONS IN REPLIES ---
   const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
   const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300);
   const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false);
   const replyInputRef = useRef(null); // Ref for reply input
-
   const { users: suggestedReplyUsers, isLoading: isLoadingSuggestedReplyUsers } =
     useSearchUsers(
       debouncedReplyMentionSearchTerm,
       showReplyMentionSuggestions && debouncedReplyMentionSearchTerm.length > 0
     );
-  // --- END NEW STATES ---
+  // --- END MENTION STATES ---
 
   const { likeComment, isLikingComment } = useLikeComment();
   const { deleteComment, isDeletingComment } = useDeleteComment();
   const { createComment, isCreatingComment } = useCreateComment(postId, comment._id);
+
+  // --- NEW STATE TO CONTROL REPLIES FETCHING/DISPLAY ---
+  const [showRepliesSection, setShowRepliesSection] = useState(false); // Controls rendering of the entire replies section
+
   const {
     comments: replies,
     isLoading: isLoadingReplies,
     isFetchingNextPage: isFetchingNextRepliesPage,
     hasNextPage: hasNextRepliesPage,
     fetchNextPage: fetchNextRepliesPage,
-  } = useFetchComments(postId, comment._id);
+  } = useFetchComments(postId, comment._id, showRepliesSection); // Pass showRepliesSection to enable fetching
 
   const observerTarget = useRef(null);
 
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeButton, setActiveButton] = useState(null); // To control the active state for touch feedback on interactive buttons
+  const [activeButton, setActiveButton] = useState(null);
 
   useEffect(() => {
     setIsTouchDevice(
@@ -78,7 +83,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     if (isTouchDevice) {
       setTimeout(() => {
         setActiveButton(null);
-      }, 150); // Match desired fade-out duration
+      }, 150);
     }
   }, [isTouchDevice]);
 
@@ -91,9 +96,15 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   }, [isTouchDevice]);
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
+  // Intersection Observer for infinite scrolling replies
   useEffect(() => {
-    if (!observerTarget.current || !hasNextRepliesPage || isFetchingNextRepliesPage)
-      return;
+    if (
+      !observerTarget.current ||
+      !hasNextRepliesPage ||
+      isFetchingNextRepliesPage ||
+      !showRepliesSection
+    )
+      return; // Only observe if replies section is open
 
     const observer = new IntersectionObserver(
       (entries) => {
@@ -115,7 +126,13 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
         observer.unobserve(observerTarget.current);
       }
     };
-  }, [hasNextRepliesPage, isFetchingNextRepliesPage, fetchNextRepliesPage, comment._id]);
+  }, [
+    hasNextRepliesPage,
+    isFetchingNextRepliesPage,
+    fetchNextRepliesPage,
+    comment._id,
+    showRepliesSection,
+  ]);
 
   const handleLikeCommentClick = (e) => {
     e.stopPropagation();
@@ -138,18 +155,46 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     });
   };
 
-  const handleReplyClick = useCallback((e) => {
+  // --- NEW: Handle pasting an image into the input field ---
+  const handlePaste = useCallback((e) => {
+    const items = e.clipboardData.items;
+    for (let i = 0; i < items.length; i++) {
+      const item = items[i];
+      if (item.type.startsWith("image/") && item.kind === "file") {
+        const file = item.getAsFile();
+        if (file) {
+          setReplyImageFile(file);
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            setReplyImagePreview(reader.result);
+          };
+          reader.readAsDataURL(file);
+          e.preventDefault(); // Prevent text from being pasted if an image is found
+          break; // Stop after finding the first image
+        }
+      }
+    }
+  }, []);
+
+  // --- HANDLER FOR OPENING/CLOSING REPLY INPUT ---
+  const handleToggleReplyInput = useCallback((e) => {
     e.stopPropagation();
     setShowReplyInput((prev) => !prev);
+    // Clear previous reply state when toggling
     setReplyText("");
     setReplyImagePreview(null);
     setReplyImageFile(null);
     if (imageInputRef.current) {
       imageInputRef.current.value = "";
     }
-    // Reset mention states for replies when opening/closing
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
+  }, []);
+
+  // --- HANDLER FOR TOGGLING REPLIES SECTION VISIBILITY ---
+  const handleToggleRepliesVisibility = useCallback((e) => {
+    e.stopPropagation();
+    setShowRepliesSection((prev) => !prev);
   }, []);
 
   const handleImageChange = (e) => {
@@ -175,7 +220,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     }
   };
 
-  // --- NEW HANDLER FOR REPLY MENTION INPUT ---
   const handleReplyTextChange = (e) => {
     const newText = e.target.value;
     setReplyText(newText);
@@ -201,36 +245,26 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     const lastAtIndex = currentText.lastIndexOf("@");
 
     if (lastAtIndex !== -1) {
-      // Get the part of the string from the '@' sign onwards
       const textFromAt = currentText.substring(lastAtIndex);
-
-      // Find the length of the *partial* username that was typed after '@'
-      // This regex now explicitly matches characters after '@'
-      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
+      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/);
 
       let partialMentionLength = 0;
       if (match && match[1]) {
-        // If a match exists and the capture group (the username part) is not empty
         partialMentionLength = match[1].length;
       }
 
-      // Calculate the start and end indices of the segment to replace
-      // The start of replacement is `lastAtIndex` (where '@' is)
-      // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
       const replaceStartIndex = lastAtIndex;
       const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
 
-      // Construct the new text
       const newText =
-        currentText.substring(0, replaceStartIndex) + // Text before the @
-        `@${username} ` + // The full @username with a space
-        currentText.substring(replaceEndIndex); // Text after the partial mention
+        currentText.substring(0, replaceStartIndex) +
+        `@${username} ` +
+        currentText.substring(replaceEndIndex);
 
       setReplyText(newText);
       setReplyMentionSearchTerm("");
       setShowReplyMentionSuggestions(false);
 
-      // Manually set cursor to the end of the newly inserted mention
       setTimeout(() => {
         const input = replyInputRef.current;
         if (input) {
@@ -242,7 +276,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       }, 0);
     }
   };
-  // --- END NEW HANDLER ---
 
   const handleSendReply = async (e) => {
     e.preventDefault();
@@ -262,9 +295,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       imageInputRef.current.value = "";
     }
     setShowReplyInput(false);
-    // Reset mention states after sending reply
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
+    setShowRepliesSection(true); // Automatically show replies section after sending a reply
   };
 
   const handleImageClick = (imageUrl, event) => {
@@ -279,7 +312,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     if (isAnimating) {
       const timer = setTimeout(() => {
         setIsAnimating(false);
-      }, 300); // Match this duration to the animation duration (0.3s)
+      }, 300);
       return () => clearTimeout(timer);
     }
   }, [isAnimating]);
@@ -367,7 +400,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </Link>
             </div>
           )}
-          {/* Display comment text with clickable mentions, URLs, and hashtags */}
           <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
 
           {comment.img && (
@@ -390,30 +422,42 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             >
               <div
                 className={`
-              rounded-full p-2 duration-200 transition relative
-              ${!isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""}
-              ${
-                isTouchDevice && activeButton === "like"
-                  ? "bg-pink-600 bg-opacity-15"
-                  : ""
-              }
-              cursor-pointer
-            `}
+                                rounded-full p-2 duration-200 transition relative
+                                ${
+                                  !isTouchDevice
+                                    ? "group-hover:bg-pink-600 group-hover:bg-opacity-15"
+                                    : ""
+                                }
+                                ${
+                                  isTouchDevice && activeButton === "like"
+                                    ? "bg-pink-600 bg-opacity-15"
+                                    : ""
+                                }
+                                cursor-pointer
+                            `}
               >
                 {!isCommentLiked && (
                   <FaRegHeart
                     className={`
-                        w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
-                        ${isAnimating && !isCommentLiked ? "animate-like-bounce" : ""}
-                    `}
+                                            w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
+                                            ${
+                                              isAnimating && !isCommentLiked
+                                                ? "animate-like-bounce"
+                                                : ""
+                                            }
+                                        `}
                   />
                 )}
                 {isCommentLiked && (
                   <FaHeart
                     className={`
-                        w-4 h-4 text-pink-600 duration-200 transition
-                        ${isAnimating && isCommentLiked ? "animate-like-bounce" : ""}
-                    `}
+                                            w-4 h-4 text-pink-600 duration-200 transition
+                                            ${
+                                              isAnimating && isCommentLiked
+                                                ? "animate-like-bounce"
+                                                : ""
+                                            }
+                                        `}
                   />
                 )}
               </div>
@@ -427,18 +471,59 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             </button>
 
             {authUser && (
+              // --- NEW REPLY BUTTON ---
               <button
-                onClick={handleReplyClick}
+                onClick={handleToggleReplyInput} // Distinct handler
                 className="flex items-center cursor-pointer group"
               >
                 <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
-                  <FaReply
-                    className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
-                    strokeWidth={10}
-                  />
+                  {showReplyInput ? (
+                    <FaReply
+                      className="w-4 h-4 rotate-180 text-sky-400 group-hover:text-sky-400 duration-200 transition"
+                      strokeWidth={10}
+                    />
+                  ) : (
+                    <FaReply
+                      className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
+                      strokeWidth={10}
+                    />
+                  )}
                 </div>
-                <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
-                  {comment.repliesCount || 0}
+                <span
+                  className={`text-sm ${
+                    showReplyInput ? "text-sky-400" : "text-slate-500"
+                  } group-hover:text-sky-400 duration-200 transition`}
+                >
+                  Reply
+                </span>
+              </button>
+            )}
+            {/* --- NEW VIEW/HIDE REPLIES BUTTON --- */}
+            {comment.repliesCount > 0 && (
+              <button
+                onClick={handleToggleRepliesVisibility} // Distinct handler
+                className="flex items-center cursor-pointer group"
+              >
+                <div className="p-2 rounded-full group-hover:bg-blue-500 group-hover:bg-opacity-15 duration-200 transition">
+                  {showRepliesSection ? (
+                    <FaChevronUp // Or a different icon, e.g., FaChevronUp
+                      className="w-4 h-4 text-blue-500 duration-200 transition" // Rotate to indicate "hide"
+                      strokeWidth={10}
+                    />
+                  ) : (
+                    <FaChevronDown // Or FaChevronDown
+                      className="w-4 h-4 text-slate-500 group-hover:text-blue-500 duration-200 transition"
+                      strokeWidth={10}
+                    />
+                  )}
+                </div>
+                <span
+                  className={` ${
+                    showRepliesSection ? "text-blue-500" : "text-slate-500"
+                  } text-sm group-hover:text-blue-500 duration-200 transition`}
+                >
+                  {comment.repliesCount || 0}{" "}
+                  {showRepliesSection ? "Hide Replies" : "View Replies"}
                 </span>
               </button>
             )}
@@ -449,8 +534,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               onSubmit={handleSendReply}
               className="mt-4 flex flex-col gap-2 relative"
             >
-              {" "}
-              {/* Added relative */}
               <div className="flex items-center gap-2">
                 <div className="avatar flex-shrink-0">
                   <div className="w-7 rounded-full">
@@ -460,19 +543,17 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     />
                   </div>
                 </div>
-                {/* Wrapper for input and mention suggestions */}
                 <div className="flex-1 relative">
                   <input
-                    ref={replyInputRef} // Attach ref to the reply input
+                    ref={replyInputRef}
                     type="text"
                     value={replyText}
-                    onChange={handleReplyTextChange} // Use the new handler
+                    onChange={handleReplyTextChange}
+                    onPaste={handlePaste}
                     placeholder={`Replying to @${comment.user.username}...`}
                     className="w-full pl-3 py-2 rounded-full bg-black/0 placeholder-gray-400 focus:outline-none text-sm"
                     disabled={isCreatingComment}
                   />
-
-                  {/* Reply Mention Suggestions Dropdown */}
                   {showReplyMentionSuggestions &&
                     debouncedReplyMentionSearchTerm.length > 0 && (
                       <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -526,10 +607,10 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
+                    className="absolute -top-2 -right-2 bg-gray-500 text-white transition duration-200 hover:bg-gray-600 rounded-full p-1 text-xs"
                     title="Remove image"
                   >
-                    <IoClose />
+                    <IoClose size={15} />
                   </button>
                 </div>
               )}
@@ -556,11 +637,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       <div className="flex justify-center items-center">
         {isCreatingComment && <LoadingSpinner />}
       </div>
-      {comment.repliesCount > 0 && (
+      {/* Conditional rendering for replies section, based on showRepliesSection */}
+      {comment.repliesCount > 0 && showRepliesSection && (
         <div className="border-l border-accent mt-2">
           {isLoadingReplies ? (
-            <div className="flex justify-center py-2">
-              <LoadingSpinner size="md" />
+            <div className="flex flex-col justify-center py-2 md:py-4 px-4 md:px-5">
+              <RepliesSkeleton />
             </div>
           ) : (
             <>

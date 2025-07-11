@@ -18,7 +18,7 @@ const ImageModal = ({ src, onClose }) => {
           className="max-w-full max-h-[80vh] object-contain"
         />
         <button
-          className="absolute top-0 right-0 text-white text-3xl font-bold bg-gray-800 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
+          className="absolute top-0 right-0 text-white text-3xl font-bold bg-gray-500 duration-200 transition hover:bg-gray-600 rounded-full w-10 h-10 flex items-center justify-center cursor-pointer"
           onClick={onClose}
           aria-label="Close"
         >

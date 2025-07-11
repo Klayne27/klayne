@@ -1,5 +1,5 @@
 import { useRef, useState, useEffect, useCallback } from "react";
-import { IoCloseSharp } from "react-icons/io5";
+import { IoClose, IoCloseSharp } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
@@ -51,6 +51,69 @@ const CreatePost = () => {
 
   // Debounced query for mention search
   const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
+
+  const handlePaste = (e) => {
+    e.preventDefault();
+
+    const items = e.clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+
+        if (file) {
+          if (!file.type.startsWith("image/")) {
+            toast.error("Pasted content is not a supported image type.");
+            setSelectedFile(null);
+            setPreviewUrl(null);
+            if (fileInputRef.current) fileInputRef.current.value = null;
+            return;
+          }
+
+          if (file.size > 20 * 1024 * 1024) {
+            toast.error("Pasted image size exceeds 20MB limit.");
+            setSelectedFile(null);
+            setPreviewUrl(null);
+            if (fileInputRef.current) fileInputRef.current.value = null;
+            return;
+          }
+
+          setSelectedFile(file);
+          setPreviewUrl(URL.createObjectURL(file));
+
+          setShowPollInputs(false);
+          setPollChoices([{ text: "" }, { text: "" }]);
+          setShowMentionSuggestions(false);
+          return;
+        }
+      }
+    }
+
+    // If no image was found, or if it was text, proceed with default text paste
+    const pastedText = e.clipboardData.getData("text/plain");
+    if (pastedText) {
+      // Get current cursor position
+      const cursorStart = e.target.selectionStart;
+      const cursorEnd = e.target.selectionEnd;
+
+      // Insert pasted text at cursor
+      const newText =
+        text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
+
+      setText(newText);
+
+      // Restore cursor position after paste
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.selectionStart = cursorStart + pastedText.length;
+          textareaRef.current.selectionEnd = cursorStart + pastedText.length;
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        }
+      }, 0);
+    }
+  };
+
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedMentionQuery(mentionQuery);
@@ -461,6 +524,7 @@ const CreatePost = () => {
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
             ref={textareaRef}
             rows={2}
             style={{ minHeight: "28px" }}
@@ -505,8 +569,9 @@ const CreatePost = () => {
 
         {previewUrl && (
           <div className="relative max-w-full mx-auto sm:w-auto">
-            <IoCloseSharp
-              className="absolute top-0 right-0 text-white bg-gray-800 rounded-full w-5 h-5 cursor-pointer z-10"
+            <IoClose
+              size={25}
+              className="absolute -top-2 -right-2 text-white bg-gray-500 transition duration-200 hover:bg-gray-600 rounded-full p-1 cursor-pointer z-10"
               onClick={() => {
                 setSelectedFile(null);
                 setPreviewUrl(null);

@@ -13,6 +13,7 @@ import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
+import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton"
 
 const PostPage = ({ openImageModal, setFeedType }) => {
   const { pid } = useParams();
@@ -54,6 +55,87 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 
   const displayPost = post?.repostedFrom || post;
+
+  // Add this new function
+  const handlePaste = (e) => {
+    e.preventDefault(); // Prevent default paste behavior
+
+    const items = e.clipboardData.items;
+    let fileFound = false;
+
+    for (let i = 0; i < items.length; i++) {
+      if (
+        items[i].type.indexOf("image") !== -1 ||
+        items[i].type.indexOf("video") !== -1
+      ) {
+        const file = items[i].getAsFile();
+
+        if (file) {
+          // Validate file type (image or video)
+          if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
+            toast.error(
+              "Pasted content is not a supported image or video type for comments."
+            );
+            setMainCommentMediaFile(null);
+            setMainCommentMediaPreview(null);
+            if (mainCommentMediaInputRef.current)
+              mainCommentMediaInputRef.current.value = "";
+            return;
+          }
+
+          // Validate file size (20MB limit for comments)
+          const MAX_COMMENT_MEDIA_SIZE_MB = 20;
+          if (file.size > MAX_COMMENT_MEDIA_SIZE_MB * 1024 * 1024) {
+            toast.error(
+              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`
+            );
+            setMainCommentMediaFile(null);
+            setMainCommentMediaPreview(null);
+            if (mainCommentMediaInputRef.current)
+              mainCommentMediaInputRef.current.value = "";
+            return;
+          }
+
+          setMainCommentMediaFile(file);
+          setMainCommentMediaPreview(URL.createObjectURL(file));
+          fileFound = true;
+          // Optionally, clear the text input if media is pasted
+          // setCommentText("");
+          break; // Process only the first image/video found
+        }
+      }
+    }
+
+    // If no media was found, paste as plain text
+    if (!fileFound) {
+      const pastedText = e.clipboardData.getData("text/plain");
+      if (pastedText) {
+        const inputElement = mentionInputRef.current; // Use the ref for the comment input
+        if (inputElement) {
+          const cursorStart = inputElement.selectionStart;
+          const cursorEnd = inputElement.selectionEnd;
+
+          const newText =
+            commentText.substring(0, cursorStart) +
+            pastedText +
+            commentText.substring(cursorEnd);
+
+          setCommentText(newText);
+
+          // Restore cursor position after paste
+          setTimeout(() => {
+            if (inputElement) {
+              inputElement.setSelectionRange(
+                cursorStart + pastedText.length,
+                cursorStart + pastedText.length
+              );
+              inputElement.focus();
+            }
+          }, 0);
+        }
+      }
+    }
+  };
 
   const handleMainCommentMediaChange = (e) => {
     const file = e.target.files[0];
@@ -319,11 +401,11 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       {authUser && (
         <form
           onSubmit={handleAddOrReplyComment}
-          className="p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
+          className="px-4 py-3 md:p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
         >
           <div className="flex items-center justify-between gap-2 sm:gap-4">
             <div className="avatar flex-shrink-0">
-              <div className="w-9 rounded-full">
+              <div className="w-8 md:w-9 rounded-full">
                 <img
                   src={authUser?.profileImg || "/avatar-placeholder.png"}
                   alt="Your profile"
@@ -337,6 +419,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 type="text"
                 value={commentText}
                 onChange={handleCommentTextChange} // Use the new handler
+                onPaste={handlePaste}
                 placeholder={
                   replyingToComment
                     ? `Replying to @${replyingToComment.user.username}...`
@@ -428,10 +511,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
               <button
                 type="button"
                 onClick={handleRemoveMainCommentMedia}
-                className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 text-xs"
+                className="absolute -top-2 -right-2 bg-gray-500 text-white duration-200 transition hover:bg-gray-600 rounded-full p-1 text-xs"
                 title="Remove media"
               >
-                <IoClose />
+                <IoClose size={15} />
               </button>
             </div>
           )}
@@ -440,8 +523,11 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
       <div className="flex flex-col" ref={commentsListRef}>
         {isLoadingComments ? (
-          <div className="flex justify-center h-full items-center py-4">
-            <LoadingSpinner size="md" />
+          <div className="flex flex-col h-full p-2 md:p-4 gap-4 md:gap-14">
+            <CommentsSkeleton />
+            <CommentsSkeleton />
+            <CommentsSkeleton />
+            <CommentsSkeleton />
           </div>
         ) : comments.length > 0 ? (
           <>

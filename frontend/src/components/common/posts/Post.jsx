@@ -11,7 +11,7 @@ import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../../utils/textUtils";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useRef } from "react"; // Import useRef
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
@@ -25,6 +25,12 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const { username } = useParams();
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // --- NEW STATE AND REF FOR HIGHLIGHTING PREVENTION ---
+  const isDraggingRef = useRef(false);
+  const initialClientY = useRef(0);
+  const initialClientX = useRef(0);
+  // --- END NEW STATE AND REF FOR HIGHLIGHTING PREVENTION ---
 
   const isRepost = !!post.repostedFrom;
   const originalPost = isRepost ? post.repostedFrom : post;
@@ -91,7 +97,14 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   }, [isTouchDevice]);
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
+  // --- MODIFIED navigateToPostPage to prevent navigation during text selection ---
   const navigateToPostPage = (e) => {
+    // If a drag/highlight action was detected, prevent navigation
+    if (isDraggingRef.current) {
+      isDraggingRef.current = false; // Reset for the next interaction
+      return;
+    }
+
     if (
       e.target.closest("a") ||
       e.target.closest("button") ||
@@ -103,6 +116,28 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
   };
+
+  // --- NEW HANDLERS FOR MOUSE EVENTS ---
+  const handleMouseDown = (e) => {
+    initialClientX.current = e.clientX;
+    initialClientY.current = e.clientY;
+    isDraggingRef.current = false; // Assume no drag until proven otherwise
+  };
+
+  const handleMouseMove = (e) => {
+    // If the mouse moves more than a few pixels, it's likely a drag
+    const deltaX = Math.abs(e.clientX - initialClientX.current);
+    const deltaY = Math.abs(e.clientY - initialClientY.current);
+    if (deltaX > 5 || deltaY > 5) {
+      isDraggingRef.current = true;
+    }
+  };
+
+  const handleMouseUp = () => {
+    // This is where navigateToPostPage will be called by the parent div's onClick
+    // The `isDraggingRef.current` flag will be checked there.
+  };
+  // --- END NEW HANDLERS FOR MOUSE EVENTS ---
 
   const handleInteractiveClick = (e) => {
     e.stopPropagation();
@@ -213,6 +248,9 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     <div
       className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer"
       onClick={navigateToPostPage}
+      onMouseDown={handleMouseDown} // Add mouse down listener
+      onMouseMove={handleMouseMove} // Add mouse move listener
+      onMouseUp={handleMouseUp} // Add mouse up listener
     >
       {isRepost && repostingUser && (
         <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
@@ -279,7 +317,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
             {canDelete && (
               <span className="flex ml-auto">
                 {!isDeleting && (
-                  <div className="group  duration-200 transition hover:text-red-600  rounded-full px-2.5">
+                  <div className="group  duration-200 transition hover:text-red-600  rounded-full px-2.5">
                     <FiTrash
                       className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
                       onClick={handleDeletePostClick}
@@ -328,7 +366,8 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                   className="flex items-center cursor-pointer group"
                   onClick={() => {
                     handleInteractiveClick();
-                    navigateToPostPage();
+                    // This specific comment icon click should still navigate
+                    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
                   }}
                   onTouchStart={() => handleTouchStart("comment")}
                   onTouchEnd={handleTouchEnd}
@@ -364,7 +403,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                   onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    className={`rounded-full p-1 duration-200 transition   ${
+                    className={`rounded-full p-1 duration-200 transition ${
                       !isTouchDevice
                         ? "group-hover:bg-green-400 group-hover:bg-opacity-15"
                         : ""
@@ -403,15 +442,19 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                 >
                   <div
                     className={`
-              rounded-full p-2 duration-200 transition relative
-              ${!isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""}
-              ${
-                isTouchDevice && activeButton === "like"
-                  ? "bg-pink-600 bg-opacity-15"
-                  : ""
-              }
-              cursor-pointer // Ensure the div itself is clickable
-          `}
+                  rounded-full p-2 duration-200 transition relative
+                  ${
+                    !isTouchDevice
+                      ? "group-hover:bg-pink-600 group-hover:bg-opacity-15"
+                      : ""
+                  }
+                  ${
+                    isTouchDevice && activeButton === "like"
+                      ? "bg-pink-600 bg-opacity-15"
+                      : ""
+                  }
+                  cursor-pointer // Ensure the div itself is clickable
+              `}
                   >
                     {!isLiked && (
                       <FaRegHeart
@@ -462,7 +505,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                     </div>
                   )}
                   <div
-                    className="flex  items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
+                    className="flex  items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
                     onClick={handleBookmarkPost}
                   >
                     {isBookmarking ? (

@@ -43,6 +43,69 @@ function MessageInput({
     }
   }, [socket, actualConversationId]);
 
+  const handlePaste = (e) => {
+    e.preventDefault(); // Prevent default paste behavior
+
+    const items = e.clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+
+        if (file) {
+          // Basic validation for image file
+          if (!file.type.startsWith("image/")) {
+            toast.error("Pasted content is not a supported image type.");
+            setImageFile(null);
+            if (imageInputRef.current) imageInputRef.current.value = null;
+            return;
+          }
+
+          // You might want to add a size limit for message images as well
+          // For example, 5MB for chat images, adjust as needed
+          const MAX_IMAGE_SIZE_MB = 5;
+          if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+            toast.error(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`);
+            setImageFile(null);
+            if (imageInputRef.current) imageInputRef.current.value = null;
+            return;
+          }
+
+          setImageFile(file);
+          // Don't need a separate previewUrl state here, as you're directly using URL.createObjectURL in JSX
+          // if you were also clearing messageInput on paste image, you'd do it here too:
+          // setMessageInput("");
+          return; // Process only the first image found
+        }
+      }
+    }
+
+    // If no image was found, paste as plain text
+    const pastedText = e.clipboardData.getData("text/plain");
+    if (pastedText) {
+      const inputElement = messageInputRef.current;
+      if (inputElement) {
+        const cursorStart = inputElement.selectionStart;
+        const cursorEnd = inputElement.selectionEnd;
+
+        const newText =
+          messageInput.substring(0, cursorStart) +
+          pastedText +
+          messageInput.substring(cursorEnd);
+
+        setMessageInput(newText);
+
+        // Restore cursor position after paste
+        setTimeout(() => {
+          if (inputElement) {
+            inputElement.selectionStart = cursorStart + pastedText.length;
+            inputElement.selectionEnd = cursorStart + pastedText.length;
+          }
+        }, 0);
+      }
+    }
+  };
+
   const handleMessageInputChange = (e) => {
     const text = e.target.value;
     setMessageInput(text);
@@ -183,7 +246,7 @@ function MessageInput({
             />
             <button
               onClick={() => setImageFile(null)}
-              className="absolute right-1 top-1 p-1 text-white rounded-full bg-black/0 hover:bg-gray-700"
+              className="absolute -right-2 -top-2 p-1 text-white rounded-full bg-gray-500 transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
             </button>
@@ -275,6 +338,7 @@ function MessageInput({
             type="text"
             value={messageInput}
             onChange={handleMessageInputChange}
+            onPaste={handlePaste}
             placeholder="Start a new message"
             className="flex-1 py-2  bg-secondary rounded-full placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
             ref={messageInputRef}
