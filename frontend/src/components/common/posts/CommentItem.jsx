@@ -471,15 +471,31 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             </button>
 
             {authUser && (
-              // --- NEW REPLY BUTTON ---
+              // --- REPLY BUTTON ---
               <button
-                onClick={handleToggleReplyInput} // Distinct handler
+                onClick={handleToggleReplyInput}
                 className="flex items-center cursor-pointer group"
+                onTouchStart={() => handleTouchStart("reply")} // Add touch start
+                onTouchEnd={handleTouchEnd} // Add touch end
+                onTouchCancel={handleTouchCancel} // Add touch cancel
               >
-                <div className="p-2 rounded-full group-hover:bg-sky-400 group-hover:bg-opacity-15 duration-200 transition">
+                <div
+                  className={`p-2 rounded-full duration-200 transition
+                  ${
+                    !isTouchDevice
+                      ? "group-hover:bg-sky-400 group-hover:bg-opacity-15"
+                      : ""
+                  }
+                  ${
+                    isTouchDevice && activeButton === "reply"
+                      ? "bg-sky-400 bg-opacity-15"
+                      : ""
+                  }
+                `}
+                >
                   {showReplyInput ? (
                     <FaReply
-                      className="w-4 h-4 rotate-180 text-sky-400 group-hover:text-sky-400 duration-200 transition"
+                      className="w-4 h-4 rotate-180 text-sky-400 duration-200 transition"
                       strokeWidth={10}
                     />
                   ) : (
@@ -498,20 +514,37 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 </span>
               </button>
             )}
-            {/* --- NEW VIEW/HIDE REPLIES BUTTON --- */}
+
+            {/* --- VIEW/HIDE REPLIES BUTTON --- */}
             {comment.repliesCount > 0 && (
               <button
-                onClick={handleToggleRepliesVisibility} // Distinct handler
+                onClick={handleToggleRepliesVisibility}
                 className="flex items-center cursor-pointer group"
+                onTouchStart={() => handleTouchStart("viewReplies")} // Add touch start
+                onTouchEnd={handleTouchEnd} // Add touch end
+                onTouchCancel={handleTouchCancel} // Add touch cancel
               >
-                <div className="p-2 rounded-full group-hover:bg-blue-500 group-hover:bg-opacity-15 duration-200 transition">
+                <div
+                  className={`p-2 rounded-full duration-200 transition
+                  ${
+                    !isTouchDevice
+                      ? "group-hover:bg-blue-500 group-hover:bg-opacity-15"
+                      : ""
+                  }
+                  ${
+                    isTouchDevice && activeButton === "viewReplies"
+                      ? "bg-blue-500 bg-opacity-15"
+                      : ""
+                  }
+                `}
+                >
                   {showRepliesSection ? (
-                    <FaChevronUp // Or a different icon, e.g., FaChevronUp
-                      className="w-4 h-4 text-blue-500 duration-200 transition" // Rotate to indicate "hide"
+                    <FaChevronUp
+                      className="w-4 h-4 text-blue-500 duration-200 transition"
                       strokeWidth={10}
                     />
                   ) : (
-                    <FaChevronDown // Or FaChevronDown
+                    <FaChevronDown
                       className="w-4 h-4 text-slate-500 group-hover:text-blue-500 duration-200 transition"
                       strokeWidth={10}
                     />

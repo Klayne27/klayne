@@ -31,7 +31,7 @@ export const useRepostPost = () => {
       // Cancel any outgoing refetches
       await queryClient.cancelQueries({ queryKey: ["posts"] });
       await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
-      await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
+      // await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
       await queryClient.cancelQueries({ queryKey: ["post", originalPostId] });
 
       // Store previous data for rollback

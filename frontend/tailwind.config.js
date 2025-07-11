@@ -20,10 +20,23 @@ export default {
           "50%": { transform: "scale(1.4)" }, // Enlarge in the middle
           "75%": { transform: "scale(0.5)" }, // Slightly shrink for a bounce effect
         },
+        // NEW: Pin animation (down and back up)
+        "pin-down": {
+          "0%": { transform: "translateY(0)" },
+          "50%": { transform: "translateY(4px)" }, // Move down
+          "100%": { transform: "translateY(0)" }, // Move back up
+        },
+        // NEW: Bookmark animation (slight pop/scale)
+        "bookmark-pop": {
+          "0%, 100%": { transform: "scale(1)" },
+          "50%": { transform: "scale(1.2)" }, // Pop out slightly
+        },
       },
       animation: {
         // Apply the keyframe animation
         "like-bounce": "like-bounce 0.3s ease-in-out", // 0.3 seconds duration, ease-in-out timing
+        "pin-down": "pin-down 0.2s ease-out", // Faster animation for pin
+        "bookmark-pop": "bookmark-pop 0.2s ease-out", // Faster animation for bookmark
       },
     },
   },

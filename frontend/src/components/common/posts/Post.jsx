@@ -11,26 +11,28 @@ import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../../utils/textUtils";
-import { useCallback, useEffect, useState, useRef } from "react"; // Import useRef
+import { useCallback, useEffect, useState, useRef } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
 import { usePinPost } from "../../../hooks/postsHooks/usePinPost";
 import { BsPin, BsPinFill } from "react-icons/bs";
 
-const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
+const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUsername, profileOwnerId }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const { username } = useParams();
-  const [isAnimating, setIsAnimating] = useState(false);
+  const [isAnimatingLike, setIsAnimatingLike] = useState(false);
+  const [isAnimatingPin, setIsAnimatingPin] = useState(false); // NEW
+  const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false); // NEW
 
-  // --- NEW STATE AND REF FOR HIGHLIGHTING PREVENTION ---
   const isDraggingRef = useRef(false);
   const initialClientY = useRef(0);
   const initialClientX = useRef(0);
-  // --- END NEW STATE AND REF FOR HIGHLIGHTING PREVENTION ---
+
+  const resolvedProfileUsername = currentProfileUsername || username; // Use prop if available
 
   const isRepost = !!post.repostedFrom;
   const originalPost = isRepost ? post.repostedFrom : post;
@@ -39,22 +41,36 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
   const isLiked = originalPost?.likes?.includes(authUser?._id);
   const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
 
-  // Check if the post is pinned by the authenticated user
+  // 1. Check if the authenticated user has pinned *this specific original post*.
+  const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(originalPost._id);
+
+  // 2. The `isPinned` state for the UI should reflect `hasAuthUserPinnedOriginal` *optimistically*.
+  //    This means your `updatePostPinStatus` helper should set an `isPinned` flag on the post object in the cache.
+  //    When `originalPost` comes from the query cache, it *might* have this `isPinned` property.
+  //    If not, fall back to checking `authUser.pinnedPosts`.
+  const isPinnedForUI =
+    originalPost?.isPinned !== undefined
+      ? originalPost.isPinned
+      : hasAuthUserPinnedOriginal;
+
+  // The `profilePinnedPosts` prop is likely used by `ProfilePage` to display the list of pinned posts.
+  // It shouldn't directly influence the `isPinned` status of an individual post *icon* unless the Post component
+  // is specifically checking if it's *in that list*. For the icon, `authUser.pinnedPosts` is more direct.
   const isPinnedOnThisProfile = profilePinnedPosts.some(
     (pinnedPost) => pinnedPost._id === originalPost._id
   );
-
-  const isPinned = originalPost?.user?.pinnedPosts?.some(
-    (pinnedPost) => pinnedPost === originalPost._id
-  );
+  // const isPinned = originalPost?.isPinned; // This directly uses the optimistic flag on the post object
 
   const canDelete = authUser && authUser._id === post.user._id;
   const isMyOriginalPost =
     authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user
 
-  const { toggleBookmark, isBookmarking } = useToggleBookmarks();
+  const { toggleBookmark, isBookmarking } = useToggleBookmarks(
+    resolvedProfileUsername,
+    profileOwnerId
+  ); // <--- Pass profileOwnerId here!
   const { repostPost, isReposting } = useRepostPost();
-  const { likePost, isLiking } = useLikePost(originalPost);
+  const { likePost, isLiking } = useLikePost(username);
   const { deletePost, isDeleting } = useDeletePosts(post);
   const { pinUnpinPost, isPinning } = usePinPost(); // Use the new pin hook
 
@@ -145,7 +161,10 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
 
   const handleBookmarkPost = (e) => {
     handleInteractiveClick(e);
-    toggleBookmark(post._id);
+    setIsAnimatingBookmark(true); // Trigger bookmark animation
+
+    if (!authUser?._id || isBookmarking) return;
+    toggleBookmark(originalPost._id);
   };
 
   const handleDeletePostClick = (e) => {
@@ -155,7 +174,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
 
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e);
-    setIsAnimating(true);
+    setIsAnimatingLike(true);
 
     if (isLiking) return;
     likePost(originalPost._id);
@@ -167,11 +186,19 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     repostPost(originalPost._id);
   };
 
-  const handlePinToggle = (e) => {
-    handleInteractiveClick(e);
-    if (isPinning) return;
-    const action = isPinnedOnThisProfile ? "unpin" : "pin";
-    pinUnpinPost({ postId: originalPost._id, action, username });
+  const handlePinPost = (e) => {
+    e.stopPropagation();
+    setIsAnimatingPin(true);
+
+    if (!authUser?.username || isPinning) return; // Prevent action if not authenticated or already pinning
+
+    const action = isPinnedForUI ? "unpin" : "pin"; // Determine action based on current UI state
+    // Pass the full originalPost object and the profile owner's username
+    pinUnpinPost({
+      postId: originalPost._id,
+      action: action,
+      post: originalPost, // Pass the full originalPost object
+    });
   };
 
   const handleMediaClick = (mediaUrl, mediaType, event) => {
@@ -229,15 +256,32 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
     return username;
   };
 
-  // Reset animation state after it completes
+  // Reset animation states after they complete
   useEffect(() => {
-    if (isAnimating) {
-      const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 300); // Match this duration to the animation duration (0.3s)
-      return () => clearTimeout(timer);
+    let timerLike, timerPin, timerBookmark;
+
+    if (isAnimatingLike) {
+      timerLike = setTimeout(() => {
+        setIsAnimatingLike(false);
+      }, 300); // Match like-bounce duration
     }
-  }, [isAnimating]);
+    if (isAnimatingPin) {
+      timerPin = setTimeout(() => {
+        setIsAnimatingPin(false);
+      }, 200); // Match pin-down duration
+    }
+    if (isAnimatingBookmark) {
+      timerBookmark = setTimeout(() => {
+        setIsAnimatingBookmark(false);
+      }, 200); // Match bookmark-pop duration
+    }
+
+    return () => {
+      clearTimeout(timerLike);
+      clearTimeout(timerPin);
+      clearTimeout(timerBookmark);
+    };
+  }, [isAnimatingLike, isAnimatingPin, isAnimatingBookmark]);
 
   if (!originalPost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -461,7 +505,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                         className={`
                         w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
                         ${
-                          isAnimating && !isLiked ? "animate-like-bounce" : ""
+                          isAnimatingLike && !isLiked ? "animate-like-bounce" : ""
                         } // Apply animation only when triggered and not liked yet
                     `}
                       />
@@ -471,7 +515,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                         className={`
                         w-4 h-4 text-pink-600 duration-200 transition
                         ${
-                          isAnimating && isLiked ? "animate-like-bounce" : ""
+                          isAnimatingLike && isLiked ? "animate-like-bounce" : ""
                         } // Apply animation only when triggered and already liked
                     `}
                       />
@@ -489,31 +533,62 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [] }) => {
                 <div className="absolute flex right-0.5">
                   {isMyOriginalPost && (
                     <div
-                      className="flex gap-1 items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
-                      onClick={handlePinToggle}
+                      className={`flex gap-1 items-center cursor-pointer group right-0.5 p-2 duration-200 transition rounded-full
+                      ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""}
+                      ${
+                        isTouchDevice && activeButton === "pin"
+                          ? "bg-primary bg-opacity-15"
+                          : ""
+                      }
+                    `}
+                      onClick={handlePinPost}
+                      onTouchStart={() => handleTouchStart("pin")}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchCancel={handleTouchCancel}
                     >
-                      {isPinning ? (
-                        <LoadingSpinner size="xs" />
-                      ) : isPinnedOnThisProfile || isPinned ? (
-                        <BsPinFill className="size-4.5 text-primary" strokeWidth={0.5} />
+                      {isPinnedOnThisProfile || isPinnedForUI ? (
+                        <BsPinFill
+                          className={`size-4.5 text-primary ${
+                            isAnimatingPin ? "animate-pin-down" : ""
+                          }`}
+                          strokeWidth={0.5}
+                        />
                       ) : (
                         <BsPin
                           strokeWidth={0.5}
-                          className="size-4.5 text-slate-500 group-hover:text-primary duration-200 transition"
+                          className={`size-4.5 text-slate-500 group-hover:text-primary duration-200 transition ${
+                            isAnimatingPin ? "animate-pin-down" : ""
+                          }`}
                         />
                       )}
                     </div>
                   )}
                   <div
-                    className="flex  items-center cursor-pointer group right-0.5 p-2 duration-200 transition hover:bg-primary hover:bg-opacity-15 rounded-full"
+                    className={`flex items-center cursor-pointer group right-0.5 p-2 duration-200 transition rounded-full
+                      ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""}
+                      ${
+                        isTouchDevice && activeButton === "bookmark"
+                          ? "bg-primary bg-opacity-15"
+                          : ""
+                      }
+                    `}
                     onClick={handleBookmarkPost}
+                    onTouchStart={() => handleTouchStart("bookmark")}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchCancel}
                   >
-                    {isBookmarking ? (
-                      <LoadingSpinner size="xs" />
-                    ) : isBookmarked ? (
-                      <FaBookmark className="size-4 text-primary" />
+                    {isBookmarked ? (
+                      <FaBookmark
+                        className={`size-4 text-primary ${
+                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                        }`}
+                      />
                     ) : (
-                      <FaRegBookmark className="size-4 text-slate-500 group-hover:text-primary duration-200 transition" /> // Outline if not
+                      <FaRegBookmark
+                        className={`size-4 text-slate-500 group-hover:text-primary duration-200 transition ${
+                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                        }`}
+                      /> // Outline if not
                     )}
                   </div>
                 </div>

@@ -6,7 +6,7 @@ import { useFetchPosts } from "../../../hooks/postsHooks/useFetchPosts";
 const Posts = ({
   feedType,
   username,
-  userId,
+  userId: profileOwnerId,
   onPostsFetched,
   openImageModal,
   pinnedPosts = [],
@@ -21,7 +21,7 @@ const Posts = ({
       case "posts":
         return `/api/posts/user/${username}`;
       case "likes":
-        return `/api/posts/likes/${userId}`;
+        return `/api/posts/likes/${profileOwnerId}`;
       default:
         return "/api/posts/all";
     }
@@ -42,7 +42,6 @@ const Posts = ({
     totalPostsCount,
     totalLikedPostsCount,
   } = useFetchPosts(POST_ENDPOINT);
-
 
   const observer = useRef();
   const lastPostElementRef = useCallback(
@@ -86,7 +85,6 @@ const Posts = ({
     pinnedPosts?.length,
   ]);
 
-
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center">
@@ -124,9 +122,7 @@ const Posts = ({
       {feedType === "posts" && (
         <div>
           {isLoadingPinnedPosts ? (
-            <div className="flex justify-center items-center h-20">
-              Loading Pinned Posts...
-            </div>
+            <div></div>
           ) : (
             pinnedPosts.length > 0 && (
               <div>
@@ -137,6 +133,8 @@ const Posts = ({
                     openImageModal={openImageModal}
                     profilePinnedPosts={pinnedPosts}
                     currentFeedType={feedType}
+                    currentProfileUsername={username}
+                    profileOwnerId={profileOwnerId}
                   />
                 ))}
               </div>
@@ -145,7 +143,6 @@ const Posts = ({
         </div>
       )}
 
-      {/* Render regular posts */}
       {filteredPosts.map((post, index) => {
         const elementRef = filteredPosts.length === index + 1 ? lastPostElementRef : null; // Only apply ref to the last *filtered* post
         return (
@@ -154,6 +151,8 @@ const Posts = ({
               post={post}
               openImageModal={openImageModal}
               profilePinnedPosts={pinnedPosts} // Also pass to regular posts in case they are also pinned
+              currentProfileUsername={username}
+              profileOwnerId={profileOwnerId}
             />
           </div>
         );

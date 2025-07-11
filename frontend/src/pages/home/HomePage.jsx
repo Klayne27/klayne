@@ -3,7 +3,6 @@ import { useState, useRef, useEffect } from "react";
 import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
 // import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
-import { useParams } from "react-router-dom";
 
 const HomePage = ({ openImageModal }) => {
   const [feedType, setFeedType] = useState("forYou");

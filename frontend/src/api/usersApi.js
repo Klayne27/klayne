@@ -28,7 +28,7 @@ export const updateUserProfileApi = async (formData) => {
   return data;
 };
 
-export const fetchUserPofileApi = async (username) => {
+export const fetchUserProfileApi = async (username) => {
   try {
     const res = await fetch(`/api/users/profile/${username}`);
 
@@ -62,7 +62,7 @@ export const fetchUserPofileApi = async (username) => {
       status: 200,
     };
   } catch (error) {
-    console.error("Error in fetchUserPofileApi:", error.message);
+    console.error("Error in fetchUserProfileApi:", error.message);
     throw error;
   }
 };

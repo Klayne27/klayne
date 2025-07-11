@@ -1,229 +1,22 @@
-// import { useMutation, useQueryClient } from "@tanstack/react-query";
-// import { likePostApi } from "../../api/postsApi";
-// import toast from "react-hot-toast";
-// import { useAuthUser } from "../authHooks/useAuthUser"; // Assuming this gives you the current user
-
-// export const useLikePost = () => {
-//   const queryClient = useQueryClient();
-//   const { authUser } = useAuthUser(); // Current authenticated user
-  
-
-//   const { mutate: likePost, isPending: isLiking } = useMutation({
-//     mutationFn: (postId) => likePostApi(postId),
-
-//     onMutate: async (postId) => {
-//       if (!authUser?._id) {
-//         console.warn("No authenticated user ID for optimistic post like update.");
-//         return;
-//       }
-
-//       // 1. Cancel any outgoing refetches for ALL relevant queries
-//       await queryClient.cancelQueries({ queryKey: ["posts"] });
-//       await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
-//       await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] }); // Assuming pinnedPosts is per user
-//       await queryClient.cancelQueries({ queryKey: ["post", postId] });
-
-//       // 2. Store previous data for potential rollback
-//       const previousPostsData = queryClient.getQueryData(["posts"]);
-//       const previousBookmarkedPostsData = queryClient.getQueryData(["bookmarkedPosts"]);
-//       const previousPinnedPostsData = queryClient.getQueryData([
-//         "pinnedPosts",
-//         authUser.username,
-//       ]);
-//       const previousPostDetailData = queryClient.getQueryData(["post", postId]);
-
-//       // --- OPTIMISTIC UPDATE LOGIC ---
-
-//       // A. OPTIMISTIC UPDATE FOR ALL POSTS LIST (e.g., Feed)
-//       queryClient.setQueryData(["posts"], (oldData) => {
-//         if (!oldData || !Array.isArray(oldData.pages)) {
-//           return oldData;
-//         }
-//         const newPages = oldData.pages.map((page) => ({
-//           ...page,
-//           posts: Array.isArray(page.posts)
-//             ? page.posts.map((post) => {
-//                 const targetPost = post.repostedFrom ? post.repostedFrom : post;
-//                 if (targetPost._id === postId) {
-//                   const isAlreadyLiked = targetPost.likes?.includes(authUser._id);
-//                   return {
-//                     ...post,
-//                     repostedFrom: post.repostedFrom
-//                       ? {
-//                           ...targetPost,
-//                           likes: isAlreadyLiked
-//                             ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                             : [...(targetPost.likes || []), authUser._id],
-//                         }
-//                       : {
-//                           ...targetPost,
-//                           likes: isAlreadyLiked
-//                             ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                             : [...(targetPost.likes || []), authUser._id],
-//                         },
-//                   };
-//                 }
-//                 return post;
-//               })
-//             : page.posts,
-//         }));
-//         return { ...oldData, pages: newPages };
-//       });
-
-//       // B. OPTIMISTIC UPDATE FOR BOOKMARKED POSTS LIST
-//       queryClient.setQueryData(["bookmarkedPosts"], (oldData) => {
-//         if (!oldData || !Array.isArray(oldData.pages)) {
-//           return oldData;
-//         }
-//         const newPages = oldData.pages.map((page) => ({
-//           ...page,
-//           posts: Array.isArray(page.posts)
-//             ? page.posts.map((post) => {
-//                 const targetPost = post.repostedFrom ? post.repostedFrom : post;
-//                 if (targetPost._id === postId) {
-//                   const isAlreadyLiked = targetPost.likes?.includes(authUser._id);
-//                   return {
-//                     ...post,
-//                     repostedFrom: post.repostedFrom
-//                       ? {
-//                           ...targetPost,
-//                           likes: isAlreadyLiked
-//                             ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                             : [...(targetPost.likes || []), authUser._id],
-//                         }
-//                       : {
-//                           ...targetPost,
-//                           likes: isAlreadyLiked
-//                             ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                             : [...(targetPost.likes || []), authUser._id],
-//                         },
-//                   };
-//                 }
-//                 return post;
-//               })
-//             : page.posts,
-//         }));
-//         return { ...oldData, pages: newPages };
-//       });
-
-//       // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST
-//       // Pinned posts might not be paginated, it's typically an array of posts
-//       queryClient.setQueryData(["pinnedPosts", authUser.username], (oldData) => {
-//         if (!oldData || !Array.isArray(oldData)) {
-//           // Assuming pinnedPosts is a direct array of posts
-//           return oldData;
-//         }
-//         return oldData.map((post) => {
-//           const targetPost = post.repostedFrom ? post.repostedFrom : post;
-//           if (targetPost._id === postId) {
-//             const isAlreadyLiked = targetPost.likes?.includes(authUser._id);
-//             return {
-//               ...post,
-//               repostedFrom: post.repostedFrom
-//                 ? {
-//                     ...targetPost,
-//                     likes: isAlreadyLiked
-//                       ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                       : [...(targetPost.likes || []), authUser._id],
-//                   }
-//                 : {
-//                     ...targetPost,
-//                     likes: isAlreadyLiked
-//                       ? (targetPost.likes || []).filter((id) => id !== authUser._id)
-//                       : [...(targetPost.likes || []), authUser._id],
-//                   },
-//             };
-//           }
-//           return post;
-//         });
-//       });
-
-//       // D. OPTIMISTIC UPDATE FOR SINGLE POST DETAIL PAGE
-//       queryClient.setQueryData(["post", postId], (oldData) => {
-//         if (
-//           !oldData ||
-//           typeof oldData !== "object" ||
-//           Object.keys(oldData).length === 0
-//         ) {
-//           return oldData;
-//         }
-//         const targetForLikeUpdate = oldData.repostedFrom || oldData;
-//         const isLiked = targetForLikeUpdate.likes?.includes(authUser._id);
-
-//         const newLikes = isLiked
-//           ? (targetForLikeUpdate.likes || []).filter((id) => id !== authUser._id)
-//           : [...(targetForLikeUpdate.likes || []), authUser._id];
-
-//         const updatedData = oldData.repostedFrom
-//           ? { ...oldData, repostedFrom: { ...targetForLikeUpdate, likes: newLikes } }
-//           : { ...oldData, likes: newLikes };
-//         return updatedData;
-//       });
-
-//       // Return the snapshot to the onError callback for rollback
-//       return {
-//         previousPostsData,
-//         previousBookmarkedPostsData,
-//         previousPinnedPostsData,
-//         previousPostDetailData,
-//       };
-//     },
-
-//     onSuccess: (data, postId) => {
-//       // Invalidate queries to refetch fresh data, ensuring consistency
-//       queryClient.invalidateQueries({ queryKey: ["posts"] });
-//       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-//       queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] }); // Invalidate all pinned posts for simplicity or by user ID
-//       queryClient.invalidateQueries({ queryKey: ["post", postId] });
-//     },
-
-//     onError: (error, postId, context) => {
-//       toast.error(error.message || "Failed to like/unlike post.");
-//       // Rollback optimistic updates if the mutation fails
-//       if (context?.previousPostsData) {
-//         queryClient.setQueryData(["posts"], context.previousPostsData);
-//       }
-//       if (context?.previousBookmarkedPostsData) {
-//         queryClient.setQueryData(
-//           ["bookmarkedPosts"],
-//           context.previousBookmarkedPostsData
-//         );
-//       }
-//       if (context?.previousPinnedPostsData) {
-//         // Need to retrieve username to restore the exact query key
-//         // If authUser is available in onError scope, use authUser.username
-//         if (authUser?.username) {
-//           queryClient.setQueryData(
-//             ["pinnedPosts", authUser.username],
-//             context.previousPinnedPostsData
-//           );
-//         } else {
-//           // Fallback: if username not available, just invalidate to refetch
-//           queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
-//         }
-//       }
-//       if (context?.previousPostDetailData) {
-//         queryClient.setQueryData(["post", postId], context.previousPostDetailData);
-//       }
-//     },
-//   });
-
-//   return { likePost, isLiking };
-// };
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { likePostApi } from "../../api/postsApi";
+import { likePostApi } from "../../api/postsApi"; // Assuming this path is correct
 import toast from "react-hot-toast";
-import { useAuthUser } from "../authHooks/useAuthUser";
-import { useParams } from "react-router-dom"; // Import useParams to get username/userId from URL
-import { useFetchUserProfile } from "../usersHooks/useFetchUserProfile";
+import { useAuthUser } from "../authHooks/useAuthUser"; // Assuming this path is correct
 
-export const useLikePost = () => {
+// IMPORTANT: Remove the following lines if they are present:
+// import { useParams } from "react-router-dom";
+// import { useFetchUserProfile } from "../usersHooks/useFetchUserProfile";
+
+// Modify the hook to accept an optional argument
+export const useLikePost = (username = null) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
-  const { username } = useParams(); // Get username and potentially userId from URL params
 
-  const { user } = useFetchUserProfile(username)
+  // REMOVE any lines related to useParams() or useFetchUserProfile() from here:
+  // For example, if you had:
+  // const { username } = useParams();
+  // const { user } = useFetchUserProfile(username);
+  // DELETE THOSE LINES. They are replaced by `currentProfileUsername`.
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: (postId) => likePostApi(postId),
@@ -234,32 +27,35 @@ export const useLikePost = () => {
         return;
       }
 
-      // Dynamically determine all potential query keys where this post might exist.
-      // This is crucial for comprehensive optimistic updates.
+      // 1. Adjust dynamicUserPostsKey to use `currentProfileUsername`
       const dynamicUserPostsKey = username
         ? ["posts", `/api/posts/user/${username}`]
         : null;
-      const dynamicUserLikesKey = user?._id
-        ? ["posts", `/api/posts/likes/${user?._id}`]
+
+      // 2. Adjust dynamicUserLikesKey to always use `authUser._id`
+      // This key is for the current authenticated user's "liked posts" feed, not the profile being viewed.
+      const dynamicUserLikesKey = authUser?._id
+        ? ["posts", `/api/posts/likes/${authUser._id}`]
         : null;
 
       const queryKeysToUpdate = [
         ["posts", "/api/posts/all"],
         ["posts", "/api/posts/following"],
-        ["bookmarkedPosts"], // This key is fine as it is
+        ["bookmarkedPosts"],
 
         // Add the dynamic profile page keys if they are currently active or might contain the post
         ...(dynamicUserPostsKey ? [dynamicUserPostsKey] : []),
-        ...(dynamicUserLikesKey ? [dynamicUserLikesKey] : []),
-      ].filter(Boolean); // Filter out any null entries
+        ...(dynamicUserLikesKey ? [dynamicUserLikesKey] : []), // This will be ["posts", "/api/posts/likes/undefined"] if authUser._id is missing, but should be fine since useAuthUser should ensure it
+      ].filter(Boolean);
 
       // Cancel all relevant queries
       await Promise.all(
         queryKeysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key }))
       );
-      // Note: "pinnedPosts" query key is ["pinnedPosts", authUser.username]
-      await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
-      // Note: Single post query key is ["post", postId]
+      // Ensure authUser.username is valid before cancelling this specific query
+      if (authUser?.username) {
+        await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
+      }
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
 
       // 2. Store previous data for potential rollback for ALL potentially affected queries
@@ -275,18 +71,23 @@ export const useLikePost = () => {
       previousDataSnapshots["bookmarkedPosts"] = queryClient.getQueryData([
         "bookmarkedPosts",
       ]);
-      previousDataSnapshots["pinnedPosts"] = queryClient.getQueryData([
-        "pinnedPosts",
-        authUser.username,
-      ]);
+      // Ensure authUser.username is valid before getting this query data
+      if (authUser?.username) {
+        previousDataSnapshots["pinnedPosts"] = queryClient.getQueryData([
+          "pinnedPosts",
+          authUser.username,
+        ]);
+      }
       previousDataSnapshots["postDetail"] = queryClient.getQueryData(["post", postId]);
 
       // Add dynamic profile page query data to snapshots
       if (dynamicUserPostsKey) {
+        // This condition implicitly checks if currentProfileUsername exists
         previousDataSnapshots["posts_user"] =
           queryClient.getQueryData(dynamicUserPostsKey);
       }
       if (dynamicUserLikesKey) {
+        // This condition implicitly checks if authUser._id exists
         previousDataSnapshots["posts_likes"] =
           queryClient.getQueryData(dynamicUserLikesKey);
       }
@@ -412,13 +213,19 @@ export const useLikePost = () => {
       // B. OPTIMISTIC UPDATE FOR BOOKMARKED POSTS LIST
       queryClient.setQueryData(["bookmarkedPosts"], updatePaginatedList);
 
-      // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST (Still assuming this is a single array of posts)
-      queryClient.setQueryData(["pinnedPosts", authUser.username], updateSinglePostArray);
+      // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST
+      if (authUser?.username) {
+        // Only update if authUser.username is available
+        queryClient.setQueryData(
+          ["pinnedPosts", authUser.username],
+          updateSinglePostArray
+        );
+      }
 
       // D. OPTIMISTIC UPDATE FOR SINGLE POST DETAIL PAGE
       queryClient.setQueryData(["post", postId], updateSinglePostObject);
 
-      // NEW: E. OPTIMISTIC UPDATE FOR USER PROFILE FEEDS
+      // E. OPTIMISTIC UPDATE FOR USER PROFILE FEEDS
       if (dynamicUserPostsKey) {
         queryClient.setQueryData(dynamicUserPostsKey, updatePaginatedList);
       }
@@ -433,11 +240,12 @@ export const useLikePost = () => {
       // Invalidate all general "posts" keys (will include user profile specific feeds)
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-      // No need to invalidate pinnedPosts here, as its content itself doesn't change on a like,
-      // only its internal post's like count, which was handled optimistically.
-      // queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] }); // REMOVED
-
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      // No need to invalidate pinnedPosts here explicitly, as it's part of general 'posts' invalidation or its data object is updated optimistically.
+      // If `pinnedPosts` query is scoped by username, ensure `authUser.username` is used for invalidation if needed:
+      // if (authUser?.username) {
+      //   queryClient.invalidateQueries({ queryKey: ["pinnedPosts", authUser.username] });
+      // }
     },
 
     onError: (error, postId, context) => {
@@ -457,30 +265,32 @@ export const useLikePost = () => {
           context.previousDataSnapshots["bookmarkedPosts"]
         );
 
-        // Rollback dynamic profile page query data
-        if (context.previousDataSnapshots["posts_user"]) {
+        // Rollback dynamic profile page query data using `currentProfileUsername`
+        if (context.previousDataSnapshots["posts_user"] && username) {
           queryClient.setQueryData(
             ["posts", `/api/posts/user/${username}`],
             context.previousDataSnapshots["posts_user"]
           );
         }
-        if (context.previousDataSnapshots["posts_likes"]) {
+        // Rollback dynamic likes key using `authUser._id`
+        if (context.previousDataSnapshots["posts_likes"] && authUser?._id) {
           queryClient.setQueryData(
-            ["posts", `/api/posts/likes/${user?._id}`],
+            ["posts", `/api/posts/likes/${authUser._id}`],
             context.previousDataSnapshots["posts_likes"]
           );
         }
 
         // Rollback pinned posts
-        if (authUser?.username) {
+        if (authUser?.username && context.previousDataSnapshots["pinnedPosts"]) {
           queryClient.setQueryData(
             ["pinnedPosts", authUser.username],
             context.previousDataSnapshots["pinnedPosts"]
           );
-        } else {
-          // If authUser.username is not available for some reason, invalidate as a fallback
-          queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
+        } else if (authUser?.username) {
+          // Fallback if snapshot wasn't taken (e.g., if authUser.username was missing during mutate)
+          queryClient.invalidateQueries({ queryKey: ["pinnedPosts", authUser.username] });
         }
+
         // Rollback single post detail page
         queryClient.setQueryData(
           ["post", postId],

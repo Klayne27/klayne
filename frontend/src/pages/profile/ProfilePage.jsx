@@ -31,7 +31,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
-
+  
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
