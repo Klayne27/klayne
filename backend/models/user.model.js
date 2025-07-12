@@ -39,7 +39,6 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    // --- START: NEW FIELDS FOR BLOCKING ---
     blockedUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -48,20 +47,16 @@ const userSchema = new mongoose.Schema(
       },
     ],
     blockedBy: [
-      // Users who have blocked this user
       {
         type: mongoose.Schema.Types.ObjectId,
         ref: "User",
         default: [],
       },
     ],
-    // --- START: NEW FIELD FOR FORCED THEME ---
     forceBlackTheme: {
       type: Boolean,
-      default: false, // Default to false for all users
+      default: false,
     },
-    // --- END: NEW FIELD FOR FORCED THEME ---
-
     profileImg: {
       type: String,
       default: "",

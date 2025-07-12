@@ -125,28 +125,28 @@ const ChatWindow = ({
     scrollToBottom,
   ]);
 
-  useEffect(() => {
-    if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
-      const id = setTimeout(() => {
-        scrollToBottom();
-        shouldScrollToBottomRef.current = false;
-      }, 0);
-      return () => clearTimeout(id);
-    }
-  }, [messages.length, isLoading, scrollToBottom]);
+  // useEffect(() => {
+  //   if (!isLoading && shouldScrollToBottomRef.current && messages.length > 0) {
+  //     const id = setTimeout(() => {
+  //       scrollToBottom();
+  //       shouldScrollToBottomRef.current = false;
+  //     }, 0);
+  //     return () => clearTimeout(id);
+  //   }
+  // }, [messages.length, isLoading, scrollToBottom]);
 
-  useEffect(() => {
-    if (shouldOptimisticScroll) {
-      scrollToBottom();
-      setShouldOptimisticScroll(false);
-    }
-  }, [shouldOptimisticScroll, scrollToBottom]);
+  // useEffect(() => {
+  //   if (shouldOptimisticScroll) {
+  //     scrollToBottom();
+  //     setShouldOptimisticScroll(false);
+  //   }
+  // }, [shouldOptimisticScroll, scrollToBottom]);
 
-  useEffect(() => {
-    if (actualConversationId) {
-      shouldScrollToBottomRef.current = true;
-    }
-  }, [actualConversationId]);
+  // useEffect(() => {
+  //   if (actualConversationId) {
+  //     shouldScrollToBottomRef.current = true;
+  //   }
+  // }, [actualConversationId]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -217,16 +217,10 @@ const ChatWindow = ({
       socket.emit("userActiveInChat", { conversationId: actualConversationId });
     }
 
-    // Mark messages as seen when the conversation becomes active
-    // and there's a current user. We can use a ref or state to track
-    // if this "seen" event has been sent for the *current* conversation session.
-    // Or, as you already have in handleNewMessage, mark as seen when a new message arrives.
-    if (socket && actualConversationId && currentUser?._id) {
-      // Emit markMessagesAsSeen when the chat window loads/changes to a new conversation
-      // and there are messages that might need to be marked seen.
-      // This is a more robust initial trigger than relying on `messages` array changes.
-      socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
-    }
+    // if (socket && actualConversationId && currentUser?._id) {
+
+    //   socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
+    // }
 
     return () => {
       // Clean up active conversation ID and user active status when leaving chat
@@ -305,7 +299,7 @@ const ChatWindow = ({
               isAtBottom ||
               newMessage.sender._id.toString() === currentUser._id.toString()
             ) {
-              scrollToBottom();
+              // scrollToBottom();
               setShowNewMessageButton(false);
             } else {
               if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
@@ -326,6 +320,7 @@ const ChatWindow = ({
 
           const newConversations = oldConversations.map((conv) => {
             if (conv._id === newMessage.conversationId) {
+              console.log(newMessage);
               const newSeenStatus =
                 newMessage.sender._id.toString() !== currentUser._id.toString()
                   ? false
@@ -385,53 +380,40 @@ const ChatWindow = ({
           );
         });
 
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        queryClient.invalidateQueries({
-          queryKey: ["conversations", newMessage.conversationId],
-        });
+        // queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        // queryClient.invalidateQueries({
+        //   queryKey: ["conversations", newMessage.conversationId],
+        // });
       };
 
-      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        // Only update the messages in the current active chat window if it's the one that was seen
-        if (seenConversationId.toString() === actualConversationId?.toString()) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-            if (!oldData) return oldData;
+      // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+      //   // Only update the messages in the current active chat window if it's the one that was seen
+      //   if (seenConversationId.toString() === actualConversationId?.toString()) {
+      //     queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+      //       if (!oldData) return oldData;
 
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) =>
-                // Mark messages as seen only if they were sent by the *current user*
-                // and are currently not seen.
-                msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
-                  ? { ...msg, seen: true }
-                  : msg
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          });
+      //       const updatedPages = oldData.pages.map((page) =>
+      //         page.map((msg) =>
+      //           // Mark messages as seen only if they were sent by the *current user*
+      //           // and are currently not seen.
+      //           msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
+      //             ? { ...msg, seen: true }
+      //             : msg
+      //         )
+      //       );
+      //       return { ...oldData, pages: updatedPages };
+      //     });
+      //   }
 
-          // *** AVOID UNNECESSARY INVALIDATION HERE FOR THE MESSAGES QUERY ***
-          // If the user is currently looking at this conversation, `setQueryData`
-          // has already updated the UI. An invalidate might cause a flicker
-          // if a background refetch pulls slightly older data before the server
-          // fully propagates the seen status or if there's a network delay.
-          // If you still want to refetch for ultimate consistency, consider a small delay
-          // or refetchType: 'active' (though 'none' is already there).
-          // For seen status, direct cache update is usually enough.
-          // queryClient.invalidateQueries({
-          //   queryKey: ["messages", actualConversationId],
-          //   refetchType: "none", // No immediate refetch on invalidation
-          // });
-        }
-
-        queryClient.invalidateQueries({
-          queryKey: ["conversations", seenConversationId],
-          refetchType: "active", // Refetch if 'conversations/[id]' query is active
-        });
-        queryClient.invalidateQueries({
-          queryKey: ["conversations"],
-          refetchType: "active", // Refetch if 'conversations' query is active (e.g. conversation list)
-        });
-      };
+      //   // queryClient.invalidateQueries({
+      //   //   queryKey: ["conversations", seenConversationId],
+      //   //   refetchType: "active", // Refetch if 'conversations/[id]' query is active
+      //   // });
+      //   // queryClient.invalidateQueries({
+      //   //   queryKey: ["conversations"],
+      //   //   refetchType: "active", // Refetch if 'conversations' query is active (e.g. conversation list)
+      //   // });
+      // };
 
       const handleMessageDeleted = ({
         messageId,
@@ -470,14 +452,14 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
-      socket.on("messagesSeen", handleMessagesSeen);
+      // socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
-        socket.off("messagesSeen", handleMessagesSeen);
+        // socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
       };
@@ -488,6 +470,9 @@ const ChatWindow = ({
     queryClient,
     otherUser?._id,
     currentUser._id,
+    currentUser.username,
+    currentUser.profileImg,
+    currentUser.fullName,
     selectedConversation,
     currentOptimisticIdRef,
     scrollToBottom,

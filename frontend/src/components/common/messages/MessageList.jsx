@@ -35,13 +35,7 @@ const MessageList = forwardRef(function MessageList(
   const { mutate: reactToMessage } = useReactToMessage();
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); // Keep this state
-
-  // Removed long press refs and duration - they are not needed for simple tap
-  // const longPressTimerRef = useRef(null);
-  // const touchStartXRef = useRef(0);
-  // const touchStartYRef = useRef(0);
-  // const LONG_PRESS_DURATION = 500;
+  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); 
 
   const mouseLeaveTimeoutRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
@@ -153,10 +147,6 @@ const MessageList = forwardRef(function MessageList(
         const messageModalElement = document.getElementById(
           `message-modal-${activeMessageModalId}`
         );
-
-        // If the click target is NOT within the message item container AND NOT within the modal element, then close it.
-        // This is key: if e.target is a button *inside* messageModalElement, messageModalElement.contains(e.target) will be true,
-        // and the modal will NOT close.
         if (
           messageItemContainer &&
           !messageItemContainer.contains(e.target) &&
@@ -191,7 +181,7 @@ const MessageList = forwardRef(function MessageList(
   return (
     <div
       ref={ref}
-      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 custom-scrollbar pt-20"
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20"
     >
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full">
