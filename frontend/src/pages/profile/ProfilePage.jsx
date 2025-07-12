@@ -22,6 +22,7 @@ import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser"
 import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
 import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
+import FollowButton from "../../components/common/FollowButton";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -31,7 +32,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
-  
+  const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false); // NEW state for hover
+
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
 
@@ -53,7 +55,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     hasBlockedYou,
     httpStatus,
   } = useFetchUserProfile(username);
-
 
   // NEW: Fetch pinned posts separately
   const {
@@ -301,7 +302,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black/0 md:text-md text-xs"
+                  className="px-1 border rounded-full hover:bg-secondary border-accent transition duration-200 z-20"
                   disabled={isBlockingRelationship}
                 >
                   <CiMail size={20} strokeWidth={1} />
@@ -318,20 +319,9 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 </button>
               )}
 
+              {/* Follow/Unfollow Button - FIXED WIDTH */}
               {!isMyProfile && !isBlockingRelationship && (
-                <button
-                  className={`${
-                    !amIFollowing
-                      ? "bg-white text-black hover:bg-gray-400 duration-200 transition border"
-                      : "hover:bg-secondary"
-                  } font-bold border px-2 md:px-4 rounded-full py-1.5 transition duration-200  md:text-base text-xs`}
-                  onClick={() => follow(user?._id)}
-                  disabled={isPending || isBlockingRelationship}
-                >
-                  {isPending && "Loading..."}
-                  {!isPending && amIFollowing && "Unfollow"}
-                  {!isPending && !amIFollowing && "Follow"}
-                </button>
+                <FollowButton user={user} isFollowing={amIFollowing} currentUserId={authUser?._id} />
               )}
 
               {(coverImg || profileImg) && (

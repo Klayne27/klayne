@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import useFollow from "../../hooks/usersHooks/useFollow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import FollowButton from "./FollowButton";
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();
@@ -28,25 +29,11 @@ const UserListItem = ({ user: listUser }) => {
       </Link>
 
       {!isMyProfile && (
-        <button
-          className={` text-sm ${
-            !amIFollowing
-              ? "bg-white text-black hover:bg-gray-400 duration-200 transition"
-              : "hover:bg-secondary"
-          } font-semibold px-3.5 py-1  duration-200 transition rounded-full border border-accent`}
-          onClick={() => follow(listUser?._id)}
-          disabled={isPending}
-        >
-          {isPending ? (
-            <span
-              className={`flex items-center justify-center loading loading-spinner loading-md`}
-            />
-          ) : amIFollowing ? (
-            "Unfollow"
-          ) : (
-            "Follow"
-          )}
-        </button>
+        <FollowButton
+          user={listUser}
+          currentUserId={authUser?._id}
+          isFollowing={amIFollowing}
+        />
       )}
     </div>
   );

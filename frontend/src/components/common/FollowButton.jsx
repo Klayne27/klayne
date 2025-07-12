@@ -1,0 +1,75 @@
+// src/components/FollowButton.jsx
+import React, { useState, useEffect } from "react";
+import LoadingSpinner from "./LoadingSpinner"; // Adjust path as needed
+import useFollow from "../../hooks/usersHooks/useFollow";
+
+const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) => {
+  const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const { follow, isPending } = useFollow();
+
+  // Use a local state for `isFollowing` to allow immediate UI update
+  // while `useFollow` hook potentially updates `currentUser` context
+  const [isCurrentlyFollowing, setIsCurrentlyFollowing] = useState(initialIsFollowing);
+
+  useEffect(() => {
+    setIsCurrentlyFollowing(initialIsFollowing);
+  }, [initialIsFollowing]);
+
+  // Effect to detect touch devices (same as before)
+  useEffect(() => {
+    const checkTouch = () => {
+      return (
+        "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+      );
+    };
+    setIsTouchDevice(checkTouch());
+  }, []);
+
+  const handleFollowClick = (e) => {
+    e.preventDefault(); // Prevent default link behavior
+    follow(user._id);
+    // Optimistic UI update: Toggle `isCurrentlyFollowing` immediately
+    setIsCurrentlyFollowing((prev) => !prev);
+  };
+
+  return (
+    <button
+      className={`
+        flex items-center justify-center font-semibold text-sm rounded-full px-3 py-1 transition duration-200
+        md:min-w-[90px] md:text-center border
+        ${
+          // Initial state for "Follow" button
+          !isCurrentlyFollowing
+            ? "bg-white text-black md:hover:bg-gray-400"
+            : // Initial state for "Following" button
+              "bg-black/0 text-white border border-accent" // Added a subtle border for consistency
+        }
+        ${
+          // Apply red styles ONLY if following, hovering AND NOT a touch device
+          isCurrentlyFollowing && isHoveringUnfollow && !isTouchDevice
+            ? "bg-red-700/20 border-red-600 text-red-600"
+            : ""
+        }
+      `}
+      onClick={handleFollowClick}
+      onMouseEnter={!isTouchDevice ? () => setIsHoveringUnfollow(true) : undefined}
+      onMouseLeave={!isTouchDevice ? () => setIsHoveringUnfollow(false) : undefined}
+      disabled={isPending} // Disable button during pending follow/unfollow action
+    >
+      {isCurrentlyFollowing ? (
+        isHoveringUnfollow && !isTouchDevice ? (
+          "Unfollow"
+        ) : (
+          "Following"
+        )
+      ) : (
+        "Follow"
+      )}
+    </button>
+  );
+};
+
+export default FollowButton;

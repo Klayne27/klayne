@@ -6,6 +6,7 @@ import LoadingSpinner from "./LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { BiRefresh } from "react-icons/bi";
 import React from "react";
+import FollowButton from "./FollowButton";
 
 const SuggestedUsersPanel = () => {
 
@@ -63,25 +64,7 @@ const SuggestedUsersPanel = () => {
                   </div>
                 </div>
                 <div>
-                  <button
-                    className={`flex items-center font-semibold text-sm ${
-                      isFollowing
-                        ? "bg-black/0 text-white border hover:bg-stone-900"
-                        : "bg-white text-black hover:bg-gray-400"
-                    } duration-200 transition rounded-full px-3 py-1`}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      follow(user._id);
-                    }}
-                  >
-                    {isPending ? (
-                      <LoadingSpinner size="sm" />
-                    ) : isFollowing ? (
-                      "Unfollow"
-                    ) : (
-                      "Follow"
-                    )}
-                  </button>
+                    <FollowButton user={user} currentUserId={currentUser?._id} isFollowing={isFollowing} />
                 </div>
               </Link>
             );
