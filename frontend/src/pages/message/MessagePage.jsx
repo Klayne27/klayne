@@ -9,6 +9,7 @@ import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConver
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "../../context/SocketContext";
 
 const MessagePage = ({
   openImageModal,
@@ -19,6 +20,7 @@ const MessagePage = ({
   const location = useLocation();
   const { conversationId: urlConversationId } = useParams();
   const navigate = useNavigate();
+  const { socket } = useSocket();
 
   const { targetUserId } = location.state || {};
 
@@ -33,8 +35,7 @@ const MessagePage = ({
 
   const [selectedConversation, setSelectedConversation] = useState(null);
   const initialLoadAttempted = useRef(false);
-    const queryClient = useQueryClient();
-
+  const queryClient = useQueryClient();
 
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
@@ -152,7 +153,7 @@ const MessagePage = ({
 
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
-      // queryClient.invalidateQueries(["conversations", conversation._id])
+    // queryClient.invalidateQueries(["conversations", conversation._id])
 
     // Update URL when a conversation is selected, but only for existing conversations
     // New chats (`isNewChat`) don't have a server-assigned ID yet.
@@ -171,6 +172,104 @@ const MessagePage = ({
       navigate("/messages");
     }
   };
+
+  // In MessagePage
+  useEffect(() => {
+    if (!socket || !currentUser) return; // Ensure socket and currentUser are available
+
+    const handleNewMessage = (newMessage) => {
+      // ... (existing logic for updating messages cache, if it's still here)
+
+      // Update conversations cache
+      queryClient.setQueryData(["conversations"], (oldConversations) => {
+        if (!oldConversations) return oldConversations;
+
+        let updatedConversations = oldConversations.map((conv) => {
+          if (conv._id === newMessage.conversationId) {
+            const newSeenStatus =
+              newMessage.sender._id.toString() !== currentUser._id.toString()
+                ? false
+                : newMessage.seen;
+            return {
+              ...conv,
+              lastMessage: {
+                _id: newMessage._id,
+                text: newMessage.text,
+                sender: newMessage.sender._id,
+                seen: newSeenStatus,
+                img: newMessage.img,
+              },
+              updatedAt: newMessage.createdAt,
+            };
+          }
+          return conv;
+        });
+
+        const isExistingConversation = updatedConversations.some(
+          (c) => c._id === newMessage.conversationId
+        );
+
+        if (!isExistingConversation && newMessage.conversationId) {
+          let otherParticipant = null;
+
+          // Safely access selectedConversation.participants
+          if (
+            newMessage.sender._id.toString() === currentUser._id.toString() &&
+            selectedConversation &&
+            selectedConversation.participants
+          ) {
+            otherParticipant = selectedConversation.participants.find(
+              (p) => p?._id?.toString() !== currentUser._id.toString()
+            );
+          } else {
+            // If current user is not sender, or selectedConversation is not available,
+            // the other participant is the sender of the new message.
+            otherParticipant = newMessage.sender;
+          }
+
+          if (otherParticipant) {
+            const newConvEntry = {
+              _id: newMessage.conversationId,
+              participants: [
+                otherParticipant,
+                {
+                  _id: currentUser._id,
+                  username: currentUser.username,
+                  fullName: currentUser.fullName,
+                  profileImg: currentUser.profileImg,
+                },
+              ],
+              lastMessage: {
+                _id: newMessage._id,
+                text: newMessage.text,
+                sender: newMessage.sender._id,
+                seen: false,
+                img: newMessage.img,
+              },
+              updatedAt: newMessage.createdAt,
+            };
+            updatedConversations = [newConvEntry, ...updatedConversations];
+          }
+        }
+
+        return updatedConversations.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+      });
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [
+    socket,
+    queryClient,
+    currentUser, // Keep currentUser as a whole object.
+    selectedConversation, // selectedConversation should be in dependencies,
+    // but its properties accessed conditionally inside.
+  ]);
 
   const handleBackToConversations = () => {
     setSelectedConversation(null);

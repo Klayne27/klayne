@@ -87,8 +87,6 @@ const ChatWindow = ({
   const shouldScrollOnFirstFullLoad = useRef(true);
   const prevActualConversationIdRef = useRef(actualConversationId);
 
-
-
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;
@@ -317,71 +315,71 @@ const ChatWindow = ({
           }
         }
 
-        // Update conversations cache (this is already good and important for sidebar)
-        queryClient.setQueryData(["conversations"], (oldConversations) => {
-          if (!oldConversations) return oldConversations;
+        // // Update conversations cache (this is already good and important for sidebar
+        // queryClient.setQueryData(["conversations"], (oldConversations) => {
+        //   if (!oldConversations) return oldConversations;
 
-          const newConversations = oldConversations.map((conv) => {
-            if (conv._id === newMessage.conversationId) {
-              console.log(newMessage);
-              const newSeenStatus =
-                newMessage.sender._id.toString() !== currentUser._id.toString()
-                  ? false
-                  : newMessage.seen;
-              return {
-                ...conv,
-                lastMessage: {
-                  _id: newMessage._id,
-                  text: newMessage.text,
-                  sender: newMessage.sender._id,
-                  seen: newSeenStatus,
-                  img: newMessage.img,
-                },
-                updatedAt: newMessage.createdAt,
-              };
-            }
-            return conv;
-          });
+        //   const newConversations = oldConversations.map((conv) => {
+        //     if (conv._id === newMessage.conversationId) {
+        //       const newSeenStatus =
+        //         newMessage.sender._id.toString() !== currentUser._id.toString()
+        //           ? false
+        //           : newMessage.seen;
+        //       return {
+        //         ...conv,
+        //         lastMessage: {
+        //           _id: newMessage._id,
+        //           text: newMessage.text,
+        //           sender: newMessage.sender._id,
+        //           seen: newSeenStatus,
+        //           img: newMessage.img,
+        //         },
+        //         updatedAt: newMessage.createdAt,
+        //       };
+        //     }
+        //     return conv;
+        //   });
 
-          if (
-            !newConversations.some((c) => c._id === newMessage.conversationId) &&
-            newMessage.conversationId
-          ) {
-            const otherParticipant =
-              newMessage.sender._id.toString() === currentUser._id.toString()
-                ? selectedConversation.participants.find(
-                    (p) => p._id.toString() !== currentUser._id.toString()
-                  )
-                : newMessage.sender;
+        //   if (
+        //     !newConversations.some((c) => c._id === newMessage.conversationId) &&
+        //     newMessage.conversationId
+        //   ) {
+        //     const otherParticipant =
+        //       newMessage.sender._id.toString() === currentUser._id.toString()
+        //         ? selectedConversation.participants.find(
+        //             (p) => p._id.toString() !== currentUser._id.toString()
+        //           )
+        //         : newMessage.sender;
 
-            if (otherParticipant) {
-              const newConvEntry = {
-                _id: newMessage.conversationId,
-                participants: [
-                  otherParticipant,
-                  {
-                    _id: currentUser._id,
-                    username: currentUser.username,
-                    fullName: currentUser.fullName,
-                    profileImg: currentUser.profileImg,
-                  },
-                ],
-                lastMessage: {
-                  _id: newMessage._id,
-                  text: newMessage.text,
-                  sender: newMessage.sender._id,
-                  seen: false,
-                  img: newMessage.img,
-                },
-                updatedAt: newMessage.createdAt,
-              };
-              return [newConvEntry, ...newConversations];
-            }
-          }
-          return [...newConversations].sort(
-            (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-          );
-        });
+        //     if (otherParticipant) {
+        //       const newConvEntry = {
+        //         _id: newMessage.conversationId,
+        //         participants: [
+        //           otherParticipant,
+        //           {
+        //             _id: currentUser._id,
+        //             username: currentUser.username,
+        //             fullName: currentUser.fullName,
+        //             profileImg: currentUser.profileImg,
+        //           },
+        //         ],
+        //         lastMessage: {
+        //           _id: newMessage._id,
+        //           text: newMessage.text,
+        //           sender: newMessage.sender._id,
+        //           seen: false,
+        //           img: newMessage.img,
+        //         },
+        //         updatedAt: newMessage.createdAt,
+        //       };
+        //       return [newConvEntry, ...newConversations];
+        //     }
+        //   }
+
+        //   return [...newConversations].sort(
+        //     (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        //   );
+        // });
 
         // queryClient.invalidateQueries({ queryKey: ["conversations"] });
         // queryClient.invalidateQueries({
