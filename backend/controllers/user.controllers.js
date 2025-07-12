@@ -19,63 +19,6 @@ const getBlockingUsers = async (userId) => {
   };
 };
 
-// export const getUserProfile = async (req, res) => {
-//   const { username } = req.params;
-//   const currentUserId = req.user?._id;
-
-//   try {
-//     const user = await User.findOne({ username }).select("-password");
-
-//     if (!user) {
-//       return res.status(404).json({ error: "User not found" });
-//     }
-
-//     // --- START: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
-//     let isBlockedByYou = false;
-//     let hasBlockedYou = false;
-
-//     if (currentUserId && currentUserId.toString() !== user._id.toString()) {
-//       const currentUser = await User.findById(currentUserId).select(
-//         "blockedUsers blockedBy"
-//       );
-//       if (currentUser) {
-//         // Check if current user has blocked the viewed user
-//         isBlockedByYou = currentUser.blockedUsers.includes(user._id);
-//         // Check if the viewed user has blocked the current user
-//         hasBlockedYou = currentUser.blockedBy.includes(user._id);
-//       }
-//     }
-
-//     // If the current user is blocked by the target user, or vice versa,
-//     // we should signify this. For "Transparency", if `user` (the profile being viewed)
-//     // has blocked `currentUserId`, we need to return this information.
-//     // The frontend will then display the "You are blocked" message.
-//     if (hasBlockedYou) {
-//       return res.status(403).json({
-//         error: "You are blocked by this user.",
-//         isBlockedByYou: false, // You haven't blocked them
-//         hasBlockedYou: true, // They have blocked you
-//         username: user.username, // Provide minimal info for transparency
-//         fullName: user.fullName, // Provide minimal info for transparency
-//         profileImg: user.profileImg, // For displaying the profile itself, but no content
-//       });
-//     }
-//     // If current user blocked the other user, we can include this in the profile data
-//     // to inform the frontend (e.g., to disable follow/message buttons).
-//     const profileData = {
-//       ...user.toObject(), // Convert mongoose document to plain object
-//       isBlockedByYou: isBlockedByYou, // True if YOU blocked THEM
-//       hasBlockedYou: hasBlockedYou, // True if THEY blocked YOU
-//     };
-
-//     res.status(200).json(profileData);
-//     // --- END: CHECK BLOCKING STATUS FOR PROFILE VIEW ---
-//   } catch (error) {
-//     console.log("Error in getUserProfile: ", error.message);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
-
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
   const currentUserId = req.user?._id; // The authenticated user's ID

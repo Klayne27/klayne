@@ -65,7 +65,6 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   );
 };
 
-
 export const createPost = async (req, res) => {
   try {
     const { text, pollOptions } = req.body;
@@ -1101,7 +1100,6 @@ export const pinUnpinPost = async (req, res) => {
   }
 };
 
-// Add this new function to your user controller or a new post controller
 export const getPinnedPosts = async (req, res) => {
   const { username } = req.params;
   const currentUserId = req.user?._id; // Get the ID of the authenticated user viewing the profile

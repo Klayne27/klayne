@@ -36,60 +36,6 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
-// export const getNotifications = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-
-//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-//     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
-
-//     const notifications = await Notification.find({ to: userId })
-//       .sort({ createdAt: -1 })
-//       .populate({
-//         path: "from",
-//         select: "username fullName profileImg isVerified",
-//       })
-//       .populate({
-//         path: "postId",
-//         select: "text img user",
-//         populate: {
-//           path: "user",
-//           select: "username",
-//         },
-//       })
-//       // .populate({
-//       //   path: "commentId", // If you want to show comment text for comment-related notifications
-//       //   select: "text",
-//       // })
-//       .limit(50);
-
-//     const filteredNotifications = notifications.filter((notification) => {
-//       if (!notification.from) {
-//         return false;
-//       }
-
-//       if (blockedAndBlockingUsers.includes(notification.from._id.toString())) {
-//         return false;
-//       }
-
-//       if (notification.postId && !notification.postId.user) {
-//         return false;
-//       }
-
-//       return true;
-//     });
-
-//     res.status(200).json(filteredNotifications);
-
-//     await Notification.updateMany({ to: userId, read: false }, { read: true });
-
-//     await emitUnreadNotificationStatus(userId.toString());
-//   } catch (error) {
-//     console.log("Error in getNotifications controller", error.message);
-//     res.status(500).json({ error: "Internal Server Error" });
-//   }
-// };
-
 export const getNotifications = async (req, res) => {
   try {
     const userId = req.user._id;
