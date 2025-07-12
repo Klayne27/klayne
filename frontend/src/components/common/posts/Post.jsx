@@ -3,7 +3,7 @@ import { BiRepost } from "react-icons/bi";
 import { FaRegHeart } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 
-import { Link, useNavigate, useParams } from "react-router-dom";
+import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import LoadingSpinner from "../LoadingSpinner";
 import { formatPostDate } from "../../../utils/date";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
@@ -18,7 +18,13 @@ import PollDisplay from "../PollDisyplay";
 import { usePinPost } from "../../../hooks/postsHooks/usePinPost";
 import { BsPin, BsPinFill } from "react-icons/bs";
 
-const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUsername, profileOwnerId }) => {
+const Post = ({
+  post,
+  openImageModal,
+  profilePinnedPosts = [],
+  currentProfileUsername,
+  profileOwnerId,
+}) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
@@ -27,6 +33,9 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
   const [isAnimatingLike, setIsAnimatingLike] = useState(false);
   const [isAnimatingPin, setIsAnimatingPin] = useState(false); // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false); // NEW
+  const [isAnimatingComment, setIsAnimatingComment] = useState(false);
+
+  const { pathname } = useLocation();
 
   const isDraggingRef = useRef(false);
   const initialClientY = useRef(0);
@@ -186,9 +195,19 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
     repostPost(originalPost._id);
   };
 
+  const handleCommentClick = (e) => {
+    handleInteractiveClick(e);
+    setIsAnimatingComment(true);
+
+    if (pathname.includes("/post/")) {
+      return;
+    }
+    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
+  };
+
   const handlePinPost = (e) => {
     e.stopPropagation();
-    setIsAnimatingPin(true);
+    setIsAnimatingPin(true); // Trigger pin animation
 
     if (!authUser?.username || isPinning) return; // Prevent action if not authenticated or already pinning
 
@@ -408,11 +427,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
               <div className="flex justify-between">
                 <div
                   className="flex items-center cursor-pointer group"
-                  onClick={() => {
-                    handleInteractiveClick();
-                    // This specific comment icon click should still navigate
-                    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
-                  }}
+                  onClick={handleCommentClick}
                   onTouchStart={() => handleTouchStart("comment")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
@@ -430,11 +445,15 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
                       }`}
                   >
                     <FaRegComment
-                      className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
+                      className={`w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition  ${
+                        isAnimatingComment ? "animate-bookmark-pop" : ""
+                      }`}
                       strokeWidth={10}
                     />
                   </div>
-                  <span className="text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition">
+                  <span
+                    className={`text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition`}
+                  >
                     {originalPost.commentsCount || 0}
                   </span>
                 </div>
@@ -504,9 +523,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
                       <FaRegHeart
                         className={`
                         w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
-                        ${
-                          isAnimatingLike && !isLiked ? "animate-like-bounce" : ""
-                        } // Apply animation only when triggered and not liked yet
+                        ${isAnimatingLike && !isLiked ? "animate-like-bounce" : ""} 
                     `}
                       />
                     )}
@@ -514,9 +531,7 @@ const Post = ({ post, openImageModal, profilePinnedPosts = [], currentProfileUse
                       <FaHeart
                         className={`
                         w-4 h-4 text-pink-600 duration-200 transition
-                        ${
-                          isAnimatingLike && isLiked ? "animate-like-bounce" : ""
-                        } // Apply animation only when triggered and already liked
+                        ${isAnimatingLike && isLiked ? "animate-like-bounce" : ""}
                     `}
                       />
                     )}

@@ -15,7 +15,7 @@ import { IoClose } from "react-icons/io5";
 import { useDebounce } from "../../../hooks/useDebounce";
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
-import RepliesSkeleton from "../../skeletons/RepliesSkeleton"
+import RepliesSkeleton from "../../skeletons/RepliesSkeleton";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
@@ -500,15 +500,39 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     />
                   ) : (
                     <FaReply
-                      className="w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition"
+                      className={`w-4 h-4 duration-200 transition
+                        ${!isTouchDevice ? "text-slate-500 group-hover:text-sky-400" : ""}
+                        ${
+                          isTouchDevice && activeButton !== "reply"
+                            ? "text-slate-500"
+                            : activeButton === "reply"
+                            ? "text-sky-400"
+                            : "text-slate-500"
+                        }
+                    `}
                       strokeWidth={10}
                     />
                   )}
                 </div>
                 <span
-                  className={`text-sm ${
-                    showReplyInput ? "text-sky-400" : "text-slate-500"
-                  } group-hover:text-sky-400 duration-200 transition`}
+                  className={`text-sm duration-200 transition
+                    ${
+                      !isTouchDevice
+                        ? showReplyInput
+                          ? "text-sky-400"
+                          : "text-slate-500 group-hover:text-sky-400"
+                        : ""
+                    }
+                    ${
+                      isTouchDevice
+                        ? showReplyInput
+                          ? "text-sky-400"
+                          : activeButton === "reply"
+                          ? "text-sky-400"
+                          : "text-slate-500"
+                        : ""
+                    }
+                `}
                 >
                   Reply
                 </span>
@@ -545,15 +569,41 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     />
                   ) : (
                     <FaChevronDown
-                      className="w-4 h-4 text-slate-500 group-hover:text-blue-500 duration-200 transition"
+                      className={`w-4 h-4 duration-200 transition
+                        ${
+                          !isTouchDevice ? "text-slate-500 group-hover:text-blue-500" : ""
+                        }
+                        ${
+                          isTouchDevice && activeButton !== "viewReplies"
+                            ? "text-slate-500"
+                            : activeButton === "viewReplies"
+                            ? "text-blue-500"
+                            : "text-slate-500"
+                        }
+                    `}
                       strokeWidth={10}
                     />
                   )}
                 </div>
                 <span
-                  className={` ${
-                    showRepliesSection ? "text-blue-500" : "text-slate-500"
-                  } text-sm group-hover:text-blue-500 duration-200 transition`}
+                  className={`text-sm duration-200 transition
+                    ${
+                      !isTouchDevice
+                        ? showRepliesSection
+                          ? "text-blue-500"
+                          : "text-slate-500 group-hover:text-blue-500"
+                        : ""
+                    }
+                    ${
+                      isTouchDevice
+                        ? showRepliesSection
+                          ? "text-blue-500"
+                          : activeButton === "viewReplies"
+                          ? "text-blue-500"
+                          : "text-slate-500"
+                        : ""
+                    }
+                `}
                 >
                   {comment.repliesCount || 0}{" "}
                   {showRepliesSection ? "Hide Replies" : "View Replies"}
