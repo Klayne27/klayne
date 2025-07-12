@@ -74,7 +74,7 @@ export const renderClickableText = (text) => {
           href={url}
           target="_blank"
           rel="noopener noreferrer"
-          className="text-blue-500 hover:underline"
+          className="text-blue-700 hover:underline"
           onClick={(e) => e.stopPropagation()} // Prevent post navigation on link click
         >
           {url}
@@ -86,7 +86,7 @@ export const renderClickableText = (text) => {
         <Link
           key={match.index}
           to={`/explore?hashtag=${hashtag.substring(1)}`} // Remove '#'
-          className="text-blue-500 hover:underline"
+          className="text-blue-700 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {hashtag}
@@ -99,7 +99,7 @@ export const renderClickableText = (text) => {
         <Link
           key={match.index}
           to={`/profile/${username}`} // Link to the user's profile page
-          className="text-blue-500 hover:underline"
+          className="text-blue-700 hover:underline"
           onClick={(e) => e.stopPropagation()}
         >
           {mention}

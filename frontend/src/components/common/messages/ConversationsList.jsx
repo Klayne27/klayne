@@ -16,7 +16,9 @@ const ConversationsList = ({
   onScrollDown, // New prop
   onScrollUp, // New prop
   conversations,
-  errorConversations
+  errorConversations,
+  followedUsers,
+  errorFollowedUsers
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const { onlineUsers } = useSocket();
@@ -27,8 +29,8 @@ const ConversationsList = ({
 
   // const { conversations, isLoadingConversations, errorConversations } =
   //   useFetchConversations();
-  const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
-    useFetchFollowedUsersForMessaging();
+  // const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
+  //   useFetchFollowedUsersForMessaging();
 
   const activeConversations =
     conversations?.filter((conv) => {

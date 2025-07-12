@@ -267,6 +267,8 @@ const MessagePage = ({
               onScrollUp={handleConversationsListScrollUp}
               conversations={conversations}
               errorConversations={errorConversations}
+              followedUsers={followedUsers}
+              errorFollowedUsers={errorFollowedUsers}
             />
           </div>
         )}

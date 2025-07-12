@@ -16,6 +16,7 @@ import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
+import { useLocation } from "react-router-dom";
 
 const ChatWindow = ({
   selectedConversation,
@@ -29,6 +30,7 @@ const ChatWindow = ({
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+  // const { pathname } = useLocation();
 
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
 
@@ -84,6 +86,8 @@ const ChatWindow = ({
 
   const shouldScrollOnFirstFullLoad = useRef(true);
   const prevActualConversationIdRef = useRef(actualConversationId);
+
+
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
@@ -413,7 +417,6 @@ const ChatWindow = ({
         //   refetchType: "active", // Refetch if 'conversations' query is active (e.g. conversation list)
         // });
       };
-
 
       const handleMessageDeleted = ({
         messageId,
