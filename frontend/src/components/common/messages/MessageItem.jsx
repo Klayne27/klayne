@@ -1,7 +1,7 @@
 import React from "react";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
-import { BsCheck2All } from "react-icons/bs";
+import { BsCheck2, BsCheck2All } from "react-icons/bs";
 
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
@@ -205,6 +205,11 @@ const MessageItem = ({
         {isSentByCurrentUser && msg.seen && (
           <span className={`self-end ml-1 text-primary`}>
             <BsCheck2All size={16} />
+          </span>
+        )}
+        {isSentByCurrentUser && !msg.seen && (
+          <span className={`self-end ml-1 text-gray-500`}>
+            <BsCheck2 size={16} />
           </span>
         )}
       </div>

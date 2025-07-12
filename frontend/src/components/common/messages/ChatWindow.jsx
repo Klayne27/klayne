@@ -99,7 +99,7 @@ const ChatWindow = ({
     const isReadyForInitialScroll =
       shouldScrollOnFirstFullLoad.current &&
       !isLoading &&
-      !isFetching &&
+      // !isFetching &&
       messages.length > 0;
 
     const scrollThreshold = 100;
@@ -217,10 +217,9 @@ const ChatWindow = ({
       socket.emit("userActiveInChat", { conversationId: actualConversationId });
     }
 
-    // if (socket && actualConversationId && currentUser?._id) {
-
-    //   socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
-    // }
+    if (socket && actualConversationId && currentUser?._id) {
+      socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
+    }
 
     return () => {
       // Clean up active conversation ID and user active status when leaving chat
@@ -386,34 +385,35 @@ const ChatWindow = ({
         // });
       };
 
-      // const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-      //   // Only update the messages in the current active chat window if it's the one that was seen
-      //   if (seenConversationId.toString() === actualConversationId?.toString()) {
-      //     queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-      //       if (!oldData) return oldData;
+      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+        // Only update the messages in the current active chat window if it's the one that was seen
+        if (seenConversationId.toString() === actualConversationId?.toString()) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+            if (!oldData) return oldData;
 
-      //       const updatedPages = oldData.pages.map((page) =>
-      //         page.map((msg) =>
-      //           // Mark messages as seen only if they were sent by the *current user*
-      //           // and are currently not seen.
-      //           msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
-      //             ? { ...msg, seen: true }
-      //             : msg
-      //         )
-      //       );
-      //       return { ...oldData, pages: updatedPages };
-      //     });
-      //   }
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((msg) =>
+                // Mark messages as seen only if they were sent by the *current user*
+                // and are currently not seen.
+                msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
+                  ? { ...msg, seen: true }
+                  : msg
+              )
+            );
+            return { ...oldData, pages: updatedPages };
+          });
+        }
 
-      //   // queryClient.invalidateQueries({
-      //   //   queryKey: ["conversations", seenConversationId],
-      //   //   refetchType: "active", // Refetch if 'conversations/[id]' query is active
-      //   // });
-      //   // queryClient.invalidateQueries({
-      //   //   queryKey: ["conversations"],
-      //   //   refetchType: "active", // Refetch if 'conversations' query is active (e.g. conversation list)
-      //   // });
-      // };
+        // queryClient.invalidateQueries({
+        //   queryKey: ["conversations", seenConversationId],
+        //   refetchType: "active", // Refetch if 'conversations/[id]' query is active
+        // });
+        // queryClient.invalidateQueries({
+        //   queryKey: ["conversations"],
+        //   refetchType: "active", // Refetch if 'conversations' query is active (e.g. conversation list)
+        // });
+      };
+
 
       const handleMessageDeleted = ({
         messageId,
@@ -452,14 +452,14 @@ const ChatWindow = ({
 
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
-      // socket.on("messagesSeen", handleMessagesSeen);
+      socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
-        // socket.off("messagesSeen", handleMessagesSeen);
+        socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
       };
@@ -518,6 +518,7 @@ const ChatWindow = ({
         isLoadingInitialMessages={isLoading && !isFetchingNextPage}
         isFetchingOlderMessages={isFetchingNextPage}
         hasNextPage={hasNextPage}
+        selectedConversationId={selectedConversation?._id}
       />
 
       {showNewMessageButton && (

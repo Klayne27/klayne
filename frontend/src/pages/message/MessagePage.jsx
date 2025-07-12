@@ -8,6 +8,7 @@ import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/use
 import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConversation";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
+import { useQueryClient } from "@tanstack/react-query";
 
 const MessagePage = ({
   openImageModal,
@@ -32,6 +33,8 @@ const MessagePage = ({
 
   const [selectedConversation, setSelectedConversation] = useState(null);
   const initialLoadAttempted = useRef(false);
+    const queryClient = useQueryClient();
+
 
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
@@ -149,6 +152,8 @@ const MessagePage = ({
 
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
+      // queryClient.invalidateQueries(["conversations", conversation._id])
+
     // Update URL when a conversation is selected, but only for existing conversations
     // New chats (`isNewChat`) don't have a server-assigned ID yet.
     if (conversation && !conversation.isNewChat) {

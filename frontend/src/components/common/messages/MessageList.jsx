@@ -28,11 +28,12 @@ const MessageList = forwardRef(function MessageList(
     isLoadingInitialMessages,
     isFetchingOlderMessages,
     hasNextPage,
+    selectedConversationId
   },
   ref
 ) {
   const { authUser: currentUser } = useAuthUser();
-  const { mutate: reactToMessage } = useReactToMessage();
+  const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); 

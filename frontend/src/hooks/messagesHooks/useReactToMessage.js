@@ -3,18 +3,21 @@ import { toast } from "react-hot-toast";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { reactToMessageApi } from "../../api/messagesApi";
 
-export const useReactToMessage = () => {
+export const useReactToMessage = (selectedConversationId) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
 
   return useMutation({
     mutationFn: ({ messageId, emoji }) => reactToMessageApi(messageId, emoji),
     onMutate: async ({ messageId, emoji }) => {
-      await queryClient.cancelQueries({ queryKey: ["messages"] });
+      await queryClient.cancelQueries({ queryKey: ["messages", selectedConversationId] });
 
-      const previousMessages = queryClient.getQueryData(["messages"]);
+      const previousMessages = queryClient.getQueryData([
+        "messages",
+        selectedConversationId,
+      ]);
 
-      queryClient.setQueryData(["messages"], (oldData) => {
+      queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
         if (!oldData || !currentUser) return oldData;
 
         const userId = currentUser._id;
@@ -57,7 +60,7 @@ export const useReactToMessage = () => {
       return { previousMessages };
     },
     onSuccess: (updatedMessageFromServer) => {
-      queryClient.setQueryData(["messages"], (oldData) => {
+      queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
         if (!oldData) return oldData;
 
         const updatedPages = oldData.pages.map((page) =>
@@ -73,7 +76,10 @@ export const useReactToMessage = () => {
     onError: (err, variables, context) => {
       toast.error(err.message || "Failed to react.");
       if (context?.previousMessages) {
-        queryClient.setQueryData(["messages"], context.previousMessages);
+        queryClient.setQueryData(
+          ["messages", selectedConversationId],
+          context.previousMessages
+        );
       }
     },
   });

@@ -1,8 +1,9 @@
 import { Link } from "react-router-dom";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
-import React from "react";
+import React, { useEffect } from "react";
 import { FiTrash } from "react-icons/fi";
+import { useQueryClient } from "@tanstack/react-query";
 
 function ConversationItem({
   conv,
@@ -12,14 +13,11 @@ function ConversationItem({
   onSelectConversation,
   onDeleteInitiate,
 }) {
+  const queryClient = useQueryClient();
+
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
   );
-
-  if (!otherUser) {
-    console.warn("Conversation without a valid other participant found:", conv);
-    return null;
-  }
 
   const isOnline = onlineUsers.includes(otherUser._id);
   const isSelected =
@@ -31,6 +29,43 @@ function ConversationItem({
   const isLastMessageFromOtherUser =
     conv.lastMessage?.sender?.toString() === otherUser._id.toString();
   const isLastMessageUnread = isLastMessageFromOtherUser && !conv.lastMessage?.seen;
+
+  // // We want to mark the conversation as seen *when it becomes selected*.
+  // // Use an useEffect that watches `isSelected` and `isLastMessageUnread`.
+  // useEffect(() => {
+  //   if (isSelected && isLastMessageUnread) {
+  //     queryClient.setQueryData(["conversations"], (oldConversations) => {
+  //       if (!oldConversations) return oldConversations;
+
+  //       const updatedConversations = oldConversations.map((convItem) => {
+  //         if (
+  //           convItem._id === conv._id && // Match the current conversation item
+  //           convItem.lastMessage &&
+  //           convItem.lastMessage.sender.toString() !== currentUser._id.toString() &&
+  //           !convItem.lastMessage.seen
+  //         ) {
+  //           return {
+  //             ...convItem,
+  //             lastMessage: {
+  //               ...convItem.lastMessage,
+  //               seen: true,
+  //             },
+  //           };
+  //         }
+  //         return convItem;
+  //       });
+  //       return updatedConversations;
+  //     });
+
+  //     // Also emit to the backend to persist the seen status and notify the sender
+  //     // This part still requires access to your socket instance.
+  //     // If `socket` is available via Context API or a prop, you'd use it here.
+  //     // Example (assuming socket is globally accessible or passed):
+  //     // if (window.socket) { // Or from a context
+  //     //   window.socket.emit("markMessagesAsSeen", { conversationId: conv._id });
+  //     // }
+  //   }
+  // }, [isSelected, isLastMessageUnread, conv._id, currentUser._id, queryClient]); // Add queryClient to dependencies
 
   let lastMessageContent;
   if (conv.isNewChat) {
@@ -59,6 +94,11 @@ function ConversationItem({
     e.stopPropagation();
     onDeleteInitiate(conv._id);
   };
+
+  if (!otherUser) {
+    console.warn("Conversation without a valid other participant found:", conv);
+    return null;
+  }
 
   return (
     <div
