@@ -379,12 +379,10 @@ io.on("connection", (socket) => {
             await emitUnreadMessageStatus(otherParticipantIdString); // Update unread status for the other participant
           });
         }
-        // This emitUnreadMessageStatus for the readerId seems redundant here
-        // if the client is already in the conversation and marking them as seen.
-        // It might be better handled when conversation list is fetched or on focus.
-        process.nextTick(async () => {
-          await emitUnreadMessageStatus(readerId); // Update unread status for the reader
-        });
+
+        // process.nextTick(async () => {
+        //   await emitUnreadMessageStatus(readerId); // Update unread status for the reader
+        // });
       }
     } catch (error) {
       console.error("Error marking messages as seen:", error);

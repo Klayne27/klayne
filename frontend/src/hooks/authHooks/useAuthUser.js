@@ -5,6 +5,7 @@ export const useAuthUser = () => {
   const {
     data: authUser,
     isLoading,
+    refetch: refetchAuthUser,
     isError,
     error,
   } = useQuery({
@@ -20,5 +21,5 @@ export const useAuthUser = () => {
     refetchOnMount: true, // Crucial: Refetch on mount to check session
   });
 
-  return { authUser, isLoading };
+  return { authUser, isLoading, refetchAuthUser };
 };
