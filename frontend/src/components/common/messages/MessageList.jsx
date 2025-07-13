@@ -180,12 +180,9 @@ const MessageList = forwardRef(function MessageList(
   }, [activeMessageModalId, handleClickOutsideMessage]);
 
   return (
-    <div
-      ref={ref}
-      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20"
-    >
+    <div ref={ref} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20 relative">
       {isLoadingInitialMessages && (
-        <div className="flex justify-center items-center h-full">
+        <div className="flex justify-center items-center h-full ">
           <LoadingSpinner size="md" />
         </div>
       )}
@@ -194,11 +191,11 @@ const MessageList = forwardRef(function MessageList(
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
-      {/* {isFetchingOlderMessages && (
-        <div className="flex justify-center py-2">
+      {isFetchingOlderMessages && (
+        <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
           <LoadingSpinner size="sm" />
         </div>
-      )} */}
+      )}
       {!hasNextPage &&
         !isLoadingInitialMessages &&
         !isFetchingOlderMessages &&

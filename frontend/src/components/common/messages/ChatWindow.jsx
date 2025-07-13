@@ -42,6 +42,8 @@ const ChatWindow = ({
   const resizeObserverRef = useRef(null);
   const prevScrollHeightRef = useRef(0);
 
+  const spinnerHeightRef = useRef(0);
+
   const actualConversationId = selectedConversation?.isNewChat
     ? null
     : selectedConversation?._id;
@@ -203,26 +205,56 @@ const ChatWindow = ({
   // --- NEW/UPDATED: Maintain scroll position when fetching older messages ---
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
+    if (!listEl) return;
 
-    // Only run if there's saved state from a pending fetch and fetch is complete
+    // Phase 1: Spinner appears
+    if (isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight === 0) {
+      // Capture state right before fetchNextPage() is called
+      // We only capture it once when the fetch begins
+      scrollStateBeforeFetch.current = {
+        scrollTop: listEl.scrollTop,
+        scrollHeight: listEl.scrollHeight,
+      };
+
+      // Measure the spinner's actual rendered height
+      // It's crucial this runs AFTER the spinner has rendered in MessageList
+      const spinnerElement = listEl.querySelector(".loading-spinner-for-older-messages"); // Add a class to your spinner div
+      if (spinnerElement) {
+        spinnerHeightRef.current = spinnerElement.offsetHeight;
+        // Optionally, adjust scroll immediately to counteract spinner pushing content down
+        // This might be tricky as the spinner adds content *above* the current view
+        // For now, we'll rely on the post-fetch adjustment.
+      } else {
+        spinnerHeightRef.current = 0; // Reset if spinner isn't there for some reason
+      }
+    }
+
+    // Phase 2: Fetch completes and messages are rendered
+    // This effect runs whenever `messages` or `isFetchingNextPage` changes.
+    // When `isFetchingNextPage` becomes false, it means new messages have loaded.
     if (
-      listEl &&
-      scrollStateBeforeFetch.current.scrollHeight > 0 && // Check if state was captured
-      !isFetchingNextPage
+      !isFetchingNextPage &&
+      scrollStateBeforeFetch.current.scrollHeight > 0 // Ensure we had a pending fetch
     ) {
       const { scrollTop: oldScrollTop, scrollHeight: oldScrollHeight } =
         scrollStateBeforeFetch.current;
       const newScrollHeight = listEl.scrollHeight;
 
-      const heightDifference = newScrollHeight - oldScrollHeight;
+      // Calculate the difference due to new messages
+      // We subtract spinnerHeightRef.current because that was temporary content
+      const contentAddedHeight =
+        newScrollHeight - (oldScrollHeight + spinnerHeightRef.current);
 
-      if (heightDifference > 0) {
-        // Adjust the scrollTop by the exact height of the newly added content
-        listEl.scrollTop = oldScrollTop + heightDifference;
-      }
+      // We might need to handle cases where spinnerHeightRef.current wasn't captured correctly
+      // or if messages loaded instantly. A robust approach is to look at the total change
+      // and ensure the previous messages remain visible.
 
-      // Reset the stored state
+      // Adjust scrollTop to keep the old top visible
+      listEl.scrollTop = oldScrollTop + contentAddedHeight;
+
+      // Reset the stored state and spinner height for the next fetch
       scrollStateBeforeFetch.current = { scrollTop: 0, scrollHeight: 0 };
+      spinnerHeightRef.current = 0;
     }
   }, [messages, isFetchingNextPage]); // Dependencies ensure this runs after messages update and fetch completes
 
