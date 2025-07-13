@@ -16,7 +16,11 @@ import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
 import { usePinPost } from "../../../hooks/postsHooks/usePinPost";
-import { BsPin, BsPinFill } from "react-icons/bs";
+import { BsPin, BsPinFill, BsThreeDots } from "react-icons/bs";
+import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser";
+import useFollow from "../../../hooks/usersHooks/useFollow";
+import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
+import { MdBlock } from "react-icons/md";
 
 const Post = ({
   post,
@@ -34,12 +38,14 @@ const Post = ({
   const [isAnimatingPin, setIsAnimatingPin] = useState(false); // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false); // NEW
   const [isAnimatingComment, setIsAnimatingComment] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
 
   const { pathname } = useLocation();
 
-  const isDraggingRef = useRef(false);
+  const isDraggingRef = useRef(0);
   const initialClientY = useRef(0);
   const initialClientX = useRef(0);
+  const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
   const resolvedProfileUsername = currentProfileUsername || username; // Use prop if available
 
@@ -50,44 +56,40 @@ const Post = ({
   const isLiked = originalPost?.likes?.includes(authUser?._id);
   const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
 
-  // 1. Check if the authenticated user has pinned *this specific original post*.
   const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(originalPost._id);
 
-  // 2. The `isPinned` state for the UI should reflect `hasAuthUserPinnedOriginal` *optimistically*.
-  //    This means your `updatePostPinStatus` helper should set an `isPinned` flag on the post object in the cache.
-  //    When `originalPost` comes from the query cache, it *might* have this `isPinned` property.
-  //    If not, fall back to checking `authUser.pinnedPosts`.
   const isPinnedForUI =
     originalPost?.isPinned !== undefined
       ? originalPost.isPinned
       : hasAuthUserPinnedOriginal;
 
-  // The `profilePinnedPosts` prop is likely used by `ProfilePage` to display the list of pinned posts.
-  // It shouldn't directly influence the `isPinned` status of an individual post *icon* unless the Post component
-  // is specifically checking if it's *in that list*. For the icon, `authUser.pinnedPosts` is more direct.
   const isPinnedOnThisProfile = profilePinnedPosts.some(
     (pinnedPost) => pinnedPost._id === originalPost._id
   );
-  // const isPinned = originalPost?.isPinned; // This directly uses the optimistic flag on the post object
 
-  const canDelete = authUser && authUser._id === post.user._id;
+  const isPostOwner = authUser && authUser._id === post.user._id;
+
   const isMyOriginalPost =
     authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(
     resolvedProfileUsername,
     profileOwnerId
-  ); // <--- Pass profileOwnerId here!
+  );
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(username);
-  const { deletePost, isDeleting } = useDeletePosts(post);
-  const { pinUnpinPost, isPinning } = usePinPost(); // Use the new pin hook
+  const { deletePost, isDeleting } = useDeletePosts(originalPost);
+  const { pinUnpinPost, isPinning } = usePinPost();
+
+  // New: Call useFollow and useBlockUnblockUser hooks
+  const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
+  const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
 
   const formattedDate = formatPostDate(originalPost.createdAt);
 
-  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeButton, setActiveButton] = useState(null); // To control the active state for touch feedback on interactive buttons
+  const [activeButton, setActiveButton] = useState(null);
+
   useEffect(() => {
     setIsTouchDevice(
       "ontouchstart" in window ||
@@ -109,7 +111,7 @@ const Post = ({
     if (isTouchDevice) {
       setTimeout(() => {
         setActiveButton(null);
-      }, 150); // Match desired fade-out duration
+      }, 150);
     }
   }, [isTouchDevice]);
 
@@ -120,13 +122,10 @@ const Post = ({
       }, 150);
     }
   }, [isTouchDevice]);
-  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
-  // --- MODIFIED navigateToPostPage to prevent navigation during text selection ---
   const navigateToPostPage = (e) => {
-    // If a drag/highlight action was detected, prevent navigation
     if (isDraggingRef.current) {
-      isDraggingRef.current = false; // Reset for the next interaction
+      isDraggingRef.current = false;
       return;
     }
 
@@ -134,23 +133,21 @@ const Post = ({
       e.target.closest("a") ||
       e.target.closest("button") ||
       e.target.closest("img") ||
-      e.target.closest("video")
+      e.target.closest("video") ||
+      e.target.closest(".menu-popover") // Prevent navigation if clicking inside the menu
     ) {
-      // Don't navigate if clicking on interactive elements
       return;
     }
     navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
   };
 
-  // --- NEW HANDLERS FOR MOUSE EVENTS ---
   const handleMouseDown = (e) => {
     initialClientX.current = e.clientX;
     initialClientY.current = e.clientY;
-    isDraggingRef.current = false; // Assume no drag until proven otherwise
+    isDraggingRef.current = false;
   };
 
   const handleMouseMove = (e) => {
-    // If the mouse moves more than a few pixels, it's likely a drag
     const deltaX = Math.abs(e.clientX - initialClientX.current);
     const deltaY = Math.abs(e.clientY - initialClientY.current);
     if (deltaX > 5 || deltaY > 5) {
@@ -158,11 +155,7 @@ const Post = ({
     }
   };
 
-  const handleMouseUp = () => {
-    // This is where navigateToPostPage will be called by the parent div's onClick
-    // The `isDraggingRef.current` flag will be checked there.
-  };
-  // --- END NEW HANDLERS FOR MOUSE EVENTS ---
+  const handleMouseUp = () => {};
 
   const handleInteractiveClick = (e) => {
     e.stopPropagation();
@@ -170,7 +163,7 @@ const Post = ({
 
   const handleBookmarkPost = (e) => {
     handleInteractiveClick(e);
-    setIsAnimatingBookmark(true); // Trigger bookmark animation
+    setIsAnimatingBookmark(true);
 
     if (!authUser?._id || isBookmarking) return;
     toggleBookmark(originalPost._id);
@@ -207,16 +200,15 @@ const Post = ({
 
   const handlePinPost = (e) => {
     e.stopPropagation();
-    setIsAnimatingPin(true); // Trigger pin animation
+    setIsAnimatingPin(true);
 
-    if (!authUser?.username || isPinning) return; // Prevent action if not authenticated or already pinning
+    if (!authUser?.username || isPinning) return;
 
-    const action = isPinnedForUI ? "unpin" : "pin"; // Determine action based on current UI state
-    // Pass the full originalPost object and the profile owner's username
+    const action = isPinnedForUI ? "unpin" : "pin";
     pinUnpinPost({
       postId: originalPost._id,
       action: action,
-      post: originalPost, // Pass the full originalPost object
+      post: originalPost,
     });
   };
 
@@ -226,6 +218,40 @@ const Post = ({
       openImageModal(mediaUrl);
     }
   };
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setShowMenu((prev) => !prev);
+  };
+
+  // New: Handle follow/unfollow
+  const handleFollowClick = (e) => {
+    e.stopPropagation();
+    if (!authUser || isFollowingOrUnfollowing) return;
+    follow(originalPostOwner._id);
+    setShowMenu(false); // Close menu after clicking
+  };
+
+  // New: Handle block/unblock
+  const handleBlockClick = (e) => {
+    e.stopPropagation();
+    if (!authUser || isBlocking) return;
+    blockUnblockUser(originalPostOwner._id);
+    setShowMenu(false); // Close menu after clicking
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
 
   const navigateToReposterProfile = (e) => {
     e.stopPropagation();
@@ -275,24 +301,23 @@ const Post = ({
     return username;
   };
 
-  // Reset animation states after they complete
   useEffect(() => {
     let timerLike, timerPin, timerBookmark;
 
     if (isAnimatingLike) {
       timerLike = setTimeout(() => {
         setIsAnimatingLike(false);
-      }, 300); // Match like-bounce duration
+      }, 300);
     }
     if (isAnimatingPin) {
       timerPin = setTimeout(() => {
         setIsAnimatingPin(false);
-      }, 200); // Match pin-down duration
+      }, 200);
     }
     if (isAnimatingBookmark) {
       timerBookmark = setTimeout(() => {
         setIsAnimatingBookmark(false);
-      }, 200); // Match bookmark-pop duration
+      }, 200);
     }
 
     return () => {
@@ -307,13 +332,20 @@ const Post = ({
     return null;
   }
 
+  // Determine if the current authUser is following the original post owner
+  const isFollowingOriginalPostOwner = authUser?.following?.includes(
+    originalPostOwner._id
+  );
+  // Determine if the current authUser has blocked the original post owner
+  const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id);
+
   return (
     <div
       className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer"
       onClick={navigateToPostPage}
-      onMouseDown={handleMouseDown} // Add mouse down listener
-      onMouseMove={handleMouseMove} // Add mouse move listener
-      onMouseUp={handleMouseUp} // Add mouse up listener
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={handleMouseUp}
     >
       {isRepost && repostingUser && (
         <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
@@ -350,7 +382,7 @@ const Post = ({
             />
           </Link>
         </div>
-        <div className="flex flex-col flex-1 min-w-0">
+        <div className="flex flex-col flex-1 min-w-0 relative">
           <div className="flex gap-1 items-center">
             <div className="flex min-w-0 items-center gap-1 overflow-hidden">
               <Link
@@ -377,20 +409,81 @@ const Post = ({
               </span>
             </div>
 
-            {canDelete && (
-              <span className="flex ml-auto">
-                {!isDeleting && (
-                  <div className="group  duration-200 transition hover:text-red-600  rounded-full px-2.5">
-                    <FiTrash
-                      className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
+            {/* BsThreeDots Icon and Conditional Menu */}
+            <span
+              className="flex ml-auto absolute right-0 group rounded-full p-2 mr-0.5 hover:bg-primary/20 transition duration-200"
+              onClick={toggleMenu}
+            >
+              <div className="group duration-200 transition hover:text-primary rounded-full">
+                <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
+              </div>
+
+              {showMenu && (
+                <div
+                  ref={menuRef}
+                  className="absolute right-0 top-0 w-max bg-black border border-accent rounded-xl z-10 menu-popover py-2  shadow-sm shadow-primary"
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
+                >
+                  {isMyOriginalPost ? (
+                    // Menu for post owner
+                    <button
+                      className="w-full text-left px-4 py-2 text-red-500  rounded-md flex items-center gap-2 font-semibold"
                       onClick={handleDeletePostClick}
-                      size={17}
-                    />
-                  </div>
-                )}
-                {isDeleting && <LoadingSpinner size="sm" />}
-              </span>
-            )}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
+                      Delete Post
+                    </button>
+                  ) : (
+                    // Menu for other users' posts
+                    <>
+                      <button
+                        className="w-full text-left px-4 py-1 text-white  flex items-center gap-2"
+                        onClick={handleFollowClick}
+                        disabled={isFollowingOrUnfollowing}
+                      >
+                        {/* {isFollowingOrUnfollowing ? (
+                          <LoadingSpinner size="sm" />
+                        ) : isFollowingOriginalPostOwner ? (
+                          "Unfollow"
+                        ) : (
+                          "Follow"
+                        )} */}
+                        {isFollowingOriginalPostOwner ? (
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <LuUserRoundPlus strokeWidth={2} /> Follow
+                          </span>
+                        )}
+                      </button>
+                      <button
+                        className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2"
+                        onClick={handleBlockClick}
+                        disabled={isBlocking}
+                      >
+                        {/* {isBlocking ? (
+                          <LoadingSpinner size="sm" />
+                        ) : isBlockedByAuthUser ? (
+                          "Unblock"
+                        ) : (
+                          "Block"
+                        )} */}
+                        {isBlockedByAuthUser ? (
+                          "Unblock"
+                        ) : (
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <MdBlock /> Block
+                          </span>
+                        )}
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
+            </span>
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
             <span className="whitespace-pre-wrap word-break-anywhere min-w-0">
@@ -438,11 +531,11 @@ const Post = ({
                         ? "group-hover:bg-sky-400 group-hover:bg-opacity-15"
                         : ""
                     }
-                      ${
-                        isTouchDevice && activeButton === "comment"
-                          ? "bg-sky-400 bg-opacity-15"
-                          : ""
-                      }`}
+                    ${
+                      isTouchDevice && activeButton === "comment"
+                        ? "bg-sky-400 bg-opacity-15"
+                        : ""
+                    }`}
                   >
                     <FaRegComment
                       className={`w-4 h-4 text-slate-500 group-hover:text-sky-400 duration-200 transition  ${
@@ -471,11 +564,11 @@ const Post = ({
                         ? "group-hover:bg-green-400 group-hover:bg-opacity-15"
                         : ""
                     }
-                      ${
-                        isTouchDevice && activeButton === "repost"
-                          ? "bg-green-400 bg-opacity-15"
-                          : ""
-                      }`}
+                    ${
+                      isTouchDevice && activeButton === "repost"
+                        ? "bg-green-400 bg-opacity-15"
+                        : ""
+                    }`}
                   >
                     <BiRepost
                       className={`w-6 h-6 duration-200 transition ${
@@ -516,14 +609,14 @@ const Post = ({
                       ? "bg-pink-600 bg-opacity-15"
                       : ""
                   }
-                  cursor-pointer // Ensure the div itself is clickable
-              `}
+                  cursor-pointer
+                `}
                   >
                     {!isLiked && (
                       <FaRegHeart
                         className={`
                         w-4 h-4 text-slate-500 group-hover:text-pink-600 duration-200 transition
-                        ${isAnimatingLike && !isLiked ? "animate-like-bounce" : ""} 
+                        ${isAnimatingLike && !isLiked ? "animate-like-bounce" : ""}
                     `}
                       />
                     )}
@@ -603,7 +696,7 @@ const Post = ({
                         className={`size-4 text-slate-500 group-hover:text-primary duration-200 transition ${
                           isAnimatingBookmark ? "animate-bookmark-pop" : ""
                         }`}
-                      /> // Outline if not
+                      />
                     )}
                   </div>
                 </div>

@@ -11,7 +11,6 @@ import {
   onlineUsersMap,
 } from "../lib/socket.js";
 
-// Helper function to extract and validate mentions
 const extractAndValidateMentions = async (text) => {
   // Regex to find @username patterns (adjust based on your username rules)
   // This regex matches '@' followed by 1 to 30 alphanumeric characters or underscores.

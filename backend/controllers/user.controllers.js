@@ -21,18 +21,16 @@ const getBlockingUsers = async (userId) => {
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
-  const currentUserId = req.user?._id; // The authenticated user's ID
+  const currentUserId = req.user?._id;
 
   try {
-    // Populate pinnedPosts and the user field within each pinned post
-
     const user = await User.findOne({ username })
       .select("-password")
       .populate({
-        path: "pinnedPosts", // Populate the pinnedPosts array
+        path: "pinnedPosts",
         populate: {
-          path: "user", // Populate the 'user' field *within* each pinned post
-          select: "username fullName profileImg isVerified", // Select desired fields for the post owner
+          path: "user",
+          select: "username fullName profileImg isVerified",
         },
       });
 
@@ -49,14 +47,12 @@ export const getUserProfile = async (req, res) => {
       );
 
       if (currentUser) {
-        // Check if the profile owner is in the current user's blockedUsers list
         isBlockedByYou = currentUser.blockedUsers.includes(user._id); // Check if the current user is in the profile owner's blockedBy list // (This means the profile owner has blocked the current user
         hasBlockedYou = currentUser.blockedBy.includes(user._id);
       }
     }
 
     if (hasBlockedYou) {
-      // If the profile owner has blocked the current user, return limited info
 
       return res.status(403).json({
         error: "You are blocked by this user.",
