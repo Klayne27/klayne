@@ -398,7 +398,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     <>
       {/* Main Sidebar */}
       <div
-        className={`fixed bottom-0 left-0 w-full md:sticky md:top-0 md:h-dvh flex md:flex-col items-center md:items-start justify-around md:justify-start border-t md:border-t-0 md:border-r border-accent bg-base-100 z-50 md:flex-[2_2_0] md:max-w-56
+        className={`fixed bottom-0 left-0 w-full bg-base-100 md:sticky md:top-0 md:h-dvh flex md:flex-col items-center md:items-start justify-around md:justify-start border-t md:border-t-0 md:border-r border-accent md:z-0 z-[10] md:flex-[2_2_0] md:max-w-56
           transition-transform duration-300 ease-out
           ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >

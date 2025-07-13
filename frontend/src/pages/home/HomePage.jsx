@@ -4,7 +4,7 @@ import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
 // import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
 
-const HomePage = ({ openImageModal }) => {
+const HomePage = ({ openImageModal, showUnfollowModal }) => {
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
@@ -65,8 +65,8 @@ const HomePage = ({ openImageModal }) => {
         className="flex-[4_4_0] mr-auto  border-accent min-h-screen "
       >
         <div
-          className="fixed top-0 z-10
-                             border-b border-accent bg-opacity-20 backdrop-blur-md"
+          className={`fixed top-0 ${showUnfollowModal ? "z-0" : "z-10"}
+                             border-b border-accent bg-opacity-20 backdrop-blur-md`}
         >
           <div className="flex w-full" style={{ width: headerWidth }}>
             <div
@@ -82,7 +82,6 @@ const HomePage = ({ openImageModal }) => {
                     ? "bg-secondary bg-opacity-50 transition duration-300" // Added transition here!
                     : ""
                 }
-                // Always include the base transition for the element if it's not handled by hover:
                 ${
                   isTouchDevice && activeTab !== "forYou" ? "transition duration-300" : ""
                 }
@@ -132,7 +131,7 @@ const HomePage = ({ openImageModal }) => {
           </div>
         </div>
 
-        <div ref={scrollableContentRef} className="">
+        <div ref={scrollableContentRef}>
           <CreatePost />
           <Posts
             feedType={feedType}

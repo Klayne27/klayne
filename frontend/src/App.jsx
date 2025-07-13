@@ -7,7 +7,6 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 
-
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
 const HomePage = lazy(() => import("./pages/home/HomePage"));
@@ -26,10 +25,10 @@ function App() {
   const [selectedImage, setSelectedImage] = useState(null);
   const [feedType, setFeedType] = useState("posts");
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
 
   const [isMobileMessagesListScrollingDown, setIsMobileMessagesListScrollingDown] =
     useState(false);
-
 
   const openImageModal = (imageUrl) => setSelectedImage(imageUrl);
   const closeImageModal = () => setSelectedImage(null);
@@ -75,7 +74,10 @@ function App() {
               path="/"
               element={
                 authUser ? (
-                  <HomePage openImageModal={openImageModal} />
+                  <HomePage
+                    openImageModal={openImageModal}
+                    showUnfollowModal={showUnfollowModal}
+                  />
                 ) : (
                   <Navigate to="/login" />
                 )
@@ -180,7 +182,13 @@ function App() {
       </main>
 
       {/* RightPanel - Hidden on mobile */}
-      {authUser && !isMessagePage && <RightPanel className="hidden md:block" />}
+      {authUser && !isMessagePage && (
+        <RightPanel
+          showUnfollowModal={showUnfollowModal}
+          setShowUnfollowModal={setShowUnfollowModal}
+          className="hidden md:block"
+        />
+      )}
       <Toaster />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
     </div>

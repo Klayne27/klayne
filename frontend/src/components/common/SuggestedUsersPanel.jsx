@@ -5,17 +5,37 @@ import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
 import LoadingSpinner from "./LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { BiRefresh } from "react-icons/bi";
-import React from "react";
+import React, { useState } from "react";
 import FollowButton from "./FollowButton";
+import UnfollowModal from "./UnfollowModal";
 
-const SuggestedUsersPanel = () => {
-
+const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal}) => {
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
   const { follow, isPending } = useFollow();
   const { authUser: currentUser } = useAuthUser();
+  // const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
+  const [userToUnfollow, setUserToUnfollow] = useState(null); // State to hold user info for unfollow modal
 
   const handleRefreshClick = () => {
     refetch();
+  };
+
+  // New functions for Unfollow Modal
+  const openUnfollowModal = (userToUnfollow) => {
+    setUserToUnfollow(userToUnfollow);
+    setShowUnfollowModal(true);
+  };
+
+  const closeUnfollowModal = () => {
+    setShowUnfollowModal(false);
+    setUserToUnfollow(null);
+  };
+
+  const handleConfirmUnfollow = () => {
+    if (userToUnfollow) {
+      follow(userToUnfollow._id); // This will unfollow the user
+      closeUnfollowModal();
+    }
   };
 
   if (!isLoading && !isRefetching && suggestedUsers?.length === 0) {
@@ -34,8 +54,7 @@ const SuggestedUsersPanel = () => {
             <RightPanelSkeleton />
           </>
         )}
-        {
-          suggestedUsers?.length > 0 &&
+        {suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
             const isFollowing = currentUser?.following?.includes(user._id);
 
@@ -64,7 +83,12 @@ const SuggestedUsersPanel = () => {
                   </div>
                 </div>
                 <div>
-                    <FollowButton user={user} currentUserId={currentUser?._id} isFollowing={isFollowing} />
+                  <FollowButton
+                    user={user}
+                    currentUserId={currentUser?._id}
+                    isFollowing={isFollowing}
+                    openUnfollowModal={openUnfollowModal}
+                  />
                 </div>
               </Link>
             );
@@ -82,6 +106,14 @@ const SuggestedUsersPanel = () => {
           {isLoading || isRefetching ? "Refreshing..." : "Refresh Suggestions"}
         </button>
       </div>
+
+      {/* Unfollow Confirmation Modal */}
+      <UnfollowModal
+        isOpen={showUnfollowModal}
+        onClose={closeUnfollowModal}
+        onUnfollowConfirm={handleConfirmUnfollow}
+        username={userToUnfollow?.username}
+      />
     </div>
   );
 };

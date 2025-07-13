@@ -6,6 +6,7 @@ import Posts from "../../components/common/posts/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
 import FollowListModal from "../../components/common/FollowListModal";
+import UnfollowModal from "../../components/common/UnfollowModal"; // Import the new modal
 
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -29,6 +30,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [profileImg, setProfileImg] = useState(null);
   const [modalType, setModalType] = useState(null);
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false);
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
+  const [userToUnfollow, setUserToUnfollow] = useState(null); // State to hold user info for unfollow modal
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
@@ -124,6 +127,24 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     closeBlockConfirmationModal();
     if (!user?._id) return;
     blockUnblockUser(user._id);
+  };
+
+  // New functions for Unfollow Modal
+  const openUnfollowModal = (userToUnfollow) => {
+    setUserToUnfollow(userToUnfollow);
+    setShowUnfollowModal(true);
+  };
+
+  const closeUnfollowModal = () => {
+    setShowUnfollowModal(false);
+    setUserToUnfollow(null);
+  };
+
+  const handleConfirmUnfollow = () => {
+    if (userToUnfollow) {
+      follow(userToUnfollow._id); // This will unfollow the user
+      closeUnfollowModal();
+    }
   };
 
   const handleImgChange = (e, state) => {
@@ -321,7 +342,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
               {/* Follow/Unfollow Button - FIXED WIDTH */}
               {!isMyProfile && !isBlockingRelationship && (
-                <FollowButton user={user} isFollowing={amIFollowing} currentUserId={authUser?._id} />
+                <FollowButton
+                  user={user}
+                  isFollowing={amIFollowing}
+                  currentUserId={authUser?._id}
+                  openUnfollowModal={openUnfollowModal} // Pass the new prop
+                />
               )}
 
               {(coverImg || profileImg) && (
@@ -402,7 +428,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {/* Posts Tab */}
               <div
                 className={`flex justify-center flex-1 p-3 relative cursor-pointer
-                  transition duration-150                     
+                  transition duration-150           
                   ${!isTouchDevice ? "hover:bg-secondary" : ""}
                   ${
                     isTouchDevice && activeTab === "posts"
@@ -444,6 +470,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 onClick={() => {
                   setFeedType("likes");
                   // Optional: if you want immediate touch feedback, you can add setActiveTab here
+                  // but onClick handles the primary navigation which is often enough.
                 }}
                 onTouchStart={() => handleTouchStart("likes")}
                 onTouchEnd={handleTouchEnd}
@@ -496,6 +523,14 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         username={user?.username}
         isBlocking={isBlockedByYou}
         isBlockedByYou={isBlockedByYou}
+      />
+
+      {/* Unfollow Confirmation Modal */}
+      <UnfollowModal
+        isOpen={showUnfollowModal}
+        onClose={closeUnfollowModal}
+        onUnfollowConfirm={handleConfirmUnfollow}
+        username={userToUnfollow?.username}
       />
     </>
   );

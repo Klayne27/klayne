@@ -1,9 +1,13 @@
-// src/components/FollowButton.jsx
 import React, { useState, useEffect } from "react";
 import LoadingSpinner from "./LoadingSpinner"; // Adjust path as needed
 import useFollow from "../../hooks/usersHooks/useFollow";
 
-const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) => {
+const FollowButton = ({
+  user,
+  isFollowing: initialIsFollowing,
+  currentUserId,
+  openUnfollowModal,
+}) => {
   const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const { follow, isPending } = useFollow();
@@ -30,9 +34,13 @@ const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) 
 
   const handleFollowClick = (e) => {
     e.preventDefault(); // Prevent default link behavior
-    follow(user._id);
-    // Optimistic UI update: Toggle `isCurrentlyFollowing` immediately
-    setIsCurrentlyFollowing((prev) => !prev);
+    if (isCurrentlyFollowing) {
+      openUnfollowModal(user); // Open the modal if currently following
+    } else {
+      follow(user._id);
+      // Optimistic UI update: Toggle `isCurrentlyFollowing` immediately
+      setIsCurrentlyFollowing((prev) => !prev);
+    }
   };
 
   return (
@@ -59,15 +67,11 @@ const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) 
       onMouseLeave={!isTouchDevice ? () => setIsHoveringUnfollow(false) : undefined}
       disabled={isPending} // Disable button during pending follow/unfollow action
     >
-      {isCurrentlyFollowing ? (
-        isHoveringUnfollow && !isTouchDevice ? (
-          "Unfollow"
-        ) : (
-          "Following"
-        )
-      ) : (
-        "Follow"
-      )}
+      {isCurrentlyFollowing
+        ? isHoveringUnfollow && !isTouchDevice
+          ? "Unfollow"
+          : "Following"
+        : "Follow"}
     </button>
   );
 };

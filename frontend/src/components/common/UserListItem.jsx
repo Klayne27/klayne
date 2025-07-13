@@ -1,11 +1,9 @@
 import { Link } from "react-router-dom";
-import useFollow from "../../hooks/usersHooks/useFollow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import FollowButton from "./FollowButton";
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();
-  const { follow, isPending } = useFollow();
 
   const amIFollowing = authUser?.following.includes(listUser?._id);
 
