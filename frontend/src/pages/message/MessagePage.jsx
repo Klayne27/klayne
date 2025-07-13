@@ -10,6 +10,8 @@ import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../context/SocketContext";
+import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
+import ChatWindowSkeleton from "../../components/skeletons/ChatWindowSkeleton";
 
 const MessagePage = ({
   openImageModal,
@@ -47,6 +49,8 @@ const MessagePage = ({
   const hasConversationIdInUrl = !!urlConversationId && urlConversationId !== "";
   const showConversationListPanel = !isMobile || !isConversationOpen;
   const showChatWindowPanel = !isMobile || isConversationOpen;
+
+  const isConversationActive = !!urlConversationId || !!selectedConversation;
 
   useEffect(() => {
     setIsChatWindowOpen(hasConversationIdInUrl);
@@ -144,7 +148,6 @@ const MessagePage = ({
     isLoadingFollowedUsers,
     currentUser,
     navigate,
-
   ]);
 
   const handleSelectConversation = (conversation) => {
@@ -320,14 +323,14 @@ const MessagePage = ({
   };
 
   // Show loading state for initial data fetch
-  if (isLoadingConversations || isLoadingFollowedUsers) {
-    return (
-      <div className="flex items-center justify-center gap-2 h-screen ">
-        <LoadingSpinner size="md" />
-        Loading inbox...
-      </div>
-    );
-  }
+  // if (isLoadingConversations || isLoadingFollowedUsers) {
+  //   return (
+  //     <div className="flex justify-center gap-2 h-screen ">
+  //       {/* <LoadingSpinner size="md" />
+  //       Loading inbox... */}
+  //     </div>
+  //   );
+  // }
 
   // Show error state if data fetching fails
   if (errorConversations || errorFollowedUsers) {
@@ -354,29 +357,40 @@ const MessagePage = ({
             flex flex-col h-screen
           `}
           >
-            <ConversationsList
-              onSelectConversation={handleSelectConversation}
-              selectedConversation={selectedConversation}
-              onDeleteInitiate={handleDeleteInitiate}
-              onScrollDown={handleConversationsListScrollDown}
-              onScrollUp={handleConversationsListScrollUp}
-              conversations={conversations}
-              errorConversations={errorConversations}
-              followedUsers={followedUsers}
-              errorFollowedUsers={errorFollowedUsers}
-            />
+            {isLoadingConversations || isLoadingFollowedUsers ? (
+              <ConversationListSkeleton />
+            ) : (
+              <ConversationsList
+                onSelectConversation={handleSelectConversation}
+                selectedConversation={selectedConversation}
+                onDeleteInitiate={handleDeleteInitiate}
+                onScrollDown={handleConversationsListScrollDown}
+                onScrollUp={handleConversationsListScrollUp}
+                conversations={conversations}
+                errorConversations={errorConversations}
+                followedUsers={followedUsers}
+                errorFollowedUsers={errorFollowedUsers}
+              />
+            )}
           </div>
         )}
 
-        {/* Chat Window Panel */}
         {showChatWindowPanel && (
           <div
             className={`
-            w-full md:flex-1
-            flex flex-col h-screen
-          `}
+              w-full md:flex-1
+              flex flex-col h-screen
+            `}
           >
-            {selectedConversation ? (
+            {/* Condition for showing ChatWindowSkeleton */}
+            {isLoadingConversations ||
+            isLoadingFollowedUsers ||
+            (isConversationActive && !selectedConversation) ? (
+              // This condition covers:
+              // 1. Initial page load on desktop (both sides loading)
+              // 2. Mobile: When a conversation is clicked and the chat window is about to load its content
+              <ChatWindowSkeleton />
+            ) : selectedConversation ? (
               <ChatWindow
                 selectedConversation={selectedConversation}
                 openImageModal={openImageModal}
