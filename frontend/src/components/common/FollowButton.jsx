@@ -43,7 +43,7 @@ const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) 
         ${
           // Initial state for "Follow" button
           !isCurrentlyFollowing
-            ? "bg-secondary/70 md:hover:bg-secondary transition duration-200"
+            ? "bg-secondary/40 md:hover:bg-secondary transition duration-200"
             : // Initial state for "Following" button
               "bg-base-100" // Added a subtle border for consistency
         }
