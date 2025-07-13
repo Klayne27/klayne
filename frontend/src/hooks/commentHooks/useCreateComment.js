@@ -185,7 +185,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       };
     },
     onSuccess: (newRealComment, variables, context) => {
-      toast.success(parentCommentId ? "Reply added!" : "Comment added!");
+      // toast.success(parentCommentId ? "Reply added!" : "Comment added!");
 
       // Update the optimistic comment with real data
       queryClient.setQueryData(commentsQueryKey, (oldData) => {

@@ -7,7 +7,7 @@ export const useDeleteComment = () => {
   const { mutate: deleteComment, isPending: isDeletingComment } = useMutation({
     mutationFn: deleteCommentApi,
     onSuccess: () => {
-      toast.success("Comment deleted successfully");
+      // toast.success("Comment deleted successfully");
       queryClient.invalidateQueries({ queryKey: ["post"] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
     },

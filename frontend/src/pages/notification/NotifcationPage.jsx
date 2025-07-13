@@ -13,6 +13,7 @@ import NotificationsSkeleton from "../../components/skeletons/NotificationsSkele
 import { FaArrowLeft } from "react-icons/fa6";
 
 import { FaAt } from "react-icons/fa"; // Import an icon for mentions, e.g., FaAt, FaRegBell, or a custom one.
+import { useRef } from "react";
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useFetchNotifications();
@@ -20,6 +21,7 @@ const NotificationPage = () => {
   const { deleteNotifications } = useDeleteNotifications();
   const { authUser } = useAuthUser();
   const navigate = useNavigate();
+  const dropdownToggleRef = useRef(null)
 
   const filteredNotifications = notifications?.filter((notification) => {
     // Keep this filter. It ensures users don't see notifications
@@ -65,6 +67,14 @@ const NotificationPage = () => {
     navigate(targetLink);
   };
 
+  const handleDeleteAllNotifications = () => {
+    deleteNotifications();
+
+    if (dropdownToggleRef.current) {
+      dropdownToggleRef.current.blur();
+    }
+  };
+
   return (
     <>
       <div className="flex-1 border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
@@ -83,11 +93,10 @@ const NotificationPage = () => {
             <ul
               tabIndex={0}
               className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-accent"
+              ref={dropdownToggleRef}
             >
               <li>
-                <a onClick={deleteNotifications}>
-                  {isDeleting ? <LoadingSpinner size="sm" /> : "Delete all notifications"}
-                </a>
+                <a onClick={handleDeleteAllNotifications}>Delete all notifications</a>
               </li>
             </ul>
           </div>
@@ -123,22 +132,18 @@ const NotificationPage = () => {
                 className="absolute right-3 top-3"
                 onClick={(e) => e.stopPropagation()}
               >
-                {isDeleting ? (
-                  <LoadingSpinner size="xs" />
-                ) : (
-                  <button
-                    className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      deleteNotification(notification._id);
-                    }}
-                  >
-                    <FiTrash
-                      className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
-                      size={20}
-                    />
-                  </button>
-                )}
+                <button
+                  className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    deleteNotification(notification._id);
+                  }}
+                >
+                  <FiTrash
+                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                    size={20}
+                  />
+                </button>
               </div>
 
               <div className="flex-shrink-0 mt-1">

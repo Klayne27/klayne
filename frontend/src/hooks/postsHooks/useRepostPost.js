@@ -140,7 +140,7 @@ export const useRepostPost = () => {
       };
     },
     onSuccess: (data, originalPostId, context) => {
-      toast.success(data.message);
+      // toast.success(data.message);
 
       // Invalidate to refetch actual data and incorporate any new reposted posts
       queryClient.invalidateQueries({ queryKey: ["posts"] });

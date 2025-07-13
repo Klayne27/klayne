@@ -83,7 +83,6 @@ export const useDeleteComment = () => {
     },
     onSuccess: (data, { postId, parentCommentId }) => {
       // Data now contains totalDeletedComments from backend
-      toast.success(data.message || "Comment deleted!");
 
       // Invalidate the comments list queries to fetch the latest state
       // This ensures all remaining comments and their counts are accurate.
