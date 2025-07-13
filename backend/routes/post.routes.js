@@ -42,7 +42,7 @@ router.post("/:postId/vote", protectRoute, voteOnPoll);
 router.post("/pin/:id", protectRoute, pinUnpinPost); 
 router.delete("/pin/:id", protectRoute, pinUnpinPost);
 
-router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts); // Assuming protectRoute is needed
+router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts);
 
 
 

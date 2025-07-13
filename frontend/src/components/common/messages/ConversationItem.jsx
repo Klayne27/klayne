@@ -4,6 +4,7 @@ import { MdImage } from "react-icons/md";
 import React, { useEffect } from "react";
 import { FiTrash } from "react-icons/fi";
 import { useQueryClient } from "@tanstack/react-query";
+import { useSocket } from "../../../context/SocketContext";
 
 function ConversationItem({
   conv,
@@ -14,6 +15,7 @@ function ConversationItem({
   onDeleteInitiate,
 }) {
   const queryClient = useQueryClient();
+  const {socket} = useSocket()
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -31,7 +33,7 @@ function ConversationItem({
   const isLastMessageUnread = isLastMessageFromOtherUser && !conv.lastMessage?.seen;
 
   // // We want to mark the conversation as seen *when it becomes selected*.
-  // // Use an useEffect that watches `isSelected` and `isLastMessageUnread`.
+  // // // Use an useEffect that watches `isSelected` and `isLastMessageUnread`.
   // useEffect(() => {
   //   if (isSelected && isLastMessageUnread) {
   //     queryClient.setQueryData(["conversations"], (oldConversations) => {
@@ -56,16 +58,8 @@ function ConversationItem({
   //       });
   //       return updatedConversations;
   //     });
-
-  //     // Also emit to the backend to persist the seen status and notify the sender
-  //     // This part still requires access to your socket instance.
-  //     // If `socket` is available via Context API or a prop, you'd use it here.
-  //     // Example (assuming socket is globally accessible or passed):
-  //     // if (window.socket) { // Or from a context
-  //     //   window.socket.emit("markMessagesAsSeen", { conversationId: conv._id });
-  //     // }
   //   }
-  // }, [isSelected, isLastMessageUnread, conv._id, currentUser._id, queryClient]); // Add queryClient to dependencies
+  // }, [ isSelected, isLastMessageUnread, conv._id, currentUser._id, queryClient]); // Add queryClient to dependencies
 
   let lastMessageContent;
   if (conv.isNewChat) {

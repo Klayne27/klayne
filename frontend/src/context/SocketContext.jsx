@@ -67,69 +67,6 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewFeedPosts(true);
       });
 
-      // newSocket.on("newMessage", (newMessage) => {
-      //   const targetConversationId = newMessage.conversationId;
-      //   const queryKey = ["messages", targetConversationId];
-
-      //   const isMessageForCurrentlyActiveChat =
-      //     activeConversationIdRef.current === targetConversationId;
-
-      //   if (isMessageForCurrentlyActiveChat) {
-      //     // This is good for updating the active chat
-      //     queryClient.setQueryData(queryKey, (oldData) => {
-      //       if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-      //         return { pages: [[newMessage]], pageParams: [1] };
-      //       }
-      //       const newData = { ...oldData };
-      //       newData.pages = [...oldData.pages];
-      //       const mostRecentPageMessages = [...newData.pages[0]].filter((msg) => {
-      //         const isOptimisticMatch =
-      //           newMessage.tempId && msg.tempId === newMessage.tempId && msg.isOptimistic;
-      //         const isIdMatch = msg._id && msg._id === newMessage._id;
-      //         return !(isOptimisticMatch || isIdMatch);
-      //       });
-      //       newData.pages[0] = [...mostRecentPageMessages, newMessage];
-      //       return newData;
-      //     });
-      //   }
-
-      //   // --- REMOVE OR ADJUST THESE LINES ---
-      //   // queryClient.invalidateQueries(["conversations"]); // <--- REMOVE THIS
-      //   // queryClient.invalidateQueries(["conversations", targetConversationId]); // <--- KEEP IF YOU ABSOLUTELY NEED TO REFECTH THE CONVERSATIONS LIST FOR UNREAD COUNTS, BUT PREFER setQueryData BELOW
-      //   // --- END REMOVAL/ADJUSTMENT ---
-
-      //   // Instead of invalidating, consider updating the specific conversation in the list
-      //   // This will update the conversation list directly, showing the last message and unread count
-      //   queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-      //     if (!oldConversationsData) return undefined; // Or return an empty array if that's your initial state
-
-      //     const updatedConversations = oldConversationsData.map((conv) => {
-      //       if (conv._id === targetConversationId) {
-      //         return {
-      //           ...conv,
-      //           lastMessage: newMessage,
-      //           unreadCount: conv.unreadCount + 1, // Increment unread count
-      //         };
-      //       }
-      //       return conv;
-      //     });
-
-      //     // Ensure the updated conversation (with the new message) is at the top/most recent
-      //     const updatedConv = updatedConversations.find(
-      //       (conv) => conv._id === targetConversationId
-      //     );
-      //     const otherConvs = updatedConversations.filter(
-      //       (conv) => conv._id !== targetConversationId
-      //     );
-      //     return [updatedConv, ...otherConvs].filter(Boolean); // Filter out potential undefined if not found
-      //   });
-
-      //   // Set hasUnreadMessages to true only if the user is not in the active conversation
-      //   if (!isMessageForCurrentlyActiveChat) {
-      //     setHasUnreadMessages(true);
-      //   }
-      // });
-
       newSocket.on("messageReacted", (updatedMessage) => {
         queryClient.setQueryData(
           ["messages", updatedMessage.conversationId],
@@ -143,10 +80,6 @@ export const SocketContextProvider = ({ children }) => {
             return { ...oldData, pages: updatedPages };
           }
         );
-        // --- REMOVE OR ADJUST THESE LINES ---
-        // queryClient.invalidateQueries(["conversations", updatedMessage.conversationId]); // <--- KEEP IF NEEDED FOR A SPECIFIC CONVERSATION, BUT PREFER setQueryData
-        // queryClient.invalidateQueries(["conversations"]); // <--- REMOVE THIS
-        // --- END REMOVAL/ADJUSTMENT ---
 
         // Similar to newMessage, update the specific conversation in the list directly
         queryClient.setQueryData(["conversations"], (oldConversationsData) => {
@@ -172,10 +105,6 @@ export const SocketContextProvider = ({ children }) => {
           );
           return { ...oldData, pages: updatedPages };
         });
-        // --- REMOVE OR ADJUST THESE LINES ---
-        // queryClient.invalidateQueries(["conversations", conversationId]); // <--- KEEP IF NEEDED
-        // queryClient.invalidateQueries(["conversations"]); // <--- REMOVE THIS
-        // --- END REMOVAL/ADJUSTMENT ---
 
         // Update the conversation list to reflect the deleted message, e.g., if it was the last message
         queryClient.setQueryData(["conversations"], (oldConversationsData) => {

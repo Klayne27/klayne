@@ -130,8 +130,6 @@ const MessagePage = ({
     setSelectedConversation(desiredConversation);
     initialLoadAttempted.current = true;
 
-    // Clean up targetUserId from location state AFTER we've processed it
-    // This is important so refreshing doesn't re-trigger the new chat logic unnecessarily.
     if (location.state?.targetUserId && targetUserId) {
       // Only replace state if targetUserId was actually used to find/create a conversation
       window.history.replaceState({}, document.title, window.location.pathname);
@@ -146,14 +144,12 @@ const MessagePage = ({
     isLoadingFollowedUsers,
     currentUser,
     navigate,
-    // Do NOT include location.state directly as it might cause infinite loops.
-    // Instead, rely on targetUserId which is derived from it.
-    // selectedConversation?._id, // Include selectedConversation._id to react to its changes
+
   ]);
 
   const handleSelectConversation = (conversation) => {
     setSelectedConversation(conversation);
-    // queryClient.invalidateQueries(["conversations", conversation._id])
+    // queryClient.invalidateQueries(["conversations"])
 
     // Update URL when a conversation is selected, but only for existing conversations
     // New chats (`isNewChat`) don't have a server-assigned ID yet.
