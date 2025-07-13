@@ -7,6 +7,7 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 
+
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
 const HomePage = lazy(() => import("./pages/home/HomePage"));

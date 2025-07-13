@@ -22,7 +22,7 @@ function ConversationListSkeleton() {
         {[...Array(5)].map(
           (
             _,
-            i // Render 7 placeholder items
+            i 
           ) => (
             <ConversationItemSkeleton key={i} />
           )
