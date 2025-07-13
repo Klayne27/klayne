@@ -13,7 +13,7 @@ export const AVAILABLE_THEMES = [
   "halloween",
   "business",
   "cupcake",
-  "luxury",
+  "cyberpunk",
   "dracula",
   "pastel",
   "retro",

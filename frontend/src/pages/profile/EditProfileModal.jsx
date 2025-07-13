@@ -61,7 +61,7 @@ const EditProfileModal = ({ authUser }) => {
         <div className="modal-box border border-accent shadow-md rounded-2xl">
           <h3 className="font-bold text-lg mb-4">Update Profile</h3>
           <form
-            className="flex flex-col gap-4 "
+            className="flex flex-col gap-4"
             onSubmit={(e) => {
               e.preventDefault();
               updateProfile(formData);
@@ -94,14 +94,14 @@ const EditProfileModal = ({ authUser }) => {
                 name="email"
                 onChange={handleInputChange}
               />
-              <textarea
-                placeholder="Bio"
-                className="resize-none flex-1 input border border-accent rounded-lg p-2 input-md"
-                value={formData.bio}
-                name="bio"
-                onChange={handleInputChange}
-              />
             </div>
+            <textarea
+              placeholder="Bio"
+              className="flex-1 input border border-accent rounded-lg p-2 input-md"
+              value={formData.bio}
+              name="bio"
+              onChange={handleInputChange}
+            />
             <div className="flex flex-wrap gap-2">
               <input
                 type="password"

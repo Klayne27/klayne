@@ -107,8 +107,8 @@ const ThemesPage = () => {
                           max-w-[80%] rounded-3xl p-3 shadow-sm
                           ${
                             message.isSent
-                              ? "bg-primary text-primary-content rounded-br-[5px]"
-                              : "bg-base-200 rounded-bl-[5px]"
+                              ? "bg-primary text-white rounded-br-[5px]"
+                              : "bg-base-200 text-white rounded-bl-[5px]"
                           }
                         `}
                       >

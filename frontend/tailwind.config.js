@@ -119,7 +119,7 @@ export default {
       },
       "coffee",
       "cupcake",
-      "luxury",
+      "cyberpunk",
       "retro",
       "pastel",
       "lemonade",
