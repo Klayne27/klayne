@@ -194,11 +194,11 @@ const MessageList = forwardRef(function MessageList(
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
-      {isFetchingOlderMessages && (
+      {/* {isFetchingOlderMessages && (
         <div className="flex justify-center py-2">
           <LoadingSpinner size="sm" />
         </div>
-      )}
+      )} */}
       {!hasNextPage &&
         !isLoadingInitialMessages &&
         !isFetchingOlderMessages &&

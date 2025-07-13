@@ -519,7 +519,7 @@ const CreatePost = () => {
       >
         <div className="relative w-full">
           <textarea
-            className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative z-10 overflow-y-auto text-white"
+            className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative z-10 overflow-y-auto"
             placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
             value={text}
             onChange={handleTextChange}
