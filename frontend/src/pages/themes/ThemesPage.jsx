@@ -137,7 +137,7 @@ const ThemesPage = () => {
                   <input
                     type="text"
                     placeholder="This is a preview"
-                    className="flex-1 py-2  bg-secondary rounded-full text-white placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
+                    className="flex-1 py-2  bg-secondary rounded-full placeholder-gray-500 focus:outline-none pl-1 pr-10 w-1"
                   />
 
                   <button

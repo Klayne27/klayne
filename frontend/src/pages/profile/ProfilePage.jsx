@@ -284,7 +284,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
               {!isMyProfile && !hasBlockedYou && (
                 <button
-                  className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:py-1.5 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
+                  className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
                     ${
                       isBlockedByYou
                         ? "bg-red-700 hover:bg-red-800"

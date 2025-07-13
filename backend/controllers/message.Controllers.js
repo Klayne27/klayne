@@ -187,7 +187,7 @@ export const sendMessage = async (req, res) => {
 
 export const getMessagesByConversationId = async (req, res) => {
   const { conversationId } = req.params;
-  const { page = 1, limit = 20 } = req.query;
+  const { page = 1, limit = 40 } = req.query;
   const userId = req.user._id;
 
   try {

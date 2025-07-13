@@ -265,7 +265,7 @@ function MessageInput({
           </div>
           <button
             onClick={() => setReplyingToMessage(null)}
-            className="ml-2 p-1 text-gray-400 hover:text-white rounded-full hover:bg-gray-700"
+            className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
           >
             <IoClose size={18} />
           </button>

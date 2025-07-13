@@ -363,14 +363,14 @@ const PostPage = ({ openImageModal, setFeedType }) => {
 
   if (!post) {
     return (
-      <div className="flex-1 flex flex-col items-center justify-center h-screen w-full text-white p-4">
+      <div className="flex-1 flex flex-col items-center justify-center h-screen w-ful p-4">
         <h2 className="text-2xl font-bold mb-4 text-center">Post Not Found</h2>
-        <p className="text-gray-400 text-center">
+        <p className="text-gray-500 text-center">
           The post you are looking for does not exist or has been deleted.
         </p>
         <button
           onClick={() => navigate(-1)}
-          className="mt-6 px-4 py-2 bg-blue-500 text-white rounded-full hover:bg-blue-600 transition-colors"
+          className="mt-6 px-4 py-2 bg-parimary rounded-full hover:bg-secondary transition-colors"
         >
           Go Back
         </button>

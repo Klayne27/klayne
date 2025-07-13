@@ -46,6 +46,9 @@ const ChatWindow = ({
     ? null
     : selectedConversation?._id;
 
+  const shouldScrollOnFirstFullLoad = useRef(true);
+  const prevActualConversationIdRef = useRef(actualConversationId);
+
   const isNewOrTemporaryChat =
     selectedConversation?.isNewChat || selectedConversation?.isTemporary;
 
@@ -65,14 +68,16 @@ const ChatWindow = ({
     isFetching,
   } = useFetchMessages(selectedConversation);
 
-  // --- Utility for scrolling to bottom ---
+  const isNewChat =
+    selectedConversation.isNewChat ||
+    (!messages?.length && !isLoading && !error && actualConversationId);
+
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
   }, []);
 
-  // --- Callback for optimistic message sent ---
   const handleOptimisticScroll = useCallback(() => {
     didMessageJustLanded.current = true;
   }, []);
@@ -87,10 +92,6 @@ const ChatWindow = ({
     onMessageSentOptimistically: handleOptimisticScroll,
   });
 
-  const shouldScrollOnFirstFullLoad = useRef(true);
-  const prevActualConversationIdRef = useRef(actualConversationId);
-
-  // --- ResizeObserver to handle dynamic content height changes (images/replies) ---
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;
@@ -99,7 +100,7 @@ const ChatWindow = ({
       resizeObserverRef.current.disconnect();
     }
 
-    prevScrollHeightRef.current = listEl.scrollHeight; // Initialize for accurate comparison
+    prevScrollHeightRef.current = listEl.scrollHeight;
 
     resizeObserverRef.current = new ResizeObserver((entries) => {
       for (let entry of entries) {
@@ -145,13 +146,14 @@ const ChatWindow = ({
     if (conversationChanged) {
       shouldScrollOnFirstFullLoad.current = true;
       prevActualConversationIdRef.current = actualConversationId;
-      didMessageJustLanded.current = true; // Force scroll on new conversation
+      // didMessageJustLanded.current = true; // Force scroll on new conversation
     }
 
-    const isReadyForInitialScroll =
-      shouldScrollOnFirstFullLoad.current && !isLoading && messages.length > 0;
+    const isReadyForAnyScroll =
+      (shouldScrollOnFirstFullLoad.current && !isLoading && messages.length > 0) ||
+      didMessageJustLanded.current;
 
-    if (isReadyForInitialScroll || didMessageJustLanded.current) {
+    if (isReadyForAnyScroll) {
       scrollToBottom();
       shouldScrollOnFirstFullLoad.current = false;
       didMessageJustLanded.current = false;
@@ -404,10 +406,6 @@ const ChatWindow = ({
     currentOptimisticIdRef,
     setShowNewMessageButton,
   ]);
-
-  const isNewChat =
-    selectedConversation.isNewChat ||
-    (!messages?.length && !isLoading && !error && actualConversationId);
 
   const memoizedSetReplyingToMessage = useCallback((message) => {
     setReplyingToMessage(message);

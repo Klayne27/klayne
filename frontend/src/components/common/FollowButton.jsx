@@ -39,13 +39,13 @@ const FollowButton = ({ user, isFollowing: initialIsFollowing, currentUserId }) 
     <button
       className={`
         flex items-center justify-center font-semibold text-sm rounded-full px-3 py-1 transition duration-200
-        md:min-w-[90px] md:text-center border
+        md:min-w-[90px] md:text-center border border-accent
         ${
           // Initial state for "Follow" button
           !isCurrentlyFollowing
-            ? "bg-white text-black md:hover:bg-gray-400"
+            ? "bg-secondary/70 md:hover:bg-secondary transition duration-200"
             : // Initial state for "Following" button
-              "bg-black/0 text-white border border-accent" // Added a subtle border for consistency
+              "bg-base-100" // Added a subtle border for consistency
         }
         ${
           // Apply red styles ONLY if following, hovering AND NOT a touch device
