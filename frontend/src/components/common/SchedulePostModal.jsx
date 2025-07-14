@@ -109,7 +109,7 @@ const SchedulePostModal = ({
     );
 
     if (scheduledDateTime <= new Date()) {
-      toast.error("Please select a future date and time.");
+      toast.info("Please select a future date and time.");
       return;
     }
 
@@ -164,7 +164,7 @@ const SchedulePostModal = ({
     >
       <div
         ref={modalRef}
-        className="bg-base-100 rounded-2xl shadow-lg max-w-xl h-[45vh] md:max-h-fit mt-7 mx-auto w-full flex flex-col overflow-hidden"
+        className="bg-base-100 rounded-2xl shadow-lg max-w-xl  max-h-fit mt-7 mx-auto w-full flex flex-col overflow-hidden"
       >
         <div className="flex items-center justify-between p-2 px-3">
           <div className="flex gap-5 items-center">

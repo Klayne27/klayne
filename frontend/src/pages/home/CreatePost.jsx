@@ -10,9 +10,6 @@ import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa6";
 import { TbCalendarClock } from "react-icons/tb";
 
-
-// Import the new SchedulePostModal component
-
 // IMPORTS FOR MENTION FEATURE
 import { useQuery } from "@tanstack/react-query";
 import { searchUsersApi } from "../../api/usersApi";
@@ -837,7 +834,7 @@ const CreatePost = () => {
             {!selectedFile && !showPollInputs && (
               <TbCalendarClock
                 size={22}
-                className="text-primary hidden md:block cursor-pointer hover:text-primary/80"
+                className="text-primary cursor-pointer hover:text-primary/80"
                 onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
                 title="Schedule post"
                 aria-label="Schedule new post"
