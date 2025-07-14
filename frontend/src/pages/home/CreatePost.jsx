@@ -530,8 +530,6 @@ const CreatePost = () => {
     // toast.success("Schedule removed.");
   }, []);
 
-  // Handlers for ScheduledPostsModal (to view all scheduled posts)
-  // This function will now open the ScheduledPostsModal (the list)
   const handleOpenScheduledPostsListModal = useCallback(() => {
     setIsScheduledPostsModalOpen(true); // Control the list modal
     setShowSchedulePostModal(false); // Close the new post schedule modal if open
@@ -621,13 +619,13 @@ const CreatePost = () => {
         </div>
       )}
       <Link to={`/profile/${authUser.username}`}>
-        <div className="avatar">
+        <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
           <div className="w-8 md:w-10 rounded-full">
             <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
           </div>
         </div>
       </Link>
-      <form className="flex flex-col w-full relative" onSubmit={handleSubmit}>
+      <form className={`flex flex-col w-full relative ${scheduledAt ? "mt-1" : ""}`} onSubmit={handleSubmit}>
         <div className="relative w-full">
           <textarea
             className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
@@ -777,9 +775,6 @@ const CreatePost = () => {
         )}
         {/* --- POLL INPUTS SECTION END --- */}
 
-        {/* Scheduled Post Display */}
-        {/* Scheduled Post Display (for the NEW post being created) */}
-
         <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
             {/* Image/Video input - hidden if poll or schedule is active */}
@@ -819,15 +814,6 @@ const CreatePost = () => {
                 aria-label="Schedule new post"
               />
             )}
-
-            {/* View ALL Scheduled Posts icon - always visible as it manages existing ones */}
-            {/* <IoCalendarOutline
-              className="text-primary size-6 cursor-pointer hover:text-primary/80"
-              onClick={handleOpenAllScheduledPostsModal} // New handler
-              title="View all scheduled posts"
-              aria-label="View all scheduled posts"
-              style={{ transform: "scaleX(-1)" }} // Optional: to differentiate from the "schedule new" icon
-            /> */}
 
             {/* Emoji picker */}
             <div className="relative">

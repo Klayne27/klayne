@@ -1,3 +1,4 @@
+// hooks/postsHooks/useUpdateScheduledPost.js
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { updateScheduledPostApi } from "../../api/postsApi";
@@ -15,9 +16,8 @@ export const useUpdateScheduledPost = () => {
     onSuccess: () => {
       toast.success("Scheduled post updated successfully");
       queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
-      // If the post is no longer scheduled (i.e., published immediately),
-      // you might want to invalidate the 'posts' query too.
-      // This logic would be better handled based on the response from the API.
+      // If the post is published immediately, you'd invalidate 'posts' query,
+      // but that's handled by the createPost -> deleteScheduledPost flow.
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update scheduled post");

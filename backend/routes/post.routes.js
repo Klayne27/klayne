@@ -19,6 +19,7 @@ import {
   updateScheduledPost,
   getScheduledPosts,
   deleteScheduledPost,
+  deleteMultipleScheduledPosts,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -52,5 +53,7 @@ router.get("/:id", protectRoute, getPost); // /api/posts/:id - THIS MUST BE LAST
 // Update and Delete Scheduled posts
 router.put("/scheduled/:id", protectRoute, updateScheduledPost); // Add protectRoute
 router.delete("/scheduled/:id", protectRoute, deleteScheduledPost); // Add protectRoute
+router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
+
 
 export default router;

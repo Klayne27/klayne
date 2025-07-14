@@ -1417,7 +1417,8 @@ export const getScheduledPosts = async (req, res) => {
 export const updateScheduledPost = async (req, res) => {
   try {
     const { id } = req.params;
-    const { text, img, video, pollOptions, scheduledAt } = req.body;
+    // Only expect text and scheduledAt for scheduled posts
+    const { text, scheduledAt } = req.body;
     const userId = req.user._id;
 
     const post = await Post.findById(id);
@@ -1433,112 +1434,41 @@ export const updateScheduledPost = async (req, res) => {
     }
 
     if (!post.isScheduled) {
-      return res
-        .status(400)
-        .json({
-          error: "This post is not a scheduled post and cannot be updated this way.",
-        });
-    }
-
-    // Basic validation
-    if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
-      return res
-        .status(400)
-        .json({ error: "Post must have text, image, video, or poll options." });
-    }
-
-    if ((img || video) && pollOptions && pollOptions.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "You cannot post a poll with an image or video." });
-    }
-
-    // Handle media updates if any
-    let uploadedImgUrl = img;
-    let uploadedVideoUrl = video;
-    let imgPublicId = post.imgPublicId;
-    let videoPublicId = post.videoPublicId;
-    let mediaType = post.mediaType;
-
-    // If new image is provided and existing image needs to be deleted
-    if (img && img !== post.img) {
-      if (post.imgPublicId) {
-        await cloudinary.uploader.destroy(post.imgPublicId);
-      }
-      const uploadedResponse = await cloudinary.uploader.upload(img);
-      uploadedImgUrl = uploadedResponse.secure_url;
-      imgPublicId = uploadedResponse.public_id;
-      mediaType = "image";
-    } else if (!img && post.img) {
-      // If image is removed
-      if (post.imgPublicId) {
-        await cloudinary.uploader.destroy(post.imgPublicId);
-      }
-      uploadedImgUrl = null;
-      imgPublicId = null;
-      if (mediaType === "image") mediaType = "none";
-    }
-
-    // If new video is provided and existing video needs to be deleted
-    if (video && video !== post.video) {
-      if (post.videoPublicId) {
-        await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" });
-      }
-      const uploadedResponse = await cloudinary.uploader.upload(video, {
-        resource_type: "video",
+      return res.status(400).json({
+        error: "This post is not a scheduled post and cannot be updated this way.",
       });
-      uploadedVideoUrl = uploadedResponse.secure_url;
-      videoPublicId = uploadedResponse.public_id;
-      mediaType = "video";
-    } else if (!video && post.video) {
-      // If video is removed
-      if (post.videoPublicId) {
-        await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" });
-      }
-      uploadedVideoUrl = null;
-      videoPublicId = null;
-      if (mediaType === "video") mediaType = "none";
     }
 
-    // Handle poll options update
-    let updatedPollOptions = post.pollOptions;
-    let updatedPollTotalVotes = post.pollTotalVotes;
+    // Since scheduled posts are text-only, ensure no media or poll is present
+    // If the original scheduled post somehow had media/poll, clear it on update.
+    if (post.imgPublicId) {
+      // Assuming cloudinary is configured to destroy the image
+      // await cloudinary.uploader.destroy(post.imgPublicId); // Uncomment if you want to delete associated media from Cloudinary on update
+    }
+    if (post.videoPublicId) {
+      // Assuming cloudinary is configured to destroy the video
+      // await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" }); // Uncomment if you want to delete associated media from Cloudinary on update
+    }
 
-    if (pollOptions && pollOptions.length > 0) {
-      if (pollOptions.length < 2) {
-        return res.status(400).json({ error: "A poll must have at least two options." });
-      }
-      updatedPollOptions = pollOptions.map((option) => ({
-        text: option.text.trim(),
-        voters: option.voters || [], // Keep existing voters if they are sent, otherwise empty
-      }));
-      updatedPollTotalVotes = pollOptions.reduce(
-        (acc, option) => acc + (option.voters ? option.voters.length : 0),
-        0
-      );
-      uploadedImgUrl = null;
-      uploadedVideoUrl = null;
-      imgPublicId = null;
-      videoPublicId = null;
-      mediaType = "none";
-    } else if (!pollOptions || pollOptions.length === 0) {
-      updatedPollOptions = [];
-      updatedPollTotalVotes = 0;
+    // Basic validation for text content
+    if (!text || text.trim().length === 0) {
+      return res.status(400).json({ error: "Scheduled post must have text content." });
     }
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
+    // Update the post fields
     post.text = text;
-    post.img = uploadedImgUrl;
-    post.video = uploadedVideoUrl;
-    post.imgPublicId = imgPublicId;
-    post.videoPublicId = videoPublicId;
-    post.mediaType = mediaType;
-    post.pollOptions = updatedPollOptions;
-    post.pollTotalVotes = updatedPollTotalVotes;
+    post.img = null; // Clear image
+    post.video = null; // Clear video
+    post.imgPublicId = null; // Clear image public ID
+    post.videoPublicId = null; // Clear video public ID
+    post.mediaType = "none"; // Set media type to none for text-only scheduled posts
+    post.pollOptions = []; // Clear poll options
+    post.pollTotalVotes = 0; // Reset poll votes
     post.mentionedUsers = mentionedUsersIds;
     post.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
-    post.isScheduled = !!scheduledAt;
+    post.isScheduled = !!scheduledAt; // Should remain true for updates unless published immediately
 
     await post.save();
 
@@ -1587,6 +1517,72 @@ export const deleteScheduledPost = async (req, res) => {
     res.status(200).json({ message: "Scheduled post deleted successfully" });
   } catch (error) {
     console.log("Error in deleteScheduledPost controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteMultipleScheduledPosts = async (req, res) => {
+  try {
+    const { postIds } = req.body; // Expect an array of post IDs
+    const userId = req.user._id;
+
+    if (!Array.isArray(postIds) || postIds.length === 0) {
+      return res.status(400).json({ error: "No post IDs provided for deletion." });
+    }
+
+    const deletePromises = postIds.map(async (postId) => {
+      const post = await Post.findById(postId);
+
+      if (!post) {
+        return { postId, status: "not_found", message: "Post not found" };
+      }
+
+      if (post.user.toString() !== userId.toString()) {
+        return { postId, status: "unauthorized", message: "Not authorized to delete" };
+      }
+
+      if (!post.isScheduled) {
+        return { postId, status: "not_scheduled", message: "Not a scheduled post" };
+      }
+
+      // Delete media from cloudinary if it exists (only if you want to delete associated media)
+      if (post.imgPublicId) {
+        await cloudinary.uploader.destroy(post.imgPublicId);
+      }
+      if (post.videoPublicId) {
+        await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" });
+      }
+
+      await Post.deleteOne({ _id: postId });
+      return { postId, status: "success", message: "Deleted successfully" };
+    });
+
+    const results = await Promise.all(deletePromises);
+
+    const successfulDeletions = results.filter(
+      (result) => result.status === "success"
+    ).length;
+    const failedDeletions = results.filter(
+      (result) => result.status !== "success"
+    ).length;
+
+    if (successfulDeletions === 0) {
+      return res
+        .status(400)
+        .json({
+          error:
+            "No scheduled posts were deleted. Check authorizations or if posts exist.",
+        });
+    }
+
+    res.status(200).json({
+      message: `${successfulDeletions} scheduled post(s) deleted successfully.`,
+      results,
+      successfulDeletions,
+      failedDeletions,
+    });
+  } catch (error) {
+    console.log("Error in deleteMultipleScheduledPosts controller: ", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

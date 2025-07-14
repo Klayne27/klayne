@@ -1,16 +1,17 @@
 // EditScheduledPostModal.jsx
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { MdClose } from "react-icons/md";
-import { IoTrashOutline } from "react-icons/io5"; // Added trash icon
+import { IoClose, IoTrashOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { TbCalendarClock } from "react-icons/tb";
 
-
 // Import your mutation hooks
-
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { useUpdateScheduledPost } from "../../hooks/postsHooks/useUpdateScheduledPost";
 import { useDeleteScheduledPost } from "../../hooks/postsHooks/useDeleteScheduledPost";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { PiSmiley } from "react-icons/pi";
+import EmojiPicker from "emoji-picker-react";
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null);
@@ -18,17 +19,21 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const { deleteScheduledPost, isPending: isDeleting } = useDeleteScheduledPost();
   const { createPost, isPending: isPublishing } = useCreatePosts(); // Use createPost for "publish now"
 
+  const { authUser } = useAuthUser();
+
+  const emojiButtonRef = useRef(null);
+    const emojiPickerRef = useRef(null)
+  const textareaRef = useRef(null);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+
   // Initialize state with post's scheduledAt date
   const initialSchedule = post ? new Date(post.scheduledAt) : new Date();
-
-  const initialMinutes = initialSchedule.getMinutes();
-  const roundedInitialMinutes = Math.min(Math.ceil(initialMinutes / 5) * 5, 55);
 
   const [selectedMonth, setSelectedMonth] = useState(initialSchedule.getMonth());
   const [selectedDay, setSelectedDay] = useState(initialSchedule.getDate());
   const [selectedYear, setSelectedYear] = useState(initialSchedule.getFullYear());
   const [selectedHour, setSelectedHour] = useState(initialSchedule.getHours() % 12 || 12); // 1-12 format
-  const [selectedMinute, setSelectedMinute] = useState(roundedInitialMinutes);
+  const [selectedMinute, setSelectedMinute] = useState(initialSchedule.getMinutes()); // Use actual minute
   const [selectedAmPm, setSelectedAmPm] = useState(
     initialSchedule.getHours() >= 12 ? "PM" : "AM"
   );
@@ -37,19 +42,27 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   // State for the post's text (can be edited)
   const [editedText, setEditedText] = useState(post?.text || "");
 
+  const onEmojiClick = useCallback((emojiObject) => {
+    setEditedText((prevText) => prevText + emojiObject.emoji);
+    if (textareaRef.current) {
+      textareaRef.current.focus();
+      // Auto-adjust height after emoji insert
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, []);
+
   useEffect(() => {
     if (!post) return; // Don't proceed if post prop is not available yet
 
     // Re-initialize state if the post prop changes while modal is open
     const newInitialSchedule = new Date(post.scheduledAt);
-    const newInitialMinutes = newInitialSchedule.getMinutes();
-    const newRoundedInitialMinutes = Math.min(Math.ceil(newInitialMinutes / 5) * 5, 55);
 
     setSelectedMonth(newInitialSchedule.getMonth());
     setSelectedDay(newInitialSchedule.getDate());
     setSelectedYear(newInitialSchedule.getFullYear());
     setSelectedHour(newInitialSchedule.getHours() % 12 || 12);
-    setSelectedMinute(newRoundedInitialMinutes);
+    setSelectedMinute(newInitialSchedule.getMinutes()); // Use actual minute
     setSelectedAmPm(newInitialSchedule.getHours() >= 12 ? "PM" : "AM");
     setEditedText(post.text || "");
 
@@ -71,6 +84,27 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen, post]); // Depend on isOpen and post
+
+  // Effect to close emoji picker on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showEmojiPicker &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target)
+      ) {
+        setShowEmojiPicker(false);
+      }
+    };
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
   const getDaysInMonth = useCallback(
     (year, month) => new Date(year, month + 1, 0).getDate(),
@@ -98,7 +132,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
     { name: "December", value: 11 },
   ];
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
-  const minutes = Array.from({ length: 12 }, (_, i) => i * 5);
+  const minutes = Array.from({ length: 60 }, (_, i) => i); // 0 to 59 minutes
 
   const handleUpdateConfirm = () => {
     let hour24 = selectedHour;
@@ -127,14 +161,15 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
     updateScheduledPost(
       {
         postId: post._id,
-        updatedData: {
+        postData: {
+          // Renamed from updatedData to postData for consistency with hook
           text: editedText,
           scheduledAt: newScheduledDateTime.toISOString(),
+          // No img, video, or pollOptions are sent as scheduled posts are text-only
         },
       },
       {
         onSuccess: () => {
-          // This toast is handled by the hook, but can add another here if needed
           onClose(); // Close modal on success
         },
       }
@@ -142,12 +177,11 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   };
 
   const handleDelete = () => {
-      deleteScheduledPost(post._id, {
-        onSuccess: () => {
-          onClose(); // Close modal on success
-        },
-      });
-    
+    deleteScheduledPost(post._id, {
+      onSuccess: () => {
+        onClose(); // Close modal on success
+      },
+    });
   };
 
   const handlePublishNow = () => {
@@ -155,9 +189,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
       createPost(
         {
           text: editedText,
-          img: post.img, // Assuming scheduled posts retain their media
-          video: post.video,
-          pollOptions: post.pollOptions, // If polls are part of your post model
+          // No img, video, pollOptions are sent as scheduled posts are text-only
           scheduledAt: null, // Clear scheduledAt to publish immediately
         },
         {
@@ -185,7 +217,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   };
 
   const handleBackgroundClick = (e) => {
-    e.stopPropagation()
+    e.stopPropagation();
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
     }
@@ -235,53 +267,72 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
     >
       <div
         ref={modalRef}
-        className="bg-base-100 rounded-2xl shadow-lg max-w-xl mx-auto w-full mt-7 flex flex-col overflow-hidden"
+        className="bg-base-100 rounded-2xl shadow-lg max-w-xl mx-auto w-full max-h-fit mt-7 flex flex-col overflow-hidden"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+        <div className="flex items-center gap-5 px-3 py-2 border-b border-gray-700">
           <button
-            className="hover:bg-gray-800 rounded-full p-2 transition duration-200"
+            className="hover:bg-secondary rounded-full p-1 transition duration-200"
             onClick={onClose}
-            disabled={isActionDisabled}
           >
-            <MdClose className="w-5 h-5 text-white" />
+            <IoClose strokeWidth={1} size={24} />
           </button>
-          <h2 className="text-xl font-bold text-white">Edit Scheduled Post</h2>
-          <button
-            className="bg-white text-black font-semibold px-4 py-1.5 rounded-full hover:opacity-90 transition duration-200 text-sm"
-            onClick={handleUpdateConfirm}
-            disabled={isActionDisabled}
-          >
-            {isUpdating ? "Updating..." : "Update"}
-          </button>
+          <h2 className="text-xl font-bold ">Edit Scheduled Post</h2>
         </div>
 
         {/* Post Text Editing */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-3">Post Content</h3>
-          <textarea
-            className="w-full bg-gray-800 border border-gray-700 rounded-lg py-2 px-3 text-white text-base resize-none focus:outline-none focus:ring-2 focus:ring-primary"
-            rows="4"
-            value={editedText}
-            onChange={(e) => setEditedText(e.target.value)}
-            placeholder="What's happening?"
-            disabled={isActionDisabled}
-          ></textarea>
+        <div className="p-4 border-b border-accent flex gap-3">
+          <img
+            src={authUser?.profileImg}
+            className="size-8 md:size-10 rounded-full object-cover"
+          />
+          <div className="flex flex-col flex-1">
+            <textarea
+              className="flex-1 bg-base-100 rounded-lg resize-none focus:outline-none text-xl"
+              rows="3"
+              value={editedText}
+              ref={textareaRef}
+              onChange={(e) => setEditedText(e.target.value)}
+              placeholder="What's happening?"
+              disabled={isActionDisabled}
+            ></textarea>
+            <div className=" hidden md:block mb-2 relative">
+              <PiSmiley
+                ref={emojiButtonRef}
+                className="text-primary cursor-pointer hidden md:block hover:text-primary/80"
+                size={22}
+                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                strokeWidth={10}
+                title="Choose an emoji"
+                aria-label="Choose an emoji"
+              />
+              {showEmojiPicker && (
+                <div
+                  className="absolute z-10 mt-2 top-full -left-28 md:left-0 md:translate-x-0 "
+                  ref={emojiPickerRef}
+                >
+                  <EmojiPicker
+                    onEmojiClick={onEmojiClick}
+                    theme="dark"
+                    lazyLoadEmojis={true}
+                  />
+                </div>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Scheduled Time Display */}
-        <div className="flex items-center gap-2 p-4 text-sm font-semibold text-primary">
-          <TbCalendarClock
-          className="w-4 h-4" /> Will send on {formattedScheduledTime()}
+        <div className="flex items-center gap-4 p-4 text-sm text-gray-500">
+          <TbCalendarClock size={18} />
+          Will send on {formattedScheduledTime()}
         </div>
 
-        {/* Date Selection (similar to SchedulePostModal) */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-3">Date</h3>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="px-4">
+          <h3 className=" text-gray-500 mb-1">Date</h3>
+          <div className="grid grid-cols-[4fr_2fr_2fr] gap-3">
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMonth}
                 onChange={(e) => {
                   const newMonth = parseInt(e.target.value);
@@ -291,7 +342,6 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                     setSelectedDay(maxDaysInNewMonth);
                   }
                 }}
-                disabled={isActionDisabled}
               >
                 {months.map((month) => (
                   <option key={month.value} value={month.value}>
@@ -318,10 +368,9 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-                disabled={isActionDisabled}
               >
                 {days.map((day) => (
                   <option key={day} value={day}>
@@ -348,7 +397,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedYear}
                 onChange={(e) => {
                   const newYear = parseInt(e.target.value);
@@ -358,7 +407,6 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                     setSelectedDay(maxDaysInNewMonth);
                   }
                 }}
-                disabled={isActionDisabled}
               >
                 {years.map((year) => (
                   <option key={year} value={year}>
@@ -386,16 +434,14 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
           </div>
         </div>
 
-        {/* Time Selection (similar to SchedulePostModal) */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-3">Time</h3>
+        <div className="p-4 py-2">
+          <h3 className=" text-gray-500">Time</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedHour}
                 onChange={(e) => setSelectedHour(parseInt(e.target.value))}
-                disabled={isActionDisabled}
               >
                 {hours.map((hour) => (
                   <option key={hour} value={hour}>
@@ -422,10 +468,9 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMinute}
                 onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
-                disabled={isActionDisabled}
               >
                 {minutes.map((minute) => (
                   <option key={minute} value={minute}>
@@ -452,10 +497,9 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedAmPm}
                 onChange={(e) => setSelectedAmPm(e.target.value)}
-                disabled={isActionDisabled}
               >
                 <option value="AM">AM</option>
                 <option value="PM">PM</option>
@@ -482,27 +526,16 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
         {/* Timezone Display */}
         <div className="p-4">
-          <h3 className="text-lg font-semibold mb-3">Time zone</h3>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base">
-            {currentTimezone}
-          </div>
-
+          <h3 className=" text-gray-500">Time zone</h3>
+          <div className="text-xl">{currentTimezone}</div>
           {/* Action Buttons */}
-          <div className="flex justify-between items-center mt-6">
+          <div className="flex justify-end items-center mt-6">
             <button
-              className="text-red-500 hover:text-red-600 font-semibold flex items-center gap-1.5 transition duration-200"
-              onClick={handleDelete}
+              className="bg-primary text-white font-semibold px-4 py-2 rounded-full hover:opacity-80 transition duration-200 text-sm"
+              onClick={handleUpdateConfirm}
               disabled={isActionDisabled}
             >
-              <IoTrashOutline className="w-5 h-5" />
-              {isDeleting ? "Deleting..." : "Delete post"}
-            </button>
-            <button
-              className="bg-primary text-white font-semibold px-4 py-2 rounded-full hover:opacity-90 transition duration-200 text-sm"
-              onClick={handlePublishNow}
-              disabled={isActionDisabled}
-            >
-              {isPublishing ? "Publishing..." : "Publish now"}
+              {isPublishing ? "Updating..." : "Update"}
             </button>
           </div>
         </div>
