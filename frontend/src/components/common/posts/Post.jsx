@@ -85,7 +85,11 @@ const Post = ({
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
 
-  const formattedDate = formatPostDate(originalPost.createdAt);
+  const displayTimestamp = originalPost.publishedAt
+    ? originalPost.publishedAt
+    : originalPost.createdAt;
+
+  const formattedDate = formatPostDate(displayTimestamp);
 
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeButton, setActiveButton] = useState(null);

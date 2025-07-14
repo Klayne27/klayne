@@ -23,6 +23,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       // Mark as not scheduled
       post.isScheduled = false;
       post.scheduledAt = null;
+      post.publishedAt = new Date(); // <--- ADDED THIS LINE
 
       // Increment user's postsCount
       await User.findByIdAndUpdate(post.user._id, { $inc: { postsCount: 1 } });

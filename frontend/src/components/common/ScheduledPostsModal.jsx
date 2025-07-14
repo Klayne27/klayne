@@ -9,6 +9,7 @@ import { format } from "date-fns";
 import { IoClose } from "react-icons/io5";
 import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
 import toast from "react-hot-toast";
+import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
@@ -18,6 +19,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const [selectedPostIds, setSelectedPostIds] = useState([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   const { scheduledPosts, isLoading, isError, error, refetch } = useGetScheduledPosts();
   const { deleteMultipleScheduledPosts, isPending: isDeletingMultiple } =
@@ -34,17 +36,22 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
       toast.error("Please select at least one post to delete.");
       return;
     }
-    if (
-      window.confirm(
-        `Are you sure you want to delete ${selectedPostIds.length} selected post(s)?`
-      )
-    ) {
-      deleteMultipleScheduledPosts(selectedPostIds, {
-        onSuccess: () => {
-          setSelectedPostIds([]); // Clear selections after successful deletion
-          setIsEditMode(false); // Exit edit mode
-        },
-      });
+    setShowDeleteConfirmModal(true); // Open the confirmation modal
+  };
+
+  const areAllPostsSelected =
+    (scheduledPosts && selectedPostIds.length === scheduledPosts.length) ||
+    selectedPostIds.length > 0;
+
+  // New function to handle select/deselect all
+  const handleSelectAllToggle = () => {
+    if (areAllPostsSelected) {
+      // If all are selected, deselect all
+      setSelectedPostIds([]);
+    } else {
+      // If not all are selected, select all
+      // Ensure scheduledPosts is not null/undefined before mapping
+      setSelectedPostIds(scheduledPosts ? scheduledPosts.map((post) => post._id) : []);
     }
   };
 
@@ -75,6 +82,33 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
   const handleEditPostClick = (post) => {
     onPostSelectedForEdit(post);
+  };
+
+  const handlePostListItemClick = (post) => {
+    if (isEditMode) {
+      // In edit mode, clicking the list item toggles its checkbox
+      const isCurrentlySelected = selectedPostIds.includes(post._id);
+      handleCheckboxChange(post._id, !isCurrentlySelected);
+    } else {
+      // Not in edit mode, open the single post edit modal
+      handleEditPostClick(post);
+    }
+  };
+
+  // This function will be called when the user confirms deletion from the ConfirmationModal
+  const handleConfirmDelete = () => {
+    deleteMultipleScheduledPosts(selectedPostIds, {
+      onSuccess: () => {
+        setSelectedPostIds([]); // Clear selections after successful deletion
+        setIsEditMode(false); // Exit edit mode
+        setShowDeleteConfirmModal(false); // Close the confirmation modal
+        // `refetch` or `invalidateQueries` in the hook will update the list
+      },
+      onError: () => {
+        // Handle error if deletion fails
+        setShowDeleteConfirmModal(false); // Close the confirmation modal even on error
+      },
+    });
   };
 
   if (!isOpen) return null;
@@ -143,21 +177,23 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                 <li
                   key={post._id}
                   className="px-4 py-2 border-b border-accent hover:bg-secondary transition duration-200 flex items-center gap-3"
+                  onClick={() => handlePostListItemClick(post)}
                 >
                   {isEditMode && (
-                      <input
-                        type="checkbox"
-                        className="checkbox checkbox-primary [--chkfg:white] rounded-[4px] size-5 text-white" // Use DaisyUI checkbox class if available
-                        checked={selectedPostIds.includes(post._id)}
-                        onChange={(e) => handleCheckboxChange(post._id, e.target.checked)}
-                        // Stop propagation to prevent handleEditPostClick from firing when checkbox is clicked
-                        onClick={(e) => e.stopPropagation()}
-                      />
+                    <input
+                      type="checkbox"
+                      className="checkbox checkbox-primary border-gray-500 [--chkfg:white] rounded-[4px] size-5 text-white border-2" // Use DaisyUI checkbox class if available
+                      checked={selectedPostIds.includes(post._id)}
+                      onChange={(e) => handleCheckboxChange(post._id, e.target.checked)}
+                      onClick={(e) => e.stopPropagation()}
+                    />
                   )}
                   {/* Wrap content in a div to make it clickable for single edit mode */}
                   <div
-                    className="flex-1 cursor-pointer"
-                    onClick={() => handleEditPostClick(post)}
+                    className={`flex-1 cursor-pointer ${
+                      isEditMode ? "cursor-default" : "cursor-pointer"
+                    }`}
+                    // onClick={() => handleEditPostClick(post)}
                   >
                     <p className="text-sm text-gray-500 mb-1 flex items-center gap-2">
                       <TbCalendarClock size={18} />
@@ -172,22 +208,41 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
             </ul>
           )}
         </div>
-        <div className="flex justify-between border-t border-accent p-1">
-          <button className="font-semibold px-4 py-1.5 rounded-full text-primary hover:bg-primary/10 transition duration-200">
-            Select all
-          </button>
+        {isEditMode && (
+          <div className="flex justify-between border-t border-accent p-1">
+            <button
+              className="font-semibold px-4 py-1.5 rounded-full text-primary hover:bg-primary/10 transition duration-200"
+              onClick={handleSelectAllToggle} // Attach the new handler
+              disabled={isLoading || isError || scheduledPosts?.length === 0} // Disable if no posts
+            >
+              {areAllPostsSelected ? "Deselect All" : "Select All"}
+            </button>
 
-          <button
-            className={`px-4 py-1.5 rounded-full ${
-              selectedPostIds.length === 0 ? "" : "hover:bg-red-700/10"
-            } text-red-600 font-semibold transition duration-200 disabled:opacity-50`}
-            onClick={handleDeleteSelected}
-            disabled={selectedPostIds.length === 0 || isDeletingMultiple}
-          >
-            {isDeletingMultiple ? "Deleting..." : `Delete`}
-          </button>
-        </div>
+            <button
+              className={`px-4 py-1.5 rounded-full ${
+                selectedPostIds.length === 0 ? "" : "hover:bg-red-700/10"
+              } text-red-600 font-semibold transition duration-200 disabled:opacity-50`}
+              onClick={handleDeleteSelected}
+              disabled={selectedPostIds.length === 0 || isDeletingMultiple}
+            >
+              {isDeletingMultiple ? "Deleting..." : `Delete`}
+            </button>
+          </div>
+        )}
       </div>
+
+      {/* Confirmation Modal for Delete Selected Posts */}
+      <DeleteScheduledPostsModal
+        isOpen={showDeleteConfirmModal}
+        onClose={() => setShowDeleteConfirmModal(false)}
+        title="Delete Scheduled Posts?"
+        message={`This can't be undone and you'll lose ${selectedPostIds.length} scheduled post(s).`}
+        confirmButtonText={isDeletingMultiple ? "Deleting..." : "Delete"}
+        onConfirm={handleConfirmDelete}
+        isConfirming={isDeletingMultiple}
+        confirmButtonColor="bg-red-600"
+        confirmButtonHoverColor="hover:bg-red-700"
+      />
     </div>
   );
 };

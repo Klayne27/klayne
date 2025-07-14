@@ -106,6 +106,10 @@ const postSchema = new mongoose.Schema(
       type: Date,
       default: null, // Will be set only if isScheduled is true
     },
+    publishedAt: {
+      type: Date,
+      default: null, // Initially null for all posts
+    },
   },
   { timestamps: true }
 );

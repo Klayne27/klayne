@@ -184,38 +184,6 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
     });
   };
 
-  const handlePublishNow = () => {
-    if (window.confirm("Are you sure you want to publish this post immediately?")) {
-      createPost(
-        {
-          text: editedText,
-          // No img, video, pollOptions are sent as scheduled posts are text-only
-          scheduledAt: null, // Clear scheduledAt to publish immediately
-        },
-        {
-          onSuccess: () => {
-            // After publishing, delete the original scheduled post
-            deleteScheduledPost(post._id, {
-              onSuccess: () => {
-                onClose();
-                toast.success("Post published successfully!");
-              },
-              onError: (err) => {
-                toast.error(
-                  `Post published, but failed to delete scheduled entry: ${err.message}`
-                );
-                onClose(); // Still close the modal
-              },
-            });
-          },
-          onError: (err) => {
-            toast.error(err.message || "Failed to publish post immediately.");
-          },
-        }
-      );
-    }
-  };
-
   const handleBackgroundClick = (e) => {
     e.stopPropagation();
     if (modalRef.current && !modalRef.current.contains(e.target)) {

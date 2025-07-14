@@ -625,7 +625,10 @@ const CreatePost = () => {
           </div>
         </div>
       </Link>
-      <form className={`flex flex-col w-full relative ${scheduledAt ? "mt-1" : ""}`} onSubmit={handleSubmit}>
+      <form
+        className={`flex flex-col w-full relative ${scheduledAt ? "mt-1" : ""}`}
+        onSubmit={handleSubmit}
+      >
         <div className="relative w-full">
           <textarea
             className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
@@ -804,17 +807,6 @@ const CreatePost = () => {
               />
             )}
 
-            {/* Schedule NEW Post icon - hidden if media or poll is active */}
-            {!selectedFile && !showPollInputs && (
-              <TbCalendarClock
-                size={22}
-                className="text-primary cursor-pointer hover:text-primary/80"
-                onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
-                title="Schedule post"
-                aria-label="Schedule new post"
-              />
-            )}
-
             {/* Emoji picker */}
             <div className="relative">
               <PiSmiley
@@ -840,10 +832,21 @@ const CreatePost = () => {
                 </div>
               )}
             </div>
+
+            {/* Schedule NEW Post icon - hidden if media or poll is active */}
+            {!selectedFile && !showPollInputs && (
+              <TbCalendarClock
+                size={22}
+                className="text-primary hidden md:block cursor-pointer hover:text-primary/80"
+                onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
+                title="Schedule post"
+                aria-label="Schedule new post"
+              />
+            )}
           </div>
           <button
             type="submit"
-            className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-secondary rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+            className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
             disabled={isButtonDisabled}
           >
             {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}

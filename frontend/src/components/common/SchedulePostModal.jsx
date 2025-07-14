@@ -1,5 +1,6 @@
 // components/common/SchedulePostModal.jsx (Your existing component)
 import React, { useState, useEffect, useRef } from "react";
+import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 import { TbCalendarClock } from "react-icons/tb";
 
@@ -108,7 +109,7 @@ const SchedulePostModal = ({
     );
 
     if (scheduledDateTime <= new Date()) {
-      alert("Please select a future date and time.");
+      toast.error("Please select a future date and time.");
       return;
     }
 
