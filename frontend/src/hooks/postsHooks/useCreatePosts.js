@@ -18,6 +18,7 @@ export const useCreatePosts = () => {
         toast.success(
           `Post scheduled for ${new Date(data.scheduledAt).toLocaleString()}`
         );
+        queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
       } else {
         toast.success("Post created successfully");
         queryClient.invalidateQueries({ queryKey: ["posts"] });

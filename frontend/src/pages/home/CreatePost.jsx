@@ -8,7 +8,8 @@ import { BiImageAdd, BiPoll } from "react-icons/bi";
 import EmojiPicker from "emoji-picker-react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa6";
-import { IoCalendarOutline } from "react-icons/io5"; // Import calendar icon
+import { TbCalendarClock } from "react-icons/tb";
+
 
 // Import the new SchedulePostModal component
 
@@ -16,108 +17,58 @@ import { IoCalendarOutline } from "react-icons/io5"; // Import calendar icon
 import { useQuery } from "@tanstack/react-query";
 import { searchUsersApi } from "../../api/usersApi";
 import SchedulePostModal from "../../components/common/SchedulePostModal";
+import ScheduledPostsModal from "../../components/common/ScheduledPostsModal";
+import EditScheduledPostModal from "../../components/common/EditSchedulePostModal";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
+const MAX_POLL_CHOICES = 4;
+const MAX_FILE_SIZE_MB = 20;
 
 const CreatePost = () => {
+  // State for post content
   const [text, setText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState(null);
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-  const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
 
-  // --- NEW POLL STATE ---
+  // State for emoji picker
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
+  const [emojiPickerWidth, setEmojiPickerWidth] = useState(350); // Default for larger screens
+
+  // State for poll feature
   const [showPollInputs, setShowPollInputs] = useState(false);
   const [pollChoices, setPollChoices] = useState([{ text: "" }, { text: "" }]);
-  const MAX_POLL_CHOICES = 4;
   const [focusedPollInputIndex, setFocusedPollInputIndex] = useState(null);
-  // --- END NEW POLL STATE ---
 
-  // --- SCHEDULE POST STATE ---
-  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  // State for schedule post feature (for NEW posts)
+  const [showSchedulePostModal, setShowSchedulePostModal] = useState(false); // Renamed for clarity
   const [scheduledAt, setScheduledAt] = useState(null); // Stores the ISO string from the modal
-  // --- END SCHEDULE POST STATE ---
 
-  // --- MENTION STATE ---
+  // State for viewing ALL scheduled posts
+  const [showAllScheduledPostsModal, setShowAllScheduledPostsModal] = useState(false); // New state
+
+  // State for showing edit schedule modal
+  const [isScheduledPostsModalOpen, setIsScheduledPostsModalOpen] = useState(false);
+  const [isEditScheduledPostModalOpen, setIsEditScheduledPostModalOpen] = useState(false);
+  const [postToEdit, setPostToEdit] = useState(null);
+
+  // State for mention feature
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-  const suggestionBoxRef = useRef(null);
-  // --- END MENTION STATE ---
+  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
 
-  const { authUser } = useAuthUser();
-
+  // Refs
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
+  const suggestionBoxRef = useRef(null);
 
+  // Hooks
+  const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
-  // Debounced query for mention search
-  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
-
-  const handlePaste = (e) => {
-    e.preventDefault();
-
-    const items = e.clipboardData.items;
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
-
-        if (file) {
-          if (!file.type.startsWith("image/")) {
-            toast.error("Pasted content is not a supported image type.");
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            if (fileInputRef.current) fileInputRef.current.value = null;
-            return;
-          }
-
-          if (file.size > 20 * 1024 * 1024) {
-            toast.error("Pasted image size exceeds 20MB limit.");
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            if (fileInputRef.current) fileInputRef.current.value = null;
-            return;
-          }
-
-          setSelectedFile(file);
-          setPreviewUrl(URL.createObjectURL(file));
-
-          // Reset other conflicting states
-          setShowPollInputs(false);
-          setPollChoices([{ text: "" }, { text: "" }]);
-          setShowMentionSuggestions(false);
-          setScheduledAt(null); // Clear scheduled post if media is pasted
-          return;
-        }
-      }
-    }
-
-    // If no image was found, or if it was text, proceed with default text paste
-    const pastedText = e.clipboardData.getData("text/plain");
-    if (pastedText) {
-      const cursorStart = e.target.selectionStart;
-      const cursorEnd = e.target.selectionEnd;
-
-      const newText =
-        text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
-
-      setText(newText);
-
-      setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.selectionStart = cursorStart + pastedText.length;
-          textareaRef.current.selectionEnd = cursorStart + pastedText.length;
-          textareaRef.current.style.height = "auto";
-          textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-        }
-      }, 0);
-    }
-  };
-
+  // Debounce mention query
   useEffect(() => {
     const timer = setTimeout(() => {
       setDebouncedMentionQuery(mentionQuery);
@@ -132,77 +83,38 @@ const CreatePost = () => {
     enabled: !!debouncedMentionQuery && showMentionSuggestions && !showPollInputs,
   });
 
-  // --- TEXTAREA CHANGE HANDLER ---
-  const handleTextChange = (e) => {
-    const newText = e.target.value;
-    setText(newText);
+  // Effect to adjust emoji picker width on resize
+  useEffect(() => {
+    const handleResize = () => {
+      setEmojiPickerWidth(window.innerWidth < 640 ? 300 : 350);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
-    // Auto-adjust textarea height
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-    }
-
-    const cursorPosition = e.target.selectionStart;
-    const textBeforeCursor = newText.substring(0, cursorPosition);
-    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
-
-    if (
-      lastAtIndex !== -1 &&
-      !/\S/.test(textBeforeCursor.substring(lastAtIndex - 1, lastAtIndex)) // Ensures '@' is preceded by whitespace or start of string
-    ) {
-      const possibleMention = textBeforeCursor.substring(lastAtIndex);
-      const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u);
-
-      if (mentionMatch) {
-        setMentionQuery(mentionMatch[1]);
-        setMentionStartIndex(lastAtIndex);
-        setShowMentionSuggestions(true);
-        return;
+  // Effect to close emoji picker on click outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        showEmojiPicker &&
+        emojiPickerRef.current &&
+        !emojiPickerRef.current.contains(event.target) &&
+        emojiButtonRef.current &&
+        !emojiButtonRef.current.contains(event.target)
+      ) {
+        setShowEmojiPicker(false);
       }
+    };
+    if (showEmojiPicker) {
+      document.addEventListener("mousedown", handleClickOutside);
     }
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [showEmojiPicker]);
 
-    setMentionQuery("");
-    setMentionStartIndex(-1);
-    setShowMentionSuggestions(false);
-  };
-
-  // --- MENTION SELECTION HANDLER ---
-  const handleMentionSelect = (username) => {
-    const currentText = text;
-    const startReplaceIndex = mentionStartIndex;
-
-    const textFromAt = currentText.substring(mentionStartIndex);
-    const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u);
-    let partialMentionLength = 0;
-    if (match && match[1]) {
-      partialMentionLength = match[1].length;
-    }
-
-    const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength;
-
-    const newText =
-      currentText.substring(0, startReplaceIndex) +
-      `@${username} ` +
-      currentText.substring(endReplaceIndex);
-
-    setText(newText);
-    setMentionQuery("");
-    setMentionStartIndex(-1);
-    setShowMentionSuggestions(false);
-
-    const newCursorPosition = startReplaceIndex + `@${username} `.length;
-    setTimeout(() => {
-      if (textareaRef.current) {
-        textareaRef.current.focus();
-        textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
-        textareaRef.current.style.height = "auto";
-        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-      }
-    }, 0);
-  };
-
-  // --- CLOSE SUGGESTIONS ON CLICK OUTSIDE ---
+  // Effect to close mention suggestions on click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -221,149 +133,260 @@ const CreatePost = () => {
     };
   }, [showMentionSuggestions]);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
+  // Effect to manage textarea height dynamically
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [text, showPollInputs]); // Also react to poll input visibility as it changes layout
 
-    if (showPollInputs) {
-      const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "");
+  // Handlers
 
-      if (text.trim() === "") {
-        toast.error("Polls should have a question/text.");
+  const resetForm = useCallback(() => {
+    setText("");
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    setShowPollInputs(false);
+    setPollChoices([{ text: "" }, { text: "" }]);
+    setScheduledAt(null);
+    setShowEmojiPicker(false);
+    setMentionQuery("");
+    setShowMentionSuggestions(false);
+    setMentionStartIndex(-1);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = null;
+    }
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+    }
+  }, []);
+
+  const handlePaste = useCallback(
+    (e) => {
+      e.preventDefault();
+
+      const items = e.clipboardData.items;
+      let imagePasted = false;
+
+      for (let i = 0; i < items.length; i++) {
+        if (items[i].type.indexOf("image") !== -1) {
+          const file = items[i].getAsFile();
+
+          if (file) {
+            if (!file.type.startsWith("image/")) {
+              toast.error("Pasted content is not a supported image type.");
+              return;
+            }
+            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+              toast.error(`Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`);
+              return;
+            }
+
+            setSelectedFile(file);
+            setPreviewUrl(URL.createObjectURL(file));
+
+            // Reset conflicting states
+            setShowPollInputs(false);
+            setPollChoices([{ text: "" }, { text: "" }]);
+            setShowMentionSuggestions(false);
+            setScheduledAt(null); // Clear scheduled post if media is pasted
+            imagePasted = true;
+            break; // Exit loop after finding the first image
+          }
+        }
+      }
+
+      if (!imagePasted) {
+        // If no image was found, or if it was text, proceed with default text paste
+        const pastedText = e.clipboardData.getData("text/plain");
+        if (pastedText) {
+          const cursorStart = e.target.selectionStart;
+          const cursorEnd = e.target.selectionEnd;
+
+          const newText =
+            text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
+
+          setText(newText);
+
+          setTimeout(() => {
+            if (textareaRef.current) {
+              textareaRef.current.selectionStart = cursorStart + pastedText.length;
+              textareaRef.current.selectionEnd = cursorStart + pastedText.length;
+              textareaRef.current.style.height = "auto";
+              textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+            }
+          }, 0);
+        }
+      }
+    },
+    [text]
+  );
+
+  const handleTextChange = useCallback((e) => {
+    const newText = e.target.value;
+    setText(newText);
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+
+    const cursorPosition = e.target.selectionStart;
+    const textBeforeCursor = newText.substring(0, cursorPosition);
+    const lastAtIndex = textBeforeCursor.lastIndexOf("@");
+
+    // Logic for mention suggestions
+    if (
+      lastAtIndex !== -1 &&
+      (lastAtIndex === 0 || /\s/.test(textBeforeCursor[lastAtIndex - 1])) // Ensures '@' is preceded by whitespace or start of string
+    ) {
+      const possibleMention = textBeforeCursor.substring(lastAtIndex);
+      const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u);
+
+      if (mentionMatch) {
+        setMentionQuery(mentionMatch[1]);
+        setMentionStartIndex(lastAtIndex);
+        setShowMentionSuggestions(true);
+        return;
+      }
+    }
+
+    setMentionQuery("");
+    setMentionStartIndex(-1);
+    setShowMentionSuggestions(false);
+  }, []);
+
+  const handleMentionSelect = useCallback(
+    (username) => {
+      const currentText = text;
+      const startReplaceIndex = mentionStartIndex;
+
+      const textFromAt = currentText.substring(mentionStartIndex);
+      const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u);
+      let partialMentionLength = 0;
+      if (match && match[1]) {
+        partialMentionLength = match[1].length;
+      }
+
+      const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength;
+
+      const newText =
+        currentText.substring(0, startReplaceIndex) +
+        `@${username} ` +
+        currentText.substring(endReplaceIndex);
+
+      setText(newText);
+      setMentionQuery("");
+      setMentionStartIndex(-1);
+      setShowMentionSuggestions(false);
+
+      const newCursorPosition = startReplaceIndex + `@${username} `.length;
+      setTimeout(() => {
+        if (textareaRef.current) {
+          textareaRef.current.focus();
+          textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+          textareaRef.current.style.height = "auto";
+          textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        }
+      }, 0);
+    },
+    [text, mentionStartIndex]
+  );
+
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault();
+
+      if (showPollInputs) {
+        const filledPollChoices = pollChoices.filter(
+          (choice) => choice.text.trim() !== ""
+        );
+
+        if (text.trim() === "") {
+          toast.error("Polls should have a question/text.");
+          return;
+        }
+
+        if (pollChoices[0].text.trim() === "" || pollChoices[1].text.trim() === "") {
+          toast.error("At least the first two poll options must be filled.");
+          return;
+        }
+
+        if (
+          filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
+        ) {
+          toast.error(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`);
+          return;
+        }
+
+        if (selectedFile) {
+          toast.error("You cannot post a poll with an image or video.");
+          return;
+        }
+        if (scheduledAt) {
+          toast.error("You cannot schedule a poll.");
+          return;
+        }
+
+        let postData = { text, pollOptions: filledPollChoices.map((c) => c.text) }; // Send only text of poll options
+
+        createPost(postData, {
+          onSuccess: resetForm,
+          onError: (err) => {
+            toast.error(err?.message || "Failed to create post with poll.");
+          },
+        });
         return;
       }
 
-      if (pollChoices[0].text.trim() === "" || pollChoices[1].text.trim() === "") {
-        toast.error("At least the first two poll options must be filled.");
+      // Regular post (text or media)
+      if (text.trim() === "" && !selectedFile) {
+        toast.error("Post must have text, an image, or a video.");
         return;
       }
 
-      if (
-        filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
-      ) {
-        toast.error(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`);
-        return;
-      }
-
-      if (selectedFile) {
-        toast.error("You cannot post a poll with an image or video.");
-        return;
-      }
-      if (scheduledAt) {
-        // Cannot schedule a poll
-        toast.error("You cannot schedule a poll.");
+      if (selectedFile && scheduledAt) {
+        toast.error("You cannot schedule a post with media.");
         return;
       }
 
       let postData = { text };
-      postData.pollOptions = filledPollChoices;
 
-      createPost(postData, {
-        onSuccess: () => {
-          setText("");
-          setSelectedFile(null);
-          setPreviewUrl(null);
-          setShowPollInputs(false);
-          setPollChoices([{ text: "" }, { text: "" }]);
-          setScheduledAt(null); // Clear scheduledAt
-          if (fileInputRef.current) {
-            fileInputRef.current.value = null;
+      if (selectedFile) {
+        const reader = new FileReader();
+        reader.onloadend = () => {
+          if (selectedFile.type.startsWith("image/")) {
+            postData.img = reader.result;
+          } else if (selectedFile.type.startsWith("video/")) {
+            postData.video = reader.result;
           }
-          if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
-          }
-        },
-        onError: (err) => {
-          toast.error(err?.message || "Failed to create post with poll.");
-        },
-      });
-      return;
-    }
 
-    // Regular post (text or media)
-    if (text.trim() === "" && !selectedFile) {
-      toast.error("Post must have text, an image, or a video.");
-      return;
-    }
-
-    // If media is selected, clear scheduledAt and vice-versa
-    if (selectedFile && scheduledAt) {
-      toast.error("You cannot schedule a post with media.");
-      return;
-    }
-
-    let postData = { text };
-
-    if (selectedFile) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (selectedFile.type.startsWith("image/")) {
-          postData.img = reader.result;
-        } else if (selectedFile.type.startsWith("video/")) {
-          postData.video = reader.result;
-        }
-
-        // Pass scheduledAt only if it's set and no media (handled above, but good for clarity)
-        if (scheduledAt && !selectedFile) {
+          createPost(postData, {
+            onSuccess: resetForm,
+            onError: (err) => {
+              toast.error(err?.message || "Failed to create post with media.");
+            },
+          });
+        };
+        reader.readAsDataURL(selectedFile);
+      } else {
+        if (scheduledAt) {
           postData.scheduledAt = scheduledAt;
         }
 
         createPost(postData, {
-          onSuccess: (data) => {
-            // Data contains isScheduled and scheduledAt
-            setText("");
-            setSelectedFile(null);
-            setPreviewUrl(null);
-            setShowPollInputs(false);
-            setPollChoices([{ text: "" }, { text: "" }]);
-            setScheduledAt(null); // Clear scheduledAt after successful creation/scheduling
-            if (fileInputRef.current) {
-              fileInputRef.current.value = null;
-            }
-            if (textareaRef.current) {
-              textareaRef.current.style.height = "auto";
-            }
-            // Toast message handled by useCreatePosts hook now
-          },
+          onSuccess: resetForm,
           onError: (err) => {
-            toast.error(err?.message || "Failed to create post with media.");
+            toast.error(err?.message || "Failed to create post.");
           },
         });
-      };
-      reader.readAsDataURL(selectedFile);
-    } else {
-      // If no file, but a scheduledAt is set, include it
-      if (scheduledAt) {
-        postData.scheduledAt = scheduledAt;
       }
+    },
+    [text, selectedFile, showPollInputs, pollChoices, scheduledAt, createPost, resetForm]
+  );
 
-      createPost(postData, {
-        onSuccess: (data) => {
-          // Data contains isScheduled and scheduledAt
-          setText("");
-          setSelectedFile(null);
-          setPreviewUrl(null);
-          setShowPollInputs(false);
-          setPollChoices([{ text: "" }, { text: "" }]);
-          setScheduledAt(null); // Clear scheduledAt after successful creation/scheduling
-          if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
-          }
-          // Toast message handled by useCreatePosts hook now
-        },
-        onError: (err) => {
-          toast.error(err?.message || "Failed to create post.");
-        },
-      });
-    }
-  };
-
-  const handleFileChange = (e) => {
-    if (e.target.files[0]) {
-      setShowPollInputs(false);
-      setPollChoices([{ text: "" }, { text: "" }]);
-      setShowMentionSuggestions(false);
-      setScheduledAt(null); // Clear scheduledAt if media is selected
-    }
+  const handleFileChange = useCallback((e) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
@@ -374,8 +397,8 @@ const CreatePost = () => {
         return;
       }
 
-      if (file.size > 20 * 1024 * 1024) {
-        toast.error("File size exceeds 20MB limit.");
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
+        toast.error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`);
         setSelectedFile(null);
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = null;
@@ -384,31 +407,31 @@ const CreatePost = () => {
 
       setSelectedFile(file);
       setPreviewUrl(URL.createObjectURL(file));
+
+      // Reset conflicting states
+      setShowPollInputs(false);
+      setPollChoices([{ text: "" }, { text: "" }]);
+      setShowMentionSuggestions(false);
+      setScheduledAt(null); // Clear scheduledAt if media is selected
     } else {
       setSelectedFile(null);
       setPreviewUrl(null);
     }
-  };
+  }, []);
 
-  const onEmojiClick = (emojiObject) => {
+  const onEmojiClick = useCallback((emojiObject) => {
     setText((prevText) => prevText + emojiObject.emoji);
     if (textareaRef.current) {
       textareaRef.current.focus();
+      // Auto-adjust height after emoji insert
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
-  };
+  }, []);
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (e.shiftKey) {
-        setTimeout(() => {
-          if (textareaRef.current) {
-            textareaRef.current.style.height = "auto";
-            textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-          }
-        }, 0);
-      } else {
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter" && !e.shiftKey) {
         if (showMentionSuggestions && mentionSuggestions.length > 0) {
           e.preventDefault();
           // Optional: automatically select the first suggestion on Enter
@@ -418,158 +441,185 @@ const CreatePost = () => {
           handleSubmit(e);
         }
       }
-    }
-  };
+    },
+    [showMentionSuggestions, mentionSuggestions, handleSubmit]
+  );
 
-  // --- NEW POLL HANDLERS ---
-  const handleAddPollChoice = () => {
+  const handleAddPollChoice = useCallback(() => {
     if (pollChoices.length < MAX_POLL_CHOICES) {
       setPollChoices([...pollChoices, { text: "" }]);
     }
-  };
+  }, [pollChoices]);
 
-  const handlePollChoiceChange = (index, value) => {
-    const newChoices = [...pollChoices];
-    newChoices[index].text = value.slice(0, POLL_CHOICE_MAX_LENGTH);
-    setPollChoices(newChoices);
-  };
+  const handlePollChoiceChange = useCallback(
+    (index, value) => {
+      const newChoices = [...pollChoices];
+      newChoices[index].text = value.slice(0, POLL_CHOICE_MAX_LENGTH);
+      setPollChoices(newChoices);
+    },
+    [pollChoices]
+  );
 
-  const handleRemovePollChoice = (indexToRemove) => {
-    const newChoices = pollChoices.filter((_, i) => i !== indexToRemove);
-    while (newChoices.length < 2) {
-      newChoices.push({ text: "" });
-    }
-    setPollChoices(newChoices);
-  };
+  const handleRemovePollChoice = useCallback(
+    (indexToRemove) => {
+      const newChoices = pollChoices.filter((_, i) => i !== indexToRemove);
+      // Ensure at least two choices remain
+      while (newChoices.length < 2) {
+        newChoices.push({ text: "" });
+      }
+      setPollChoices(newChoices);
+    },
+    [pollChoices]
+  );
 
-  const handleRemovePoll = () => {
+  const handleRemovePoll = useCallback(() => {
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
     }
-  };
+  }, []);
 
-  const handlePollIconClick = () => {
-    setShowPollInputs(!showPollInputs);
+  const handlePollIconClick = useCallback(() => {
+    setShowPollInputs((prev) => !prev);
     if (!showPollInputs) {
-      // If turning poll inputs ON
-      setSelectedFile(null); // Clear media
+      // If turning poll inputs ON, clear other conflicting states
+      setSelectedFile(null);
       setPreviewUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = null;
-      setScheduledAt(null); // Clear scheduledAt
+      setScheduledAt(null);
       setPollChoices([{ text: "" }, { text: "" }]);
       setMentionQuery("");
       setShowMentionSuggestions(false);
       setMentionStartIndex(-1);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto";
-      }
     }
-  };
+  }, [showPollInputs]);
 
-  const handlePollInputFocus = (index) => {
+  const handlePollInputFocus = useCallback((index) => {
     setFocusedPollInputIndex(index);
-  };
+  }, []);
 
-  const handlePollInputBlur = () => {
+  const handlePollInputBlur = useCallback(() => {
     setFocusedPollInputIndex(null);
-  };
-  // --- END NEW POLL HANDLERS ---
+  }, []);
 
-  // --- SCHEDULE POST HANDLERS ---
-  const handleScheduleIconClick = () => {
-    setShowScheduleModal(true);
+  // Handlers for SchedulePostModal (for new posts)
+  const handleOpenSchedulePostModal = useCallback(() => {
+    setShowSchedulePostModal(true);
     // When opening schedule modal, clear other conflicting states
     setSelectedFile(null);
     setPreviewUrl(null);
     if (fileInputRef.current) fileInputRef.current.value = null;
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
-  };
+  }, []);
 
-  const handleScheduleModalClose = () => {
-    setShowScheduleModal(false);
-  };
+  const handleCloseSchedulePostModal = useCallback(() => {
+    setShowSchedulePostModal(false);
+  }, []);
 
-  const handleScheduleConfirm = (isoDateTime) => {
+  const handleScheduleConfirm = useCallback((isoDateTime) => {
     setScheduledAt(isoDateTime);
-    setShowScheduleModal(false);
-    toast.success(`Post scheduled for ${new Date(isoDateTime).toLocaleString()}`);
-  };
+    setShowSchedulePostModal(false);
+    // toast.success(`Post scheduled for ${new Date(isoDateTime).toLocaleString()}`);
+  }, []);
 
-  const handleRemoveSchedule = () => {
+  const handleRemoveSchedule = useCallback(() => {
     setScheduledAt(null);
-    toast.success("Schedule removed.");
-  };
-  // --- END SCHEDULE POST HANDLERS ---
+    setShowSchedulePostModal(false);
+    // toast.success("Schedule removed.");
+  }, []);
 
+  // Handlers for ScheduledPostsModal (to view all scheduled posts)
+  // This function will now open the ScheduledPostsModal (the list)
+  const handleOpenScheduledPostsListModal = useCallback(() => {
+    setIsScheduledPostsModalOpen(true); // Control the list modal
+    setShowSchedulePostModal(false); // Close the new post schedule modal if open
+    setIsEditScheduledPostModalOpen(false); // Ensure edit modal is closed
+    setPostToEdit(null); // Clear any previously selected post for edit
+  }, []);
+
+  // This function closes the ScheduledPostsModal (the list)
+  const handleCloseScheduledPostsListModal = useCallback(() => {
+    setIsScheduledPostsModalOpen(false);
+    setShowSchedulePostModal(true)
+    // Do NOT automatically open SchedulePostModal here unless specifically desired.
+    // The user might just want to close the list.
+    // setShowSchedulePostModal(true); // Removed this, as it forces open the new schedule modal
+  }, []);
+
+  // This function is called when a post item is clicked in ScheduledPostsModal
+  const handlePostSelectedForEdit = (post) => {
+    setIsScheduledPostsModalOpen(false); // Close the list modal
+    setPostToEdit(post); // Set the post data
+    setIsEditScheduledPostModalOpen(true); // Open the edit modal
+  };
+
+  // This function is called when EditScheduledPostModal is closed
+  const handleCloseEditScheduledPostModal = () => {
+    setIsEditScheduledPostModalOpen(false); // Close the edit modal
+    setPostToEdit(null); // Clear the post data
+
+    // Option 1: Go back to the list of scheduled posts
+    setIsScheduledPostsModalOpen(true);
+    // Option 2: Just close all modals and return to main CreatePost screen
+    // setIsScheduledPostsModalOpen(false); // If you prefer this behavior
+  };
+
+  // Determine if the post button should be disabled
   const isButtonDisabled =
     isPending ||
     (() => {
-      // If a scheduledAt date is picked, the post needs text, but not media/poll
       if (scheduledAt) {
+        // Scheduled post requires text, and cannot have media or be a poll
         return text.trim() === "" || selectedFile !== null || showPollInputs;
       }
       if (showPollInputs) {
+        // Poll requires text and at least two non-empty choices, and no choice exceeds max length
         return (
           text.trim() === "" ||
           pollChoices[0].text.trim() === "" ||
           pollChoices[1].text.trim() === "" ||
           pollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         );
-      } else {
-        // Normal post: needs text OR file
-        return text.trim() === "" && !selectedFile;
       }
+      // Regular post requires text OR a selected file
+      return text.trim() === "" && !selectedFile;
     })();
 
-  useEffect(() => {
-    const handleResize = () => {
-      if (window.innerWidth < 640) {
-        setEmojiPickerWidth(300);
-      } else {
-        setEmojiPickerWidth(350);
-      }
-    };
-
-    handleResize();
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        showEmojiPicker &&
-        emojiPickerRef.current &&
-        !emojiPickerRef.current.contains(event.target) &&
-        emojiButtonRef.current &&
-        !emojiButtonRef.current.contains(event.target)
-      ) {
-        setShowEmojiPicker(false);
-      }
-    };
-
-    if (showEmojiPicker) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showEmojiPicker]);
-
-  // Effect to manage textarea height dynamically on mount and text changes
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-    }
-  }, [text]);
-
   return (
-    <div className="flex p-4 items-start gap-3 border-b border-accent mt-12 relative">
+    <div
+      className={`flex p-4 items-start gap-3 border-b border-accent ${
+        scheduledAt ? "mt-14" : "mt-12"
+      } relative`}
+    >
+      {scheduledAt && (
+        <div
+          className="flex items-center justify-between absolute top-0 left-[66px]"
+          onClick={handleOpenSchedulePostModal}
+        >
+          <p className="text-gray-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
+            <TbCalendarClock size={16} />
+            Will send on{" "}
+            {new Date(scheduledAt).toLocaleString([], {
+              month: "short",
+              day: "numeric",
+              year: "numeric",
+              hour: "numeric",
+              minute: "2-digit",
+              hour12: true,
+            })}
+          </p>
+          {/* <button
+            type="button"
+            onClick={handleRemoveSchedule}
+            className="text-red-600 hover:text-red-400 transition duration-200"
+            aria-label="Remove schedule"
+          >
+            <IoCloseSharp size={23} />
+          </button> */}
+        </div>
+      )}
       <Link to={`/profile/${authUser.username}`}>
         <div className="avatar">
           <div className="w-8 md:w-10 rounded-full">
@@ -583,7 +633,7 @@ const CreatePost = () => {
             className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
             placeholder={
               scheduledAt
-                ? "What do you want to schedule?"
+                ? "What is happening?"
                 : showPollInputs
                 ? "Ask a question"
                 : "What is happening?"
@@ -728,28 +778,7 @@ const CreatePost = () => {
         {/* --- POLL INPUTS SECTION END --- */}
 
         {/* Scheduled Post Display */}
-        {scheduledAt && (
-          <div className="flex items-center justify-between mt-4 p-3 border border-accent rounded-2xl bg-secondary/20">
-            <p className="text-primary text-sm font-semibold">
-              Will send on{" "}
-              {new Date(scheduledAt).toLocaleString([], {
-                month: "short",
-                day: "numeric",
-                year: "numeric",
-                hour: "numeric",
-                minute: "2-digit",
-                hour12: true,
-              })}
-            </p>
-            <button
-              type="button"
-              onClick={handleRemoveSchedule}
-              className="text-red-600 hover:text-red-400 transition duration-200"
-            >
-              <IoCloseSharp size={23} />
-            </button>
-          </div>
-        )}
+        {/* Scheduled Post Display (for the NEW post being created) */}
 
         <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
@@ -758,6 +787,8 @@ const CreatePost = () => {
               <BiImageAdd
                 className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
                 onClick={() => fileInputRef.current.click()}
+                title="Add image or video"
+                aria-label="Add image or video"
               />
             )}
             <input
@@ -774,17 +805,29 @@ const CreatePost = () => {
                 className="text-primary size-6 cursor-pointer hover:text-primary/80"
                 onClick={handlePollIconClick}
                 title="Add a poll"
+                aria-label="Add a poll"
               />
             )}
 
-            {/* Schedule Post icon - hidden if media or poll is active */}
+            {/* Schedule NEW Post icon - hidden if media or poll is active */}
             {!selectedFile && !showPollInputs && (
-              <IoCalendarOutline
-                className="text-primary size-6 cursor-pointer hover:text-primary/80"
-                onClick={handleScheduleIconClick}
+              <TbCalendarClock
+                size={22}
+                className="text-primary cursor-pointer hover:text-primary/80"
+                onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
                 title="Schedule post"
+                aria-label="Schedule new post"
               />
             )}
+
+            {/* View ALL Scheduled Posts icon - always visible as it manages existing ones */}
+            {/* <IoCalendarOutline
+              className="text-primary size-6 cursor-pointer hover:text-primary/80"
+              onClick={handleOpenAllScheduledPostsModal} // New handler
+              title="View all scheduled posts"
+              aria-label="View all scheduled posts"
+              style={{ transform: "scaleX(-1)" }} // Optional: to differentiate from the "schedule new" icon
+            /> */}
 
             {/* Emoji picker */}
             <div className="relative">
@@ -794,6 +837,8 @@ const CreatePost = () => {
                 size={22}
                 onClick={() => setShowEmojiPicker(!showEmojiPicker)}
                 strokeWidth={10}
+                title="Choose an emoji"
+                aria-label="Choose an emoji"
               />
               {showEmojiPicker && (
                 <div
@@ -804,6 +849,7 @@ const CreatePost = () => {
                     onEmojiClick={onEmojiClick}
                     theme="dark"
                     width={emojiPickerWidth}
+                    lazyLoadEmojis={true}
                   />
                 </div>
               )}
@@ -817,16 +863,35 @@ const CreatePost = () => {
             {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
           </button>
         </div>
-        {isError && <div className="text-red-500">{error.message}</div>}
+        {isError && <div className="text-red-500 mt-2">{error.message}</div>}
       </form>
 
-      {/* Schedule Post Modal */}
+      {/* Schedule Post Modal (for NEW posts) */}
       <SchedulePostModal
-        isOpen={showScheduleModal}
-        onClose={handleScheduleModalClose}
+        isOpen={showSchedulePostModal} // Changed state name
+        onClose={handleCloseSchedulePostModal} // Changed handler name
         onScheduleConfirm={handleScheduleConfirm}
         initialDate={scheduledAt} // Pass current scheduledAt if editing
+        openAllScheduledPosts={handleOpenScheduledPostsListModal}
+        scheduledAt={scheduledAt}
+        onRemoveSchedule={handleRemoveSchedule}
       />
+
+      {/* Scheduled Posts List Modal (to view/manage ALL existing scheduled posts) */}
+      <ScheduledPostsModal
+        isOpen={isScheduledPostsModalOpen}
+        onClose={handleCloseScheduledPostsListModal}
+        onPostSelectedForEdit={handlePostSelectedForEdit} // Pass the new handler
+      />
+
+      {/* Render EditScheduledPostModal separately */}
+      {postToEdit && ( // Only render if there's a post to edit
+        <EditScheduledPostModal
+          isOpen={isEditScheduledPostModalOpen}
+          onClose={handleCloseEditScheduledPostModal}
+          post={postToEdit}
+        />
+      )}
     </div>
   );
 };

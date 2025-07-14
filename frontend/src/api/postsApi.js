@@ -131,3 +131,31 @@ export const unpinPostApi = async (postId) => {
   }
   return res.json();
 };
+
+// New API client functions for scheduled posts
+export const fetchScheduledPostsApi = async () => {
+  const res = await fetch("/api/posts/scheduled");
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts");
+  return data;
+};
+
+export const updateScheduledPostApi = async ({ postId, postData }) => {
+  const res = await fetch(`/api/posts/scheduled/${postId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(postData),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to update scheduled post");
+  return data;
+};
+
+export const deleteScheduledPostApi = async (postId) => {
+  const res = await fetch(`/api/posts/scheduled/${postId}`, {
+    method: "DELETE",
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to delete scheduled post");
+  return data;
+};

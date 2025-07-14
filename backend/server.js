@@ -4,7 +4,7 @@ import cookieParser from "cookie-parser";
 import dotenv from "dotenv";
 import { v2 as cloudinary } from "cloudinary";
 
-import { app, server } from "./lib/socket.js";
+import { app, io, onlineUsersMap, server } from "./lib/socket.js";
 
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -13,6 +13,7 @@ import commentRoutes from "./routes/comment.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import connectMongoDB from "./db/connectMongoDB.js";
+import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
 
 dotenv.config();
 
@@ -44,6 +45,11 @@ if (process.env.NODE_ENV === "production") {
     res.sendFile(path.resolve(__dirname, "frontend", "dist", "index.html"));
   });
 }
+
+setInterval(() => {
+  console.log("Checking for scheduled posts to publish...");
+  publishScheduledPosts(io, onlineUsersMap); // Pass io and onlineUsersMap
+}, 60 * 1000); // Check every 1 minute
 
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);

@@ -1,11 +1,19 @@
+// components/common/SchedulePostModal.jsx (Your existing component)
 import React, { useState, useEffect, useRef } from "react";
-import { IoCalendarOutline } from "react-icons/io5";
-import { MdClose } from "react-icons/md";
+import { IoClose } from "react-icons/io5";
+import { TbCalendarClock } from "react-icons/tb";
 
-const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) => {
+const SchedulePostModal = ({
+  isOpen,
+  onClose,
+  onScheduleConfirm,
+  initialDate,
+  openAllScheduledPosts,
+  scheduledAt,
+  onRemoveSchedule,
+}) => {
   const modalRef = useRef(null);
 
-  // Initialize with current date/time + 10 minutes or initialDate if provided
   const now = new Date();
   const initialSchedule = initialDate
     ? new Date(initialDate)
@@ -16,9 +24,8 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
   const [selectedDay, setSelectedDay] = useState(initialSchedule.getDate());
   const [selectedYear, setSelectedYear] = useState(initialSchedule.getFullYear());
   const [selectedHour, setSelectedHour] = useState(initialSchedule.getHours() % 12 || 12); // 1-12 format
-  const [selectedMinute, setSelectedMinute] = useState(
-    Math.ceil(initialSchedule.getMinutes() / 5) * 5
-  ); // Round to nearest 5 minutes
+  const [selectedMinute, setSelectedMinute] = useState(initialSchedule.getMinutes());
+
   const [selectedAmPm, setSelectedAmPm] = useState(
     initialSchedule.getHours() >= 12 ? "PM" : "AM"
   );
@@ -26,12 +33,9 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
 
   useEffect(() => {
     if (isOpen) {
-      document.body.style.overflow = "hidden"; // Disable background scrolling
-      // Set timezone display
+      document.body.style.overflow = "hidden";
       try {
         const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
-        // Format timezone nicely, e.g., "America/New_York" to "Eastern Time" or "New York"
-        // This is a simple conversion, for full names, you'd need a library or map
         const timezoneName = tz.split("/").pop().replace(/_/g, " ") || tz;
         setCurrentTimezone(timezoneName);
       } catch (error) {
@@ -39,13 +43,27 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
         setCurrentTimezone("Local Time");
       }
     } else {
-      document.body.style.overflow = "unset"; // Enable background scrolling
+      document.body.style.overflow = "unset";
     }
 
     return () => {
       document.body.style.overflow = "unset";
     };
   }, [isOpen]);
+
+  // Update states if initialDate changes (useful when editing a scheduled post)
+  useEffect(() => {
+    if (initialDate && isOpen) {
+      const date = new Date(initialDate);
+      setSelectedDate(date);
+      setSelectedMonth(date.getMonth());
+      setSelectedDay(date.getDate());
+      setSelectedYear(date.getFullYear());
+      setSelectedHour(date.getHours() % 12 || 12);
+      setSelectedMinute(date.getMinutes());
+      setSelectedAmPm(date.getHours() >= 12 ? "PM" : "AM");
+    }
+  }, [initialDate, isOpen]);
 
   if (!isOpen) return null;
 
@@ -54,7 +72,7 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
     { length: getDaysInMonth(selectedYear, selectedMonth) },
     (_, i) => i + 1
   );
-  const years = Array.from({ length: 10 }, (_, i) => now.getFullYear() + i); // Current year + 9 future years
+  const years = Array.from({ length: 10 }, (_, i) => now.getFullYear() + i);
   const months = [
     { name: "January", value: 0 },
     { name: "February", value: 1 },
@@ -69,15 +87,15 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
     { name: "November", value: 10 },
     { name: "December", value: 11 },
   ];
-  const hours = Array.from({ length: 12 }, (_, i) => i + 1); // 1-12
-  const minutes = Array.from({ length: 12 }, (_, i) => i * 5); // 0, 5, 10... 55
+  const hours = Array.from({ length: 12 }, (_, i) => i + 1);
+  const minutes = Array.from({ length: 60 }, (_, i) => i);
 
   const handleConfirm = () => {
     let hour24 = selectedHour;
     if (selectedAmPm === "PM" && selectedHour !== 12) {
       hour24 = selectedHour + 12;
     } else if (selectedAmPm === "AM" && selectedHour === 12) {
-      hour24 = 0; // Midnight 12 AM is 0 hours
+      hour24 = 0;
     }
 
     const scheduledDateTime = new Date(
@@ -86,16 +104,27 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
       selectedDay,
       hour24,
       selectedMinute,
-      0 // Seconds
+      0
     );
 
-    // Basic validation: ensure scheduled time is in the future
     if (scheduledDateTime <= new Date()) {
-      alert("Please select a future date and time."); // Use a toast in a real app
+      alert("Please select a future date and time.");
       return;
     }
 
-    onScheduleConfirm(scheduledDateTime.toISOString()); // Pass ISO string for consistency
+    onScheduleConfirm(scheduledDateTime.toISOString());
+  };
+
+  const resetDate = new Date(now.getTime() + 10 * 60 * 1000);
+
+  const handleResetSchedule = () => {
+    setSelectedDate(resetDate);
+    setSelectedMonth(resetDate.getMonth());
+    setSelectedDay(resetDate.getDate());
+    setSelectedYear(resetDate.getFullYear());
+    setSelectedHour(resetDate.getHours() % 12 || 12);
+    setSelectedMinute(resetDate.getMinutes());
+    setSelectedAmPm(resetDate.getHours() >= 12 ? "PM" : "AM");
   };
 
   const handleBackgroundClick = (e) => {
@@ -105,13 +134,6 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
   };
 
   const formattedScheduledTime = () => {
-    const date = new Date(
-      selectedYear,
-      selectedMonth,
-      selectedDay,
-      selectedHour,
-      selectedMinute
-    );
     let h = selectedHour;
     if (selectedAmPm === "PM" && selectedHour !== 12) h = selectedHour + 12;
     if (selectedAmPm === "AM" && selectedHour === 12) h = 0;
@@ -136,48 +158,60 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
 
   return (
     <div
-      className="fixed inset-0 bg-black bg-opacity-70 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex  justify-center z-50 p-4"
       onClick={handleBackgroundClick}
     >
       <div
         ref={modalRef}
-        className="bg-base-100 rounded-2xl shadow-lg max-w-md mx-auto w-full flex flex-col overflow-hidden"
+        className="bg-base-100 rounded-2xl shadow-lg max-w-xl h-[45vh] md:max-h-fit mt-7 mx-auto w-full flex flex-col overflow-hidden"
       >
-        {/* Modal Header */}
-        <div className="flex items-center justify-between p-4 border-b border-gray-700">
-          <button
-            className="hover:bg-gray-800 rounded-full p-2 transition duration-200"
-            onClick={onClose}
-          >
-            <MdClose className="w-5 h-5 text-white" />
-          </button>
-          <h2 className="text-xl font-bold text-white">Schedule</h2>
-          <button
-            className="bg-white text-black font-semibold px-4 py-1.5 rounded-full hover:opacity-90 transition duration-200 text-sm"
-            onClick={handleConfirm}
-          >
-            Confirm
-          </button>
+        <div className="flex items-center justify-between p-2 px-3">
+          <div className="flex gap-5 items-center">
+            <button
+              className="hover:bg-secondary rounded-full p-1 transition duration-200"
+              onClick={onClose}
+            >
+              <IoClose strokeWidth={1} size={24} />
+            </button>
+            <h2 className="text-xl font-bold">Schedule</h2>
+          </div>
+          <div className="flex gap-3">
+            {scheduledAt && (
+              <button
+                onClick={() => {
+                  handleResetSchedule();
+                  onRemoveSchedule();
+                }}
+                className="font-semibold rounded-full px-3 hover:bg-secondary transition duration-200"
+              >
+                Clear
+              </button>
+            )}
+
+            <button
+              className="bg-primary text-white font-semibold px-4 py-1.5 rounded-full hover:opacity-80 transition duration-200 text-sm"
+              onClick={handleConfirm}
+            >
+              Confirm
+            </button>
+          </div>
         </div>
 
-        {/* Scheduled Time Display */}
-        <div className="flex items-center gap-2 p-4 text-sm font-semibold text-primary">
-          <IoCalendarOutline className="w-4 h-4" />
+        <div className="flex items-center gap-4 p-4 text-sm text-gray-500">
+          <TbCalendarClock size={18} />
           Will send on {formattedScheduledTime()}
         </div>
 
-        {/* Date Selection */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-3">Date</h3>
-          <div className="grid grid-cols-3 gap-3">
+        <div className="px-4">
+          <h3 className=" text-gray-500 mb-1">Date</h3>
+          <div className="grid grid-cols-[4fr_2fr_2fr] gap-3">
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMonth}
                 onChange={(e) => {
                   const newMonth = parseInt(e.target.value);
                   setSelectedMonth(newMonth);
-                  // Adjust day if new month has fewer days than current selected day
                   const maxDaysInNewMonth = getDaysInMonth(selectedYear, newMonth);
                   if (selectedDay > maxDaysInNewMonth) {
                     setSelectedDay(maxDaysInNewMonth);
@@ -209,7 +243,7 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(parseInt(e.target.value))}
               >
@@ -238,12 +272,11 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedYear}
                 onChange={(e) => {
                   const newYear = parseInt(e.target.value);
                   setSelectedYear(newYear);
-                  // Adjust day if selected date becomes invalid in February of a leap/non-leap year
                   const maxDaysInNewMonth = getDaysInMonth(newYear, selectedMonth);
                   if (selectedDay > maxDaysInNewMonth) {
                     setSelectedDay(maxDaysInNewMonth);
@@ -276,13 +309,12 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
           </div>
         </div>
 
-        {/* Time Selection */}
-        <div className="p-4 border-b border-gray-700">
-          <h3 className="text-lg font-semibold text-white mb-3">Time</h3>
+        <div className="p-4 py-2">
+          <h3 className=" text-gray-500">Time</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedHour}
                 onChange={(e) => setSelectedHour(parseInt(e.target.value))}
               >
@@ -311,7 +343,7 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMinute}
                 onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
               >
@@ -340,7 +372,7 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
             </div>
             <div className="relative">
               <select
-                className="w-full bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedAmPm}
                 onChange={(e) => setSelectedAmPm(e.target.value)}
               >
@@ -367,17 +399,23 @@ const SchedulePostModal = ({ isOpen, onClose, onScheduleConfirm, initialDate }) 
           </div>
         </div>
 
-        {/* Timezone Display */}
         <div className="p-4">
-          <h3 className="text-lg font-semibold text-white mb-3">Time zone</h3>
-          <div className="bg-gray-800 border border-gray-700 rounded-lg py-3 px-3 text-white text-base">
-            {currentTimezone}
-          </div>
-          <p className="text-sm text-primary mt-4 cursor-pointer hover:underline">
+          <h3 className=" text-gray-500">Time zone</h3>
+          <div className="text-xl">{currentTimezone}</div>
+        </div>
+        <div className="flex border-t border-accent p-4">
+          <p
+            className="flex items-center text-sm font-semibold text-primary px-4 cursor-pointer p-1 rounded-full hover:bg-primary/15 transition duration-200"
+            onClick={() => {
+              openAllScheduledPosts();
+            }}
+          >
             Scheduled posts
           </p>
         </div>
       </div>
+
+      {/* <ScheduledPostsModal isOpen={openScheduledPosts} onClose={closeScheduledPosts} /> */}
     </div>
   );
 };
