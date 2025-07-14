@@ -8,14 +8,16 @@ import { BiImageAdd, BiPoll } from "react-icons/bi";
 import EmojiPicker from "emoji-picker-react";
 import toast from "react-hot-toast";
 import { FaPlus } from "react-icons/fa6";
+import { IoCalendarOutline } from "react-icons/io5"; // Import calendar icon
+
+// Import the new SchedulePostModal component
 
 // IMPORTS FOR MENTION FEATURE
 import { useQuery } from "@tanstack/react-query";
 import { searchUsersApi } from "../../api/usersApi";
+import SchedulePostModal from "../../components/common/SchedulePostModal";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
-
-// Removed getCaretCoordinates function entirely
 
 const CreatePost = () => {
   const [text, setText] = useState("");
@@ -31,11 +33,15 @@ const CreatePost = () => {
   const [focusedPollInputIndex, setFocusedPollInputIndex] = useState(null);
   // --- END NEW POLL STATE ---
 
+  // --- SCHEDULE POST STATE ---
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
+  const [scheduledAt, setScheduledAt] = useState(null); // Stores the ISO string from the modal
+  // --- END SCHEDULE POST STATE ---
+
   // --- MENTION STATE ---
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-  // Removed suggestionMenuPosition state, we'll calculate it directly in JSX
   const suggestionBoxRef = useRef(null);
   // --- END MENTION STATE ---
 
@@ -45,7 +51,6 @@ const CreatePost = () => {
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
-  // Removed formRef, as we're positioning relative to the textarea's parent (the `relative w-full` div)
 
   const { createPost, isPending, isError, error } = useCreatePosts();
 
@@ -81,9 +86,11 @@ const CreatePost = () => {
           setSelectedFile(file);
           setPreviewUrl(URL.createObjectURL(file));
 
+          // Reset other conflicting states
           setShowPollInputs(false);
           setPollChoices([{ text: "" }, { text: "" }]);
           setShowMentionSuggestions(false);
+          setScheduledAt(null); // Clear scheduled post if media is pasted
           return;
         }
       }
@@ -92,17 +99,14 @@ const CreatePost = () => {
     // If no image was found, or if it was text, proceed with default text paste
     const pastedText = e.clipboardData.getData("text/plain");
     if (pastedText) {
-      // Get current cursor position
       const cursorStart = e.target.selectionStart;
       const cursorEnd = e.target.selectionEnd;
 
-      // Insert pasted text at cursor
       const newText =
         text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
 
       setText(newText);
 
-      // Restore cursor position after paste
       setTimeout(() => {
         if (textareaRef.current) {
           textareaRef.current.selectionStart = cursorStart + pastedText.length;
@@ -135,8 +139,8 @@ const CreatePost = () => {
 
     // Auto-adjust textarea height
     if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"; // Reset height
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px"; // Set to scroll height
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
     }
 
     const cursorPosition = e.target.selectionStart;
@@ -148,14 +152,12 @@ const CreatePost = () => {
       !/\S/.test(textBeforeCursor.substring(lastAtIndex - 1, lastAtIndex)) // Ensures '@' is preceded by whitespace or start of string
     ) {
       const possibleMention = textBeforeCursor.substring(lastAtIndex);
-      // Updated regex to include Unicode letters and numbers
       const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u);
 
       if (mentionMatch) {
         setMentionQuery(mentionMatch[1]);
         setMentionStartIndex(lastAtIndex);
         setShowMentionSuggestions(true);
-        // No need to set suggestionMenuPosition here, it will be calculated in JSX
         return;
       }
     }
@@ -170,20 +172,18 @@ const CreatePost = () => {
     const currentText = text;
     const startReplaceIndex = mentionStartIndex;
 
-    // Calculate the length of the partial mention (e.g., 'joh' from '@joh')
     const textFromAt = currentText.substring(mentionStartIndex);
-    const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u); // Use the same broad regex
+    const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u);
     let partialMentionLength = 0;
     if (match && match[1]) {
       partialMentionLength = match[1].length;
     }
 
-    // The end of the segment to replace is just after the partial mention
     const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength;
 
     const newText =
       currentText.substring(0, startReplaceIndex) +
-      `@${username} ` + // Add a space after the username for better UX
+      `@${username} ` +
       currentText.substring(endReplaceIndex);
 
     setText(newText);
@@ -248,6 +248,11 @@ const CreatePost = () => {
         toast.error("You cannot post a poll with an image or video.");
         return;
       }
+      if (scheduledAt) {
+        // Cannot schedule a poll
+        toast.error("You cannot schedule a poll.");
+        return;
+      }
 
       let postData = { text };
       postData.pollOptions = filledPollChoices;
@@ -259,6 +264,7 @@ const CreatePost = () => {
           setPreviewUrl(null);
           setShowPollInputs(false);
           setPollChoices([{ text: "" }, { text: "" }]);
+          setScheduledAt(null); // Clear scheduledAt
           if (fileInputRef.current) {
             fileInputRef.current.value = null;
           }
@@ -273,8 +279,15 @@ const CreatePost = () => {
       return;
     }
 
+    // Regular post (text or media)
     if (text.trim() === "" && !selectedFile) {
       toast.error("Post must have text, an image, or a video.");
+      return;
+    }
+
+    // If media is selected, clear scheduledAt and vice-versa
+    if (selectedFile && scheduledAt) {
+      toast.error("You cannot schedule a post with media.");
       return;
     }
 
@@ -289,19 +302,27 @@ const CreatePost = () => {
           postData.video = reader.result;
         }
 
+        // Pass scheduledAt only if it's set and no media (handled above, but good for clarity)
+        if (scheduledAt && !selectedFile) {
+          postData.scheduledAt = scheduledAt;
+        }
+
         createPost(postData, {
-          onSuccess: () => {
+          onSuccess: (data) => {
+            // Data contains isScheduled and scheduledAt
             setText("");
             setSelectedFile(null);
             setPreviewUrl(null);
             setShowPollInputs(false);
             setPollChoices([{ text: "" }, { text: "" }]);
+            setScheduledAt(null); // Clear scheduledAt after successful creation/scheduling
             if (fileInputRef.current) {
               fileInputRef.current.value = null;
             }
             if (textareaRef.current) {
               textareaRef.current.style.height = "auto";
             }
+            // Toast message handled by useCreatePosts hook now
           },
           onError: (err) => {
             toast.error(err?.message || "Failed to create post with media.");
@@ -310,16 +331,24 @@ const CreatePost = () => {
       };
       reader.readAsDataURL(selectedFile);
     } else {
+      // If no file, but a scheduledAt is set, include it
+      if (scheduledAt) {
+        postData.scheduledAt = scheduledAt;
+      }
+
       createPost(postData, {
-        onSuccess: () => {
+        onSuccess: (data) => {
+          // Data contains isScheduled and scheduledAt
           setText("");
           setSelectedFile(null);
           setPreviewUrl(null);
           setShowPollInputs(false);
           setPollChoices([{ text: "" }, { text: "" }]);
+          setScheduledAt(null); // Clear scheduledAt after successful creation/scheduling
           if (textareaRef.current) {
             textareaRef.current.style.height = "auto";
           }
+          // Toast message handled by useCreatePosts hook now
         },
         onError: (err) => {
           toast.error(err?.message || "Failed to create post.");
@@ -333,6 +362,7 @@ const CreatePost = () => {
       setShowPollInputs(false);
       setPollChoices([{ text: "" }, { text: "" }]);
       setShowMentionSuggestions(false);
+      setScheduledAt(null); // Clear scheduledAt if media is selected
     }
     const file = e.target.files[0];
     if (file) {
@@ -380,8 +410,9 @@ const CreatePost = () => {
         }, 0);
       } else {
         if (showMentionSuggestions && mentionSuggestions.length > 0) {
-          e.preventDefault(); // Prevent new line if suggestions are open
-          // Potentially add logic here to select first suggestion on Enter
+          e.preventDefault();
+          // Optional: automatically select the first suggestion on Enter
+          // handleMentionSelect(mentionSuggestions[0].username);
         } else {
           e.preventDefault();
           handleSubmit(e);
@@ -422,9 +453,11 @@ const CreatePost = () => {
   const handlePollIconClick = () => {
     setShowPollInputs(!showPollInputs);
     if (!showPollInputs) {
-      setSelectedFile(null);
+      // If turning poll inputs ON
+      setSelectedFile(null); // Clear media
       setPreviewUrl(null);
       if (fileInputRef.current) fileInputRef.current.value = null;
+      setScheduledAt(null); // Clear scheduledAt
       setPollChoices([{ text: "" }, { text: "" }]);
       setMentionQuery("");
       setShowMentionSuggestions(false);
@@ -444,9 +477,40 @@ const CreatePost = () => {
   };
   // --- END NEW POLL HANDLERS ---
 
+  // --- SCHEDULE POST HANDLERS ---
+  const handleScheduleIconClick = () => {
+    setShowScheduleModal(true);
+    // When opening schedule modal, clear other conflicting states
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    if (fileInputRef.current) fileInputRef.current.value = null;
+    setShowPollInputs(false);
+    setPollChoices([{ text: "" }, { text: "" }]);
+  };
+
+  const handleScheduleModalClose = () => {
+    setShowScheduleModal(false);
+  };
+
+  const handleScheduleConfirm = (isoDateTime) => {
+    setScheduledAt(isoDateTime);
+    setShowScheduleModal(false);
+    toast.success(`Post scheduled for ${new Date(isoDateTime).toLocaleString()}`);
+  };
+
+  const handleRemoveSchedule = () => {
+    setScheduledAt(null);
+    toast.success("Schedule removed.");
+  };
+  // --- END SCHEDULE POST HANDLERS ---
+
   const isButtonDisabled =
     isPending ||
     (() => {
+      // If a scheduledAt date is picked, the post needs text, but not media/poll
+      if (scheduledAt) {
+        return text.trim() === "" || selectedFile !== null || showPollInputs;
+      }
       if (showPollInputs) {
         return (
           text.trim() === "" ||
@@ -455,6 +519,7 @@ const CreatePost = () => {
           pollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         );
       } else {
+        // Normal post: needs text OR file
         return text.trim() === "" && !selectedFile;
       }
     })();
@@ -512,15 +577,17 @@ const CreatePost = () => {
           </div>
         </div>
       </Link>
-      <form
-        className="flex flex-col w-full relative"
-        onSubmit={handleSubmit}
-        // Removed ref={formRef}
-      >
+      <form className="flex flex-col w-full relative" onSubmit={handleSubmit}>
         <div className="relative w-full">
           <textarea
             className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
-            placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
+            placeholder={
+              scheduledAt
+                ? "What do you want to schedule?"
+                : showPollInputs
+                ? "Ask a question"
+                : "What is happening?"
+            }
             value={text}
             onChange={handleTextChange}
             onKeyDown={handleKeyDown}
@@ -534,7 +601,6 @@ const CreatePost = () => {
             <div
               ref={suggestionBoxRef}
               className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
-              // Simplified positioning: always at the bottom-left of the textarea's content area
               style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
             >
               {isLoadingMentions ? (
@@ -659,11 +725,36 @@ const CreatePost = () => {
             </div>
           </div>
         )}
+        {/* --- POLL INPUTS SECTION END --- */}
+
+        {/* Scheduled Post Display */}
+        {scheduledAt && (
+          <div className="flex items-center justify-between mt-4 p-3 border border-accent rounded-2xl bg-secondary/20">
+            <p className="text-primary text-sm font-semibold">
+              Will send on{" "}
+              {new Date(scheduledAt).toLocaleString([], {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+                hour: "numeric",
+                minute: "2-digit",
+                hour12: true,
+              })}
+            </p>
+            <button
+              type="button"
+              onClick={handleRemoveSchedule}
+              className="text-red-600 hover:text-red-400 transition duration-200"
+            >
+              <IoCloseSharp size={23} />
+            </button>
+          </div>
+        )}
 
         <div className="flex justify-between pt-3">
           <div className="flex gap-1 items-center">
-            {/* Image/Video input - hidden if poll is active */}
-            {!showPollInputs && (
+            {/* Image/Video input - hidden if poll or schedule is active */}
+            {!showPollInputs && !scheduledAt && (
               <BiImageAdd
                 className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
                 onClick={() => fileInputRef.current.click()}
@@ -677,12 +768,21 @@ const CreatePost = () => {
               onChange={handleFileChange}
             />
 
-            {/* Poll icon - hidden if media is selected/previewed */}
-            {!selectedFile && (
+            {/* Poll icon - hidden if media or schedule is selected/previewed */}
+            {!selectedFile && !scheduledAt && (
               <BiPoll
                 className="text-primary size-6 cursor-pointer hover:text-primary/80"
                 onClick={handlePollIconClick}
                 title="Add a poll"
+              />
+            )}
+
+            {/* Schedule Post icon - hidden if media or poll is active */}
+            {!selectedFile && !showPollInputs && (
+              <IoCalendarOutline
+                className="text-primary size-6 cursor-pointer hover:text-primary/80"
+                onClick={handleScheduleIconClick}
+                title="Schedule post"
               />
             )}
 
@@ -714,11 +814,19 @@ const CreatePost = () => {
             className="px-3 py-1 text-sm md:text-base md:px-4 md:py-2 bg-primary text-secondary rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
             disabled={isButtonDisabled}
           >
-            {isPending ? "Posting..." : "Post"}
+            {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
           </button>
         </div>
         {isError && <div className="text-red-500">{error.message}</div>}
       </form>
+
+      {/* Schedule Post Modal */}
+      <SchedulePostModal
+        isOpen={showScheduleModal}
+        onClose={handleScheduleModalClose}
+        onScheduleConfirm={handleScheduleConfirm}
+        initialDate={scheduledAt} // Pass current scheduledAt if editing
+      />
     </div>
   );
 };

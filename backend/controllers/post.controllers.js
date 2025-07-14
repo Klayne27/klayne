@@ -12,27 +12,20 @@ import {
 } from "../lib/socket.js";
 
 const extractAndValidateMentions = async (text) => {
-  // Regex to find @username patterns (adjust based on your username rules)
-  // This regex matches '@' followed by 1 to 30 alphanumeric characters or underscores.
   const mentionRegex = /@([a-zA-Z0-9_]{1,30})\b/g;
   let match;
   const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
 
-  // Extract all unique usernames mentioned in the text
   while ((match = mentionRegex.exec(text)) !== null) {
     mentionedUsernames.add(match[1].toLowerCase()); // Store in lowercase for case-insensitive lookup
   }
 
   const mentionedUsersIds = [];
   if (mentionedUsernames.size > 0) {
-    // Find all users by their usernames from the database
-    // Use $in operator to query multiple usernames efficiently
-    // Use $options: 'i' for case-insensitive matching
     const users = await User.find({
       username: { $in: Array.from(mentionedUsernames) },
-    }).select('_id username'); // Select only ID and username
+    }).select("_id username"); // Select only ID and username
 
-    // Map found users to their _id
     users.forEach((user) => mentionedUsersIds.push(user._id));
   }
   return mentionedUsersIds;
@@ -66,7 +59,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 
 export const createPost = async (req, res) => {
   try {
-    const { text, pollOptions } = req.body;
+    const { text, pollOptions, scheduledAt } = req.body;
     let { img, video } = req.body;
 
     const userId = req.user._id.toString();
@@ -106,7 +99,6 @@ export const createPost = async (req, res) => {
       mediaType = "video";
     }
 
-    // Extract and validate mentioned users from the post text
     const mentionedUsersIds = await extractAndValidateMentions(text); // Ensure this function correctly returns an array of user IDs
 
     const newPostData = {
@@ -114,6 +106,8 @@ export const createPost = async (req, res) => {
       text,
       commentsCount: 0,
       mentionedUsers: mentionedUsersIds, // Store the IDs of mentioned users
+      isScheduled: !!scheduledAt, // Set to true if scheduledAt is provided
+      scheduledAt: scheduledAt ? new Date(scheduledAt) : null, // Store the scheduled date
     };
 
     if (pollOptions && pollOptions.length > 0) {
@@ -145,35 +139,33 @@ export const createPost = async (req, res) => {
     const newPost = new Post(newPostData);
     await newPost.save();
 
-    await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
+    if (!newPost.isScheduled) {
+      await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
 
-    // --- Create Notifications for Mentioned Users and emit status ---
-    for (const mentionedUserId of mentionedUsersIds) {
-      // Ensure you don't notify the post author if they mention themselves
-      if (mentionedUserId.toString() !== userId.toString()) {
-        // You can reuse createAndSendNotification here for consistency
-        // Or keep your direct logic if you prefer, but make sure to call emitUnreadNotificationStatus
-        await createAndSendNotification({
-          from: userId,
-          to: mentionedUserId,
-          type: "mention",
-          postId: newPost._id,
-        });
-        // The createAndSendNotification function already calls emitUnreadNotificationStatus
-        // so you don't need to call it again here if you use it.
-        // If you prefer the direct logic, you *must* add:
-        // await emitUnreadNotificationStatus(mentionedUserId.toString());
+      for (const mentionedUserId of mentionedUsersIds) {
+        if (mentionedUserId.toString() !== userId.toString()) {
+          // Ensure createAndSendNotification is defined or imported
+          await createAndSendNotification({
+            from: userId,
+            to: mentionedUserId,
+            type: "mention",
+            postId: newPost._id,
+          });
+        }
       }
-    }
 
-    // Emit new post to online users (excluding the sender)
-    // This is separate from notification badge logic
-    for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-      if (onlineUserId.toString() !== userId.toString()) {
-        socketIdsSet.forEach((socketId) => {
-          io.to(socketId).emit("newPostAvailable", newPost);
-        });
+      // Ensure onlineUsersMap and io are defined or imported
+      for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+        if (onlineUserId.toString() !== userId.toString()) {
+          socketIdsSet.forEach((socketId) => {
+            io.to(socketId).emit("newPostAvailable", newPost);
+          });
+        }
       }
+    } else {
+      // Handle scheduled post: perhaps log it or add to a queue
+      console.log(`Post scheduled for ${newPost.scheduledAt}`);
+      // You'll need a separate mechanism (e.g., a cron job) to publish scheduled posts
     }
 
     res.status(201).json(newPost);

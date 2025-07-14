@@ -98,6 +98,14 @@ const postSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
+    isScheduled: {
+      type: Boolean,
+      default: false,
+    },
+    scheduledAt: {
+      type: Date,
+      default: null, // Will be set only if isScheduled is true
+    },
   },
   { timestamps: true }
 );
