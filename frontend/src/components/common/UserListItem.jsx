@@ -27,11 +27,11 @@ const UserListItem = ({ user: listUser }) => {
       </Link>
 
       {!isMyProfile && (
-        <FollowButton
-          user={listUser}
-          currentUserId={authUser?._id}
-          isFollowing={amIFollowing}
-        />
+          <FollowButton
+            user={listUser}
+            currentUserId={authUser?._id}
+            isFollowing={amIFollowing}
+          />
       )}
     </div>
   );

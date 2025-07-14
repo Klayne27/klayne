@@ -12,7 +12,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
 
   const { users, isLoading, error } = useFetchFollowList(userId, type);
 
-  // useEffect to handle the native <dialog> 'close' event
   useEffect(() => {
     const dialogElement = dialogRef.current;
     if (!dialogElement) return;
@@ -48,7 +47,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
   return (
     <dialog
       ref={dialogRef} // Assign the ref to the dialog element
-      // Using the ID for document.getElementById from parent, though ref is better for internal use
       id={`${
         page === "profilePage" ? `follow_list_modal_${type}` : `follow_modal_list_${type}`
       }`}

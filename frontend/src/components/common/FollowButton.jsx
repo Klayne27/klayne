@@ -6,7 +6,7 @@ const FollowButton = ({
   user,
   isFollowing: initialIsFollowing,
   currentUserId,
-  openUnfollowModal,
+  openUnfollowModal, // This prop is now optional
 }) => {
   const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
@@ -35,10 +35,14 @@ const FollowButton = ({
   const handleFollowClick = (e) => {
     e.preventDefault(); // Prevent default link behavior
     if (isCurrentlyFollowing) {
-      openUnfollowModal(user); // Open the modal if currently following
+      if (openUnfollowModal) {
+        openUnfollowModal(user);
+      } else {
+        follow(user._id);
+        setIsCurrentlyFollowing((prev) => !prev);
+      }
     } else {
       follow(user._id);
-      // Optimistic UI update: Toggle `isCurrentlyFollowing` immediately
       setIsCurrentlyFollowing((prev) => !prev);
     }
   };
