@@ -45,7 +45,9 @@ const MessageItem = ({
     );
   }
 
-  const isSentByCurrentUser = msg.sender._id === currentUser._id;
+  const isSentByCurrentUser =
+    (typeof msg.sender === "object" && msg.sender?._id === currentUser._id) ||
+    (typeof msg.sender === "string" && msg.sender === currentUser._id);
   // Ensure message has text content to be editable (images typically aren't edited this way)
   const isEditable = isSentByCurrentUser && msg.text && !msg.img;
   const showModal = activeMessageModalId === msg._id;
