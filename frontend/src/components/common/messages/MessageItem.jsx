@@ -127,7 +127,7 @@ const MessageItem = ({
         )}
       </div>
       <div
-        className={`flex ${
+        className={`flex whitespace-pre-wrap ${
           isSentByCurrentUser ? "justify-end" : "justify-start"
         } items-start group relative`}
       >
@@ -194,9 +194,7 @@ const MessageItem = ({
           )}
           {msg.text && (
             <p
-              className={`break-words text-sm ${
-                isSentByCurrentUser ? "text-white" : ""
-              }`}
+              className={`break-words text-sm ${isSentByCurrentUser ? "text-white" : ""}`}
             >
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>

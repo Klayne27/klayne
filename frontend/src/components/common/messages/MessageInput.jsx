@@ -31,6 +31,23 @@ function MessageInput({
   const typingTimeoutRef = useRef(null);
   const { authUser: currentUser } = useAuthUser();
 
+    const [isMobile, setIsMobile] = useState(false);
+
+    useEffect(() => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      // Simple check for common mobile user agents
+      if (/android|ipad|iphone|ipod/i.test(userAgent)) {
+        setIsMobile(true);
+      }
+
+      // Adjust textarea height on messageInput change
+      if (messageInputRef.current) {
+        messageInputRef.current.style.height = "auto";
+        messageInputRef.current.style.height =
+          messageInputRef.current.scrollHeight + "px";
+      }
+    }, [messageInput, messageInputRef]);
+
   const emitTyping = useCallback(() => {
     if (socket && actualConversationId) {
       socket.emit("typing", { conversationId: actualConversationId });
@@ -133,6 +150,33 @@ function MessageInput({
     }, 1500);
   };
 
+
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter") {
+      if (isMobile) {
+        // On mobile, pressing Enter (from the keyboard UI) creates a new line
+        // The send button will be used to send the message
+        e.preventDefault(); // Prevent default form submission
+        setMessageInput((prev) => prev + "\n");
+      } else {
+        // On desktop, Shift + Enter creates a new line
+        if (e.shiftKey) {
+          e.preventDefault(); // Prevent default form submission
+          setMessageInput((prev) => prev + "\n");
+        } else {
+          // On desktop, Enter sends the message
+          e.preventDefault(); // Prevent default new line behavior for Enter
+          handleSendMessage(e);
+        }
+      }
+    }
+  };
+
+  const handleMobileSend = (e) => {
+    e.preventDefault();
+    handleSendMessage(e);
+  };
+
   const handleSendMessage = async (e) => {
     e.preventDefault();
 
@@ -155,7 +199,7 @@ function MessageInput({
 
     const messagePayload = {
       recipientId: otherUser._id,
-      message: messageInput.trim(),
+      message: messageInput,
       img: null,
       conversationId: actualConversationId,
       repliedTo: repliedToId,
@@ -273,7 +317,7 @@ function MessageInput({
       )}
 
       <form
-        onSubmit={handleSendMessage}
+        onSubmit={isMobile ? handleMobileSend : handleSendMessage}
         className="p-2 border-accent bg-black/0 flex items-center relative"
       >
         {isTypingOtherUser && (
@@ -334,20 +378,21 @@ function MessageInput({
             </button>
           </div>
 
-          <input
-            type="text"
+          <textarea
             value={messageInput}
-            onChange={handleMessageInputChange}
+            onChange={(e) => setMessageInput(e.target.value)}
+            onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder="Start a new message"
-            className="flex-1 py-2  bg-secondary rounded-full placeholder-gray-400 focus:outline-none pl-1 pr-10 w-1"
+            className="flex py-2 bg-secondary rounded-r-full placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]" /* Added w-full, resize-none, overflow-hidden, and max-h */
             ref={messageInputRef}
+            rows={1} // Start with 1 row
           />
 
           <button
             type="submit"
             disabled={isSendingMessage || (!messageInput.trim() && !imageFile)}
-            className={`hidden md:block absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+            className={` absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
               messageInput.trim() || imageFile
                 ? "bg-primary"
                 : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
