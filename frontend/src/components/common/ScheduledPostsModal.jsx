@@ -1,5 +1,5 @@
 // components/common/ScheduledPostsModal.jsx
-import React, { useRef, useEffect, useState } from "react";
+import React, { useRef, useEffect, useState, useCallback } from "react";
 import { MdClose } from "react-icons/md";
 import { useGetScheduledPosts } from "../../hooks/postsHooks/useGetScheduledPosts";
 import LoadingSpinner from "./LoadingSpinner";
@@ -21,9 +21,39 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
+  // --- NEW STATE FOR TOUCH EFFECT ---
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
+  const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
+
   const { scheduledPosts, isLoading, isError, error, refetch } = useGetScheduledPosts();
   const { deleteMultipleScheduledPosts, isPending: isDeletingMultiple } =
     useDeleteMultipleScheduledPosts();
+
+  // --- NEW TOUCH HANDLERS ---
+  const handleTouchStart = useCallback(
+    (id) => {
+      if (isTouchDevice) {
+        setActiveButton(id);
+      }
+    },
+    [isTouchDevice]
+  );
+
+  const handleTouchEnd = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
+    }
+  }, [isTouchDevice]);
+
+  const handleTouchCancel = useCallback(() => {
+    if (isTouchDevice) {
+      setTimeout(() => {
+        setActiveButton(null);
+      }, 200);
+    }
+  }, [isTouchDevice]);
 
   const handleCheckboxChange = (postId, isChecked) => {
     setSelectedPostIds((prevSelected) =>
@@ -111,6 +141,15 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     });
   };
 
+  // --- EFFECT TO DETECT TOUCH DEVICE ---
+  useEffect(() => {
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
+  }, []);
+
   if (!isOpen) return null;
 
   return (
@@ -176,8 +215,17 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
               {scheduledPosts.map((post) => (
                 <li
                   key={post._id}
-                  className="px-4 py-2 border-b border-accent hover:bg-secondary transition duration-200 flex items-center gap-3"
+                  className={`px-4 py-2 border-b border-accent  transition duration-200 flex items-center gap-3 ${
+                    !isTouchDevice ? "hover:bg-secondary" : ""
+                  }  ${
+                    isTouchDevice && activeButton === "scheduled-post"
+                      ? "bg-secondary transition duration-150"
+                      : ""
+                  }`}
                   onClick={() => handlePostListItemClick(post)}
+                  onTouchStart={() => handleTouchStart("scheduled-post")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
                   {isEditMode && (
                     <input

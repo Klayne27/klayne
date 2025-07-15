@@ -457,7 +457,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                   transition duration-150         
                   ${
                     !isTouchDevice ? "hover:bg-secondary" : ""
-                  } {/* Hover only for non-touch */}
+                  } 
                   ${
                     isTouchDevice && activeTab === "likes"
                       ? "bg-secondary bg-opacity-50"

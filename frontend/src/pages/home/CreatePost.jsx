@@ -518,13 +518,11 @@ const CreatePost = () => {
   const handleScheduleConfirm = useCallback((isoDateTime) => {
     setScheduledAt(isoDateTime);
     setShowSchedulePostModal(false);
-    // toast.success(`Post scheduled for ${new Date(isoDateTime).toLocaleString()}`);
   }, []);
 
   const handleRemoveSchedule = useCallback(() => {
     setScheduledAt(null);
     setShowSchedulePostModal(false);
-    // toast.success("Schedule removed.");
   }, []);
 
   const handleOpenScheduledPostsListModal = useCallback(() => {
