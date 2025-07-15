@@ -348,7 +348,7 @@ function MessageInput({
           className="hidden"
         />
 
-        <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary border border-transparent focus-within:border-accent/99">
+        <div className="flex-1 relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99">
           <div className="flex pl-1">
             <button
               type="button"
@@ -359,7 +359,7 @@ function MessageInput({
             </button>
             <button
               type="button"
-              className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 hidden md:block"
+              className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
             >
               <PiSmiley
                 className="w-5 h-5"
@@ -384,7 +384,7 @@ function MessageInput({
             onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             placeholder="Start a new message"
-            className="flex py-2 bg-secondary rounded-r-full placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]" /* Added w-full, resize-none, overflow-hidden, and max-h */
+            className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]" /* Added w-full, resize-none, overflow-hidden, and max-h */
             ref={messageInputRef}
             rows={1} // Start with 1 row
           />
@@ -392,10 +392,10 @@ function MessageInput({
           <button
             type="submit"
             disabled={isSendingMessage || (!messageInput.trim() && !imageFile)}
-            className={` absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+            className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
               messageInput.trim() || imageFile
-                ? "bg-primary"
-                : "bg-primary text-blue-200 opacity-50 cursor-not-allowed"
+                ? "bg-primary text-white"
+                : "bg-primary text-white opacity-50 cursor-not-allowed"
             } transition-colors duration-200`}
           >
             <MdSend className="w-5 h-5" />
