@@ -55,7 +55,9 @@ export const renderClickableText = (text) => {
   // Regex to match URLs, #hashtags, and @mentions
   // Order matters here for correct capturing group assignment
   // (1) URLs, (2) Hashtags, (3) Mentions
-  const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(@[\p{L}\p{N}_]+)/gu;
+  // const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(@[\p{L}\p{N}_]+)/gu;
+  const regex =
+    /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}_]+)/gu;
 
   let match;
   while ((match = regex.exec(text)) !== null) {
