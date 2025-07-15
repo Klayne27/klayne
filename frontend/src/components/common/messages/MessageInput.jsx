@@ -330,7 +330,7 @@ function MessageInput({
   // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
     <>
-      {isTypingOtherUser && (
+      {/* {isTypingOtherUser && (
         <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400 text-sm">
           <span className="animate-pulse font-semibold">
             {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
@@ -349,7 +349,7 @@ function MessageInput({
             </span>
           </span>
         </div>
-      )}
+      )} */}
       <input
         type="file"
         accept="image/*"
@@ -486,7 +486,7 @@ function MessageInput({
           {/* The form, now nested inside the edit mode container */}
           <form
             onSubmit={handleSubmit}
-            className="p-2 bg-black/0 flex items-center relative"
+            className="px-2 bg-black/0 flex items-center relative" // change back to p-2 if new typing indicator is ugly
           >
             {renderFormContent(true)}{" "}
             {/* Pass true to indicate editing mode for placeholders/icons */}
@@ -496,7 +496,7 @@ function MessageInput({
         // NORMAL MODE (not editing)
         <form
           onSubmit={handleSubmit}
-          className="p-2 bg-black/0 flex items-center relative"
+          className="px-2 bg-black/0 flex items-center relative"  // change back to p-2
         >
           {renderFormContent(false)} {/* Pass false for normal mode */}
         </form>

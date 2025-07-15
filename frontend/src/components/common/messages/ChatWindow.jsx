@@ -229,6 +229,18 @@ const ChatWindow = ({
     }
   }, [messages, isFetchingNextPage]);
 
+  // --- NEW: Scroll to bottom when typing indicator appears ---
+  useEffect(() => {
+    if (isTypingOtherUser) {
+      // Small delay to allow the DOM to update with the new message item's height
+      const timeoutId = setTimeout(() => {
+        scrollToBottom();
+      }, 50); // A small delay (e.g., 50ms) often helps ensure the new element's height is registered
+
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isTypingOtherUser, scrollToBottom]);
+
   // --- Socket and active conversation management ---
   useEffect(() => {
     setActiveConversationId(actualConversationId);
@@ -473,6 +485,7 @@ const ChatWindow = ({
         hasNextPage={hasNextPage}
         selectedConversationId={selectedConversation?._id}
         setEditingMessage={setEditingMessage}
+        isTypingOtherUser={isTypingOtherUser}
       />
 
       {showNewMessageButton && (

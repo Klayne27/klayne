@@ -1,5 +1,5 @@
 import React from "react";
-import { FaReply } from "react-icons/fa";
+import { FaCircle, FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { BsCheck2, BsCheck2All } from "react-icons/bs";
 import { MdEdit } from "react-icons/md"; // Import the edit icon
@@ -21,9 +21,30 @@ const MessageItem = ({
   handleReactionClick,
   isDeletingMessage,
   currentUser,
-  // NEW PROP: Function to set the message for editing
   setEditingMessage,
+  isTypingOtherUser,
 }) => {
+  // --- NEW: Typing Indicator MessageItem ---
+  if (isTypingOtherUser) {
+    return (
+      <div className="flex justify-start p-1 rounded-lg message-item-container">
+        <div className="flex flex-col max-w-[70%] p-3 rounded-3xl bg-[#2F3336] text-white rounded-bl-[4px]">
+          <span className="flex items-center gap-0.5">
+            <span className="inline-block pulsing-dot pulsing-dot-1">
+              <FaCircle size={6} />
+            </span>
+            <span className="inline-block pulsing-dot pulsing-dot-2">
+              <FaCircle size={6} />
+            </span>
+            <span className="inline-block pulsing-dot pulsing-dot-3">
+              <FaCircle size={6} />
+            </span>
+          </span>
+        </div>
+      </div>
+    );
+  }
+
   const isSentByCurrentUser = msg.sender._id === currentUser._id;
   // Ensure message has text content to be editable (images typically aren't edited this way)
   const isEditable = isSentByCurrentUser && msg.text && !msg.img;
@@ -73,7 +94,11 @@ const MessageItem = ({
         handleMessageTap(msg._id);
       }}
     >
-      <div className={`flex ${isSentByCurrentUser ? "justify-self-end" : "justify-self-start"}`}>
+      <div
+        className={`flex ${
+          isSentByCurrentUser ? "justify-self-end" : "justify-self-start"
+        }`}
+      >
         {msg.isEdited &&
           msg.text && ( // Only show if it's a text message and it's marked as edited
             <span className="text-xs italic text-gray-500 mb-1 mr-7 ml-2">(Edited)</span>

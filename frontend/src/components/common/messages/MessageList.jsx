@@ -30,6 +30,7 @@ const MessageList = forwardRef(function MessageList(
     hasNextPage,
     selectedConversationId,
     setEditingMessage,
+    isTypingOtherUser
   },
   ref
 ) {
@@ -181,7 +182,10 @@ const MessageList = forwardRef(function MessageList(
   }, [activeMessageModalId, handleClickOutsideMessage]);
 
   return (
-    <div ref={ref} className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20 relative">
+    <div
+      ref={ref}
+      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20 relative"
+    >
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full ">
           <LoadingSpinner size="md" />
@@ -226,6 +230,17 @@ const MessageList = forwardRef(function MessageList(
             setEditingMessage={setEditingMessage}
           />
         ))}
+
+      {isTypingOtherUser && (
+        <MessageItem
+          key="typing-indicator" // Give it a unique key
+          isTypingOtherUser={true} // Crucial prop to trigger the typing bubble
+          // Pass minimal other props as they won't be used by the typing bubble
+          msg={{ sender: { _id: "dummy" }, text: "", img: "" }} // Dummy msg object to satisfy prop types if needed
+          currentUser={currentUser}
+          // Other props are not necessary for the typing bubble
+        />
+      )}
     </div>
   );
 });
