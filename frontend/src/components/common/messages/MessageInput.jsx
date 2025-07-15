@@ -36,7 +36,7 @@ function MessageInput({
 
   const [isMobile, setIsMobile] = useState(false);
 
-  const { editMessage, isEditing } = useEditMessage();
+  const { editMessage, isEditing } = useEditMessage(actualConversationId);
 
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;

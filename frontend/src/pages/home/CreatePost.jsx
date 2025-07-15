@@ -297,7 +297,6 @@ const CreatePost = () => {
 
       // ********** IMPORTANT: Add a check for isPending here **********
       if (isPending) {
-        console.log("Submission already in progress, ignoring.");
         return; // Do nothing if a post is already being created
       }
 
