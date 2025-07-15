@@ -28,7 +28,8 @@ const MessageList = forwardRef(function MessageList(
     isLoadingInitialMessages,
     isFetchingOlderMessages,
     hasNextPage,
-    selectedConversationId
+    selectedConversationId,
+    setEditingMessage,
   },
   ref
 ) {
@@ -222,6 +223,7 @@ const MessageList = forwardRef(function MessageList(
             handleReactionClick={handleReactionClick}
             isDeletingMessage={isDeletingMessage}
             currentUser={currentUser}
+            setEditingMessage={setEditingMessage}
           />
         ))}
     </div>

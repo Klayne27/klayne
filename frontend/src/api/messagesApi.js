@@ -105,3 +105,17 @@ export const reactToMessageApi = async (messageId, emoji) => {
 
   return data;
 };
+
+export const editMessageApi = async (messageId, newText) => {
+  const res = await fetch(`/api/messages/edit/${messageId}`, {
+    method: "PUT",
+    headers: { "Content-type": "application/json" },
+    body: JSON.stringify({newText}),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to edit message");
+
+  return data;
+};

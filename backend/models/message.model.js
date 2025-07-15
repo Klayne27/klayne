@@ -18,11 +18,15 @@ const messageSchema = new mongoose.Schema(
       ref: "Message",
       default: null,
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
     reactions: [
       {
         emoji: {
           type: String,
-          enum: ["❤️", "👍", "😂", "😭", "😡"], 
+          enum: ["❤️", "👍", "😂", "😭", "😡"],
           required: true,
         },
         user: {

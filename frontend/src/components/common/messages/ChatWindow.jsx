@@ -30,6 +30,7 @@ const ChatWindow = ({
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
+  const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
@@ -220,14 +221,13 @@ const ChatWindow = ({
         scrollStateBeforeFetch.current;
       const newScrollHeight = listEl.scrollHeight;
 
-      const heightDifference = newScrollHeight - oldScrollHeight
+      const heightDifference = newScrollHeight - oldScrollHeight;
 
       listEl.scrollTop = oldScrollTop + heightDifference;
 
-
       scrollStateBeforeFetch.current = { scrollTop: 0, scrollHeight: 0 };
     }
-  }, [messages, isFetchingNextPage]); 
+  }, [messages, isFetchingNextPage]);
 
   // --- Socket and active conversation management ---
   useEffect(() => {
@@ -382,11 +382,36 @@ const ChatWindow = ({
         }
       };
 
+      // --- NEW: Handle messageEdited event ---
+      const handleMessageEdited = (updatedMessage) => {
+        // Check if the edited message belongs to the currently active chat
+        if (
+          updatedMessage.conversationId.toString() === actualConversationId?.toString()
+        ) {
+          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+            if (!oldData) return oldData;
+
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((msg) =>
+                // Find the message by its ID and replace it with the updated version
+                msg._id === updatedMessage._id ? updatedMessage : msg
+              )
+            );
+            return { ...oldData, pages: updatedPages };
+          });
+
+          // Invalidate conversations query to update the lastMessage in the sidebar
+          // This will cause a refetch of conversations, showing the updated last message.
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        }
+      };
+
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
+      socket.on("messageEdited", handleMessageEdited);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
@@ -394,6 +419,7 @@ const ChatWindow = ({
         socket.off("messagesSeen", handleMessagesSeen);
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
+        socket.off("messageEdited", handleMessageEdited);
       };
     }
   }, [
@@ -446,6 +472,7 @@ const ChatWindow = ({
         isFetchingOlderMessages={isFetchingNextPage}
         hasNextPage={hasNextPage}
         selectedConversationId={selectedConversation?._id}
+        setEditingMessage={setEditingMessage}
       />
 
       {showNewMessageButton && (
@@ -472,6 +499,8 @@ const ChatWindow = ({
         isSendingMessage={isSendingMessage}
         selectedConversation={selectedConversation}
         socket={socket}
+        editingMessage={editingMessage}
+        setEditingMessage={setEditingMessage}
       />
     </div>
   );

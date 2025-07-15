@@ -4,9 +4,10 @@ import { truncateText } from "../../../utils/truncateText";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
-import { MdSend } from "react-icons/md";
+import { MdCheck, MdEdit, MdSend } from "react-icons/md";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { FaCircle } from "react-icons/fa";
+import { FaCircle, FaSpinner } from "react-icons/fa";
+import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage";
 
 function MessageInput({
   otherUser,
@@ -20,6 +21,8 @@ function MessageInput({
   selectedConversation,
   socket,
   isTypingOtherUser,
+  editingMessage,
+  setEditingMessage,
 }) {
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
@@ -32,6 +35,10 @@ function MessageInput({
   const { authUser: currentUser } = useAuthUser();
 
   const [isMobile, setIsMobile] = useState(false);
+
+  const { editMessage, isEditing } = useEditMessage();
+
+
 
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
@@ -123,6 +130,20 @@ function MessageInput({
     }
   };
 
+  // Effect to populate messageInput when entering edit mode
+  useEffect(() => {
+    if (editingMessage) {
+      setMessageInput(editingMessage.text);
+      messageInputRef.current?.focus(); // Focus the textarea when editing starts
+    } else {
+      // Clear input when exiting edit mode, but only if it's not a new message being composed
+      if (messageInputRef.current.value === messageInput) {
+        // Prevent clearing if user typed before cancelling edit
+        setMessageInput("");
+      }
+    }
+  }, [editingMessage]); // Depend on editingMessage
+
   const handleMessageInputChange = (e) => {
     const text = e.target.value;
     setMessageInput(text);
@@ -165,7 +186,7 @@ function MessageInput({
         } else {
           // On desktop, Enter sends the message
           e.preventDefault(); // Prevent default new line behavior for Enter
-          handleSendMessage(e);
+          handleSubmit(e);
         }
       }
     }
@@ -233,8 +254,33 @@ function MessageInput({
     }
   };
 
+  const handleSubmit = (e) => {
+    e.preventDefault();
+
+    const trimmedMessage = messageInput.replace(/\s/g, ""); // Check if message contains only whitespace
+
+    if (trimmedMessage.length === 0 && !imageFile) {
+      return; // Don't send if empty or only whitespace and no image
+    }
+
+    if (editingMessage) {
+      // Handle message editing
+      editMessage({ messageId: editingMessage._id, newText: messageInput });
+      setEditingMessage(null); // Exit edit mode
+      setMessageInput(""); // Clear input after editing
+    } else {
+      // Handle sending new message
+      handleSendMessage(e); // Your original send logic
+    }
+  };
+
   const onEmojiClick = (emojiObject) => {
     setMessageInput((prevText) => prevText + emojiObject.emoji);
+  };
+
+  const handleCancelEdit = () => {
+    setEditingMessage(null);
+    setMessageInput("");
   };
 
   useEffect(() => {
@@ -277,6 +323,105 @@ function MessageInput({
     };
   }, [actualConversationId, emitStopTyping]);
 
+    const isSendButtonDisabled =
+      isSendingMessage || isEditing || (!messageInput.trim() && !imageFile);
+
+
+  // Helper for rendering the common form content
+  const renderFormContent = (isEditingMode = false) => (
+    <>
+      {isTypingOtherUser && (
+        <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400 text-sm">
+          <span className="animate-pulse font-semibold">
+            {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
+              ?.fullName || "Other user"}{" "}
+            is typing
+          </span>
+          <span className="flex ml-1 gap-0.5 mt-2.5">
+            <span className="inline-block pulsing-dot pulsing-dot-1">
+              <FaCircle size={6} />
+            </span>
+            <span className="inline-block pulsing-dot pulsing-dot-2">
+              <FaCircle size={6} />
+            </span>
+            <span className="inline-block pulsing-dot pulsing-dot-3">
+              <FaCircle size={6} />
+            </span>
+          </span>
+        </div>
+      )}
+      <input
+        type="file"
+        accept="image/*"
+        onChange={(e) => setImageFile(e.target.files[0])}
+        ref={imageInputRef}
+        className="hidden"
+      />
+
+      <div className="flex-1 relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99">
+        <div className="flex pl-1">
+          <button
+            type="button"
+            onClick={() => imageInputRef.current.click()}
+            className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+          >
+            <IoImageOutline className="w-5 h-5" />
+          </button>
+          <button
+            type="button"
+            className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+          >
+            <PiSmiley
+              className="w-5 h-5"
+              ref={emojiButtonRef}
+              onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            />
+            {showEmojiPicker && (
+              <div className="absolute bottom-full -left-40 z-10" ref={emojiPickerRef}>
+                <EmojiPicker
+                  onEmojiClick={onEmojiClick}
+                  width={emojiPickerWidth}
+                  theme="dark"
+                />{" "}
+              </div>
+            )}
+          </button>
+        </div>
+
+        <textarea
+          value={messageInput}
+          onChange={handleMessageInputChange}
+          onKeyDown={handleKeyDown}
+          onPaste={handlePaste}
+          placeholder={isEditingMode ? "Editing message..." : "Start a new message"}
+          className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]"
+          ref={messageInputRef}
+          rows={1}
+        />
+
+        <button
+          type="submit"
+          disabled={isSendButtonDisabled}
+          className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+            messageInput.trim() || imageFile
+              ? "bg-primary text-white"
+              : "bg-primary text-white opacity-50 cursor-not-allowed"
+          } transition-colors duration-200`}
+        >
+          {isEditingMode ? (
+            isEditing ? (
+              <FaSpinner className="animate-spin" />
+            ) : (
+              <MdCheck className="w-5 h-5" />
+            )
+          ) : (
+            <MdSend className="w-5 h-5" />
+          )}
+        </button>
+      </div>
+    </>
+  );
+
   return (
     <>
       {imageFile && (
@@ -297,7 +442,8 @@ function MessageInput({
         </div>
       )}
 
-      {replyingToMessage && (
+      {/* Only show replyingToMessage if NOT in editing mode */}
+      {replyingToMessage && !editingMessage && (
         <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
           <div className="flex-1 p-3 rounded-md flex flex-col">
             <div className="text-sm text-primary font-bold">Replying to</div>
@@ -310,97 +456,51 @@ function MessageInput({
             onClick={() => setReplyingToMessage(null)}
             className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
           >
-            <IoClose size={18} />
+            <IoClose size={20} />
           </button>
         </div>
       )}
 
-      <form
-        onSubmit={isMobile ? handleMobileSend : handleSendMessage}
-        className="p-2 border-accent bg-black/0 flex items-center relative"
-      >
-        {isTypingOtherUser && (
-          <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400  text-sm">
-            <span className="animate-pulse font-semibold">
-              {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
-                ?.fullName || "Other user"}{" "}
-              is typing
-            </span>
-            <span className="flex ml-1 gap-0.5 mt-2.5">
-              <span className="inline-block pulsing-dot pulsing-dot-1">
-                <FaCircle size={6} />
-              </span>
-              <span className="inline-block pulsing-dot pulsing-dot-2">
-                <FaCircle size={6} />
-              </span>
-              <span className="inline-block pulsing-dot pulsing-dot-3">
-                <FaCircle size={6} />
+      {/* Conditional rendering for the entire input section */}
+      {editingMessage ? (
+        // EDIT MODE CONTAINER
+        <div className="w-full bg-base-200 flex flex-col border-t border-accent">
+          {/* Edit Message Indicator Bar */}
+          <div className="flex items-center justify-between px-4 py-2 text-sm">
+            <span className="flex items-center gap-2 ">
+              <MdEdit className="w-4 h-4" />
+              <span className="text-gray-400">Editing message</span>
+              <span className="font-semibold ml-1">
+                "{truncateText(editingMessage.text, 30)}"
               </span>
             </span>
-          </div>
-        )}
-        <input
-          type="file"
-          accept="image/*"
-          onChange={(e) => setImageFile(e.target.files[0])}
-          ref={imageInputRef}
-          className="hidden"
-        />
-
-        <div className="flex-1 relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99">
-          <div className="flex pl-1">
             <button
-              type="button"
-              onClick={() => imageInputRef.current.click()}
-              className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+              onClick={handleCancelEdit}
+              className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
+              title="Cancel Edit"
             >
-              <IoImageOutline className="w-5 h-5" />
-            </button>
-            <button
-              type="button"
-              className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
-            >
-              <PiSmiley
-                className="w-5 h-5"
-                ref={emojiButtonRef}
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-              />
-              {showEmojiPicker && (
-                <div className="absolute bottom-full -left-40 z-10" ref={emojiPickerRef}>
-                  <EmojiPicker
-                    onEmojiClick={onEmojiClick}
-                    width={emojiPickerWidth}
-                    theme="dark"
-                  />{" "}
-                </div>
-              )}
+              <IoClose className="w-4 h-4" />
             </button>
           </div>
 
-          <textarea
-            value={messageInput}
-            onChange={(e) => setMessageInput(e.target.value)}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            placeholder="Start a new message"
-            className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]" /* Added w-full, resize-none, overflow-hidden, and max-h */
-            ref={messageInputRef}
-            rows={1} // Start with 1 row
-          />
-
-          <button
-            type="submit"
-            disabled={isSendingMessage || (!messageInput.trim() && !imageFile)}
-            className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
-              messageInput.trim() || imageFile
-                ? "bg-primary text-white"
-                : "bg-primary text-white opacity-50 cursor-not-allowed"
-            } transition-colors duration-200`}
+          {/* The form, now nested inside the edit mode container */}
+          <form
+            onSubmit={handleSubmit}
+            className="p-2 bg-black/0 flex items-center relative"
           >
-            <MdSend className="w-5 h-5" />
-          </button>
+            {renderFormContent(true)}{" "}
+            {/* Pass true to indicate editing mode for placeholders/icons */}
+          </form>
         </div>
-      </form>
+      ) : (
+        // NORMAL MODE (not editing)
+        <form
+          onSubmit={handleSubmit}
+          className="p-2 bg-black/0 flex items-center relative"
+        >
+          {renderFormContent(false)} {/* Pass false for normal mode */}
+        </form>
+      )}
     </>
   );
 }

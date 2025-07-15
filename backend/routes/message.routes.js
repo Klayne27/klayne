@@ -8,6 +8,7 @@ import {
   deleteMessage,
   deleteConversationForUser,
   reactToMessage,
+  editMessage,
 } from "../controllers/message.Controllers.js";
 
 const router = express.Router();
@@ -19,5 +20,7 @@ router.post("/", protectRoute, sendMessage);
 router.delete("/:messageId", protectRoute, deleteMessage);
 router.delete("/conversations/:conversationId", protectRoute, deleteConversationForUser);
 router.post("/react/:messageId", protectRoute, reactToMessage);
+router.put("/edit/:id", protectRoute, editMessage); // New route for editing message
+
 
 export default router;

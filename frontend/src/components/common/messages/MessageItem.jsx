@@ -2,17 +2,18 @@ import React from "react";
 import { FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { BsCheck2, BsCheck2All } from "react-icons/bs";
+import { MdEdit } from "react-icons/md"; // Import the edit icon
 
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 
 const MessageItem = ({
   msg,
-  isCurrentlyTouchDevice, // Receive this prop
+  isCurrentlyTouchDevice,
   activeMessageModalId,
   handleMouseEnter,
   handleMouseLeave,
-  handleMessageTap, // Receive the new tap handler
+  handleMessageTap,
   handleDeleteClick,
   handleReplyClick,
   handleImageClick,
@@ -20,17 +21,20 @@ const MessageItem = ({
   handleReactionClick,
   isDeletingMessage,
   currentUser,
+  // NEW PROP: Function to set the message for editing
+  setEditingMessage,
 }) => {
   const isSentByCurrentUser = msg.sender._id === currentUser._id;
+  // Ensure message has text content to be editable (images typically aren't edited this way)
+  const isEditable = isSentByCurrentUser && msg.text && !msg.img;
   const showModal = activeMessageModalId === msg._id;
   const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
 
-  // Adjusted highlight class: only apply hover for non-touch
   const messageHighlightClass = isCurrentlyTouchDevice
     ? showModal
-      ? "active-highlight" // Keep a highlight for active modal on touch
+      ? "active-highlight"
       : ""
-    : "hover:bg-secondary"; // Only apply hover for non-touch
+    : "hover:bg-secondary";
 
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -47,6 +51,13 @@ const MessageItem = ({
     return acc;
   }, {});
 
+  const handleEditClick = (e) => {
+    e.stopPropagation(); // Prevent the message tap/hover logic
+    setEditingMessage(msg); // Set the current message as the one to be edited
+    // You might also want to close the modal after setting the message for editing
+    handleMessageTap(null); // Passing null will close any active modal
+  };
+
   return (
     <div
       key={msg._id}
@@ -54,19 +65,20 @@ const MessageItem = ({
       className={`p-1 rounded-lg relative message-item-container ${messageHighlightClass}`}
       onMouseEnter={() => handleMouseEnter(msg._id)}
       onMouseLeave={handleMouseLeave}
-      // Use onClick for general message interaction on touch devices
-      // This will trigger the handleMessageTap function
       onClick={(e) => {
-        // Only trigger message tap if not a button inside the modal
-        // This might be redundant if stopPropagation is on buttons, but acts as a safeguard.
         const modalElement = document.getElementById(`message-modal-${msg._id}`);
         if (modalElement && modalElement.contains(e.target)) {
-          // If the click is inside the modal, let the button's onClick handle it
           return;
         }
         handleMessageTap(msg._id);
       }}
     >
+      <div className={`flex ${isSentByCurrentUser ? "justify-self-end" : "justify-self-start"}`}>
+        {msg.isEdited &&
+          msg.text && ( // Only show if it's a text message and it's marked as edited
+            <span className="text-xs italic text-gray-500 mb-1 mr-7 ml-2">(Edited)</span>
+          )}
+      </div>
       <div
         id={`message-modal-${msg._id}`}
         className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
@@ -85,7 +97,7 @@ const MessageItem = ({
           <button
             key={emoji}
             onClick={(e) => {
-              e.stopPropagation(); // CRITICAL: Prevent click from bubbling up to message div or document
+              e.stopPropagation();
               handleReactionClick(msg._id, emoji);
             }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
@@ -97,7 +109,7 @@ const MessageItem = ({
 
         <button
           onClick={(e) => {
-            e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+            e.stopPropagation();
             handleReplyClick(msg);
           }}
           className="text-primary/90 hover:text-primary hover:scale-125 rounded-full p-1 ml-1"
@@ -106,10 +118,21 @@ const MessageItem = ({
           <FaReply size={18} />
         </button>
 
+        {/* NEW: Edit Button */}
+        {isEditable && ( // Only show if the message is editable
+          <button
+            onClick={handleEditClick}
+            className="text-yellow-400 hover:text-yellow-500 hover:scale-125 rounded-full p-1"
+            title="Edit message"
+          >
+            <MdEdit size={20} />
+          </button>
+        )}
+
         {isSentByCurrentUser && (
           <button
             onClick={(e) => {
-              e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+              e.stopPropagation();
               handleDeleteClick(msg._id);
             }}
             className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 ${
@@ -142,17 +165,17 @@ const MessageItem = ({
           {msg.repliedTo && (
             <div
               className={`
-                                        mb-2 p-2 rounded-md text-xs border
-                                        ${
-                                          isSentByCurrentUser
-                                            ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
-                                            : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
-                                        }
-                                        flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
-                                      hover:border-blue-400 hover:bg-opacity-40
-                                        `}
+                                mb-2 p-2 rounded-md text-xs border
+                                ${
+                                  isSentByCurrentUser
+                                    ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                    : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                                }
+                                flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                            hover:border-blue-400 hover:bg-opacity-40
+                                `}
               onClick={(e) => {
-                e.stopPropagation(); // Prevent reply link click from closing the modal
+                e.stopPropagation();
                 handleJumpToOriginalMessage(msg.repliedTo._id);
               }}
             >
@@ -187,7 +210,7 @@ const MessageItem = ({
               alt="message attachment"
               className="mt-2 rounded-lg w-60 h-auto object-cover cursor-pointer"
               onClick={(e) => {
-                e.stopPropagation(); // Keep this for image modal
+                e.stopPropagation();
                 handleImageClick(msg.img, e);
               }}
             />
@@ -199,6 +222,7 @@ const MessageItem = ({
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>
           )}
+          {/* "Edited" indicator display */}
         </div>
         {isSentByCurrentUser && msg.seen && (
           <span className={`self-end ml-1 text-primary`}>
@@ -238,7 +262,7 @@ const MessageItem = ({
                   data.users.length > 0 ? `Reacted by: ${data.users.join(", ")}` : ""
                 }
                 onClick={(e) => {
-                  e.stopPropagation(); // CRITICAL: Prevent click from bubbling up
+                  e.stopPropagation();
                   handleReactionClick(msg._id, emoji);
                 }}
               >

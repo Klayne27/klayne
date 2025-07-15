@@ -628,7 +628,7 @@ const CreatePost = () => {
       >
         <div className="relative w-full">
           <textarea
-            className="bg-inherit w-full p-0 pb-4 resize-none border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
+            className="bg-inherit w-full p-0 pb-4 resize-none max-h-[140px] border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
             placeholder={
               scheduledAt
                 ? "What is happening?"

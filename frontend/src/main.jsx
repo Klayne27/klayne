@@ -18,7 +18,7 @@ createRoot(document.getElementById("root")).render(
         <SocketContextProvider>
           <ThemeProvider>
             <App />
-            <ReactQueryDevtools initialIsOpen={false} /> {/* Add this line */}
+            {/* <ReactQueryDevtools initialIsOpen={false} />  */}
           </ThemeProvider>
         </SocketContextProvider>
       </QueryClientProvider>

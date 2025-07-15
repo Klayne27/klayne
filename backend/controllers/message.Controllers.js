@@ -583,3 +583,81 @@ export const reactToMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const editMessage = async (req, res) => {
+  try {
+    const { id: messageId } = req.params;
+    const { newText } = req.body;
+    const senderId = req.user._id;
+
+    if (!newText || newText.trim() === "") {
+      return res.status(400).json({ error: "Message text cannot be empty" });
+    }
+
+    const message = await Message.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found" });
+    }
+
+    if (message.sender.toString() !== senderId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to edit this message" });
+    }
+
+    // Store the old text before updating for comparison if needed
+    const oldText = message.text;
+
+    // Update the message document
+    message.text = newText;
+    message.isEdited = true; // Mark as edited
+    await message.save();
+
+    // Now, check if this message is the lastMessage in its conversation
+    const conversation = await Conversation.findById(message.conversationId);
+
+    if (conversation) {
+      // Check if the edited message is indeed the last message of the conversation
+      // Using messageId to compare is the most robust way
+      if (
+        conversation.lastMessage &&
+        conversation.lastMessage.messageId &&
+        conversation.lastMessage.messageId.toString() === message._id.toString()
+      ) {
+        conversation.lastMessage.text = newText;
+        conversation.lastMessage.isEdited = true;
+        // Optionally update the conversation's updatedAt to bring it to the top
+        // conversation.updatedAt = new Date();
+        await conversation.save();
+
+        // Emit an event for conversation list update (if you have one)
+        // This is important for real-time update of the conversation list
+        io.to(senderId.toString()).emit("conversationUpdated", conversation);
+        const receiverId = conversation.participants.find(
+          (pId) => pId.toString() !== senderId.toString()
+        );
+        const receiverSocketId = getReceiverSocketIds(receiverId);
+        if (receiverSocketId) {
+          io.to(receiverSocketId).emit("conversationUpdated", conversation);
+        }
+      }
+
+      // Emit socket event to notify clients about the updated message (for the chat window itself)
+      // This is the one already in place
+      io.to(senderId.toString()).emit("messageEdited", message);
+      const receiverId = conversation.participants.find(
+        (pId) => pId.toString() !== senderId.toString()
+      );
+      const receiverSocketId = getReceiverSocketIds(receiverId);
+      if (receiverSocketId) {
+        io.to(receiverSocketId).emit("messageEdited", message);
+      }
+    }
+
+    res.status(200).json(message);
+  } catch (error) {
+    console.error("Error in editMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

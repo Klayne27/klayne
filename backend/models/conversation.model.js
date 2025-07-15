@@ -14,6 +14,17 @@ const conversationSchema = new mongoose.Schema(
         type: Boolean,
         default: false,
       },
+      isEdited: {
+        type: Boolean,
+        default: false,
+      },
+      // IMPORTANT: Add the message ID so you can easily reference the actual message
+      // This is crucial for consistency and potential future features
+      messageId: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Message",
+        default: null,
+      },
     },
     deletedFor: [
       {
@@ -21,7 +32,6 @@ const conversationSchema = new mongoose.Schema(
         deletedAt: { type: Date, default: Date.now },
       },
     ],
-    
   },
   { timestamps: true }
 );
