@@ -110,10 +110,6 @@ const postSchema = new mongoose.Schema(
       type: Date,
       default: null, // Initially null for all posts
     },
-    isEdited: {
-      type: Boolean,
-      default: false,
-    },
   },
   { timestamps: true }
 );

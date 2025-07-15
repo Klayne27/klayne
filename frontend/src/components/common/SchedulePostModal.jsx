@@ -1,4 +1,4 @@
-// components/common/SchedulePostModal.jsx (Your existing component)
+// components/common/SchedulePostModal.jsx
 import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
@@ -31,6 +31,11 @@ const SchedulePostModal = ({
     initialSchedule.getHours() >= 12 ? "PM" : "AM"
   );
   const [currentTimezone, setCurrentTimezone] = useState("");
+
+  // New states for granular validation
+  const [isPastDate, setIsPastDate] = useState(false);
+  const [isPastTimeOfDay, setIsPastTimeOfDay] = useState(false); // Only relevant if date is current date
+  const [isOverallPast, setIsOverallPast] = useState(false); // Overall validation
 
   useEffect(() => {
     if (isOpen) {
@@ -66,6 +71,94 @@ const SchedulePostModal = ({
     }
   }, [initialDate, isOpen]);
 
+  // Effect for granular validation
+  useEffect(() => {
+    const nowLocal = new Date(); // Current local time
+
+    // 1. Validate Date (Year, Month, Day)
+    const currentYear = nowLocal.getFullYear();
+    const currentMonth = nowLocal.getMonth();
+    const currentDay = nowLocal.getDate();
+
+    // Check if the selected date is in the past
+    const tempIsPastDate =
+      selectedYear < currentYear ||
+      (selectedYear === currentYear && selectedMonth < currentMonth) ||
+      (selectedYear === currentYear &&
+        selectedMonth === currentMonth &&
+        selectedDay < currentDay);
+
+    setIsPastDate(tempIsPastDate);
+
+    // 2. Validate Time (Hour, Minute) - Only if the selected date is TODAY
+    let tempIsPastTimeOfDay = false;
+    if (
+      selectedYear === currentYear &&
+      selectedMonth === currentMonth &&
+      selectedDay === currentDay
+    ) {
+      let hour24 = selectedHour;
+      if (selectedAmPm === "PM" && selectedHour !== 12) {
+        hour24 = selectedHour + 12;
+      } else if (selectedAmPm === "AM" && selectedHour === 12) {
+        hour24 = 0;
+      }
+
+      const currentHour = nowLocal.getHours();
+      const currentMinute = nowLocal.getMinutes();
+
+      tempIsPastTimeOfDay =
+        hour24 < currentHour ||
+        (hour24 === currentHour && selectedMinute <= currentMinute);
+    }
+    setIsPastTimeOfDay(tempIsPastTimeOfDay);
+
+    // 3. Overall validation (for button disable and main error message)
+    const combinedScheduledDateTime = new Date(
+      selectedYear,
+      selectedMonth,
+      selectedDay,
+      // Convert to 24-hour format for the combined date object
+      selectedAmPm === "PM" && selectedHour !== 12
+        ? selectedHour + 12
+        : selectedHour === 12 && selectedAmPm === "AM"
+        ? 0
+        : selectedHour,
+      selectedMinute,
+      0, // Seconds
+      0 // Milliseconds
+    );
+
+    // Ensure 'nowLocal' is also compared without milliseconds for consistency
+    nowLocal.setSeconds(0);
+    nowLocal.setMilliseconds(0);
+
+    setIsOverallPast(combinedScheduledDateTime <= nowLocal);
+  }, [
+    selectedYear,
+    selectedMonth,
+    selectedDay,
+    selectedHour,
+    selectedMinute,
+    selectedAmPm,
+  ]);
+
+    // ********** IMPORTANT CHANGE HERE **********
+    useEffect(() => {
+      if (isOpen) {
+        // Check if THIS modal OR the child delete confirm modal is open
+        document.body.style.overflow = "hidden";
+      } else {
+        document.body.style.overflow = "unset";
+      }
+      // Cleanup function: ensures scrolling is re-enabled when the component unmounts
+      // or when isOpen changes to false
+      return () => {
+        document.body.style.overflow = "unset";
+      };
+    }, [isOpen]); // Add showDeleteConfirmModal to dependencies
+  
+
   if (!isOpen) return null;
 
   const getDaysInMonth = (year, month) => new Date(year, month + 1, 0).getDate();
@@ -91,7 +184,14 @@ const SchedulePostModal = ({
   const hours = Array.from({ length: 12 }, (_, i) => i + 1);
   const minutes = Array.from({ length: 60 }, (_, i) => i);
 
+  
+
   const handleConfirm = () => {
+    if (isOverallPast) {
+      toast.error("Cannot schedule a post in the past.");
+      return;
+    }
+
     let hour24 = selectedHour;
     if (selectedAmPm === "PM" && selectedHour !== 12) {
       hour24 = selectedHour + 12;
@@ -108,11 +208,6 @@ const SchedulePostModal = ({
       0
     );
 
-    if (scheduledDateTime <= new Date()) {
-      toast.info("Please select a future date and time.");
-      return;
-    }
-
     onScheduleConfirm(scheduledDateTime.toISOString());
   };
 
@@ -127,6 +222,8 @@ const SchedulePostModal = ({
     setSelectedMinute(resetDate.getMinutes());
     setSelectedAmPm(resetDate.getHours() >= 12 ? "PM" : "AM");
   };
+
+  
 
   const handleBackgroundClick = (e) => {
     if (modalRef.current && !modalRef.current.contains(e.target)) {
@@ -159,12 +256,12 @@ const SchedulePostModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex  justify-center z-50 p-4"
+      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex  justify-center z-50 p-4"
       onClick={handleBackgroundClick}
     >
       <div
         ref={modalRef}
-        className="bg-base-100 rounded-2xl shadow-lg max-w-xl  max-h-fit mt-7 mx-auto w-full flex flex-col overflow-hidden"
+        className="bg-base-100 rounded-2xl shadow-lg max-w-xl max-h-fit mt-7 mx-auto w-full flex flex-col overflow-hidden"
       >
         <div className="flex items-center justify-between p-2 px-3">
           <div className="flex gap-5 items-center">
@@ -190,8 +287,11 @@ const SchedulePostModal = ({
             )}
 
             <button
-              className="bg-primary text-white font-semibold px-4 py-1.5 rounded-full hover:opacity-80 transition duration-200 text-sm"
+              className={`bg-primary text-white font-semibold px-4 py-1.5 rounded-full transition duration-200 text-sm ${
+                isOverallPast ? "opacity-50 cursor-not-allowed" : "hover:opacity-80"
+              }`}
               onClick={handleConfirm}
+              disabled={isOverallPast} // Disable button if overall time is in the past
             >
               Confirm
             </button>
@@ -208,7 +308,11 @@ const SchedulePostModal = ({
           <div className="grid grid-cols-[4fr_2fr_2fr] gap-3">
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedMonth}
                 onChange={(e) => {
                   const newMonth = parseInt(e.target.value);
@@ -244,7 +348,11 @@ const SchedulePostModal = ({
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(parseInt(e.target.value))}
               >
@@ -273,7 +381,11 @@ const SchedulePostModal = ({
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedYear}
                 onChange={(e) => {
                   const newYear = parseInt(e.target.value);
@@ -308,6 +420,11 @@ const SchedulePostModal = ({
               </div>
             </div>
           </div>
+          {isPastDate && ( // Only show the main error message if the overall time is in the past
+            <p className="text-red-500 text-sm mt-2">
+              You can't schedule a post to send in the past.
+            </p>
+          )}
         </div>
 
         <div className="p-4 py-2">
@@ -315,7 +432,11 @@ const SchedulePostModal = ({
           <div className="grid grid-cols-3 gap-3">
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastTimeOfDay && !isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedHour}
                 onChange={(e) => setSelectedHour(parseInt(e.target.value))}
               >
@@ -344,7 +465,11 @@ const SchedulePostModal = ({
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastTimeOfDay && !isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedMinute}
                 onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
               >
@@ -373,7 +498,11 @@ const SchedulePostModal = ({
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className={`w-full bg-base-100 border rounded-[4px] py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:border-none ${
+                  isPastTimeOfDay && !isPastDate
+                    ? "border-red-500 focus:ring-red-500"
+                    : "border-accent focus:ring-primary"
+                }`}
                 value={selectedAmPm}
                 onChange={(e) => setSelectedAmPm(e.target.value)}
               >
@@ -398,6 +527,12 @@ const SchedulePostModal = ({
               </div>
             </div>
           </div>
+          {/* Error message */}
+          {isPastTimeOfDay && ( // Only show the main error message if the overall time is in the past
+            <p className="text-red-500 text-sm mt-2">
+              You can't schedule a post to send in the past.
+            </p>
+          )}
         </div>
 
         <div className="p-4">
@@ -415,8 +550,6 @@ const SchedulePostModal = ({
           </p>
         </div>
       </div>
-
-      {/* <ScheduledPostsModal isOpen={openScheduledPosts} onClose={closeScheduledPosts} /> */}
     </div>
   );
 };

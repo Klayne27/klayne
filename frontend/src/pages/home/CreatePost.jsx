@@ -295,6 +295,12 @@ const CreatePost = () => {
     async (e) => {
       e.preventDefault();
 
+      // ********** IMPORTANT: Add a check for isPending here **********
+      if (isPending) {
+        console.log("Submission already in progress, ignoring.");
+        return; // Do nothing if a post is already being created
+      }
+
       if (showPollInputs) {
         const filledPollChoices = pollChoices.filter(
           (choice) => choice.text.trim() !== ""
@@ -339,7 +345,7 @@ const CreatePost = () => {
 
       // Regular post (text or media)
       if (text.trim() === "" && !selectedFile) {
-        toast.error("Post must have text, an image, or a video.");
+        // toast.error("Post must have text, an image, or a video.");
         return;
       }
 
@@ -380,7 +386,16 @@ const CreatePost = () => {
         });
       }
     },
-    [text, selectedFile, showPollInputs, pollChoices, scheduledAt, createPost, resetForm]
+    [
+      text,
+      selectedFile,
+      showPollInputs,
+      pollChoices,
+      scheduledAt,
+      createPost,
+      resetForm,
+      isPending,
+    ]
   );
 
   const handleFileChange = useCallback((e) => {
@@ -428,7 +443,7 @@ const CreatePost = () => {
 
   const handleKeyDown = useCallback(
     (e) => {
-      if (e.key === "Enter" && !e.shiftKey) {
+      if (e.key === "Enter" && !e.shiftKey && !isPending) {
         if (showMentionSuggestions && mentionSuggestions.length > 0) {
           e.preventDefault();
           // Optional: automatically select the first suggestion on Enter
@@ -439,7 +454,7 @@ const CreatePost = () => {
         }
       }
     },
-    [showMentionSuggestions, mentionSuggestions, handleSubmit]
+    [showMentionSuggestions, mentionSuggestions, handleSubmit, isPending]
   );
 
   const handleAddPollChoice = useCallback(() => {

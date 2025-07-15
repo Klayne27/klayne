@@ -410,7 +410,7 @@ const handleMessageInputChange = (e) => {
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={isEditingMode ? "Editing message..." : "Start a new message"}
-          className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-10 w-full resize-none overflow-y-auto max-h-[140px]"
+          className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
           ref={messageInputRef}
           rows={1}
         />

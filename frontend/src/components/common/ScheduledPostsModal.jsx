@@ -141,6 +141,21 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     });
   };
 
+  // ********** IMPORTANT CHANGE HERE **********
+  useEffect(() => {
+    if (isOpen || showDeleteConfirmModal) {
+      // Check if THIS modal OR the child delete confirm modal is open
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "unset";
+    }
+    // Cleanup function: ensures scrolling is re-enabled when the component unmounts
+    // or when isOpen changes to false
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, [isOpen, showDeleteConfirmModal]); // Add showDeleteConfirmModal to dependencies
+
   // --- EFFECT TO DETECT TOUCH DEVICE ---
   useEffect(() => {
     setIsTouchDevice(
