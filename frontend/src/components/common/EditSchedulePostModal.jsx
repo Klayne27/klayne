@@ -157,7 +157,6 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
       return;
     }
 
-    // Call the mutation hook to update the post
     updateScheduledPost(
       {
         postId: post._id,

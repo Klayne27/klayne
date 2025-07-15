@@ -352,7 +352,7 @@ export const getAllPosts = async (req, res) => {
 
     const posts = await Post.aggregate([
       { $match: matchConditions },
-      { $sort: { createdAt: -1 } },
+      { $sort: { publishedAt: -1, createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
       {
@@ -585,7 +585,7 @@ export const getLikedPosts = async (req, res) => {
           ],
         },
       },
-      { $sort: { createdAt: -1 } },
+      { $sort: { publishedAt: -1, createdAt: -1 } },
     ];
 
     const totalLikedPostsResult = await Post.aggregate([
@@ -691,7 +691,7 @@ export const getFollowingPosts = async (req, res) => {
     const totalCount = await Post.countDocuments(queryConditions);
 
     const rawFeedPosts = await Post.find(queryConditions)
-      .sort({ createdAt: -1 })
+      .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
@@ -854,7 +854,7 @@ export const getUserPosts = async (req, res) => {
     const totalUserPosts = await Post.countDocuments(queryConditions);
 
     const rawUserPosts = await Post.find(queryConditions)
-      .sort({ createdAt: -1 })
+      .sort({ publishedAt: -1, createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate({
@@ -1158,7 +1158,7 @@ export const getBookmarkedPosts = async (req, res) => {
     const totalPostsCount = await Post.countDocuments(filter);
 
     const bookmarkedPosts = await Post.find(filter)
-      .sort({ createdAt: -1 })
+      .sort({ publishedAt: -1, createdAt: -1 })
       .skip((parsedPage - 1) * parsedLimit)
       .limit(parsedLimit)
       .populate({
