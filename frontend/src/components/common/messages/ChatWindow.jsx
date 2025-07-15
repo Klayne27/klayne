@@ -378,18 +378,10 @@ const ChatWindow = ({
 
       // --- MODIFIED: handleTyping event listener ---
       const handleTyping = ({ conversationId, userId, isEditing }) => {
-        console.log("Typing event received:", {
-          conversationId,
-          userId,
-          isEditing,
-          actualConversationId,
-          otherUser_id: otherUser?._id,
-        });
         if (
           conversationId === actualConversationId &&
           userId === otherUser?._id.toString()
         ) {
-          console.log("Condition met for typing indicator. isEditing:", isEditing);
           if (!isEditing) {
             setIsTypingOtherUser(true);
           }
@@ -397,7 +389,6 @@ const ChatWindow = ({
       };
 
       const handleConversationUpdate = (updatedConversation) => {
-        console.log("conversationUpdated event received:", updatedConversation);
         queryClient.setQueryData(
           ["conversations", currentUser?._id],
           (oldConversations) => {
