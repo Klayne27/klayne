@@ -551,9 +551,6 @@ const CreatePost = () => {
   const handleCloseScheduledPostsListModal = useCallback(() => {
     setIsScheduledPostsModalOpen(false);
     setShowSchedulePostModal(true)
-    // Do NOT automatically open SchedulePostModal here unless specifically desired.
-    // The user might just want to close the list.
-    // setShowSchedulePostModal(true); // Removed this, as it forces open the new schedule modal
   }, []);
 
   // This function is called when a post item is clicked in ScheduledPostsModal

@@ -10,6 +10,7 @@ import { IoClose } from "react-icons/io5";
 import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
 import toast from "react-hot-toast";
 import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
+import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
@@ -20,6 +21,8 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+
+  useLockBodyScroll(isOpen)
 
   // --- NEW STATE FOR TOUCH EFFECT ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
@@ -141,20 +144,6 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     });
   };
 
-  // ********** IMPORTANT CHANGE HERE **********
-  useEffect(() => {
-    if (isOpen || showDeleteConfirmModal) {
-      // Check if THIS modal OR the child delete confirm modal is open
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    // Cleanup function: ensures scrolling is re-enabled when the component unmounts
-    // or when isOpen changes to false
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen, showDeleteConfirmModal]); // Add showDeleteConfirmModal to dependencies
 
   // --- EFFECT TO DETECT TOUCH DEVICE ---
   useEffect(() => {
@@ -169,7 +158,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4"
+      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${isOpen ? "modal-open" : ""}`}
       onClick={handleBackgroundClick}
     >
       <div

@@ -93,3 +93,7 @@ body {
 .word-break-anywhere {
   overflow-wrap: anywhere;
 }
+
+.modal-open {
+    overflow: hidden;
+}

@@ -12,6 +12,7 @@ import { useDeleteScheduledPost } from "../../hooks/postsHooks/useDeleteSchedule
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
+import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null);
@@ -20,6 +21,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const { createPost, isPending: isPublishing } = useCreatePosts(); // Use createPost for "publish now"
 
   const { authUser } = useAuthUser();
+  useLockBodyScroll(isOpen)
 
   const emojiButtonRef = useRef(null);
     const emojiPickerRef = useRef(null)
@@ -229,7 +231,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
   return (
     <div
-      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4"
+      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${isOpen ? "modal-open" : ""}`}
       onClick={handleBackgroundClick}
     >
       <div

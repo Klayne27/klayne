@@ -3,6 +3,7 @@ import React, { useState, useEffect, useRef } from "react";
 import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 import { TbCalendarClock } from "react-icons/tb";
+import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 
 const SchedulePostModal = ({
   isOpen,
@@ -14,6 +15,7 @@ const SchedulePostModal = ({
   onRemoveSchedule,
 }) => {
   const modalRef = useRef(null);
+  useLockBodyScroll(isOpen)
 
   const now = new Date();
   const initialSchedule = initialDate
@@ -256,7 +258,7 @@ const SchedulePostModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex  justify-center z-50 p-4"
+      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${isOpen ? "modal-open" : ""}`}
       onClick={handleBackgroundClick}
     >
       <div
