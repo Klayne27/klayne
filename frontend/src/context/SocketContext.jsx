@@ -97,6 +97,47 @@ export const SocketContextProvider = ({ children }) => {
         });
       });
 
+      // --- NEW: Handle messageEdited event in SocketContextProvider ---
+      newSocket.on("messageEdited", (updatedMessage) => {
+        // Update messages query data
+        queryClient.setQueryData(
+          ["messages", updatedMessage.conversationId],
+          (oldData) => {
+            if (!oldData) return oldData;
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((message) =>
+                message._id === updatedMessage._id ? updatedMessage : message
+              )
+            );
+            return { ...oldData, pages: updatedPages };
+          }
+        );
+
+        // Update conversations query data if the edited message was the last message
+        // This is crucial for updating the sidebar conversation list
+        queryClient.setQueryData(["conversations"], (oldConversationsData) => {
+          if (!oldConversationsData) return undefined;
+
+          const updatedConversations = oldConversationsData.map((conv) => {
+            if (conv._id === updatedMessage.conversationId) {
+              // Check if the edited message is the lastMessage of this conversation
+              if (conv.lastMessage && conv.lastMessage.messageId === updatedMessage._id) {
+                return {
+                  ...conv,
+                  lastMessage: {
+                    ...conv.lastMessage,
+                    text: updatedMessage.text,
+                    isEdited: updatedMessage.isEdited,
+                  },
+                };
+              }
+            }
+            return conv;
+          });
+          return updatedConversations;
+        });
+      });
+
       newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
         queryClient.setQueryData(["messages", conversationId], (oldData) => {
           if (!oldData) return oldData;
