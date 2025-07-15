@@ -2,12 +2,7 @@ import { useEffect, useRef, useState } from "react"; // Add useRef, useEffect
 import { useSocket } from "../../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { useFetchConversations } from "../../../hooks/messagesHooks/useFetchConversations";
-import { useFetchFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import ConversationItem from "./ConversationItem";
-import LoadingSpinner from "../LoadingSpinner";
-import { useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa6";
 
 const ConversationsList = ({
   onSelectConversation,
@@ -26,12 +21,7 @@ const ConversationsList = ({
 
   const scrollRef = useRef(null); // Ref for the scrollable div
   const lastScrollTop = useRef(0); // To track scroll direction
-
-  // const { conversations, isLoadingConversations, errorConversations } =
-  //   useFetchConversations();
-  // const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
-  //   useFetchFollowedUsersForMessaging();
-
+  
   const activeConversations =
     conversations?.filter((conv) => {
       const isDeletedForMe =

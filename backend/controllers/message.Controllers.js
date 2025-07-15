@@ -16,41 +16,43 @@ const getBlockingUsers = async (userId) => {
 };
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-
   if (!currentUserId || !targetUserId) {
-      return false;
+    return false;
   }
   if (currentUserId.toString() === targetUserId.toString()) {
-      return false;
+    return false;
   }
 
-  const currentUser = await User.findById(currentUserId).select("blockedUsers blockedBy").lean();
-  const targetUser = await User.findById(targetUserId).select("blockedUsers blockedBy").lean();
+  const currentUser = await User.findById(currentUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
+  const targetUser = await User.findById(targetUserId)
+    .select("blockedUsers blockedBy")
+    .lean();
 
   if (!currentUser || !targetUser) {
-      return false;
+    return false;
   }
 
   let currentUserBlockedTarget;
   try {
-      currentUserBlockedTarget = (currentUser.blockedUsers || []).some(id => {
-          const result = id.toString() === targetUserId.toString();
-          return result;
-      });
+    currentUserBlockedTarget = (currentUser.blockedUsers || []).some((id) => {
+      const result = id.toString() === targetUserId.toString();
+      return result;
+    });
   } catch (e) {
-      throw e;
+    throw e;
   }
 
   let targetUserBlockedCurrentUser;
   try {
-      targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(id => {
-          const result = id.toString() === currentUserId.toString();
-          return result;
-      });
+    targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some((id) => {
+      const result = id.toString() === currentUserId.toString();
+      return result;
+    });
   } catch (e) {
-      throw e;
+    throw e;
   }
-
 
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
@@ -156,7 +158,7 @@ export const sendMessage = async (req, res) => {
     }
 
     const messageToSend = { ...newMessage.toObject() };
-    
+
     if (tempId) {
       messageToSend.tempId = tempId;
     }
@@ -193,16 +195,13 @@ export const getMessagesByConversationId = async (req, res) => {
   const userId = req.user._id;
 
   try {
-
     const conversation = await Conversation.findById(conversationId);
 
     if (!conversation) {
-
       return res.status(404).json({ error: "Conversation not found." });
     }
 
     if (!conversation.participants.includes(userId)) {
-
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
 
@@ -218,7 +217,7 @@ export const getMessagesByConversationId = async (req, res) => {
           error: "You cannot view this conversation due to blocking restrictions.",
         });
       }
-    } 
+    }
 
     if (otherParticipantId) {
       process.nextTick(async () => {
