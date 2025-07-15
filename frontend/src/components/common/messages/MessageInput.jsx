@@ -31,22 +31,22 @@ function MessageInput({
   const typingTimeoutRef = useRef(null);
   const { authUser: currentUser } = useAuthUser();
 
-    const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-    useEffect(() => {
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      // Simple check for common mobile user agents
-      if (/android|ipad|iphone|ipod/i.test(userAgent)) {
-        setIsMobile(true);
-      }
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Simple check for common mobile user agents
+    if (/android|ipad|iphone|ipod/i.test(userAgent)) {
+      setIsMobile(true);
+    }
 
-      // Adjust textarea height on messageInput change
-      if (messageInputRef.current) {
-        messageInputRef.current.style.height = "auto";
-        messageInputRef.current.style.height =
-          messageInputRef.current.scrollHeight + "px";
-      }
-    }, [messageInput, messageInputRef]);
+    // Adjust textarea height on messageInput change
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = "auto";
+      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+      messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
+    }
+  }, [messageInput, messageInputRef]);
 
   const emitTyping = useCallback(() => {
     if (socket && actualConversationId) {
@@ -149,7 +149,6 @@ function MessageInput({
       typingTimeoutRef.current = null;
     }, 1500);
   };
-
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
