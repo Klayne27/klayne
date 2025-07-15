@@ -49,8 +49,8 @@ const MessageList = forwardRef(function MessageList(
   }, []); // Only runs once
 
   const handleDeleteClick = useCallback(
-    (messageId) => {
-      deleteMessage(messageId);
+    ({ messageId, conversationId }) => {
+      deleteMessage({ messageId, conversationId });
       setActiveMessageModalId(null); // Close modal after action
     },
     [deleteMessage]

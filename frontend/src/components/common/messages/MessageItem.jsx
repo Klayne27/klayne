@@ -160,19 +160,16 @@ const MessageItem = ({
           <button
             onClick={(e) => {
               e.stopPropagation();
-              handleDeleteClick(msg._id);
+              handleDeleteClick({
+                messageId: msg._id,
+                conversationId: msg.conversationId, // <-- Pass conversationId here
+              });
             }}
-            className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 ${
-              isDeletingMessage ? "cursor-not-allowed" : "cursor-pointer"
-            }`}
+            className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 cursor-pointer`}
             title="Delete message"
-            disabled={isDeletingMessage}
+            // disabled={isDeletingMessage}
           >
-            {isDeletingMessage ? (
-              <span className="loading loading-spinner loading-xs" />
-            ) : (
-              <FiTrash size={18} />
-            )}
+            <FiTrash size={18} />
           </button>
         )}
       </div>

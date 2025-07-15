@@ -14,7 +14,7 @@ export const fetchFollowedUsersForMessagingApi = async () => {
   return res.json();
 };
 
-export const deleteMessageApi = async (messageId) => {
+export const deleteMessageApi = async ({messageId, conversationId}) => {
   const res = await fetch(`/api/messages/${messageId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
