@@ -434,17 +434,17 @@ const ChatWindow = ({
         if (
           updatedMessage.conversationId.toString() === actualConversationId?.toString()
         ) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-            if (!oldData) return oldData;
+          // queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+          //   if (!oldData) return oldData;
 
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) =>
-                // Find the message by its ID and replace it with the updated version
-                msg._id === updatedMessage._id ? updatedMessage : msg
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          });
+          //   const updatedPages = oldData.pages.map((page) =>
+          //     page.map((msg) =>
+          //       // Find the message by its ID and replace it with the updated version
+          //       msg._id === updatedMessage._id ? updatedMessage : msg
+          //     )
+          //   );
+          //   return { ...oldData, pages: updatedPages };
+          // });
 
           // Invalidate conversations query to update the lastMessage in the sidebar
           // This will cause a refetch of conversations, showing the updated last message.
