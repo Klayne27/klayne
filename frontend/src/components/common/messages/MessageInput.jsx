@@ -38,8 +38,6 @@ function MessageInput({
 
   const { editMessage, isEditing } = useEditMessage();
 
-
-
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
     // Simple check for common mobile user agents
@@ -55,17 +53,33 @@ function MessageInput({
     }
   }, [messageInput, messageInputRef]);
 
-  const emitTyping = useCallback(() => {
-    if (socket && actualConversationId) {
-      socket.emit("typing", { conversationId: actualConversationId });
-    }
-  }, [socket, actualConversationId]);
+  // --- MODIFIED: emitTyping now accepts isEditing flag ---
+  const emitTyping = useCallback(
+    (isEditingActive) => {
+      if (socket && actualConversationId && currentUser?._id) {
+        socket.emit("typing", {
+          conversationId: actualConversationId,
+          userId: currentUser._id, // This should be the current user's ID
+          isEditing: isEditingActive, // Pass the flag
+        });
+      }
+    },
+    [socket, actualConversationId, currentUser?._id]
+  );
 
-  const emitStopTyping = useCallback(() => {
-    if (socket && actualConversationId) {
-      socket.emit("stopTyping", { conversationId: actualConversationId });
-    }
-  }, [socket, actualConversationId]);
+  // --- MODIFIED: emitStopTyping now accepts isEditing flag ---
+  const emitStopTyping = useCallback(
+    (isEditingActive) => {
+      if (socket && actualConversationId && currentUser?._id) {
+        socket.emit("stopTyping", {
+          conversationId: actualConversationId,
+          userId: currentUser._id, // This should be the current user's ID
+          isEditing: isEditingActive, // Pass the flag
+        });
+      }
+    },
+    [socket, actualConversationId, currentUser?._id]
+  );
 
   const handlePaste = (e) => {
     e.preventDefault(); // Prevent default paste behavior
@@ -144,32 +158,34 @@ function MessageInput({
     }
   }, [editingMessage]); // Depend on editingMessage
 
-  const handleMessageInputChange = (e) => {
-    const text = e.target.value;
-    setMessageInput(text);
+const handleMessageInputChange = (e) => {
+  const text = e.target.value;
+  setMessageInput(text);
 
-    if (text.trim() === "") {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = null;
-      }
-      emitStopTyping();
-      return;
-    }
+  const isCurrentlyEditing = !!editingMessage; // Determine if in edit mode
 
-    if (!typingTimeoutRef.current) {
-      emitTyping();
-    }
-
+  if (text.trim() === "") {
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
-    }
-
-    typingTimeoutRef.current = setTimeout(() => {
-      emitStopTyping();
       typingTimeoutRef.current = null;
-    }, 1500);
-  };
+    }
+    emitStopTyping(isCurrentlyEditing); // Pass the flag
+    return;
+  }
+
+  if (!typingTimeoutRef.current) {
+    emitTyping(isCurrentlyEditing); // Pass the flag
+  }
+
+  if (typingTimeoutRef.current) {
+    clearTimeout(typingTimeoutRef.current);
+  }
+
+  typingTimeoutRef.current = setTimeout(() => {
+    emitStopTyping(isCurrentlyEditing); // Pass the flag
+    typingTimeoutRef.current = null;
+  }, 1500);
+};
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -281,6 +297,7 @@ function MessageInput({
   const handleCancelEdit = () => {
     setEditingMessage(null);
     setMessageInput("");
+    emitStopTyping(true); // Indicate it was an edit context
   };
 
   useEffect(() => {
@@ -323,9 +340,8 @@ function MessageInput({
     };
   }, [actualConversationId, emitStopTyping]);
 
-    const isSendButtonDisabled =
-      isSendingMessage || isEditing || (!messageInput.trim() && !imageFile);
-
+  const isSendButtonDisabled =
+    isSendingMessage || isEditing || (!messageInput.trim() && !imageFile);
 
   // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
@@ -496,7 +512,7 @@ function MessageInput({
         // NORMAL MODE (not editing)
         <form
           onSubmit={handleSubmit}
-          className="px-2 bg-black/0 flex items-center relative"  // change back to p-2
+          className="px-2 bg-black/0 flex items-center relative" // change back to p-2
         >
           {renderFormContent(false)} {/* Pass false for normal mode */}
         </form>

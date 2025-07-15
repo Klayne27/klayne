@@ -130,6 +130,8 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       seen: false,
       createdAt: newMessage.createdAt,
+      isEdited: false, // <-- ADD THIS: New messages are not edited
+      messageId: newMessage._id, // <-- ADD THIS: Store the actual message ID
     };
 
     conversation.deletedFor = conversation.deletedFor.filter(
@@ -316,6 +318,8 @@ export const getConversations = async (req, res) => {
               sender: conversation.lastMessage.sender,
               seen: conversation.lastMessage.seen,
               createdAt: conversation.lastMessage.createdAt,
+              isEdited: conversation.lastMessage.isEdited || false, // Ensure it's always a boolean
+              messageId: conversation.lastMessage.messageId || null,
               img: conversation.lastMessage.img,
             }
           : null;

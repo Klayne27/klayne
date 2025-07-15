@@ -253,7 +253,7 @@ io.on("connection", (socket) => {
 
   io.emit("getOnlineUsers", getOnlineUserIds());
 
-  socket.on("typing", async ({ conversationId }) => {
+  socket.on("typing", async ({ conversationId, isEditing }) => {
     const senderId = socket.userId;
     if (!conversationId || !senderId) return;
 
@@ -278,7 +278,7 @@ io.on("connection", (socket) => {
             if (!blocked) {
               const receiverSocketIds = getReceiverSocketIds(participantId);
               receiverSocketIds.forEach((sockId) => {
-                io.to(sockId).emit("typing", { conversationId, userId: senderId });
+                io.to(sockId).emit("typing", { conversationId, userId: senderId, isEditing });
               });
             } 
           }
@@ -289,7 +289,7 @@ io.on("connection", (socket) => {
     }
   });
 
-  socket.on("stopTyping", async ({ conversationId }) => {
+  socket.on("stopTyping", async ({ conversationId, isEditing }) => {
     const senderId = socket.userId;
     if (!conversationId || !senderId) return;
 
@@ -314,7 +314,7 @@ io.on("connection", (socket) => {
               if (!blocked) {
                 const receiverSocketIds = getReceiverSocketIds(participantId);
                 receiverSocketIds.forEach((sockId) => {
-                  io.to(sockId).emit("stopTyping", { conversationId, userId: senderId });
+                  io.to(sockId).emit("stopTyping", { conversationId, userId: senderId, isEditing });
                 });
               }
             }

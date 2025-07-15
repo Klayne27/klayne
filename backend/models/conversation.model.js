@@ -38,7 +38,6 @@ const conversationSchema = new mongoose.Schema(
 
 conversationSchema.index({ participants: 1, updatedAt: -1 });
 conversationSchema.index({ "lastMessage.sender": 1, "lastMessage.seen": 1 });
-
 conversationSchema.index({ "deletedFor.user": 1 });
 
 const Conversation = mongoose.model("Conversation", conversationSchema);

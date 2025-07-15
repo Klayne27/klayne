@@ -376,20 +376,63 @@ const ChatWindow = ({
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       };
 
-      const handleTyping = ({ conversationId, userId }) => {
+      // --- MODIFIED: handleTyping event listener ---
+      const handleTyping = ({ conversationId, userId, isEditing }) => {
+        console.log("Typing event received:", {
+          conversationId,
+          userId,
+          isEditing,
+          actualConversationId,
+          otherUser_id: otherUser?._id,
+        });
         if (
           conversationId === actualConversationId &&
           userId === otherUser?._id.toString()
         ) {
-          setIsTypingOtherUser(true);
+          console.log("Condition met for typing indicator. isEditing:", isEditing);
+          if (!isEditing) {
+            setIsTypingOtherUser(true);
+          }
         }
       };
 
-      const handleStopTyping = ({ conversationId, userId }) => {
+      const handleConversationUpdate = (updatedConversation) => {
+        console.log("conversationUpdated event received:", updatedConversation);
+        queryClient.setQueryData(
+          ["conversations", currentUser?._id],
+          (oldConversations) => {
+            if (!oldConversations) return [];
+
+            // Find the index of the updated conversation
+            const index = oldConversations.findIndex(
+              (conv) => conv._id === updatedConversation._id
+            );
+
+            if (index !== -1) {
+              // If found, replace it and potentially reorder to the top
+              const newConversations = [...oldConversations];
+              newConversations[index] = updatedConversation;
+
+              // Optional: If you sort by updatedAt, re-sort the list
+              // newConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+              return newConversations;
+            } else {
+              // If not found (e.g., a new conversation was created), just add it
+              // Or invalidate to refetch everything for simplicity if new conversations are rare
+              return [updatedConversation, ...oldConversations];
+            }
+          }
+        );
+      };
+
+      // --- MODIFIED: handleStopTyping event listener ---
+      const handleStopTyping = ({ conversationId, userId, isEditing }) => {
         if (
           conversationId === actualConversationId &&
           userId === otherUser?._id.toString()
         ) {
+          // Always stop typing, regardless of whether they were editing or not.
+          // The `isEditing` check is primarily for *starting* the typing indicator.
           setIsTypingOtherUser(false);
         }
       };
@@ -424,6 +467,7 @@ const ChatWindow = ({
       socket.on("typing", handleTyping);
       socket.on("stopTyping", handleStopTyping);
       socket.on("messageEdited", handleMessageEdited);
+      socket.on("conversationUpdated", handleConversationUpdate);
 
       return () => {
         socket.off("newMessage", handleNewMessage);
@@ -432,6 +476,7 @@ const ChatWindow = ({
         socket.off("typing", handleTyping);
         socket.off("stopTyping", handleStopTyping);
         socket.off("messageEdited", handleMessageEdited);
+        socket.off("conversationUpdated", handleConversationUpdate);
       };
     }
   }, [

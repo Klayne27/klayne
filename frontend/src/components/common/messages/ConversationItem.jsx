@@ -17,7 +17,6 @@ function ConversationItem({
   const queryClient = useQueryClient();
   const {socket} = useSocket()
 
-
     const lastMessageText = conv.lastMessage?.text || "";
     const isEdited = conv.lastMessage?.isEdited || false;
     // const isLastMessageFromMe = conv.lastMessage?.sender.toString();
