@@ -50,6 +50,7 @@ function MessageInput({
       messageInputRef.current.style.height = "auto";
       messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
       messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
+      messageInputRef.current.focus();
     }
   }, [messageInput, messageInputRef]);
 
