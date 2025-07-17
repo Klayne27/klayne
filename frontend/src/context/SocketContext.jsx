@@ -22,10 +22,10 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
 
-  const { pathname } = useLocation();
-
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
+
+  const location = useLocation();
 
   const activeConversationIdRef = useRef(activeConversationId);
   useEffect(() => {
@@ -50,6 +50,40 @@ export const SocketContextProvider = ({ children }) => {
 
       socketRef.current = newSocket;
       setSocket(newSocket);
+
+      // --- Public Chat Socket Listeners ---
+      newSocket.on("newPublicMessage", (newMessage) => {
+        // Only show toast if user is not on the public chat page
+        // if (!location.pathname.startsWith("/public-chat")) {
+        //   toast(
+        //     `New public message from ${newMessage.sender.username}: ${
+        //       newMessage.content ? newMessage.content.substring(0, 30) + "..." : "Image"
+        //     }`
+        //   );
+        //   // You might set a hasUnreadPublicChatMessages state here for a sidebar indicator
+        // }
+      });
+
+      newSocket.on("messageDeleted", ({ messageId, senderId, content, img }) => {
+        // Public chat message deleted event
+        // The usePublicMessages hook handles the query invalidation.
+        // This is just for potential toast notifications outside the chat page.
+        // if (!location.pathname.startsWith("/public-chat")) {
+        //   toast.info(`A public message was deleted.`);
+        // }
+      });
+
+      newSocket.on("userBanned", ({ userId, username }) => {
+        // if (!location.pathname.startsWith("/public-chat")) {
+        //   toast.error(`${username} has been banned from public chat.`);
+        // }
+      });
+
+      newSocket.on("userUnbanned", ({ userId, username }) => {
+        // if (!location.pathname.startsWith("/public-chat")) {
+        //   toast.success(`${username} has been unbanned from public chat.`);
+        // }
+      });
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);

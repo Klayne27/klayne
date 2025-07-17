@@ -14,40 +14,40 @@ const useFollow = () => {
   } = useMutation({
     mutationFn: (userIdToFollow) => followApi(userIdToFollow),
     onMutate: async (userIdToFollow) => {
-      // await queryClient.cancelQueries({ queryKey: ["authUser"] });
-      // await queryClient.cancelQueries({ queryKey: ["userProfile", userIdToFollow] });
-      // const previousAuthUser = queryClient.getQueryData(["authUser"]);
-      // const previousUserProfile = queryClient.getQueryData([
-      //   "userProfile",
-      //   userIdToFollow,
-      // ]);
-      // if (previousAuthUser) {
-      //   queryClient.setQueryData(["authUser"], (oldData) => {
-      //     if (!oldData) return oldData; // Should not happen if previousAuthUser exists
-      //     const isCurrentlyFollowing = oldData.following.includes(userIdToFollow);
-      //     let newFollowing;
-      //     if (isCurrentlyFollowing) {
-      //       newFollowing = oldData.following.filter((id) => id !== userIdToFollow);
-      //     } else {
-      //       newFollowing = [...oldData.following, userIdToFollow];
-      //     }
-      //     return { ...oldData, following: newFollowing };
-      //   });
-      // }
-      // if (previousUserProfile) {
-      //   queryClient.setQueryData(["userProfile", userIdToFollow], (oldData) => {
-      //     if (!oldData) return oldData; // Should not happen if previousUserProfile exists
-      //     const isCurrentlyFollowedByAuthUser = oldData.followers.includes(authUser._id);
-      //     let newFollowers;
-      //     if (isCurrentlyFollowedByAuthUser) {
-      //       newFollowers = oldData.followers.filter((id) => id !== authUser._id);
-      //     } else {
-      //       newFollowers = [...oldData.followers, authUser._id];
-      //     }
-      //     return { ...oldData, followers: newFollowers };
-      //   });
-      // }
-      // return { previousAuthUser, previousUserProfile };
+      await queryClient.cancelQueries({ queryKey: ["authUser"] });
+      await queryClient.cancelQueries({ queryKey: ["userProfile", userIdToFollow] });
+      const previousAuthUser = queryClient.getQueryData(["authUser"]);
+      const previousUserProfile = queryClient.getQueryData([
+        "userProfile",
+        userIdToFollow,
+      ]);
+      if (previousAuthUser) {
+        queryClient.setQueryData(["authUser"], (oldData) => {
+          if (!oldData) return oldData; // Should not happen if previousAuthUser exists
+          const isCurrentlyFollowing = oldData.following.includes(userIdToFollow);
+          let newFollowing;
+          if (isCurrentlyFollowing) {
+            newFollowing = oldData.following.filter((id) => id !== userIdToFollow);
+          } else {
+            newFollowing = [...oldData.following, userIdToFollow];
+          }
+          return { ...oldData, following: newFollowing };
+        });
+      }
+      if (previousUserProfile) {
+        queryClient.setQueryData(["userProfile", userIdToFollow], (oldData) => {
+          if (!oldData) return oldData; // Should not happen if previousUserProfile exists
+          const isCurrentlyFollowedByAuthUser = oldData.followers.includes(authUser._id);
+          let newFollowers;
+          if (isCurrentlyFollowedByAuthUser) {
+            newFollowers = oldData.followers.filter((id) => id !== authUser._id);
+          } else {
+            newFollowers = [...oldData.followers, authUser._id];
+          }
+          return { ...oldData, followers: newFollowers };
+        });
+      }
+      return { previousAuthUser, previousUserProfile };
     },
     onError: (error, userIdToFollow, context) => {
       // Rollback to the previous data if the mutation fails
@@ -66,9 +66,8 @@ const useFollow = () => {
       // Invalidate and refetch to ensure the client state is in sync with the server.
       // This is important because even if optimistic update was correct,
       // the server might have different data due to other actions.
-      // queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      // queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] });
-      // queryClient.invalidateQueries({ queryKey: ["users"] })
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] });
       // queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
     },
     onSuccess: (data, userIdToFollow) => {

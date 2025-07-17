@@ -4,7 +4,7 @@ import SearchPanel from "../../components/common/SearchPanel";
 import SuggestedUsersPanel from "../../components/common/SuggestedUsersPanel";
 import { FaArrowLeft } from "react-icons/fa6";
 
-const SearchPage = () => {
+const SearchPage = ({ showUnfollowModal, setShowUnfollowModal }) => {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -26,7 +26,10 @@ const SearchPage = () => {
       <div className="p-3">
         <SearchPanel />
         <div className="mt-4">
-          <SuggestedUsersPanel />
+          <SuggestedUsersPanel
+            showUnfollowModal={showUnfollowModal}
+            setShowUnfollowModal={setShowUnfollowModal}
+          />
         </div>
       </div>
     </div>

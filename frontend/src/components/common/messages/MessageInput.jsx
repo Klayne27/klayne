@@ -259,7 +259,7 @@ const handleMessageInputChange = (e) => {
       setReplyingToMessage(null);
       currentOptimisticIdRef.current = null;
 
-      if (messageInputRef.current && wasInputFocused) {
+      if (messageInputRef.current && wasInputFocused && isMobile) {
         setTimeout(() => {
           messageInputRef.current.focus();
         }, 0);
@@ -385,7 +385,7 @@ const handleMessageInputChange = (e) => {
           </button>
           <button
             type="button"
-            className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+            className="hidden md:block p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
           >
             <PiSmiley
               className="w-5 h-5"

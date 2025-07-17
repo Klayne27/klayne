@@ -286,8 +286,6 @@ export const getAllPosts = async (req, res) => {
     const userId = req.user?._id;
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-    // console.log("Blocked By Me:", blockedByMe); // Add debug logs
-    // console.log("Blocked Me:", blockedMe);     // Add debug logs
 
     const blockedAndBlockingObjectIds = [
       ...new Set([

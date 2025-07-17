@@ -19,6 +19,7 @@ import { FaUserXmark } from "react-icons/fa6";
 import FollowListModal from "./FollowListModal";
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 import React from "react";
+import { BsChatSquareText } from "react-icons/bs";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -685,6 +686,52 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 alt="User Profile"
               />
             </button>
+          </li>
+
+          <li
+            onClick={() => navigate("/public-chat")}
+            className="hidden flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
+          >
+            <Link
+              to="/public-chat"
+              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
+              transition duration-200
+              ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
+              ${
+                isTouchDevice && activeButton === "public-chat"
+                  ? "bg-secondary bg-opacity-80"
+                  : ""
+              }`}
+              onTouchStart={() => handleTouchStart("public-chat")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              <BsChatSquareText
+                className={`size-6 ${
+                  pathname.startsWith("/public-chat")
+                    ? "font-bold text-opacity-100"
+                    : "opacity-80"
+                }`}
+                // You might need to adjust strokeWidth depending on the icon library
+              />
+              {/* If you add unread status for public chat, put a notification dot here */}
+              {/* {hasUnreadPublicChatMessages && (
+              <div
+                className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                style={{ transform: "translate(50%, -50%)" }}
+              ></div>
+            )} */}
+            </Link>
+            <span
+              className={`text-lg hidden md:block ${
+                pathname.startsWith("/public-chat")
+                  ? "font-bold text-opacity-100"
+                  : "opacity-80"
+              }`}
+              onClick={() => navigate("/public-chat")}
+            >
+              Public Chat
+            </span>
           </li>
 
           {/* Profile (Desktop Only) */}

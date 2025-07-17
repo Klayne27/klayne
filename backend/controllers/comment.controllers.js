@@ -52,17 +52,16 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
-// Helper function to extract and validate mentions
 const processMentions = async (text, commenterId) => {
   const mentionedUserIds = [];
   if (!text) return [];
 
-  const mentionRegex = /@([a-zA-Z0-9_]+)/g; // Regex to find @usernames
+  const mentionRegex = /@([a-zA-Z0-9_]+)/g;
   let match;
-  const uniqueMentionedUsernames = new Set(); // Use a Set to avoid duplicate lookups/notifications
+  const uniqueMentionedUsernames = new Set();
 
   while ((match = mentionRegex.exec(text)) !== null) {
-    uniqueMentionedUsernames.add(match[1]); // Add the username (group 1)
+    uniqueMentionedUsernames.add(match[1]);
   }
 
   if (uniqueMentionedUsernames.size > 0) {
@@ -70,9 +69,7 @@ const processMentions = async (text, commenterId) => {
       username: { $in: Array.from(uniqueMentionedUsernames) },
     }).select("_id username");
     for (const user of users) {
-      // Check if the commenter is blocked by the mentioned user, or vice versa
       const isBlocked = await isBlockedOrBlockedBy(commenterId, user._id);
-      // Only add to mentionedUserIds if neither user has blocked the other
       if (!isBlocked) {
         mentionedUserIds.push(user._id);
       }
@@ -215,10 +212,10 @@ export const getComments = async (req, res) => {
 export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
-    let { img } = req.body; // Using 'img' for image/video upload. If you have separate 'video' field in FE, ensure it's handled.
+    let { img } = req.body;
 
     const postId = req.params.postId;
-    const userId = req.user._id; // The user creating the comment
+    const userId = req.user._id;
 
     if (!text && !img) {
       return res
@@ -243,7 +240,6 @@ export const createComment = async (req, res) => {
         .json({ error: "Internal server error: Post owner information missing." });
     }
 
-    // Check if commenter is blocked by post owner or vice versa
     if (await isBlockedOrBlockedBy(userId, post.user._id)) {
       return res
         .status(403)
@@ -260,15 +256,15 @@ export const createComment = async (req, res) => {
       }
     }
 
-    const mentionedUserIds = await processMentions(text, userId); // Process mentions
+    const mentionedUserIds = await processMentions(text, userId);
 
     const newComment = new Comment({
       user: userId,
       post: postId,
       text,
       img,
-      parentComment: null, // This is for top-level comments
-      mentionedUsers: mentionedUserIds, // Save the IDs of valid mentions
+      parentComment: null,
+      mentionedUsers: mentionedUserIds,
     });
 
     await newComment.save();
@@ -276,7 +272,6 @@ export const createComment = async (req, res) => {
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    // Populate user details for the response
     await newComment.populate({
       path: "user",
       select: "username fullName profileImg isVerified",

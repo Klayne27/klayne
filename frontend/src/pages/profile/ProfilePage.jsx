@@ -330,15 +330,15 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 </button>
               )}
 
-              {!isMyProfile && !amIFollowing && !isBlockingRelationship && (
+              {/* {!isMyProfile && !amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="hidden p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 bg-black/0 md:text-md text-xs"
+                  className="hidden p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 md:text-md text-xs"
                   disabled={isBlockingRelationship}
                 >
                   <CiMail size={20} strokeWidth={1} />
                 </button>
-              )}
+              )} */}
 
               {/* Follow/Unfollow Button - FIXED WIDTH */}
               {!isMyProfile && !isBlockingRelationship && (

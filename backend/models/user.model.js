@@ -86,8 +86,15 @@ const userSchema = new mongoose.Schema(
         ref: "Post",
         default: [],
       },
-    ],
-    
+    ], // --- ADD THESE NEW FIELDS ---
+    isAdmin: {
+      type: Boolean,
+      default: false,
+    },
+    isBannedInPublicChat: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

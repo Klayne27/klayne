@@ -7,6 +7,7 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 
+// const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
 const HomePage = lazy(() => import("./pages/home/HomePage"));
@@ -42,8 +43,7 @@ function App() {
   }
 
   const isMessagePage = location.pathname.includes("/messages");
-  const isSpecificConversationOpen =
-    isMessagePage && location.pathname.split("/").length > 3;
+  const isPublicChatPage = location.pathname.includes("/public-chat");
 
   return (
     // On small screens, use flex-col for main content and padding-bottom for the fixed footer
@@ -59,7 +59,13 @@ function App() {
       {/* Main content area */}
       {/* On mobile, add pb-[var(--mobile-nav-height)] to ensure content scrolls above the fixed footer */}
       {/* Set a common height for your mobile nav, e.g., 64px or 4rem (h-16) */}
-      <main className="flex-1 overflow-auto  md:pb-0">
+      <main
+        className={`${
+          isPublicChatPage
+            ? "flex flex-col h-screen max-h-screen md:flex-1"
+            : "flex-1 md:pb-0"
+        }`}
+      >
         {" "}
         {/* Added pb-16 for mobile */}
         <Suspense
@@ -143,6 +149,17 @@ function App() {
                 )
               }
             />
+            {/* New Public Chat Route */}
+            {/* <Route
+              path="/public-chat"
+              element={
+                authUser ? (
+                  <PublicChatPage openImageModal={openImageModal} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
+            /> */}
             <Route
               path="/bookmarks"
               element={
@@ -175,7 +192,16 @@ function App() {
             />
             <Route
               path="/search"
-              element={authUser ? <SearchPage /> : <Navigate to="/login" />}
+              element={
+                authUser ? (
+                  <SearchPage
+                    showUnfollowModal={showUnfollowModal}
+                    setShowUnfollowModal={setShowUnfollowModal}
+                  />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
             />
           </Routes>
         </Suspense>

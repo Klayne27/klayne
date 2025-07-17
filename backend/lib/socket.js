@@ -226,6 +226,8 @@ export const createAndSendNotification = async ({
   }
 };
 
+export const PUBLIC_CHAT_ROOM = "public_chat_room"
+
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
@@ -241,8 +243,10 @@ io.on("connection", (socket) => {
       onlineUsersMap.set(userId, new Set());
     }
     onlineUsersMap.get(userId).add(socket.id);
-
     socket.userId = userId;
+
+    socket.join(PUBLIC_CHAT_ROOM)
+    console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
 
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
@@ -413,6 +417,8 @@ io.on("connection", (socket) => {
 
   socket.on("disconnect", () => {
     console.log(`Socket disconnected: ${socket.id}`);
+
+    socket.leave(PUBLIC_CHAT_ROOM)
 
     const disconnectedUserId = socket.userId;
 
