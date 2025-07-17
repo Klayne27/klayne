@@ -21,7 +21,7 @@ const NotificationPage = () => {
   const { deleteNotifications } = useDeleteNotifications();
   const { authUser } = useAuthUser();
   const navigate = useNavigate();
-  const dropdownToggleRef = useRef(null)
+  const dropdownToggleRef = useRef(null);
 
   const filteredNotifications = notifications?.filter((notification) => {
     // Keep this filter. It ensures users don't see notifications
@@ -58,7 +58,16 @@ const NotificationPage = () => {
       targetLink = `/profile/${notification.from?.username}`;
     } else if (notification.postId && notification.postId._id) {
       // This path is correct for likes, comments, reposts, AND mentions
-      targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
+      // For comment replies, we want to go to the specific reply if possible
+      if (
+        notification.type === "commentReply" &&
+        notification.commentId &&
+        notification.commentId._id
+      ) {
+        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}?commentId=${notification.commentId._id}`;
+      } else {
+        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
+      }
     } else {
       console.warn("Could not determine navigation link for notification:", notification);
       return;

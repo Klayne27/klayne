@@ -75,7 +75,7 @@ export const getPublicMessages = async (req, res) => {
       .limit(limit)
       .populate({
         path: "sender",
-        select: "username fullName profileImg",
+        select: "username fullName profileImg isAdmin isBannedInPublicChat",
       })
       .lean(); // Use .lean() for faster queries if you don't need Mongoose documents
 
@@ -196,3 +196,124 @@ export const unbanUserFromPublicChat = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+// --- New Controllers for Reactions ---
+
+export const addReactionToPublicMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { emoji } = req.body;
+    const userId = req.user._id;
+
+    const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+    if (!allowedEmojis.includes(emoji)) {
+      return res.status(400).json({ error: "Invalid emoji." });
+    }
+
+    if (await isBanned(userId)) {
+      return res
+        .status(403)
+        .json({ error: "You are banned from the public chat and cannot react." });
+    }
+
+    const message = await PublicChatMessage.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    // --- NEW LOGIC START ---
+    // Find if the current user already reacted with THIS SPECIFIC EMOJI
+    const existingSpecificEmojiReactionIndex = message.reactions.findIndex(
+      (reaction) =>
+        reaction.userId.toString() === userId.toString() && reaction.emoji === emoji
+    );
+
+    let actionTaken = ""; // For logging/debugging
+
+    if (existingSpecificEmojiReactionIndex !== -1) {
+      // User already reacted with this specific emoji -> REMOVE it
+      message.reactions.splice(existingSpecificEmojiReactionIndex, 1);
+      actionTaken = "removed specific emoji";
+    } else {
+      // User has NOT reacted with this specific emoji -> ADD it
+      message.reactions.push({ emoji, userId });
+      actionTaken = "added specific emoji";
+    }
+    // --- NEW LOGIC END ---
+
+    await message.save();
+
+    const populatedMessage = await PublicChatMessage.findById(messageId)
+      .populate({
+        path: "sender",
+        select: "username fullName profileImg isAdmin isBannedInPublicChat",
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username profileImg",
+      })
+      .lean();
+
+    io.to(PUBLIC_CHAT_ROOM).emit("publicMessageReactionUpdated", {
+      messageId: populatedMessage._id,
+      reactions: populatedMessage.reactions,
+    });
+
+    res.status(200).json(populatedMessage.reactions);
+  } catch (error) {
+    console.error("Error in addReactionToPublicMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+
+// export const removeReactionFromPublicMessage = async (req, res) => {
+//   try {
+//     const { messageId } = req.params;
+//     const userId = req.user._id; // The user removing the reaction
+
+//     const message = await PublicChatMessage.findById(messageId);
+
+//     if (!message) {
+//       return res.status(404).json({ error: "Message not found." });
+//     }
+
+//     // Filter out the reaction from the current user
+//     const initialReactionCount = message.reactions.length;
+//     message.reactions = message.reactions.filter(
+//       (reaction) => reaction.userId.toString() !== userId.toString()
+//     );
+
+//     if (message.reactions.length === initialReactionCount) {
+//       return res.status(400).json({ error: "User has no reaction to remove from this message." });
+//     }
+
+//     await message.save();
+
+//     // Populate sender details for real-time broadcast (to get profileImg, username etc. for reactee)
+//     await message.populate({
+//         path: "sender",
+//         select: "username fullName profileImg isAdmin isBannedInPublicChat",
+//     });
+
+//     // Populate reactions.userId to get details of users who reacted
+//     for (let i = 0; i < message.reactions.length; i++) {
+//         await message.reactions[i].populate({
+//             path: 'userId',
+//             select: 'username profileImg' // Select relevant fields
+//         });
+//     }
+
+//     // Emit reaction update to all clients in the public chat room
+//     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageReactionUpdated", {
+//       messageId: message._id,
+//       reactions: message.reactions, // Send the full updated reactions array
+//     });
+
+//     res.status(200).json(message.reactions); // Or send the whole updated message
+//   } catch (error) {
+//     console.error("Error in removeReactionFromPublicMessage controller: ", error.message);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };

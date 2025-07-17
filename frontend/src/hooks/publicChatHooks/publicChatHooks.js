@@ -11,9 +11,11 @@ import toast from "react-hot-toast";
 import { useEffect } from "react";
 import { useSocket } from "../../context/SocketContext";
 import {
+  addPublicMessageReactionApi,
   banUserFromPublicChatApi,
   deletePublicMessageApi,
   getPublicMessagesApi,
+  removePublicMessageReactionApi,
   sendPublicMessageApi,
   unbanUserFromPublicChatApi,
 } from "../../api/publicChatApi";
@@ -98,15 +100,19 @@ export const usePublicMessages = () => {
         );
         return { ...oldData, pages: updatedPages };
       });
-      toast.success("Message deleted by admin.");
+      // toast.success("Message deleted by admin.");
     };
 
     const handleUserBanned = ({ userId, username }) => {
-      toast.error(`${username} has been banned from the public chat.`);
+      // toast.error(`${username} has been banned from the public chat.`);
+            queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+
     };
 
     const handleUserUnbanned = ({ userId, username }) => {
-      toast.success(`${username} has been unbanned from the public chat.`);
+      // toast.success(`${username} has been unbanned from the public chat.`);
+            queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+
     };
 
     socket.on("newPublicMessage", handleNewPublicMessage);
@@ -142,7 +148,6 @@ export const usePublicMessages = () => {
   };
 };
 
-
 export const useSendPublicMessage = () => {
   const queryClient = useQueryClient();
 
@@ -156,14 +161,14 @@ export const useSendPublicMessage = () => {
     onSuccess: (newMessage) => {
       // This will automatically be handled by the socket listener
       // but we can optionally add it here for immediate UI update before socket emits
-        queryClient.setQueryData(["publicMessages"], (oldData) => {
-          if (!oldData) {
-            return { pages: [[newMessage]], pageParams: [1] };
-          }
-          const updatedPages = [...oldData.pages];
-          updatedPages[0] = [...updatedPages[0], newMessage];
-          return { ...oldData, pages: updatedPages };
-        });
+      // queryClient.setQueryData(["publicMessages"], (oldData) => {
+      //   if (!oldData) {
+      //     return { pages: [[newMessage]], pageParams: [1] };
+      //   }
+      //   const updatedPages = [...oldData.pages];
+      //   updatedPages[0] = [...updatedPages[0], newMessage];
+      //   return { ...oldData, pages: updatedPages };
+      // });
       //   toast.success("Message sent!");
     },
     onError: (error) => {
@@ -217,8 +222,8 @@ export const useBanUserFromPublicChat = () => {
     mutationFn: banUserFromPublicChatApi,
     onSuccess: (data) => {
       // Invalidate relevant queries or show success
-      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Optionally refetch all to clear banned user messages
-      toast.success("User banned from public chat.");
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Optionally refetch all to clear banned user messages
+      // toast.success("User banned from public chat.");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to ban user.");
@@ -240,7 +245,8 @@ export const useUnbanUserFromPublicChat = () => {
     mutationFn: unbanUserFromPublicChatApi,
     onSuccess: (data) => {
       // Invalidate relevant queries or show success
-      toast.success("User unbanned from public chat.");
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // toast.success("User unbanned from public chat.");
     },
     onError: (error) => {
       toast.error(error.message || "Failed to unban user.");
@@ -248,4 +254,125 @@ export const useUnbanUserFromPublicChat = () => {
   });
 
   return { unbanUser, isPending, isError, error };
+};
+// --- New React Query Hooks for Reactions ---
+export const useAddPublicMessageReaction = () => {
+  const queryClient = useQueryClient();
+
+  const { mutate: addReaction, isPending: isReacting } = useMutation({
+    mutationFn: ({ messageId, emoji }) => addPublicMessageReactionApi(messageId, emoji),
+    onMutate: async ({ messageId, emoji }) => {
+      await queryClient.cancelQueries(["publicMessages"]);
+
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+
+        const newPages = oldData.pages.map((page) =>
+          page.map((msg) => {
+            if (msg._id === messageId) {
+              const newReactions = [...(msg.reactions || [])];
+              const authUser = queryClient.getQueryData(["authUser"]);
+
+              if (!authUser) {
+                console.warn(
+                  "Auth user not found in cache for optimistic update. Skipping reaction update for message:",
+                  messageId
+                );
+                return msg;
+              }
+
+              // --- NEW LOGIC START ---
+              // Find if the current user already reacted with THIS SPECIFIC EMOJI
+              const existingSpecificEmojiReactionIndex = newReactions.findIndex(
+                (r) =>
+                  (r.userId?._id || r.userId)?.toString() === authUser._id.toString() &&
+                  r.emoji === emoji // Check for the specific emoji
+              );
+
+              const newReactionEntry = {
+                emoji,
+                userId: {
+                  _id: authUser._id,
+                  username: authUser.username,
+                  profileImg: authUser.profileImg,
+                },
+              };
+
+              if (existingSpecificEmojiReactionIndex !== -1) {
+                // User already reacted with this specific emoji -> REMOVE it
+                newReactions.splice(existingSpecificEmojiReactionIndex, 1);
+              } else {
+                // User has NOT reacted with this specific emoji -> ADD it
+                newReactions.push(newReactionEntry);
+              }
+              // --- NEW LOGIC END ---
+
+              return { ...msg, reactions: newReactions };
+            }
+            return msg;
+          })
+        );
+        return { ...oldData, pages: newPages };
+      });
+
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      toast.error(err.message || "Failed to add reaction.");
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["publicMessages"], context.previousMessages);
+      }
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries(["publicMessages"]);
+    },
+  });
+
+  return { addReaction, isReacting };
+};
+
+export const useRemovePublicMessageReaction = () => {
+  const queryClient = useQueryClient();
+
+  const { mutate: removeReaction, isPending: isRemovingReaction } = useMutation({
+    mutationFn: (messageId) => removePublicMessageReactionApi(messageId),
+    onMutate: async (messageId) => {
+      // Optimistic update
+      await queryClient.cancelQueries(["publicMessages"]);
+
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+
+        const newPages = oldData.pages.map((page) =>
+          page.map((msg) => {
+            if (msg._id === messageId) {
+              const newReactions = msg.reactions.filter(
+                (r) => r.userId.toString() !== queryClient.getQueryData(["authUser"])._id.toString()
+              );
+              return { ...msg, reactions: newReactions };
+            }
+            return msg;
+          })
+        );
+        return { ...oldData, pages: newPages };
+      });
+
+      return { previousMessages };
+    },
+    onError: (err, variables, context) => {
+      toast.error(err.message || "Failed to remove reaction.");
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["publicMessages"], context.previousMessages);
+      }
+    },
+    onSettled: () => {
+      // queryClient.invalidateQueries(["publicMessages"]);
+    },
+  });
+
+  return { removeReaction, isRemovingReaction };
 };

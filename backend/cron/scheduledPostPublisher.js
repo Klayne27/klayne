@@ -43,6 +43,10 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       }
 
       await post.save();
+      console.log(
+        `Successfully published and saved post ${post._id}. New publishedAt: ${post.publishedAt}, isScheduled: ${post.isScheduled}`
+      );
+
 
       // Emit new post event to online users (excluding the post creator for their own feed)
       // This is similar to what you do in createPost

@@ -202,13 +202,13 @@ export const createAndSendNotification = async ({
         select: "text img user",
       });
     }
-    if (commentId && newNotification.type !== "commentReply") {
+    if (commentId && type !== "commentReply") {
       await newNotification.populate({
         path: "commentId",
         select: "text user",
       });
     }
-    if (parentCommentId && newNotification.type === "commentReply") {
+    if (parentCommentId && type === "commentReply") {
       await newNotification.populate({
         path: "parentCommentId",
         select: "text user",

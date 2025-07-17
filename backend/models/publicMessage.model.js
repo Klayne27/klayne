@@ -20,6 +20,22 @@ const publicChatMessageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    reactions: [
+      {
+        emoji: {
+          type: String,
+          enum: ["❤️", "👍", "😂", "😭", "😡"], // Only allowed emojis
+          required: true,
+        },
+        userId: {
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+
+        _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
+      },
+    ],
   },
   { timestamps: true }
 );

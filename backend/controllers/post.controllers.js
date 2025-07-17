@@ -109,6 +109,7 @@ export const createPost = async (req, res) => {
       mentionedUsers: mentionedUsersIds,
       isScheduled,
       scheduledAt: isScheduled ? new Date(scheduledAt) : null,
+      publishedAt: new Date(), // <--- ADD THIS LINE FOR IMMEDIATE POSTS
     };
 
     if (pollOptions && pollOptions.length > 0) {

@@ -154,8 +154,6 @@ const MessagePage = ({
     setSelectedConversation(conversation);
     // queryClient.invalidateQueries(["conversations"])
 
-    // Update URL when a conversation is selected, but only for existing conversations
-    // New chats (`isNewChat`) don't have a server-assigned ID yet.
     if (conversation && !conversation.isNewChat) {
       navigate(`/messages/${conversation._id}`);
     } else if (conversation?.isNewChat) {
@@ -321,16 +319,6 @@ const MessagePage = ({
     setSelectedConversation(newConversation); // Set the selected conversation to the real one
     navigate(`/messages/${newConversation._id}`, { replace: true }); // Navigate to the correct URL
   };
-
-  // Show loading state for initial data fetch
-  // if (isLoadingConversations || isLoadingFollowedUsers) {
-  //   return (
-  //     <div className="flex justify-center gap-2 h-screen ">
-  //       {/* <LoadingSpinner size="md" />
-  //       Loading inbox... */}
-  //     </div>
-  //   );
-  // }
 
   // Show error state if data fetching fails
   if (errorConversations || errorFollowedUsers) {

@@ -1,4 +1,3 @@
-
 export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   try {
     const res = await fetch(`/api/public-chat/messages?page=${pageParam}`, {
@@ -113,4 +112,31 @@ export const unbanUserFromPublicChatApi = async (userId) => {
     console.error("Error unbanning user:", error);
     throw error;
   }
+};
+
+export const addPublicMessageReactionApi = async (messageId, emoji) => {
+  const res = await fetch(`/api/public-chat/${messageId}/react`, {
+    method: "POST",
+    headers: { "Content-type": "application/json" },
+    body: JSON.stringify({ emoji }),
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to react to message");
+
+  return data;
+};
+
+export const removePublicMessageReactionApi = async (messageId) => {
+  const res = await fetch(`/api/public-chat/${messageId}/react`, {
+    method: "DELETE",
+    headers: { "Content-type": "application/json" },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to remove reaction");
+
+  return data;
 };

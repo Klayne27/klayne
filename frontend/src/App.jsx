@@ -7,7 +7,7 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 
-// const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
+const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
 const HomePage = lazy(() => import("./pages/home/HomePage"));
@@ -154,7 +154,9 @@ function App() {
               path="/public-chat"
               element={
                 authUser ? (
-                  <PublicChatPage openImageModal={openImageModal} />
+                  <PublicChatPage
+                    openImageModal={openImageModal}
+                  />
                 ) : (
                   <Navigate to="/login" />
                 )
@@ -208,7 +210,7 @@ function App() {
       </main>
 
       {/* RightPanel - Hidden on mobile */}
-      {authUser && !isMessagePage && (
+      {authUser && !isMessagePage && !isPublicChatPage && (
         <RightPanel
           showUnfollowModal={showUnfollowModal}
           setShowUnfollowModal={setShowUnfollowModal}

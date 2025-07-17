@@ -503,54 +503,55 @@ const ChatWindow = ({
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
+      <div className="mx-auto w-full flex flex-col h-full max-w-3xl md:max-w-[585px]">
+        <MessageList
+          ref={messageListRef}
+          error={error}
+          isNewChat={isNewChat}
+          messagesToRender={messages}
+          setReplyingToMessage={memoizedSetReplyingToMessage}
+          deleteMessage={memoizedDeleteMessage}
+          messageInputRef={messageInputRef}
+          isDeletingMessage={isDeletingMessage}
+          messages={messages}
+          openImageModal={openImageModal}
+          selectedConversation={selectedConversation}
+          isLoadingInitialMessages={isLoading && !isFetchingNextPage}
+          isFetchingOlderMessages={isFetchingNextPage}
+          hasNextPage={hasNextPage}
+          selectedConversationId={selectedConversation?._id}
+          setEditingMessage={setEditingMessage}
+          isTypingOtherUser={isTypingOtherUser}
+        />
 
-      <MessageList
-        ref={messageListRef}
-        error={error}
-        isNewChat={isNewChat}
-        messagesToRender={messages}
-        setReplyingToMessage={memoizedSetReplyingToMessage}
-        deleteMessage={memoizedDeleteMessage}
-        messageInputRef={messageInputRef}
-        isDeletingMessage={isDeletingMessage}
-        messages={messages}
-        openImageModal={openImageModal}
-        selectedConversation={selectedConversation}
-        isLoadingInitialMessages={isLoading && !isFetchingNextPage}
-        isFetchingOlderMessages={isFetchingNextPage}
-        hasNextPage={hasNextPage}
-        selectedConversationId={selectedConversation?._id}
-        setEditingMessage={setEditingMessage}
-        isTypingOtherUser={isTypingOtherUser}
-      />
+        {showNewMessageButton && (
+          <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+            <button
+              onClick={handleNewMessageButtonClick}
+              className="bg-primary text-sm px-3 py-1 text-white rounded-full shadow-lg flex items-center space-x-2 animate-bounce-custom"
+            >
+              <span>New Message</span>
+              <FaCaretDown />
+            </button>
+          </div>
+        )}
 
-      {showNewMessageButton && (
-        <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
-          <button
-            onClick={handleNewMessageButtonClick}
-            className="bg-primary text-sm px-3 py-1 text-white rounded-full shadow-lg flex items-center space-x-2 animate-bounce-custom"
-          >
-            <span>New Message</span>
-            <FaCaretDown />
-          </button>
-        </div>
-      )}
-
-      <MessageInput
-        otherUser={otherUser}
-        replyingToMessage={replyingToMessage}
-        setReplyingToMessage={memoizedSetReplyingToMessage}
-        actualConversationId={actualConversationId}
-        currentOptimisticIdRef={currentOptimisticIdRef}
-        messageInputRef={messageInputRef}
-        isTypingOtherUser={isTypingOtherUser}
-        sendMessage={sendMessage}
-        isSendingMessage={isSendingMessage}
-        selectedConversation={selectedConversation}
-        socket={socket}
-        editingMessage={editingMessage}
-        setEditingMessage={setEditingMessage}
-      />
+        <MessageInput
+          otherUser={otherUser}
+          replyingToMessage={replyingToMessage}
+          setReplyingToMessage={memoizedSetReplyingToMessage}
+          actualConversationId={actualConversationId}
+          currentOptimisticIdRef={currentOptimisticIdRef}
+          messageInputRef={messageInputRef}
+          isTypingOtherUser={isTypingOtherUser}
+          sendMessage={sendMessage}
+          isSendingMessage={isSendingMessage}
+          selectedConversation={selectedConversation}
+          socket={socket}
+          editingMessage={editingMessage}
+          setEditingMessage={setEditingMessage}
+        />
+      </div>{" "}
     </div>
   );
 };

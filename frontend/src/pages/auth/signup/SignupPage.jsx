@@ -36,14 +36,14 @@ const SignUpPage = () => {
         <XSvg className=" lg:w-2/3 fill-primary" />
       </div>
       <div className="flex-1 flex flex-col justify-center items-center">
-        <div className="bg-yellow-800 bg-opacity-30 border border-yellow-700 text-yellow-100 p-3 rounded-lg mb-6 max-w-sm text-center ">
+        {/* <div className="bg-yellow-800 bg-opacity-30 border border-yellow-700 text-yellow-100 p-3 rounded-lg mb-6 max-w-sm text-center ">
           <p className="font-semibold mb-1">Important Note:</p>
           <p className="text-sm">
             For your security, I recommend <strong>**not**</strong> using your real email
             address or a password you use for other important accounts. This is a demo
             application.
           </p>
-        </div>
+        </div> */}
         <form
           className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
           onSubmit={handleSubmit}

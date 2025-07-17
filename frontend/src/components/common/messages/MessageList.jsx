@@ -30,7 +30,7 @@ const MessageList = forwardRef(function MessageList(
     hasNextPage,
     selectedConversationId,
     setEditingMessage,
-    isTypingOtherUser
+    isTypingOtherUser,
   },
   ref
 ) {
@@ -38,7 +38,7 @@ const MessageList = forwardRef(function MessageList(
   const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); 
+  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
 
   const mouseLeaveTimeoutRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
@@ -100,7 +100,7 @@ const MessageList = forwardRef(function MessageList(
   const handleReactionClick = useCallback(
     (messageId, emoji) => {
       reactToMessage({ messageId, emoji });
-      setActiveMessageModalId(null); // Close modal after action
+      // setActiveMessageModalId(null); // Close modal after action
     },
     [reactToMessage]
   );
@@ -209,27 +209,28 @@ const MessageList = forwardRef(function MessageList(
             <p>No more messages</p>
           </div>
         )}
-      {!isNewChat &&
-        messagesToRender.length > 0 &&
-        messagesToRender.map((msg) => (
-          <MessageItem
-            key={msg._id}
-            msg={msg}
-            isCurrentlyTouchDevice={isCurrentlyTouchDevice} // Pass this prop
-            activeMessageModalId={activeMessageModalId}
-            handleMouseEnter={handleMouseEnter}
-            handleMouseLeave={handleMouseLeave}
-            handleMessageTap={handleMessageTap} // Pass the new tap handler
-            handleDeleteClick={handleDeleteClick}
-            handleReplyClick={handleReplyClick}
-            handleImageClick={handleImageClick}
-            handleJumpToOriginalMessage={handleJumpToOriginalMessage}
-            handleReactionClick={handleReactionClick}
-            isDeletingMessage={isDeletingMessage}
-            currentUser={currentUser}
-            setEditingMessage={setEditingMessage}
-          />
-        ))}
+        {!isNewChat &&
+          messagesToRender.length > 0 &&
+          messagesToRender.map((msg) => (
+            <MessageItem
+              key={msg._id}
+              msg={msg}
+              isCurrentlyTouchDevice={isCurrentlyTouchDevice} // Pass this prop
+              activeMessageModalId={activeMessageModalId}
+              handleMouseEnter={handleMouseEnter}
+              handleMouseLeave={handleMouseLeave}
+              handleMessageTap={handleMessageTap} // Pass the new tap handler
+              handleDeleteClick={handleDeleteClick}
+              handleReplyClick={handleReplyClick}
+              handleImageClick={handleImageClick}
+              handleJumpToOriginalMessage={handleJumpToOriginalMessage}
+              handleReactionClick={handleReactionClick}
+              isDeletingMessage={isDeletingMessage}
+              currentUser={currentUser}
+              setEditingMessage={setEditingMessage}
+            />
+          ))}
+    
 
       {isTypingOtherUser && (
         <MessageItem

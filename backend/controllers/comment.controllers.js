@@ -409,9 +409,10 @@ export const replyToComment = async (req, res) => {
       await createAndSendNotification({
         from: userId,
         to: parentComment.user._id,
-        type: "comment",
+        type: "commentReply",
         postId: post._id,
         commentId: newReply._id,
+        parentCommentId: parentCommentId, // <--- Add this line! Pass the ID of the parent comment
       });
     } // Notify mentioned users in the reply
 

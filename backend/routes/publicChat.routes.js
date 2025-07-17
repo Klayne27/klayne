@@ -6,6 +6,8 @@ import {
   getPublicMessages,
   sendPublicMessage,
   unbanUserFromPublicChat,
+  // removeReactionFromPublicMessage,
+  addReactionToPublicMessage,
 } from "../controllers/publicChat.controllers.js";
 
 const router = express.Router();
@@ -18,5 +20,9 @@ router.get("/messages", protectRoute, getPublicMessages);
 router.delete("/admin/delete/:messageId", protectRoute, deletePublicMessage);
 router.put("/admin/ban/:userId", protectRoute, banUserFromPublicChat);
 router.put("/admin/unban/:userId", protectRoute, unbanUserFromPublicChat);
+
+// New Routes for Reactions
+router.post("/:messageId/react", protectRoute, addReactionToPublicMessage);
+// router.delete("/:messageId/react", protectRoute, removeReactionFromPublicMessage); // DELETE for removing reaction
 
 export default router;

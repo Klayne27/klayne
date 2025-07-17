@@ -365,7 +365,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
     if (window.innerWidth < 768) {
       // Prioritize hiding for specific pages on mobile
-      if (isChatWindowOpen || pathname.includes("/post/")) {
+      if (isChatWindowOpen || pathname.includes("/post/") || pathname.includes("/public-chat")) {
         // <-- ADDED: Hide if on PostPage
         setIsMobileBarVisible(false);
       } else if (pathname.startsWith("/messages")) {
@@ -690,7 +690,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
           <li
             onClick={() => navigate("/public-chat")}
-            className="hidden flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
+            className="flex hidden justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
           >
             <Link
               to="/public-chat"
