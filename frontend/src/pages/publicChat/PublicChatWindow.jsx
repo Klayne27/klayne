@@ -1,6 +1,6 @@
 import React, { useRef, useEffect, useCallback, useState, useLayoutEffect } from "react";
-import { IoSendSharp } from "react-icons/io5";
-import { FaImage } from "react-icons/fa6";
+import { IoSendSharp, IoClose } from "react-icons/io5"; // Import IoClose
+import { FaImage } from "react-icons/fa6"; // Assuming this is FaImage
 import { IoImageOutline } from "react-icons/io5";
 import toast from "react-hot-toast";
 import { Link } from "react-router-dom";
@@ -18,9 +18,6 @@ import {
   useUnbanUserFromPublicChat,
   useAddPublicMessageReaction,
 } from "../../hooks/publicChatHooks/publicChatHooks";
-// Hooks
-
-// Components
 
 const PublicChatWindow = ({ openImageModal }) => {
   const { authUser: currentUser, refetchAuthUser } = useAuthUser();
@@ -47,15 +44,17 @@ const PublicChatWindow = ({ openImageModal }) => {
   const [previewImage, setPreviewImage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false); // State for touch device detection
+  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+
+  // NEW STATE: For handling replies
+  const [replyingToMessage, setReplyingToMessage] = useState(null);
 
   const messageListRef = useRef(null);
   const fileInputRef = useRef(null);
-  const messageInputRef = useRef(null); // Ref for the textarea
+  const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
 
-  // Flags for controlling scroll behavior
   const shouldScrollToBottom = useRef(false);
   const isUserScrollingUp = useRef(false);
 
@@ -65,19 +64,24 @@ const PublicChatWindow = ({ openImageModal }) => {
     currentUser?.isBannedInPublicChat || false
   );
 
+  // Helper to truncate text for reply preview
+  const truncateText = (text, maxLength) => {
+    if (!text) return "";
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength) + "...";
+  };
+
   useEffect(() => {
     const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    // Simple check for common mobile user agents
     if (/android|ipad|iphone|ipod/i.test(userAgent)) {
       setIsMobile(true);
     }
 
-    // Adjust textarea height on messageInput change
     if (messageInputRef.current) {
       messageInputRef.current.style.height = "auto";
       messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
       messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
-      messageInputRef.current.focus();
+      // messageInputRef.current.focus(); // Removed this to prevent re-focus on every messageContent change
     }
   }, [messageContent, messageInputRef]);
 
@@ -86,7 +90,7 @@ const PublicChatWindow = ({ openImageModal }) => {
     const checkTouch = () =>
       setIsCurrentlyTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
     checkTouch();
-    window.addEventListener("resize", checkTouch); // Re-check on resize if device changes orientation/mode
+    window.addEventListener("resize", checkTouch);
     return () => window.removeEventListener("resize", checkTouch);
   }, []);
 
@@ -96,14 +100,11 @@ const PublicChatWindow = ({ openImageModal }) => {
     }
   }, []);
 
-  // New helper to check if scroll is near bottom
   const isScrollAtBottom = useCallback(() => {
     if (!messageListRef.current) return false;
     const { scrollTop, scrollHeight, clientHeight } = messageListRef.current;
     return scrollHeight - scrollTop - clientHeight < 10;
   }, []);
-
-  // --- SCROLL BEHAVIOR LOGIC ---
 
   // --- Message hover/tap handlers ---
   const handleMouseEnter = (messageId) => {
@@ -120,30 +121,44 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const handleMessageTap = (messageId) => {
     if (isCurrentlyTouchDevice) {
-      // Toggle the modal for touch devices
       setActiveMessageModalId(activeMessageModalId === messageId ? null : messageId);
     }
   };
 
-  // --- New Reaction Handler ---
+  // --- Reaction Handler ---
   const handleReactionClick = (messageId, emoji) => {
     addReaction({ messageId, emoji });
-    // After reacting, you might want to close the modal
     // setActiveMessageModalId(null); // Close the reaction picker after clicking an emoji
   };
 
-  // --- Existing handlers to pass down ---
+  // --- Admin/Self Delete Message Handler ---
   const handleDeleteMessage = (messageId) => {
     if (window.confirm("Are you sure you want to delete this message?")) {
       deletePublicMessage(messageId);
     }
   };
 
-    const handleUnbanUser = (userId) => {
+  // --- Ban/Unban User Handlers ---
+  const handleBanUser = (userId) => {
+    if (window.confirm(`Are you sure you want to ban this user from public chat?`)) {
+      banUser(userId);
+    }
+  };
+
+  const handleUnbanUser = (userId) => {
+    if (window.confirm(`Are you sure you want to unban this user from public chat?`)) {
       unbanUser(userId);
-    };
+    }
+  };
 
-
+  // NEW: Handler to set the message to reply to
+  const handleReply = (messageToReplyTo) => {
+    setReplyingToMessage(messageToReplyTo);
+    setActiveMessageModalId(null); // Close the message modal after selecting reply
+    if (messageInputRef.current) {
+      messageInputRef.current.focus(); // Focus the input field
+    }
+  };
 
 
   useLayoutEffect(() => {
@@ -228,12 +243,10 @@ const PublicChatWindow = ({ openImageModal }) => {
         }
       });
 
-      // Listen for ban/unban events
       socket.on("userBanned", ({ userId, username }) => {
         if (userId === currentUser._id) {
           setIsCurrentUserBanned(true);
           toast.error(`You have been banned from the public chat.`);
-          // You might want to clear message content and disable input here
           setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
@@ -242,8 +255,6 @@ const PublicChatWindow = ({ openImageModal }) => {
             messageInputRef.current.style.height = "auto";
             messageInputRef.current.rows = 1;
           }
-        } else {
-          // toast.error(`${username} has been banned from the public chat.`);
         }
       });
 
@@ -253,8 +264,6 @@ const PublicChatWindow = ({ openImageModal }) => {
           toast.success(
             `You have been unbanned from the public chat. You can now send messages.`
           );
-        } else {
-          // toast.success(`${username} has been unbanned from the public chat.`);
         }
       });
 
@@ -268,10 +277,9 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const handleMessageContentChange = (e) => {
     setMessageContent(e.target.value);
-    // Adjust textarea height
     if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto"; // Reset height
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px"; // Set to scroll height
+      messageInputRef.current.style.height = "auto";
+      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
     }
 
     if (!typingTimeoutRef.current) {
@@ -286,12 +294,14 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   // --- SEND MESSAGE LOGIC ---
   const handleSendMessage = async (e) => {
-    e.preventDefault(); // Prevent default form submission initially
+    e.preventDefault();
 
-    if (isSendingMessage) return;
-    if (!messageContent.trim() && !selectedFile) return;
+    if (isSendingMessage || isCurrentUserBanned) return;
+    if (!messageContent.trim() && !selectedFile && !replyingToMessage) {
+        toast.error("Message cannot be empty.");
+        return;
+    }
 
-    // Clear typing indicator instantly when sending a message
     clearTimeout(typingTimeoutRef.current);
     typingTimeoutRef.current = null;
     sendTypingEvent(false);
@@ -303,34 +313,37 @@ const PublicChatWindow = ({ openImageModal }) => {
         reader.readAsDataURL(selectedFile);
         reader.onloadend = async () => {
           imgBase64 = reader.result;
-          await sendPublicMessage({ content: messageContent, imgBase64 });
+          await sendPublicMessage({
+            content: messageContent,
+            imgBase64,
+            replyTo: replyingToMessage ? replyingToMessage._id : null, // Include replyTo ID
+          });
           setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
           if (fileInputRef.current) fileInputRef.current.value = "";
           if (messageInputRef.current) {
-            // Reset textarea height
             messageInputRef.current.style.height = "auto";
             messageInputRef.current.rows = 1;
           }
+          setReplyingToMessage(null); // Clear reply state after sending
           shouldScrollToBottom.current = true;
         };
-
-        // Keep keyboard open after canceling edit on mobile
-        if (isMobile && messageInputRef.current) {
-          messageInputRef.current.focus();
-        }
       } catch (error) {
         toast.error("Failed to read image file.");
       }
     } else {
-      await sendPublicMessage({ content: messageContent, imgBase64: null });
+      await sendPublicMessage({
+        content: messageContent,
+        imgBase64: null,
+        replyTo: replyingToMessage ? replyingToMessage._id : null, // Include replyTo ID
+      });
       setMessageContent("");
       if (messageInputRef.current) {
-        // Reset textarea height
         messageInputRef.current.style.height = "auto";
         messageInputRef.current.rows = 1;
       }
+      setReplyingToMessage(null); // Clear reply state after sending
       shouldScrollToBottom.current = true;
     }
   };
@@ -363,24 +376,21 @@ const PublicChatWindow = ({ openImageModal }) => {
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (isMobile) {
-        // On mobile, pressing Enter (from the keyboard UI) creates a new line
-        // The send button will be used to send the message
-        e.preventDefault(); // Prevent default form submission
+        e.preventDefault();
         setMessageContent((prev) => prev + "\n");
       } else {
-        // On desktop, Shift + Enter creates a new line
         if (e.shiftKey) {
-          e.preventDefault(); // Prevent default form submission
+          e.preventDefault();
           setMessageContent((prev) => prev + "\n");
         } else {
-          // On desktop, Enter sends the message
-          e.preventDefault(); // Prevent default new line behavior for Enter
+          e.preventDefault();
           handleSendMessage(e);
         }
       }
     }
   };
 
+  // Render Logic for Loading/Error states
   if (isLoadingMessages && messages.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center h-full">
@@ -398,7 +408,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   }
 
   return (
-    <div className="flex flex-col h-full relative  md:border-r border-accent">
+    <div className="flex flex-col h-full relative md:border-r border-accent">
       <PublicChatHeader />
 
       <div className="flex-grow overflow-y-auto p-4 pb-0 min-h-0" ref={messageListRef}>
@@ -414,12 +424,8 @@ const PublicChatWindow = ({ openImageModal }) => {
           </div>
         )}
         <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
-          {" "}
-          {/* Add this new wrapper */}
           {messages.map((message) => (
             <div key={message._id}>
-              {/* The overflow-hidden div is no longer strictly necessary here, but doesn't hurt */}
-              {/* It's good that PublicChatMessage itself handles overflow-hidden within its bubble */}
               <div>
                 <PublicChatMessage
                   key={message._id}
@@ -427,14 +433,15 @@ const PublicChatWindow = ({ openImageModal }) => {
                   authUser={currentUser}
                   openImageModal={openImageModal}
                   onDelete={deletePublicMessage}
-                  onBan={banUser}
-                  onUnban={unbanUser}
+                  onBan={handleBanUser}
+                  onUnban={handleUnbanUser}
                   isCurrentlyTouchDevice={isCurrentlyTouchDevice}
                   activeMessageModalId={activeMessageModalId}
                   handleMouseEnter={handleMouseEnter}
                   handleMouseLeave={handleMouseLeave}
                   handleMessageTap={handleMessageTap}
                   handleReactionClick={handleReactionClick}
+                  onReply={handleReply}
                 />
               </div>
             </div>
@@ -451,13 +458,39 @@ const PublicChatWindow = ({ openImageModal }) => {
 
       <form
         onSubmit={handleSendMessage}
-        className="sticky bottom-0 bg-base-100 px-2 flex flex-col" // Changed to flex-col to stack image preview above input
+        className="sticky bottom-0 bg-base-100 px-2 flex flex-col"
       >
+        {/* NEW: Replying To Indicator */}
+        {replyingToMessage && (
+          <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
+            <div className="flex-1 p-3 rounded-md flex flex-col">
+              <div className="text-sm text-primary font-bold">Replying to</div>
+              <div className="text-xs text-gray-400 mt-1 italic">
+                {replyingToMessage.sender?.username && (
+                  <span className="font-semibold mr-1">@{replyingToMessage.sender.username}:</span>
+                )}
+                {truncateText(
+                  replyingToMessage.content || "[Image Message]",
+                  40
+                )}
+              </div>
+              {replyingToMessage.img && !replyingToMessage.content && (
+                <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>
+              )}
+            </div>
+            <button
+              onClick={() => setReplyingToMessage(null)}
+              className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
+              aria-label="Cancel reply"
+            >
+              <IoClose size={20} />
+            </button>
+          </div>
+        )}
+
+        {/* Image Preview */}
         {previewImage && (
-          // Adjusted styling for preview image container to match MessageInput
           <div className="p-2 pt-4 flex">
-            {" "}
-            {/* Changed pt-0 to pt-4 for better spacing */}
             <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-accent">
               <img
                 src={previewImage}
@@ -474,6 +507,7 @@ const PublicChatWindow = ({ openImageModal }) => {
             </div>
           </div>
         )}
+
         <input
           type="file"
           ref={fileInputRef}
@@ -484,12 +518,15 @@ const PublicChatWindow = ({ openImageModal }) => {
           id="image-upload-public-chat"
         />
 
-        <div className="flex-1 relative my-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99">
+        <div className={`flex-1 relative my-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
+            ${isCurrentUserBanned ? "opacity-50 cursor-not-allowed" : ""}
+        `}>
           <div className="flex pl-1">
             <button
               type="button"
               onClick={handleImageButtonClick}
               className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+              disabled={isCurrentUserBanned}
             >
               <IoImageOutline className="w-5 h-5" />
             </button>
@@ -499,18 +536,18 @@ const PublicChatWindow = ({ openImageModal }) => {
             value={messageContent}
             onChange={handleMessageContentChange}
             onKeyDown={handleKeyDown}
-            placeholder="Type your message..."
-            className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-auto max-h-[140px]" // Changed overflow-y-auto to overflow-y-hidden to manage expansion
+            placeholder={isCurrentUserBanned ? "You are banned from sending messages." : replyingToMessage ? "Send your reply..." : "Type your message..."}
+            className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-auto max-h-[140px]"
             rows={1}
             ref={messageInputRef}
-            // disabled={isSendingMessage}
+            disabled={isCurrentUserBanned || isSendingMessage}
           />
 
           <button
             type="submit"
-            disabled={isSendingMessage || (!messageContent.trim() && !selectedFile)}
+            disabled={isSendingMessage || isCurrentUserBanned || (!messageContent.trim() && !selectedFile && !replyingToMessage)}
             className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
-              messageContent.trim() || selectedFile
+              messageContent.trim() || selectedFile || replyingToMessage
                 ? "bg-primary text-white"
                 : "bg-primary text-white opacity-50 cursor-not-allowed"
             } transition-colors duration-200`}

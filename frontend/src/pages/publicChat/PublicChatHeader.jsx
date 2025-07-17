@@ -1,6 +1,7 @@
 // src/components/publicChat/PublicChatHeader.jsx
 import React from "react";
 import { FaArrowLeft } from "react-icons/fa6";
+import { IoChatbubblesOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 // No need for Link or FaArrowLeft as there's no internal back within the chat component
 // import { Link } from "react-router-dom";
@@ -14,24 +15,17 @@ const PublicChatHeader = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="sticky top-0 z-10 bg-base-200 p-4 flex items-center justify-between shadow-md">
-      {/* Removed mobile back button as it's no longer needed within the component */}
-      {/* {isMobile && (
-        <button onClick={onBackToPublicChatList} className="btn btn-ghost btn-circle mr-2">
-          <FaArrowLeft className="w-5 h-5" />
-        </button>
-      )} */}
+    <div className="fixed w-full md:w-[1015px] top-0 z-10 bg-black px-4 py-3 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
       <div className="flex items-center gap-3">
-        <div className="avatar ">
+        <div className="avatar">
           <button
             onClick={() => navigate(-1)}
-            className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200"
+            className="hover:bg-gray-800 rounded-full block md:hidden p-2.5 transition duration-200"
           >
             <FaArrowLeft className="w-4 h-4" />
           </button>
-          <div className="w-10 rounded-full">
-            <img src="/avatar-placeholder.png" alt="Public Chat Avatar" />{" "}
-            {/* Or a specific public chat icon */}
+          <div className="flex items-center">
+            <IoChatbubblesOutline size={30} />
           </div>
         </div>
         <div>

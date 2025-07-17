@@ -15,42 +15,65 @@ const isBanned = async (userId) => {
   return user ? user.isBannedInPublicChat : false;
 };
 
-// Send a public chat message
 export const sendPublicMessage = async (req, res) => {
   try {
-    const { content, imgBase64 } = req.body; // Expecting imgBase64 here if you send base64
+    // Now expecting 'replyTo' in addition to 'content' and 'imgBase64'
+    const { content, imgBase64, replyTo } = req.body;
     const senderId = req.user._id;
-    let img = null;
+    let img = null; // Initialize img to null
 
+    // Check if the sender is banned from public chat
     if (await isBanned(senderId)) {
       return res.status(403).json({ error: "You are banned from the public chat." });
     }
 
+    // Handle image upload if imgBase64 is provided
     if (imgBase64) {
-      // If sending base64, upload it directly to Cloudinary
       const uploadResponse = await cloudinary.uploader.upload(imgBase64, {
-        folder: "public-chat-images", // Optional: specify a folder in Cloudinary
+        folder: "public-chat-images",
       });
       img = uploadResponse.secure_url;
     }
 
+    // Ensure at least content or an image is provided
     if (!content && !img) {
       return res.status(400).json({ error: "Message content or image is required." });
     }
 
-    const newPublicMessage = new PublicChatMessage({
+    let newMessageData = {
       sender: senderId,
-      content,
-      img,
-    });
+      content: content || "", // Ensure content is an empty string if not provided
+      img: img, // Will be null if no imageBase64 was sent
+    };
 
+    // If 'replyTo' message ID is provided, validate it
+    if (replyTo) {
+      const repliedMessage = await PublicChatMessage.findById(replyTo);
+      if (!repliedMessage) {
+        return res.status(404).json({ error: "Message being replied to not found." });
+      }
+      newMessageData.replyTo = replyTo; // Add the replyTo ID to the message data
+    }
+
+    const newPublicMessage = new PublicChatMessage(newMessageData);
     await newPublicMessage.save();
 
-    // Populate sender details for real-time broadcast
-    await newPublicMessage.populate({
-      path: "sender",
-      select: "username fullName profileImg isAdmin",
-    });
+    // Populate sender and replyTo details for the real-time broadcast via Socket.io
+    // This ensures clients receive full data for display immediately
+    await newPublicMessage.populate([
+      {
+        path: "sender",
+        select: "username fullName profileImg isAdmin",
+      },
+      {
+        path: "replyTo", // Populate the replied-to message
+        select: "sender content img isDeletedByAdmin", // Select relevant fields for the preview
+        populate: {
+          path: "sender", // Populate the sender of the replied-to message
+          select: "username isBannedInPublicChat", // Select their username and ban status
+        },
+      },
+    ]);
 
     // Emit the new message to all connected clients in the public chat room
     io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
@@ -62,24 +85,35 @@ export const sendPublicMessage = async (req, res) => {
   }
 };
 
-// Get public chat messages with pagination for infinite scrolling
+// --- getPublicMessages Controller ---
 export const getPublicMessages = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 20; // Number of messages per page
+    const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
     const messages = await PublicChatMessage.find()
-      .sort({ createdAt: -1 }) // Sort by newest first
+      .sort({ createdAt: -1 }) // Sort by newest first to get the latest messages
       .skip(skip)
       .limit(limit)
-      .populate({
-        path: "sender",
-        select: "username fullName profileImg isAdmin isBannedInPublicChat",
-      })
-      .lean(); // Use .lean() for faster queries if you don't need Mongoose documents
+      .populate([
+        {
+          path: "sender",
+          select: "username fullName profileImg isAdmin isVerified isBannedInPublicChat",
+        },
+        {
+          path: "replyTo", // Populate the replied-to message
+          select: "sender content img isDeletedByAdmin", // Select minimal fields needed for reply preview
+          populate: {
+            path: "sender", // Populate the sender of the replied-to message
+            select: "username isBannedInPublicChat", // Select their username and ban status
+          },
+        },
+      ])
+      .lean(); // Use .lean() for faster queries, returns plain JavaScript objects
 
-    // Reverse the messages to display them in chronological order (oldest first) for infinite scrolling
+    // Reverse the messages to display them in chronological order (oldest first)
+    // for correct rendering in infinite scrolling lists
     res.status(200).json(messages.reverse());
   } catch (error) {
     console.error("Error in getPublicMessages controller: ", error.message);

@@ -212,7 +212,7 @@ const MessageItem = ({
               </span>
               {msg.repliedTo.text && (
                 <span
-                  className={`font-bold ${
+                  className={`font-bold truncate ${
                     isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
                   } mt-1 italic`}
                 >

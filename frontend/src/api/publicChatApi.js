@@ -21,7 +21,7 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   }
 };
 
-export const sendPublicMessageApi = async ({ content, imgBase64 }) => {
+export const sendPublicMessageApi = async ({ content, imgBase64, replyTo }) => {
   try {
     const res = await fetch(`/api/public-chat/send`, {
       method: "POST",
@@ -29,7 +29,7 @@ export const sendPublicMessageApi = async ({ content, imgBase64 }) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ content, imgBase64 }), // Send content and imgBase64
+      body: JSON.stringify({ content, imgBase64, replyTo }), // Send content and imgBase64
     });
 
     const data = await res.json();

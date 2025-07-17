@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu";
-import { IoClose } from "react-icons/io5"; // Import a close icon
+import { IoChatbubbleEllipsesOutline, IoChatbubblesOutline, IoClose } from "react-icons/io5"; // Import a close icon
 import { FaUserTimes } from "react-icons/fa";
 import { BiLogOut } from "react-icons/bi";
 import { FaUserXmark } from "react-icons/fa6";
@@ -562,6 +562,53 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
+          {/* Public Chat - Visible on mobile, replaces Bookmarks */}
+          <li
+            onClick={() => navigate("/public-chat")}
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+          >
+            <Link
+              to="/public-chat"
+              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
+              transition duration-200
+              ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
+              ${
+                isTouchDevice && activeButton === "public-chat"
+                  ? "bg-secondary bg-opacity-80"
+                  : ""
+              }`}
+              onTouchStart={() => handleTouchStart("public-chat")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              <IoChatbubbleEllipsesOutline
+                className={`size-6 ${
+                  pathname.startsWith("/public-chat")
+                    ? "font-bold text-opacity-100"
+                    : "opacity-80"
+                }`}
+                strokeWidth={10}
+              />
+              {/* If you add unread status for public chat, put a notification dot here */}
+              {/* {hasUnreadPublicChatMessages && (
+            <div
+              className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+              style={{ transform: "translate(50%, -50%)" }}
+            ></div>
+          )} */}
+            </Link>
+            <span
+              className={`text-lg hidden md:block ${
+                pathname.startsWith("/public-chat")
+                  ? "font-bold text-opacity-100"
+                  : "opacity-80"
+              }`}
+              onClick={() => navigate("/public-chat")}
+            >
+              Public Chat
+            </span>
+          </li>
+
           {/* Search (Mobile Only) */}
           <li
             className="flex md:flex justify-start lg:hidden items-center cursor-pointer "
@@ -570,7 +617,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <button
               className={` ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer
+              } flex gap-3 items-center rounded-full py-2 px-[13px] max-w-fit cursor-pointer
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
@@ -593,9 +640,9 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
-          {/* Bookmarks - Only visible on desktop now, as per X/Twitter mobile */}
+          {/* Bookmarks - Hidden on mobile, visible on desktop */}
           <li
-            className="flex md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
             onClick={handleBookmarksClick}
           >
             <Link
@@ -664,7 +711,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </li>
 
           {/* Mobile Profile Image (to open side modal) */}
-          <li className="flex md:hidden justify-center items-center cursor-pointer py-1 pr-2">
+          <li className="flex md:hidden justify-center items-center cursor-pointer py-1 px-[7px]">
             <button
               id="mobile-profile-img-button" // Add an ID for click outside logic
               onClick={toggleSideModal}
@@ -686,52 +733,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 alt="User Profile"
               />
             </button>
-          </li>
-
-          <li
-            onClick={() => navigate("/public-chat")}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
-          >
-            <Link
-              to="/public-chat"
-              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
-              transition duration-200
-              ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
-              ${
-                isTouchDevice && activeButton === "public-chat"
-                  ? "bg-secondary bg-opacity-80"
-                  : ""
-              }`}
-              onTouchStart={() => handleTouchStart("public-chat")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <BsChatSquareText
-                className={`size-6 ${
-                  pathname.startsWith("/public-chat")
-                    ? "font-bold text-opacity-100"
-                    : "opacity-80"
-                }`}
-                // You might need to adjust strokeWidth depending on the icon library
-              />
-              {/* If you add unread status for public chat, put a notification dot here */}
-              {/* {hasUnreadPublicChatMessages && (
-              <div
-                className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
-                style={{ transform: "translate(50%, -50%)" }}
-              ></div>
-            )} */}
-            </Link>
-            <span
-              className={`text-lg hidden md:block ${
-                pathname.startsWith("/public-chat")
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
-              }`}
-              onClick={() => navigate("/public-chat")}
-            >
-              Public Chat
-            </span>
           </li>
 
           {/* Profile (Desktop Only) */}
@@ -861,11 +862,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 <div className="avatar">
                   <div
                     className={`w-11 rounded-full cursor-pointer
-                      ${
-                        isTouchDevice && activeButton === "modal-profile-img"
-                          ? "bg-secondary bg-opacity-50 transition duration-150"
-                          : "transition duration-150"
-                      }`}
+                    ${
+                      isTouchDevice && activeButton === "modal-profile-img"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
                     onClick={() => {
                       navigate(`/profile/${authUser?.username}`);
                       setShowSideModal(false); // Close modal on navigation
@@ -970,6 +971,32 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                     }`}
                   >
                     Profile
+                  </span>
+                </li>
+                {/* Bookmarks Tab in Side Modal (now visible only in modal on mobile) */}
+                <li
+                  onClick={() => {
+                    navigate("/bookmarks");
+                    setShowSideModal(false); // Close modal on navigation
+                  }}
+                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
+                    ${
+                      isTouchDevice && activeButton === "modal-bookmarks"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                  onTouchStart={() => handleTouchStart("modal-bookmarks")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  <CiBookmark
+                    className="size-6 mr-4"
+                    strokeWidth={pathname === "/bookmarks" ? 2 : 1}
+                  />
+                  <span
+                    className={`text-lg ${pathname === "/bookmarks" ? "font-bold" : ""}`}
+                  >
+                    Bookmarks
                   </span>
                 </li>
                 {/* Themes Tab in Side Modal */}
@@ -1081,11 +1108,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           <button
             onClick={handleDeleteAccount}
             className={`w-full bg-red-600 text-white py-2 rounded-full hover:bg-red-700 transition-colors
-              ${
-                isTouchDevice && activeButton === "confirm-delete"
-                  ? "bg-red-700 transition duration-150"
-                  : "transition duration-150"
-              }`}
+            ${
+              isTouchDevice && activeButton === "confirm-delete"
+                ? "bg-red-700 transition duration-150"
+                : "transition duration-150"
+            }`}
             onTouchStart={() => handleTouchStart("confirm-delete")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
@@ -1096,11 +1123,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           <button
             onClick={() => setShowConfirmDeleteModal(false)}
             className={`w-full bg-gray-500 text-white py-2 rounded-full hover:bg-gray-600 transition-colors
-              ${
-                isTouchDevice && activeButton === "cancel-delete"
-                  ? "bg-secondary bg-opacity-50 transition duration-150"
-                  : "transition duration-150"
-              }`}
+            ${
+              isTouchDevice && activeButton === "cancel-delete"
+                ? "bg-secondary bg-opacity-50 transition duration-150"
+                : "transition duration-150"
+            }`}
             onTouchStart={() => handleTouchStart("cancel-delete")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}

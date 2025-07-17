@@ -2,18 +2,21 @@
 
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { MdDeleteForever } from "react-icons/md"; // Import MdDeleteForever for the trash icon
-import { FaUserSlash, FaUserCheck } from "react-icons/fa";
+import { MdDeleteForever } from "react-icons/md";
+import { FaUserSlash, FaUserCheck, FaReply } from "react-icons/fa"; // Import FaReply
 import toast from "react-hot-toast";
-// Assuming useDeleteOwnPublicMessage is imported correctly from your publicChatHooks file
-import { useDeleteOwnPublicMessage, useDeletePublicMessage } from "../../hooks/publicChatHooks/publicChatHooks";
+import {
+  useDeleteOwnPublicMessage,
+  useDeletePublicMessage,
+} from "../../hooks/publicChatHooks/publicChatHooks";
 import { FiTrash } from "react-icons/fi";
+import { renderClickableText } from "../../utils/textUtils";
+import { truncateText } from "../../utils/truncateText";
 
 const PublicChatMessage = ({
   message,
   authUser,
   openImageModal,
-  // onDelete, // This seems to be for admin delete, keep it for now
   onBan,
   onUnban,
   isCurrentlyTouchDevice,
@@ -21,13 +24,13 @@ const PublicChatMessage = ({
   handleMouseEnter,
   handleMouseLeave,
   handleMessageTap,
-  handleReactionClick, // Function to call useAddPublicMessageReaction
+  handleReactionClick,
+  onReply, // NEW: Prop for handling reply click
 }) => {
-  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage(); // Destructure new hook
-  const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } = useDeletePublicMessage();
+  const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
+  const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
+    useDeletePublicMessage();
 
-  // Determine if the message belongs to the currently authenticated user
   const fromMe = message.sender._id === authUser._id;
 
   const myBubbleBgColor = "bg-primary";
@@ -37,9 +40,10 @@ const PublicChatMessage = ({
   const linkColor = fromMe ? "text-blue-200" : "text-blue-400";
 
   const isSenderAdmin = message.sender.isAdmin;
-  const isAuthUserAdmin = authUser.isAdmin; // Check if the auth user is an admin
+  const isAuthUserAdmin = authUser.isAdmin;
   const isSenderBanned = message.sender.isBannedInPublicChat;
   const isMessageDeleted = message.isDeletedByAdmin;
+  const isSenderVerified = message.sender.isVerified
 
   const bubbleRounding = fromMe
     ? "rounded-3xl rounded-br-[4px]"
@@ -53,6 +57,12 @@ const PublicChatMessage = ({
       ? "active-highlight"
       : ""
     : "hover:bg-secondary";
+
+  // Helper to truncate text for reply preview
+
+
+  // Utility to render clickable text (assuming it's a shared utility)
+  // For now, it just returns the text as is.
 
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
@@ -82,54 +92,33 @@ const PublicChatMessage = ({
     return acc;
   }, {});
 
-  // Admin Delete Handler (existing, passed via props)
-   const handleAdminDeleteClick = (e) => {
-     e.stopPropagation();
-     if (window.confirm("Are you sure you want to delete this message as an admin?")) {
-       adminDeleteMessage(message._id); // This prop should call useDeletePublicMessage
-       // If you moved useDeletePublicMessage hook here, use: adminDeleteMessage(message._id);
-     }
-   };
+  const handleAdminDeleteClick = (e) => {
+    e.stopPropagation();
+    if (window.confirm("Are you sure you want to delete this message as an admin?")) {
+      adminDeleteMessage(message._id);
+    }
+  };
 
   const handleAdminBanClick = () => {
-    if (
-      window.confirm(
-        `Are you sure you want to ban ${message.sender.username} from the public chat?`
-      )
-    ) {
-      onBan(message.sender._id);
-      setIsDropdownOpen(false);
-    }
+    onBan(message.sender._id);
   };
 
   const handleAdminUnbanClick = () => {
-    if (
-      window.confirm(
-        `Are you sure you want to unban ${message.sender.username} from the public chat?`
-      )
-    ) {
-      onUnban(message.sender._id);
-      setIsDropdownOpen(false);
-    }
+    onUnban(message.sender._id);
   };
 
-  // Handler for deleting THIS user's own message
   const handleDeleteOwnMessageInModal = (e) => {
-    e.stopPropagation(); // Prevent the main message click handler
-
+    e.stopPropagation();
     if (!isDeletingOwnMessage) {
       deleteOwnMessage(message._id);
-      // After deletion, you might want to close the modal
-      // This would usually be handled by a parent component managing activeMessageModalId
     }
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownOpen(!isDropdownOpen);
-  };
-
-  const closeDropdown = () => {
-    setIsDropdownOpen(false);
+  // NEW: Handler for reply button
+  const handleReplyClick = (e) => {
+    e.stopPropagation();
+    // Call the onReply prop, passing the full message object being replied to
+    onReply(message);
   };
 
   return (
@@ -156,26 +145,29 @@ const PublicChatMessage = ({
         handleMessageTap(message._id);
       }}
     >
-      {/* Reaction Picker Modal (absolute positioned) */}
+      {/* Reaction Picker and Action Modal (absolute positioned) */}
       <div
         id={`message-reaction-modal-${message._id}`}
         className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
-                        ${
-                          fromMe
-                            ? "-left-20 translate-x-1/2" // Adjust position for sender's messages
-                            : "-right-16 -translate-x-1/2" // Adjust position for receiver's messages
-                        }
-                        ${
-                          showModal
-                            ? "opacity-100 pointer-events-auto"
-                            : "opacity-0 pointer-events-none"
-                        } `}
+                      ${
+                        fromMe
+                          ? "-left-20 translate-x-1/2" // Adjust position for sender's messages
+                          : "-right-16 -translate-x-1/2" // Adjust position for receiver's messages
+                      }
+                      ${
+                        showModal
+                          ? "opacity-100 pointer-events-auto"
+                          : "opacity-0 pointer-events-none"
+                      } `}
       >
+        {/* Reply Button */}
+
+        {/* Emojis */}
         {allowedEmojis.map((emoji) => (
           <button
             key={emoji}
             onClick={(e) => {
-              e.stopPropagation(); // Prevent message tap from being triggered
+              e.stopPropagation();
               handleReactionClick(message._id, emoji);
             }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
@@ -184,8 +176,16 @@ const PublicChatMessage = ({
             {emoji}
           </button>
         ))}
+        <button
+          onClick={handleReplyClick} // New handler
+          className="p-1 text-blue-400 hover:text-blue-500 hover:scale-125 transition duration-100"
+          title="Reply to message"
+        >
+          <FaReply size={18} />
+        </button>
+
         {/* Trash Icon for deleting own message */}
-        {fromMe && ( // Only show if it's the current user's message
+        {fromMe && (
           <button
             onClick={handleDeleteOwnMessageInModal}
             disabled={isDeletingOwnMessage}
@@ -194,49 +194,44 @@ const PublicChatMessage = ({
           >
             <FiTrash size={18} />
           </button>
-        )}{" "}
-        {isAuthUserAdmin &&
-          !fromMe && ( // Only show for admins, on *other* users' messages
-            <>
-              {/* Admin Delete Message Button */}
-              {!isMessageDeleted && ( // Don't show if already deleted by admin
-                <button
-                  onClick={handleAdminDeleteClick}
-                  // The disable state here should ideally be for the admin delete operation,
-                  // not necessarily tied to `isDeletingOwnMessage`. You might need a separate
-                  // `isDeletingOtherMessage` state or a more generic `isActionPending` prop.
-                  disabled={false} // Adjust this if you implement a separate loading state
-                  className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
-                  title="Delete message (Admin)"
-                >
-                  <MdDeleteForever size={20} /> {/* Larger trash icon for admin */}
-                </button>
-              )}
+        )}
+        {/* Admin Delete and Ban/Unban Buttons */}
+        {isAuthUserAdmin && !fromMe && (
+          <>
+            {!isMessageDeleted && (
+              <button
+                onClick={handleAdminDeleteClick}
+                disabled={isAdminDeleting}
+                className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
+                title="Delete message (Admin)"
+              >
+                <MdDeleteForever size={20} />
+              </button>
+            )}
 
-              {/* Admin Ban/Unban Button */}
-              {isSenderBanned ? (
-                <button
-                  onClick={handleAdminUnbanClick}
-                  // Again, adjust disabled state if you have a specific loading state for ban/unban
-                  disabled={false}
-                  className="p-1 text-green-400 hover:text-green-500 hover:scale-125 transition duration-100"
-                  title={`Unban ${message.sender.username} (Admin)`}
-                >
-                  <FaUserCheck size={18} />
-                </button>
-              ) : (
-                <button
-                  onClick={handleAdminBanClick}
-                  // Adjust disabled state
-                  disabled={false}
-                  className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
-                  title={`Ban ${message.sender.username} (Admin)`}
-                >
-                  <FaUserSlash size={18} />
-                </button>
-              )}
-            </>
-          )}
+            {isSenderBanned ? (
+              <button
+                onClick={handleAdminUnbanClick}
+                // You'll need a loading state for ban/unban in the parent if you want to disable
+                disabled={false}
+                className="p-1 text-green-400 hover:text-green-500 hover:scale-125 transition duration-100"
+                title={`Unban ${message.sender.username} (Admin)`}
+              >
+                <FaUserCheck size={18} />
+              </button>
+            ) : (
+              <button
+                onClick={handleAdminBanClick}
+                // You'll need a loading state for ban/unban in the parent if you want to disable
+                disabled={false}
+                className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
+                title={`Ban ${message.sender.username} (Admin)`}
+              >
+                <FaUserSlash size={18} />
+              </button>
+            )}
+          </>
+        )}
       </div>
 
       {/* Message Content and other elements */}
@@ -269,15 +264,17 @@ const PublicChatMessage = ({
             <div className="flex items-center text-sm mb-1">
               <Link
                 to={`/profile/${message.sender.username}`}
-                className={`font-semibold ${linkColor} mr-2`}
+                className={`font-semibold ${linkColor} mr-1`}
               >
                 {message.sender.username}
-                {isSenderAdmin && (
-                  <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
-                    Admin
-                  </span>
-                )}
               </Link>
+              {isSenderVerified && <img src="/verified.png" className="size-[17px]" />}
+
+              {isSenderAdmin && (
+                <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
+                  Admin
+                </span>
+              )}
               {isSenderBanned && (
                 <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-white">
                   Banned
@@ -286,21 +283,75 @@ const PublicChatMessage = ({
             </div>
           )}
 
+          {/* NEW: Replied Message Display */}
+
           {/* Chat Bubble Container */}
           <div
             className={`
-                            p-3
-                            ${fromMe ? myBubbleBgColor : othersBubbleBgColor}
-                            ${textColor}
-                            ${bubbleRounding}
-                            flex flex-col
-                            w-fit
-                            max-w-full
-                            overflow-hidden
-                        `}
+                                  p-3
+                                  ${fromMe ? myBubbleBgColor : othersBubbleBgColor}
+                                  ${textColor}
+                                  ${bubbleRounding}
+                                  flex flex-col
+                                  w-fit
+                                  max-w-full
+                                  overflow-hidden
+                              `}
           >
+            {message.replyTo && (
+              <div
+                className={`
+                              mb-2 p-2 rounded-md text-xs border
+                              ${
+                                fromMe
+                                  ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                  : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                              }
+                              flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                              hover:border-blue-400 hover:bg-opacity-40
+                              `}
+                // You might want to pass handleJumpToOriginalMessage from parent
+                // onClick={(e) => {
+                //   e.stopPropagation();
+                //   handleJumpToOriginalMessage(message.replyTo._id);
+                // }}
+              >
+                <span
+                  className={`font-bold ${fromMe ? "text-gray-600" : "text-gray-300"}`}
+                >
+                  Replying to:{" "}
+                  <span className="font-normal">
+                    @{message.replyTo.sender?.username || "Unknown User"}
+                  </span>
+                </span>
+                {message.replyTo.isDeletedByAdmin ? (
+                  <div></div>
+                ) : (
+                  message.replyTo.content && (
+                    <span
+                      className={`font-bold truncate ${
+                        fromMe ? "text-gray-600" : "text-gray-300"
+                      } mt-1 italic`}
+                    >
+                      {renderClickableText(truncateText(message.replyTo.content, 50))}
+                    </span>
+                  )
+                )}
+                {message.replyTo.img && (
+                  <img
+                    src={message.replyTo.img}
+                    alt="replied message attachment"
+                    className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
+                  />
+                )}
+                {/* Optional: Indicate if replied message was deleted */}
+                {message.replyTo.isDeletedByAdmin && (
+                  <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
+                )}
+              </div>
+            )}
             {message.isDeletedByAdmin || isSenderBanned ? (
-              <span className="italic text-gray-400">[Message Deleted]</span>
+              <span className="italic text-sm text-gray-400">[Message Deleted]</span>
             ) : (
               <>
                 {message.img && (
@@ -320,86 +371,33 @@ const PublicChatMessage = ({
                 )}
               </>
             )}
-
-            {/* Admin Actions Dropdown (Only for admins, on other users' messages) */}
-            {/* {isAuthUserAdmin && !fromMe && (
-              <div className="absolute right-1 admin-dropdown">
-                {" "}
-                <button
-                  onClick={toggleDropdown}
-                  onBlur={(e) => {
-                    requestAnimationFrame(() => {
-                      if (!e.currentTarget.contains(document.activeElement)) {
-                        closeDropdown();
-                      }
-                    });
-                  }}
-                  className="p-1 rounded-full text-gray-400 hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-700 focus:ring-white"
-                >
-                  <span className="sr-only">Open options</span>
-                  ...
-                </button>
-                {isDropdownOpen && (
-                  <ul className="absolute left-1 mt-1 w-40 z-[1000] bg-gray-800 rounded-md shadow-lg py-1">
-                    {!isMessageDeleted && (
-                      <li>
-                        <button
-                          onClick={handleDeleteClick}
-                          className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
-                        >
-                          <MdDeleteForever className="w-4 h-4" /> Delete Message
-                        </button>
-                      </li>
-                    )}
-                    <li>
-                      {isSenderBanned ? (
-                        <button
-                          onClick={handleUnbanClick}
-                          className="w-full text-left px-4 py-2 text-sm text-green-400 hover:bg-gray-700 flex items-center gap-2"
-                        >
-                          <FaUserCheck className="w-4 h-4" /> Unban User
-                        </button>
-                      ) : (
-                        <button
-                          onClick={handleBanClick}
-                          className="w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-gray-700 flex items-center gap-2"
-                        >
-                          <FaUserSlash className="w-4 h-4" /> Ban User
-                        </button>
-                      )}
-                    </li>
-                  </ul>
-                )}
-              </div>
-            )} */}
           </div>
 
           {/* Grouped Reactions Display */}
           {Object.keys(groupedReactions || {}).length > 0 && (
             <div
               className={`flex gap-1 items-center py-1 rounded-full text-xs font-semibold
-                                ${fromMe ? "self-end" : "self-start"}
-                                `}
+                                    ${fromMe ? "self-end" : "self-start"}
+                                    `}
             >
               {Object.entries(groupedReactions).map(([emoji, data]) => {
                 const hasCurrentUserReactedToThisEmoji = data.userIds.some(
                   (userId) => userId === authUser._id?.toString()
                 );
 
-                // Create a title string with all usernames who reacted with this emoji
                 const reactionUsersTitle = data.users
-                  .map((user) => user.username) // Use data.users which has username
+                  .map((user) => user.username)
                   .join(", ");
 
                 return (
                   <div
                     key={emoji}
                     className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 transition-colors duration-200
-                                                ${
-                                                  hasCurrentUserReactedToThisEmoji
-                                                    ? "bg-violet-600/30 border-violet-600 border"
-                                                    : "bg-gray-800 border border-gray-800"
-                                                }`}
+                                            ${
+                                              hasCurrentUserReactedToThisEmoji
+                                                ? "bg-violet-600/30 border-violet-600 border"
+                                                : "bg-gray-800 border border-gray-800"
+                                            }`}
                     title={reactionUsersTitle ? `Reacted by: ${reactionUsersTitle}` : ""}
                     onClick={(e) => {
                       e.stopPropagation();
