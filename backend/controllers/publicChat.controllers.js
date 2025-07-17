@@ -91,8 +91,9 @@ export const getPublicMessages = async (req, res) => {
 export const deletePublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const adminId = req.user._id; // Assuming req.user is populated by your protectRoute middleware
+    const adminId = req.user._id;
 
+    // Assuming isAdmin function verifies admin status
     if (!(await isAdmin(adminId))) {
       return res
         .status(403)
@@ -107,10 +108,13 @@ export const deletePublicMessage = async (req, res) => {
 
     // Mark the message as deleted by admin instead of actually deleting it
     message.isDeletedByAdmin = true;
+    // Clear content and image if not already done by client on optimisitic update
+    message.content = "[Message Deleted]"; // Standardize the display
+    message.img = null; // Remove image URL
     await message.save();
 
-    // Emit an event to inform clients about the deleted message
-    io.to(PUBLIC_CHAT_ROOM).emit("messageDeleted", { messageId: message._id });
+    // Emit an event to inform clients about the admin-deleted message
+    io.to(PUBLIC_CHAT_ROOM).emit("publicMessageDeleted", { messageId: message._id });
 
     res.status(200).json({ message: "Message marked as deleted successfully." });
   } catch (error) {
@@ -263,6 +267,45 @@ export const addReactionToPublicMessage = async (req, res) => {
     res.status(200).json(populatedMessage.reactions);
   } catch (error) {
     console.error("Error in addReactionToPublicMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteOwnPublicMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const userId = req.user._id; // User attempting the deletion
+
+    const message = await PublicChatMessage.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    // Authorization check: Only the sender can delete their message
+    // Or if you want admins to delete any message:
+    // const isUserAdmin = req.user.isAdmin; // Assuming isAdmin is on req.user from auth middleware
+    // if (message.sender.toString() !== userId.toString() && !isUserAdmin) {
+
+    if (message.sender.toString() !== userId.toString()) {
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to delete this message." });
+    }
+
+    // Perform the deletion
+    await PublicChatMessage.deleteOne({ _id: messageId }); // Use deleteOne or findByIdAndDelete
+
+    // Emit message deletion to all clients in the public chat room
+    // This is crucial for real-time updates
+    io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {
+      messageId: message._id,
+      senderId: message.sender.toString(), // Useful for frontend to quickly remove from UI
+    });
+
+    res.status(200).json({ message: "Message deleted successfully." });
+  } catch (error) {
+    console.error("Error in deletePublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -36,6 +36,11 @@ const publicChatMessageSchema = new mongoose.Schema(
         _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
       },
     ],
+    replyTo: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "PublicChatMessage", // References another public chat message
+      default: null, // If null, it's not a reply
+    },
   },
   { timestamps: true }
 );

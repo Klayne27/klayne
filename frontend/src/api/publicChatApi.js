@@ -140,3 +140,16 @@ export const removePublicMessageReactionApi = async (messageId) => {
 
   return data;
 };
+
+export const deleteOwnPublicMessageApi = async (messageId) => {
+  const res = await fetch(`/api/public-chat/${messageId}`, {
+    method: "DELETE",
+    headers: { "Content-type": "application/json" }, // Can remove this header if no body
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to delete message");
+
+  return data;
+};

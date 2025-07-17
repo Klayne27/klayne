@@ -13,6 +13,7 @@ import { useSocket } from "../../context/SocketContext";
 import {
   addPublicMessageReactionApi,
   banUserFromPublicChatApi,
+  deleteOwnPublicMessageApi,
   deletePublicMessageApi,
   getPublicMessagesApi,
   removePublicMessageReactionApi,
@@ -37,21 +38,16 @@ export const usePublicMessages = () => {
     queryKey: ["publicMessages"],
     queryFn: getPublicMessagesApi,
     getNextPageParam: (lastPage, allPages) => {
-      // If the last fetched page has fewer messages than the limit (20),
-      // it means we've reached the end of the messages (no more older messages).
       if (lastPage.length === 20) {
-        return allPages.length + 1; // Request the next page (older messages)
+        return allPages.length + 1;
       }
-      return undefined; // No more pages
+      return undefined;
     },
-    // IMPORTANT: Remove the 'select' option here.
-    // We want data.pages to accumulate in the order fetched: [latest_page, older_page, oldest_page].
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
   });
 
-  // Effect to handle new incoming messages via Socket.io
   useEffect(() => {
     if (!socket) return;
 
@@ -60,22 +56,14 @@ export const usePublicMessages = () => {
     const handleNewPublicMessage = (newMessage) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) {
-          // If no data exists yet, initialize with the new message
           return { pages: [[newMessage]], pageParams: [1] };
         }
-
-        // oldData.pages is an array of arrays (pages).
-        // The first array (oldData.pages[0]) contains the most recently fetched page.
-        // We want to add the NEW incoming message to the END of this most recent page.
         const updatedPages = [...oldData.pages];
         if (updatedPages.length > 0) {
-          // Append the new message to the end of the first page (which is the latest page)
           updatedPages[0] = [...updatedPages[0], newMessage];
         } else {
-          // Fallback if pages array is empty (shouldn't happen if oldData exists)
           updatedPages.push([newMessage]);
         }
-
         return {
           ...oldData,
           pages: updatedPages,
@@ -83,7 +71,8 @@ export const usePublicMessages = () => {
       });
     };
 
-    const handleMessageDeleted = ({ messageId, senderId, content, img }) => {
+    // Handler for ADMIN DELETE: Marks message as deleted, keeps it visible
+    const handleMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) =>
@@ -92,8 +81,8 @@ export const usePublicMessages = () => {
               ? {
                   ...message,
                   isDeletedByAdmin: true,
-                  content: "[Message Deleted]",
-                  img: null,
+                  content: "[Message Deleted]", // Ensure content is updated
+                  img: null, // Clear image
                 }
               : message
           )
@@ -103,38 +92,45 @@ export const usePublicMessages = () => {
       // toast.success("Message deleted by admin.");
     };
 
-    const handleUserBanned = ({ userId, username }) => {
-      // toast.error(`${username} has been banned from the public chat.`);
-            queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+    // NEW Handler for USER OWN DELETE: Removes message completely
+    const handleMessageRemoved = ({ messageId }) => {
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+        const updatedPages = oldData.pages.map((page) =>
+          page.filter((message) => message._id !== messageId)
+        );
+        return { ...oldData, pages: updatedPages };
+      });
+      // toast.success("A message was removed."); // Generic toast for others
+    };
 
+    const handleUserBanned = ({ userId, username }) => {
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // toast.error(`${username} has been banned from the public chat.`); // Show toast for admin
     };
 
     const handleUserUnbanned = ({ userId, username }) => {
-      // toast.success(`${username} has been unbanned from the public chat.`);
-            queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // toast.success(`${username} has been unbanned from the public chat.`); // Show toast for admin
     };
 
     socket.on("newPublicMessage", handleNewPublicMessage);
-    socket.on("messageDeleted", handleMessageDeleted);
+    socket.on("publicMessageDeleted", handleMessageDeleted); // Admin delete
+    socket.on("publicOwnMessageDeleted", handleMessageRemoved); // User own delete
     socket.on("userBanned", handleUserBanned);
     socket.on("userUnbanned", handleUserUnbanned);
 
     return () => {
       socket.off("newPublicMessage", handleNewPublicMessage);
-      socket.off("messageDeleted", handleMessageDeleted);
+      socket.off("publicMessageDeleted", handleMessageDeleted);
+      socket.off("publicOwnMessageDeleted", handleMessageRemoved);
       socket.off("userBanned", handleUserBanned);
       socket.off("userUnbanned", handleUserUnbanned);
       socket.emit("leavePublicChat");
     };
   }, [socket, queryClient]);
 
-  // Flatten the pages for rendering.
-  // We need to reverse the *order of pages* because `fetchNextPage` appends older pages.
-  // So, `data.pages` is `[newest_page, older_page, oldest_page]`.
-  // To get a chronological (oldest to newest) flattened array, we reverse `data.pages` first.
   const messages = data?.pages.slice().reverse().flat() || [];
-  // Use slice() before reverse() to create a shallow copy and avoid mutating the cached data directly.
 
   return {
     messages,
@@ -180,34 +176,42 @@ export const useSendPublicMessage = () => {
 };
 
 export const useDeletePublicMessage = () => {
-  const queryClient = useQueryClient();
-  const { socket } = useSocket();
+    const queryClient = useQueryClient();
+    const { socket } = useSocket();
 
-  const {
-    mutate: deletePublicMessage,
-    isPending,
-    isError,
-    error,
-  } = useMutation({
-    mutationFn: deletePublicMessageApi,
-    onSuccess: (data, messageId) => {
-      // The socket event will handle the UI update more reliably
-      // We can optimismistically update here too, but rely on socket for consistency
-      // queryClient.setQueryData(["publicMessages"], (oldData) => {
-      //   if (!oldData) return oldData;
-      //   const updatedPages = oldData.pages.map((page) =>
-      //     page.filter((message) => message._id !== messageId)
-      //   );
-      //   return { ...oldData, pages: updatedPages };
-      // });
-      toast.success("Message deleted (admin action)");
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to delete message");
-    },
-  });
+    const {
+        mutate: deletePublicMessage,
+        isPending,
+        isError,
+        error,
+    } = useMutation({
+        mutationFn: deletePublicMessageApi,
+        onSuccess: (data, messageId) => {
+            toast.success("Message marked as deleted (Admin action)");
+            // Optimistic update for admin delete - optional, as socket handles it
+            queryClient.setQueryData(["publicMessages"], (oldData) => {
+                if (!oldData) return oldData;
+                const updatedPages = oldData.pages.map((page) =>
+                    page.map((message) =>
+                        message._id === messageId
+                            ? {
+                                  ...message,
+                                  isDeletedByAdmin: true,
+                                  content: "[Message Deleted]", // Ensure content is updated
+                                  img: null, // Clear image
+                              }
+                            : message
+                    )
+                );
+                return { ...oldData, pages: updatedPages };
+            });
+        },
+        onError: (error) => {
+            toast.error(error.message || "Failed to delete message");
+        },
+    });
 
-  return { deletePublicMessage, isPending, isError, error };
+    return { deletePublicMessage, isPending, isError, error };
 };
 
 export const useBanUserFromPublicChat = () => {
@@ -375,4 +379,44 @@ export const useRemovePublicMessageReaction = () => {
   });
 
   return { removeReaction, isRemovingReaction };
+};
+
+export const useDeleteOwnPublicMessage = () => {
+  const queryClient = useQueryClient();
+
+  const { mutate: deleteOwnMessage, isPending: isDeletingOwnMessage } = useMutation({
+    mutationFn: (messageId) => deleteOwnPublicMessageApi(messageId),
+    onMutate: async (messageIdToDelete) => {
+      // Optimistic Update: Remove the message from the cache immediately
+      await queryClient.cancelQueries(["publicMessages"]); // Cancel any ongoing fetches
+
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+
+        const newPages = oldData.pages.map((page) =>
+          page.filter((msg) => msg._id !== messageIdToDelete)
+        );
+
+        return { ...oldData, pages: newPages };
+      });
+
+      // Return a context object with the snapshotted value
+      return { previousMessages };
+    },
+    onError: (err, messageIdToDelete, context) => {
+      // Rollback on error
+      toast.error(err.message || "Failed to delete message.");
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["publicMessages"], context.previousMessages);
+      }
+    },
+    onSettled: () => {
+      // Invalidate to refetch and ensure consistency with the server
+      queryClient.invalidateQueries(["publicMessages"]);
+    },
+  });
+
+  return { deleteOwnMessage, isDeletingOwnMessage };
 };

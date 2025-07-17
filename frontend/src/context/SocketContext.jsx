@@ -64,7 +64,7 @@ export const SocketContextProvider = ({ children }) => {
         // }
       });
 
-      newSocket.on("messageDeleted", ({ messageId, senderId, content, img }) => {
+      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {
         // Public chat message deleted event
         // The usePublicMessages hook handles the query invalidation.
         // This is just for potential toast notifications outside the chat page.
