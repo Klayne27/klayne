@@ -158,34 +158,34 @@ function MessageInput({
     }
   }, [editingMessage]); // Depend on editingMessage
 
-const handleMessageInputChange = (e) => {
-  const text = e.target.value;
-  setMessageInput(text);
+  const handleMessageInputChange = (e) => {
+    const text = e.target.value;
+    setMessageInput(text);
 
-  const isCurrentlyEditing = !!editingMessage; // Determine if in edit mode
+    const isCurrentlyEditing = !!editingMessage; // Determine if in edit mode
 
-  if (text.trim() === "") {
+    if (text.trim() === "") {
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      emitStopTyping(isCurrentlyEditing); // Pass the flag
+      return;
+    }
+
+    if (!typingTimeoutRef.current) {
+      emitTyping(isCurrentlyEditing); // Pass the flag
+    }
+
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
     }
-    emitStopTyping(isCurrentlyEditing); // Pass the flag
-    return;
-  }
 
-  if (!typingTimeoutRef.current) {
-    emitTyping(isCurrentlyEditing); // Pass the flag
-  }
-
-  if (typingTimeoutRef.current) {
-    clearTimeout(typingTimeoutRef.current);
-  }
-
-  typingTimeoutRef.current = setTimeout(() => {
-    emitStopTyping(isCurrentlyEditing); // Pass the flag
-    typingTimeoutRef.current = null;
-  }, 1500);
-};
+    typingTimeoutRef.current = setTimeout(() => {
+      emitStopTyping(isCurrentlyEditing); // Pass the flag
+      typingTimeoutRef.current = null;
+    }, 1500);
+  };
 
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
@@ -229,7 +229,7 @@ const handleMessageInputChange = (e) => {
       return;
     }
 
-    const wasInputFocused = messageInputRef.current === document.activeElement;
+    // const wasInputFocused = messageInputRef.current === document.activeElement;
 
     const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
@@ -252,17 +252,21 @@ const handleMessageInputChange = (e) => {
         messagePayload.img = imageDataUrl;
       }
 
-      sendMessage(messagePayload);
+      await sendMessage(messagePayload);
 
       setMessageInput("");
       setImageFile(null);
       setReplyingToMessage(null);
       currentOptimisticIdRef.current = null;
 
-      if (messageInputRef.current && wasInputFocused && isMobile) {
-        setTimeout(() => {
-          messageInputRef.current.focus();
-        }, 0);
+      // if (messageInputRef.current && wasInputFocused && isMobile) {
+      //   setTimeout(() => {
+      //     messageInputRef.current.focus();
+      //   }, 0);
+      // }
+
+      if (isMobile && messageInputRef.current) {
+        messageInputRef.current.focus();
       }
     } catch (error) {
       console.error("Error during message send process:", error);
@@ -273,10 +277,15 @@ const handleMessageInputChange = (e) => {
   const handleSubmit = (e) => {
     e.preventDefault();
 
-    const trimmedMessage = messageInput.replace(/\s/g, ""); // Check if message contains only whitespace
+    const trimmedMessage = messageInput.replace(/\s/g, "");
 
     if (trimmedMessage.length === 0 && !imageFile) {
-      return; // Don't send if empty or only whitespace and no image
+      // If the input is empty or only whitespace and no image,
+      // and it's a mobile device, ensure focus remains to prevent keyboard close.
+      if (isMobile && messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
+      return;
     }
 
     if (editingMessage) {
@@ -284,6 +293,11 @@ const handleMessageInputChange = (e) => {
       editMessage({ messageId: editingMessage._id, newText: messageInput });
       setEditingMessage(null); // Exit edit mode
       setMessageInput(""); // Clear input after editing
+
+      // Keep keyboard open after editing on mobile
+      if (isMobile && messageInputRef.current) {
+        messageInputRef.current.focus();
+      }
     } else {
       // Handle sending new message
       handleSendMessage(e); // Your original send logic
@@ -294,10 +308,26 @@ const handleMessageInputChange = (e) => {
     setMessageInput((prevText) => prevText + emojiObject.emoji);
   };
 
+  const handleImageButtonClick = (e) => {
+    e.preventDefault(); // Prevent default button behavior that might blur
+    imageInputRef.current.click();
+    // Re-focus the message input after triggering file input click
+    if (isMobile && messageInputRef.current) {
+      setTimeout(() => {
+        messageInputRef.current.focus();
+      }, 0);
+    }
+  };
+
   const handleCancelEdit = () => {
     setEditingMessage(null);
     setMessageInput("");
     emitStopTyping(true); // Indicate it was an edit context
+
+    // Keep keyboard open after canceling edit on mobile
+    if (isMobile && messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
   };
 
   useEffect(() => {
@@ -378,7 +408,7 @@ const handleMessageInputChange = (e) => {
         <div className="flex pl-1">
           <button
             type="button"
-            onClick={() => imageInputRef.current.click()}
+            onClick={handleImageButtonClick} // Use the new handler
             className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
           >
             <IoImageOutline className="w-5 h-5" />
