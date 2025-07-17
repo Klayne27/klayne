@@ -617,12 +617,22 @@ export const editMessage = async (req, res) => {
     message.isEdited = true; // Mark as edited
     await message.save();
 
-    // Now, check if this message is the lastMessage in its conversation
+    // --- CRUCIAL CHANGE: Populate message for emission ---
+    // Populate sender, and if it's a reply, populate repliedTo and repliedTo.sender
+    const populatedMessage = await Message.findById(message._id)
+      .populate("sender", "username fullName profileImg isVerified") // Ensure sender is populated
+      .populate({
+        path: "repliedTo",
+        populate: {
+          path: "sender",
+          select: "username fullName", // Only necessary fields for repliedTo sender
+        },
+        select: "text img sender", // Select relevant fields for repliedTo message itself
+      });
+
     const conversation = await Conversation.findById(message.conversationId);
 
     if (conversation) {
-      // Check if the edited message is indeed the last message of the conversation
-      // Using messageId to compare is the most robust way
       if (
         conversation.lastMessage &&
         conversation.lastMessage.messageId &&
@@ -630,35 +640,39 @@ export const editMessage = async (req, res) => {
       ) {
         conversation.lastMessage.text = newText;
         conversation.lastMessage.isEdited = true;
-        // Optionally update the conversation's updatedAt to bring it to the top
-        // conversation.updatedAt = new Date();
+        // The lastMessage in conversation also needs its repliedTo status updated
+        // or re-evaluated, but it only stores text and sender for simplicity.
+        // For 'repliedTo' UI in sidebar, you'd likely need to fetch the full convo.
         await conversation.save();
 
-        // Emit an event for conversation list update (if you have one)
-        // This is important for real-time update of the conversation list
-        io.to(senderId.toString()).emit("conversationUpdated", conversation);
+        // Emit conversation update for sidebar, use the fully updated conversation if possible
+        const updatedConversation = await Conversation.findById(conversation._id)
+          .populate("participants", "username fullName profileImg")
+          .populate("lastMessage.sender", "username fullName profileImg")
+          .lean(); // Fetch the latest state of the conversation
+
+        io.to(senderId.toString()).emit("conversationUpdated", updatedConversation);
         const receiverId = conversation.participants.find(
           (pId) => pId.toString() !== senderId.toString()
         );
-        const receiverSocketId = getReceiverSocketIds(receiverId);
-        if (receiverSocketId) {
-          io.to(receiverSocketId).emit("conversationUpdated", conversation);
+        const receiverSocketIds = getReceiverSocketIds(receiverId);
+        if (receiverSocketIds.length > 0) {
+          // Check if there are active sockets
+          receiverSocketIds.forEach((socketId) => {
+            io.to(socketId).emit("conversationUpdated", updatedConversation);
+          });
         }
       }
 
       // Emit socket event to notify clients about the updated message (for the chat window itself)
-      // This is the one already in place
-      io.to(senderId.toString()).emit("messageEdited", message);
-      const receiverId = conversation.participants.find(
-        (pId) => pId.toString() !== senderId.toString()
-      );
-      const receiverSocketId = getReceiverSocketIds(receiverId);
-      if (receiverSocketId) {
-        io.to(receiverSocketId).emit("messageEdited", message);
-      }
+      // Use the populatedMessage here!
+      io.to(conversation._id.toString()).emit("messageEdited", populatedMessage); // Emit to the conversation room for all participants
+      // Removed individual sender/receiver emits here, use conversation room instead for simplicity
+      // and ensure all participants get it. The `io.to(conversationId)` will send to all sockets
+      // that have joined that room.
     }
 
-    res.status(200).json(message);
+    res.status(200).json(populatedMessage);
   } catch (error) {
     console.error("Error in editMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });

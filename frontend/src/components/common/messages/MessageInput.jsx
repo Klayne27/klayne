@@ -252,7 +252,7 @@ function MessageInput({
         messagePayload.img = imageDataUrl;
       }
 
-      await sendMessage(messagePayload);
+      sendMessage(messagePayload);
 
       setMessageInput("");
       setImageFile(null);
