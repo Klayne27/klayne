@@ -562,7 +562,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           {/* Public Chat - Visible on mobile, replaces Bookmarks */}
           <li
             onClick={() => navigate("/public-chat")}
-            className="flex hidden justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
           >
             <Link
               to="/public-chat"

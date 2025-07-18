@@ -15,6 +15,7 @@ import {
   banUserFromPublicChatApi,
   deleteOwnPublicMessageApi,
   deletePublicMessageApi,
+  editPublicMessageApi,
   getPublicMessagesApi,
   removePublicMessageReactionApi,
   sendPublicMessageApi,
@@ -137,28 +138,66 @@ export const usePublicMessages = () => {
       // toast.success("A message was removed.");
     };
 
-    const handleUserBanned = ({ userId, username }) => {
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // toast.error(`${username} has been banned from the public chat.`);
+    const handlePublicMessageEdited = ({ messageId, updatedMessage }) => {
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData || !oldData.pages) {
+          console.warn("PublicMessages cache is empty or malformed when editing.", {
+            oldData,
+          });
+          return oldData;
+        }
+
+        const updatedPages = oldData.pages.map((page) => {
+          // Each 'page' is already an array of messages.
+          // Directly map over 'page'.
+          if (!Array.isArray(page)) {
+            console.warn("Expected page to be an array of messages, got:", page);
+            return page; // Return page as is if it's not an array of messages
+          }
+          return page.map((message) => {
+            if (message._id === messageId) {
+              return updatedMessage; // Replace with the fully updated message from server
+            }
+            return message;
+          });
+        });
+        return { ...oldData, pages: updatedPages };
+      });
     };
 
-    const handleUserUnbanned = ({ userId, username }) => {
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // toast.success(`${username} has been unbanned from the public chat.`);
+    const handlePublicMessageReactionUpdated = ({ messageId, reactions }) => {
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((message) => {
+            if (message._id === messageId) {
+              // Replace the message's reactions with the updated reactions from the server
+              return { ...message, reactions: reactions };
+            }
+            return message;
+          })
+        );
+        return { ...oldData, pages: updatedPages };
+      });
     };
 
+    socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted);
     socket.on("publicOwnMessageDeleted", handleMessageRemoved);
-    socket.on("userBanned", handleUserBanned);
-    socket.on("userUnbanned", handleUserUnbanned);
+    socket.on("publicMessageEdited", handlePublicMessageEdited);
+    // socket.on("userBanned", handleUserBanned);
+    // socket.on("userUnbanned", handleUserUnbanned);
 
     return () => {
+      socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
       socket.off("newPublicMessage", handleNewPublicMessage);
       socket.off("publicMessageDeleted", handleMessageDeleted);
       socket.off("publicOwnMessageDeleted", handleMessageRemoved);
-      socket.off("userBanned", handleUserBanned);
-      socket.off("userUnbanned");
+      socket.off("publicMessageEdited", handlePublicMessageEdited);
+      // socket.off("userBanned", handleUserBanned);
+      // socket.off("userUnbanned", handleUserUnbanned);
       socket.emit("leavePublicChat");
     };
   }, [socket, queryClient, authUser]); // Add authUser to dependency array
@@ -265,42 +304,42 @@ export const useSendPublicMessage = () => {
 };
 
 export const useDeletePublicMessage = () => {
-    const queryClient = useQueryClient();
-    const { socket } = useSocket();
+  const queryClient = useQueryClient();
+  const { socket } = useSocket();
 
-    const {
-        mutate: deletePublicMessage,
-        isPending,
-        isError,
-        error,
-    } = useMutation({
-        mutationFn: deletePublicMessageApi,
-        onSuccess: (data, messageId) => {
-            // toast.success("Message marked as deleted (Admin action)");
-            // // Optimistic update for admin delete - optional, as socket handles it
-            // queryClient.setQueryData(["publicMessages"], (oldData) => {
-            //     if (!oldData) return oldData;
-            //     const updatedPages = oldData.pages.map((page) =>
-            //         page.map((message) =>
-            //             message._id === messageId
-            //                 ? {
-            //                       ...message,
-            //                       isDeletedByAdmin: true,
-            //                       content: "[Message Deleted]", // Ensure content is updated
-            //                       img: null, // Clear image
-            //                   }
-            //                 : message
-            //         )
-            //     );
-            //     return { ...oldData, pages: updatedPages };
-            // });
-        },
-        onError: (error) => {
-            toast.error(error.message || "Failed to delete message");
-        },
-    });
+  const {
+    mutate: deletePublicMessage,
+    isPending,
+    isError,
+    error,
+  } = useMutation({
+    mutationFn: deletePublicMessageApi,
+    onSuccess: (data, messageId) => {
+      // toast.success("Message marked as deleted (Admin action)");
+      // // Optimistic update for admin delete - optional, as socket handles it
+      // queryClient.setQueryData(["publicMessages"], (oldData) => {
+      //     if (!oldData) return oldData;
+      //     const updatedPages = oldData.pages.map((page) =>
+      //         page.map((message) =>
+      //             message._id === messageId
+      //                 ? {
+      //                       ...message,
+      //                       isDeletedByAdmin: true,
+      //                       content: "[Message Deleted]", // Ensure content is updated
+      //                       img: null, // Clear image
+      //                   }
+      //                 : message
+      //         )
+      //     );
+      //     return { ...oldData, pages: updatedPages };
+      // });
+    },
+    onError: (error) => {
+      toast.error(error.message || "Failed to delete message");
+    },
+  });
 
-    return { deletePublicMessage, isPending, isError, error };
+  return { deletePublicMessage, isPending, isError, error };
 };
 
 export const useBanUserFromPublicChat = () => {
@@ -351,56 +390,55 @@ export const useUnbanUserFromPublicChat = () => {
 // --- New React Query Hooks for Reactions ---
 export const useAddPublicMessageReaction = () => {
   const queryClient = useQueryClient();
+  const { authUser: currentUser } = useAuthUser(); // Get authUser here
 
   const { mutate: addReaction, isPending: isReacting } = useMutation({
     mutationFn: ({ messageId, emoji }) => addPublicMessageReactionApi(messageId, emoji),
     onMutate: async ({ messageId, emoji }) => {
-      await queryClient.cancelQueries(["publicMessages"]);
+      await queryClient.cancelQueries({ queryKey: ["publicMessages"] }); // Use object for cancelQueries
 
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) return oldData;
+        if (!oldData || !currentUser) {
+          // Use currentUser here
+          console.warn(
+            "Auth user not found for optimistic update, or oldData is missing."
+          );
+          return oldData;
+        }
 
         const newPages = oldData.pages.map((page) =>
           page.map((msg) => {
             if (msg._id === messageId) {
               const newReactions = [...(msg.reactions || [])];
-              const authUser = queryClient.getQueryData(["authUser"]);
 
-              if (!authUser) {
-                console.warn(
-                  "Auth user not found in cache for optimistic update. Skipping reaction update for message:",
-                  messageId
-                );
-                return msg;
-              }
-
-              // --- NEW LOGIC START ---
-              // Find if the current user already reacted with THIS SPECIFIC EMOJI
+              // --- This logic is already solid for optimistic add/remove ---
               const existingSpecificEmojiReactionIndex = newReactions.findIndex(
                 (r) =>
-                  (r.userId?._id || r.userId)?.toString() === authUser._id.toString() &&
-                  r.emoji === emoji // Check for the specific emoji
+                  (r.userId?._id || r.userId)?.toString() ===
+                    currentUser._id.toString() && // Use currentUser._id
+                  r.emoji === emoji
               );
 
               const newReactionEntry = {
                 emoji,
                 userId: {
-                  _id: authUser._id,
-                  username: authUser.username,
-                  profileImg: authUser.profileImg,
+                  // Populate for optimistic UI display
+                  _id: currentUser._id,
+                  username: currentUser.username,
+                  profileImg: currentUser.profileImg,
+                  // Add other user details if `populatedMessage` from backend provides them
+                  fullName: currentUser.fullName, // Make sure this is in your authUser
                 },
               };
 
               if (existingSpecificEmojiReactionIndex !== -1) {
-                // User already reacted with this specific emoji -> REMOVE it
                 newReactions.splice(existingSpecificEmojiReactionIndex, 1);
               } else {
-                // User has NOT reacted with this specific emoji -> ADD it
                 newReactions.push(newReactionEntry);
               }
-              // --- NEW LOGIC END ---
+              // --- END LOGIC ---
 
               return { ...msg, reactions: newReactions };
             }
@@ -418,8 +456,10 @@ export const useAddPublicMessageReaction = () => {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
     },
+    // `onSettled` is great here because it runs on both success and error.
+    // It's ideal for refetching to ensure eventual consistency.
     onSettled: () => {
-      queryClient.invalidateQueries(["publicMessages"]);
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Use object for invalidateQueries
     },
   });
 
@@ -444,7 +484,9 @@ export const useRemovePublicMessageReaction = () => {
           page.map((msg) => {
             if (msg._id === messageId) {
               const newReactions = msg.reactions.filter(
-                (r) => r.userId.toString() !== queryClient.getQueryData(["authUser"])._id.toString()
+                (r) =>
+                  r.userId.toString() !==
+                  queryClient.getQueryData(["authUser"])._id.toString()
               );
               return { ...msg, reactions: newReactions };
             }
@@ -508,4 +550,72 @@ export const useDeleteOwnPublicMessage = () => {
   });
 
   return { deleteOwnMessage, isDeletingOwnMessage };
+};
+
+// NEW: Hook for editing a public message
+export const useEditPublicMessage = () => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ messageId, newContent }) =>
+      editPublicMessageApi(messageId, newContent),
+    onMutate: async ({ messageId, newContent }) => {
+      // Cancel any outgoing refetches for the messages query
+      await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
+
+      // Snapshot the current messages data
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      // Optimistically update the message in the cache
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        // --- MODIFICATION STARTS HERE ---
+        if (!oldData || !oldData.pages) {
+          // If oldData or oldData.pages is undefined/null, return oldData as is.
+          // This prevents trying to map over a non-existent 'pages' array.
+          return oldData;
+        }
+
+        const updatedPages = oldData.pages.map((page) => {
+          // Ensure page.messages exists before mapping
+          if (!page.messages) {
+            return page; // Return the page as is if messages array is missing
+          }
+          return {
+            ...page,
+            messages: page.messages.map((message) => {
+              if (message._id === messageId) {
+                return {
+                  ...message,
+                  content: newContent,
+                  isEdited: true,
+                  editedAt: new Date().toISOString(), // Use ISO string for consistency
+                };
+              }
+              return message;
+            }),
+          };
+        });
+        // --- MODIFICATION ENDS HERE ---
+        return { ...oldData, pages: updatedPages };
+      });
+
+      return { previousMessages }; // Return snapshot for potential rollback
+    },
+    onSuccess: (data) => {
+      // toast.success("Message edited successfully!");
+      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+    },
+    onError: (error, { messageId }, context) => {
+      toast.error(error.message || "Failed to edit message.");
+      // Rollback to the previous messages if the mutation fails
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["publicMessages"], context.previousMessages);
+      }
+    },
+    onSettled: () => {
+      // No change needed here, as your `publicMessageEdited` socket event
+      // is designed to handle the authoritative update for all clients.
+      // If you weren't using sockets, you would likely invalidate here.
+    },
+  });
 };

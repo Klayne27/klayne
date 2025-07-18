@@ -41,6 +41,14 @@ const publicChatMessageSchema = new mongoose.Schema(
       ref: "PublicChatMessage", // References another public chat message
       default: null, // If null, it's not a reply
     },
+    isEdited: {
+      type: Boolean,
+      default: false,
+    },
+    editedAt: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

@@ -5,6 +5,8 @@ import { Link } from "react-router-dom";
 import { MdDeleteForever } from "react-icons/md";
 import { FaUserSlash, FaUserCheck, FaReply } from "react-icons/fa"; // Import FaReply
 import toast from "react-hot-toast";
+import { MdEdit } from "react-icons/md"; // Import the edit icon
+
 import {
   useDeleteOwnPublicMessage,
   useDeletePublicMessage,
@@ -26,6 +28,7 @@ const PublicChatMessage = ({
   handleMessageTap,
   handleReactionClick,
   onReply, // NEW: Prop for handling reply click
+  onEdit,
 }) => {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
@@ -43,7 +46,8 @@ const PublicChatMessage = ({
   const isAuthUserAdmin = authUser.isAdmin;
   const isSenderBanned = message.sender.isBannedInPublicChat;
   const isMessageDeleted = message.isDeletedByAdmin;
-  const isSenderVerified = message.sender.isVerified
+  const isSenderVerified = message.sender.isVerified;
+  const isMessageEdited = message.isEdited; // NEW: Check if message is edited
 
   const bubbleRounding = fromMe
     ? "rounded-3xl rounded-br-[4px]"
@@ -60,14 +64,13 @@ const PublicChatMessage = ({
 
   // Helper to truncate text for reply preview
 
-
   // Utility to render clickable text (assuming it's a shared utility)
   // For now, it just returns the text as is.
 
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
     const reactorId = reaction.userId?._id?.toString() || reaction.userId?.toString();
-    const reactorUsername = reaction.userId?.username || "Unknown";
+    const reactorUsername = reaction?.userId?.username || "Unknown";
     const reactorProfileImg = reaction.userId?.profileImg || "/avatar-placeholder.png";
 
     if (!reactorId) return acc;
@@ -85,6 +88,7 @@ const PublicChatMessage = ({
         _id: reactorId,
         username: reactorUsername,
         profileImg: reactorProfileImg,
+        fullName: reaction?.userId?.fullName, // <--- Add fullName here for consistency
       });
       acc[reaction.emoji].userIds.push(reactorId);
     }
@@ -119,6 +123,12 @@ const PublicChatMessage = ({
     e.stopPropagation();
     // Call the onReply prop, passing the full message object being replied to
     onReply(message);
+  };
+
+  // NEW: Handler for edit button
+  const handleEditClick = (e) => {
+    e.stopPropagation();
+    onEdit(message); // Call the onEdit prop, passing the full message object
   };
 
   return (
@@ -183,6 +193,17 @@ const PublicChatMessage = ({
         >
           <FaReply size={18} />
         </button>
+
+        {/* NEW: Edit button (only for own messages that are not deleted/edited) */}
+        {fromMe && !isMessageDeleted && (
+          <button
+            onClick={handleEditClick}
+            className="p-1 text-yellow-400 hover:text-yellow-500 hover:scale-125 transition duration-100"
+            title="Edit Message"
+          >
+            <MdEdit size={20} />
+          </button>
+        )}
 
         {/* Trash Icon for deleting own message */}
         {fromMe && (
@@ -283,6 +304,14 @@ const PublicChatMessage = ({
             </div>
           )}
 
+          <div className={`flex ${fromMe ? "justify-self-end" : "justify-self-start"}`}>
+            {isMessageEdited && ( // Only show if it's a text message and it's marked as edited
+              <span className="text-xs italic text-gray-500 mb-1 mr-3 ml-2">
+                (Edited)
+              </span>
+            )}
+          </div>
+
           {/* NEW: Replied Message Display */}
 
           {/* Chat Bubble Container */}
@@ -333,7 +362,7 @@ const PublicChatMessage = ({
                         fromMe ? "text-gray-600" : "text-gray-300"
                       } mt-1 italic`}
                     >
-                      {renderClickableText(truncateText(message.replyTo.content, 50))}
+                      {renderClickableText(truncateText(message.replyTo.content))}
                     </span>
                   )
                 )}
@@ -366,7 +395,7 @@ const PublicChatMessage = ({
                 )}
                 {message.content && (
                   <p className="whitespace-pre-wrap break-words text-sm">
-                    {message.content}
+                    {renderClickableText(message.content)}
                   </p>
                 )}
               </>
@@ -386,7 +415,7 @@ const PublicChatMessage = ({
                 );
 
                 const reactionUsersTitle = data.users
-                  .map((user) => user.username)
+                  .map((user) => user.username || user.fullName || "Unknown")
                   .join(", ");
 
                 return (

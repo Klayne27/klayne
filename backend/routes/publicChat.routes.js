@@ -9,6 +9,7 @@ import {
   // removeReactionFromPublicMessage,
   addReactionToPublicMessage,
   deleteOwnPublicMessage,
+  editPublicMessage,
 } from "../controllers/publicChat.controllers.js";
 
 const router = express.Router();
@@ -25,6 +26,8 @@ router.put("/admin/unban/:userId", protectRoute, unbanUserFromPublicChat);
 // New Routes for Reactions
 router.post("/:messageId/react", protectRoute, addReactionToPublicMessage);
 router.delete("/:messageId", protectRoute, deleteOwnPublicMessage);
+
+router.put("/edit/:messageId", protectRoute, editPublicMessage); // NEW EDIT ROUTE
 
 // router.delete("/:messageId/react", protectRoute, removeReactionFromPublicMessage); // DELETE for removing reaction
 

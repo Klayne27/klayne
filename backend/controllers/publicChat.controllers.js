@@ -109,6 +109,11 @@ export const getPublicMessages = async (req, res) => {
             select: "username isBannedInPublicChat", // Select their username and ban status
           },
         },
+        {
+          path: "reactions.userId",
+          // >>> IMPORTANT: Match the select from addReactionToPublicMessage <<<
+          select: "username profileImg fullName",
+        },
       ])
       .lean(); // Use .lean() for faster queries, returns plain JavaScript objects
 
@@ -289,7 +294,7 @@ export const addReactionToPublicMessage = async (req, res) => {
       })
       .populate({
         path: "reactions.userId",
-        select: "username profileImg",
+        select: "username profileImg fullName",
       })
       .lean();
 
@@ -340,6 +345,75 @@ export const deleteOwnPublicMessage = async (req, res) => {
     res.status(200).json({ message: "Message deleted successfully." });
   } catch (error) {
     console.error("Error in deletePublicMessage controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// Add this function to your controllers/publicChatController.js file
+export const editPublicMessage = async (req, res) => {
+  try {
+    const { messageId } = req.params;
+    const { newContent } = req.body;
+    const userId = req.user._id; // Authenticated user ID
+
+    if (!newContent || newContent.trim() === "") {
+      return res.status(400).json({ error: "Edited content cannot be empty." });
+    }
+
+    const message = await PublicChatMessage.findById(messageId);
+
+    if (!message) {
+      return res.status(404).json({ error: "Message not found." });
+    }
+
+    // Only the original sender can edit their message
+    if (message.sender.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You are not authorized to edit this message." });
+    }
+
+    // Prevent editing if the message has been deleted by an admin
+    if (message.isDeletedByAdmin) {
+      return res.status(403).json({ error: "Cannot edit a message deleted by an admin." });
+    }
+
+    message.content = newContent;
+    message.isEdited = true;
+    message.editedAt = new Date(); // Set current time for edited timestamp
+
+    await message.save();
+
+    // Populate the message to send back over socket.io and as response
+    // Ensure all necessary fields are populated for consistency with getPublicMessages
+    const populatedMessage = await PublicChatMessage.findById(messageId)
+      .populate([
+        {
+          path: "sender",
+          select: "username fullName profileImg isAdmin isVerified isBannedInPublicChat",
+        },
+        {
+          path: "replyTo",
+          select: "sender content img isDeletedByAdmin",
+          populate: {
+            path: "sender",
+            select: "username isBannedInPublicChat",
+          },
+        },
+        {
+          path: "reactions.userId",
+          select: "username profileImg fullName",
+        },
+      ])
+      .lean();
+
+    // Emit event to all clients in the public chat room
+    io.to(PUBLIC_CHAT_ROOM).emit("publicMessageEdited", {
+      messageId: populatedMessage._id,
+      updatedMessage: populatedMessage,
+    });
+
+    res.status(200).json(populatedMessage);
+  } catch (error) {
+    console.error("Error in editPublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -226,7 +226,7 @@ export const createAndSendNotification = async ({
   }
 };
 
-export const PUBLIC_CHAT_ROOM = "public_chat_room"
+export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", (socket) => {
   console.log(`Socket connected: ${socket.id}`);
@@ -245,7 +245,7 @@ io.on("connection", (socket) => {
     onlineUsersMap.get(userId).add(socket.id);
     socket.userId = userId;
 
-    socket.join(PUBLIC_CHAT_ROOM)
+    socket.join(PUBLIC_CHAT_ROOM);
     console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
 
     emitUnreadMessageStatus(userId);
@@ -256,6 +256,26 @@ io.on("connection", (socket) => {
   }
 
   io.emit("getOnlineUsers", getOnlineUserIds());
+
+  socket.on("joinConversation", (conversationId) => {
+    if (conversationId) {
+      // Basic validation
+      socket.join(conversationId);
+      console.log(
+        `Socket ${socket.id} (User ${socket.userId}) joined private conversation room: ${conversationId}`
+      );
+    }
+  });
+
+  socket.on("leaveConversation", (conversationId) => {
+    if (conversationId) {
+      // Basic validation
+      socket.leave(conversationId);
+      console.log(
+        `Socket ${socket.id} (User ${socket.userId}) left private conversation room: ${conversationId}`
+      );
+    }
+  });
 
   socket.on("typing", async ({ conversationId, isEditing }) => {
     const senderId = socket.userId;
@@ -282,9 +302,13 @@ io.on("connection", (socket) => {
             if (!blocked) {
               const receiverSocketIds = getReceiverSocketIds(participantId);
               receiverSocketIds.forEach((sockId) => {
-                io.to(sockId).emit("typing", { conversationId, userId: senderId, isEditing });
+                io.to(sockId).emit("typing", {
+                  conversationId,
+                  userId: senderId,
+                  isEditing,
+                });
               });
-            } 
+            }
           }
         }
       } catch (err) {
@@ -318,7 +342,11 @@ io.on("connection", (socket) => {
               if (!blocked) {
                 const receiverSocketIds = getReceiverSocketIds(participantId);
                 receiverSocketIds.forEach((sockId) => {
-                  io.to(sockId).emit("stopTyping", { conversationId, userId: senderId, isEditing });
+                  io.to(sockId).emit("stopTyping", {
+                    conversationId,
+                    userId: senderId,
+                    isEditing,
+                  });
                 });
               }
             }
@@ -346,7 +374,6 @@ io.on("connection", (socket) => {
       const otherParticipantId = conversation.participants.find(
         (pId) => pId.toString() !== readerId.toString()
       );
-
 
       await Message.updateMany(
         {
@@ -418,7 +445,7 @@ io.on("connection", (socket) => {
   socket.on("disconnect", () => {
     console.log(`Socket disconnected: ${socket.id}`);
 
-    socket.leave(PUBLIC_CHAT_ROOM)
+    socket.leave(PUBLIC_CHAT_ROOM);
 
     const disconnectedUserId = socket.userId;
 
@@ -478,7 +505,6 @@ io.on("connection", (socket) => {
     }
 
     io.emit("getOnlineUsers", getOnlineUserIds());
-
   });
 });
 

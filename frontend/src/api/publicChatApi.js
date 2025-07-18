@@ -153,3 +153,20 @@ export const deleteOwnPublicMessageApi = async (messageId) => {
 
   return data;
 };
+
+
+export const editPublicMessageApi = async (messageId, newContent) => {
+  const res = await fetch(`/api/public-chat/edit/${messageId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ newContent }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to edit message.");
+  }
+  return data;
+};

@@ -273,6 +273,14 @@ const ChatWindow = ({
   // --- Socket event listeners and handling new messages from others ---
   useEffect(() => {
     if (socket) {
+      let prevConversationId; // To store the conversation ID before it changes
+
+      if (actualConversationId) {
+        // Only join if there's an actual conversation ID
+        socket.emit("joinConversation", actualConversationId);
+        prevConversationId = actualConversationId; // Store for cleanup
+      }
+
       const handleNewMessage = (newMessage) => {
         const targetMessagesQueryKey = ["messages", newMessage.conversationId];
 
@@ -460,6 +468,9 @@ const ChatWindow = ({
       socket.on("conversationUpdated", handleConversationUpdate);
 
       return () => {
+        if (prevConversationId) {
+          socket.emit("leaveConversation", prevConversationId);
+        }
         socket.off("newMessage", handleNewMessage);
         socket.off("messageDeleted", handleMessageDeleted);
         socket.off("messagesSeen", handleMessagesSeen);
