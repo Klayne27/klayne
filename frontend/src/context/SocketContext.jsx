@@ -102,18 +102,22 @@ export const SocketContextProvider = ({ children }) => {
       });
 
       newSocket.on("messageReacted", (updatedMessage) => {
-        queryClient.setQueryData(
-          ["messages", updatedMessage.conversationId],
-          (oldData) => {
-            if (!oldData) return oldData;
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((message) =>
-                message._id === updatedMessage._id ? updatedMessage : message
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          }
-        );
+        // queryClient.setQueryData(
+        //   ["messages", updatedMessage.conversationId],
+        //   (oldData) => {
+        //     if (!oldData) return oldData;
+        //     const updatedPages = oldData.pages.map((page) =>
+        //       page.map((message) =>
+        //         message._id === updatedMessage._id ? updatedMessage : message
+        //       )
+        //     );
+        //     return { ...oldData, pages: updatedPages };
+        //   }
+        // );
+
+          queryClient.invalidateQueries({
+            queryKey: ["messages", updatedMessage.conversationId],
+          });
 
         // Similar to newMessage, update the specific conversation in the list directly
         // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
