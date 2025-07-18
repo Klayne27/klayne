@@ -535,24 +535,35 @@ export const reactToMessage = async (req, res) => {
       });
     }
 
-    const reactionIndex = message.reactions.findIndex(
+    // Use findOneAndUpdate with atomic operators
+    const reactionExists = message.reactions.some(
       (reaction) =>
         reaction.user.toString() === userId.toString() && reaction.emoji === emoji
     );
 
-    let action = "";
-
-    if (reactionIndex !== -1) {
-      message.reactions.splice(reactionIndex, 1);
-      action = "removed";
+    let updatedMessage;
+    if (reactionExists) {
+      // Pull the reaction if it exists
+      updatedMessage = await Message.findOneAndUpdate(
+        { _id: messageId, "reactions.user": userId, "reactions.emoji": emoji },
+        { $pull: { reactions: { user: userId, emoji: emoji } } },
+        { new: true } // Return the updated document
+      );
     } else {
-      message.reactions.push({ emoji, user: userId });
-      action = "added";
+      // Push the reaction if it doesn't exist
+      updatedMessage = await Message.findOneAndUpdate(
+        { _id: messageId },
+        { $push: { reactions: { emoji, user: userId } } },
+        { new: true } // Return the updated document
+      );
     }
 
-    await message.save();
+    if (!updatedMessage) {
+      // This might happen if the message was deleted between findById and findOneAndUpdate
+      return res.status(404).json({ error: "Message not found or update failed." });
+    }
 
-    const populatedMessage = await Message.findById(message._id)
+    const populatedMessage = await Message.findById(updatedMessage._id)
       .populate({
         path: "sender",
         select: "username fullName profileImg isVerified",
@@ -570,7 +581,7 @@ export const reactToMessage = async (req, res) => {
         select: "username fullName profileImg",
       });
 
-    const conversation = await Conversation.findById(message.conversationId);
+    const conversation = await Conversation.findById(populatedMessage.conversationId);
     if (conversation) {
       conversation.participants.forEach((participantId) => {
         const receiverSocketIds = getReceiverSocketIds(participantId.toString());

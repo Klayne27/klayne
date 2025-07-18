@@ -12,14 +12,11 @@ import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu";
-import { IoChatbubbleEllipsesOutline, IoChatbubblesOutline, IoClose } from "react-icons/io5"; // Import a close icon
-import { FaUserTimes } from "react-icons/fa";
+import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"; // Import a close icon
 import { BiLogOut } from "react-icons/bi";
-import { FaUserXmark } from "react-icons/fa6";
 import FollowListModal from "./FollowListModal";
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 import React from "react";
-import { BsChatSquareText } from "react-icons/bs";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -565,7 +562,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           {/* Public Chat - Visible on mobile, replaces Bookmarks */}
           <li
             onClick={() => navigate("/public-chat")}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            className="hidden flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
           >
             <Link
               to="/public-chat"

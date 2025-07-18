@@ -141,7 +141,7 @@ const MessagePage = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [
     urlConversationId,
-    targetUserId, // Keep targetUserId in dependency array
+    targetUserId,
     conversations,
     followedUsers,
     isLoadingConversations,

@@ -116,19 +116,19 @@ export const SocketContextProvider = ({ children }) => {
         );
 
         // Similar to newMessage, update the specific conversation in the list directly
-        queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-          if (!oldConversationsData) return undefined;
+        // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
+        //   if (!oldConversationsData) return undefined;
 
-          const updatedConversations = oldConversationsData.map((conv) => {
-            if (conv._id === updatedMessage.conversationId) {
-              // If a reaction, the last message might not change, but you might want to reflect the change
-              // For now, we'll just return the conversation as is, as reactions don't change lastMessage often
-              return conv;
-            }
-            return conv;
-          });
-          return updatedConversations;
-        });
+        //   const updatedConversations = oldConversationsData.map((conv) => {
+        //     if (conv._id === updatedMessage.conversationId) {
+        //       // If a reaction, the last message might not change, but you might want to reflect the change
+        //       // For now, we'll just return the conversation as is, as reactions don't change lastMessage often
+        //       return conv;
+        //     }
+        //     return conv;
+        //   });
+        //   return updatedConversations;
+        // });
       });
 
       // --- NEW: Handle messageEdited event in SocketContextProvider ---

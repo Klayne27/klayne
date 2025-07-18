@@ -25,6 +25,8 @@ const ChatWindow = ({
 }) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
+  const currentUserId = currentUser?._id; // <--- Extract primitive ID
+
   const { socket, setActiveConversationId } = useSocket();
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
@@ -278,7 +280,7 @@ const ChatWindow = ({
           newMessage.conversationId === actualConversationId ||
           (selectedConversation?.isNewChat &&
             newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            newMessage.recipientId?.toString() === currentUser._id.toString() &&
+            newMessage.recipientId?.toString() === currentUserId.toString() &&
             !actualConversationId);
 
         queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
@@ -292,7 +294,7 @@ const ChatWindow = ({
           );
 
           if (
-            newMessage.sender._id.toString() === currentUser._id.toString() &&
+            newMessage.sender._id.toString() === currentUserId.toString() &&
             currentOptimisticIdRef.current &&
             oldData.pages[0].some(
               (msg) => msg._id === currentOptimisticIdRef.current && msg.isOptimistic
@@ -324,7 +326,7 @@ const ChatWindow = ({
 
             if (
               isAtBottom ||
-              newMessage.sender._id.toString() === currentUser._id.toString()
+              newMessage.sender._id.toString() === currentUserId.toString()
             ) {
               didMessageJustLanded.current = true;
               setShowNewMessageButton(false);
@@ -349,7 +351,7 @@ const ChatWindow = ({
 
             const updatedPages = oldData.pages.map((page) =>
               page.map((msg) =>
-                msg.sender._id.toString() === currentUser._id.toString() && !msg.seen
+                msg.sender._id.toString() === currentUserId.toString() && !msg.seen
                   ? { ...msg, seen: true }
                   : msg
               )
@@ -389,31 +391,28 @@ const ChatWindow = ({
       };
 
       const handleConversationUpdate = (updatedConversation) => {
-        queryClient.setQueryData(
-          ["conversations", currentUser?._id],
-          (oldConversations) => {
-            if (!oldConversations) return [];
+        queryClient.setQueryData(["conversations", currentUserId], (oldConversations) => {
+          if (!oldConversations) return [];
 
-            // Find the index of the updated conversation
-            const index = oldConversations.findIndex(
-              (conv) => conv._id === updatedConversation._id
-            );
+          // Find the index of the updated conversation
+          const index = oldConversations.findIndex(
+            (conv) => conv._id === updatedConversation._id
+          );
 
-            if (index !== -1) {
-              // If found, replace it and potentially reorder to the top
-              const newConversations = [...oldConversations];
-              newConversations[index] = updatedConversation;
+          if (index !== -1) {
+            // If found, replace it and potentially reorder to the top
+            const newConversations = [...oldConversations];
+            newConversations[index] = updatedConversation;
 
-              // Optional: If you sort by updatedAt, re-sort the list
-              // newConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-              return newConversations;
-            } else {
-              // If not found (e.g., a new conversation was created), just add it
-              // Or invalidate to refetch everything for simplicity if new conversations are rare
-              return [updatedConversation, ...oldConversations];
-            }
+            // Optional: If you sort by updatedAt, re-sort the list
+            // newConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+            return newConversations;
+          } else {
+            // If not found (e.g., a new conversation was created), just add it
+            // Or invalidate to refetch everything for simplicity if new conversations are rare
+            return [updatedConversation, ...oldConversations];
           }
-        );
+        });
       };
 
       // --- MODIFIED: handleStopTyping event listener ---
@@ -475,12 +474,12 @@ const ChatWindow = ({
     actualConversationId,
     queryClient,
     otherUser?._id,
-    currentUser._id,
-    currentUser.username,
-    currentUser.profileImg,
-    currentUser.fullName,
-    selectedConversation,
-    currentOptimisticIdRef,
+    currentUserId,
+    // currentUser.username,
+    // currentUser.profileImg,
+    // currentUser.fullName,
+    selectedConversation.isNewChat,
+    // currentOptimisticIdRef,
     setShowNewMessageButton,
   ]);
 

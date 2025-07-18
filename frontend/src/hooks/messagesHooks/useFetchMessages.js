@@ -1,8 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchMessagesApi } from "../../api/messagesApi";
+import { useMemo } from "react";
 
 export const useFetchMessages = (selectedConversation) => {
-
   const {
     data,
     fetchNextPage,
@@ -31,7 +31,9 @@ export const useFetchMessages = (selectedConversation) => {
     refetchOnReconnect: true,
   });
 
-  const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
+  const messages = useMemo(() => {
+    return data ? [...data.pages].reverse().flatMap((page) => page) : [];
+  }, [data]); // Dependency is `data` - if data.pages or its contents change, `data` object reference changes.
 
   return {
     messages,
