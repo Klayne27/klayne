@@ -1,7 +1,7 @@
 // src/components/publicChat/PublicChatHeader.jsx
 import React from "react";
 import { FaArrowLeft } from "react-icons/fa6";
-import { IoChatbubblesOutline } from "react-icons/io5";
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 // No need for Link or FaArrowLeft as there's no internal back within the chat component
 // import { Link } from "react-router-dom";
@@ -25,7 +25,7 @@ const PublicChatHeader = () => {
             <FaArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center">
-            <IoChatbubblesOutline size={30} />
+            <IoChatbubbleEllipsesOutline size={30} />
           </div>
         </div>
         <div>

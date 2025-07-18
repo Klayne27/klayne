@@ -408,12 +408,12 @@ const PublicChatWindow = ({ openImageModal }) => {
   }
 
   return (
-    <div className="flex flex-col h-full relative md:border-r border-accent">
+    <div className="flex flex-col h-full relative md:border-r border-accent ">
       <PublicChatHeader />
 
       <div className="flex-grow overflow-y-auto p-4 pb-0 min-h-0" ref={messageListRef}>
         {isFetchingNextPage && (
-          <div className="flex justify-center py-2">
+          <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
             <LoadingSpinner size="sm" />
           </div>
         )}
@@ -467,12 +467,11 @@ const PublicChatWindow = ({ openImageModal }) => {
               <div className="text-sm text-primary font-bold">Replying to</div>
               <div className="text-xs text-gray-400 mt-1 italic">
                 {replyingToMessage.sender?.username && (
-                  <span className="font-semibold mr-1">@{replyingToMessage.sender.username}:</span>
+                  <span className="font-semibold mr-1">
+                    @{replyingToMessage.sender.username}:
+                  </span>
                 )}
-                {truncateText(
-                  replyingToMessage.content || "[Image Message]",
-                  40
-                )}
+                {truncateText(replyingToMessage.content || "[Image Message]", 40)}
               </div>
               {replyingToMessage.img && !replyingToMessage.content && (
                 <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>
@@ -518,9 +517,11 @@ const PublicChatWindow = ({ openImageModal }) => {
           id="image-upload-public-chat"
         />
 
-        <div className={`flex-1 relative my-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
+        <div
+          className={`flex-1 relative my-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
             ${isCurrentUserBanned ? "opacity-50 cursor-not-allowed" : ""}
-        `}>
+        `}
+        >
           <div className="flex pl-1">
             <button
               type="button"
@@ -536,7 +537,13 @@ const PublicChatWindow = ({ openImageModal }) => {
             value={messageContent}
             onChange={handleMessageContentChange}
             onKeyDown={handleKeyDown}
-            placeholder={isCurrentUserBanned ? "You are banned from sending messages." : replyingToMessage ? "Send your reply..." : "Type your message..."}
+            placeholder={
+              isCurrentUserBanned
+                ? "You are banned from sending messages."
+                : replyingToMessage
+                ? "Send your reply..."
+                : "Type your message..."
+            }
             className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-auto max-h-[140px]"
             rows={1}
             ref={messageInputRef}
@@ -545,7 +552,11 @@ const PublicChatWindow = ({ openImageModal }) => {
 
           <button
             type="submit"
-            disabled={isSendingMessage || isCurrentUserBanned || (!messageContent.trim() && !selectedFile && !replyingToMessage)}
+            disabled={
+              isSendingMessage ||
+              isCurrentUserBanned ||
+              (!messageContent.trim() && !selectedFile && !replyingToMessage)
+            }
             className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
               messageContent.trim() || selectedFile || replyingToMessage
                 ? "bg-primary text-white"

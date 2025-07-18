@@ -29,7 +29,10 @@ export const useFetchMessages = (selectedConversation) => {
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
+    structuralSharing: false, // <--- ADD THIS TEMPORARILY
   });
+
+  // const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
 
   const messages = useMemo(() => {
     return data ? [...data.pages].reverse().flatMap((page) => page) : [];
