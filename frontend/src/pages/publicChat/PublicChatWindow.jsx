@@ -71,9 +71,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   const [editingMessage, setEditingMessage] = useState(null); // Stores the message object being edited
   // const [editContent, setEditContent] = useState(""); // No longer needed, messageContent handles this
 
-  const [isCurrentUserBanned, setIsCurrentUserBanned] = useState(
-    currentUser?.isBannedInPublicChat || false
-  );
+  const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
 
   // Helper to truncate text for reply preview and edit preview
   const truncateText = (text, maxLength) => {
@@ -163,6 +161,8 @@ const PublicChatWindow = ({ openImageModal }) => {
     addReaction({ messageId, emoji });
     // setActiveMessageModalId(null); // Close the reaction picker after clicking an emoji
   };
+
+
 
   // --- NEW: Handler to set message for editing ---
   const handleEdit = (messageToEdit) => {
@@ -301,10 +301,13 @@ const PublicChatWindow = ({ openImageModal }) => {
         }
       });
 
-      socket.on("userBanned", ({ userId, username }) => {
-        if (userId === currentUser._id) {
-          setIsCurrentUserBanned(true);
-          toast.error(`You have been banned from the public chat.`);
+      // --- MODIFICATION START ---
+      // Replaced 'userBanned' and 'userUnbanned' with 'bannedFromPublicChat'
+      // This event is sent directly to the user's socket from the server.
+      socket.on("bannedFromPublicChat", ({ isBanned, message }) => {
+        if (isBanned) {
+          // Clear current message content and any file previews
+
           setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
@@ -313,17 +316,16 @@ const PublicChatWindow = ({ openImageModal }) => {
             messageInputRef.current.style.height = "auto";
             messageInputRef.current.rows = 1;
           }
+          // IMPORTANT: Clear public messages from query cache if banned
+          queryClient.setQueryData(["publicMessages"], (oldData) => ({
+            pages: [[]], // Set pages to an array containing an empty array
+            pageParams: [undefined],
+          }));
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
         }
       });
-
-      socket.on("userUnbanned", ({ userId, username }) => {
-        if (userId === currentUser._id) {
-          setIsCurrentUserBanned(false);
-          toast.success(
-            `You have been unbanned from the public chat. You can now send messages.`
-          );
-        }
-      });
+      // --- MODIFICATION END ---
 
       // socket.on("publicMessageEdited", ({ messageId, updatedMessage }) => {
       //   queryClient.setQueryData(["publicMessages"], (oldData) => {
@@ -344,12 +346,12 @@ const PublicChatWindow = ({ openImageModal }) => {
 
       return () => {
         socket.off("publicChatTyping");
-        socket.off("userBanned");
-        socket.off("userUnbanned");
+        socket.off("bannedFromPublicChat"); // Unsubscribe from the new event
+        // socket.off("userUnbanned");
         // socket.off("publicMessageEdited");
       };
     }
-  }, [socket, currentUser, refetchAuthUser, queryClient]);
+  }, [socket, currentUser, refetchAuthUser, queryClient, isCurrentUserBanned]);
 
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value;
@@ -588,7 +590,9 @@ const PublicChatWindow = ({ openImageModal }) => {
       />
 
       <div
-        className={`flex-1 relative my-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
+        className={`flex-1 ${
+          isEditingMode ? "" : "mx-2"
+        } relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
           ${isCurrentUserBanned ? "opacity-50 cursor-not-allowed" : ""}
         `}
       >
@@ -650,136 +654,151 @@ const PublicChatWindow = ({ openImageModal }) => {
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent ">
       <PublicChatHeader />
-
-      <div className="flex-grow overflow-y-auto p-4 pb-0 min-h-0" ref={messageListRef}>
-        {isFetchingNextPage && (
-          <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
-            <LoadingSpinner size="sm" />
+      {isCurrentUserBanned ? (
+        <div className="flex flex-grow items-center justify-center">
+          <div className="bg-base-100  p-6 rounded-2xl  border-accent text-center mx-auto my-5 max-w-sm shadow-lg animate-fade-in">
+            <p className="mb-3 font-bold text-lg">
+              You are currently banned from the public chat.
+            </p>
+            <p className="text-base">You cannot view messages or send new ones.</p>
           </div>
-        )}
-        {messages.length === 0 && !isLoadingMessages && (
-          <div className="flex flex-col items-center justify-center h-full text-gray-400">
-            <p className="text-xl font-bold mb-2">Welcome to the Public Chat!</p>
-            <p className="text-sm text-center">Start by sending the first message.</p>
-          </div>
-        )}
-        <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
-          {messages.map((message) => (
-            <div key={message._id}>
-              <div>
-                <PublicChatMessage
-                  key={message._id}
-                  message={message}
-                  authUser={currentUser}
-                  openImageModal={openImageModal}
-                  onDelete={handleDeleteMessage}
-                  onBan={handleBanUser}
-                  onUnban={handleUnbanUser}
-                  isCurrentlyTouchDevice={isCurrentlyTouchDevice}
-                  activeMessageModalId={activeMessageModalId}
-                  handleMouseEnter={handleMouseEnter}
-                  handleMouseLeave={handleMouseLeave}
-                  handleMessageTap={handleMessageTap}
-                  handleReactionClick={handleReactionClick}
-                  onReply={handleReply}
-                  onEdit={handleEdit}
-                />
-              </div>
-            </div>
-          ))}
-        </div>
-        {isTyping && (
-          <div className="chat chat-start">
-            <div className="chat-bubble bg-gray-700 text-white">
-              <span className="loading loading-dots loading-sm"></span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* --- NEW: Image Preview moved outside the form, above the input section --- */}
-      {previewImage && (
-        <div className="mt-4 border-t border-accent p-5 flex sticky bottom-0 z-10 bg-base-100">
-          <div className="relative">
-            <img
-              src={previewImage}
-              alt="Preview"
-              className="max-w-[200px] max-h-[200px] object-contain rounded-md"
-            />
-            <button
-              onClick={handleRemoveImage}
-              className="absolute -right-2 -top-2 p-1 text-white rounded-full bg-gray-500 transition duration-200 hover:bg-gray-600"
-            >
-              <IoClose size={15} />
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Conditional rendering for the entire input section */}
-      {editingMessage ? (
-        // EDIT MODE CONTAINER
-        <div className="w-full bg-base-100 flex flex-col border-t border-accent sticky bottom-0 z-10">
-          {/* Edit Message Indicator Bar */}
-          <div className="flex items-center justify-between px-4 py-2 text-sm">
-            <span className="flex items-center gap-2 ">
-              <MdEdit className="w-4 h-4" />
-              <span className="text-gray-400">Editing message</span>
-              <span className="font-semibold ml-1">
-                "{truncateText(editingMessage.content, 30)}"
-              </span>
-            </span>
-            <button
-              onClick={handleCancelEdit}
-              className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
-              title="Cancel Edit"
-            >
-              <IoClose className="w-4 h-4" />
-            </button>
-          </div>
-
-          {/* The form, now nested inside the edit mode container */}
-          <form
-            onSubmit={handleSendMessageOrEdit}
-            className="px-2 bg-black/0 flex items-center relative"
-          >
-            {renderFormContent(true)} {/* Pass true to indicate editing mode */}
-          </form>
         </div>
       ) : (
-        // NORMAL MODE (not editing)
-        <form
-          onSubmit={handleSendMessageOrEdit}
-          className="sticky bottom-0 bg-base-100 px-2 flex flex-col"
-        >
-          {/* Only show replyingToMessage if NOT in editing mode */}
-          {replyingToMessage && (
-            <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
-              <div className="flex-1 p-3 rounded-md flex flex-col">
-                <div className="text-sm text-primary font-bold">Replying to</div>
-                <div className="text-xs text-gray-400 mt-1 italic">
-                  {replyingToMessage.sender?.username && (
-                    <span className="font-semibold mr-1">
-                      @{replyingToMessage.sender.username}:
-                    </span>
-                  )}
-                  {truncateText(replyingToMessage.content || "[Image Message]", 40)}
-                </div>
-                {replyingToMessage.img && !replyingToMessage.content && (
-                  <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>
-                )}
+        <>
+          <div
+            className="flex-grow overflow-y-auto p-4 pb-0 min-h-0"
+            ref={messageListRef}
+          >
+            {isFetchingNextPage && (
+              <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
+                <LoadingSpinner size="sm" />
               </div>
-              <button
-                onClick={() => setReplyingToMessage(null)}
-                className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
-                aria-label="Cancel reply"
-              >
-                <IoClose size={20} />
-              </button>
+            )}
+            {messages.length === 0 && !isLoadingMessages && (
+              <div className="flex flex-col items-center justify-center h-full text-gray-400">
+                <p className="text-xl font-bold mb-2">Welcome to the Public Chat!</p>
+                <p className="text-sm text-center">Start by sending the first message.</p>
+              </div>
+            )}
+            <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
+              {messages.map((message) => (
+                <div key={message._id}>
+                  <div>
+                    <PublicChatMessage
+                      key={message._id}
+                      message={message}
+                      authUser={currentUser}
+                      openImageModal={openImageModal}
+                      onDelete={handleDeleteMessage}
+                      onBan={handleBanUser}
+                      onUnban={handleUnbanUser}
+                      isCurrentlyTouchDevice={isCurrentlyTouchDevice}
+                      activeMessageModalId={activeMessageModalId}
+                      handleMouseEnter={handleMouseEnter}
+                      handleMouseLeave={handleMouseLeave}
+                      handleMessageTap={handleMessageTap}
+                      handleReactionClick={handleReactionClick}
+                      onReply={handleReply}
+                      onEdit={handleEdit}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+            {isTyping && (
+              <div className="chat chat-start">
+                <div className="chat-bubble bg-gray-700 text-white">
+                  <span className="loading loading-dots loading-sm"></span>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* --- NEW: Image Preview moved outside the form, above the input section --- */}
+          {previewImage && (
+            <div className="mt-4 border-t border-accent p-5 flex sticky bottom-0 z-10 bg-base-100">
+              <div className="relative">
+                <img
+                  src={previewImage}
+                  alt="Preview"
+                  className="max-w-[200px] max-h-[200px] object-contain rounded-md"
+                />
+                <button
+                  onClick={handleRemoveImage}
+                  className="absolute -right-2 -top-2 p-1 text-white rounded-full bg-gray-500 transition duration-200 hover:bg-gray-600"
+                >
+                  <IoClose size={15} />
+                </button>
+              </div>
             </div>
           )}
-          {renderFormContent(false)} {/* Pass false for normal mode */}
-        </form>
+
+          {/* Conditional rendering for the entire input section */}
+          {editingMessage ? (
+            // EDIT MODE CONTAINER
+            <div className="w-full bg-base-200 flex flex-col border-t border-accent sticky bottom-0 z-10">
+              {/* Edit Message Indicator Bar */}
+              <div className="flex items-center justify-between px-4 py-2 text-sm">
+                <span className="flex items-center gap-2 ">
+                  <MdEdit className="w-4 h-4" />
+                  <span className="text-gray-400">Editing message</span>
+                  <span className="font-semibold ml-1">
+                    "{truncateText(editingMessage.content, 30)}"
+                  </span>
+                </span>
+                <button
+                  onClick={handleCancelEdit}
+                  className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
+                  title="Cancel Edit"
+                >
+                  <IoClose className="w-4 h-4" />
+                </button>
+              </div>
+
+              {/* The form, now nested inside the edit mode container */}
+              <form
+                onSubmit={handleSendMessageOrEdit}
+                className="px-2 bg-black/0 flex items-center relative"
+              >
+                {renderFormContent(true)} {/* Pass true to indicate editing mode */}
+              </form>
+            </div>
+          ) : (
+            // NORMAL MODE (not editing)
+            <form
+              onSubmit={handleSendMessageOrEdit}
+              className="sticky bottom-0 bg-base-100  flex flex-col"
+            >
+              {/* Only show replyingToMessage if NOT in editing mode */}
+              {replyingToMessage && (
+                <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
+                  <div className="flex-1 p-3 rounded-md flex flex-col">
+                    <div className="text-sm text-primary font-bold">Replying to</div>
+                    <div className="text-xs text-gray-400 mt-1 italic">
+                      {replyingToMessage.sender?.username && (
+                        <span className="font-semibold mr-1">
+                          @{replyingToMessage.sender.username}:
+                        </span>
+                      )}
+                      {truncateText(replyingToMessage.content || "[Image Message]", 40)}
+                    </div>
+                    {replyingToMessage.img && !replyingToMessage.content && (
+                      <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>
+                    )}
+                  </div>
+                  <button
+                    onClick={() => setReplyingToMessage(null)}
+                    className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
+                    aria-label="Cancel reply"
+                  >
+                    <IoClose size={20} />
+                  </button>
+                </div>
+              )}
+              {renderFormContent(false)} {/* Pass false for normal mode */}
+            </form>
+          )}
+        </>
       )}
     </div>
   );

@@ -23,6 +23,7 @@ const MessageItem = ({
   currentUser,
   setEditingMessage,
   isTypingOtherUser,
+  onReactionAdded
 }) => {
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
@@ -126,6 +127,7 @@ const MessageItem = ({
             onClick={(e) => {
               e.stopPropagation();
               handleReactionClick(msg._id, emoji);
+              onReactionAdded()
             }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
             title={`React with ${emoji}`}

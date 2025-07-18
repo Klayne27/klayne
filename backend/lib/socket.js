@@ -228,7 +228,7 @@ export const createAndSendNotification = async ({
 
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
-io.on("connection", (socket) => {
+io.on("connection", async (socket) => {
   console.log(`Socket connected: ${socket.id}`);
 
   const userId = socket.handshake.query.userId;
@@ -245,8 +245,36 @@ io.on("connection", (socket) => {
     onlineUsersMap.get(userId).add(socket.id);
     socket.userId = userId;
 
-    socket.join(PUBLIC_CHAT_ROOM);
-    console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
+    // --- MODIFICATION START ---
+
+    // Check ban status on connection for public chat
+    try {
+      const user = await User.findById(userId).select("isBannedInPublicChat").lean();
+      if (user && user.isBannedInPublicChat) {
+        socket.isBannedInPublicChat = true; // Attach flag to socket for easier checks
+        // Do NOT join PUBLIC_CHAT_ROOM if banned
+        console.log(
+          `User ${userId} (${socket.id}) is banned and prevented from joining ${PUBLIC_CHAT_ROOM}.`
+        );
+        // Immediately notify the client that they are banned (for UI purposes)
+        io.to(socket.id).emit("bannedFromPublicChat", {
+          isBanned: true,
+          // message: "You are currently banned from the public chat.",
+        });
+      } else {
+        socket.isBannedInPublicChat = false;
+        socket.join(PUBLIC_CHAT_ROOM); // Allow to join if not banned
+        console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
+        // Also send a status to indicate they are NOT banned, in case they were previously
+        io.to(socket.id).emit("bannedFromPublicChat", { isBanned: false });
+      }
+    } catch (err) {
+      console.error("Error checking user ban status on connection:", err);
+      // Fallback: If error, disconnect to prevent unintended access
+      socket.disconnect(true);
+      return;
+    }
+    // --- MODIFICATION END ---
 
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
@@ -256,6 +284,63 @@ io.on("connection", (socket) => {
   }
 
   io.emit("getOnlineUsers", getOnlineUserIds());
+
+  // --- NEW: Handle direct 'joinPublicChat' event (if client explicitly sends it) ---
+  socket.on("joinPublicChat", async () => {
+    // Re-check ban status if user explicitly tries to join later
+    try {
+      const user = await User.findById(socket.userId)
+        .select("isBannedInPublicChat")
+        .lean();
+      if (user && user.isBannedInPublicChat) {
+        socket.isBannedInPublicChat = true;
+        socket.leave(PUBLIC_CHAT_ROOM); // Ensure they are not in the room
+        io.to(socket.id).emit("bannedFromPublicChat", {
+          isBanned: true,
+          // message: "You are currently banned from the public chat.",
+        });
+      } else {
+        socket.isBannedInPublicChat = false;
+        socket.join(PUBLIC_CHAT_ROOM);
+        io.to(socket.id).emit("bannedFromPublicChat", { isBanned: false });
+      }
+    } catch (err) {
+      console.error("Error handling joinPublicChat event:", err);
+    }
+  });
+
+  // --- NEW: Listen for 'userBanned' and 'userUnbanned' events from admin actions ---
+  // These are meant for the *specific user being banned/unbanned* to update their status immediately.
+  socket.on("userBanned", ({ userId, username }) => {
+    // This event name matches your controller emit
+    if (socket.userId === userId.toString()) {
+      socket.isBannedInPublicChat = true;
+      socket.leave(PUBLIC_CHAT_ROOM); // Immediately remove them from the room
+      io.to(socket.id).emit("bannedFromPublicChat", {
+        isBanned: true,
+        // message: `You have been banned from the public chat.`,
+      });
+      console.log(
+        `User ${userId} (${username}) was just banned and removed from public chat room.`
+      );
+    }
+  });
+
+  socket.on("userUnbanned", ({ userId, username }) => {
+    // This event name matches your controller emit
+    if (socket.userId === userId.toString()) {
+      socket.isBannedInPublicChat = false;
+      socket.join(PUBLIC_CHAT_ROOM); // Allow them to rejoin the room
+      io.to(socket.id).emit("bannedFromPublicChat", {
+        isBanned: false,
+        // message: `You have been unbanned from the public chat.`,
+      });
+      console.log(
+        `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
+      );
+    }
+  });
+  // --- END NEW ---
 
   socket.on("joinConversation", (conversationId) => {
     if (conversationId) {

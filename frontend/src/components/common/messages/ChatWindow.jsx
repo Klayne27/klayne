@@ -85,6 +85,24 @@ const ChatWindow = ({
     didMessageJustLanded.current = true;
   }, []);
 
+  // NEW: Function to explicitly trigger scroll-to-bottom after a reaction
+  const handleReactionAdded = useCallback(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
+
+    const scrollThreshold = 100; // Keep consistent with other checks
+    const isUserAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+    if (isUserAtBottom) {
+      // Use a small timeout to ensure the DOM has rendered the reaction and updated scrollHeight
+      setTimeout(() => {
+        scrollToBottom();
+        setShowNewMessageButton(false); // Hide the new message button if we scrolled
+      }, 1); // Small delay to ensure DOM updates
+    }
+  }, [scrollToBottom, setShowNewMessageButton]);
+
   const { sendMessage, isSendingMessage } = useSendMessage({
     selectedConversation,
     isNewOrTemporaryChat,
@@ -111,17 +129,24 @@ const ChatWindow = ({
           const newScrollHeight = listEl.scrollHeight;
           const oldScrollHeight = prevScrollHeightRef.current;
 
-          if (newScrollHeight > oldScrollHeight) {
-            const scrollThreshold = 100;
-            const isUserAtBottom =
-              listEl.scrollHeight - listEl.scrollTop <=
-              listEl.clientHeight + scrollThreshold;
+          // Define a scroll threshold for being "at the bottom"
+          const scrollThreshold = 100; // Adjust as needed
+          const isUserAtBottom =
+            listEl.scrollHeight - listEl.scrollTop <=
+            listEl.clientHeight + scrollThreshold;
 
-            if (isUserAtBottom || didMessageJustLanded.current) {
-              scrollToBottom();
-              didMessageJustLanded.current = false;
-              setShowNewMessageButton(false);
-            }
+          // Condition 1: Scroll if new content arrives AND user is at the bottom
+          // Condition 2: Scroll if message just landed (optimistic send or new received message)
+          // Condition 3: Scroll if newScrollHeight > oldScrollHeight (content added, like a reaction)
+          //               AND the user is already considered at the bottom.
+          if (
+            isUserAtBottom || // User is at or near the bottom
+            didMessageJustLanded.current || // A new message just landed
+            (newScrollHeight > oldScrollHeight && isUserAtBottom) // Height increased AND user was at bottom
+          ) {
+            scrollToBottom();
+            didMessageJustLanded.current = false; // Reset after scrolling
+            setShowNewMessageButton(false); // Hide new message button if scrolled to bottom
           }
           prevScrollHeightRef.current = newScrollHeight;
         }
@@ -231,15 +256,23 @@ const ChatWindow = ({
     }
   }, [messages, isFetchingNextPage]);
 
-  // --- NEW: Scroll to bottom when typing indicator appears ---
   useEffect(() => {
     if (isTypingOtherUser) {
-      // Small delay to allow the DOM to update with the new message item's height
-      const timeoutId = setTimeout(() => {
-        scrollToBottom();
-      }, 50); // A small delay (e.g., 50ms) often helps ensure the new element's height is registered
+      const listEl = messageListRef.current;
+      if (listEl) {
+        // Check if the user is already at the bottom or very close to it
+        const scrollThreshold = 100; // Define a threshold, e.g., 100px from the bottom
+        const isUserAtBottom =
+          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
-      return () => clearTimeout(timeoutId);
+        if (isUserAtBottom) {
+          // Only scroll to bottom if the user is already at the bottom
+          const timeoutId = setTimeout(() => {
+            scrollToBottom();
+          }, 1); // Small delay to allow DOM to update
+          return () => clearTimeout(timeoutId);
+        }
+      }
     }
   }, [isTypingOtherUser, scrollToBottom]);
 
@@ -532,6 +565,7 @@ const ChatWindow = ({
           selectedConversationId={selectedConversation?._id}
           setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
+          onReactionAdded={handleReactionAdded}
         />
 
         {showNewMessageButton && (

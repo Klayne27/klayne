@@ -31,6 +31,7 @@ const MessageList = forwardRef(function MessageList(
     selectedConversationId,
     setEditingMessage,
     isTypingOtherUser,
+    onReactionAdded,
   },
   ref
 ) {
@@ -228,6 +229,7 @@ const MessageList = forwardRef(function MessageList(
               isDeletingMessage={isDeletingMessage}
               currentUser={currentUser}
               setEditingMessage={setEditingMessage}
+              onReactionAdded={onReactionAdded}
             />
           ))}
     

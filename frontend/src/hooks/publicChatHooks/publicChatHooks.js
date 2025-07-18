@@ -49,10 +49,18 @@ export const usePublicMessages = () => {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
+    // select: (data) => ({
+    //   ...data,
+    //   pages: data.pages.map(
+    //     (page) => page.filter((message) => !message.sender?.isBannedInPublicChat) // Filter messages from banned users (for other users)
+    //   ),
+    // }),
   });
 
   useEffect(() => {
     if (!socket || !authUser) return; // Ensure authUser is available
+
+
 
     socket.emit("public_chat_room");
 
@@ -106,6 +114,7 @@ export const usePublicMessages = () => {
         };
       });
     };
+
 
     const handleMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
@@ -182,13 +191,28 @@ export const usePublicMessages = () => {
       });
     };
 
+    const handleUserBannedGlobal = ({ userId, username }) => {
+      // Other users need to react by filtering out messages from the banned user
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+    };
+
+    const handleUserUnbannedGlobal = ({ userId, username }) => {
+      // When a user is unbanned, you can invalidate the query to refetch messages
+      // This will include any new messages from the unbanned user if they send them.
+      // If you want immediate re-appearance of *previous* messages from that user,
+      // you would need to store them client-side or have a more complex server-side
+      // mechanism to send only that user's past messages. For simplicity, refetching is best.
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // toast.info(`${username} has been unbanned from the public chat.`);
+    };
+
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted);
     socket.on("publicOwnMessageDeleted", handleMessageRemoved);
     socket.on("publicMessageEdited", handlePublicMessageEdited);
-    // socket.on("userBanned", handleUserBanned);
-    // socket.on("userUnbanned", handleUserUnbanned);
+    socket.on("userBanned", handleUserBannedGlobal);
+    socket.on("userUnbanned", handleUserUnbannedGlobal);
 
     return () => {
       socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
@@ -196,8 +220,8 @@ export const usePublicMessages = () => {
       socket.off("publicMessageDeleted", handleMessageDeleted);
       socket.off("publicOwnMessageDeleted", handleMessageRemoved);
       socket.off("publicMessageEdited", handlePublicMessageEdited);
-      // socket.off("userBanned", handleUserBanned);
-      // socket.off("userUnbanned", handleUserUnbanned);
+      socket.off("userBanned", handleUserBannedGlobal);
+      socket.off("userUnbanned", handleUserUnbannedGlobal);
       socket.emit("leavePublicChat");
     };
   }, [socket, queryClient, authUser]); // Add authUser to dependency array
@@ -387,6 +411,7 @@ export const useUnbanUserFromPublicChat = () => {
 
   return { unbanUser, isPending, isError, error };
 };
+
 // --- New React Query Hooks for Reactions ---
 export const useAddPublicMessageReaction = () => {
   const queryClient = useQueryClient();
