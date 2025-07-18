@@ -115,9 +115,22 @@ export const SocketContextProvider = ({ children }) => {
         //   }
         // );
 
-          queryClient.invalidateQueries({
-            queryKey: ["messages", updatedMessage.conversationId],
-          });
+          queryClient.setQueryData(
+            ["messages", updatedMessage.conversationId],
+            (oldData) => {
+              if (!oldData) return oldData;
+              const updatedPages = oldData.pages.map((page) =>
+                page.map((message) =>
+                  message._id === updatedMessage._id ? updatedMessage : message
+                )
+              );
+              return { ...oldData, pages: updatedPages };
+            }
+          );
+
+          // queryClient.invalidateQueries({
+          //   queryKey: ["messages", updatedMessage.conversationId],
+          // });
 
         // Similar to newMessage, update the specific conversation in the list directly
         // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
