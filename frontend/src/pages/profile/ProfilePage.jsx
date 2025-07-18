@@ -11,7 +11,7 @@ import UnfollowModal from "../../components/common/UnfollowModal"; // Import the
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
 import { FaLink } from "react-icons/fa";
-import { MdBlock, MdEdit } from "react-icons/md";
+import { MdBlock, MdDeleteForever, MdEdit } from "react-icons/md";
 import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
@@ -24,6 +24,8 @@ import BlockConfirmationModal from "../../components/common/BlockConfirmationMod
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
 import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 import FollowButton from "../../components/common/FollowButton";
+import { useAdminDeleteUser } from "../../hooks/usersHooks/useAdminDeleteUser";
+import DeleteUserConfirmationModal from "../../components/common/DeleteUserConfirmationModal";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -31,6 +33,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [modalType, setModalType] = useState(null);
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false); // NEW STATE for delete modal
   const [userToUnfollow, setUserToUnfollow] = useState(null); // State to hold user info for unfollow modal
   const navigate = useNavigate();
 
@@ -46,6 +49,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const { follow, isPending } = useFollow();
 
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
+  const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser(); // USE NEW HOOK
 
   const {
     user,
@@ -72,6 +76,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const isMyProfile = authUser?._id === user?._id;
   const amIFollowing = authUser?.following?.includes(user?._id);
+
+  const isAdminUser = authUser?.isAdmin; // Assuming `isAdmin` field on authUser
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
 
@@ -113,6 +119,23 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   }, [isTouchDevice]);
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
+
+  // NEW: Functions for Admin Delete User Modal
+  const openDeleteUserModal = () => {
+    if (!user?._id) return;
+    setShowDeleteUserModal(true);
+  };
+
+  const closeDeleteUserModal = () => {
+    setShowDeleteUserModal(false);
+  };
+
+  const handleConfirmDeleteUser = () => {
+    if (user?._id) {
+      adminDeleteUser(user._id); // Call the new mutation hook
+      closeDeleteUserModal();
+    }
+  };
 
   const openBlockConfirmationModal = () => {
     if (!user?._id) return;
@@ -303,6 +326,17 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             <div className="flex justify-end px-4 mt-5 gap-2">
               {isMyProfile && <EditProfileModal authUser={authUser} />}
 
+              {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
+              {isAdminUser && !isMyProfile && user && (
+                <button
+                  onClick={openDeleteUserModal}
+                  className="btn btn-sm btn-error text-white md:px-3 top-4 rounded-full py-1 md:text-base text-xs absolute flex items-center gap-1 transition duration-200 hover:scale-105"
+                  disabled={isDeletingUser}
+                >
+                  <MdDeleteForever size={20} />
+                </button>
+              )}
+
               {!isMyProfile && !hasBlockedYou && (
                 <button
                   className={`flex items-center gap-1 font-bold px-1.5 md:px-3 rounded-full py-1 md:text-base text-xs transition duration-200 absolute border border-red-700 top-20
@@ -455,9 +489,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               <div
                 className={`flex justify-center flex-1 p-3 relative cursor-pointer
                   transition duration-150         
-                  ${
-                    !isTouchDevice ? "hover:bg-secondary" : ""
-                  } 
+                  ${!isTouchDevice ? "hover:bg-secondary" : ""} 
                   ${
                     isTouchDevice && activeTab === "likes"
                       ? "bg-secondary bg-opacity-50"
@@ -532,6 +564,15 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         onUnfollowConfirm={handleConfirmUnfollow}
         username={userToUnfollow?.username}
       />
+
+      {user && (
+        <DeleteUserConfirmationModal
+          isOpen={showDeleteUserModal}
+          onClose={closeDeleteUserModal}
+          onConfirm={handleConfirmDeleteUser}
+          username={user.username}
+        />
+      )}
     </>
   );
 };

@@ -112,3 +112,23 @@ export const blockUnblockUserApi = async (userId) => {
   }
   return data;
 };
+
+export const deleteUserAccountAdmin = async (userId) => {
+  const res = await fetch(`/api/users/admin/delete/${userId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+      // IMPORTANT: Include Authorization header if your protectRoute middleware
+      // relies on a token (e.g., JWT token from localStorage)
+      Authorization: `Bearer ${localStorage.getItem("jwt")}`, // Example
+    },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete user account as admin");
+  }
+
+  return data;
+};

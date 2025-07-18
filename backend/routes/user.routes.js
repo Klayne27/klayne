@@ -10,7 +10,9 @@ import {
   deleteUserAccount,
   searchUsers,
   blockUnblockUser,
+  adminDeleteUserAccount,
 } from "../controllers/user.controllers.js";
+import { isAdmin } from "../middleware/isAdmin.js";
 
 const router = express.Router();
 
@@ -23,6 +25,8 @@ router.get("/following/:id", protectRoute, getFollowingUsers);
 router.delete("/delete/:id", protectRoute, deleteUserAccount);
 router.get("/search", protectRoute, searchUsers);
 router.post("/block/:id", protectRoute, blockUnblockUser);
+
+router.delete("/admin/delete/:id", protectRoute, isAdmin, adminDeleteUserAccount);
 
 
 export default router;

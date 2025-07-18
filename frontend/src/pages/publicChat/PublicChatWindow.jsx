@@ -84,6 +84,26 @@ const PublicChatWindow = ({ openImageModal }) => {
     return scrollHeight - scrollTop - clientHeight < 10;
   }, []);
 
+  // NEW: Function to scroll to a specific message by its ID
+  const handleJumpToMessage = useCallback((messageId) => {
+    const messageElement = document.getElementById(`message-${messageId}`);
+    if (messageElement && messageListRef.current) {
+      // Scroll into view first
+      messageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center", // Adjust this to 'start', 'center', or 'end' as preferred
+      });
+
+      // Add the highlight class
+      messageElement.classList.add("highlight-message");
+
+      // Remove the highlight class after 1.5 seconds
+      setTimeout(() => {
+        messageElement.classList.remove("highlight-message");
+      }, 1500); // 1500ms = 1.5 seconds
+    }
+  }, []); 
+
   // --- Message hover/tap handlers ---
   const handleMouseEnter = (messageId) => {
     if (!isCurrentlyTouchDevice) {
@@ -343,6 +363,7 @@ const PublicChatWindow = ({ openImageModal }) => {
                     handleReactionClick={handleReactionClick}
                     onReply={handleReply}
                     onEdit={handleEdit}
+                    onJumpToMessage={handleJumpToMessage}
                   />
                 </div>
               ))}

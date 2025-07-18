@@ -29,6 +29,7 @@ const PublicChatMessage = ({
   handleReactionClick,
   onReply, // NEW: Prop for handling reply click
   onEdit,
+  onJumpToMessage
 }) => {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
@@ -123,13 +124,20 @@ const PublicChatMessage = ({
     e.stopPropagation();
     // Call the onReply prop, passing the full message object being replied to
     onReply(message);
-
   };
 
   // NEW: Handler for edit button
   const handleEditClick = (e) => {
     e.stopPropagation();
     onEdit(message); // Call the onEdit prop, passing the full message object
+  };
+
+  // NEW: Handler for clicking the "Replying to" div
+  const handleReplyingToClick = (e) => {
+    e.stopPropagation();
+    if (message.replyTo && message.replyTo._id) {
+      onJumpToMessage(message.replyTo._id);
+    }
   };
 
   return (
@@ -345,6 +353,7 @@ const PublicChatMessage = ({
                 //   e.stopPropagation();
                 //   handleJumpToOriginalMessage(message.replyTo._id);
                 // }}
+                onClick={handleReplyingToClick} // ADD THIS onClick HANDLER
               >
                 <span
                   className={`font-bold ${fromMe ? "text-gray-600" : "text-gray-300"}`}

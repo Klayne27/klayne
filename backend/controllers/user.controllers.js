@@ -517,3 +517,118 @@ export const blockUnblockUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
+export const adminDeleteUserAccount = async (req, res) => {
+  try {
+    // 1. Authorization: Check if the requesting user is an admin
+    // Assuming req.user is populated by your authentication middleware
+    if (!req.user || !req.user.isAdmin) {
+      return res
+        .status(403)
+        .json({
+          error: "Forbidden: Only administrators can delete other user accounts.",
+        });
+    }
+
+    // 2. Get the ID of the user to be deleted from request parameters
+    const { id: userIdToDelete } = req.params; // Renamed for clarity
+
+    // Prevent admin from deleting their own account via this endpoint (optional but good practice)
+    // If an admin wants to delete their own, they should use the standard deleteUserAccount
+    if (userIdToDelete === req.user._id.toString()) {
+      return res
+        .status(400)
+        .json({
+          error: "Please use the 'Delete My Account' option to delete your own account.",
+        });
+    }
+
+    const userToDelete = await User.findById(userIdToDelete);
+    if (!userToDelete) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // --- Start Deletion Logic (same as your existing controller) ---
+
+    // Remove user from other users' blockedUsers and blockedBy arrays
+    await User.updateMany(
+      { blockedUsers: userToDelete._id },
+      { $pull: { blockedUsers: userToDelete._id } }
+    );
+    await User.updateMany(
+      { blockedBy: userToDelete._id },
+      { $pull: { blockedBy: userToDelete._id } }
+    );
+
+    // Delete profile and cover images from Cloudinary
+    if (userToDelete.profileImg) {
+      const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(profileImgId);
+    }
+    if (userToDelete.coverImg) {
+      const coverImgId = userToDelete.coverImg.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(coverImgId);
+    }
+
+    // Delete user's posts and their images from Cloudinary
+    const userPosts = await Post.find({ user: userToDelete._id });
+    for (const post of userPosts) {
+      if (post.img) {
+        const postId = post.img.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(postId);
+      }
+      await Post.findByIdAndDelete(post._id);
+    }
+
+    // Remove user's likes from other posts
+    await Post.updateMany(
+      { likes: userToDelete._id },
+      { $pull: { likes: userToDelete._id } }
+    );
+
+    // Remove user's comments from other posts
+    await Post.updateMany(
+      { "comments.user": userToDelete._id },
+      { $pull: { comments: { user: userToDelete._id } } }
+    );
+
+    // Remove user from other users' following lists
+    await User.updateMany(
+      { following: userToDelete._id },
+      { $pull: { following: userToDelete._id } }
+    );
+
+    // Remove user from other users' followers lists
+    await User.updateMany(
+      { followers: userToDelete._id },
+      { $pull: { followers: userToDelete._id } }
+    );
+
+    // Delete all notifications related to this user
+    await Notification.deleteMany({
+      $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
+    });
+
+    // Delete all conversations and messages involving this user
+    const conversationsToDelete = await Conversation.find({
+      participants: userToDelete._id,
+    });
+
+    for (const conversation of conversationsToDelete) {
+      await Message.deleteMany({ conversationId: conversation._id });
+      await Conversation.findByIdAndDelete(conversation._id);
+    }
+
+    // Finally, delete the user document
+    await User.findByIdAndDelete(userIdToDelete);
+
+    // --- End Deletion Logic ---
+
+    res.status(200).json({
+      message: `Account of ${userToDelete.username} deleted successfully. All associated data has been removed.`,
+    });
+  } catch (error) {
+    console.error("Error in adminDeleteUserAccount: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
