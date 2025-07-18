@@ -60,8 +60,6 @@ export const usePublicMessages = () => {
   useEffect(() => {
     if (!socket || !authUser) return; // Ensure authUser is available
 
-
-
     socket.emit("public_chat_room");
 
     const handleNewPublicMessage = (newMessage) => {
@@ -114,7 +112,6 @@ export const usePublicMessages = () => {
         };
       });
     };
-
 
     const handleMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {

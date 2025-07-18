@@ -123,6 +123,7 @@ const PublicChatMessage = ({
     e.stopPropagation();
     // Call the onReply prop, passing the full message object being replied to
     onReply(message);
+
   };
 
   // NEW: Handler for edit button
@@ -161,8 +162,8 @@ const PublicChatMessage = ({
         className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
                       ${
                         fromMe
-                          ? "-left-20 translate-x-1/2" // Adjust position for sender's messages
-                          : "-right-16 -translate-x-1/2" // Adjust position for receiver's messages
+                          ? "-left-28 translate-x-1/2" // Adjust position for sender's messages
+                          : "-right-20 -translate-x-1/2" // Adjust position for receiver's messages
                       }
                       ${
                         showModal

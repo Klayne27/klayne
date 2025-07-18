@@ -230,8 +230,9 @@ export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
   console.log(`Socket connected: ${socket.id}`);
-
   const userId = socket.handshake.query.userId;
+
+  console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
 
   if (
     userId &&
@@ -309,37 +310,46 @@ io.on("connection", async (socket) => {
     }
   });
 
+  console.log(socket);
+
   // --- NEW: Listen for 'userBanned' and 'userUnbanned' events from admin actions ---
   // These are meant for the *specific user being banned/unbanned* to update their status immediately.
-  socket.on("userBanned", ({ userId, username }) => {
-    // This event name matches your controller emit
-    if (socket.userId === userId.toString()) {
-      socket.isBannedInPublicChat = true;
-      socket.leave(PUBLIC_CHAT_ROOM); // Immediately remove them from the room
-      io.to(socket.id).emit("bannedFromPublicChat", {
-        isBanned: true,
-        // message: `You have been banned from the public chat.`,
-      });
-      console.log(
-        `User ${userId} (${username}) was just banned and removed from public chat room.`
-      );
-    }
-  });
+  // socket.on("userBanned", ({ userId, username }) => {
+  //   console.log(
+  //     `User ${userId} (${username}) was just banned and removed from public chat room.`
+  //   );
 
-  socket.on("userUnbanned", ({ userId, username }) => {
-    // This event name matches your controller emit
-    if (socket.userId === userId.toString()) {
-      socket.isBannedInPublicChat = false;
-      socket.join(PUBLIC_CHAT_ROOM); // Allow them to rejoin the room
-      io.to(socket.id).emit("bannedFromPublicChat", {
-        isBanned: false,
-        // message: `You have been unbanned from the public chat.`,
-      });
-      console.log(
-        `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
-      );
-    }
-  });
+  //   // This event name matches your controller emit
+  //   if (socket.userId === userId.toString()) {
+  //     socket.isBannedInPublicChat = true;
+  //     socket.leave(PUBLIC_CHAT_ROOM); // Immediately remove them from the room
+  //     io.to(socket.id).emit("bannedFromPublicChat", {
+  //       isBanned: true,
+  //       // message: `You have been banned from the public chat.`,
+  //     });
+  //     console.log(
+  //       `User ${userId} (${username}) was just banned and removed from public chat room.`
+  //     );
+  //   }
+  // });
+
+  // socket.on("userUnbanned", ({ userId, username }) => {
+  //       console.log(
+  //         `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
+  //       );
+  //   // This event name matches your controller emit
+  //   if (socket.userId === userId.toString()) {
+  //     socket.isBannedInPublicChat = false;
+  //     socket.join(PUBLIC_CHAT_ROOM); // Allow them to rejoin the room
+  //     io.to(socket.id).emit("bannedFromPublicChat", {
+  //       isBanned: false,
+  //       // message: `You have been unbanned from the public chat.`,
+  //     });
+  //     console.log(
+  //       `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
+  //     );
+  //   }
+  // });
   // --- END NEW ---
 
   socket.on("joinConversation", (conversationId) => {

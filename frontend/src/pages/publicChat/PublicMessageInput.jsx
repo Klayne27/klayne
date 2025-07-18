@@ -65,7 +65,12 @@ const PublicMessageInput = ({
     // messageContent,
   ]);
 
-  // Clear typing timeout on component unmount
+  useEffect(() => {
+    if (replyingToMessage && messageInputRef.current) {
+      messageInputRef.current.focus();
+    }
+  }, [replyingToMessage]); // Depend on replyingToMessage
+
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -398,8 +403,8 @@ const PublicMessageInput = ({
               <button
                 type="button"
                 onClick={handleImageButtonClick}
-                className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
-                disabled={isCurrentUserBanned || isEditingMode}
+                className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 cursor-not-allowed"
+                disabled={true}
               >
                 <IoImageOutline className="w-5 h-5" />
               </button>

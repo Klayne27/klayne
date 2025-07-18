@@ -1,4 +1,4 @@
-import { io, PUBLIC_CHAT_ROOM } from "../lib/socket.js";
+import { getReceiverSocketIds, io, PUBLIC_CHAT_ROOM } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
@@ -173,32 +173,40 @@ export const banUserFromPublicChat = async (req, res) => {
     }
 
     const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    if (user.isAdmin) {
-      return res
-        .status(403)
-        .json({ error: "Cannot ban another admin from public chat." });
-    }
+    if (!user) return res.status(404).json({ error: "User not found." });
+    if (user.isAdmin) return res.status(403).json({ error: "Cannot ban another admin." });
 
     user.isBannedInPublicChat = true;
     await user.save();
 
-    // Optionally, disconnect the user from the public chat socket if they are currently connected
-    // This requires a more direct way to find the public chat sockets of a user
-    // For simplicity, we'll just rely on the backend check for sending messages.
-    // If you need immediate disconnection, you'd iterate through onlineUsersMap and check if the banned user's sockets are in the 'public-chat' room.
+    // --- ✅ START OF FIX ---
+
+    // 1. Find all active socket IDs for the banned user.
+    const bannedUserSocketIds = getReceiverSocketIds(userId);
+
+    if (bannedUserSocketIds.length > 0) {
+      bannedUserSocketIds.forEach((socketId) => {
+        // Get the full socket instance from the main 'io' server
+        const socketInstance = io.sockets.sockets.get(socketId);
+        if (socketInstance) {
+          // 2. Forcefully remove them from the room on the server.
+          socketInstance.leave(PUBLIC_CHAT_ROOM);
+
+          // 3. Send a direct event to THIS user's client to trigger the UI update.
+          socketInstance.emit("bannedFromPublicChat", { isBanned: true });
+        }
+      });
+    }
+
+    // --- END OF FIX ---
+
+    // 4. Broadcast to everyone else in the room so their UIs can update (e.g., filter messages).
     io.to(PUBLIC_CHAT_ROOM).emit("userBanned", {
       userId: user._id,
       username: user.username,
     });
 
-    res
-      .status(200)
-      .json({ message: `User ${user.username} banned from public chat successfully.` });
+    res.status(200).json({ message: `User ${user.username} banned successfully.` });
   } catch (error) {
     console.error("Error in banUserFromPublicChat controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -212,35 +220,44 @@ export const unbanUserFromPublicChat = async (req, res) => {
     const adminId = req.user._id;
 
     if (!(await isAdmin(adminId))) {
-      return res
-        .status(403)
-        .json({ error: "Unauthorized: Only admins can unban users." });
+      return res.status(403).json({ error: "Unauthorized." });
     }
 
     const user = await User.findById(userId);
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
+    if (!user) return res.status(404).json({ error: "User not found." });
 
     user.isBannedInPublicChat = false;
     await user.save();
 
+    // --- ✅ START OF FIX ---
+    const unbannedUserSocketIds = getReceiverSocketIds(userId);
+
+    if (unbannedUserSocketIds.length > 0) {
+      unbannedUserSocketIds.forEach((socketId) => {
+        const socketInstance = io.sockets.sockets.get(socketId);
+        if (socketInstance) {
+          // Allow the user to rejoin the room
+          socketInstance.join(PUBLIC_CHAT_ROOM);
+
+          // Notify the user's client that they are no longer banned
+          socketInstance.emit("bannedFromPublicChat", { isBanned: false });
+        }
+      });
+    }
+    // --- END OF FIX ---
+
+    // Notify others in the room
     io.to(PUBLIC_CHAT_ROOM).emit("userUnbanned", {
       userId: user._id,
       username: user.username,
     });
 
-    res
-      .status(200)
-      .json({ message: `User ${user.username} unbanned from public chat successfully.` });
+    res.status(200).json({ message: `User ${user.username} unbanned successfully.` });
   } catch (error) {
     console.error("Error in unbanUserFromPublicChat controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// --- New Controllers for Reactions ---
 
 export const addReactionToPublicMessage = async (req, res) => {
   try {
@@ -417,7 +434,6 @@ export const editPublicMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 // export const removeReactionFromPublicMessage = async (req, res) => {
 //   try {

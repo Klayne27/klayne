@@ -63,6 +63,8 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
 
+  console.log("Current user banned status in render:", isCurrentUserBanned);
+
   // --- Touch device detection ---
   useEffect(() => {
     const checkTouch = () =>
@@ -140,6 +142,39 @@ const PublicChatWindow = ({ openImageModal }) => {
     setReplyingToMessage(messageToReplyTo);
     setActiveMessageModalId(null);
   };
+
+  // Handler for sending messages from PublicMessageInput
+  const handleSendMessage = useCallback(
+    (messagePayload) => {
+      shouldScrollToBottom.current = true; // Set flag to scroll to bottom after sending
+      sendPublicMessage(messagePayload, {
+        onSuccess: () => {
+          // You might want to invalidate queries or refetch here if needed
+          // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+        },
+      });
+    },
+    [sendPublicMessage]
+  );
+
+  // Handler for editing messages from PublicMessageInput
+  const handleEditMessage = useCallback(
+    (messageId, messagePayload) => {
+      shouldScrollToBottom.current = true; // Set flag to scroll to bottom after editing
+      editPublicMessage(
+        { messageId, ...messagePayload },
+        {
+          onSuccess: () => {
+            // You might want to invalidate queries or refetch here if needed
+            // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+          },
+        }
+      );
+    },
+    [editPublicMessage]
+  );
+
+  // console.log(currentUser);
 
   useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
@@ -226,8 +261,12 @@ const PublicChatWindow = ({ openImageModal }) => {
         }
       });
 
-      socket.on("bannedFromPublicChat", ({ isBanned, message }) => {
+      socket.on("bannedFromPublicChat", ({ isBanned }) => {
+        console.log("RECEIVED bannedFromPublicChat event. isBanned:", isBanned);
+        queryClient.invalidateQueries({ queryKey: ["authUser"] });
+        console.log("Invalidated authUser query.");
         if (isBanned) {
+          console.log("User banned. Clearing message content and public messages.");
           setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
@@ -236,6 +275,7 @@ const PublicChatWindow = ({ openImageModal }) => {
             pageParams: [undefined],
           }));
         } else {
+          console.log("User unbanned. Invalidating public messages.");
           queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
         }
       });
@@ -263,6 +303,8 @@ const PublicChatWindow = ({ openImageModal }) => {
       </div>
     );
   }
+
+  console.log(messages);
 
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent ">
@@ -339,8 +381,8 @@ const PublicChatWindow = ({ openImageModal }) => {
             setEditingMessage={setEditingMessage}
             replyingToMessage={replyingToMessage}
             setReplyingToMessage={setReplyingToMessage}
-            sendPublicMessage={sendPublicMessage}
-            editPublicMessage={editPublicMessage}
+            sendPublicMessage={handleSendMessage}
+            editPublicMessage={handleEditMessage}
             sendTypingEvent={sendTypingEvent}
           />
         </>
