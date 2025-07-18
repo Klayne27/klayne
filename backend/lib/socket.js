@@ -254,9 +254,7 @@ io.on("connection", async (socket) => {
       if (user && user.isBannedInPublicChat) {
         socket.isBannedInPublicChat = true; // Attach flag to socket for easier checks
         // Do NOT join PUBLIC_CHAT_ROOM if banned
-        console.log(
-          `User ${userId} (${socket.id}) is banned and prevented from joining ${PUBLIC_CHAT_ROOM}.`
-        );
+
         // Immediately notify the client that they are banned (for UI purposes)
         io.to(socket.id).emit("bannedFromPublicChat", {
           isBanned: true,
@@ -309,8 +307,6 @@ io.on("connection", async (socket) => {
       console.error("Error handling joinPublicChat event:", err);
     }
   });
-
-  console.log(socket);
 
   // --- NEW: Listen for 'userBanned' and 'userUnbanned' events from admin actions ---
   // These are meant for the *specific user being banned/unbanned* to update their status immediately.

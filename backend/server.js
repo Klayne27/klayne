@@ -50,7 +50,6 @@ if (process.env.NODE_ENV === "production") {
 }
 
 setInterval(() => {
-  console.log("Checking for scheduled posts to publish...");
   publishScheduledPosts(io, onlineUsersMap); // Pass io and onlineUsersMap
 }, 60 * 1000); // Check every 1 minute
 

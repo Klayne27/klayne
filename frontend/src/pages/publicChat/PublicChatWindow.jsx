@@ -63,8 +63,6 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
 
-  console.log("Current user banned status in render:", isCurrentUserBanned);
-
   // --- Touch device detection ---
   useEffect(() => {
     const checkTouch = () =>
@@ -174,8 +172,6 @@ const PublicChatWindow = ({ openImageModal }) => {
     [editPublicMessage]
   );
 
-  // console.log(currentUser);
-
   useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
 
@@ -262,11 +258,8 @@ const PublicChatWindow = ({ openImageModal }) => {
       });
 
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
-        console.log("RECEIVED bannedFromPublicChat event. isBanned:", isBanned);
         queryClient.invalidateQueries({ queryKey: ["authUser"] });
-        console.log("Invalidated authUser query.");
         if (isBanned) {
-          console.log("User banned. Clearing message content and public messages.");
           setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
@@ -275,7 +268,6 @@ const PublicChatWindow = ({ openImageModal }) => {
             pageParams: [undefined],
           }));
         } else {
-          console.log("User unbanned. Invalidating public messages.");
           queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
         }
       });
@@ -304,8 +296,6 @@ const PublicChatWindow = ({ openImageModal }) => {
     );
   }
 
-  console.log(messages);
-
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent ">
       <PublicChatHeader />
@@ -329,12 +319,12 @@ const PublicChatWindow = ({ openImageModal }) => {
                 <LoadingSpinner size="sm" />
               </div>
             )}
-            {messages.length === 0 && !isLoadingMessages && (
+            {/* {messages.length === 0 && !isLoadingMessages && (
               <div className="flex flex-col items-center justify-center h-full text-gray-400">
                 <p className="text-xl font-bold mb-2">Welcome to the Public Chat!</p>
                 <p className="text-sm text-center">Start by sending the first message.</p>
               </div>
-            )}
+            )} */}
             <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
               {messages.map((message) => (
                 <div key={message._id}>
