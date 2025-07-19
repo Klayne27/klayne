@@ -52,38 +52,13 @@ export const SocketContextProvider = ({ children }) => {
       setSocket(newSocket);
 
       // --- Public Chat Socket Listeners ---
-      newSocket.on("newPublicMessage", (newMessage) => {
-        // Only show toast if user is not on the public chat page
-        // if (!location.pathname.startsWith("/public-chat")) {
-        //   toast(
-        //     `New public message from ${newMessage.sender.username}: ${
-        //       newMessage.content ? newMessage.content.substring(0, 30) + "..." : "Image"
-        //     }`
-        //   );
-        //   // You might set a hasUnreadPublicChatMessages state here for a sidebar indicator
-        // }
-      });
+      newSocket.on("newPublicMessage", (newMessage) => {});
 
-      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {
-        // Public chat message deleted event
-        // The usePublicMessages hook handles the query invalidation.
-        // This is just for potential toast notifications outside the chat page.
-        // if (!location.pathname.startsWith("/public-chat")) {
-        //   toast.info(`A public message was deleted.`);
-        // }
-      });
+      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {});
 
-      newSocket.on("userBanned", ({ userId, username }) => {
-        // if (!location.pathname.startsWith("/public-chat")) {
-        //   toast.error(`${username} has been banned from public chat.`);
-        // }
-      });
+      newSocket.on("userBanned", ({ userId, username }) => {});
 
-      newSocket.on("userUnbanned", ({ userId, username }) => {
-        // if (!location.pathname.startsWith("/public-chat")) {
-        //   toast.success(`${username} has been unbanned from public chat.`);
-        // }
-      });
+      newSocket.on("userUnbanned", ({ userId, username }) => {});
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
@@ -101,93 +76,27 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewFeedPosts(true);
       });
 
-      newSocket.on("messageReacted", (updatedMessage) => {
-        // queryClient.setQueryData(
-        //   ["messages", updatedMessage.conversationId],
-        //   (oldData) => {
-        //     if (!oldData) return oldData;
-        //     const updatedPages = oldData.pages.map((page) =>
-        //       page.map((message) =>
-        //         message._id === updatedMessage._id ? updatedMessage : message
-        //       )
-        //     );
-        //     return { ...oldData, pages: updatedPages };
-        //   }
-        // );
+      newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
+        // If the person who reacted is the current user, do nothing.
+        // The useMutation's onSuccess will handle the update.
+        if (actorId === user._id) {
+          return;
+        }
 
-          queryClient.setQueryData(
-            ["messages", updatedMessage.conversationId],
-            (oldData) => {
-              if (!oldData) return oldData;
-              const updatedPages = oldData.pages.map((page) =>
-                page.map((message) =>
-                  message._id === updatedMessage._id ? updatedMessage : message
-                )
-              );
-              return { ...oldData, pages: updatedPages };
-            }
-          );
-
-          // queryClient.invalidateQueries({
-          //   queryKey: ["messages", updatedMessage.conversationId],
-          // });
-
-        // Similar to newMessage, update the specific conversation in the list directly
-        // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-        //   if (!oldConversationsData) return undefined;
-
-        //   const updatedConversations = oldConversationsData.map((conv) => {
-        //     if (conv._id === updatedMessage.conversationId) {
-        //       // If a reaction, the last message might not change, but you might want to reflect the change
-        //       // For now, we'll just return the conversation as is, as reactions don't change lastMessage often
-        //       return conv;
-        //     }
-        //     return conv;
-        //   });
-        //   return updatedConversations;
-        // });
+        // For everyone else, update the cache as before.
+        queryClient.setQueryData(
+          ["messages", updatedMessage.conversationId],
+          (oldData) => {
+            if (!oldData) return oldData;
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((message) =>
+                message._id === updatedMessage._id ? updatedMessage : message
+              )
+            );
+            return { ...oldData, pages: updatedPages };
+          }
+        );
       });
-
-      // --- NEW: Handle messageEdited event in SocketContextProvider ---
-      // newSocket.on("messageEdited", (updatedMessage) => {
-      //   // Update messages query data
-      //   queryClient.setQueryData(
-      //     ["messages", updatedMessage.conversationId],
-      //     (oldData) => {
-      //       if (!oldData) return oldData;
-      //       const updatedPages = oldData.pages.map((page) =>
-      //         page.map((message) =>
-      //           message._id === updatedMessage._id ? updatedMessage : message
-      //         )
-      //       );
-      //       return { ...oldData, pages: updatedPages };
-      //     }
-      //   );
-
-      //   // Update conversations query data if the edited message was the last message
-      //   // This is crucial for updating the sidebar conversation list
-      //   queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-      //     if (!oldConversationsData) return undefined;
-
-      //     const updatedConversations = oldConversationsData.map((conv) => {
-      //       if (conv._id === updatedMessage.conversationId) {
-      //         // Check if the edited message is the lastMessage of this conversation
-      //         if (conv.lastMessage && conv.lastMessage.messageId === updatedMessage._id) {
-      //           return {
-      //             ...conv,
-      //             lastMessage: {
-      //               ...conv.lastMessage,
-      //               text: updatedMessage.text,
-      //               isEdited: updatedMessage.isEdited,
-      //             },
-      //           };
-      //         }
-      //       }
-      //       return conv;
-      //     });
-      //     return updatedConversations;
-      //   });
-      // });
 
       newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
         queryClient.setQueryData(["messages", conversationId], (oldData) => {
@@ -204,9 +113,6 @@ export const SocketContextProvider = ({ children }) => {
 
           const updatedConversations = oldConversationsData.map((conv) => {
             if (conv._id === conversationId) {
-              // You'll need to fetch the *actual* new last message for this conversation
-              // or handle it more robustly. For now, we'll just leave it as is,
-              // assuming the chat view handles the deletion.
               return conv;
             }
             return conv;

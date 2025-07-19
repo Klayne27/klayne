@@ -586,7 +586,10 @@ export const reactToMessage = async (req, res) => {
       conversation.participants.forEach((participantId) => {
         const receiverSocketIds = getReceiverSocketIds(participantId.toString());
         receiverSocketIds.forEach((socketId) => {
-          io.to(socketId).emit("messageReacted", populatedMessage);
+          io.to(socketId).emit("messageReacted", {
+            actorId: userId,
+            updatedMessage: populatedMessage,
+          });
         });
       });
     }
