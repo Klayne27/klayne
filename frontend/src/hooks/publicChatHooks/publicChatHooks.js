@@ -27,7 +27,7 @@ import { useMemo } from "react";
 export const usePublicMessages = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
-  const { authUser } = useAuthUser(); // Get authUser to check if the message is from current user
+  const { authUser } = useAuthUser();
   const MESSAGE_LIMIT = 40;
 
   const {
@@ -51,20 +51,12 @@ export const usePublicMessages = () => {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    // structuralSharing: false, // <--- ADD THIS TEMPORARILY
     refetchOnReconnect: true,
     refetchOnMount: true,
-
-    // select: (data) => ({
-    //   ...data,
-    //   pages: data.pages.map(
-    //     (page) => page.filter((message) => !message.sender?.isBannedInPublicChat) // Filter messages from banned users (for other users)
-    //   ),
-    // }),
   });
 
   useEffect(() => {
-    if (!socket || !authUser) return; // Ensure authUser is available
+    if (!socket || !authUser) return;
 
     socket.emit("public_chat_room");
 
@@ -110,7 +102,7 @@ export const usePublicMessages = () => {
         for (let i = allCurrentMessages.length - 1; i >= 0; i--) {
           const msg = allCurrentMessages[i];
           if (!seenIds.has(msg._id)) {
-            uniqueMessages.unshift(msg); 
+            uniqueMessages.unshift(msg);
             seenIds.add(msg._id);
           }
         }
@@ -121,8 +113,7 @@ export const usePublicMessages = () => {
         }
 
         const newPages = [allCurrentMessages];
-
-        const newPageParams = [1]; 
+        const newPageParams = [1];
 
         return {
           ...oldData,
@@ -132,32 +123,70 @@ export const usePublicMessages = () => {
       });
     };
 
+    // Handler for admin-initiated message deletion (marks as deleted)
     const handleMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
+
         const updatedPages = oldData.pages.map((page) =>
-          page.map((message) =>
-            message._id === messageId
-              ? {
-                  ...message,
-                  isDeletedByAdmin: true,
+          page.map((message) => {
+            // Update the deleted message itself (mark as deleted)
+            if (message._id === messageId) {
+              return {
+                ...message,
+                isDeletedByAdmin: true,
+                content: "[Message Deleted]",
+                img: null,
+              };
+            }
+            // Update any messages that replied to the admin-deleted message
+            if (message.replyTo && message.replyTo._id === messageId) {
+              return {
+                ...message,
+                replyTo: {
+                  ...message.replyTo,
                   content: "[Message Deleted]",
                   img: null,
-                }
-              : message
-          )
+                  isDeletedByAdmin: true, // Ensure this is true
+                  isOriginalMessageDeleted: true, // New flag: original message is gone
+                  sender: { username: "Deleted User" }, // Indicate sender is gone
+                },
+              };
+            }
+            return message;
+          })
         );
         return { ...oldData, pages: updatedPages };
       });
       // toast.success("Message deleted by admin.");
     };
 
+    // Handler for sender-initiated message deletion (removes from DB)
     const handlepublicOwnMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
-        const updatedPages = oldData.pages.map((page) =>
-          page.filter((message) => message._id !== messageId)
-        );
+
+        const updatedPages = oldData.pages.map((page) => {
+          // First, filter out the deleted message itself from this page
+          const filteredPage = page.filter((message) => message._id !== messageId);
+
+          // Then, update any messages that replied to the deleted message
+          return filteredPage.map((message) => {
+            if (message.replyTo && message.replyTo._id === messageId) {
+              return {
+                ...message,
+                replyTo: {
+                  ...message.replyTo,
+                  content: "[Message Deleted]", // Or a more specific message
+                  img: null,
+                  isOriginalMessageDeleted: true, // New flag: original message is gone
+                  sender: { username: "Deleted User" }, // Indicate sender is gone
+                },
+              };
+            }
+            return message;
+          });
+        });
         return { ...oldData, pages: updatedPages };
       });
       // toast.success("A message was removed.");
@@ -173,15 +202,13 @@ export const usePublicMessages = () => {
         }
 
         const updatedPages = oldData.pages.map((page) => {
-          // Each 'page' is already an array of messages.
-          // Directly map over 'page'.
           if (!Array.isArray(page)) {
             console.warn("Expected page to be an array of messages, got:", page);
-            return page; // Return page as is if it's not an array of messages
+            return page;
           }
           return page.map((message) => {
             if (message._id === messageId) {
-              return updatedMessage; // Replace with the fully updated message from server
+              return updatedMessage;
             }
             return message;
           });
@@ -197,7 +224,6 @@ export const usePublicMessages = () => {
         const updatedPages = oldData.pages.map((page) =>
           page.map((message) => {
             if (message._id === messageId) {
-              // Replace the message's reactions with the updated reactions from the server
               return { ...message, reactions: reactions };
             }
             return message;
@@ -217,8 +243,8 @@ export const usePublicMessages = () => {
 
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
-    socket.on("publicMessageDeleted", handleMessageDeleted);
-    socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
+    socket.on("publicMessageDeleted", handleMessageDeleted); // For admin deletions
+    socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted); // For sender deletions
     socket.on("publicMessageEdited", handlePublicMessageEdited);
     socket.on("userBanned", handleUserBannedGlobal);
     socket.on("userUnbanned", handleUserUnbannedGlobal);
@@ -233,9 +259,7 @@ export const usePublicMessages = () => {
       socket.off("userUnbanned", handleUserUnbannedGlobal);
       socket.emit("leavePublicChat");
     };
-  }, [socket, queryClient, authUser]); // Add authUser to dependency array
-
-  // const messages = data?.pages.slice().reverse().flat() || [];
+  }, [socket, queryClient, authUser]);
 
   const messages = useMemo(() => {
     return data ? [...data.pages].reverse().flatMap((page) => page) : [];
@@ -379,8 +403,6 @@ export const useSendPublicMessage = () => {
 };
 
 export const useDeletePublicMessage = () => {
-
-
   const {
     mutate: deletePublicMessage,
     isPending,
@@ -604,7 +626,7 @@ export const useDeleteOwnPublicMessage = () => {
     },
     onSettled: () => {
       // Invalidate to refetch and ensure consistency with the server
-      queryClient.invalidateQueries(["publicMessages"]);
+      // queryClient.invalidateQueries(["publicMessages"]);
     },
   });
 

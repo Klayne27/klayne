@@ -302,13 +302,13 @@ const PublicChatWindow = ({ openImageModal }) => {
     );
   }
 
-  if (isMessagesError) {
-    return (
-      <div className="flex flex-col items-center justify-center h-full text-lg text-error">
-        Error loading messages: {messagesError.message}
-      </div>
-    );
-  }
+  // if (isMessagesError) {
+  //   return (
+  //     <div className="flex flex-col items-center justify-center h-full text-lg text-error">
+  //       Error loading messages: {messagesError.message}
+  //     </div>
+  //   );
+  // }
 
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent ">
@@ -333,7 +333,7 @@ const PublicChatWindow = ({ openImageModal }) => {
                 <LoadingSpinner size="sm" />
               </div>
             )}
-            <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
+            <div className="mx-auto w-full max-w-3xl md:max-w-[968px] mt-16">
               {messages.map((message) => (
                 <div key={message._id}>
                   <PublicChatMessage

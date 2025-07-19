@@ -31,7 +31,7 @@ const PublicChatMessage = ({
   onEdit,
   onJumpToMessage,
   setEditingMessage,
-  setReplyingToMessage
+  setReplyingToMessage,
 }) => {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
@@ -126,14 +126,14 @@ const PublicChatMessage = ({
     e.stopPropagation();
     // Call the onReply prop, passing the full message object being replied to
     onReply(message);
-    setEditingMessage(null)
+    setEditingMessage(null);
   };
 
   // NEW: Handler for edit button
   const handleEditClick = (e) => {
     e.stopPropagation();
     onEdit(message); // Call the onEdit prop, passing the full message object
-    setReplyingToMessage(null)
+    setReplyingToMessage(null);
   };
 
   // NEW: Handler for clicking the "Replying to" div
@@ -352,11 +352,6 @@ const PublicChatMessage = ({
                               flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
                               hover:border-blue-400 hover:bg-opacity-40
                               `}
-                // You might want to pass handleJumpToOriginalMessage from parent
-                // onClick={(e) => {
-                //   e.stopPropagation();
-                //   handleJumpToOriginalMessage(message.replyTo._id);
-                // }}
                 onClick={handleReplyingToClick} // ADD THIS onClick HANDLER
               >
                 <span

@@ -150,7 +150,7 @@ function App() {
               }
             />
             {/* New Public Chat Route */}
-            <Route
+            {/* <Route
               path="/public-chat"
               element={
                 authUser ? (
@@ -161,7 +161,7 @@ function App() {
                   <Navigate to="/login" />
                 )
               }
-            />
+            /> */}
             <Route
               path="/bookmarks"
               element={

@@ -88,7 +88,7 @@ const MessageItem = ({
     <div
       key={msg._id}
       id={`message-${msg._id}`}
-      className={`p-1 rounded-lg relative message-item-container ${messageHighlightClass}`}
+      className={`p-1 rounded-lg relative message-item-container hover:bg-secondary`}
       onMouseEnter={() => handleMouseEnter(msg._id)}
       onMouseLeave={handleMouseLeave}
       onClick={(e) => {
@@ -111,7 +111,7 @@ const MessageItem = ({
       </div>
       <div
         id={`message-modal-${msg._id}`}
-        className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
+        className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1  z-10
                 ${
                   isSentByCurrentUser
                     ? "-left-28 translate-x-1/2"
@@ -129,9 +129,9 @@ const MessageItem = ({
             onClick={(e) => {
               e.stopPropagation();
               handleReactionClick(msg._id, emoji);
-              onReactionAdded()
+              onReactionAdded();
             }}
-            className={`text-xl hover:scale-125 py-1 transition duration-100`}
+            className={`text-xl md:hover:scale-125 py-1 transition duration-100`}
             title={`React with ${emoji}`}
           >
             {emoji}
@@ -142,7 +142,7 @@ const MessageItem = ({
           onClick={(e) => {
             e.stopPropagation();
             handleReplyClick(msg);
-            setEditingMessage(null)
+            setEditingMessage(null);
           }}
           className="text-blue-400 hover:text-blue-500 hover:scale-125 rounded-full p-1 ml-1"
           title="Reply"
