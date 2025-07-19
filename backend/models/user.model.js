@@ -25,6 +25,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isGoldVerified: {
+      type: Boolean,
+      default: false,
+    },
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,

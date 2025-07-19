@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react"; // Import useState
 import { FaCircle, FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { BsCheck2, BsCheck2All } from "react-icons/bs";
@@ -6,6 +6,7 @@ import { MdEdit } from "react-icons/md"; // Import the edit icon
 
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
+import { useNavigate } from "react-router-dom";
 
 const MessageItem = ({
   msg,
@@ -24,12 +25,24 @@ const MessageItem = ({
   setEditingMessage,
   isTypingOtherUser,
   onReactionAdded,
-  setReplyingToMessage
+  setReplyingToMessage,
+  // Existing NEW PROPS
+  showHeaderInfo,
+  senderProfileImg,
+  senderUsername, // Keep this prop for consistency, but it won't be displayed for other users
+  // NEW PROPS for corner rounding
+  isFirstInGroup,
+  isLastInGroup,
 }) => {
+  const navigate = useNavigate();
+
+  // --- NEW: State for hover effect ---
+  const [isHovered, setIsHovered] = useState(false);
+
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
     return (
-      <div className="flex justify-start p-1 rounded-lg message-item-container">
+      <div className="flex justify-start p-1 rounded-lg message-item-container ml-9">
         <div className="flex flex-col max-w-[70%] p-3 rounded-3xl bg-[#2F3336] text-white rounded-bl-[4px]">
           <span className="flex items-center gap-0.5">
             <span className="inline-block pulsing-dot pulsing-dot-1">
@@ -81,16 +94,71 @@ const MessageItem = ({
     setEditingMessage(msg); // Set the current message as the one to be edited
     // You might also want to close the modal after setting the message for editing
     handleMessageTap(null); // Passing null will close any active modal
-    setReplyingToMessage(null)
+    setReplyingToMessage(null);
   };
+
+  // Helper for formatting time (e.g., "10:30 AM")
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false
+    });
+  };
+
+  // Helper for formatting date (e.g., "July 19, 2025")
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString([], {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+  // Determine message bubble corner classes
+  let bubbleClasses = "";
+  if (isSentByCurrentUser) {
+    bubbleClasses += " bg-primary text-white";
+    if (isFirstInGroup && isLastInGroup) {
+      bubbleClasses += " rounded-3xl"; // Single message, or isolated message
+    } else if (isFirstInGroup) {
+      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]"; // First in group
+    } else if (isLastInGroup) {
+      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl"; // Last in group
+    } else {
+      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]"; // Middle message
+    }
+  } else {
+    // Not current user
+    bubbleClasses += " bg-[#2F3336] text-white";
+    if (isFirstInGroup && isLastInGroup) {
+      bubbleClasses += " rounded-3xl"; // Single message, or isolated message
+    } else if (isFirstInGroup) {
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]"; // First in group
+    } else if (isLastInGroup) {
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl"; // Last in group
+    } else {
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]"; // Middle message
+    }
+  }
+
+  // Determine if the time should be shown
+  const shouldShowTimeOnHover = isHovered || showModal;
 
   return (
     <div
       key={msg._id}
       id={`message-${msg._id}`}
-      className={`p-1 rounded-lg relative message-item-container hover:bg-secondary`}
-      onMouseEnter={() => handleMouseEnter(msg._id)}
-      onMouseLeave={handleMouseLeave}
+      className={`rounded-lg relative message-item-container hover:bg-secondary ${
+        showHeaderInfo ? "mt-4" : "mt-0.5" // Adjust margin for visual grouping
+      }`}
+      onMouseEnter={() => {
+        handleMouseEnter(msg._id);
+        setIsHovered(true); // Set hover state to true
+      }}
+      onMouseLeave={() => {
+        handleMouseLeave();
+        setIsHovered(false); // Set hover state to false
+      }}
       onClick={(e) => {
         const modalElement = document.getElementById(`message-modal-${msg._id}`);
         if (modalElement && modalElement.contains(e.target)) {
@@ -100,28 +168,18 @@ const MessageItem = ({
       }}
     >
       <div
-        className={`flex ${
-          isSentByCurrentUser ? "justify-self-end" : "justify-self-start"
-        }`}
-      >
-        {msg.isEdited &&
-          msg.text && ( // Only show if it's a text message and it's marked as edited
-            <span className="text-xs italic text-gray-500 mb-1 mr-7 ml-2">(Edited)</span>
-          )}
-      </div>
-      <div
         id={`message-modal-${msg._id}`}
-        className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1  z-10
-                ${
-                  isSentByCurrentUser
-                    ? "-left-28 translate-x-1/2"
-                    : "-right-24 -translate-x-1/2"
-                }
-                ${
-                  showModal
-                    ? "opacity-100 pointer-events-auto"
-                    : "opacity-0 pointer-events-none"
-                } `}
+        className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 z-10
+          ${
+            isSentByCurrentUser
+              ? "-left-28 translate-x-1/2"
+              : "-right-24 -translate-x-1/2"
+          }
+          ${
+            showModal
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          } `}
       >
         {allowedEmojis.map((emoji) => (
           <button
@@ -150,8 +208,7 @@ const MessageItem = ({
           <FaReply size={18} />
         </button>
 
-        {/* NEW: Edit Button */}
-        {isEditable && ( // Only show if the message is editable
+        {isEditable && (
           <button
             onClick={handleEditClick}
             className="text-yellow-400 hover:text-yellow-500 hover:scale-125 rounded-full p-1"
@@ -167,30 +224,62 @@ const MessageItem = ({
               e.stopPropagation();
               handleDeleteClick({
                 messageId: msg._id,
-                conversationId: msg.conversationId, // <-- Pass conversationId here
+                conversationId: msg.conversationId,
               });
             }}
             className={`text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 cursor-pointer`}
             title="Delete message"
-            // disabled={isDeletingMessage}
           >
             <FiTrash size={18} />
           </button>
         )}
       </div>
+
+      {/* Header Info (Profile Img and Date for other users, only Date for current user) */}
+      {showHeaderInfo && !isSentByCurrentUser && (
+        <div className="flex items-center gap-2 mb-2">
+          {/* Removed senderUsername display */}
+          <span className="text-xs text-gray-500 ml-10">
+            {formatDate(msg.createdAt)} at {formatTime(msg.createdAt)}
+          </span>
+        </div>
+      )}
+      {showHeaderInfo && isSentByCurrentUser && (
+        <div className="flex justify-end items-center gap-2 mb-2 mr-5">
+          <span className="text-xs text-gray-500">
+            {formatDate(msg.createdAt)} at {formatTime(msg.createdAt)}
+          </span>
+        </div>
+      )}
+
       <div
         className={`flex whitespace-pre-wrap ${
           isSentByCurrentUser ? "justify-end" : "justify-start"
         } items-start group relative`}
       >
-        <div
-          className={`flex flex-col max-w-[70%] p-3 rounded-3xl relative
-                ${
-                  isSentByCurrentUser
-                    ? "bg-primary text-white rounded-br-[4px]"
-                    : "bg-[#2F3336] text-white rounded-bl-[4px]"
-                }`}
-        >
+        {!isSentByCurrentUser && isFirstInGroup && senderProfileImg && (
+          <img
+            src={senderProfileImg}
+            alt={`${senderUsername}'s profile`}
+            className="w-8 h-8 rounded-full object-cover mr-2 mt-0.5 cursor-pointer"
+            onClick={() => navigate(`/profile/${senderUsername}`)}
+          />
+        )}
+
+        {!isSentByCurrentUser && !isFirstInGroup && <div className="w-8 h-8 mr-2"></div>}
+
+        {shouldShowTimeOnHover && !isSentByCurrentUser && !showHeaderInfo && (
+          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
+            {formatTime(msg.createdAt)}
+          </div>
+        )}
+        {shouldShowTimeOnHover && isSentByCurrentUser && !showHeaderInfo && (
+          <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
+            {formatTime(msg.createdAt)}
+          </div>
+        )}
+
+        <div className={`flex flex-col max-w-[70%] p-3 relative ${bubbleClasses}`}>
           {msg.repliedTo && (
             <div
               className={`
@@ -251,7 +340,9 @@ const MessageItem = ({
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>
           )}
-          {/* "Edited" indicator display */}
+          {msg.isEdited && msg.text && (
+            <span className="text-xs italic text-gray-500 mt-1 self-end">(Edited)</span>
+          )}
         </div>
         {isSentByCurrentUser && msg.seen && (
           <span className={`self-end ml-1 text-primary`}>
@@ -302,20 +393,6 @@ const MessageItem = ({
           })}
         </div>
       )}
-
-      <span
-        className={`text-xs mt-1 flex text-gray-500 ${
-          isSentByCurrentUser ? "justify-self-end" : "self-start"
-        }`}
-      >
-        {new Date(msg.createdAt).toLocaleTimeString([], {
-          hour: "2-digit",
-          minute: "2-digit",
-          day: "numeric",
-          month: "long",
-          year: "numeric",
-        })}
-      </span>
     </div>
   );
 };

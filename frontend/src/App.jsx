@@ -46,8 +46,6 @@ function App() {
   const isPublicChatPage = location.pathname.includes("/public-chat");
 
   return (
-    // On small screens, use flex-col for main content and padding-bottom for the fixed footer
-    // On medium screens, use original flex setup
     <div className="flex flex-col md:flex-row md:max-w-[1240px] mx-auto min-h-screen">
       {authUser && (
         <Sidebar
@@ -56,9 +54,6 @@ function App() {
         />
       )}
 
-      {/* Main content area */}
-      {/* On mobile, add pb-[var(--mobile-nav-height)] to ensure content scrolls above the fixed footer */}
-      {/* Set a common height for your mobile nav, e.g., 64px or 4rem (h-16) */}
       <main
         className={`${
           isPublicChatPage
@@ -149,8 +144,7 @@ function App() {
                 )
               }
             />
-            {/* New Public Chat Route */}
-            {/* <Route
+            <Route
               path="/public-chat"
               element={
                 authUser ? (
@@ -161,7 +155,7 @@ function App() {
                   <Navigate to="/login" />
                 )
               }
-            /> */}
+            />
             <Route
               path="/bookmarks"
               element={

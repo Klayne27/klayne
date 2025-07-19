@@ -56,7 +56,7 @@ export const sendPublicMessage = async (req, res) => {
     await newPublicMessage.populate([
       {
         path: "sender",
-        select: "username fullName profileImg isAdmin",
+        select: "username fullName profileImg isAdmin isVerified",
       },
       {
         path: "replyTo",

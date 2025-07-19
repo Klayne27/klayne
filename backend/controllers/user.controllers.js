@@ -30,7 +30,7 @@ export const getUserProfile = async (req, res) => {
         path: "pinnedPosts",
         populate: {
           path: "user",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified isGoldVerified",
         },
       });
 
@@ -63,6 +63,7 @@ export const getUserProfile = async (req, res) => {
         profileImg: user.profileImg,
         coverImg: user.coverImg, // Include coverImg for header display
         isVerified: user.isVerified, // Include isVerified
+        isGoldVerified: user.isGoldVerified
       });
     } // If isBlockedByYou, you (the current user) have blocked this user. // In this case, you might still want to see the basic profile info but // restrict access to some content or interactions. // The current logic passes isBlockedByYou in profileData, which is fine.
 

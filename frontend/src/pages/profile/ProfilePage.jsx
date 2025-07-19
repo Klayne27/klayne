@@ -412,7 +412,16 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           <>
             <div className="flex flex-col gap-4 mt-3 px-4">
               <div className="flex flex-col">
-                <span className="font-bold text-lg">{user?.fullName}</span>
+                <div className="flex gap-1 items-center">
+                  <span className="font-bold text-lg">{user?.fullName}</span>
+                  {user?.isVerified ? (
+                    <img src="/verified.png" className="size-[18px]" />
+                  ) : (
+                    user?.isGoldVerified && (
+                      <img src="/gold-verified.png" className="size-[17px] text-white" />
+                    )
+                  )}
+                </div>
                 <span className="text-sm text-slate-500">@{user?.username}</span>
                 <span className="text-sm my-1">{user?.bio}</span>
               </div>

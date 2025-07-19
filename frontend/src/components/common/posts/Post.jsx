@@ -396,7 +396,7 @@ const Post = ({
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
-                  <img src="/verified.png" className="size-[17px] mr-1" alt="Verified" />
+                  <img src="/verified.png" className="size-[17px]" alt="Verified" />
                 )}
               </Link>
               <span className="text-gray-500 flex gap-1 text-sm min-w-0">

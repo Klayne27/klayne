@@ -5,7 +5,6 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 
 import MessageItem from "./MessageItem";
 
-// Keep this to differentiate behavior if needed, though we'll simplify its use.
 const isTouchDevice = () => {
   if (typeof window === "undefined") return false;
   return (
@@ -45,14 +44,13 @@ const MessageList = forwardRef(function MessageList(
   const MOUSE_LEAVE_DELAY = 100;
 
   useEffect(() => {
-    // Detect touch device once on mount
     setIsCurrentlyTouchDevice(isTouchDevice());
-  }, []); // Only runs once
+  }, []);
 
   const handleDeleteClick = useCallback(
     ({ messageId, conversationId }) => {
       deleteMessage({ messageId, conversationId });
-      setActiveMessageModalId(null); // Close modal after action
+      setActiveMessageModalId(null);
     },
     [deleteMessage]
   );
@@ -63,14 +61,13 @@ const MessageList = forwardRef(function MessageList(
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
-      // setActiveMessageModalId(null); // Close modal after action
     },
     [setReplyingToMessage, messageInputRef]
   );
 
   const handleImageClick = useCallback(
     (imageUrl, event) => {
-      event.stopPropagation(); // Keep this to prevent image click from closing modal
+      event.stopPropagation();
       if (openImageModal) {
         openImageModal(imageUrl);
       } else {
@@ -101,16 +98,14 @@ const MessageList = forwardRef(function MessageList(
   const handleReactionClick = useCallback(
     (messageId, emoji) => {
       reactToMessage({ messageId, emoji });
-      setActiveMessageModalId(null); // Close modal after action
+      setActiveMessageModalId(null);
     },
     [reactToMessage]
   );
 
-  // Desktop hover logic
   const handleMouseEnter = useCallback(
     (messageId) => {
       if (!isCurrentlyTouchDevice) {
-        // Only for non-touch devices
         if (mouseLeaveTimeoutRef.current) {
           clearTimeout(mouseLeaveTimeoutRef.current);
           mouseLeaveTimeoutRef.current = null;
@@ -118,19 +113,17 @@ const MessageList = forwardRef(function MessageList(
         setActiveMessageModalId(messageId);
       }
     },
-    [isCurrentlyTouchDevice] // Depend on this to ensure correct behavior
+    [isCurrentlyTouchDevice]
   );
 
   const handleMouseLeave = useCallback(() => {
     if (!isCurrentlyTouchDevice) {
-      // Only for non-touch devices
       mouseLeaveTimeoutRef.current = setTimeout(() => {
         setActiveMessageModalId(null);
       }, MOUSE_LEAVE_DELAY);
     }
-  }, [isCurrentlyTouchDevice]); // Depend on this
+  }, [isCurrentlyTouchDevice]);
 
-  // NEW: Simple tap handler for mobile to show/hide modal
   const handleMessageTap = useCallback(
     (messageId) => {
       if (isCurrentlyTouchDevice) {
@@ -140,8 +133,6 @@ const MessageList = forwardRef(function MessageList(
     [isCurrentlyTouchDevice]
   );
 
-  // The handleClickOutsideMessage logic is crucial.
-  // It needs to correctly distinguish clicks inside the modal vs. outside.
   const handleClickOutsideMessage = useCallback(
     (e) => {
       if (activeMessageModalId) {
@@ -165,27 +156,102 @@ const MessageList = forwardRef(function MessageList(
   );
 
   useEffect(() => {
-    // Attach document click listener only when a modal is active.
-    // This avoids conflicts when no modal is expected to be open.
     if (activeMessageModalId) {
       document.addEventListener("click", handleClickOutsideMessage);
-      // Consider adding 'touchend' listener for outside clicks on mobile if 'click' isn't sufficient
-      // document.addEventListener("touchend", handleClickOutsideMessage);
     }
 
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage);
-      // document.removeEventListener("touchend", handleClickOutsideMessage);
       if (mouseLeaveTimeoutRef.current) {
         clearTimeout(mouseLeaveTimeoutRef.current);
       }
     };
   }, [activeMessageModalId, handleClickOutsideMessage]);
 
+  // --- NEW LOGIC FOR GROUPING MESSAGES AND DISPLAYING DATE ONCE & ROUNDED CORNERS ---
+  const enhancedMessagesToRender = messagesToRender.map((msg, index) => {
+    const previousMessage = messagesToRender[index - 1];
+    const nextMessage = messagesToRender[index + 1]; // Get the next message
+
+    // Helper to get sender ID, handling both object and string formats
+    const getSenderId = (message) => {
+      if (!message || !message.sender) return null;
+      return typeof message.sender === "object" ? message.sender._id : message.sender;
+    };
+
+    const currentSenderId = getSenderId(msg);
+    const prevSenderId = getSenderId(previousMessage);
+    const nextSenderId = getSenderId(nextMessage);
+
+    const isSameSenderAsPrevious = currentSenderId === prevSenderId;
+    const isSameSenderAsNext = currentSenderId === nextSenderId;
+
+    let showHeaderInfo = false;
+    let isFirstInGroup = false;
+    let isLastInGroup = false;
+
+    // Determine showHeaderInfo (based on previous logic)
+    if (!previousMessage) {
+      showHeaderInfo = true;
+    } else {
+      const prevDate = new Date(previousMessage.createdAt);
+      const currDate = new Date(msg.createdAt);
+
+      const isNewDay =
+        prevDate.getDate() !== currDate.getDate() ||
+        prevDate.getMonth() !== currDate.getMonth() ||
+        prevDate.getFullYear() !== currDate.getFullYear();
+
+      if (!isSameSenderAsPrevious || isNewDay) {
+        showHeaderInfo = true;
+      }
+    }
+
+    // Determine isFirstInGroup
+    if (showHeaderInfo) {
+      // If header is shown, it's always the first in its visible group
+      isFirstInGroup = true;
+    } else if (!isSameSenderAsPrevious) {
+      // Edge case where a message *could* start a new group without a header (e.g., if date logic wasn't precise, but given showHeaderInfo, this is less likely to be hit as a primary trigger for first-in-group)
+      isFirstInGroup = true;
+    }
+
+    // Determine isLastInGroup
+    // A message is the last in its group if:
+    // 1. There is no next message (it's the very last message in the chat)
+    // 2. The next message is from a different sender
+    // 3. The next message is on a different day (even if same sender, it "breaks" the visual group)
+    if (!nextMessage) {
+      isLastInGroup = true;
+    } else {
+      const currDate = new Date(msg.createdAt);
+      const nextDate = new Date(nextMessage.createdAt);
+      const isNextNewDay =
+        currDate.getDate() !== nextDate.getDate() ||
+        currDate.getMonth() !== nextDate.getMonth() ||
+        currDate.getFullYear() !== nextDate.getFullYear();
+
+      if (!isSameSenderAsNext || isNextNewDay) {
+        isLastInGroup = true;
+      }
+    }
+
+    return {
+      ...msg,
+      showHeaderInfo,
+      isFirstInGroup, // New prop
+      isLastInGroup, // New prop
+      senderProfileImg: msg.sender?.profileImg || '/public/avatar-placeholder.png',
+      senderUsername: typeof msg.sender === "object" ? msg.sender?.username : undefined,
+    };
+  });
+
+  // --- END NEW LOGIC ---
+
   return (
     <div
       ref={ref}
-      className="flex-1 overflow-y-auto p-4 flex flex-col gap-3 pt-20 relative"
+      className="flex-1 overflow-y-auto p-4 flex flex-col pt-20 relative"
     >
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full ">
@@ -210,39 +276,41 @@ const MessageList = forwardRef(function MessageList(
             <p>No more messages</p>
           </div>
         )}
-        {!isNewChat &&
-          messagesToRender.length > 0 &&
-          messagesToRender.map((msg) => (
-            <MessageItem
-              key={msg._id}
-              msg={msg}
-              isCurrentlyTouchDevice={isCurrentlyTouchDevice} // Pass this prop
-              activeMessageModalId={activeMessageModalId}
-              handleMouseEnter={handleMouseEnter}
-              handleMouseLeave={handleMouseLeave}
-              handleMessageTap={handleMessageTap} // Pass the new tap handler
-              handleDeleteClick={handleDeleteClick}
-              handleReplyClick={handleReplyClick}
-              handleImageClick={handleImageClick}
-              handleJumpToOriginalMessage={handleJumpToOriginalMessage}
-              handleReactionClick={handleReactionClick}
-              isDeletingMessage={isDeletingMessage}
-              currentUser={currentUser}
-              setEditingMessage={setEditingMessage}
-              onReactionAdded={onReactionAdded}
-              setReplyingToMessage={setReplyingToMessage}
-            />
-          ))}
-    
+      {!isNewChat &&
+        enhancedMessagesToRender.length > 0 &&
+        enhancedMessagesToRender.map((msg) => (
+          <MessageItem
+            key={msg._id}
+            msg={msg}
+            isCurrentlyTouchDevice={isCurrentlyTouchDevice}
+            activeMessageModalId={activeMessageModalId}
+            handleMouseEnter={handleMouseEnter}
+            handleMouseLeave={handleMouseLeave}
+            handleMessageTap={handleMessageTap}
+            handleDeleteClick={handleDeleteClick}
+            handleReplyClick={handleReplyClick}
+            handleImageClick={handleImageClick}
+            handleJumpToOriginalMessage={handleJumpToOriginalMessage}
+            handleReactionClick={handleReactionClick}
+            isDeletingMessage={isDeletingMessage}
+            currentUser={currentUser}
+            setEditingMessage={setEditingMessage}
+            onReactionAdded={onReactionAdded}
+            setReplyingToMessage={setReplyingToMessage}
+            showHeaderInfo={msg.showHeaderInfo}
+            senderProfileImg={msg.senderProfileImg}
+            senderUsername={msg.senderUsername}
+            isFirstInGroup={msg.isFirstInGroup} // Pass new prop
+            isLastInGroup={msg.isLastInGroup} // Pass new prop
+          />
+        ))}
 
       {isTypingOtherUser && (
         <MessageItem
-          key="typing-indicator" // Give it a unique key
-          isTypingOtherUser={true} // Crucial prop to trigger the typing bubble
-          // Pass minimal other props as they won't be used by the typing bubble
-          msg={{ sender: { _id: "dummy" }, text: "", img: "" }} // Dummy msg object to satisfy prop types if needed
+          key="typing-indicator"
+          isTypingOtherUser={true}
+          msg={{ sender: { _id: "dummy" }, text: "", img: "" }}
           currentUser={currentUser}
-          // Other props are not necessary for the typing bubble
         />
       )}
     </div>

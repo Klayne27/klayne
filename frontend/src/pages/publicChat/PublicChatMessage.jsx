@@ -148,7 +148,7 @@ const PublicChatMessage = ({
     <div
       key={message._id}
       id={`message-${message._id}`}
-      className={`relative mb-4 p-1 rounded-lg ${messageHighlightClass} ${
+      className={`relative mb-4 p-1 rounded-lg hover:bg-secondary ${
         fromMe ? "justify-end" : "justify-start"
       }`}
       onMouseEnter={() => handleMouseEnter(message._id)}
