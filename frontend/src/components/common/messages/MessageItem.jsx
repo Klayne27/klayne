@@ -26,11 +26,9 @@ const MessageItem = ({
   isTypingOtherUser,
   onReactionAdded,
   setReplyingToMessage,
-  // Existing NEW PROPS
   showHeaderInfo,
   senderProfileImg,
   senderUsername, // Keep this prop for consistency, but it won't be displayed for other users
-  // NEW PROPS for corner rounding
   isFirstInGroup,
   isLastInGroup,
 }) => {

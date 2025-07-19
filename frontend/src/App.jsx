@@ -144,7 +144,7 @@ function App() {
                 )
               }
             />
-            <Route
+            {/* <Route
               path="/public-chat"
               element={
                 authUser ? (
@@ -155,7 +155,7 @@ function App() {
                   <Navigate to="/login" />
                 )
               }
-            />
+            /> */}
             <Route
               path="/bookmarks"
               element={
