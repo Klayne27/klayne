@@ -19,7 +19,7 @@ function ConversationListSkeleton() {
       <div className="skeleton rounded-full w-full h-10 mb-3"></div>
 
       <div className="flex flex-col gap-2">
-        {[...Array(5)].map(
+        {[...Array(11)].map(
           (
             _,
             i 
