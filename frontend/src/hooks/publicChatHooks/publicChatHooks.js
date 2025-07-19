@@ -51,7 +51,7 @@ export const usePublicMessages = () => {
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
-    structuralSharing: false, // <--- ADD THIS TEMPORARILY
+    // structuralSharing: false, // <--- ADD THIS TEMPORARILY
     refetchOnReconnect: true,
     refetchOnMount: true,
 
@@ -175,7 +175,7 @@ export const usePublicMessages = () => {
       // toast.success("Message deleted by admin.");
     };
 
-    const handleMessageRemoved = ({ messageId }) => {
+    const handlepublicOwnMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) =>
@@ -248,7 +248,7 @@ export const usePublicMessages = () => {
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted);
-    socket.on("publicOwnMessageDeleted", handleMessageRemoved);
+    socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
     socket.on("publicMessageEdited", handlePublicMessageEdited);
     socket.on("userBanned", handleUserBannedGlobal);
     socket.on("userUnbanned", handleUserUnbannedGlobal);
@@ -257,7 +257,7 @@ export const usePublicMessages = () => {
       socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
       socket.off("newPublicMessage", handleNewPublicMessage);
       socket.off("publicMessageDeleted", handleMessageDeleted);
-      socket.off("publicOwnMessageDeleted", handleMessageRemoved);
+      socket.off("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
       socket.off("publicMessageEdited", handlePublicMessageEdited);
       socket.off("userBanned", handleUserBannedGlobal);
       socket.off("userUnbanned", handleUserUnbannedGlobal);
@@ -409,9 +409,7 @@ export const useSendPublicMessage = () => {
 };
 
 export const useDeletePublicMessage = () => {
-  const queryClient = useQueryClient();
-  const { socket } = useSocket();
-  const { authUser } = useAuthUser();
+
 
   const {
     mutate: deletePublicMessage,
@@ -420,95 +418,9 @@ export const useDeletePublicMessage = () => {
     error,
   } = useMutation({
     mutationFn: deletePublicMessageApi,
-    // onMutate: async (messageData) => {
-    //   const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
-
-    //   await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
-
-    //   const previousMessages = queryClient.getQueryData(["publicMessages"]);
-
-    //   let populatedReplyTo = null;
-    //   if (messageData.replyTo) {
-    //     // If you're using the data transformed by useMemo, you'd flatMap here.
-    //     // But for cache operations, directly use oldData.pages.
-    //     const allMessages = previousMessages?.pages.flat(); // Use previousMessages for consistency
-    //     const repliedMessageInCache = allMessages?.find(
-    //       (msg) => msg._id === messageData.replyTo
-    //     );
-
-    //     if (repliedMessageInCache) {
-    //       populatedReplyTo = {
-    //         _id: repliedMessageInCache._id,
-    //         content: repliedMessageInCache.content,
-    //         img: repliedMessageInCache.img,
-    //         isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
-    //         sender: {
-    //           _id: repliedMessageInCache.sender?._id,
-    //           username: repliedMessageInCache.sender?.username || "Unknown User",
-    //         },
-    //       };
-    //     }
-    //   }
-
-    //   const optimisticMessage = {
-    //     _id: tempId,
-    //     content: messageData.content,
-    //     img: messageData.imgBase64,
-    //     sender: {
-    //       _id: authUser._id,
-    //       username: authUser.username,
-    //       fullName: authUser.fullName,
-    //       profileImg: authUser.profileImg,
-    //       isAdmin: authUser.isAdmin,
-    //       isVerified: authUser.isVerified,
-    //       isBannedInPublicChat: authUser.isBannedInPublicChat,
-    //     },
-    //     createdAt: new Date().toISOString(),
-    //     updatedAt: new Date().toISOString(),
-    //     isOptimistic: true,
-    //     replyTo: populatedReplyTo,
-    //     isDeletedByAdmin: false,
-    //     reactions: [],
-    //   };
-
-    //   queryClient.setQueryData(["publicMessages"], (oldData) => {
-    //     if (!oldData) {
-    //       return { pages: [[optimisticMessage]], pageParams: [1] };
-    //     }
-    //     const updatedPages = [...oldData.pages]; // Add to the FIRST page, as it holds the newest messages based on your server-side sort/reverse
-    //     if (updatedPages.length > 0) {
-    //       updatedPages[0] = [...updatedPages[0], optimisticMessage];
-    //     } else {
-    //       // This scenario means no data was present initially, so create the first page
-    //       updatedPages.push([optimisticMessage]);
-    //     }
-    //     return {
-    //       ...oldData,
-    //       pages: updatedPages,
-    //     };
-    //   });
-
-    //   return { previousMessages, tempId };
-    // },
+   
     onSuccess: (data, messageId) => {
-      // toast.success("Message marked as deleted (Admin action)");
-      // // Optimistic update for admin delete - optional, as socket handles it
-      // queryClient.setQueryData(["publicMessages"], (oldData) => {
-      //     if (!oldData) return oldData;
-      //     const updatedPages = oldData.pages.map((page) =>
-      //         page.map((message) =>
-      //             message._id === messageId
-      //                 ? {
-      //                       ...message,
-      //                       isDeletedByAdmin: true,
-      //                       content: "[Message Deleted]", // Ensure content is updated
-      //                       img: null, // Clear image
-      //                   }
-      //                 : message
-      //         )
-      //     );
-      //     return { ...oldData, pages: updatedPages };
-      // });
+
     },
     onError: (error) => {
       toast.error(error.message || "Failed to delete message");
@@ -756,6 +668,7 @@ export const useEditPublicMessage = () => {
                 content: newContent,
                 isEdited: true,
                 editedAt: new Date().toISOString(),
+                replyTo: message.replyTo
               };
             }
             return message;
