@@ -113,63 +113,88 @@ const ChatWindow = ({
     onMessageSentOptimistically: handleOptimisticScroll,
   });
 
-useLayoutEffect(() => {
-  const listEl = messageListRef.current;
-  if (!listEl) return;
-
-  if (resizeObserverRef.current) {
-    resizeObserverRef.current.disconnect();
-  }
-
-  // Store the current scroll height BEFORE the ResizeObserver observes changes
-  prevScrollHeightRef.current = listEl.scrollHeight;
-
-  resizeObserverRef.current = new ResizeObserver((entries) => {
-    for (let entry of entries) {
-      if (entry.target === listEl) {
-        const newScrollHeight = listEl.scrollHeight;
-        const oldScrollHeight = prevScrollHeightRef.current;
-
-        const scrollThreshold = 100; // Define how close to the bottom is "at the bottom"
-        const isUserAtBottom =
-          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
-
-        // Condition 1: A new message just landed (either sent by current user or received)
-        // This is a strong signal to scroll.
-        if (didMessageJustLanded.current) {
-          // Add a small timeout here specifically for when content, like images,
-          // might still be settling in terms of height. This is a safeguard.
-          setTimeout(() => {
-            scrollToBottom();
-            setShowNewMessageButton(false);
-            didMessageJustLanded.current = false; // Reset after scrolling
-          }, 50); // Small delay to ensure image height is registered
-        }
-        // Condition 2: The scroll height increased AND the user was already at the bottom.
-        // This covers cases where existing messages might expand (e.g., reactions, image loading in older messages)
-        // or new content is added and the user is following along.
-        else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
-          scrollToBottom();
-          setShowNewMessageButton(false);
-        }
-        // Condition 3: User manually scrolled up, so we don't automatically scroll them down
-        // unless a new message is from *them* or they scroll back down.
-        // This is already handled by the `setShowNewMessageButton` logic in `handleScroll`.
-
-        prevScrollHeightRef.current = newScrollHeight;
-      }
+  // --- NEW EFFECT FOR EDIT MODE SCROLL ADJUSTMENT ---
+  useEffect(() => {
+    if (editingMessage || replyingToMessage) {
+      // When entering edit mode, ensure scroll is at the very bottom
+      // to compensate for the input area expanding.
+      // A small timeout helps ensure the DOM has fully rendered the new input size.
+      setTimeout(() => {
+        scrollToBottom();
+        // You might want to hide any "new message" button here too,
+        // as the user's view is now at the bottom.
+        // setShowNewMessageButton(false); // If you have this state
+      }, 0); // A very small delay, typically sufficient
+    } else {
+      // Optional: When exiting edit mode, if the input shrinks,
+      // you might want to adjust scroll if the user was at the bottom.
+      // However, users rarely notice this as much as the initial "push up".
+      // If clearing the input also makes it smaller, this can help.
+      // If isScrollAtBottom() check is performed here:
+      // if (isScrollAtBottom()) {
+      //   scrollToBottom();
+      // }
     }
-  });
+  }, [editingMessage, replyingToMessage, scrollToBottom /*, setShowNewMessageButton */]);
 
-  resizeObserverRef.current.observe(listEl);
+  useLayoutEffect(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
 
-  return () => {
     if (resizeObserverRef.current) {
       resizeObserverRef.current.disconnect();
-      resizeObserverRef.current = null;
     }
-  };
-}, [scrollToBottom, actualConversationId]);
+
+    // Store the current scroll height BEFORE the ResizeObserver observes changes
+    prevScrollHeightRef.current = listEl.scrollHeight;
+
+    resizeObserverRef.current = new ResizeObserver((entries) => {
+      for (let entry of entries) {
+        if (entry.target === listEl) {
+          const newScrollHeight = listEl.scrollHeight;
+          const oldScrollHeight = prevScrollHeightRef.current;
+
+          const scrollThreshold = 100; // Define how close to the bottom is "at the bottom"
+          const isUserAtBottom =
+            listEl.scrollHeight - listEl.scrollTop <=
+            listEl.clientHeight + scrollThreshold;
+
+          // Condition 1: A new message just landed (either sent by current user or received)
+          // This is a strong signal to scroll.
+          if (didMessageJustLanded.current) {
+            // Add a small timeout here specifically for when content, like images,
+            // might still be settling in terms of height. This is a safeguard.
+            setTimeout(() => {
+              scrollToBottom();
+              setShowNewMessageButton(false);
+              didMessageJustLanded.current = false; // Reset after scrolling
+            }, 50); // Small delay to ensure image height is registered
+          }
+          // Condition 2: The scroll height increased AND the user was already at the bottom.
+          // This covers cases where existing messages might expand (e.g., reactions, image loading in older messages)
+          // or new content is added and the user is following along.
+          else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
+            scrollToBottom();
+            setShowNewMessageButton(false);
+          }
+          // Condition 3: User manually scrolled up, so we don't automatically scroll them down
+          // unless a new message is from *them* or they scroll back down.
+          // This is already handled by the `setShowNewMessageButton` logic in `handleScroll`.
+
+          prevScrollHeightRef.current = newScrollHeight;
+        }
+      }
+    });
+
+    resizeObserverRef.current.observe(listEl);
+
+    return () => {
+      if (resizeObserverRef.current) {
+        resizeObserverRef.current.disconnect();
+        resizeObserverRef.current = null;
+      }
+    };
+  }, [scrollToBottom, actualConversationId]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -589,6 +614,7 @@ useLayoutEffect(() => {
         )}
 
         <MessageInput
+        
           otherUser={otherUser}
           replyingToMessage={replyingToMessage}
           setReplyingToMessage={memoizedSetReplyingToMessage}

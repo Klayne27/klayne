@@ -22,11 +22,13 @@ import {
   unbanUserFromPublicChatApi,
 } from "../../api/publicChatApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { useMemo } from "react";
 
 export const usePublicMessages = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const { authUser } = useAuthUser(); // Get authUser to check if the message is from current user
+  const MESSAGE_LIMIT = 40;
 
   const {
     data,
@@ -41,14 +43,18 @@ export const usePublicMessages = () => {
     queryKey: ["publicMessages"],
     queryFn: getPublicMessagesApi,
     getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.length === 20) {
-        return allPages.length + 1;
+      if (lastPage.length < MESSAGE_LIMIT) {
+        return undefined;
       }
-      return undefined;
+      return allPages.length + 1;
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
-    cacheTime: 10 * 60 * 1000,
+    gcTime: 10 * 60 * 1000,
+    structuralSharing: false, // <--- ADD THIS TEMPORARILY
+    refetchOnReconnect: true,
+    refetchOnMount: true,
+
     // select: (data) => ({
     //   ...data,
     //   pages: data.pages.map(
@@ -64,51 +70,87 @@ export const usePublicMessages = () => {
 
     const handleNewPublicMessage = (newMessage) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) {
+        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+          // If no old data, initialize with the new message in the first page
           return { pages: [[newMessage]], pageParams: [1] };
         }
 
-        const updatedPages = oldData.pages.map((page) => {
-          // Check if this new message (from socket) replaces an optimistic one
-          // This check is crucial for the current user's messages
-          const existingIndex = page.findIndex(
-            (msg) =>
-              msg.isOptimistic &&
-              msg.sender?._id === authUser._id && // Ensure it's the current user's optimistic message
-              msg.content === newMessage.content &&
-              !msg.img && // Assuming you don't send img base64 for optimistic updates or handle separately
-              !newMessage.img // And the new message also doesn't have an image.
-            // For image messages, you'd need a more sophisticated comparison
-          );
+        // Get the current "latest" page (which is the first page in oldData.pages)
+        const currentLatestPage = oldData.pages[0];
+        let updatedLatestPage = [...currentLatestPage];
+        let messageFoundAndReplaced = false;
 
-          if (existingIndex !== -1) {
-            // Replace the optimistic message with the real one from the server
-            const newPage = [...page];
-            newPage[existingIndex] = newMessage;
-            return newPage;
-          }
-          // If it's not a replacement (e.g., it's a message from another user, or a new message for current user)
-          return page;
-        });
+        // 1. Try to find and replace the optimistic message
+        const existingOptimisticIndex = updatedLatestPage.findIndex(
+          (msg) =>
+            msg.isOptimistic &&
+            msg.sender?._id === authUser._id &&
+            msg.content === newMessage.content &&
+            // Note: If images are involved, ensure your optimistic image handling
+            // allows for a reliable comparison/replacement.
+            !msg.img &&
+            !newMessage.img
+        );
 
-        // After potentially replacing, add the new message if it's genuinely new
-        // This is important for messages from other users, or if the current user
-        // didn't have an optimistic placeholder for some reason.
-        const latestPage = updatedPages[updatedPages.length - 1];
-        const alreadyExists = latestPage.some((msg) => msg._id === newMessage._id);
+        if (existingOptimisticIndex !== -1) {
+          updatedLatestPage[existingOptimisticIndex] = {
+            ...newMessage,
+            isOptimistic: false, // Mark as no longer optimistic
+          };
+          messageFoundAndReplaced = true;
+        }
 
-        if (!alreadyExists) {
-          // Only add if it doesn't already exist (e.g., from a replacement)
-          if (updatedPages.length > 0) {
-            updatedPages[updatedPages.length - 1] = [...latestPage, newMessage];
-          } else {
-            updatedPages.push([newMessage]);
+        // 2. If it wasn't an optimistic message replacement, check for actual duplicates
+        // (This handles cases where the message is from another user, or current user
+        // without an optimistic placeholder, or if the replacement logic failed)
+        const messageAlreadyExistsById = updatedLatestPage.some(
+          (msg) => msg._id === newMessage._id
+        );
+
+        if (!messageFoundAndReplaced && !messageAlreadyExistsById) {
+          // Add the new message to the end of the latest page (chronological order)
+          updatedLatestPage.push(newMessage);
+        }
+
+        // 3. Enforce the 40 message limit for the *entire* chat view.
+        // This will discard older messages, effectively "snapping back" the view.
+        // Since `getPublicMessagesApi` gives us pages in chronological order (oldest to newest messages within a page)
+        // and the `pages` array is `[[newest page], [older page], ...]`,
+        // we need to combine and then take the last 40.
+        let allCurrentMessages = [updatedLatestPage, ...oldData.pages.slice(1)].flat();
+
+        // Ensure no duplicates based on _id, in case multiple pages had the same message
+        // (less likely with good pagination, but good for robustness)
+        const uniqueMessages = [];
+        const seenIds = new Set();
+        for (let i = allCurrentMessages.length - 1; i >= 0; i--) {
+          // Iterate backwards to prioritize newer messages
+          const msg = allCurrentMessages[i];
+          if (!seenIds.has(msg._id)) {
+            uniqueMessages.unshift(msg); // Add to beginning to keep chronological order
+            seenIds.add(msg._id);
           }
         }
+        allCurrentMessages = uniqueMessages;
+
+        if (allCurrentMessages.length > MESSAGE_LIMIT) {
+          // Keep only the latest MESSAGE_LIMIT messages
+          allCurrentMessages = allCurrentMessages.slice(-MESSAGE_LIMIT);
+        }
+
+        // Re-package into the 'pages' array structure.
+        // For simplicity, we can put all 40 messages into a single "page".
+        // If your display component specifically relies on `pages[0]` for recent,
+        // this might need adjustment, but for `flatMap` it'll work.
+        const newPages = [allCurrentMessages];
+
+        // Reset pageParams since we're effectively resetting the fetched data
+        const newPageParams = [1]; // Only one page now, so next param would be 2 if infinite scroll was still active.
 
         return {
           ...oldData,
-          pages: updatedPages,
+          pages: newPages,
+          pageParams: newPageParams, // Reset pageParams to only fetch from page 1 again
         };
       });
     };
@@ -223,7 +265,11 @@ export const usePublicMessages = () => {
     };
   }, [socket, queryClient, authUser]); // Add authUser to dependency array
 
-  const messages = data?.pages.slice().reverse().flat() || [];
+  // const messages = data?.pages.slice().reverse().flat() || [];
+
+  const messages = useMemo(() => {
+    return data ? [...data.pages].reverse().flatMap((page) => page) : [];
+  }, [data]);
 
   return {
     messages,
@@ -241,6 +287,7 @@ export const usePublicMessages = () => {
 export const useSendPublicMessage = () => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser(); // Get authUser here too for sender details
+  const MESSAGE_LIMIT = 40; // Use the same limit
 
   const {
     mutate: sendPublicMessage,
@@ -249,30 +296,22 @@ export const useSendPublicMessage = () => {
     error,
     reset,
   } = useMutation({
-    // The actual API call is now the sole responsibility of mutationFn
     mutationFn: async (messageData) => {
       sendPublicMessageApi(messageData);
-      // Send the actual message to the server
-      // const response = await sendPublicMessageApi(messageData);
-      // return response;
     },
 
-    // This is where the optimistic update should happen
     onMutate: async (messageData) => {
-      // 1. Generate a temporary client-side ID for the optimistic update
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // Cancel any outgoing refetches for the publicMessages query to prevent race conditions
       await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
 
-      // Snapshot the current messages data for potential rollback
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
-      // Create the optimistic message object
       let populatedReplyTo = null;
       if (messageData.replyTo) {
-        const allMessages = queryClient.getQueryData(["publicMessages"])?.pages.flat();
-        const repliedMessageInCache = allMessages?.find(
+        // Use previousMessages if it exists, otherwise flatMap an empty array
+        const allMessages = previousMessages?.pages.flat() || [];
+        const repliedMessageInCache = allMessages.find(
           (msg) => msg._id === messageData.replyTo
         );
 
@@ -291,10 +330,10 @@ export const useSendPublicMessage = () => {
       }
 
       const optimisticMessage = {
-        _id: tempId, // Use the temporary ID
+        _id: tempId,
         content: messageData.content,
         img: messageData.imgBase64,
-        sender: { // Provide a full sender object, matching your populated sender in the backend
+        sender: {
           _id: authUser._id,
           username: authUser.username,
           fullName: authUser.fullName,
@@ -305,65 +344,53 @@ export const useSendPublicMessage = () => {
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
-        isOptimistic: true, // Mark it as an optimistic update
+        isOptimistic: true,
         replyTo: populatedReplyTo,
         isDeletedByAdmin: false,
         reactions: [],
       };
 
-      // Optimistically update the cache
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) {
-          return { pages: [[optimisticMessage]], pageParams: [1] };
+        let newPages = [];
+        let currentLatestPage = [];
+
+        if (oldData && oldData.pages && oldData.pages.length > 0) {
+          // Take the existing first page (most recent messages)
+          currentLatestPage = [...oldData.pages[0]];
         }
-        const updatedPages = [...oldData.pages];
-        // Add to the last page (most recent messages)
-        if (updatedPages.length > 0) {
-          updatedPages[updatedPages.length - 1] = [...updatedPages[updatedPages.length - 1], optimisticMessage];
-        } else {
-          updatedPages.push([optimisticMessage]); // If no pages exist, create the first one
+
+        // Add the new optimistic message to the current latest messages
+        currentLatestPage.push(optimisticMessage);
+
+        // Enforce the 40 message limit immediately for the optimistic view
+        if (currentLatestPage.length > MESSAGE_LIMIT) {
+          currentLatestPage = currentLatestPage.slice(-MESSAGE_LIMIT); // Keep only the last 40
         }
+
+        // The pages array now contains only the one page of 40 messages
+        newPages = [currentLatestPage];
+
         return {
-          ...oldData,
-          pages: updatedPages,
+          ...oldData, // Preserve other oldData properties like pageParams, though they might become irrelevant
+          pages: newPages,
+          pageParams: [1], // Reset pageParams to reflect that we're only showing the first page now
         };
       });
 
-      // Return a context object with the previous data and the tempId for onError rollback
       return { previousMessages, tempId };
     },
 
-    // onSuccess is for when the server responds successfully
     onSuccess: (serverMessage, variables, context) => {
-      // The socket listener `handleNewPublicMessage` is responsible for
-      // replacing the optimistic message with the server-returned message.
-      // This is generally the most robust approach in real-time apps.
-      // We don't need to explicitly update the cache here because the socket
-      // listener will do it authoritatively.
-
-      // If you weren't using sockets, you would do the replacement here:
-      /*
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) return oldData;
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((msg) =>
-            msg._id === context.tempId ? { ...serverMessage, isOptimistic: false } : msg
-          )
-        );
-        return { ...oldData, pages: updatedPages };
-      });
-      */
+      // The socket listener handleNewPublicMessage is now fully responsible
+      // for replacing and trimming. No action needed here.
     },
 
-    // onError is for when the API call fails
     onError: (error, variables, context) => {
       toast.error(error.message || "Failed to send message");
-      // Rollback the optimistic update
+      // Rollback logic remains mostly the same, ensuring the optimistic message is removed
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       } else {
-        // If previousMessages wasn't captured (e.g., initial state was empty),
-        // filter out the optimistic message directly.
         queryClient.setQueryData(["publicMessages"], (oldData) => {
           if (!oldData) return oldData;
           const updatedPages = oldData.pages.map((page) =>
@@ -373,12 +400,8 @@ export const useSendPublicMessage = () => {
         });
       }
     },
-
-    // onSettled is always called, good for invalidating if needed
     onSettled: (data, error, variables, context) => {
-      // No explicit invalidation needed if your socket event is reliable for new messages
-      // If the socket event is NOT reliable, then you might want to invalidate here:
-      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // No explicit invalidation needed.
     },
   });
 
@@ -388,6 +411,7 @@ export const useSendPublicMessage = () => {
 export const useDeletePublicMessage = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
+  const { authUser } = useAuthUser();
 
   const {
     mutate: deletePublicMessage,
@@ -396,6 +420,76 @@ export const useDeletePublicMessage = () => {
     error,
   } = useMutation({
     mutationFn: deletePublicMessageApi,
+    // onMutate: async (messageData) => {
+    //   const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+
+    //   await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
+
+    //   const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+    //   let populatedReplyTo = null;
+    //   if (messageData.replyTo) {
+    //     // If you're using the data transformed by useMemo, you'd flatMap here.
+    //     // But for cache operations, directly use oldData.pages.
+    //     const allMessages = previousMessages?.pages.flat(); // Use previousMessages for consistency
+    //     const repliedMessageInCache = allMessages?.find(
+    //       (msg) => msg._id === messageData.replyTo
+    //     );
+
+    //     if (repliedMessageInCache) {
+    //       populatedReplyTo = {
+    //         _id: repliedMessageInCache._id,
+    //         content: repliedMessageInCache.content,
+    //         img: repliedMessageInCache.img,
+    //         isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
+    //         sender: {
+    //           _id: repliedMessageInCache.sender?._id,
+    //           username: repliedMessageInCache.sender?.username || "Unknown User",
+    //         },
+    //       };
+    //     }
+    //   }
+
+    //   const optimisticMessage = {
+    //     _id: tempId,
+    //     content: messageData.content,
+    //     img: messageData.imgBase64,
+    //     sender: {
+    //       _id: authUser._id,
+    //       username: authUser.username,
+    //       fullName: authUser.fullName,
+    //       profileImg: authUser.profileImg,
+    //       isAdmin: authUser.isAdmin,
+    //       isVerified: authUser.isVerified,
+    //       isBannedInPublicChat: authUser.isBannedInPublicChat,
+    //     },
+    //     createdAt: new Date().toISOString(),
+    //     updatedAt: new Date().toISOString(),
+    //     isOptimistic: true,
+    //     replyTo: populatedReplyTo,
+    //     isDeletedByAdmin: false,
+    //     reactions: [],
+    //   };
+
+    //   queryClient.setQueryData(["publicMessages"], (oldData) => {
+    //     if (!oldData) {
+    //       return { pages: [[optimisticMessage]], pageParams: [1] };
+    //     }
+    //     const updatedPages = [...oldData.pages]; // Add to the FIRST page, as it holds the newest messages based on your server-side sort/reverse
+    //     if (updatedPages.length > 0) {
+    //       updatedPages[0] = [...updatedPages[0], optimisticMessage];
+    //     } else {
+    //       // This scenario means no data was present initially, so create the first page
+    //       updatedPages.push([optimisticMessage]);
+    //     }
+    //     return {
+    //       ...oldData,
+    //       pages: updatedPages,
+    //     };
+    //   });
+
+    //   return { previousMessages, tempId };
+    // },
     onSuccess: (data, messageId) => {
       // toast.success("Message marked as deleted (Admin action)");
       // // Optimistic update for admin delete - optional, as socket handles it

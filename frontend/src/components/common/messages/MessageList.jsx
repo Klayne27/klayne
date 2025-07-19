@@ -63,7 +63,7 @@ const MessageList = forwardRef(function MessageList(
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
-      setActiveMessageModalId(null); // Close modal after action
+      // setActiveMessageModalId(null); // Close modal after action
     },
     [setReplyingToMessage, messageInputRef]
   );
@@ -230,6 +230,7 @@ const MessageList = forwardRef(function MessageList(
               currentUser={currentUser}
               setEditingMessage={setEditingMessage}
               onReactionAdded={onReactionAdded}
+              setReplyingToMessage={setReplyingToMessage}
             />
           ))}
     

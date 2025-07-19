@@ -23,7 +23,8 @@ const MessageItem = ({
   currentUser,
   setEditingMessage,
   isTypingOtherUser,
-  onReactionAdded
+  onReactionAdded,
+  setReplyingToMessage
 }) => {
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
@@ -80,6 +81,7 @@ const MessageItem = ({
     setEditingMessage(msg); // Set the current message as the one to be edited
     // You might also want to close the modal after setting the message for editing
     handleMessageTap(null); // Passing null will close any active modal
+    setReplyingToMessage(null)
   };
 
   return (
@@ -140,8 +142,9 @@ const MessageItem = ({
           onClick={(e) => {
             e.stopPropagation();
             handleReplyClick(msg);
+            setEditingMessage(null)
           }}
-          className="text-primary/90 hover:text-primary hover:scale-125 rounded-full p-1 ml-1"
+          className="text-blue-400 hover:text-blue-500 hover:scale-125 rounded-full p-1 ml-1"
           title="Reply"
         >
           <FaReply size={18} />

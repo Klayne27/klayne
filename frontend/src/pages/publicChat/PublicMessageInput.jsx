@@ -1,14 +1,14 @@
 // src/components/publicChat/PublicMessageInput.jsx
-import React, { useRef, useEffect, useCallback } from "react";
-import { IoSendSharp, IoClose, IoImageOutline } from "react-icons/io5";
+import React, { useRef, useEffect } from "react";
+import { IoClose, IoImageOutline } from "react-icons/io5";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
 import toast from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { truncateText } from "../../utils/truncateText";
+import { useState } from "react";
+import { FaReply } from "react-icons/fa6";
 
 const PublicMessageInput = ({
-  messageContent,
-  setMessageContent,
   selectedFile,
   setSelectedFile,
   previewImage,
@@ -28,6 +28,8 @@ const PublicMessageInput = ({
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null); // Local to this component
 
+  const [messageContent, setMessageContent] = useState("");
+
   // Adjust textarea height based on content
   useEffect(() => {
     if (messageInputRef.current) {
@@ -40,28 +42,25 @@ const PublicMessageInput = ({
   useEffect(() => {
     if (editingMessage) {
       setMessageContent(editingMessage.content);
-      setReplyingToMessage(null);
-      setSelectedFile(null);
-      setPreviewImage(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
+      // setReplyingToMessage(null);
+      // setSelectedFile(null);
+      // setPreviewImage(null);
+      // if (fileInputRef.current) fileInputRef.current.value = "";
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
     } else {
       // Clear input when exiting edit mode, but only if it matches the edited message content
-      if (
-        messageInputRef.current?.value === messageContent &&
-        messageContent === (editingMessage?.content || "")
-      ) {
+      if (messageInputRef.current?.value === messageContent) {
         setMessageContent("");
       }
     }
   }, [
     editingMessage,
-    setMessageContent,
-    setReplyingToMessage,
-    setSelectedFile,
-    setPreviewImage,
+    // setMessageContent,
+    // setReplyingToMessage,
+    // setSelectedFile,
+    // setPreviewImage,
     // messageContent,
   ]);
 
@@ -102,10 +101,10 @@ const PublicMessageInput = ({
 
     if (isSendingMessage || isEditingMessage || isCurrentUserBanned) return;
 
-    const contentToSend = messageContent.replace(/\s/g, "");
+    const contentToSend = messageContent.trim();
 
     if (!contentToSend && !selectedFile && !replyingToMessage && !editingMessage) {
-      toast.error("Message cannot be empty.");
+      // toast.error("Message cannot be empty.");
       return;
     }
 
@@ -240,7 +239,6 @@ const PublicMessageInput = ({
     setEditingMessage(null);
     setMessageContent("");
     sendTypingEvent(false, true);
-    messageInputRef.current?.focus();
   };
 
   const isSendButtonDisabled =
@@ -275,22 +273,28 @@ const PublicMessageInput = ({
       {/* --- Conditional Rendering for Input Section (Edit Mode vs. Normal Mode) --- */}
       {isEditingMode ? (
         // EDIT MODE CONTAINER
-        <div className="w-full bg-base-200 flex flex-col border-t border-accent sticky bottom-0 z-10">
+        <div className="w-full bg-base-100 flex flex-col border-t border-accent sticky bottom-0 z-10">
           {/* Edit Message Indicator Bar */}
-          <div className="flex items-center justify-between px-4 py-2 text-sm">
-            <span className="flex items-center gap-2 ">
-              <MdEdit className="w-4 h-4" />
-              <span className="text-gray-400">Editing message</span>
-              <span className="font-semibold ml-1">
+          <div className="flex items-center justify-between p-2 px-1 pt-0 text-sm">
+            <span className="flex flex-col items-start p-3 ">
+              <div className="flex gap-2 items-center">
+                <MdEdit className="w-4 h-4 text-yellow-400" />
+                <span className="text-primary font-bold">Editing message</span>
+              </div>
+              <span className="font-semibold text-gray-400">
                 "{truncateText(editingMessage.content)}"
               </span>
             </span>
+
             <button
-              onClick={handleCancelEdit}
-              className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
+              onClick={() => {
+                handleCancelEdit();
+                messageInputRef.current.focus();
+              }}
+              className="ml-2 p-1 mr-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
               title="Cancel Edit"
             >
-              <IoClose className="w-4 h-4" />
+              <IoClose size={20} />
             </button>
           </div>
 
@@ -365,7 +369,11 @@ const PublicMessageInput = ({
           {replyingToMessage && (
             <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
               <div className="flex-1 p-3 rounded-md flex flex-col">
-                <div className="text-sm text-primary font-bold">Replying to</div>
+                <div className="flex gap-2 items-center">
+                  <FaReply className="size-3 text-blue-400" />
+
+                  <div className="text-sm text-primary font-bold">Replying to</div>
+                </div>
                 <div className="text-xs text-gray-400 mt-1 italic">
                   {replyingToMessage.sender?.username && (
                     <span className="font-semibold mr-1">
@@ -379,7 +387,10 @@ const PublicMessageInput = ({
                 )}
               </div>
               <button
-                onClick={() => setReplyingToMessage(null)}
+                onClick={() => {
+                  setReplyingToMessage(null);
+                  messageInputRef.current.focus();
+                }}
                 className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
                 aria-label="Cancel reply"
               >

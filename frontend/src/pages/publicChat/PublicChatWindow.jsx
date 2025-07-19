@@ -40,7 +40,6 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { mutate: editPublicMessage, isPending: isEditingMessage } =
     useEditPublicMessage();
 
-  const [messageContent, setMessageContent] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [isTyping, setIsTyping] = useState(false);
@@ -50,6 +49,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   const queryClient = useQueryClient();
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
+  const [editingMessage, setEditingMessage] = useState(null);
 
   const messageListRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
@@ -58,8 +58,6 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   // Moved to PublicMessageInput, but kept here for clarity if needed elsewhere:
   // const [isMobile, setIsMobile] = useState(false);
-
-  const [editingMessage, setEditingMessage] = useState(null);
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
 
@@ -102,7 +100,7 @@ const PublicChatWindow = ({ openImageModal }) => {
         messageElement.classList.remove("highlight-message");
       }, 1500); // 1500ms = 1.5 seconds
     }
-  }, []); 
+  }, []);
 
   // --- Message hover/tap handlers ---
   const handleMouseEnter = (messageId) => {
@@ -126,14 +124,14 @@ const PublicChatWindow = ({ openImageModal }) => {
   // --- Reaction Handler ---
   const handleReactionClick = (messageId, emoji) => {
     addReaction({ messageId, emoji });
-    setActiveMessageModalId(null)
+    setActiveMessageModalId(null);
   };
 
   // --- Handler to set message for editing ---
   const handleEdit = (messageToEdit) => {
     setEditingMessage(messageToEdit);
     setReplyingToMessage(null);
-    setActiveMessageModalId(null);
+    // setActiveMessageModalId(null);
   };
 
   // --- Admin/Self Delete Message Handler ---
@@ -159,19 +157,14 @@ const PublicChatWindow = ({ openImageModal }) => {
   // NEW: Handler to set the message to reply to
   const handleReply = (messageToReplyTo) => {
     setReplyingToMessage(messageToReplyTo);
-    setActiveMessageModalId(null);
+    // setActiveMessageModalId(null);
   };
 
   // Handler for sending messages from PublicMessageInput
   const handleSendMessage = useCallback(
     (messagePayload) => {
       shouldScrollToBottom.current = true; // Set flag to scroll to bottom after sending
-      sendPublicMessage(messagePayload, {
-        onSuccess: () => {
-          // You might want to invalidate queries or refetch here if needed
-          // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-        },
-      });
+      sendPublicMessage(messagePayload);
     },
     [sendPublicMessage]
   );
@@ -180,12 +173,18 @@ const PublicChatWindow = ({ openImageModal }) => {
   const handleEditMessage = useCallback(
     (messageId, messagePayload) => {
       shouldScrollToBottom.current = true; // Set flag to scroll to bottom after editing
-      editPublicMessage(
-        { messageId, ...messagePayload },
-      );
+      editPublicMessage({ messageId, ...messagePayload });
     },
     [editPublicMessage]
   );
+
+  useEffect(() => {
+    if (editingMessage || replyingToMessage) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 0); // A very small delay, typically sufficient
+    }
+  }, [editingMessage, replyingToMessage, scrollToBottom /*, setShowNewMessageButton */]);
 
   useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
@@ -275,7 +274,7 @@ const PublicChatWindow = ({ openImageModal }) => {
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
         queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (isBanned) {
-          setMessageContent("");
+          // setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
           queryClient.setQueryData(["publicMessages"], (oldData) => ({
@@ -334,12 +333,6 @@ const PublicChatWindow = ({ openImageModal }) => {
                 <LoadingSpinner size="sm" />
               </div>
             )}
-            {/* {messages.length === 0 && !isLoadingMessages && (
-              <div className="flex flex-col items-center justify-center h-full text-gray-400">
-                <p className="text-xl font-bold mb-2">Welcome to the Public Chat!</p>
-                <p className="text-sm text-center">Start by sending the first message.</p>
-              </div>
-            )} */}
             <div className="mx-auto w-full max-w-3xl md:max-w-[968px]">
               {messages.map((message) => (
                 <div key={message._id}>
@@ -359,6 +352,8 @@ const PublicChatWindow = ({ openImageModal }) => {
                     onReply={handleReply}
                     onEdit={handleEdit}
                     onJumpToMessage={handleJumpToMessage}
+                    setEditingMessage={setEditingMessage}
+                    setReplyingToMessage={setReplyingToMessage}
                   />
                 </div>
               ))}
@@ -372,10 +367,7 @@ const PublicChatWindow = ({ openImageModal }) => {
             )}
           </div>
 
-          {/* Render the PublicMessageInput component */}
           <PublicMessageInput
-            messageContent={messageContent}
-            setMessageContent={setMessageContent}
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
             previewImage={previewImage}

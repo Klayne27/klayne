@@ -8,6 +8,7 @@ import { MdCheck, MdEdit, MdSend } from "react-icons/md";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { FaCircle, FaSpinner } from "react-icons/fa";
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage";
+import { FaReply } from "react-icons/fa6";
 
 function MessageInput({
   otherUser,
@@ -493,7 +494,10 @@ function MessageInput({
       {replyingToMessage && !editingMessage && (
         <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
           <div className="flex-1 p-3 rounded-md flex flex-col">
-            <div className="text-sm text-primary font-bold">Replying to</div>
+            <div className="flex gap-2 items-center">
+              <FaReply className="size-3" />
+              <div className="text-sm text-primary font-bold">Replying to</div>
+            </div>
             <div className="text-xs text-gray-400 mt-1 italic">
               {truncateText(replyingToMessage.text, 40)}
               {replyingToMessage.img && !replyingToMessage.text && " (Image)"}
@@ -511,22 +515,23 @@ function MessageInput({
       {/* Conditional rendering for the entire input section */}
       {editingMessage ? (
         // EDIT MODE CONTAINER
-        <div className="w-full bg-base-200 flex flex-col border-t border-accent">
-          {/* Edit Message Indicator Bar */}
-          <div className="flex items-center justify-between px-4 py-2 text-sm">
-            <span className="flex items-center gap-2 ">
-              <MdEdit className="w-4 h-4" />
-              <span className="text-gray-400">Editing message</span>
-              <span className="font-semibold ml-1">
+        <div className="w-full bg-base-100 flex flex-col border-t border-accent">
+          <div className="flex items-center justify-between py-2 px-1 pt-0 text-sm">
+            <div className="flex flex-col items-start p-3 ">
+              <div className="flex gap-2 items-center">
+                <MdEdit className="w-4 h-4" />
+                <div className="text-primary font-bold">Editing message</div>
+              </div>
+              <span className="font-semibold text-gray-400">
                 "{truncateText(editingMessage.text, 30)}"
               </span>
-            </span>
+            </div>
             <button
               onClick={handleCancelEdit}
-              className="p-1 rounded-full text-gray-400 hover:text-white hover:bg-gray-700 transition-colors duration-200"
+              className="ml-2 mr-1 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
               title="Cancel Edit"
             >
-              <IoClose className="w-4 h-4" />
+              <IoClose size={20} />
             </button>
           </div>
 
