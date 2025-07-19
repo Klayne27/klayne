@@ -13,7 +13,7 @@ export const useFetchNotifications = () => {
     queryKey: ["notifications"],
     queryFn: fetchNotificationsApi,
     onError: (err) => {
-      toast.error(err.message);
+      // toast.error(err.message);
     },
     retry: false,
     refetchOnWindowFocus: true,

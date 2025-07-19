@@ -128,7 +128,6 @@ export const useSendMessage = ({
     },
 
     onError: (error, variables, context) => {
-      console.error("Error sending message:", error);
       const { previousData, optimisticId, queryKey } = context;
 
       queryClient.setQueryData(queryKey, (oldData) => {

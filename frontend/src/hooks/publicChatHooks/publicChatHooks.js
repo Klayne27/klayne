@@ -473,7 +473,7 @@ export const useAddPublicMessageReaction = () => {
       return { previousMessages };
     },
     onError: (err, variables, context) => {
-      toast.error(err.message || "Failed to add reaction.");
+      // toast.error(err.message || "Failed to add reaction.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
@@ -521,7 +521,7 @@ export const useRemovePublicMessageReaction = () => {
       return { previousMessages };
     },
     onError: (err, variables, context) => {
-      toast.error(err.message || "Failed to remove reaction.");
+      // toast.error(err.message || "Failed to remove reaction.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }

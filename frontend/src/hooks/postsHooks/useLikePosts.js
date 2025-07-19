@@ -249,7 +249,7 @@ export const useLikePost = (username = null) => {
     },
 
     onError: (error, postId, context) => {
-      toast.error(error.message || "Failed to like/unlike post.");
+      // toast.error(error.message || "Failed to like/unlike post.");
       if (context?.previousDataSnapshots) {
         // Rollback all known general "posts" keys
         queryClient.setQueryData(

@@ -23,7 +23,7 @@ export const useDeleteNotifications = () => {
     },
     onError: (error, variables, context) => {
       // If the mutation fails, use the context we returned from onMutate to roll back
-      toast.error(error.message || "Failed to delete all notifications");
+      // toast.error(error.message || "Failed to delete all notifications");
       console.error("Delete all notifications error:", error);
       if (context?.previousNotifications) {
         queryClient.setQueryData(["notifications"], context.previousNotifications);
