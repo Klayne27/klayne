@@ -101,7 +101,7 @@ const MessageList = forwardRef(function MessageList(
   const handleReactionClick = useCallback(
     (messageId, emoji) => {
       reactToMessage({ messageId, emoji });
-      // setActiveMessageModalId(null); // Close modal after action
+      setActiveMessageModalId(null); // Close modal after action
     },
     [reactToMessage]
   );

@@ -126,6 +126,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   // --- Reaction Handler ---
   const handleReactionClick = (messageId, emoji) => {
     addReaction({ messageId, emoji });
+    setActiveMessageModalId(null)
   };
 
   // --- Handler to set message for editing ---
@@ -181,12 +182,6 @@ const PublicChatWindow = ({ openImageModal }) => {
       shouldScrollToBottom.current = true; // Set flag to scroll to bottom after editing
       editPublicMessage(
         { messageId, ...messagePayload },
-        {
-          onSuccess: () => {
-            // You might want to invalidate queries or refetch here if needed
-            // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-          },
-        }
       );
     },
     [editPublicMessage]

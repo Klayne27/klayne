@@ -102,7 +102,7 @@ const PublicMessageInput = ({
 
     if (isSendingMessage || isEditingMessage || isCurrentUserBanned) return;
 
-    const contentToSend = messageContent.trim();
+    const contentToSend = messageContent.replace(/\s/g, "");
 
     if (!contentToSend && !selectedFile && !replyingToMessage && !editingMessage) {
       toast.error("Message cannot be empty.");
@@ -114,33 +114,36 @@ const PublicMessageInput = ({
     sendTypingEvent(false); // Ensure typing status is cleared
 
     if (editingMessage) {
-      if (contentToSend === editingMessage.content.trim()) {
-        toast.error("No changes detected.");
-        setEditingMessage(null);
-        setMessageContent("");
-        messageInputRef.current?.focus();
-        return;
-      }
-      if (!contentToSend) {
-        toast.error("Edited message cannot be empty.");
-        return;
-      }
+      // if (contentToSend === editingMessage.content.trim()) {
+      //   toast.error("No changes detected.");
+      //   setEditingMessage(null);
+      //   setMessageContent("");
+      //   messageInputRef.current?.focus();
+      //   return;
+      // }
+      // if (!contentToSend) {
+      //   toast.error("Edited message cannot be empty.");
+      //   return;
+      // }
       editPublicMessage(
         {
           messageId: editingMessage._id,
           newContent: contentToSend,
-        },
-        {
-          onSuccess: () => {
-            setEditingMessage(null);
-            setMessageContent("");
-            messageInputRef.current?.focus();
-          },
-          onError: (error) => {
-            toast.error(`Failed to edit message: ${error.message}`);
-          },
         }
+
+        // {
+        //   onSuccess: () => {
+        //     setEditingMessage(null);
+        //     setMessageContent("");
+        //     messageInputRef.current?.focus();
+        //   },
+        //   onError: (error) => {
+        //     toast.error(`Failed to edit message: ${error.message}`);
+        //   },
+        // }
       );
+      setEditingMessage(null);
+      setMessageContent("");
     } else {
       let imgBase64 = null;
       if (selectedFile) {

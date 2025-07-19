@@ -240,6 +240,7 @@ export const usePublicMessages = () => {
 // NEW/UPDATED HOOK: useSendPublicMessage
 export const useSendPublicMessage = () => {
   const queryClient = useQueryClient();
+  const { authUser } = useAuthUser(); // Get authUser here too for sender details
 
   const {
     mutate: sendPublicMessage,
@@ -248,33 +249,79 @@ export const useSendPublicMessage = () => {
     error,
     reset,
   } = useMutation({
+    // The actual API call is now the sole responsibility of mutationFn
     mutationFn: async (messageData) => {
+      sendPublicMessageApi(messageData);
+      // Send the actual message to the server
+      // const response = await sendPublicMessageApi(messageData);
+      // return response;
+    },
+
+    // This is where the optimistic update should happen
+    onMutate: async (messageData) => {
       // 1. Generate a temporary client-side ID for the optimistic update
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
 
-      // 2. Create the optimistic message object
+      // Cancel any outgoing refetches for the publicMessages query to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
+
+      // Snapshot the current messages data for potential rollback
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      // Create the optimistic message object
+      let populatedReplyTo = null;
+      if (messageData.replyTo) {
+        const allMessages = queryClient.getQueryData(["publicMessages"])?.pages.flat();
+        const repliedMessageInCache = allMessages?.find(
+          (msg) => msg._id === messageData.replyTo
+        );
+
+        if (repliedMessageInCache) {
+          populatedReplyTo = {
+            _id: repliedMessageInCache._id,
+            content: repliedMessageInCache.content,
+            img: repliedMessageInCache.img,
+            isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
+            sender: {
+              _id: repliedMessageInCache.sender?._id,
+              username: repliedMessageInCache.sender?.username || "Unknown User",
+            },
+          };
+        }
+      }
+
       const optimisticMessage = {
         _id: tempId, // Use the temporary ID
         content: messageData.content,
-        img: messageData.imgBase64, // Or just a flag if image is large
-        sender: queryClient.getQueryData(["authUser"]), // Get current user from cache
+        img: messageData.imgBase64,
+        sender: { // Provide a full sender object, matching your populated sender in the backend
+          _id: authUser._id,
+          username: authUser.username,
+          fullName: authUser.fullName,
+          profileImg: authUser.profileImg,
+          isAdmin: authUser.isAdmin,
+          isVerified: authUser.isVerified,
+          isBannedInPublicChat: authUser.isBannedInPublicChat,
+        },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         isOptimistic: true, // Mark it as an optimistic update
-        replyTo: messageData.replyTo, // Include replyTo ID
-        // Add any other fields that your server-side message typically has
+        replyTo: populatedReplyTo,
+        isDeletedByAdmin: false,
+        reactions: [],
       };
 
-      // 3. Optimistically update the cache BEFORE the API call
+      // Optimistically update the cache
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) {
           return { pages: [[optimisticMessage]], pageParams: [1] };
         }
         const updatedPages = [...oldData.pages];
+        // Add to the last page (most recent messages)
         if (updatedPages.length > 0) {
-          updatedPages[0] = [...updatedPages[0], optimisticMessage];
+          updatedPages[updatedPages.length - 1] = [...updatedPages[updatedPages.length - 1], optimisticMessage];
         } else {
-          updatedPages.push([optimisticMessage]);
+          updatedPages.push([optimisticMessage]); // If no pages exist, create the first one
         }
         return {
           ...oldData,
@@ -282,42 +329,56 @@ export const useSendPublicMessage = () => {
         };
       });
 
-      try {
-        // 4. Send the actual message to the server
-        const response = await sendPublicMessageApi(messageData);
-        return { ...response, tempId }; // Pass tempId back for reconciliation
-      } catch (e) {
-        // If API call fails, revert the optimistic update
+      // Return a context object with the previous data and the tempId for onError rollback
+      return { previousMessages, tempId };
+    },
+
+    // onSuccess is for when the server responds successfully
+    onSuccess: (serverMessage, variables, context) => {
+      // The socket listener `handleNewPublicMessage` is responsible for
+      // replacing the optimistic message with the server-returned message.
+      // This is generally the most robust approach in real-time apps.
+      // We don't need to explicitly update the cache here because the socket
+      // listener will do it authoritatively.
+
+      // If you weren't using sockets, you would do the replacement here:
+      /*
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((msg) =>
+            msg._id === context.tempId ? { ...serverMessage, isOptimistic: false } : msg
+          )
+        );
+        return { ...oldData, pages: updatedPages };
+      });
+      */
+    },
+
+    // onError is for when the API call fails
+    onError: (error, variables, context) => {
+      toast.error(error.message || "Failed to send message");
+      // Rollback the optimistic update
+      if (context?.previousMessages) {
+        queryClient.setQueryData(["publicMessages"], context.previousMessages);
+      } else {
+        // If previousMessages wasn't captured (e.g., initial state was empty),
+        // filter out the optimistic message directly.
         queryClient.setQueryData(["publicMessages"], (oldData) => {
           if (!oldData) return oldData;
           const updatedPages = oldData.pages.map((page) =>
-            page.filter((msg) => msg._id !== tempId)
+            page.filter((msg) => msg._id !== context.tempId)
           );
           return { ...oldData, pages: updatedPages };
         });
-        throw e; // Re-throw the error to be caught by onError
       }
     },
-    onSuccess: (serverMessage) => {
-      // The socket listener will handle adding the real message,
-      // but we still need to remove the optimistic one IF THE SOCKET DOESN'T HANDLE DEDUPLICATION
-      // or if the socket update comes *after* this success.
-      // For now, we'll let the socket handle adding and deduplicating.
-      // We *could* remove the optimistic message here, but it's safer to let the socket
-      // decide if it's new or replaces an optimistic one.
-      // For now, let's just make sure the `onSuccess` here doesn't re-add the message.
-      // The primary goal is for the `socket.on("newPublicMessage")` to be the source of truth
-      // for *new* messages, and `onSuccess` for optimistic feedback *only*.
-      // If the socket event is guaranteed to fire, you can leave `onSuccess` empty.
-      // If the socket event might be delayed or not fire for some reason,
-      // you'd add logic here to replace the optimistic message with the server message.
-      // The current setup means the optimistic update already added it,
-      // and the socket will add it again.
-      // To fix double add, remove the optimistic add from onSuccess,
-      // and adjust socket listener to handle replacement.
-    },
-    onError: (error) => {
-      toast.error(error.message || "Failed to send message");
+
+    // onSettled is always called, good for invalidating if needed
+    onSettled: (data, error, variables, context) => {
+      // No explicit invalidation needed if your socket event is reliable for new messages
+      // If the socket event is NOT reliable, then you might want to invalidate here:
+      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
     },
   });
 
@@ -582,62 +643,46 @@ export const useEditPublicMessage = () => {
     mutationFn: ({ messageId, newContent }) =>
       editPublicMessageApi(messageId, newContent),
     onMutate: async ({ messageId, newContent }) => {
-      // Cancel any outgoing refetches for the messages query
       await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
-
-      // Snapshot the current messages data
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
-      // Optimistically update the message in the cache
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        // --- MODIFICATION STARTS HERE ---
         if (!oldData || !oldData.pages) {
-          // If oldData or oldData.pages is undefined/null, return oldData as is.
-          // This prevents trying to map over a non-existent 'pages' array.
           return oldData;
         }
 
         const updatedPages = oldData.pages.map((page) => {
-          // Ensure page.messages exists before mapping
-          if (!page.messages) {
-            return page; // Return the page as is if messages array is missing
-          }
-          return {
-            ...page,
-            messages: page.messages.map((message) => {
-              if (message._id === messageId) {
-                return {
-                  ...message,
-                  content: newContent,
-                  isEdited: true,
-                  editedAt: new Date().toISOString(), // Use ISO string for consistency
-                };
-              }
-              return message;
-            }),
-          };
+          // Each 'page' is directly an array of messages
+          // Remove the `if (!page.messages)` check and `messages:` property in the return
+          return page.map((message) => {
+            // Directly map over 'page'
+            if (message._id === messageId) {
+              return {
+                ...message,
+                content: newContent,
+                isEdited: true,
+                editedAt: new Date().toISOString(),
+              };
+            }
+            return message;
+          });
         });
-        // --- MODIFICATION ENDS HERE ---
         return { ...oldData, pages: updatedPages };
       });
 
-      return { previousMessages }; // Return snapshot for potential rollback
+      return { previousMessages };
     },
     onSuccess: (data) => {
-      // toast.success("Message edited successfully!");
-      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // The socket listener handles the final authoritative update.
     },
     onError: (error, { messageId }, context) => {
       toast.error(error.message || "Failed to edit message.");
-      // Rollback to the previous messages if the mutation fails
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
     },
     onSettled: () => {
-      // No change needed here, as your `publicMessageEdited` socket event
-      // is designed to handle the authoritative update for all clients.
-      // If you weren't using sockets, you would likely invalidate here.
+      // Still no change needed here if socket listener is active
     },
   });
 };
