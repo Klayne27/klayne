@@ -71,23 +71,18 @@ export const usePublicMessages = () => {
     const handleNewPublicMessage = (newMessage) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          // If no old data, initialize with the new message in the first page
           return { pages: [[newMessage]], pageParams: [1] };
         }
 
-        // Get the current "latest" page (which is the first page in oldData.pages)
         const currentLatestPage = oldData.pages[0];
         let updatedLatestPage = [...currentLatestPage];
         let messageFoundAndReplaced = false;
 
-        // 1. Try to find and replace the optimistic message
         const existingOptimisticIndex = updatedLatestPage.findIndex(
           (msg) =>
             msg.isOptimistic &&
             msg.sender?._id === authUser._id &&
             msg.content === newMessage.content &&
-            // Note: If images are involved, ensure your optimistic image handling
-            // allows for a reliable comparison/replacement.
             !msg.img &&
             !newMessage.img
         );
@@ -95,62 +90,44 @@ export const usePublicMessages = () => {
         if (existingOptimisticIndex !== -1) {
           updatedLatestPage[existingOptimisticIndex] = {
             ...newMessage,
-            isOptimistic: false, // Mark as no longer optimistic
+            isOptimistic: false,
           };
           messageFoundAndReplaced = true;
         }
 
-        // 2. If it wasn't an optimistic message replacement, check for actual duplicates
-        // (This handles cases where the message is from another user, or current user
-        // without an optimistic placeholder, or if the replacement logic failed)
         const messageAlreadyExistsById = updatedLatestPage.some(
           (msg) => msg._id === newMessage._id
         );
 
         if (!messageFoundAndReplaced && !messageAlreadyExistsById) {
-          // Add the new message to the end of the latest page (chronological order)
           updatedLatestPage.push(newMessage);
         }
 
-        // 3. Enforce the 40 message limit for the *entire* chat view.
-        // This will discard older messages, effectively "snapping back" the view.
-        // Since `getPublicMessagesApi` gives us pages in chronological order (oldest to newest messages within a page)
-        // and the `pages` array is `[[newest page], [older page], ...]`,
-        // we need to combine and then take the last 40.
         let allCurrentMessages = [updatedLatestPage, ...oldData.pages.slice(1)].flat();
 
-        // Ensure no duplicates based on _id, in case multiple pages had the same message
-        // (less likely with good pagination, but good for robustness)
         const uniqueMessages = [];
         const seenIds = new Set();
         for (let i = allCurrentMessages.length - 1; i >= 0; i--) {
-          // Iterate backwards to prioritize newer messages
           const msg = allCurrentMessages[i];
           if (!seenIds.has(msg._id)) {
-            uniqueMessages.unshift(msg); // Add to beginning to keep chronological order
+            uniqueMessages.unshift(msg); 
             seenIds.add(msg._id);
           }
         }
         allCurrentMessages = uniqueMessages;
 
         if (allCurrentMessages.length > MESSAGE_LIMIT) {
-          // Keep only the latest MESSAGE_LIMIT messages
           allCurrentMessages = allCurrentMessages.slice(-MESSAGE_LIMIT);
         }
 
-        // Re-package into the 'pages' array structure.
-        // For simplicity, we can put all 40 messages into a single "page".
-        // If your display component specifically relies on `pages[0]` for recent,
-        // this might need adjustment, but for `flatMap` it'll work.
         const newPages = [allCurrentMessages];
 
-        // Reset pageParams since we're effectively resetting the fetched data
-        const newPageParams = [1]; // Only one page now, so next param would be 2 if infinite scroll was still active.
+        const newPageParams = [1]; 
 
         return {
           ...oldData,
           pages: newPages,
-          pageParams: newPageParams, // Reset pageParams to only fetch from page 1 again
+          pageParams: newPageParams,
         };
       });
     };
@@ -231,18 +208,11 @@ export const usePublicMessages = () => {
     };
 
     const handleUserBannedGlobal = ({ userId, username }) => {
-      // Other users need to react by filtering out messages from the banned user
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
     };
 
     const handleUserUnbannedGlobal = ({ userId, username }) => {
-      // When a user is unbanned, you can invalidate the query to refetch messages
-      // This will include any new messages from the unbanned user if they send them.
-      // If you want immediate re-appearance of *previous* messages from that user,
-      // you would need to store them client-side or have a more complex server-side
-      // mechanism to send only that user's past messages. For simplicity, refetching is best.
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // toast.info(`${username} has been unbanned from the public chat.`);
     };
 
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);

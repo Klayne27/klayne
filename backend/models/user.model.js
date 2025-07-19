@@ -95,6 +95,10 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    lastReadPublicChatTimestamp: {
+      type: Date,
+      default: null, // Set to null initially, meaning they haven't "read" it yet
+    },
   },
   { timestamps: true }
 );

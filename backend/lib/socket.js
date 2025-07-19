@@ -6,6 +6,7 @@ import Conversation from "../models/conversation.model.js";
 import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
+import PublicChatMessage from "../models/publicMessage.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -18,6 +19,7 @@ const allowedOrigins = [
 
 const userActiveChats = new Map();
 const typingUsersInConversation = new Map();
+export const activePublicChatUsers = new Set(); // userId
 
 const io = new Server(server, {
   cors: {
@@ -125,6 +127,52 @@ export async function emitUnreadMessageStatus(userId) {
   } catch (error) {
     console.error(
       `Unhandled error in emitUnreadMessageStatus for user ${userId}:`,
+      error
+    );
+  }
+}
+
+export async function emitUnreadPublicChatStatus(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+
+    // If the user is currently in the public chat, they should NOT see a red dot.
+    // Their status should always be 'false' as they are actively viewing.
+    if (activePublicChatUsers.has(userId)) {
+      recipientSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("unreadPublicChatStatus", { hasUnreadPublicChat: false });
+      });
+      return; // Crucially, stop here if the user is active in the chat
+    }
+
+    // Otherwise, calculate if they truly have unread messages
+    const latestPublicMessage = await PublicChatMessage.findOne()
+      .sort({ createdAt: -1 })
+      .lean();
+
+    const user = await User.findById(userIdObj)
+      .select("lastReadPublicChatTimestamp")
+      .lean();
+
+    let hasUnreadPublicChat = false;
+
+    if (latestPublicMessage && user) {
+      if (
+        (user.lastReadPublicChatTimestamp === null ||
+          latestPublicMessage.createdAt > user.lastReadPublicChatTimestamp) &&
+        latestPublicMessage.sender.toString() !== userId // Exclude sender from getting notification for their own message
+      ) {
+        hasUnreadPublicChat = true;
+      }
+    }
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("unreadPublicChatStatus", { hasUnreadPublicChat });
+    });
+  } catch (error) {
+    console.error(
+      `Unhandled error in emitUnreadPublicChatStatus for user ${userId}:`,
       error
     );
   }
@@ -277,6 +325,7 @@ io.on("connection", async (socket) => {
 
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
+    await emitUnreadPublicChatStatus(userId); // <--- CALL NEW FUNCTION HERE
   } else {
     socket.disconnect(true);
     return;
@@ -284,69 +333,84 @@ io.on("connection", async (socket) => {
 
   io.emit("getOnlineUsers", getOnlineUserIds());
 
-  // --- NEW: Handle direct 'joinPublicChat' event (if client explicitly sends it) ---
-  socket.on("joinPublicChat", async () => {
-    // Re-check ban status if user explicitly tries to join later
+  socket.on("userEnteredPublicChat", async () => {
+    if (!socket.userId) return; // Ensure userId is set
+
+    activePublicChatUsers.add(socket.userId);
+    console.log(`User ${socket.userId} entered public chat.`);
+
+    // Immediately mark public chat as read for this user
     try {
-      const user = await User.findById(socket.userId)
-        .select("isBannedInPublicChat")
+      const latestPublicMessage = await PublicChatMessage.findOne()
+        .sort({ createdAt: -1 })
         .lean();
-      if (user && user.isBannedInPublicChat) {
-        socket.isBannedInPublicChat = true;
-        socket.leave(PUBLIC_CHAT_ROOM); // Ensure they are not in the room
-        io.to(socket.id).emit("bannedFromPublicChat", {
-          isBanned: true,
-          // message: "You are currently banned from the public chat.",
-        });
+      if (latestPublicMessage) {
+        await User.findByIdAndUpdate(
+          socket.userId,
+          { $set: { lastReadPublicChatTimestamp: latestPublicMessage.createdAt } },
+          { new: true }
+        );
       } else {
-        socket.isBannedInPublicChat = false;
-        socket.join(PUBLIC_CHAT_ROOM);
-        io.to(socket.id).emit("bannedFromPublicChat", { isBanned: false });
+        // If no messages yet, just set to current time
+        await User.findByIdAndUpdate(
+          socket.userId,
+          { $set: { lastReadPublicChatTimestamp: new Date() } },
+          { new: true }
+        );
       }
-    } catch (err) {
-      console.error("Error handling joinPublicChat event:", err);
+      // After marking as read, emit false to ensure no red dot appears
+      emitUnreadPublicChatStatus(socket.userId);
+    } catch (error) {
+      console.error(
+        `Error marking public chat as read on "userEnteredPublicChat" for user ${socket.userId}:`,
+        error
+      );
     }
   });
 
-  // --- NEW: Listen for 'userBanned' and 'userUnbanned' events from admin actions ---
-  // These are meant for the *specific user being banned/unbanned* to update their status immediately.
-  // socket.on("userBanned", ({ userId, username }) => {
-  //   console.log(
-  //     `User ${userId} (${username}) was just banned and removed from public chat room.`
-  //   );
+  socket.on("userLeftPublicChat", () => {
+    if (!socket.userId) return; // Ensure userId is set
+    activePublicChatUsers.delete(socket.userId);
+    console.log(`User ${socket.userId} left public chat.`);
+    // When they leave, you might want to re-evaluate their unread status
+    // in case new messages arrived while they were on the page.
+    // The `sendPublicMessage` controller will do this for new messages,
+    // but if no new messages came, their status should reflect existing unread.
+    // This is less critical as `sendPublicMessage` handles new message notifications.
+    // However, if they just leave, and there were unread messages from before they entered,
+    // this would ensure the dot appears.
+    // For now, let's rely on `sendPublicMessage` to trigger this.
+  });
 
-  //   // This event name matches your controller emit
-  //   if (socket.userId === userId.toString()) {
-  //     socket.isBannedInPublicChat = true;
-  //     socket.leave(PUBLIC_CHAT_ROOM); // Immediately remove them from the room
-  //     io.to(socket.id).emit("bannedFromPublicChat", {
-  //       isBanned: true,
-  //       // message: `You have been banned from the public chat.`,
-  //     });
+  // socket.on("markPublicChatAsRead", async () => {
+  //   try {
+  //     const userId = socket.userId;
+  //     if (!userId) {
+  //       return;
+  //     }
+  //     // The logic here is redundant with 'userEnteredPublicChat'
+  //     // It's better to have one clear entry point for marking as read.
+  //     // If you MUST keep it, it should perform the same logic as above.
   //     console.log(
-  //       `User ${userId} (${username}) was just banned and removed from public chat room.`
+  //       `User ${userId} explicitly marked public chat as read (redundant event)`
   //     );
+  //     const latestPublicMessage = await PublicChatMessage.findOne()
+  //       .sort({ createdAt: -1 })
+  //       .lean();
+  //     if (latestPublicMessage) {
+  //       await User.findByIdAndUpdate(userId, {
+  //         lastReadPublicChatTimestamp: latestPublicMessage.createdAt,
+  //       });
+  //     } else {
+  //       await User.findByIdAndUpdate(userId, {
+  //         lastReadPublicChatTimestamp: new Date(),
+  //       });
+  //     }
+  //     await emitUnreadPublicChatStatus(userId);
+  //   } catch (error) {
+  //     console.error("Error marking public chat as read:", error);
   //   }
   // });
-
-  // socket.on("userUnbanned", ({ userId, username }) => {
-  //       console.log(
-  //         `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
-  //       );
-  //   // This event name matches your controller emit
-  //   if (socket.userId === userId.toString()) {
-  //     socket.isBannedInPublicChat = false;
-  //     socket.join(PUBLIC_CHAT_ROOM); // Allow them to rejoin the room
-  //     io.to(socket.id).emit("bannedFromPublicChat", {
-  //       isBanned: false,
-  //       // message: `You have been unbanned from the public chat.`,
-  //     });
-  //     console.log(
-  //       `User ${userId} (${username}) was just unbanned and allowed to join public chat room.`
-  //     );
-  //   }
-  // });
-  // --- END NEW ---
 
   socket.on("joinConversation", (conversationId) => {
     if (conversationId) {
@@ -543,6 +607,7 @@ io.on("connection", async (socket) => {
     if (disconnectedUserId && onlineUsersMap.has(disconnectedUserId)) {
       const userSockets = onlineUsersMap.get(disconnectedUserId);
       userSockets.delete(socket.id);
+      activePublicChatUsers.delete(disconnectedUserId);
 
       if (userSockets.size === 0) {
         onlineUsersMap.delete(disconnectedUserId);

@@ -11,6 +11,7 @@ export const useSocket = () => {
 };
 
 const BASE_URL = import.meta.env.MODE === "development" ? "http://localhost:5000" : "/";
+const PUBLIC_CHAT_ROUTE = "/public-chat";
 
 export const SocketContextProvider = ({ children }) => {
   const { authUser: user, isLoading: isLoadingAuthUser } = useAuthUser();
@@ -21,11 +22,13 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
+  const [hasUnreadPublicChat, setHasUnreadPublicChat] = useState(false);
 
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
 
   const location = useLocation();
+  const previousPathRef = useRef(location.pathname);
 
   const activeConversationIdRef = useRef(activeConversationId);
   useEffect(() => {
@@ -51,14 +54,14 @@ export const SocketContextProvider = ({ children }) => {
       socketRef.current = newSocket;
       setSocket(newSocket);
 
-      // --- Public Chat Socket Listeners ---
-      newSocket.on("newPublicMessage", (newMessage) => {});
+      // In SocketContextProvider.jsx
+      newSocket.on("newPublicMessage", (newMessage) => {
+        queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      });
 
-      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {});
-
-      newSocket.on("userBanned", ({ userId, username }) => {});
-
-      newSocket.on("userUnbanned", ({ userId, username }) => {});
+      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {
+        queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      });
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
@@ -72,18 +75,16 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadNotifications(hasUnreadNotifications);
       });
 
+
       newSocket.on("newPostAvailable", () => {
         setHasNewFeedPosts(true);
       });
 
       newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
-        // If the person who reacted is the current user, do nothing.
-        // The useMutation's onSuccess will handle the update.
         if (actorId === user._id) {
           return;
         }
 
-        // For everyone else, update the cache as before.
         queryClient.setQueryData(
           ["messages", updatedMessage.conversationId],
           (oldData) => {
@@ -107,10 +108,8 @@ export const SocketContextProvider = ({ children }) => {
           return { ...oldData, pages: updatedPages };
         });
 
-        // Update the conversation list to reflect the deleted message, e.g., if it was the last message
         queryClient.setQueryData(["conversations"], (oldConversationsData) => {
           if (!oldConversationsData) return undefined;
-
           const updatedConversations = oldConversationsData.map((conv) => {
             if (conv._id === conversationId) {
               return conv;
@@ -120,6 +119,10 @@ export const SocketContextProvider = ({ children }) => {
           return updatedConversations;
         });
       });
+
+       newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat }) => {
+          setHasUnreadPublicChat(hasUnreadPublicChat);
+        });
 
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
@@ -149,20 +152,32 @@ export const SocketContextProvider = ({ children }) => {
       setActiveConversationId(null);
       setHasUnreadNotifications(false);
       setHasNewFeedPosts(false);
+      setHasUnreadPublicChat(false); // Clear public chat unread status on logout
     }
   }, [user, isLoadingAuthUser, queryClient]);
 
   useEffect(() => {
-    if (socket && user) {
-      socket.emit("userActiveInChat", { conversationId: activeConversationId });
-    }
-  }, [socket, activeConversationId, user]);
+    // This existing useEffect updates `activeConversationIdRef` based on `activeConversationId` state.
+    // It's fine as is for private chats.
+  }, [activeConversationId]);
 
+  // ✅ This effect now correctly manages enter/leave events
   useEffect(() => {
-    if (socket && user) {
-      socket.emit("userActiveInChat", { conversationId: activeConversationId });
+    if (!socket || !user) return;
+
+    const currentPath = location.pathname;
+    const prevPath = previousPathRef.current; // When user ENTERS the public chat
+
+    if (currentPath === PUBLIC_CHAT_ROUTE && prevPath !== PUBLIC_CHAT_ROUTE) {
+      socket.emit("userEnteredPublicChat");
+      // The `setHasUnreadPublicChat(false)` line is REMOVED.
+    } // When user LEAVES the public chat
+    else if (currentPath !== PUBLIC_CHAT_ROUTE && prevPath === PUBLIC_CHAT_ROUTE) {
+      socket.emit("userLeftPublicChat");
     }
-  }, [socket, activeConversationId, user]);
+
+    previousPathRef.current = currentPath;
+  }, [socket, user, location.pathname]);
 
   return (
     <SocketContext.Provider
@@ -176,6 +191,8 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadNotifications,
         hasNewFeedPosts,
         setHasNewFeedPosts,
+        hasUnreadPublicChat,
+        setHasUnreadPublicChat,
       }}
     >
       {children}

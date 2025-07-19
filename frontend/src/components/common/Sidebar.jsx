@@ -28,6 +28,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     hasUnreadNotifications,
     hasNewFeedPosts,
     setHasNewFeedPosts,
+    hasUnreadPublicChat
   } = useSocket();
   const queryClient = useQueryClient();
   // const {username} = useParams()
@@ -124,7 +125,10 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
   useEffect(() => {
     const hasAnyNotification =
-      hasUnreadMessages || hasUnreadNotifications || hasNewFeedPosts;
+      hasUnreadMessages ||
+      hasUnreadNotifications ||
+      hasNewFeedPosts ||
+      hasUnreadPublicChat;
 
     if (hasAnyNotification) {
       document.title = `(New) ${originalTitle.current}`;
@@ -201,7 +205,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         faviconLink.href = originalFaviconHref.current;
       }
     };
-  }, [hasUnreadMessages, hasUnreadNotifications, hasNewFeedPosts]);
+  }, [hasUnreadMessages, hasUnreadNotifications, hasNewFeedPosts, hasUnreadPublicChat]);
 
   const handleMobileSearchClick = () => {
     navigate("/search");
@@ -339,8 +343,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     }
   };
 
-  // Modified useEffect for scroll behavior
-  // Modified useEffect for scroll behavior and visibility
   useEffect(() => {
     const handleScroll = () => {
       // This is generally for hiding on scroll down on certain pages
@@ -388,6 +390,13 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
+  
+
+  const handlePublicChatClick = () => {
+    navigate("/public-chat");
+
+  };
+
   if (!shouldRenderMobileSidebar) {
     return null;
   }
@@ -426,9 +435,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[115px] p-1 md:p-0"
           >
-            <Link
-              to="/"
-              onClick={handleHomeClick}
+            <button
               className={`relative flex items-center rounded-full py-2 px-2 pl-[9px] pr-[7px] max-w-fit cursor-pointer
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
@@ -453,7 +460,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
+            </button>
             <span
               className={`text-lg hidden md:block ${
                 pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
@@ -472,8 +479,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             onClick={() => navigate("/messages")}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
           >
-            <Link
-              to="/messages"
+            <button
               className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
@@ -500,14 +506,13 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
+            </button>
             <span
               className={`text-lg hidden md:block ${
                 pathname.startsWith("/messages")
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
               }`}
-              onClick={() => navigate("/messages")}
             >
               Messages
             </span>
@@ -518,8 +523,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             onClick={() => navigate("/notifications")}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[168px] p-1 md:p-0"
           >
-            <Link
-              to="/notifications"
+            <button
               className={`flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
@@ -546,14 +550,13 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
-            </Link>
+            </button>
             <span
               className={`text-lg hidden md:block ${
                 pathname === "/notifications"
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
               }`}
-              onClick={() => navigate("/notifications")}
             >
               Notifications
             </span>
@@ -561,46 +564,42 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
           {/* Public Chat - Visible on mobile, replaces Bookmarks */}
           <li
-            onClick={() => navigate("/public-chat")}
-            className="flex hidden justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            onClick={handlePublicChatClick}
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
           >
-            <Link
-              to="/public-chat"
-              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
-              transition duration-200
-              ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
-              ${
-                isTouchDevice && activeButton === "public-chat"
-                  ? "bg-secondary bg-opacity-80"
-                  : ""
-              }`}
+            <button
+              className={`flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
+                transition duration-200
+                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
+                ${
+                  isTouchDevice && activeButton === "public-chat"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
               onTouchStart={() => handleTouchStart("public-chat")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
               <IoChatbubbleEllipsesOutline
                 className={`size-6 ${
-                  pathname.startsWith("/public-chat")
+                  pathname === "/public-chat" // Adjust based on your actual public chat route
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
                 }`}
-                strokeWidth={10}
+                strokeWidth={pathname === "/public-chat" ? 2 : 1}
               />
-              {/* If you add unread status for public chat, put a notification dot here */}
-              {/* {hasUnreadPublicChatMessages && (
-            <div
-              className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
-              style={{ transform: "translate(50%, -50%)" }}
-            ></div>
-          )} */}
-            </Link>
+              {/* Red dot for new public chat messages */}
+              {hasUnreadPublicChat && (
+                <div
+                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  style={{ transform: "translate(50%, -50%)" }}
+                ></div>
+              )}
+            </button>
             <span
               className={`text-lg hidden md:block ${
-                pathname.startsWith("/public-chat")
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
+                pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
-              onClick={() => navigate("/public-chat")}
             >
               Public Chat
             </span>
@@ -642,8 +641,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
             onClick={handleBookmarksClick}
           >
-            <Link
-              to="/bookmarks"
+            <button
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
               } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
@@ -662,7 +660,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 className="size-6"
                 strokeWidth={pathname === "/bookmarks" ? 2 : 1}
               />
-            </Link>
+            </button>
             <span
               className={`text-lg hidden md:block ${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
@@ -677,8 +675,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[120px] md:p-0"
             onClick={() => navigate("/themes")}
           >
-            <Link
-              to="/themes"
+            <button
               className={`${
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
               } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
@@ -697,7 +694,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 className="size-6"
                 strokeWidth={pathname === "/themes" ? 2.5 : 2}
               />
-            </Link>
+            </button>
             <span
               className={`text-lg ${
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
@@ -737,8 +734,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             onClick={() => navigate(`/profile/${authUser?.username}`)}
             className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[110px] p-1 md:p-0"
           >
-            <Link
-              to={`/profile/${authUser?.username}`}
+            <button
               className={`hidden md:block ${
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
@@ -757,9 +753,8 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                 className="size-7"
                 strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
               />
-            </Link>
+            </button>
             <span
-              onClick={() => navigate(`/profile/${authUser?.username}`)}
               className={`text-lg hidden md:block ${
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"

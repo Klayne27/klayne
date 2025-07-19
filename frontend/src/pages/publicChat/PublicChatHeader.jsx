@@ -15,12 +15,12 @@ const PublicChatHeader = () => {
   const navigate = useNavigate()
 
   return (
-    <div className="fixed w-full md:w-[1015px] top-0 z-10 bg-black px-4 py-3 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
+    <div className="fixed w-full md:w-[1015px] top-0 z-[1000] bg-black px-4 py-3 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
       <div className="flex items-center gap-3">
         <div className="avatar">
           <button
             onClick={() => navigate(-1)}
-            className="hover:bg-gray-800 rounded-full block md:hidden p-2.5 transition duration-200"
+            className="hover:bg-gray-800 block md:hidden rounded-full mr-2 p-2.5 transition duration-200 flex-shrink-0"
           >
             <FaArrowLeft className="w-4 h-4" />
           </button>
@@ -29,7 +29,7 @@ const PublicChatHeader = () => {
           </div>
         </div>
         <div>
-          <h2 className="text-lg font-bold">Public Chat</h2>
+          <h2 className="font-bold text-xl flex-1 truncate">Public Chat</h2>
         </div>
       </div>
     </div>
@@ -37,3 +37,14 @@ const PublicChatHeader = () => {
 };
 
 export default PublicChatHeader;
+
+      // <div className="flex items-center gap-2 md:gap-4 px-2.5 md:px-3.5 md:py-1.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+      //   <button
+      //     onClick={handleBack}
+      //     className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
+      //   >
+      //     {" "}
+      //     <FaArrowLeft />
+      //   </button>
+      //   <h1 className="font-bold text-xl flex-1 truncate">Search</h1>
+      // </div>;

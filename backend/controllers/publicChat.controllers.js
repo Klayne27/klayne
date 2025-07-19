@@ -1,4 +1,4 @@
-import { getReceiverSocketIds, io, PUBLIC_CHAT_ROOM } from "../lib/socket.js";
+import { activePublicChatUsers, emitUnreadPublicChatStatus, getReceiverSocketIds, io, onlineUsersMap, PUBLIC_CHAT_ROOM } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
@@ -17,17 +17,14 @@ const isBanned = async (userId) => {
 
 export const sendPublicMessage = async (req, res) => {
   try {
-    // Now expecting 'replyTo' in addition to 'content' and 'imgBase64'
     const { content, imgBase64, replyTo } = req.body;
     const senderId = req.user._id;
-    let img = null; // Initialize img to null
+    let img = null;
 
-    // Check if the sender is banned from public chat
     if (await isBanned(senderId)) {
       return res.status(403).json({ error: "You are banned from the public chat." });
     }
 
-    // Handle image upload if imgBase64 is provided
     if (imgBase64) {
       const uploadResponse = await cloudinary.uploader.upload(imgBase64, {
         folder: "public-chat-images",
@@ -35,50 +32,65 @@ export const sendPublicMessage = async (req, res) => {
       img = uploadResponse.secure_url;
     }
 
-    // Ensure at least content or an image is provided
     if (!content && !img) {
       return res.status(400).json({ error: "Message content or image is required." });
     }
 
     let newMessageData = {
       sender: senderId,
-      content: content || "", // Ensure content is an empty string if not provided
-      img: img, // Will be null if no imageBase64 was sent
+      content: content || "",
+      img: img,
     };
 
-    // If 'replyTo' message ID is provided, validate it
     if (replyTo) {
       const repliedMessage = await PublicChatMessage.findById(replyTo);
       if (!repliedMessage) {
         return res.status(404).json({ error: "Message being replied to not found." });
       }
-      newMessageData.replyTo = replyTo; // Add the replyTo ID to the message data
+      newMessageData.replyTo = replyTo;
     }
 
     const newPublicMessage = new PublicChatMessage(newMessageData);
     await newPublicMessage.save();
 
-    // Populate sender and replyTo details for the real-time broadcast via Socket.io
-    // This ensures clients receive full data for display immediately
     await newPublicMessage.populate([
       {
         path: "sender",
         select: "username fullName profileImg isAdmin",
       },
       {
-        path: "replyTo", // Populate the replied-to message
-        select: "sender content img isDeletedByAdmin", // Select relevant fields for the preview
+        path: "replyTo",
+        select: "sender content img isDeletedByAdmin",
         populate: {
-          path: "sender", // Populate the sender of the replied-to message
-          select: "username isBannedInPublicChat", // Select their username and ban status
+          path: "sender",
+          select: "username isBannedInPublicChat",
         },
       },
     ]);
 
     // Emit the new message to all connected clients in the public chat room
-    io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
+       io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
 
-    res.status(201).json(newPublicMessage);
+       await User.findByIdAndUpdate(senderId, {
+         lastReadPublicChatTimestamp: newPublicMessage.createdAt,
+       });
+
+       // --- REVISED LOGIC START ---
+       const allOnlineUserIds = Array.from(onlineUsersMap.keys());
+
+       // Filter out the sender and users who are actively in the public chat
+       const usersToNotify = allOnlineUserIds.filter(
+         (userId) =>
+           userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId)
+       );
+
+       // Emit status only to relevant users
+       for (const userId of usersToNotify) {
+         await emitUnreadPublicChatStatus(userId);
+       }
+       // --- REVISED LOGIC END ---
+
+       res.status(201).json(newPublicMessage);
   } catch (error) {
     console.error("Error in sendPublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });

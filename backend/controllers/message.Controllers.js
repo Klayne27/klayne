@@ -170,13 +170,6 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // const senderSocketIds = getReceiverSocketIds(senderId.toString());
-    // if (senderSocketIds.length > 0) {
-    //   senderSocketIds.forEach((socketId) => {
-    //     io.to(socketId).emit("newMessage", messageToSend);
-    //   });
-    // }
-
     await emitUnreadMessageStatus(recipientId.toString());
     await emitUnreadMessageStatus(senderId.toString());
 
