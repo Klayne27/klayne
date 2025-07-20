@@ -292,7 +292,7 @@ const PublicChatMessage = ({
 
       {/* Message Content and other elements */}
       <div
-        className={`relative flex gap-2 items-end ${
+        className={`relative flex gap-2 items-start ${
           fromMe ? "ml-28 flex-row-reverse" : "mr-28 flex-row"
         } `}
       >
@@ -303,7 +303,7 @@ const PublicChatMessage = ({
               <img
                 alt="User Avatar"
                 src={message.sender.profileImg || "/avatar-placeholder.png"}
-                className="size-9 rounded-full object-cover mb-1" // mb-5 to push the avatar down for non-first messages
+                className="size-9 rounded-full object-cover mt-9" // mb-5 to push the avatar down for non-first messages
               />
             </Link>
           </div>
@@ -312,8 +312,10 @@ const PublicChatMessage = ({
         {/* Spacer for non-first messages to align with avatar */}
         {!fromMe && !isFirstInGroup && <div className="w-9 flex-shrink-0" />}
 
-        {shouldShowTimeOnHover && !fromMe && !isFirstInGroup &&  (
-          <div className={`absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap`}>
+        {shouldShowTimeOnHover && !fromMe && !isFirstInGroup && (
+          <div
+            className={`absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap`}
+          >
             {formatTime(message.createdAt)}
           </div>
         )}
@@ -365,11 +367,7 @@ const PublicChatMessage = ({
             </div>
           )}
           {message.isEdited && message.content && (
-            <span
-              className={`text-xs ml-1 italic text-gray-500`}
-            >
-              (Edited)
-            </span>
+            <span className={`text-xs ml-1 italic text-gray-500`}>(Edited)</span>
           )}
           {/* Chat Bubble Container - Now uses the `bubbleClasses` prop */}
           <div
@@ -424,9 +422,10 @@ const PublicChatMessage = ({
                     className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                   />
                 )}
-                {message.replyTo.isDeletedByAdmin || message.replyTo.isDeletedByUser && (
-                  <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
-                )}
+                {message.replyTo.isDeletedByAdmin ||
+                  (message.replyTo.isDeletedByUser && (
+                    <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
+                  ))}
               </div>
             )}
             {message.isDeletedByAdmin || message.isDeletedByUser || isSenderBanned ? (
@@ -453,6 +452,7 @@ const PublicChatMessage = ({
           </div>
 
           {/* Grouped Reactions Display */}
+
           {Object.keys(groupedReactions || {}).length > 0 && (
             <div
               className={`flex gap-1 items-center pt-0.5 rounded-full text-xs font-semibold
@@ -490,7 +490,6 @@ const PublicChatMessage = ({
               })}
             </div>
           )}
-
           {/* Timestamp below the bubble - Only show if it's the last message in a group */}
           {/* {isLastInGroup && (
 
