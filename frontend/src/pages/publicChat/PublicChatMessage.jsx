@@ -14,7 +14,9 @@ import {
 import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
+import { formatDate } from "date-fns";
 
+// --- PublicChatMessage Component ---
 const PublicChatMessage = ({
   message,
   authUser,
@@ -27,20 +29,25 @@ const PublicChatMessage = ({
   handleMouseLeave,
   handleMessageTap,
   handleReactionClick,
-  onReply, // NEW: Prop for handling reply click
+  onReply,
   onEdit,
   onJumpToMessage,
   setEditingMessage,
   setReplyingToMessage,
+  // NEW: Grouping props
+  isFirstInGroup,
+  isLastInGroup,
+  bubbleClasses, // Receive pre-calculated classes
 }) => {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
     useDeletePublicMessage();
+  const [isHovered, setIsHovered] = useState(false);
 
   const fromMe = message.sender._id === authUser._id;
 
-  const myBubbleBgColor = "bg-primary";
-  const othersBubbleBgColor = "bg-gray-700";
+  const myBubbleBgColor = "bg-primary"; // These are now likely covered by `bubbleClasses` but good to keep for clarity if needed elsewhere
+  const othersBubbleBgColor = "bg-[#2F3336]"; // Same as above
 
   const textColor = "text-white";
   const linkColor = fromMe ? "text-blue-200" : "text-blue-400";
@@ -50,25 +57,20 @@ const PublicChatMessage = ({
   const isSenderBanned = message.sender.isBannedInPublicChat;
   const isMessageDeleted = message.isDeletedByAdmin;
   const isSenderVerified = message.sender.isVerified;
-  const isMessageEdited = message.isEdited; // NEW: Check if message is edited
+  const isMessageEdited = message.isEdited;
 
-  const bubbleRounding = fromMe
-    ? "rounded-3xl rounded-br-[4px]"
-    : "rounded-3xl rounded-bl-[4px]";
+  // `bubbleRounding` is now replaced by `bubbleClasses` passed from parent
 
   const showModal = activeMessageModalId === message._id;
   const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+
+  const shouldShowTimeOnHover = isHovered || showModal;
 
   const messageHighlightClass = isCurrentlyTouchDevice
     ? showModal
       ? "active-highlight"
       : ""
-    : "hover:bg-secondary";
-
-  // Helper to truncate text for reply preview
-
-  // Utility to render clickable text (assuming it's a shared utility)
-  // For now, it just returns the text as is.
+    : "hover:bg-secondary"; // This hover class needs adjustment or removal if you want the whole row to highlight
 
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
@@ -91,7 +93,7 @@ const PublicChatMessage = ({
         _id: reactorId,
         username: reactorUsername,
         profileImg: reactorProfileImg,
-        fullName: reaction?.userId?.fullName, // <--- Add fullName here for consistency
+        fullName: reaction?.userId?.fullName,
       });
       acc[reaction.emoji].userIds.push(reactorId);
     }
@@ -121,22 +123,18 @@ const PublicChatMessage = ({
     }
   };
 
-  // NEW: Handler for reply button
   const handleReplyClick = (e) => {
     e.stopPropagation();
-    // Call the onReply prop, passing the full message object being replied to
     onReply(message);
     setEditingMessage(null);
   };
 
-  // NEW: Handler for edit button
   const handleEditClick = (e) => {
     e.stopPropagation();
-    onEdit(message); // Call the onEdit prop, passing the full message object
+    onEdit(message);
     setReplyingToMessage(null);
   };
 
-  // NEW: Handler for clicking the "Replying to" div
   const handleReplyingToClick = (e) => {
     e.stopPropagation();
     if (message.replyTo && message.replyTo._id) {
@@ -144,15 +142,38 @@ const PublicChatMessage = ({
     }
   };
 
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString([], {
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+  };
+
+  // Helper for formatting date (e.g., "July 19, 2025")
+  const formatDate = (dateString) => {
+    return new Date(dateString).toLocaleDateString([], {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+  };
+
   return (
     <div
       key={message._id}
       id={`message-${message._id}`}
-      className={`relative mb-4 p-1 rounded-lg hover:bg-secondary ${
+      className={`relative mb-0 p-[1px] rounded-lg ${messageHighlightClass} ${
         fromMe ? "justify-end" : "justify-start"
       }`}
-      onMouseEnter={() => handleMouseEnter(message._id)}
-      onMouseLeave={handleMouseLeave}
+      onMouseEnter={() => {
+        handleMouseEnter(message._id);
+        setIsHovered(true); // Set hover state to true
+      }}
+      onMouseLeave={() => {
+        handleMouseLeave();
+        setIsHovered(false); // Set hover state to false
+      }}
       onClick={(e) => {
         const modalElement = document.getElementById(
           `message-reaction-modal-${message._id}`
@@ -168,6 +189,11 @@ const PublicChatMessage = ({
         handleMessageTap(message._id);
       }}
     >
+      {shouldShowTimeOnHover && fromMe && (
+        <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
+          {formatTime(message.createdAt)}
+        </div>
+      )}
       {/* Reaction Picker and Action Modal (absolute positioned) */}
       <div
         id={`message-reaction-modal-${message._id}`}
@@ -183,8 +209,6 @@ const PublicChatMessage = ({
                           : "opacity-0 pointer-events-none"
                       } `}
       >
-        {/* Reply Button */}
-
         {/* Emojis */}
         {allowedEmojis.map((emoji) => (
           <button
@@ -200,7 +224,7 @@ const PublicChatMessage = ({
           </button>
         ))}
         <button
-          onClick={handleReplyClick} // New handler
+          onClick={handleReplyClick}
           className="p-1 text-blue-400 hover:text-blue-500 hover:scale-125 transition duration-100"
           title="Reply to message"
         >
@@ -246,7 +270,6 @@ const PublicChatMessage = ({
             {isSenderBanned ? (
               <button
                 onClick={handleAdminUnbanClick}
-                // You'll need a loading state for ban/unban in the parent if you want to disable
                 disabled={false}
                 className="p-1 text-green-400 hover:text-green-500 hover:scale-125 transition duration-100"
                 title={`Unban ${message.sender.username} (Admin)`}
@@ -256,7 +279,6 @@ const PublicChatMessage = ({
             ) : (
               <button
                 onClick={handleAdminBanClick}
-                // You'll need a loading state for ban/unban in the parent if you want to disable
                 disabled={false}
                 className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
                 title={`Ban ${message.sender.username} (Admin)`}
@@ -274,16 +296,25 @@ const PublicChatMessage = ({
           fromMe ? "ml-28 flex-row-reverse" : "mr-28 flex-row"
         } `}
       >
-        {/* Avatar */}
-        {!fromMe && (
+        {/* Avatar - Only show if it's the first message in a group and not from current user */}
+        {!fromMe && isFirstInGroup && (
           <div className="flex-shrink-0">
             <Link to={`/profile/${message.sender.username}`}>
               <img
                 alt="User Avatar"
                 src={message.sender.profileImg || "/avatar-placeholder.png"}
-                className="w-10 h-10 rounded-full object-cover mb-5"
+                className="size-9 rounded-full object-cover mb-1" // mb-5 to push the avatar down for non-first messages
               />
             </Link>
+          </div>
+        )}
+
+        {/* Spacer for non-first messages to align with avatar */}
+        {!fromMe && !isFirstInGroup && <div className="w-9 flex-shrink-0" />}
+
+        {shouldShowTimeOnHover && !fromMe && !isFirstInGroup &&  (
+          <div className={`absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap`}>
+            {formatTime(message.createdAt)}
           </div>
         )}
 
@@ -293,66 +324,77 @@ const PublicChatMessage = ({
             fromMe ? "items-end" : "items-start"
           } flex-grow min-w-0`}
         >
-          {/* Header (Username, Admin/Banned badges) */}
-          {!fromMe && (
-            <div className="flex items-center text-sm mb-1">
-              <Link
-                to={`/profile/${message.sender.username}`}
-                className={`font-semibold ${linkColor} mr-1`}
+          {/* Header (Username, Admin/Banned badges) - Only show if it's the first message in a group and not from current user */}
+          {!fromMe && isFirstInGroup && (
+            <div>
+              <span
+                className={`text-xs flex text-gray-500 ${
+                  fromMe ? "justify-self-end" : "self-start"
+                }`}
               >
-                {message.sender.username}
-              </Link>
-              {isSenderVerified && <img src="/verified.png" className="size-[17px]" />}
+                {formatDate(message.createdAt)} at {formatTime(message.createdAt)}
+              </span>
+              <div className="flex items-center text-sm ">
+                <Link
+                  to={`/profile/${message.sender.username}`}
+                  className={`font-semibold ${linkColor} mr-1`}
+                >
+                  {message.sender.username}
+                </Link>
+                {isSenderVerified && <img src="/verified.png" className="size-[17px]" />}
 
-              {isSenderAdmin && (
-                <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
-                  Admin
-                </span>
-              )}
-              {isSenderBanned && (
-                <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-white">
-                  Banned
-                </span>
-              )}
+                {isSenderAdmin && (
+                  <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
+                    Admin
+                  </span>
+                )}
+                {isSenderBanned && (
+                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-white">
+                    Banned
+                  </span>
+                )}
+              </div>
             </div>
           )}
 
-          <div className={`flex ${fromMe ? "justify-self-end" : "justify-self-start"}`}>
-            {isMessageEdited && ( // Only show if it's a text message and it's marked as edited
-              <span className="text-xs italic text-gray-500 mb-1 mr-3 ml-2">
-                (Edited)
+          {fromMe && isFirstInGroup && (
+            <div className="flex justify-end items-center gap-2 mr-1">
+              <span className="text-xs text-gray-500">
+                {formatDate(message.createdAt)} at {formatTime(message.createdAt)}
               </span>
-            )}
-          </div>
-
-          {/* NEW: Replied Message Display */}
-
-          {/* Chat Bubble Container */}
+            </div>
+          )}
+          {message.isEdited && message.content && (
+            <span
+              className={`text-xs ml-1 italic text-gray-500`}
+            >
+              (Edited)
+            </span>
+          )}
+          {/* Chat Bubble Container - Now uses the `bubbleClasses` prop */}
           <div
             className={`
-                                  p-3
-                                  ${fromMe ? myBubbleBgColor : othersBubbleBgColor}
-                                  ${textColor}
-                                  ${bubbleRounding}
-                                  flex flex-col
-                                  w-fit
-                                  max-w-full
-                                  overflow-hidden
-                              `}
+                            p-3
+                            ${bubbleClasses}
+                            flex flex-col
+                            w-fit
+                            max-w-full
+                            overflow-hidden
+                        `}
           >
             {message.replyTo && (
               <div
                 className={`
-                              mb-2 p-2 rounded-md text-xs border
-                              ${
-                                fromMe
-                                  ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
-                                  : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
-                              }
-                              flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
-                              hover:border-blue-400 hover:bg-opacity-40
-                              `}
-                onClick={handleReplyingToClick} // ADD THIS onClick HANDLER
+                                mb-2 p-2 rounded-md text-xs border
+                                ${
+                                  fromMe
+                                    ? "border-gray-600 bg-blue-300 bg-opacity-30 border-l-4"
+                                    : "border-blue-300 bg-gray-950 bg-opacity-30 border-r-4"
+                                }
+                                flex flex-col cursor-pointer transition-colors duration-200 ease-in-out
+                                hover:border-blue-400 hover:bg-opacity-40
+                                `}
+                onClick={handleReplyingToClick}
               >
                 <span
                   className={`font-bold ${fromMe ? "text-gray-600" : "text-gray-300"}`}
@@ -382,7 +424,6 @@ const PublicChatMessage = ({
                     className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                   />
                 )}
-                {/* Optional: Indicate if replied message was deleted */}
                 {message.replyTo.isDeletedByAdmin && (
                   <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
                 )}
@@ -414,9 +455,9 @@ const PublicChatMessage = ({
           {/* Grouped Reactions Display */}
           {Object.keys(groupedReactions || {}).length > 0 && (
             <div
-              className={`flex gap-1 items-center py-1 rounded-full text-xs font-semibold
-                                    ${fromMe ? "self-end" : "self-start"}
-                                    `}
+              className={`flex gap-1 items-center pt-0.5 rounded-full text-xs font-semibold
+                                ${fromMe ? "self-end" : "self-start"}
+                                `}
             >
               {Object.entries(groupedReactions).map(([emoji, data]) => {
                 const hasCurrentUserReactedToThisEmoji = data.userIds.some(
@@ -431,11 +472,11 @@ const PublicChatMessage = ({
                   <div
                     key={emoji}
                     className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 transition-colors duration-200
-                                            ${
-                                              hasCurrentUserReactedToThisEmoji
-                                                ? "bg-violet-600/30 border-violet-600 border"
-                                                : "bg-gray-800 border border-gray-800"
-                                            }`}
+                                                ${
+                                                  hasCurrentUserReactedToThisEmoji
+                                                    ? "bg-violet-600/30 border-violet-600 border"
+                                                    : "bg-gray-800 border border-gray-800"
+                                                }`}
                     title={reactionUsersTitle ? `Reacted by: ${reactionUsersTitle}` : ""}
                     onClick={(e) => {
                       e.stopPropagation();
@@ -450,20 +491,10 @@ const PublicChatMessage = ({
             </div>
           )}
 
-          {/* Timestamp below the bubble */}
-          <span
-            className={`text-xs mt-1 flex text-gray-500 ${
-              fromMe ? "justify-self-end" : "self-start"
-            }`}
-          >
-            {new Date(message.createdAt).toLocaleTimeString([], {
-              hour: "2-digit",
-              minute: "2-digit",
-              day: "numeric",
-              month: "long",
-              year: "numeric",
-            })}
-          </span>
+          {/* Timestamp below the bubble - Only show if it's the last message in a group */}
+          {/* {isLastInGroup && (
+
+          )} */}
         </div>
       </div>
     </div>

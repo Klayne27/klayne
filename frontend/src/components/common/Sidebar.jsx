@@ -474,7 +474,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
-          {/* Messages */}
           <li
             onClick={() => navigate("/messages")}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
@@ -518,7 +517,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
-          {/* Notifications */}
           <li
             onClick={() => navigate("/notifications")}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[168px] p-1 md:p-0"
@@ -562,10 +560,9 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             </span>
           </li>
 
-          {/* Public Chat - Visible on mobile, replaces Bookmarks */}
           <li
             onClick={handlePublicChatClick}
-            className="flex hidden justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
           >
             <button
               className={`flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative

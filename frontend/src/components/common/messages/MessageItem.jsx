@@ -100,7 +100,7 @@ const MessageItem = ({
     return new Date(dateString).toLocaleTimeString([], {
       hour: "2-digit",
       minute: "2-digit",
-      hour12: false
+      hour12: false,
     });
   };
 
@@ -146,8 +146,8 @@ const MessageItem = ({
     <div
       key={msg._id}
       id={`message-${msg._id}`}
-      className={`rounded-lg relative message-item-container hover:bg-secondary ${
-        showHeaderInfo ? "mt-4" : "mt-0.5" // Adjust margin for visual grouping
+      className={`rounded-lg py-[1px] relative message-item-container hover:bg-secondary ${
+        showHeaderInfo ? "mt-4" : "" // Adjust margin for visual grouping
       }`}
       onMouseEnter={() => {
         handleMouseEnter(msg._id);
@@ -235,7 +235,7 @@ const MessageItem = ({
 
       {/* Header Info (Profile Img and Date for other users, only Date for current user) */}
       {showHeaderInfo && !isSentByCurrentUser && (
-        <div className="flex items-center gap-2 mb-2">
+        <div className="flex items-center gap-2 mb-0.5">
           {/* Removed senderUsername display */}
           <span className="text-xs text-gray-500 ml-10">
             {formatDate(msg.createdAt)} at {formatTime(msg.createdAt)}
@@ -243,13 +243,23 @@ const MessageItem = ({
         </div>
       )}
       {showHeaderInfo && isSentByCurrentUser && (
-        <div className="flex justify-end items-center gap-2 mb-2 mr-5">
+        <div className="flex justify-end items-center gap-2 mb-0.5 mr-5">
           <span className="text-xs text-gray-500">
             {formatDate(msg.createdAt)} at {formatTime(msg.createdAt)}
           </span>
         </div>
       )}
+      {msg.isEdited && msg.text && !isSentByCurrentUser && (
+        <div className="flex">
+          <span className={`text-xs italic text-gray-500 ml-10`}>(Edited)</span>
+        </div>
+      )}
 
+      {msg.isEdited && msg.text && isSentByCurrentUser && (
+        <div className="flex justify-self-end">
+          <span className={`text-xs italic text-gray-500 mr-5`}>(Edited)</span>
+        </div>
+      )}
       <div
         className={`flex whitespace-pre-wrap ${
           isSentByCurrentUser ? "justify-end" : "justify-start"
@@ -259,7 +269,7 @@ const MessageItem = ({
           <img
             src={senderProfileImg}
             alt={`${senderUsername}'s profile`}
-            className="w-8 h-8 rounded-full object-cover mr-2 mt-0.5 cursor-pointer"
+            className="size-8 rounded-full object-cover mr-2 mt-0.5 cursor-pointer"
             onClick={() => navigate(`/profile/${senderUsername}`)}
           />
         )}
@@ -276,7 +286,6 @@ const MessageItem = ({
             {formatTime(msg.createdAt)}
           </div>
         )}
-
         <div className={`flex flex-col max-w-[70%] p-3 relative ${bubbleClasses}`}>
           {msg.repliedTo && (
             <div
@@ -338,9 +347,6 @@ const MessageItem = ({
               {renderClickableText(msg.text, isSentByCurrentUser)}
             </p>
           )}
-          {msg.isEdited && msg.text && (
-            <span className="text-xs italic text-gray-500 mt-1 self-end">(Edited)</span>
-          )}
         </div>
         {isSentByCurrentUser && msg.seen && (
           <span className={`self-end ml-1 text-primary`}>
@@ -355,7 +361,7 @@ const MessageItem = ({
       </div>
       {Object.keys(groupedReactions || {}).length > 0 && (
         <div
-          className={`flex gap-1 -bottom-3 items-center py-1 rounded-full text-xs font-semibold
+          className={`flex gap-1 -bottom-3 items-center pt-0.5 ml-10 mr-5 rounded-full text-xs font-semibold
                                 ${
                                   isSentByCurrentUser
                                     ? "justify-self-end"

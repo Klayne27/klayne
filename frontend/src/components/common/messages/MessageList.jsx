@@ -5,6 +5,9 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 
 import MessageItem from "./MessageItem";
 
+const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
+
+
 const isTouchDevice = () => {
   if (typeof window === "undefined") return false;
   return (
@@ -168,10 +171,9 @@ const MessageList = forwardRef(function MessageList(
     };
   }, [activeMessageModalId, handleClickOutsideMessage]);
 
-  // --- NEW LOGIC FOR GROUPING MESSAGES AND DISPLAYING DATE ONCE & ROUNDED CORNERS ---
   const enhancedMessagesToRender = messagesToRender.map((msg, index) => {
     const previousMessage = messagesToRender[index - 1];
-    const nextMessage = messagesToRender[index + 1]; // Get the next message
+    const nextMessage = messagesToRender[index + 1];
 
     // Helper to get sender ID, handling both object and string formats
     const getSenderId = (message) => {
@@ -183,55 +185,52 @@ const MessageList = forwardRef(function MessageList(
     const prevSenderId = getSenderId(previousMessage);
     const nextSenderId = getSenderId(nextMessage);
 
-    const isSameSenderAsPrevious = currentSenderId === prevSenderId;
-    const isSameSenderAsNext = currentSenderId === nextSenderId;
+    const isSentByCurrentUser = currentSenderId === currentUser._id;
 
     let showHeaderInfo = false;
     let isFirstInGroup = false;
     let isLastInGroup = false;
 
-    // Determine showHeaderInfo (based on previous logic)
+    // Determine if the current message starts a new "visual" group
     if (!previousMessage) {
+      // Always show header for the very first message
       showHeaderInfo = true;
+      isFirstInGroup = true;
     } else {
       const prevDate = new Date(previousMessage.createdAt);
       const currDate = new Date(msg.createdAt);
+
+      const timeDifference = currDate.getTime() - prevDate.getTime();
+      const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
       const isNewDay =
         prevDate.getDate() !== currDate.getDate() ||
         prevDate.getMonth() !== currDate.getMonth() ||
         prevDate.getFullYear() !== currDate.getFullYear();
 
-      if (!isSameSenderAsPrevious || isNewDay) {
+      if (currentSenderId !== prevSenderId || isNewDay || isTimeThresholdExceeded) {
         showHeaderInfo = true;
+        isFirstInGroup = true;
       }
     }
 
-    // Determine isFirstInGroup
-    if (showHeaderInfo) {
-      // If header is shown, it's always the first in its visible group
-      isFirstInGroup = true;
-    } else if (!isSameSenderAsPrevious) {
-      // Edge case where a message *could* start a new group without a header (e.g., if date logic wasn't precise, but given showHeaderInfo, this is less likely to be hit as a primary trigger for first-in-group)
-      isFirstInGroup = true;
-    }
-
-    // Determine isLastInGroup
-    // A message is the last in its group if:
-    // 1. There is no next message (it's the very last message in the chat)
-    // 2. The next message is from a different sender
-    // 3. The next message is on a different day (even if same sender, it "breaks" the visual group)
+    // Determine if the current message is the last in its "visual" group
     if (!nextMessage) {
+      // Always the last if there's no next message
       isLastInGroup = true;
     } else {
       const currDate = new Date(msg.createdAt);
       const nextDate = new Date(nextMessage.createdAt);
+
+      const timeDifference = nextDate.getTime() - currDate.getTime();
+      const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
+
       const isNextNewDay =
         currDate.getDate() !== nextDate.getDate() ||
         currDate.getMonth() !== nextDate.getMonth() ||
         currDate.getFullYear() !== nextDate.getFullYear();
 
-      if (!isSameSenderAsNext || isNextNewDay) {
+      if (currentSenderId !== nextSenderId || isNextNewDay || isTimeThresholdExceeded) {
         isLastInGroup = true;
       }
     }
@@ -239,20 +238,19 @@ const MessageList = forwardRef(function MessageList(
     return {
       ...msg,
       showHeaderInfo,
-      isFirstInGroup, // New prop
-      isLastInGroup, // New prop
-      senderProfileImg: msg.sender?.profileImg || '/public/avatar-placeholder.png',
+      isFirstInGroup,
+      isLastInGroup,
+      senderProfileImg: msg.sender?.profileImg || "/public/avatar-placeholder.png",
       senderUsername: typeof msg.sender === "object" ? msg.sender?.username : undefined,
     };
   });
 
   // --- END NEW LOGIC ---
 
+  // --- END NEW LOGIC ---
+
   return (
-    <div
-      ref={ref}
-      className="flex-1 overflow-y-auto p-4 flex flex-col pt-20 relative"
-    >
+    <div ref={ref} className="flex-1 overflow-y-auto p-4 flex flex-col pt-20 relative">
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full ">
           <LoadingSpinner size="md" />

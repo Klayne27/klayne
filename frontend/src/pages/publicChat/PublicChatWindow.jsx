@@ -18,6 +18,8 @@ import {
   useEditPublicMessage,
 } from "../../hooks/publicChatHooks/publicChatHooks";
 
+const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
+
 const PublicChatWindow = ({ openImageModal }) => {
   const { authUser: currentUser, refetchAuthUser } = useAuthUser();
   const { socket, setActiveConversationId } = useSocket();
@@ -30,6 +32,8 @@ const PublicChatWindow = ({ openImageModal }) => {
     isLoading: isLoadingMessages,
     isError: isMessagesError,
     error: messagesError,
+    isSomeoneTyping,
+    typingUsers,
   } = usePublicMessages();
 
   const { sendPublicMessage, isPending: isSendingMessage } = useSendPublicMessage();
@@ -56,10 +60,23 @@ const PublicChatWindow = ({ openImageModal }) => {
   const shouldScrollToBottom = useRef(false);
   const isUserScrollingUp = useRef(false);
 
-  // Moved to PublicMessageInput, but kept here for clarity if needed elsewhere:
-  // const [isMobile, setIsMobile] = useState(false);
-
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
+
+  const getTypingMessage = (users) => {
+    if (users.length === 0) return "";
+
+    const names = users.map((u) => u.username);
+    const isEditing = users.some((u) => u.isEditing);
+    const verb = isEditing ? "typing" : "typing";
+
+    if (users.length === 1) {
+      return `${names[0]} is ${verb}...`;
+    }
+    if (users.length === 2) {
+      return `${names.join(" and ")} are ${verb}...`;
+    }
+    return "Several people are typing...";
+  };
 
   // --- Touch device detection ---
   useEffect(() => {
@@ -69,6 +86,17 @@ const PublicChatWindow = ({ openImageModal }) => {
     window.addEventListener("resize", checkTouch);
     return () => window.removeEventListener("resize", checkTouch);
   }, []);
+
+  // You need a function to send typing events. This typically calls socket.emit
+  const sendTypingEvent = (isTyping, isEditing) => {
+    if (socket) {
+      if (isTyping) {
+        socket.emit("public_typing", { isEditing });
+      } else {
+        socket.emit("public_stop_typing");
+      }
+    }
+  };
 
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
@@ -82,23 +110,19 @@ const PublicChatWindow = ({ openImageModal }) => {
     return scrollHeight - scrollTop - clientHeight < 10;
   }, []);
 
-  // NEW: Function to scroll to a specific message by its ID
   const handleJumpToMessage = useCallback((messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`);
     if (messageElement && messageListRef.current) {
-      // Scroll into view first
       messageElement.scrollIntoView({
         behavior: "smooth",
-        block: "center", // Adjust this to 'start', 'center', or 'end' as preferred
+        block: "center",
       });
 
-      // Add the highlight class
       messageElement.classList.add("highlight-message");
 
-      // Remove the highlight class after 1.5 seconds
       setTimeout(() => {
         messageElement.classList.remove("highlight-message");
-      }, 1500); // 1500ms = 1.5 seconds
+      }, 1500);
     }
   }, []);
 
@@ -131,7 +155,6 @@ const PublicChatWindow = ({ openImageModal }) => {
   const handleEdit = (messageToEdit) => {
     setEditingMessage(messageToEdit);
     setReplyingToMessage(null);
-    // setActiveMessageModalId(null);
   };
 
   // --- Admin/Self Delete Message Handler ---
@@ -157,13 +180,12 @@ const PublicChatWindow = ({ openImageModal }) => {
   // NEW: Handler to set the message to reply to
   const handleReply = (messageToReplyTo) => {
     setReplyingToMessage(messageToReplyTo);
-    // setActiveMessageModalId(null);
   };
 
   // Handler for sending messages from PublicMessageInput
   const handleSendMessage = useCallback(
     (messagePayload) => {
-      shouldScrollToBottom.current = true; // Set flag to scroll to bottom after sending
+      shouldScrollToBottom.current = true;
       sendPublicMessage(messagePayload);
     },
     [sendPublicMessage]
@@ -172,19 +194,19 @@ const PublicChatWindow = ({ openImageModal }) => {
   // Handler for editing messages from PublicMessageInput
   const handleEditMessage = useCallback(
     (messageId, messagePayload) => {
-      shouldScrollToBottom.current = true; // Set flag to scroll to bottom after editing
+      shouldScrollToBottom.current = true;
       editPublicMessage({ messageId, ...messagePayload });
     },
     [editPublicMessage]
   );
 
-  useEffect(() => {
-    if (editingMessage || replyingToMessage) {
-      setTimeout(() => {
-        scrollToBottom();
-      }, 0); // A very small delay, typically sufficient
-    }
-  }, [editingMessage, replyingToMessage, scrollToBottom /*, setShowNewMessageButton */]);
+  // useEffect(() => {
+  //   if (editingMessage || replyingToMessage) {
+  //     setTimeout(() => {
+  //       scrollToBottom();
+  //     }, 0);
+  //   }
+  // }, [editingMessage, replyingToMessage, scrollToBottom]);
 
   useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
@@ -250,31 +272,11 @@ const PublicChatWindow = ({ openImageModal }) => {
     }
   }, [isFetchingNextPage, messages]);
 
-  // --- TYPING INDICATOR LOGIC ---
-  const sendTypingEvent = useCallback(
-    (isTypingActive, isEditingActive) => {
-      if (socket) {
-        socket.emit("publicChatTyping", {
-          isTyping: isTypingActive,
-          isEditing: isEditingActive,
-        });
-      }
-    },
-    [socket]
-  );
-
   useEffect(() => {
     if (socket) {
-      socket.on("publicChatTyping", ({ userId, isTyping: typingStatus }) => {
-        if (userId !== currentUser._id) {
-          setIsTyping(typingStatus);
-        }
-      });
-
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
         queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (isBanned) {
-          // setMessageContent("");
           setSelectedFile(null);
           setPreviewImage(null);
           queryClient.setQueryData(["publicMessages"], (oldData) => ({
@@ -287,11 +289,83 @@ const PublicChatWindow = ({ openImageModal }) => {
       });
 
       return () => {
-        socket.off("publicChatTyping");
         socket.off("bannedFromPublicChat");
       };
     }
   }, [socket, currentUser, refetchAuthUser, queryClient, isCurrentUserBanned]);
+
+  // --- Message Grouping Logic ---
+  // This is where we'll preprocess messages to add grouping flags
+  const getGroupedMessages = useCallback(() => {
+    if (!messages || messages.length === 0) return [];
+
+    const allMessages = messages;
+    const grouped = [];
+
+    for (let i = 0; i < allMessages.length; i++) {
+      const message = { ...allMessages[i] }; // Create a mutable copy
+      const prevMessage = allMessages[i - 1];
+
+      const isSentByCurrentUser = message.sender._id === currentUser._id;
+      const isPrevSentByCurrentUser = prevMessage?.sender._id === currentUser._id;
+
+      // Determine if this is the first message in a group
+      message.isFirstInGroup =
+        !prevMessage ||
+        message.sender._id !== prevMessage.sender._id || // Different sender
+        new Date(message.createdAt).getTime() -
+          new Date(prevMessage.createdAt).getTime() >
+          MESSAGE_GROUP_TIME_THRESHOLD_MS; // Time threshold exceeded
+
+      // Determine if this is the last message in a group
+      const nextMessage = allMessages[i + 1];
+      message.isLastInGroup =
+        !nextMessage ||
+        message.sender._id !== nextMessage.sender._id || // Different sender
+        new Date(nextMessage.createdAt).getTime() -
+          new Date(message.createdAt).getTime() >
+          MESSAGE_GROUP_TIME_THRESHOLD_MS; // Time threshold exceeded
+
+      // Apply the bubble classes based on grouping and sender
+      let bubbleClasses = "";
+      if (isSentByCurrentUser) {
+        bubbleClasses += " bg-primary text-white";
+        if (message.isFirstInGroup && message.isLastInGroup) {
+          bubbleClasses += " rounded-3xl"; // Single message, or isolated message
+        } else if (message.isFirstInGroup) {
+          bubbleClasses +=
+            " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]"; // First in group
+        } else if (message.isLastInGroup) {
+          bubbleClasses +=
+            " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl"; // Last in group
+        } else {
+          bubbleClasses +=
+            " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]"; // Middle message
+        }
+      } else {
+        // Not current user
+        bubbleClasses += " bg-[#2F3336] text-white";
+        if (message.isFirstInGroup && message.isLastInGroup) {
+          bubbleClasses += " rounded-3xl"; // Single message, or isolated message
+        } else if (message.isFirstInGroup) {
+          bubbleClasses +=
+            " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]"; // First in group
+        } else if (message.isLastInGroup) {
+          bubbleClasses +=
+            " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl"; // Last in group
+        } else {
+          bubbleClasses +=
+            " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]"; // Middle message
+        }
+      }
+      message.bubbleClasses = bubbleClasses; // Attach the computed classes
+
+      grouped.push(message);
+    }
+    return grouped;
+  }, [messages, currentUser]);
+
+  const processedMessages = getGroupedMessages();
 
   // Render Logic for Loading/Error states
   if (isLoadingMessages && messages.length === 0) {
@@ -301,14 +375,6 @@ const PublicChatWindow = ({ openImageModal }) => {
       </div>
     );
   }
-
-  // if (isMessagesError) {
-  //   return (
-  //     <div className="flex flex-col items-center justify-center h-full text-lg text-error">
-  //       Error loading messages: {messagesError.message}
-  //     </div>
-  //   );
-  // }
 
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent ">
@@ -325,7 +391,7 @@ const PublicChatWindow = ({ openImageModal }) => {
       ) : (
         <>
           <div
-            className="flex-grow overflow-y-auto p-4 pb-0 min-h-0"
+            className="flex-grow overflow-y-auto p-4 pb-2 min-h-0"
             ref={messageListRef}
           >
             {isFetchingNextPage && (
@@ -334,7 +400,7 @@ const PublicChatWindow = ({ openImageModal }) => {
               </div>
             )}
             <div className="mx-auto w-full max-w-3xl md:max-w-[968px] mt-16">
-              {messages.map((message) => (
+              {processedMessages.map((message) => (
                 <div key={message._id}>
                   <PublicChatMessage
                     message={message}
@@ -354,6 +420,10 @@ const PublicChatWindow = ({ openImageModal }) => {
                     onJumpToMessage={handleJumpToMessage}
                     setEditingMessage={setEditingMessage}
                     setReplyingToMessage={setReplyingToMessage}
+                    // Pass grouping props
+                    isFirstInGroup={message.isFirstInGroup}
+                    isLastInGroup={message.isLastInGroup}
+                    bubbleClasses={message.bubbleClasses} // Pass the pre-calculated classes
                   />
                 </div>
               ))}
@@ -366,7 +436,6 @@ const PublicChatWindow = ({ openImageModal }) => {
               </div>
             )}
           </div>
-
           <PublicMessageInput
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}
@@ -382,7 +451,10 @@ const PublicChatWindow = ({ openImageModal }) => {
             sendPublicMessage={handleSendMessage}
             editPublicMessage={handleEditMessage}
             sendTypingEvent={sendTypingEvent}
+            isSomeoneTyping={isSomeoneTyping}
+            typingUsers={typingUsers}
           />
+
         </>
       )}
     </div>

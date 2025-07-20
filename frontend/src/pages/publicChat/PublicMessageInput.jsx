@@ -7,6 +7,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { truncateText } from "../../utils/truncateText";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa6";
+import { FaCircle } from "react-icons/fa";
 
 const PublicMessageInput = ({
   selectedFile,
@@ -20,199 +21,181 @@ const PublicMessageInput = ({
   setEditingMessage,
   replyingToMessage,
   setReplyingToMessage,
-  sendPublicMessage, // This prop will be the actual send message mutation
-  editPublicMessage, // This prop will be the actual edit message mutation
-  sendTypingEvent, // Pass down the typing event emitter
+  sendPublicMessage,
+  editPublicMessage,
+  sendTypingEvent, // This function needs to be updated to emit the new event
+  isSomeoneTyping, // This will now be derived from typingUsers.length > 0
+  typingUsers, // This is the array of users currently typing from the server
 }) => {
   const fileInputRef = useRef(null);
   const messageInputRef = useRef(null);
-  const typingTimeoutRef = useRef(null); // Local to this component
+  const typingTimeoutRef = useRef(null);
+  const hasSentTypingEvent = useRef(false);
 
   const [messageContent, setMessageContent] = useState("");
 
-  // Adjust textarea height based on content
+  const getTypingMessage = (users) => {
+    if (users.length === 0) return ""; // Should ideally not be called if users.length is 0
+
+    const names = users.map((u) => u.username);
+    const isEditingAny = users.some((u) => u.isEditing); // Check if *any* typing user is editing
+
+    // Determine the verb based on whether anyone is editing
+    const verb = isEditingAny ? "editing" : "typing";
+
+    if (users.length === 1) {
+      return `${names[0]} is ${verb}`;
+    }
+    if (users.length === 2) {
+      return `${names.join(" and ")} are ${verb}`;
+    }
+    return "Several people are typing"; // Or "Several people are editing" if isEditingAny is true for some
+  };
+
+  // Adjust textarea height
   useEffect(() => {
     if (messageInputRef.current) {
       messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+      messageInputRef.current.style.height = `${messageInputRef.current.scrollHeight}px`;
     }
   }, [messageContent]);
 
-  // Handle messageInput when entering/exiting edit mode
+  // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
       setMessageContent(editingMessage.content);
-      // setReplyingToMessage(null);
-      // setSelectedFile(null);
-      // setPreviewImage(null);
-      // if (fileInputRef.current) fileInputRef.current.value = "";
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
+      setReplyingToMessage(null);
+      setSelectedFile(null);
+      setPreviewImage(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      messageInputRef.current?.focus();
     } else {
-      // Clear input when exiting edit mode, but only if it matches the edited message content
-      if (messageInputRef.current?.value === messageContent) {
-        setMessageContent("");
-      }
+      setMessageContent("");
     }
-  }, [
-    editingMessage,
-    // setMessageContent,
-    // setReplyingToMessage,
-    // setSelectedFile,
-    // setPreviewImage,
-    // messageContent,
-  ]);
+  }, [editingMessage, setReplyingToMessage, setSelectedFile, setPreviewImage]);
 
+  // Focus when replying
   useEffect(() => {
-    if (replyingToMessage && messageInputRef.current) {
-      messageInputRef.current.focus();
+    if (replyingToMessage) {
+      messageInputRef.current?.focus();
     }
-  }, [replyingToMessage]); // Depend on replyingToMessage
+  }, [replyingToMessage]);
 
+  // Cleanup effect for unmounting
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
-        typingTimeoutRef.current = null;
       }
-      sendTypingEvent(false, false); // Ensure stop typing is sent on unmount
+      // Ensure we send a stop typing event if the component unmounts
+      // sendTypingEvent(false); // This call is still fine
     };
-  }, [sendTypingEvent]);
+  }, []); // sendTypingEvent is not a dependency if it doesn't change on re-renders,
+  // but if it's passed from a hook that re-creates it, it should be a dependency.
+  // Given your current setup, it's likely stable, so empty array is fine.
 
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value;
     setMessageContent(newValue);
 
-    const isCurrentlyEditing = !!editingMessage;
+    clearTimeout(typingTimeoutRef.current); // Always clear any pending "stop" timer
 
-    if (!typingTimeoutRef.current && newValue.trim().length > 0) {
-      sendTypingEvent(true, isCurrentlyEditing);
+    if (newValue.trim().length > 0) {
+      if (!hasSentTypingEvent.current) {
+        const isCurrentlyEditing = !!editingMessage;
+        sendTypingEvent(true, isCurrentlyEditing);
+        hasSentTypingEvent.current = true; // Mark that we've notified the server
+      }
+
+      // Set a new timer to signal "stop typing" after a pause.
+      typingTimeoutRef.current = setTimeout(() => {
+        sendTypingEvent(false);
+        hasSentTypingEvent.current = false; // Reset the flag
+      }, 1500); // 1.5-second pause
+    } else {
+      // If the input is empty, immediately send a "stop typing" event.
+      if (hasSentTypingEvent.current) {
+        sendTypingEvent(false);
+        hasSentTypingEvent.current = false;
+      }
     }
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = setTimeout(() => {
-      sendTypingEvent(false, isCurrentlyEditing);
-      typingTimeoutRef.current = null;
-    }, 1500);
+  };
+
+  const clearInputState = () => {
+    setMessageContent("");
+    setSelectedFile(null);
+    setPreviewImage(null);
+    setReplyingToMessage(null);
+    setEditingMessage(null);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = "auto";
+      messageInputRef.current.focus();
+    }
   };
 
   const handleSendMessageOrEdit = async (e) => {
     e.preventDefault();
-
     if (isSendingMessage || isEditingMessage || isCurrentUserBanned) return;
 
     const contentToSend = messageContent.trim();
-
-    if (!contentToSend && !selectedFile && !replyingToMessage && !editingMessage) {
-      // toast.error("Message cannot be empty.");
+    if (!contentToSend && !selectedFile) {
       return;
     }
 
-    clearTimeout(typingTimeoutRef.current);
-    typingTimeoutRef.current = null;
-    sendTypingEvent(false); // Ensure typing status is cleared
+    // Immediately stop typing indicator
+    if (typingTimeoutRef.current) {
+      clearTimeout(typingTimeoutRef.current);
+      typingTimeoutRef.current = null;
+    }
+    sendTypingEvent(false); // Ensure stop typing is sent when message is sent
+    hasSentTypingEvent.current = false; // Reset flag after sending message
+
+    const payload = {
+      content: contentToSend,
+      replyTo: replyingToMessage ? replyingToMessage._id : null,
+    };
 
     if (editingMessage) {
-      // if (contentToSend === editingMessage.content.trim()) {
-      //   toast.error("No changes detected.");
-      //   setEditingMessage(null);
-      //   setMessageContent("");
-      //   messageInputRef.current?.focus();
-      //   return;
-      // }
-      // if (!contentToSend) {
-      //   toast.error("Edited message cannot be empty.");
-      //   return;
-      // }
-      editPublicMessage(
-        {
-          messageId: editingMessage._id,
-          newContent: contentToSend,
-        }
-
-        // {
-        //   onSuccess: () => {
-        //     setEditingMessage(null);
-        //     setMessageContent("");
-        //     messageInputRef.current?.focus();
-        //   },
-        //   onError: (error) => {
-        //     toast.error(`Failed to edit message: ${error.message}`);
-        //   },
-        // }
-      );
-      setEditingMessage(null);
-      setMessageContent("");
+      editPublicMessage({
+        messageId: editingMessage._id,
+        newContent: contentToSend,
+      });
     } else {
-      let imgBase64 = null;
       if (selectedFile) {
-        try {
-          const reader = new FileReader();
-          reader.readAsDataURL(selectedFile);
-          reader.onloadend = async () => {
-            imgBase64 = reader.result;
-            await sendPublicMessage({
-              content: contentToSend,
-              imgBase64,
-              replyTo: replyingToMessage ? replyingToMessage._id : null,
-            });
-            setMessageContent("");
-            setSelectedFile(null);
-            setPreviewImage(null);
-            if (fileInputRef.current) fileInputRef.current.value = "";
-            messageInputRef.current.style.height = "auto";
-            messageInputRef.current.rows = 1;
-            setReplyingToMessage(null);
-            messageInputRef.current?.focus();
-          };
-        } catch (error) {
+        const reader = new FileReader();
+        reader.readAsDataURL(selectedFile);
+        reader.onloadend = () => {
+          sendPublicMessage({ ...payload, imgBase64: reader.result });
+        };
+        reader.onerror = () => {
           toast.error("Failed to read image file.");
-        }
+        };
       } else {
-        await sendPublicMessage({
-          content: contentToSend,
-          imgBase64: null,
-          replyTo: replyingToMessage ? replyingToMessage._id : null,
-        });
-        setMessageContent("");
-        messageInputRef.current.style.height = "auto";
-        messageInputRef.current.rows = 1;
-        setReplyingToMessage(null);
-        messageInputRef.current?.focus();
+        sendPublicMessage({ ...payload, imgBase64: null });
       }
     }
+    clearInputState();
   };
 
   const handleImageChange = (e) => {
     const file = e.target.files[0];
-    if (file) {
-      if (!file.type.startsWith("image/")) {
-        toast.error("Selected file is not a supported image type.");
-        setSelectedFile(null);
-        setPreviewImage(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
-        return;
-      }
+    if (!file) return;
 
-      const MAX_IMAGE_SIZE_MB = 5;
-      if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-        toast.error(`Image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`);
-        setSelectedFile(null);
-        setPreviewImage(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
-        return;
-      }
-
-      setSelectedFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPreviewImage(reader.result);
-      };
-      reader.readAsDataURL(file);
-    } else {
-      setSelectedFile(null);
-      setPreviewImage(null);
+    if (!file.type.startsWith("image/")) {
+      toast.error("Only image files are supported.");
+      return;
     }
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      toast.error("Image size cannot exceed 5MB.");
+      return;
+    }
+
+    setSelectedFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setPreviewImage(reader.result);
+    reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
@@ -238,7 +221,8 @@ const PublicMessageInput = ({
   const handleCancelEdit = () => {
     setEditingMessage(null);
     setMessageContent("");
-    sendTypingEvent(false, true);
+    // Ensure that when cancelling edit, we also send a stop typing for editing state
+    sendTypingEvent(false); // Send a general stop typing event
   };
 
   const isSendButtonDisabled =
@@ -248,6 +232,9 @@ const PublicMessageInput = ({
     (!messageContent.trim() && !selectedFile);
 
   const isEditingMode = !!editingMessage;
+
+  // Derive isSomeoneTyping from the length of typingUsers array
+  const showTypingIndicator = typingUsers && typingUsers.length > 0;
 
   return (
     <>
@@ -364,7 +351,7 @@ const PublicMessageInput = ({
         // NORMAL MODE (not editing)
         <form
           onSubmit={handleSendMessageOrEdit}
-          className="sticky bottom-0 bg-base-100 flex flex-col"
+          className="sticky bottom-0 bg-base-100 flex flex-col mb-1"
         >
           {replyingToMessage && (
             <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
@@ -453,6 +440,25 @@ const PublicMessageInput = ({
               <MdSend className="w-5 h-5" />
             </button>
           </div>
+          {showTypingIndicator && ( // Use the new derived state
+            <div className="flex justify-start px-4 left-0 p-1 absolute -bottom-1.5 items-center text-gray-400 text-sm">
+              <span className="animate-pulse font-semibold">
+                {getTypingMessage(typingUsers)}
+              </span>
+              {/* Pulsing dots always appear when someone is typing */}
+              <span className="flex ml-1 gap-0.5 mt-2.5">
+                <span className="inline-block pulsing-dot pulsing-dot-1">
+                  <FaCircle size={6} />
+                </span>
+                <span className="inline-block pulsing-dot pulsing-dot-2">
+                  <FaCircle size={6} />
+                </span>
+                <span className="inline-block pulsing-dot pulsing-dot-3">
+                  <FaCircle size={6} />
+                </span>
+              </span>
+            </div>
+          )}
         </form>
       )}
     </>

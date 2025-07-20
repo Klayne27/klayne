@@ -8,7 +8,7 @@ import {
 } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useSocket } from "../../context/SocketContext";
 import {
   addPublicMessageReactionApi,
@@ -29,6 +29,9 @@ export const usePublicMessages = () => {
   const { socket } = useSocket();
   const { authUser } = useAuthUser();
   const MESSAGE_LIMIT = 40;
+
+  // New state to manage typing users
+  const [typingUsers, setTypingUsers] = useState([]);
 
   const {
     data,
@@ -241,6 +244,23 @@ export const usePublicMessages = () => {
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
     };
 
+    // --- New Socket Listeners for Typing Indicator ---
+    const handleTyping = ({ userId, username, isEditing }) => {
+      if (userId !== authUser._id) {
+        setTypingUsers((prev) => {
+          // Remove any old entry for this user to ensure data is fresh
+          const otherTypingUsers = prev.filter((user) => user.userId !== userId);
+          // Add the new, updated entry for the user
+          return [...otherTypingUsers, { userId, username, isEditing }];
+        });
+      }
+    };
+
+    const handleStopTyping = ({ userId }) => {
+      setTypingUsers((prev) => prev.filter((user) => user.userId !== userId));
+    };
+    // --- End New Socket Listeners ---
+
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted); // For admin deletions
@@ -248,6 +268,12 @@ export const usePublicMessages = () => {
     socket.on("publicMessageEdited", handlePublicMessageEdited);
     socket.on("userBanned", handleUserBannedGlobal);
     socket.on("userUnbanned", handleUserUnbannedGlobal);
+    // Register new typing event listeners
+    socket.on("public_typing_update", ({ typingUsers: serverTypingUsers }) => {
+      setTypingUsers(serverTypingUsers.filter((user) => user.userId !== authUser._id));
+    });
+    // socket.on("public_typing", handleTyping);
+    // socket.on("public_stop_typing", handleStopTyping);
 
     return () => {
       socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
@@ -257,6 +283,11 @@ export const usePublicMessages = () => {
       socket.off("publicMessageEdited", handlePublicMessageEdited);
       socket.off("userBanned", handleUserBannedGlobal);
       socket.off("userUnbanned", handleUserUnbannedGlobal);
+      // Clean up new typing event listeners
+      socket.off("public_typing_update");
+
+      // socket.off("public_typing", handleTyping);
+      // socket.off("public_stop_typing", handleStopTyping);
       socket.emit("leavePublicChat");
     };
   }, [socket, queryClient, authUser]);
@@ -264,6 +295,11 @@ export const usePublicMessages = () => {
   const messages = useMemo(() => {
     return data ? [...data.pages].reverse().flatMap((page) => page) : [];
   }, [data]);
+
+  // Determine if 'someone' (excluding current user) is typing
+  const isSomeoneTyping = useMemo(() => {
+    return typingUsers.length > 0;
+  }, [typingUsers]);
 
   return {
     messages,
@@ -274,6 +310,8 @@ export const usePublicMessages = () => {
     isError,
     error,
     refetch,
+    typingUsers,
+    isSomeoneTyping, // Export the typing indicator status
   };
 };
 
@@ -410,10 +448,8 @@ export const useDeletePublicMessage = () => {
     error,
   } = useMutation({
     mutationFn: deletePublicMessageApi,
-   
-    onSuccess: (data, messageId) => {
 
-    },
+    onSuccess: (data, messageId) => {},
     onError: (error) => {
       toast.error(error.message || "Failed to delete message");
     },
@@ -660,7 +696,7 @@ export const useEditPublicMessage = () => {
                 content: newContent,
                 isEdited: true,
                 editedAt: new Date().toISOString(),
-                replyTo: message.replyTo
+                replyTo: message.replyTo,
               };
             }
             return message;

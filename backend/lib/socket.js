@@ -20,6 +20,7 @@ const allowedOrigins = [
 const userActiveChats = new Map();
 const typingUsersInConversation = new Map();
 export const activePublicChatUsers = new Set(); // userId
+const publicChatTypingUsers = new Map(); // To track who is typing in public chat
 
 const io = new Server(server, {
   cors: {
@@ -53,10 +54,9 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) return false;
   if (currentUserId.toString() === targetUserId.toString()) return false;
 
-  const currentUser = await User.findById(currentUserId)
-    .select("blockedUsers blockedBy")
-    .lean();
-  const targetUser = await User.findById(targetUserId)
+  const [currentUser, targetUser] = await User.find({
+    _id: { $in: [currentUserId, targetUserId] },
+  })
     .select("blockedUsers blockedBy")
     .lean();
 
@@ -372,45 +372,7 @@ io.on("connection", async (socket) => {
     if (!socket.userId) return; // Ensure userId is set
     activePublicChatUsers.delete(socket.userId);
     console.log(`User ${socket.userId} left public chat.`);
-    // When they leave, you might want to re-evaluate their unread status
-    // in case new messages arrived while they were on the page.
-    // The `sendPublicMessage` controller will do this for new messages,
-    // but if no new messages came, their status should reflect existing unread.
-    // This is less critical as `sendPublicMessage` handles new message notifications.
-    // However, if they just leave, and there were unread messages from before they entered,
-    // this would ensure the dot appears.
-    // For now, let's rely on `sendPublicMessage` to trigger this.
   });
-
-  // socket.on("markPublicChatAsRead", async () => {
-  //   try {
-  //     const userId = socket.userId;
-  //     if (!userId) {
-  //       return;
-  //     }
-  //     // The logic here is redundant with 'userEnteredPublicChat'
-  //     // It's better to have one clear entry point for marking as read.
-  //     // If you MUST keep it, it should perform the same logic as above.
-  //     console.log(
-  //       `User ${userId} explicitly marked public chat as read (redundant event)`
-  //     );
-  //     const latestPublicMessage = await PublicChatMessage.findOne()
-  //       .sort({ createdAt: -1 })
-  //       .lean();
-  //     if (latestPublicMessage) {
-  //       await User.findByIdAndUpdate(userId, {
-  //         lastReadPublicChatTimestamp: latestPublicMessage.createdAt,
-  //       });
-  //     } else {
-  //       await User.findByIdAndUpdate(userId, {
-  //         lastReadPublicChatTimestamp: new Date(),
-  //       });
-  //     }
-  //     await emitUnreadPublicChatStatus(userId);
-  //   } catch (error) {
-  //     console.error("Error marking public chat as read:", error);
-  //   }
-  // });
 
   socket.on("joinConversation", (conversationId) => {
     if (conversationId) {
@@ -421,6 +383,104 @@ io.on("connection", async (socket) => {
       );
     }
   });
+
+socket.on("public_typing", async ({ isEditing }) => {
+  if (!socket.userId || socket.isBannedInPublicChat) return;
+
+  try {
+    let userUsername;
+
+    // Option 1: Store username on socket during connection/login (Recommended)
+    if (socket.username) {
+      userUsername = socket.username;
+    } else {
+      // Fallback: Fetch if not already on socket, but avoid for every event.
+      // This part should ideally be optimized out if username is set on connect.
+      const user = await User.findById(socket.userId).select("username").lean();
+      if (!user) return;
+      userUsername = user.username;
+      socket.username = user.username; // Cache it on the socket for future events
+    }
+
+    // Always update the user's typing status in the map
+    // This is crucial: if a user is already typing, their 'isEditing' status needs to be updated.
+    // And even if just typing, refreshing their presence in the map (and thus the timestamp if you add it)
+    // is good for keeping track of active typers.
+    publicChatTypingUsers.set(socket.userId, {
+      username: userUsername,
+      isEditing: isEditing,
+      timestamp: Date.now(), // Add a timestamp for potential inactivity cleanup
+    });
+
+    // Emit the *updated* list of all current typing users to everyone
+    // This simplifies client-side state management significantly.
+    // Instead of sending individual start/stop, send the full current list.
+    const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
+      ([userId, data]) => ({
+        userId,
+        username: data.username,
+        isEditing: data.isEditing,
+      })
+    );
+    socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+      typingUsers: typingUsersArray,
+    });
+    // You could also emit to the sender to confirm their status, if needed.
+    // socket.emit("public_typing_update", { typingUsers: typingUsersArray });
+  } catch (error) {
+    console.error("Error handling public_typing event:", error);
+  }
+});
+
+socket.on("public_stop_typing", () => {
+  if (!socket.userId || socket.isBannedInPublicChat) return;
+
+  // Remove the user from the typing map
+  if (publicChatTypingUsers.has(socket.userId)) {
+    publicChatTypingUsers.delete(socket.userId);
+  }
+
+  // Emit the *updated* list of all current typing users after one stops
+  const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
+    ([userId, data]) => ({
+      userId,
+      username: data.username,
+      isEditing: data.isEditing,
+    })
+  );
+  socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+    typingUsers: typingUsersArray,
+  });
+});
+// --- END PUBLIC CHAT TYPING EVENTS ---
+
+// Optional: Add a cleanup mechanism for stale typing indicators on the server
+// setInterval(() => {
+//   const currentTime = Date.now();
+//   const TYPING_TIMEOUT_SERVER = 5000; // e.g., 5 seconds of inactivity
+//   let changed = false;
+
+//   for (const [userId, data] of publicChatTypingUsers.entries()) {
+//     if (currentTime - data.timestamp > TYPING_TIMEOUT_SERVER) {
+//       publicChatTypingUsers.delete(userId);
+//       changed = true;
+//     }
+//   }
+
+//   if (changed) {
+//     const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
+//       ([userId, data]) => ({
+//         userId,
+//         username: data.username,
+//         isEditing: data.isEditing,
+//       })
+//     );
+//     // Emit this to all clients to keep their lists in sync
+//     io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+//       typingUsers: typingUsersArray,
+//     });
+//   }
+// }, TYPING_TIMEOUT_SERVER); 
 
   socket.on("leaveConversation", (conversationId) => {
     if (conversationId) {
@@ -566,10 +626,6 @@ io.on("connection", async (socket) => {
             await emitUnreadMessageStatus(otherParticipantIdString); // Update unread status for the other participant
           });
         }
-
-        // process.nextTick(async () => {
-        //   await emitUnreadMessageStatus(readerId); // Update unread status for the reader
-        // });
       }
     } catch (error) {
       console.error("Error marking messages as seen:", error);
@@ -603,6 +659,29 @@ io.on("connection", async (socket) => {
     socket.leave(PUBLIC_CHAT_ROOM);
 
     const disconnectedUserId = socket.userId;
+
+    // --- FIX START: Handle public chat typing on disconnect ---
+    if (disconnectedUserId) {
+      // --- Crucial: Notify public chat users that this user has stopped typing ---
+      if (publicChatTypingUsers.has(disconnectedUserId)) {
+        publicChatTypingUsers.delete(disconnectedUserId); // Remove from server-side tracking
+        io.to(PUBLIC_CHAT_ROOM).emit("public_stop_typing", {
+          userId: disconnectedUserId,
+        });
+      }
+      activePublicChatUsers.delete(disconnectedUserId); // This is separate for presence, keep it.
+
+      // ... rest of existing disconnect logic for onlineUsersMap and private chat typing
+      if (onlineUsersMap.has(disconnectedUserId)) {
+        const userSockets = onlineUsersMap.get(disconnectedUserId);
+        userSockets.delete(socket.id);
+
+        if (userSockets.size === 0) {
+          onlineUsersMap.delete(disconnectedUserId);
+          // ... (your existing private chat typing cleanup on disconnect) ...
+        }
+      }
+    }
 
     if (disconnectedUserId && onlineUsersMap.has(disconnectedUserId)) {
       const userSockets = onlineUsersMap.get(disconnectedUserId);

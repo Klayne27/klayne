@@ -170,7 +170,7 @@ export const SocketContextProvider = ({ children }) => {
 
     if (currentPath === PUBLIC_CHAT_ROUTE && prevPath !== PUBLIC_CHAT_ROUTE) {
       socket.emit("userEnteredPublicChat");
-      // The `setHasUnreadPublicChat(false)` line is REMOVED.
+      setHasUnreadPublicChat(false)
     } // When user LEAVES the public chat
     else if (currentPath !== PUBLIC_CHAT_ROUTE && prevPath === PUBLIC_CHAT_ROUTE) {
       socket.emit("userLeftPublicChat");

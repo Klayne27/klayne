@@ -108,7 +108,7 @@ export default {
       {
         business: {
           ...daisyUIThemes["business"],
-          secondary: "hsl(200, 13%, 40%)",
+          secondary: "hsl(200, 13%, 30%)",
         },
       },
       {
