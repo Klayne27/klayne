@@ -63,68 +63,47 @@ export const usePublicMessages = () => {
 
     socket.emit("public_chat_room");
 
-    const handleNewPublicMessage = (newMessage) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          return { pages: [[newMessage]], pageParams: [1] };
-        }
+     const handleNewPublicMessage = (newMessage) => {
+       queryClient.setQueryData(["publicMessages"], (oldData) => {
+         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+           return { pages: [[newMessage]], pageParams: [1] };
+         }
 
-        const currentLatestPage = oldData.pages[0];
-        let updatedLatestPage = [...currentLatestPage];
-        let messageFoundAndReplaced = false;
+         // Deep copy pages to avoid mutating the cache directly
+         const newPages = oldData.pages.map((page) => [...page]);
+         const mostRecentPage = newPages[0];
 
-        const existingOptimisticIndex = updatedLatestPage.findIndex(
-          (msg) =>
-            msg.isOptimistic &&
-            msg.sender?._id === authUser._id &&
-            msg.content === newMessage.content &&
-            !msg.img &&
-            !newMessage.img
-        );
+         // Case 1: The message is from ME (the sender).
+         // It's the server confirming my optimistic message.
+         if (newMessage.sender._id === authUser._id) {
+           const optimisticIndex = mostRecentPage.findIndex((msg) => msg.isOptimistic);
 
-        if (existingOptimisticIndex !== -1) {
-          updatedLatestPage[existingOptimisticIndex] = {
-            ...newMessage,
-            isOptimistic: false,
-          };
-          messageFoundAndReplaced = true;
-        }
+           if (optimisticIndex !== -1) {
+             // Replace the optimistic message with the real one
+             mostRecentPage[optimisticIndex] = newMessage;
+           } else {
+             // Fallback if optimistic message wasn't found (should be rare)
+             if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+               mostRecentPage.push(newMessage);
+             }
+           }
+         }
+         // Case 2: The message is from SOMEONE ELSE (a receiver).
+         else {
+           // Simply add the new message to the end of the list.
+           // DO NOT trim or reset pagination. This makes the list grow (40 -> 41).
+           if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+             mostRecentPage.push(newMessage);
+           }
+         }
 
-        const messageAlreadyExistsById = updatedLatestPage.some(
-          (msg) => msg._id === newMessage._id
-        );
-
-        if (!messageFoundAndReplaced && !messageAlreadyExistsById) {
-          updatedLatestPage.push(newMessage);
-        }
-
-        let allCurrentMessages = [updatedLatestPage, ...oldData.pages.slice(1)].flat();
-
-        const uniqueMessages = [];
-        const seenIds = new Set();
-        for (let i = allCurrentMessages.length - 1; i >= 0; i--) {
-          const msg = allCurrentMessages[i];
-          if (!seenIds.has(msg._id)) {
-            uniqueMessages.unshift(msg);
-            seenIds.add(msg._id);
-          }
-        }
-        allCurrentMessages = uniqueMessages;
-
-        if (allCurrentMessages.length > MESSAGE_LIMIT) {
-          allCurrentMessages = allCurrentMessages.slice(-MESSAGE_LIMIT);
-        }
-
-        const newPages = [allCurrentMessages];
-        const newPageParams = [1];
-
-        return {
-          ...oldData,
-          pages: newPages,
-          pageParams: newPageParams,
-        };
-      });
-    };
+         // Return the updated pages, preserving the structure for receivers.
+         return {
+           ...oldData,
+           pages: newPages,
+         };
+       });
+     };
 
     // Handler for admin-initiated message deletion (marks as deleted)
     const handleMessageDeleted = ({ messageId }) => {
@@ -395,34 +374,27 @@ export const useSendPublicMessage = () => {
         reactions: [],
       };
 
+      // ✅ THE FIX: Update the cache correctly
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        let newPages = [];
-        let currentLatestPage = [];
-
-        if (oldData && oldData.pages && oldData.pages.length > 0) {
-          // Take the existing first page (most recent messages)
-          currentLatestPage = [...oldData.pages[0]];
+        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+          return { pages: [[optimisticMessage]], pageParams: [undefined] };
         }
 
-        // Add the new optimistic message to the current latest messages
-        currentLatestPage.push(optimisticMessage);
+        // 1. Create a deep copy of the pages to avoid direct mutation.
+        const newPages = oldData.pages.map((page) => [...page]);
 
-        // Enforce the 40 message limit immediately for the optimistic view
-        if (currentLatestPage.length > MESSAGE_LIMIT) {
-          currentLatestPage = currentLatestPage.slice(-MESSAGE_LIMIT); // Keep only the last 40
-        }
+        // 2. Add the new optimistic message to the end of the first page.
+        //    This assumes pages[0] holds the newest messages.
+        newPages[0].push(optimisticMessage);
 
-        // The pages array now contains only the one page of 40 messages
-        newPages = [currentLatestPage];
-
+        // 3. Return the data with its pagination structure preserved.
         return {
-          ...oldData, // Preserve other oldData properties like pageParams, though they might become irrelevant
+          ...oldData,
           pages: newPages,
-          pageParams: [1], // Reset pageParams to reflect that we're only showing the first page now
         };
       });
 
-      return { previousMessages, tempId };
+      return { previousMessages };
     },
 
     onSuccess: (serverMessage, variables, context) => {
@@ -650,19 +622,14 @@ export const useDeleteOwnPublicMessage = () => {
     onMutate: async (messageIdToDelete) => {
       // // Optimistic Update: Remove the message from the cache immediately
       // await queryClient.cancelQueries(["publicMessages"]); // Cancel any ongoing fetches
-
       // const previousMessages = queryClient.getQueryData(["publicMessages"]);
-
       // queryClient.setQueryData(["publicMessages"], (oldData) => {
       //   if (!oldData) return oldData;
-
       //   const newPages = oldData.pages.map((page) =>
       //     page.filter((msg) => msg._id !== messageIdToDelete)
       //   );
-
       //   return { ...oldData, pages: newPages };
       // });
-
       // // Return a context object with the snapshotted value
       // return { previousMessages };
     },

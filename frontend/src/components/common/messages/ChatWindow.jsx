@@ -113,21 +113,6 @@ const ChatWindow = ({
     onMessageSentOptimistically: handleOptimisticScroll,
   });
 
-  // --- NEW EFFECT FOR EDIT MODE SCROLL ADJUSTMENT ---
-  // useEffect(() => {
-  //   if (editingMessage || replyingToMessage) {
-  //     // When entering edit mode, ensure scroll is at the very bottom
-  //     // to compensate for the input area expanding.
-  //     // A small timeout helps ensure the DOM has fully rendered the new input size.
-  //     setTimeout(() => {
-  //       scrollToBottom();
-  //       // You might want to hide any "new message" button here too,
-  //       // as the user's view is now at the bottom.
-  //       // setShowNewMessageButton(false); // If you have this state
-  //     }, 0); // A very small delay, typically sufficient
-  //   } 
-  // }, [editingMessage, replyingToMessage, scrollToBottom /*, setShowNewMessageButton */]);
-
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;
@@ -605,7 +590,6 @@ const ChatWindow = ({
         )}
 
         <MessageInput
-        
           otherUser={otherUser}
           replyingToMessage={replyingToMessage}
           setReplyingToMessage={memoizedSetReplyingToMessage}

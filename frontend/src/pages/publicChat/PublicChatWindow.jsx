@@ -17,6 +17,7 @@ import {
   useAddPublicMessageReaction,
   useEditPublicMessage,
 } from "../../hooks/publicChatHooks/publicChatHooks";
+import { FaCaretDown } from "react-icons/fa";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
 
@@ -49,6 +50,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   const [isTyping, setIsTyping] = useState(false);
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
 
   const queryClient = useQueryClient();
 
@@ -59,24 +61,11 @@ const PublicChatWindow = ({ openImageModal }) => {
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
   const shouldScrollToBottom = useRef(false);
   const isUserScrollingUp = useRef(false);
+  const prevLastMessageId = useRef(
+    messages.length > 0 ? messages[messages.length - 1]._id : null
+  );
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
-
-  const getTypingMessage = (users) => {
-    if (users.length === 0) return "";
-
-    const names = users.map((u) => u.username);
-    const isEditing = users.some((u) => u.isEditing);
-    const verb = isEditing ? "typing" : "typing";
-
-    if (users.length === 1) {
-      return `${names[0]} is ${verb}...`;
-    }
-    if (users.length === 2) {
-      return `${names.join(" and ")} are ${verb}...`;
-    }
-    return "Several people are typing...";
-  };
 
   // --- Touch device detection ---
   useEffect(() => {
@@ -200,13 +189,10 @@ const PublicChatWindow = ({ openImageModal }) => {
     [editPublicMessage]
   );
 
-  // useEffect(() => {
-  //   if (editingMessage || replyingToMessage) {
-  //     setTimeout(() => {
-  //       scrollToBottom();
-  //     }, 0);
-  //   }
-  // }, [editingMessage, replyingToMessage, scrollToBottom]);
+  const handleNewMessageButtonClick = useCallback(() => {
+    scrollToBottom();
+    setShowNewMessageButton(false);
+  }, [scrollToBottom]);
 
   useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
@@ -231,6 +217,8 @@ const PublicChatWindow = ({ openImageModal }) => {
 
     if (isScrollAtBottom() && !isUserScrollingUp.current) {
       scrollToBottom();
+    } else {
+      return;
     }
   }, [messages.length, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
 
@@ -238,9 +226,18 @@ const PublicChatWindow = ({ openImageModal }) => {
     const listEl = messageListRef.current;
     if (listEl) {
       const { scrollTop, scrollHeight, clientHeight } = listEl;
+      const scrollThreshold = 50; // A small buffer
 
-      isUserScrollingUp.current = scrollHeight - scrollTop - clientHeight > 10;
+      // Determine if the user is scrolled up
+      isUserScrollingUp.current =
+        scrollHeight - scrollTop - clientHeight > scrollThreshold;
 
+      // 👇 If user scrolls back down, hide the button
+      if (!isUserScrollingUp.current) {
+        setShowNewMessageButton(false);
+      }
+
+      // Existing logic to fetch older messages
       if (scrollTop < 1 && hasNextPage && !isFetchingNextPage) {
         scrollStateBeforeFetch.current = {
           scrollTop: listEl.scrollTop,
@@ -249,7 +246,29 @@ const PublicChatWindow = ({ openImageModal }) => {
         fetchNextPage();
       }
     }
-  }, [fetchNextPage, hasNextPage, isFetchingNextPage]);
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage]); // No need to add setShowNewMessageButton here
+
+  useEffect(() => {
+    if (messages.length === 0) {
+      prevLastMessageId.current = null;
+      return;
+    }
+
+    const newLastMessage = messages[messages.length - 1];
+
+    // Check if a truly new message was added to the end of the list
+    const isNewMessageAdded = newLastMessage._id !== prevLastMessageId.current;
+
+    if (isNewMessageAdded) {
+      // Show button ONLY if user is scrolled up and the message isn't their own
+      if (isUserScrollingUp.current && newLastMessage.sender?._id !== currentUser._id) {
+        setShowNewMessageButton(true);
+      }
+    }
+
+    // Update the ref for the next comparison
+    prevLastMessageId.current = newLastMessage._id;
+  }, [messages, currentUser._id]);
 
   useEffect(() => {
     const currentRef = messageListRef.current;
@@ -428,11 +447,15 @@ const PublicChatWindow = ({ openImageModal }) => {
                 </div>
               ))}
             </div>
-            {isTyping && (
-              <div className="chat chat-start">
-                <div className="chat-bubble bg-gray-700 text-white">
-                  <span className="loading loading-dots loading-sm"></span>
-                </div>
+            {showNewMessageButton && (
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+                <button
+                  onClick={handleNewMessageButtonClick}
+                  className="bg-primary text-sm px-3 py-1 text-white rounded-full shadow-lg flex items-center space-x-2 animate-bounce"
+                >
+                  <span>New Message</span>
+                  <FaCaretDown />
+                </button>
               </div>
             )}
           </div>
@@ -454,7 +477,6 @@ const PublicChatWindow = ({ openImageModal }) => {
             isSomeoneTyping={isSomeoneTyping}
             typingUsers={typingUsers}
           />
-
         </>
       )}
     </div>
