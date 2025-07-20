@@ -55,7 +55,7 @@ const PublicChatMessage = ({
   const isSenderAdmin = message.sender.isAdmin;
   const isAuthUserAdmin = authUser.isAdmin;
   const isSenderBanned = message.sender.isBannedInPublicChat;
-  const isMessageDeleted = message.isDeletedByAdmin;
+  const isMessageDeleted = message.isDeletedByAdmin || message.isDeletedByUser;
   const isSenderVerified = message.sender.isVerified;
   const isMessageEdited = message.isEdited;
 
@@ -404,7 +404,7 @@ const PublicChatMessage = ({
                     @{message.replyTo.sender?.username || "Unknown User"}
                   </span>
                 </span>
-                {message.replyTo.isDeletedByAdmin ? (
+                {message.replyTo.isDeletedByAdmin || message.replyTo.isDeletedByUser ? (
                   <div></div>
                 ) : (
                   message.replyTo.content && (
@@ -424,12 +424,12 @@ const PublicChatMessage = ({
                     className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                   />
                 )}
-                {message.replyTo.isDeletedByAdmin && (
+                {message.replyTo.isDeletedByAdmin || message.replyTo.isDeletedByUser && (
                   <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
                 )}
               </div>
             )}
-            {message.isDeletedByAdmin || isSenderBanned ? (
+            {message.isDeletedByAdmin || message.isDeletedByUser || isSenderBanned ? (
               <span className="italic text-sm text-gray-400">[Message Deleted]</span>
             ) : (
               <>

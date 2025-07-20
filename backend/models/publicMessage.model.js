@@ -20,6 +20,10 @@ const publicChatMessageSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isDeletedByUser: {
+      type: Boolean,
+      default: false,
+    },
     reactions: [
       {
         emoji: {

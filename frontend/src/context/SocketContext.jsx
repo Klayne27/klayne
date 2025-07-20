@@ -63,6 +63,10 @@ export const SocketContextProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
       });
 
+      newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, content, img }) => {
+        queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      });
+
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users);
       });
@@ -74,7 +78,6 @@ export const SocketContextProvider = ({ children }) => {
       newSocket.on("unreadNotificationStatus", ({ hasUnreadNotifications }) => {
         setHasUnreadNotifications(hasUnreadNotifications);
       });
-
 
       newSocket.on("newPostAvailable", () => {
         setHasNewFeedPosts(true);
@@ -120,9 +123,9 @@ export const SocketContextProvider = ({ children }) => {
         });
       });
 
-       newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat }) => {
-          setHasUnreadPublicChat(hasUnreadPublicChat);
-        });
+      newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat }) => {
+        setHasUnreadPublicChat(hasUnreadPublicChat);
+      });
 
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
@@ -170,7 +173,7 @@ export const SocketContextProvider = ({ children }) => {
 
     if (currentPath === PUBLIC_CHAT_ROUTE && prevPath !== PUBLIC_CHAT_ROUTE) {
       socket.emit("userEnteredPublicChat");
-      setHasUnreadPublicChat(false)
+      setHasUnreadPublicChat(false);
     } // When user LEAVES the public chat
     else if (currentPath !== PUBLIC_CHAT_ROUTE && prevPath === PUBLIC_CHAT_ROUTE) {
       socket.emit("userLeftPublicChat");

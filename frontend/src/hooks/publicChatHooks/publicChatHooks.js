@@ -138,7 +138,8 @@ export const usePublicMessages = () => {
               return {
                 ...message,
                 isDeletedByAdmin: true,
-                content: "[Message Deleted]",
+                // isDeletedByUser: true,
+                // content: "[Message Deleted]",
                 img: null,
               };
             }
@@ -148,11 +149,12 @@ export const usePublicMessages = () => {
                 ...message,
                 replyTo: {
                   ...message.replyTo,
-                  content: "[Message Deleted]",
+                  // content: "[Message Deleted]",
                   img: null,
                   isDeletedByAdmin: true, // Ensure this is true
+                  // isDeletedByUser: true,
                   isOriginalMessageDeleted: true, // New flag: original message is gone
-                  sender: { username: "Deleted User" }, // Indicate sender is gone
+                  // sender: { username: "Deleted User" },
                 },
               };
             }
@@ -170,20 +172,29 @@ export const usePublicMessages = () => {
         if (!oldData) return oldData;
 
         const updatedPages = oldData.pages.map((page) => {
-          // First, filter out the deleted message itself from this page
-          const filteredPage = page.filter((message) => message._id !== messageId);
+          return page.map((message) => {
+            // --- CRUCIAL CHANGE: Mark the message itself as deleted ---
+            if (message._id === messageId) {
+              return {
+                ...message,
+                isDeletedByUser: true, // Flag for user-initiated deletion
+                // content: "[Message Deleted]", // Display this text instead of the original
+                img: null, // Clear image content
+                // You might want to clear other sensitive fields here as well
+              };
+            }
 
-          // Then, update any messages that replied to the deleted message
-          return filteredPage.map((message) => {
+            // --- Update any messages that replied to the now-deleted message ---
             if (message.replyTo && message.replyTo._id === messageId) {
               return {
                 ...message,
                 replyTo: {
                   ...message.replyTo,
-                  content: "[Message Deleted]", // Or a more specific message
+                  // content: "[Message Deleted]", // Or a more specific message
                   img: null,
-                  isOriginalMessageDeleted: true, // New flag: original message is gone
-                  sender: { username: "Deleted User" }, // Indicate sender is gone
+                  isDeletedByUser: true, // Flag that the original message was deleted by user
+                  isOriginalMessageDeleted: true, // Indicates the original message is gone
+                  // sender: { username: "Deleted User" }, // Optional: anonymize sender in reply
                 },
               };
             }
@@ -353,6 +364,7 @@ export const useSendPublicMessage = () => {
             content: repliedMessageInCache.content,
             img: repliedMessageInCache.img,
             isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
+            isDeletedByUser: repliedMessageInCache.isDeletedByUser,
             sender: {
               _id: repliedMessageInCache.sender?._id,
               username: repliedMessageInCache.sender?.username || "Unknown User",
@@ -379,6 +391,7 @@ export const useSendPublicMessage = () => {
         isOptimistic: true,
         replyTo: populatedReplyTo,
         isDeletedByAdmin: false,
+        isDeletedByUser: false,
         reactions: [],
       };
 
@@ -635,23 +648,23 @@ export const useDeleteOwnPublicMessage = () => {
   const { mutate: deleteOwnMessage, isPending: isDeletingOwnMessage } = useMutation({
     mutationFn: (messageId) => deleteOwnPublicMessageApi(messageId),
     onMutate: async (messageIdToDelete) => {
-      // Optimistic Update: Remove the message from the cache immediately
-      await queryClient.cancelQueries(["publicMessages"]); // Cancel any ongoing fetches
+      // // Optimistic Update: Remove the message from the cache immediately
+      // await queryClient.cancelQueries(["publicMessages"]); // Cancel any ongoing fetches
 
-      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+      // const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) return oldData;
+      // queryClient.setQueryData(["publicMessages"], (oldData) => {
+      //   if (!oldData) return oldData;
 
-        const newPages = oldData.pages.map((page) =>
-          page.filter((msg) => msg._id !== messageIdToDelete)
-        );
+      //   const newPages = oldData.pages.map((page) =>
+      //     page.filter((msg) => msg._id !== messageIdToDelete)
+      //   );
 
-        return { ...oldData, pages: newPages };
-      });
+      //   return { ...oldData, pages: newPages };
+      // });
 
-      // Return a context object with the snapshotted value
-      return { previousMessages };
+      // // Return a context object with the snapshotted value
+      // return { previousMessages };
     },
     onError: (err, messageIdToDelete, context) => {
       // Rollback on error

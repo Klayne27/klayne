@@ -1,4 +1,11 @@
-import { activePublicChatUsers, emitUnreadPublicChatStatus, getReceiverSocketIds, io, onlineUsersMap, PUBLIC_CHAT_ROOM } from "../lib/socket.js";
+import {
+  activePublicChatUsers,
+  emitUnreadPublicChatStatus,
+  getReceiverSocketIds,
+  io,
+  onlineUsersMap,
+  PUBLIC_CHAT_ROOM,
+} from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
@@ -60,7 +67,7 @@ export const sendPublicMessage = async (req, res) => {
       },
       {
         path: "replyTo",
-        select: "sender content img isDeletedByAdmin",
+        select: "sender content img isDeletedByAdmin isDeletedByUser",
         populate: {
           path: "sender",
           select: "username isBannedInPublicChat",
@@ -69,28 +76,28 @@ export const sendPublicMessage = async (req, res) => {
     ]);
 
     // Emit the new message to all connected clients in the public chat room
-       io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
+    io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
 
-       await User.findByIdAndUpdate(senderId, {
-         lastReadPublicChatTimestamp: newPublicMessage.createdAt,
-       });
+    await User.findByIdAndUpdate(senderId, {
+      lastReadPublicChatTimestamp: newPublicMessage.createdAt,
+    });
 
-       // --- REVISED LOGIC START ---
-       const allOnlineUserIds = Array.from(onlineUsersMap.keys());
+    // --- REVISED LOGIC START ---
+    const allOnlineUserIds = Array.from(onlineUsersMap.keys());
 
-       // Filter out the sender and users who are actively in the public chat
-       const usersToNotify = allOnlineUserIds.filter(
-         (userId) =>
-           userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId)
-       );
+    // Filter out the sender and users who are actively in the public chat
+    const usersToNotify = allOnlineUserIds.filter(
+      (userId) =>
+        userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId)
+    );
 
-       // Emit status only to relevant users
-       for (const userId of usersToNotify) {
-         await emitUnreadPublicChatStatus(userId);
-       }
-       // --- REVISED LOGIC END ---
+    // Emit status only to relevant users
+    for (const userId of usersToNotify) {
+      await emitUnreadPublicChatStatus(userId);
+    }
+    // --- REVISED LOGIC END ---
 
-       res.status(201).json(newPublicMessage);
+    res.status(201).json(newPublicMessage);
   } catch (error) {
     console.error("Error in sendPublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -115,7 +122,7 @@ export const getPublicMessages = async (req, res) => {
         },
         {
           path: "replyTo", // Populate the replied-to message
-          select: "sender content img isDeletedByAdmin", // Select minimal fields needed for reply preview
+          select: "sender content img isDeletedByAdmin isDeletedByUser", // Select minimal fields needed for reply preview
           populate: {
             path: "sender", // Populate the sender of the replied-to message
             select: "username isBannedInPublicChat", // Select their username and ban status
@@ -157,10 +164,8 @@ export const deletePublicMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found." });
     }
 
-    // Mark the message as deleted by admin instead of actually deleting it
     message.isDeletedByAdmin = true;
-    // Clear content and image if not already done by client on optimisitic update
-    message.content = "[Message Deleted]"; // Standardize the display
+    // message.content = "[Message Deleted]";
     message.img = null; // Remove image URL
     await message.save();
 
@@ -350,22 +355,17 @@ export const deleteOwnPublicMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found." });
     }
 
-    // Authorization check: Only the sender can delete their message
-    // Or if you want admins to delete any message:
-    // const isUserAdmin = req.user.isAdmin; // Assuming isAdmin is on req.user from auth middleware
-    // if (message.sender.toString() !== userId.toString() && !isUserAdmin) {
-
     if (message.sender.toString() !== userId.toString()) {
       return res
         .status(403)
         .json({ error: "You are not authorized to delete this message." });
     }
 
-    // Perform the deletion
-    await PublicChatMessage.deleteOne({ _id: messageId }); // Use deleteOne or findByIdAndDelete
+    message.isDeletedByUser = true;
+    // message.content = "[Message Deleted]";
+    message.img = null; // Remove image URL
+    await message.save();
 
-    // Emit message deletion to all clients in the public chat room
-    // This is crucial for real-time updates
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {
       messageId: message._id,
       senderId: message.sender.toString(), // Useful for frontend to quickly remove from UI
@@ -397,12 +397,14 @@ export const editPublicMessage = async (req, res) => {
 
     // Only the original sender can edit their message
     if (message.sender.toString() !== userId.toString()) {
-      return res.status(403).json({ error: "You are not authorized to edit this message." });
+      return res
+        .status(403)
+        .json({ error: "You are not authorized to edit this message." });
     }
 
     // Prevent editing if the message has been deleted by an admin
-    if (message.isDeletedByAdmin) {
-      return res.status(403).json({ error: "Cannot edit a message deleted by an admin." });
+    if (message.isDeletedByAdmin || message.isDeletedByUser) {
+      return res.status(403).json({ error: "Cannot edit a deleted message." });
     }
 
     message.content = newContent;
@@ -421,7 +423,7 @@ export const editPublicMessage = async (req, res) => {
         },
         {
           path: "replyTo",
-          select: "sender content img isDeletedByAdmin",
+          select: "sender content img isDeletedByAdmin isDeletedByUser",
           populate: {
             path: "sender",
             select: "username isBannedInPublicChat",
