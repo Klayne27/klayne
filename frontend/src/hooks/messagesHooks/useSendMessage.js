@@ -39,6 +39,7 @@ export const useSendMessage = ({
           fullName: currentUser.fullName,
           profileImg: currentUser.profileImg,
           isVerified: currentUser.isVerified,
+          isGoldVerified: currentUser.isGoldVerified,
         },
         conversationId: selectedConversation?._id || queryKeyConversationId,
         createdAt: new Date().toISOString(),

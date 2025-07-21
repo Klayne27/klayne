@@ -164,7 +164,8 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName profileImg isVerified blockedUsers blockedBy",
+        select:
+          "username fullName profileImg isVerified isGoldVerified blockedUsers blockedBy",
       })
       .populate({
         path: "parentComment",
@@ -274,7 +275,7 @@ export const createComment = async (req, res) => {
 
     await newComment.populate({
       path: "user",
-      select: "username fullName profileImg isVerified",
+      select: "username fullName profileImg isVerified isGoldVerified",
     });
 
     // Notify the post owner (if not the commenter and not blocked)
@@ -398,7 +399,7 @@ export const replyToComment = async (req, res) => {
 
     await newReply.populate({
       path: "user",
-      select: "username fullName profileImg isVerified",
+      select: "username fullName profileImg isVerified isGoldVerified",
     }); // Notify the parent comment owner (if not the replier and not blocked)
 
     if (

@@ -398,6 +398,9 @@ const Post = ({
                 {originalPostOwner.isVerified && (
                   <img src="/verified.png" className="size-[17px]" alt="Verified" />
                 )}
+                {originalPostOwner.isGoldVerified && (
+                  <img src="/gold-verified.png" className="size-[17px]" alt="Verified" />
+                )}
               </Link>
               <span className="text-gray-500 flex gap-1 text-sm min-w-0">
                 {" "}

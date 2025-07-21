@@ -47,7 +47,7 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username fullName profileImg isVerified",
+        select: "username fullName profileImg isVerified isGoldVerified",
       })
       .populate({
         path: "postId",

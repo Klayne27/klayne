@@ -63,7 +63,7 @@ export const sendPublicMessage = async (req, res) => {
     await newPublicMessage.populate([
       {
         path: "sender",
-        select: "username fullName profileImg isAdmin isVerified",
+        select: "username fullName profileImg isAdmin isVerified isGoldVerified",
       },
       {
         path: "replyTo",
@@ -118,7 +118,8 @@ export const getPublicMessages = async (req, res) => {
       .populate([
         {
           path: "sender",
-          select: "username fullName profileImg isAdmin isVerified isBannedInPublicChat",
+          select:
+            "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
         },
         {
           path: "replyTo", // Populate the replied-to message
@@ -419,7 +420,8 @@ export const editPublicMessage = async (req, res) => {
       .populate([
         {
           path: "sender",
-          select: "username fullName profileImg isAdmin isVerified isBannedInPublicChat",
+          select:
+            "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
         },
         {
           path: "replyTo",

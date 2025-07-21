@@ -1345,7 +1345,7 @@ export const getPinnedPosts = async (req, res) => {
         path: "pinnedPosts",
         populate: {
           path: "user",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified isGoldVerified",
         },
         // IMPORTANT: If pinned posts can be reposts, you'll need to populate repostedFrom here as well
         // similar to how you do it in getUserPosts.

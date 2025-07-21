@@ -363,6 +363,7 @@ export const useSendPublicMessage = () => {
           profileImg: authUser.profileImg,
           isAdmin: authUser.isAdmin,
           isVerified: authUser.isVerified,
+          isGoldVerified: authUser.isGoldVerified,
           isBannedInPublicChat: authUser.isBannedInPublicChat,
         },
         createdAt: new Date().toISOString(),

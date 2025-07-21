@@ -125,6 +125,9 @@ function ConversationItem({
             {conv.participants[0].isVerified && (
               <img src="/verified.png" className="size-[17px]" alt="Verified badge" />
             )}
+            {conv.participants[0].isGoldVerified && (
+              <img src="/gold-verified.png" className="size-[17px]" alt="Verified badge" />
+            )}
             <span className="text-gray-400 ">@{otherUser?.username}</span>
             {!conv.isNewChat && (
               <>

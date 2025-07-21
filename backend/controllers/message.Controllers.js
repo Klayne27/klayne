@@ -144,7 +144,10 @@ export const sendMessage = async (req, res) => {
 
     await conversation.save();
 
-    await newMessage.populate("sender", "username profileImg fullName isVerified");
+    await newMessage.populate(
+      "sender",
+      "username profileImg fullName isVerified isGoldVerified"
+    );
 
     if (newMessage.repliedTo) {
       await newMessage.populate({
@@ -152,7 +155,7 @@ export const sendMessage = async (req, res) => {
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified isGoldVerified",
         },
       });
     }
@@ -249,13 +252,13 @@ export const getMessagesByConversationId = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("sender", "username profileImg fullName isVerified")
+      .populate("sender", "username profileImg fullName isVerified isGoldVerified")
       .populate({
         path: "repliedTo",
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified isGoldVerified",
         },
       });
 
@@ -280,7 +283,7 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username profileImg fullName isVerified",
+        select: "username profileImg fullName isVerified isGoldVerified",
       })
       .sort({ updatedAt: -1 });
 
@@ -342,7 +345,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
     const currentUser = await User.findById(userId).populate({
       path: "following",
-      select: "username profileImg fullName isVerified",
+      select: "username profileImg fullName isVerified isGoldVerified",
     });
 
     if (!currentUser) {
@@ -559,14 +562,14 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(updatedMessage._id)
       .populate({
         path: "sender",
-        select: "username fullName profileImg isVerified",
+        select: "username fullName profileImg isVerified isGoldVerified",
       })
       .populate({
         path: "repliedTo",
         select: "text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified",
+          select: "username fullName profileImg isVerified isGoldVerified",
         },
       })
       .populate({
@@ -627,7 +630,7 @@ export const editMessage = async (req, res) => {
     // --- CRUCIAL CHANGE: Populate message for emission ---
     // Populate sender, and if it's a reply, populate repliedTo and repliedTo.sender
     const populatedMessage = await Message.findById(message._id)
-      .populate("sender", "username fullName profileImg isVerified") // Ensure sender is populated
+      .populate("sender", "username fullName profileImg isVerified isGoldVerified") // Ensure sender is populated
       .populate({
         path: "repliedTo",
         populate: {

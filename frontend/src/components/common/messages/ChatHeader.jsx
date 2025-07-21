@@ -23,6 +23,9 @@ function ChatHeader({ onBackToConversations, otherUser }) {
       {otherUser?.isVerified && (
         <img src="/verified.png" className="size-[17px] ml-1" alt="Verified badge" />
       )}
+      {otherUser?.isGoldVerified && (
+        <img src="/gold-verified.png" className="size-[17px]" />
+      )}
     </div>
   );
 }

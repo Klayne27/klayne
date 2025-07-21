@@ -357,6 +357,13 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   alt="Verified"
                 />
               )}
+              {comment.user.isGoldVerified && (
+                <img
+                  src="/gold-verified.png"
+                  className="size-[17px] flex-shrink-0"
+                  alt="Verified"
+                />
+              )}
               <Link
                 to={`/profile/${comment.user.username}`}
                 className="text-gray-500 text-sm truncate flex-grow min-w-0"

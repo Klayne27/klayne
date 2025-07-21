@@ -57,6 +57,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const isSenderBanned = message.sender.isBannedInPublicChat;
   const isMessageDeleted = message.isDeletedByAdmin || message.isDeletedByUser;
   const isSenderVerified = message.sender.isVerified;
+  const isSenderGoldVerified = message.sender.isGoldVerified;
   const isMessageEdited = message.isEdited;
 
   const isSentByCurrentUser = message.sender?._id === authUser?._id;
@@ -273,7 +274,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         )}
 
         {/* Trash Icon for deleting own message */}
-        {fromMe && (
+        {fromMe && !isMessageDeleted && (
           <button
             onClick={handleDeleteOwnMessageInModal}
             disabled={isDeletingOwnMessage}
@@ -284,7 +285,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           </button>
         )}
         {/* Admin Delete and Ban/Unban Buttons */}
-        {isAuthUserAdmin && (
+        {isAuthUserAdmin && !fromMe && (
           <>
             {!isMessageDeleted && (
               <button
@@ -374,6 +375,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   {message.sender.username}
                 </Link>
                 {isSenderVerified && <img src="/verified.png" className="size-[17px]" />}
+                {isSenderGoldVerified && <img src="/gold-verified.png" className="size-[17px]" />}
 
                 {isSenderAdmin && (
                   <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
@@ -459,7 +461,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               </div>
             )}
             {message.isDeletedByAdmin || message.isDeletedByUser || isSenderBanned ? (
-              <span className="italic text-sm text-gray-400">[Message Deleted]</span>
+              <span className="italic text-sm text-gray-400 ">[Message Deleted]</span>
             ) : (
               <>
                 {message.img && (

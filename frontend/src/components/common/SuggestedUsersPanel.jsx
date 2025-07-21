@@ -78,6 +78,9 @@ const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal}) => {
                       {user.isVerified && (
                         <img src="/verified.png" className="size-[17px]" />
                       )}
+                      {user.isGoldVerified && (
+                        <img src="/gold-verified.png" className="size-[17px]" />
+                      )}
                     </span>
                     <span className="text-sm text-slate-500">@{user.username}</span>
                   </div>
