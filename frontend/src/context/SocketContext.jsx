@@ -55,9 +55,9 @@ export const SocketContextProvider = ({ children }) => {
       setSocket(newSocket);
 
       // In SocketContextProvider.jsx
-      // newSocket.on("newPublicMessage", (newMessage) => {
-      //   queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // });
+      newSocket.on("newPublicMessage", (newMessage) => {
+        queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      });
 
       newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
