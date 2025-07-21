@@ -562,7 +562,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
           <li
             onClick={handlePublicChatClick}
-            className="flex hidden justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
           >
             <button
               className={`flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
