@@ -69,9 +69,9 @@ export const sendMessage = async (req, res) => {
     let { img } = req.body;
     const senderId = req.user._id;
 
-    const isDeletedForRecipient = conversation.deletedFor.some(
-      (entry) => entry.user.toString() === recipientId.toString()
-    );
+    // const isDeletedForRecipient = conversation.deletedFor.some(
+    //   (entry) => entry.user.toString() === recipientId.toString()
+    // );
 
     if (senderId.toString() === recipientId.toString()) {
       return res.status(400).json({ error: "You cannot message yourself." });
