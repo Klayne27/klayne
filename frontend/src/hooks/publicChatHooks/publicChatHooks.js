@@ -51,7 +51,6 @@ export const usePublicMessages = () => {
       }
       return allPages.length + 1;
     },
-    
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,

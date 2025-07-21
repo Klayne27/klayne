@@ -158,16 +158,16 @@ export const deletePublicMessage = async (req, res) => {
         .json({ error: "Unauthorized: Only admins can delete messages." });
     }
 
-    const message = await PublicChatMessage.findByIdAndDelete(messageId);
+    const message = await PublicChatMessage.findById(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
     }
 
-    // message.isDeletedByAdmin = true;
+    message.isDeletedByAdmin = true;
     // // message.content = "[Message Deleted]";
-    // message.img = null; // Remove image URL
-    // await message.save();
+    message.img = null; // Remove image URL
+    await message.save();
 
     // Emit an event to inform clients about the admin-deleted message
     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageDeleted", { messageId: message._id });

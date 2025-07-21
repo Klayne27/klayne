@@ -380,7 +380,7 @@ const getGroupedMessages = useCallback((allMessages) => {
   return grouped;
 }, []);
 
-  const dedupedMessages = useMemo(() => {
+  const dedupedMessages = React.useMemo(() => {
     const seen = new Set();
     return messages.filter((msg) => {
       if (seen.has(msg._id)) return false;
