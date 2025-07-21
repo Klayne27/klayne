@@ -15,9 +15,10 @@ import { FiTrash } from "react-icons/fi";
 import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
 import { formatDate } from "date-fns";
+import { useMemo } from "react";
 
 // --- PublicChatMessage Component ---
-const PublicChatMessage = ({
+const PublicChatMessage = React.memo(function PublicChatMessage({
   message,
   authUser,
   openImageModal,
@@ -37,8 +38,7 @@ const PublicChatMessage = ({
   // NEW: Grouping props
   isFirstInGroup,
   isLastInGroup,
-  bubbleClasses, // Receive pre-calculated classes
-}) => {
+}) {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
     useDeletePublicMessage();
@@ -59,6 +59,8 @@ const PublicChatMessage = ({
   const isSenderVerified = message.sender.isVerified;
   const isMessageEdited = message.isEdited;
 
+  const isSentByCurrentUser = message.sender?._id === authUser?._id;
+
   // `bubbleRounding` is now replaced by `bubbleClasses` passed from parent
 
   const showModal = activeMessageModalId === message._id;
@@ -70,7 +72,7 @@ const PublicChatMessage = ({
     ? showModal
       ? "active-highlight"
       : ""
-    : "hover:bg-secondary"; // This hover class needs adjustment or removal if you want the whole row to highlight
+    : "hover:bg-secondary";
 
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
@@ -100,6 +102,34 @@ const PublicChatMessage = ({
 
     return acc;
   }, {});
+
+  const bubbleClasses = useMemo(() => {
+    let classes = "";
+    if (isSentByCurrentUser) {
+      classes += " bg-primary text-white";
+      if (isFirstInGroup && isLastInGroup) {
+        classes += " rounded-3xl";
+      } else if (isFirstInGroup) {
+        classes += " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]";
+      } else if (isLastInGroup) {
+        classes += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl";
+      } else {
+        classes += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]";
+      }
+    } else {
+      classes += " bg-[#2F3336] text-white";
+      if (isFirstInGroup && isLastInGroup) {
+        classes += " rounded-3xl";
+      } else if (isFirstInGroup) {
+        classes += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]";
+      } else if (isLastInGroup) {
+        classes += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl";
+      } else {
+        classes += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]";
+      }
+    }
+    return classes;
+  }, [isSentByCurrentUser, isFirstInGroup, isLastInGroup]); // Dependencies for useMemo
 
   const handleAdminDeleteClick = (e) => {
     e.stopPropagation();
@@ -163,7 +193,7 @@ const PublicChatMessage = ({
     <div
       key={message._id}
       id={`message-${message._id}`}
-      className={`relative mb-0 p-[1px] rounded-lg ${messageHighlightClass} ${
+      className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${
         fromMe ? "justify-end" : "justify-start"
       }`}
       onMouseEnter={() => {
@@ -498,6 +528,6 @@ const PublicChatMessage = ({
       </div>
     </div>
   );
-};
+});
 
 export default PublicChatMessage;

@@ -66,6 +66,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   );
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
+  const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
 
   // --- Touch device detection ---
   useEffect(() => {
@@ -135,10 +136,13 @@ const PublicChatWindow = ({ openImageModal }) => {
   };
 
   // --- Reaction Handler ---
-  const handleReactionClick = (messageId, emoji) => {
-    addReaction({ messageId, emoji });
-    setActiveMessageModalId(null);
-  };
+  const handleReactionClick = useCallback(
+    (messageId, emoji) => {
+      addReaction({ messageId, emoji }); // `addReaction` should be memoized or from a stable hook
+      setActiveMessageModalId(null);
+    },
+    [addReaction]
+  ); // Dependency on addReaction
 
   // --- Handler to set message for editing ---
   const handleEdit = (messageToEdit) => {
@@ -210,17 +214,16 @@ const PublicChatWindow = ({ openImageModal }) => {
       scrollToBottom();
       shouldScrollToBottom.current = false;
     }
-  }, [messages, isLoadingMessages, scrollToBottom]);
+  }, [messages.length, isLoadingMessages, scrollToBottom]);
 
   useEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
 
-    if (isScrollAtBottom() && !isUserScrollingUp.current) {
+    // We only want to auto-scroll if the user is already at the bottom.
+    if (isScrollAtBottom()) {
       scrollToBottom();
-    } else {
-      return;
     }
-  }, [messages.length, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
+  }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]); // 👈 USE lastMessageId HERE
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current;
@@ -346,38 +349,7 @@ const PublicChatWindow = ({ openImageModal }) => {
           MESSAGE_GROUP_TIME_THRESHOLD_MS; // Time threshold exceeded
 
       // Apply the bubble classes based on grouping and sender
-      let bubbleClasses = "";
-      if (isSentByCurrentUser) {
-        bubbleClasses += " bg-primary text-white";
-        if (message.isFirstInGroup && message.isLastInGroup) {
-          bubbleClasses += " rounded-3xl"; // Single message, or isolated message
-        } else if (message.isFirstInGroup) {
-          bubbleClasses +=
-            " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]"; // First in group
-        } else if (message.isLastInGroup) {
-          bubbleClasses +=
-            " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl"; // Last in group
-        } else {
-          bubbleClasses +=
-            " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]"; // Middle message
-        }
-      } else {
-        // Not current user
-        bubbleClasses += " bg-[#2F3336] text-white";
-        if (message.isFirstInGroup && message.isLastInGroup) {
-          bubbleClasses += " rounded-3xl"; // Single message, or isolated message
-        } else if (message.isFirstInGroup) {
-          bubbleClasses +=
-            " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]"; // First in group
-        } else if (message.isLastInGroup) {
-          bubbleClasses +=
-            " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl"; // Last in group
-        } else {
-          bubbleClasses +=
-            " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]"; // Middle message
-        }
-      }
-      message.bubbleClasses = bubbleClasses; // Attach the computed classes
+      // Attach the computed classes
 
       grouped.push(message);
     }

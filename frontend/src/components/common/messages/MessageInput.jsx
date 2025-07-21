@@ -9,6 +9,7 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { FaCircle, FaSpinner } from "react-icons/fa";
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage";
 import { FaReply } from "react-icons/fa6";
+import React from "react";
 
 function MessageInput({
   otherUser,
@@ -557,4 +558,4 @@ function MessageInput({
   );
 }
 
-export default MessageInput;
+export default React.memo(MessageInput);

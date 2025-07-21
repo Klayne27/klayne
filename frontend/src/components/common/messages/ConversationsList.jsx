@@ -3,6 +3,7 @@ import { useSocket } from "../../../context/SocketContext";
 import { IoSearch, IoSettingsOutline } from "react-icons/io5";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import ConversationItem from "./ConversationItem";
+import React from "react";
 
 const ConversationsList = ({
   onSelectConversation,
@@ -183,4 +184,4 @@ const ConversationsList = ({
   );
 };
 
-export default ConversationsList;
+export default React.memo(ConversationsList);

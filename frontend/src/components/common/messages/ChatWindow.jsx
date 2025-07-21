@@ -113,6 +113,7 @@ const ChatWindow = ({
     onMessageSentOptimistically: handleOptimisticScroll,
   });
 
+
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;

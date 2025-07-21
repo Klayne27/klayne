@@ -560,9 +560,9 @@ export const useAddPublicMessageReaction = () => {
     },
     // `onSettled` is great here because it runs on both success and error.
     // It's ideal for refetching to ensure eventual consistency.
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Use object for invalidateQueries
-    },
+    // onSettled: () => {
+    //   // queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Use object for invalidateQueries
+    // },
   });
 
   return { addReaction, isReacting };
