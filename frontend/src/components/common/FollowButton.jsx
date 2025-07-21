@@ -10,7 +10,7 @@ const FollowButton = ({
 }) => {
   const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false);
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const { follow, isPending } = useFollow();
+  const { follow, isPending } = useFollow(user);
 
   // Use a local state for `isFollowing` to allow immediate UI update
   // while `useFollow` hook potentially updates `currentUser` context

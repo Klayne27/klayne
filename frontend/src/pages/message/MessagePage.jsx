@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useMemo } from "react";
 import { useLocation, useParams, useNavigate } from "react-router-dom";
 import ConversationsList from "../../components/common/messages/ConversationsList";
 import ChatWindow from "../../components/common/messages/ChatWindow";
@@ -35,9 +35,57 @@ const MessagePage = ({
   const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
     useFetchFollowedUsersForMessaging();
 
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const initialLoadAttempted = useRef(false);
+  // const [selectedConversation, setSelectedConversation] = useState(null);
+  // const initialLoadAttempted = useRef(false);
   const queryClient = useQueryClient();
+
+  // ⬇️ ADD THIS NEW USEEFFECT ⬇️
+  useEffect(() => {
+    if (!socket || !currentUser) return;
+
+    const handleNewMessage = (newMessage) => {
+      // Ignore messages sent by the current user
+      if (newMessage.sender._id === currentUser._id) {
+        return;
+      }
+
+      const conversationId = newMessage.conversationId;
+
+      // --- Task 2: Update the conversations list for the sidebar ---
+      queryClient.setQueryData(["conversations"], (oldConversations) => {
+        if (!oldConversations) return [];
+
+        const updatedConversations = oldConversations.map((conv) => {
+          if (conv._id === conversationId) {
+            return {
+              ...conv,
+              lastMessage: {
+                // update with new last message details
+                text: newMessage.text,
+                sender: newMessage.sender._id,
+                seen: false, // It's a new message from someone else
+                img: newMessage.img,
+              },
+              updatedAt: newMessage.createdAt,
+            };
+          }
+          return conv;
+        });
+
+        // Sort to bring the updated conversation to the top
+        return updatedConversations.sort(
+          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
+        );
+      });
+    };
+
+    socket.on("newMessage", handleNewMessage);
+
+    return () => {
+      socket.off("newMessage", handleNewMessage);
+    };
+  }, [socket, queryClient, currentUser]);
+  
 
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
@@ -49,6 +97,52 @@ const MessagePage = ({
   const hasConversationIdInUrl = !!urlConversationId && urlConversationId !== "";
   const showConversationListPanel = !isMobile || !isConversationOpen;
   const showChatWindowPanel = !isMobile || isConversationOpen;
+
+  const selectedConversation = useMemo(() => {
+    // If the main data isn't ready, we can't select anything.
+    if (isLoadingConversations || isLoadingFollowedUsers) {
+      return null;
+    }
+
+    // Case 1: An existing conversation ID is in the URL.
+    if (urlConversationId) {
+      return conversations.find((conv) => conv._id === urlConversationId) || null;
+    }
+
+    // Case 2: We are starting a new chat with a target user.
+    if (targetUserId) {
+      // Check if a conversation already exists for this user.
+      const existingConv = conversations.find((conv) =>
+        conv.participants.some((p) => p?._id.toString() === targetUserId)
+      );
+      if (existingConv) return existingConv;
+
+      // If not, create a temporary "pseudo" conversation object.
+      const targetUser = followedUsers.find(
+        (user) => user._id.toString() === targetUserId
+      );
+      if (targetUser) {
+        return {
+          _id: `new-${targetUser._id}`,
+          participants: [targetUser, currentUser], // Simplified for clarity
+          isNewChat: true,
+          lastMessage: { text: "Start a new message", seen: true, img: "" },
+          updatedAt: new Date(),
+        };
+      }
+    }
+
+    // Default case: No conversation is selected.
+    return null;
+  }, [
+    urlConversationId,
+    targetUserId,
+    conversations,
+    followedUsers,
+    isLoadingConversations,
+    isLoadingFollowedUsers,
+    currentUser,
+  ]);
 
   const isConversationActive = !!urlConversationId || !!selectedConversation;
 
@@ -67,7 +161,7 @@ const MessagePage = ({
     }
 
     if (
-      initialLoadAttempted.current &&
+      // initialLoadAttempted.current &&
       !targetUserId && // No new targetUserId trying to force a new convo
       urlConversationId === selectedConversation?._id // URL matches current selected convo (for existing chats)
     ) {
@@ -131,8 +225,8 @@ const MessagePage = ({
       return;
     }
 
-    setSelectedConversation(desiredConversation);
-    initialLoadAttempted.current = true;
+    // setSelectedConversation(desiredConversation);
+    // initialLoadAttempted.current = true;
 
     if (location.state?.targetUserId && targetUserId) {
       // Only replace state if targetUserId was actually used to find/create a conversation
@@ -151,125 +245,41 @@ const MessagePage = ({
   ]);
 
   const handleSelectConversation = (conversation) => {
-    setSelectedConversation(conversation);
-    // queryClient.invalidateQueries(["conversations"])
-
+    // The only job is to change the URL. The derived state will do the rest.
     if (conversation && !conversation.isNewChat) {
       navigate(`/messages/${conversation._id}`);
-    } else if (conversation?.isNewChat) {
-      // For new chats, ensure the targetUserId is in state if navigating via link
-      navigate("/messages", {
-        state: {
-          targetUserId: conversation.participants.find((p) => p?._id !== currentUser._id)
-            ?._id,
-        },
-      });
     } else {
-      // If no conversation is selected (e.g., clearing selection), go to base /messages
+      // Handle new chats or clearing selection
       navigate("/messages");
     }
   };
 
   // In MessagePage
-  useEffect(() => {
-    if (!socket || !currentUser) return; // Ensure socket and currentUser are available
+  // useEffect(() => {
+  //   if (!socket || !currentUser) return; // Ensure socket and currentUser are available
 
-    const handleNewMessage = (newMessage) => {
-      // ... (existing logic for updating messages cache, if it's still here)
+  //   const handleNewMessage = (newMessage) => {
+  //     // ... (existing logic for updating messages cache, if it's still here)
 
-      // Update conversations cache
-      queryClient.setQueryData(["conversations"], (oldConversations) => {
-        if (!oldConversations) return oldConversations;
+  //     // Update conversations cache
 
-        let updatedConversations = oldConversations.map((conv) => {
-          if (conv._id === newMessage.conversationId) {
-            const newSeenStatus =
-              newMessage.sender._id.toString() !== currentUser._id.toString()
-                ? false
-                : newMessage.seen;
-            return {
-              ...conv,
-              lastMessage: {
-                _id: newMessage._id,
-                text: newMessage.text,
-                sender: newMessage.sender._id,
-                seen: newSeenStatus,
-                img: newMessage.img,
-              },
-              updatedAt: newMessage.createdAt,
-            };
-          }
-          return conv;
-        });
+  //   };
 
-        const isExistingConversation = updatedConversations.some(
-          (c) => c._id === newMessage.conversationId
-        );
+  //   socket.on("newMessage", handleNewMessage);
 
-        if (!isExistingConversation && newMessage.conversationId) {
-          let otherParticipant = null;
-
-          // Safely access selectedConversation.participants
-          if (
-            newMessage.sender._id.toString() === currentUser._id.toString() &&
-            selectedConversation &&
-            selectedConversation.participants
-          ) {
-            otherParticipant = selectedConversation.participants.find(
-              (p) => p?._id?.toString() !== currentUser._id.toString()
-            );
-          } else {
-            // If current user is not sender, or selectedConversation is not available,
-            // the other participant is the sender of the new message.
-            otherParticipant = newMessage.sender;
-          }
-
-          if (otherParticipant) {
-            const newConvEntry = {
-              _id: newMessage.conversationId,
-              participants: [
-                otherParticipant,
-                {
-                  _id: currentUser._id,
-                  username: currentUser.username,
-                  fullName: currentUser.fullName,
-                  profileImg: currentUser.profileImg,
-                },
-              ],
-              lastMessage: {
-                _id: newMessage._id,
-                text: newMessage.text,
-                sender: newMessage.sender._id,
-                seen: false,
-                img: newMessage.img,
-              },
-              updatedAt: newMessage.createdAt,
-            };
-            updatedConversations = [newConvEntry, ...updatedConversations];
-          }
-        }
-
-        return updatedConversations.sort(
-          (a, b) => new Date(b.updatedAt) - new Date(a.updatedAt)
-        );
-      });
-    };
-
-    socket.on("newMessage", handleNewMessage);
-
-    return () => {
-      socket.off("newMessage", handleNewMessage);
-    };
-  }, [
-    socket,
-    queryClient,
-    currentUser, // Keep currentUser as a whole object.
-    selectedConversation, // selectedConversation should be in dependencies,
-    // but its properties accessed conditionally inside.
-  ]);
+  //   return () => {
+  //     socket.off("newMessage", handleNewMessage);
+  //   };
+  // }, [
+  //   socket,
+  //   queryClient,
+  //   currentUser, // Keep currentUser as a whole object.
+  //   selectedConversation, // selectedConversation should be in dependencies,
+  //   // but its properties accessed conditionally inside.
+  // ]);
 
   const handleBackToConversations = () => {
-    setSelectedConversation(null);
+    // setSelectedConversation(null);
     navigate("/messages");
   };
 
@@ -283,7 +293,7 @@ const MessagePage = ({
       await deleteConversation(conversationToDeleteId);
       // After deletion, if the deleted conversation was selected, clear selection and navigate back.
       if (selectedConversation?._id === conversationToDeleteId) {
-        setSelectedConversation(null);
+        // setSelectedConversation(null);
         navigate("/messages", { replace: true });
       }
       // If it was a 'new chat' pseudo-conversation that was deleted (which shouldn't happen, but as a safeguard)
@@ -291,7 +301,7 @@ const MessagePage = ({
         selectedConversation?.isNewChat &&
         selectedConversation.participants.some((p) => p._id === conversationToDeleteId)
       ) {
-        setSelectedConversation(null);
+        // setSelectedConversation(null);
         navigate("/messages", { replace: true });
       }
     }
@@ -316,7 +326,7 @@ const MessagePage = ({
 
   const handleNewConversationCreated = (newConversation) => {
     refetchConversations(); // Ensure conversations list is updated
-    setSelectedConversation(newConversation); // Set the selected conversation to the real one
+    // setSelectedConversation(newConversation); // Set the selected conversation to the real one
     navigate(`/messages/${newConversation._id}`, { replace: true }); // Navigate to the correct URL
   };
 

@@ -29,6 +29,7 @@ const ChatWindow = ({
 
   const { socket, setActiveConversationId } = useSocket();
 
+  const [isAtBottom, setIsAtBottom] = useState(false);
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
@@ -71,6 +72,8 @@ const ChatWindow = ({
     isFetching,
   } = useFetchMessages(selectedConversation);
 
+  const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
+
   const isNewChat =
     selectedConversation.isNewChat ||
     (!messages?.length && !isLoading && !error && actualConversationId);
@@ -112,7 +115,6 @@ const ChatWindow = ({
     actualConversationId,
     onMessageSentOptimistically: handleOptimisticScroll,
   });
-
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
@@ -178,14 +180,19 @@ const ChatWindow = ({
     const listEl = messageListRef.current;
     if (!listEl) return;
 
+    const scrollThreshold = 100;
+
     const conversationChanged =
       prevActualConversationIdRef.current !== actualConversationId;
 
     if (conversationChanged) {
       shouldScrollOnFirstFullLoad.current = true;
       prevActualConversationIdRef.current = actualConversationId;
-      // didMessageJustLanded.current = true; // Force scroll on new conversation
+      didMessageJustLanded.current = true; // Force scroll on new conversation
     }
+
+    const isAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
     const isReadyForAnyScroll =
       (shouldScrollOnFirstFullLoad.current && !isLoading && messages.length > 0) ||
@@ -197,7 +204,15 @@ const ChatWindow = ({
       didMessageJustLanded.current = false;
       setShowNewMessageButton(false);
     }
-  }, [messages, isLoading, actualConversationId, scrollToBottom]);
+
+    if (isAtBottom) {
+      scrollToBottom()
+    }
+  }, [messages.length, isLoading, actualConversationId, scrollToBottom, lastMessageId]);
+
+  // useLayoutEffect(() => {
+  //   if (isAtBottom) scrollToBottom();
+  // }, [lastMessageId, isAtBottom, scrollToBottom]);
 
   // --- Existing scroll handling for fetching older messages ---
   useEffect(() => {
@@ -325,25 +340,24 @@ const ChatWindow = ({
       }
 
       const handleNewMessage = (newMessage) => {
+        // IMPORTANT: Always set the query data for the conversation the message belongs to
+        // This ensures the data is in the cache even if the user is not currently viewing that chat.
         const targetMessagesQueryKey = ["messages", newMessage.conversationId];
 
-        const isMessageForCurrentlyActiveChat =
-          newMessage.conversationId === actualConversationId ||
-          (selectedConversation?.isNewChat &&
-            newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            newMessage.recipientId?.toString() === currentUserId.toString() &&
-            !actualConversationId);
-
         queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
+          // If no existing data, initialize with the new message
           if (!oldData || !oldData.pages || oldData.pages.length === 0) {
             return { pages: [[newMessage]], pageParams: [1] };
           }
+
           const newData = { ...oldData };
+          // Filter out duplicates (if any) and optimistic messages that are being replaced
           const firstPageMessages = newData.pages[0].filter(
             (msg) =>
               msg._id !== newMessage._id && msg._id !== currentOptimisticIdRef.current
           );
 
+          // If the new message is from the current user and replaces an optimistic one
           if (
             newMessage.sender._id.toString() === currentUserId.toString() &&
             currentOptimisticIdRef.current &&
@@ -357,15 +371,19 @@ const ChatWindow = ({
             ];
             currentOptimisticIdRef.current = null;
           } else {
+            // Otherwise, just add the new message to the first page
             newData.pages[0] = [...firstPageMessages, newMessage];
           }
           return newData;
         });
 
-        queryClient.invalidateQueries({
-          queryKey: targetMessagesQueryKey,
-          refetchType: "none",
-        });
+        // Now, handle UI-specific logic ONLY if the message is for the currently active chat
+        const isMessageForCurrentlyActiveChat =
+          newMessage.conversationId === actualConversationId ||
+          (selectedConversation?.isNewChat &&
+            newMessage.sender._id.toString() === otherUser?._id.toString() &&
+            newMessage.recipientId?.toString() === currentUserId.toString() &&
+            !actualConversationId); // If it's a new chat, match by sender/recipient until a real ID exists
 
         if (isMessageForCurrentlyActiveChat) {
           const listEl = messageListRef.current;
@@ -375,24 +393,31 @@ const ChatWindow = ({
               listEl.scrollHeight - listEl.scrollTop <=
               listEl.clientHeight + scrollThreshold;
 
+            // Mark for scroll only if it's a message from another user AND we're not at the bottom
+            // OR if it's our own message (which implies we should always scroll to it)
             if (
-              isAtBottom ||
-              newMessage.sender._id.toString() === currentUserId.toString()
+              newMessage.sender._id.toString() === currentUserId.toString() || // Our own message
+              isAtBottom // Already at bottom, so keep scrolling
             ) {
               didMessageJustLanded.current = true;
               setShowNewMessageButton(false);
             } else {
+              // If message is from other user and we are scrolled up
               if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
                 setShowNewMessageButton(true);
               }
             }
           }
+
+          // Mark messages as seen if the received message is from the other user in the active chat
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
               conversationId: newMessage.conversationId,
             });
           }
         }
+        // Invalidate the conversations list to update the last message/unread count in the sidebar
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       };
 
       const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
@@ -442,26 +467,25 @@ const ChatWindow = ({
       };
 
       const handleConversationUpdate = (updatedConversation) => {
-        queryClient.setQueryData(["conversations", currentUserId], (oldConversations) => {
-          if (!oldConversations) return [];
+        // Now this key matches your useFetchConversations hook
+        queryClient.setQueryData(["conversations"], (oldConversations) => {
+          if (!oldConversations) return [updatedConversation]; // Handle initial empty state
 
+          // Assuming oldConversations is an array, you'd want to update it
           // Find the index of the updated conversation
           const index = oldConversations.findIndex(
             (conv) => conv._id === updatedConversation._id
           );
 
           if (index !== -1) {
-            // If found, replace it and potentially reorder to the top
             const newConversations = [...oldConversations];
             newConversations[index] = updatedConversation;
-
-            // Optional: If you sort by updatedAt, re-sort the list
+            // You might also want to reorder if 'updatedAt' changes
             // newConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
             return newConversations;
           } else {
-            // If not found (e.g., a new conversation was created), just add it
-            // Or invalidate to refetch everything for simplicity if new conversations are rare
-            return [updatedConversation, ...oldConversations];
+            // If not found (e.g., a brand new conversation was created that wasn't in the list)
+            return [updatedConversation, ...oldConversations]; // Add to the top
           }
         });
       };
@@ -529,6 +553,7 @@ const ChatWindow = ({
     queryClient,
     otherUser?._id,
     currentUserId,
+    selectedConversation,
     // currentUser.username,
     // currentUser.profileImg,
     // currentUser.fullName,
@@ -551,6 +576,7 @@ const ChatWindow = ({
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();
     setShowNewMessageButton(false);
+    didMessageJustLanded.current = false;
   }, [scrollToBottom]);
 
   return (

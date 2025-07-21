@@ -10,6 +10,7 @@ export const useFetchConversations = () => {
   } = useQuery({
     queryKey: ["conversations"],
     queryFn: fetchConversationsApi,
+    // staleTime: Infinity
   });
 
   return {

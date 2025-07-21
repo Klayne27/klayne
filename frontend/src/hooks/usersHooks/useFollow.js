@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { followApi } from "../../api/usersApi"; // Assuming followApi toggles follow/unfollow
 import { useAuthUser } from "../authHooks/useAuthUser";
 
-const useFollow = () => {
+const useFollow = (user) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser(); // Assuming this hook provides the current authenticated userr
   const {
@@ -68,6 +68,7 @@ const useFollow = () => {
       // the server might have different data due to other actions.
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] });
+      queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] });
       // queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
     },
     onSuccess: (data, userIdToFollow) => {
