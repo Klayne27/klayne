@@ -198,35 +198,11 @@ const PublicChatWindow = ({ openImageModal }) => {
     setShowNewMessageButton(false);
   }, [scrollToBottom]);
 
-  useLayoutEffect(() => {
-    if (!messageListRef.current || isLoadingMessages) return;
-
-    if (
-      messages.length > 0 &&
-      !isUserScrollingUp.current &&
-      !scrollStateBeforeFetch.current.scrollHeight
-    ) {
-      scrollToBottom();
-      return;
-    }
-
-    if (shouldScrollToBottom.current) {
-      scrollToBottom();
-      shouldScrollToBottom.current = false;
-    }
-  }, [messages.length, isLoadingMessages, scrollToBottom]);
-
-  useEffect(() => {
-    if (!messageListRef.current || isLoadingMessages) return;
-
-    // We only want to auto-scroll if the user is already at the bottom.
-    if (isScrollAtBottom()) {
-      scrollToBottom();
-    }
-  }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]); // 👈 USE lastMessageId HERE
+  // 👈 USE lastMessageId HERE
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current;
+
     if (listEl) {
       const { scrollTop, scrollHeight, clientHeight } = listEl;
       const scrollThreshold = 50; // A small buffer
@@ -250,6 +226,41 @@ const PublicChatWindow = ({ openImageModal }) => {
       }
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]); // No need to add setShowNewMessageButton here
+
+  // useLayoutEffect(() => {
+  //   if (!messageListRef.current || isLoadingMessages) return;
+
+  //   if (
+  //     messages.length > 0 &&
+  //     !isUserScrollingUp.current &&
+  //     !scrollStateBeforeFetch.current.scrollHeight
+  //   ) {
+  //     scrollToBottom();
+  //     return;
+  //   }
+
+  //   if (shouldScrollToBottom.current) {
+  //     scrollToBottom();
+  //     shouldScrollToBottom.current = false;
+  //   }
+  // }, [messages.length, isLoadingMessages, scrollToBottom]);
+
+  const isInitialLoad = useRef(true);
+  useEffect(() => {
+    if (isInitialLoad.current && messages.length > 0) {
+      scrollToBottom();
+      isInitialLoad.current = false;
+    }
+  }, [messages.length, scrollToBottom]);
+
+  useEffect(() => {
+    if (!messageListRef.current || isLoadingMessages) return;
+
+    // We only want to auto-scroll if the user is already at the bottom.
+    if (isScrollAtBottom()) {
+      scrollToBottom();
+    }
+  }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -382,7 +393,7 @@ const PublicChatWindow = ({ openImageModal }) => {
       ) : (
         <>
           <div
-            className="flex-grow overflow-y-auto p-4 pb-2 min-h-0"
+            className="flex-grow overflow-y-auto p-4 pb-7 min-h-0"
             ref={messageListRef}
           >
             {isFetchingNextPage && (
@@ -431,6 +442,7 @@ const PublicChatWindow = ({ openImageModal }) => {
               </div>
             )}
           </div>
+
           <PublicMessageInput
             selectedFile={selectedFile}
             setSelectedFile={setSelectedFile}

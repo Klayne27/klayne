@@ -133,9 +133,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const handleAdminDeleteClick = (e) => {
     e.stopPropagation();
-    if (window.confirm("Are you sure you want to delete this message as an admin?")) {
+    // if (window.confirm("Are you sure you want to delete this message as an admin?")) {
       adminDeleteMessage(message._id);
-    }
+    // }
   };
 
   const handleAdminBanClick = () => {

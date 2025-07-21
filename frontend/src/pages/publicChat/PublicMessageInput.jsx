@@ -238,6 +238,7 @@ const PublicMessageInput = ({
 
   return (
     <>
+      {" "}
       {/* --- Image Preview Section --- */}
       {previewImage && (
         <div className="mt-4 border-t border-accent p-5 flex sticky bottom-0 z-10 bg-base-100">
@@ -256,7 +257,6 @@ const PublicMessageInput = ({
           </div>
         </div>
       )}
-
       {/* --- Conditional Rendering for Input Section (Edit Mode vs. Normal Mode) --- */}
       {isEditingMode ? (
         // EDIT MODE CONTAINER
@@ -351,7 +351,7 @@ const PublicMessageInput = ({
         // NORMAL MODE (not editing)
         <form
           onSubmit={handleSendMessageOrEdit}
-          className="sticky bottom-0 bg-base-100 flex flex-col mb-1"
+          className="sticky bottom-0 bg-base-100 flex flex-col"
         >
           {replyingToMessage && (
             <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
@@ -440,12 +440,11 @@ const PublicMessageInput = ({
               <MdSend className="w-5 h-5" />
             </button>
           </div>
-          {showTypingIndicator && ( // Use the new derived state
-            <div className="flex justify-start px-4 left-0 p-1 absolute -bottom-1.5 items-center text-gray-400 text-sm">
+          {showTypingIndicator && ( 
+            <div className="flex justify-start px-4 left-0 p-1 absolute -top-7 bg-base-100 w-full items-center text-gray-400 text-sm">
               <span className="animate-pulse font-semibold">
                 {getTypingMessage(typingUsers)}
               </span>
-              {/* Pulsing dots always appear when someone is typing */}
               <span className="flex ml-1 gap-0.5 mt-2.5">
                 <span className="inline-block pulsing-dot pulsing-dot-1">
                   <FaCircle size={6} />
