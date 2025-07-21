@@ -350,7 +350,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id; // User attempting the deletion
 
-    const message = await PublicChatMessage.findByIdAndDelete(messageId);
+    const message = await PublicChatMessage.findById(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
@@ -362,10 +362,10 @@ export const deleteOwnPublicMessage = async (req, res) => {
         .json({ error: "You are not authorized to delete this message." });
     }
 
-    // message.isDeletedByUser = true;
-    // // message.content = "[Message Deleted]";
-    // message.img = null; // Remove image URL
-    // await message.save();
+    message.isDeletedByUser = true;
+    // message.content = "[Message Deleted]";
+    message.img = null; // Remove image URL
+    await message.save();
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {
       messageId: message._id,
