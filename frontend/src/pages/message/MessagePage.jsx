@@ -170,30 +170,6 @@ const MessagePage = ({
     }
   };
 
-  // In MessagePage
-  // useEffect(() => {
-  //   if (!socket || !currentUser) return; // Ensure socket and currentUser are available
-
-  //   const handleNewMessage = (newMessage) => {
-  //     // ... (existing logic for updating messages cache, if it's still here)
-
-  //     // Update conversations cache
-
-  //   };
-
-  //   socket.on("newMessage", handleNewMessage);
-
-  //   return () => {
-  //     socket.off("newMessage", handleNewMessage);
-  //   };
-  // }, [
-  //   socket,
-  //   queryClient,
-  //   currentUser, // Keep currentUser as a whole object.
-  //   selectedConversation, // selectedConversation should be in dependencies,
-  //   // but its properties accessed conditionally inside.
-  // ]);
-
   const handleBackToConversations = () => {
     setSelectedConversation(null);
     navigate("/messages");
@@ -256,9 +232,6 @@ const MessagePage = ({
     );
   }
 
-  // `showChatWindow` determines if the ChatWindow should be visible.
-  // It's true if there's a URL conversation ID, or if a conversation is locally selected (e.g., a new chat).
-  const showChatWindow = !!urlConversationId || !!selectedConversation;
 
   return (
     <>
@@ -300,9 +273,6 @@ const MessagePage = ({
             {isLoadingConversations ||
             isLoadingFollowedUsers ||
             (isConversationActive && !selectedConversation) ? (
-              // This condition covers:
-              // 1. Initial page load on desktop (both sides loading)
-              // 2. Mobile: When a conversation is clicked and the chat window is about to load its content
               <ChatWindowSkeleton />
             ) : selectedConversation ? (
               <ChatWindow

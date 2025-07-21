@@ -14,12 +14,7 @@ function ConversationItem({
   onSelectConversation,
   onDeleteInitiate,
 }) {
-  const queryClient = useQueryClient();
-  const {socket} = useSocket()
 
-    const lastMessageText = conv.lastMessage?.text || "";
-    const isEdited = conv.lastMessage?.isEdited || false;
-    // const isLastMessageFromMe = conv.lastMessage?.sender.toString();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -35,35 +30,6 @@ function ConversationItem({
   const isLastMessageFromOtherUser =
     conv.lastMessage?.sender?.toString() === otherUser._id.toString();
   const isLastMessageUnread = isLastMessageFromOtherUser && !conv.lastMessage?.seen;
-
-  // // We want to mark the conversation as seen *when it becomes selected*.
-  // // // Use an useEffect that watches `isSelected` and `isLastMessageUnread`.
-  // useEffect(() => {
-  //   if (isSelected && isLastMessageUnread) {
-  //     queryClient.setQueryData(["conversations"], (oldConversations) => {
-  //       if (!oldConversations) return oldConversations;
-
-  //       const updatedConversations = oldConversations.map((convItem) => {
-  //         if (
-  //           convItem._id === conv._id && // Match the current conversation item
-  //           convItem.lastMessage &&
-  //           convItem.lastMessage.sender.toString() !== currentUser._id.toString() &&
-  //           !convItem.lastMessage.seen
-  //         ) {
-  //           return {
-  //             ...convItem,
-  //             lastMessage: {
-  //               ...convItem.lastMessage,
-  //               seen: true,
-  //             },
-  //           };
-  //         }
-  //         return convItem;
-  //       });
-  //       return updatedConversations;
-  //     });
-  //   }
-  // }, [ isSelected, isLastMessageUnread, conv._id, currentUser._id, queryClient]); // Add queryClient to dependencies
 
   let lastMessageContent;
   if (conv.isNewChat) {
@@ -148,7 +114,7 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      {/* {!conv.isNewChat && (
+      {!conv.isNewChat && (
         <div
           className="group p-2 rounded-full hover:bg-red-600 hover:text-red-500 hover:bg-opacity-15 duration-200 transition"
           onClick={handleDeleteClick}
@@ -158,7 +124,7 @@ function ConversationItem({
             size={18}
           />
         </div>
-      )} */}
+      )}
     </div>
   );
 }
