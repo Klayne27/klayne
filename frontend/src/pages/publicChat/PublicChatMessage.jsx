@@ -284,7 +284,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           </button>
         )}
         {/* Admin Delete and Ban/Unban Buttons */}
-        {isAuthUserAdmin && !fromMe && (
+        {isAuthUserAdmin && (
           <>
             {!isMessageDeleted && (
               <button

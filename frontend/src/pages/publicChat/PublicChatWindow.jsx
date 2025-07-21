@@ -1,5 +1,5 @@
 // src/components/publicChat/PublicChatWindow.jsx
-import React, { useRef, useEffect, useCallback, useState, useLayoutEffect } from "react";
+import React, { useRef, useEffect, useCallback, useState, useLayoutEffect, useMemo } from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useSocket } from "../../context/SocketContext";
 import PublicChatHeader from "./PublicChatHeader";
@@ -44,6 +44,8 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { addReaction } = useAddPublicMessageReaction();
   const { mutate: editPublicMessage, isPending: isEditingMessage } =
     useEditPublicMessage();
+
+    const [isAtBottom, setIsAtBottom] = useState(true);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -198,6 +200,27 @@ const PublicChatWindow = ({ openImageModal }) => {
     setShowNewMessageButton(false);
   }, [scrollToBottom]);
 
+  useEffect(() => {
+    const container = messageListRef.current;
+    if (!container) return;
+
+    const messagesEls = container.querySelectorAll("[id^='message-']");
+    const lastEl = messagesEls[messagesEls.length - 1];
+    if (!lastEl) return;
+
+    const observer = new IntersectionObserver(
+      ([entry]) => setIsAtBottom(entry.isIntersecting),
+      { root: container, threshold: 0.9 }
+    );
+    observer.observe(lastEl);
+    return () => observer.disconnect();
+  }, [messages]);
+
+  // 3) auto‑scroll only when it truly is at the bottom
+  useLayoutEffect(() => {
+    if (isAtBottom) scrollToBottom();
+  }, [lastMessageId, isLoadingMessages, isAtBottom, scrollToBottom]);
+
   // 👈 USE lastMessageId HERE
 
   const handleScroll = useCallback(() => {
@@ -227,40 +250,40 @@ const PublicChatWindow = ({ openImageModal }) => {
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]); // No need to add setShowNewMessageButton here
 
-  // useLayoutEffect(() => {
-  //   if (!messageListRef.current || isLoadingMessages) return;
-
-  //   if (
-  //     messages.length > 0 &&
-  //     !isUserScrollingUp.current &&
-  //     !scrollStateBeforeFetch.current.scrollHeight
-  //   ) {
-  //     scrollToBottom();
-  //     return;
-  //   }
-
-  //   if (shouldScrollToBottom.current) {
-  //     scrollToBottom();
-  //     shouldScrollToBottom.current = false;
-  //   }
-  // }, [messages.length, isLoadingMessages, scrollToBottom]);
-
-  const isInitialLoad = useRef(true);
-  useEffect(() => {
-    if (isInitialLoad.current && messages.length > 0) {
-      scrollToBottom();
-      isInitialLoad.current = false;
-    }
-  }, [messages.length, scrollToBottom]);
-
-  useEffect(() => {
+  useLayoutEffect(() => {
     if (!messageListRef.current || isLoadingMessages) return;
 
-    // We only want to auto-scroll if the user is already at the bottom.
-    if (isScrollAtBottom()) {
+    if (
+      messages.length > 0 &&
+      !isUserScrollingUp.current &&
+      !scrollStateBeforeFetch.current.scrollHeight
+    ) {
       scrollToBottom();
+      return;
     }
-  }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
+
+    if (shouldScrollToBottom.current) {
+      scrollToBottom();
+      shouldScrollToBottom.current = false;
+    }
+  }, [messages.length, isLoadingMessages, scrollToBottom]);
+
+  // const isInitialLoad = useRef(true);
+  // useEffect(() => {
+  //   if (isInitialLoad.current && messages.length > 0) {
+  //     scrollToBottom();
+  //     isInitialLoad.current = false;
+  //   }
+  // }, [messages.length, scrollToBottom]);
+
+  // useEffect(() => {
+  //   if (!messageListRef.current || isLoadingMessages) return;
+
+  //   // We only want to auto-scroll if the user is already at the bottom.
+  //   if (isScrollAtBottom()) {
+  //     scrollToBottom();
+  //   }
+  // }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -329,45 +352,46 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   // --- Message Grouping Logic ---
   // This is where we'll preprocess messages to add grouping flags
-  const getGroupedMessages = useCallback(() => {
-    if (!messages || messages.length === 0) return [];
+const getGroupedMessages = useCallback((allMessages) => {
+  if (!allMessages || allMessages.length === 0) return [];
 
-    const allMessages = messages;
-    const grouped = [];
+  const grouped = [];
+  for (let i = 0; i < allMessages.length; i++) {
+    const message = { ...allMessages[i] };
+    const prev = allMessages[i - 1];
+    const next = allMessages[i + 1];
 
-    for (let i = 0; i < allMessages.length; i++) {
-      const message = { ...allMessages[i] }; // Create a mutable copy
-      const prevMessage = allMessages[i - 1];
+    // first-in-group?
+    message.isFirstInGroup =
+      !prev ||
+      message.sender._id !== prev.sender._id ||
+      new Date(message.createdAt) - new Date(prev.createdAt) >
+        MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
-      const isSentByCurrentUser = message.sender._id === currentUser._id;
-      const isPrevSentByCurrentUser = prevMessage?.sender._id === currentUser._id;
+    // last-in-group?
+    message.isLastInGroup =
+      !next ||
+      message.sender._id !== next.sender._id ||
+      new Date(next.createdAt) - new Date(message.createdAt) >
+        MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
-      // Determine if this is the first message in a group
-      message.isFirstInGroup =
-        !prevMessage ||
-        message.sender._id !== prevMessage.sender._id || // Different sender
-        new Date(message.createdAt).getTime() -
-          new Date(prevMessage.createdAt).getTime() >
-          MESSAGE_GROUP_TIME_THRESHOLD_MS; // Time threshold exceeded
+    grouped.push(message);
+  }
+  return grouped;
+}, []);
 
-      // Determine if this is the last message in a group
-      const nextMessage = allMessages[i + 1];
-      message.isLastInGroup =
-        !nextMessage ||
-        message.sender._id !== nextMessage.sender._id || // Different sender
-        new Date(nextMessage.createdAt).getTime() -
-          new Date(message.createdAt).getTime() >
-          MESSAGE_GROUP_TIME_THRESHOLD_MS; // Time threshold exceeded
+  const dedupedMessages = useMemo(() => {
+    const seen = new Set();
+    return messages.filter((msg) => {
+      if (seen.has(msg._id)) return false;
+      seen.add(msg._id);
+      return true;
+    });
+  }, [messages]);
 
-      // Apply the bubble classes based on grouping and sender
-      // Attach the computed classes
-
-      grouped.push(message);
-    }
-    return grouped;
-  }, [messages, currentUser]);
-
-  const processedMessages = getGroupedMessages();
+  const processedMessages = useMemo(() => {
+    return getGroupedMessages(dedupedMessages);
+  }, [dedupedMessages, getGroupedMessages]);
 
   // Render Logic for Loading/Error states
   if (isLoadingMessages && messages.length === 0) {

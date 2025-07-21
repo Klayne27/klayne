@@ -441,7 +441,7 @@ const PublicMessageInput = ({
             </button>
           </div>
           {showTypingIndicator && ( 
-            <div className="flex justify-start px-4 left-0 p-1 absolute -top-7 bg-base-100 w-full items-center text-gray-400 text-sm">
+            <div className="flex justify-start px-4 z-20 left-0 p-1 absolute -top-7 bg-base-100 w-full items-center text-gray-400 text-sm">
               <span className="animate-pulse font-semibold">
                 {getTypingMessage(typingUsers)}
               </span>
