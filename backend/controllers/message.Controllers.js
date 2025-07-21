@@ -69,9 +69,21 @@ export const sendMessage = async (req, res) => {
     let { img } = req.body;
     const senderId = req.user._id;
 
+    const isDeletedForRecipient = conversation.deletedFor.some(
+      (entry) => entry.user.toString() === recipientId.toString()
+    );
+
     if (senderId.toString() === recipientId.toString()) {
       return res.status(400).json({ error: "You cannot message yourself." });
     }
+
+    // if (isDeletedForRecipient) {
+    //   // If so, remove them from the deletedFor array to make it reappear in their inbox
+    //   await Conversation.updateOne(
+    //     { _id: conversation._id },
+    //     { $pull: { deletedFor: { user: recipientId } } }
+    //   );
+    // }
 
     if (await isBlockedOrBlockedBy(senderId, recipientId)) {
       return res.status(403).json({

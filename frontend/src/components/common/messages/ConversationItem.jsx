@@ -148,7 +148,7 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      {!conv.isNewChat && (
+      {/* {!conv.isNewChat && (
         <div
           className="group p-2 rounded-full hover:bg-red-600 hover:text-red-500 hover:bg-opacity-15 duration-200 transition"
           onClick={handleDeleteClick}
@@ -158,7 +158,7 @@ function ConversationItem({
             size={18}
           />
         </div>
-      )}
+      )} */}
     </div>
   );
 }
