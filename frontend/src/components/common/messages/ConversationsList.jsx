@@ -29,8 +29,6 @@ const ConversationsList = ({
     );
   });
 
-  console.log(conversations);
-
   return (
     <div className="flex flex-col h-full border-accent">
       {/* Header */}
