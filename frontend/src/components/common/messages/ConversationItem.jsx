@@ -87,7 +87,7 @@ function ConversationItem({
             {otherUser.isGoldVerified && (
               <img src="/gold-verified.png" className="size-[17px]" alt="Gold Verified" />
             )}
-            <span className="text-gray-400 hidden sm:inline">@{otherUser.username}</span>
+            <span className="text-gray-400">@{otherUser.username}</span>
             <span className="text-gray-400 text-xs mx-1">·</span>
             <span className="text-gray-400 text-xs shrink-0">
               {formatPostDate(conv.updatedAt)}
