@@ -18,7 +18,7 @@ export const useFetchUserProfile = (username) => {
     cacheTime: 10 * 60 * 1000,
   });
 
-  const user = data?.user || null;
+  const userProfile = data?.user || null;
   const isBlockedByYou = data?.isBlockedByYou || false;
   const hasBlockedYou = data?.hasBlockedYou || false;
   const message = data?.message || error?.message || null;
@@ -26,7 +26,7 @@ export const useFetchUserProfile = (username) => {
 
 
   return {
-    user,
+    userProfile,
     isLoading,
     isRefetching,
     error: message,

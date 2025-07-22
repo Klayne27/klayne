@@ -460,19 +460,6 @@ export const blockUnblockUser = async (req, res) => {
         $pull: { blockedBy: currentUserId },
       });
 
-      const conversation = await Conversation.findOne({
-        participants: { $all: [currentUserId, userToBlockId] },
-      });
-
-      if (conversation) {
-        conversation.deletedFor = conversation.deletedFor.filter(
-          (entry) =>
-            entry.user.toString() !== currentUserId.toString() &&
-            entry.user.toString() !== userToBlockId.toString()
-        );
-        await conversation.save();
-      }
-
       return res.status(200).json({
         message: "User unblocked successfully.",
         username: userToBlock.username,
@@ -505,28 +492,6 @@ export const blockUnblockUser = async (req, res) => {
         await User.findByIdAndUpdate(currentUserId, {
           $pull: { followers: userToBlockId },
         });
-      }
-
-      const conversation = await Conversation.findOne({
-        participants: { $all: [currentUserId, userToBlockId] },
-      });
-
-      if (conversation) {
-        if (
-          !conversation.deletedFor.some(
-            (entry) => entry.user.toString() === currentUserId.toString()
-          )
-        ) {
-          conversation.deletedFor.push({ user: currentUserId });
-        }
-        if (
-          !conversation.deletedFor.some(
-            (entry) => entry.user.toString() === userToBlockId.toString()
-          )
-        ) {
-          conversation.deletedFor.push({ user: userToBlockId });
-        }
-        await conversation.save();
       }
 
       return res.status(200).json({

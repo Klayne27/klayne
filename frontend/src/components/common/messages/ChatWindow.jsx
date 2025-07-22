@@ -16,6 +16,7 @@ import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
+import { IoChatbubblesOutline } from "react-icons/io5";
 
 const ChatWindow = ({
   selectedConversation,
@@ -41,7 +42,7 @@ const ChatWindow = ({
   const currentOptimisticIdRef = useRef(null);
   const messageListRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
-  
+
   const didMessageJustLanded = useRef(false); // Renamed for clarity: `didMessageJustArriveOrSend` -> `didMessageJustLanded`
 
   const resizeObserverRef = useRef(null);
@@ -368,42 +369,37 @@ const ChatWindow = ({
         }
       };
 
-const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
+        if (seenConversationId.toString() === conversationId?.toString()) {
+          queryClient.setQueryData(["messages", conversationId], (oldData) => {
+            if (!oldData) {
+              return oldData;
+            }
 
-  if (seenConversationId.toString() === conversationId?.toString()) {
-    queryClient.setQueryData(["messages", conversationId], (oldData) => {
+            const updatedPages = oldData.pages.map((page, pageIndex) =>
+              page.map((msg) => {
+                // Check if it's the current user's message AND it's currently not seen
+                const shouldBeMarkedSeen =
+                  msg.sender && // Ensure sender exists
+                  msg.sender._id.toString() === currentUserId.toString() &&
+                  !msg.seen;
 
-      if (!oldData) {
+                if (shouldBeMarkedSeen) {
+                  return { ...msg, seen: true };
+                }
+                return msg;
+              })
+            );
+            // Important: Verify the 'seen' property of your specific message here in the console
+            // For example, find the message by its ID if you know it, or just inspect the last message
+            if (updatedPages && updatedPages.length > 0 && updatedPages[0].length > 0) {
+              const lastMessageOnFirstPage = updatedPages[0][updatedPages[0].length - 1];
+            }
 
-        return oldData;
-      }
-
-      const updatedPages = oldData.pages.map((page, pageIndex) =>
-        page.map((msg) => {
-          // Check if it's the current user's message AND it's currently not seen
-          const shouldBeMarkedSeen =
-            msg.sender && // Ensure sender exists
-            msg.sender._id.toString() === currentUserId.toString() &&
-            !msg.seen;
-
-          if (shouldBeMarkedSeen) {
-            return { ...msg, seen: true };
-          }
-          return msg;
-        })
-      );
-      // Important: Verify the 'seen' property of your specific message here in the console
-      // For example, find the message by its ID if you know it, or just inspect the last message
-      if (updatedPages && updatedPages.length > 0 && updatedPages[0].length > 0) {
-        const lastMessageOnFirstPage = updatedPages[0][updatedPages[0].length - 1];
-
-      }
-
-      return { ...oldData, pages: updatedPages };
-    });
-    // console.log("queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Uncomment if needed for conversation list updates");
-  } 
-};
+            return { ...oldData, pages: updatedPages };
+          });
+        }
+      };
 
       const handleMessageDeleted = ({
         messageId,
@@ -434,11 +430,9 @@ const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) =>
       const handleConversationUpdate = (updatedConversation) => {
         // queryClient.setQueryData(["conversations"], (oldConversations) => {
         //   if (!oldConversations) return [updatedConversation]; // Handle initial empty state
-
         //   const index = oldConversations.findIndex(
         //     (conv) => conv._id === updatedConversation._id
         //   );
-
         //   if (index !== -1) {
         //     const newConversations = [...oldConversations];
         //     newConversations[index] = updatedConversation;
@@ -527,6 +521,17 @@ const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) =>
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
+      {isChatEmpty && (
+        <div className="flex flex-col items-center justify-end h-full text-center p-4">
+          <IoChatbubblesOutline className="text-6xl text-gray-300 mb-4" />
+          <p className="text-xl font-semibold  mb-2">
+            You're starting a new chat with @{otherUser?.username}!
+          </p>
+          <p className="text-base text-gray-500 italic max-w-sm">
+            Say hello and send your first message to begin your conversation.
+          </p>
+        </div>
+      )}
       <div className="mx-auto w-full flex flex-col h-full max-w-3xl md:max-w-[585px]">
         <MessageList
           isNewChat={isChatEmpty} // Pass the simplified boolean

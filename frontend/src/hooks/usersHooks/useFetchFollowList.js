@@ -32,7 +32,6 @@ export const useFetchFollowList = (userId, type) => {
     enabled: enabled,
     staleTime: 5 * 60 * 1000, // 5 minutes
     cacheTime: 10 * 60 * 1000, // 10 minutes
-    // You might want to add retry logic here similar to useFetchUserProfile
     retry: (failureCount, err) => {
       // Example retry logic: if it's a 404 or 403, don't retry. Otherwise, retry a few times.
       if (err?.status === 403 || err?.status === 404) {

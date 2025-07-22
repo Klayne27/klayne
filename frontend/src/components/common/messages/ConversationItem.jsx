@@ -6,16 +6,15 @@ import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
 import { FiTrash } from "react-icons/fi";
 import React from "react";
+import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility";
+import { CiCircleMinus } from "react-icons/ci";
 
 // 🗑️ REMOVED PROPS: onlineUsers (can be re-added if needed, but simplifying for now)
 // ✅ The component is simpler as it doesn't need to check for "isNewChat".
-function ConversationItem({
-  conv,
-  selectedConversation,
-  onSelectConversation,
-  onDeleteInitiate,
-}) {
+function ConversationItem({ conv, selectedConversation, onSelectConversation, onToggleVisibility }) {
   const { authUser: currentUser } = useAuthUser();
+
+  const {  toggleVisibility, isPending } = useToggleConversationVisibility();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -45,9 +44,9 @@ function ConversationItem({
       ? lastMessageContent.slice(0, 35) + "..."
       : lastMessageContent;
 
-  const handleDeleteClick = (e) => {
-    e.stopPropagation(); // Prevent the conversation from being selected
-    onDeleteInitiate(conv._id);
+  const handleToggleHide = (e) => {
+    e.stopPropagation();
+    toggleVisibility(conv._id);
   };
 
   // This should rarely happen now with the new backend logic
@@ -58,7 +57,7 @@ function ConversationItem({
   return (
     <div
       className={`flex items-center gap-1 p-3 cursor-pointer hover:bg-secondary/60 duration-300 transition-colors
-        ${isSelected ? "bg-secondary border-r-2 border-r-accent" : ""}
+        ${isSelected ? "bg-secondary border-r-2 border-r-primary" : ""}
       `}
       onClick={() => onSelectConversation(conv)} // ✨ Simplified handler
     >
@@ -106,15 +105,16 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      {/* <div
+      <div
         className="group p-2 rounded-full hover:bg-red-600/15"
-        onClick={handleDeleteClick}
+        onClick={handleToggleHide}
       >
-        <FiTrash
-          className="text-gray-500 group-hover:text-red-500 cursor-pointer transition-colors duration-200"
-          size={18}
+        <CiCircleMinus
+          className="text-slate-500 group-hover:text-red-500 cursor-pointer transition-colors duration-200"
+          size={22}
+          strokeWidth={1}
         />
-      </div> */}
+      </div>
     </div>
   );
 }

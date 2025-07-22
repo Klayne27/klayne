@@ -15,7 +15,6 @@ import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu";
 import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"; // Import a close icon
 import { BiLogOut } from "react-icons/bi";
 import FollowListModal from "./FollowListModal";
-import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
 import React from "react";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
@@ -36,7 +35,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-  // const { user } = useFetchUserProfile();
 
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);

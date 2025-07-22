@@ -12,7 +12,6 @@ const ConversationsList = ({
   conversations,
   onSelectConversation,
   selectedConversation,
-  onDeleteInitiate,
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const [searchTerm, setSearchTerm] = useState("");
@@ -66,7 +65,6 @@ const ConversationsList = ({
               conv={conv}
               onSelectConversation={onSelectConversation}
               selectedConversation={selectedConversation}
-              onDeleteInitiate={onDeleteInitiate}
             />
           ))
         )}

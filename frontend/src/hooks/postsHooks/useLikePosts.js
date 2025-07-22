@@ -1,22 +1,12 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { likePostApi } from "../../api/postsApi"; // Assuming this path is correct
-import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser"; // Assuming this path is correct
 
-// IMPORTANT: Remove the following lines if they are present:
-// import { useParams } from "react-router-dom";
-// import { useFetchUserProfile } from "../usersHooks/useFetchUserProfile";
 
-// Modify the hook to accept an optional argument
 export const useLikePost = (username = null) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
 
-  // REMOVE any lines related to useParams() or useFetchUserProfile() from here:
-  // For example, if you had:
-  // const { username } = useParams();
-  // const { user } = useFetchUserProfile(username);
-  // DELETE THOSE LINES. They are replaced by `currentProfileUsername`.
 
   const { mutate: likePost, isPending: isLiking } = useMutation({
     mutationFn: (postId) => likePostApi(postId),

@@ -1,6 +1,11 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { getReceiverSocketIds, io, emitUnreadMessageStatus, userActiveChats } from "../lib/socket.js";
+import {
+  getReceiverSocketIds,
+  io,
+  emitUnreadMessageStatus,
+  userActiveChats,
+} from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 
@@ -77,6 +82,10 @@ export const sendMessage = async (req, res) => {
 
     if (!recipientId) {
       return res.status(404).json({ error: "Conversation recipient not found." });
+    }
+
+    if (conversation.hiddenFor && conversation.hiddenFor.length > 0) {
+      conversation.hiddenFor = [];
     }
 
     // --- CORE LOGIC CHANGE ---
@@ -170,7 +179,6 @@ export const getMessagesByConversationId = async (req, res) => {
     }
 
     if (!conversation.participants.includes(userId)) {
-
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
 
@@ -178,12 +186,10 @@ export const getMessagesByConversationId = async (req, res) => {
       (participantId) => participantId.toString() !== userId.toString()
     );
 
-
     if (otherParticipantId) {
       const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
 
       if (isBlocked) {
-
         return res.status(403).json({
           error: "You cannot view this conversation due to blocking restrictions.",
         });
@@ -231,6 +237,7 @@ export const getConversations = async (req, res) => {
 
     const conversations = await Conversation.find({
       participants: userId,
+      hiddenFor: { $ne: userId },
     })
       .populate({
         path: "participants",
@@ -254,33 +261,6 @@ export const getConversations = async (req, res) => {
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
-
-// export const getFollowedUsersForMessaging = async (req, res) => {
-//   try {
-//     const userId = req.user._id;
-
-//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-//     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
-
-//     const currentUser = await User.findById(userId).populate({
-//       path: "following",
-//       select: "username profileImg fullName isVerified isGoldVerified",
-//     });
-
-//     if (!currentUser) {
-//       return res.status(404).json({ error: "User not found." });
-//     }
-
-//     const followedUsers = currentUser.following.filter((user) => {
-//       return user && !blockedAndBlockingUsers.includes(user._id.toString());
-//     });
-
-//     res.status(200).json(followedUsers);
-//   } catch (error) {
-//     console.error("Error in getFollowedUsersForMessaging controller:", error.message);
-//     res.status(500).json({ error: "Internal server error: " + error.message });
-//   }
-// };
 
 export const deleteMessage = async (req, res) => {
   try {
@@ -369,53 +349,6 @@ export const deleteMessage = async (req, res) => {
   } catch (error) {
     console.error("Error in deleteMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
-
-export const deleteConversationForUser = async (req, res) => {
-  try {
-    const { conversationId } = req.params;
-    const userId = req.user._id;
-    const conversation = await Conversation.findById(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found" });
-    }
-
-    if (!conversation.participants.includes(userId)) {
-      return res
-        .status(403)
-        .json({ error: "You are not a participant in this conversation" });
-    }
-
-    const otherParticipantId = conversation.participants.find(
-      (p) => p.toString() !== userId.toString()
-    );
-    if (otherParticipantId && (await isBlockedOrBlockedBy(userId, otherParticipantId))) {
-      return res.status(403).json({
-        error: "You cannot delete this conversation due to blocking restrictions.",
-      });
-    }
-
-    const isAlreadyDeletedForUser = conversation.deletedFor.some(
-      (entry) => entry.user.toString() === userId.toString()
-    );
-
-    if (isAlreadyDeletedForUser) {
-      return res
-        .status(200)
-        .json({ message: "Conversation already marked as deleted for this user" });
-    }
-
-    conversation.deletedFor.push({ user: userId });
-    await conversation.save();
-
-    await emitUnreadMessageStatus(userId.toString());
-
-    res.status(200).json({ message: "Conversation deleted successfully" });
-  } catch (error) {
-    console.error("Error deleting conversation for user:", error.message);
-    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -574,8 +507,14 @@ export const editMessage = async (req, res) => {
 
         // Emit conversation update for sidebar, use the fully updated conversation if possible
         const updatedConversation = await Conversation.findById(conversation._id)
-          .populate("participants", "username fullName profileImg isVerified isGoldVerified")
-          .populate("lastMessage.sender", "username fullName profileImg isVerified isGoldVerified")
+          .populate(
+            "participants",
+            "username fullName profileImg isVerified isGoldVerified"
+          )
+          .populate(
+            "lastMessage.sender",
+            "username fullName profileImg isVerified isGoldVerified"
+          )
           .lean(); // Fetch the latest state of the conversation
 
         io.to(senderId.toString()).emit("conversationUpdated", updatedConversation);
@@ -597,5 +536,70 @@ export const editMessage = async (req, res) => {
   } catch (error) {
     console.error("Error in editMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const toggleConversationVisibility = async (req, res) => {
+  try {
+    const { conversationId } = req.params;
+    const userId = req.user._id;
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    if (!conversation.participants.some((p) => p.equals(userId))) {
+      return res.status(403).json({ error: "Unauthorized access to this conversation" });
+    }
+
+    const isHidden = conversation.hiddenFor.some((id) => id.equals(userId));
+
+    if (isHidden) {
+      conversation.hiddenFor = conversation.hiddenFor.filter((id) => !id.equals(userId));
+    } else {
+      conversation.hiddenFor.push(userId);
+    }
+
+    await conversation.save();
+    res.status(200).json({
+      message: isHidden
+        ? "Conversation unhid successfully"
+        : "Conversation hid successfully",
+    });
+  } catch (error) {
+    console.error("Error in toggleConversationVisibility controller", error.message);
+    res.status(500).json({ error: "Internal Server Error" + error.message });
+  }
+};
+
+export const getConversationBetweenUsers = async (req, res) => {
+  try {
+    const { otherUserId } = req.params;
+    const currentUserId = req.user._id;
+
+    const conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, otherUserId] },
+    });
+
+    if (!conversation) {
+      return res
+        .status(200)
+        .json({ conversationId: null, isHiddenForCurrentUser: false });
+    }
+
+    const isHiddenForCurrentUser = conversation.hiddenFor.some((id) =>
+      id.equals(currentUserId)
+    );
+
+    res
+      .status(200)
+      .json({
+        conversationId: conversation._id,
+        isHiddenForCurrentUser: isHiddenForCurrentUser,
+      });
+  } catch (error) {
+    console.error("Error in getConversationBetweenusers controller:", error.message)
+    res.status(500).json({error: "Internal Server Error " + error.message})
   }
 };

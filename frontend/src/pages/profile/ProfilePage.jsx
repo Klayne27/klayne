@@ -22,10 +22,13 @@ import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
 import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
-import { useFetchPosts } from "../../hooks/postsHooks/useFetchPosts";
 import FollowButton from "../../components/common/FollowButton";
 import { useAdminDeleteUser } from "../../hooks/usersHooks/useAdminDeleteUser";
 import DeleteUserConfirmationModal from "../../components/common/DeleteUserConfirmationModal";
+import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useToggleConversationVisibility";
+import toast from "react-hot-toast";
+import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
+import { useQueryClient } from "@tanstack/react-query";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -42,6 +45,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
+  const queryClient = useQueryClient();
 
   const { username } = useParams();
 
@@ -52,7 +56,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser(); // USE NEW HOOK
 
   const {
-    user,
+    userProfile,
     isLoading,
     refetch,
     isRefetching,
@@ -63,6 +67,13 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     httpStatus,
   } = useFetchUserProfile(username);
 
+  const {
+    data: conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
+    isLoading: isLoadingConversationStatus,
+    isError: isErrorConversationStatus,
+    error: conversationStatusError,
+  } = useFetchConversationBetweenUsers(userProfile?._id);
+
   // NEW: Fetch pinned posts separately
   const {
     pinnedPosts,
@@ -72,10 +83,11 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   } = useFetchPinnedPosts(username);
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile();
+  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility();
   const { conversations } = useFetchConversations();
 
-  const isMyProfile = authUser?._id === user?._id;
-  const amIFollowing = authUser?.following?.includes(user?._id);
+  const isMyProfile = authUser?._id === userProfile?._id;
+  const amIFollowing = authUser?.following?.includes(userProfile?._id);
 
   const isAdminUser = authUser?.isAdmin; // Assuming `isAdmin` field on authUser
 
@@ -122,7 +134,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   // NEW: Functions for Admin Delete User Modal
   const openDeleteUserModal = () => {
-    if (!user?._id) return;
+    if (!userProfile?._id) return;
     setShowDeleteUserModal(true);
   };
 
@@ -131,14 +143,14 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   };
 
   const handleConfirmDeleteUser = () => {
-    if (user?._id) {
-      adminDeleteUser(user._id); // Call the new mutation hook
+    if (userProfile?._id) {
+      adminDeleteUser(userProfile._id); // Call the new mutation hook
       closeDeleteUserModal();
     }
   };
 
   const openBlockConfirmationModal = () => {
-    if (!user?._id) return;
+    if (!userProfile?._id) return;
     setShowBlockConfirmationModal(true);
   };
 
@@ -148,8 +160,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const handleConfirmBlockUnblock = () => {
     closeBlockConfirmationModal();
-    if (!user?._id) return;
-    blockUnblockUser(user._id);
+    if (!userProfile?._id) return;
+    blockUnblockUser(userProfile._id);
   };
 
   // New functions for Unfollow Modal
@@ -182,17 +194,34 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  const handleMessageClick = () => {
+  const handleMessageClick = async () => {
     if (isBlockingRelationship) return;
 
-    const existingConversation = conversations.find((conv) =>
-      conv.participants.some((p) => p?._id.toString() === user._id.toString())
-    );
+    if (!authUser || !userProfile?._id) {
+      toast.error("Authentication or profile data is missing.");
+      return;
+    }
 
-    if (existingConversation) {
-      navigate(`/messages/${existingConversation._id}`);
+    if (isLoadingConversationStatus || isTogglingVisibility) {
+      return;
+    }
+
+    if (isErrorConversationStatus) {
+      console.error("Error fetching conversation status:", conversationStatusError);
+      return;
+    }
+
+    if (conversationStatus && conversationStatus.conversationId) {
+      const existingConversationId = conversationStatus.conversationId;
+      const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
+
+      if (isHiddenForCurrentUser) {
+        await toggleVisibility(existingConversationId);
+        // queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      }
+      navigate(`/messages/${existingConversationId}`);
     } else {
-      navigate("/messages", { state: { targetUserId: user._id } });
+      navigate("/messages", { state: { targetUserId: userProfile._id } });
     }
   };
 
@@ -233,7 +262,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       "You are blocked by this user. You cannot view their profile content.";
     showFullProfileHeader = false;
     showFullProfileContent = false;
-  } else if (!user) {
+  } else if (!userProfile) {
     displayMessage = error?.message || "User not found.";
     showFullProfileHeader = false;
     showFullProfileContent = false;
@@ -254,7 +283,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           <ProfileHeaderSkeleton />
         )}
 
-        {showFullProfileHeader && user && (
+        {showFullProfileHeader && userProfile && (
           <>
             <div className="flex gap-2 md:gap-4 px-3 md:px-4 py-0.5 md:py-2 items-center">
               <button
@@ -264,7 +293,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <FaArrowLeft className="w-4 h-4" />
               </button>
               <div className="flex flex-col">
-                <p className="font-bold text-lg">{user?.fullName}</p>
+                <p className="font-bold text-lg">{userProfile?.fullName}</p>
                 <span className="text-sm text-slate-500">
                   {feedType === "posts"
                     ? `${userPostsCount} posts`
@@ -274,10 +303,10 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
             </div>
             <div className="relative group/cover">
               <img
-                src={coverImg || user?.coverImg || "/cover.png"}
+                src={coverImg || userProfile?.coverImg || "/cover.png"}
                 className="h-52 w-full object-cover cursor-pointer"
                 alt="cover image"
-                onClick={(e) => handleImageClick(user?.coverImg, e)}
+                onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
                 loading="lazy"
               />
               {isMyProfile && (
@@ -306,10 +335,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="w-32 rounded-full relative group/avatar">
                   <img
-                    src={profileImg || user?.profileImg || "/avatar-placeholder.png"}
+                    src={
+                      profileImg || userProfile?.profileImg || "/avatar-placeholder.png"
+                    }
                     alt="user avatar"
                     className="cursor-pointer"
-                    onClick={(e) => handleImageClick(user?.profileImg, e)}
+                    onClick={(e) => handleImageClick(userProfile?.profileImg, e)}
                     loading="lazy"
                   />
                   {isMyProfile && (
@@ -327,7 +358,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {isMyProfile && <EditProfileModal authUser={authUser} />}
 
               {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
-              {isAdminUser && !isMyProfile && user && (
+              {isAdminUser && !isMyProfile && userProfile && (
                 <button
                   onClick={openDeleteUserModal}
                   className="btn btn-sm btn-error text-white md:px-3 top-4 rounded-full py-1 md:text-base text-xs absolute flex items-center gap-1 transition duration-200 hover:scale-105"
@@ -358,7 +389,13 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <button
                   onClick={handleMessageClick}
                   className="px-1 border rounded-full hover:bg-secondary border-accent transition duration-200 z-20"
-                  disabled={isBlockingRelationship}
+                  disabled={
+                    isLoadingConversationStatus ||
+                    isTogglingVisibility ||
+                    !authUser ||
+                    !userProfile?._id ||
+                    isBlockingRelationship
+                  }
                 >
                   <CiMail size={20} strokeWidth={1} />
                 </button>
@@ -377,7 +414,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
               {/* Follow/Unfollow Button - FIXED WIDTH */}
               {!isMyProfile && !isBlockingRelationship && (
                 <FollowButton
-                  user={user}
+                  user={userProfile}
                   isFollowing={amIFollowing}
                   currentUserId={authUser?._id}
                   openUnfollowModal={openUnfollowModal} // Pass the new prop
@@ -417,35 +454,35 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           <p className="text-center text-lg mt-16 text-slate-400">{displayMessage}</p>
         )}
 
-        {showFullProfileContent && user && (
+        {showFullProfileContent && userProfile && (
           <>
             <div className="flex flex-col gap-4 mt-3 px-4">
               <div className="flex flex-col">
                 <div className="flex gap-1 items-center">
-                  <span className="font-bold text-lg">{user?.fullName}</span>
-                  {user?.isVerified && (
+                  <span className="font-bold text-lg">{userProfile?.fullName}</span>
+                  {userProfile?.isVerified && (
                     <img src="/verified.png" className="size-[18px]" />
                   )}
-                  {user?.isGoldVerified && (
+                  {userProfile?.isGoldVerified && (
                     <img src="/gold-verified.png" className="size-[18px]" />
                   )}
                 </div>
-                <span className="text-sm text-slate-500">@{user?.username}</span>
-                <span className="text-sm my-1">{user?.bio}</span>
+                <span className="text-sm text-slate-500">@{userProfile?.username}</span>
+                <span className="text-sm my-1">{userProfile?.bio}</span>
               </div>
 
               <div className="flex gap-2 flex-wrap">
-                {user?.link && (
+                {userProfile?.link && (
                   <div className="flex gap-1 items-center ">
                     <>
                       <FaLink className="w-3 h-3 text-slate-500" />
                       <a
-                        href={user?.link}
+                        href={userProfile?.link}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
-                        {user?.link.slice(12)}
+                        {userProfile?.link.slice(12)}
                       </a>
                     </>
                   </div>
@@ -453,7 +490,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <div className="flex gap-2 items-center">
                   <IoCalendarOutline className="w-4 h-4 text-slate-500" />
                   <span className="text-sm text-slate-500">
-                    {formatMemberSinceDate(user?.createdAt)}
+                    {formatMemberSinceDate(userProfile?.createdAt)}
                   </span>
                 </div>
               </div>
@@ -463,14 +500,18 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                   className="flex gap-1 items-center cursor-pointer hover:underline"
                   onClick={() => openFollowListModal("following")}
                 >
-                  <span className="font-bold text-sm">{user?.following?.length}</span>{" "}
+                  <span className="font-bold text-sm">
+                    {userProfile?.following?.length}
+                  </span>{" "}
                   <span className="text-slate-500 text-sm">Following</span>{" "}
                 </div>
                 <div
                   className="flex gap-1 items-center cursor-pointer hover:underline"
                   onClick={() => openFollowListModal("followers")}
                 >
-                  <span className="font-bold text-sm">{user?.followers?.length}</span>{" "}
+                  <span className="font-bold text-sm">
+                    {userProfile?.followers?.length}
+                  </span>{" "}
                   <span className="text-slate-500 text-sm">Followers</span>{" "}
                 </div>
               </div>
@@ -534,11 +575,11 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
           </>
         )}
 
-        {showFullProfileContent && user && !isBlockedByYou && (
+        {showFullProfileContent && userProfile && !isBlockedByYou && (
           <Posts
             feedType={feedType}
             username={username}
-            userId={user?._id}
+            userId={userProfile?._id}
             onPostsFetched={handlePostsFetched}
             openImageModal={openImageModal}
             pinnedPosts={pinnedPosts || []}
@@ -547,18 +588,18 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         )}
       </div>
 
-      {user && (
+      {userProfile && (
         <FollowListModal
-          userId={user._id}
+          userId={userProfile._id}
           type="following"
           page="profilePage"
           onClose={() => closeFollowListModal("following")}
         />
       )}
 
-      {user && (
+      {userProfile && (
         <FollowListModal
-          userId={user._id}
+          userId={userProfile._id}
           type="followers"
           page="profilePage"
           onClose={() => closeFollowListModal("followers")}
@@ -569,7 +610,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         isOpen={showBlockConfirmationModal}
         onClose={closeBlockConfirmationModal}
         onConfirm={handleConfirmBlockUnblock}
-        username={user?.username}
+        username={userProfile?.username}
         isBlocking={isBlockedByYou}
         isBlockedByYou={isBlockedByYou}
       />
@@ -582,12 +623,12 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         username={userToUnfollow?.username}
       />
 
-      {user && (
+      {userProfile && (
         <DeleteUserConfirmationModal
           isOpen={showDeleteUserModal}
           onClose={closeDeleteUserModal}
           onConfirm={handleConfirmDeleteUser}
-          username={user.username}
+          username={userProfile.username}
         />
       )}
     </>

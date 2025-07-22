@@ -260,7 +260,7 @@ const PublicMessageInput = ({
       {/* --- Conditional Rendering for Input Section (Edit Mode vs. Normal Mode) --- */}
       {isEditingMode ? (
         // EDIT MODE CONTAINER
-        <div className="w-full bg-base-100 flex flex-col border-t border-accent sticky bottom-0 z-10">
+        <div className="w-full bg-base-100 z-50 flex flex-col border-t border-accent sticky bottom-0 ">
           {/* Edit Message Indicator Bar */}
           <div className="flex items-center justify-between p-2 px-1 pt-0 text-sm">
             <span className="flex flex-col items-start p-3 ">
@@ -288,7 +288,7 @@ const PublicMessageInput = ({
           {/* The form for editing */}
           <form
             onSubmit={handleSendMessageOrEdit}
-            className="px-2 bg-black/0 flex items-center relative"
+            className="px-2 bg-black/0 flex items-center relative z-10"
           >
             <input
               type="file"
@@ -346,6 +346,24 @@ const PublicMessageInput = ({
               </button>
             </div>
           </form>
+          {showTypingIndicator && (
+            <div className="flex justify-start px-4 left-0 p-1 absolute border-accent -top-[29px] bg-base-100 w-full items-center text-gray-400 text-sm">
+              <span className="animate-pulse font-semibold">
+                {getTypingMessage(typingUsers)}
+              </span>
+              <span className="flex ml-1 gap-0.5 mt-2.5">
+                <span className="inline-block pulsing-dot pulsing-dot-1">
+                  <FaCircle size={6} />
+                </span>
+                <span className="inline-block pulsing-dot pulsing-dot-2">
+                  <FaCircle size={6} />
+                </span>
+                <span className="inline-block pulsing-dot pulsing-dot-3">
+                  <FaCircle size={6} />
+                </span>
+              </span>
+            </div>
+          )}
         </div>
       ) : (
         // NORMAL MODE (not editing)
@@ -440,7 +458,7 @@ const PublicMessageInput = ({
               <MdSend className="w-5 h-5" />
             </button>
           </div>
-          {showTypingIndicator && ( 
+          {showTypingIndicator && (
             <div className="flex justify-start px-4 z-20 left-0 p-1 absolute -top-7 bg-base-100 w-full items-center text-gray-400 text-sm">
               <span className="animate-pulse font-semibold">
                 {getTypingMessage(typingUsers)}

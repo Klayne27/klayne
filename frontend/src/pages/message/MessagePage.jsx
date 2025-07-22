@@ -6,7 +6,6 @@ import ConversationsList from "../../components/common/messages/ConversationsLis
 import ChatWindow from "../../components/common/messages/ChatWindow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
-import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConversation";
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
 import ChatWindowSkeleton from "../../components/skeletons/ChatWindowSkeleton";
 import ConfirmationDialog from "../../components/common/ConfirmationDialog";
@@ -23,11 +22,9 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
   // 🗑️ REMOVED: `useFetchFollowedUsersForMessaging` is no longer needed.
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
-  const { deleteConversation, isDeleting } = useDeleteConversation();
 
   const [selectedConversation, setSelectedConversation] = useState(null);
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
-  const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
 
   // ♻️ REFACTORED: This effect now has one job: sync the selectedConversation state
   // with the conversation ID from the URL.
@@ -61,27 +58,6 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
     queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
-  const handleDeleteInitiate = (id) => {
-    setConversationToDeleteId(id);
-    setShowConfirmDeleteDialog(true);
-  };
-
-  const handleConfirmDelete = async () => {
-    if (!conversationToDeleteId) return;
-
-    await deleteConversation(conversationToDeleteId, {
-      onSuccess: () => {
-        // If the deleted conversation was the selected one, navigate away
-        if (urlConversationId === conversationToDeleteId) {
-          navigate("/messages", { replace: true });
-        }
-      },
-    });
-
-    setShowConfirmDeleteDialog(false);
-    setConversationToDeleteId(null);
-  };
-
   const isMobile = window.innerWidth < 768;
   const showConversationList = !isMobile || !urlConversationId;
   const showChatWindow = !isMobile || !!urlConversationId;
@@ -106,7 +82,6 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
                 conversations={conversations}
                 onSelectConversation={handleSelectConversation}
                 selectedConversation={selectedConversation}
-                onDeleteInitiate={handleDeleteInitiate}
               />
             )}
           </div>
@@ -139,9 +114,9 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
       <ConfirmationDialog
         isOpen={showConfirmDeleteDialog}
         message="Are you sure you want to delete this conversation? This action cannot be undone."
-        onConfirm={handleConfirmDelete}
+        // onConfirm={handleConfirmDelete}
         onCancel={() => setShowConfirmDeleteDialog(false)}
-        isLoading={isDeleting}
+        // isLoading={isDeleting}
       />
     </>
   );

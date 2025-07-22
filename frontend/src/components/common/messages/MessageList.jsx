@@ -7,7 +7,6 @@ import MessageItem from "./MessageItem";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
-
 const isTouchDevice = () => {
   if (typeof window === "undefined") return false;
   return (
@@ -271,7 +270,7 @@ const MessageList = forwardRef(function MessageList(
         !isFetchingOlderMessages &&
         messagesToRender.length > 0 && (
           <div className="flex justify-center text-gray-500 text-sm my-2">
-            <p>No more messages</p>
+            <p>This is the start of your conversation</p>
           </div>
         )}
       {!isNewChat &&

@@ -93,7 +93,6 @@ export async function emitUnreadMessageStatus(userId) {
       { "lastMessage.sender": { $ne: userIdObj } },
       { "lastMessage.seen": false },
       { "lastMessage.text": { $exists: true, $ne: "" } },
-      { "deletedFor.user": { $ne: userIdObj } },
     ];
 
     baseQueryConditions.push({

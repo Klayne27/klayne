@@ -42,8 +42,7 @@ export const fetchMessagesApi = async (conversationId, page = 1, limit = 40) => 
   // const data = await res.json();
   // return Array.isArray(data) ? data : [];
 
-    return res.json();
-
+  return res.json();
 };
 
 export const sendMessageApi = async ({ conversationId, message, img, repliedTo }) => {
@@ -58,28 +57,6 @@ export const sendMessageApi = async ({ conversationId, message, img, repliedTo }
     throw new Error(errorData.error || "Failed to send message");
   }
   return res.json();
-};
-
-export const deleteConversationApi = async (conversationId) => {
-  try {
-    const res = await fetch(`/api/messages/conversations/${conversationId}`, {
-      method: "DELETE",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Something went wrong during deletion");
-    }
-
-    return data;
-  } catch (error) {
-    console.error("Error in deleteConversation mutation:", error);
-    throw error;
-  }
 };
 
 export const reactToMessageApi = async (messageId, emoji) => {
@@ -105,6 +82,31 @@ export const editMessageApi = async (messageId, newText) => {
   const data = await res.json();
 
   if (!res.ok) throw new Error(data.error || "Failed to edit message");
+
+  return data;
+};
+
+export const toggleConversationVisibilityApi = async (conversationId) => {
+  const res = await fetch(`/api/messages/conversations/visibility/${conversationId}`, {
+    method: "PUT",
+    headers: { "Content-type": "application/json" },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to toggle conversation hide");
+  }
+
+  return data;
+};
+
+export const getConversationBetweenUsersApi = async (otherUserId) => {
+  const res = await fetch(`/api/messages/conversations/between/${otherUserId}`);
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch conversation between users");
+  }
 
   return data;
 };
