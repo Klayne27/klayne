@@ -106,7 +106,7 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      <div
+      {/* <div
         className="group p-2 rounded-full hover:bg-red-600/15"
         onClick={handleDeleteClick}
       >
@@ -114,7 +114,7 @@ function ConversationItem({
           className="text-gray-500 group-hover:text-red-500 cursor-pointer transition-colors duration-200"
           size={18}
         />
-      </div>
+      </div> */}
     </div>
   );
 }
