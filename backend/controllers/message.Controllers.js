@@ -243,7 +243,8 @@ export const getConversations = async (req, res) => {
         path: "participants",
         select: "username profileImg fullName isVerified isGoldVerified",
       })
-      .sort({ updatedAt: -1 });
+      .sort({ updatedAt: -1 })
+      .lean();
 
     // Filter out conversations where the other participant is blocked or has blocked you
     const filteredConversations = conversations.filter((conv) => {
@@ -596,7 +597,7 @@ export const getConversationBetweenUsers = async (req, res) => {
 
     const conversation = await Conversation.findOne({
       participants: { $all: [currentUserId, otherUserId] },
-    });
+    }).lean();
 
     if (!conversation) {
       return res

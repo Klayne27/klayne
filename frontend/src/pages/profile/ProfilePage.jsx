@@ -202,12 +202,15 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       return;
     }
 
+    // Good to disable interaction while these are loading/in-progress
     if (isLoadingConversationStatus || isTogglingVisibility) {
-      return <p>Loading</p>
+      // Maybe return a loading spinner or disable the button instead of a <p> tag
+      return; // Or return a loading indicator JSX
     }
 
     if (isErrorConversationStatus) {
       console.error("Error fetching conversation status:", conversationStatusError);
+      toast.error("Failed to get conversation status."); // Inform the user
       return;
     }
 
@@ -216,12 +219,31 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
 
       if (isHiddenForCurrentUser) {
-        // We are UNHIDING, so we tell the hook this is not a hiding action.
-        // This is the key change.
-        toggleVisibility({ conversationId: existingConversationId, isHiding: false });
+        // Case 1: Conversation exists and is hidden for the current user.
+        // We need to UNHIDE it first, then navigate.
+        // We pass a callback to the toggleVisibility mutation's onSuccess
+        // to ensure navigation happens AFTER the unhiding API call is successful.
+        toggleVisibility(
+          { conversationId: existingConversationId, isHiding: false },
+          {
+            onSuccess: () => {
+              // Navigate only after the unhide operation is successful
+              navigate(`/messages/${existingConversationId}`);
+            },
+            onError: (err) => {
+              toast.error(
+                "Failed to unhide conversation: " + (err.message || "Unknown error")
+              );
+            },
+          }
+        );
+      } else {
+        // Case 2: Conversation exists and is NOT hidden for the current user.
+        // Just navigate to it directly. No API call to toggle visibility needed.
+        navigate(`/messages/${existingConversationId}`);
       }
-      navigate(`/messages/${existingConversationId}`);
     } else {
+      // Case 3: No existing conversation found. Navigate to create a new one.
       navigate("/messages", { state: { targetUserId: userProfile._id } });
     }
   };
