@@ -194,7 +194,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  const handleMessageClick = async () => {
+  const handleMessageClick = () => {
     if (isBlockingRelationship) return;
 
     if (!authUser || !userProfile?._id) {
@@ -211,18 +211,19 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       return;
     }
 
-    if (conversationStatus && conversationStatus.conversationId) {
-      const existingConversationId = conversationStatus.conversationId;
-      const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
+  if (conversationStatus && conversationStatus.conversationId) {
+    const existingConversationId = conversationStatus.conversationId;
+    const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
 
-      if (isHiddenForCurrentUser) {
-        await toggleVisibility(existingConversationId);
-        // queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      }
-      navigate(`/messages/${existingConversationId}`);
-    } else {
-      navigate("/messages", { state: { targetUserId: userProfile._id } });
+    if (isHiddenForCurrentUser) {
+      // We are UNHIDING, so we tell the hook this is not a hiding action.
+      // This is the key change.
+      toggleVisibility({ conversationId: existingConversationId, isHiding: false });
     }
+    navigate(`/messages/${existingConversationId}`);
+  } else {
+    navigate("/messages", { state: { targetUserId: userProfile._id } });
+  }
   };
 
   const handleImageClick = (imageUrl, event) => {

@@ -11,10 +11,15 @@ import { CiCircleMinus } from "react-icons/ci";
 
 // 🗑️ REMOVED PROPS: onlineUsers (can be re-added if needed, but simplifying for now)
 // ✅ The component is simpler as it doesn't need to check for "isNewChat".
-function ConversationItem({ conv, selectedConversation, onSelectConversation, onToggleVisibility }) {
+function ConversationItem({
+  conv,
+  selectedConversation,
+  onSelectConversation,
+  onToggleVisibility,
+}) {
   const { authUser: currentUser } = useAuthUser();
 
-  const {  toggleVisibility, isPending } = useToggleConversationVisibility();
+  const { toggleVisibility, isPending } = useToggleConversationVisibility();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -46,7 +51,7 @@ function ConversationItem({ conv, selectedConversation, onSelectConversation, on
 
   const handleToggleHide = (e) => {
     e.stopPropagation();
-    toggleVisibility(conv._id);
+    toggleVisibility({ conversationId: conv._id, isHiding: true });
   };
 
   // This should rarely happen now with the new backend logic

@@ -10,7 +10,5 @@ export const useFetchConversationBetweenUsers = (otherUserId) => {
     staleTime: 5 * 60 * 1000, // Data can be considered fresh for 5 minutes
     cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
     retry: 1, // Retry once if it fails
-    // Select what you need from the data if you want to optimize rendering
-    // select: (data) => data.conversationId, // if you only need the ID
   });
 };

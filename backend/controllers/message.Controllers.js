@@ -543,25 +543,37 @@ export const toggleConversationVisibility = async (req, res) => {
   try {
     const { conversationId } = req.params;
     const userId = req.user._id;
-    const conversation = await Conversation.findById(conversationId);
+
+    // First, find the conversation to check its current state without getting a full Mongoose document
+    const conversation = await Conversation.findById(conversationId).lean();
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
     }
 
+    // Authorization check
     if (!conversation.participants.some((p) => p.equals(userId))) {
-      return res.status(403).json({ error: "Unauthorized access to this conversation" });
+      return res.status(403).json({ error: "Unauthorized" });
     }
 
     const isHidden = conversation.hiddenFor.some((id) => id.equals(userId));
 
+    let updateOperation;
     if (isHidden) {
-      conversation.hiddenFor = conversation.hiddenFor.filter((id) => !id.equals(userId));
+      // If it's already hidden, we want to unhide it by pulling the user's ID
+      updateOperation = { $pull: { hiddenFor: userId } };
     } else {
-      conversation.hiddenFor.push(userId);
+      // If it's not hidden, we want to hide it by adding the user's ID to the set
+      updateOperation = { $addToSet: { hiddenFor: userId } }; // Using $addToSet is safer than $push
     }
 
-    await conversation.save();
+    // Perform the update using updateOne and disable timestamps for this operation
+    await Conversation.updateOne(
+      { _id: conversationId },
+      updateOperation,
+      { timestamps: false } // This is the magic part ✨
+    );
+
     res.status(200).json({
       message: isHidden
         ? "Conversation unhid successfully"
@@ -569,7 +581,7 @@ export const toggleConversationVisibility = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in toggleConversationVisibility controller", error.message);
-    res.status(500).json({ error: "Internal Server Error" + error.message });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };
 
