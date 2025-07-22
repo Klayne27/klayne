@@ -556,6 +556,10 @@ export const toggleConversationVisibility = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized" });
     }
 
+    if (!conversation.hiddenFor) {
+      conversation.hiddenFor = [];
+    }
+
     const isHidden = conversation.hiddenFor.some((id) => id.equals(userId));
 
     let updateOperation;
@@ -604,14 +608,12 @@ export const getConversationBetweenUsers = async (req, res) => {
       id.equals(currentUserId)
     );
 
-    res
-      .status(200)
-      .json({
-        conversationId: conversation._id,
-        isHiddenForCurrentUser: isHiddenForCurrentUser,
-      });
+    res.status(200).json({
+      conversationId: conversation._id,
+      isHiddenForCurrentUser: isHiddenForCurrentUser,
+    });
   } catch (error) {
-    console.error("Error in getConversationBetweenusers controller:", error.message)
-    res.status(500).json({error: "Internal Server Error " + error.message})
+    console.error("Error in getConversationBetweenusers controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error " + error.message });
   }
 };

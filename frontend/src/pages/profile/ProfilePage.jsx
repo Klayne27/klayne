@@ -68,10 +68,10 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   } = useFetchUserProfile(username);
 
   const {
-    data: conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
-    isLoading: isLoadingConversationStatus,
-    isError: isErrorConversationStatus,
-    error: conversationStatusError,
+    conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
+    isLoadingConversationStatus,
+    isErrorConversationStatus,
+    conversationStatusError,
   } = useFetchConversationBetweenUsers(userProfile?._id);
 
   // NEW: Fetch pinned posts separately
@@ -203,7 +203,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
 
     if (isLoadingConversationStatus || isTogglingVisibility) {
-      return;
+      return <p>Loading</p>
     }
 
     if (isErrorConversationStatus) {
@@ -211,19 +211,19 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       return;
     }
 
-  if (conversationStatus && conversationStatus.conversationId) {
-    const existingConversationId = conversationStatus.conversationId;
-    const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
+    if (conversationStatus && conversationStatus.conversationId) {
+      const existingConversationId = conversationStatus.conversationId;
+      const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
 
-    if (isHiddenForCurrentUser) {
-      // We are UNHIDING, so we tell the hook this is not a hiding action.
-      // This is the key change.
-      toggleVisibility({ conversationId: existingConversationId, isHiding: false });
+      if (isHiddenForCurrentUser) {
+        // We are UNHIDING, so we tell the hook this is not a hiding action.
+        // This is the key change.
+        toggleVisibility({ conversationId: existingConversationId, isHiding: false });
+      }
+      navigate(`/messages/${existingConversationId}`);
+    } else {
+      navigate("/messages", { state: { targetUserId: userProfile._id } });
     }
-    navigate(`/messages/${existingConversationId}`);
-  } else {
-    navigate("/messages", { state: { targetUserId: userProfile._id } });
-  }
   };
 
   const handleImageClick = (imageUrl, event) => {
