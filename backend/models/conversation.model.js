@@ -26,19 +26,19 @@ const conversationSchema = new mongoose.Schema(
         default: null,
       },
     },
-    deletedFor: [
-      {
-        user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-        deletedAt: { type: Date, default: Date.now },
-      },
-    ],
+    // deletedFor: [
+    //   {
+    //     user: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+    //     deletedAt: { type: Date, default: Date.now },
+    //   },
+    // ],
   },
   { timestamps: true }
 );
 
 conversationSchema.index({ participants: 1, updatedAt: -1 });
 conversationSchema.index({ "lastMessage.sender": 1, "lastMessage.seen": 1 });
-conversationSchema.index({ "deletedFor.user": 1 });
+// conversationSchema.index({ "deletedFor.user": 1 });
 
 const Conversation = mongoose.model("Conversation", conversationSchema);
 

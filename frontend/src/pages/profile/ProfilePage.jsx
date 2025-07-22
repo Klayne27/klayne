@@ -388,10 +388,19 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                 <button
                   className="border border-accent rounded-full px-2 md:px-4 py-0.5 md:py-1.5 bg-accent/30 hover:bg-secondary transition duration-300"
                   onClick={async () => {
-                    await updateProfile({
-                      coverImg,
-                      profileImg,
-                    });
+                    const updatePayload = {};
+                    if (profileImg !== null) {
+                      // Only add if a new profile image was selected
+                      updatePayload.profileImg = profileImg;
+                    }
+                    if (coverImg !== null) {
+                      // Only add if a new cover image was selected
+                      updatePayload.coverImg = coverImg;
+                    }
+
+                    await updateProfile(updatePayload); // Send only the relevant image data
+
+                    // Reset local states after successful update
                     setProfileImg(null);
                     setCoverImg(null);
                   }}

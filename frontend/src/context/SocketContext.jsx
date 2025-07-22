@@ -111,16 +111,16 @@ export const SocketContextProvider = ({ children }) => {
           return { ...oldData, pages: updatedPages };
         });
 
-        queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-          if (!oldConversationsData) return undefined;
-          const updatedConversations = oldConversationsData.map((conv) => {
-            if (conv._id === conversationId) {
-              return conv;
-            }
-            return conv;
-          });
-          return updatedConversations;
-        });
+        // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
+        //   if (!oldConversationsData) return undefined;
+        //   const updatedConversations = oldConversationsData.map((conv) => {
+        //     if (conv._id === conversationId) {
+        //       return conv;
+        //     }
+        //     return conv;
+        //   });
+        //   return updatedConversations;
+        // });
       });
 
       newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat }) => {

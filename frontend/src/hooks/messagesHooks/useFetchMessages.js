@@ -2,7 +2,7 @@ import { useInfiniteQuery } from "@tanstack/react-query";
 import { fetchMessagesApi } from "../../api/messagesApi";
 import { useMemo } from "react";
 
-export const useFetchMessages = (selectedConversation) => {
+export const useFetchMessages = (conversationId) => {
   const {
     data,
     fetchNextPage,
@@ -13,9 +13,9 @@ export const useFetchMessages = (selectedConversation) => {
     refetch: refetchMessages,
     isFetching,
   } = useInfiniteQuery({
-    queryKey: ["messages", selectedConversation?._id],
+    queryKey: ["messages", conversationId],
     queryFn: ({ pageParam = 1 }) =>
-      fetchMessagesApi(selectedConversation?._id, pageParam),
+      fetchMessagesApi(conversationId, pageParam),
     getNextPageParam: (lastPage, allPages) => {
       const limit = 40;
       if (lastPage.length < limit) {
@@ -23,7 +23,7 @@ export const useFetchMessages = (selectedConversation) => {
       }
       return allPages.length + 1;
     },
-    enabled: !!selectedConversation?._id && !selectedConversation._id.startsWith("new-"),
+    enabled: !!conversationId,
     // staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
     refetchOnMount: true,

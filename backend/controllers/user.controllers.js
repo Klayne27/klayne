@@ -94,33 +94,53 @@ export const followUnfollowUser = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
+    // Block checks are still important
     if (currentUser.blockedUsers.includes(userToModify._id)) {
-      return res
-        .status(400)
-        .json({ error: "You have blocked this user. Unblock them to follow/unfollow." });
+        return res
+            .status(400)
+            .json({ error: "You have blocked this user. Unblock them to follow." });
     }
     if (userToModify.blockedUsers.includes(currentUser._id)) {
-      return res
-        .status(400)
-        .json({ error: "This user has blocked you. You cannot follow them." });
+        return res
+            .status(400)
+            .json({ error: "This user has blocked you. You cannot follow them." });
     }
 
     const isFollowing = currentUser.following.includes(id);
 
     if (isFollowing) {
+      // --- UNFOLLOW LOGIC ---
       await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+
+      // Optional: You could delete the conversation here if you want it to disappear on unfollow.
+      // For now, we'll leave it, allowing users to continue messaging even after unfollowing.
+      await Conversation.findOneAndDelete({ participants: { $all: [req.user._id, id] } });
+
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
+      // --- FOLLOW LOGIC ---
       await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+
+      // ✨ Automatically create a conversation if it doesn't exist
+      const existingConversation = await Conversation.findOne({
+        participants: { $all: [req.user._id, id] },
+      });
+
+      if (!existingConversation) {
+        const newConversation = new Conversation({
+          participants: [req.user._id, id],
+        });
+        await newConversation.save();
+      }
+
+      // Your existing notification logic
       const newNotification = new Notification({
         type: "follow",
         from: req.user._id,
         to: userToModify._id,
-        read: false,
       });
-
       await newNotification.save();
       await emitUnreadNotificationStatus(userToModify._id.toString());
 
@@ -237,13 +257,16 @@ export const updateUser = async (req, res) => {
       coverImg = uploadedResponse.secure_url;
     }
 
-    user.fullName = fullName || user.fullName;
-    user.email = email || user.email;
-    user.username = username || user.username;
-    user.bio = bio;
-    user.link = link;
-    user.profileImg = profileImg || user.profileImg;
-    user.coverImg = coverImg || user.coverImg;
+    if (fullName !== undefined) user.fullName = fullName;
+    if (email !== undefined) user.email = email;
+    if (username !== undefined) user.username = username;
+
+
+    if (bio !== undefined) user.bio = bio;
+    if (link !== undefined) user.link = link;
+
+    if (profileImg !== undefined) user.profileImg = profileImg; // This will be the new URL or undefined if not provided
+    if (coverImg !== undefined) user.coverImg = coverImg; // This will be the new URL or undefined if not provided
 
     user = await user.save();
 
@@ -288,8 +311,7 @@ export const getFollowers = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Wrap the array in an object with a 'users' key
-    res.status(200).json(user.followers); // <--- CHANGE HERE
+    res.status(200).json(user.followers);
   } catch (error) {
     console.log("Error in getFollowers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });

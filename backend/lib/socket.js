@@ -17,7 +17,7 @@ const allowedOrigins = [
   process.env.RENDER_EXTERNAL_URL,
 ];
 
-const userActiveChats = new Map();
+export const userActiveChats = new Map();
 const typingUsersInConversation = new Map();
 export const activePublicChatUsers = new Set(); // userId
 const publicChatTypingUsers = new Map(); // To track who is typing in public chat
@@ -280,8 +280,6 @@ io.on("connection", async (socket) => {
   console.log(`Socket connected: ${socket.id}`);
   const userId = socket.handshake.query.userId;
 
-  console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
-
   if (
     userId &&
     typeof userId === "string" &&
@@ -311,7 +309,6 @@ io.on("connection", async (socket) => {
       } else {
         socket.isBannedInPublicChat = false;
         socket.join(PUBLIC_CHAT_ROOM); // Allow to join if not banned
-        console.log(`User ${userId} (${socket.id}) joined room ${PUBLIC_CHAT_ROOM}`);
         // Also send a status to indicate they are NOT banned, in case they were previously
         io.to(socket.id).emit("bannedFromPublicChat", { isBanned: false });
       }
@@ -378,43 +375,69 @@ io.on("connection", async (socket) => {
     if (conversationId) {
       // Basic validation
       socket.join(conversationId);
-      console.log(
-        `Socket ${socket.id} (User ${socket.userId}) joined private conversation room: ${conversationId}`
-      );
+      // console.log(
+      //   `Socket ${socket.id} (User ${socket.userId}) joined private conversation room: ${conversationId}`
+      // );
     }
   });
 
-socket.on("public_typing", async ({ isEditing }) => {
-  if (!socket.userId || socket.isBannedInPublicChat) return;
+  socket.on("public_typing", async ({ isEditing }) => {
+    if (!socket.userId || socket.isBannedInPublicChat) return;
 
-  try {
-    let userUsername;
+    try {
+      let userUsername;
 
-    // Option 1: Store username on socket during connection/login (Recommended)
-    if (socket.username) {
-      userUsername = socket.username;
-    } else {
-      // Fallback: Fetch if not already on socket, but avoid for every event.
-      // This part should ideally be optimized out if username is set on connect.
-      const user = await User.findById(socket.userId).select("username").lean();
-      if (!user) return;
-      userUsername = user.username;
-      socket.username = user.username; // Cache it on the socket for future events
+      // Option 1: Store username on socket during connection/login (Recommended)
+      if (socket.username) {
+        userUsername = socket.username;
+      } else {
+        // Fallback: Fetch if not already on socket, but avoid for every event.
+        // This part should ideally be optimized out if username is set on connect.
+        const user = await User.findById(socket.userId).select("username").lean();
+        if (!user) return;
+        userUsername = user.username;
+        socket.username = user.username; // Cache it on the socket for future events
+      }
+
+      // Always update the user's typing status in the map
+      // This is crucial: if a user is already typing, their 'isEditing' status needs to be updated.
+      // And even if just typing, refreshing their presence in the map (and thus the timestamp if you add it)
+      // is good for keeping track of active typers.
+      publicChatTypingUsers.set(socket.userId, {
+        username: userUsername,
+        isEditing: isEditing,
+        timestamp: Date.now(), // Add a timestamp for potential inactivity cleanup
+      });
+
+      // Emit the *updated* list of all current typing users to everyone
+      // This simplifies client-side state management significantly.
+      // Instead of sending individual start/stop, send the full current list.
+      const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
+        ([userId, data]) => ({
+          userId,
+          username: data.username,
+          isEditing: data.isEditing,
+        })
+      );
+      socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+        typingUsers: typingUsersArray,
+      });
+      // You could also emit to the sender to confirm their status, if needed.
+      // socket.emit("public_typing_update", { typingUsers: typingUsersArray });
+    } catch (error) {
+      console.error("Error handling public_typing event:", error);
+    }
+  });
+
+  socket.on("public_stop_typing", () => {
+    if (!socket.userId || socket.isBannedInPublicChat) return;
+
+    // Remove the user from the typing map
+    if (publicChatTypingUsers.has(socket.userId)) {
+      publicChatTypingUsers.delete(socket.userId);
     }
 
-    // Always update the user's typing status in the map
-    // This is crucial: if a user is already typing, their 'isEditing' status needs to be updated.
-    // And even if just typing, refreshing their presence in the map (and thus the timestamp if you add it)
-    // is good for keeping track of active typers.
-    publicChatTypingUsers.set(socket.userId, {
-      username: userUsername,
-      isEditing: isEditing,
-      timestamp: Date.now(), // Add a timestamp for potential inactivity cleanup
-    });
-
-    // Emit the *updated* list of all current typing users to everyone
-    // This simplifies client-side state management significantly.
-    // Instead of sending individual start/stop, send the full current list.
+    // Emit the *updated* list of all current typing users after one stops
     const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
       ([userId, data]) => ({
         userId,
@@ -425,70 +448,44 @@ socket.on("public_typing", async ({ isEditing }) => {
     socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
       typingUsers: typingUsersArray,
     });
-    // You could also emit to the sender to confirm their status, if needed.
-    // socket.emit("public_typing_update", { typingUsers: typingUsersArray });
-  } catch (error) {
-    console.error("Error handling public_typing event:", error);
-  }
-});
-
-socket.on("public_stop_typing", () => {
-  if (!socket.userId || socket.isBannedInPublicChat) return;
-
-  // Remove the user from the typing map
-  if (publicChatTypingUsers.has(socket.userId)) {
-    publicChatTypingUsers.delete(socket.userId);
-  }
-
-  // Emit the *updated* list of all current typing users after one stops
-  const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
-    ([userId, data]) => ({
-      userId,
-      username: data.username,
-      isEditing: data.isEditing,
-    })
-  );
-  socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-    typingUsers: typingUsersArray,
   });
-});
-// --- END PUBLIC CHAT TYPING EVENTS ---
+  // --- END PUBLIC CHAT TYPING EVENTS ---
 
-// Optional: Add a cleanup mechanism for stale typing indicators on the server
-// setInterval(() => {
-//   const currentTime = Date.now();
-//   const TYPING_TIMEOUT_SERVER = 5000; // e.g., 5 seconds of inactivity
-//   let changed = false;
+  // Optional: Add a cleanup mechanism for stale typing indicators on the server
+  // setInterval(() => {
+  //   const currentTime = Date.now();
+  //   const TYPING_TIMEOUT_SERVER = 5000; // e.g., 5 seconds of inactivity
+  //   let changed = false;
 
-//   for (const [userId, data] of publicChatTypingUsers.entries()) {
-//     if (currentTime - data.timestamp > TYPING_TIMEOUT_SERVER) {
-//       publicChatTypingUsers.delete(userId);
-//       changed = true;
-//     }
-//   }
+  //   for (const [userId, data] of publicChatTypingUsers.entries()) {
+  //     if (currentTime - data.timestamp > TYPING_TIMEOUT_SERVER) {
+  //       publicChatTypingUsers.delete(userId);
+  //       changed = true;
+  //     }
+  //   }
 
-//   if (changed) {
-//     const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
-//       ([userId, data]) => ({
-//         userId,
-//         username: data.username,
-//         isEditing: data.isEditing,
-//       })
-//     );
-//     // Emit this to all clients to keep their lists in sync
-//     io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-//       typingUsers: typingUsersArray,
-//     });
-//   }
-// }, TYPING_TIMEOUT_SERVER); 
+  //   if (changed) {
+  //     const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
+  //       ([userId, data]) => ({
+  //         userId,
+  //         username: data.username,
+  //         isEditing: data.isEditing,
+  //       })
+  //     );
+  //     // Emit this to all clients to keep their lists in sync
+  //     io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+  //       typingUsers: typingUsersArray,
+  //     });
+  //   }
+  // }, TYPING_TIMEOUT_SERVER);
 
   socket.on("leaveConversation", (conversationId) => {
     if (conversationId) {
       // Basic validation
       socket.leave(conversationId);
-      console.log(
-        `Socket ${socket.id} (User ${socket.userId}) left private conversation room: ${conversationId}`
-      );
+      // console.log(
+      //   `Socket ${socket.id} (User ${socket.userId}) left private conversation room: ${conversationId}`
+      // );
     }
   });
 
@@ -576,20 +573,21 @@ socket.on("public_stop_typing", () => {
   socket.on("markMessagesAsSeen", async ({ conversationId }) => {
     try {
       const readerId = socket.userId;
-
       const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
       const readerObjectId = new mongoose.Types.ObjectId(readerId);
 
-      const conversation = await Conversation.findById(conversationObjectId).select(
-        "participants"
-      );
-      if (!conversation) {
-        return console.error("Conversation not found for marking messages as seen.");
-      }
-      const otherParticipantId = conversation.participants.find(
-        (pId) => pId.toString() !== readerId.toString()
+      // Update the last message in the conversation if it was sent by the other user and is currently unseen
+      const conversationUpdateResult = await Conversation.updateOne(
+        {
+          _id: conversationObjectId,
+          "lastMessage.sender": { $ne: readerObjectId },
+          "lastMessage.seen": false,
+        },
+        { $set: { "lastMessage.seen": true } },
+        { timestamps: false } // Don't bump the `updatedAt` timestamp just for a 'seen' update
       );
 
+      // Also mark all individual messages as seen
       await Message.updateMany(
         {
           conversationId: conversationObjectId,
@@ -598,37 +596,38 @@ socket.on("public_stop_typing", () => {
         },
         { $set: { seen: true } }
       );
-      await Conversation.updateOne(
-        {
-          _id: conversationObjectId,
-          lastMessage: { $ne: null },
-          "lastMessage.sender": { $ne: readerObjectId },
-          "lastMessage.seen": false, // Only update if it's currently unseen
-        },
-        { $set: { "lastMessage.seen": true } },
-        { timestamps: false }
-      );
 
-      if (conversation) {
-        const otherParticipantIdString = conversation.participants
-          .find((pId) => pId.toString() !== readerId.toString())
-          ?.toString();
+      // --- CORE FIX: If the conversation's lastMessage was updated, fetch and emit it ---
+      if (conversationUpdateResult.modifiedCount > 0) {
+        // Fetch the now-updated conversation with populated details
+        const updatedConversation = await Conversation.findById(conversationObjectId)
+          .populate("participants", "username profileImg fullName isVerified isGoldVerified")
+          .populate("lastMessage.sender", "username profileImg fullName isVerified isGoldVerified");
 
-        if (otherParticipantIdString) {
-          const recipientSocketIds = getReceiverSocketIds(otherParticipantIdString);
-          recipientSocketIds.forEach((sockId) => {
-            // Emit to the *sender* of the messages that *their* messages have been seen.
-            io.to(sockId).emit("messagesSeen", { conversationId, readerId });
-          });
-          // You might want to consider the context of emitUnreadMessageStatus
-          // Does it need to be a nextTick?
-          process.nextTick(async () => {
-            await emitUnreadMessageStatus(otherParticipantIdString); // Update unread status for the other participant
+        if (updatedConversation) {
+          // Emit the full conversation object to all participants so their UI (sidebar) updates
+          updatedConversation.participants.forEach((participant) => {
+            const participantSocketIds = getReceiverSocketIds(participant._id.toString());
+            io.to(participantSocketIds).emit("conversationUpdated", updatedConversation);
           });
         }
       }
+
+      // You can still emit messagesSeen for the sender of the original message
+      const initialConversation = await Conversation.findById(
+        conversationObjectId
+      ).select("participants");
+      if (initialConversation) {
+        const otherParticipantId = initialConversation.participants.find(
+          (pId) => pId.toString() !== readerId.toString()
+        );
+        if (otherParticipantId) {
+          const senderSocketIds = getReceiverSocketIds(otherParticipantId.toString());
+          io.to(senderSocketIds).emit("messagesSeen", { conversationId, readerId });
+        }
+      }
     } catch (error) {
-      console.error("Error marking messages as seen:", error);
+      console.error("Error marking messages as seen (socket):", error);
     }
   });
 

@@ -20,7 +20,7 @@ import { FaCaretDown } from "react-icons/fa";
 const ChatWindow = ({
   selectedConversation,
   onBackToConversations,
-  onNewConversationCreated,
+  onNewMessage,
   openImageModal,
 }) => {
   const queryClient = useQueryClient();
@@ -29,54 +29,36 @@ const ChatWindow = ({
 
   const { socket, setActiveConversationId } = useSocket();
 
-  const [isAtBottom, setIsAtBottom] = useState(false);
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+
+  const conversationId = selectedConversation?._id;
+
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
   const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
   const messageListRef = useRef(null);
-  // This ref will now store the scrollTop *before* a fetch and its previous scrollHeight
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
-
+  
   const didMessageJustLanded = useRef(false); // Renamed for clarity: `didMessageJustArriveOrSend` -> `didMessageJustLanded`
 
   const resizeObserverRef = useRef(null);
   const prevScrollHeightRef = useRef(0);
 
-  const actualConversationId = selectedConversation?.isNewChat
-    ? null
-    : selectedConversation?._id;
-
   const shouldScrollOnFirstFullLoad = useRef(true);
-  const prevActualConversationIdRef = useRef(actualConversationId);
-
-  const isNewOrTemporaryChat =
-    selectedConversation?.isNewChat || selectedConversation?.isTemporary;
+  const prevActualConversationIdRef = useRef(conversationId);
 
   const otherUser = selectedConversation?.participants.find(
     (p) => p?._id !== currentUser?._id
   );
 
-  const { deleteMessage, isDeletingMessage } = useDeleteMessage(actualConversationId);
-  const {
-    messages,
-    isLoading,
-    error,
-    refetchMessages,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isFetching,
-  } = useFetchMessages(selectedConversation);
+  const { deleteMessage, isDeletingMessage } = useDeleteMessage(conversationId);
+  const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFetchMessages(conversationId);
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
-
-  const isNewChat =
-    selectedConversation.isNewChat ||
-    (!messages?.length && !isLoading && !error && actualConversationId);
 
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
@@ -98,7 +80,6 @@ const ChatWindow = ({
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
     if (isUserAtBottom) {
-      // Use a small timeout to ensure the DOM has rendered the reaction and updated scrollHeight
       setTimeout(() => {
         scrollToBottom();
         setShowNewMessageButton(false); // Hide the new message button if we scrolled
@@ -106,14 +87,9 @@ const ChatWindow = ({
     }
   }, [scrollToBottom, setShowNewMessageButton]);
 
-  const { sendMessage, isSendingMessage } = useSendMessage({
-    selectedConversation,
-    isNewOrTemporaryChat,
-    onNewConversationCreated,
+  const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
     replyingToMessage,
-    currentOptimisticIdRef,
-    actualConversationId,
-    onMessageSentOptimistically: handleOptimisticScroll,
+    onOptimisticSend: handleOptimisticScroll,
   });
 
   useLayoutEffect(() => {
@@ -124,7 +100,6 @@ const ChatWindow = ({
       resizeObserverRef.current.disconnect();
     }
 
-    // Store the current scroll height BEFORE the ResizeObserver observes changes
     prevScrollHeightRef.current = listEl.scrollHeight;
 
     resizeObserverRef.current = new ResizeObserver((entries) => {
@@ -138,28 +113,16 @@ const ChatWindow = ({
             listEl.scrollHeight - listEl.scrollTop <=
             listEl.clientHeight + scrollThreshold;
 
-          // Condition 1: A new message just landed (either sent by current user or received)
-          // This is a strong signal to scroll.
           if (didMessageJustLanded.current) {
-            // Add a small timeout here specifically for when content, like images,
-            // might still be settling in terms of height. This is a safeguard.
             setTimeout(() => {
               scrollToBottom();
               setShowNewMessageButton(false);
               didMessageJustLanded.current = false; // Reset after scrolling
             }, 50); // Small delay to ensure image height is registered
-          }
-          // Condition 2: The scroll height increased AND the user was already at the bottom.
-          // This covers cases where existing messages might expand (e.g., reactions, image loading in older messages)
-          // or new content is added and the user is following along.
-          else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
+          } else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
             scrollToBottom();
             setShowNewMessageButton(false);
           }
-          // Condition 3: User manually scrolled up, so we don't automatically scroll them down
-          // unless a new message is from *them* or they scroll back down.
-          // This is already handled by the `setShowNewMessageButton` logic in `handleScroll`.
-
           prevScrollHeightRef.current = newScrollHeight;
         }
       }
@@ -173,7 +136,7 @@ const ChatWindow = ({
         resizeObserverRef.current = null;
       }
     };
-  }, [scrollToBottom, actualConversationId]);
+  }, [scrollToBottom, conversationId]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -182,12 +145,11 @@ const ChatWindow = ({
 
     const scrollThreshold = 100;
 
-    const conversationChanged =
-      prevActualConversationIdRef.current !== actualConversationId;
+    const conversationChanged = prevActualConversationIdRef.current !== conversationId;
 
     if (conversationChanged) {
       shouldScrollOnFirstFullLoad.current = true;
-      prevActualConversationIdRef.current = actualConversationId;
+      prevActualConversationIdRef.current = conversationId;
       didMessageJustLanded.current = true; // Force scroll on new conversation
     }
 
@@ -206,13 +168,9 @@ const ChatWindow = ({
     }
 
     if (isAtBottom) {
-      scrollToBottom()
+      scrollToBottom();
     }
-  }, [messages.length, isLoading, actualConversationId, scrollToBottom, lastMessageId]);
-
-  // useLayoutEffect(() => {
-  //   if (isAtBottom) scrollToBottom();
-  // }, [lastMessageId, isAtBottom, scrollToBottom]);
+  }, [messages.length, isLoading, conversationId, scrollToBottom, lastMessageId]);
 
   // --- Existing scroll handling for fetching older messages ---
   useEffect(() => {
@@ -303,21 +261,21 @@ const ChatWindow = ({
 
   // --- Socket and active conversation management ---
   useEffect(() => {
-    setActiveConversationId(actualConversationId);
+    setActiveConversationId(conversationId);
     return () => {
       setActiveConversationId(null);
     };
-  }, [actualConversationId, setActiveConversationId]);
+  }, [conversationId, setActiveConversationId]);
 
   useEffect(() => {
-    setActiveConversationId(actualConversationId);
+    setActiveConversationId(conversationId);
 
     if (socket) {
-      socket.emit("userActiveInChat", { conversationId: actualConversationId });
+      socket.emit("userActiveInChat", { conversationId: conversationId });
     }
 
-    if (socket && actualConversationId && currentUser?._id) {
-      socket.emit("markMessagesAsSeen", { conversationId: actualConversationId });
+    if (socket && conversationId && currentUser?._id) {
+      socket.emit("markMessagesAsSeen", { conversationId: conversationId });
     }
 
     return () => {
@@ -326,26 +284,22 @@ const ChatWindow = ({
         socket.emit("userActiveInChat", { conversationId: null });
       }
     };
-  }, [socket, actualConversationId, currentUser?._id, setActiveConversationId]);
+  }, [socket, conversationId, currentUser?._id, setActiveConversationId]);
 
   // --- Socket event listeners and handling new messages from others ---
   useEffect(() => {
     if (socket) {
       let prevConversationId; // To store the conversation ID before it changes
 
-      if (actualConversationId) {
-        // Only join if there's an actual conversation ID
-        socket.emit("joinConversation", actualConversationId);
-        prevConversationId = actualConversationId; // Store for cleanup
+      if (conversationId) {
+        socket.emit("joinConversation", conversationId);
+        prevConversationId = conversationId; // Store for cleanup
       }
 
       const handleNewMessage = (newMessage) => {
-        // IMPORTANT: Always set the query data for the conversation the message belongs to
-        // This ensures the data is in the cache even if the user is not currently viewing that chat.
         const targetMessagesQueryKey = ["messages", newMessage.conversationId];
 
         queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
-          // If no existing data, initialize with the new message
           if (!oldData || !oldData.pages || oldData.pages.length === 0) {
             return { pages: [[newMessage]], pageParams: [1] };
           }
@@ -357,7 +311,6 @@ const ChatWindow = ({
               msg._id !== newMessage._id && msg._id !== currentOptimisticIdRef.current
           );
 
-          // If the new message is from the current user and replaces an optimistic one
           if (
             newMessage.sender._id.toString() === currentUserId.toString() &&
             currentOptimisticIdRef.current &&
@@ -377,13 +330,14 @@ const ChatWindow = ({
           return newData;
         });
 
+        queryClient.invalidateQueries({ queryKey: ["conversations"] });
+
         // Now, handle UI-specific logic ONLY if the message is for the currently active chat
         const isMessageForCurrentlyActiveChat =
-          newMessage.conversationId === actualConversationId ||
-          (selectedConversation?.isNewChat &&
-            newMessage.sender._id.toString() === otherUser?._id.toString() &&
+          newMessage.conversationId === conversationId ||
+          (newMessage.sender._id.toString() === otherUser?._id.toString() &&
             newMessage.recipientId?.toString() === currentUserId.toString() &&
-            !actualConversationId); // If it's a new chat, match by sender/recipient until a real ID exists
+            !conversationId); // If it's a new chat, match by sender/recipient until a real ID exists
 
         if (isMessageForCurrentlyActiveChat) {
           const listEl = messageListRef.current;
@@ -393,8 +347,6 @@ const ChatWindow = ({
               listEl.scrollHeight - listEl.scrollTop <=
               listEl.clientHeight + scrollThreshold;
 
-            // Mark for scroll only if it's a message from another user AND we're not at the bottom
-            // OR if it's our own message (which implies we should always scroll to it)
             if (
               newMessage.sender._id.toString() === currentUserId.toString() || // Our own message
               isAtBottom // Already at bottom, so keep scrolling
@@ -402,47 +354,63 @@ const ChatWindow = ({
               didMessageJustLanded.current = true;
               setShowNewMessageButton(false);
             } else {
-              // If message is from other user and we are scrolled up
               if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
                 setShowNewMessageButton(true);
               }
             }
           }
 
-          // Mark messages as seen if the received message is from the other user in the active chat
           if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
             socket.emit("markMessagesAsSeen", {
               conversationId: newMessage.conversationId,
             });
           }
         }
-        // Invalidate the conversations list to update the last message/unread count in the sidebar
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
       };
 
-      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        if (seenConversationId.toString() === actualConversationId?.toString()) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
-            if (!oldData) return oldData;
+const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
 
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) =>
-                msg.sender._id.toString() === currentUserId.toString() && !msg.seen
-                  ? { ...msg, seen: true }
-                  : msg
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          });
-        }
-      };
+  if (seenConversationId.toString() === conversationId?.toString()) {
+    queryClient.setQueryData(["messages", conversationId], (oldData) => {
+
+      if (!oldData) {
+
+        return oldData;
+      }
+
+      const updatedPages = oldData.pages.map((page, pageIndex) =>
+        page.map((msg) => {
+          // Check if it's the current user's message AND it's currently not seen
+          const shouldBeMarkedSeen =
+            msg.sender && // Ensure sender exists
+            msg.sender._id.toString() === currentUserId.toString() &&
+            !msg.seen;
+
+          if (shouldBeMarkedSeen) {
+            return { ...msg, seen: true };
+          }
+          return msg;
+        })
+      );
+      // Important: Verify the 'seen' property of your specific message here in the console
+      // For example, find the message by its ID if you know it, or just inspect the last message
+      if (updatedPages && updatedPages.length > 0 && updatedPages[0].length > 0) {
+        const lastMessageOnFirstPage = updatedPages[0][updatedPages[0].length - 1];
+
+      }
+
+      return { ...oldData, pages: updatedPages };
+    });
+    // console.log("queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Uncomment if needed for conversation list updates");
+  } 
+};
 
       const handleMessageDeleted = ({
         messageId,
         conversationId: deletedConversationId,
       }) => {
-        if (deletedConversationId.toString() === actualConversationId?.toString()) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+        if (deletedConversationId.toString() === conversationId?.toString()) {
+          queryClient.setQueryData(["messages", conversationId], (oldData) => {
             if (!oldData) return oldData;
 
             const updatedPages = oldData.pages.map((page) =>
@@ -456,10 +424,7 @@ const ChatWindow = ({
 
       // --- MODIFIED: handleTyping event listener ---
       const handleTyping = ({ conversationId, userId, isEditing }) => {
-        if (
-          conversationId === actualConversationId &&
-          userId === otherUser?._id.toString()
-        ) {
+        if (conversationId === conversationId && userId === otherUser?._id.toString()) {
           if (!isEditing) {
             setIsTypingOtherUser(true);
           }
@@ -467,62 +432,41 @@ const ChatWindow = ({
       };
 
       const handleConversationUpdate = (updatedConversation) => {
-        // Now this key matches your useFetchConversations hook
-        queryClient.setQueryData(["conversations"], (oldConversations) => {
-          if (!oldConversations) return [updatedConversation]; // Handle initial empty state
+        // queryClient.setQueryData(["conversations"], (oldConversations) => {
+        //   if (!oldConversations) return [updatedConversation]; // Handle initial empty state
 
-          // Assuming oldConversations is an array, you'd want to update it
-          // Find the index of the updated conversation
-          const index = oldConversations.findIndex(
-            (conv) => conv._id === updatedConversation._id
-          );
+        //   const index = oldConversations.findIndex(
+        //     (conv) => conv._id === updatedConversation._id
+        //   );
 
-          if (index !== -1) {
-            const newConversations = [...oldConversations];
-            newConversations[index] = updatedConversation;
-            // You might also want to reorder if 'updatedAt' changes
-            // newConversations.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-            return newConversations;
-          } else {
-            // If not found (e.g., a brand new conversation was created that wasn't in the list)
-            return [updatedConversation, ...oldConversations]; // Add to the top
-          }
-        });
+        //   if (index !== -1) {
+        //     const newConversations = [...oldConversations];
+        //     newConversations[index] = updatedConversation;
+        //     return newConversations;
+        //   } else {
+        //     return [updatedConversation, ...oldConversations]; // Add to the top
+        //   }
+        // });
       };
 
-      // --- MODIFIED: handleStopTyping event listener ---
       const handleStopTyping = ({ conversationId, userId, isEditing }) => {
-        if (
-          conversationId === actualConversationId &&
-          userId === otherUser?._id.toString()
-        ) {
-          // Always stop typing, regardless of whether they were editing or not.
-          // The `isEditing` check is primarily for *starting* the typing indicator.
+        if (conversationId === conversationId && userId === otherUser?._id.toString()) {
           setIsTypingOtherUser(false);
         }
       };
 
-      // --- NEW: Handle messageEdited event ---
       const handleMessageEdited = (updatedMessage) => {
-        // Check if the edited message belongs to the currently active chat
-        if (
-          updatedMessage.conversationId.toString() === actualConversationId?.toString()
-        ) {
-          queryClient.setQueryData(["messages", actualConversationId], (oldData) => {
+        if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
+          queryClient.setQueryData(["messages", conversationId], (oldData) => {
             if (!oldData) return oldData;
 
             const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) =>
-                // Find the message by its ID and replace it with the updated version
-                msg._id === updatedMessage._id ? updatedMessage : msg
-              )
+              page.map((msg) => (msg._id === updatedMessage._id ? updatedMessage : msg))
             );
             return { ...oldData, pages: updatedPages };
           });
 
-          // Invalidate conversations query to update the lastMessage in the sidebar
-          // This will cause a refetch of conversations, showing the updated last message.
-          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          // queryClient.invalidateQueries({ queryKey: ["conversations"] });
         }
       };
 
@@ -549,7 +493,7 @@ const ChatWindow = ({
     }
   }, [
     socket,
-    actualConversationId,
+    conversationId,
     queryClient,
     otherUser?._id,
     currentUserId,
@@ -557,7 +501,6 @@ const ChatWindow = ({
     // currentUser.username,
     // currentUser.profileImg,
     // currentUser.fullName,
-    selectedConversation.isNewChat,
     // currentOptimisticIdRef,
     setShowNewMessageButton,
   ]);
@@ -579,14 +522,16 @@ const ChatWindow = ({
     didMessageJustLanded.current = false;
   }, [scrollToBottom]);
 
+  const isChatEmpty = !messages?.length && !isLoading;
+
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent">
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
       <div className="mx-auto w-full flex flex-col h-full max-w-3xl md:max-w-[585px]">
         <MessageList
+          isNewChat={isChatEmpty} // Pass the simplified boolean
           ref={messageListRef}
           error={error}
-          isNewChat={isNewChat}
           messagesToRender={messages}
           setReplyingToMessage={memoizedSetReplyingToMessage}
           deleteMessage={memoizedDeleteMessage}
@@ -620,7 +565,7 @@ const ChatWindow = ({
           otherUser={otherUser}
           replyingToMessage={replyingToMessage}
           setReplyingToMessage={memoizedSetReplyingToMessage}
-          actualConversationId={actualConversationId}
+          actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
           messageInputRef={messageInputRef}
           isTypingOtherUser={isTypingOtherUser}

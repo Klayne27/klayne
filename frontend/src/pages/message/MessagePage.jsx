@@ -1,178 +1,64 @@
-import { useState, useEffect, useRef } from "react";
-import { useLocation, useParams, useNavigate } from "react-router-dom";
+// src/pages/message/MessagePage.jsx
+
+import { useState, useEffect } from "react";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import ConversationsList from "../../components/common/messages/ConversationsList";
 import ChatWindow from "../../components/common/messages/ChatWindow";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
-import { useFetchFollowedUsersForMessaging } from "../../hooks/messagesHooks/useFetchFollowedUsersForMessaging";
 import { useDeleteConversation } from "../../hooks/messagesHooks/useDeleteConversation";
-import ConfirmationDialog from "../../components/common/ConfirmationDialog";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSocket } from "../../context/SocketContext";
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
 import ChatWindowSkeleton from "../../components/skeletons/ChatWindowSkeleton";
+import ConfirmationDialog from "../../components/common/ConfirmationDialog";
+import { useQueryClient } from "@tanstack/react-query";
 
-const MessagePage = ({
-  openImageModal,
-  setIsChatWindowOpen,
-  setIsMobileMessagesListScrollingDown,
-}) => {
+// 🗑️ REMOVED PROPS: setIsMobileMessagesListScrollingDown
+const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
   const { authUser: currentUser } = useAuthUser();
-  const location = useLocation();
   const { conversationId: urlConversationId } = useParams();
   const navigate = useNavigate();
-  const { socket } = useSocket();
-
-  const { targetUserId } = location.state || {};
-
-  const {
-    conversations,
-    isLoadingConversations,
-    errorConversations,
-    refetchConversations,
-  } = useFetchConversations();
-  const { followedUsers, isLoadingFollowedUsers, errorFollowedUsers } =
-    useFetchFollowedUsersForMessaging();
-
-  const [selectedConversation, setSelectedConversation] = useState(null);
-  const initialLoadAttempted = useRef(false);
+  const location = useLocation();
   const queryClient = useQueryClient();
 
+  // 🗑️ REMOVED: `useFetchFollowedUsersForMessaging` is no longer needed.
+  const { conversations, isLoadingConversations, errorConversations } =
+    useFetchConversations();
+  const { deleteConversation, isDeleting } = useDeleteConversation();
+
+  const [selectedConversation, setSelectedConversation] = useState(null);
   const [showConfirmDeleteDialog, setShowConfirmDeleteDialog] = useState(false);
   const [conversationToDeleteId, setConversationToDeleteId] = useState(null);
 
-  const { deleteConversation, isDeleting } = useDeleteConversation();
-  const isConversationOpen = urlConversationId !== undefined;
-  const isMobile = window.innerWidth < 768;
-
-  const hasConversationIdInUrl = !!urlConversationId && urlConversationId !== "";
-  const showConversationListPanel = !isMobile || !isConversationOpen;
-  const showChatWindowPanel = !isMobile || isConversationOpen;
-
-  const isConversationActive = !!urlConversationId || !!selectedConversation;
-
+  // ♻️ REFACTORED: This effect now has one job: sync the selectedConversation state
+  // with the conversation ID from the URL.
   useEffect(() => {
-    setIsChatWindowOpen(hasConversationIdInUrl);
+    // Don't do anything until conversations have loaded.
+    if (isLoadingConversations) return;
 
-    return () => {
-      setIsChatWindowOpen(false);
-    };
-  }, [hasConversationIdInUrl, setIsChatWindowOpen]);
-  // --- End Core Logic ---
-
-  useEffect(() => {
-    if (isLoadingConversations || isLoadingFollowedUsers || !currentUser) {
-      return;
+    if (urlConversationId) {
+      const conversationFromUrl = conversations.find((c) => c._id === urlConversationId);
+      setSelectedConversation(conversationFromUrl || null);
+    } else {
+      // If there's no ID in the URL, no conversation is selected.
+      setSelectedConversation(null);
     }
 
-    if (
-      initialLoadAttempted.current &&
-      !targetUserId && // No new targetUserId trying to force a new convo
-      urlConversationId === selectedConversation?._id // URL matches current selected convo (for existing chats)
-    ) {
-      return; // Already in the correct state, prevent unnecessary re-runs
-    }
+    setIsChatWindowOpen(!!urlConversationId);
 
-    let desiredConversation = null;
-
-    if (targetUserId) {
-      const existingConv = conversations.find((conv) =>
-        conv.participants.some((p) => p?._id.toString() === targetUserId)
-      );
-
-      if (existingConv) {
-        desiredConversation = existingConv;
-        navigate(`/messages/${existingConv._id}`, { replace: true });
-      } else {
-        // If no existing conversation, create a "pseudo" conversation for a new chat
-        const targetUser = followedUsers.find(
-          (user) => user._id.toString() === targetUserId
-        );
-        if (targetUser) {
-          desiredConversation = {
-            _id: `new-${targetUser._id}`, // Temporary ID for new chats
-            participants: [
-              targetUser,
-              {
-                _id: currentUser._id,
-                username: currentUser.username,
-                fullName: currentUser.fullName,
-                profileImg: currentUser.profileImg,
-              },
-            ],
-            isNewChat: true,
-            lastMessage: { text: "Start a new message", seen: true, img: "" },
-            updatedAt: new Date(),
-          };
-        } else {
-          console.warn("MessagesPage: Target user for new chat not found:", targetUserId);
-          navigate("/messages", { replace: true });
-        }
-      }
-    }
-
-    if (urlConversationId && !desiredConversation) {
-      desiredConversation = conversations.find((conv) => conv._id === urlConversationId);
-
-      if (!desiredConversation && urlConversationId !== "undefined") {
-        console.warn(
-          "MessagesPage: Conversation ID from URL not found in current conversations list. This might mean it's loading, or it's an invalid ID."
-        );
-      }
-    }
-
-    if (
-      !targetUserId &&
-      !urlConversationId &&
-      conversations.length > 0 &&
-      !selectedConversation
-    ) {
-      return;
-    }
-
-    setSelectedConversation(desiredConversation);
-    initialLoadAttempted.current = true;
-
-    if (location.state?.targetUserId && targetUserId) {
-      // Only replace state if targetUserId was actually used to find/create a conversation
-      window.history.replaceState({}, document.title, window.location.pathname);
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [
-    urlConversationId,
-    targetUserId,
-    conversations,
-    followedUsers,
-    isLoadingConversations,
-    isLoadingFollowedUsers,
-    currentUser,
-    navigate,
-  ]);
+    // Clean up the chat window state when the component unmounts
+    return () => setIsChatWindowOpen(false);
+  }, [urlConversationId, conversations, isLoadingConversations, setIsChatWindowOpen]);
 
   const handleSelectConversation = (conversation) => {
-    setSelectedConversation(conversation);
-    // queryClient.invalidateQueries(["conversations"])
-
-    if (conversation && !conversation.isNewChat) {
+    // ♻️ REFACTORED: Logic is now very simple. Just navigate to the conversation's URL.
+    if (conversation?._id) {
       navigate(`/messages/${conversation._id}`);
-    } else if (conversation?.isNewChat) {
-      // For new chats, ensure the targetUserId is in state if navigating via link
-      navigate("/messages", {
-        state: {
-          targetUserId: conversation.participants.find((p) => p?._id !== currentUser._id)
-            ?._id,
-        },
-      });
-    } else {
-      // If no conversation is selected (e.g., clearing selection), go to base /messages
-      navigate("/messages");
     }
   };
 
   const handleBackToConversations = () => {
-    setSelectedConversation(null);
     navigate("/messages");
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
   };
 
   const handleDeleteInitiate = (id) => {
@@ -181,111 +67,68 @@ const MessagePage = ({
   };
 
   const handleConfirmDelete = async () => {
-    if (conversationToDeleteId) {
-      await deleteConversation(conversationToDeleteId);
-      // After deletion, if the deleted conversation was selected, clear selection and navigate back.
-      if (selectedConversation?._id === conversationToDeleteId) {
-        setSelectedConversation(null);
-        navigate("/messages", { replace: true });
-      }
-      // If it was a 'new chat' pseudo-conversation that was deleted (which shouldn't happen, but as a safeguard)
-      if (
-        selectedConversation?.isNewChat &&
-        selectedConversation.participants.some((p) => p._id === conversationToDeleteId)
-      ) {
-        setSelectedConversation(null);
-        navigate("/messages", { replace: true });
-      }
-    }
-    setShowConfirmDeleteDialog(false);
-    setConversationToDeleteId(null);
-    refetchConversations(); // Refetch conversations to update the list
-  };
+    if (!conversationToDeleteId) return;
 
-  const handleCancelDelete = () => {
+    await deleteConversation(conversationToDeleteId, {
+      onSuccess: () => {
+        // If the deleted conversation was the selected one, navigate away
+        if (urlConversationId === conversationToDeleteId) {
+          navigate("/messages", { replace: true });
+        }
+      },
+    });
+
     setShowConfirmDeleteDialog(false);
     setConversationToDeleteId(null);
   };
 
-  // Callback functions for ConversationsList scroll
-  const handleConversationsListScrollDown = () => {
-    setIsMobileMessagesListScrollingDown(true);
-  };
+  const isMobile = window.innerWidth < 768;
+  const showConversationList = !isMobile || !urlConversationId;
+  const showChatWindow = !isMobile || !!urlConversationId;
 
-  const handleConversationsListScrollUp = () => {
-    setIsMobileMessagesListScrollingDown(false);
-  };
-
-  const handleNewConversationCreated = (newConversation) => {
-    refetchConversations(); // Ensure conversations list is updated
-    setSelectedConversation(newConversation); // Set the selected conversation to the real one
-    navigate(`/messages/${newConversation._id}`, { replace: true }); // Navigate to the correct URL
-  };
-
-  // Show error state if data fetching fails
-  if (errorConversations || errorFollowedUsers) {
+  if (errorConversations) {
     return (
-      <div className="flex min-h-screen text-red-500 items-center justify-center">
-        Error loading messages:{" "}
-        {errorConversations?.message || errorFollowedUsers?.message}
+      <div className="flex-center h-screen text-red-500">
+        Error: {errorConversations.message}
       </div>
     );
   }
 
-
   return (
     <>
       <div className="flex min-h-screen overflow-hidden w-full">
-        {/* Conversations List Panel */}
-        {showConversationListPanel && (
-          <div
-            className={`
-            w-full md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent
-            flex flex-col h-screen
-          `}
-          >
-            {isLoadingConversations || isLoadingFollowedUsers ? (
+        {showConversationList && (
+          <div className="w-full md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent flex flex-col h-screen">
+            {isLoadingConversations ? (
               <ConversationListSkeleton />
             ) : (
               <ConversationsList
+                conversations={conversations}
                 onSelectConversation={handleSelectConversation}
                 selectedConversation={selectedConversation}
                 onDeleteInitiate={handleDeleteInitiate}
-                onScrollDown={handleConversationsListScrollDown}
-                onScrollUp={handleConversationsListScrollUp}
-                conversations={conversations}
-                errorConversations={errorConversations}
-                followedUsers={followedUsers}
-                errorFollowedUsers={errorFollowedUsers}
               />
             )}
           </div>
         )}
 
-        {showChatWindowPanel && (
-          <div
-            className={`
-              w-full md:flex-1
-              flex flex-col h-screen
-            `}
-          >
-            {/* Condition for showing ChatWindowSkeleton */}
-            {isLoadingConversations ||
-            isLoadingFollowedUsers ||
-            (isConversationActive && !selectedConversation) ? (
+        {showChatWindow && (
+          <div className="w-full md:flex-1 flex flex-col h-screen">
+            {isLoadingConversations && urlConversationId ? (
               <ChatWindowSkeleton />
             ) : selectedConversation ? (
               <ChatWindow
+                key={selectedConversation._id} // Add key to force re-mount on conversation change
                 selectedConversation={selectedConversation}
                 openImageModal={openImageModal}
                 onBackToConversations={handleBackToConversations}
-                onNewConversationCreated={handleNewConversationCreated}
+                // onNewMessage={handleNewMessage} // ✨ Pass this new handler
               />
             ) : (
-              <div className="flex-1 flex flex-col items-center justify-center text-gray-400 p-4 text-center">
+              <div className="hidden md:flex flex-1 flex-col items-center justify-center text-gray-400 p-4">
                 <p className="text-xl font-bold mb-2">Select a message</p>
                 <p className="text-sm">
-                  Choose an existing conversation or start a new one.
+                  Choose from your existing conversations to start chatting.
                 </p>
               </div>
             )}
@@ -295,9 +138,9 @@ const MessagePage = ({
 
       <ConfirmationDialog
         isOpen={showConfirmDeleteDialog}
-        message="Are you sure you want to delete this conversation for yourself? This action cannot be undone."
+        message="Are you sure you want to delete this conversation? This action cannot be undone."
         onConfirm={handleConfirmDelete}
-        onCancel={handleCancelDelete}
+        onCancel={() => setShowConfirmDeleteDialog(false)}
         isLoading={isDeleting}
       />
     </>

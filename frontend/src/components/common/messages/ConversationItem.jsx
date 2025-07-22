@@ -1,47 +1,43 @@
+// src/components/common/messages/ConversationItem.jsx
+
 import { Link } from "react-router-dom";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
-import React, { useEffect } from "react";
 import { FiTrash } from "react-icons/fi";
-import { useQueryClient } from "@tanstack/react-query";
-import { useSocket } from "../../../context/SocketContext";
+import React from "react";
 
+// 🗑️ REMOVED PROPS: onlineUsers (can be re-added if needed, but simplifying for now)
+// ✅ The component is simpler as it doesn't need to check for "isNewChat".
 function ConversationItem({
   conv,
-  currentUser,
-  onlineUsers,
   selectedConversation,
   onSelectConversation,
   onDeleteInitiate,
 }) {
-
+  const { authUser: currentUser } = useAuthUser();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
   );
 
-  const isOnline = onlineUsers.includes(otherUser._id);
-  const isSelected =
-    selectedConversation &&
-    (selectedConversation._id === conv._id ||
-      (selectedConversation.isNewChat &&
-        selectedConversation.participants[0]?._id === otherUser._id));
+  // ♻️ REFACTORED: Selection logic is simpler without `isNewChat`.
+  const isSelected = selectedConversation?._id === conv._id;
 
-  const isLastMessageFromOtherUser =
-    conv.lastMessage?.sender?.toString() === otherUser._id.toString();
-  const isLastMessageUnread = isLastMessageFromOtherUser && !conv.lastMessage?.seen;
+  const isLastMessageUnread =
+    conv.lastMessage?.sender?.toString() === otherUser?._id.toString() &&
+    !conv.lastMessage?.seen;
 
-  let lastMessageContent;
-  if (conv.isNewChat) {
-    lastMessageContent = <span className="italic">Start a new message</span>;
-  } else if (conv.lastMessage?.img) {
+  // ♻️ REFACTORED: Last message content logic is simpler.
+  let lastMessageContent = "No messages yet...";
+  if (conv.lastMessage?.img) {
     lastMessageContent = (
       <span className="flex items-center gap-1">
         <MdImage className="inline-block text-lg" /> Image
       </span>
     );
-  } else {
-    lastMessageContent = conv.lastMessage?.text || "";
+  } else if (conv.lastMessage?.text) {
+    lastMessageContent = conv.lastMessage.text;
   }
 
   const truncatedLastMessage =
@@ -49,82 +45,76 @@ function ConversationItem({
       ? lastMessageContent.slice(0, 35) + "..."
       : lastMessageContent;
 
-  const conversationToSelect = conv.isNewChat
-    ? { _id: null, participants: [otherUser], isNewChat: true }
-    : conv;
-
   const handleDeleteClick = (e) => {
-    e.preventDefault();
-    e.stopPropagation();
+    e.stopPropagation(); // Prevent the conversation from being selected
     onDeleteInitiate(conv._id);
   };
 
+  // This should rarely happen now with the new backend logic
   if (!otherUser) {
-    console.warn("Conversation without a valid other participant found:", conv);
     return null;
   }
 
   return (
     <div
-      key={conv._id}
-      className={`flex items-center gap-1 p-3 cursor-pointer border-gray-700 hover:bg-secondary hover:bg-opacity-60 duration-300 transition
+      className={`flex items-center gap-1 p-3 cursor-pointer hover:bg-secondary/60 duration-300 transition-colors
         ${isSelected ? "bg-secondary border-r-2 border-r-accent" : ""}
-        transition-colors duration-200`}
-      onClick={() => onSelectConversation(conversationToSelect)}
+      `}
+      onClick={() => onSelectConversation(conv)} // ✨ Simplified handler
     >
-      <div className="relative p-1">
-        <Link to={`/profile/${otherUser.username}`} onClick={(e) => e.stopPropagation()}>
-          <img
-            src={otherUser?.profileImg || "/avatar-placeholder.png"}
-            alt={otherUser.username}
-            className="w-8 h-8 rounded-full object-cover"
-          />
-        </Link>
-        {/* {isOnline && (
-          <span className="absolute bottom-0.5 right-0.5 w-3 h-3 bg-green-500 rounded-full border-2 border-[#2F3336]"></span>
-        )} */}
-      </div>
-      <div className="flex flex-col flex-1">
+      <Link
+        to={`/profile/${otherUser.username}`}
+        onClick={(e) => e.stopPropagation()}
+        className="relative p-1"
+      >
+        <img
+          src={otherUser.profileImg || "/avatar-placeholder.png"}
+          alt={otherUser.username}
+          className="w-8 h-8 rounded-full object-cover"
+        />
+      </Link>
+      <div className="flex flex-col flex-1 overflow-hidden">
         <div className="flex items-center justify-between">
-          <div className="flex gap-1 items-center">
-            <span className="font-bold ">{otherUser.fullName}</span>
-            {conv.participants[0].isVerified && (
-              <img src="/verified.png" className="size-[17px]" alt="Verified badge" />
+          <div className="flex gap-1 items-center truncate">
+            <span className="font-bold">{otherUser.fullName}</span>
+            {otherUser.isVerified && (
+              <img src="/verified.png" className="size-[17px]" alt="Verified" />
             )}
-            {conv.participants[0].isGoldVerified && (
-              <img src="/gold-verified.png" className="size-[17px]" alt="Verified badge" />
+            {otherUser.isGoldVerified && (
+              <img src="/gold-verified.png" className="size-[17px]" alt="Gold Verified" />
             )}
-            <span className="text-gray-400 ">@{otherUser?.username}</span>
-            {!conv.isNewChat && (
-              <>
-                <span className="text-[7px] text-gray-400">●</span>
-                <span className=" text-gray-400">{formatPostDate(conv.updatedAt)}</span>
-              </>
-            )}
+            <span className="text-gray-400 hidden sm:inline">@{otherUser.username}</span>
+            <span className="text-gray-400 text-xs mx-1">·</span>
+            <span className="text-gray-400 text-xs shrink-0">
+              {formatPostDate(conv.updatedAt)}
+            </span>
           </div>
         </div>
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-start">
           <p
-            className={`text-sm flex ${
-              isLastMessageUnread ? " font-semibold" : "text-gray-400"
+            className={`text-sm truncate ${
+              isLastMessageUnread ? "font-semibold" : "text-gray-400"
             }`}
           >
             {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
-            {truncatedLastMessage}
+
+            {lastMessageContent === "No messages yet..." ? (
+              <span className="italic">{lastMessageContent}</span>
+            ) : (
+              truncatedLastMessage
+            )}
           </p>
         </div>
       </div>
-      {!conv.isNewChat && (
-        <div
-          className="group p-2 rounded-full hover:bg-red-600 hover:text-red-500 hover:bg-opacity-15 duration-200 transition"
-          onClick={handleDeleteClick}
-        >
-          <FiTrash
-            className="text-gray-500 group-hover:text-red-500 cursor-pointer transition duration-200"
-            size={18}
-          />
-        </div>
-      )}
+      <div
+        className="group p-2 rounded-full hover:bg-red-600/15"
+        onClick={handleDeleteClick}
+      >
+        <FiTrash
+          className="text-gray-500 group-hover:text-red-500 cursor-pointer transition-colors duration-200"
+          size={18}
+        />
+      </div>
     </div>
   );
 }

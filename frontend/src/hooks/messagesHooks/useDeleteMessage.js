@@ -47,7 +47,7 @@ export const useDeleteMessage = (convId) => {
       //    This ensures eventual consistency and updates other parts of the UI
       //    like the conversation list if the last message was deleted.
       queryClient.invalidateQueries({ queryKey: context.queryKey });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // To update last message shown in sidebar
+      // queryClient.invalidateQueries({ queryKey: ["conversations"] }); // To update last message shown in sidebar
     },
     onError: (error, variables, context) => {
       toast.error(error.message || "Failed to delete message.");

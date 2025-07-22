@@ -2,46 +2,24 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
-export const useSendMessage = ({
-  selectedConversation,
-  isNewOrTemporaryChat,
-  onNewConversationCreated,
-  replyingToMessage,
-  currentOptimisticIdRef,
-  onMessageSentOptimistically,
-}) => {
+export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
   const { authUser: currentUser } = useAuthUser();
   const queryClient = useQueryClient();
 
-  const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
+  return useMutation({
     mutationFn: sendMessageApi,
     onMutate: async (newMessageData) => {
-      // ... (your existing onMutate logic - it looks fine for optimistic updates)
-      const queryKeyConversationId = isNewOrTemporaryChat
-        ? `temp-${selectedConversation.participants[0]._id}`
-        : selectedConversation?._id;
-
-      const queryKey = ["messages", queryKeyConversationId];
+      const { conversationId } = newMessageData;
+      const queryKey = ["messages", conversationId];
 
       await queryClient.cancelQueries({ queryKey });
-
       const previousData = queryClient.getQueryData(queryKey);
 
-      const tempMessageId = `optimistic-${Date.now()}-${Math.random()}`;
-      currentOptimisticIdRef.current = tempMessageId;
-
-      const tempMessage = {
-        _id: tempMessageId,
+      const optimisticMessage = {
+        _id: `optimistic-${Date.now()}`,
         text: newMessageData.message,
-        sender: {
-          _id: currentUser._id,
-          username: currentUser.username,
-          fullName: currentUser.fullName,
-          profileImg: currentUser.profileImg,
-          isVerified: currentUser.isVerified,
-          isGoldVerified: currentUser.isGoldVerified,
-        },
-        conversationId: selectedConversation?._id || queryKeyConversationId,
+        sender: currentUser,
+        conversationId,
         createdAt: new Date().toISOString(),
         img: newMessageData.img || null,
         seen: false,
@@ -59,90 +37,39 @@ export const useSendMessage = ({
           : null,
       };
 
+      // Update the cache optimistically
       queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          return { pages: [[tempMessage]], pageParams: [1] };
+        if (!oldData?.pages) {
+          return { pages: [[optimisticMessage]], pageParams: [1] };
         }
-
-        const newData = { ...oldData };
-        newData.pages = [...oldData.pages];
-        newData.pages[0] = [...newData.pages[0], tempMessage];
-
+        const newData = { ...oldData, pages: [...oldData.pages] };
+        newData.pages[0] = [...newData.pages[0], optimisticMessage];
         return newData;
       });
 
-      if (onMessageSentOptimistically) {
-        onMessageSentOptimistically();
+      if (onOptimisticSend) {
+        onOptimisticSend(); // Signal that an optimistic message was added
       }
 
-      return { previousData, optimisticId: tempMessageId, queryKey };
+      return { previousData, queryKey, optimisticId: optimisticMessage._id };
     },
-
-    onSuccess: (data, variables, context) => {
-      // Assuming 'data' from sendMessageApi contains both 'newMessage' and 'conversation'
-      const { newMessage, conversation: newRealConversation } = data; // <--- IMPORTANT: Destructure 'conversation'
-      const newRealConversationId = newRealConversation?._id; // Get the ID from the new conversation object
-
-      const finalQueryKeyConversationId =
-        newRealConversationId || selectedConversation._id;
-      const finalQueryKey = ["messages", finalQueryKeyConversationId];
-
-      queryClient.setQueryData(finalQueryKey, (oldData) => {
+    onSuccess: (newMessage, variables, context) => {
+      // Replace the optimistic message with the real one from the server
+      queryClient.setQueryData(context.queryKey, (oldData) => {
         if (!oldData) return oldData;
-
-        const newData = {
+        return {
           ...oldData,
           pages: oldData.pages.map((page) =>
-            page.map((msg) =>
-              msg._id === context.optimisticId
-                ? { ...newMessage, isOptimistic: undefined }
-                : msg
-            )
+            page.map((msg) => (msg._id === context.optimisticId ? newMessage : msg))
           ),
         };
-        return newData;
       });
-
-      queryClient.invalidateQueries({
-        queryKey: finalQueryKey,
-        exact: true,
-        refetchType: "background",
-      });
-
-      if (
-        isNewOrTemporaryChat &&
-        newRealConversationId && // Check if ID exists
-        selectedConversation._id !== newRealConversationId // Check if this is truly a new ID
-      ) {
-        // Remove the temporary query cache key for the old 'new chat' ID
-        // This is important to ensure the new conversation uses the real ID for its cache.
-        queryClient.removeQueries(["messages", context.queryKey[1]]);
-
-        // THIS IS THE CRUCIAL CHANGE: Pass the full conversation object
-        if (onNewConversationCreated) {
-          onNewConversationCreated(newRealConversation); // <--- Pass the entire object
-        }
-      }
-      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Refresh sidebar list
-
-      currentOptimisticIdRef.current = null; // Clear optimistic ID after replacement
+      // Invalidate the main conversations list to update the `lastMessage` in the sidebar.
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
-
-    onError: (error, variables, context) => {
-      const { previousData, optimisticId, queryKey } = context;
-
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return oldData;
-        const newData = { ...oldData };
-        newData.pages = oldData.pages.map((page) =>
-          page.filter((msg) => msg._id !== optimisticId)
-        );
-        return newData;
-      });
-
-      currentOptimisticIdRef.current = null;
+    onError: (err, variables, context) => {
+      // Roll back the optimistic update on error
+      queryClient.setQueryData(context.queryKey, context.previousData);
     },
   });
-
-  return { sendMessage, isSendingMessage };
 };

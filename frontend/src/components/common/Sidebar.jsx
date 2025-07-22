@@ -28,7 +28,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     hasUnreadNotifications,
     hasNewFeedPosts,
     setHasNewFeedPosts,
-    hasUnreadPublicChat
+    hasUnreadPublicChat,
   } = useSocket();
   const queryClient = useQueryClient();
   // const {username} = useParams()
@@ -364,7 +364,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
     if (window.innerWidth < 768) {
       // Prioritize hiding for specific pages on mobile
-      if (isChatWindowOpen || pathname.includes("/post/") || pathname.includes("/public-chat")) {
+      if (
+        isChatWindowOpen ||
+        pathname.includes("/post/") ||
+        pathname.includes("/public-chat")
+      ) {
         // <-- ADDED: Hide if on PostPage
         setIsMobileBarVisible(false);
       } else if (pathname.startsWith("/messages")) {
@@ -390,11 +394,8 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
-  
-
   const handlePublicChatClick = () => {
     navigate("/public-chat");
-
   };
 
   if (!shouldRenderMobileSidebar) {
@@ -475,7 +476,10 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           </li>
 
           <li
-            onClick={() => navigate("/messages")}
+            onClick={() => {
+              navigate("/messages");
+              queryClient.invalidateQueries({queryKey: ["conversations"]})
+            }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
           >
             <button

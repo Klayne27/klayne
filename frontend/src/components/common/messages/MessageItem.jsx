@@ -139,6 +139,8 @@ const MessageItem = ({
     }
   }
 
+  // console.log(msg);
+
   // Determine if the time should be shown
   const shouldShowTimeOnHover = isHovered || showModal;
 

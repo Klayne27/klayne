@@ -1,6 +1,6 @@
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { getReceiverSocketIds, io, emitUnreadMessageStatus } from "../lib/socket.js";
+import { getReceiverSocketIds, io, emitUnreadMessageStatus, userActiveChats } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 
@@ -59,66 +59,31 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 
 export const sendMessage = async (req, res) => {
   try {
-    const {
-      recipientId,
-      message,
-      conversationId: incomingConversationId,
-      repliedTo,
-      tempId,
-    } = req.body;
+    const { message, conversationId, repliedTo } = req.body;
     let { img } = req.body;
     const senderId = req.user._id;
 
-    // const isDeletedForRecipient = conversation.deletedFor.some(
-    //   (entry) => entry.user.toString() === recipientId.toString()
-    // );
-
-    if (senderId.toString() === recipientId.toString()) {
-      return res.status(400).json({ error: "You cannot message yourself." });
+    if (!conversationId) {
+      return res.status(400).json({ error: "Conversation ID is required." });
     }
 
-    // if (isDeletedForRecipient) {
-    //   // If so, remove them from the deletedFor array to make it reappear in their inbox
-    //   await Conversation.updateOne(
-    //     { _id: conversation._id },
-    //     { $pull: { deletedFor: { user: recipientId } } }
-    //   );
-    // }
+    const conversation = await Conversation.findById(conversationId);
 
-    if (await isBlockedOrBlockedBy(senderId, recipientId)) {
-      return res.status(403).json({
-        error: "You cannot send messages to this user due to blocking restrictions.",
-      });
+    if (!conversation || !conversation.participants.includes(senderId)) {
+      return res.status(403).json({ error: "Unauthorized or invalid conversation." });
     }
 
-    const recipientUser = await User.findById(recipientId);
-    if (!recipientUser) {
-      return res.status(404).json({ error: "Recipient user not found." });
+    const recipientId = conversation.participants.find((p) => !p.equals(senderId));
+
+    if (!recipientId) {
+      return res.status(404).json({ error: "Conversation recipient not found." });
     }
 
-    let conversation;
-
-    if (incomingConversationId) {
-      conversation = await Conversation.findById(incomingConversationId);
-      if (!conversation || !conversation.participants.includes(senderId)) {
-        return res
-          .status(403)
-          .json({ error: "Unauthorized or invalid conversation ID." });
-      }
-    } else {
-      conversation = await Conversation.findOne({
-        participants: { $all: [senderId, recipientId] },
-      });
-
-      if (!conversation) {
-        conversation = new Conversation({
-          participants: [senderId, recipientId],
-          lastMessage: null,
-          deletedFor: [],
-        });
-        await conversation.save();
-      }
-    }
+    // --- CORE LOGIC CHANGE ---
+    // Check if the recipient is currently active in this specific chat.
+    const recipientActiveConversation = userActiveChats.get(recipientId.toString());
+    const isSeen = recipientActiveConversation === conversationId.toString();
+    // --- END OF CORE LOGIC CHANGE ---
 
     let uploadedImgUrl = "";
     if (img) {
@@ -131,31 +96,23 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       text: message || "",
       img: uploadedImgUrl,
-      seen: false,
       repliedTo: repliedTo || null,
-      tempId,
+      seen: isSeen, // Set the correct 'seen' status from the start
     });
 
     await newMessage.save();
 
+    // Update the conversation's lastMessage and timestamp
     conversation.lastMessage = {
-      text: message || "",
-      img: uploadedImgUrl,
+      text: newMessage.text,
+      img: newMessage.img,
       sender: senderId,
-      seen: false,
-      createdAt: newMessage.createdAt,
-      isEdited: false, // <-- ADD THIS: New messages are not edited
-      messageId: newMessage._id, // <-- ADD THIS: Store the actual message ID
+      seen: isSeen, // Also set the correct 'seen' status here
+      messageId: newMessage._id,
     };
-
-    conversation.deletedFor = conversation.deletedFor.filter(
-      (entry) =>
-        entry.user.toString() !== senderId.toString() &&
-        entry.user.toString() !== recipientId.toString()
-    );
-
     await conversation.save();
 
+    // Populate details for the socket payload and response
     await newMessage.populate(
       "sender",
       "username profileImg fullName isVerified isGoldVerified"
@@ -164,33 +121,36 @@ export const sendMessage = async (req, res) => {
     if (newMessage.repliedTo) {
       await newMessage.populate({
         path: "repliedTo",
-        select: "sender text img",
+        select: "text img sender createdAt", // Select the fields you need for display
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified isGoldVerified",
+          select: "username profileImg", // Populate the sender of the replied-to message
         },
       });
     }
 
-    const messageToSend = { ...newMessage.toObject() };
-
-    if (tempId) {
-      messageToSend.tempId = tempId;
-    }
-
+    // The newMessage object now has the correct `seen` status.
+    // We emit this correct object to the recipient.
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
-      recipientSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("newMessage", messageToSend);
+      io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
+    }
+
+    // If the message was seen instantly, we can also emit the 'messagesSeen' event
+    // back to the sender right away.
+    if (isSeen) {
+      const senderSocketIds = getReceiverSocketIds(senderId.toString());
+      io.to(senderSocketIds).emit("messagesSeen", {
+        conversationId: conversationId,
+        readerId: recipientId,
       });
     }
 
     await emitUnreadMessageStatus(recipientId.toString());
     await emitUnreadMessageStatus(senderId.toString());
 
-    res
-      .status(201)
-      .json({ newMessage: newMessage.toObject(), conversationId: conversation._id });
+    // Return the correct message object in the API response.
+    res.status(201).json(newMessage.toObject());
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -210,6 +170,7 @@ export const getMessagesByConversationId = async (req, res) => {
     }
 
     if (!conversation.participants.includes(userId)) {
+
       return res.status(403).json({ error: "Unauthorized access to conversation." });
     }
 
@@ -217,43 +178,16 @@ export const getMessagesByConversationId = async (req, res) => {
       (participantId) => participantId.toString() !== userId.toString()
     );
 
+
     if (otherParticipantId) {
       const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
 
       if (isBlocked) {
+
         return res.status(403).json({
           error: "You cannot view this conversation due to blocking restrictions.",
         });
       }
-    }
-
-    if (otherParticipantId) {
-      process.nextTick(async () => {
-        try {
-          await Message.updateMany(
-            { conversationId: conversationId, sender: otherParticipantId, seen: false },
-            { $set: { seen: true } }
-          );
-
-          if (
-            conversation.lastMessage &&
-            conversation.lastMessage.sender.toString() ===
-              otherParticipantId.toString() &&
-            !conversation.lastMessage.seen
-          ) {
-            await Conversation.updateOne(
-              { _id: conversationId },
-              { $set: { "lastMessage.seen": true } },
-              { timestamps: false }
-            );
-          }
-
-          await emitUnreadMessageStatus(userId.toString());
-          await emitUnreadMessageStatus(otherParticipantId.toString());
-        } catch (error) {
-          console.error("Error deferring seen status update:", error);
-        }
-      });
     }
 
     const skip = (parseInt(page) - 1) * parseInt(limit);
@@ -261,7 +195,7 @@ export const getMessagesByConversationId = async (req, res) => {
     const messages = await Message.find({
       conversationId: conversationId,
     })
-      .sort({ createdAt: -1 })
+      .sort({ createdAt: -1 }) // Fetch in reverse to get newest last when reversed later
       .skip(skip)
       .limit(parseInt(limit))
       .populate("sender", "username profileImg fullName isVerified isGoldVerified")
@@ -274,7 +208,7 @@ export const getMessagesByConversationId = async (req, res) => {
         },
       });
 
-    res.status(200).json(messages.reverse());
+    res.status(200).json(messages.reverse()); // Reverse to have oldest first for UI display
   } catch (error) {
     console.error("Error in getMessagesByConversationId controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -285,13 +219,18 @@ export const getConversations = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+    // Find the current user to get their list of blocked users
+    const user = await User.findById(userId);
+    const blockedByMe = user.blockedUsers || [];
+
+    // Find users who have blocked the current user
+    const usersBlockingMe = await User.find({ blockedUsers: userId }).select("_id");
+    const blockedMe = usersBlockingMe.map((u) => u._id);
+
+    const allBlockedIds = [...new Set([...blockedByMe, ...blockedMe])];
 
     const conversations = await Conversation.find({
       participants: userId,
-      "participants.1": { $exists: true },
-      "deletedFor.user": { $ne: userId },
     })
       .populate({
         path: "participants",
@@ -299,81 +238,49 @@ export const getConversations = async (req, res) => {
       })
       .sort({ updatedAt: -1 });
 
-    const processedConversations = conversations
-      .map((conversation) => {
-        const validParticipants = conversation.participants.filter((p) => p && p._id);
+    // Filter out conversations where the other participant is blocked or has blocked you
+    const filteredConversations = conversations.filter((conv) => {
+      const otherParticipant = conv.participants.find(
+        (p) => p._id.toString() !== userId.toString()
+      );
+      // If for some reason there's no other participant, or they are in the blocked list, exclude it.
+      if (!otherParticipant) return false;
+      return !allBlockedIds.some((blockedId) => blockedId.equals(otherParticipant._id));
+    });
 
-        if (validParticipants.length < 2) {
-          return null;
-        }
-
-        const otherParticipant = validParticipants.find(
-          (participant) => participant._id.toString() !== userId.toString()
-        );
-
-        if (!otherParticipant) {
-          return null;
-        }
-
-        if (blockedAndBlockingUsers.includes(otherParticipant._id.toString())) {
-          return null;
-        }
-
-        const lastMessageData = conversation.lastMessage
-          ? {
-              text: conversation.lastMessage.text,
-              sender: conversation.lastMessage.sender,
-              seen: conversation.lastMessage.seen,
-              createdAt: conversation.lastMessage.createdAt,
-              isEdited: conversation.lastMessage.isEdited || false, // Ensure it's always a boolean
-              messageId: conversation.lastMessage.messageId || null,
-              img: conversation.lastMessage.img,
-            }
-          : null;
-
-        return {
-          _id: conversation._id,
-          participants: [otherParticipant],
-          lastMessage: lastMessageData,
-          createdAt: conversation.createdAt,
-          updatedAt: conversation.updatedAt,
-        };
-      })
-      .filter(Boolean);
-
-    res.status(200).json(processedConversations);
+    res.status(200).json(filteredConversations);
   } catch (error) {
     console.error("Error in getConversations controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
 
-export const getFollowedUsersForMessaging = async (req, res) => {
-  try {
-    const userId = req.user._id;
+// export const getFollowedUsersForMessaging = async (req, res) => {
+//   try {
+//     const userId = req.user._id;
 
-    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+//     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
-    const currentUser = await User.findById(userId).populate({
-      path: "following",
-      select: "username profileImg fullName isVerified isGoldVerified",
-    });
+//     const currentUser = await User.findById(userId).populate({
+//       path: "following",
+//       select: "username profileImg fullName isVerified isGoldVerified",
+//     });
 
-    if (!currentUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
+//     if (!currentUser) {
+//       return res.status(404).json({ error: "User not found." });
+//     }
 
-    const followedUsers = currentUser.following.filter((user) => {
-      return user && !blockedAndBlockingUsers.includes(user._id.toString());
-    });
+//     const followedUsers = currentUser.following.filter((user) => {
+//       return user && !blockedAndBlockingUsers.includes(user._id.toString());
+//     });
 
-    res.status(200).json(followedUsers);
-  } catch (error) {
-    console.error("Error in getFollowedUsersForMessaging controller:", error.message);
-    res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
+//     res.status(200).json(followedUsers);
+//   } catch (error) {
+//     console.error("Error in getFollowedUsersForMessaging controller:", error.message);
+//     res.status(500).json({ error: "Internal server error: " + error.message });
+//   }
+// };
 
 export const deleteMessage = async (req, res) => {
   try {
@@ -662,15 +569,13 @@ export const editMessage = async (req, res) => {
       ) {
         conversation.lastMessage.text = newText;
         conversation.lastMessage.isEdited = true;
-        // The lastMessage in conversation also needs its repliedTo status updated
-        // or re-evaluated, but it only stores text and sender for simplicity.
-        // For 'repliedTo' UI in sidebar, you'd likely need to fetch the full convo.
+
         await conversation.save();
 
         // Emit conversation update for sidebar, use the fully updated conversation if possible
         const updatedConversation = await Conversation.findById(conversation._id)
-          .populate("participants", "username fullName profileImg")
-          .populate("lastMessage.sender", "username fullName profileImg")
+          .populate("participants", "username fullName profileImg isVerified isGoldVerified")
+          .populate("lastMessage.sender", "username fullName profileImg isVerified isGoldVerified")
           .lean(); // Fetch the latest state of the conversation
 
         io.to(senderId.toString()).emit("conversationUpdated", updatedConversation);
@@ -679,19 +584,13 @@ export const editMessage = async (req, res) => {
         );
         const receiverSocketIds = getReceiverSocketIds(receiverId);
         if (receiverSocketIds.length > 0) {
-          // Check if there are active sockets
           receiverSocketIds.forEach((socketId) => {
             io.to(socketId).emit("conversationUpdated", updatedConversation);
           });
         }
       }
 
-      // Emit socket event to notify clients about the updated message (for the chat window itself)
-      // Use the populatedMessage here!
       io.to(conversation._id.toString()).emit("messageEdited", populatedMessage); // Emit to the conversation room for all participants
-      // Removed individual sender/receiver emits here, use conversation room instead for simplicity
-      // and ensure all participants get it. The `io.to(conversationId)` will send to all sockets
-      // that have joined that room.
     }
 
     res.status(200).json(populatedMessage);
