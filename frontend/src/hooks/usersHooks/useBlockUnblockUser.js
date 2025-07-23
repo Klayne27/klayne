@@ -61,6 +61,7 @@ export const useBlockUnblockUser = () => {
       queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
+      queryClient.invalidateQueries({ queryKey: ["messages"]})
     },
     onError: (error) => {
       toast.error(error.message || "Failed to update user block status.");

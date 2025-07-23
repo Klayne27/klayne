@@ -110,7 +110,7 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      <div
+      {/* <div
         className="group p-2 rounded-full hover:bg-red-600/15"
         onClick={handleToggleHide}
       >
@@ -119,7 +119,7 @@ function ConversationItem({
           size={22}
           strokeWidth={1}
         />
-      </div>
+      </div> */}
     </div>
   );
 }

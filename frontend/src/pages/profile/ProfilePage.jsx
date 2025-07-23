@@ -29,6 +29,7 @@ import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useTo
 import toast from "react-hot-toast";
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
 import { useQueryClient } from "@tanstack/react-query";
+import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -54,6 +55,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
 
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser(); // USE NEW HOOK
+
 
   const {
     userProfile,
@@ -247,6 +249,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       navigate("/messages", { state: { targetUserId: userProfile._id } });
     }
   };
+
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
