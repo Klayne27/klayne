@@ -1056,6 +1056,9 @@ export const repostPost = async (req, res) => {
         likes: [],
         commentsCount: 0,
         repostsCount: 0,
+        isScheduled: false, // Reposts are immediate
+        scheduledAt: null,
+        publishedAt: new Date(), // ✨ Crucial: Set publishedAt for the new repost
       });
       await newRepost.save();
       originalPost.repostsCount = (originalPost.repostsCount || 0) + 1;
