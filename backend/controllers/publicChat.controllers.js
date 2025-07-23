@@ -164,11 +164,18 @@ export const deletePublicMessage = async (req, res) => {
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
     }
+    const imageUrlToDelete = message.img;
 
     message.isDeletedByAdmin = true;
     // // message.content = "[Message Deleted]";
     message.img = null; // Remove image URL
     await message.save();
+
+
+    if (imageUrlToDelete) {
+      const imgId = imageUrlToDelete.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(imgId);
+    }
 
     // Emit an event to inform clients about the admin-deleted message
     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageDeleted", { messageId: message._id });
@@ -348,7 +355,7 @@ export const addReactionToPublicMessage = async (req, res) => {
 export const deleteOwnPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const userId = req.user._id; // User attempting the deletion
+    const userId = req.user._id;
 
     const message = await PublicChatMessage.findById(messageId);
 
@@ -362,19 +369,77 @@ export const deleteOwnPublicMessage = async (req, res) => {
         .json({ error: "You are not authorized to delete this message." });
     }
 
+    const imageUrlToDelete = message.img; // Correctly captured BEFORE modification
+
     message.isDeletedByUser = true;
-    // message.content = "[Message Deleted]";
     message.img = null; // Remove image URL
-    await message.save();
+    await message.save(); // Save changes to DB
+
+    if (imageUrlToDelete) {
+      let imgId;
+      try {
+        const parts = imageUrlToDelete.split("/upload/");
+        if (parts.length > 1) {
+          const pathAfterUpload = parts[1]; // e.g., v1753245512/public-chat-images/l3dhhg7aclikwhck8d5p.jpg
+          const idWithExtension = pathAfterUpload.split("/").slice(1).join("/"); // Remove 'v123456/' if present, or resource type 'image/'
+          imgId = idWithExtension.split(".")[0]; // Remove the file extension
+
+          const urlSegments = imageUrlToDelete.split("/");
+          const uploadIndex = urlSegments.indexOf("upload");
+          if (uploadIndex !== -1 && urlSegments.length > uploadIndex + 1) {
+            let startIndex = uploadIndex + 1; // Points to 'vXXXXXXXXXX' or the start of the public ID
+            if (
+              urlSegments[startIndex].startsWith("v") &&
+              urlSegments[startIndex].length === 11 &&
+              !isNaN(urlSegments[startIndex].substring(1))
+            ) {
+              startIndex++; // Skip the version number if it exists
+            }
+
+            imgId = urlSegments.slice(startIndex).join("/").split(".")[0];
+          } else {
+            console.error(
+              "Cloudinary URL format unexpected. Could not extract public ID."
+            );
+            imgId = null;
+          }
+        } else {
+          console.error(
+            "Cloudinary URL does not contain '/upload/'. Could not extract public ID."
+          );
+          imgId = null;
+        }
+
+        if (!imgId) {
+          console.error(
+            "Cloudinary public ID is null or empty after extraction. Deletion skipped."
+          );
+        } else {
+          const result = await cloudinary.uploader.destroy(imgId);
+          if (result.result === "not found") {
+            console.warn(
+              `Cloudinary image with ID ${imgId} not found or already deleted.`
+            );
+          } else if (result.result !== "ok") {
+            console.error(`Cloudinary deletion failed for ID ${imgId}:`, result.result);
+          }
+        }
+      } catch (cloudinaryError) {
+        console.error(
+          "Error during Cloudinary deletion process:",
+          cloudinaryError.message
+        );
+      }
+    }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {
       messageId: message._id,
-      senderId: message.sender.toString(), // Useful for frontend to quickly remove from UI
+      senderId: message.sender.toString(),
     });
 
     res.status(200).json({ message: "Message deleted successfully." });
   } catch (error) {
-    console.error("Error in deletePublicMessage controller: ", error.message);
+    console.error("Error in deleteOwnPublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

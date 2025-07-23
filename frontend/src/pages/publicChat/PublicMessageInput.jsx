@@ -8,6 +8,7 @@ import { truncateText } from "../../utils/truncateText";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa6";
 import { FaCircle } from "react-icons/fa";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 
 const PublicMessageInput = ({
   selectedFile,
@@ -31,6 +32,9 @@ const PublicMessageInput = ({
   const messageInputRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const hasSentTypingEvent = useRef(false);
+
+  const { authUser } = useAuthUser();
+  const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
 
   const [messageContent, setMessageContent] = useState("");
 
@@ -91,8 +95,6 @@ const PublicMessageInput = ({
       // sendTypingEvent(false); // This call is still fine
     };
   }, []); // sendTypingEvent is not a dependency if it doesn't change on re-renders,
-  // but if it's passed from a hook that re-creates it, it should be a dependency.
-  // Given your current setup, it's likely stable, so empty array is fine.
 
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value;
@@ -308,7 +310,7 @@ const PublicMessageInput = ({
                   type="button"
                   onClick={handleImageButtonClick}
                   className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
-                  disabled={isCurrentUserBanned || isEditingMode}
+                  disabled={!canSendImages}
                 >
                   <IoImageOutline className="w-5 h-5" />
                 </button>
@@ -422,8 +424,8 @@ const PublicMessageInput = ({
               <button
                 type="button"
                 onClick={handleImageButtonClick}
-                className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 cursor-not-allowed"
-                disabled={true}
+                className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed cursor-pointer"
+                disabled={!canSendImages}
               >
                 <IoImageOutline className="w-5 h-5" />
               </button>

@@ -138,15 +138,11 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    // The newMessage object now has the correct `seen` status.
-    // We emit this correct object to the recipient.
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
       io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
     }
 
-    // If the message was seen instantly, we can also emit the 'messagesSeen' event
-    // back to the sender right away.
     if (isSeen) {
       const senderSocketIds = getReceiverSocketIds(senderId.toString());
       io.to(senderSocketIds).emit("messagesSeen", {

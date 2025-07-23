@@ -9,7 +9,7 @@ const publicChatMessageSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
+      default: "", // Keep default as empty string for consistency
     },
     img: {
       type: String,
