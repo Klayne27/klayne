@@ -275,28 +275,28 @@ const Post = ({
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  useEffect(() => {
-    const checkIfUserRepostedStatus = async () => {
-      if (!authUser || !originalPost?._id) {
-        setHasUserRepostedOriginal(false);
-        return;
-      }
-      try {
-        const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {});
-        if (!response.ok) {
-          console.warn("Authentication issue checking repost status or other error.");
-          setHasUserRepostedOriginal(false);
-          return;
-        }
-        const data = await response.json();
-        setHasUserRepostedOriginal(data.hasReposted);
-      } catch (error) {
-        console.error("Error checking if user reposted:", error);
-        setHasUserRepostedOriginal(false);
-      }
-    };
-    checkIfUserRepostedStatus();
-  }, [authUser, originalPost?._id, isReposting]);
+  // useEffect(() => {
+  //   const checkIfUserRepostedStatus = async () => {
+  //     if (!authUser || !originalPost?._id) {
+  //       setHasUserRepostedOriginal(false);
+  //       return;
+  //     }
+  //     try {
+  //       const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {});
+  //       if (!response.ok) {
+  //         console.warn("Authentication issue checking repost status or other error.");
+  //         setHasUserRepostedOriginal(false);
+  //         return;
+  //       }
+  //       const data = await response.json();
+  //       setHasUserRepostedOriginal(data.hasReposted);
+  //     } catch (error) {
+  //       console.error("Error checking if user reposted:", error);
+  //       setHasUserRepostedOriginal(false);
+  //     }
+  //   };
+  //   checkIfUserRepostedStatus();
+  // }, [authUser, originalPost?._id, isReposting]);
 
   const getDisplayUsername = (username) => {
     if (isSmallScreen && username.length > 5) {

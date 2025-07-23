@@ -52,6 +52,12 @@ const postSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    repostedBy: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+      },
+    ],
     bookmarkedBy: [
       {
         type: mongoose.Schema.Types.ObjectId,

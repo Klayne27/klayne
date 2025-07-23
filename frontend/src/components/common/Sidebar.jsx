@@ -35,7 +35,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { pathname } = useLocation();
   const navigate = useNavigate();
 
-
   const [showPopover, setShowPopover] = useState(false);
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
@@ -341,46 +340,60 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     }
   };
 
+  // --- START MODIFIED useEffect for Mobile Sidebar Visibility ---
   useEffect(() => {
     const handleScroll = () => {
-      // This is generally for hiding on scroll down on certain pages
-      if (
-        window.innerWidth < 768 &&
-        !pathname.startsWith("/messages") &&
-        !pathname.includes("/post/")
-      ) {
-        const currentScrollY = window.scrollY;
+      // Always hide on specific paths regardless of scroll on mobile
+      const shouldAlwaysHide =
+        pathname.includes("/public-chat") || // Public chat
+        pathname.includes("/post/") || // Individual post page
+        isChatWindowOpen; // Private chat window is open
 
-        if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+      if (window.innerWidth < 768) {
+        if (shouldAlwaysHide) {
           setIsMobileBarVisible(false);
-        } else if (currentScrollY < lastScrollY.current) {
-          setIsMobileBarVisible(true);
+          lastScrollY.current = window.scrollY; // Reset lastScrollY to current to prevent immediate re-showing
+          return; // Exit early, no further scroll logic needed for these paths
         }
-        lastScrollY.current = currentScrollY;
+
+        if (pathname.startsWith("/messages")) {
+          // Special handling for messages page, based on prop
+          setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
+        } else {
+          // General scroll-hide/show behavior for other mobile pages
+          const currentScrollY = window.scrollY;
+          if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
+            setIsMobileBarVisible(false);
+          } else if (currentScrollY < lastScrollY.current) {
+            setIsMobileBarVisible(true);
+          }
+          lastScrollY.current = currentScrollY;
+        }
+      } else {
+        // Always visible on desktop
+        setIsMobileBarVisible(true);
       }
     };
 
+    // Initial check when component mounts or dependencies change
+    // This handles navigation directly to a hidden path
     if (window.innerWidth < 768) {
-      // Prioritize hiding for specific pages on mobile
-      if (
-        isChatWindowOpen ||
+      const shouldAlwaysHide =
+        pathname.includes("/public-chat") ||
         pathname.includes("/post/") ||
-        pathname.includes("/public-chat")
-      ) {
-        // <-- ADDED: Hide if on PostPage
+        isChatWindowOpen;
+
+      if (shouldAlwaysHide) {
         setIsMobileBarVisible(false);
       } else if (pathname.startsWith("/messages")) {
         setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
       } else {
-        // Default visibility for other pages that use scroll-hide behavior
-        setIsMobileBarVisible(true);
+        setIsMobileBarVisible(true); // Default to visible for other paths
       }
     } else {
-      // Always visible on desktop
-      setIsMobileBarVisible(true);
+      setIsMobileBarVisible(true); // Always visible on desktop
     }
 
-    // Add/remove event listeners
     window.addEventListener("scroll", handleScroll);
     window.addEventListener("resize", handleScroll);
 
@@ -388,7 +401,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, [isChatWindowOpen, isMobileMessagesListScrollingDown, pathname]); // Keep pathname in dependencies
+  }, [isChatWindowOpen, isMobileMessagesListScrollingDown, pathname]);
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
@@ -476,7 +489,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           <li
             onClick={() => {
               navigate("/messages");
-              queryClient.invalidateQueries({queryKey: ["conversations"]})
+              queryClient.invalidateQueries({ queryKey: ["conversations"] });
             }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
           >
