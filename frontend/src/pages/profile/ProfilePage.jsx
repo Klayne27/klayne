@@ -68,6 +68,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     hasBlockedYou,
     httpStatus,
   } = useFetchUserProfile(username);
+const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
+  useGetOrCreateConversation();
 
   const {
     conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
@@ -244,10 +246,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         // Just navigate to it directly. No API call to toggle visibility needed.
         navigate(`/messages/${existingConversationId}`);
       }
-    } else {
-      // Case 3: No existing conversation found. Navigate to create a new one.
-      navigate("/messages", { state: { targetUserId: userProfile._id } });
-    }
+    } 
   };
 
 

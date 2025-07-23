@@ -8,8 +8,6 @@ export const useGetOrCreateConversation = () => {
   return useMutation({
     mutationFn: getOrCreateConversationApi,
     onSuccess: (data) => {
-      // Invalidate existing conversations query to refetch the updated list
-      // This ensures the new/unhidden conversation appears in the ConversationsList
       queryClient.invalidateQueries(["conversations"]);
     },
     onError: (error) => {

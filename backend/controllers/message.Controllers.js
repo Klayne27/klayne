@@ -663,8 +663,6 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(400).json({ error: "Cannot create conversation with yourself." });
     }
 
-    // Find the existing conversation. Since following creates it, it should always exist.
-    // We fetch it without populating for now, as we only need its ID and hiddenFor status
     let conversation = await Conversation.findOne({
       participants: { $all: [currentUserId, targetUserId] },
       // isGroup: false, // Include if applicable

@@ -71,6 +71,10 @@ const useFollow = (user) => {
       queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["followedUsersForMessaging"] });
+      queryClient.invalidateQueries({
+        queryKey: ["conversationBetweenUsers", userIdToFollow],
+      });
+
       // queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
     },
     onSuccess: (data, userIdToFollow) => {

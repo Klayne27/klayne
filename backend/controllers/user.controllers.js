@@ -115,7 +115,7 @@ export const followUnfollowUser = async (req, res) => {
 
       // Optional: You could delete the conversation here if you want it to disappear on unfollow.
       // For now, we'll leave it, allowing users to continue messaging even after unfollowing.
-      await Conversation.findOneAndDelete({ participants: { $all: [req.user._id, id] } });
+      // await Conversation.findOneAndDelete({ participants: { $all: [req.user._id, id] } });
 
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
@@ -128,7 +128,15 @@ export const followUnfollowUser = async (req, res) => {
         participants: { $all: [req.user._id, id] },
       });
 
-      if (!existingConversation) {
+      if (existingConversation) {
+        // ✨ NEW LOGIC: If it exists, unhide it for the current user
+        await Conversation.updateOne(
+          { _id: existingConversation._id },
+          { $pull: { hiddenFor: req.user._id } },
+          { timestamps: false }
+        );
+      } else {
+        // If it doesn't exist, create it
         const newConversation = new Conversation({
           participants: [req.user._id, id],
         });
