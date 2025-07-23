@@ -83,8 +83,8 @@ export const getUserProfile = async (req, res) => {
 export const followUnfollowUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const userToModify = await User.findById(id);
-    const currentUser = await User.findById(req.user._id);
+    const userToModify = await User.findById(id); // User B
+    const currentUser = await User.findById(req.user._id); // User A
 
     if (id === req.user._id.toString()) {
       return res.status(400).json({ error: "You can't follow/unfollow yourself" });
@@ -94,7 +94,7 @@ export const followUnfollowUser = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    // Block checks are still important
+    // Block checks are still important and should remain
     if (currentUser.blockedUsers.includes(userToModify._id)) {
       return res
         .status(400)
@@ -113,9 +113,9 @@ export const followUnfollowUser = async (req, res) => {
       await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
 
-      // Optional: You could delete the conversation here if you want it to disappear on unfollow.
-      // For now, we'll leave it, allowing users to continue messaging even after unfollowing.
-      // await Conversation.findOneAndDelete({ participants: { $all: [req.user._id, id] } });
+      // Optional: If you want to hide the conversation for the unfollowing user (User A)
+      // upon unfollow, you can add them to the hiddenFor array here.
+      // Or, as before, you can delete it. For now, we'll leave it.
 
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
@@ -129,16 +129,23 @@ export const followUnfollowUser = async (req, res) => {
       });
 
       if (existingConversation) {
-        // ✨ NEW LOGIC: If it exists, unhide it for the current user
+        // ✨ If it exists, unhide it for the current user (User A)
         await Conversation.updateOne(
           { _id: existingConversation._id },
-          { $pull: { hiddenFor: req.user._id } },
+          { $pull: { hiddenFor: req.user._id } }, // Remove currentUser (A) from hiddenFor
+          { timestamps: false }
+        );
+        // Ensure userToModify (B) remains in hiddenFor if they were there
+        await Conversation.updateOne(
+          { _id: existingConversation._id },
+          { $addToSet: { hiddenFor: userToModify._id } }, // Add userToModify (B) to hiddenFor if not already there
           { timestamps: false }
         );
       } else {
         // If it doesn't exist, create it
         const newConversation = new Conversation({
           participants: [req.user._id, id],
+          hiddenFor: [userToModify._id], // ✨ NEW: Hide it for the followed user (User B)
         });
         await newConversation.save();
       }

@@ -15,7 +15,6 @@ import {
   useBanUserFromPublicChat,
   useUnbanUserFromPublicChat,
   useAddPublicMessageReaction,
-  useEditPublicMessage,
 } from "../../hooks/publicChatHooks/publicChatHooks";
 import { FaCaretDown } from "react-icons/fa";
 
@@ -42,8 +41,6 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { banUser } = useBanUserFromPublicChat();
   const { unbanUser } = useUnbanUserFromPublicChat();
   const { addReaction } = useAddPublicMessageReaction();
-  // const { editPublicMessage, isEditingMessage } =
-  //   useEditPublicMessage();
 
     const [isAtBottom, setIsAtBottom] = useState(true);
 
