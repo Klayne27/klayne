@@ -80,6 +80,12 @@ export const sendMessage = async (req, res) => {
 
     const recipientId = conversation.participants.find((p) => !p.equals(senderId));
 
+    const senderIsBlocked = await isBlockedOrBlockedBy(senderId, recipientId);
+
+    if (senderIsBlocked) {
+      return res.status(403).json({ error: "You cannot send messages to this user." });
+    }
+
     if (!recipientId) {
       return res.status(404).json({ error: "Conversation recipient not found." });
     }
