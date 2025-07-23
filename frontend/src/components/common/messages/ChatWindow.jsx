@@ -449,21 +449,38 @@ const ChatWindow = ({
         }
       };
 
-      const handleMessageEdited = (updatedMessage) => {
-        if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
-          queryClient.setQueryData(["messages", conversationId], (oldData) => {
-            if (!oldData) return oldData;
+const handleMessageEdited = (updatedMessage) => {
+  // Ensure the update is for the currently viewed conversation
+  if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
+    const queryKey = ["messages", conversationId];
 
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) => (msg._id === updatedMessage._id ? updatedMessage : msg))
-            );
-            return { ...oldData, pages: updatedPages };
-          });
+    queryClient.setQueryData(queryKey, (oldData) => {
+      if (!oldData) return oldData;
 
-          // queryClient.invalidateQueries({ queryKey: ["conversations"] });
-        }
-      };
+      const updatedPages = oldData.pages.map((page) =>
+        page.map((msg) => {
+          // Case 1: This is the message that was actually edited.
+          if (msg._id === updatedMessage._id) {
+            return updatedMessage;
+          }
 
+          if (msg.repliedTo && msg.repliedTo._id === updatedMessage._id) {
+            return {
+              ...msg, // Keep the reply message itself
+              repliedTo: updatedMessage, // Update its 'repliedTo' data
+            };
+          }
+
+          return msg;
+        })
+      );
+      return { ...oldData, pages: updatedPages };
+    });
+
+    // Invalidate conversations to update the last message in the sidebar
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+  }
+};
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);

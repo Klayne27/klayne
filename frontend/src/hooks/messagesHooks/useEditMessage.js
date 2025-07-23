@@ -26,7 +26,7 @@ export const useEditMessage = (conversationId) => {
                   text: newText,
                   isEdited: true,
                   // IMPORTANT: Preserve repliedTo here in optimistic update if it exists
-                  repliedTo: msg.repliedTo,
+                  // repliedTo: msg.repliedTo,
                 }
               : msg
           )

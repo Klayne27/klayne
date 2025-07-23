@@ -42,8 +42,8 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { banUser } = useBanUserFromPublicChat();
   const { unbanUser } = useUnbanUserFromPublicChat();
   const { addReaction } = useAddPublicMessageReaction();
-  const { mutate: editPublicMessage, isPending: isEditingMessage } =
-    useEditPublicMessage();
+  // const { editPublicMessage, isEditingMessage } =
+  //   useEditPublicMessage();
 
     const [isAtBottom, setIsAtBottom] = useState(true);
 
@@ -187,13 +187,13 @@ const PublicChatWindow = ({ openImageModal }) => {
   );
 
   // Handler for editing messages from PublicMessageInput
-  const handleEditMessage = useCallback(
-    (messageId, messagePayload) => {
-      shouldScrollToBottom.current = true;
-      editPublicMessage({ messageId, ...messagePayload });
-    },
-    [editPublicMessage]
-  );
+  // const handleEditMessage = useCallback(
+  //   (messageId, messagePayload) => {
+  //     shouldScrollToBottom.current = true;
+  //     editPublicMessage({ messageId, ...messagePayload });
+  //   },
+  //   [editPublicMessage]
+  // );
 
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();
@@ -473,14 +473,14 @@ const getGroupedMessages = useCallback((allMessages) => {
             previewImage={previewImage}
             setPreviewImage={setPreviewImage}
             isSendingMessage={isSendingMessage}
-            isEditingMessage={isEditingMessage}
+            // isEditingMessage={isEditingMessage}
             isCurrentUserBanned={isCurrentUserBanned}
             editingMessage={editingMessage}
             setEditingMessage={setEditingMessage}
             replyingToMessage={replyingToMessage}
             setReplyingToMessage={setReplyingToMessage}
             sendPublicMessage={handleSendMessage}
-            editPublicMessage={handleEditMessage}
+            // editPublicMessage={handleEditMessage}
             sendTypingEvent={sendTypingEvent}
             isSomeoneTyping={isSomeoneTyping}
             typingUsers={typingUsers}

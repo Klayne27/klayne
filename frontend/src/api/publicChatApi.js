@@ -154,7 +154,7 @@ export const deleteOwnPublicMessageApi = async (messageId) => {
   return data;
 };
 
-export const editPublicMessageApi = async ({messageId, newContent}) => {
+export const editPublicMessageApi = async (messageId, newContent) => {
   const res = await fetch(`/api/public-chat/edit/${messageId}`, {
     method: "PUT",
     headers: {

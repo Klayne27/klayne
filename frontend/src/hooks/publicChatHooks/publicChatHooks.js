@@ -63,47 +63,47 @@ export const usePublicMessages = () => {
 
     socket.emit("public_chat_room");
 
-     const handleNewPublicMessage = (newMessage) => {
-       queryClient.setQueryData(["publicMessages"], (oldData) => {
-         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-           return { pages: [[newMessage]], pageParams: [1] };
-         }
+    const handleNewPublicMessage = (newMessage) => {
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+          return { pages: [[newMessage]], pageParams: [1] };
+        }
 
-         // Deep copy pages to avoid mutating the cache directly
-         const newPages = oldData.pages.map((page) => [...page]);
-         const mostRecentPage = newPages[0];
+        // Deep copy pages to avoid mutating the cache directly
+        const newPages = oldData.pages.map((page) => [...page]);
+        const mostRecentPage = newPages[0];
 
-         // Case 1: The message is from ME (the sender).
-         // It's the server confirming my optimistic message.
-         if (newMessage.sender._id === authUser._id) {
-           const optimisticIndex = mostRecentPage.findIndex((msg) => msg.isOptimistic);
+        // Case 1: The message is from ME (the sender).
+        // It's the server confirming my optimistic message.
+        if (newMessage.sender._id === authUser._id) {
+          const optimisticIndex = mostRecentPage.findIndex((msg) => msg.isOptimistic);
 
-           if (optimisticIndex !== -1) {
-             // Replace the optimistic message with the real one
-             mostRecentPage[optimisticIndex] = newMessage;
-           } else {
-             // Fallback if optimistic message wasn't found (should be rare)
-             if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
-               mostRecentPage.push(newMessage);
-             }
-           }
-         }
-         // Case 2: The message is from SOMEONE ELSE (a receiver).
-         else {
-           // Simply add the new message to the end of the list.
-           // DO NOT trim or reset pagination. This makes the list grow (40 -> 41).
-           if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
-             mostRecentPage.push(newMessage);
-           }
-         }
+          if (optimisticIndex !== -1) {
+            // Replace the optimistic message with the real one
+            mostRecentPage[optimisticIndex] = newMessage;
+          } else {
+            // Fallback if optimistic message wasn't found (should be rare)
+            if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+              mostRecentPage.push(newMessage);
+            }
+          }
+        }
+        // Case 2: The message is from SOMEONE ELSE (a receiver).
+        else {
+          // Simply add the new message to the end of the list.
+          // DO NOT trim or reset pagination. This makes the list grow (40 -> 41).
+          if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+            mostRecentPage.push(newMessage);
+          }
+        }
 
-         // Return the updated pages, preserving the structure for receivers.
-         return {
-           ...oldData,
-           pages: newPages,
-         };
-       });
-     };
+        // Return the updated pages, preserving the structure for receivers.
+        return {
+          ...oldData,
+          pages: newPages,
+        };
+      });
+    };
 
     // Handler for admin-initiated message deletion (marks as deleted)
     const handleMessageDeleted = ({ messageId }) => {
@@ -185,27 +185,26 @@ export const usePublicMessages = () => {
       // toast.success("A message was removed.");
     };
 
-    const handlePublicMessageEdited = ({ messageId, updatedMessage }) => {
+    const handlePublicMessageEdited = (updatedMessage) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData || !oldData.pages) {
-          console.warn("PublicMessages cache is empty or malformed when editing.", {
-            oldData,
-          });
           return oldData;
         }
-
-        const updatedPages = oldData.pages.map((page) => {
-          if (!Array.isArray(page)) {
-            console.warn("Expected page to be an array of messages, got:", page);
-            return page;
-          }
-          return page.map((message) => {
-            if (message._id === messageId) {
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((msg) => {
+            if (msg._id == updatedMessage._id) {
               return updatedMessage;
             }
-            return message;
-          });
-        });
+
+            if (msg.replyTo && msg.replyTo._id === updatedMessage._id) {
+              return {
+                ...msg,
+                replyTo: updatedMessage,
+              };
+            }
+            return msg;
+          })
+        );
         return { ...oldData, pages: updatedPages };
       });
     };
@@ -234,21 +233,6 @@ export const usePublicMessages = () => {
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
     };
 
-    // --- New Socket Listeners for Typing Indicator ---
-    const handleTyping = ({ userId, username, isEditing }) => {
-      if (userId !== authUser._id) {
-        setTypingUsers((prev) => {
-          // Remove any old entry for this user to ensure data is fresh
-          const otherTypingUsers = prev.filter((user) => user.userId !== userId);
-          // Add the new, updated entry for the user
-          return [...otherTypingUsers, { userId, username, isEditing }];
-        });
-      }
-    };
-
-    const handleStopTyping = ({ userId }) => {
-      setTypingUsers((prev) => prev.filter((user) => user.userId !== userId));
-    };
     // --- End New Socket Listeners ---
 
     socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
@@ -258,12 +242,9 @@ export const usePublicMessages = () => {
     socket.on("publicMessageEdited", handlePublicMessageEdited);
     socket.on("userBanned", handleUserBannedGlobal);
     socket.on("userUnbanned", handleUserUnbannedGlobal);
-    // Register new typing event listeners
     socket.on("public_typing_update", ({ typingUsers: serverTypingUsers }) => {
       setTypingUsers(serverTypingUsers.filter((user) => user.userId !== authUser._id));
     });
-    // socket.on("public_typing", handleTyping);
-    // socket.on("public_stop_typing", handleStopTyping);
 
     return () => {
       socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
@@ -273,11 +254,7 @@ export const usePublicMessages = () => {
       socket.off("publicMessageEdited", handlePublicMessageEdited);
       socket.off("userBanned", handleUserBannedGlobal);
       socket.off("userUnbanned", handleUserUnbannedGlobal);
-      // Clean up new typing event listeners
       socket.off("public_typing_update");
-
-      // socket.off("public_typing", handleTyping);
-      // socket.off("public_stop_typing", handleStopTyping);
       socket.emit("leavePublicChat");
     };
   }, [socket, queryClient, authUser]);
@@ -621,29 +598,64 @@ export const useDeleteOwnPublicMessage = () => {
   const { mutate: deleteOwnMessage, isPending: isDeletingOwnMessage } = useMutation({
     mutationFn: (messageId) => deleteOwnPublicMessageApi(messageId),
     onMutate: async (messageIdToDelete) => {
-      // // Optimistic Update: Remove the message from the cache immediately
-      // await queryClient.cancelQueries(["publicMessages"]); // Cancel any ongoing fetches
-      // const previousMessages = queryClient.getQueryData(["publicMessages"]);
-      // queryClient.setQueryData(["publicMessages"], (oldData) => {
-      //   if (!oldData) return oldData;
-      //   const newPages = oldData.pages.map((page) =>
-      //     page.filter((msg) => msg._id !== messageIdToDelete)
-      //   );
-      //   return { ...oldData, pages: newPages };
-      // });
-      // // Return a context object with the snapshotted value
-      // return { previousMessages };
+      await queryClient.cancelQueries(["publicMessages"]);
+      const previousMessages = queryClient.getQueryData(["publicMessages"]);
+
+      queryClient.setQueryData(["publicMessages"], (oldData) => {
+        if (!oldData) return oldData;
+        const newPages = oldData.pages.map((page) =>
+          page.map((message) => {
+            if (message._id === messageIdToDelete) {
+              // Optimistically mark as deleted and update content/img
+              return {
+                ...message,
+                isDeletedByUser: true,
+                content: "[Message Deleted]", // Set the desired display text
+                img: null, // Clear image optimistically
+                // You might also want to clear reactions or other sensitive data
+                reactions: [],
+                replyTo: message.replyTo
+                  ? {
+                      // Preserve replyTo structure but clear content
+                      ...message.replyTo,
+                      content: "", // Clear the content of the replied-to message in the optimistic state
+                      img: null,
+                      isOriginalMessageDeleted: true, // Mark the original as deleted
+                    }
+                  : null,
+              };
+            }
+            // Also handle if this message was a reply to the one being deleted
+            if (message.replyTo && message.replyTo._id === messageIdToDelete) {
+              return {
+                ...message,
+                replyTo: {
+                  ...message.replyTo,
+                  content: "[Message Deleted]", // For the reply block
+                  img: null,
+                  isDeletedByUser: true,
+                  isOriginalMessageDeleted: true,
+                },
+              };
+            }
+            return message;
+          })
+        );
+        return { ...oldData, pages: newPages };
+      });
+
+      return { previousMessages };
     },
     onError: (err, messageIdToDelete, context) => {
-      // Rollback on error
       toast.error(err.message || "Failed to delete message.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
     },
-    onSettled: () => {
-      // Invalidate to refetch and ensure consistency with the server
-      // queryClient.invalidateQueries(["publicMessages"]);
+    onSettled: (data, error, variables, context) => {
+      // The socket listener 'publicOwnMessageDeleted' will be responsible
+      // for the final authoritative update (which is consistent with this optimistic state).
+      // No explicit invalidate here is usually needed if the socket is reliable.
     },
   });
 
@@ -654,51 +666,73 @@ export const useDeleteOwnPublicMessage = () => {
 export const useEditPublicMessage = () => {
   const queryClient = useQueryClient();
 
-  return useMutation({
+  // The 'mutate' function is returned from useMutation, let's capture it.
+  const { mutate: editPublicMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newContent }) =>
       editPublicMessageApi(messageId, newContent),
+
     onMutate: async ({ messageId, newContent }) => {
+      // Your onMutate logic is correct for the optimistic update.
       await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData || !oldData.pages) {
-          return oldData;
-        }
+        if (!oldData || !oldData.pages) return oldData;
 
-        const updatedPages = oldData.pages.map((page) => {
-          // Each 'page' is directly an array of messages
-          // Remove the `if (!page.messages)` check and `messages:` property in the return
-          return page.map((message) => {
-            // Directly map over 'page'
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((message) => {
             if (message._id === messageId) {
               return {
                 ...message,
                 content: newContent,
                 isEdited: true,
-                editedAt: new Date().toISOString(),
-                replyTo: message.replyTo,
+                // editedAt: new Date().toISOString(),
               };
             }
             return message;
-          });
-        });
+          })
+        );
         return { ...oldData, pages: updatedPages };
       });
 
       return { previousMessages };
     },
-    onSuccess: (data) => {
-      // The socket listener handles the final authoritative update.
+
+    // ✅ ADDED: A proper onSuccess handler
+    onSuccess: (updatedMessage) => {
+      // Use the authoritative data from the server to update the cache.
+      // This is faster and more reliable than waiting for the socket echo.
+      // queryClient.setQueryData(["publicMessages"], (oldData) => {
+      //   if (!oldData) return oldData;
+      //   const updatedPages = oldData.pages.map((page) =>
+      //     page.map((message) => {
+      //       // Case 1: This is the message that was edited.
+      //       if (message._id === updatedMessage._id) {
+      //         return updatedMessage;
+      //       }
+      //       // Case 2: This message replies to the edited one. Update its 'replyTo' block.
+      //       if (message.replyTo && message.replyTo._id === updatedMessage._id) {
+      //         return {
+      //           ...message,
+      //           replyTo: updatedMessage,
+      //         };
+      //       }
+      //       return message;
+      //     })
+      //   );
+      //   return { ...oldData, pages: updatedPages };
+      // });
     },
-    onError: (error, { messageId }, context) => {
+
+    onError: (error, variables, context) => {
+      console.error("Mutation failed:", error); // Log the actual error to the console
       toast.error(error.message || "Failed to edit message.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
     },
-    onSettled: () => {
-      // Still no change needed here if socket listener is active
-    },
   });
+
+  // Return the mutation function and its state from your custom hook
+  return { editPublicMessage, isEditing };
 };

@@ -9,6 +9,7 @@ import { useState } from "react";
 import { FaReply } from "react-icons/fa6";
 import { FaCircle } from "react-icons/fa";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useEditPublicMessage } from "../../hooks/publicChatHooks/publicChatHooks";
 
 const PublicMessageInput = ({
   selectedFile,
@@ -16,14 +17,14 @@ const PublicMessageInput = ({
   previewImage,
   setPreviewImage,
   isSendingMessage,
-  isEditingMessage,
+  // isEditingMessage,
   isCurrentUserBanned,
   editingMessage,
   setEditingMessage,
   replyingToMessage,
   setReplyingToMessage,
   sendPublicMessage,
-  editPublicMessage,
+  // editPublicMessage,
   sendTypingEvent, // This function needs to be updated to emit the new event
   isSomeoneTyping, // This will now be derived from typingUsers.length > 0
   typingUsers, // This is the array of users currently typing from the server
@@ -36,6 +37,9 @@ const PublicMessageInput = ({
   const { authUser } = useAuthUser();
   const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
 
+
+    const { editPublicMessage, isEditingMessage } =
+      useEditPublicMessage();
   const [messageContent, setMessageContent] = useState("");
 
   const getTypingMessage = (users) => {

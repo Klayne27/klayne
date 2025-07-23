@@ -481,7 +481,7 @@ export const editPublicMessage = async (req, res) => {
 
     // Populate the message to send back over socket.io and as response
     // Ensure all necessary fields are populated for consistency with getPublicMessages
-    const populatedMessage = await PublicChatMessage.findById(messageId)
+    const populatedMessage = await PublicChatMessage.findById(message._id)
       .populate([
         {
           path: "sender",
@@ -504,10 +504,7 @@ export const editPublicMessage = async (req, res) => {
       .lean();
 
     // Emit event to all clients in the public chat room
-    io.to(PUBLIC_CHAT_ROOM).emit("publicMessageEdited", {
-      messageId: populatedMessage._id,
-      updatedMessage: populatedMessage,
-    });
+    io.to(PUBLIC_CHAT_ROOM).emit("publicMessageEdited", populatedMessage);
 
     res.status(200).json(populatedMessage);
   } catch (error) {
