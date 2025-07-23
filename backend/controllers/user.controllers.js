@@ -7,6 +7,7 @@ import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import mongoose from "mongoose";
+import PublicChatMessage from "../models/publicMessage.model.js";
 
 const getBlockingUsers = async (userId) => {
   if (!userId) {
@@ -53,7 +54,6 @@ export const getUserProfile = async (req, res) => {
     }
 
     if (hasBlockedYou) {
-
       return res.status(403).json({
         error: "You are blocked by this user.",
         isBlockedByYou: false, // You haven't blocked them
@@ -63,7 +63,7 @@ export const getUserProfile = async (req, res) => {
         profileImg: user.profileImg,
         coverImg: user.coverImg, // Include coverImg for header display
         isVerified: user.isVerified, // Include isVerified
-        isGoldVerified: user.isGoldVerified
+        isGoldVerified: user.isGoldVerified,
       });
     } // If isBlockedByYou, you (the current user) have blocked this user. // In this case, you might still want to see the basic profile info but // restrict access to some content or interactions. // The current logic passes isBlockedByYou in profileData, which is fine.
 
@@ -96,14 +96,14 @@ export const followUnfollowUser = async (req, res) => {
 
     // Block checks are still important
     if (currentUser.blockedUsers.includes(userToModify._id)) {
-        return res
-            .status(400)
-            .json({ error: "You have blocked this user. Unblock them to follow." });
+      return res
+        .status(400)
+        .json({ error: "You have blocked this user. Unblock them to follow." });
     }
     if (userToModify.blockedUsers.includes(currentUser._id)) {
-        return res
-            .status(400)
-            .json({ error: "This user has blocked you. You cannot follow them." });
+      return res
+        .status(400)
+        .json({ error: "This user has blocked you. You cannot follow them." });
     }
 
     const isFollowing = currentUser.following.includes(id);
@@ -261,7 +261,6 @@ export const updateUser = async (req, res) => {
     if (email !== undefined) user.email = email;
     if (username !== undefined) user.username = username;
 
-
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
 
@@ -292,7 +291,7 @@ export const getFollowingUsers = async (req, res) => {
     }
 
     // Wrap the array in an object with a 'users' key
-    res.status(200).json(user.following ); // <--- CHANGE HERE
+    res.status(200).json(user.following); // <--- CHANGE HERE
   } catch (error) {
     console.log("Error in getFollowingUsers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -391,6 +390,24 @@ export const deleteUserAccount = async (req, res) => {
     for (const conversation of conversationsToDelete) {
       await Message.deleteMany({ conversationId: conversation._id });
       await Conversation.findByIdAndDelete(conversation._id);
+    }
+
+    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
+
+    // ✨ OPTIONAL: If public chat messages can contain images/videos, delete them from Cloudinary too
+    // This requires iterating through PublicChatMessages, similar to how you handle Posts.
+    // Ensure you fetch messages that actually have an 'img' or 'video' field
+    const publicChatMessagesWithMedia = await PublicChatMessage.find({
+      sender: userToDelete._id,
+      img: { $ne: "" },
+    });
+    for (const msg of publicChatMessagesWithMedia) {
+      if (msg.img) {
+        // Assuming public chat images are stored in Cloudinary and follow the same naming convention
+        const imgPublicId = msg.img.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(imgPublicId);
+      }
+      // If you also support video in public chat messages, add similar logic
     }
 
     await User.findByIdAndDelete(id);
@@ -503,14 +520,10 @@ export const blockUnblockUser = async (req, res) => {
 
 export const adminDeleteUserAccount = async (req, res) => {
   try {
-    // 1. Authorization: Check if the requesting user is an admin
-    // Assuming req.user is populated by your authentication middleware
     if (!req.user || !req.user.isAdmin) {
-      return res
-        .status(403)
-        .json({
-          error: "Forbidden: Only administrators can delete other user accounts.",
-        });
+      return res.status(403).json({
+        error: "Forbidden: Only administrators can delete other user accounts.",
+      });
     }
 
     // 2. Get the ID of the user to be deleted from request parameters
@@ -519,11 +532,9 @@ export const adminDeleteUserAccount = async (req, res) => {
     // Prevent admin from deleting their own account via this endpoint (optional but good practice)
     // If an admin wants to delete their own, they should use the standard deleteUserAccount
     if (userIdToDelete === req.user._id.toString()) {
-      return res
-        .status(400)
-        .json({
-          error: "Please use the 'Delete My Account' option to delete your own account.",
-        });
+      return res.status(400).json({
+        error: "Please use the 'Delete My Account' option to delete your own account.",
+      });
     }
 
     const userToDelete = await User.findById(userIdToDelete);
@@ -600,6 +611,25 @@ export const adminDeleteUserAccount = async (req, res) => {
     for (const conversation of conversationsToDelete) {
       await Message.deleteMany({ conversationId: conversation._id });
       await Conversation.findByIdAndDelete(conversation._id);
+    }
+
+    // ✨ NEW STEP: Delete public chat messages sent by the user
+    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
+
+    // ✨ OPTIONAL: If public chat messages can contain images/videos, delete them from Cloudinary too
+    // This requires iterating through PublicChatMessages, similar to how you handle Posts.
+    // Example:
+    const publicChatMessagesWithMedia = await PublicChatMessage.find({
+      sender: userToDelete._id,
+      img: { $ne: "" },
+    });
+    for (const msg of publicChatMessagesWithMedia) {
+      if (msg.img) {
+        // Assuming public chat images are stored in Cloudinary and follow the same naming convention
+        const imgPublicId = msg.img.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(imgPublicId);
+      }
+      // If you also support video in public chat messages, add similar logic
     }
 
     // Finally, delete the user document

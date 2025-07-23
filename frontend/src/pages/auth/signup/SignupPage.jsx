@@ -35,15 +35,20 @@ const SignUpPage = () => {
       <div className="flex-1 hidden lg:flex items-center justify-center">
         <XSvg className=" lg:w-2/3 fill-primary" />
       </div>
-      <div className="flex-1 flex flex-col justify-center items-center">
-        {/* <div className="bg-yellow-800 bg-opacity-30 border border-yellow-700 text-yellow-100 p-3 rounded-lg mb-6 max-w-sm text-center ">
-          <p className="font-semibold mb-1">Important Note:</p>
-          <p className="text-sm">
-            For your security, I recommend <strong>**not**</strong> using your real email
-            address or a password you use for other important accounts. This is a demo
-            application.
+      <div className="flex-1 flex flex-col items-center pt-8 md:justify-center">
+        {/* Warning/Reminder Section */}
+        <div className="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-6 max-w-md text-center text-sm shadow-lg border border-yellow-700">
+          <p className="font-semibold mb-1">Important Account Note:</p>
+          <p>
+            You <strong>don't have to use a real email address</strong> here. Just enter
+            something that looks like an email (e.g., `yourusername@example.com`).
           </p>
-        </div> */}
+          <p className="mt-2">
+            <strong>Please write down your password!</strong> If you lose it, there's
+            currently <strong>no way to recover your account</strong>.
+          </p>
+        </div>
+        {/* End Warning/Reminder Section */}
         <form
           className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
           onSubmit={handleSubmit}
