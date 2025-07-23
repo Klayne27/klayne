@@ -614,3 +614,102 @@ export const getConversationBetweenUsers = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error " + error.message });
   }
 };
+
+export const getFollowedUsersForMessaging = async (req, res) => {
+  try {
+    const userId = req.user._id; // Authenticated user's ID
+    const { q } = req.query; // Get the search query from req.query
+
+    // Find the current user to get their following list
+    const currentUser = await User.findById(userId).select("following");
+
+    if (!currentUser) {
+      return res.status(404).json({ error: "Current user not found." });
+    }
+
+    // Get the IDs of users the current user is following
+    const followedUserIds = currentUser.following;
+
+    let query = {
+      _id: { $in: followedUserIds }, // Only search within followed users
+    };
+
+    if (q) {
+      // If a search query 'q' is provided, add the regex filter
+      query.$or = [
+        { username: { $regex: `^${q}`, $options: "i" } }, // Starts with `q` (case-insensitive)
+        { fullName: { $regex: `^${q}`, $options: "i" } }, // Starts with `q` (case-insensitive)
+      ];
+    }
+
+    // Fetch details of followed users based on the constructed query
+    const followedUsers = await User.find(query)
+      .select("-password -email -blockedUsers -followers -following") // Select fields to return
+      .limit(10); // You might want to limit results for suggestions, e.g., 10-20
+
+    res.status(200).json(followedUsers);
+  } catch (error) {
+    console.error("Error in getFollowedUsersForMessaging controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getOrCreateConversation = async (req, res) => {
+  try {
+    const { targetUserId } = req.body; // The user you want to chat with
+    const currentUserId = req.user._id;
+
+    if (currentUserId.toString() === targetUserId.toString()) {
+      return res.status(400).json({ error: "Cannot create conversation with yourself." });
+    }
+
+    // Find the existing conversation. Since following creates it, it should always exist.
+    // We fetch it without populating for now, as we only need its ID and hiddenFor status
+    let conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, targetUserId] },
+      // isGroup: false, // Include if applicable
+    });
+
+    if (!conversation) {
+      // This fallback is crucial for robustness, even if it "shouldn't" be hit
+      return res.status(404).json({
+        error: "Conversation not found. You can only message users you follow.",
+      });
+    }
+
+    // Check if it's hidden for the current user
+    const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
+
+    if (isHiddenForCurrentUser) {
+      // If it's hidden, we need to unhide it.
+      // Use updateOne with $pull to remove the userId from hiddenFor,
+      // and critically, disable timestamp updates for this operation.
+      await Conversation.updateOne(
+        { _id: conversation._id },
+        { $pull: { hiddenFor: currentUserId } },
+        { timestamps: false } // ✨ This prevents `updatedAt` from changing
+      );
+
+      // After updating, refetch the conversation to get its *latest* state including the unhidden status
+      // and populate participants for the frontend response.
+      // This ensures the frontend receives the correct, unhidden conversation object.
+      conversation = await Conversation.findById(conversation._id).populate(
+        "participants",
+        "-password -email -blockedUsers -following -followers"
+      );
+    } else {
+      // If it's not hidden, we just need to populate it for the response
+      // as no update was needed.
+      conversation = await conversation.populate(
+        "participants",
+        "-password -email -blockedUsers -following -followers"
+      );
+    }
+
+    // Return the existing (and possibly unhidden) conversation
+    return res.status(200).json(conversation);
+  } catch (error) {
+    console.error("Error in getOrCreateConversation controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

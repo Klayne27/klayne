@@ -412,17 +412,11 @@ export const searchUsers = async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // You might want to adjust the regex for mention suggestions
-    // Current: ^${q} (starts with q) - this is good for general search
-    // For mentions, it's usually fine as well, as users type the start of the username.
     const users = await User.find({
       $or: [
         { username: { $regex: `^${q}`, $options: "i" } }, // Starts with `q`
         { fullName: { $regex: `^${q}`, $options: "i" } }, // Starts with `q`
       ],
-      // Optional: Exclude current user from suggestions if they can't mention themselves meaningfully
-      // This is generally handled better on the frontend.
-      // _id: { $ne: req.user._id } // if you pass current user ID
     })
       .select("-password") // Only need these for suggestions
       .limit(5); // Limit to a smaller number for quick suggestions, e.g., 5-10

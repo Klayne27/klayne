@@ -19,7 +19,6 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
   const location = useLocation();
   const queryClient = useQueryClient();
 
-  // 🗑️ REMOVED: `useFetchFollowedUsersForMessaging` is no longer needed.
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
 

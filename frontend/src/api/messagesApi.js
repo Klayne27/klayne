@@ -6,13 +6,43 @@ export const fetchConversationsApi = async () => {
   return res.json();
 };
 
-// export const fetchFollowedUsersForMessagingApi = async () => {
-//   const res = await fetch("/api/messages/followed-users-for-messaging");
-//   if (!res.ok) {
-//     throw new Error("Failed to fetch followed users for messaging");
-//   }
-//   return res.json();
-// };
+export const fetchFollowedUsersForMessagingApi = async (searchQuery = "") => {
+  const url = searchQuery
+    ? `/api/messages/followed-for-messaging?q=${encodeURIComponent(searchQuery)}`
+    : "/api/messages/followed-for-messaging";
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: {
+      "Content-Type": "application/json",
+      // Include authorization header if your protectRoute uses it
+      // 'Authorization': `Bearer ${yourAuthToken}` // If you store tokens
+    },
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch followed users.");
+  }
+  return data;
+};
+
+export const getOrCreateConversationApi = async (targetUserId) => {
+  const res = await fetch("/api/messages/conversations/get-or-create", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      // 'Authorization': `Bearer ${yourAuthToken}` // If you store tokens
+    },
+    body: JSON.stringify({ targetUserId }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to get or create conversation.");
+  }
+  return data;
+};
 
 export const deleteMessageApi = async ({ messageId, conversationId }) => {
   const res = await fetch(`/api/messages/${messageId}`, {

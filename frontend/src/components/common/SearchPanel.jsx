@@ -52,7 +52,7 @@ const SearchPanel = () => {
       </div>
 
       {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (
-        <div className="max-h-[500px] w-full overflow-y-auto border rounded-2xl absolute top-[43px] left-0 z-50 bg-base-100 border-accent shadow-md shadow-gray-400">
+        <div className="max-h-[500px] w-full overflow-y-auto border rounded-2xl absolute top-[51px] left-0 z-50 bg-base-100 border-accent shadow-md shadow-gray-400">
           {(isLoading || isFetching) && debouncedQuery ? (
             <p className="p-4 text-gray-400 text-center">Searching...</p>
           ) : isError ? (
