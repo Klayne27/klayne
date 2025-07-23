@@ -7,14 +7,6 @@ import LoadingSpinner from "../../components/common/LoadingSpinner";
 const PublicChatPage = ({ openImageModal }) => {
   const { authUser, isLoading: isLoadingAuthUser } = useAuthUser();
 
-  // This effect will tell AppLayout that a chat window is "open"
-  // so AppLayout can adjust its layout (e.g., hide RightPanel on desktop)
-  // useEffect(() => {
-  //   setIsChatWindowOpen(true);
-  //   return () => {
-  //     setIsChatWindowOpen(false);
-  //   };
-  // }, [setIsChatWindowOpen]);
 
   if (isLoadingAuthUser) {
     return (

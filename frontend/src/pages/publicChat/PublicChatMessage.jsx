@@ -35,7 +35,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   onJumpToMessage,
   setEditingMessage,
   setReplyingToMessage,
-  // NEW: Grouping props
+  handleLoadImage,
   isFirstInGroup,
   isLastInGroup,
 }) {
@@ -135,7 +135,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const handleAdminDeleteClick = (e) => {
     e.stopPropagation();
     // if (window.confirm("Are you sure you want to delete this message as an admin?")) {
-      adminDeleteMessage(message._id);
+    adminDeleteMessage(message._id);
     // }
   };
 
@@ -375,7 +375,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   {message.sender.username}
                 </Link>
                 {isSenderVerified && <img src="/verified.png" className="size-[17px]" />}
-                {isSenderGoldVerified && <img src="/gold-verified.png" className="size-[17px]" />}
+                {isSenderGoldVerified && (
+                  <img src="/gold-verified.png" className="size-[17px]" />
+                )}
 
                 {isSenderAdmin && (
                   <span className="ml-1 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-400 text-yellow-900">
@@ -450,6 +452,8 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 {message.replyTo.img && (
                   <img
                     src={message.replyTo.img}
+                    onLoad={handleLoadImage}
+                    onError={handleLoadImage}
                     alt="replied message attachment"
                     className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                   />
@@ -468,6 +472,8 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   <div className="mb-2 max-w-[200px] h-auto rounded-lg overflow-hidden shadow-md border border-gray-600 cursor-pointer">
                     <img
                       src={message.img}
+                      onLoad={handleLoadImage}
+                      onError={handleLoadImage}
                       alt="Chat image"
                       className="w-full h-full object-cover"
                       onClick={() => openImageModal(message.img)}

@@ -93,6 +93,10 @@ const PublicChatWindow = ({ openImageModal }) => {
     }
   }, []);
 
+  const handleLoadImage = useCallback(() => {
+    scrollToBottom()
+  }, [scrollToBottom])
+
   const isScrollAtBottom = useCallback(() => {
     if (!messageListRef.current) return false;
     const { scrollTop, scrollHeight, clientHeight } = messageListRef.current;
@@ -214,9 +218,9 @@ const PublicChatWindow = ({ openImageModal }) => {
   }, [messages]);
 
   // 3) auto‑scroll only when it truly is at the bottom
-  useLayoutEffect(() => {
-    if (isAtBottom) scrollToBottom();
-  }, [lastMessageId, isLoadingMessages, isAtBottom, scrollToBottom]);
+  // useLayoutEffect(() => {
+  //   if (isAtBottom) scrollToBottom();
+  // }, [lastMessageId, isLoadingMessages, isAtBottom, scrollToBottom]);
 
   // 👈 USE lastMessageId HERE
 
@@ -444,6 +448,7 @@ const getGroupedMessages = useCallback((allMessages) => {
                     setEditingMessage={setEditingMessage}
                     setReplyingToMessage={setReplyingToMessage}
                     // Pass grouping props
+                    handleLoadImage={handleLoadImage}
                     isFirstInGroup={message.isFirstInGroup}
                     isLastInGroup={message.isLastInGroup}
                     bubbleClasses={message.bubbleClasses} // Pass the pre-calculated classes
