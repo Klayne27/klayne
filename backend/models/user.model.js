@@ -90,7 +90,7 @@ const userSchema = new mongoose.Schema(
         ref: "Post",
         default: [],
       },
-    ], // --- ADD THESE NEW FIELDS ---
+    ],
     isAdmin: {
       type: Boolean,
       default: false,
@@ -101,7 +101,7 @@ const userSchema = new mongoose.Schema(
     },
     lastReadPublicChatTimestamp: {
       type: Date,
-      default: null, // Set to null initially, meaning they haven't "read" it yet
+      default: null,
     },
   },
   { timestamps: true }

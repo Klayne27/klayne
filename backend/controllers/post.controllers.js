@@ -182,6 +182,7 @@ export const createPost = async (req, res) => {
 export const deletePost = async (req, res) => {
   try {
     const { id } = req.params;
+    const userId = req.user._id;
 
     const postToDelete = await Post.findById(id);
 
@@ -189,32 +190,39 @@ export const deletePost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    if (postToDelete.user.toString() !== req.user._id.toString()) {
+    if (!postToDelete.user.equals(userId)) {
       return res
         .status(401)
         .json({ error: "You are not authorized to delete this post" });
     }
 
-    if (postToDelete.mediaType === "image" && postToDelete.imgPublicId) {
-      await cloudinary.uploader.destroy(postToDelete.imgPublicId);
-    } else if (postToDelete.mediaType === "video" && postToDelete.videoPublicId) {
-      await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
-        resource_type: "video",
-      });
-    }
-
+    // Case 1: Deleting an ORIGINAL post
     if (!postToDelete.repostedFrom) {
+      if (postToDelete.imgPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
+      }
+      if (postToDelete.videoPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
+          resource_type: "video",
+        });
+      }
       await Post.deleteMany({ repostedFrom: postToDelete._id });
-      await User.findByIdAndUpdate(postToDelete.user, { $inc: { postsCount: -1 } });
-    } else {
-      await Post.findByIdAndUpdate(
-        postToDelete.repostedFrom,
-        { $inc: { repostsCount: -1 } },
-        { new: true }
-      );
+      await Post.deleteOne({ _id: id });
+      // You may want to update user's post count here as well
     }
-
-    await Post.deleteOne({ _id: id });
+    // Case 2: Deleting a REPOST
+    else {
+      // Update the original post's metadata
+      await Post.updateOne(
+        { _id: postToDelete.repostedFrom },
+        {
+          $inc: { repostsCount: -1 },
+          $pull: { repostedBy: userId }, // Remove user from the 'repostedBy' array
+        }
+      );
+      // Delete the actual repost document
+      await Post.deleteOne({ _id: id });
+    }
 
     res.status(200).json({ message: "Post deleted successfully" });
   } catch (error) {
@@ -392,6 +400,8 @@ export const getAllPosts = async (req, res) => {
                 likes: 1,
                 commentsCount: 1,
                 repostsCount: 1,
+                repostedBy: 1,
+                bookmarkedBy: 1,
                 createdAt: 1,
                 user: 1,
                 isScheduled: 1, // <--- Include these for potential client-side use or deeper filtering
@@ -524,6 +534,8 @@ export const getLikedPosts = async (req, res) => {
                 likes: 1,
                 commentsCount: 1,
                 repostsCount: 1,
+                bookmarkedBy: 1,
+                repostedBy: 1,
                 createdAt: 1,
                 user: 1,
                 isScheduled: 1, // Include for filtering reposts
@@ -546,6 +558,7 @@ export const getLikedPosts = async (req, res) => {
           comments: 1,
           commentsCount: 1,
           repostsCount: 1,
+          repostedBy: 1,
           repostedFrom: 1,
           bookmarkedBy: 1,
           createdAt: 1,
@@ -707,7 +720,7 @@ export const getFollowingPosts = async (req, res) => {
         },
         // --- ADDED isScheduled and scheduledAt to repostedFrom select ---
         select:
-          "text img video mediaType likes commentsCount repostsCount createdAt user isScheduled scheduledAt",
+          "text img video mediaType likes commentsCount repostsCount bookmarkedBy repostedBy createdAt user isScheduled scheduledAt",
       });
 
     const finalFeedPosts = rawFeedPosts.filter((post) => {
@@ -791,12 +804,6 @@ export const getUserPosts = async (req, res) => {
     const queryConditions = {
       $and: [
         { "deletedFor.user": { $ne: currentUserId } },
-        // --- START: MODIFIED SCHEDULED POST LOGIC for the main post ---
-        // For a user's own profile, they *can* see their own scheduled posts.
-        // However, if fetching a *different* user's profile, scheduled posts should be hidden.
-        // The condition below hides ALL scheduled posts that are in the future, unless they belong to `currentUserId`
-        // which isn't the primary user here, `user._id` is.
-        // So, this is for general viewing by others.
         {
           $or: [
             { isScheduled: { $ne: true } }, // if isScheduled is false or not present
@@ -841,17 +848,6 @@ export const getUserPosts = async (req, res) => {
       ],
     };
 
-    // If fetching current user's posts, add specific logic to show their *own* future scheduled posts
-    if (currentUserId && user._id.equals(currentUserId)) {
-      // Modify queryConditions to allow current user to see their own scheduled posts
-      // The previous $or condition already handles this with `{ user: currentUserId }` for the main post.
-      // For reposts, the `repostedFrom.user: currentUserId` handles it too.
-      // So no explicit change needed here if the above $or is applied.
-    } else {
-      // If not the owner, ensure only published posts are shown
-      // This is already covered by the $or condition above.
-    }
-
     const totalUserPosts = await Post.countDocuments(queryConditions);
 
     const rawUserPosts = await Post.find(queryConditions)
@@ -868,9 +864,8 @@ export const getUserPosts = async (req, res) => {
           path: "user",
           select: "-password",
         },
-        // --- ADDED isScheduled and scheduledAt to repostedFrom select ---
         select:
-          "text img video mediaType likes commentsCount repostsCount createdAt user isScheduled scheduledAt",
+          "text img video mediaType likes commentsCount bookmarkedBy repostsCount repostedBy createdAt user isScheduled scheduledAt",
       });
 
     const finalUserPosts = rawUserPosts.filter((post) => {
@@ -929,8 +924,6 @@ export const getUserPosts = async (req, res) => {
   }
 };
 
-// getPost is fine as it was last modified, it already handles scheduled posts for a single post correctly.
-// I'm including it here for completeness as it was in your prompt, but no changes are needed for it.
 export const getPost = async (req, res) => {
   try {
     const currentUserId = req.user?._id;
@@ -949,7 +942,7 @@ export const getPost = async (req, res) => {
           },
         ],
         select:
-          "text img video mediaType likes commentsCount repostsCount createdAt user isScheduled scheduledAt", // Ensure these are selected
+          "text img video mediaType likes commentsCount repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
       });
 
     if (!post) {
@@ -1017,78 +1010,73 @@ export const repostPost = async (req, res) => {
     const { postId } = req.params;
     const userId = req.user._id;
 
-    const originalPost = await Post.findById(postId);
+    const postToRepost = await Post.findById(postId);
+    if (!postToRepost) {
+      return res.status(404).json({ error: "Post not found." });
+    }
+
+    // A post can be a repost itself. Find the ultimate original post.
+    const originalPostId = postToRepost.repostedFrom || postToRepost._id;
+    const originalPost = await Post.findById(originalPostId);
     if (!originalPost) {
       return res.status(404).json({ error: "Original post not found." });
     }
 
+    // Block check against the original author
     const originalPostOwnerId = originalPost.user.toString();
     if (await isBlockedOrBlockedBy(userId, originalPostOwnerId)) {
-      return res
-        .status(403)
-        .json({ error: "You cannot repost this content due to blocking restrictions." });
+      return res.status(403).json({
+        error: "You cannot interact with this content due to blocking restrictions.",
+      });
     }
 
-    if (
-      !originalPost.repostedFrom &&
-      originalPost.user.toString() === userId.toString()
-    ) {
+    if (originalPost.user.equals(userId)) {
       return res.status(400).json({ error: "You cannot repost your own post." });
     }
 
     const existingRepost = await Post.findOne({
       user: userId,
-      repostedFrom: originalPost._id,
+      repostedFrom: originalPostId,
     });
 
-    let message;
-    let hasUserReposted;
-
     if (existingRepost) {
+      // --- UNDO REPOST ---
       await Post.deleteOne({ _id: existingRepost._id });
-      originalPost.repostsCount = Math.max(0, originalPost.repostsCount - 1);
-      message = "Repost removed successfully.";
-      hasUserReposted = false;
+      await Post.updateOne(
+        { _id: originalPostId },
+        { $pull: { repostedBy: userId }, $inc: { repostsCount: -1 } }
+      );
+
+      res.status(200).json({
+        message: "Repost removed successfully.",
+      });
     } else {
+      // --- CREATE REPOST ---
       const newRepost = new Post({
         user: userId,
-        text: "",
-        img: "",
-        repostedFrom: originalPost._id,
-        likes: [],
-        commentsCount: 0,
-        repostsCount: 0,
-        repostedBy: [],
-        isScheduled: false, // Reposts are immediate
-        scheduledAt: null,
-        publishedAt: new Date(), // ✨ Crucial: Set publishedAt for the new repost
+        repostedFrom: originalPostId,
+        publishedAt: new Date(), // A repost happens NOW
       });
       await newRepost.save();
-      originalPost.repostsCount = (originalPost.repostsCount || 0) + 1;
-      message = "Post reposted successfully.";
-      hasUserReposted = true;
+      await Post.updateOne(
+        { _id: originalPostId },
+        { $addToSet: { repostedBy: userId }, $inc: { repostsCount: 1 } }
+      );
 
-      if (originalPost.user.toString() !== userId.toString()) {
+      if (!originalPost.user.equals(userId)) {
         await createAndSendNotification({
           from: userId,
           to: originalPost.user,
           type: "repost",
-          postId: originalPost._id,
-          commentId: null,
+          postId: originalPostId,
         });
       }
+
+      res.status(201).json({ message: "Post reposted successfully." });
     }
-
-    await originalPost.save();
-
-    res.status(200).json({
-      message: message,
-      newRepostsCount: originalPost.repostsCount,
-      hasUserReposted: hasUserReposted,
-    });
   } catch (error) {
-    console.error("Error in toggleRepost controller:", error.message);
-    res.status(500).json({ error: "Internal server error: " + error.message });
+    console.error("Error in repostPost controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };
 
@@ -1177,7 +1165,7 @@ export const getBookmarkedPosts = async (req, res) => {
           select: "-password",
         },
         select:
-          "text img video mediaType likes commentsCount repostsCount createdAt user",
+          "text img video mediaType likes commentsCount repostsCount createdAt user repostedBy",
       })
       .populate({
         path: "comments",
@@ -1322,73 +1310,68 @@ export const pinUnpinPost = async (req, res) => {
 
 export const getPinnedPosts = async (req, res) => {
   const { username } = req.params;
-  const currentUserId = req.user?._id; // Get the ID of the authenticated user viewing the profile
+  const currentUserId = req.user?._id;
 
   try {
     const user = await User.findOne({ username });
-
     if (!user) {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Check if the current user is blocked by or has blocked the profile owner
     if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
       return res.status(403).json({
         error: "You cannot view posts from this user due to blocking restrictions.",
       });
     }
 
-    // Determine blocked/blocking users for filtering reposts and general posts if necessary
-    // For pinned posts, we mainly care about the direct blocking between viewer and profile owner.
-    // However, if pinned posts can be reposts, you might need to apply similar logic as getUserPosts.
-    // For now, let's assume pinned posts are always original posts of the user whose profile is being viewed.
-    // If a pinned post is a repost of someone blocked by the viewer, that's a more complex scenario,
-    // which the frontend `Post` component would ideally handle.
-
-    const pinnedPosts = await User.findById(user._id) // Use user._id instead of just 'user'
+    // ✨ REVISED POPULATION LOGIC
+    const userWithPinnedPosts = await User.findById(user._id)
       .select("pinnedPosts")
       .populate({
         path: "pinnedPosts",
-        populate: {
-          path: "user",
-          select: "username fullName profileImg isVerified isGoldVerified",
-        },
-        // IMPORTANT: If pinned posts can be reposts, you'll need to populate repostedFrom here as well
-        // similar to how you do it in getUserPosts.
-        // For example:
-        // populate: [
-        //   { path: "user", select: "username fullName profileImg isVerified" },
-        //   {
-        //     path: "repostedFrom",
-        //     populate: {
-        //       path: "user",
-        //       select: "username fullName profileImg isVerified",
-        //     },
-        //     select: "text img video mediaType likes commentsCount repostsCount createdAt user",
-        //   },
-        // ],
+        populate: [
+          { path: "user", select: "-password" },
+          {
+            path: "repostedFrom",
+            populate: {
+              path: "user",
+              select: "-password",
+            },
+            // Select all necessary fields for the original post, including repostedBy
+            select:
+              "text img video mediaType likes commentsCount bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy",
+          },
+        ],
       })
-      .lean(); // Use .lean() for performance if you don't need Mongoose document methods
+      .lean();
 
-    if (!pinnedPosts || !pinnedPosts.pinnedPosts) {
-      return res.status(200).json([]); // No pinned posts found, return empty array
+    if (!userWithPinnedPosts || !userWithPinnedPosts.pinnedPosts) {
+      return res.status(200).json([]);
     }
 
-    // Filter out posts that are deleted for the current user, or if they are reposts of blocked users.
-    // This part should mirror the filtering logic in getUserPosts to ensure consistency.
-    const finalPinnedPosts = pinnedPosts.pinnedPosts.filter((post) => {
-      // If the post itself is deleted for the current user
-      const isDeletedForMe = post.deletedFor?.some((entry) =>
-        entry.user.equals(currentUserId)
-      );
-      if (isDeletedForMe) {
+    // ✨ ENHANCED FILTERING
+    // This ensures consistency with your other feed endpoints
+    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
+    const blockedIds = new Set([...blockedByMe, ...blockedMe]);
+
+    const finalPinnedPosts = userWithPinnedPosts.pinnedPosts.filter((post) => {
+      const postOwnerId = post.user?._id?.toString();
+      const repostedFromOwnerId = post.repostedFrom?.user?._id?.toString();
+
+      // Filter if viewer has blocked/is blocked by post owner or original post owner
+      if (
+        blockedIds.has(postOwnerId) ||
+        (repostedFromOwnerId && blockedIds.has(repostedFromOwnerId))
+      ) {
         return false;
       }
 
-      // If the pinned post is a repost and the original owner is blocked/blocking
-      // You'll need `getBlockingUsers` here if you populated `repostedFrom`.
-      // For simplicity, assuming pinned posts are always original posts of the profile owner for now.
-      // If you implement the `repostedFrom` population, add filtering for it here.
+      // Filter if post is "deleted for me"
+      if (post.deletedFor?.some((entry) => entry.user.equals(currentUserId))) {
+        return false;
+      }
+
+      // Add any other necessary filtering (e.g., for scheduled posts) if needed
 
       return true;
     });
@@ -1502,11 +1485,9 @@ export const deleteScheduledPost = async (req, res) => {
     }
 
     if (!post.isScheduled) {
-      return res
-        .status(400)
-        .json({
-          error: "This post is not a scheduled post and cannot be deleted this way.",
-        });
+      return res.status(400).json({
+        error: "This post is not a scheduled post and cannot be deleted this way.",
+      });
     }
 
     // Delete media from cloudinary if it exists
@@ -1572,12 +1553,9 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
     ).length;
 
     if (successfulDeletions === 0) {
-      return res
-        .status(400)
-        .json({
-          error:
-            "No scheduled posts were deleted. Check authorizations or if posts exist.",
-        });
+      return res.status(400).json({
+        error: "No scheduled posts were deleted. Check authorizations or if posts exist.",
+      });
     }
 
     res.status(200).json({

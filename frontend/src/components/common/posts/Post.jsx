@@ -31,7 +31,6 @@ const Post = ({
 }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
-  const [hasUserRepostedOriginal, setHasUserRepostedOriginal] = useState(false);
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const { username } = useParams();
   const [isAnimatingLike, setIsAnimatingLike] = useState(false);
@@ -47,24 +46,25 @@ const Post = ({
   const initialClientX = useRef(0);
   const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
-  const resolvedProfileUsername = currentProfileUsername || username; // Use prop if available
 
   const isRepost = !!post.repostedFrom;
-  const originalPost = isRepost ? post.repostedFrom : post;
-  const originalPostOwner = originalPost?.user;
-  const repostingUser = isRepost ? post.user : null;
-  const isLiked = originalPost?.likes?.includes(authUser?._id);
-  const isBookmarked = (post.bookmarkedBy || []).includes(authUser?._id);
+  const sourcePost = post.repostedFrom || post;
 
-  const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(originalPost._id);
+  // const sourcePost = isRepost ? post.repostedFrom : post;
+  const originalPostOwner = sourcePost?.user;
+  const repostingUser = isRepost ? post.user : null;
+  const isLiked = sourcePost?.likes?.includes(authUser?._id);
+  const isBookmarked = sourcePost.bookmarkedBy.includes(authUser?._id);
+  const repostedByCurrentUser = sourcePost.repostedBy?.includes(authUser?._id);
+  const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(sourcePost._id);
 
   const isPinnedForUI =
-    originalPost?.isPinned !== undefined
-      ? originalPost.isPinned
+    sourcePost?.isPinned !== undefined
+      ? sourcePost.isPinned
       : hasAuthUserPinnedOriginal;
 
   const isPinnedOnThisProfile = profilePinnedPosts.some(
-    (pinnedPost) => pinnedPost._id === originalPost._id
+    (pinnedPost) => pinnedPost._id === sourcePost._id
   );
 
   const isPostOwner = authUser && authUser._id === post.user._id;
@@ -73,21 +73,21 @@ const Post = ({
     authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(
-    resolvedProfileUsername,
+    currentProfileUsername,
     profileOwnerId
   );
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(username);
-  const { deletePost, isDeleting } = useDeletePosts(originalPost);
+  const { deletePost, isDeleting } = useDeletePosts(sourcePost);
   const { pinUnpinPost, isPinning } = usePinPost();
 
   // New: Call useFollow and useBlockUnblockUser hooks
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
 
-  const displayTimestamp = originalPost.publishedAt
-    ? originalPost.publishedAt
-    : originalPost.createdAt;
+  const displayTimestamp = sourcePost.publishedAt
+    ? sourcePost.publishedAt
+    : sourcePost.createdAt;
 
   const formattedDate = formatPostDate(displayTimestamp);
 
@@ -142,7 +142,7 @@ const Post = ({
     ) {
       return;
     }
-    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
+    navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`);
   };
 
   const handleMouseDown = (e) => {
@@ -170,7 +170,7 @@ const Post = ({
     setIsAnimatingBookmark(true);
 
     if (!authUser?._id || isBookmarking) return;
-    toggleBookmark(originalPost._id);
+    toggleBookmark(sourcePost._id);
   };
 
   const handleDeletePostClick = (e) => {
@@ -183,13 +183,13 @@ const Post = ({
     setIsAnimatingLike(true);
 
     if (isLiking) return;
-    likePost(originalPost._id);
+    likePost(sourcePost._id);
   };
 
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
-    repostPost(originalPost._id);
+    repostPost(sourcePost._id);
   };
 
   const handleCommentClick = (e) => {
@@ -199,7 +199,7 @@ const Post = ({
     if (pathname.includes("/post/")) {
       return;
     }
-    navigate(`/${originalPostOwner.username}/post/${originalPost._id}`);
+    navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`);
   };
 
   const handlePinPost = (e) => {
@@ -210,9 +210,9 @@ const Post = ({
 
     const action = isPinnedForUI ? "unpin" : "pin";
     pinUnpinPost({
-      postId: originalPost._id,
+      postId: sourcePost._id,
       action: action,
-      post: originalPost,
+      post: sourcePost,
     });
   };
 
@@ -275,29 +275,6 @@ const Post = ({
     return () => window.removeEventListener("resize", checkScreenSize);
   }, []);
 
-  // useEffect(() => {
-  //   const checkIfUserRepostedStatus = async () => {
-  //     if (!authUser || !originalPost?._id) {
-  //       setHasUserRepostedOriginal(false);
-  //       return;
-  //     }
-  //     try {
-  //       const response = await fetch(`/api/posts/check-repost/${originalPost._id}`, {});
-  //       if (!response.ok) {
-  //         console.warn("Authentication issue checking repost status or other error.");
-  //         setHasUserRepostedOriginal(false);
-  //         return;
-  //       }
-  //       const data = await response.json();
-  //       setHasUserRepostedOriginal(data.hasReposted);
-  //     } catch (error) {
-  //       console.error("Error checking if user reposted:", error);
-  //       setHasUserRepostedOriginal(false);
-  //     }
-  //   };
-  //   checkIfUserRepostedStatus();
-  // }, [authUser, originalPost?._id, isReposting]);
-
   const getDisplayUsername = (username) => {
     if (isSmallScreen && username.length > 5) {
       return username.slice(0, 5) + "...";
@@ -331,7 +308,7 @@ const Post = ({
     };
   }, [isAnimatingLike, isAnimatingPin, isAnimatingBookmark]);
 
-  if (!originalPost || !originalPostOwner) {
+  if (!sourcePost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
     return null;
   }
@@ -494,25 +471,25 @@ const Post = ({
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
             <span className="whitespace-pre-wrap word-break-anywhere min-w-0">
-              {renderClickableText(originalPost.text)}
+              {renderClickableText(sourcePost.text)}
             </span>
-            {originalPost.mediaType === "image" && originalPost.img && (
+            {sourcePost.mediaType === "image" && sourcePost.img && (
               <img
-                src={originalPost.img}
+                src={sourcePost.img}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
                 alt="post image"
-                onClick={(e) => handleMediaClick(originalPost.img, "image", e)}
+                onClick={(e) => handleMediaClick(sourcePost.img, "image", e)}
                 loading="lazy"
               />
             )}
-            {originalPost.mediaType === "video" && originalPost.video && (
+            {sourcePost.mediaType === "video" && sourcePost.video && (
               <video
                 controls
-                src={originalPost.video}
+                src={sourcePost.video}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
                 alt="post video"
                 preload="metadata"
-                onClick={(e) => handleMediaClick(originalPost.video, "video", e)}
+                onClick={(e) => handleMediaClick(sourcePost.video, "video", e)}
               >
                 Your browser does not support the video tag.
               </video>
@@ -554,7 +531,7 @@ const Post = ({
                   <span
                     className={`text-sm text-slate-500 group-hover:text-sky-400 duration-200 transition`}
                   >
-                    {originalPost.commentsCount || 0}
+                    {sourcePost.commentsCount || 0}
                   </span>
                 </div>
 
@@ -579,7 +556,7 @@ const Post = ({
                   >
                     <BiRepost
                       className={`w-6 h-6 duration-200 transition ${
-                        hasUserRepostedOriginal
+                        repostedByCurrentUser
                           ? "text-green-500"
                           : "text-slate-500 group-hover:text-green-500"
                       } ${isReposting ? "animate-spin" : ""}`}
@@ -587,12 +564,12 @@ const Post = ({
                   </div>
                   <span
                     className={`text-sm duration-200 transition ${
-                      hasUserRepostedOriginal
+                      repostedByCurrentUser
                         ? "text-green-500"
                         : "text-slate-500 group-hover:text-green-500"
                     }`}
                   >
-                    {originalPost.repostsCount || 0}{" "}
+                    {sourcePost.repostsCount || 0}{" "}
                   </span>
                 </div>
 
@@ -641,7 +618,7 @@ const Post = ({
                       isLiked ? "text-pink-600 " : "text-slate-500"
                     }`}
                   >
-                    {originalPost.likes?.length || 0}
+                    {sourcePost.likes?.length || 0}
                   </span>
                 </div>
 

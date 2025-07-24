@@ -223,10 +223,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
       const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
 
       if (isHiddenForCurrentUser) {
-        // Case 1: Conversation exists and is hidden for the current user.
-        // We need to UNHIDE it first, then navigate.
-        // We pass a callback to the toggleVisibility mutation's onSuccess
-        // to ensure navigation happens AFTER the unhiding API call is successful.
+
         toggleVisibility(
           { conversationId: existingConversationId, isHiding: false },
           {

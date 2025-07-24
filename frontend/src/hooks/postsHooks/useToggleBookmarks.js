@@ -5,7 +5,10 @@ import { toggleBookmarkApi } from "../../api/postsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
-export const useToggleBookmarks = (currentProfileUsername = null) => {
+export const useToggleBookmarks = (
+  currentProfileUsername = null,
+  profileOwnerId = null
+) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
 
@@ -22,14 +25,14 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
         ? ["posts", `/api/posts/user/${currentProfileUsername}`]
         : null;
 
-      const dynamicUserLikedPostsKey = authUser?._id
-        ? ["posts", `/api/posts/likes/${authUser?._id}`]
+      const dynamicUserLikedPostsKey = profileOwnerId
+        ? ["posts", `/api/posts/likes/${profileOwnerId}`]
         : null;
 
       // Add the specific pinnedPosts key IF it's likely to be used on the current profile
       // This is crucial if pinnedPosts has its own dedicated query cache entry.
-      const pinnedPostsQueryKey = authUser?.username
-        ? ["pinnedPosts", authUser.username] // Assuming this is your key for fetching pinned posts for the current user's profile
+      const pinnedPostsQueryKey = currentProfileUsername
+        ? ["pinnedPosts", currentProfileUsername] // Assuming this is your key for fetching pinned posts for the current user's profile
         : null;
 
       const queryKeysToUpdate = [
@@ -176,22 +179,11 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
       }
 
       // Invalidate liked posts if applicable
-      if (authUser?._id) {
+      if (profileOwnerId) {
         queryClient.invalidateQueries({
-          queryKey: ["posts", `/api/posts/likes/${authUser?._id}`],
+          queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
         });
       }
-
-      // --- NO LONGER INVALIDATE PINNEDPOSTS HERE IF WE OPTIMISTICALLY UPDATED IT ---
-      // The optimistic update should handle the icon change.
-      // If the backend response confirms the change, the invalidation might still be useful
-      // for stale data, but it should not be the primary driver for immediate UI update.
-      // If `pinnedPosts` is truly a *derived* state from `posts/user`, then invalidating
-      // `posts/user` might be sufficient. But if it has its own query, keeping this invalidation
-      // is fine for ensuring freshness without needing a full optimistic rollback for just the icon.
-      // For now, let's remove the specific ["pinnedPosts"] invalidate, as the onMutate should cover it.
-      // If you still see stale data after a successful bookmark, consider a more targeted invalidation
-      // or re-evaluating the query structure for pinned posts.
     },
 
     onError: (error, postId, context) => {
@@ -214,14 +206,16 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
             queryKey: ["posts", `/api/posts/user/${currentProfileUsername}`],
           });
         }
-        if (authUser?._id) {
+        if (profileOwnerId) {
           queryClient.invalidateQueries({
-            queryKey: ["posts", `/api/posts/likes/${authUser?._id}`],
+            queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
           });
         }
         // Invalidate pinned posts on error if a specific query key exists and wasn't snapshotted
-        if (authUser?.username) {
-          queryClient.invalidateQueries({ queryKey: ["pinnedPosts", authUser.username] });
+        if (currentProfileUsername) {
+          queryClient.invalidateQueries({
+            queryKey: ["pinnedPosts", currentProfileUsername],
+          });
         }
       }
     },
