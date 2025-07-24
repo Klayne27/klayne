@@ -3,8 +3,8 @@ import { searchUsersApi } from "../../api/usersApi";
 
 export const useSearchUsers = (query) => {
   const {
-    data: users,
-    isLoading,
+    data: suggestedUsers,
+    isLoading: isLoadingSuggestedUsers,
     isError,
     error,
     isFetching,
@@ -14,5 +14,5 @@ export const useSearchUsers = (query) => {
     enabled: !!query,
   });
 
-  return { users, isLoading, isError, error, isFetching };
+  return { suggestedUsers, isLoadingSuggestedUsers, isError, error, isFetching };
 };

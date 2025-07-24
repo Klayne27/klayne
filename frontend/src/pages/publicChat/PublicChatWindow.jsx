@@ -45,7 +45,6 @@ const PublicChatWindow = ({ openImageModal }) => {
     const [isAtBottom, setIsAtBottom] = useState(true);
 
 
-  const [isTyping, setIsTyping] = useState(false);
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
   const [showNewMessageButton, setShowNewMessageButton] = useState(false);
@@ -186,42 +185,27 @@ const PublicChatWindow = ({ openImageModal }) => {
     [sendPublicMessage]
   );
 
-  // Handler for editing messages from PublicMessageInput
-  // const handleEditMessage = useCallback(
-  //   (messageId, messagePayload) => {
-  //     shouldScrollToBottom.current = true;
-  //     editPublicMessage({ messageId, ...messagePayload });
-  //   },
-  //   [editPublicMessage]
-  // );
-
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();
     setShowNewMessageButton(false);
   }, [scrollToBottom]);
 
-  useEffect(() => {
-    const container = messageListRef.current;
-    if (!container) return;
+  // useEffect(() => {
+  //   const container = messageListRef.current;
+  //   if (!container) return;
 
-    const messagesEls = container.querySelectorAll("[id^='message-']");
-    const lastEl = messagesEls[messagesEls.length - 1];
-    if (!lastEl) return;
+  //   const messagesEls = container.querySelectorAll("[id^='message-']");
+  //   const lastEl = messagesEls[messagesEls.length - 1];
+  //   if (!lastEl) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsAtBottom(entry.isIntersecting),
-      { root: container, threshold: 0.9 }
-    );
-    observer.observe(lastEl);
-    return () => observer.disconnect();
-  }, [messages]);
+  //   const observer = new IntersectionObserver(
+  //     ([entry]) => setIsAtBottom(entry.isIntersecting),
+  //     { root: container, threshold: 0.9 }
+  //   );
+  //   observer.observe(lastEl);
+  //   return () => observer.disconnect();
+  // }, [messages]);
 
-  // 3) auto‑scroll only when it truly is at the bottom
-  // useLayoutEffect(() => {
-  //   if (isAtBottom) scrollToBottom();
-  // }, [lastMessageId, isLoadingMessages, isAtBottom, scrollToBottom]);
-
-  // 👈 USE lastMessageId HERE
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current;
@@ -267,23 +251,6 @@ const PublicChatWindow = ({ openImageModal }) => {
       shouldScrollToBottom.current = false;
     }
   }, [messages.length, isLoadingMessages, scrollToBottom]);
-
-  // const isInitialLoad = useRef(true);
-  // useEffect(() => {
-  //   if (isInitialLoad.current && messages.length > 0) {
-  //     scrollToBottom();
-  //     isInitialLoad.current = false;
-  //   }
-  // }, [messages.length, scrollToBottom]);
-
-  // useEffect(() => {
-  //   if (!messageListRef.current || isLoadingMessages) return;
-
-  //   // We only want to auto-scroll if the user is already at the bottom.
-  //   if (isScrollAtBottom()) {
-  //     scrollToBottom();
-  //   }
-  // }, [lastMessageId, isLoadingMessages, isScrollAtBottom, scrollToBottom]);
 
   useEffect(() => {
     if (messages.length === 0) {

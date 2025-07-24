@@ -13,7 +13,7 @@ import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
-import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton"
+import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
   const { pid } = useParams();
@@ -31,16 +31,45 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const [mentionSearchTerm, setMentionSearchTerm] = useState("");
   const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
-  const mentionInputRef = useRef(null); // Ref for the input to control cursor position
+  const [isMobile, setIsMobile] = useState(false);
 
-  const { users: suggestedUsers, isLoading: isLoadingSuggestedUsers } = useSearchUsers(
-    debouncedMentionSearchTerm,
-    showMentionSuggestions && debouncedMentionSearchTerm.length > 0 // Enable search only when needed
+  const commentInputRef = useRef(null); // RENAMED: was commentInputRef, now points to textarea
+
+  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
+    debouncedMentionSearchTerm
   );
   // --- END NEW STATES ---
 
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const mobileBreakpoint = 768; // px
+      setIsMobile(window.innerWidth <= mobileBreakpoint);
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => {
+      window.removeEventListener("resize", checkIsMobile);
+    };
+  }, []);
+  // --- END MOBILE DETECTION ---
+
+  // --- TEXTAREA HEIGHT ADJUSTMENT ---
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = commentInputRef.current; // Use the new ref
+    if (textarea) {
+      textarea.style.height = "auto"; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [commentText, adjustTextareaHeight]); // Trigger on commentText change
+  // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
   const { post, isLoading, isError, error, refetch: refetchPost } = useFetchPost(pid);
   const {
@@ -110,7 +139,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     if (!fileFound) {
       const pastedText = e.clipboardData.getData("text/plain");
       if (pastedText) {
-        const inputElement = mentionInputRef.current; // Use the ref for the comment input
+        const inputElement = commentInputRef.current; // Use the ref for the comment input
         if (inputElement) {
           const cursorStart = inputElement.selectionStart;
           const cursorEnd = inputElement.selectionEnd;
@@ -196,105 +225,117 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     }
   };
 
-  const handleSelectMention = (username) => {
-    const currentText = commentText;
-    const lastAtIndex = currentText.lastIndexOf("@");
+  const handleSelectMention = useCallback(
+    (username) => {
+      const currentText = commentText;
+      const lastAtIndex = currentText.lastIndexOf("@");
 
-    if (lastAtIndex !== -1) {
-      // Get the part of the string from the '@' sign onwards
-      const textFromAt = currentText.substring(lastAtIndex);
+      if (lastAtIndex !== -1) {
+        // Get the part of the string from the '@' sign onwards
+        const textFromAt = currentText.substring(lastAtIndex);
 
-      // Find the length of the *partial* username that was typed after '@'
-      // This regex now explicitly matches characters after '@'
-      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
+        // Find the length of the *partial* username that was typed after '@'
+        // This regex now explicitly matches characters after '@'
+        const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
 
-      let partialMentionLength = 0;
-      if (match && match[1]) {
-        // If a match exists and the capture group (the username part) is not empty
-        partialMentionLength = match[1].length;
-      }
-
-      // Calculate the start and end indices of the segment to replace
-      // The start of replacement is `lastAtIndex` (where '@' is)
-      // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
-      const replaceStartIndex = lastAtIndex;
-      const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
-
-      // Construct the new text
-      const newText =
-        currentText.substring(0, replaceStartIndex) + // Text before the @
-        `@${username} ` + // The full @username with a space
-        currentText.substring(replaceEndIndex); // Text after the partial mention
-
-      setCommentText(newText);
-      setMentionSearchTerm("");
-      setShowMentionSuggestions(false);
-
-      // Manually set cursor to the end of the newly inserted mention
-      setTimeout(() => {
-        const input = mentionInputRef.current;
-        if (input) {
-          const newCursorPos =
-            currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
-          input.setSelectionRange(newCursorPos, newCursorPos);
-          input.focus();
+        let partialMentionLength = 0;
+        if (match && match[1]) {
+          // If a match exists and the capture group (the username part) is not empty
+          partialMentionLength = match[1].length;
         }
-      }, 0);
-    }
-  };
+
+        // Calculate the start and end indices of the segment to replace
+        // The start of replacement is `lastAtIndex` (where '@' is)
+        // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
+        const replaceStartIndex = lastAtIndex;
+        const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+
+        // Construct the new text
+        const newText =
+          currentText.substring(0, replaceStartIndex) + // Text before the @
+          `@${username} ` + // The full @username with a space
+          currentText.substring(replaceEndIndex); // Text after the partial mention
+
+        setCommentText(newText);
+        setMentionSearchTerm("");
+        setShowMentionSuggestions(false);
+
+        // Manually set cursor to the end of the newly inserted mention
+        setTimeout(() => {
+          const input = commentInputRef.current;
+          if (input) {
+            const newCursorPos =
+              currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+            input.focus();
+          }
+        }, 0);
+      }
+    },
+    [commentText]
+  );
   // --- END NEW HANDLER ---
 
-  const handleAddOrReplyComment = async (e) => {
-    e.preventDefault();
+  const handleAddOrReplyComment = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    if (!commentText.trim() && !mainCommentMediaFile) {
-      console.warn("Attempted to send empty comment with no media.");
-      return;
-    }
-    if (isCreatingComment) return;
+      if (!commentText.trim() && !mainCommentMediaFile) {
+        console.warn("Attempted to send empty comment with no media.");
+        return;
+      }
+      if (isCreatingComment) return;
 
-    let commentPayload = { text: commentText };
+      let commentPayload = { text: commentText };
 
-    if (mainCommentMediaFile) {
-      const reader = new FileReader();
-      reader.onloadend = async () => {
-        if (mainCommentMediaFile.type.startsWith("image/")) {
-          commentPayload.img = reader.result;
-        } else if (mainCommentMediaFile.type.startsWith("video/")) {
-          commentPayload.video = reader.result;
-        }
+      if (mainCommentMediaFile) {
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+          if (mainCommentMediaFile.type.startsWith("image/")) {
+            commentPayload.img = reader.result;
+          } else if (mainCommentMediaFile.type.startsWith("video/")) {
+            commentPayload.video = reader.result;
+          }
 
+          if (replyingToComment) {
+            commentPayload.parentCommentId = replyingToComment._id;
+          }
+
+          await createComment(commentPayload);
+
+          setCommentText("");
+          setReplyingToComment(null);
+          setMainCommentMediaPreview(null);
+          setMainCommentMediaFile(null);
+          if (mainCommentMediaInputRef.current) {
+            mainCommentMediaInputRef.current.value = "";
+          }
+          // Reset mention states after sending
+          setMentionSearchTerm("");
+          setShowMentionSuggestions(false);
+        };
+        reader.readAsDataURL(mainCommentMediaFile);
+      } else {
         if (replyingToComment) {
           commentPayload.parentCommentId = replyingToComment._id;
         }
-
         await createComment(commentPayload);
 
         setCommentText("");
         setReplyingToComment(null);
-        setMainCommentMediaPreview(null);
-        setMainCommentMediaFile(null);
-        if (mainCommentMediaInputRef.current) {
-          mainCommentMediaInputRef.current.value = "";
-        }
         // Reset mention states after sending
         setMentionSearchTerm("");
         setShowMentionSuggestions(false);
-      };
-      reader.readAsDataURL(mainCommentMediaFile);
-    } else {
-      if (replyingToComment) {
-        commentPayload.parentCommentId = replyingToComment._id;
       }
-      await createComment(commentPayload);
-
-      setCommentText("");
-      setReplyingToComment(null);
-      // Reset mention states after sending
-      setMentionSearchTerm("");
-      setShowMentionSuggestions(false);
-    }
-  };
+    },
+    [
+      commentText,
+      createComment,
+      isCreatingComment,
+      mainCommentMediaFile,
+      replyingToComment,
+    ]
+  );
 
   const handleSetReplyingToComment = useCallback((comment) => {
     setReplyingToComment(comment);
@@ -308,7 +349,64 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     setMentionSearchTerm("");
     setShowMentionSuggestions(false);
   }, []);
-  
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        if (showMentionSuggestions && suggestedUsers.length > 0) {
+          e.preventDefault();
+          // Automatically select the first suggestion on Enter
+          handleSelectMention(suggestedUsers[0].username);
+        } else if (isMobile) {
+          e.preventDefault(); // Prevent default form submission
+          const { current: input } = commentInputRef;
+          if (input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const newValue =
+              commentText.substring(0, start) + "\n" + commentText.substring(end);
+            setCommentText(newValue);
+            setTimeout(() => {
+              input.selectionStart = input.selectionEnd = start + 1;
+            }, 0);
+          }
+        } else {
+          // Desktop logic
+          if (e.shiftKey) {
+            e.preventDefault(); // Prevent default form submission
+            const { current: input } = commentInputRef;
+            if (input) {
+              const start = input.selectionStart;
+              const end = input.selectionEnd;
+              const newValue =
+                commentText.substring(0, start) + "\n" + commentText.substring(end);
+              setCommentText(newValue);
+              setTimeout(() => {
+                input.selectionStart = input.selectionEnd = start + 1;
+              }, 0);
+            }
+          } else {
+            // On desktop, Enter sends the message (and not pending)
+            if (!isCreatingComment) {
+              e.preventDefault(); // Prevent default new line behavior for Enter
+              handleAddOrReplyComment(e);
+            }
+          }
+        }
+      }
+    },
+    [
+      isMobile,
+      commentInputRef,
+      commentText,
+      setCommentText,
+      showMentionSuggestions,
+      suggestedUsers,
+      handleSelectMention,
+      isCreatingComment,
+      handleAddOrReplyComment,
+    ]
+  );
 
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
@@ -415,19 +513,21 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             </div>
             {/* Wrapper for input and mention suggestions */}
             <div className="flex-1 relative">
-              <input
-                ref={mentionInputRef} // Attach ref to the input
+              <textarea
+                ref={commentInputRef} // Attach ref to the input
                 type="text"
                 value={commentText}
                 onChange={handleCommentTextChange} // Use the new handler
+                onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
                 placeholder={
                   replyingToComment
                     ? `Replying to @${replyingToComment.user.username}...`
                     : "Post your comment"
                 }
-                className="w-full pl-3 py-2 bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg"
+                className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
                 disabled={isCreatingComment}
+                rows={1}
               />
 
               {/* Mention Suggestions Dropdown */}

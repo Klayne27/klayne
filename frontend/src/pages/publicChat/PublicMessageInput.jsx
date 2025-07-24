@@ -26,12 +26,14 @@ const PublicMessageInput = ({
   typingUsers, // This is the array of users currently typing from the server
 }) => {
   const fileInputRef = useRef(null);
-  const messageInputRef = useRef(null);
+  const textareaRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const hasSentTypingEvent = useRef(false);
 
   const { authUser } = useAuthUser();
   const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
+
+  const [isAtTextareaBottom, setIsAtTextareaBottom] = useState(true);
 
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
@@ -81,16 +83,29 @@ const PublicMessageInput = ({
 
   // --- Textarea Height Adjustment (separated from mobile check) ---
   const adjustTextareaHeight = useCallback(() => {
-    const textarea = messageInputRef.current;
+    const textarea = textareaRef.current;
     if (textarea) {
       textarea.style.height = "auto"; // Reset height
       textarea.style.height = `${textarea.scrollHeight}px`;
     }
   }, []);
 
+  const handleTextareaScroll = useCallback(() => {
+    const textarea = textareaRef.current;
+    if (textarea) {
+      const { scrollTop, scrollHeight, clientHeight } = textarea;
+      // Check if scrolled to bottom with a small buffer
+      setIsAtTextareaBottom(scrollHeight - scrollTop - clientHeight < 1);
+    }
+  }, []);
+
   useEffect(() => {
     adjustTextareaHeight();
-  }, [messageContent, adjustTextareaHeight]);
+
+    if (textareaRef.current && isAtTextareaBottom) {
+      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+    }
+  }, [messageContent, adjustTextareaHeight, isAtTextareaBottom]);
 
   // Handle entering/exiting edit mode
   useEffect(() => {
@@ -100,7 +115,7 @@ const PublicMessageInput = ({
       setSelectedFile(null);
       setPreviewImage(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
-      messageInputRef.current?.focus();
+      textareaRef.current?.focus();
     } else {
       setMessageContent("");
     }
@@ -109,7 +124,7 @@ const PublicMessageInput = ({
   // Focus when replying
   useEffect(() => {
     if (replyingToMessage) {
-      messageInputRef.current?.focus();
+      textareaRef.current?.focus();
     }
   }, [replyingToMessage]);
 
@@ -190,7 +205,7 @@ const PublicMessageInput = ({
     // If no image was found, paste as plain text
     const pastedText = e.clipboardData.getData("text/plain");
     if (pastedText) {
-      const inputElement = messageInputRef.current;
+      const inputElement = textareaRef.current;
       if (inputElement) {
         const cursorStart = inputElement.selectionStart;
         const cursorEnd = inputElement.selectionEnd;
@@ -220,9 +235,9 @@ const PublicMessageInput = ({
     setReplyingToMessage(null);
     setEditingMessage(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.focus();
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.focus();
     }
   };
 
@@ -294,13 +309,13 @@ const PublicMessageInput = ({
     setSelectedFile(null);
     setPreviewImage(null);
     if (fileInputRef.current) fileInputRef.current.value = "";
-    messageInputRef.current?.focus();
+    textareaRef.current?.focus();
   };
 
   const handleImageButtonClick = (e) => {
     e.preventDefault();
     fileInputRef.current.click();
-    messageInputRef.current?.focus();
+    textareaRef.current?.focus();
   };
 
   const handleTouchMove = (e) => {
@@ -319,7 +334,7 @@ const PublicMessageInput = ({
     if (e.key === "Enter") {
       if (isMobile) {
         e.preventDefault(); // Prevent default form submission
-        const { current: input } = messageInputRef;
+        const { current: input } = textareaRef;
         if (input) {
           const start = input.selectionStart;
           const end = input.selectionEnd;
@@ -333,7 +348,7 @@ const PublicMessageInput = ({
       } else {
         if (e.shiftKey) {
           e.preventDefault(); // Prevent default form submission
-          const { current: input } = messageInputRef;
+          const { current: input } = textareaRef;
           if (input) {
             const start = input.selectionStart;
             const end = input.selectionEnd;
@@ -411,7 +426,7 @@ const PublicMessageInput = ({
             <button
               onClick={() => {
                 handleCancelEdit();
-                messageInputRef.current.focus();
+                textareaRef.current.focus();
               }}
               className="ml-2 p-1 mr-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
               title="Cancel Edit"
@@ -462,7 +477,7 @@ const PublicMessageInput = ({
                 }
                 className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
                 rows={1}
-                ref={messageInputRef}
+                ref={textareaRef}
                 disabled={isCurrentUserBanned}
               />
 
@@ -531,7 +546,7 @@ const PublicMessageInput = ({
               <button
                 onClick={() => {
                   setReplyingToMessage(null);
-                  messageInputRef.current.focus();
+                  textareaRef.current.focus();
                 }}
                 className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
                 aria-label="Cancel reply"
@@ -570,6 +585,7 @@ const PublicMessageInput = ({
               value={messageContent}
               onChange={handleMessageContentChange}
               onPaste={handlePaste}
+              onScroll={handleTextareaScroll}
               onKeyDown={handleKeyDown}
               placeholder={
                 isCurrentUserBanned
@@ -580,7 +596,7 @@ const PublicMessageInput = ({
               }
               className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
               rows={1}
-              ref={messageInputRef}
+              ref={textareaRef}
               disabled={isCurrentUserBanned}
             />
 

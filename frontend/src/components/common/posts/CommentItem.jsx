@@ -28,16 +28,16 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [replyImageFile, setReplyImageFile] = useState(null);
   const imageInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
   // --- STATES FOR MENTIONS IN REPLIES ---
   const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
   const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300);
   const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false);
   const replyInputRef = useRef(null); // Ref for reply input
-  const { users: suggestedReplyUsers, isLoading: isLoadingSuggestedReplyUsers } =
+  const { suggestedUsers, isLoadingSuggestedUsers } =
     useSearchUsers(
       debouncedReplyMentionSearchTerm,
-      showReplyMentionSuggestions && debouncedReplyMentionSearchTerm.length > 0
     );
   // --- END MENTION STATES ---
 
@@ -61,6 +61,34 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
+
+  useEffect(() => {
+    const checkIsMobile = () => {
+      const mobileBreakpoint = 768; // px
+      setIsMobile(window.innerWidth <= mobileBreakpoint);
+    };
+
+    checkIsMobile();
+    window.addEventListener("resize", checkIsMobile);
+    return () => {
+      window.removeEventListener("resize", checkIsMobile);
+    };
+  }, []);
+  // --- END MOBILE DETECTION ---
+
+  // --- TEXTAREA HEIGHT ADJUSTMENT ---
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = replyInputRef.current; // Use the new ref
+    if (textarea) {
+      textarea.style.height = "auto"; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [replyText, adjustTextareaHeight]); // Trigger on replyText change
+  // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
   useEffect(() => {
     setIsTouchDevice(
@@ -240,7 +268,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     }
   };
 
-  const handleSelectReplyMention = (username) => {
+  const handleSelectReplyMention = useCallback((username) => {
     const currentText = replyText;
     const lastAtIndex = currentText.lastIndexOf("@");
 
@@ -275,15 +303,15 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
         }
       }, 0);
     }
-  };
+  }, [replyText])
 
-  const handleSendReply = async (e) => {
+  const handleSendReply = useCallback(async (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (!replyText.trim() && !replyImageFile) {
-      return;
-    }
+    // if (!replyText.trim() && !replyImageFile) {
+    //   return;
+    // }
     if (isCreatingComment) return;
 
     await createComment({ text: replyText, img: replyImagePreview });
@@ -298,7 +326,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
     setShowRepliesSection(true); // Automatically show replies section after sending a reply
-  };
+  }, [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview]);
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
@@ -306,6 +334,64 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       openImageModal(imageUrl);
     }
   };
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      if (e.key === "Enter") {
+        if (showReplyMentionSuggestions && suggestedUsers.length > 0) {
+          e.preventDefault();
+          // Automatically select the first suggestion on Enter
+          handleSelectReplyMention(suggestedUsers[0].username);
+        } else if (isMobile) {
+          e.preventDefault(); // Prevent default form submission
+          const { current: input } = replyInputRef;
+          if (input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const newValue =
+              replyText.substring(0, start) + "\n" + replyText.substring(end);
+            setReplyText(newValue);
+            setTimeout(() => {
+              input.selectionStart = input.selectionEnd = start + 1;
+            }, 0);
+          }
+        } else {
+          // Desktop logic
+          if (e.shiftKey) {
+            e.preventDefault(); // Prevent default form submission
+            const { current: input } = replyInputRef;
+            if (input) {
+              const start = input.selectionStart;
+              const end = input.selectionEnd;
+              const newValue =
+                replyText.substring(0, start) + "\n" + replyText.substring(end);
+              setReplyText(newValue);
+              setTimeout(() => {
+                input.selectionStart = input.selectionEnd = start + 1;
+              }, 0);
+            }
+          } else {
+            // On desktop, Enter sends the message (and not pending)
+            if (!isCreatingComment) {
+              e.preventDefault(); // Prevent default new line behavior for Enter
+              handleSendReply(e);
+            }
+          }
+        }
+      }
+    },
+    [
+      isMobile,
+      replyInputRef,
+      replyText,
+      setReplyText,
+      showReplyMentionSuggestions,
+      suggestedUsers,
+      handleSelectReplyMention,
+      isCreatingComment,
+      handleSendReply,
+    ]
+  );
 
   // Reset animation state after it completes
   useEffect(() => {
@@ -634,25 +720,27 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   </div>
                 </div>
                 <div className="flex-1 relative">
-                  <input
+                  <textarea
                     ref={replyInputRef}
                     type="text"
                     value={replyText}
                     onChange={handleReplyTextChange}
+                    onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
+                    rows={1}
                     placeholder={`Replying to @${comment.user.username}...`}
-                    className="w-full pl-3 py-2 rounded-full bg-black/0 placeholder-gray-400 focus:outline-none text-sm"
+                    className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
                     disabled={isCreatingComment}
                   />
                   {showReplyMentionSuggestions &&
                     debouncedReplyMentionSearchTerm.length > 0 && (
                       <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {isLoadingSuggestedReplyUsers ? (
+                        {isLoadingSuggestedUsers ? (
                           <div className="p-2 text-center">
                             <LoadingSpinner size="sm" />
                           </div>
-                        ) : suggestedReplyUsers.length > 0 ? (
-                          suggestedReplyUsers.map((user) => (
+                        ) : suggestedUsers.length > 0 ? (
+                          suggestedUsers.map((user) => (
                             <div
                               key={user._id}
                               className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"

@@ -16,6 +16,8 @@ import { searchUsersApi } from "../../api/usersApi";
 import SchedulePostModal from "../../components/common/SchedulePostModal";
 import ScheduledPostsModal from "../../components/common/ScheduledPostsModal";
 import EditScheduledPostModal from "../../components/common/EditSchedulePostModal";
+import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
+import { useDebounce } from "../../hooks/useDebounce";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -52,8 +54,11 @@ const CreatePost = () => {
   const [mentionQuery, setMentionQuery] = useState("");
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
-  const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
+  // const [debouncedMentionQuery, setDebouncedMentionQuery] = useState("");
 
+
+    const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300);
+  
   // Refs
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
@@ -65,60 +70,57 @@ const CreatePost = () => {
   const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
-  const [isMobile, setIsMobile] = useState(false);
-  
-    useEffect(() => {
-      const checkIsMobile = () => {
-        // Define your breakpoint
-        const mobileBreakpoint = 768; // px
-  
-        // Update state based on current window width
-        setIsMobile(window.innerWidth <= mobileBreakpoint);
-      };
-  
-      // Initial check when component mounts
-      checkIsMobile();
-  
-      // Add event listener for window resize
-      window.addEventListener("resize", checkIsMobile);
-  
-      // Clean up event listener when component unmounts
-      return () => {
-        window.removeEventListener("resize", checkIsMobile);
-      };
-    }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
-  
-    // --- Textarea Height Adjustment (separated from mobile check) ---
-    const adjustTextareaHeight = useCallback(() => {
-      const textarea = textareaRef.current;
-      if (textarea) {
-        textarea.style.height = "auto"; // Reset height
-        textarea.style.height = `${textarea.scrollHeight}px`;
-        // Optional: If you want it to always scroll to the bottom when typing,
-        // you can keep this line, but it might not be the "Gemini-like" behavior
-        // you want if the user is scrolling up to edit earlier text.
-        // textarea.scrollTop = textarea.scrollHeight;
-      }
-    }, []);
-  
-    useEffect(() => {
-      adjustTextareaHeight();
-    }, [text, adjustTextareaHeight]);
+  // const [isMobile, setIsMobile] = useState(false);
 
-  // Debounce mention query
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      setDebouncedMentionQuery(mentionQuery);
-    }, 300);
-    return () => clearTimeout(timer);
-  }, [mentionQuery]);
+  // useEffect(() => {
+  //   const checkIsMobile = () => {
+  //     // Define your breakpoint
+  //     const mobileBreakpoint = 768; // px
+
+  //     // Update state based on current window width
+  //     setIsMobile(window.innerWidth <= mobileBreakpoint);
+  //   };
+
+  //   // Initial check when component mounts
+  //   checkIsMobile();
+
+  //   // Add event listener for window resize
+  //   window.addEventListener("resize", checkIsMobile);
+
+  //   // Clean up event listener when component unmounts
+  //   return () => {
+  //     window.removeEventListener("resize", checkIsMobile);
+  //   };
+  // }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+
+  // // --- Textarea Height Adjustment (separated from mobile check) ---
+  // const adjustTextareaHeight = useCallback(() => {
+  //   const textarea = textareaRef.current;
+  //   if (textarea) {
+  //     textarea.style.height = "auto"; // Reset height
+  //     textarea.style.height = `${textarea.scrollHeight}px`;
+  //     // Optional: If you want it to always scroll to the bottom when typing,
+  //     // you can keep this line, but it might not be the "Gemini-like" behavior
+  //     // you want if the user is scrolling up to edit earlier text.
+  //     // textarea.scrollTop = textarea.scrollHeight;
+  //   }
+  // }, []);
+
+  // useEffect(() => {
+  //   adjustTextareaHeight();
+  // }, [text, adjustTextareaHeight]);
+
+  // // Debounce mention query
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     setDebouncedMentionQuery(mentionQuery);
+  //   }, 300);
+  //   return () => clearTimeout(timer);
+  // }, [mentionQuery]);
 
   // Fetch mention suggestions using react-query
-  const { data: mentionSuggestions = [], isLoading: isLoadingMentions } = useQuery({
-    queryKey: ["mentionSuggestions", debouncedMentionQuery],
-    queryFn: () => searchUsersApi(debouncedMentionQuery),
-    enabled: !!debouncedMentionQuery && showMentionSuggestions && !showPollInputs,
-  });
+  const { suggestedUsers, isLoadingSuggestedUsers } =
+    useSearchUsers(debouncedMentionSearchTerm);
 
   // Effect to adjust emoji picker width on resize
   useEffect(() => {
@@ -483,63 +485,61 @@ const CreatePost = () => {
     }
   }, []);
 
- const handleKeyDown = useCallback(
-   (e) => {
-     if (e.key === "Enter") {
-       if (showMentionSuggestions && mentionSuggestions.length > 0) {
-         e.preventDefault();
-         // Automatically select the first suggestion on Enter
-         handleMentionSelect(mentionSuggestions[0].username);
-       } else if (isMobile) {
-         e.preventDefault(); // Prevent default form submission
-         const { current: input } = textareaRef;
-         if (input) {
-           const start = input.selectionStart;
-           const end = input.selectionEnd;
-           const newValue =
-             text.substring(0, start) + "\n" + text.substring(end);
-           setText(newValue);
-           setTimeout(() => {
-             input.selectionStart = input.selectionEnd = start + 1;
-           }, 0);
-         }
-       } else {
-         // Desktop logic
-         if (e.shiftKey) {
-           e.preventDefault(); // Prevent default form submission
-           const { current: input } = textareaRef;
-           if (input) {
-             const start = input.selectionStart;
-             const end = input.selectionEnd;
-             const newValue =
-               text.substring(0, start) + "\n" + text.substring(end);
-             setText(newValue);
-             setTimeout(() => {
-               input.selectionStart = input.selectionEnd = start + 1;
-             }, 0);
-           }
-         } else {
-           // On desktop, Enter sends the message (and not pending)
-           if (!isPending) {
-             e.preventDefault(); // Prevent default new line behavior for Enter
-             handleSubmit(e);
-           }
-         }
-       }
-     }
-   },
-   [
-     isMobile,
-     textareaRef,
-     text,
-     setText,
-     showMentionSuggestions,
-     mentionSuggestions,
-     handleMentionSelect,
-     isPending,
-     handleSubmit,
-   ]
- );
+  // const handleKeyDown = useCallback(
+  //   (e) => {
+  //     if (e.key === "Enter") {
+  //       if (showMentionSuggestions && suggestedUsers.length > 0) {
+  //         e.preventDefault();
+  //         // Automatically select the first suggestion on Enter
+  //         handleMentionSelect(suggestedUsers[0].username);
+  //       } else if (isMobile) {
+  //         e.preventDefault(); // Prevent default form submission
+  //         const { current: input } = textareaRef;
+  //         if (input) {
+  //           const start = input.selectionStart;
+  //           const end = input.selectionEnd;
+  //           const newValue = text.substring(0, start) + "\n" + text.substring(end);
+  //           setText(newValue);
+  //           setTimeout(() => {
+  //             input.selectionStart = input.selectionEnd = start + 1;
+  //           }, 0);
+  //         }
+  //       } else {
+  //         // Desktop logic
+  //         if (e.shiftKey) {
+  //           e.preventDefault(); // Prevent default form submission
+  //           const { current: input } = textareaRef;
+  //           if (input) {
+  //             const start = input.selectionStart;
+  //             const end = input.selectionEnd;
+  //             const newValue = text.substring(0, start) + "\n" + text.substring(end);
+  //             setText(newValue);
+  //             setTimeout(() => {
+  //               input.selectionStart = input.selectionEnd = start + 1;
+  //             }, 0);
+  //           }
+  //         } else {
+  //           // On desktop, Enter sends the message (and not pending)
+  //           if (!isPending) {
+  //             e.preventDefault(); // Prevent default new line behavior for Enter
+  //             handleSubmit(e);
+  //           }
+  //         }
+  //       }
+  //     }
+  //   },
+  //   [
+  //     isMobile,
+  //     textareaRef,
+  //     text,
+  //     setText,
+  //     showMentionSuggestions,
+  //     suggestedUsers,
+  //     handleMentionSelect,
+  //     isPending,
+  //     handleSubmit,
+  //   ]
+  // );
 
   const handleAddPollChoice = useCallback(() => {
     if (pollChoices.length < MAX_POLL_CHOICES) {
@@ -732,25 +732,25 @@ const CreatePost = () => {
             }
             value={text}
             onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
+            // onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             ref={textareaRef}
             rows={2}
             style={{ minHeight: "28px" }}
           />
           {/* Mention Suggestions Popover */}
-          {showMentionSuggestions && mentionSuggestions.length > 0 && !showPollInputs && (
+          {showMentionSuggestions && suggestedUsers?.length > 0 && !showPollInputs && (
             <div
               ref={suggestionBoxRef}
               className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
               style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
             >
-              {isLoadingMentions ? (
+              {isLoadingSuggestedUsers ? (
                 <p className="p-2 text-gray-400">Loading suggestions...</p>
-              ) : mentionSuggestions.length === 0 ? (
+              ) : suggestedUsers.length === 0 ? (
                 <p className="p-2 text-gray-500">No users found.</p>
               ) : (
-                mentionSuggestions.map((user) => (
+                suggestedUsers.map((user) => (
                   <div
                     key={user._id}
                     className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
