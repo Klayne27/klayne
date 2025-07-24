@@ -413,6 +413,18 @@ function MessageInput({
     }
   };
 
+  const handleTouchMove = (e) => {
+    // Check if the textarea content itself is overflowing
+    // This is crucial: only prevent default if the textarea can actually scroll
+    const target = e.target;
+    if (target.scrollHeight > target.clientHeight) {
+      // If the content is larger than the visible area,
+      // allow the textarea to scroll by not preventing its default behavior.
+      // And importantly, prevent the event from bubbling to parent scroll containers.
+      e.stopPropagation();
+    }
+  };
+
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -501,6 +513,7 @@ function MessageInput({
           value={messageInput}
           onChange={handleMessageInputChange}
           onKeyDown={handleKeyDown}
+          onTouchMove={handleTouchMove} // Add this
           onPaste={handlePaste}
           placeholder={
             isEditingMode

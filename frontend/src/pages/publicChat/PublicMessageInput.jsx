@@ -57,41 +57,40 @@ const PublicMessageInput = ({
     }
     return "Several people are typing"; // Or "Several people are editing" if isEditingAny is true for some
   };
-  
-    useEffect(() => {
-      const checkIsMobile = () => {
-        // Define your breakpoint
-        const mobileBreakpoint = 768; // px
-  
-        // Update state based on current window width
-        setIsMobile(window.innerWidth <= mobileBreakpoint);
-      };
-  
-      // Initial check when component mounts
-      checkIsMobile();
-  
-      // Add event listener for window resize
-      window.addEventListener("resize", checkIsMobile);
-  
-      // Clean up event listener when component unmounts
-      return () => {
-        window.removeEventListener("resize", checkIsMobile);
-      };
-    }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
-  
-    // --- Textarea Height Adjustment (separated from mobile check) ---
-    const adjustTextareaHeight = useCallback(() => {
-      const textarea = messageInputRef.current;
-      if (textarea) {
-        textarea.style.height = "auto"; // Reset height
-        textarea.style.height = `${textarea.scrollHeight}px`;
-      }
-    }, []);
-  
-    useEffect(() => {
-      adjustTextareaHeight();
-    }, [messageContent, adjustTextareaHeight]);
 
+  useEffect(() => {
+    const checkIsMobile = () => {
+      // Define your breakpoint
+      const mobileBreakpoint = 768; // px
+
+      // Update state based on current window width
+      setIsMobile(window.innerWidth <= mobileBreakpoint);
+    };
+
+    // Initial check when component mounts
+    checkIsMobile();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkIsMobile);
+
+    // Clean up event listener when component unmounts
+    return () => {
+      window.removeEventListener("resize", checkIsMobile);
+    };
+  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+
+  // --- Textarea Height Adjustment (separated from mobile check) ---
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = messageInputRef.current;
+    if (textarea) {
+      textarea.style.height = "auto"; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`;
+    }
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageContent, adjustTextareaHeight]);
 
   // Handle entering/exiting edit mode
   useEffect(() => {
@@ -304,6 +303,18 @@ const PublicMessageInput = ({
     messageInputRef.current?.focus();
   };
 
+  const handleTouchMove = (e) => {
+    // Check if the textarea content itself is overflowing
+    // This is crucial: only prevent default if the textarea can actually scroll
+    const target = e.target;
+    if (target.scrollHeight > target.clientHeight) {
+      // If the content is larger than the visible area,
+      // allow the textarea to scroll by not preventing its default behavior.
+      // And importantly, prevent the event from bubbling to parent scroll containers.
+      e.stopPropagation();
+    }
+  };
+
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (isMobile) {
@@ -442,6 +453,7 @@ const PublicMessageInput = ({
                 value={messageContent}
                 onChange={handleMessageContentChange}
                 onKeyDown={handleKeyDown}
+                onTouch={handleTouchMove}
                 onPaste={handlePaste}
                 placeholder={
                   isCurrentUserBanned
