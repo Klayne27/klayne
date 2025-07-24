@@ -241,6 +241,11 @@ export const updateUser = async (req, res) => {
     }
 
     if (currentPassword && newPassword) {
+      // New: Check if newPassword matches confirmNewPassword
+      if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ error: "New passwords do not match" });
+      }
+
       const isMatch = await bcrypt.compare(currentPassword, user.password);
       if (!isMatch)
         return res.status(400).json({ error: "Current password is incorrect" });
@@ -253,6 +258,7 @@ export const updateUser = async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
+
 
     if (profileImg) {
       if (user.profileImg) {
@@ -541,7 +547,6 @@ export const adminDeleteUserAccount = async (req, res) => {
       });
     }
 
-    // 2. Get the ID of the user to be deleted from request parameters
     const { id: userIdToDelete } = req.params; // Renamed for clarity
 
     // Prevent admin from deleting their own account via this endpoint (optional but good practice)

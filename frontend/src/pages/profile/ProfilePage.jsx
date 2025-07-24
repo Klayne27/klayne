@@ -333,7 +333,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
               />
               {isMyProfile && (
                 <div
-                  className="absolute top-2 right-2 rounded-full p-2 bg-gray-800 bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
+                  className="absolute top-2 text-white right-2 rounded-full p-2 bg-primary bg-opacity-75 cursor-pointer opacity-0 group-hover/cover:opacity-100 transition duration-200"
                   onClick={() => coverImgRef.current.click()}
                 >
                   <MdEdit className="w-5 h-5 " />
@@ -366,7 +366,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
                     loading="lazy"
                   />
                   {isMyProfile && (
-                    <div className="absolute top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer">
+                    <div className="absolute text-white top-5 right-3 p-1 bg-primary rounded-full group-hover/avatar:opacity-100 opacity-0 cursor-pointer duration-200">
                       <MdEdit
                         className="w-4 h-4"
                         onClick={() => profileImgRef.current.click()}

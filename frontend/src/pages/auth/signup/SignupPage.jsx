@@ -7,7 +7,7 @@ import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
-import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
+import { FaEye, FaEyeSlash } from "react-icons/fa6"; // Import eye icons
 
 import { useSignup } from "../../../hooks/authHooks/useSignup";
 
@@ -105,7 +105,7 @@ const SignUpPage = () => {
             />
             {/* Show/Hide password icon */}
             <span
-              className="absolute right-4 cursor-pointer" // Position to the right
+              className="absolute text-slate-500 right-4 cursor-pointer" // Position to the right
               onClick={() => setShowPassword(!showPassword)}
             >
               {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
