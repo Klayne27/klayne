@@ -12,10 +12,6 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useEditPublicMessage } from "../../hooks/publicChatHooks/publicChatHooks";
 
 const PublicMessageInput = ({
-  selectedFile,
-  setSelectedFile,
-  previewImage,
-  setPreviewImage,
   isSendingMessage,
   // isEditingMessage,
   isCurrentUserBanned,
@@ -37,10 +33,11 @@ const PublicMessageInput = ({
   const { authUser } = useAuthUser();
   const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
 
-
-    const { editPublicMessage, isEditingMessage } =
-      useEditPublicMessage();
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [previewImage, setPreviewImage] = useState(null);
   const [messageContent, setMessageContent] = useState("");
+
+  const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
 
   const getTypingMessage = (users) => {
     if (users.length === 0) return ""; // Should ideally not be called if users.length is 0
@@ -123,6 +120,68 @@ const PublicMessageInput = ({
       if (hasSentTypingEvent.current) {
         sendTypingEvent(false);
         hasSentTypingEvent.current = false;
+      }
+    }
+  };
+
+  const handlePaste = (e) => {
+    e.preventDefault(); // Prevent default paste behavior
+
+    const items = e.clipboardData.items;
+
+    for (let i = 0; i < items.length; i++) {
+      if (items[i].type.indexOf("image") !== -1) {
+        const file = items[i].getAsFile();
+
+        if (file) {
+          // Basic validation for image file
+          if (!file.type.startsWith("image/")) {
+            toast.error("Pasted content is not a supported image type.");
+            setSelectedFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = null;
+            return;
+          }
+
+          // You might want to add a size limit for message images as well
+          // For example, 5MB for chat images, adjust as needed
+          const MAX_IMAGE_SIZE_MB = 5;
+          if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
+            toast.error(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`);
+            setSelectedFile(null);
+            if (fileInputRef.current) fileInputRef.current.value = null;
+            return;
+          }
+
+          setSelectedFile(file);
+          setPreviewImage(URL.createObjectURL(file));
+
+          return; // Process only the first image found
+        }
+      }
+    }
+
+    // If no image was found, paste as plain text
+    const pastedText = e.clipboardData.getData("text/plain");
+    if (pastedText) {
+      const inputElement = messageInputRef.current;
+      if (inputElement) {
+        const cursorStart = inputElement.selectionStart;
+        const cursorEnd = inputElement.selectionEnd;
+
+        const newText =
+          messageContent.substring(0, cursorStart) +
+          pastedText +
+          messageContent.substring(cursorEnd);
+
+        setMessageContent(newText);
+
+        // Restore cursor position after paste
+        setTimeout(() => {
+          if (inputElement) {
+            inputElement.selectionStart = cursorStart + pastedText.length;
+            inputElement.selectionEnd = cursorStart + pastedText.length;
+          }
+        }, 0);
       }
     }
   };
@@ -324,6 +383,7 @@ const PublicMessageInput = ({
                 value={messageContent}
                 onChange={handleMessageContentChange}
                 onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
                 placeholder={
                   isCurrentUserBanned
                     ? "You are banned from sending messages."
@@ -438,6 +498,7 @@ const PublicMessageInput = ({
             <textarea
               value={messageContent}
               onChange={handleMessageContentChange}
+              onPaste={handlePaste}
               onKeyDown={handleKeyDown}
               placeholder={
                 isCurrentUserBanned

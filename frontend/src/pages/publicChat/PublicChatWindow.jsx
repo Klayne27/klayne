@@ -44,8 +44,7 @@ const PublicChatWindow = ({ openImageModal }) => {
 
     const [isAtBottom, setIsAtBottom] = useState(true);
 
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
+
   const [isTyping, setIsTyping] = useState(false);
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
@@ -334,8 +333,6 @@ const PublicChatWindow = ({ openImageModal }) => {
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
         queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (isBanned) {
-          setSelectedFile(null);
-          setPreviewImage(null);
           queryClient.setQueryData(["publicMessages"], (oldData) => ({
             pages: [[]],
             pageParams: [undefined],
@@ -470,10 +467,6 @@ const getGroupedMessages = useCallback((allMessages) => {
           </div>
 
           <PublicMessageInput
-            selectedFile={selectedFile}
-            setSelectedFile={setSelectedFile}
-            previewImage={previewImage}
-            setPreviewImage={setPreviewImage}
             isSendingMessage={isSendingMessage}
             // isEditingMessage={isEditingMessage}
             isCurrentUserBanned={isCurrentUserBanned}
