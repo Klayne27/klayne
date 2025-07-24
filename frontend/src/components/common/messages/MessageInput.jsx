@@ -61,22 +61,22 @@ function MessageInput({
     };
   }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
-  // --- Textarea Height Adjustment (separated from mobile check) ---
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = messageInputRef.current;
-    if (textarea) {
-      textarea.style.height = "auto"; // Reset height
-      textarea.style.height = `${textarea.scrollHeight}px`;
-      // Optional: If you want it to always scroll to the bottom when typing,
-      // you can keep this line, but it might not be the "Gemini-like" behavior
-      // you want if the user is scrolling up to edit earlier text.
-      // textarea.scrollTop = textarea.scrollHeight;
-    }
-  }, []);
+  // // --- Textarea Height Adjustment (separated from mobile check) ---
+  // const adjustTextareaHeight = useCallback(() => {
+  //   const textarea = messageInputRef.current;
+  //   if (textarea) {
+  //     textarea.style.height = "auto"; // Reset height
+  //     textarea.style.height = `${textarea.scrollHeight}px`;
+  //     // Optional: If you want it to always scroll to the bottom when typing,
+  //     // you can keep this line, but it might not be the "Gemini-like" behavior
+  //     // you want if the user is scrolling up to edit earlier text.
+  //     // textarea.scrollTop = textarea.scrollHeight;
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    adjustTextareaHeight();
-  }, [messageInput, adjustTextareaHeight]);
+  // useEffect(() => {
+  //   adjustTextareaHeight();
+  // }, [messageInput, adjustTextareaHeight]);
 
   // --- MODIFIED: emitTyping now accepts isEditing flag ---
   const emitTyping = useCallback(
@@ -187,6 +187,11 @@ function MessageInput({
     const text = e.target.value;
     setMessageInput(text);
 
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = "auto";
+      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+    }
+
     const isCurrentlyEditing = !!editingMessage; // Determine if in edit mode
 
     if (text.trim() === "") {
@@ -212,44 +217,44 @@ function MessageInput({
     }, 1500);
   };
 
-  const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (isMobile) {
-        e.preventDefault(); // Prevent default form submission
-        const { current: input } = messageInputRef;
-        if (input) {
-          const start = input.selectionStart;
-          const end = input.selectionEnd;
-          const newValue =
-            messageInput.substring(0, start) + "\n" + messageInput.substring(end);
-          setMessageInput(newValue);
-          setTimeout(() => {
-            input.selectionStart = input.selectionEnd = start + 1;
-          }, 0);
-        }
-      } else {
-        if (e.shiftKey) {
-          e.preventDefault(); // Prevent default form submission
-          const { current: input } = messageInputRef;
-          if (input) {
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const newValue =
-              messageInput.substring(0, start) + "\n" + messageInput.substring(end);
-            setMessageInput(newValue);
-            // Crucially, set the cursor position right after the new line
-            setTimeout(() => {
-              input.selectionStart = input.selectionEnd = start + 1;
-            }, 0);
-          }
-        } else {
-          // On desktop, Enter sends the message
-          e.preventDefault(); // Prevent default new line behavior for Enter
-          handleSubmit(e);
-        }
-      }
-    }
-  };
+  // const handleKeyDown = (e) => {
+  //   if (e.key === "Enter") {
+  //     if (isMobile) {
+  //       e.preventDefault(); // Prevent default form submission
+  //       const { current: input } = messageInputRef;
+  //       if (input) {
+  //         const start = input.selectionStart;
+  //         const end = input.selectionEnd;
+  //         const newValue =
+  //           messageInput.substring(0, start) + "\n" + messageInput.substring(end);
+  //         setMessageInput(newValue);
+  //         setTimeout(() => {
+  //           input.selectionStart = input.selectionEnd = start + 1;
+  //         }, 0);
+  //       }
+  //     } else {
+  //       if (e.shiftKey) {
+  //         e.preventDefault(); // Prevent default form submission
+  //         const { current: input } = messageInputRef;
+  //         if (input) {
+  //           const start = input.selectionStart;
+  //           const end = input.selectionEnd;
+  //           const newValue =
+  //             messageInput.substring(0, start) + "\n" + messageInput.substring(end);
+  //           setMessageInput(newValue);
+  //           // Crucially, set the cursor position right after the new line
+  //           setTimeout(() => {
+  //             input.selectionStart = input.selectionEnd = start + 1;
+  //           }, 0);
+  //         }
+  //       } else {
+  //         // On desktop, Enter sends the message
+  //         e.preventDefault(); // Prevent default new line behavior for Enter
+  //         handleSubmit(e);
+  //       }
+  //     }
+  //   }
+  // };
 
   const handleMobileSend = (e) => {
     e.preventDefault();
@@ -377,15 +382,30 @@ function MessageInput({
     ]
   );
 
-  // const handleKeyDown = useCallback(
-  //   (e) => {
-  //     if (e.key === "Enter" && !e.shiftKey) {
-  //       e.preventDefault();
-  //       handleSubmit(e);
-  //     }
-  //   },
-  //   [handleSubmit]
-  // );
+  const handleKeyDown = (e) => {
+    if (isMobile) {
+      // On mobile, prevent default Enter behavior (which might submit a form)
+      // The "Done" or "Go" button on the mobile keyboard will handle submission.
+      // New lines are typically handled by the mobile keyboard itself within the textarea.
+      if (e.key === "Enter") {
+        // You might not even need this if your textarea naturally handles new lines on mobile.
+        // If it *does* submit on mobile Enter, then e.preventDefault() here is key.
+        // But typically, a mobile keyboard's 'Enter' or 'Return' key within a textarea
+        // will create a new line by default, and a separate "send" button is used for submission.
+        // So, for mobile, we primarily rely on the UI button for submission.
+      }
+    } else {
+      // On PC
+      if (e.key === "Enter" && !e.shiftKey) {
+        // If Enter is pressed without Shift, prevent default and submit the form
+        e.preventDefault();
+        handleSubmit(e); // Call your existing handleSubmit
+      } else if (e.key === "Enter" && e.shiftKey) {
+        // If Shift + Enter is pressed, allow the default behavior (new line)
+        // No need to call e.preventDefault() as the default behavior is desired.
+      }
+    }
+  };
 
   const onEmojiClick = (emojiObject) => {
     setMessageInput((prevText) => prevText + emojiObject.emoji);

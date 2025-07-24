@@ -70,28 +70,28 @@ const CreatePost = () => {
   const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
-  // const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
 
-  // useEffect(() => {
-  //   const checkIsMobile = () => {
-  //     // Define your breakpoint
-  //     const mobileBreakpoint = 768; // px
+  useEffect(() => {
+    const checkIsMobile = () => {
+      // Define your breakpoint
+      const mobileBreakpoint = 768; // px
 
-  //     // Update state based on current window width
-  //     setIsMobile(window.innerWidth <= mobileBreakpoint);
-  //   };
+      // Update state based on current window width
+      setIsMobile(window.innerWidth <= mobileBreakpoint);
+    };
 
-  //   // Initial check when component mounts
-  //   checkIsMobile();
+    // Initial check when component mounts
+    checkIsMobile();
 
-  //   // Add event listener for window resize
-  //   window.addEventListener("resize", checkIsMobile);
+    // Add event listener for window resize
+    window.addEventListener("resize", checkIsMobile);
 
-  //   // Clean up event listener when component unmounts
-  //   return () => {
-  //     window.removeEventListener("resize", checkIsMobile);
-  //   };
-  // }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+    // Clean up event listener when component unmounts
+    return () => {
+      window.removeEventListener("resize", checkIsMobile);
+    };
+  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
   // // --- Textarea Height Adjustment (separated from mobile check) ---
   // const adjustTextareaHeight = useCallback(() => {
@@ -541,6 +541,31 @@ const CreatePost = () => {
   //   ]
   // );
 
+  const handleKeyDown = (e) => {
+    if (isMobile) {
+      // On mobile, prevent default Enter behavior (which might submit a form)
+      // The "Done" or "Go" button on the mobile keyboard will handle submission.
+      // New lines are typically handled by the mobile keyboard itself within the textarea.
+      if (e.key === "Enter") {
+        // You might not even need this if your textarea naturally handles new lines on mobile.
+        // If it *does* submit on mobile Enter, then e.preventDefault() here is key.
+        // But typically, a mobile keyboard's 'Enter' or 'Return' key within a textarea
+        // will create a new line by default, and a separate "send" button is used for submission.
+        // So, for mobile, we primarily rely on the UI button for submission.
+      }
+    } else {
+      // On PC
+      if (e.key === "Enter" && !e.shiftKey) {
+        // If Enter is pressed without Shift, prevent default and submit the form
+        e.preventDefault();
+        handleSubmit(e); // Call your existing handleSubmit
+      } else if (e.key === "Enter" && e.shiftKey) {
+        // If Shift + Enter is pressed, allow the default behavior (new line)
+        // No need to call e.preventDefault() as the default behavior is desired.
+      }
+    }
+  };
+
   const handleAddPollChoice = useCallback(() => {
     if (pollChoices.length < MAX_POLL_CHOICES) {
       setPollChoices([...pollChoices, { text: "" }]);
@@ -732,7 +757,7 @@ const CreatePost = () => {
             }
             value={text}
             onChange={handleTextChange}
-            // onKeyDown={handleKeyDown}
+            onKeyDown={handleKeyDown}
             onPaste={handlePaste}
             ref={textareaRef}
             rows={2}

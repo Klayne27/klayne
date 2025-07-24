@@ -82,30 +82,30 @@ const PublicMessageInput = ({
   }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
   // --- Textarea Height Adjustment (separated from mobile check) ---
-  const adjustTextareaHeight = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      textarea.style.height = "auto"; // Reset height
-      textarea.style.height = `${textarea.scrollHeight}px`;
-    }
-  }, []);
+  // const adjustTextareaHeight = useCallback(() => {
+  //   const textarea = textareaRef.current;
+  //   if (textarea) {
+  //     textarea.style.height = "auto"; // Reset height
+  //     textarea.style.height = `${textarea.scrollHeight}px`;
+  //   }
+  // }, []);
 
-  const handleTextareaScroll = useCallback(() => {
-    const textarea = textareaRef.current;
-    if (textarea) {
-      const { scrollTop, scrollHeight, clientHeight } = textarea;
-      // Check if scrolled to bottom with a small buffer
-      setIsAtTextareaBottom(scrollHeight - scrollTop - clientHeight < 1);
-    }
-  }, []);
+  // const handleTextareaScroll = useCallback(() => {
+  //   const textarea = textareaRef.current;
+  //   if (textarea) {
+  //     const { scrollTop, scrollHeight, clientHeight } = textarea;
+  //     // Check if scrolled to bottom with a small buffer
+  //     setIsAtTextareaBottom(scrollHeight - scrollTop - clientHeight < 1);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    adjustTextareaHeight();
+  // useEffect(() => {
+  //   adjustTextareaHeight();
 
-    if (textareaRef.current && isAtTextareaBottom) {
-      textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-    }
-  }, [messageContent, adjustTextareaHeight, isAtTextareaBottom]);
+  //   if (textareaRef.current && isAtTextareaBottom) {
+  //     textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
+  //   }
+  // }, [messageContent, adjustTextareaHeight, isAtTextareaBottom]);
 
   // Handle entering/exiting edit mode
   useEffect(() => {
@@ -142,6 +142,11 @@ const PublicMessageInput = ({
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value;
     setMessageContent(newValue);
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto";
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
 
     clearTimeout(typingTimeoutRef.current); // Always clear any pending "stop" timer
 
@@ -330,40 +335,65 @@ const PublicMessageInput = ({
     }
   };
 
+  // const handleKeyDown = (e) => {
+  //   if (e.key === "Enter") {
+  //     if (isMobile) {
+  //       e.preventDefault(); // Prevent default form submission
+  //       const { current: input } = textareaRef;
+  //       if (input) {
+  //         const start = input.selectionStart;
+  //         const end = input.selectionEnd;
+  //         const newValue =
+  //           messageContent.substring(0, start) + "\n" + messageContent.substring(end);
+  //         setMessageContent(newValue);
+  //         setTimeout(() => {
+  //           input.selectionStart = input.selectionEnd = start + 1;
+  //         }, 0);
+  //       }
+  //     } else {
+  //       if (e.shiftKey) {
+  //         e.preventDefault(); // Prevent default form submission
+  //         const { current: input } = textareaRef;
+  //         if (input) {
+  //           const start = input.selectionStart;
+  //           const end = input.selectionEnd;
+  //           const newValue =
+  //             messageContent.substring(0, start) + "\n" + messageContent.substring(end);
+  //           setMessageContent(newValue);
+  //           setTimeout(() => {
+  //             input.selectionStart = input.selectionEnd = start + 1;
+  //           }, 0);
+  //         }
+  //       } else {
+  //         // On desktop, Enter sends the message
+  //         e.preventDefault(); // Prevent default new line behavior for Enter
+  //         handleSendMessageOrEdit(e);
+  //       }
+  //     }
+  //   }
+  // };
+
   const handleKeyDown = (e) => {
-    if (e.key === "Enter") {
-      if (isMobile) {
-        e.preventDefault(); // Prevent default form submission
-        const { current: input } = textareaRef;
-        if (input) {
-          const start = input.selectionStart;
-          const end = input.selectionEnd;
-          const newValue =
-            messageContent.substring(0, start) + "\n" + messageContent.substring(end);
-          setMessageContent(newValue);
-          setTimeout(() => {
-            input.selectionStart = input.selectionEnd = start + 1;
-          }, 0);
-        }
-      } else {
-        if (e.shiftKey) {
-          e.preventDefault(); // Prevent default form submission
-          const { current: input } = textareaRef;
-          if (input) {
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const newValue =
-              messageContent.substring(0, start) + "\n" + messageContent.substring(end);
-            setMessageContent(newValue);
-            setTimeout(() => {
-              input.selectionStart = input.selectionEnd = start + 1;
-            }, 0);
-          }
-        } else {
-          // On desktop, Enter sends the message
-          e.preventDefault(); // Prevent default new line behavior for Enter
-          handleSendMessageOrEdit(e);
-        }
+    if (isMobile) {
+      // On mobile, prevent default Enter behavior (which might submit a form)
+      // The "Done" or "Go" button on the mobile keyboard will handle submission.
+      // New lines are typically handled by the mobile keyboard itself within the textarea.
+      if (e.key === "Enter") {
+        // You might not even need this if your textarea naturally handles new lines on mobile.
+        // If it *does* submit on mobile Enter, then e.preventDefault() here is key.
+        // But typically, a mobile keyboard's 'Enter' or 'Return' key within a textarea
+        // will create a new line by default, and a separate "send" button is used for submission.
+        // So, for mobile, we primarily rely on the UI button for submission.
+      }
+    } else {
+      // On PC
+      if (e.key === "Enter" && !e.shiftKey) {
+        // If Enter is pressed without Shift, prevent default and submit the form
+        e.preventDefault();
+        handleSendMessageOrEdit(e); // Call your existing handleSubmit
+      } else if (e.key === "Enter" && e.shiftKey) {
+        // If Shift + Enter is pressed, allow the default behavior (new line)
+        // No need to call e.preventDefault() as the default behavior is desired.
       }
     }
   };
@@ -585,7 +615,6 @@ const PublicMessageInput = ({
               value={messageContent}
               onChange={handleMessageContentChange}
               onPaste={handlePaste}
-              onScroll={handleTextareaScroll}
               onKeyDown={handleKeyDown}
               placeholder={
                 isCurrentUserBanned
