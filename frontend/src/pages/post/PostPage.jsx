@@ -308,6 +308,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     setMentionSearchTerm("");
     setShowMentionSuggestions(false);
   }, []);
+  
 
   useEffect(() => {
     if (!isLoading && (isError || !post)) {

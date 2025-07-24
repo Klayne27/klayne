@@ -1,6 +1,6 @@
-import { FaHeart, FaRegComment } from "react-icons/fa";
-import { BiRepost } from "react-icons/bi";
-import { FaRegHeart } from "react-icons/fa";
+import { FaHeart, FaRegComment } from "react-icons/fa6";
+import { FaRetweet } from "react-icons/fa6";
+import { FaRegHeart } from "react-icons/fa6";
 import { FiTrash } from "react-icons/fi";
 
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
@@ -46,7 +46,6 @@ const Post = ({
   const initialClientX = useRef(0);
   const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
-
   const isRepost = !!post.repostedFrom;
   const sourcePost = post.repostedFrom || post;
 
@@ -59,9 +58,7 @@ const Post = ({
   const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(sourcePost._id);
 
   const isPinnedForUI =
-    sourcePost?.isPinned !== undefined
-      ? sourcePost.isPinned
-      : hasAuthUserPinnedOriginal;
+    sourcePost?.isPinned !== undefined ? sourcePost.isPinned : hasAuthUserPinnedOriginal;
 
   const isPinnedOnThisProfile = profilePinnedPosts.some(
     (pinnedPost) => pinnedPost._id === sourcePost._id
@@ -329,8 +326,8 @@ const Post = ({
       onMouseUp={handleMouseUp}
     >
       {isRepost && repostingUser && (
-        <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
-          <BiRepost className="inline-block text-lg" size={20} />
+        <div className="flex items-center gap-1 text-slate-500 text-sm ml-6 font-semibold">
+          <FaRetweet className="inline-block text-lg" size={16} />
           <span
             className="hover:underline cursor-pointer"
             onClick={navigateToReposterProfile}
@@ -343,7 +340,7 @@ const Post = ({
         </div>
       )}
       {isPinnedOnThisProfile && (
-        <div className="flex items-center gap-1 text-gray-500 text-sm ml-6 font-semibold">
+        <div className="flex items-center gap-1 text-slate-500 text-sm ml-6 font-semibold">
           <BsPinFill className="inline-block text-lg" size={15} />
           <span className="cursor-pointer">Pinned</span>
         </div>
@@ -379,7 +376,7 @@ const Post = ({
                   <img src="/gold-verified.png" className="size-[17px]" alt="Verified" />
                 )}
               </Link>
-              <span className="text-gray-500 flex gap-1 text-sm min-w-0">
+              <span className="text-slate-500 flex gap-1 text-sm min-w-0">
                 {" "}
                 <Link
                   to={`/profile/${originalPostOwner.username}`}
@@ -543,7 +540,7 @@ const Post = ({
                   onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    className={`rounded-full p-1 duration-200 transition ${
+                    className={`rounded-full p-2 duration-200 transition ${
                       !isTouchDevice
                         ? "group-hover:bg-green-400 group-hover:bg-opacity-15"
                         : ""
@@ -554,8 +551,8 @@ const Post = ({
                         : ""
                     }`}
                   >
-                    <BiRepost
-                      className={`w-6 h-6 duration-200 transition ${
+                    <FaRetweet
+                      className={`size-[18px] duration-200 transition ${
                         repostedByCurrentUser
                           ? "text-green-500"
                           : "text-slate-500 group-hover:text-green-500"
@@ -606,6 +603,7 @@ const Post = ({
                     )}
                     {isLiked && (
                       <FaHeart
+                        strokeWidth={10}
                         className={`
                         w-4 h-4 text-pink-600 duration-200 transition
                         ${isAnimatingLike && isLiked ? "animate-like-bounce" : ""}

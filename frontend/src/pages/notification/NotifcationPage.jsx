@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
-import { FaUser, FaHeart, FaCommentDots, FaRetweet, FaReply } from "react-icons/fa";
+import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6";
 import { FiTrash } from "react-icons/fi";
 import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications";
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
@@ -166,7 +166,7 @@ const NotificationPage = () => {
                   <FaHeart className="w-7 h-7 text-pink-500" />
                 )}
                 {notification.type === "comment" && (
-                  <FaCommentDots className="w-7 h-7 text-blue-500" />
+                  <FaComment className="w-7 h-7 text-blue-500" />
                 )}
                 {notification.type === "commentReply" && (
                   <FaReply className="w-7 h-7 text-sky-500" />
