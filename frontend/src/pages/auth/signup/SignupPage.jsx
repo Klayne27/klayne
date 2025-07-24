@@ -7,6 +7,7 @@ import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
+import { FaEye, FaEyeSlash } from "react-icons/fa"; // Import eye icons
 
 import { useSignup } from "../../../hooks/authHooks/useSignup";
 
@@ -17,6 +18,8 @@ const SignUpPage = () => {
     fullName: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
 
   const { signup, isPending, isError, error } = useSignup(formData);
 
@@ -50,7 +53,7 @@ const SignUpPage = () => {
         </div>
         {/* End Warning/Reminder Section */}
         <form
-          className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
+          className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
           onSubmit={handleSubmit}
         >
           <XSvg className="w-24 lg:hidden fill-primary" />
@@ -90,16 +93,23 @@ const SignUpPage = () => {
               />
             </label>
           </div>
-          <label className="input input-bordered rounded flex items-center gap-2">
+          <label className="input input-bordered rounded flex items-center gap-2 relative">
             <MdPassword />
             <input
-              type="password"
-              className="grow"
+              type={showPassword ? "text" : "password"}
+              className="grow mr-6"
               placeholder="Password"
               name="password"
               onChange={handleInputChange}
               value={formData.password}
             />
+            {/* Show/Hide password icon */}
+            <span
+              className="absolute right-4 cursor-pointer" // Position to the right
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
+            </span>
           </label>
           <button className="py-3 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/80 transition duration-200">
             {isPending ? "Loading..." : "Sign up"}

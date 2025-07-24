@@ -331,7 +331,10 @@ const CreatePost = () => {
           return;
         }
 
-        let postData = { text, pollOptions: filledPollChoices.map((c) => c.text) }; // Send only text of poll options
+        let postData = {
+          text,
+          pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
+        };
 
         createPost(postData, {
           onSuccess: resetForm,
@@ -549,7 +552,7 @@ const CreatePost = () => {
   // This function closes the ScheduledPostsModal (the list)
   const handleCloseScheduledPostsListModal = useCallback(() => {
     setIsScheduledPostsModalOpen(false);
-    setShowSchedulePostModal(true)
+    setShowSchedulePostModal(true);
   }, []);
 
   // This function is called when a post item is clicked in ScheduledPostsModal

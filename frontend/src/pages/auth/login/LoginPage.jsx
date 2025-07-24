@@ -6,12 +6,15 @@ import XSvg from "../../../components/svgs/X";
 import { MdOutlineMail } from "react-icons/md";
 import { MdPassword } from "react-icons/md";
 import { useLogin } from "../../../hooks/authHooks/useLogin";
+import { FaEye, FaEyeSlash } from "react-icons/fa";
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
   });
+
+  const [showPassword, setShowPassword] = useState(false);
 
   const { login, isPending, isError, error } = useLogin(formData);
 
@@ -46,16 +49,22 @@ const LoginPage = () => {
             />
           </label>
 
-          <label className="input input-bordered rounded flex items-center gap-2">
+          <label className="input input-bordered rounded flex items-center gap-2 relative">
             <MdPassword />
             <input
-              type="password"
-              className="grow"
+              type={showPassword ? "text" : "password"}
+              className="grow mr-6"
               placeholder="Password"
               name="password"
               onChange={handleInputChange}
               value={formData.password}
             />
+            <span
+              className="absolute right-4 cursor-pointer" // Position to the right
+              onClick={() => setShowPassword(!showPassword)}
+            >
+              {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
+            </span>
           </label>
           <button className="py-3 text-sm font-semibold bg-primary rounded-full text-white  hover:bg-primary/80 transition duration-200">
             {isPending ? "Loading..." : "Login"}
