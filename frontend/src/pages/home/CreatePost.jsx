@@ -65,6 +65,46 @@ const CreatePost = () => {
   const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
+  const [isMobile, setIsMobile] = useState(false);
+  
+    useEffect(() => {
+      const checkIsMobile = () => {
+        // Define your breakpoint
+        const mobileBreakpoint = 768; // px
+  
+        // Update state based on current window width
+        setIsMobile(window.innerWidth <= mobileBreakpoint);
+      };
+  
+      // Initial check when component mounts
+      checkIsMobile();
+  
+      // Add event listener for window resize
+      window.addEventListener("resize", checkIsMobile);
+  
+      // Clean up event listener when component unmounts
+      return () => {
+        window.removeEventListener("resize", checkIsMobile);
+      };
+    }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  
+    // --- Textarea Height Adjustment (separated from mobile check) ---
+    const adjustTextareaHeight = useCallback(() => {
+      const textarea = textareaRef.current;
+      if (textarea) {
+        textarea.style.height = "auto"; // Reset height
+        textarea.style.height = `${textarea.scrollHeight}px`;
+        // Optional: If you want it to always scroll to the bottom when typing,
+        // you can keep this line, but it might not be the "Gemini-like" behavior
+        // you want if the user is scrolling up to edit earlier text.
+        // textarea.scrollTop = textarea.scrollHeight;
+      }
+    }, []);
+  
+    useEffect(() => {
+      adjustTextareaHeight();
+    }, [text, adjustTextareaHeight]);
+
   // Debounce mention query
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -443,21 +483,63 @@ const CreatePost = () => {
     }
   }, []);
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === "Enter" && !e.shiftKey && !isPending) {
-        if (showMentionSuggestions && mentionSuggestions.length > 0) {
-          e.preventDefault();
-          // Optional: automatically select the first suggestion on Enter
-          // handleMentionSelect(mentionSuggestions[0].username);
-        } else {
-          e.preventDefault();
-          handleSubmit(e);
-        }
-      }
-    },
-    [showMentionSuggestions, mentionSuggestions, handleSubmit, isPending]
-  );
+ const handleKeyDown = useCallback(
+   (e) => {
+     if (e.key === "Enter") {
+       if (showMentionSuggestions && mentionSuggestions.length > 0) {
+         e.preventDefault();
+         // Automatically select the first suggestion on Enter
+         handleMentionSelect(mentionSuggestions[0].username);
+       } else if (isMobile) {
+         e.preventDefault(); // Prevent default form submission
+         const { current: input } = textareaRef;
+         if (input) {
+           const start = input.selectionStart;
+           const end = input.selectionEnd;
+           const newValue =
+             text.substring(0, start) + "\n" + text.substring(end);
+           setText(newValue);
+           setTimeout(() => {
+             input.selectionStart = input.selectionEnd = start + 1;
+           }, 0);
+         }
+       } else {
+         // Desktop logic
+         if (e.shiftKey) {
+           e.preventDefault(); // Prevent default form submission
+           const { current: input } = textareaRef;
+           if (input) {
+             const start = input.selectionStart;
+             const end = input.selectionEnd;
+             const newValue =
+               text.substring(0, start) + "\n" + text.substring(end);
+             setText(newValue);
+             setTimeout(() => {
+               input.selectionStart = input.selectionEnd = start + 1;
+             }, 0);
+           }
+         } else {
+           // On desktop, Enter sends the message (and not pending)
+           if (!isPending) {
+             e.preventDefault(); // Prevent default new line behavior for Enter
+             handleSubmit(e);
+           }
+         }
+       }
+     }
+   },
+   [
+     isMobile,
+     textareaRef,
+     text,
+     setText,
+     showMentionSuggestions,
+     mentionSuggestions,
+     handleMentionSelect,
+     isPending,
+     handleSubmit,
+   ]
+ );
 
   const handleAddPollChoice = useCallback(() => {
     if (pollChoices.length < MAX_POLL_CHOICES) {

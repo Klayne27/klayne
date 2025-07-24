@@ -36,25 +36,47 @@ function MessageInput({
   const typingTimeoutRef = useRef(null);
   const { authUser: currentUser } = useAuthUser();
 
-  const [isMobile, setIsMobile] = useState(false);
-
   const { editMessage, isEditing } = useEditMessage(actualConversationId);
 
-  useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    // Simple check for common mobile user agents
-    if (/android|ipad|iphone|ipod/i.test(userAgent)) {
-      setIsMobile(true);
-    }
+  const [isMobile, setIsMobile] = useState(false);
 
-    // Adjust textarea height on messageInput change
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
-      messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
-      // messageInputRef.current.focus();
+  useEffect(() => {
+    const checkIsMobile = () => {
+      // Define your breakpoint
+      const mobileBreakpoint = 768; // px
+
+      // Update state based on current window width
+      setIsMobile(window.innerWidth <= mobileBreakpoint);
+    };
+
+    // Initial check when component mounts
+    checkIsMobile();
+
+    // Add event listener for window resize
+    window.addEventListener("resize", checkIsMobile);
+
+    // Clean up event listener when component unmounts
+    return () => {
+      window.removeEventListener("resize", checkIsMobile);
+    };
+  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+
+  // --- Textarea Height Adjustment (separated from mobile check) ---
+  const adjustTextareaHeight = useCallback(() => {
+    const textarea = messageInputRef.current;
+    if (textarea) {
+      textarea.style.height = "auto"; // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`;
+      // Optional: If you want it to always scroll to the bottom when typing,
+      // you can keep this line, but it might not be the "Gemini-like" behavior
+      // you want if the user is scrolling up to edit earlier text.
+      // textarea.scrollTop = textarea.scrollHeight;
     }
-  }, [messageInput, messageInputRef]);
+  }, []);
+
+  useEffect(() => {
+    adjustTextareaHeight();
+  }, [messageInput, adjustTextareaHeight]);
 
   // --- MODIFIED: emitTyping now accepts isEditing flag ---
   const emitTyping = useCallback(
@@ -215,6 +237,7 @@ function MessageInput({
             const newValue =
               messageInput.substring(0, start) + "\n" + messageInput.substring(end);
             setMessageInput(newValue);
+            // Crucially, set the cursor position right after the new line
             setTimeout(() => {
               input.selectionStart = input.selectionEnd = start + 1;
             }, 0);
@@ -233,96 +256,136 @@ function MessageInput({
     handleSendMessage(e);
   };
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
+  const handleSendMessage = useCallback(
+    async (e) => {
+      e.preventDefault();
 
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
-    }
-    emitStopTyping();
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current);
+        typingTimeoutRef.current = null;
+      }
+      emitStopTyping();
 
-    if (!messageInput.trim() && !imageFile) return;
+      if (!messageInput.trim() && !imageFile) return;
 
-    if (!otherUser) {
-      toast.error("No recipient selected.");
-      return;
-    }
-
-    // const wasInputFocused = messageInputRef.current === document.activeElement;
-
-    const repliedToId = replyingToMessage ? replyingToMessage._id : null;
-
-    const messagePayload = {
-      recipientId: otherUser._id,
-      message: messageInput,
-      img: null,
-      conversationId: actualConversationId,
-      repliedTo: repliedToId,
-    };
-
-    try {
-      if (imageFile) {
-        const reader = new FileReader();
-        const imageDataUrl = await new Promise((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result);
-          reader.onerror = reject;
-          reader.readAsDataURL(imageFile);
-        });
-        messagePayload.img = imageDataUrl;
+      if (!otherUser) {
+        toast.error("No recipient selected.");
+        return;
       }
 
-      sendMessage(messagePayload);
+      // const wasInputFocused = messageInputRef.current === document.activeElement;
 
-      setMessageInput("");
-      setImageFile(null);
-      setReplyingToMessage(null);
-      currentOptimisticIdRef.current = null;
+      const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
-      // if (messageInputRef.current && wasInputFocused && isMobile) {
-      //   setTimeout(() => {
-      //     messageInputRef.current.focus();
-      //   }, 0);
-      // }
+      const messagePayload = {
+        recipientId: otherUser._id,
+        message: messageInput,
+        img: null,
+        conversationId: actualConversationId,
+        repliedTo: repliedToId,
+      };
 
-      if (isMobile && messageInputRef.current) {
-        messageInputRef.current.focus();
+      try {
+        if (imageFile) {
+          const reader = new FileReader();
+          const imageDataUrl = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result);
+            reader.onerror = reject;
+            reader.readAsDataURL(imageFile);
+          });
+          messagePayload.img = imageDataUrl;
+        }
+
+        sendMessage(messagePayload);
+
+        setMessageInput("");
+        setImageFile(null);
+        setReplyingToMessage(null);
+        currentOptimisticIdRef.current = null;
+
+        // if (messageInputRef.current && wasInputFocused && isMobile) {
+        //   setTimeout(() => {
+        //     messageInputRef.current.focus();
+        //   }, 0);
+        // }
+
+        if (isMobile && messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      } catch (error) {
+        console.error("Error during message send process:", error);
+        toast.error("Failed to send message.");
       }
-    } catch (error) {
-      console.error("Error during message send process:", error);
-      toast.error("Failed to send message.");
-    }
-  };
+    },
+    [
+      emitStopTyping,
+      messageInput,
+      imageFile,
+      otherUser,
+      replyingToMessage,
+      actualConversationId,
+      sendMessage,
+      setMessageInput,
+      setImageFile,
+      setReplyingToMessage,
+      currentOptimisticIdRef,
+      isMobile,
+      messageInputRef,
+    ]
+  );
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
+  const handleSubmit = useCallback(
+    (e) => {
+      e.preventDefault();
 
-    const trimmedMessage = messageInput.replace(/\s/g, "");
+      const trimmedMessage = messageInput.replace(/\s/g, "");
 
-    if (trimmedMessage.length === 0 && !imageFile) {
-      // If the input is empty or only whitespace and no image,
-      // and it's a mobile device, ensure focus remains to prevent keyboard close.
-      if (isMobile && messageInputRef.current) {
-        messageInputRef.current.focus();
+      if (trimmedMessage.length === 0 && !imageFile) {
+        // If the input is empty or only whitespace and no image,
+        // and it's a mobile device, ensure focus remains to prevent keyboard close.
+        if (isMobile && messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+        return;
       }
-      return;
-    }
 
-    if (editingMessage) {
-      // Handle message editing
-      editMessage({ messageId: editingMessage._id, newText: messageInput });
-      setEditingMessage(null); // Exit edit mode
-      setMessageInput(""); // Clear input after editing
+      if (editingMessage) {
+        // Handle message editing
+        editMessage({ messageId: editingMessage._id, newText: messageInput });
+        setEditingMessage(null); // Exit edit mode
+        setMessageInput(""); // Clear input after editing
 
-      // Keep keyboard open after editing on mobile
-      if (isMobile && messageInputRef.current) {
-        messageInputRef.current.focus();
+        // Keep keyboard open after editing on mobile
+        if (isMobile && messageInputRef.current) {
+          messageInputRef.current.focus();
+        }
+      } else {
+        // Handle sending new message
+        handleSendMessage(e); // Your original send logic
       }
-    } else {
-      // Handle sending new message
-      handleSendMessage(e); // Your original send logic
-    }
-  };
+    },
+    [
+      messageInput,
+      imageFile,
+      isMobile,
+      messageInputRef,
+      editingMessage,
+      editMessage,
+      setEditingMessage,
+      handleSendMessage,
+      setMessageInput,
+    ]
+  );
+
+  // const handleKeyDown = useCallback(
+  //   (e) => {
+  //     if (e.key === "Enter" && !e.shiftKey) {
+  //       e.preventDefault();
+  //       handleSubmit(e);
+  //     }
+  //   },
+  //   [handleSubmit]
+  // );
 
   const onEmojiClick = (emojiObject) => {
     setMessageInput((prevText) => prevText + emojiObject.emoji);

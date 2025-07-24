@@ -1,5 +1,5 @@
 // src/components/publicChat/PublicMessageInput.jsx
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useCallback } from "react";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
 import toast from "react-hot-toast";
@@ -57,30 +57,42 @@ const PublicMessageInput = ({
     }
     return "Several people are typing"; // Or "Several people are editing" if isEditingAny is true for some
   };
+  
+    useEffect(() => {
+      const checkIsMobile = () => {
+        // Define your breakpoint
+        const mobileBreakpoint = 768; // px
+  
+        // Update state based on current window width
+        setIsMobile(window.innerWidth <= mobileBreakpoint);
+      };
+  
+      // Initial check when component mounts
+      checkIsMobile();
+  
+      // Add event listener for window resize
+      window.addEventListener("resize", checkIsMobile);
+  
+      // Clean up event listener when component unmounts
+      return () => {
+        window.removeEventListener("resize", checkIsMobile);
+      };
+    }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  
+    // --- Textarea Height Adjustment (separated from mobile check) ---
+    const adjustTextareaHeight = useCallback(() => {
+      const textarea = messageInputRef.current;
+      if (textarea) {
+        textarea.style.height = "auto"; // Reset height
+        textarea.style.height = `${textarea.scrollHeight}px`;
+      }
+    }, []);
+  
+    useEffect(() => {
+      adjustTextareaHeight();
+    }, [messageContent, adjustTextareaHeight]);
 
-  // Adjust textarea height
-  useEffect(() => {
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = `${messageInputRef.current.scrollHeight}px`;
-    }
-  }, [messageContent]);
 
-  useEffect(() => {
-    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-    // Simple check for common mobile user agents
-    if (/android|ipad|iphone|ipod/i.test(userAgent)) {
-      setIsMobile(true);
-    }
-
-    // Adjust textarea height on messageInput change
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
-      messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
-      // messageInputRef.current.focus();
-    }
-  }, [messageContent, messageInputRef]);
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
