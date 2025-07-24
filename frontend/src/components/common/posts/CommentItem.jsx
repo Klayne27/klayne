@@ -769,7 +769,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
                 <button
                   type="submit"
-                  className="hidden md:block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-primary-content transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
+                  className="block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-primary-content transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
                   disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
                 >
                   Reply

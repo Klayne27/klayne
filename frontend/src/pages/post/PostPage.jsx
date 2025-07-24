@@ -582,7 +582,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
             </button>
             <button
               type="submit"
-              className="hidden md:block px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-primary-content rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
+              className="block px-2 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-primary-content rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
               disabled={
                 isCreatingComment || (!commentText.trim() && !mainCommentMediaPreview)
               }
