@@ -36,6 +36,7 @@ const PublicMessageInput = ({
   const [selectedFile, setSelectedFile] = useState(null);
   const [previewImage, setPreviewImage] = useState(null);
   const [messageContent, setMessageContent] = useState("");
+  const [isMobile, setIsMobile] = useState(false);
 
   const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
 
@@ -65,6 +66,21 @@ const PublicMessageInput = ({
     }
   }, [messageContent]);
 
+  useEffect(() => {
+    const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+    // Simple check for common mobile user agents
+    if (/android|ipad|iphone|ipod/i.test(userAgent)) {
+      setIsMobile(true);
+    }
+
+    // Adjust textarea height on messageInput change
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = "auto";
+      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+      messageInputRef.current.scrollTop = messageInputRef.current.scrollHeight;
+      // messageInputRef.current.focus();
+    }
+  }, [messageContent, messageInputRef]);
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
@@ -277,9 +293,40 @@ const PublicMessageInput = ({
   };
 
   const handleKeyDown = (e) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendMessageOrEdit(e);
+    if (e.key === "Enter") {
+      if (isMobile) {
+        e.preventDefault(); // Prevent default form submission
+        const { current: input } = messageInputRef;
+        if (input) {
+          const start = input.selectionStart;
+          const end = input.selectionEnd;
+          const newValue =
+            messageContent.substring(0, start) + "\n" + messageContent.substring(end);
+          setMessageContent(newValue);
+          setTimeout(() => {
+            input.selectionStart = input.selectionEnd = start + 1;
+          }, 0);
+        }
+      } else {
+        if (e.shiftKey) {
+          e.preventDefault(); // Prevent default form submission
+          const { current: input } = messageInputRef;
+          if (input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const newValue =
+              messageContent.substring(0, start) + "\n" + messageContent.substring(end);
+            setMessageContent(newValue);
+            setTimeout(() => {
+              input.selectionStart = input.selectionEnd = start + 1;
+            }, 0);
+          }
+        } else {
+          // On desktop, Enter sends the message
+          e.preventDefault(); // Prevent default new line behavior for Enter
+          handleSendMessageOrEdit(e);
+        }
+      }
     }
   };
 

@@ -193,15 +193,32 @@ function MessageInput({
   const handleKeyDown = (e) => {
     if (e.key === "Enter") {
       if (isMobile) {
-        // On mobile, pressing Enter (from the keyboard UI) creates a new line
-        // The send button will be used to send the message
         e.preventDefault(); // Prevent default form submission
-        setMessageInput((prev) => prev + "\n");
+        const { current: input } = messageInputRef;
+        if (input) {
+          const start = input.selectionStart;
+          const end = input.selectionEnd;
+          const newValue =
+            messageInput.substring(0, start) + "\n" + messageInput.substring(end);
+          setMessageInput(newValue);
+          setTimeout(() => {
+            input.selectionStart = input.selectionEnd = start + 1;
+          }, 0);
+        }
       } else {
-        // On desktop, Shift + Enter creates a new line
         if (e.shiftKey) {
           e.preventDefault(); // Prevent default form submission
-          setMessageInput((prev) => prev + "\n");
+          const { current: input } = messageInputRef;
+          if (input) {
+            const start = input.selectionStart;
+            const end = input.selectionEnd;
+            const newValue =
+              messageInput.substring(0, start) + "\n" + messageInput.substring(end);
+            setMessageInput(newValue);
+            setTimeout(() => {
+              input.selectionStart = input.selectionEnd = start + 1;
+            }, 0);
+          }
         } else {
           // On desktop, Enter sends the message
           e.preventDefault(); // Prevent default new line behavior for Enter
@@ -379,26 +396,6 @@ function MessageInput({
   // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
     <>
-      {/* {isTypingOtherUser && (
-        <div className="flex justify-start px-4 left-0 p-1 absolute bottom-0 items-center text-gray-400 text-sm">
-          <span className="animate-pulse font-semibold">
-            {selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
-              ?.fullName || "Other user"}{" "}
-            is typing
-          </span>
-          <span className="flex ml-1 gap-0.5 mt-2.5">
-            <span className="inline-block pulsing-dot pulsing-dot-1">
-              <FaCircle size={6} />
-            </span>
-            <span className="inline-block pulsing-dot pulsing-dot-2">
-              <FaCircle size={6} />
-            </span>
-            <span className="inline-block pulsing-dot pulsing-dot-3">
-              <FaCircle size={6} />
-            </span>
-          </span>
-        </div>
-      )} */}
       <input
         type="file"
         accept="image/*"
@@ -442,7 +439,13 @@ function MessageInput({
           onChange={handleMessageInputChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          placeholder={isEditingMode ? "Editing message..." : replyingToMessage ? "Send your reply..." : "Type your message..."}
+          placeholder={
+            isEditingMode
+              ? "Editing message..."
+              : replyingToMessage
+              ? "Send your reply..."
+              : "Type your message..."
+          }
           className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
           ref={messageInputRef}
           rows={1}
