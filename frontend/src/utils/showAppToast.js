@@ -7,8 +7,8 @@ const SINGLE_TOAST_ID = "app-single-toast";
 const commonToastStyle = {
   background: "#1DA1F2", // Twitter Blue background
   color: "#fff",
-  borderRadius: "8px",
-  padding: "12px 16px",
+  borderRadius: "4px",
+  padding: "8px 16px",
   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   fontSize: "15px",
   fontWeight: "500",
@@ -34,7 +34,6 @@ export const showAppToast = (message, type = "blank") => {
         ...options,
         style: {
           ...options.style, // Merge common styles
-          background: "#ef4444", // Tailwind red-500 for error
         },
       });
       break;
