@@ -130,6 +130,10 @@ const Post = ({
       return;
     }
 
+    if (pathname.includes("/post/")) {
+      return;
+    }
+
     if (
       e.target.closest("a") ||
       e.target.closest("button") ||
@@ -217,6 +221,7 @@ const Post = ({
     event.stopPropagation();
     if (openImageModal && mediaType === "image") {
       openImageModal(mediaUrl);
+      console.log(mediaUrl);
     }
   };
 

@@ -5,8 +5,8 @@ const ImageModal = ({ src, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75"
-      onClick={onClose} 
+      className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-75"
+      onClick={onClose}
     >
       <div
         className="relative max-w-full max-h-full p-4"
@@ -25,6 +25,14 @@ const ImageModal = ({ src, onClose }) => {
           <IoClose />
         </button>
       </div>
+      <a
+        href={src}
+        target="_blank" 
+        rel="noopener noreferrer" 
+        className="text-gray-400 hover:underline cursor-pointer mt-4"
+      >
+        View original
+      </a>
     </div>
   );
 };
