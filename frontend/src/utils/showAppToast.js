@@ -24,13 +24,13 @@ export const showAppToast = (message, type = "blank") => {
 
   switch (type) {
     case "success":
-      showAppToast(message, {
+      toast.success(message, {
         ...options,
         duration: 2000, // Shorter duration for success
       });
       break;
     case "error":
-      showAppToast(message, {
+      toast.error(message, {
         ...options,
         style: {
           ...options.style, // Merge common styles
