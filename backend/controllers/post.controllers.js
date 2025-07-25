@@ -1051,12 +1051,10 @@ export const repostPost = async (req, res) => {
         message: "Repost removed successfully.",
       });
     } else {
-      // --- CREATE REPOST ---
+
       const newRepost = new Post({
         user: userId,
         repostedFrom: originalPostId,
-        pollOptions: originalPost.pollOptions,
-        pollTotalVotes: originalPost.pollTotalVotes,
         publishedAt: new Date(), // A repost happens NOW
       });
       await newRepost.save();
@@ -1212,9 +1210,9 @@ export const voteOnPoll = async (req, res) => {
     }
 
     // Optional: Add blocking checks here if you want to prevent blocked users from voting
-    if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
-      return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
-    }
+    // if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
+    //   return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
+    // }
 
     // 3. Find the specific poll option using its _id (Mongoose subdocument method)
     const selectedOption = post.pollOptions.id(optionId); // `id()` is a Mongoose array method to find subdocuments by their `_id`

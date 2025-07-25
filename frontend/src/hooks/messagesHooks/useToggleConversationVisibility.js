@@ -1,7 +1,6 @@
-// src/hooks/messagesHooks/useToggleConversationVisibility.js (Updated)
+// src/hooks/messagesHooks/useToggleConversationVisibility.js
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { toggleConversationVisibilityApi } from "../../api/messagesApi";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -9,52 +8,45 @@ export const useToggleConversationVisibility = () => {
   const queryClient = useQueryClient();
 
   const { mutate: toggleVisibility, isPending: isTogglingVisibility } = useMutation({
-    // 1. Destructure the conversationId from the input object for the API call
     mutationFn: ({ conversationId }) => toggleConversationVisibilityApi(conversationId),
 
-    // 2. Update onMutate to be smarter
-    onMutate: async ({ conversationId, isHiding = true }) => {
-      // We only perform the optimistic REMOVAL if we are explicitly HIDING.
-      // For unhiding, we'll do nothing here and let onSettled refetch the data.
-      if (!isHiding) {
-        return; // Exit early
-      }
-
+    onMutate: async ({ conversationId }) => {
+      // We only need to do optimistic updates for hiding. Un-hiding can wait for the refetch.
       await queryClient.cancelQueries({ queryKey: ["conversations"] });
 
-      const previousConversationsData = queryClient.getQueryData(["conversations"]);
+      const previousConversations = queryClient.getQueryData(["conversations"]);
 
-      // 3. Add a guard clause: If the cache is empty, we can't do an optimistic update.
-      if (!previousConversationsData) {
+      // If there's no previous data, we can't do anything.
+      if (!previousConversations) {
         return;
       }
 
+      // **THE FIX IS HERE**
+      // Optimistically remove the conversation from the list
       queryClient.setQueryData(["conversations"], (oldData) => {
-        // More robust check to prevent crash if data structure is unexpected
-        if (!oldData?.conversations) {
+        // If oldData is not an array, do nothing
+        if (!Array.isArray(oldData)) {
           return oldData;
         }
-
-        const updatedConversations = oldData.conversations.filter(
-          (conv) => conv._id !== conversationId
-        );
-
-        return { ...oldData, conversations: updatedConversations };
+        // **Directly filter the oldData array**
+        return oldData.filter((conv) => conv._id !== conversationId);
       });
 
-      return { previousConversationsData };
+      // Return context with the previous data for rollback on error
+      return { previousConversations };
     },
 
     onError: (err, variables, context) => {
-      // This rollback logic is still correct
-      if (context?.previousConversationsData) {
-        queryClient.setQueryData(["conversations"], context.previousConversationsData);
+      // If the mutation fails, roll back to the previous state
+      if (context?.previousConversations) {
+        queryClient.setQueryData(["conversations"], context.previousConversations);
       }
-      showAppToast(err.message || "Failed to update conversation.", "error");
+      showAppToast(err.message || "Failed to hide conversation.", "error");
     },
 
-    // This runs for both success and error, ensuring data consistency
     onSettled: () => {
+      // Always refetch after the mutation is settled (either success or error)
+      // to ensure the client state is in sync with the server.
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

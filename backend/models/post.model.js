@@ -93,6 +93,7 @@ const postSchema = new mongoose.Schema(
         ],
       },
     ],
+    
     pollTotalVotes: {
       type: Number,
       default: 0,

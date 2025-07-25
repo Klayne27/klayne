@@ -4,7 +4,6 @@ import { Link } from "react-router-dom";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
-import { FiTrash } from "react-icons/fi";
 import React from "react";
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility";
 import { CiCircleMinus } from "react-icons/ci";
@@ -17,7 +16,7 @@ function ConversationItem({
 }) {
   const { authUser: currentUser } = useAuthUser();
 
-  const { toggleVisibility, isPending } = useToggleConversationVisibility();
+  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
