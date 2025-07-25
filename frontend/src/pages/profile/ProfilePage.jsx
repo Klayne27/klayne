@@ -57,7 +57,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser(); // USE NEW HOOK
 
-
   const {
     userProfile,
     isLoading,
@@ -69,8 +68,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     hasBlockedYou,
     httpStatus,
   } = useFetchUserProfile(username);
-const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
-  useGetOrCreateConversation();
+  const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
+    useGetOrCreateConversation();
 
   const {
     conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
@@ -207,47 +206,20 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
       return;
     }
 
-    // Good to disable interaction while these are loading/in-progress
-    if (isLoadingConversationStatus || isTogglingVisibility) {
-      // Maybe return a loading spinner or disable the button instead of a <p> tag
-      return; // Or return a loading indicator JSX
-    }
-
-    if (isErrorConversationStatus) {
-      console.error("Error fetching conversation status:", conversationStatusError);
-      showAppToast("Failed to get conversation status.", "error"); // Inform the user
-      return;
-    }
-
-    if (conversationStatus && conversationStatus.conversationId) {
-      const existingConversationId = conversationStatus.conversationId;
-      const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
-
-      if (isHiddenForCurrentUser) {
-
-        toggleVisibility(
-          { conversationId: existingConversationId, isHiding: false },
-          {
-            onSuccess: () => {
-              // Navigate only after the unhide operation is successful
-              navigate(`/messages/${existingConversationId}`);
-            },
-            onError: (err) => {
-              showAppToast(
-                "Failed to unhide conversation: " +
-                  (err.message || "Unknown error", "error")
-              );
-            },
-          }
-        );
-      } else {
-        // Case 2: Conversation exists and is NOT hidden for the current user.
-        // Just navigate to it directly. No API call to toggle visibility needed.
-        navigate(`/messages/${existingConversationId}`);
-      }
-    } 
+    getOrCreateConversation(userProfile?._id, {
+      onSuccess: (conversation) => {
+        if (conversation && conversation._id) {
+          navigate(`/messages/${conversation._id}`);
+        } else {
+          console.error("No conversation ID received after get/create conversation");
+          showAppToast("Failed to open chat: Conversation ID missing.", "error");
+        }
+      },
+      onError: (err) => {
+        console.error("Failed to open chat:", err);
+      },
+    });
   };
-
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
@@ -414,8 +386,6 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
                   onClick={handleMessageClick}
                   className="px-1 border rounded-full hover:bg-secondary border-accent transition duration-200 z-20"
                   disabled={
-                    isLoadingConversationStatus ||
-                    isTogglingVisibility ||
                     !authUser ||
                     !userProfile?._id ||
                     isBlockingRelationship
