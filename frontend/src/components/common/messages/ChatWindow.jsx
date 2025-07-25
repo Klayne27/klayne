@@ -55,9 +55,18 @@ const ChatWindow = ({
     (p) => p?._id !== currentUser?._id
   );
 
+  const handleOptimisticScroll = useCallback(() => {
+    didMessageJustLanded.current = true;
+  }, []);
+
   const { deleteMessage, isDeletingMessage } = useDeleteMessage(conversationId);
   const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId);
+
+  const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
+    replyingToMessage,
+    onOptimisticSend: handleOptimisticScroll,
+  });
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
 
@@ -65,10 +74,6 @@ const ChatWindow = ({
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight;
     }
-  }, []);
-
-  const handleOptimisticScroll = useCallback(() => {
-    didMessageJustLanded.current = true;
   }, []);
 
   // NEW: Function to explicitly trigger scroll-to-bottom after a reaction
@@ -87,11 +92,6 @@ const ChatWindow = ({
       }, 1); // Small delay to ensure DOM updates
     }
   }, [scrollToBottom, setShowNewMessageButton]);
-
-  const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
-    replyingToMessage,
-    onOptimisticSend: handleOptimisticScroll,
-  });
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
@@ -139,6 +139,10 @@ const ChatWindow = ({
     };
   }, [scrollToBottom, conversationId]);
 
+    const handleLoadImage = useCallback(() => {
+      scrollToBottom();
+    }, [scrollToBottom]);
+
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
@@ -172,6 +176,26 @@ const ChatWindow = ({
       scrollToBottom();
     }
   }, [messages.length, isLoading, conversationId, scrollToBottom, lastMessageId]);
+
+  useEffect(() => {
+    if (isTypingOtherUser) {
+      const listEl = messageListRef.current;
+      if (listEl) {
+        // Check if the user is already at the bottom or very close to it
+        const scrollThreshold = 100; // Define a threshold, e.g., 100px from the bottom
+        const isUserAtBottom =
+          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+        if (isUserAtBottom) {
+          // Only scroll to bottom if the user is already at the bottom
+          const timeoutId = setTimeout(() => {
+            scrollToBottom();
+          }, 1); // Small delay to allow DOM to update
+          return () => clearTimeout(timeoutId);
+        }
+      }
+    }
+  }, [isTypingOtherUser, scrollToBottom]);
 
   // --- Existing scroll handling for fetching older messages ---
   useEffect(() => {
@@ -239,26 +263,6 @@ const ChatWindow = ({
       scrollStateBeforeFetch.current = { scrollTop: 0, scrollHeight: 0 };
     }
   }, [messages, isFetchingNextPage]);
-
-  useEffect(() => {
-    if (isTypingOtherUser) {
-      const listEl = messageListRef.current;
-      if (listEl) {
-        // Check if the user is already at the bottom or very close to it
-        const scrollThreshold = 100; // Define a threshold, e.g., 100px from the bottom
-        const isUserAtBottom =
-          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
-
-        if (isUserAtBottom) {
-          // Only scroll to bottom if the user is already at the bottom
-          const timeoutId = setTimeout(() => {
-            scrollToBottom();
-          }, 1); // Small delay to allow DOM to update
-          return () => clearTimeout(timeoutId);
-        }
-      }
-    }
-  }, [isTypingOtherUser, scrollToBottom]);
 
   // --- Socket and active conversation management ---
   useEffect(() => {
@@ -449,38 +453,38 @@ const ChatWindow = ({
         }
       };
 
-const handleMessageEdited = (updatedMessage) => {
-  // Ensure the update is for the currently viewed conversation
-  if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
-    const queryKey = ["messages", conversationId];
+      const handleMessageEdited = (updatedMessage) => {
+        // Ensure the update is for the currently viewed conversation
+        if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
+          const queryKey = ["messages", conversationId];
 
-    queryClient.setQueryData(queryKey, (oldData) => {
-      if (!oldData) return oldData;
+          queryClient.setQueryData(queryKey, (oldData) => {
+            if (!oldData) return oldData;
 
-      const updatedPages = oldData.pages.map((page) =>
-        page.map((msg) => {
-          // Case 1: This is the message that was actually edited.
-          if (msg._id === updatedMessage._id) {
-            return updatedMessage;
-          }
+            const updatedPages = oldData.pages.map((page) =>
+              page.map((msg) => {
+                // Case 1: This is the message that was actually edited.
+                if (msg._id === updatedMessage._id) {
+                  return updatedMessage;
+                }
 
-          if (msg.repliedTo && msg.repliedTo._id === updatedMessage._id) {
-            return {
-              ...msg, // Keep the reply message itself
-              repliedTo: updatedMessage, // Update its 'repliedTo' data
-            };
-          }
+                if (msg.repliedTo && msg.repliedTo._id === updatedMessage._id) {
+                  return {
+                    ...msg, // Keep the reply message itself
+                    repliedTo: updatedMessage, // Update its 'repliedTo' data
+                  };
+                }
 
-          return msg;
-        })
-      );
-      return { ...oldData, pages: updatedPages };
-    });
+                return msg;
+              })
+            );
+            return { ...oldData, pages: updatedPages };
+          });
 
-    // Invalidate conversations to update the last message in the sidebar
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
-  }
-};
+          // Invalidate conversations to update the last message in the sidebar
+          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        }
+      };
       socket.on("newMessage", handleNewMessage);
       socket.on("messageDeleted", handleMessageDeleted);
       socket.on("messagesSeen", handleMessagesSeen);
@@ -569,6 +573,7 @@ const handleMessageEdited = (updatedMessage) => {
           setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
           onReactionAdded={handleReactionAdded}
+          handleLoadImage={handleLoadImage}
         />
 
         {showNewMessageButton && (

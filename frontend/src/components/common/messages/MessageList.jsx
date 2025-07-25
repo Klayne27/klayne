@@ -34,6 +34,7 @@ const MessageList = forwardRef(function MessageList(
     setEditingMessage,
     isTypingOtherUser,
     onReactionAdded,
+    handleLoadImage,
     selectedConversation,
   },
   ref
@@ -280,6 +281,7 @@ const MessageList = forwardRef(function MessageList(
         enhancedMessagesToRender.length > 0 &&
         enhancedMessagesToRender.map((msg) => (
           <MessageItem
+            handleLoadImage={handleLoadImage}
             key={msg._id}
             msg={msg}
             isCurrentlyTouchDevice={isCurrentlyTouchDevice}

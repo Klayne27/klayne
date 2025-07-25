@@ -31,6 +31,7 @@ const MessageItem = ({
   senderUsername, // Keep this prop for consistency, but it won't be displayed for other users
   isFirstInGroup,
   isLastInGroup,
+  handleLoadImage,
 }) => {
   const navigate = useNavigate();
 
@@ -270,6 +271,7 @@ const MessageItem = ({
         {!isSentByCurrentUser && isFirstInGroup && senderProfileImg && (
           <img
             src={senderProfileImg}
+            onLoad={handleLoadImage}
             alt={`${senderUsername}'s profile`}
             className="size-8 rounded-full object-cover mr-2 mt-0.5 cursor-pointer"
             onClick={() => navigate(`/profile/${senderUsername}`)}
@@ -325,6 +327,7 @@ const MessageItem = ({
               {msg.repliedTo.img && (
                 <img
                   src={msg.repliedTo.img}
+                  onLoad={handleLoadImage}
                   alt="replied message attachment"
                   className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                 />
@@ -334,6 +337,7 @@ const MessageItem = ({
           {msg.img && (
             <img
               src={msg.img}
+              onLoad={handleLoadImage}
               alt="message attachment"
               className="mt-2 rounded-lg w-60 h-auto object-cover cursor-pointer"
               onClick={(e) => {

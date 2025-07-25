@@ -308,12 +308,6 @@ function MessageInput({
         setReplyingToMessage(null);
         currentOptimisticIdRef.current = null;
 
-        // if (messageInputRef.current && wasInputFocused && isMobile) {
-        //   setTimeout(() => {
-        //     messageInputRef.current.focus();
-        //   }, 0);
-        // }
-
         if (isMobile && messageInputRef.current) {
           messageInputRef.current.focus();
         }

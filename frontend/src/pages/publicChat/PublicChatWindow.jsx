@@ -206,6 +206,23 @@ const PublicChatWindow = ({ openImageModal }) => {
     return () => observer.disconnect();
   }, [messages]);
 
+    useLayoutEffect(() => {
+      if (!messageListRef.current || isLoadingMessages) return;
+
+      if (
+        messages.length > 0 &&
+        !isUserScrollingUp.current &&
+        !scrollStateBeforeFetch.current.scrollHeight
+      ) {
+        scrollToBottom();
+        return;
+      }
+
+      if (shouldScrollToBottom.current) {
+        scrollToBottom();
+        shouldScrollToBottom.current = false;
+      }
+    }, [messages.length, isLoadingMessages, scrollToBottom]);
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current;
@@ -233,24 +250,6 @@ const PublicChatWindow = ({ openImageModal }) => {
       }
     }
   }, [fetchNextPage, hasNextPage, isFetchingNextPage]); // No need to add setShowNewMessageButton here
-
-  useLayoutEffect(() => {
-    if (!messageListRef.current || isLoadingMessages) return;
-
-    if (
-      messages.length > 0 &&
-      !isUserScrollingUp.current &&
-      !scrollStateBeforeFetch.current.scrollHeight
-    ) {
-      scrollToBottom();
-      return;
-    }
-
-    if (shouldScrollToBottom.current) {
-      scrollToBottom();
-      shouldScrollToBottom.current = false;
-    }
-  }, [messages.length, isLoadingMessages, scrollToBottom]);
 
   useEffect(() => {
     if (messages.length === 0) {
