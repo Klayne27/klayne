@@ -77,7 +77,7 @@ const ConversationsList = ({
           navigate(`/messages/${conversation._id}`);
         } else {
           console.error("No conversation ID received after get/create conversation");
-          showAppToast("Failed to open chat: Conversation ID missing.", "error");
+          showAppToast("Failed to open chat: Conversation ID missing.");
         }
       },
       onError: (err) => {

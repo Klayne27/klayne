@@ -5,7 +5,7 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
       headers: {
         "Content-Type": "application/json",
       },
-      credentials: "include", // Send cookies with the request
+      credentials: "include",
     });
 
     const data = await res.json();

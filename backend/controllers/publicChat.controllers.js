@@ -444,7 +444,6 @@ export const deleteOwnPublicMessage = async (req, res) => {
   }
 };
 
-// Add this function to your controllers/publicChatController.js file
 export const editPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
@@ -512,53 +511,3 @@ export const editPublicMessage = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// export const removeReactionFromPublicMessage = async (req, res) => {
-//   try {
-//     const { messageId } = req.params;
-//     const userId = req.user._id; // The user removing the reaction
-
-//     const message = await PublicChatMessage.findById(messageId);
-
-//     if (!message) {
-//       return res.status(404).json({ error: "Message not found." });
-//     }
-
-//     // Filter out the reaction from the current user
-//     const initialReactionCount = message.reactions.length;
-//     message.reactions = message.reactions.filter(
-//       (reaction) => reaction.userId.toString() !== userId.toString()
-//     );
-
-//     if (message.reactions.length === initialReactionCount) {
-//       return res.status(400).json({ error: "User has no reaction to remove from this message." });
-//     }
-
-//     await message.save();
-
-//     // Populate sender details for real-time broadcast (to get profileImg, username etc. for reactee)
-//     await message.populate({
-//         path: "sender",
-//         select: "username fullName profileImg isAdmin isBannedInPublicChat",
-//     });
-
-//     // Populate reactions.userId to get details of users who reacted
-//     for (let i = 0; i < message.reactions.length; i++) {
-//         await message.reactions[i].populate({
-//             path: 'userId',
-//             select: 'username profileImg' // Select relevant fields
-//         });
-//     }
-
-//     // Emit reaction update to all clients in the public chat room
-//     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageReactionUpdated", {
-//       messageId: message._id,
-//       reactions: message.reactions, // Send the full updated reactions array
-//     });
-
-//     res.status(200).json(message.reactions); // Or send the whole updated message
-//   } catch (error) {
-//     console.error("Error in removeReactionFromPublicMessage controller: ", error.message);
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
