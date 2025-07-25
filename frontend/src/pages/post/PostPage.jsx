@@ -500,9 +500,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       {authUser && (
         <form
           onSubmit={handleAddOrReplyComment}
-          className="px-4 py-3 md:p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
+          className="px-2 py-3 md:p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
         >
-          <div className="flex items-center justify-between gap-2 sm:gap-4">
+          <div className="flex items-center justify-between sm:gap-4">
             <div className="avatar flex-shrink-0">
               <div className="w-8 md:w-9 rounded-full">
                 <img
@@ -523,7 +523,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 placeholder={
                   replyingToComment
                     ? `Replying to @${replyingToComment.user.username}...`
-                    : "Post your comment"
+                    : "Post your reply"
                 }
                 className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
                 disabled={isCreatingComment}
@@ -587,7 +587,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 isCreatingComment || (!commentText.trim() && !mainCommentMediaPreview)
               }
             >
-              {isCreatingComment ? <LoadingSpinner size="sm" /> : "Comment"}
+              {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
             </button>
           </div>
 
