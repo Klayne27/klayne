@@ -240,33 +240,25 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    if (currentPassword || newPassword || confirmNewPassword) {
-      // Check if any password field is provided
-      if (!currentPassword || !newPassword || !confirmNewPassword) {
-        return res.status(400).json({
-          error:
-            "Please provide current password, new password, and confirm new password.",
-        });
-      }
-
+    if (currentPassword && newPassword) {
+      // New: Check if newPassword matches confirmNewPassword
       if (newPassword !== confirmNewPassword) {
-        return res.status(400).json({ error: "New passwords do not match." });
-      }
-
-      if (newPassword.length < 6) {
-        return res
-          .status(400)
-          .json({ error: "Password must be at least 6 characters long." });
+        return res.status(400).json({ error: "New passwords do not match" });
       }
 
       const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch) {
-        return res.status(400).json({ error: "Current password is incorrect." });
+      if (!isMatch)
+        return res.status(400).json({ error: "Current password is incorrect" });
+      if (newPassword.length < 6) {
+        return res
+          .status(400)
+          .json({ error: "Password must be at least 6 characters long" });
       }
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
+
 
     if (profileImg) {
       if (user.profileImg) {
