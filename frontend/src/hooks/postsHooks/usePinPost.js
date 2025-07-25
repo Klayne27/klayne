@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const usePinPost = () => {
   const queryClient = useQueryClient();
@@ -181,7 +182,7 @@ export const usePinPost = () => {
     },
 
     onSuccess: (data, variables) => {
-      toast.success(data.message);
+      showAppToast(data.message, "success");
       const { postId } = variables; // Access from variables, username not needed here
 
       if (authUser?.username) {
@@ -197,7 +198,7 @@ export const usePinPost = () => {
     },
 
     onError: (error, variables, context) => {
-      toast.error(error.message || "Failed to update pin status");
+      showAppToast(error.message || "Failed to update pin status", "error");
       // Rollback optimistic updates using the stored context
       if (context) {
         // Rollback general feeds

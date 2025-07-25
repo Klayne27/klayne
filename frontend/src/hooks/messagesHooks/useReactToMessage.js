@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "react-hot-toast";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { reactToMessageApi } from "../../api/messagesApi";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useReactToMessage = (selectedConversationId) => {
   const queryClient = useQueryClient();
@@ -99,7 +100,7 @@ export const useReactToMessage = (selectedConversationId) => {
 
     // Your onError rollback is correct
     onError: (err, variables, context) => {
-      toast.error(err.message || "Failed to react.");
+      showAppToast(err.message || "Failed to react.", "error");
       if (context?.previousMessages) {
         queryClient.setQueryData(
           ["messages", selectedConversationId],

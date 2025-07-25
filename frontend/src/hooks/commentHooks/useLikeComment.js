@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { likeUnlikeCommentApi } from "../../api/commentsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useLikeComment = () => {
   const queryClient = useQueryClient();
@@ -117,7 +118,7 @@ export const useLikeComment = () => {
     },
     onError: (error, { postId, parentCommentId }, context) => {
       // <--- Add parentCommentId here!
-      toast.error(error.message || "Failed to update comment like status.");
+      showAppToast(error.message || "Failed to update comment like status.", "error");
       // Rollback for top-level comments
       if (context.previousTopLevelCommentsData) {
         queryClient.setQueryData(

@@ -15,10 +15,10 @@
 //     onSuccess: (data, conversationId) => {
 //       queryClient.invalidateQueries({ queryKey: ["conversations"] });
 //       queryClient.removeQueries({ queryKey: ["messages", conversationId] });
-//       toast.success(data.message || "Conversation deleted successfully!");
+//       showAppToast(data.message || "Conversation deleted successfully!");
 //     },
 //     onError: (error) => {
-//       toast.error(error.message || "Failed to delete conversation.");
+//       showAppToast(error.message|| "Failed to delete conversation.");
 //       console.error("Error deleting conversation:", error);
 //     },
 //   });

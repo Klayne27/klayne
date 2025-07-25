@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { followApi } from "../../api/usersApi"; // Assuming followApi toggles follow/unfollow
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 const useFollow = (user) => {
   const queryClient = useQueryClient();
@@ -60,7 +61,7 @@ const useFollow = (user) => {
           context.previousUserProfile
         );
       }
-      toast.error(error.message || "Failed to perform action");
+      showAppToast(error.message || "Failed to perform action", "error");
     },
     onSettled: (data, error, userIdToFollow) => {
       // Invalidate and refetch to ensure the client state is in sync with the server.
@@ -81,7 +82,7 @@ const useFollow = (user) => {
       // Optional: Add a success toast
       // const isFollowing = authUser?.following?.includes(userIdToFollow); // This might be stale here
       // const action = isFollowing ? "Unfollowed" : "Followed";
-      // toast.success(`${action} user successfully!`);
+      // showAppToast(`${action} user successfully!`);
     },
   });
 

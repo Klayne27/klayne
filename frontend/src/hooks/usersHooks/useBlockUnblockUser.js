@@ -1,6 +1,7 @@
 import toast from "react-hot-toast";
 import { blockUnblockUserApi } from "../../api/usersApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient();
@@ -8,7 +9,7 @@ export const useBlockUnblockUser = () => {
   const { mutate: blockUnblockUser, isLoading: isBlocking } = useMutation({
     mutationFn: blockUnblockUserApi,
     onSuccess: (data, variables) => {
-      toast.success(data.message || "User block status updated!");
+      showAppToast(data.message || "User block status updated!", "success");
 
       const targetUserId = variables;
 
@@ -64,7 +65,7 @@ export const useBlockUnblockUser = () => {
       queryClient.invalidateQueries({ queryKey: ["messages"]})
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to update user block status.");
+      showAppToast(error.message || "Failed to update user block status.", "error");
       console.error("Block/Unblock mutation error:", error);
     },
   });

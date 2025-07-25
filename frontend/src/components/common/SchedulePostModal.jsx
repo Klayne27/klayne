@@ -4,6 +4,7 @@ import toast from "react-hot-toast";
 import { IoClose } from "react-icons/io5";
 import { TbCalendarClock } from "react-icons/tb";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import { showAppToast } from "../../utils/showAppToast";
 
 const SchedulePostModal = ({
   isOpen,
@@ -190,7 +191,7 @@ const SchedulePostModal = ({
 
   const handleConfirm = () => {
     if (isOverallPast) {
-      toast.error("Cannot schedule a post in the past.");
+      showAppToast("Cannot schedule a post in the past.", "error");
       return;
     }
 

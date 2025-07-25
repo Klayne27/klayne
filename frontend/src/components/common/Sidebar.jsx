@@ -16,6 +16,7 @@ import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"; // Impor
 import { BiLogOut } from "react-icons/bi";
 import FollowListModal from "./FollowListModal";
 import React from "react";
+import { showAppToast } from "../../utils/showAppToast";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -336,7 +337,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       await deleteAccount(authUser._id);
       setShowSideModal(false); // Close side modal after deletion attempt
     } else {
-      toast.error("User ID not available. Cannot proceed with deletion.");
+      showAppToast("User ID not available. Cannot proceed with deletion.", "error");
     }
   };
 

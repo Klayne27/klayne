@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { logoutApi } from "../../api/authApi";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useLogout = () => {
   const queryClient = useQueryClient();
@@ -11,7 +12,7 @@ export const useLogout = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: () => {
-      toast.error("Logout failed");
+      showAppToast("Logout failed", "error");
     },
   });
 

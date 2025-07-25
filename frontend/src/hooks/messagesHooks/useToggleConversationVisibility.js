@@ -3,6 +3,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { toggleConversationVisibilityApi } from "../../api/messagesApi";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useToggleConversationVisibility = () => {
   const queryClient = useQueryClient();
@@ -49,7 +50,7 @@ export const useToggleConversationVisibility = () => {
       if (context?.previousConversationsData) {
         queryClient.setQueryData(["conversations"], context.previousConversationsData);
       }
-      toast.error(err.message || "Failed to update conversation.");
+      showAppToast(err.message || "Failed to update conversation.", "error");
     },
 
     // This runs for both success and error, ensuring data consistency

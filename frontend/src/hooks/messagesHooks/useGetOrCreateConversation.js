@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { getOrCreateConversationApi } from "../../api/messagesApi";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useGetOrCreateConversation = () => {
   const queryClient = useQueryClient();
@@ -11,7 +12,7 @@ export const useGetOrCreateConversation = () => {
       queryClient.invalidateQueries(["conversations"]);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to open conversation.");
+      showAppToast(error.message || "Failed to open conversation.", "error");
     },
   });
 };

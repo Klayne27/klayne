@@ -1,6 +1,7 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser"; // Assuming this is available
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useRepostPost = () => {
   const queryClient = useQueryClient();
@@ -140,7 +141,7 @@ export const useRepostPost = () => {
       };
     },
     onSuccess: (data, originalPostId, context) => {
-      // toast.success(data.message);
+      // showAppToast(data.message);
 
       // Invalidate to refetch actual data and incorporate any new reposted posts
       queryClient.invalidateQueries({ queryKey: ["posts"] });
@@ -150,7 +151,7 @@ export const useRepostPost = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] }); // Invalidate authUser to reflect updated user's repost count/list if applicable
     },
     onError: (error, originalPostId, context) => {
-      toast.error(error.message || "Failed to toggle repost status");
+      showAppToast(error.message || "Failed to toggle repost status", "error");
       // Rollback
       if (context?.previousPostsData) {
         queryClient.setQueryData(["posts"], context.previousPostsData);

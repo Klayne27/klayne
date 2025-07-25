@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteMessageApi } from "../../api/messagesApi";
 import toast from "react-hot-toast";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useDeleteMessage = (convId) => {
   const queryClient = useQueryClient();
@@ -50,7 +51,7 @@ export const useDeleteMessage = (convId) => {
       // queryClient.invalidateQueries({ queryKey: ["conversations"] }); // To update last message shown in sidebar
     },
     onError: (error, variables, context) => {
-      toast.error(error.message || "Failed to delete message.");
+      showAppToast(error.message || "Failed to delete message.", "error");
 
       // 6. If the mutation fails, roll back to the `previousMessagesData` snapshot.
       if (context?.previousMessagesData) {

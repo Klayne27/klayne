@@ -13,6 +13,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import { showAppToast } from "../../utils/showAppToast";
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null);
@@ -155,7 +156,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
     const nowPlusOneMinute = new Date(Date.now() + 60 * 1000);
     if (newScheduledDateTime < nowPlusOneMinute) {
-      toast.error("Scheduled time must be at least 1 minute in the future.");
+      showAppToast("Scheduled time must be at least 1 minute in the future.", "error");
       return;
     }
 

@@ -2,6 +2,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { deleteMultipleScheduledPostsApi } from "../../api/postsApi";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useDeleteMultipleScheduledPosts = () => {
   const queryClient = useQueryClient();
@@ -15,17 +16,18 @@ export const useDeleteMultipleScheduledPosts = () => {
     mutationFn: (postIds) => deleteMultipleScheduledPostsApi(postIds),
     onSuccess: (data) => {
       if (data.successfulDeletions > 0) {
-        toast.success(
-          `${data.successfulDeletions} scheduled post(s) deleted successfully.`
+        showAppToast(
+          `${data.successfulDeletions} scheduled post(s) deleted successfully.`,
+          "success"
         );
       }
       if (data.failedDeletions > 0) {
-        toast.error(`${data.failedDeletions} scheduled post(s) could not be deleted.`);
+        showAppToast(`${data.failedDeletions} scheduled post(s) could not be deleted.`, "error");
       }
       queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete scheduled posts.");
+      showAppToast(error.message || "Failed to delete scheduled posts.", "error");
     },
   });
 

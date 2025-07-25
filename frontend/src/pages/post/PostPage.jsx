@@ -14,6 +14,7 @@ import { IoClose } from "react-icons/io5";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
+import { showAppToast } from "../../utils/showAppToast";
 
 const PostPage = ({ openImageModal, setFeedType }) => {
   const { pid } = useParams();
@@ -102,8 +103,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
         if (file) {
           // Validate file type (image or video)
           if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-            toast.error(
-              "Pasted content is not a supported image or video type for comments."
+            showAppToast(
+              "Pasted content is not a supported image or video type for comments.", "error"
             );
             setMainCommentMediaFile(null);
             setMainCommentMediaPreview(null);
@@ -115,8 +116,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           // Validate file size (20MB limit for comments)
           const MAX_COMMENT_MEDIA_SIZE_MB = 20;
           if (file.size > MAX_COMMENT_MEDIA_SIZE_MB * 1024 * 1024) {
-            toast.error(
-              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`
+            showAppToast(
+              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`, "error"
             );
             setMainCommentMediaFile(null);
             setMainCommentMediaPreview(null);
@@ -170,8 +171,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        toast.error(
-          "Unsupported file type. Please select an image or a video for your comment."
+        showAppToast(
+          "Unsupported file type. Please select an image or a video for your comment.", "error"
         );
         setMainCommentMediaFile(null);
         setMainCommentMediaPreview(null);
@@ -180,7 +181,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       }
 
       if (file.size > 20 * 1024 * 1024) {
-        toast.error("Comment media size exceeds 20MB limit.");
+        showAppToast("Comment media size exceeds 20MB limit.", "error");
         setMainCommentMediaFile(null);
         setMainCommentMediaPreview(null);
         if (mainCommentMediaInputRef.current) mainCommentMediaInputRef.current.value = "";
@@ -411,9 +412,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   useEffect(() => {
     if (!isLoading && (isError || !post)) {
       if (isError) {
-        toast.error(error?.message || "Could not load post.");
+        showAppToast(error?.message || "Could not load post.", "error");
       } else if (!post) {
-        toast.error("The post you are looking for does not exist or has been deleted.");
+        showAppToast("The post you are looking for does not exist or has been deleted.", "error");
       }
       navigate("/", { replace: true });
     }
@@ -425,8 +426,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       refetchPost();
     }
   }, [pid, refetchComments, refetchPost]);
-
-  console.log(displayPost);
 
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)

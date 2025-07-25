@@ -148,9 +148,7 @@ function App() {
               path="/public-chat"
               element={
                 authUser ? (
-                  <PublicChatPage
-                    openImageModal={openImageModal}
-                  />
+                  <PublicChatPage openImageModal={openImageModal} />
                 ) : (
                   <Navigate to="/login" />
                 )
@@ -211,7 +209,9 @@ function App() {
           className="hidden md:block"
         />
       )}
-      <Toaster />
+      <Toaster
+        position="bottom-center" // Change position to top-center
+      />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
     </div>
   );

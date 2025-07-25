@@ -23,6 +23,7 @@ import {
 } from "../../api/publicChatApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { useMemo } from "react";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const usePublicMessages = () => {
   const queryClient = useQueryClient();
@@ -142,7 +143,7 @@ export const usePublicMessages = () => {
         );
         return { ...oldData, pages: updatedPages };
       });
-      // toast.success("Message deleted by admin.");
+      // showAppToast("Message deleted by admin.");
     };
 
     // Handler for sender-initiated message deletion (removes from DB)
@@ -182,7 +183,7 @@ export const usePublicMessages = () => {
         });
         return { ...oldData, pages: updatedPages };
       });
-      // toast.success("A message was removed.");
+      // showAppToast("A message was removed.");
     };
 
     const handlePublicMessageEdited = (updatedMessage) => {
@@ -381,7 +382,7 @@ export const useSendPublicMessage = () => {
     },
 
     onError: (error, variables, context) => {
-      toast.error(error.message || "Failed to send message");
+      showAppToast(error.message || "Failed to send message", "error");
       // Rollback logic remains mostly the same, ensuring the optimistic message is removed
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
@@ -414,7 +415,7 @@ export const useDeletePublicMessage = () => {
 
     onSuccess: (data, messageId) => {},
     onError: (error) => {
-      toast.error(error.message || "Failed to delete message");
+      showAppToast(error.message || "Failed to delete message", "error");
     },
   });
 
@@ -434,10 +435,10 @@ export const useBanUserFromPublicChat = () => {
     onSuccess: (data) => {
       // Invalidate relevant queries or show success
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Optionally refetch all to clear banned user messages
-      // toast.success("User banned from public chat.");
+      // showAppToast("User banned from public chat.");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to ban user.");
+      showAppToast(error.message || "Failed to ban user.", "error");
     },
   });
 
@@ -457,10 +458,10 @@ export const useUnbanUserFromPublicChat = () => {
     onSuccess: (data) => {
       // Invalidate relevant queries or show success
       queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // toast.success("User unbanned from public chat.");
+      // showAppToast("User unbanned from public chat.");
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to unban user.");
+      showAppToast(error.message || "Failed to unban user.", "error");
     },
   });
 
@@ -531,7 +532,7 @@ export const useAddPublicMessageReaction = () => {
       return { previousMessages };
     },
     onError: (err, variables, context) => {
-      // toast.error(err.message || "Failed to add reaction.");
+      // showAppToastt((err.message || "Failed to add reaction.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
@@ -579,7 +580,7 @@ export const useRemovePublicMessageReaction = () => {
       return { previousMessages };
     },
     onError: (err, variables, context) => {
-      // toast.error(err.message || "Failed to remove reaction.");
+      // showAppToastt((err.message || "Failed to remove reaction.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
@@ -647,7 +648,7 @@ export const useDeleteOwnPublicMessage = () => {
       return { previousMessages };
     },
     onError: (err, messageIdToDelete, context) => {
-      toast.error(err.message || "Failed to delete message.");
+      showAppToast(err.message || "Failed to delete message.", "error");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
@@ -726,7 +727,7 @@ export const useEditPublicMessage = () => {
 
     onError: (error, variables, context) => {
       console.error("Mutation failed:", error); // Log the actual error to the console
-      toast.error(error.message || "Failed to edit message.");
+      showAppToast(error.message || "Failed to edit message.", "error");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }

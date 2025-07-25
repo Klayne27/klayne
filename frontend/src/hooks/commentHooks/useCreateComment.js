@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addCommentApi, replyToCommentApi } from "../../api/commentsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useCreateComment = (postId, parentCommentId = null) => {
   const queryClient = useQueryClient();
@@ -186,7 +187,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       };
     },
     onSuccess: (newRealComment, variables, context) => {
-      toast.success(parentCommentId ? "Reply added!" : "Comment added!");
+      showAppToast(parentCommentId ? "Reply added!" : "Comment added!", "success");
 
       // Update the optimistic comment with real data
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
@@ -218,7 +219,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
     onError: (error, variables, context) => {
-      toast.error(error.message || "Failed to add comment.");
+      showAppToast(error.message || "Failed to add comment.", "error");
       // Rollback optimistic updates
       if (context.previousComments) {
         queryClient.setQueryData(commentsQueryKey, context.previousComments);

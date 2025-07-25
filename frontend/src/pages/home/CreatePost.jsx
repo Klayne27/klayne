@@ -18,6 +18,7 @@ import ScheduledPostsModal from "../../components/common/ScheduledPostsModal";
 import EditScheduledPostModal from "../../components/common/EditSchedulePostModal";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import { useDebounce } from "../../hooks/useDebounce";
+import { showAppToast } from "../../utils/showAppToast";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -214,11 +215,11 @@ const CreatePost = () => {
 
           if (file) {
             if (!file.type.startsWith("image/")) {
-              toast.error("Pasted content is not a supported image type.");
+              showAppToast("Pasted content is not a supported image type.", "error");
               return;
             }
             if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-              toast.error(`Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`);
+              showAppToast(`Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error");
               return;
             }
 
@@ -348,28 +349,28 @@ const CreatePost = () => {
         );
 
         if (text.trim() === "") {
-          toast.error("Polls should have a question/text.");
+          showAppToast("Polls should have a question/text.", "error");
           return;
         }
 
         if (pollChoices[0].text.trim() === "" || pollChoices[1].text.trim() === "") {
-          toast.error("At least the first two poll options must be filled.");
+          showAppToast("At least the first two poll options must be filled.", "error");
           return;
         }
 
         if (
           filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         ) {
-          toast.error(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`);
+          showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error");
           return;
         }
 
         if (selectedFile) {
-          toast.error("You cannot post a poll with an image or video.");
+          showAppToast("You cannot post a poll with an image or video.", "error");
           return;
         }
         if (scheduledAt) {
-          toast.error("You cannot schedule a poll.");
+          showAppToast("You cannot schedule a poll.", "error");
           return;
         }
 
@@ -381,7 +382,7 @@ const CreatePost = () => {
         createPost(postData, {
           onSuccess: resetForm,
           onError: (err) => {
-            toast.error(err?.message || "Failed to create post with poll.");
+            showAppToast(err?.message || "Failed to create post with poll.", "error");
           },
         });
         return;
@@ -389,12 +390,12 @@ const CreatePost = () => {
 
       // Regular post (text or media)
       if (text.trim() === "" && !selectedFile) {
-        // toast.error("Post must have text, an image, or a video.");
+        // showAppToastt(("Post must have text, an image, or a video.");
         return;
       }
 
       if (selectedFile && scheduledAt) {
-        toast.error("You cannot schedule a post with media.");
+        showAppToast("You cannot schedule a post with media.", "error");
         return;
       }
 
@@ -412,7 +413,7 @@ const CreatePost = () => {
           createPost(postData, {
             onSuccess: resetForm,
             onError: (err) => {
-              toast.error(err?.message || "Failed to create post with media.");
+              showAppToast(err?.message || "Failed to create post with media.", "error");
             },
           });
         };
@@ -425,7 +426,7 @@ const CreatePost = () => {
         createPost(postData, {
           onSuccess: resetForm,
           onError: (err) => {
-            toast.error(err?.message || "Failed to create post.");
+            showAppToast(err?.message || "Failed to create post.", "error");
           },
         });
       }
@@ -446,7 +447,7 @@ const CreatePost = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        toast.error("Unsupported file type. Please select an image or a video.");
+        showAppToast("Unsupported file type. Please select an image or a video.", "error");
         setSelectedFile(null);
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = null;
@@ -454,7 +455,7 @@ const CreatePost = () => {
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-        toast.error(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`);
+        showAppToast(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error");
         setSelectedFile(null);
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = null;

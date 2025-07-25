@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteUserAccountAdmin } from "../../api/usersApi"; // Adjust path if needed
 import toast from "react-hot-toast";
 import { useNavigate } from "react-router-dom";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useAdminDeleteUser = () => {
   const queryClient = useQueryClient();
@@ -17,7 +18,7 @@ export const useAdminDeleteUser = () => {
   } = useMutation({
     mutationFn: deleteUserAccountAdmin,
     onSuccess: (data) => {
-      toast.success(data.message || "User account deleted successfully!");
+      showAppToast(data.message || "User account deleted successfully!", "success");
       // Invalidate relevant queries to refresh data after deletion
       queryClient.invalidateQueries({ queryKey: ["users"] }); // Invalidate general user list
       queryClient.invalidateQueries({ queryKey: ["userProfile"] }); // Invalidate specific profile if it was cached
@@ -25,7 +26,7 @@ export const useAdminDeleteUser = () => {
       navigate("/"); // Redirect to home or admin dashboard
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete user account.");
+      showAppToast(error.message || "Failed to delete user account.", "error");
       console.error("Error deleting user account (admin):", error);
     },
   });

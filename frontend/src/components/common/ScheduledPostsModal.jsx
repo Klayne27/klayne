@@ -11,6 +11,7 @@ import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDelet
 import toast from "react-hot-toast";
 import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import { showAppToast } from "../../utils/showAppToast";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
@@ -66,7 +67,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
   const handleDeleteSelected = () => {
     if (selectedPostIds.length === 0) {
-      toast.error("Please select at least one post to delete.");
+      showAppToast("Please select at least one post to delete.", "error");
       return;
     }
     setShowDeleteConfirmModal(true); // Open the confirmation modal

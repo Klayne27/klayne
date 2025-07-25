@@ -30,6 +30,7 @@ import toast from "react-hot-toast";
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
 import { useQueryClient } from "@tanstack/react-query";
 import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation";
+import { showAppToast } from "../../utils/showAppToast";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null);
@@ -202,7 +203,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
     if (isBlockingRelationship) return;
 
     if (!authUser || !userProfile?._id) {
-      toast.error("Authentication or profile data is missing.");
+      showAppToast("Authentication or profile data is missing.", "error");
       return;
     }
 
@@ -214,7 +215,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
 
     if (isErrorConversationStatus) {
       console.error("Error fetching conversation status:", conversationStatusError);
-      toast.error("Failed to get conversation status."); // Inform the user
+      showAppToast("Failed to get conversation status.", "error"); // Inform the user
       return;
     }
 
@@ -232,8 +233,9 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
               navigate(`/messages/${existingConversationId}`);
             },
             onError: (err) => {
-              toast.error(
-                "Failed to unhide conversation: " + (err.message || "Unknown error")
+              showAppToast(
+                "Failed to unhide conversation: " +
+                  (err.message || "Unknown error", "error")
               );
             },
           }

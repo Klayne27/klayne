@@ -104,7 +104,7 @@ export const useDeleteComment = () => {
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
     },
     onError: (error, variables, context) => {
-      // toast.error(error.message || "Failed to delete comment.");
+      // showAppToast(error.message|| "Failed to delete comment.");
       // Revert optimistic updates on error
       if (context.previousCommentsData) {
         const commentsQueryKey = context.optimisticParentCommentId

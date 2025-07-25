@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { voteOnPollApi } from "../../api/postsApi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 // Assume your API client has a function to send votes
 // e.g., import { voteOnPollApi } from "../../../api/postsApi"; // You'll need to create this
@@ -33,17 +34,17 @@ const PollDisplay = ({ post }) => {
       setUserVotedOptionId(variables.optionId);
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to cast vote.");
+      showAppToast(error.message|| "Failed to cast vote.", "error");
     },
   });
 
   const handleVote = (optionId) => {
     if (!authUser) {
-      toast.error("You must be logged in to vote.");
+      showAppToast("You must be logged in to vote.", "error");
       return;
     }
     if (userVotedOptionId) {
-      toast.info("You have already voted on this poll.");
+      showAppToast("You have already voted on this poll.", "error");
       return;
     }
     voteOnPoll({ postId: post._id, optionId });

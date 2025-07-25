@@ -10,6 +10,7 @@ import { FaCircle, FaSpinner } from "react-icons/fa";
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage";
 import { FaReply } from "react-icons/fa6";
 import React from "react";
+import { showAppToast } from "../../../utils/showAppToast";
 
 function MessageInput({
   otherUser,
@@ -118,7 +119,7 @@ function MessageInput({
         if (file) {
           // Basic validation for image file
           if (!file.type.startsWith("image/")) {
-            toast.error("Pasted content is not a supported image type.");
+            showAppToast("Pasted content is not a supported image type.", "error");
             setImageFile(null);
             if (imageInputRef.current) imageInputRef.current.value = null;
             return;
@@ -128,7 +129,7 @@ function MessageInput({
           // For example, 5MB for chat images, adjust as needed
           const MAX_IMAGE_SIZE_MB = 5;
           if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-            toast.error(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`);
+            showAppToast(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`, "error");
             setImageFile(null);
             if (imageInputRef.current) imageInputRef.current.value = null;
             return;
@@ -274,7 +275,7 @@ function MessageInput({
       if (!messageInput.trim() && !imageFile) return;
 
       if (!otherUser) {
-        toast.error("No recipient selected.");
+        showAppToast("No recipient selected.", "error");
         return;
       }
 
@@ -313,7 +314,7 @@ function MessageInput({
         }
       } catch (error) {
         console.error("Error during message send process:", error);
-        toast.error("Failed to send message.");
+        showAppToast("Failed to send message.", "error");
       }
     },
     [

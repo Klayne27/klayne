@@ -7,12 +7,12 @@
 //   const { mutate: addComment, isPending: isAddingComment } = useMutation({
 //     mutationFn: addCommentApi,
 //     onSuccess: () => {
-//       toast.success("Comment added successfully!");
+//       showAppToast("Comment added successfully!");
 //       queryClient.invalidateQueries(["post", pid]);
 //       queryClient.invalidateQueries(["posts"]);
 //     },
 //     onError: (err) => {
-//       toast.error(err.message || "Failed to add comment.");
+//       showAppToastt((err.message || "Failed to add comment.");
 //     },
 //   });
 

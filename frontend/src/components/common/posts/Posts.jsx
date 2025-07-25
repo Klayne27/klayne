@@ -85,8 +85,6 @@ const Posts = ({
     pinnedPosts?.length,
   ]);
 
-  console.log(posts);
-
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center">

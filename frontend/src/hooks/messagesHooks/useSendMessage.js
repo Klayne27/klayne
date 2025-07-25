@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import toast from "react-hot-toast";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
   const { authUser: currentUser } = useAuthUser();
@@ -70,7 +71,7 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
     },
     onError: (err, variables, context) => {
       // Roll back the optimistic update on error
-      toast.error(err.message)
+      showAppToast(err.message, "error");
       queryClient.setQueryData(context.queryKey, context.previousData);
     },
   });

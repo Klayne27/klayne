@@ -7,6 +7,7 @@ import { useNavigate } from "react-router-dom";
 import { useGetOrCreateConversation } from "../../../hooks/messagesHooks/useGetOrCreateConversation";
 import { useGetFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useGetFollowedUsersForMessaging"; // Updated hook import
 import toast from "react-hot-toast";
+import { showAppToast } from "../../../utils/showAppToast";
 
 const ConversationsList = ({
   conversations,
@@ -76,7 +77,7 @@ const ConversationsList = ({
           navigate(`/messages/${conversation._id}`);
         } else {
           console.error("No conversation ID received after get/create conversation");
-          toast.error("Failed to open chat: Conversation ID missing.");
+          showAppToast("Failed to open chat: Conversation ID missing.", "error");
         }
       },
       onError: (err) => {

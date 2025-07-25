@@ -4,6 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleBookmarkApi } from "../../api/postsApi";
 import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useToggleBookmarks = (
   currentProfileUsername = null,
@@ -163,7 +164,7 @@ export const useToggleBookmarks = (
     },
 
     onSuccess: (data, postId) => {
-      toast.success(data.message);
+      showAppToast(data.message, "success");
 
       // Invalidate general post lists to ensure eventual consistency
       queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
@@ -188,7 +189,7 @@ export const useToggleBookmarks = (
 
     onError: (error, postId, context) => {
       console.error("Error toggling bookmark: ", error);
-      toast.error(error.message || "Failed to toggle bookmark");
+      showAppToast(error.message || "Failed to toggle bookmark", "error");
 
       if (context?.previousDataSnapshots) {
         // Rollback all queries that were optimistically updated

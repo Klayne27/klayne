@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteScheduledPostApi } from "../../api/postsApi";
 import toast from "react-hot-toast";
+import { showAppToast } from "../../utils/showAppToast";
 
 // New React Query hook for deleting scheduled posts
 export const useDeleteScheduledPost = () => {
@@ -14,11 +15,11 @@ export const useDeleteScheduledPost = () => {
   } = useMutation({
     mutationFn: (postId) => deleteScheduledPostApi(postId),
     onSuccess: () => {
-      toast.success("Scheduled post deleted successfully");
+      showAppToast("Scheduled post deleted successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
     },
     onError: (error) => {
-      toast.error(error.message || "Failed to delete scheduled post");
+      showAppToast(error.message || "Failed to delete scheduled post", "error");
     },
   });
 

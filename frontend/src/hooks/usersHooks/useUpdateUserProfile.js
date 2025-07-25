@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { updateUserProfileApi } from "../../api/usersApi";
 import { useState } from "react";
+import { showAppToast } from "../../utils/showAppToast";
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
@@ -18,7 +19,7 @@ export const useUpdateUserProfile = () => {
     onSuccess: (data) => {
       setNewUsername(data.username);
 
-      toast.success("Profile updated successfully");
+      showAppToast("Profile updated successfully", "success");
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["authUser"] }),
         queryClient.invalidateQueries({ queryKey: ["posts"] }),
@@ -26,7 +27,7 @@ export const useUpdateUserProfile = () => {
       ]);
     },
     onError: (error) => {
-      toast.error(error.message);
+      showAppToast(error.message, "error");
       setNewUsername(null);
     },
   });

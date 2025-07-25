@@ -10,6 +10,7 @@ import { FaReply } from "react-icons/fa6";
 import { FaCircle } from "react-icons/fa";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useEditPublicMessage } from "../../hooks/publicChatHooks/publicChatHooks";
+import { showAppToast } from "../../utils/showAppToast";
 
 const PublicMessageInput = ({
   isSendingMessage,
@@ -183,7 +184,7 @@ const PublicMessageInput = ({
         if (file) {
           // Basic validation for image file
           if (!file.type.startsWith("image/")) {
-            toast.error("Pasted content is not a supported image type.");
+            showAppToast("Pasted content is not a supported image type.", "error");
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = null;
             return;
@@ -193,7 +194,7 @@ const PublicMessageInput = ({
           // For example, 5MB for chat images, adjust as needed
           const MAX_IMAGE_SIZE_MB = 5;
           if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-            toast.error(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`);
+            showAppToast(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`, "error");
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = null;
             return;
@@ -281,7 +282,7 @@ const PublicMessageInput = ({
           sendPublicMessage({ ...payload, imgBase64: reader.result });
         };
         reader.onerror = () => {
-          toast.error("Failed to read image file.");
+          showAppToast("Failed to read image file.", "error");
         };
       } else {
         sendPublicMessage({ ...payload, imgBase64: null });
@@ -295,12 +296,12 @@ const PublicMessageInput = ({
     if (!file) return;
 
     if (!file.type.startsWith("image/")) {
-      toast.error("Only image files are supported.");
+      showAppToast("Only image files are supported.", "error");
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
       // 5MB limit
-      toast.error("Image size cannot exceed 5MB.");
+      showAppToast("Image size cannot exceed 5MB.", "error");
       return;
     }
 
