@@ -216,7 +216,7 @@ export const getSuggestedUsers = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const { fullName, email, username, currentPassword, newPassword, bio, link } = req.body;
+  const { fullName, email, username, currentPassword, newPassword, bio, link, confirmNewPassword } = req.body;
   let { profileImg, coverImg } = req.body;
 
   const userId = req.user._id;
@@ -240,25 +240,33 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    if (currentPassword && newPassword) {
-      // New: Check if newPassword matches confirmNewPassword
-      if (newPassword !== confirmNewPassword) {
-        return res.status(400).json({ error: "New passwords do not match" });
+    if (currentPassword || newPassword || confirmNewPassword) {
+      // Check if any password field is provided
+      if (!currentPassword || !newPassword || !confirmNewPassword) {
+        return res.status(400).json({
+          error:
+            "Please provide current password, new password, and confirm new password.",
+        });
       }
 
-      const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch)
-        return res.status(400).json({ error: "Current password is incorrect" });
+      if (newPassword !== confirmNewPassword) {
+        return res.status(400).json({ error: "New passwords do not match." });
+      }
+
       if (newPassword.length < 6) {
         return res
           .status(400)
-          .json({ error: "Password must be at least 6 characters long" });
+          .json({ error: "Password must be at least 6 characters long." });
+      }
+
+      const isMatch = await bcrypt.compare(currentPassword, user.password);
+      if (!isMatch) {
+        return res.status(400).json({ error: "Current password is incorrect." });
       }
 
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
-
 
     if (profileImg) {
       if (user.profileImg) {

@@ -12,6 +12,7 @@ const EditProfileModal = ({ authUser }) => {
     link: "",
     newPassword: "",
     currentPassword: "",
+    confirmNewPassword: "",
   });
 
   const navigate = useNavigate();
@@ -63,6 +64,7 @@ const EditProfileModal = ({ authUser }) => {
         link: authUser?.link,
         newPassword: "",
         currentPassword: "",
+        confirmNewPassword: "",
       });
     }
   }, [authUser]);
