@@ -326,7 +326,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
     setShowRepliesSection(true); // Automatically show replies section after sending a reply
-  }, [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview]);
+  }, [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview, ]);
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
@@ -493,7 +493,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </Link>
             </div>
           )}
-          <p className="text-sm break-words mt-1">{renderClickableText(comment.text)}</p>
+          <p className="text-sm break-words mt-1 whitespace-pre-wrap">
+            {renderClickableText(comment.text)}
+          </p>
 
           {comment.img && (
             <img
