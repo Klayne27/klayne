@@ -16,11 +16,17 @@ import { useDebounce } from "../../../hooks/useDebounce";
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 import RepliesSkeleton from "../../skeletons/RepliesSkeleton";
+import useFollow from "../../../hooks/usersHooks/useFollow";
+import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser";
+import { MdBlock } from "react-icons/md";
+import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
+import { BsThreeDots } from "react-icons/bs";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
   const isCommentLiked = authUser && comment.likes?.includes(authUser._id);
+  const isFollowingCommentOwner = authUser?.following.includes(comment.user._id);
 
   const [showReplyInput, setShowReplyInput] = useState(false);
   const [replyText, setReplyText] = useState("");
@@ -29,16 +35,18 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const imageInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+
+  const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
   // --- STATES FOR MENTIONS IN REPLIES ---
   const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
   const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300);
   const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false);
   const replyInputRef = useRef(null); // Ref for reply input
-  const { suggestedUsers, isLoadingSuggestedUsers } =
-    useSearchUsers(
-      debouncedReplyMentionSearchTerm,
-    );
+  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
+    debouncedReplyMentionSearchTerm
+  );
   // --- END MENTION STATES ---
 
   const { likeComment, isLikingComment } = useLikeComment();
@@ -58,9 +66,17 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const observerTarget = useRef(null);
 
+  const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
+  const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
+
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeButton, setActiveButton] = useState(null);
+
+  // Determine if the current authUser is following the original post owner
+  const isFollowingOriginalPostOwner = authUser?.following?.includes(comment.user._id);
+  // Determine if the current authUser has blocked the original post owner
+  const isBlockedByAuthUser = authUser?.blockedUsers?.includes(comment.user._id);
 
   useEffect(() => {
     const checkIsMobile = () => {
@@ -268,65 +284,71 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     }
   };
 
-  const handleSelectReplyMention = useCallback((username) => {
-    const currentText = replyText;
-    const lastAtIndex = currentText.lastIndexOf("@");
+  const handleSelectReplyMention = useCallback(
+    (username) => {
+      const currentText = replyText;
+      const lastAtIndex = currentText.lastIndexOf("@");
 
-    if (lastAtIndex !== -1) {
-      const textFromAt = currentText.substring(lastAtIndex);
-      const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/);
+      if (lastAtIndex !== -1) {
+        const textFromAt = currentText.substring(lastAtIndex);
+        const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/);
 
-      let partialMentionLength = 0;
-      if (match && match[1]) {
-        partialMentionLength = match[1].length;
+        let partialMentionLength = 0;
+        if (match && match[1]) {
+          partialMentionLength = match[1].length;
+        }
+
+        const replaceStartIndex = lastAtIndex;
+        const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+
+        const newText =
+          currentText.substring(0, replaceStartIndex) +
+          `@${username} ` +
+          currentText.substring(replaceEndIndex);
+
+        setReplyText(newText);
+        setReplyMentionSearchTerm("");
+        setShowReplyMentionSuggestions(false);
+
+        setTimeout(() => {
+          const input = replyInputRef.current;
+          if (input) {
+            const newCursorPos =
+              currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
+            input.setSelectionRange(newCursorPos, newCursorPos);
+            input.focus();
+          }
+        }, 0);
       }
+    },
+    [replyText]
+  );
 
-      const replaceStartIndex = lastAtIndex;
-      const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+  const handleSendReply = useCallback(
+    async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
 
-      const newText =
-        currentText.substring(0, replaceStartIndex) +
-        `@${username} ` +
-        currentText.substring(replaceEndIndex);
+      // if (!replyText.trim() && !replyImageFile) {
+      //   return;
+      // }
+      if (isCreatingComment) return;
 
-      setReplyText(newText);
+      await createComment({ text: replyText, img: replyImagePreview });
+
+      setReplyText("");
+      setReplyImagePreview(null);
+      setReplyImageFile(null);
+      if (imageInputRef.current) {
+        imageInputRef.current.value = "";
+      }
+      setShowReplyInput(false);
       setReplyMentionSearchTerm("");
       setShowReplyMentionSuggestions(false);
-
-      setTimeout(() => {
-        const input = replyInputRef.current;
-        if (input) {
-          const newCursorPos =
-            currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
-          input.setSelectionRange(newCursorPos, newCursorPos);
-          input.focus();
-        }
-      }, 0);
-    }
-  }, [replyText])
-
-  const handleSendReply = useCallback(async (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-
-    // if (!replyText.trim() && !replyImageFile) {
-    //   return;
-    // }
-    if (isCreatingComment) return;
-
-    await createComment({ text: replyText, img: replyImagePreview });
-
-    setReplyText("");
-    setReplyImagePreview(null);
-    setReplyImageFile(null);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
-    }
-    setShowReplyInput(false);
-    setReplyMentionSearchTerm("");
-    setShowReplyMentionSuggestions(false);
-    setShowRepliesSection(true); // Automatically show replies section after sending a reply
-  }, [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview, ]);
+      setShowRepliesSection(true); // Automatically show replies section after sending a reply
+    },
+    [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview]
+  );
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
@@ -392,6 +414,40 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       handleSendReply,
     ]
   );
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setShowMenu((prev) => !prev);
+  };
+
+  // New: Handle follow/unfollow
+  const handleFollowClick = (e) => {
+    e.stopPropagation();
+    if (!authUser || isFollowingOrUnfollowing) return;
+    follow(comment.user._id);
+    setShowMenu(false); // Close menu after clicking
+  };
+
+  // New: Handle block/unblock
+  const handleBlockClick = (e) => {
+    e.stopPropagation();
+    if (!authUser || isBlocking) return;
+    blockUnblockUser(comment.user._id);
+    setShowMenu(false); // Close menu after clicking
+  };
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
 
   // Reset animation state after it completes
   useEffect(() => {
@@ -464,7 +520,104 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 </span>
               )}
             </div>
-            {(isCommentOwner || isPostOwner) && (
+
+            <span
+              className="flex ml-auto absolute right-0 group rounded-full p-2 mr-0.5 hover:bg-primary/20 transition duration-200"
+              onClick={toggleMenu}
+            >
+              <div className="group duration-200 transition hover:text-primary rounded-full">
+                <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
+              </div>
+
+              {showMenu && (
+                <div
+                  ref={menuRef}
+                  className="absolute right-0 top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2 shadow-md shadow-primary"
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
+                >
+                  {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
+                  {isCommentOwner && (
+                    <>
+                      {/* If the current user is the comment owner AND the post owner, only show delete */}
+                      {isPostOwner ? (
+                        <button
+                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                          onClick={handleDeleteCommentClick}
+                          disabled={isDeletingComment}
+                        >
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <FiTrash /> Delete Reply
+                          </span>
+                        </button>
+                      ) : (
+                        // If the current user is the comment owner but NOT the post owner, only show delete
+                        <button
+                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                          onClick={handleDeleteCommentClick}
+                          disabled={isDeletingComment}
+                        >
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <FiTrash /> Delete Reply
+                          </span>
+                        </button>
+                      )}
+                    </>
+                  )}
+
+                  {/* Scenario 2 & 3: Current user is NOT the comment owner */}
+                  {!isCommentOwner && (
+                    <>
+                      {/* Follow/Unfollow button (always shown if not comment owner) */}
+                      <button
+                        className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                        onClick={handleFollowClick}
+                        disabled={isFollowingOrUnfollowing}
+                      >
+                        {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                          </span>
+                        ) : (
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <LuUserRoundPlus strokeWidth={2} /> Follow @
+                            {comment.user.username}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Block/Unblock button (always shown if not comment owner) */}
+                      <button
+                        className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                        onClick={handleBlockClick}
+                        disabled={isBlocking}
+                      >
+                        {isBlockedByAuthUser ? ( // Assuming this variable tracks if current user blocked the comment owner
+                          "Unblock"
+                        ) : (
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <MdBlock /> Block @{comment.user.username}
+                          </span>
+                        )}
+                      </button>
+
+                      {/* Scenario 3: Post owner interacting with another user's comment */}
+                      {isPostOwner && (
+                        <button
+                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                          onClick={handleDeleteCommentClick}
+                          disabled={isDeletingComment}
+                        >
+                          <span className="flex items-center justify-center gap-3 font-semibold">
+                            <FiTrash /> Delete Reply
+                          </span>
+                        </button>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+            </span>
+            {/* {(isCommentOwner || isPostOwner) && (
               <button
                 className="group absolute right-0 top-0 text-red-500 rounded-full px-2.5 transition duration-200"
                 onClick={handleDeleteCommentClick}
@@ -479,7 +632,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   />
                 )}
               </button>
-            )}
+            )} */}
           </div>
           {comment.parentComment && comment.parentComment.user && (
             <div className="text-gray-500 text-xs mt-1 mb-2">

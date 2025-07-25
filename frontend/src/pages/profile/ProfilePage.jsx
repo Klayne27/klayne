@@ -355,7 +355,7 @@ const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
               <div className="avatar absolute -bottom-16 left-4">
-                <div className="w-32 rounded-full relative group/avatar">
+                <div className="w-32 rounded-full relative group/avatar border-4 border-base-100">
                   <img
                     src={
                       profileImg || userProfile?.profileImg || "/avatar-placeholder.png"

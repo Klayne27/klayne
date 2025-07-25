@@ -319,7 +319,7 @@ const Post = ({
 
   return (
     <div
-      className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer"
+      className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer hover:bg-gray-700/30 transition duration-200"
       onClick={navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -402,7 +402,7 @@ const Post = ({
               {showMenu && (
                 <div
                   ref={menuRef}
-                  className="absolute right-0 top-0 w-max bg-black border border-accent rounded-xl z-10 menu-popover py-2  shadow-sm shadow-primary"
+                  className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2  shadow-md shadow-primary"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                 >
                   {isMyOriginalPost ? (
@@ -416,47 +416,33 @@ const Post = ({
                       Delete Post
                     </button>
                   ) : (
-                    // Menu for other users' posts
                     <>
                       <button
-                        className="w-full text-left px-4 py-1 text-white  flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
                         onClick={handleFollowClick}
                         disabled={isFollowingOrUnfollowing}
                       >
-                        {/* {isFollowingOrUnfollowing ? (
-                          <LoadingSpinner size="sm" />
-                        ) : isFollowingOriginalPostOwner ? (
-                          "Unfollow"
-                        ) : (
-                          "Follow"
-                        )} */}
                         {isFollowingOriginalPostOwner ? (
                           <span className="flex items-center justify-center gap-3 font-semibold">
                             <LuUserRoundMinus strokeWidth={2} /> Unfollow
                           </span>
                         ) : (
                           <span className="flex items-center justify-center gap-3 font-semibold">
-                            <LuUserRoundPlus strokeWidth={2} /> Follow
+                            <LuUserRoundPlus strokeWidth={2} /> Follow @
+                            {originalPostOwner.username}
                           </span>
                         )}
                       </button>
                       <button
-                        className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2"
+                        className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 duration-200 transtion hover:bg-gray-700/30"
                         onClick={handleBlockClick}
                         disabled={isBlocking}
                       >
-                        {/* {isBlocking ? (
-                          <LoadingSpinner size="sm" />
-                        ) : isBlockedByAuthUser ? (
-                          "Unblock"
-                        ) : (
-                          "Block"
-                        )} */}
                         {isBlockedByAuthUser ? (
                           "Unblock"
                         ) : (
                           <span className="flex items-center justify-center gap-3 font-semibold">
-                            <MdBlock /> Block
+                            <MdBlock /> Block @{originalPostOwner.username}
                           </span>
                         )}
                       </button>

@@ -426,6 +426,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     }
   }, [pid, refetchComments, refetchPost]);
 
+  console.log(displayPost);
+
   useEffect(() => {
     if (!observerTarget.current || !hasNextCommentsPage || isFetchingNextCommentsPage)
       return;
@@ -525,7 +527,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                     ? `Replying to @${replyingToComment.user.username}...`
                     : "Post your reply"
                 }
-                className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
+                className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-base sm:text-lg resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
                 disabled={isCreatingComment}
                 rows={1}
               />
