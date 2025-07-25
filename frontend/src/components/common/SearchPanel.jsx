@@ -20,15 +20,15 @@ const SearchPanel = () => {
     };
   }, [searchQuery]);
 
-  const { users, isLoading, isError, error, isFetching } = useSearchUsers(debouncedQuery);
+  const { suggestedUsers, isLoadingSuggestedUsers, isError, error, isFetching } = useSearchUsers(debouncedQuery);
 
   useEffect(() => {
-    if (debouncedQuery || users?.length > 0 || isError) {
+    if (debouncedQuery || suggestedUsers?.length > 0 || isError) {
       setShowResults(true);
     } else {
       setShowResults(false);
     }
-  }, [debouncedQuery, users, isError]);
+  }, [debouncedQuery, suggestedUsers, isError]);
 
   return (
     <div className="relative w-full md:block">
@@ -41,7 +41,7 @@ const SearchPanel = () => {
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           onFocus={() => {
-            if (debouncedQuery || users?.length > 0 || isError) {
+            if (debouncedQuery || suggestedUsers?.length > 0 || isError) {
               setShowResults(true);
             }
           }}
@@ -51,15 +51,15 @@ const SearchPanel = () => {
         />
       </div>
 
-      {showResults && (debouncedQuery.length > 0 || users?.length > 0) ? (
+      {showResults && (debouncedQuery.length > 0 || suggestedUsers?.length > 0) ? (
         <div className="max-h-[500px] w-full overflow-y-auto border rounded-2xl absolute top-[51px] left-0 z-50 bg-base-100 border-accent shadow-md shadow-gray-400">
-          {(isLoading || isFetching) && debouncedQuery ? (
+          {(isLoadingSuggestedUsers || isFetching) && debouncedQuery ? (
             <p className="p-4 text-gray-400 text-center">Searching...</p>
           ) : isError ? (
             <p className="p-4 text-red-500 text-center">Error: {error.message}</p>
-          ) : users && users.length > 0 ? (
+          ) : suggestedUsers && suggestedUsers.length > 0 ? (
             <>
-              {users.map((user) => {
+              {suggestedUsers.map((user) => {
                 const hasBlockedYou = user.blockedUsers.includes(authUser._id);
 
                 return (
@@ -93,7 +93,7 @@ const SearchPanel = () => {
                 );
               })}
             </>
-          ) : debouncedQuery && !isLoading && !isFetching && users.length === 0 ? (
+          ) : debouncedQuery && !isLoadingSuggestedUsers && !isFetching && suggestedUsers?.length === 0 ? (
             <p className="p-4 text-gray-400 text-center">No users found.</p>
           ) : null}
         </div>

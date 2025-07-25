@@ -9,8 +9,6 @@ import React from "react";
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility";
 import { CiCircleMinus } from "react-icons/ci";
 
-// 🗑️ REMOVED PROPS: onlineUsers (can be re-added if needed, but simplifying for now)
-// ✅ The component is simpler as it doesn't need to check for "isNewChat".
 function ConversationItem({
   conv,
   selectedConversation,
@@ -25,14 +23,12 @@ function ConversationItem({
     (p) => p?._id.toString() !== currentUser._id.toString()
   );
 
-  // ♻️ REFACTORED: Selection logic is simpler without `isNewChat`.
   const isSelected = selectedConversation?._id === conv._id;
 
   const isLastMessageUnread =
     conv.lastMessage?.sender?.toString() === otherUser?._id.toString() &&
     !conv.lastMessage?.seen;
 
-  // ♻️ REFACTORED: Last message content logic is simpler.
   let lastMessageContent = "No messages yet...";
   if (conv.lastMessage?.img) {
     lastMessageContent = (
