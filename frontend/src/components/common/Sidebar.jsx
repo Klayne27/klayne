@@ -810,7 +810,7 @@ const Sidebar = ({
           </li>
           <div className="hidden md:block mr-7">
             <button
-              className="font-semibold text-md rounded-full w-full px-4 py-3 bg-primary duration-200 transition hover:bg-primary/85 cursor-pointer"
+              className="font-semibold  rounded-full w-full px-4 py-3 bg-primary duration-200 transition hover:bg-primary/85 cursor-pointer text-white"
               onClick={onOpenCreatePostModal}
             >
               Post

@@ -11,7 +11,7 @@ import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
 import { useLikePost } from "../../../hooks/postsHooks/useLikePosts";
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost";
 import { renderClickableText } from "../../../utils/textUtils";
-import { useCallback, useEffect, useState, useRef } from "react";
+import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
 import PollDisplay from "../PollDisyplay";
@@ -688,4 +688,4 @@ const Post = ({
   );
 };
 
-export default Post;
+export default React.memo(Post);

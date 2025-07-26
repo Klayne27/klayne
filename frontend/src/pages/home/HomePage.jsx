@@ -131,7 +131,10 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
           </div>
         </div>
 
-        <div ref={scrollableContentRef}>
+        <div
+          ref={scrollableContentRef}
+
+        >
           <CreatePost />
           <Posts
             feedType={feedType}
