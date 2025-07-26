@@ -835,7 +835,7 @@ function CreatePostModal({ onClose }) {
             </div>
           </div>
           <div className="flex justify-between pt-3 relative">
-            <div className="flex gap-1 items-center">
+            <div className="flex gap-1 items-center ml-[52px]">
               {/* Image/Video input - hidden if poll or schedule is active */}
               {!showPollInputs && !scheduledAt && (
                 <BiImageAdd
