@@ -540,7 +540,7 @@ const Sidebar = ({
               navigate("/messages");
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
             }}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[140px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
           >
             <button
               className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
@@ -583,7 +583,7 @@ const Sidebar = ({
 
           <li
             onClick={() => navigate("/notifications")}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[168px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[180px] p-1 md:p-0"
           >
             <button
               className={`flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
@@ -626,7 +626,7 @@ const Sidebar = ({
 
           <li
             onClick={handlePublicChatClick}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[160px] p-1 md:p-0"
+            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[170px] p-1 md:p-0"
           >
             <button
               className={`flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
@@ -702,7 +702,7 @@ const Sidebar = ({
 
           {/* Bookmarks - Hidden on mobile, visible on desktop */}
           <li
-            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[165px] p-1 md:p-0"
             onClick={handleBookmarksClick}
           >
             <button
@@ -736,7 +736,7 @@ const Sidebar = ({
 
           {/* Themes */}
           <li
-            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[120px] md:p-0"
+            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[125px] md:p-0"
             onClick={() => navigate("/themes")}
           >
             <button
@@ -796,7 +796,7 @@ const Sidebar = ({
           {/* Profile (Desktop Only) */}
           <li
             onClick={() => navigate(`/profile/${authUser?.username}`)}
-            className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[110px] p-1 md:p-0"
+            className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[125px] p-1 md:p-0"
           >
             <button
               className={`hidden md:block ${
