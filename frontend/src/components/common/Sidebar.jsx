@@ -1,14 +1,11 @@
 import XSvg from "../svgs/X";
 import { PiBellThin, PiHouseThin } from "react-icons/pi";
-import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import { HiDotsHorizontal } from "react-icons/hi";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
 import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci";
 import { useState, useRef, useEffect, useCallback } from "react";
-import Modal from "./Modal"; // Assuming you have a generic Modal component
 import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
-import toast from "react-hot-toast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu";
@@ -19,8 +16,13 @@ import React from "react";
 import { showAppToast } from "../../utils/showAppToast";
 import { BsThreeDots } from "react-icons/bs";
 import ConfirmationModal from "./ConfirmationModal";
+import FeatherIcon from "../svgs/FeatherIcon";
 
-const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
+const Sidebar = ({
+  isChatWindowOpen,
+  isMobileMessagesListScrollingDown,
+  onOpenCreatePostModal,
+}) => {
   const { authUser } = useAuthUser();
 
   const { logout } = useLogout();
@@ -43,6 +45,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
   const [showSideModal, setShowSideModal] = useState(false); // New state for side modal
   const [modalType, setModalType] = useState("");
+  const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true);
 
   // NEW STATE: To track if FollowListModals are open
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
@@ -355,6 +358,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
       if (window.innerWidth < 768) {
         if (shouldAlwaysHide) {
           setIsMobileBarVisible(false);
+          setIsFeatherIconVisible(false); // Immediately hid
           lastScrollY.current = window.scrollY; // Reset lastScrollY to current to prevent immediate re-showing
           return; // Exit early, no further scroll logic needed for these paths
         }
@@ -367,14 +371,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           const currentScrollY = window.scrollY;
           if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
             setIsMobileBarVisible(false);
+            setIsFeatherIconVisible(false);
           } else if (currentScrollY < lastScrollY.current) {
             setIsMobileBarVisible(true);
+            setIsFeatherIconVisible(true);
           }
           lastScrollY.current = currentScrollY;
         }
       } else {
         // Always visible on desktop
         setIsMobileBarVisible(true);
+        setIsFeatherIconVisible(true);
       }
     };
 
@@ -388,13 +395,16 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
 
       if (shouldAlwaysHide) {
         setIsMobileBarVisible(false);
+        setIsFeatherIconVisible(false);
       } else if (pathname.startsWith("/messages")) {
         setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
       } else {
         setIsMobileBarVisible(true); // Default to visible for other paths
+        setIsFeatherIconVisible(true); // Default to visible for other paths on mobile initially
       }
     } else {
       setIsMobileBarVisible(true); // Always visible on desktop
+      setIsFeatherIconVisible(true); // Always visible on desktop
     }
 
     window.addEventListener("scroll", handleScroll);
@@ -416,6 +426,8 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
     return null;
   }
 
+
+
   return (
     <>
       {/* Main Sidebar */}
@@ -424,6 +436,21 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           transition-transform duration-300 ease-out
           ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >
+        <div
+          className={
+            `block md:hidden ${pathname.includes("/messages") ? "hidden" : ""} fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
+            transform transition-all duration-300 ease-in-out
+             ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
+          }
+          style={{
+            width: "56px",
+            height: "56px",
+            boxShadow: "0px 0px 10px 1px rgba(255, 255, 255, 0.60)", // White shadow
+          }}
+          onClick={() => onOpenCreatePostModal(true)}
+        >
+          <FeatherIcon />
+        </div>
         {/* X-SVG button, apply hover & active */}
         <Link
           to="/"
@@ -441,7 +468,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
           <XSvg className="fill-primary" />
         </Link>
 
-        <ul className="flex flex-row md:flex-col md:gap-4 mt-0 md:mt-4 w-full md:w-auto justify-around md:justify-start">
+        <ul className="flex flex-row md:flex-col md:gap-4 mt-0 md:mt-4 w-full  justify-around md:justify-start">
           {/* Home */}
           <li
             onClick={() => {
@@ -464,7 +491,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <PiHouseThin
-                className={`size-[26px] ${
+                className={`size-[30px] ${
                   pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
                 strokeWidth={pathname === "/" ? 18 : 12}
@@ -477,7 +504,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               )}
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
               onClick={() => {
@@ -510,7 +537,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <CiMail
-                className={`size-6 ${
+                className={`size-7 ${
                   pathname.startsWith("/messages")
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
@@ -525,7 +552,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               )}
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname.startsWith("/messages")
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
@@ -553,7 +580,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <PiBellThin
-                className={`size-6 ${
+                className={`size-7 ${
                   pathname === "/notifications"
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
@@ -568,7 +595,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               )}
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === "/notifications"
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
@@ -596,7 +623,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <IoChatbubbleEllipsesOutline
-                className={`size-6 ${
+                className={`size-7 ${
                   pathname === "/public-chat" // Adjust based on your actual public chat route
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
@@ -612,7 +639,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               )}
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -628,7 +655,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
             <button
               className={` ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center rounded-full py-2 px-[13px] max-w-fit cursor-pointer
+              } flex gap-3 items-center rounded-full py-2 px-[1px] max-w-fit cursor-pointer
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
@@ -640,10 +667,13 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <CiSearch className="size-6" strokeWidth={pathname === "/search" ? 2 : 1} />
+              <CiSearch
+                className="size-7 w-11"
+                strokeWidth={pathname === "/search" ? 2 : 1}
+              />
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -672,12 +702,12 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <CiBookmark
-                className="size-6"
+                className="size-7"
                 strokeWidth={pathname === "/bookmarks" ? 2 : 1}
               />
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -706,7 +736,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <LuPalette
-                className="size-6"
+                className="size-7"
                 strokeWidth={pathname === "/themes" ? 2.5 : 2}
               />
             </button>
@@ -765,12 +795,12 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               onTouchCancel={handleTouchCancel}
             >
               <LuUserRound
-                className="size-7"
+                className="size-8"
                 strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
               />
             </button>
             <span
-              className={`text-lg hidden md:block ${
+              className={`text-xl hidden md:block ${
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
@@ -779,6 +809,14 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
               Profile
             </span>
           </li>
+          <div className="hidden md:block mr-7">
+            <button
+              className="font-semibold text-md rounded-full w-full px-4 py-3 bg-primary duration-200 transition hover:bg-primary/85 cursor-pointer"
+              onClick={onOpenCreatePostModal}
+            >
+              Post
+            </button>
+          </div>
         </ul>
 
         {/* User Profile and Popover (Desktop only) */}
@@ -969,11 +1007,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   onTouchCancel={handleTouchCancel}
                 >
                   <LuUserRound
-                    className="size-6 mr-4"
+                    className="size-7 mr-4"
                     strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 2}
                   />
                   <span
-                    className={`text-lg ${
+                    className={`text-xl ${
                       pathname === `/profile/${authUser?.username}` ? "font-bold" : ""
                     }`}
                   >
@@ -997,11 +1035,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   onTouchCancel={handleTouchCancel}
                 >
                   <CiBookmark
-                    className="size-6 mr-4"
+                    className="size-7 mr-4"
                     strokeWidth={pathname === "/bookmarks" ? 2 : 1}
                   />
                   <span
-                    className={`text-lg ${pathname === "/bookmarks" ? "font-bold" : ""}`}
+                    className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}
                   >
                     Bookmarks
                   </span>
@@ -1020,11 +1058,11 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                     }`}
                 >
                   <LuPalette
-                    className="size-6 mr-4"
+                    className="size-7 mr-4"
                     strokeWidth={pathname === "/themes" ? 2 : 2}
                   />
                   <span
-                    className={`text-lg ${pathname === "/themes" ? "font-bold" : ""}`}
+                    className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}
                   >
                     Themes
                   </span>
@@ -1111,7 +1149,6 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         danger={true}
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
       />
-      
     </>
   );
 };

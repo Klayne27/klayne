@@ -1,27 +1,25 @@
-import { useRef, useState, useEffect, useCallback } from "react";
-import { IoClose, IoCloseSharp } from "react-icons/io5";
-import { PiSmiley } from "react-icons/pi";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
+import React, { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
+import { IoClose, IoCloseSharp } from "react-icons/io5";
 import { BiImageAdd, BiPoll } from "react-icons/bi";
-import EmojiPicker from "emoji-picker-react";
-import { FaPlus } from "react-icons/fa6";
+import { PiSmiley } from "react-icons/pi";
 import { TbCalendarClock } from "react-icons/tb";
-
-// IMPORTS FOR MENTION FEATURE
-import SchedulePostModal from "../../components/common/SchedulePostModal";
-import ScheduledPostsModal from "../../components/common/ScheduledPostsModal";
-import EditScheduledPostModal from "../../components/common/EditSchedulePostModal";
-import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
-import { useDebounce } from "../../hooks/useDebounce";
+import { FaPlus } from "react-icons/fa";
+import EmojiPicker from "emoji-picker-react";
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import EditScheduledPostModal from "./EditSchedulePostModal";
+import ScheduledPostsModal from "./ScheduledPostsModal";
+import SchedulePostModal from "./SchedulePostModal";
 import { showAppToast } from "../../utils/showAppToast";
+import { useDebounce } from "../../hooks/useDebounce";
+import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
+import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
 const MAX_FILE_SIZE_MB = 20;
 
-const CreatePost = () => {
+function CreatePostModal({ onClose }) {
   // State for post content
   const [text, setText] = useState("");
   const [selectedFile, setSelectedFile] = useState(null);
@@ -53,13 +51,14 @@ const CreatePost = () => {
   const [mentionStartIndex, setMentionStartIndex] = useState(-1);
 
   const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300);
-  
+
   // Refs
   const fileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const textareaRef = useRef(null);
   const suggestionBoxRef = useRef(null);
+  const modalContentRef = useRef(null);
 
   // Hooks
   const { authUser } = useAuthUser();
@@ -88,10 +87,10 @@ const CreatePost = () => {
     };
   }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
-
   // Fetch mention suggestions using react-query
-  const { suggestedUsers, isLoadingSuggestedUsers } =
-    useSearchUsers(debouncedMentionSearchTerm);
+  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
+    debouncedMentionSearchTerm
+  );
 
   // Effect to adjust emoji picker width on resize
   useEffect(() => {
@@ -189,7 +188,10 @@ const CreatePost = () => {
               return;
             }
             if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-              showAppToast(`Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error");
+              showAppToast(
+                `Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`,
+                "error"
+              );
               return;
             }
 
@@ -307,7 +309,7 @@ const CreatePost = () => {
   const handleSubmit = useCallback(
     async (e) => {
       e.preventDefault();
-
+      onClose();
       if (isPending) {
         return; // Do nothing if a post is already being created
       }
@@ -330,7 +332,10 @@ const CreatePost = () => {
         if (
           filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         ) {
-          showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error");
+          showAppToast(
+            `Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`,
+            "error"
+          );
           return;
         }
 
@@ -393,7 +398,9 @@ const CreatePost = () => {
         }
 
         createPost(postData, {
-          onSuccess: resetForm,
+          onSuccess: () => {
+            resetForm();
+          },
           onError: (err) => {
             showAppToast(err?.message || "Failed to create post.", "error");
           },
@@ -409,6 +416,7 @@ const CreatePost = () => {
       createPost,
       resetForm,
       isPending,
+      onClose,
     ]
   );
 
@@ -416,7 +424,10 @@ const CreatePost = () => {
     const file = e.target.files[0];
     if (file) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        showAppToast("Unsupported file type. Please select an image or a video.", "error");
+        showAppToast(
+          "Unsupported file type. Please select an image or a video.",
+          "error"
+        );
         setSelectedFile(null);
         setPreviewUrl(null);
         if (fileInputRef.current) fileInputRef.current.value = null;
@@ -544,6 +555,7 @@ const CreatePost = () => {
     if (fileInputRef.current) fileInputRef.current.value = null;
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
+    
   }, []);
 
   const handleCloseSchedulePostModal = useCallback(() => {
@@ -591,6 +603,12 @@ const CreatePost = () => {
     // setIsScheduledPostsModalOpen(false); // If you prefer this behavior
   };
 
+    const handleBackgroundClick = (e) => {
+        e.stopPropagation()
+      if (modalContentRef.current && !modalContentRef.current.contains(e.target)) {
+        onClose();
+      }
+    };
   // Determine if the post button should be disabled
   const isButtonDisabled =
     isPending ||
@@ -612,269 +630,285 @@ const CreatePost = () => {
       return text.trim() === "" && !selectedFile;
     })();
 
+  // Prevent scrolling the body when the modal is open
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "unset";
+    };
+  }, []);
+
   return (
     <div
-      className={` flex p-4 items-start gap-3 border-b border-accent relative ${
-        scheduledAt ? "mt-14" : "mt-12"
-      } `}
+      className="fixed inset-0 bg-gray-700 bg-opacity-70 justify-center z-50 p-4"
+        onClick={handleBackgroundClick}
     >
-      {scheduledAt && (
-        <div
-          className="flex items-center justify-between absolute top-0 left-[66px]"
-          onClick={handleOpenSchedulePostModal}
-        >
-          <p className="text-gray-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
-            <TbCalendarClock size={16} />
-            Will send on{" "}
-            {new Date(scheduledAt).toLocaleString([], {
-              month: "short",
-              day: "numeric",
-              year: "numeric",
-              hour: "numeric",
-              minute: "2-digit",
-              hour12: true,
-            })}
-          </p>
-        </div>
-      )}
-      <Link to={`/profile/${authUser.username}`}>
-        <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
-          <div className="w-10 rounded-full">
-            <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+      <div
+      onClick={e => e.stopPropagation()}
+        ref={modalContentRef}
+        className={`bg-base-100 rounded-2xl shadow-lg mt-7 pl-3 pr-7 max-w-xl mx-auto w-full flex flex-col overflow-hidden max-h-[90vh]`}
+      >
+        <div className="flex items-center justify-between py-2">
+          <div className="flex gap-5 items-center">
+            <button
+              className="hover:bg-secondary rounded-full p-1 transition duration-200"
+              onClick={onClose}
+            >
+              <IoClose strokeWidth={1} size={24} className="" />
+            </button>
+            <h2 className="text-xl font-bold">Create Post</h2>{" "}
           </div>
         </div>
-      </Link>
-      <form
-        className={`flex flex-col w-full relative ${scheduledAt ? "mt-1" : ""}`}
-        onSubmit={handleSubmit}
-      >
-        <div className="relative w-full">
-          <textarea
-            className="bg-inherit w-full p-0 pb-4 resize-none max-h-[270px] border-none focus:outline-none border-gray-800 text-xl relative overflow-y-auto"
-            placeholder={
-              scheduledAt
-                ? "What is happening?"
-                : showPollInputs
-                ? "Ask a question"
-                : "What is happening?"
-            }
-            value={text}
-            onChange={handleTextChange}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            ref={textareaRef}
-            rows={2}
-            style={{ minHeight: "28px" }}
-          />
-          {/* Mention Suggestions Popover */}
-          {showMentionSuggestions && suggestedUsers?.length > 0 && !showPollInputs && (
-            <div
-              ref={suggestionBoxRef}
-              className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
-              style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
-            >
-              {isLoadingSuggestedUsers ? (
-                <p className="p-2 text-gray-400">Loading suggestions...</p>
-              ) : suggestedUsers.length === 0 ? (
-                <p className="p-2 text-gray-500">No users found.</p>
-              ) : (
-                suggestedUsers.map((user) => (
+
+        <div className="flex-1 flex flex-col p-4 overflow-y-auto custom-scrollbar">
+          {/* Avatar and Textarea */}
+          <div className="flex items-start gap-3 flex-grow">
+            <Link to={`/profile/${authUser.username}`}>
+              <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
+                <div className="size-10 rounded-full">
+                  <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+                </div>
+              </div>
+            </Link>
+            <div className={`flex w-full relative ${scheduledAt ? "mt-1" : ""}`}>
+              <div className="relative w-full">
+                {scheduledAt && (
                   <div
-                    key={user._id}
-                    className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
-                    onClick={() => handleMentionSelect(user.username)}
+                    className="flex items-center justify-between absolute -top-4 -left-0.5 "
+                    onClick={handleOpenSchedulePostModal}
                   >
-                    <div className="avatar">
-                      <div className="w-8 rounded-full">
-                        <img
-                          src={user.profileImg || "/avatar-placeholder.png"}
-                          alt="profile"
-                        />
-                      </div>
+                    <p className="text-gray-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
+                      <TbCalendarClock size={16} />
+                      Will send on{" "}
+                      {new Date(scheduledAt).toLocaleString([], {
+                        month: "short",
+                        day: "numeric",
+                        year: "numeric",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      })}
+                    </p>
+                  </div>
+                )}
+                <textarea
+                  className="bg-inherit w-full max-h-[2600px] p-0 pb-2 resize-none border-none focus:outline-none text-xl overflow-y-auto"
+                  placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
+                  value={text}
+                  onChange={handleTextChange}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                  ref={textareaRef}
+                  rows={4}
+                />
+                {/* Mention Suggestions Popover */}
+                {showMentionSuggestions &&
+                  suggestedUsers?.length > 0 &&
+                  !showPollInputs && (
+                    <div
+                      ref={suggestionBoxRef}
+                      className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
+                      style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
+                    >
+                      {isLoadingSuggestedUsers ? (
+                        <p className="p-2 text-gray-400">Loading suggestions...</p>
+                      ) : suggestedUsers.length === 0 ? (
+                        <p className="p-2 text-gray-500">No users found.</p>
+                      ) : (
+                        suggestedUsers.map((user) => (
+                          <div
+                            key={user._id}
+                            className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
+                            onClick={() => handleMentionSelect(user.username)}
+                          >
+                            <div className="avatar">
+                              <div className="w-8 rounded-full">
+                                <img
+                                  src={user.profileImg || "/avatar-placeholder.png"}
+                                  alt="profile"
+                                />
+                              </div>
+                            </div>
+                            <div>
+                              <p className="font-semibold">{user.fullName}</p>
+                              <p className="text-gray-500 text-sm">@{user.username}</p>
+                            </div>
+                          </div>
+                        ))
+                      )}
                     </div>
-                    <div>
-                      <p className="font-semibold">{user.fullName}</p>
-                      <p className="text-gray-500 text-sm">@{user.username}</p>
+                  )}
+                {previewUrl && (
+                  <div className="relative max-w-full mx-auto sm:w-auto">
+                    <IoClose
+                      size={25}
+                      className="absolute -top-2 -right-2 text-white bg-gray-500 transition duration-200 hover:bg-gray-600 rounded-full p-1 cursor-pointer z-10"
+                      onClick={() => {
+                        setSelectedFile(null);
+                        setPreviewUrl(null);
+                        if (fileInputRef.current) fileInputRef.current.value = null;
+                      }}
+                    />
+                    {selectedFile.type.startsWith("image/") ? (
+                      <img
+                        src={previewUrl}
+                        className="w-full h-auto max-h-96 object-contain rounded"
+                        alt="Image preview"
+                      />
+                    ) : (
+                      <video
+                        controls
+                        src={previewUrl}
+                        className="w-full h-auto max-h-96 object-contain rounded"
+                        preload="metadata"
+                      >
+                        Your browser does not support the video tag.
+                      </video>
+                    )}
+                  </div>
+                )}
+                {showPollInputs && (
+                  <div className="flex flex-col gap-4 mt-4 p-3 border border-accent rounded-2xl">
+                    {pollChoices.map((choice, index) => (
+                      <div key={index} className="flex items-center gap-1 relative">
+                        <div
+                          className={`relative ${
+                            pollChoices.length > 3 ? "w-full" : "w-full mr-7"
+                          }`}
+                        >
+                          <input
+                            type="text"
+                            placeholder={`Choice ${index + 1}`}
+                            className={`bg-black/0 border p-2 py-3 border-accent ${
+                              pollChoices.length > 3 ? "w-full" : "w-full mr-7"
+                            } placeholder:text-gray-500 focus:outline-none focus:border-accent/99 rounded-[4px] `}
+                            value={choice.text}
+                            onChange={(e) =>
+                              handlePollChoiceChange(index, e.target.value)
+                            }
+                            onFocus={() => handlePollInputFocus(index)}
+                            onBlur={handlePollInputBlur}
+                            maxLength={POLL_CHOICE_MAX_LENGTH}
+                          />
+
+                          {focusedPollInputIndex === index && (
+                            <span className="absolute top-1 right-2 text-xs text-gray-500">
+                              {choice.text.length} / {POLL_CHOICE_MAX_LENGTH}
+                            </span>
+                          )}
+
+                          {index >= 2 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemovePollChoice(index)}
+                              className="text-red-600 hover:text-red-400 absolute top-3.5 right-1 transition duration-200"
+                            >
+                              <IoCloseSharp size={23} />
+                            </button>
+                          )}
+                        </div>
+                        {index === pollChoices.length - 1 &&
+                          pollChoices.length < MAX_POLL_CHOICES && (
+                            <button
+                              type="button"
+                              onClick={handleAddPollChoice}
+                              className="text-primary hover:text-blue-400 transition duration-200 absolute right-0"
+                            >
+                              <FaPlus size={18} />
+                            </button>
+                          )}
+                      </div>
+                    ))}
+                    <div className="flex justify-center items-center">
+                      <button
+                        type="button"
+                        onClick={handleRemovePoll}
+                        className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200"
+                      >
+                        Remove poll
+                      </button>
                     </div>
                   </div>
-                ))
+                )}
+              </div>
+              {isError && <div className="text-red-500 mt-2">{error.message}</div>}
+            </div>
+          </div>
+          <div className="flex justify-between pt-3 relative">
+            <div className="flex gap-1 items-center">
+              {/* Image/Video input - hidden if poll or schedule is active */}
+              {!showPollInputs && !scheduledAt && (
+                <BiImageAdd
+                  className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
+                  onClick={() => fileInputRef.current.click()}
+                  title="Add image or video"
+                  aria-label="Add image or video"
+                />
               )}
+              <input
+                type="file"
+                accept="image/*,video/*"
+                hidden
+                ref={fileInputRef}
+                onChange={handleFileChange}
+              />
+
+              {/* Poll icon - hidden if media or schedule is selected/previewed */}
+              {!selectedFile && !scheduledAt && (
+                <BiPoll
+                  className="text-primary size-6 cursor-pointer hover:text-primary/80"
+                  onClick={handlePollIconClick}
+                  title="Add a poll"
+                  aria-label="Add a poll"
+                />
+              )}
+
+              {/* Emoji picker */}
+              <div className="relative">
+                <PiSmiley
+                  ref={emojiButtonRef}
+                  className="text-primary cursor-pointer hidden md:block hover:text-primary/80"
+                  size={22}
+                  onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+                  strokeWidth={10}
+                  title="Choose an emoji"
+                  aria-label="Choose an emoji"
+                />
+              </div>
+
+              {/* Schedule NEW Post icon - hidden if media or poll is active */}
+              {!selectedFile && !showPollInputs && (
+                <TbCalendarClock
+                  size={22}
+                  className="text-primary cursor-pointer hover:text-primary/80"
+                  onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
+                  title="Schedule post"
+                  aria-label="Schedule new post"
+                />
+              )}
+            </div>
+
+            <button
+              onClick={handleSubmit}
+              className="px-4 py-2 md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+              disabled={isButtonDisabled}
+            >
+              {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
+            </button>
+          </div>
+          {showEmojiPicker && (
+            <div className="absolute" ref={emojiPickerRef}>
+              <EmojiPicker
+                onEmojiClick={onEmojiClick}
+                theme="dark"
+                width={emojiPickerWidth}
+                lazyLoadEmojis={true}
+              />
             </div>
           )}
+          {/* Schedule Post Modal (for NEW posts) */}
         </div>
-
-        {previewUrl && (
-          <div className="relative max-w-full mx-auto sm:w-auto">
-            <IoClose
-              size={25}
-              className="absolute -top-2 -right-2 text-white bg-gray-500 transition duration-200 hover:bg-gray-600 rounded-full p-1 cursor-pointer z-10"
-              onClick={() => {
-                setSelectedFile(null);
-                setPreviewUrl(null);
-                if (fileInputRef.current) fileInputRef.current.value = null;
-              }}
-            />
-            {selectedFile.type.startsWith("image/") ? (
-              <img
-                src={previewUrl}
-                className="w-full h-auto max-h-96 object-contain rounded"
-                alt="Image preview"
-              />
-            ) : (
-              <video
-                controls
-                src={previewUrl}
-                className="w-full h-auto max-h-96 object-contain rounded"
-                preload="metadata"
-              >
-                Your browser does not support the video tag.
-              </video>
-            )}
-          </div>
-        )}
-
-        {/* --- POLL INPUTS SECTION START --- */}
-        {showPollInputs && (
-          <div className="flex flex-col gap-4 mt-4 p-3 border border-accent rounded-2xl">
-            {pollChoices.map((choice, index) => (
-              <div key={index} className="flex items-center gap-1 relative">
-                <div
-                  className={`relative ${
-                    pollChoices.length > 3 ? "w-full" : "w-full mr-7"
-                  }`}
-                >
-                  <input
-                    type="text"
-                    placeholder={`Choice ${index + 1}`}
-                    className={`bg-black/0 border p-2 py-3 border-accent ${
-                      pollChoices.length > 3 ? "w-full" : "w-full mr-7"
-                    } placeholder:text-gray-500 focus:outline-none focus:border-accent/99 rounded-[4px] `}
-                    value={choice.text}
-                    onChange={(e) => handlePollChoiceChange(index, e.target.value)}
-                    onFocus={() => handlePollInputFocus(index)}
-                    onBlur={handlePollInputBlur}
-                    maxLength={POLL_CHOICE_MAX_LENGTH}
-                  />
-
-                  {focusedPollInputIndex === index && (
-                    <span className="absolute top-1 right-2 text-xs text-gray-500">
-                      {choice.text.length} / {POLL_CHOICE_MAX_LENGTH}
-                    </span>
-                  )}
-
-                  {index >= 2 && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemovePollChoice(index)}
-                      className="text-red-600 hover:text-red-400 absolute top-3.5 right-1 transition duration-200"
-                    >
-                      <IoCloseSharp size={23} />
-                    </button>
-                  )}
-                </div>
-                {index === pollChoices.length - 1 &&
-                  pollChoices.length < MAX_POLL_CHOICES && (
-                    <button
-                      type="button"
-                      onClick={handleAddPollChoice}
-                      className="text-primary hover:text-blue-400 transition duration-200 absolute right-0"
-                    >
-                      <FaPlus size={18} />
-                    </button>
-                  )}
-              </div>
-            ))}
-            <div className="flex justify-center items-center">
-              <button
-                type="button"
-                onClick={handleRemovePoll}
-                className="text-red-600 hover:text-red-400 mb-1 mt-2 rounded-full px-3 py-1  transition duration-200"
-              >
-                Remove poll
-              </button>
-            </div>
-          </div>
-        )}
-        {/* --- POLL INPUTS SECTION END --- */}
-
-        <div className="flex justify-between pt-3">
-          <div className="flex gap-1 items-center">
-            {/* Image/Video input - hidden if poll or schedule is active */}
-            {!showPollInputs && !scheduledAt && (
-              <BiImageAdd
-                className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
-                onClick={() => fileInputRef.current.click()}
-                title="Add image or video"
-                aria-label="Add image or video"
-              />
-            )}
-            <input
-              type="file"
-              accept="image/*,video/*"
-              hidden
-              ref={fileInputRef}
-              onChange={handleFileChange}
-            />
-
-            {/* Poll icon - hidden if media or schedule is selected/previewed */}
-            {!selectedFile && !scheduledAt && (
-              <BiPoll
-                className="text-primary size-6 cursor-pointer hover:text-primary/80"
-                onClick={handlePollIconClick}
-                title="Add a poll"
-                aria-label="Add a poll"
-              />
-            )}
-
-            {/* Emoji picker */}
-            <div className="relative">
-              <PiSmiley
-                ref={emojiButtonRef}
-                className="text-primary cursor-pointer hidden md:block hover:text-primary/80"
-                size={22}
-                onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                strokeWidth={10}
-                title="Choose an emoji"
-                aria-label="Choose an emoji"
-              />
-              {showEmojiPicker && (
-                <div
-                  className="absolute z-10 mt-2 top-full -left-28 md:left-0 md:translate-x-0 "
-                  ref={emojiPickerRef}
-                >
-                  <EmojiPicker
-                    onEmojiClick={onEmojiClick}
-                    theme="dark"
-                    width={emojiPickerWidth}
-                    lazyLoadEmojis={true}
-                  />
-                </div>
-              )}
-            </div>
-
-            {/* Schedule NEW Post icon - hidden if media or poll is active */}
-            {!selectedFile && !showPollInputs && (
-              <TbCalendarClock
-                size={22}
-                className="text-primary cursor-pointer hover:text-primary/80"
-                onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
-                title="Schedule post"
-                aria-label="Schedule new post"
-              />
-            )}
-          </div>
-          <button
-            type="submit"
-            className=" px-4 py-2 bg-primary text-white rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
-            disabled={isButtonDisabled}
-          >
-            {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
-          </button>
-        </div>
-        {isError && <div className="text-red-500 mt-2">{error.message}</div>}
-      </form>
-
-      {/* Schedule Post Modal (for NEW posts) */}
+      </div>
       <SchedulePostModal
         isOpen={showSchedulePostModal} // Changed state name
         onClose={handleCloseSchedulePostModal} // Changed handler name
@@ -902,5 +936,6 @@ const CreatePost = () => {
       )}
     </div>
   );
-};
-export default CreatePost;
+}
+
+export default CreatePostModal;

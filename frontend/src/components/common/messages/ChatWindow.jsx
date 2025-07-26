@@ -16,7 +16,7 @@ import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
-import { IoChatbubblesOutline } from "react-icons/io5";
+import { IoArrowDownOutline, IoChatbubblesOutline } from "react-icons/io5";
 
 const ChatWindow = ({
   selectedConversation,
@@ -32,6 +32,7 @@ const ChatWindow = ({
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+  const [showScrollDownButton, setShowScrollDownButton] = useState(false)
 
   const conversationId = selectedConversation?._id;
 
@@ -361,6 +362,7 @@ const ChatWindow = ({
             } else {
               if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
                 setShowNewMessageButton(true);
+                setShowScrollDownButton(true)
               }
             }
           }
@@ -541,6 +543,9 @@ const ChatWindow = ({
 
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent">
+      <div className="absolute bottom-20 right-6 z-[9999] cursor-pointer duration-200 transition hover:bg-gray-800 rounded-full p-1 border-2 bg-base-100 border-accent">
+        <IoArrowDownOutline size={22} />
+      </div>
       <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
       {isChatEmpty && (
         <div className="flex flex-col items-center justify-end h-full text-center p-4">

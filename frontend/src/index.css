@@ -110,3 +110,13 @@ body {
   touch-action: manipulation; /* Prevents default browser actions like double-tap zoom */
   user-select: none; /* Prevents text selection on long press */
 }
+
+.fill-current {
+  fill: currentColor;
+}
+
+/* Example for setting the icon size */
+.icon-size {
+  width: 20px; /* Adjust as needed */
+  height: 20px; /* Adjust as needed */
+}

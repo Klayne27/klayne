@@ -355,7 +355,7 @@ const Post = ({
         <div className="avatar mt-1">
           <Link
             to={`/profile/${originalPostOwner.username}`}
-            className="size-8 md:size-10 rounded-full overflow-hidden"
+            className="size-10 rounded-full overflow-hidden"
             onClick={(e) => handleInteractiveClick(e)}
           >
             <img
@@ -407,13 +407,13 @@ const Post = ({
               {showMenu && (
                 <div
                   ref={menuRef}
-                  className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2  shadow-md shadow-primary"
+                  className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2 shadow-primary-glow"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                 >
                   {isMyOriginalPost ? (
                     // Menu for post owner
                     <button
-                      className="w-full text-left px-4 py-2 text-red-500  rounded-md flex items-center gap-2 font-semibold"
+                      className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-700/30 duration-200 transition flex items-center gap-2 font-semibold"
                       onClick={handleDeletePostClick}
                       disabled={isDeleting}
                     >
@@ -462,13 +462,19 @@ const Post = ({
               {renderClickableText(sourcePost.text)}
             </span>
             {sourcePost.mediaType === "image" && sourcePost.img && (
-              <img
-                src={sourcePost.img}
-                className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
-                alt="post image"
-                onClick={(e) => handleMediaClick(sourcePost.img, "image", e)}
-                loading="lazy"
-              />
+              // <div className="w-full max-w-full flex justify-center"> // Optional: for true centering if parent isn't flex-col
+              <div className="inline-flex max-w-full justify-center">
+                {" "}
+                {/* Use inline-flex so it wraps the content, and max-w-full */}
+                <img
+                  src={sourcePost.img}
+                  className="h-auto max-h-80 object-contain rounded-2xl border border-accent block"
+                  // Removed w-full from img to allow wrapper to dictate width based on content
+                  alt="post image"
+                  onClick={(e) => handleMediaClick(sourcePost.img, "image", e)}
+                  loading="lazy"
+                />
+              </div>
             )}
             {sourcePost.mediaType === "video" && sourcePost.video && (
               <video

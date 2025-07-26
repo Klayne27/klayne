@@ -229,6 +229,7 @@ const SchedulePostModal = ({
   
 
   const handleBackgroundClick = (e) => {
+    e.stopPropagation()
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
     }

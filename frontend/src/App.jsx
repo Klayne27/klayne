@@ -6,6 +6,11 @@ import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
+import CreatePostModal from "./components/common/CreatePostModal";
+import { TbPencilPlus } from "react-icons/tb";
+import { RiQuillPenAiLine } from "react-icons/ri";
+import FeatherIcon from "./components/svgs/FeatherIcon";
+
 
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
@@ -27,6 +32,7 @@ function App() {
   const [feedType, setFeedType] = useState("posts");
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
+  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
 
   const [isMobileMessagesListScrollingDown, setIsMobileMessagesListScrollingDown] =
     useState(false);
@@ -47,8 +53,20 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row md:max-w-[1240px] mx-auto min-h-screen">
+      {/* <div
+        className="block md:hidden fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 duration-200 transition p-4 bg-primary text-white"
+        style={{
+          width: "56px",
+          height: "56px",
+          boxShadow: "0px 0px 10px 1px rgba(255, 255, 255, 0.60)",
+        }}
+        onClick={() => setShowCreatePostModal(true)}
+      >
+        <FeatherIcon />
+      </div> */}
       {authUser && (
         <Sidebar
+          onOpenCreatePostModal={() => setShowCreatePostModal(true)}
           isChatWindowOpen={isChatWindowOpen}
           isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown} // Pass new prop
         />
@@ -213,6 +231,9 @@ function App() {
         position="bottom-center" // Change position to top-center
       />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
+      {showCreatePostModal && (
+        <CreatePostModal onClose={() => setShowCreatePostModal(false)} />
+      )}
     </div>
   );
 }
