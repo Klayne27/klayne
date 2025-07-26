@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
+import toast from "react-hot-toast"; // This seems to be unused if you're using showAppToast
 import { deleteUserAccountApi } from "../../api/usersApi";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -7,7 +7,7 @@ export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteAccount, isPending: isDeletingAccount } = useMutation({
-    mutationFn: deleteUserAccountApi,
+    mutationFn: ({ userId, password }) => deleteUserAccountApi(userId, password), // Updated mutationFn to accept object
     onSuccess: () => {
       showAppToast("Account deleted successfully!", "success");
       localStorage.removeItem("authUser");

@@ -47,6 +47,8 @@ const Sidebar = ({
   const [modalType, setModalType] = useState("");
   const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true);
 
+  const [passwordInput, setPasswordInput] = useState("");
+
   // NEW STATE: To track if FollowListModals are open
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
@@ -338,9 +340,25 @@ const Sidebar = ({
   };
 
   const handleDeleteAccount = async () => {
+    if (!passwordInput) {
+      showAppToast("Please enter your password.", "error");
+      return;
+    }
+
     if (authUser && authUser._id) {
-      await deleteAccount(authUser._id);
-      setShowSideModal(false); // Close side modal after deletion attempt
+      try {
+        await deleteAccount({ userId: authUser._id, password: passwordInput });
+        // On success, the useDeleteAccount hook redirects, so the modal will unmount anyway.
+        // If it didn't redirect, you'd setShowConfirmDeleteModal(false);
+      } catch (error) {
+        // Error handling is already done by useDeleteAccount's onError,
+        // but you can add more specific modal closing logic if needed.
+        // For example, if you want the modal to stay open on error for correction.
+        console.error("Deletion failed:", error);
+      } finally {
+        // Clear password input regardless of success/failure when the async operation finishes
+        setPasswordInput("");
+      }
     } else {
       showAppToast("User ID not available. Cannot proceed with deletion.", "error");
     }
@@ -421,11 +439,11 @@ const Sidebar = ({
     navigate("/public-chat");
   };
 
+  const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount;
+
   if (!shouldRenderMobileSidebar) {
     return null;
   }
-
-
 
   return (
     <>
@@ -437,7 +455,9 @@ const Sidebar = ({
       >
         <div
           className={
-            `block md:hidden ${pathname.includes("/messages") ? "hidden" : ""} fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
+            `block md:hidden ${
+              pathname.includes("/messages") ? "hidden" : ""
+            } fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
             transform transition-all duration-300 ease-in-out
              ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
           }
@@ -1141,13 +1161,26 @@ const Sidebar = ({
       <ConfirmationModal
         modalTitle="Confirm Account Deletion"
         isOpen={showConfirmDeleteModal}
-        onClose={() => setShowConfirmDeleteModal(false)}
+        onClose={() => {
+          setShowConfirmDeleteModal(false);
+          setPasswordInput(""); // Clear password when modal is closed without confirmation
+        }}
         onConfirm={handleDeleteAccount}
-        message="Are you absolutely sure you want to delete your account? This action is
-          irreversible and all your data will be permanently removed."
+        isConfirmDisabled={isConfirmButtonDisabled} // Control disabled state from here
+        message="This action is irreversible. Please enter your password to confirm."
         danger={true}
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
-      />
+        isLoading={isDeletingAccount} // Show loading state
+      >
+        <input
+          type="password"
+          placeholder="Enter your password"
+          value={passwordInput}
+          onChange={(e) => setPasswordInput(e.target.value)}
+          className="w-full p-2 px-4 mb-2 bg-base-100 border border-slate-500 rounded-xl focus:outline-none focus:border-primary focus:ring-primary"
+          autoFocus // Optional: Automatically focus this input when modal opens
+        />
+      </ConfirmationModal>
     </>
   );
 };

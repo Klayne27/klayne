@@ -77,10 +77,12 @@ export const followApi = async (userId) => {
   return data;
 };
 
-export const deleteUserAccountApi = async (userId) => {
+export const deleteUserAccountApi = async (userId, password) => {
+  // Added password parameter
   const res = await fetch(`/api/users/delete/${userId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ password }), // Send the password in the request body
   });
   const data = await res.json();
 

@@ -351,6 +351,14 @@ export const getFollowers = async (req, res) => {
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
+    // Extract password from request body
+    const { password } = req.body;
+
+    if (!password) {
+      return res
+        .status(400)
+        .json({ error: "Password is required to delete your account." });
+    }
 
     if (id !== req.user._id.toString()) {
       return res
@@ -362,6 +370,14 @@ export const deleteUserAccount = async (req, res) => {
     if (!userToDelete) {
       return res.status(404).json({ error: "User not found." });
     }
+
+    // Verify password
+    const isPasswordCorrect = await bcrypt.compare(password, userToDelete.password);
+    if (!isPasswordCorrect) {
+      return res.status(401).json({ error: "Invalid password." });
+    }
+
+    // --- Start: Existing Deletion Logic (no changes needed here) ---
 
     await User.updateMany(
       { blockedUsers: userToDelete._id },
@@ -386,6 +402,11 @@ export const deleteUserAccount = async (req, res) => {
       if (post.img) {
         const postId = post.img.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(postId);
+      }
+      // Assuming 'video' field also exists on Post and needs deletion from Cloudinary
+      if (post.video) {
+        const videoId = post.video.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
       await Post.findByIdAndDelete(post._id);
     }
@@ -425,23 +446,24 @@ export const deleteUserAccount = async (req, res) => {
 
     await PublicChatMessage.deleteMany({ sender: userToDelete._id });
 
-    // ✨ OPTIONAL: If public chat messages can contain images/videos, delete them from Cloudinary too
-    // This requires iterating through PublicChatMessages, similar to how you handle Posts.
-    // Ensure you fetch messages that actually have an 'img' or 'video' field
     const publicChatMessagesWithMedia = await PublicChatMessage.find({
       sender: userToDelete._id,
-      img: { $ne: "" },
+      $or: [{ img: { $ne: "" } }, { video: { $ne: "" } }], // Check for both img and video
     });
     for (const msg of publicChatMessagesWithMedia) {
       if (msg.img) {
-        // Assuming public chat images are stored in Cloudinary and follow the same naming convention
         const imgPublicId = msg.img.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(imgPublicId);
       }
-      // If you also support video in public chat messages, add similar logic
+      if (msg.video) {
+        const videoPublicId = msg.video.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(videoPublicId, { resource_type: "video" });
+      }
     }
 
     await User.findByIdAndDelete(id);
+
+    // --- End: Existing Deletion Logic ---
 
     res.status(200).json({
       message: "Account deleted successfully. All associated data has been removed.",
