@@ -407,7 +407,7 @@ const Post = ({
               {showMenu && (
                 <div
                   ref={menuRef}
-                  className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2 shadow-primary-glow"
+                  className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2 shadow-md shadow-primary"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                 >
                   {isMyOriginalPost ? (
