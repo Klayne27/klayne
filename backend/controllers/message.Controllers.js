@@ -8,6 +8,7 @@ import {
 } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
+import mongoose from "mongoose";
 
 const getBlockingUsers = async (userId) => {
   if (!userId) {
@@ -715,5 +716,77 @@ export const getOrCreateConversation = async (req, res) => {
   } catch (error) {
     console.error("Error in getOrCreateConversation controller:", error.message);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const deleteConversation = async (req, res) => {
+  const { id: conversationId } = req.params;
+  const { _id: currentUserId } = req.user;
+
+  const session = await mongoose.startSession(); // Start a new session for the transaction
+
+  try {
+    await session.withTransaction(async () => {
+      // 1. Find the conversation
+      const conversation = await Conversation.findById(conversationId).session(session);
+
+      if (!conversation) {
+        // Use throw inside a transaction to abort it
+        throw new Error("Conversation not found");
+      }
+
+      // 2. Security check: ensure the user making the request is a participant
+      if (!conversation.participants.includes(currentUserId)) {
+        throw new Error("Unauthorized: You are not a participant of this conversation");
+      }
+
+      // 3. Identify the other participant
+      const otherUserId = conversation.participants.find((p) => !p.equals(currentUserId));
+
+      if (!otherUserId) {
+        // This case handles group chats or corrupted data, good practice to have
+        throw new Error("Could not identify the other participant");
+      }
+
+      // 4. Delete all messages within the conversation
+      await Message.deleteMany({ conversationId: conversationId }).session(session);
+
+      // 5. Unfollow logic: Remove users from each other's lists
+      // currentUserId stops following otherUserId
+      await User.findByIdAndUpdate(currentUserId, {
+        $pull: { following: otherUserId },
+      }).session(session);
+      // otherUserId loses currentUserId as a follower
+      await User.findByIdAndUpdate(otherUserId, {
+        $pull: { followers: currentUserId },
+      }).session(session);
+
+      await User.findByIdAndUpdate(currentUserId, {
+        $pull: { followers: otherUserId },
+      }).session(session);
+      // otherUserId loses currentUserId as a follower
+      await User.findByIdAndUpdate(otherUserId, {
+        $pull: { following: currentUserId },
+      }).session(session);
+
+      // 6. Finally, delete the conversation itself
+      await Conversation.findByIdAndDelete(conversationId).session(session);
+    });
+
+    // If the transaction is successful, send a success response
+    res.status(200).json({ message: "Conversation deleted successfully." });
+  } catch (error) {
+    console.error("Error in deleteConversation:", error.message);
+    // Respond with a specific error message based on the error thrown in the transaction
+    if (error.message === "Conversation not found") {
+      return res.status(404).json({ error: error.message });
+    }
+    if (error.message.startsWith("Unauthorized")) {
+      return res.status(403).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Internal Server Error" });
+  } finally {
+    // End the session
+    await session.endSession();
   }
 };

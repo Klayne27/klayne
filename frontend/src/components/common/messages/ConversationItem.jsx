@@ -4,9 +4,14 @@ import { Link } from "react-router-dom";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility";
 import { CiCircleMinus } from "react-icons/ci";
+import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConversation";
+import { FiTrash } from "react-icons/fi";
+import { BsThreeDots } from "react-icons/bs";
+import DeleteConversationModal from "../DeleteConversationModal";
+import ConfirmationModal from "../ConfirmationModal";
 
 function ConversationItem({
   conv,
@@ -16,11 +21,17 @@ function ConversationItem({
 }) {
   const { authUser: currentUser } = useAuthUser();
 
-  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility();
+  const [showMenu, setShowMenu] = useState(false);
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+
+  const menuRef = useRef(null);
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
   );
+
+  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility();
+  const { deleteConversation, isPending } = useDeleteConversation();
 
   const isSelected = selectedConversation?._id === conv._id;
 
@@ -49,7 +60,34 @@ function ConversationItem({
     toggleVisibility({ conversationId: conv._id, isHiding: true });
   };
 
-  // This should rarely happen now with the new backend logic
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [menuRef]);
+
+  const toggleMenu = (e) => {
+    e.stopPropagation();
+    setShowMenu(!showMenu);
+  };
+
+  const handleCloseModal = (e) => {
+    e.stopPropagation();
+    setShowDeleteModal(false);
+  };
+
+  const handleDelete = () => {
+    deleteConversation(conv._id);
+    setShowDeleteModal(false);
+  };
+
   if (!otherUser) {
     return null;
   }
@@ -105,16 +143,51 @@ function ConversationItem({
           </p>
         </div>
       </div>
-      <div
-        className="group p-2 rounded-full hover:bg-red-600/15"
-        onClick={handleToggleHide}
+      <span
+        className="flex ml-auto relative right-0 group rounded-full p-2 mr-0.5 hover:bg-primary/20 transition duration-200"
+        onClick={toggleMenu}
       >
-        <CiCircleMinus
-          className="text-slate-500 group-hover:text-red-500 cursor-pointer transition-colors duration-200"
-          size={22}
-          strokeWidth={1}
+        <div className="group duration-200 transition hover:text-primary rounded-full">
+          <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
+        </div>
+        {showMenu && (
+          <div
+            ref={menuRef}
+            className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-md z-10 menu-popover py-2  shadow-md shadow-primary"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+              onClick={handleToggleHide}
+            >
+              <CiCircleMinus />
+              Hide Conversation
+            </button>
+            <button
+              className="w-full text-left px-4 py-2 text-red-500  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowDeleteModal(true);
+              }}
+            >
+              <FiTrash />
+              Delete Conversation
+            </button>
+          </div>
+        )}
+      </span>
+
+      {showDeleteModal && (
+        <ConfirmationModal
+          isOpen={showDeleteModal}
+          modalTitle="Confirm Conversation Deletion"
+          message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants and unfollow ${otherUser.username}. You will also be unfollowed by them.`}
+          confirmButtonText="Yes, Delete Conversation"
+          onConfirm={handleDelete}
+          onClose={handleCloseModal}
+          danger={true}
         />
-      </div>
+      )}
     </div>
   );
 }

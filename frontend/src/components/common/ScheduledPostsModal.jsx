@@ -12,6 +12,7 @@ import toast from "react-hot-toast";
 import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
+import ConfirmationModal from "./ConfirmationModal";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
@@ -23,7 +24,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
-  useLockBodyScroll(isOpen)
+  useLockBodyScroll(isOpen);
 
   // --- NEW STATE FOR TOUCH EFFECT ---
   const [isTouchDevice, setIsTouchDevice] = useState(false);
@@ -94,23 +95,22 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     setSelectedPostIds([]); // Clear selections when toggling edit mode
   };
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     document.body.style.overflow = "hidden";
+  //   } else {
+  //     document.body.style.overflow = "unset";
+  //   }
+  //   return () => {
+  //     document.body.style.overflow = "unset";
+  //   };
+  // }, [isOpen]);
 
   const handleBackgroundClick = (e) => {
     e.stopPropagation();
     if (modalRef.current && !modalRef.current.contains(e.target)) {
       onClose();
-      setIsEditMode(false); // Ensure edit mode is off on close
-      setSelectedPostIds([]); // Clear selected posts on close
+      setIsEditMode(false);
     }
   };
 
@@ -131,20 +131,9 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
   // This function will be called when the user confirms deletion from the ConfirmationModal
   const handleConfirmDelete = () => {
-    deleteMultipleScheduledPosts(selectedPostIds, {
-      onSuccess: () => {
-        setSelectedPostIds([]); // Clear selections after successful deletion
-        setIsEditMode(false); // Exit edit mode
-        setShowDeleteConfirmModal(false); // Close the confirmation modal
-        // `refetch` or `invalidateQueries` in the hook will update the list
-      },
-      onError: () => {
-        // Handle error if deletion fails
-        setShowDeleteConfirmModal(false); // Close the confirmation modal even on error
-      },
-    });
+    deleteMultipleScheduledPosts(selectedPostIds);
+    setShowDeleteConfirmModal(false);
   };
-
 
   // --- EFFECT TO DETECT TOUCH DEVICE ---
   useEffect(() => {
@@ -159,7 +148,9 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
   return (
     <div
-      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${isOpen ? "modal-open" : ""}`}
+      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${
+        isOpen ? "modal-open" : ""
+      }`}
       onClick={handleBackgroundClick}
     >
       <div
@@ -171,7 +162,10 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
           <div className="flex gap-5 items-center">
             <button
               className="hover:bg-secondary rounded-full p-1 transition duration-200"
-              onClick={onClose}
+              onClick={() => {
+                onClose();
+                setIsEditMode(false);
+              }}
             >
               <IoClose strokeWidth={1} size={24} />
             </button>
@@ -285,16 +279,14 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
       </div>
 
       {/* Confirmation Modal for Delete Selected Posts */}
-      <DeleteScheduledPostsModal
+      <ConfirmationModal
         isOpen={showDeleteConfirmModal}
         onClose={() => setShowDeleteConfirmModal(false)}
-        title="Delete Scheduled Posts?"
+        onConfirm={handleConfirmDelete}
+        modalTitle="Delete Scheduled Posts?"
         message={`This can't be undone and you'll lose ${selectedPostIds.length} scheduled post(s).`}
         confirmButtonText={isDeletingMultiple ? "Deleting..." : "Delete"}
-        onConfirm={handleConfirmDelete}
-        isConfirming={isDeletingMultiple}
-        confirmButtonColor="bg-red-600"
-        confirmButtonHoverColor="hover:bg-red-700"
+        danger={true}
       />
     </div>
   );

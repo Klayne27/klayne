@@ -113,9 +113,11 @@ export const followUnfollowUser = async (req, res) => {
       await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
 
-      // Optional: If you want to hide the conversation for the unfollowing user (User A)
-      // upon unfollow, you can add them to the hiddenFor array here.
-      // Or, as before, you can delete it. For now, we'll leave it.
+      await Conversation.updateOne(
+        { participants: { $all: [req.user._id, id] } },
+        { $addToSet: { hiddenFor: req.user._id } }, // Add currentUser (A) to hiddenFor
+        { timestamps: false }
+      );
 
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
@@ -216,7 +218,16 @@ export const getSuggestedUsers = async (req, res) => {
 };
 
 export const updateUser = async (req, res) => {
-  const { fullName, email, username, currentPassword, newPassword, bio, link, confirmNewPassword } = req.body;
+  const {
+    fullName,
+    email,
+    username,
+    currentPassword,
+    newPassword,
+    bio,
+    link,
+    confirmNewPassword,
+  } = req.body;
   let { profileImg, coverImg } = req.body;
 
   const userId = req.user._id;
@@ -258,7 +269,6 @@ export const updateUser = async (req, res) => {
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
-
 
     if (profileImg) {
       if (user.profileImg) {

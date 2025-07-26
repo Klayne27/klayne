@@ -6,7 +6,6 @@ import Posts from "../../components/common/posts/Posts";
 import ProfileHeaderSkeleton from "../../components/skeletons/ProfileHeaderSkeleton";
 import EditProfileModal from "./EditProfileModal";
 import FollowListModal from "../../components/common/FollowListModal";
-import UnfollowModal from "../../components/common/UnfollowModal"; // Import the new modal
 
 import { FaArrowLeft } from "react-icons/fa6";
 import { IoCalendarOutline } from "react-icons/io5";
@@ -16,20 +15,17 @@ import { formatMemberSinceDate } from "../../utils/date";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile";
 import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile";
-import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import { CiMail } from "react-icons/ci";
 import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
-import BlockConfirmationModal from "../../components/common/BlockConfirmationModal";
+import ConfirmationModal from "../../components/common/ConfirmationModal";
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
 import FollowButton from "../../components/common/FollowButton";
 import { useAdminDeleteUser } from "../../hooks/usersHooks/useAdminDeleteUser";
 import DeleteUserConfirmationModal from "../../components/common/DeleteUserConfirmationModal";
 import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useToggleConversationVisibility";
-import toast from "react-hot-toast";
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
 import { useQueryClient } from "@tanstack/react-query";
-import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation";
 import { showAppToast } from "../../utils/showAppToast";
 
 const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
@@ -57,7 +53,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser(); // USE NEW HOOK
 
-
   const {
     userProfile,
     isLoading,
@@ -69,7 +64,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     hasBlockedYou,
     httpStatus,
   } = useFetchUserProfile(username);
-
 
   const {
     conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
@@ -93,6 +87,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   const amIFollowing = authUser?.following?.includes(userProfile?._id);
 
   const isAdminUser = authUser?.isAdmin; // Assuming `isAdmin` field on authUser
+  const modalTitle = isBlockedByYou ? `Unblock @${username}?` : `Block @${username}?`;
+  const confirmButtonText = isBlockedByYou ? "Unblock" : "Block";
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
 
@@ -222,7 +218,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
       const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser;
 
       if (isHiddenForCurrentUser) {
-
         toggleVisibility(
           { conversationId: existingConversationId, isHiding: false },
           {
@@ -243,9 +238,8 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         // Just navigate to it directly. No API call to toggle visibility needed.
         navigate(`/messages/${existingConversationId}`);
       }
-    } 
+    }
   };
-
 
   const handleImageClick = (imageUrl, event) => {
     event.stopPropagation();
@@ -295,6 +289,14 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
   } else {
     showFullProfileHeader = true;
     showFullProfileContent = true;
+  }
+
+  let message;
+  if (isBlockedByYou) {
+    message = `They will be able to follow you, message you, and engage with your public posts.`;
+  } else {
+    message = `They will not be able to see your public posts and will no longer be able to engage with them. @${username} 
+    will also not be able to follow or message you, and you will not see notifications from them.`;
   }
 
   return (
@@ -628,21 +630,29 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
         />
       )}
 
-      <BlockConfirmationModal
+      <ConfirmationModal
         isOpen={showBlockConfirmationModal}
         onClose={closeBlockConfirmationModal}
         onConfirm={handleConfirmBlockUnblock}
-        username={userProfile?.username}
-        isBlocking={isBlockedByYou}
-        isBlockedByYou={isBlockedByYou}
+        danger={!isBlockedByYou}
+        message={message}
+        confirmButtonText={confirmButtonText}
+        modalTitle={modalTitle}
       />
 
-      {/* Unfollow Confirmation Modal */}
-      <UnfollowModal
+      <ConfirmationModal
         isOpen={showUnfollowModal}
+        modalTitle={
+          <>
+            Unfollow <p>@{userToUnfollow?.username}</p>
+          </>
+        }
+        message="Their posts will no longer show up in your For You timeline. You can still view
+          their profile, unless their posts are protected."
+        confirmButtonText="Unfollow"
+        onConfirm={handleConfirmUnfollow}
         onClose={closeUnfollowModal}
-        onUnfollowConfirm={handleConfirmUnfollow}
-        username={userToUnfollow?.username}
+        danger={false}
       />
 
       {userProfile && (

@@ -140,3 +140,22 @@ export const getConversationBetweenUsersApi = async (otherUserId) => {
 
   return data;
 };
+
+export const deleteConversationApi = async (conversationId) => {
+    try {
+        const res = await fetch(`/api/messages/conversations/${conversationId}`, {
+            method: "DELETE",
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+            throw new Error(data.error || "Failed to delete conversation");
+        }
+
+        return data;
+    } catch (error) {
+        // Re-throw the error to be caught by React Query's onError
+        throw new Error(error.message);
+    }
+};

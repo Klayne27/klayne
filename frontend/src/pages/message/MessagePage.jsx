@@ -8,7 +8,6 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
 import ChatWindowSkeleton from "../../components/skeletons/ChatWindowSkeleton";
-import ConfirmationDialog from "../../components/common/ConfirmationDialog";
 import { useQueryClient } from "@tanstack/react-query";
 
 // 🗑️ REMOVED PROPS: setIsMobileMessagesListScrollingDown
@@ -109,14 +108,6 @@ const MessagePage = ({ openImageModal, setIsChatWindowOpen }) => {
           </div>
         )}
       </div>
-
-      <ConfirmationDialog
-        isOpen={showConfirmDeleteDialog}
-        message="Are you sure you want to delete this conversation? This action cannot be undone."
-        // onConfirm={handleConfirmDelete}
-        onCancel={() => setShowConfirmDeleteDialog(false)}
-        // isLoading={isDeleting}
-      />
     </>
   );
 };

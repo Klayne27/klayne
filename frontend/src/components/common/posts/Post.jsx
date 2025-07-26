@@ -75,7 +75,7 @@ const Post = ({
   );
   const { repostPost, isReposting } = useRepostPost();
   const { likePost, isLiking } = useLikePost(username);
-  const { deletePost, isDeleting } = useDeletePosts(sourcePost);
+  const { deletePost, isDeleting } = useDeletePosts();
   const { pinUnpinPost, isPinning } = usePinPost();
 
   // New: Call useFollow and useBlockUnblockUser hooks
@@ -176,7 +176,7 @@ const Post = ({
 
   const handleDeletePostClick = (e) => {
     handleInteractiveClick(e);
-    deletePost();
+    deletePost(sourcePost?._id);
   };
 
   const handleLikePostClick = (e) => {
@@ -417,7 +417,7 @@ const Post = ({
                       onClick={handleDeletePostClick}
                       disabled={isDeleting}
                     >
-                      {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
+                      <FiTrash />
                       Delete Post
                     </button>
                   ) : (

@@ -17,6 +17,8 @@ import { BiLogOut } from "react-icons/bi";
 import FollowListModal from "./FollowListModal";
 import React from "react";
 import { showAppToast } from "../../utils/showAppToast";
+import { BsThreeDots } from "react-icons/bs";
+import ConfirmationModal from "./ConfirmationModal";
 
 const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
   const { authUser } = useAuthUser();
@@ -808,7 +810,7 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
                   <p className="font-bold text-sm w-20 truncate">{authUser?.fullName}</p>
                   <p className="text-slate-500 text-sm">@{authUser?.username}</p>
                 </div>
-                <HiDotsHorizontal className="w-5 h-5 cursor-pointer " />
+                <BsThreeDots className="w-5 h-5 cursor-pointer " />
               </div>
             </button>
 
@@ -1099,48 +1101,17 @@ const Sidebar = ({ isChatWindowOpen, isMobileMessagesListScrollingDown }) => {
         ></div>
       )}
 
-      {/* Modal for Account Deletion (already exists) */}
-      <Modal
+      <ConfirmationModal
+        modalTitle="Confirm Account Deletion"
         isOpen={showConfirmDeleteModal}
         onClose={() => setShowConfirmDeleteModal(false)}
-      >
-        <h2 className="text-lg font-bold mb-4 text-center">Confirm Account Deletion</h2>
-        <p className="text-gray-500 mb-6 text-center">
-          Are you absolutely sure you want to delete your account? This action is
-          irreversible and all your data will be permanently removed.
-        </p>
-        <div className="flex flex-col gap-3">
-          <button
-            onClick={handleDeleteAccount}
-            className={`w-full bg-red-600 text-white py-2 rounded-full hover:bg-red-700 transition-colors
-            ${
-              isTouchDevice && activeButton === "confirm-delete"
-                ? "bg-red-700 transition duration-150"
-                : "transition duration-150"
-            }`}
-            onTouchStart={() => handleTouchStart("confirm-delete")}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-            disabled={isDeletingAccount}
-          >
-            {isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
-          </button>
-          <button
-            onClick={() => setShowConfirmDeleteModal(false)}
-            className={`w-full bg-gray-500 text-white py-2 rounded-full hover:bg-gray-600 transition-colors
-            ${
-              isTouchDevice && activeButton === "cancel-delete"
-                ? "bg-secondary bg-opacity-50 transition duration-150"
-                : "transition duration-150"
-            }`}
-            onTouchStart={() => handleTouchStart("cancel-delete")}
-            onTouchEnd={handleTouchEnd}
-            onTouchCancel={handleTouchCancel}
-          >
-            Cancel
-          </button>
-        </div>
-      </Modal>
+        onConfirm={handleDeleteAccount}
+        message="Are you absolutely sure you want to delete your account? This action is
+          irreversible and all your data will be permanently removed."
+        danger={true}
+        confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
+      />
+      
     </>
   );
 };

@@ -63,7 +63,7 @@ const LoginPage = () => {
               className="absolute text-slate-500 right-4 cursor-pointer" // Position to the right
               onClick={() => setShowPassword(!showPassword)}
             >
-              {showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
+              {!showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
             </span>
           </label>
           <button className="py-3 text-sm font-semibold bg-primary rounded-full text-white  hover:bg-primary/80 transition duration-200">

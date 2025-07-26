@@ -33,8 +33,8 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 15) =>
   return data;
 };
 
-export const deletePostApi = async (post) => {
-  const res = await fetch(`/api/posts/${post._id}`, {
+export const deletePostApi = async (postId) => {
+  const res = await fetch(`/api/posts/${postId}`, {
     method: "DELETE",
   });
 

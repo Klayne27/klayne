@@ -204,7 +204,7 @@ const EditProfileModal = ({ authUser }) => {
                 onClick={() => setShowCurrentPassword(!showCurrentPassword)}
                 title={showCurrentPassword ? "Hide password" : "Show password"}
               >
-                {showCurrentPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+                {!showCurrentPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
               </span>
             </div>
 
@@ -229,7 +229,7 @@ const EditProfileModal = ({ authUser }) => {
                 onClick={() => setShowNewPassword(!showNewPassword)}
                 title={showNewPassword ? "Hide password" : "Show password"}
               >
-                {showNewPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+                {!showNewPassword ? <FaEyeSlash size={15} /> : <Fa size={15} />}
               </span>
             </div>
 
@@ -256,7 +256,7 @@ const EditProfileModal = ({ authUser }) => {
                 onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                 title={showConfirmNewPassword ? "Hide password" : "Show password"}
               >
-                {showConfirmNewPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
+                {!showConfirmNewPassword ? <FaEyeSlash size={15} /> : <Fa size={15} />}
               </span>
             </div>
             <button className="btn btn-primary rounded-full btn-sm text-white">

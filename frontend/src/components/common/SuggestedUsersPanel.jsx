@@ -7,9 +7,9 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { BiRefresh } from "react-icons/bi";
 import React, { useState } from "react";
 import FollowButton from "./FollowButton";
-import UnfollowModal from "./UnfollowModal";
+import ConfirmationModal from "./ConfirmationModal";
 
-const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal}) => {
+const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal }) => {
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
   const { follow, isPending } = useFollow();
   const { authUser: currentUser } = useAuthUser();
@@ -110,12 +110,15 @@ const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal}) => {
         </button>
       </div>
 
-      {/* Unfollow Confirmation Modal */}
-      <UnfollowModal
+      <ConfirmationModal
         isOpen={showUnfollowModal}
+        modalTitle={`Unfollow  @${userToUnfollow?.username}`}
+        message="Their posts will no longer show up in your For You timeline. You can still view
+          their profile, unless their posts are protected."
+        confirmButtonText="Unfollow"
+        onConfirm={handleConfirmUnfollow}
         onClose={closeUnfollowModal}
-        onUnfollowConfirm={handleConfirmUnfollow}
-        username={userToUnfollow?.username}
+        danger={false}
       />
     </div>
   );
