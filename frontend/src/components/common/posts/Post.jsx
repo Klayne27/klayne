@@ -53,8 +53,8 @@ const Post = ({
   const originalPostOwner = sourcePost?.user;
   const repostingUser = isRepost ? post.user : null;
   const isLiked = sourcePost?.likes?.includes(authUser?._id);
-  const isBookmarked = sourcePost.bookmarkedBy.includes(authUser?._id);
-  const repostedByCurrentUser = sourcePost.repostedBy?.includes(authUser?._id);
+  const isBookmarked = sourcePost?.bookmarkedBy?.includes(authUser?._id);
+  const repostedByCurrentUser = sourcePost?.repostedBy?.includes(authUser?._id);
   const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(sourcePost._id);
 
   const isPinnedForUI =
@@ -417,7 +417,7 @@ const Post = ({
                       onClick={handleDeletePostClick}
                       disabled={isDeleting}
                     >
-                      <FiTrash />
+                      {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
                       Delete Post
                     </button>
                   ) : (
