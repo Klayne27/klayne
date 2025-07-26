@@ -346,7 +346,6 @@ const Sidebar = ({
     }
   };
 
-  // --- START MODIFIED useEffect for Mobile Sidebar Visibility ---
   useEffect(() => {
     const handleScroll = () => {
       // Always hide on specific paths regardless of scroll on mobile
