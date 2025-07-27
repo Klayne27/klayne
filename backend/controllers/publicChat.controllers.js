@@ -290,10 +290,10 @@ export const addReactionToPublicMessage = async (req, res) => {
     const { emoji } = req.body;
     const userId = req.user._id;
 
-    const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
-    if (!allowedEmojis.includes(emoji)) {
-      return res.status(400).json({ error: "Invalid emoji." });
-    }
+    // const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+    // if (!allowedEmojis.includes(emoji)) {
+    //   return res.status(400).json({ error: "Invalid emoji." });
+    // }
 
     if (await isBanned(userId)) {
       return res

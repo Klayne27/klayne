@@ -70,6 +70,7 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
+  
 
   // --- Touch device detection ---
   useEffect(() => {

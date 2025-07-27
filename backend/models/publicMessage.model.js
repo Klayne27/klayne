@@ -28,7 +28,7 @@ const publicChatMessageSchema = new mongoose.Schema(
       {
         emoji: {
           type: String,
-          enum: ["❤️", "👍", "😂", "😭", "😡"], // Only allowed emojis
+          // enum: ["❤️", "👍", "😂", "😭", "😡"], // Only allowed emojis
           required: true,
         },
         userId: {

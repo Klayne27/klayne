@@ -16,6 +16,10 @@ import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
 import { formatDate } from "date-fns";
 import { useMemo } from "react";
+import { useCallback } from "react";
+import { useRef } from "react";
+import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
+import { PiSmileyFill } from "react-icons/pi";
 
 // --- PublicChatMessage Component ---
 const PublicChatMessage = React.memo(function PublicChatMessage({
@@ -44,6 +48,71 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     useDeletePublicMessage();
   const [isHovered, setIsHovered] = useState(false);
 
+  const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
+  // State for the popover's calculated position
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  // Ref for the "More Emojis" button, which will be the popover's anchor
+  const moreEmojisButtonRef = useRef(null);
+
+  // Callback to open the popover and calculate its position
+  const handleOpenEmojiPickerPopover = useCallback(
+    (e) => {
+      e.stopPropagation();
+
+      if (showEmojiPickerPopover) {
+        setShowEmojiPickerPopover(false);
+        return;
+      }
+
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+
+      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350;
+      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400;
+
+      let newTop = buttonRect.top - estimatedPickerHeight - 10;
+      let newLeft = buttonRect.left + buttonRect.width / 2;
+
+      const padding = 10;
+
+      // Adjust newLeft to prevent going off the left edge
+      if (newLeft - estimatedPickerWidth / 2 < padding) {
+        newLeft = estimatedPickerWidth / 2 + padding;
+      }
+
+      // Adjust newLeft to prevent going off the right edge
+      if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
+        newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding;
+      }
+
+      // Adjust newTop to prevent going off the top edge
+      if (newTop < padding) {
+        // Use padding instead of 0
+        newTop = buttonRect.bottom + 10;
+      }
+
+      setPopoverPosition({
+        top: newTop,
+        left: newLeft,
+      });
+      setShowEmojiPickerPopover(true);
+    },
+    [showEmojiPickerPopover]
+  );
+
+  // Callback to close the popover
+  const handleCloseEmojiPickerPopover = useCallback(() => {
+    setShowEmojiPickerPopover(false);
+  }, []);
+
+  // Callback for when an emoji is selected from the picker
+  const handleEmojiSelect = useCallback(
+    (emojiObject) => {
+      handleReactionClick(message._id, emojiObject.emoji); // Use emojiObject.emoji
+      handleCloseEmojiPickerPopover(); // Close the popover after selection
+    },
+    [handleReactionClick, message._id, handleCloseEmojiPickerPopover]
+  );
+
   const fromMe = message.sender._id === authUser._id;
 
   const myBubbleBgColor = "bg-primary"; // These are now likely covered by `bubbleClasses` but good to keep for clarity if needed elsewhere
@@ -65,7 +134,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   // `bubbleRounding` is now replaced by `bubbleClasses` passed from parent
 
   const showModal = activeMessageModalId === message._id;
-  const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+  const allowedEmojis = ["❤️", "👍", "😂"];
 
   const shouldShowTimeOnHover = isHovered || showModal;
 
@@ -248,6 +317,15 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             {emoji}
           </button>
         ))}
+        <div className="w-px h-6 bg-slate-500 mx-1"></div>
+        <button
+          ref={moreEmojisButtonRef} // Attach ref to this button
+          onClick={handleOpenEmojiPickerPopover} // Toggle popover on click
+          className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
+          title="More Emojis"
+        >
+          <PiSmileyFill className="size-[26px]" />
+        </button>
         <button
           onClick={handleReplyClick}
           className="p-1 text-blue-400 hover:text-blue-500 hover:scale-125 transition duration-100"
@@ -255,7 +333,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         >
           <FaReply size={18} />
         </button>
-
         {/* NEW: Edit button (only for own messages that are not deleted/edited) */}
         {fromMe && !isMessageDeleted && (
           <button
@@ -266,7 +343,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             <MdEdit size={20} />
           </button>
         )}
-
         {/* Trash Icon for deleting own message */}
         {fromMe && !isMessageDeleted && (
           <button
@@ -487,7 +563,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
           {Object.keys(groupedReactions || {}).length > 0 && (
             <div
-              className={`flex gap-1 items-center pt-0.5 rounded-full text-xs font-semibold
+              className={`flex gap-1 flex-wrap items-center pt-0.5 rounded-full text-xs font-semibold
                                 ${fromMe ? "self-end" : "self-start"}
                                 `}
             >
@@ -522,10 +598,14 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               })}
             </div>
           )}
-          {/* Timestamp below the bubble - Only show if it's the last message in a group */}
-          {/* {isLastInGroup && (
-
-          )} */}
+          {showEmojiPickerPopover && (
+            <EmojiPickerPopover
+              position={popoverPosition}
+              onClose={handleCloseEmojiPickerPopover}
+              onEmojiClick={handleEmojiSelect} // Pass the handler for emoji selection
+              triggerRef={moreEmojisButtonRef} // Pass the button ref for click outside logic
+            />
+          )}
         </div>
       </div>
     </div>

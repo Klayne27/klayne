@@ -11,6 +11,8 @@ import { PiSmileyFill } from "react-icons/pi";
 import { useRef } from "react";
 import { useCallback } from "react";
 import EmojiPickerPopover from "../EmojiPickerPopover";
+import { TbMinusVertical } from "react-icons/tb";
+import { useEffect } from "react";
 
 const MessageItem = ({
   msg,
@@ -50,36 +52,37 @@ const MessageItem = ({
   // Callback to open the popover and calculate its position
   const handleOpenEmojiPickerPopover = useCallback(
     (e) => {
-      e.stopPropagation(); // Prevent clicks from bubbling up and closing other things
+      e.stopPropagation();
 
-      // Toggle logic: if already open, close it
       if (showEmojiPickerPopover) {
         setShowEmojiPickerPopover(false);
         return;
       }
 
-      // Get the bounding rectangle of the button to position the popover
       const buttonRect = e.currentTarget.getBoundingClientRect();
 
-      // Calculate position for the popover
-      const pickerHeight = 400; // Approximate height of the EmojiPicker component
-      const pickerWidth = 350; // Approximate width of the EmojiPicker component
+      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350; 
+      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400; 
 
-      let newTop = buttonRect.top - pickerHeight - 10; // 10px above the button
-      let newLeft = buttonRect.left + buttonRect.width / 2; // Center horizontally
+      let newTop = buttonRect.top - estimatedPickerHeight - 10;
+      let newLeft = buttonRect.left + buttonRect.width / 2; 
 
-      // Basic viewport collision detection (can be more sophisticated)
-      if (newTop < 0) {
-        // If it goes off the top of the screen, place it below
+      const padding = 10;
+
+      // Adjust newLeft to prevent going off the left edge
+      if (newLeft - estimatedPickerWidth / 2 < padding) {
+        newLeft = estimatedPickerWidth / 2 + padding;
+      }
+
+      // Adjust newLeft to prevent going off the right edge
+      if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
+        newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding;
+      }
+
+      // Adjust newTop to prevent going off the top edge
+      if (newTop < padding) {
+        // Use padding instead of 0
         newTop = buttonRect.bottom + 10;
-      }
-      if (newLeft + pickerWidth / 2 > window.innerWidth) {
-        // If it goes off the right
-        newLeft = window.innerWidth - pickerWidth / 2 - 10;
-      }
-      if (newLeft - pickerWidth / 2 < 0) {
-        // If it goes off the left
-        newLeft = pickerWidth / 2 + 10;
       }
 
       setPopoverPosition({
@@ -89,7 +92,7 @@ const MessageItem = ({
       setShowEmojiPickerPopover(true);
     },
     [showEmojiPickerPopover]
-  ); // showEmojiPickerPopover is a dependency for toggle logic
+  );
 
   // Callback to close the popover
   const handleCloseEmojiPickerPopover = useCallback(() => {
@@ -257,15 +260,15 @@ const MessageItem = ({
             {emoji}
           </button>
         ))}
+        <div className="w-px h-6 bg-slate-500 mx-1"></div> {/* Added divider */}
         <button
           ref={moreEmojisButtonRef} // Attach ref to this button
           onClick={handleOpenEmojiPickerPopover} // Toggle popover on click
-          className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-l border-slate-500 mt-[1px] ml-1 pl-2"
+          className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
           title="More Emojis"
         >
           <PiSmileyFill className="size-[26px]" />
         </button>
-
         <button
           onClick={(e) => {
             e.stopPropagation();
@@ -277,7 +280,6 @@ const MessageItem = ({
         >
           <FaReply size={18} />
         </button>
-
         {isEditable && (
           <button
             onClick={handleEditClick}
@@ -287,7 +289,6 @@ const MessageItem = ({
             <MdEdit size={20} />
           </button>
         )}
-
         {isSentByCurrentUser && (
           <button
             onClick={(e) => {
@@ -436,7 +437,7 @@ const MessageItem = ({
       </div>
       {Object.keys(groupedReactions || {}).length > 0 && (
         <div
-          className={`flex gap-1 -bottom-3 items-center pt-0.5 ml-10 mr-5 rounded-full text-xs font-semibold
+          className={`flex gap-1 flex-wrap -bottom-3 items-center pt-0.5 ml-10 mr-5 rounded-full text-xs font-semibold
                                 ${
                                   isSentByCurrentUser
                                     ? "justify-self-end"

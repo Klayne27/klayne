@@ -5,22 +5,7 @@ import { useState } from "react";
 
 const EmojiPickerPopover = ({ position, onClose, onEmojiClick, triggerRef }) => {
   const popoverRef = useRef(null);
-  const [isMobile, setIsMobile] = useState(false);
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      const mobileBreakpoint = 768; // px
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []);
-
-  // Effect to handle clicks outside the popover (and the trigger button)
   useEffect(() => {
     const handleClickOutside = (event) => {
       // Check if the click occurred outside the popover AND outside the trigger button
@@ -64,11 +49,11 @@ const EmojiPickerPopover = ({ position, onClose, onEmojiClick, triggerRef }) => 
     >
       <EmojiPicker
         onEmojiClick={onEmojiClick} // Pass the handler from parent
-        width={`${isMobile ? 280 : 350}`} // Adjust width as needed
+        width={280} // Adjust width as needed
         height={400} // Adjust height as needed
         theme="dark" // Or 'light', or use your app's theme
         skinTonesDisabled={false} // Enable/disable skin tones if desired
-        // Add any other props you need for EmojiPicker (e.g., searchDisabled, lazyLoadEmojis)
+        autoFocusSearch={false}
       />
     </div>,
     portalRoot // This is where the popover will be rendered in the DOM
