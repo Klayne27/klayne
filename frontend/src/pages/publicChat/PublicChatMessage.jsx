@@ -564,7 +564,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           {Object.keys(groupedReactions || {}).length > 0 && (
             <div
               className={`flex gap-1 flex-wrap items-center pt-0.5 rounded-full text-xs font-semibold
-                                ${fromMe ? "self-end" : "self-start"}
+                                ${fromMe ? "justify-end" : "justify-start"}
                                 `}
             >
               {Object.entries(groupedReactions).map(([emoji, data]) => {
