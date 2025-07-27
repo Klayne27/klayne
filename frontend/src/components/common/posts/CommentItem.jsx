@@ -530,91 +530,97 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </div>
 
               {showMenu && (
-                <div
-                  ref={menuRef}
-                  className="absolute right-0 white-shadow top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2"
-                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
-                >
-                  {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
-                  {isCommentOwner && (
-                    <>
-                      {/* If the current user is the comment owner AND the post owner, only show delete */}
-                      {isPostOwner ? (
-                        <button
-                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                          onClick={handleDeleteCommentClick}
-                          disabled={isDeletingComment}
-                        >
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <FiTrash /> Delete Reply
-                          </span>
-                        </button>
-                      ) : (
-                        // If the current user is the comment owner but NOT the post owner, only show delete
-                        <button
-                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                          onClick={handleDeleteCommentClick}
-                          disabled={isDeletingComment}
-                        >
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <FiTrash /> Delete Reply
-                          </span>
-                        </button>
-                      )}
-                    </>
-                  )}
-
-                  {/* Scenario 2 & 3: Current user is NOT the comment owner */}
-                  {!isCommentOwner && (
-                    <>
-                      {/* Follow/Unfollow button (always shown if not comment owner) */}
-                      <button
-                        className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
-                        onClick={handleFollowClick}
-                        disabled={isFollowingOrUnfollowing}
-                      >
-                        {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <LuUserRoundMinus strokeWidth={2} /> Unfollow
-                          </span>
+                <>
+                  <div
+                    className="fixed inset-0 bg-transparent z-10 cursor-default"
+                    onClick={toggleMenu}
+                  ></div>
+                  <div
+                    ref={menuRef}
+                    className="absolute right-0 white-shadow top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2"
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
+                  >
+                    {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
+                    {isCommentOwner && (
+                      <>
+                        {/* If the current user is the comment owner AND the post owner, only show delete */}
+                        {isPostOwner ? (
+                          <button
+                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                            onClick={handleDeleteCommentClick}
+                            disabled={isDeletingComment}
+                          >
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <FiTrash /> Delete Reply
+                            </span>
+                          </button>
                         ) : (
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <LuUserRoundPlus strokeWidth={2} /> Follow @
-                            {comment.user.username}
-                          </span>
+                          // If the current user is the comment owner but NOT the post owner, only show delete
+                          <button
+                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                            onClick={handleDeleteCommentClick}
+                            disabled={isDeletingComment}
+                          >
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <FiTrash /> Delete Reply
+                            </span>
+                          </button>
                         )}
-                      </button>
+                      </>
+                    )}
 
-                      {/* Block/Unblock button (always shown if not comment owner) */}
-                      <button
-                        className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
-                        onClick={handleBlockClick}
-                        disabled={isBlocking}
-                      >
-                        {isBlockedByAuthUser ? ( // Assuming this variable tracks if current user blocked the comment owner
-                          "Unblock"
-                        ) : (
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <MdBlock /> Block @{comment.user.username}
-                          </span>
-                        )}
-                      </button>
-
-                      {/* Scenario 3: Post owner interacting with another user's comment */}
-                      {isPostOwner && (
+                    {/* Scenario 2 & 3: Current user is NOT the comment owner */}
+                    {!isCommentOwner && (
+                      <>
+                        {/* Follow/Unfollow button (always shown if not comment owner) */}
                         <button
-                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                          onClick={handleDeleteCommentClick}
-                          disabled={isDeletingComment}
+                          className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                          onClick={handleFollowClick}
+                          disabled={isFollowingOrUnfollowing}
                         >
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <FiTrash /> Delete Reply
-                          </span>
+                          {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <LuUserRoundPlus strokeWidth={2} /> Follow @
+                              {comment.user.username}
+                            </span>
+                          )}
                         </button>
-                      )}
-                    </>
-                  )}
-                </div>
+
+                        {/* Block/Unblock button (always shown if not comment owner) */}
+                        <button
+                          className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                          onClick={handleBlockClick}
+                          disabled={isBlocking}
+                        >
+                          {isBlockedByAuthUser ? ( // Assuming this variable tracks if current user blocked the comment owner
+                            "Unblock"
+                          ) : (
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <MdBlock /> Block @{comment.user.username}
+                            </span>
+                          )}
+                        </button>
+
+                        {/* Scenario 3: Post owner interacting with another user's comment */}
+                        {isPostOwner && (
+                          <button
+                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                            onClick={handleDeleteCommentClick}
+                            disabled={isDeletingComment}
+                          >
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <FiTrash /> Delete Reply
+                            </span>
+                          </button>
+                        )}
+                      </>
+                    )}
+                  </div>
+                </>
               )}
             </span>
             {/* {(isCommentOwner || isPostOwner) && (

@@ -247,17 +247,17 @@ const Post = ({
   };
 
   // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuRef]);
+  // useEffect(() => {
+  //   const handleClickOutside = (event) => {
+  //     if (menuRef.current && !menuRef.current.contains(event.target)) {
+  //       setShowMenu(false);
+  //     }
+  //   };
+  //   document.addEventListener("mousedown", handleClickOutside);
+  //   return () => {
+  //     document.removeEventListener("mousedown", handleClickOutside);
+  //   };
+  // }, [menuRef]);
 
   const navigateToReposterProfile = (e) => {
     e.stopPropagation();
@@ -324,7 +324,9 @@ const Post = ({
 
   return (
     <div
-      className="flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer hover:bg-gray-700/30 transition duration-200"
+      className={`${
+        showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
+      } flex flex-col gap-0 py-3 px-4 border-b border-accent cursor-pointer  transition duration-500`}
       onClick={navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -401,59 +403,65 @@ const Post = ({
               onClick={toggleMenu}
             >
               <div className="group duration-200 transition hover:text-primary rounded-full">
-                <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
+                <BsThreeDots className=" group-hover:text-primary cursor-pointer text-slate-500" />
               </div>
 
               {showMenu && (
-                <div
-                  ref={menuRef}
-                  className="white-shadow absolute  right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2 shadow-md shadow-primary"
-                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
-                >
-                  {isMyOriginalPost ? (
-                    // Menu for post owner
-                    <button
-                      className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-700/30 duration-200 transition flex items-center gap-2 font-semibold"
-                      onClick={handleDeletePostClick}
-                      disabled={isDeleting}
-                    >
-                      {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
-                      Delete Post
-                    </button>
-                  ) : (
-                    <>
+                <>
+                  <div
+                    className="fixed inset-0 bg-transparent z-10 cursor-default"
+                    onClick={toggleMenu}
+                  ></div>
+                  <div
+                    ref={menuRef}
+                    className="white-shadow absolute right-0 top-0 w-max bg-base-100  rounded-xl text-lg z-10 menu-popover py-2 shadow-md shadow-primary"
+                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
+                  >
+                    {isMyOriginalPost ? (
+                      // Menu for post owner
                       <button
-                        className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
-                        onClick={handleFollowClick}
-                        disabled={isFollowingOrUnfollowing}
+                        className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-700/30 duration-200 transition flex items-center gap-2 font-semibold z-50"
+                        onClick={handleDeletePostClick}
+                        disabled={isDeleting}
                       >
-                        {isFollowingOriginalPostOwner ? (
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <LuUserRoundMinus strokeWidth={2} /> Unfollow
-                          </span>
-                        ) : (
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <LuUserRoundPlus strokeWidth={2} /> Follow @
-                            {originalPostOwner.username}
-                          </span>
-                        )}
+                        {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
+                        Delete Post
                       </button>
-                      <button
-                        className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 duration-200 transtion hover:bg-gray-700/30"
-                        onClick={handleBlockClick}
-                        disabled={isBlocking}
-                      >
-                        {isBlockedByAuthUser ? (
-                          "Unblock"
-                        ) : (
-                          <span className="flex items-center justify-center gap-3 font-semibold">
-                            <MdBlock /> Block @{originalPostOwner.username}
-                          </span>
-                        )}
-                      </button>
-                    </>
-                  )}
-                </div>
+                    ) : (
+                      <>
+                        <button
+                          className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                          onClick={handleFollowClick}
+                          disabled={isFollowingOrUnfollowing}
+                        >
+                          {isFollowingOriginalPostOwner ? (
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                            </span>
+                          ) : (
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <LuUserRoundPlus strokeWidth={2} /> Follow @
+                              {originalPostOwner.username}
+                            </span>
+                          )}
+                        </button>
+                        <button
+                          className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 duration-200 transtion hover:bg-gray-700/30"
+                          onClick={handleBlockClick}
+                          disabled={isBlocking}
+                        >
+                          {isBlockedByAuthUser ? (
+                            "Unblock"
+                          ) : (
+                            <span className="flex items-center justify-center gap-3 font-semibold">
+                              <MdBlock /> Block @{originalPostOwner.username}
+                            </span>
+                          )}
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </>
               )}
             </span>
           </div>

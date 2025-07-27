@@ -436,7 +436,7 @@ const PublicChatWindow = ({ openImageModal }) => {
                     handleLoadImage={handleLoadImage}
                     isFirstInGroup={message.isFirstInGroup}
                     isLastInGroup={message.isLastInGroup}
-                    bubbleClasses={message.bubbleClasses} // Pass the pre-calculated classes
+                    bubbleClasses={message.bubbleClasses}
                   />
                 </div>
               ))}

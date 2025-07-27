@@ -151,29 +151,35 @@ function ConversationItem({
           <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
         </div>
         {showMenu && (
-          <div
-            ref={menuRef}
-            className="absolute right-0 top-0 w-max bg-base-100 white-shadow rounded-xl text-md z-10 menu-popover py-2"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <button
-              className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
-              onClick={handleToggleHide}
+          <>
+            <div
+              className="fixed inset-0 bg-transparent z-10 cursor-default"
+              onClick={toggleMenu}
+            ></div>
+            <div
+              ref={menuRef}
+              className="absolute right-0 top-0 w-max bg-base-100 white-shadow rounded-xl text-md z-10 menu-popover py-2"
+              onClick={(e) => e.stopPropagation()}
             >
-              <CiCircleMinus />
-              Hide Conversation
-            </button>
-            <button
-              className="w-full text-left px-4 py-2 text-red-500  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
-              onClick={(e) => {
-                e.stopPropagation();
-                setShowDeleteModal(true);
-              }}
-            >
-              <FiTrash />
-              Delete Conversation
-            </button>
-          </div>
+              <button
+                className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+                onClick={handleToggleHide}
+              >
+                <CiCircleMinus />
+                Hide Conversation
+              </button>
+              <button
+                className="w-full text-left px-4 py-2 text-red-500  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowDeleteModal(true);
+                }}
+              >
+                <FiTrash />
+                Delete Conversation
+              </button>
+            </div>
+          </>
         )}
       </span>
 

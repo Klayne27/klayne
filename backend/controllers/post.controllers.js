@@ -67,6 +67,14 @@ export const createPost = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    if (video) {
+      if (!user.isVerified && !user.isGoldVerified) {
+        return res.status(403).json({
+          error: "Only verified users can post videos.",
+        });
+      }
+    }
+
     if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
       return res
         .status(400)
@@ -1051,7 +1059,6 @@ export const repostPost = async (req, res) => {
         message: "Repost removed successfully.",
       });
     } else {
-
       const newRepost = new Post({
         user: userId,
         repostedFrom: originalPostId,
