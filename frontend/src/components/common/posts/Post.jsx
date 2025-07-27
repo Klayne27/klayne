@@ -377,10 +377,10 @@ const Post = ({
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
-                  <img src="/verified.png" className="size-[17px]" alt="Verified" />
+                  <img src="/verified.png" className="size-[17px]" alt="Verified" loading="lazy" />
                 )}
                 {originalPostOwner.isGoldVerified && (
-                  <img src="/gold-verified.png" className="size-[17px]" alt="Verified" />
+                  <img src="/gold-verified.png" className="size-[17px]" alt="Verified" loading="lazy" />
                 )}
               </Link>
               <span className="text-slate-500 flex gap-1 text-sm min-w-0">
@@ -487,6 +487,7 @@ const Post = ({
             {sourcePost.mediaType === "video" && sourcePost.video && (
               <video
                 controls
+                loading="lazy"
                 src={sourcePost.video}
                 className="w-full h-auto max-h-80 object-contain rounded-2xl border border-accent block max-w-full"
                 alt="post video"

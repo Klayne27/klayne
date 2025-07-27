@@ -14,6 +14,7 @@ import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
+import { RxCaretDown } from "react-icons/rx";
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null);
@@ -240,7 +241,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
         className="bg-base-100 rounded-2xl shadow-lg max-w-xl mx-auto w-full max-h-fit mt-7 flex flex-col overflow-hidden"
       >
         {/* Modal Header */}
-        <div className="flex items-center gap-5 px-3 py-2 border-b border-gray-700">
+        <div className="flex items-center gap-5 px-3 py-2 border-b border-slate-500">
           <button
             className="hover:bg-secondary rounded-full p-1 transition duration-200"
             onClick={onClose}
@@ -251,7 +252,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
         </div>
 
         {/* Post Text Editing */}
-        <div className="p-4 border-b border-accent flex gap-3">
+        <div className="p-4 border-b border-slate-500 flex gap-3">
           <img
             src={authUser?.profileImg}
             className="size-8 md:size-10 rounded-full object-cover"
@@ -292,17 +293,17 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
           </div>
         </div>
 
-        <div className="flex items-center gap-4 p-4 text-sm text-gray-500">
+        <div className="flex items-center gap-4 p-4 text-sm text-slate-500">
           <TbCalendarClock size={18} />
           Will send on {formattedScheduledTime()}
         </div>
 
         <div className="px-4">
-          <h3 className=" text-gray-500 mb-1">Date</h3>
+          <h3 className=" text-slate-500 mb-1">Date</h3>
           <div className="grid grid-cols-[4fr_2fr_2fr] gap-3">
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMonth}
                 onChange={(e) => {
                   const newMonth = parseInt(e.target.value);
@@ -320,25 +321,12 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedDay}
                 onChange={(e) => setSelectedDay(parseInt(e.target.value))}
               >
@@ -349,25 +337,12 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedYear}
                 onChange={(e) => {
                   const newYear = parseInt(e.target.value);
@@ -385,31 +360,18 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
           </div>
         </div>
 
         <div className="p-4 py-2">
-          <h3 className=" text-gray-500">Time</h3>
+          <h3 className=" text-slate-500">Time</h3>
           <div className="grid grid-cols-3 gap-3">
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedHour}
                 onChange={(e) => setSelectedHour(parseInt(e.target.value))}
               >
@@ -420,25 +382,12 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedMinute}
                 onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
               >
@@ -449,25 +398,12 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 ))}
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
             <div className="relative">
               <select
-                className="w-full bg-base-100 border rounded-[4px] border-accent py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
+                className="w-full bg-base-100 border rounded-[4px] border-slate-500 py-3 px-3 text-base appearance-none cursor-pointer focus:outline-none focus:ring-2 focus:ring-primary"
                 value={selectedAmPm}
                 onChange={(e) => setSelectedAmPm(e.target.value)}
               >
@@ -475,20 +411,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
                 <option value="PM">PM</option>
               </select>
               <div className="absolute inset-y-0 right-0 flex items-center px-2 pointer-events-none">
-                <svg
-                  className="w-4 h-4 text-gray-400"
-                  fill="none"
-                  stroke="currentColor"
-                  viewBox="0 0 24 24"
-                  xmlns="http://www.w3.org/2000/svg"
-                >
-                  <path
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                    strokeWidth="2"
-                    d="M19 9l-7 7-7-7"
-                  ></path>
-                </svg>
+                <RxCaretDown size={20} />
               </div>
             </div>
           </div>
@@ -496,7 +419,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
         {/* Timezone Display */}
         <div className="p-4">
-          <h3 className=" text-gray-500">Time zone</h3>
+          <h3 className=" text-slate-500">Time zone</h3>
           <div className="text-xl">{currentTimezone}</div>
           {/* Action Buttons */}
           <div className="flex justify-end items-center mt-6">

@@ -13,8 +13,8 @@ const PublicChatHeader = () => {
   };
 
   return (
-    <div className="fixed w-full md:w-[1015px] top-0 z-[1000] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
-      <div className="flex items-center gap-3">
+    <div className="text-white fixed w-full md:w-[1015px] top-0 z-[1000] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
+      <div className="flex items-center gap-3 text-white">
         <div className="avatar">
           <button
             onClick={() => navigate(-1)}
@@ -27,7 +27,7 @@ const PublicChatHeader = () => {
           </div>
         </div>
         <div>
-          <h2 className="font-bold text-xl flex-1 truncate">Public Chat</h2>
+          <h2 className="font-bold text-xl flex-1 truncate ">Public Chat</h2>
         </div>
       </div>
 
@@ -81,17 +81,12 @@ const PublicChatHeader = () => {
                   **Protect Your Privacy:** Do not share personal information (yours or
                   others').
                 </li>
-                <li>
-                  **No Impersonation:** Do not pretend to be another user.
-                </li>
+                <li>**No Impersonation:** Do not pretend to be another user.</li>
                 <li>
                   **Report Issues:** If you see something that violates these rules,
                   message Wayne. (report button soon maybe)
                 </li>
-                <li>
-                  **Listen to Admins:** Instructions from admins are
-                  final.
-                </li>
+                <li>**Listen to Admins:** Instructions from admins are final.</li>
               </ul>
             </div>
             <div className="text-center mt-4">

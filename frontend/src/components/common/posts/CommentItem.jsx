@@ -623,25 +623,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 </>
               )}
             </span>
-            {/* {(isCommentOwner || isPostOwner) && (
-              <button
-                className="group absolute right-0 top-0 text-red-500 rounded-full px-2.5 transition duration-200"
-                onClick={handleDeleteCommentClick}
-                disabled={isDeletingComment}
-              >
-                {isDeletingComment ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <FiTrash
-                    size={17}
-                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
-                  />
-                )}
-              </button>
-            )} */}
           </div>
           {comment.parentComment && comment.parentComment.user && (
-            <div className="text-gray-500 text-xs mt-1 mb-2">
+            <div className="text-gray-500 text-xs mt-1 mb-2 ">
               Replying to{" "}
               <Link
                 to={`/profile/${comment.parentComment.user.username}`}
@@ -871,7 +855,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               onSubmit={handleSendReply}
               className="mt-4 flex flex-col gap-2 relative"
             >
-              <div className="flex items-center gap-2">
+              <div className="flex items-start md:gap-2">
                 <div className="avatar flex-shrink-0">
                   <div className="w-7 rounded-full">
                     <img
@@ -927,14 +911,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                       </div>
                     )}
                 </div>
-
-                <button
-                  type="submit"
-                  className="block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-white transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
-                  disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
-                >
-                  Reply
-                </button>
               </div>
               {replyImagePreview && (
                 <div className="relative size-40 mt-2 self-start">
@@ -953,22 +929,33 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   </button>
                 </div>
               )}
-              <input
-                type="file"
-                accept="image/*"
-                hidden
-                ref={imageInputRef}
-                onChange={handleImageChange}
-              />
-              <button
-                type="button"
-                onClick={() => imageInputRef.current.click()}
-                className="mt-2 text-primary hover:text-primary/80 transition duration-200 self-start p-1 rounded-full"
-                title="Add image"
-                disabled={isCreatingComment}
-              >
-                <BiImageAdd size={24} />
-              </button>
+              {replyText && (
+                <div className="flex justify-between">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    hidden
+                    ref={imageInputRef}
+                    onChange={handleImageChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => imageInputRef.current.click()}
+                    className="ml-[33px] text-primary hover:text-primary/80 transition duration-200 self-start p-1 rounded-full"
+                    title="Add image"
+                    disabled={isCreatingComment}
+                  >
+                    <BiImageAdd size={24} />
+                  </button>
+                  <button
+                    type="submit"
+                    className="block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-white transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
+                    disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
+                  >
+                    Reply
+                  </button>
+                </div>
+              )}
             </form>
           )}
         </div>

@@ -35,7 +35,7 @@ const ConfirmationModal = ({
 
   return (
     <div
-      className="fixed inset-0 bg-gray-700 bg-opacity-70 flex items-center justify-center z-50 p-4"
+      className="fixed inset-0 cursor-default bg-gray-700 bg-opacity-70 flex items-center justify-center z-50 p-4"
       onClick={(e) => {
         e.stopPropagation();
         onClose();
@@ -68,7 +68,7 @@ const ConfirmationModal = ({
                          ${
                            danger
                              ? "bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:opacity-50" // Added disabled styles
-                             : "bg-white text-black hover:bg-gray-200 disabled:bg-gray-300 disabled:text-gray-500" // Added disabled styles
+                             : "bg-white text-black hover:bg-gray-200 disabled:bg-slate-500 disabled:text-slate-600" // Added disabled styles
                          }
                          ${isLoading ? "opacity-70 cursor-not-allowed" : ""}
                        `}

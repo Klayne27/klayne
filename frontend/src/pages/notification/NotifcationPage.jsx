@@ -149,7 +149,7 @@ const NotificationPage = () => {
                   }}
                 >
                   <FiTrash
-                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-gray-500"
+                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
                     size={20}
                   />
                 </button>
@@ -199,7 +199,7 @@ const NotificationPage = () => {
                     @{notification.from?.username}
                   </span>
                   <span className="text-[8px]">●</span>
-                  <span className="text-gray-500 text-sm">
+                  <span className="text-slate-500 text-sm">
                     {formatPostDate(notification.createdAt)}
                   </span>
                 </div>

@@ -104,7 +104,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           // Validate file type (image or video)
           if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
             showAppToast(
-              "Pasted content is not a supported image or video type for comments.", "error"
+              "Pasted content is not a supported image or video type for comments.",
+              "error"
             );
             setMainCommentMediaFile(null);
             setMainCommentMediaPreview(null);
@@ -117,7 +118,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           const MAX_COMMENT_MEDIA_SIZE_MB = 20;
           if (file.size > MAX_COMMENT_MEDIA_SIZE_MB * 1024 * 1024) {
             showAppToast(
-              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`, "error"
+              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`,
+              "error"
             );
             setMainCommentMediaFile(null);
             setMainCommentMediaPreview(null);
@@ -172,7 +174,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     if (file) {
       if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
         showAppToast(
-          "Unsupported file type. Please select an image or a video for your comment.", "error"
+          "Unsupported file type. Please select an image or a video for your comment.",
+          "error"
         );
         setMainCommentMediaFile(null);
         setMainCommentMediaPreview(null);
@@ -414,7 +417,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       if (isError) {
         showAppToast(error?.message || "Could not load post.", "error");
       } else if (!post) {
-        showAppToast("The post you are looking for does not exist or has been deleted.", "error");
+        showAppToast(
+          "The post you are looking for does not exist or has been deleted.",
+          "error"
+        );
       }
       navigate("/", { replace: true });
     }
@@ -465,7 +471,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
     return (
       <div className="flex-1 flex flex-col items-center justify-center h-screen w-ful p-4">
         <h2 className="text-2xl font-bold mb-4 text-center">Post Not Found</h2>
-        <p className="text-gray-500 text-center">
+        <p className="text-slate-500 text-center">
           The post you are looking for does not exist or has been deleted.
         </p>
         <button
@@ -503,9 +509,9 @@ const PostPage = ({ openImageModal, setFeedType }) => {
           onSubmit={handleAddOrReplyComment}
           className="px-2 py-3 md:p-4 border-b border-accent flex flex-col gap-2 relative" // Added relative for positioning suggestions
         >
-          <div className="flex items-center justify-between sm:gap-4">
+          <div className="flex items-start md:gap-4">
             <div className="avatar flex-shrink-0">
-              <div className="w-8 md:w-9 rounded-full">
+              <div className={`w-8 md:w-9 rounded-full`}>
                 <img
                   src={authUser?.profileImg || "/avatar-placeholder.png"}
                   alt="Your profile"
@@ -531,6 +537,35 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 rows={1}
               />
 
+              {commentText && <div className="flex justify-between">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  hidden
+                  ref={mainCommentMediaInputRef}
+                  onChange={handleMainCommentMediaChange}
+                />
+                <button
+                  type="button"
+                  onClick={() => mainCommentMediaInputRef.current.click()}
+                  className={`ml-[9px] rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0`}
+                  title="Add image or video to comment"
+                >
+                  <BiImageAdd size={24} />
+                </button>
+                
+                  <button
+                    type="submit"
+                    className="block px-3 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-slate-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
+                    disabled={
+                      isCreatingComment ||
+                      (!commentText.trim() && !mainCommentMediaPreview)
+                    }
+                  >
+                    {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
+                  </button>
+                
+              </div>}
               {/* Mention Suggestions Dropdown */}
               {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
                 <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
@@ -565,31 +600,6 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 </div>
               )}
             </div>
-
-            <input
-              type="file"
-              accept="image/*,video/*"
-              hidden
-              ref={mainCommentMediaInputRef}
-              onChange={handleMainCommentMediaChange}
-            />
-            <button
-              type="button"
-              onClick={() => mainCommentMediaInputRef.current.click()}
-              className="p-2 rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0"
-              title="Add image or video to comment"
-            >
-              <BiImageAdd size={24} />
-            </button>
-            <button
-              type="submit"
-              className="block px-3 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
-              disabled={
-                isCreatingComment || (!commentText.trim() && !mainCommentMediaPreview)
-              }
-            >
-              {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
-            </button>
           </div>
 
           {mainCommentMediaPreview && (
@@ -613,7 +623,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
               <button
                 type="button"
                 onClick={handleRemoveMainCommentMedia}
-                className="absolute -top-2 -right-2 bg-gray-500 text-white duration-200 transition hover:bg-gray-600 rounded-full p-1 text-xs"
+                className="absolute -top-2 -right-2 bg-slate-500 text-white duration-200 transition hover:bg-slate-600 rounded-full p-1 text-xs"
                 title="Remove media"
               >
                 <IoClose size={15} />

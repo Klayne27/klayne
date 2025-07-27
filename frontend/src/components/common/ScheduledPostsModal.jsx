@@ -158,7 +158,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
         className="bg-base-100 rounded-2xl shadow-lg mt-7 max-w-xl mx-auto w-full flex flex-col overflow-hidden h-[80vh]"
       >
         {/* Modal Header */}
-        <div className="flex items-center justify-between px-3 py-2 border-b border-accent">
+        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-500">
           <div className="flex gap-5 items-center">
             <button
               className="hover:bg-secondary rounded-full p-1 transition duration-200"
@@ -175,7 +175,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
           {isEditMode ? (
             <div className="flex items-center gap-2">
               <button
-                className="bg-gray-500 text-white font-semibold px-4 py-1.5 rounded-full hover:bg-gray-600 transition duration-200 text-sm"
+                className="bg-slate-500 text-white font-semibold px-4 py-1.5 rounded-full hover:bg-slate-600 transition duration-200 text-sm"
                 onClick={handleToggleEditMode}
               >
                 Done
@@ -206,7 +206,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
           )}
 
           {!isLoading && !isError && scheduledPosts?.length === 0 && (
-            <p className="text-center text-gray-500 mt-4">No scheduled posts found.</p>
+            <p className="text-center text-slate-500 mt-4">No scheduled posts found.</p>
           )}
 
           {!isLoading && !isError && scheduledPosts?.length > 0 && (
@@ -214,7 +214,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
               {scheduledPosts.map((post) => (
                 <li
                   key={post._id}
-                  className={`px-4 py-2 border-b border-accent  transition duration-200 flex items-center gap-3 ${
+                  className={`px-4 py-2 border-b border-slate-500  transition duration-200 flex items-center gap-3 ${
                     !isTouchDevice ? "hover:bg-secondary" : ""
                   }  ${
                     isTouchDevice && activeButton === "scheduled-post"
@@ -229,7 +229,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                   {isEditMode && (
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-primary border-gray-500 [--chkfg:white] rounded-[4px] size-5 text-white border-2" // Use DaisyUI checkbox class if available
+                      className="checkbox checkbox-primary border-slate-500 [--chkfg:white] rounded-[4px] size-5 text-white border-2" // Use DaisyUI checkbox class if available
                       checked={selectedPostIds.includes(post._id)}
                       onChange={(e) => handleCheckboxChange(post._id, e.target.checked)}
                       onClick={(e) => e.stopPropagation()}
@@ -242,7 +242,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                     }`}
                     // onClick={() => handleEditPostClick(post)}
                   >
-                    <p className="text-sm text-gray-500 mb-1 flex items-center gap-2">
+                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-2">
                       <TbCalendarClock size={18} />
                       Will send on{" "}
                       {format(new Date(post.scheduledAt), "EEE, MMM d, yyyy 'at' h:mm a")}
@@ -256,7 +256,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
           )}
         </div>
         {isEditMode && (
-          <div className="flex justify-between border-t border-accent p-1">
+          <div className="flex justify-between border-t border-slate-500 p-1">
             <button
               className="font-semibold px-4 py-1.5 rounded-full text-primary hover:bg-primary/10 transition duration-200"
               onClick={handleSelectAllToggle} // Attach the new handler

@@ -85,7 +85,7 @@ const SearchPanel = () => {
                       <span className="font-semibold  truncate max-w-[120px]">
                         {user.fullName}
                       </span>
-                      <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                      <span className="text-sm text-slate-500 truncate max-w-[120px]">
                         @{user.username}
                       </span>
                     </div>
@@ -94,7 +94,7 @@ const SearchPanel = () => {
               })}
             </>
           ) : debouncedQuery && !isLoadingSuggestedUsers && !isFetching && suggestedUsers?.length === 0 ? (
-            <p className="p-4 text-gray-400 text-center">No users found.</p>
+            <p className="p-4 text-slate-500 text-center">No users found.</p>
           ) : null}
         </div>
       ) : null}

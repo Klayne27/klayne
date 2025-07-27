@@ -66,7 +66,7 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
         )}
         {error && <p className="text-red-500 text-center">{error.message}</p>}
         {!isLoading && users?.length === 0 && (
-          <p className="text-center text-gray-500">
+          <p className="text-center text-slate-500">
             {type === "following" ? "Not following anyone yet." : "No followers yet."}
           </p>
         )}

@@ -68,7 +68,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
           className={`fixed top-0 ${showUnfollowModal ? "z-0" : "z-10"}
                              border-b border-accent bg-opacity-20 backdrop-blur-md`}
         >
-          <div className="flex w-full" style={{ width: headerWidth }}>
+          <div className="flex w-full " style={{ width: headerWidth }}>
             <div
               className={`
                 flex justify-center flex-1 p-3 cursor-pointer

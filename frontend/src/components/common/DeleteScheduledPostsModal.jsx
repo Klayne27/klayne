@@ -45,7 +45,7 @@ const DeleteScheduledPostsModal = ({
         className="bg-base-100 rounded-2xl shadow-lg p-8 max-w-xs mx-auto w-full flex flex-col gap-1 "
       >
         <h2 className="text-xl font-bold">{title}</h2>
-        <p className="text-gray-500">{message}</p>
+        <p className="text-slate-500">{message}</p>
 
         <div className="flex flex-col gap-3 mt-5">
           <button

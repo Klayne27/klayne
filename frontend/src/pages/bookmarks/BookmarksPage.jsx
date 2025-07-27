@@ -95,21 +95,21 @@ const BookmarksPage = ({ openImageModal }) => {
           <div className="text-center p-4 text-red-500">
             <p className="text-xl font-bold">Error loading bookmarks</p>
             <p>{bookmarkedPostsError.message}</p>
-            <p className="text-gray-500">Please try again later.</p>
+            <p className="text-slate-500">Please try again later.</p>
           </div>
         )}
 
         {noPostsFound && !isSearchActive && (
           <div className="text-center p-4">
             <p className="text-xl font-bold">No Bookmarked Posts Yet</p>
-            <p className="text-gray-500">Bookmark posts to see them here.</p>
+            <p className="text-slate-500">Bookmark posts to see them here.</p>
           </div>
         )}
 
         {noPostsFound && isSearchActive && (
           <div className="text-center p-4">
             <p className="text-xl font-bold">No matching bookmarks found</p>
-            <p className="text-gray-500">
+            <p className="text-slate-500">
               Try a different keyword or check your spelling.
             </p>
           </div>
@@ -128,13 +128,13 @@ const BookmarksPage = ({ openImageModal }) => {
             {isFetchingNextPage ? (
               <PostSkeleton />
             ) : (
-              <span className="text-gray-500">Loading more...</span>
+              <span className="text-slate-500">Loading more...</span>
             )}
           </div>
         )}
 
         {!hasNextPage && !isLoadingBookmarkedPosts && bookmarkedPosts?.length > 0 && (
-          <div className="text-center py-4 text-gray-500">
+          <div className="text-center py-4 text-slate-500">
             <p>You've reached the end of your bookmarks!</p>
           </div>
         )}

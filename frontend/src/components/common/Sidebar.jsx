@@ -508,7 +508,7 @@ const Sidebar = ({
                 className={`size-[30px] ${
                   pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
-                strokeWidth={pathname === "/" ? 18 : 12}
+                strokeWidth={pathname === "/" ? 10 : 8}
               />
               {hasNewFeedPosts && (
                 <div
@@ -556,7 +556,7 @@ const Sidebar = ({
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
                 }`}
-                strokeWidth={pathname.startsWith("/messages") ? 2 : 1}
+                strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
               />
               {hasUnreadMessages && (
                 <div
@@ -599,7 +599,7 @@ const Sidebar = ({
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
                 }`}
-                strokeWidth={pathname === "/notifications" ? 25 : 15}
+                strokeWidth={pathname === "/notifications" ? 14 : 10}
               />
               {hasUnreadNotifications && (
                 <div
@@ -683,7 +683,7 @@ const Sidebar = ({
             >
               <CiSearch
                 className="size-7 w-11"
-                strokeWidth={pathname === "/search" ? 2 : 1}
+                strokeWidth={pathname === "/search" ? 1 : 0.5}
               />
             </button>
             <span

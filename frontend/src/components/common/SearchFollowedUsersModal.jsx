@@ -33,7 +33,7 @@ const SearchFollowedUsersModal = ({ onClose, onSelectUser, currentUserId }) => {
           <h2 className="text-xl font-bold">New Message</h2>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-white transition-colors"
+            className="text-slate-500 hover:text-white transition-colors"
           >
             &times;
           </button>
@@ -41,7 +41,7 @@ const SearchFollowedUsersModal = ({ onClose, onSelectUser, currentUserId }) => {
 
         {/* Search Input within Modal */}
         <div className="relative flex items-center mb-4">
-          <CiSearch className="absolute w-4 h-4 text-gray-500 mx-3" />
+          <CiSearch className="absolute w-4 h-4 text-slate-500 mx-3" />
           <input
             type="text"
             placeholder="Search followed users"
@@ -82,7 +82,7 @@ const SearchFollowedUsersModal = ({ onClose, onSelectUser, currentUserId }) => {
                         <span className="font-semibold truncate max-w-[120px]">
                           {user.fullName}
                         </span>
-                        <span className="text-sm text-gray-500 truncate max-w-[120px]">
+                        <span className="text-sm text-slate-500 truncate max-w-[120px]">
                           @{user.username}
                         </span>
                       </div>
@@ -91,7 +91,7 @@ const SearchFollowedUsersModal = ({ onClose, onSelectUser, currentUserId }) => {
               )}
             </>
           ) : (
-            <p className="p-4 text-gray-400 text-center">
+            <p className="p-4 text-slate-500 text-center">
               No followed users found matching your search.
             </p>
           )}

@@ -79,7 +79,7 @@ function ConversationItem({
   };
 
   const handleCloseModal = (e) => {
-    e.stopPropagation();
+    // e.stopPropagation();
     setShowDeleteModal(false);
   };
 
@@ -173,6 +173,7 @@ function ConversationItem({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteModal(true);
+                  setShowMenu(false)
                 }}
               >
                 <FiTrash />

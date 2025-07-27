@@ -677,7 +677,7 @@ function CreatePostModal({ onClose }) {
                     className="flex items-center justify-between absolute -top-4 -left-0.5 "
                     onClick={handleOpenSchedulePostModal}
                   >
-                    <p className="text-gray-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
+                    <p className="text-slate-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
                       <TbCalendarClock size={16} />
                       Will send on{" "}
                       {new Date(scheduledAt).toLocaleString([], {
@@ -713,7 +713,7 @@ function CreatePostModal({ onClose }) {
                       {isLoadingSuggestedUsers ? (
                         <p className="p-2 text-gray-400">Loading suggestions...</p>
                       ) : suggestedUsers.length === 0 ? (
-                        <p className="p-2 text-gray-500">No users found.</p>
+                        <p className="p-2 text-slate-500">No users found.</p>
                       ) : (
                         suggestedUsers.map((user) => (
                           <div
@@ -731,7 +731,7 @@ function CreatePostModal({ onClose }) {
                             </div>
                             <div>
                               <p className="font-semibold">{user.fullName}</p>
-                              <p className="text-gray-500 text-sm">@{user.username}</p>
+                              <p className="text-slate-500 text-sm">@{user.username}</p>
                             </div>
                           </div>
                         ))
@@ -742,7 +742,7 @@ function CreatePostModal({ onClose }) {
                   <div className="relative max-w-full mx-auto sm:w-auto">
                     <IoClose
                       size={25}
-                      className="absolute -top-2 -right-2 text-white bg-gray-500 transition duration-200 hover:bg-gray-600 rounded-full p-1 cursor-pointer z-10"
+                      className="absolute -top-2 -right-2 text-white bg-slate-500 transition duration-200 hover:bg-slate-600 rounded-full p-1 cursor-pointer z-10"
                       onClick={() => {
                         setSelectedFile(null);
                         setPreviewUrl(null);
@@ -781,7 +781,7 @@ function CreatePostModal({ onClose }) {
                             placeholder={`Choice ${index + 1}`}
                             className={`bg-black/0 border p-2 py-3 border-accent ${
                               pollChoices.length > 3 ? "w-full" : "w-full mr-7"
-                            } placeholder:text-gray-500 focus:outline-none focus:border-accent/99 rounded-[4px] `}
+                            } placeholder:text-slate-500 focus:outline-none focus:border-accent/99 rounded-[4px] `}
                             value={choice.text}
                             onChange={(e) =>
                               handlePollChoiceChange(index, e.target.value)
@@ -792,7 +792,7 @@ function CreatePostModal({ onClose }) {
                           />
 
                           {focusedPollInputIndex === index && (
-                            <span className="absolute top-1 right-2 text-xs text-gray-500">
+                            <span className="absolute top-1 right-2 text-xs text-slate-500">
                               {choice.text.length} / {POLL_CHOICE_MAX_LENGTH}
                             </span>
                           )}
@@ -890,7 +890,7 @@ function CreatePostModal({ onClose }) {
 
             <button
               onClick={handleSubmit}
-              className="px-4 py-2 md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold disabled:cursor-default"
+              className="px-4 py-2 md:px-4 md:py-2 bg-primary text-white rounded-full hover:bg-primary/80 transition duration-300 disabled:bg-slate-500 disabled:text-black font-bold disabled:cursor-default"
               disabled={isButtonDisabled}
             >
               {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
