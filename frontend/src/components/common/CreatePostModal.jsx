@@ -468,22 +468,12 @@ function CreatePostModal({ onClose }) {
 
   const handleKeyDown = (e) => {
     if (isMobile) {
-      if (e.key === "Enter") {
-        // You might not even need this if your textarea naturally handles new lines on mobile.
-        // If it *does* submit on mobile Enter, then e.preventDefault() here is key.
-        // But typically, a mobile keyboard's 'Enter' or 'Return' key within a textarea
-        // will create a new line by default, and a separate "send" button is used for submission.
-        // So, for mobile, we primarily rely on the UI button for submission.
-      }
-    } else {
-      // On PC
-      if (e.key === "Enter" && !e.shiftKey) {
-        // If Enter is pressed without Shift, prevent default and submit the form
+      return;
+    }
+    if (e.key === "Enter") {
+      if (!e.shiftKey) {
         e.preventDefault();
-        handleSubmit(e); // Call your existing handleSubmit
-      } else if (e.key === "Enter" && e.shiftKey) {
-        // If Shift + Enter is pressed, allow the default behavior (new line)
-        // No need to call e.preventDefault() as the default behavior is desired.
+        handleSubmit(e);
       }
     }
   };

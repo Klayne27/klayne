@@ -10,7 +10,6 @@ import { useNavigate } from "react-router-dom";
 
 const MessageItem = ({
   msg,
-  isCurrentlyTouchDevice,
   activeMessageModalId,
   handleMouseEnter,
   handleMouseLeave,
@@ -20,7 +19,6 @@ const MessageItem = ({
   handleImageClick,
   handleJumpToOriginalMessage,
   handleReactionClick,
-  isDeletingMessage,
   currentUser,
   setEditingMessage,
   isTypingOtherUser,

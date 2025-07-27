@@ -82,45 +82,22 @@ const PublicMessageInput = ({
     };
   }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
-  // --- Textarea Height Adjustment (separated from mobile check) ---
-  // const adjustTextareaHeight = useCallback(() => {
-  //   const textarea = textareaRef.current;
-  //   if (textarea) {
-  //     textarea.style.height = "auto"; // Reset height
-  //     textarea.style.height = `${textarea.scrollHeight}px`;
-  //   }
-  // }, []);
-
-  // const handleTextareaScroll = useCallback(() => {
-  //   const textarea = textareaRef.current;
-  //   if (textarea) {
-  //     const { scrollTop, scrollHeight, clientHeight } = textarea;
-  //     // Check if scrolled to bottom with a small buffer
-  //     setIsAtTextareaBottom(scrollHeight - scrollTop - clientHeight < 1);
-  //   }
-  // }, []);
-
-  // useEffect(() => {
-  //   adjustTextareaHeight();
-
-  //   if (textareaRef.current && isAtTextareaBottom) {
-  //     textareaRef.current.scrollTop = textareaRef.current.scrollHeight;
-  //   }
-  // }, [messageContent, adjustTextareaHeight, isAtTextareaBottom]);
-
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
       setMessageContent(editingMessage.content);
       setReplyingToMessage(null);
-      setSelectedFile(null);
-      setPreviewImage(null);
-      if (fileInputRef.current) fileInputRef.current.value = "";
       textareaRef.current?.focus();
+      // setSelectedFile(null);
+      // setPreviewImage(null);
+      if (textareaRef.current) {
+        textareaRef.current.style.height = "auto"; // Reset height first
+        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      }
     } else {
       setMessageContent("");
     }
-  }, [editingMessage, setReplyingToMessage, setSelectedFile, setPreviewImage]);
+  }, [editingMessage, messageContent, setReplyingToMessage, setSelectedFile, setPreviewImage]);
 
   // Focus when replying
   useEffect(() => {
@@ -194,7 +171,10 @@ const PublicMessageInput = ({
           // For example, 5MB for chat images, adjust as needed
           const MAX_IMAGE_SIZE_MB = 5;
           if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-            showAppToast(`Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`, "error");
+            showAppToast(
+              `Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`,
+              "error"
+            );
             setSelectedFile(null);
             if (fileInputRef.current) fileInputRef.current.value = null;
             return;
@@ -325,76 +305,20 @@ const PublicMessageInput = ({
   };
 
   const handleTouchMove = (e) => {
-    // Check if the textarea content itself is overflowing
-    // This is crucial: only prevent default if the textarea can actually scroll
     const target = e.target;
     if (target.scrollHeight > target.clientHeight) {
-      // If the content is larger than the visible area,
-      // allow the textarea to scroll by not preventing its default behavior.
-      // And importantly, prevent the event from bubbling to parent scroll containers.
       e.stopPropagation();
     }
   };
 
-  // const handleKeyDown = (e) => {
-  //   if (e.key === "Enter") {
-  //     if (isMobile) {
-  //       e.preventDefault(); // Prevent default form submission
-  //       const { current: input } = textareaRef;
-  //       if (input) {
-  //         const start = input.selectionStart;
-  //         const end = input.selectionEnd;
-  //         const newValue =
-  //           messageContent.substring(0, start) + "\n" + messageContent.substring(end);
-  //         setMessageContent(newValue);
-  //         setTimeout(() => {
-  //           input.selectionStart = input.selectionEnd = start + 1;
-  //         }, 0);
-  //       }
-  //     } else {
-  //       if (e.shiftKey) {
-  //         e.preventDefault(); // Prevent default form submission
-  //         const { current: input } = textareaRef;
-  //         if (input) {
-  //           const start = input.selectionStart;
-  //           const end = input.selectionEnd;
-  //           const newValue =
-  //             messageContent.substring(0, start) + "\n" + messageContent.substring(end);
-  //           setMessageContent(newValue);
-  //           setTimeout(() => {
-  //             input.selectionStart = input.selectionEnd = start + 1;
-  //           }, 0);
-  //         }
-  //       } else {
-  //         // On desktop, Enter sends the message
-  //         e.preventDefault(); // Prevent default new line behavior for Enter
-  //         handleSendMessageOrEdit(e);
-  //       }
-  //     }
-  //   }
-  // };
-
   const handleKeyDown = (e) => {
     if (isMobile) {
-      // On mobile, prevent default Enter behavior (which might submit a form)
-      // The "Done" or "Go" button on the mobile keyboard will handle submission.
-      // New lines are typically handled by the mobile keyboard itself within the textarea.
-      if (e.key === "Enter") {
-        // You might not even need this if your textarea naturally handles new lines on mobile.
-        // If it *does* submit on mobile Enter, then e.preventDefault() here is key.
-        // But typically, a mobile keyboard's 'Enter' or 'Return' key within a textarea
-        // will create a new line by default, and a separate "send" button is used for submission.
-        // So, for mobile, we primarily rely on the UI button for submission.
-      }
-    } else {
-      // On PC
-      if (e.key === "Enter" && !e.shiftKey) {
-        // If Enter is pressed without Shift, prevent default and submit the form
+      return;
+    }
+    if (e.key === "Enter") {
+      if (!e.shiftKey) {
         e.preventDefault();
-        handleSendMessageOrEdit(e); // Call your existing handleSubmit
-      } else if (e.key === "Enter" && e.shiftKey) {
-        // If Shift + Enter is pressed, allow the default behavior (new line)
-        // No need to call e.preventDefault() as the default behavior is desired.
+        handleSendMessageOrEdit(e);
       }
     }
   };

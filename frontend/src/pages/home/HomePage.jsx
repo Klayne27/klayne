@@ -34,11 +34,8 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
     setHasNewFeedPosts(false);
   }, [queryClient, setShowNewFeedPostsButton, setHasNewFeedPosts]);
 
-  // NEW: Effect for scroll listener to show/hide the button
   useEffect(() => {
     const handleScroll = () => {
-      // You want to show the button if the user is scrolled down
-      // A simple threshold: if scrollY is greater than, say, 100px
       if (window.scrollY > 1000) {
         setShowScrollButton(true);
       } else {
@@ -51,7 +48,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
     return () => {
       window.removeEventListener("scroll", handleScroll);
     };
-  }, []); // Empty dependency array ensures it runs once on mount and cleans up on unmount
+  }, []);
 
   useEffect(() => {
     const updateWidth = () => {
