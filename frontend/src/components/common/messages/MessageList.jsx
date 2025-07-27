@@ -49,6 +49,24 @@ const MessageList = forwardRef(function MessageList(
   const mouseLeaveTimeoutRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
 
+  // const [showFullEmojiPickerModal, setShowFullEmojiPickerModal] = useState(false);
+  // const [messageIdForEmojiPicker, setMessageIdForEmojiPicker] = useState(null);
+
+  // const handleOpenFullEmojiPicker = (messageId) => {
+  //   setMessageIdForEmojiPicker(messageId);
+  //   setShowFullEmojiPickerModal(true);
+  // };
+
+  // const handleCloseFullEmojiPicker = () => {
+  //   setShowFullEmojiPickerModal(false);
+  //   setMessageIdForEmojiPicker(null);
+  // };
+
+  // const handleSelectedEmojiFromPicker = (emoji) => {
+  //   handleReactionClick(messageIdForEmojiPicker, emoji);
+  //   handleCloseFullEmojiPicker();
+  // };
+
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
   }, []);

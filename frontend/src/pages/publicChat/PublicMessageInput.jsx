@@ -97,7 +97,7 @@ const PublicMessageInput = ({
     } else {
       setMessageContent("");
     }
-  }, [editingMessage, messageContent, setReplyingToMessage, setSelectedFile, setPreviewImage]);
+  }, [editingMessage, setReplyingToMessage, setSelectedFile, setPreviewImage]);
 
   // Focus when replying
   useEffect(() => {

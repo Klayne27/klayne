@@ -7,6 +7,7 @@ import { MdEdit } from "react-icons/md"; // Import the edit icon
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 import { useNavigate } from "react-router-dom";
+import { PiSmiley } from "react-icons/pi";
 
 const MessageItem = ({
   msg,
@@ -188,6 +189,19 @@ const MessageItem = ({
             {emoji}
           </button>
         ))}
+        {/* <button
+          onClick={(e) => {
+            e.stopPropagation();
+            // This is where you'll open your new full emoji picker modal
+            // You'll likely need a prop passed down to trigger this
+            // onOpenFullEmojiPicker(msg._id); // Example: pass message ID
+            handleMessageTap(null); // Close the current small modal
+          }}
+          className="text-gray-400 hover:text-white rounded-full p-1 ml-1"
+          title="More Emojis"
+        >
+          <PiSmiley className="w-5 h-5" /> 
+        </button> */}
 
         <button
           onClick={(e) => {
