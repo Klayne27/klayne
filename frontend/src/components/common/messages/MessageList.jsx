@@ -5,7 +5,7 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 
 import MessageItem from "./MessageItem";
 import { useFetchConversationBetweenUsers } from "../../../hooks/messagesHooks/useFetchConversationBetweenUsers";
-import FullEmojiPickerModal from "../FullEmojiPickerModal";
+import FullEmojiPickerModal from "../EmojiPickerPopover";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 

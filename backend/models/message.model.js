@@ -30,7 +30,7 @@ const messageSchema = new mongoose.Schema(
       {
         emoji: {
           type: String,
-          enum: ["❤️", "👍", "😂", "😭", "😡"],
+          // enum: ["❤️", "👍", "😂", "😭", "😡"],
           required: true,
         },
         user: {

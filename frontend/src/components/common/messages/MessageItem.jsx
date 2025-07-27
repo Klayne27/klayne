@@ -7,7 +7,10 @@ import { MdEdit } from "react-icons/md"; // Import the edit icon
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 import { useNavigate } from "react-router-dom";
-import { PiSmiley } from "react-icons/pi";
+import { PiSmileyFill } from "react-icons/pi";
+import { useRef } from "react";
+import { useCallback } from "react";
+import EmojiPickerPopover from "../EmojiPickerPopover";
 
 const MessageItem = ({
   msg,
@@ -38,23 +41,69 @@ const MessageItem = ({
   // --- NEW: State for hover effect ---
   const [isHovered, setIsHovered] = useState(false);
 
-  // const [showFullEmojiPickerModal, setShowFullEmojiPickerModal] = useState(false);
-  // const [messageIdForEmojiPicker, setMessageIdForEmojiPicker] = useState(null);
+  const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
+  // State for the popover's calculated position
+  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  // Ref for the "More Emojis" button, which will be the popover's anchor
+  const moreEmojisButtonRef = useRef(null);
 
-  // const handleOpenFullEmojiPicker = (messageId) => {
-  //   setMessageIdForEmojiPicker(messageId);
-  //   setShowFullEmojiPickerModal(true);
-  // };
+  // Callback to open the popover and calculate its position
+  const handleOpenEmojiPickerPopover = useCallback(
+    (e) => {
+      e.stopPropagation(); // Prevent clicks from bubbling up and closing other things
 
-  // const handleCloseFullEmojiPicker = () => {
-  //   setShowFullEmojiPickerModal(false);
-  //   setMessageIdForEmojiPicker(null);
-  // };
+      // Toggle logic: if already open, close it
+      if (showEmojiPickerPopover) {
+        setShowEmojiPickerPopover(false);
+        return;
+      }
 
-  // const handleSelectedEmojiFromPicker = (emoji) => {
-  //   handleReactionClick(messageIdForEmojiPicker, emoji);
-  //   handleCloseFullEmojiPicker();
-  // };
+      // Get the bounding rectangle of the button to position the popover
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+
+      // Calculate position for the popover
+      const pickerHeight = 400; // Approximate height of the EmojiPicker component
+      const pickerWidth = 350; // Approximate width of the EmojiPicker component
+
+      let newTop = buttonRect.top - pickerHeight - 10; // 10px above the button
+      let newLeft = buttonRect.left + buttonRect.width / 2; // Center horizontally
+
+      // Basic viewport collision detection (can be more sophisticated)
+      if (newTop < 0) {
+        // If it goes off the top of the screen, place it below
+        newTop = buttonRect.bottom + 10;
+      }
+      if (newLeft + pickerWidth / 2 > window.innerWidth) {
+        // If it goes off the right
+        newLeft = window.innerWidth - pickerWidth / 2 - 10;
+      }
+      if (newLeft - pickerWidth / 2 < 0) {
+        // If it goes off the left
+        newLeft = pickerWidth / 2 + 10;
+      }
+
+      setPopoverPosition({
+        top: newTop,
+        left: newLeft,
+      });
+      setShowEmojiPickerPopover(true);
+    },
+    [showEmojiPickerPopover]
+  ); // showEmojiPickerPopover is a dependency for toggle logic
+
+  // Callback to close the popover
+  const handleCloseEmojiPickerPopover = useCallback(() => {
+    setShowEmojiPickerPopover(false);
+  }, []);
+
+  // Callback for when an emoji is selected from the picker
+  const handleEmojiSelect = useCallback(
+    (emojiObject) => {
+      handleReactionClick(msg._id, emojiObject.emoji); // Use emojiObject.emoji
+      handleCloseEmojiPickerPopover(); // Close the popover after selection
+    },
+    [handleReactionClick, msg._id, handleCloseEmojiPickerPopover]
+  );
 
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
@@ -83,7 +132,7 @@ const MessageItem = ({
   // Ensure message has text content to be editable (images typically aren't edited this way)
   const isEditable = isSentByCurrentUser && msg.text && !msg.img;
   const showModal = activeMessageModalId === msg._id;
-  const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
+  const allowedEmojis = ["❤️", "👍", "😂"];
 
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -208,19 +257,14 @@ const MessageItem = ({
             {emoji}
           </button>
         ))}
-        {/* <button
-          onClick={(e) => {
-            e.stopPropagation();
-            // This is where you'll open your new full emoji picker modal
-            // You'll likely need a prop passed down to trigger this
-            onOpenFullEmojiPicker(msg._id); // Example: pass message ID
-            handleMessageTap(null); // Close the current small modal
-          }}
-          className="text-gray-400 hover:text-white rounded-full p-1 ml-1"
+        <button
+          ref={moreEmojisButtonRef} // Attach ref to this button
+          onClick={handleOpenEmojiPickerPopover} // Toggle popover on click
+          className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-l border-slate-500 mt-[1px] ml-1 pl-2"
           title="More Emojis"
         >
-          <PiSmiley className="w-5 h-5" />
-        </button> */}
+          <PiSmileyFill className="size-[26px]" />
+        </button>
 
         <button
           onClick={(e) => {
@@ -228,7 +272,7 @@ const MessageItem = ({
             handleReplyClick(msg);
             setEditingMessage(null);
           }}
-          className="text-blue-400 hover:text-blue-500 hover:scale-125 rounded-full p-1 ml-1"
+          className="text-blue-400 hover:text-blue-500 hover:scale-125 rounded-full p-1"
           title="Reply"
         >
           <FaReply size={18} />
@@ -427,6 +471,15 @@ const MessageItem = ({
             );
           })}
         </div>
+      )}
+
+      {showEmojiPickerPopover && (
+        <EmojiPickerPopover
+          position={popoverPosition}
+          onClose={handleCloseEmojiPickerPopover}
+          onEmojiClick={handleEmojiSelect} // Pass the handler for emoji selection
+          triggerRef={moreEmojisButtonRef} // Pass the button ref for click outside logic
+        />
       )}
     </div>
   );
