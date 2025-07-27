@@ -357,7 +357,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    const message = await PublicChatMessage.findByIdAndDelete(messageId);
+    const message = await PublicChatMessage.findById(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
@@ -371,9 +371,9 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     const imageUrlToDelete = message.img; // Correctly captured BEFORE modification
 
-    // message.isDeletedByUser = true;
-    // message.img = null; // Remove image URL
-    // await message.save(); // Save changes to DB
+    message.isDeletedByUser = true;
+    message.img = null; // Remove image URL
+    await message.save(); // Save changes to DB
 
     if (imageUrlToDelete) {
       let imgId;

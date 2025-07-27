@@ -318,7 +318,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       {/* Message Content and other elements */}
       <div
         className={`relative flex gap-2 items-start ${
-          fromMe ? "ml-28 flex-row-reverse" : "mr-28 flex-row"
+          fromMe ? "ml-16 flex-row-reverse" : "mr-16 flex-row"
         } `}
       >
         {/* Avatar - Only show if it's the first message in a group and not from current user */}
