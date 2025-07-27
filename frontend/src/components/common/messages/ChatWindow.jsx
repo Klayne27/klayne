@@ -139,9 +139,25 @@ const ChatWindow = ({
     };
   }, [scrollToBottom, conversationId]);
 
-  const handleLoadImage = useCallback(() => {
-    scrollToBottom();
-  }, [scrollToBottom]);
+ const handleLoadImage = useCallback(() => {
+   const listEl = messageListRef.current;
+   if (!listEl) return;
+
+   const scrollThreshold = 100;
+   const isUserAtBottom =
+     listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+   // Scroll if:
+   // 1. User is currently at the bottom (image loaded for visible content)
+   // 2. A new message (optimistic or received) just landed, indicated by shouldScrollToBottomOnNewMessage
+   if (isUserAtBottom) {
+     setTimeout(() => {
+       scrollToBottom();
+       setShowNewMessageButton(false);
+      //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
+     }, 50); // Small delay to ensure image height is registered by the browser
+   }
+ }, [scrollToBottom]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -569,7 +585,7 @@ const ChatWindow = ({
           setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
           onReactionAdded={handleReactionAdded}
-          // handleLoadImage={handleLoadImage}
+          handleLoadImage={handleLoadImage}
         />
 
         {showNewMessageButton && (

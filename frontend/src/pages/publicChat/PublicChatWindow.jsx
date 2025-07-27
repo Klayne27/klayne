@@ -1,5 +1,12 @@
 // src/components/publicChat/PublicChatWindow.jsx
-import React, { useRef, useEffect, useCallback, useState, useLayoutEffect, useMemo } from "react";
+import React, {
+  useRef,
+  useEffect,
+  useCallback,
+  useState,
+  useLayoutEffect,
+  useMemo,
+} from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useSocket } from "../../context/SocketContext";
 import PublicChatHeader from "./PublicChatHeader";
@@ -42,8 +49,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { unbanUser } = useUnbanUserFromPublicChat();
   const { addReaction } = useAddPublicMessageReaction();
 
-    const [isAtBottom, setIsAtBottom] = useState(true);
-
+  const [isAtBottom, setIsAtBottom] = useState(true);
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
@@ -92,8 +98,24 @@ const PublicChatWindow = ({ openImageModal }) => {
   }, []);
 
   const handleLoadImage = useCallback(() => {
-    scrollToBottom()
-  }, [scrollToBottom])
+    const listEl = messageListRef.current;
+    if (!listEl) return;
+
+    const scrollThreshold = 100;
+    const isUserAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+    // Scroll if:
+    // 1. User is currently at the bottom (image loaded for visible content)
+    // 2. A new message (optimistic or received) just landed, indicated by shouldScrollToBottomOnNewMessage
+    if (isUserAtBottom) {
+      setTimeout(() => {
+        scrollToBottom();
+        setShowNewMessageButton(false);
+        //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
+      }, 50); // Small delay to ensure image height is registered by the browser
+    }
+  }, [scrollToBottom]);
 
   const isScrollAtBottom = useCallback(() => {
     if (!messageListRef.current) return false;
@@ -206,23 +228,23 @@ const PublicChatWindow = ({ openImageModal }) => {
   //   return () => observer.disconnect();
   // }, [messages]);
 
-    useLayoutEffect(() => {
-      if (!messageListRef.current || isLoadingMessages) return;
+  useLayoutEffect(() => {
+    if (!messageListRef.current || isLoadingMessages) return;
 
-      if (
-        messages.length > 0 &&
-        !isUserScrollingUp.current &&
-        !scrollStateBeforeFetch.current.scrollHeight
-      ) {
-        scrollToBottom();
-        return;
-      }
+    if (
+      messages.length > 0 &&
+      !isUserScrollingUp.current &&
+      !scrollStateBeforeFetch.current.scrollHeight
+    ) {
+      scrollToBottom();
+      return;
+    }
 
-      if (shouldScrollToBottom.current) {
-        scrollToBottom();
-        shouldScrollToBottom.current = false;
-      }
-    }, [messages.length, isLoadingMessages, scrollToBottom]);
+    if (shouldScrollToBottom.current) {
+      scrollToBottom();
+      shouldScrollToBottom.current = false;
+    }
+  }, [messages.length, isLoadingMessages, scrollToBottom]);
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current;
@@ -316,33 +338,33 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   // --- Message Grouping Logic ---
   // This is where we'll preprocess messages to add grouping flags
-const getGroupedMessages = useCallback((allMessages) => {
-  if (!allMessages || allMessages.length === 0) return [];
+  const getGroupedMessages = useCallback((allMessages) => {
+    if (!allMessages || allMessages.length === 0) return [];
 
-  const grouped = [];
-  for (let i = 0; i < allMessages.length; i++) {
-    const message = { ...allMessages[i] };
-    const prev = allMessages[i - 1];
-    const next = allMessages[i + 1];
+    const grouped = [];
+    for (let i = 0; i < allMessages.length; i++) {
+      const message = { ...allMessages[i] };
+      const prev = allMessages[i - 1];
+      const next = allMessages[i + 1];
 
-    // first-in-group?
-    message.isFirstInGroup =
-      !prev ||
-      message.sender._id !== prev.sender._id ||
-      new Date(message.createdAt) - new Date(prev.createdAt) >
-        MESSAGE_GROUP_TIME_THRESHOLD_MS;
+      // first-in-group?
+      message.isFirstInGroup =
+        !prev ||
+        message.sender._id !== prev.sender._id ||
+        new Date(message.createdAt) - new Date(prev.createdAt) >
+          MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
-    // last-in-group?
-    message.isLastInGroup =
-      !next ||
-      message.sender._id !== next.sender._id ||
-      new Date(next.createdAt) - new Date(message.createdAt) >
-        MESSAGE_GROUP_TIME_THRESHOLD_MS;
+      // last-in-group?
+      message.isLastInGroup =
+        !next ||
+        message.sender._id !== next.sender._id ||
+        new Date(next.createdAt) - new Date(message.createdAt) >
+          MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
-    grouped.push(message);
-  }
-  return grouped;
-}, []);
+      grouped.push(message);
+    }
+    return grouped;
+  }, []);
 
   const dedupedMessages = React.useMemo(() => {
     const seen = new Set();
@@ -411,7 +433,7 @@ const getGroupedMessages = useCallback((allMessages) => {
                     setEditingMessage={setEditingMessage}
                     setReplyingToMessage={setReplyingToMessage}
                     // Pass grouping props
-                    // handleLoadImage={handleLoadImage}
+                    handleLoadImage={handleLoadImage}
                     isFirstInGroup={message.isFirstInGroup}
                     isLastInGroup={message.isLastInGroup}
                     bubbleClasses={message.bubbleClasses} // Pass the pre-calculated classes
