@@ -36,7 +36,6 @@ body {
   }
 }
 
-
 @keyframes discord-pulse {
   0% {
     transform: translateY(0);
@@ -79,7 +78,8 @@ body {
 }
 
 @keyframes bounce-custom {
-  0%, 100% {
+  0%,
+  100% {
     transform: translateY(0);
   }
   50% {
@@ -96,27 +96,13 @@ body {
 }
 
 .modal-open {
-    overflow: hidden;
-}
-
-.active-highlight {
-  /* This removes the default gray tap highlight on iOS */
-  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
-
-  /* We'll use a subtle background change to indicate a tap */
-  background-color: rgba(252, 0, 0, 0.801); /* A very light gray overlay */
-  transition: background-color 0.1s ease-in-out; /* Smooth transition for the background */
-
-  touch-action: manipulation; /* Prevents default browser actions like double-tap zoom */
-  user-select: none; /* Prevents text selection on long press */
+  overflow: hidden;
 }
 
 .fill-current {
   fill: currentColor;
 }
 
-/* Example for setting the icon size */
-.icon-size {
-  width: 20px; /* Adjust as needed */
-  height: 20px; /* Adjust as needed */
+.white-shadow {
+  box-shadow: 0px 0px 10px 1px rgba(255, 255, 255, 0.90);
 }

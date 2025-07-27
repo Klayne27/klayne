@@ -14,8 +14,8 @@ export const useFetchMessages = (conversationId) => {
     isFetching,
   } = useInfiniteQuery({
     queryKey: ["messages", conversationId],
-    queryFn: ({ pageParam = 1 }) =>
-      fetchMessagesApi(conversationId, pageParam),
+    queryFn: () =>
+      fetchMessagesApi(conversationId),
     getNextPageParam: (lastPage, allPages) => {
       const limit = 40;
       if (lastPage.length < limit) {

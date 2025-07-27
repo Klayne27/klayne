@@ -69,12 +69,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const shouldShowTimeOnHover = isHovered || showModal;
 
-  const messageHighlightClass = isCurrentlyTouchDevice
-    ? showModal
-      ? "active-highlight"
-      : ""
-    : "hover:bg-secondary";
-
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
     const reactorId = reaction.userId?._id?.toString() || reaction.userId?.toString();

@@ -67,12 +67,6 @@ const MessageItem = ({
   const showModal = activeMessageModalId === msg._id;
   const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
 
-  const messageHighlightClass = isCurrentlyTouchDevice
-    ? showModal
-      ? "active-highlight"
-      : ""
-    : "hover:bg-secondary";
-
   const groupedReactions = msg.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
       count: 0,
@@ -104,6 +98,8 @@ const MessageItem = ({
       hour12: false,
     });
   };
+
+  // console.log(msg);
 
   // Helper for formatting date (e.g., "July 19, 2025")
   const formatDate = (dateString) => {
@@ -145,7 +141,7 @@ const MessageItem = ({
 
   return (
     <div
-      key={msg._id}
+      // key={`message-${msg._id}-key`}
       id={`message-${msg._id}`}
       className={`rounded-lg py-[1px] relative message-item-container hover:bg-secondary ${
         showHeaderInfo ? "mt-4" : "" // Adjust margin for visual grouping

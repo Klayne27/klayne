@@ -190,21 +190,21 @@ const PublicChatWindow = ({ openImageModal }) => {
     setShowNewMessageButton(false);
   }, [scrollToBottom]);
 
-  useEffect(() => {
-    const container = messageListRef.current;
-    if (!container) return;
+  // useEffect(() => {
+  //   const container = messageListRef.current;
+  //   if (!container) return;
 
-    const messagesEls = container.querySelectorAll("[id^='message-']");
-    const lastEl = messagesEls[messagesEls.length - 1];
-    if (!lastEl) return;
+  //   const messagesEls = container.querySelectorAll("[id^='message-']");
+  //   const lastEl = messagesEls[messagesEls.length - 1];
+  //   if (!lastEl) return;
 
-    const observer = new IntersectionObserver(
-      ([entry]) => setIsAtBottom(entry.isIntersecting),
-      { root: container, threshold: 0.9 }
-    );
-    observer.observe(lastEl);
-    return () => observer.disconnect();
-  }, [messages]);
+  //   const observer = new IntersectionObserver(
+  //     ([entry]) => setIsAtBottom(entry.isIntersecting),
+  //     { root: container, threshold: 0.9 }
+  //   );
+  //   observer.observe(lastEl);
+  //   return () => observer.disconnect();
+  // }, [messages]);
 
     useLayoutEffect(() => {
       if (!messageListRef.current || isLoadingMessages) return;
@@ -411,7 +411,7 @@ const getGroupedMessages = useCallback((allMessages) => {
                     setEditingMessage={setEditingMessage}
                     setReplyingToMessage={setReplyingToMessage}
                     // Pass grouping props
-                    handleLoadImage={handleLoadImage}
+                    // handleLoadImage={handleLoadImage}
                     isFirstInGroup={message.isFirstInGroup}
                     isLastInGroup={message.isLastInGroup}
                     bubbleClasses={message.bubbleClasses} // Pass the pre-calculated classes

@@ -153,7 +153,7 @@ function ConversationItem({
         {showMenu && (
           <div
             ref={menuRef}
-            className="absolute right-0 top-0 w-max bg-base-100  rounded-xl text-md z-10 menu-popover py-2  shadow-md shadow-primary"
+            className="absolute right-0 top-0 w-max bg-base-100 white-shadow rounded-xl text-md z-10 menu-popover py-2"
             onClick={(e) => e.stopPropagation()}
           >
             <button

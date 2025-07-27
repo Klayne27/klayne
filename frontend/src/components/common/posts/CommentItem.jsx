@@ -532,7 +532,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               {showMenu && (
                 <div
                   ref={menuRef}
-                  className="absolute right-0 top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2 shadow-md shadow-primary"
+                  className="absolute right-0 white-shadow top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                 >
                   {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}

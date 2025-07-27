@@ -457,15 +457,10 @@ const Sidebar = ({
           className={
             `block md:hidden ${
               pathname.includes("/messages") ? "hidden" : ""
-            } fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
-            transform transition-all duration-300 ease-in-out
+            } fixed bottom-[73px] right-5 z-[50] rounded-full size-[56px] cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
+            transform transition-all duration-300 ease-in-out white-shadow
              ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
           }
-          style={{
-            width: "56px",
-            height: "56px",
-            boxShadow: "0px 0px 10px 1px rgba(255, 255, 255, 0.60)", // White shadow
-          }}
           onClick={() => onOpenCreatePostModal(true)}
         >
           <FeatherIcon />
@@ -874,12 +869,12 @@ const Sidebar = ({
             {showPopover && (
               <div
                 ref={popoverRef}
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-accent min-w-[250px] z-1000 flex flex-col gap-1 shadow-md shadow-gray-400"
+                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-accent min-w-[250px] z-1000 flex flex-col gap-1 white-shadow"
               >
                 {/* Popover buttons also need the touch effect */}
                 <button
                   onClick={handleConfirmDeleteClick}
-                  className={`w-full text-left px-3 py-2 text-red-500 text-md hover:bg-secondary font-bold
+                  className={`w-full flex items-center text-left px-3 py-2 text-red-500 text-md hover:bg-secondary font-bold
                     ${
                       isTouchDevice && activeButton === "delete-account-popover"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
@@ -889,11 +884,14 @@ const Sidebar = ({
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
+                  <span>
+                    <LuUserRoundX className="size-6 mr-3" />
+                  </span>
                   Delete Account
                 </button>
                 <button
                   onClick={handleLogout}
-                  className={`w-full text-left px-3 py-2 text-md hover:bg-secondary font-bold
+                  className={`w-full flex items-center text-left px-3 py-2 pl-2 text-md hover:bg-secondary font-bold
                     ${
                       isTouchDevice && activeButton === "logout-popover"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
@@ -903,6 +901,9 @@ const Sidebar = ({
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
+                  <span>
+                    <BiLogOut className="size-6 mr-4" />
+                  </span>
                   Logout @{authUser?.username}
                 </button>
               </div>
@@ -1124,7 +1125,7 @@ const Sidebar = ({
                   <span>
                     <BiLogOut className="size-6 mr-4" />
                   </span>
-                  Logout
+                  Logout @{authUser?.username}
                 </li>
               </ul>
             </div>

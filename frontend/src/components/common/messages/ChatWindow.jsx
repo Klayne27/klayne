@@ -16,7 +16,7 @@ import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
-import {  IoChatbubblesOutline } from "react-icons/io5";
+import { IoChatbubblesOutline } from "react-icons/io5";
 
 const ChatWindow = ({
   selectedConversation,
@@ -32,7 +32,6 @@ const ChatWindow = ({
 
   const [replyingToMessage, setReplyingToMessage] = useState(null);
   const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
-  const [showScrollDownButton, setShowScrollDownButton] = useState(false)
 
   const conversationId = selectedConversation?._id;
 
@@ -140,9 +139,9 @@ const ChatWindow = ({
     };
   }, [scrollToBottom, conversationId]);
 
-    const handleLoadImage = useCallback(() => {
-      scrollToBottom();
-    }, [scrollToBottom]);
+  const handleLoadImage = useCallback(() => {
+    scrollToBottom();
+  }, [scrollToBottom]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -304,35 +303,28 @@ const ChatWindow = ({
 
       const handleNewMessage = (newMessage) => {
         const targetMessagesQueryKey = ["messages", newMessage.conversationId];
+        const limit = 40; // Use the same page size limit
 
         queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
           if (!oldData || !oldData.pages || oldData.pages.length === 0) {
             return { pages: [[newMessage]], pageParams: [1] };
           }
 
-          const newData = { ...oldData };
+          const newData = {
+            ...oldData,
+            pages: oldData.pages.map((page) => [...page]),
+          };
           // Filter out duplicates (if any) and optimistic messages that are being replaced
-          const firstPageMessages = newData.pages[0].filter(
-            (msg) =>
-              msg._id !== newMessage._id && msg._id !== currentOptimisticIdRef.current
-          );
+          const firstPage = newData.pages[0];
 
-          if (
-            newMessage.sender._id.toString() === currentUserId.toString() &&
-            currentOptimisticIdRef.current &&
-            oldData.pages[0].some(
-              (msg) => msg._id === currentOptimisticIdRef.current && msg.isOptimistic
-            )
-          ) {
-            newData.pages[0] = [
-              ...firstPageMessages,
-              { ...newMessage, isOptimistic: undefined },
-            ];
-            currentOptimisticIdRef.current = null;
-          } else {
-            // Otherwise, just add the new message to the first page
-            newData.pages[0] = [...firstPageMessages, newMessage];
+          firstPage.push(newMessage);
+
+          // **THE SAME FIX**: Maintain page size integrity
+          if (firstPage.length > limit) {
+            firstPage.shift();
           }
+
+          newData.pages[0] = firstPage;
           return newData;
         });
 
@@ -362,7 +354,6 @@ const ChatWindow = ({
             } else {
               if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
                 setShowNewMessageButton(true);
-                setShowScrollDownButton(true)
               }
             }
           }

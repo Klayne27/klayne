@@ -215,7 +215,7 @@ export const getMessagesByConversationId = async (req, res) => {
           path: "sender",
           select: "username fullName profileImg isVerified isGoldVerified",
         },
-      });
+      }).lean()
 
     res.status(200).json(messages.reverse()); // Reverse to have oldest first for UI display
   } catch (error) {
