@@ -2,16 +2,12 @@ import { Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Suspense, lazy, useState } from "react";
 import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
-import LoadingSpinner from "./components/common/LoadingSpinner";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
-import CreatePostModal from "./components/common/CreatePostModal";
-import { TbPencilPlus } from "react-icons/tb";
-import { RiQuillPenAiLine } from "react-icons/ri";
-import FeatherIcon from "./components/svgs/FeatherIcon";
+// import CreatePostModal from "./components/common/CreatePostModal";
 
-
+const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"))
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
