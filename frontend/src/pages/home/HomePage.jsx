@@ -168,7 +168,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
         </div>
 
         {/* NEW POSTS BUTTON */}
-        {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
+        {/* {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
           <button
             onClick={handleNewPostsButtonClick}
             className="fixed top-[52px] md:top-[53px] left-1/2 -translate-x-1/2 z-50
@@ -179,7 +179,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
             <BiRefresh size={18} />
             <span>Show new posts</span>
           </button>
-        )}
+        )} */}
 
         <div ref={scrollableContentRef}>
           {" "}
