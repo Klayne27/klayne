@@ -569,7 +569,7 @@ const ChatWindow = ({
           setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
           onReactionAdded={handleReactionAdded}
-          handleLoadImage={handleLoadImage}
+          // handleLoadImage={handleLoadImage}
         />
 
         {showNewMessageButton && (
