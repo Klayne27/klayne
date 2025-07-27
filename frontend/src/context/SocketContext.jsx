@@ -23,6 +23,7 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
   const [hasUnreadPublicChat, setHasUnreadPublicChat] = useState(false);
+  const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
 
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
@@ -81,6 +82,7 @@ export const SocketContextProvider = ({ children }) => {
 
       newSocket.on("newPostAvailable", () => {
         setHasNewFeedPosts(true);
+        setShowNewFeedPostsButton(true)
       });
 
       newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
@@ -155,6 +157,7 @@ export const SocketContextProvider = ({ children }) => {
       setActiveConversationId(null);
       setHasUnreadNotifications(false);
       setHasNewFeedPosts(false);
+      setShowNewFeedPostsButton(false)
       setHasUnreadPublicChat(false); // Clear public chat unread status on logout
     }
   }, [user, isLoadingAuthUser, queryClient]);
@@ -194,6 +197,8 @@ export const SocketContextProvider = ({ children }) => {
         setHasUnreadNotifications,
         hasNewFeedPosts,
         setHasNewFeedPosts,
+        showNewFeedPostsButton,
+        setShowNewFeedPostsButton,
         hasUnreadPublicChat,
         setHasUnreadPublicChat,
       }}

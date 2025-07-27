@@ -1,16 +1,58 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, useCallback } from "react"; // Added useCallback
+import { BiRefresh } from "react-icons/bi"; // Icon for the button, install if not present: npm install react-icons
 
 import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
-// import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
+import { useSocket } from "../../context/SocketContext";
+import { useQueryClient } from "@tanstack/react-query";
 
 const HomePage = ({ openImageModal, showUnfollowModal }) => {
+  const { showNewFeedPostsButton, setShowNewFeedPostsButton } = useSocket();
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
-  const scrollableContentRef = useRef(null);
+  const scrollableContentRef = useRef(null); // This ref points to the div containing CreatePost and Posts
   const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeTab, setActiveTab] = useState(null); // To control the active state for touch feedback
+  const [activeTab, setActiveTab] = useState(null);
+  // NEW: State to manage button visibility based on scroll
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
+  const queryClient = useQueryClient();
+
+  // Function to scroll to the top and refetch posts
+  const handleNewPostsButtonClick = useCallback(() => {
+    // Scroll smoothly to the top of the feed
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
+    // Invalidate and refetch the appropriate query based on feedType
+    // This assumes your useFetchPosts hook uses a query key that changes with feedType
+    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
+
+    // Reset the socket context button state
+    setShowNewFeedPostsButton(false);
+  }, [ queryClient, setShowNewFeedPostsButton]);
+
+  // NEW: Effect for scroll listener to show/hide the button
+  useEffect(() => {
+    const handleScroll = () => {
+      // You want to show the button if the user is scrolled down
+      // A simple threshold: if scrollY is greater than, say, 100px
+      if (window.scrollY > 100) {
+        setShowScrollButton(true);
+      } else {
+        setShowScrollButton(false);
+      }
+    };
+
+    window.addEventListener("scroll", handleScroll);
+
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+    };
+  }, []); // Empty dependency array ensures it runs once on mount and cleans up on unmount
 
   useEffect(() => {
     const updateWidth = () => {
@@ -22,8 +64,6 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
     updateWidth();
     window.addEventListener("resize", updateWidth);
 
-    // Detect if it's a touch device
-    // This is a common heuristic, but not foolproof.
     setIsTouchDevice(
       "ontouchstart" in window ||
         navigator.maxTouchPoints > 0 ||
@@ -40,6 +80,8 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
       left: 0,
       behavior: "instant",
     });
+    // When changing tabs, hide the new posts button immediately
+    setShowNewFeedPostsButton(false);
   };
 
   const handleTouchStart = (type) => {
@@ -50,25 +92,20 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
   const handleTouchEnd = () => {
     if (isTouchDevice) {
-      // Use a timeout to allow the transition to be visible before clearing
-      // This timeout should be *at least* as long as your CSS transition duration
       setTimeout(() => {
         setActiveTab(null);
-      }, 150); // <-- Adjust this duration if your transition is longer/shorter
+      }, 150);
     }
   };
 
   return (
     <>
-      <div
-        ref={mainFeedRef}
-        className="flex-[4_4_0] mr-auto  border-accent min-h-screen "
-      >
+      <div ref={mainFeedRef} className="flex-[4_4_0] mr-auto border-accent min-h-screen">
         <div
           className={`fixed top-0 ${showUnfollowModal ? "z-0" : "z-10"}
-                             border-b border-accent bg-opacity-20 backdrop-blur-md`}
+                       border-b border-accent bg-opacity-20 backdrop-blur-md`}
         >
-          <div className="flex w-full " style={{ width: headerWidth }}>
+          <div className="flex w-full" style={{ width: headerWidth }}>
             <div
               className={`
                 flex justify-center flex-1 p-3 cursor-pointer
@@ -79,7 +116,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
                 }
                 ${
                   activeTab === "forYou"
-                    ? "bg-secondary bg-opacity-50 transition duration-300" // Added transition here!
+                    ? "bg-secondary bg-opacity-50 transition duration-300"
                     : ""
                 }
                 ${
@@ -90,7 +127,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
               onClick={() => handleTabClick("forYou")}
               onTouchStart={() => handleTouchStart("forYou")}
               onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchEnd} // Good practice for touches that don't complete
+              onTouchCancel={handleTouchEnd}
             >
               For you
               {feedType === "forYou" && (
@@ -107,10 +144,9 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
                 }
                 ${
                   activeTab === "following"
-                    ? "bg-secondary bg-opacity-50 transition duration-300" // Added transition here!
+                    ? "bg-secondary bg-opacity-50 transition duration-300"
                     : ""
                 }
-                // Always include the base transition for the element if it's not handled by hover:
                 ${
                   isTouchDevice && activeTab !== "following"
                     ? "transition duration-300"
@@ -131,16 +167,25 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
           </div>
         </div>
 
-        <div
-          ref={scrollableContentRef}
+        {/* NEW POSTS BUTTON */}
+        {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
+          <button
+            onClick={handleNewPostsButtonClick}
+            className="fixed top-[52px] md:top-[53px] left-1/2 -translate-x-1/2 z-50
+                       bg-primary text-white px-4 py-2 rounded-full
+                       hover:bg-primary/90 transition-all duration-200
+                       flex items-center gap-2 text-sm md:text-md"
+          >
+            <BiRefresh size={18} />
+            <span>Show new posts</span>
+          </button>
+        )}
 
-        >
+        <div ref={scrollableContentRef}>
+          {" "}
+          {/* Ensure this div is scrollable if mainFeedRef is not */}
           <CreatePost />
-          <Posts
-            feedType={feedType}
-            openImageModal={openImageModal}
-            // pinnedPosts={pinnedPosts}
-          />
+          <Posts feedType={feedType} openImageModal={openImageModal} />
         </div>
       </div>
     </>

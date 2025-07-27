@@ -10,7 +10,6 @@ import { CiCircleMinus } from "react-icons/ci";
 import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConversation";
 import { FiTrash } from "react-icons/fi";
 import { BsThreeDots } from "react-icons/bs";
-import DeleteConversationModal from "../DeleteConversationModal";
 import ConfirmationModal from "../ConfirmationModal";
 
 function ConversationItem({
