@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react"; // Added useCallback
-import { BiRefresh } from "react-icons/bi"; // Icon for the button, install if not present: npm install react-icons
+import { FaArrowUp } from "react-icons/fa6";
 
 import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
@@ -7,7 +7,8 @@ import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 
 const HomePage = ({ openImageModal, showUnfollowModal }) => {
-  const { showNewFeedPostsButton, setShowNewFeedPostsButton } = useSocket();
+  const { showNewFeedPostsButton, setShowNewFeedPostsButton, setHasNewFeedPosts } =
+    useSocket();
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
@@ -27,20 +28,18 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
       behavior: "smooth",
     });
 
-    // Invalidate and refetch the appropriate query based on feedType
-    // This assumes your useFetchPosts hook uses a query key that changes with feedType
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
-    // Reset the socket context button state
     setShowNewFeedPostsButton(false);
-  }, [ queryClient, setShowNewFeedPostsButton]);
+    setHasNewFeedPosts(false);
+  }, [queryClient, setShowNewFeedPostsButton, setHasNewFeedPosts]);
 
   // NEW: Effect for scroll listener to show/hide the button
   useEffect(() => {
     const handleScroll = () => {
       // You want to show the button if the user is scrolled down
       // A simple threshold: if scrollY is greater than, say, 100px
-      if (window.scrollY > 100) {
+      if (window.scrollY > 1000) {
         setShowScrollButton(true);
       } else {
         setShowScrollButton(false);
@@ -168,18 +167,18 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
         </div>
 
         {/* NEW POSTS BUTTON */}
-        {/* {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
+        {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
           <button
             onClick={handleNewPostsButtonClick}
-            className="fixed top-[52px] md:top-[53px] left-1/2 -translate-x-1/2 z-50
-                       bg-primary text-white px-4 py-2 rounded-full
+            className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 z-50
+                       bg-primary text-white px-4 py-2 rounded-full white-shadow
                        hover:bg-primary/90 transition-all duration-200
                        flex items-center gap-2 text-sm md:text-md"
           >
-            <BiRefresh size={18} />
+            <FaArrowUp size={18} />
             <span>Show new posts</span>
           </button>
-        )} */}
+        )}
 
         <div ref={scrollableContentRef}>
           {" "}

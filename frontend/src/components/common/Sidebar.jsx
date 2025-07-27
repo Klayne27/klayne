@@ -33,6 +33,7 @@ const Sidebar = ({
     hasNewFeedPosts,
     setHasNewFeedPosts,
     hasUnreadPublicChat,
+    setShowNewFeedPostsButton
   } = useSocket();
   const queryClient = useQueryClient();
   // const {username} = useParams()
@@ -217,9 +218,17 @@ const Sidebar = ({
   };
 
   const handleHomeClick = () => {
+
+    if (pathname === "/")
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
+
     queryClient.invalidateQueries({ queryKey: ["posts"] });
     if (hasNewFeedPosts) {
       setHasNewFeedPosts(false);
+      setShowNewFeedPostsButton(false)
     }
   };
 
@@ -420,8 +429,8 @@ const Sidebar = ({
         setIsFeatherIconVisible(true); // Default to visible for other paths on mobile initially
       }
     } else {
-      setIsMobileBarVisible(true); // Always visible on desktop
-      setIsFeatherIconVisible(true); // Always visible on desktop
+      setIsMobileBarVisible(true);
+      setIsFeatherIconVisible(true);
     }
 
     window.addEventListener("scroll", handleScroll);
