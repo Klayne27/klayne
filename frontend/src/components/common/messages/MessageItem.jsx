@@ -31,11 +31,30 @@ const MessageItem = ({
   isFirstInGroup,
   isLastInGroup,
   handleLoadImage,
+  onOpenFullEmojiPicker,
 }) => {
   const navigate = useNavigate();
 
   // --- NEW: State for hover effect ---
   const [isHovered, setIsHovered] = useState(false);
+
+  // const [showFullEmojiPickerModal, setShowFullEmojiPickerModal] = useState(false);
+  // const [messageIdForEmojiPicker, setMessageIdForEmojiPicker] = useState(null);
+
+  // const handleOpenFullEmojiPicker = (messageId) => {
+  //   setMessageIdForEmojiPicker(messageId);
+  //   setShowFullEmojiPickerModal(true);
+  // };
+
+  // const handleCloseFullEmojiPicker = () => {
+  //   setShowFullEmojiPickerModal(false);
+  //   setMessageIdForEmojiPicker(null);
+  // };
+
+  // const handleSelectedEmojiFromPicker = (emoji) => {
+  //   handleReactionClick(messageIdForEmojiPicker, emoji);
+  //   handleCloseFullEmojiPicker();
+  // };
 
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
@@ -194,13 +213,13 @@ const MessageItem = ({
             e.stopPropagation();
             // This is where you'll open your new full emoji picker modal
             // You'll likely need a prop passed down to trigger this
-            // onOpenFullEmojiPicker(msg._id); // Example: pass message ID
+            onOpenFullEmojiPicker(msg._id); // Example: pass message ID
             handleMessageTap(null); // Close the current small modal
           }}
           className="text-gray-400 hover:text-white rounded-full p-1 ml-1"
           title="More Emojis"
         >
-          <PiSmiley className="w-5 h-5" /> 
+          <PiSmiley className="w-5 h-5" />
         </button> */}
 
         <button

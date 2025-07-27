@@ -370,9 +370,9 @@ export const reactToMessage = async (req, res) => {
       return res.status(400).json({ error: "Message ID and emoji are required." });
     }
 
-    if (!["❤️", "👍", "😂", "😭", "😡"].includes(emoji)) {
-      return res.status(400).json({ error: "Invalid emoji provided." });
-    }
+    // if (!["❤️", "👍", "😂", "😭", "😡"].includes(emoji)) {
+    //   return res.status(400).json({ error: "Invalid emoji provided." });
+    // }
 
     const message = await Message.findById(messageId);
 

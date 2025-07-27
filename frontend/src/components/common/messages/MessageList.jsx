@@ -5,6 +5,7 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 
 import MessageItem from "./MessageItem";
 import { useFetchConversationBetweenUsers } from "../../../hooks/messagesHooks/useFetchConversationBetweenUsers";
+import FullEmojiPickerModal from "../FullEmojiPickerModal";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
@@ -48,24 +49,6 @@ const MessageList = forwardRef(function MessageList(
 
   const mouseLeaveTimeoutRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
-
-  // const [showFullEmojiPickerModal, setShowFullEmojiPickerModal] = useState(false);
-  // const [messageIdForEmojiPicker, setMessageIdForEmojiPicker] = useState(null);
-
-  // const handleOpenFullEmojiPicker = (messageId) => {
-  //   setMessageIdForEmojiPicker(messageId);
-  //   setShowFullEmojiPickerModal(true);
-  // };
-
-  // const handleCloseFullEmojiPicker = () => {
-  //   setShowFullEmojiPickerModal(false);
-  //   setMessageIdForEmojiPicker(null);
-  // };
-
-  // const handleSelectedEmojiFromPicker = (emoji) => {
-  //   handleReactionClick(messageIdForEmojiPicker, emoji);
-  //   handleCloseFullEmojiPicker();
-  // };
 
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
@@ -322,6 +305,7 @@ const MessageList = forwardRef(function MessageList(
             senderUsername={msg.senderUsername}
             isFirstInGroup={msg.isFirstInGroup} // Pass new prop
             isLastInGroup={msg.isLastInGroup} // Pass new prop
+            // onOpenFullEmojiPicker={handleOpenFullEmojiPicker}
           />
         ))}
 

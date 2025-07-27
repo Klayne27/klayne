@@ -167,7 +167,7 @@ function MessageInput({
         setMessageInput("");
     }
     // eslint-disable-next-line
-  }, [editingMessage, messageInput]);
+  }, [editingMessage]);
 
   const handleMessageInputChange = (e) => {
     const text = e.target.value;
