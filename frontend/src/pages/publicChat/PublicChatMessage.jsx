@@ -577,7 +577,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                           fromMe ? "text-gray-600" : "text-gray-300"
                         } mt-1 italic`}
                       >
-                        {renderClickableText(truncateText(message.replyTo.content, 49))}
+                        {renderClickableText(truncateText(message.replyTo.content, 20))}
                       </span>
                     )
                   )}

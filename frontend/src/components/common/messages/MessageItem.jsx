@@ -483,7 +483,7 @@ const MessageItem = ({
                             isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
                           } mt-1 italic`}
                         >
-                          {renderClickableText(truncateText(msg.repliedTo.text, 49))}
+                          {renderClickableText(truncateText(msg.repliedTo.text, 20))}
                         </span>
                       )}
                       {msg.repliedTo.img && (
@@ -514,9 +514,13 @@ const MessageItem = ({
                   {/* Message Text */}
                   {msg.text && (
                     <p
-                      className={`whitespace-pre-wrap break-words text-sm ${
+                      className={`whitespace-pre-wrap text-sm ${
                         isSentByCurrentUser ? "text-white" : ""
                       }`}
+                      style={{
+                        wordBreak: "break-all", // More aggressive than break-word
+                        // overflowWrap: "break-word", // Fallback for older browsers
+                      }}
                     >
                       {renderClickableText(msg.text, isSentByCurrentUser)}
                     </p>
