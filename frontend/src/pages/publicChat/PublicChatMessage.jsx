@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useMemo } from "react";
+import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MdAdminPanelSettings, MdDeleteForever } from "react-icons/md";
 import { FaUserSlash, FaUserCheck, FaReply, FaBan } from "react-icons/fa";
@@ -78,6 +78,25 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
+
+  const [isMobile, setIsMobile] = useState(false);
+    const pressTimer = useRef(null);
+    const LONG_PRESS_DURATION = 500; // milliseconds
+  
+    useEffect(() => {
+      // Basic mobile detection based on user agent or screen width
+      const checkIfMobile = () => {
+        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+        const isMobileDevice =
+          /android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent) ||
+          window.innerWidth < 768;
+        setIsMobile(isMobileDevice);
+      };
+  
+      checkIfMobile();
+      window.addEventListener("resize", checkIfMobile);
+      return () => window.removeEventListener("resize", checkIfMobile);
+    }, []);
 
   const handleOpenEmojiPickerPopover = useCallback(
     (e, targetRef) => {
@@ -251,6 +270,27 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     }
   };
 
+  // NEW: Mobile Touch Handlers
+  const handleTouchStart = (e) => {
+    e.stopPropagation();
+    // Start a timer for long press
+    pressTimer.current = setTimeout(() => {
+      handleMessageTap(message._id); // Show modal after long press
+    }, LONG_PRESS_DURATION);
+  };
+
+  const handleTouchEnd = (e) => {
+    e.stopPropagation();
+    clearTimeout(pressTimer.current); // Clear timer if finger lifted before long press
+  };
+
+  const handleTouchMove = (e) => {
+    // If finger moves significantly, cancel the long press
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
+  };
+
   return (
     <>
       {/* Date Separator */}
@@ -299,6 +339,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           }
           handleMessageTap(message._id);
         }}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
       >
         {/* No longer showing time on hover here, it's next to username/avatar */}
         {/* Reaction Picker and Action Modal (absolute positioned) */}
