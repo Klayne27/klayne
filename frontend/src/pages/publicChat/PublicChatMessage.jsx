@@ -5,6 +5,7 @@ import { FaUserSlash, FaUserCheck, FaReply, FaBan } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
+import { BsThreeDots } from "react-icons/bs"; // Import BsThreeDots
 
 import {
   useDeleteOwnPublicMessage,
@@ -12,9 +13,9 @@ import {
 } from "../../hooks/publicChatHooks/publicChatHooks";
 import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
-// No need to import formatDate from 'date-fns' if you're defining it locally or from your utils
 
 import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
+import { HiOutlineReply } from "react-icons/hi";
 
 // Helper for formatting date (e.g., "July 28, 2025")
 const formatDisplayDate = (dateString) => {
@@ -78,29 +79,37 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
+  const moreActionsButtonRef = useRef(null); // Ref for the new More Actions button
+
+  const [showMoreActionsModal, setShowMoreActionsModal] = useState(false); // State for the new modal
+  const [moreActionsModalPosition, setMoreActionsModalPosition] = useState({
+    top: 0,
+    left: 0,
+  });
 
   const [isMobile, setIsMobile] = useState(false);
-    const pressTimer = useRef(null);
-    const LONG_PRESS_DURATION = 500; // milliseconds
-  
-    useEffect(() => {
-      // Basic mobile detection based on user agent or screen width
-      const checkIfMobile = () => {
-        const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-        const isMobileDevice =
-          /android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent) ||
-          window.innerWidth < 768;
-        setIsMobile(isMobileDevice);
-      };
-  
-      checkIfMobile();
-      window.addEventListener("resize", checkIfMobile);
-      return () => window.removeEventListener("resize", checkIfMobile);
-    }, []);
+  const pressTimer = useRef(null);
+  const LONG_PRESS_DURATION = 500; // milliseconds
+  const fromMe = message.sender._id === authUser._id;
+  useEffect(() => {
+    // Basic mobile detection based on user agent or screen width
+    const checkIfMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobileDevice =
+        /android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent) ||
+        window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, []);
 
   const handleOpenEmojiPickerPopover = useCallback(
     (e, targetRef) => {
       e.stopPropagation();
+      setShowMoreActionsModal(false); // Close more actions modal if open
 
       if (showEmojiPickerPopover && targetRef.current === moreEmojisButtonRef.current) {
         setShowEmojiPickerPopover(false);
@@ -155,7 +164,80 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     [handleReactionClick, message._id, handleCloseEmojiPickerPopover, onReactionAdded]
   );
 
-  const fromMe = message.sender._id === authUser._id;
+  // --- Handlers for More Actions Modal ---
+  const handleOpenMoreActionsModal = useCallback(
+    (e) => {
+      e.stopPropagation();
+      setShowEmojiPickerPopover(false); // Close emoji picker if open
+
+      // Toggle functionality: if already open, close it
+      if (showMoreActionsModal) {
+        setShowMoreActionsModal(false);
+        return;
+      }
+
+      const buttonRect = e.currentTarget.getBoundingClientRect();
+      // Estimate modal height based on actions available
+      // Reply, Edit (optional), Delete (optional), Admin Ban/Unban (optional)
+      const isEditable = fromMe && !message.isDeletedByAdmin && !message.isDeletedByUser;
+      const canDeleteOwn =
+        fromMe && !message.isDeletedByAdmin && !message.isDeletedByUser;
+      const canAdminActions = authUser.isAdmin && !fromMe;
+
+      let numItems = 1; // Always has Reply
+      if (isEditable) numItems += 1; // Add Edit
+      if (canDeleteOwn || canAdminActions) numItems += 1; // Add Delete (own) or Admin actions
+
+      const itemHeight = 38; // px per action item (approximate, including padding)
+      const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
+
+      const modalWidth = 180; // Approximate width of the modal
+
+      // Calculate newLeft to position the modal to the left of the button.
+      const offsetLeft = 5; // Small offset for visual spacing
+      let newLeft = buttonRect.left - modalWidth - offsetLeft;
+
+      // Ensure the modal doesn't go off the left edge of the screen
+      if (newLeft < 10) {
+        newLeft = 10; // Minimum 10px padding from the left edge
+      }
+
+      // Calculate newTop to align the vertical middle of the modal with the vertical middle of the button.
+      let newTop = buttonRect.top + buttonRect.height / 2 - estimatedModalHeight / 2;
+
+      // Ensure the modal doesn't go off the top or bottom edge of the screen
+      const paddingVertical = 10; // Minimum padding from top/bottom viewport edge
+      if (newTop < paddingVertical) {
+        newTop = paddingVertical;
+      }
+      if (newTop + estimatedModalHeight > window.innerHeight - paddingVertical) {
+        newTop = window.innerHeight - estimatedModalHeight - paddingVertical;
+      }
+
+      setMoreActionsModalPosition({ top: newTop, left: newLeft });
+      setShowMoreActionsModal(true);
+    },
+    [
+      showMoreActionsModal,
+      fromMe,
+      message.isDeletedByAdmin,
+      message.isDeletedByUser,
+      authUser.isAdmin,
+    ]
+  );
+
+  const handleCloseMoreActionsModal = useCallback(() => {
+    setShowMoreActionsModal(false);
+  }, []);
+
+  const handleActionClick =
+    (actionFn, ...args) =>
+    (e) => {
+      e.stopPropagation();
+      actionFn(...args);
+      handleMessageTap(null); // Close main reaction modal
+      handleCloseMoreActionsModal(); // Close this modal
+    };
 
   const isSenderAdmin = message.sender.isAdmin;
   const isAuthUserAdmin = authUser.isAdmin;
@@ -210,7 +292,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         msUserSelect: "none",
         touchAction: "manipulation",
       }
-    : {}; 
+    : {};
 
   const bubbleClasses = useMemo(() => {
     let classes = "";
@@ -240,45 +322,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     return classes;
   }, [isSentByCurrentUser, isFirstInGroup, isLastInGroup]);
 
-  const handleAdminDeleteClick = (e) => {
-    e.stopPropagation();
-    adminDeleteMessage(message._id);
-  };
-
-  const handleAdminBanClick = () => {
-    onBan(message.sender._id);
-  };
-
-  const handleAdminUnbanClick = () => {
-    onUnban(message.sender._id);
-  };
-
-  const handleDeleteOwnMessageInModal = (e) => {
-    e.stopPropagation();
-    if (!isDeletingOwnMessage) {
-      deleteOwnMessage(message._id);
-    }
-  };
-
-  const handleReplyClick = (e) => {
-    e.stopPropagation();
-    onReply(message);
-    setEditingMessage(null);
-  };
-
-  const handleEditClick = (e) => {
-    e.stopPropagation();
-    onEdit(message);
-    setReplyingToMessage(null);
-  };
-
-  const handleReplyingToClick = (e) => {
-    e.stopPropagation();
-    if (message.replyTo && message.replyTo._id) {
-      onJumpToMessage(message.replyTo._id);
-    }
-  };
-
   // NEW: Mobile Touch Handlers
   const handleTouchStart = (e) => {
     e.stopPropagation();
@@ -299,6 +342,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       clearTimeout(pressTimer.current);
     }
   };
+
+    const handleReplyingToClick = (e) => {
+      e.stopPropagation();
+      if (message.replyTo && message.replyTo._id) {
+        onJumpToMessage(message.replyTo._id);
+      }
+    };
 
   return (
     <>
@@ -346,19 +396,16 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         onTouchEnd={isMobile ? handleTouchEnd : undefined}
         onTouchMove={isMobile ? handleTouchMove : undefined}
       >
-        {/* No longer showing time on hover here, it's next to username/avatar */}
-        {/* Reaction Picker and Action Modal (absolute positioned) */}
+        {/* Main Reaction Picker and Action Modal */}
         <div
           id={`message-reaction-modal-${message._id}`}
-          className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
-                      ${
-                        fromMe ? "-left-28 translate-x-1/2" : "-right-20 -translate-x-1/2"
-                      }
-                      ${
-                        showModal
-                          ? "opacity-100 pointer-events-auto"
-                          : "opacity-0 pointer-events-none"
-                      } `}
+          className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
+          ${fromMe ? "-left-24 translate-x-1/2" : "-right-24 -translate-x-1/2"}
+          ${
+            showModal
+              ? "opacity-100 pointer-events-auto"
+              : "opacity-0 pointer-events-none"
+          } `}
           style={messageContentStyle}
         >
           {/* Emojis */}
@@ -380,75 +427,104 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           <button
             ref={moreEmojisButtonRef}
             onClick={(e) => handleOpenEmojiPickerPopover(e, moreEmojisButtonRef)}
-            className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
+            className="text-slate-500 hover:text-slate-400 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
             title="More Emojis"
           >
             <PiSmileyFill className="size-[26px]" />
           </button>
           <button
-            onClick={handleReplyClick}
-            className="p-1 text-blue-400 hover:text-blue-500 hover:scale-125 transition duration-100"
+            onClick={handleActionClick(onReply, message)}
+            className="p-1 text-slate-500 hover:text-slate-400 hover:scale-125 transition duration-100"
             title="Reply to message"
           >
-            <FaReply size={18} />
+            <HiOutlineReply size={21} />
           </button>
-          {/* NEW: Edit button (only for own messages that are not deleted/edited) */}
-          {fromMe && !isMessageDeleted && (
-            <button
-              onClick={handleEditClick}
-              className="p-1 text-yellow-400 hover:text-yellow-500 hover:scale-125 transition duration-100"
-              title="Edit Message"
-            >
-              <MdEdit size={20} />
-            </button>
-          )}
-          {/* Trash Icon for deleting own message */}
-          {fromMe && !isMessageDeleted && (
-            <button
-              onClick={handleDeleteOwnMessageInModal}
-              disabled={isDeletingOwnMessage}
-              className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
-              title={isDeletingOwnMessage ? "Deleting..." : "Delete Message"}
-            >
-              <FiTrash size={18} />
-            </button>
-          )}
-          {/* Admin Delete and Ban/Unban Buttons */}
-          {isAuthUserAdmin && !fromMe && (
-            <>
-              {!isMessageDeleted && (
-                <button
-                  onClick={handleAdminDeleteClick}
-                  disabled={isAdminDeleting}
-                  className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
-                  title="Delete message (Admin)"
-                >
-                  <MdDeleteForever size={20} />
-                </button>
-              )}
-
-              {isSenderBanned ? (
-                <button
-                  onClick={handleAdminUnbanClick}
-                  disabled={false}
-                  className="p-1 text-green-400 hover:text-green-500 hover:scale-125 transition duration-100"
-                  title={`Unban ${message.sender.username} (Admin)`}
-                >
-                  <FaUserCheck size={18} />
-                </button>
-              ) : (
-                <button
-                  onClick={handleAdminBanClick}
-                  disabled={false}
-                  className="p-1 text-red-400 hover:text-red-500 hover:scale-125 transition duration-100"
-                  title={`Ban ${message.sender.username} (Admin)`}
-                >
-                  <FaUserSlash size={18} />
-                </button>
-              )}
-            </>
-          )}
+          {/* New "More Actions" button */}
+          <button
+            ref={moreActionsButtonRef}
+            onClick={handleOpenMoreActionsModal}
+            className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1"
+            title="More actions"
+          >
+            <BsThreeDots size={18} />
+          </button>
         </div>
+
+        {/* --- Discord-like "More Actions" Modal --- */}
+        {showMoreActionsModal && (
+          <div className="fixed inset-0 z-20" onClick={handleCloseMoreActionsModal}>
+            <div
+              className={`absolute bg-base-100 gray-shadow rounded-xl p-2 z-30`}
+              style={{
+                top: moreActionsModalPosition.top,
+                left: moreActionsModalPosition.left,
+                minWidth: "180px", // Ensure a consistent minimum width
+              }}
+              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the modal
+            >
+              <button
+                onClick={handleActionClick(onReply, message)}
+                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] transition duration-200"
+              >
+                Reply
+                <HiOutlineReply size={18} className="text-slate-400" />
+              </button>
+              {fromMe && !isMessageDeleted && (
+                <button
+                  onClick={handleActionClick(() => {
+                    onEdit(message);
+                    setReplyingToMessage(null);
+                  })}
+                  className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] transition duration-200"
+                >
+                  Edit Message
+                  <MdEdit size={16} className="text-slate-400" />
+                </button>
+              )}
+              {fromMe && !isMessageDeleted && (
+                <button
+                  onClick={handleActionClick(deleteOwnMessage, message._id)}
+                  disabled={isDeletingOwnMessage}
+                  className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
+                >
+                  Delete Message
+                  <FiTrash size={16} />
+                </button>
+              )}
+              {isAuthUserAdmin && !fromMe && (
+                <>
+                  {!isMessageDeleted && (
+                    <button
+                      onClick={handleActionClick(adminDeleteMessage, message._id)}
+                      disabled={isAdminDeleting}
+                      className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
+                    >
+                      Delete (Admin)
+                      <MdDeleteForever size={18} />
+                    </button>
+                  )}
+                  {isSenderBanned ? (
+                    <button
+                      onClick={handleActionClick(onUnban, message.sender._id)}
+                      className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-green-400 hover:bg-green-400/10 transition duration-200"
+                    >
+                      Unban User
+                      <FaUserCheck size={16} />
+                    </button>
+                  ) : (
+                    <button
+                      onClick={handleActionClick(onBan, message.sender._id)}
+                      className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
+                    >
+                      Ban User
+                      <FaUserSlash size={16} />
+                    </button>
+                  )}
+                </>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Message Content and other elements */}
         <div
@@ -505,7 +581,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   <img src="/verified.png" className="size-[17px] mr-1" />
                 )}
                 {isSenderGoldVerified && !fromMe && (
-                  <img src="/gold-verified.png" className="size-[17px]" />
+                  <img src="/gold-verified.png" className="size-[17px] mr-1" />
                 )}
 
                 {isSenderAdmin && !fromMe && (
@@ -636,12 +712,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className={`
-                                    text-gray-400 hover:text-gray-200
-                                    size-[30px] rounded-lg flex items-center justify-center
-                                    transition-colors duration-200 ease-in-out
-                                     hover:bg-gray-700
-                                    bg-gray-800
-                                `}
+                                        text-gray-400 hover:text-gray-200
+                                        size-[30px] rounded-lg flex items-center justify-center
+                                        transition-colors duration-200 ease-in-out
+                                        hover:bg-gray-700
+                                        bg-gray-800
+                                    `}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />
@@ -686,12 +762,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className={`
-                                    text-gray-400 hover:text-gray-200
-                                    size-[30px] rounded-lg flex items-center justify-center
-                                    transition-colors duration-200 ease-in-out
-                                    border border-transparent hover:bg-gray-700
-                                    bg-gray-800
-                                `}
+                                        text-gray-400 hover:text-gray-200
+                                        size-[30px] rounded-lg flex items-center justify-center
+                                        transition-colors duration-200 ease-in-out
+                                        border border-transparent hover:bg-gray-700
+                                        bg-gray-800
+                                    `}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />

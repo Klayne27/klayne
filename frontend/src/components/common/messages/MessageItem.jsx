@@ -5,6 +5,8 @@ import { BsCheck2, BsCheck2All, BsThreeDots } from "react-icons/bs"; // Import B
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
+import { HiOutlineReply } from "react-icons/hi";
+
 
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
@@ -353,11 +355,11 @@ const MessageItem = ({
         {/* Main Reaction Picker and Action Modal */}
         <div
           id={`message-modal-${msg._id}`}
-          className={`absolute -top-5 bg-secondary shadow-sm shadow-primary rounded-xl px-2 flex items-center gap-1 z-10
+          className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 z-10
           ${
             isSentByCurrentUser
-              ? "-left-28 translate-x-1/2"
-              : "-right-20 -translate-x-1/2"
+              ? "-left-24 translate-x-1/2"
+              : "-right-24 -translate-x-1/2"
           }
           ${
             showModal
@@ -389,11 +391,11 @@ const MessageItem = ({
             <PiSmileyFill className="size-[26px]" />
           </button>
           <button
-            onClick={handleReplyClick}
-            className="p-1 text-slate-500 hover:text-slate-400 hover:scale-125 transition duration-100"
+            onClick={handleActionClick(handleReplyClick, msg)}
+            className="p-1 text-slate-500 hover:text-slate-400 md:hover:scale-125 transition duration-100"
             title="Reply to message"
           >
-            <FaReply size={18} />
+            <HiOutlineReply size={21} />
           </button>
           {/* New "More" button */}
           <button
@@ -413,7 +415,7 @@ const MessageItem = ({
             onClick={handleCloseMoreActionsModal}
           >
             <div
-              className={`absolute p-2 bg-secondary rounded-xl black-shadow  z-30`}
+              className={`absolute p-2 bg-base-100 rounded-xl gray-shadow  z-30`}
               style={{
                 top: moreActionsModalPosition.top,
                 left: moreActionsModalPosition.left,
@@ -423,10 +425,10 @@ const MessageItem = ({
             >
               <button
                 onClick={handleActionClick(handleReplyClick, msg)}
-                className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] duration-200 transition"
+                className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
               >
                 Reply
-                <FaReply size={16} className="text-slate-400" />
+                <HiOutlineReply size={18} className="text-slate-400" />
               </button>
               {isEditable && (
                 <button
@@ -434,7 +436,7 @@ const MessageItem = ({
                     setEditingMessage(msg);
                     setReplyingToMessage(null);
                   })}
-                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] duration-200 transition"
+                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
                 >
                   Edit Message
                   <MdEdit size={16} className="text-slate-400" />
@@ -518,7 +520,7 @@ const MessageItem = ({
 
             {/* Edited Status */}
             {msg.isEdited && msg.text && (
-              <span className="text-xs italic text-gray-500 self-end mr-5">(Edited)</span>
+              <span className={`text-xs italic text-gray-500 mr-5 ${isSentByCurrentUser ? "self-end" : "self-start"}`}>(Edited)</span>
             )}
             <div className="flex">
               {/* Chat Bubble Container */}
@@ -597,8 +599,8 @@ const MessageItem = ({
                         isSentByCurrentUser ? "text-white" : ""
                       }`}
                       style={{
-                        wordBreak: "break-all",
-                        overflowWrap: "break-word",
+                        wordBreak: "break-word",
+                        // overflowWrap: "break-word",
                       }}
                     >
                       {renderClickableText(msg.text, isSentByCurrentUser)}

@@ -62,12 +62,13 @@ const MessageList = forwardRef(function MessageList(
 
   const handleReplyClick = useCallback(
     (message) => {
+      setEditingMessage(false);
       setReplyingToMessage(message);
       if (messageInputRef.current) {
         messageInputRef.current.focus();
       }
     },
-    [setReplyingToMessage, messageInputRef]
+    [setReplyingToMessage, messageInputRef, setEditingMessage]
   );
 
   const handleImageClick = useCallback(
