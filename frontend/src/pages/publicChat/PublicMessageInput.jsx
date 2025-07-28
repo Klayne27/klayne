@@ -82,6 +82,13 @@ const PublicMessageInput = ({
     };
   }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
 
+  useEffect(() => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Reset height first
+      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    }
+  }, [messageContent]);
+
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
@@ -90,10 +97,6 @@ const PublicMessageInput = ({
       textareaRef.current?.focus();
       // setSelectedFile(null);
       // setPreviewImage(null);
-      if (textareaRef.current) {
-        textareaRef.current.style.height = "auto"; // Reset height first
-        textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-      }
     } else {
       setMessageContent("");
     }
@@ -269,6 +272,11 @@ const PublicMessageInput = ({
       }
     }
     clearInputState();
+
+    if (textareaRef.current) {
+      textareaRef.current.style.height = "auto"; // Crucial
+      textareaRef.current.rows = 1;
+    }
   };
 
   const handleImageChange = (e) => {

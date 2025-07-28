@@ -158,6 +158,7 @@ const MessageItem = ({
     // You might also want to close the modal after setting the message for editing
     handleMessageTap(null); // Passing null will close any active modal
     setReplyingToMessage(null);
+    
   };
 
   // Helper for formatting time (e.g., "10:30 AM")

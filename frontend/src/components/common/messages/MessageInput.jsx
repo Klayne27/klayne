@@ -152,19 +152,20 @@ function MessageInput({
   };
 
   useEffect(() => {
+    if (messageInputRef.current) {
+      messageInputRef.current.style.height = "auto"; // Reset height first
+      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+    }
+    // eslint-disable-next-line
+  }, [messageInput]);
+
+  useEffect(() => {
     if (editingMessage) {
       setMessageInput(editingMessage.text);
       messageInputRef.current?.focus();
-
-      // NEW: Immediately adjust textarea height to fit content
-      if (messageInputRef.current) {
-        messageInputRef.current.style.height = "auto"; // Reset height first
-        messageInputRef.current.style.height =
-          messageInputRef.current.scrollHeight + "px";
-      }
     } else {
       // Clear input when exiting edit mode
-        setMessageInput("");
+      setMessageInput("");
     }
     // eslint-disable-next-line
   }, [editingMessage]);
@@ -303,6 +304,11 @@ function MessageInput({
       } else {
         // Handle sending new message
         handleSendMessage(e); // Your original send logic
+        setMessageInput("");
+        if (messageInputRef.current) {
+          messageInputRef.current.style.height = "auto"; // Crucial
+          messageInputRef.current.rows = 1;
+        }
       }
     },
     [
