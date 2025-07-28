@@ -5,6 +5,7 @@ import RightPanel from "./components/common/RightPanel";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
+import ProfileImageModal from "./components/common/ProfileImageModal";
 // import CreatePostModal from "./components/common/CreatePostModal";
 
 const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"))
@@ -25,6 +26,7 @@ function App() {
 
   const location = useLocation();
   const [selectedImage, setSelectedImage] = useState(null);
+  const [selectedProfileImg, setSelectedProfileImg] = useState(null)
   const [feedType, setFeedType] = useState("posts");
   const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
   const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
@@ -34,7 +36,9 @@ function App() {
     useState(false);
 
   const openImageModal = (imageUrl) => setSelectedImage(imageUrl);
+  const openProfileImgModal = (imageUrl) => setSelectedProfileImg(imageUrl)
   const closeImageModal = () => setSelectedImage(null);
+  const closeProfileImageModal = () => setSelectedProfileImg(null);
 
   if (isLoading) {
     return (
@@ -116,6 +120,7 @@ function App() {
                 authUser ? (
                   <ProfilePage
                     openImageModal={openImageModal}
+                    openProfileImgModal={openProfileImgModal}
                     feedType={feedType}
                     setFeedType={setFeedType}
                   />
@@ -227,6 +232,7 @@ function App() {
         position="bottom-center" // Change position to top-center
       />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
+      <ProfileImageModal src={selectedProfileImg} onClose={closeProfileImageModal} />
       {showCreatePostModal && (
         <CreatePostModal onClose={() => setShowCreatePostModal(false)} />
       )}

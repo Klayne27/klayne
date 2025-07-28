@@ -11,7 +11,6 @@ import { HiOutlineReply } from "react-icons/hi";
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 import EmojiPickerPopover from "../EmojiPickerPopover";
-import { IoCopyOutline } from "react-icons/io5";
 import { IoCopy } from "react-icons/io5";
 
 
@@ -401,26 +400,26 @@ const MessageItem = ({
           <button
             ref={moreEmojisButtonRef}
             onClick={handleOpenEmojiPickerPopover}
-            className="text-slate-500 hover:text-slate-400 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
+            className="text-slate-500 group hover:text-slate-400 duration-100 hover:bg-secondary rounded-md transtion border-slate-500 mt-[1px]"
             title="More Emojis"
           >
-            <PiSmileyFill className="size-[26px]" />
+            <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
           </button>
           <button
             onClick={handleActionClick(handleReplyClick, msg)}
-            className="p-1 text-slate-500 hover:text-slate-400 md:hover:scale-125 transition duration-100"
+            className="p-1 text-slate-500 group hover:text-slate-400 rounded-md hover:bg-secondary transition duration-100"
             title="Reply to message"
           >
-            <HiOutlineReply size={21} />
+            <HiOutlineReply size={18} className="group-hover:scale-110" />
           </button>
           {/* New "More" button */}
           <button
             ref={moreButtonRef}
             onClick={handleOpenMoreActionsModal}
-            className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1"
+            className="text-slate-500 hover:text-slate-400 group hover:bg-secondary rounded-md transition duration-100 p-1"
             title="More actions"
           >
-            <BsThreeDots size={18} />
+            <BsThreeDots size={18} className="group-hover:scale-110" />
           </button>
         </div>
 

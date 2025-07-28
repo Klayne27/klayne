@@ -439,26 +439,26 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           <button
             ref={moreEmojisButtonRef}
             onClick={(e) => handleOpenEmojiPickerPopover(e, moreEmojisButtonRef)}
-            className="text-slate-500 hover:text-slate-400 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
+            className=" text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg duration-100 transtion"
             title="More Emojis"
           >
-            <PiSmileyFill className="size-[26px]" />
+            <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
           </button>
           <button
             onClick={handleActionClick(onReply, message)}
-            className="p-1 text-slate-500 hover:text-slate-400 hover:scale-125 transition duration-100"
+            className="p-1 text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg transition duration-100"
             title="Reply to message"
           >
-            <HiOutlineReply size={21} />
+            <HiOutlineReply size={18} className="group-hover:scale-110" />
           </button>
           {/* New "More Actions" button */}
           <button
             ref={moreActionsButtonRef}
             onClick={handleOpenMoreActionsModal}
-            className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1"
+            className="text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg p-1 transition duration-100"
             title="More actions"
           >
-            <BsThreeDots size={18} />
+            <BsThreeDots size={18} className="group-hover:scale-110" />
           </button>
         </div>
 

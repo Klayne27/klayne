@@ -28,7 +28,7 @@ import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useF
 import { useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";
 
-const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
+const ProfilePage = ({ openImageModal, feedType, setFeedType, openProfileImgModal }) => {
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [modalType, setModalType] = useState(null);
@@ -241,16 +241,27 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
     }
   };
 
-  const handleImageClick = (imageUrl, event) => {
+  const handleProfileImageClick = (imageUrl, event) => {
     event.stopPropagation();
-    if (openImageModal) {
-      openImageModal(imageUrl);
+    if (openProfileImgModal) {
+      openProfileImgModal(imageUrl)
     } else {
       console.warn(
         "openImageModal prop is undefined in ProfilePage component. Image modal will not open."
       );
     }
   };
+
+    const handleImageClick = (imageUrl, event) => {
+      event.stopPropagation();
+      if (openImageModal) {
+        openImageModal(imageUrl);
+      } else {
+        console.warn(
+          "openImageModal prop is undefined in ProfilePage component. Image modal will not open."
+        );
+      }
+    };
 
   const openFollowListModal = (type) => {
     setModalType(type);
@@ -364,7 +375,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType }) => {
                     }
                     alt="user avatar"
                     className="cursor-pointer"
-                    onClick={(e) => handleImageClick(userProfile?.profileImg, e)}
+                    onClick={(e) => handleProfileImageClick(userProfile?.profileImg, e)}
                     loading="lazy"
                   />
                   {isMyProfile && (
