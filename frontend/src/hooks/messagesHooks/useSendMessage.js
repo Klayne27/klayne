@@ -1,7 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
-import toast from "react-hot-toast";
 import { showAppToast } from "../../utils/showAppToast";
 
 export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
@@ -25,7 +24,7 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
         createdAt: new Date().toISOString(),
         img: newMessageData.img || null,
         seen: false,
-        isOptimistic: true,
+        isOptimistic: false,
         repliedTo: replyingToMessage
           ? {
               _id: replyingToMessage._id,
