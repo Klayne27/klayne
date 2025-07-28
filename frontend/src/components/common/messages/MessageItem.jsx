@@ -30,7 +30,7 @@ const MessageItem = ({
   setReplyingToMessage,
   showHeaderInfo,
   senderProfileImg,
-  senderUsername, // Keep this prop for consistency, but it won't be displayed for other users
+  senderUsername,
   isFirstInGroup,
   isLastInGroup,
   handleLoadImage,
@@ -46,6 +46,8 @@ const MessageItem = ({
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   // Ref for the "More Emojis" button, which will be the popover's anchor
   const moreEmojisButtonRef = useRef(null);
+  // NEW: Ref for the "Add Reaction" button beside grouped reactions
+  const addReactionButtonRef = useRef(null);
 
   // Callback to open the popover and calculate its position
   const handleOpenEmojiPickerPopover = useCallback(
@@ -59,11 +61,11 @@ const MessageItem = ({
 
       const buttonRect = e.currentTarget.getBoundingClientRect();
 
-      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350; 
-      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400; 
+      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350;
+      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400;
 
       let newTop = buttonRect.top - estimatedPickerHeight - 10;
-      let newLeft = buttonRect.left + buttonRect.width / 2; 
+      let newLeft = buttonRect.left + buttonRect.width / 2;
 
       const padding = 10;
 
@@ -106,6 +108,13 @@ const MessageItem = ({
     },
     [handleReactionClick, msg._id, handleCloseEmojiPickerPopover, onReactionAdded]
   );
+
+  const hasCurrentUserReactedToMessage = msg.reactions?.some(
+    (reaction) =>
+      (reaction.user?._id?.toString() || reaction.user?.toString()) ===
+      currentUser._id.toString()
+  );
+
 
   // --- NEW: Typing Indicator MessageItem ---
   if (isTypingOtherUser) {
@@ -151,13 +160,15 @@ const MessageItem = ({
     return acc;
   }, {});
 
+    const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0;
+
+
   const handleEditClick = (e) => {
     e.stopPropagation(); // Prevent the message tap/hover logic
     setEditingMessage(msg); // Set the current message as the one to be edited
     // You might also want to close the modal after setting the message for editing
     handleMessageTap(null); // Passing null will close any active modal
     setReplyingToMessage(null);
-    
   };
 
   // Helper for formatting time (e.g., "10:30 AM")
@@ -236,7 +247,7 @@ const MessageItem = ({
           ${
             isSentByCurrentUser
               ? "-left-28 translate-x-1/2"
-              : "-right-24 -translate-x-1/2"
+              : "-right-20 -translate-x-1/2"
           }
           ${
             showModal
@@ -433,16 +444,36 @@ const MessageItem = ({
           </span>
         )}
       </div>
-      {Object.keys(groupedReactions || {}).length > 0 && (
+      {/* Grouped Reactions and NEW Add Reaction Button */}
+      {/* Grouped Reactions and NEW Add Reaction Button */}
+      {hasAnyReactions && ( // Only show this entire block if there's at least one reaction
         <div
-          className={`flex gap-1 flex-wrap -bottom-3 items-center pt-0.5 ml-10 mr-5 rounded-full text-xs font-semibold
-                                ${
-                                  isSentByCurrentUser
-                                    ? "justify-self-end"
-                                    : "justify-self-start"
-                                }
-                                `}
+          className={`flex gap-1 flex-wrap items-center pt-0.5 rounded-full text-xs font-semibold
+                      ${
+                        isSentByCurrentUser
+                          ? "justify-end mr-5" // Align to the right
+                          : "justify-start ml-10" // Align to the left
+                      }
+                      relative`}
         >
+          {/* Render "Add Reaction" button BEFORE reactions if sent by current user */}
+          {hasAnyReactions && isSentByCurrentUser && (
+            <button
+              ref={addReactionButtonRef}
+              onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+              className={`
+                text-gray-400 hover:text-gray-200
+                size-[30px] rounded-lg flex items-center justify-center
+                transition-colors duration-200 ease-in-out
+                 hover:bg-gray-700
+                bg-gray-800
+              `}
+              title="Add reaction"
+            >
+              <PiSmileyFill className="size-5" />
+            </button>
+          )}
+
           {Object.entries(groupedReactions).map(([emoji, data]) => {
             const hasCurrentUserReactedToThisEmoji = data.userIds.some(
               (userId) => userId === currentUser._id?.toString()
@@ -457,7 +488,11 @@ const MessageItem = ({
                     : "bg-gray-800 border border-gray-800"
                 }`}
                 title={
-                  data.users.length > 0 ? `Reacted by: ${data.users.join(", ")}` : ""
+                  data.userIds.length > 0
+                    ? `Reacted by: ${data.userIds
+                        .map((id) => `User ID: ${id}`)
+                        .join(", ")}`
+                    : ""
                 }
                 onClick={(e) => {
                   e.stopPropagation();
@@ -469,6 +504,24 @@ const MessageItem = ({
               </div>
             );
           })}
+
+          {/* Render "Add Reaction" button AFTER reactions if sent by other user */}
+          {hasAnyReactions && !isSentByCurrentUser && (
+            <button
+              ref={addReactionButtonRef}
+              onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+              className={`
+                text-gray-400 hover:text-gray-200
+                size-[30px] rounded-lg flex items-center justify-center
+                transition-colors duration-200 ease-in-out
+                border border-transparent hover:bg-gray-700
+                bg-gray-800
+              `}
+              title="Add reaction"
+            >
+              <PiSmileyFill className="size-5" />
+            </button>
+          )}
         </div>
       )}
 
@@ -477,7 +530,11 @@ const MessageItem = ({
           position={popoverPosition}
           onClose={handleCloseEmojiPickerPopover}
           onEmojiClick={handleEmojiSelect} // Pass the handler for emoji selection
-          triggerRef={moreEmojisButtonRef} // Pass the button ref for click outside logic
+          triggerRef={
+            addReactionButtonRef.current && showEmojiPickerPopover
+              ? addReactionButtonRef
+              : moreEmojisButtonRef
+          }
         />
       )}
     </div>

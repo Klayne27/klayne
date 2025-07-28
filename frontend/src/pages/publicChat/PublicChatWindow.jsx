@@ -31,6 +31,10 @@ const PublicChatWindow = ({ openImageModal }) => {
   const { authUser: currentUser, refetchAuthUser } = useAuthUser();
   const { socket, setActiveConversationId } = useSocket();
 
+  const lastMessageDateRef = useRef(null); // Ref to store the date of the last rendered message
+
+
+
   const {
     messages,
     fetchNextPage,
@@ -70,6 +74,11 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
+
+  useEffect(() => {
+    // Reset the ref when messages change (e.g., loading new chat, switching conversations)
+    lastMessageDateRef.current = null;
+  }, [messages]);
 
   // --- Touch device detection ---
   useEffect(() => {
@@ -428,35 +437,75 @@ const PublicChatWindow = ({ openImageModal }) => {
               </div>
             )}
             <div className="mx-auto w-full max-w-3xl md:max-w-[968px] mt-16">
-              {processedMessages.map((message) => (
-                <div key={message._id}>
-                  <PublicChatMessage
-                    message={message}
-                    authUser={currentUser}
-                    openImageModal={openImageModal}
-                    onDelete={handleDeleteMessage}
-                    onBan={handleBanUser}
-                    onUnban={handleUnbanUser}
-                    isCurrentlyTouchDevice={isCurrentlyTouchDevice}
-                    activeMessageModalId={activeMessageModalId}
-                    handleMouseEnter={handleMouseEnter}
-                    handleMouseLeave={handleMouseLeave}
-                    handleMessageTap={handleMessageTap}
-                    handleReactionClick={handleReactionClick}
-                    onReply={handleReply}
-                    onEdit={handleEdit}
-                    onJumpToMessage={handleJumpToMessage}
-                    setEditingMessage={setEditingMessage}
-                    setReplyingToMessage={setReplyingToMessage}
-                    // Pass grouping props
-                    handleLoadImage={handleLoadImage}
-                    isFirstInGroup={message.isFirstInGroup}
-                    isLastInGroup={message.isLastInGroup}
-                    bubbleClasses={message.bubbleClasses}
-                    onReactionAdded={handleReactionAdded}
-                  />
-                </div>
-              ))}
+              {processedMessages.map((message, index) => {
+                const messageDate = new Date(message.createdAt);
+                let isNewDay = false;
+
+                // Check if it's a new day compared to the last message
+                if (lastMessageDateRef.current) {
+                  const lastDate = new Date(lastMessageDateRef.current);
+                  isNewDay =
+                    messageDate.getDate() !== lastDate.getDate() ||
+                    messageDate.getMonth() !== lastDate.getMonth() ||
+                    messageDate.getFullYear() !== lastDate.getFullYear();
+                } else {
+                  // If it's the very first message, always treat it as a new day for the separator
+                  isNewDay = true;
+                }
+
+                // Update the ref for the next message
+                lastMessageDateRef.current = message.createdAt;
+
+                // Determine if this message is the first in a group based on sender and time
+                const prevMessage = messages[index - 1];
+                const isFirstInGroup =
+                  !prevMessage ||
+                  message.sender._id !== prevMessage.sender._id ||
+                  isNewDay || // A new day also means a new group
+                  new Date(message.createdAt).getTime() -
+                    new Date(prevMessage.createdAt).getTime() >
+                    5 * 60 * 1000; // 5 minutes difference
+
+                // Determine if this message is the last in a group
+                const nextMessage = messages[index + 1];
+                const isLastInGroup =
+                  !nextMessage ||
+                  message.sender._id !== nextMessage.sender._id ||
+                  new Date(nextMessage.createdAt).getTime() -
+                    new Date(message.createdAt).getTime() >
+                    5 * 60 * 1000; // 5 minutes difference
+
+                return (
+                  <div key={message._id}>
+                    <PublicChatMessage
+                      message={message}
+                      authUser={currentUser}
+                      openImageModal={openImageModal}
+                      onDelete={handleDeleteMessage}
+                      onBan={handleBanUser}
+                      onUnban={handleUnbanUser}
+                      isCurrentlyTouchDevice={isCurrentlyTouchDevice}
+                      activeMessageModalId={activeMessageModalId}
+                      handleMouseEnter={handleMouseEnter}
+                      handleMouseLeave={handleMouseLeave}
+                      handleMessageTap={handleMessageTap}
+                      handleReactionClick={handleReactionClick}
+                      onReply={handleReply}
+                      onEdit={handleEdit}
+                      onJumpToMessage={handleJumpToMessage}
+                      setEditingMessage={setEditingMessage}
+                      setReplyingToMessage={setReplyingToMessage}
+                      // Pass grouping props
+                      handleLoadImage={handleLoadImage}
+                      isFirstInGroup={message.isFirstInGroup}
+                      isLastInGroup={message.isLastInGroup}
+                      bubbleClasses={message.bubbleClasses}
+                      onReactionAdded={handleReactionAdded}
+                      isNewDay={isNewDay}
+                    />
+                  </div>
+                );
+              })}
             </div>
             {showNewMessageButton && (
               <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
