@@ -312,7 +312,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             onClick={(e) => {
               e.stopPropagation();
               handleReactionClick(message._id, emoji);
-              onReactionAdded()
+              onReactionAdded();
             }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
             title={`React with ${emoji}`}
@@ -443,7 +443,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               <div className="flex items-center text-sm ">
                 <Link
                   to={`/profile/${message.sender.username}`}
-                  className={`font-semibold ${linkColor} mr-1`}
+                  className={`font-semibold mr-1 ${
+                    isSenderVerified
+                      ? "text-[#1D9BF0]"
+                      : isSenderGoldVerified
+                      ? "text-[#E3B812]"
+                      : ""
+                  }`}
                 >
                   {message.sender.username}
                 </Link>
