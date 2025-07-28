@@ -596,6 +596,10 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                     (userId) => userId === authUser._id?.toString()
                   );
 
+                  const reactionUsersTitle = data.users
+                    .map((user) => user.username || "Unknown")
+                    .join(", ");
+
                   return (
                     <div
                       key={emoji}
@@ -605,11 +609,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                           : "bg-gray-800 border border-gray-800"
                       }`}
                       title={
-                        data.userIds.length > 0
-                          ? `Reacted by: ${data.userIds
-                              .map((id) => `User ID: ${id}`)
-                              .join(", ")}`
-                          : ""
+                        reactionUsersTitle ? `Reacted by: ${reactionUsersTitle}` : ""
                       }
                       onClick={(e) => {
                         e.stopPropagation();

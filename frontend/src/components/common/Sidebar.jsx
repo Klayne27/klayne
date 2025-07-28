@@ -225,7 +225,7 @@ const Sidebar = ({
       behavior: "smooth",
     });
 
-    queryClient.invalidateQueries({ queryKey: ["posts"] });
+    // queryClient.invalidateQueries({ queryKey: ["posts"] });
     if (hasNewFeedPosts) {
       setHasNewFeedPosts(false);
       setShowNewFeedPostsButton(false)

@@ -45,6 +45,7 @@ const MessageList = forwardRef(function MessageList(
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
 
   const mouseLeaveTimeoutRef = useRef(null);
+  const lastMessageDateRef = useRef(null)
   const MOUSE_LEAVE_DELAY = 100;
 
   useEffect(() => {
@@ -277,34 +278,74 @@ const MessageList = forwardRef(function MessageList(
         )}
       {!isNewChat &&
         enhancedMessagesToRender.length > 0 &&
-        enhancedMessagesToRender.map((msg) => (
-          <MessageItem
-            handleLoadImage={handleLoadImage}
-            key={msg._id}
-            msg={msg}
-            isCurrentlyTouchDevice={isCurrentlyTouchDevice}
-            activeMessageModalId={activeMessageModalId}
-            handleMouseEnter={handleMouseEnter}
-            handleMouseLeave={handleMouseLeave}
-            handleMessageTap={handleMessageTap}
-            handleDeleteClick={handleDeleteClick}
-            handleReplyClick={handleReplyClick}
-            handleImageClick={handleImageClick}
-            handleJumpToOriginalMessage={handleJumpToOriginalMessage}
-            handleReactionClick={handleReactionClick}
-            isDeletingMessage={isDeletingMessage}
-            currentUser={currentUser}
-            setEditingMessage={setEditingMessage}
-            onReactionAdded={onReactionAdded}
-            setReplyingToMessage={setReplyingToMessage}
-            showHeaderInfo={msg.showHeaderInfo}
-            senderProfileImg={msg.senderProfileImg}
-            senderUsername={msg.senderUsername}
-            isFirstInGroup={msg.isFirstInGroup} // Pass new prop
-            isLastInGroup={msg.isLastInGroup} // Pass new prop
-            // onOpenFullEmojiPicker={handleOpenFullEmojiPicker}
-          />
-        ))}
+        enhancedMessagesToRender.map((msg, index) => {
+          const messageDate = new Date(msg.createdAt);
+          let isNewDay = false;
+
+          // Check if it's a new day compared to the last message
+          if (lastMessageDateRef.current) {
+            const lastDate = new Date(lastMessageDateRef.current);
+            isNewDay =
+              messageDate.getDate() !== lastDate.getDate() ||
+              messageDate.getMonth() !== lastDate.getMonth() ||
+              messageDate.getFullYear() !== lastDate.getFullYear();
+          } else {
+            // If it's the very first message, always treat it as a new day for the separator
+            isNewDay = true;
+          }
+
+          // Update the ref for the next message
+          lastMessageDateRef.current = msg.createdAt;
+
+          // Determine if this message is the first in a group based on sender and time
+          const prevMessage = enhancedMessagesToRender[index - 1];
+          const isFirstInGroup =
+            !prevMessage ||
+            msg.sender._id !== prevMessage.sender._id ||
+            isNewDay || // A new day also means a new group
+            new Date(msg.createdAt).getTime() -
+              new Date(prevMessage.createdAt).getTime() >
+              5 * 60 * 1000; // 5 minutes difference
+
+          // Determine if this msg is the last in a group
+          const nextMessage = enhancedMessagesToRender[index + 1];
+          const isLastInGroup =
+            !nextMessage ||
+            msg.sender._id !== nextMessage.sender._id ||
+            new Date(nextMessage.createdAt).getTime() -
+              new Date(msg.createdAt).getTime() >
+              5 * 60 * 1000; // 5 minutes difference
+
+          return (
+            <MessageItem
+              handleLoadImage={handleLoadImage}
+              key={msg._id}
+              msg={msg}
+              isCurrentlyTouchDevice={isCurrentlyTouchDevice}
+              activeMessageModalId={activeMessageModalId}
+              handleMouseEnter={handleMouseEnter}
+              handleMouseLeave={handleMouseLeave}
+              handleMessageTap={handleMessageTap}
+              handleDeleteClick={handleDeleteClick}
+              handleReplyClick={handleReplyClick}
+              handleImageClick={handleImageClick}
+              handleJumpToOriginalMessage={handleJumpToOriginalMessage}
+              handleReactionClick={handleReactionClick}
+              isDeletingMessage={isDeletingMessage}
+              currentUser={currentUser}
+              setEditingMessage={setEditingMessage}
+              onReactionAdded={onReactionAdded}
+              setReplyingToMessage={setReplyingToMessage}
+              showHeaderInfo={msg.showHeaderInfo}
+              senderProfileImg={msg.senderProfileImg}
+              senderUsername={msg.senderUsername}
+              isFirstInGroup={msg.isFirstInGroup} // Pass new prop
+              isLastInGroup={msg.isLastInGroup} // Pass new prop
+              isNewDay={isNewDay}
+              // onOpenFullEmojiPicker={handleOpenFullEmojiPicker}
+            />
+          );
+        })}
 
       {isTypingOtherUser && (
         <MessageItem
