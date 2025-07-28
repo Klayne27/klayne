@@ -101,7 +101,7 @@ const PublicChatWindow = ({ openImageModal }) => {
     const listEl = messageListRef.current;
     if (!listEl) return;
 
-    const scrollThreshold = 100;
+    const scrollThreshold = 500;
     const isUserAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 

@@ -143,7 +143,7 @@ const ChatWindow = ({
    const listEl = messageListRef.current;
    if (!listEl) return;
 
-   const scrollThreshold = 100;
+   const scrollThreshold = 500;
    const isUserAtBottom =
      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
@@ -299,13 +299,15 @@ const ChatWindow = ({
       socket.emit("markMessagesAsSeen", { conversationId: conversationId });
     }
 
+    queryClient.invalidateQueries({queryKey: ["conversations"]})
+
     return () => {
       setActiveConversationId(null);
       if (socket) {
         socket.emit("userActiveInChat", { conversationId: null });
       }
     };
-  }, [socket, conversationId, currentUser?._id, setActiveConversationId]);
+  }, [socket, conversationId, currentUser?._id, setActiveConversationId, queryClient]);
 
   // --- Socket event listeners and handling new messages from others ---
   useEffect(() => {
@@ -441,19 +443,19 @@ const ChatWindow = ({
       };
 
       const handleConversationUpdate = (updatedConversation) => {
-        // queryClient.setQueryData(["conversations"], (oldConversations) => {
-        //   if (!oldConversations) return [updatedConversation]; // Handle initial empty state
-        //   const index = oldConversations.findIndex(
-        //     (conv) => conv._id === updatedConversation._id
-        //   );
-        //   if (index !== -1) {
-        //     const newConversations = [...oldConversations];
-        //     newConversations[index] = updatedConversation;
-        //     return newConversations;
-        //   } else {
-        //     return [updatedConversation, ...oldConversations]; // Add to the top
-        //   }
-        // });
+        queryClient.setQueryData(["conversations"], (oldConversations) => {
+          if (!oldConversations) return [updatedConversation]; // Handle initial empty state
+          const index = oldConversations.findIndex(
+            (conv) => conv._id === updatedConversation._id
+          );
+          if (index !== -1) {
+            const newConversations = [...oldConversations];
+            newConversations[index] = updatedConversation;
+            return newConversations;
+          } else {
+            return [updatedConversation, ...oldConversations]; // Add to the top
+          }
+        });
       };
 
       const handleStopTyping = ({ conversationId, userId, isEditing }) => {
