@@ -276,7 +276,7 @@ export const createAndSendNotification = async ({
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
-  console.log(`Socket connected: ${socket.id}`);
+  // console.log(`Socket connected: ${socket.id}`);
   const userId = socket.handshake.query.userId;
 
   if (
@@ -333,7 +333,7 @@ io.on("connection", async (socket) => {
     if (!socket.userId) return; // Ensure userId is set
 
     activePublicChatUsers.add(socket.userId);
-    console.log(`User ${socket.userId} entered public chat.`);
+    // console.log(`User ${socket.userId} entered public chat.`);
 
     // Immediately mark public chat as read for this user
     try {
@@ -367,7 +367,7 @@ io.on("connection", async (socket) => {
   socket.on("userLeftPublicChat", () => {
     if (!socket.userId) return; // Ensure userId is set
     activePublicChatUsers.delete(socket.userId);
-    console.log(`User ${socket.userId} left public chat.`);
+    // console.log(`User ${socket.userId} left public chat.`);
   });
 
   socket.on("joinConversation", (conversationId) => {

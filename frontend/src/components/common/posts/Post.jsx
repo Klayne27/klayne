@@ -221,7 +221,6 @@ const Post = ({
     event.stopPropagation();
     if (openImageModal && mediaType === "image") {
       openImageModal(mediaUrl);
-      console.log(mediaUrl);
     }
   };
 

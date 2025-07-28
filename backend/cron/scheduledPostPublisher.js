@@ -17,7 +17,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       return;
     }
 
-    console.log(`Publishing ${postsToPublish.length} scheduled posts...`);
+    // console.log(`Publishing ${postsToPublish.length} scheduled posts...`);
 
     for (const post of postsToPublish) {
       // Mark as not scheduled
@@ -43,9 +43,9 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       }
 
       await post.save();
-      console.log(
-        `Successfully published and saved post ${post._id}. New publishedAt: ${post.publishedAt}, isScheduled: ${post.isScheduled}`
-      );
+      // console.log(
+      //   `Successfully published and saved post ${post._id}. New publishedAt: ${post.publishedAt}, isScheduled: ${post.isScheduled}`
+      // );
 
 
       // Emit new post event to online users (excluding the post creator for their own feed)
@@ -59,7 +59,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
           }
         }
       }
-      console.log(`Published scheduled post: ${post._id}`);
+      // console.log(`Published scheduled post: ${post._id}`);
     }
   } catch (error) {
     console.error("Error publishing scheduled posts:", error);

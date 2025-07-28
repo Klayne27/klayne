@@ -169,8 +169,6 @@ const MessageItem = ({
     });
   };
 
-  // console.log(msg);
-
   // Helper for formatting date (e.g., "July 19, 2025")
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString([], {
