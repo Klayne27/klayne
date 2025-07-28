@@ -57,17 +57,17 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
     },
     onSuccess: (newMessage, variables, context) => {
       // Replace the optimistic message with the real one from the server
-      // queryClient.setQueryData(context.queryKey, (oldData) => {
-      //   if (!oldData) return oldData;
-      //   return {
-      //     ...oldData,
-      //     pages: oldData.pages.map((page) =>
-      //       page.map((msg) => (msg._id === context.optimisticId ? newMessage : msg))
-      //     ),
-      //   };
-      // });
-      // // Invalidate the main conversations list to update the `lastMessage` in the sidebar.
-      // queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.setQueryData(context.queryKey, (oldData) => {
+        if (!oldData) return oldData;
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) =>
+            page.map((msg) => (msg._id === context.optimisticId ? newMessage : msg))
+          ),
+        };
+      });
+      // Invalidate the main conversations list to update the `lastMessage` in the sidebar.
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (err, variables, context) => {
       // Roll back the optimistic update on error

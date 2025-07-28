@@ -41,7 +41,7 @@ function ConversationItem({
   let lastMessageContent = "No messages yet...";
   if (conv.lastMessage?.img) {
     lastMessageContent = (
-      <span className="flex items-center gap-1">
+      <span className="gap-1">
         <MdImage className="inline-block text-lg" /> Image
       </span>
     );
