@@ -254,6 +254,13 @@ const MessageItem = ({
         className={`relative mb-0 p-[1px] rounded-lg ${
           isMessageHighlighted ? "bg-secondary" : ""
         } ${isFirstInGroup ? "mt-2" : ""} `}
+        style={{
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+          touchAction: "manipulation",
+        }}
         onMouseEnter={() => {
           if (!isMobile) {
             // Only apply hover for non-mobile
