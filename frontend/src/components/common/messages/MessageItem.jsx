@@ -540,6 +540,13 @@ const MessageItem = ({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out hover:bg-gray-700 bg-gray-800"
+                    style={{
+                      userSelect: "none",
+                      WebkitUserSelect: "none",
+                      MozUserSelect: "none",
+                      msUserSelect: "none",
+                      touchAction: "manipulation",
+                    }}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />
@@ -554,6 +561,13 @@ const MessageItem = ({
                   return (
                     <div
                       key={emoji}
+                      style={{
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                        MozUserSelect: "none",
+                        msUserSelect: "none",
+                        touchAction: "manipulation",
+                      }}
                       className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 ${
                         hasCurrentUserReactedToThisEmoji
                           ? "bg-violet-600/30 border-violet-600 border"
@@ -575,6 +589,13 @@ const MessageItem = ({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out border border-transparent hover:bg-gray-700 bg-gray-800"
+                    style={{
+                      userSelect: "none",
+                      WebkitUserSelect: "none",
+                      MozUserSelect: "none",
+                      msUserSelect: "none",
+                      touchAction: "manipulation",
+                    }}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />
