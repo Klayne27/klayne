@@ -270,6 +270,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${
           fromMe ? "justify-end" : "justify-start"
         } ${isFirstInGroup ? "mt-4" : ""}`}
+        style={{
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+          touchAction: "manipulation",
+        }}
         onMouseEnter={() => {
           handleMouseEnter(message._id);
           setIsHovered(true);
@@ -306,6 +313,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                           ? "opacity-100 pointer-events-auto"
                           : "opacity-0 pointer-events-none"
                       } `}
+          style={{
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
         >
           {/* Emojis */}
           {allowedEmojis.map((emoji) => (
@@ -401,6 +415,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           className={`relative flex gap-2 items-start ${
             fromMe ? "ml-16 flex-row-reverse" : "mr-16 flex-row"
           } `}
+          style={{
+            userSelect: "none",
+            WebkitUserSelect: "none",
+            MozUserSelect: "none",
+            msUserSelect: "none",
+            touchAction: "manipulation",
+          }}
         >
           {/* Avatar - Only show if it's the first message in a group and not from current user */}
           {!fromMe && isFirstInGroup && (
@@ -459,7 +480,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   </span>
                 )}
                 {isSenderBanned && !fromMe && (
-                  <span >
+                  <span>
                     <FaBan size={15} className="fill-red-500 mr-1" />
                   </span>
                 )}
@@ -573,6 +594,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 className={`flex gap-1 flex-wrap items-center pt-0.5 rounded-full text-xs font-semibold
                                 ${isSentByCurrentUser ? "justify-end" : "justify-start"}
                                 relative`}
+                style={{
+                  userSelect: "none",
+                  WebkitUserSelect: "none",
+                  MozUserSelect: "none",
+                  msUserSelect: "none",
+                  touchAction: "manipulation",
+                }}
               >
                 {/* Render "Add Reaction" button BEFORE reactions if sent by current user */}
                 {isSentByCurrentUser && (
@@ -609,6 +637,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                           ? "bg-violet-600/30 border-violet-600 border"
                           : "bg-gray-800 border border-gray-800"
                       }`}
+                      style={{
+                        userSelect: "none",
+                        WebkitUserSelect: "none",
+                        MozUserSelect: "none",
+                        msUserSelect: "none",
+                        touchAction: "manipulation",
+                      }}
                       title={
                         reactionUsersTitle ? `Reacted by: ${reactionUsersTitle}` : ""
                       }
