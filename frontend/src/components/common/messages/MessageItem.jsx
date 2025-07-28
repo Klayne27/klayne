@@ -439,6 +439,11 @@ const MessageItem = ({
               >
                 <div
                   className={`p-3 flex flex-col w-full overflow-hidden ${bubbleClasses}`}
+                  style={{
+                    userSelect: "none",
+                    WebkitUserSelect: "none",
+                    MozUserSelect: "none",
+                  }}
                 >
                   {/* Reply Block */}
                   {msg.repliedTo && (
