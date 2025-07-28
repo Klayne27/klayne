@@ -236,7 +236,7 @@ export const usePublicMessages = () => {
 
     // --- End New Socket Listeners ---
 
-    socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
+    // socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
     socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted); // For admin deletions
     socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted); // For sender deletions
@@ -248,7 +248,7 @@ export const usePublicMessages = () => {
     });
 
     return () => {
-      socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
+      // socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
       socket.off("newPublicMessage", handleNewPublicMessage);
       socket.off("publicMessageDeleted", handleMessageDeleted);
       socket.off("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
@@ -471,56 +471,47 @@ export const useUnbanUserFromPublicChat = () => {
 // --- New React Query Hooks for Reactions ---
 export const useAddPublicMessageReaction = () => {
   const queryClient = useQueryClient();
-  const { authUser: currentUser } = useAuthUser(); // Get authUser here
+  const { authUser: currentUser } = useAuthUser();
 
   const { mutate: addReaction, isPending: isReacting } = useMutation({
     mutationFn: ({ messageId, emoji }) => addPublicMessageReactionApi(messageId, emoji),
     onMutate: async ({ messageId, emoji }) => {
-      await queryClient.cancelQueries({ queryKey: ["publicMessages"] }); // Use object for cancelQueries
+      // Optimistic update: Show the reaction immediately
+      // No need to cancel queries unless a re-render from fetching would immediately overwrite.
+      // queryClient.cancelQueries({ queryKey: ["publicMessages"] }); // Keep commented or remove
 
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData || !currentUser) {
-          // Use currentUser here
-          console.warn(
-            "Auth user not found for optimistic update, or oldData is missing."
-          );
-          return oldData;
-        }
+        if (!oldData || !currentUser) return oldData;
 
         const newPages = oldData.pages.map((page) =>
           page.map((msg) => {
             if (msg._id === messageId) {
               const newReactions = [...(msg.reactions || [])];
-
-              // --- This logic is already solid for optimistic add/remove ---
-              const existingSpecificEmojiReactionIndex = newReactions.findIndex(
+              const existingIndex = newReactions.findIndex(
                 (r) =>
-                  (r.userId?._id || r.userId)?.toString() ===
-                    currentUser._id.toString() && // Use currentUser._id
+                  (r.userId?._id || r.userId)?.toString() === currentUser._id.toString() &&
                   r.emoji === emoji
               );
 
-              const newReactionEntry = {
+              // Create an optimistic reaction object that mimics the populated structure
+              const optimisticReaction = {
                 emoji,
-                userId: {
-                  // Populate for optimistic UI display
+                // Ensure the user object matches what your backend populates
+                userId: { // Matches PublicChatMessage.reactions.userId
                   _id: currentUser._id,
                   username: currentUser.username,
+                  fullName: currentUser.fullName,
                   profileImg: currentUser.profileImg,
-                  // Add other user details if `populatedMessage` from backend provides them
-                  fullName: currentUser.fullName, // Make sure this is in your authUser
                 },
               };
 
-              if (existingSpecificEmojiReactionIndex !== -1) {
-                newReactions.splice(existingSpecificEmojiReactionIndex, 1);
+              if (existingIndex !== -1) {
+                newReactions.splice(existingIndex, 1);
               } else {
-                newReactions.push(newReactionEntry);
+                newReactions.push(optimisticReaction);
               }
-              // --- END LOGIC ---
-
               return { ...msg, reactions: newReactions };
             }
             return msg;
@@ -529,68 +520,30 @@ export const useAddPublicMessageReaction = () => {
         return { ...oldData, pages: newPages };
       });
 
-      return { previousMessages };
+      return { previousMessages }; // Context for onError
+    },
+    onSuccess: (updatedMessageFromServer) => {
+      // No explicit cache update here, as the Socket.IO event will handle it.
+      // We rely on the `publicMessageReactionUpdated` socket event for the ultimate truth.
+      // However, it's good practice to invalidate here too, as a fallback in case a socket event is missed.
+      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      // If you are relying solely on Socket.IO, this onSuccess can remain empty.
     },
     onError: (err, variables, context) => {
-      // showAppToastt((err.message || "Failed to add reaction.");
+      // showAppToast((err.message || "Failed to add reaction.");
       if (context?.previousMessages) {
         queryClient.setQueryData(["publicMessages"], context.previousMessages);
       }
+      queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Invalidate on error to refetch correct state
     },
-    // `onSettled` is great here because it runs on both success and error.
-    // It's ideal for refetching to ensure eventual consistency.
-    // onSettled: () => {
-    //   // queryClient.invalidateQueries({ queryKey: ["publicMessages"] }); // Use object for invalidateQueries
-    // },
+    onSettled: () => {
+       // This will refetch in the background, ensuring consistency even if a socket event is missed.
+       // It's a safety net.
+      //  queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+    }
   });
 
   return { addReaction, isReacting };
-};
-
-export const useRemovePublicMessageReaction = () => {
-  const queryClient = useQueryClient();
-
-  const { mutate: removeReaction, isPending: isRemovingReaction } = useMutation({
-    mutationFn: (messageId) => removePublicMessageReactionApi(messageId),
-    onMutate: async (messageId) => {
-      // Optimistic update
-      await queryClient.cancelQueries(["publicMessages"]);
-
-      const previousMessages = queryClient.getQueryData(["publicMessages"]);
-
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData) return oldData;
-
-        const newPages = oldData.pages.map((page) =>
-          page.map((msg) => {
-            if (msg._id === messageId) {
-              const newReactions = msg.reactions.filter(
-                (r) =>
-                  r.userId.toString() !==
-                  queryClient.getQueryData(["authUser"])._id.toString()
-              );
-              return { ...msg, reactions: newReactions };
-            }
-            return msg;
-          })
-        );
-        return { ...oldData, pages: newPages };
-      });
-
-      return { previousMessages };
-    },
-    onError: (err, variables, context) => {
-      // showAppToastt((err.message || "Failed to remove reaction.");
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["publicMessages"], context.previousMessages);
-      }
-    },
-    onSettled: () => {
-      // queryClient.invalidateQueries(["publicMessages"]);
-    },
-  });
-
-  return { removeReaction, isRemovingReaction };
 };
 
 export const useDeleteOwnPublicMessage = () => {

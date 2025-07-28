@@ -171,7 +171,6 @@ export const deletePublicMessage = async (req, res) => {
     message.img = null; // Remove image URL
     await message.save();
 
-
     if (imageUrlToDelete) {
       const imgId = imageUrlToDelete.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
@@ -290,65 +289,90 @@ export const addReactionToPublicMessage = async (req, res) => {
     const { emoji } = req.body;
     const userId = req.user._id;
 
-    // const allowedEmojis = ["❤️", "👍", "😂", "😭", "😡"];
-    // if (!allowedEmojis.includes(emoji)) {
-    //   return res.status(400).json({ error: "Invalid emoji." });
-    // }
-
-    if (await isBanned(userId)) {
-      return res
-        .status(403)
-        .json({ error: "You are banned from the public chat and cannot react." });
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: No user authenticated" });
     }
 
+    if (!messageId || !emoji) {
+      return res.status(400).json({ error: "Message ID and emoji are required." });
+    }
+
+    // Check if the user is banned before proceeding
+    if (await isBanned(userId)) {
+      return res.status(403).json({
+        error: "You are banned from the public chat and cannot react.",
+      });
+    }
+
+    // Step 1: Find the message to check its existence and current reaction state
+    // This is necessary for the initial reactionExists check
     const message = await PublicChatMessage.findById(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
     }
 
-    // --- NEW LOGIC START ---
-    // Find if the current user already reacted with THIS SPECIFIC EMOJI
-    const existingSpecificEmojiReactionIndex = message.reactions.findIndex(
+    // This is the core logic replicated from reactToMessage for atomicity
+    const reactionExists = message.reactions.some(
       (reaction) =>
         reaction.userId.toString() === userId.toString() && reaction.emoji === emoji
     );
 
-    let actionTaken = ""; // For logging/debugging
-
-    if (existingSpecificEmojiReactionIndex !== -1) {
-      // User already reacted with this specific emoji -> REMOVE it
-      message.reactions.splice(existingSpecificEmojiReactionIndex, 1);
-      actionTaken = "removed specific emoji";
+    let updatedMessage;
+    if (reactionExists) {
+      // Pull the reaction if it exists (atomic removal)
+      updatedMessage = await PublicChatMessage.findOneAndUpdate(
+        { _id: messageId, "reactions.userId": userId, "reactions.emoji": emoji },
+        { $pull: { reactions: { userId: userId, emoji: emoji } } },
+        { new: true } // Return the updated document
+      );
     } else {
-      // User has NOT reacted with this specific emoji -> ADD it
-      message.reactions.push({ emoji, userId });
-      actionTaken = "added specific emoji";
+      // Push the reaction if it doesn't exist (atomic addition)
+      updatedMessage = await PublicChatMessage.findOneAndUpdate(
+        { _id: messageId },
+        { $push: { reactions: { emoji, userId: userId } } }, // Note: Using $push here as per reactToMessage. If you want strict no-duplicates for a {emoji, userId} pair, consider $addToSet. However, the existing findIndex logic and frontend will handle it.
+        { new: true } // Return the updated document
+      );
     }
-    // --- NEW LOGIC END ---
 
-    await message.save();
+    if (!updatedMessage) {
+      // This might happen if the message was deleted concurrently
+      return res.status(404).json({ error: "Message not found or update failed." });
+    }
 
-    const populatedMessage = await PublicChatMessage.findById(messageId)
+    // Step 2: Fully populate the message after the update for consistent client-side data
+    const populatedMessage = await PublicChatMessage.findById(updatedMessage._id)
       .populate({
         path: "sender",
         select: "username fullName profileImg isAdmin isBannedInPublicChat",
       })
       .populate({
-        path: "reactions.userId",
+        path: "reactions.userId", // Make sure this path matches your schema (reactions.userId vs reactions.user)
         select: "username profileImg fullName",
       })
-      .lean();
+      .lean(); // Use .lean() for performance if you don't need Mongoose document methods
 
+    if (!populatedMessage) {
+      // Should ideally not happen if updatedMessage was found
+      console.error("Failed to populate message after update for Socket.IO emission.");
+      return res
+        .status(500)
+        .json({ error: "Internal server error: Populated message not found." });
+    }
+
+    // Step 3: Emit Socket.IO event
+    // Public chat doesn't have a conversation, so emit to the general public chat room
     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageReactionUpdated", {
-      messageId: populatedMessage._id,
-      reactions: populatedMessage.reactions,
+      actorId: userId, // Include actorId for frontend to potentially ignore its own socket events
+      updatedMessage: populatedMessage, // Send the fully populated message, like in private chats
     });
 
-    res.status(200).json(populatedMessage.reactions);
+    // Step 4: Send the response back to the client
+    // For consistency with reactToMessage, return the whole populated message
+    return res.status(200).json(populatedMessage);
   } catch (error) {
     console.error("Error in addReactionToPublicMessage controller: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
+    res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
 
