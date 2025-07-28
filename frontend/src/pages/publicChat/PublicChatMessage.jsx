@@ -16,6 +16,7 @@ import { truncateText } from "../../utils/truncateText";
 
 import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
 import { HiOutlineReply } from "react-icons/hi";
+import { IoCopy } from "react-icons/io5";
 
 // Helper for formatting date (e.g., "July 28, 2025")
 const formatDisplayDate = (dateString) => {
@@ -188,7 +189,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       if (isEditable) numItems += 1; // Add Edit
       if (canDeleteOwn || canAdminActions) numItems += 1; // Add Delete (own) or Admin actions
 
-      const itemHeight = 38; // px per action item (approximate, including padding)
+      const itemHeight = 45; // px per action item (approximate, including padding)
       const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
 
       const modalWidth = 180; // Approximate width of the modal
@@ -229,6 +230,17 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false);
   }, []);
+
+  const copyMessageToClipboard = useCallback(async () => {
+    if (message.text) {
+      try {
+        await navigator.clipboard.writeText(message.text);
+      } catch (err) {
+        console.error("Failed to copy message: ", err);
+        // Handle error (e.g., show an error message to the user)
+      }
+    }
+  }, [message.text]);
 
   const handleActionClick =
     (actionFn, ...args) =>
@@ -343,12 +355,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     }
   };
 
-    const handleReplyingToClick = (e) => {
-      e.stopPropagation();
-      if (message.replyTo && message.replyTo._id) {
-        onJumpToMessage(message.replyTo._id);
-      }
-    };
+  const handleReplyingToClick = (e) => {
+    e.stopPropagation();
+    if (message.replyTo && message.replyTo._id) {
+      onJumpToMessage(message.replyTo._id);
+    }
+  };
 
   return (
     <>
@@ -464,18 +476,27 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             >
               <button
                 onClick={handleActionClick(onReply, message)}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] transition duration-200"
+                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-secondary transition duration-200"
               >
                 Reply
                 <HiOutlineReply size={18} className="text-slate-400" />
               </button>
+              {message.content && (
+                <button
+                  onClick={handleActionClick(copyMessageToClipboard)}
+                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
+                >
+                  Copy Text
+                  <IoCopy size={18} className="text-slate-400" />
+                </button>
+              )}
               {fromMe && !isMessageDeleted && (
                 <button
                   onClick={handleActionClick(() => {
                     onEdit(message);
                     setReplyingToMessage(null);
                   })}
-                  className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-[#3b3d40] transition duration-200"
+                  className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-slate-300 hover:bg-secondary transition duration-200"
                 >
                   Edit Message
                   <MdEdit size={16} className="text-slate-400" />

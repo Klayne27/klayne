@@ -11,6 +11,9 @@ import { HiOutlineReply } from "react-icons/hi";
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 import EmojiPickerPopover from "../EmojiPickerPopover";
+import { IoCopyOutline } from "react-icons/io5";
+import { IoCopy } from "react-icons/io5";
+
 
 const MessageItem = ({
   msg,
@@ -169,7 +172,7 @@ const MessageItem = ({
       // and each button in the "More Actions" modal is roughly 30px (py-1.5 + some padding/border).
       // Reply (30) + Edit (30) + Delete (30) = 90px + py-1 (total for modal)
       // A safer estimate for modalHeight can be derived from the number of items:
-      const itemHeight = 35; // px per action item (approximate, including padding)
+      const itemHeight = 38; // px per action item (approximate, including padding)
       const numItems = isEditable ? 3 : 2; // Reply, Edit, Delete (3) or Reply, Delete (2)
       const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
 
@@ -179,7 +182,7 @@ const MessageItem = ({
       let newLeft = buttonRect.left - modalWidth;
 
       // Add a small offset (e.g., 5-10px) to the left for better visual spacing.
-      const offsetLeft = 10;
+      const offsetLeft = 5;
       newLeft = buttonRect.left - modalWidth - offsetLeft;
 
       // Ensure the modal doesn't go off the left edge of the screen
@@ -210,6 +213,18 @@ const MessageItem = ({
     },
     [showMoreActionsModal, isEditable]
   );
+
+  const copyMessageToClipboard = useCallback(async () => {
+    if (msg.text) {
+      try {
+        await navigator.clipboard.writeText(msg.text);
+        // Optionally, add a visual feedback like a toast notification
+      } catch (err) {
+        console.error("Failed to copy message: ", err);
+        // Handle error (e.g., show an error message to the user)
+      }
+    }
+  }, [msg.text]);
   // Helper for formatting time (e.g., "10:30 AM")
   const formatTime = (dateString) => {
     return new Date(dateString).toLocaleTimeString([], {
@@ -282,6 +297,7 @@ const MessageItem = ({
       clearTimeout(pressTimer.current);
     }
   };
+  
 
   // NEW: Typing Indicator MessageItem
   if (isTypingOtherUser) {
@@ -430,6 +446,15 @@ const MessageItem = ({
                 Reply
                 <HiOutlineReply size={18} className="text-slate-400" />
               </button>
+              {msg.text && (
+                <button
+                  onClick={handleActionClick(copyMessageToClipboard)}
+                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
+                >
+                  Copy Text
+                  <IoCopy size={18} className="text-slate-400" />
+                </button>
+              )}
               {isEditable && (
                 <button
                   onClick={handleActionClick(() => {
@@ -520,7 +545,13 @@ const MessageItem = ({
 
             {/* Edited Status */}
             {msg.isEdited && msg.text && (
-              <span className={`text-xs italic text-gray-500 mr-5 ${isSentByCurrentUser ? "self-end" : "self-start"}`}>(Edited)</span>
+              <span
+                className={`text-xs italic text-gray-500 mr-5 ${
+                  isSentByCurrentUser ? "self-end" : "self-start"
+                }`}
+              >
+                (Edited)
+              </span>
             )}
             <div className="flex">
               {/* Chat Bubble Container */}
