@@ -59,43 +59,43 @@ export const useReactToMessage = (selectedConversationId) => {
 
     // --- ✅ NEW, SMARTER onSuccess LOGIC ---
     onSuccess: (updatedMessageFromApi) => {
-      queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
-        if (!oldData) return oldData;
+      // queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
+      //   if (!oldData) return oldData;
 
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) =>
-            page.map((message) => {
-              if (message._id === updatedMessageFromApi._id) {
-                // The reactions confirmed by the server for THIS mutation
-                const serverReactions = updatedMessageFromApi.reactions;
+      //   return {
+      //     ...oldData,
+      //     pages: oldData.pages.map((page) =>
+      //       page.map((message) => {
+      //         if (message._id === updatedMessageFromApi._id) {
+      //           // The reactions confirmed by the server for THIS mutation
+      //           const serverReactions = updatedMessageFromApi.reactions;
 
-                // Find any other optimistic reactions from other IN-FLIGHT mutations
-                // that exist in our current cache but are not yet in the server's response.
-                const otherOptimisticReactions = message.reactions.filter(
-                  (cachedReaction) =>
-                    // It must be an optimistic reaction
-                    cachedReaction._id.toString().startsWith("optimistic-") &&
-                    // And it must NOT be in the list of reactions just confirmed by the server
-                    !serverReactions.some(
-                      (serverReaction) =>
-                        serverReaction.emoji === cachedReaction.emoji &&
-                        (serverReaction.user._id || serverReaction.user).toString() ===
-                          (cachedReaction.user._id || cachedReaction.user).toString()
-                    )
-                );
+      //           // Find any other optimistic reactions from other IN-FLIGHT mutations
+      //           // that exist in our current cache but are not yet in the server's response.
+      //           const otherOptimisticReactions = message.reactions.filter(
+      //             (cachedReaction) =>
+      //               // It must be an optimistic reaction
+      //               cachedReaction._id.toString().startsWith("optimistic-") &&
+      //               // And it must NOT be in the list of reactions just confirmed by the server
+      //               !serverReactions.some(
+      //                 (serverReaction) =>
+      //                   serverReaction.emoji === cachedReaction.emoji &&
+      //                   (serverReaction.user._id || serverReaction.user).toString() ===
+      //                     (cachedReaction.user._id || cachedReaction.user).toString()
+      //               )
+      //           );
 
-                // The new state is the confirmed server reactions PLUS the other pending optimistic ones.
-                return {
-                  ...updatedMessageFromApi,
-                  reactions: [...serverReactions, ...otherOptimisticReactions],
-                };
-              }
-              return message;
-            })
-          ),
-        };
-      });
+      //           // The new state is the confirmed server reactions PLUS the other pending optimistic ones.
+      //           return {
+      //             ...updatedMessageFromApi,
+      //             reactions: [...serverReactions, ...otherOptimisticReactions],
+      //           };
+      //         }
+      //         return message;
+      //       })
+      //     ),
+      //   };
+      // });
     },
 
     // Your onError rollback is correct

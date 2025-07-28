@@ -4,8 +4,6 @@ import LoadingSpinner from "../LoadingSpinner";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 
 import MessageItem from "./MessageItem";
-import { useFetchConversationBetweenUsers } from "../../../hooks/messagesHooks/useFetchConversationBetweenUsers";
-import FullEmojiPickerModal from "../EmojiPickerPopover";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
@@ -42,7 +40,6 @@ const MessageList = forwardRef(function MessageList(
 ) {
   const { authUser: currentUser } = useAuthUser();
   const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
-  const { isLoadingConversationStatus } = useFetchConversationBetweenUsers();
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);

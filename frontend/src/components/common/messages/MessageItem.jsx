@@ -11,8 +11,6 @@ import { PiSmileyFill } from "react-icons/pi";
 import { useRef } from "react";
 import { useCallback } from "react";
 import EmojiPickerPopover from "../EmojiPickerPopover";
-import { TbMinusVertical } from "react-icons/tb";
-import { useEffect } from "react";
 
 const MessageItem = ({
   msg,
