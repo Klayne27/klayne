@@ -10,7 +10,7 @@ const ProfileImageModal = ({ src, onClose }) => {
     >
       <div className="avatar">
         <div
-          className="w-[500px] rounded-full relative group/avatar"
+          className="w-[280px] rounded-full relative group/avatar"
           onClick={(e) => e.stopPropagation()}
         >
           <img src={src} alt="Enlarged" className="" />
