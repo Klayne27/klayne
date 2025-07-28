@@ -104,8 +104,9 @@ const MessageItem = ({
     (emojiObject) => {
       handleReactionClick(msg._id, emojiObject.emoji); // Use emojiObject.emoji
       handleCloseEmojiPickerPopover(); // Close the popover after selection
+      onReactionAdded();
     },
-    [handleReactionClick, msg._id, handleCloseEmojiPickerPopover]
+    [handleReactionClick, msg._id, handleCloseEmojiPickerPopover, onReactionAdded]
   );
 
   // --- NEW: Typing Indicator MessageItem ---

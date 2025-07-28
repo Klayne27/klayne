@@ -70,7 +70,6 @@ const PublicChatWindow = ({ openImageModal }) => {
 
   const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
-  
 
   // --- Touch device detection ---
   useEffect(() => {
@@ -167,6 +166,22 @@ const PublicChatWindow = ({ openImageModal }) => {
     },
     [addReaction]
   ); // Dependency on addReaction
+
+  const handleReactionAdded = useCallback(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
+
+    const scrollThreshold = 100; // Keep consistent with other checks
+    const isUserAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+
+    if (isUserAtBottom) {
+      setTimeout(() => {
+        scrollToBottom();
+        setShowNewMessageButton(false); // Hide the new message button if we scrolled
+      }, 1); // Small delay to ensure DOM updates
+    }
+  }, [scrollToBottom, setShowNewMessageButton]);
 
   // --- Handler to set message for editing ---
   const handleEdit = (messageToEdit) => {
@@ -438,6 +453,7 @@ const PublicChatWindow = ({ openImageModal }) => {
                     isFirstInGroup={message.isFirstInGroup}
                     isLastInGroup={message.isLastInGroup}
                     bubbleClasses={message.bubbleClasses}
+                    onReactionAdded={handleReactionAdded}
                   />
                 </div>
               ))}

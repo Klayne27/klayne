@@ -42,6 +42,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   handleLoadImage,
   isFirstInGroup,
   isLastInGroup,
+  onReactionAdded,
 }) {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
@@ -109,8 +110,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     (emojiObject) => {
       handleReactionClick(message._id, emojiObject.emoji); // Use emojiObject.emoji
       handleCloseEmojiPickerPopover(); // Close the popover after selection
+      onReactionAdded();
     },
-    [handleReactionClick, message._id, handleCloseEmojiPickerPopover]
+    [handleReactionClick, message._id, handleCloseEmojiPickerPopover, onReactionAdded]
   );
 
   const fromMe = message.sender._id === authUser._id;
@@ -310,6 +312,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             onClick={(e) => {
               e.stopPropagation();
               handleReactionClick(message._id, emoji);
+              onReactionAdded()
             }}
             className={`text-xl hover:scale-125 py-1 transition duration-100`}
             title={`React with ${emoji}`}
