@@ -228,7 +228,7 @@ const MessageItem = ({
   // NEW: Typing Indicator MessageItem
   if (isTypingOtherUser) {
     return (
-      <div className="flex justify-start p-1 rounded-lg message-item-container ml-9">
+      <div className="flex justify-start p-1 rounded-lg message-item-container ml-10">
         <div className="flex flex-col max-w-[70%] p-3 rounded-3xl bg-[#2F3336] text-white rounded-bl-[4px]">
           <span className="flex items-center gap-0.5">
             <span className="inline-block pulsing-dot pulsing-dot-1">
@@ -335,7 +335,7 @@ const MessageItem = ({
           <button
             ref={moreEmojisButtonRef}
             onClick={handleOpenEmojiPickerPopover}
-            className="text-amber-400 hover:text-amber-500 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
+            className="text-slate-500 hover:text-slate-400 md:hover:scale-125 duration-100 transtion border-slate-500 mt-[1px]"
             title="More Emojis"
           >
             <PiSmileyFill className="size-[26px]" />
@@ -346,7 +346,7 @@ const MessageItem = ({
               handleReplyClick(msg);
               setEditingMessage(null);
             }}
-            className="text-blue-400 hover:text-blue-500 hover:scale-125 rounded-full p-1"
+            className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1"
             title="Reply"
           >
             <FaReply size={18} />
@@ -354,7 +354,7 @@ const MessageItem = ({
           {isEditable && (
             <button
               onClick={handleEditClick}
-              className="text-yellow-400 hover:text-yellow-500 hover:scale-125 rounded-full p-1"
+              className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1"
               title="Edit message"
             >
               <MdEdit size={20} />
@@ -369,7 +369,7 @@ const MessageItem = ({
                   conversationId: msg.conversationId,
                 });
               }}
-              className="text-red-400 hover:text-red-500 hover:scale-125 rounded-full p-1 cursor-pointer"
+              className="text-slate-500 hover:text-slate-400 hover:scale-125 rounded-full p-1 cursor-pointer"
               title="Delete message"
             >
               <FiTrash size={18} />
@@ -483,7 +483,7 @@ const MessageItem = ({
                             isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
                           } mt-1 italic`}
                         >
-                          {renderClickableText(truncateText(msg.repliedTo.text, 50))}
+                          {renderClickableText(truncateText(msg.repliedTo.text, 49))}
                         </span>
                       )}
                       {msg.repliedTo.img && (
