@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useRef, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { MdAdminPanelSettings, MdDeleteForever } from "react-icons/md";
-import { FaUserSlash, FaUserCheck, FaReply } from "react-icons/fa";
+import { FaUserSlash, FaUserCheck, FaReply, FaBan } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
@@ -459,8 +459,8 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                   </span>
                 )}
                 {isSenderBanned && !fromMe && (
-                  <span className="ml-2 inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-600 text-white mr-1">
-                    Banned
+                  <span >
+                    <FaBan size={15} className="fill-red-500 mr-1" />
                   </span>
                 )}
 

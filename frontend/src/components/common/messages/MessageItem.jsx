@@ -1,4 +1,4 @@
-import React, { useState, useRef, useCallback } from "react";
+import React, { useState, useRef, useCallback, useEffect } from "react";
 import { FaCircle, FaReply } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { BsCheck2, BsCheck2All } from "react-icons/bs";
@@ -41,6 +41,26 @@ const MessageItem = ({
   const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
+
+  // NEW: State and ref for mobile long press
+  const [isMobile, setIsMobile] = useState(false);
+  const pressTimer = useRef(null);
+  const LONG_PRESS_DURATION = 500; // milliseconds
+
+  useEffect(() => {
+    // Basic mobile detection based on user agent or screen width
+    const checkIfMobile = () => {
+      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
+      const isMobileDevice =
+        /android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent) ||
+        window.innerWidth < 768;
+      setIsMobile(isMobileDevice);
+    };
+
+    checkIfMobile();
+    window.addEventListener("resize", checkIfMobile);
+    return () => window.removeEventListener("resize", checkIfMobile);
+  }, []);
 
   const handleOpenEmojiPickerPopover = useCallback(
     (e) => {
@@ -169,7 +189,31 @@ const MessageItem = ({
       bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]";
     }
   }
+
+  // NEW: Logic for showing time and applying highlight class
   const shouldShowTimeOnHover = isHovered || showModal;
+  const isMessageHighlighted = isHovered || showModal; // Highlight on hover for PC, or when modal is active for mobile/PC
+
+  // NEW: Mobile Touch Handlers
+  const handleTouchStart = (e) => {
+    e.stopPropagation();
+    // Start a timer for long press
+    pressTimer.current = setTimeout(() => {
+      handleMessageTap(msg._id); // Show modal after long press
+    }, LONG_PRESS_DURATION);
+  };
+
+  const handleTouchEnd = (e) => {
+    e.stopPropagation();
+    clearTimeout(pressTimer.current); // Clear timer if finger lifted before long press
+  };
+
+  const handleTouchMove = (e) => {
+    // If finger moves significantly, cancel the long press
+    if (pressTimer.current) {
+      clearTimeout(pressTimer.current);
+    }
+  };
 
   // NEW: Typing Indicator MessageItem
   if (isTypingOtherUser) {
@@ -207,22 +251,44 @@ const MessageItem = ({
 
       <div
         id={`message-${msg._id}`}
-        className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${isFirstInGroup ? "mt-2" : ""} `}
+        className={`relative mb-0 p-[1px] rounded-lg ${
+          isMessageHighlighted ? "bg-secondary" : ""
+        } ${isFirstInGroup ? "mt-2" : ""} `}
         onMouseEnter={() => {
-          handleMouseEnter(msg._id);
-          setIsHovered(true);
+          if (!isMobile) {
+            // Only apply hover for non-mobile
+            handleMouseEnter(msg._id);
+            setIsHovered(true);
+          }
         }}
         onMouseLeave={() => {
-          handleMouseLeave();
-          setIsHovered(false);
+          if (!isMobile) {
+            // Only apply hover for non-mobile
+            handleMouseLeave();
+            setIsHovered(false);
+          }
         }}
         onClick={(e) => {
-          const modalElement = document.getElementById(`message-modal-${msg._id}`);
-          if (modalElement && modalElement.contains(e.target)) {
-            return;
+          // If on mobile, a single tap should hide the modal if it's open, otherwise do nothing.
+          // The long press will open it.
+          if (isMobile) {
+            if (showModal) {
+              handleMessageTap(null); // Close modal on tap if open
+            }
+            // Prevents long press from immediately triggering a click.
+            e.stopPropagation();
+          } else {
+            // For PC, regular click behavior remains
+            const modalElement = document.getElementById(`message-modal-${msg._id}`);
+            if (modalElement && modalElement.contains(e.target)) {
+              return;
+            }
+            handleMessageTap(msg._id);
           }
-          handleMessageTap(msg._id);
         }}
+        onTouchStart={isMobile ? handleTouchStart : undefined}
+        onTouchEnd={isMobile ? handleTouchEnd : undefined}
+        onTouchMove={isMobile ? handleTouchMove : undefined}
       >
         {/* Reaction Picker and Action Modal (Unchanged) */}
         <div
