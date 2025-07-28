@@ -193,6 +193,16 @@ const MessageItem = ({
   // NEW: Logic for showing time and applying highlight class
   const shouldShowTimeOnHover = isHovered || showModal;
   const isMessageHighlighted = isHovered || showModal; // Highlight on hover for PC, or when modal is active for mobile/PC
+  const messageContentStyle = isMobile
+    ? {
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        touchAction: "manipulation",
+      }
+    : {}; 
+
 
   // NEW: Mobile Touch Handlers
   const handleTouchStart = (e) => {
@@ -254,13 +264,7 @@ const MessageItem = ({
         className={`relative mb-0 p-[1px] rounded-lg ${
           isMessageHighlighted ? "bg-secondary" : ""
         } ${isFirstInGroup ? "mt-2" : ""} `}
-        style={{
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          MozUserSelect: "none",
-          msUserSelect: "none",
-          touchAction: "manipulation",
-        }}
+        style={messageContentStyle}
         onMouseEnter={() => {
           if (!isMobile) {
             // Only apply hover for non-mobile
@@ -446,13 +450,7 @@ const MessageItem = ({
               >
                 <div
                   className={`p-3 flex flex-col w-full overflow-hidden ${bubbleClasses}`}
-                  style={{
-                    userSelect: "none",
-                    WebkitUserSelect: "none",
-                    MozUserSelect: "none",
-                    msUserSelect: "none",
-                    touchAction: "manipulation",
-                  }}
+                  style={messageContentStyle}
                 >
                   {/* Reply Block */}
                   {msg.repliedTo && (
@@ -547,13 +545,7 @@ const MessageItem = ({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out hover:bg-gray-700 bg-gray-800"
-                    style={{
-                      userSelect: "none",
-                      WebkitUserSelect: "none",
-                      MozUserSelect: "none",
-                      msUserSelect: "none",
-                      touchAction: "manipulation",
-                    }}
+                    style={messageContentStyle}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />
@@ -568,13 +560,7 @@ const MessageItem = ({
                   return (
                     <div
                       key={emoji}
-                      style={{
-                        userSelect: "none",
-                        WebkitUserSelect: "none",
-                        MozUserSelect: "none",
-                        msUserSelect: "none",
-                        touchAction: "manipulation",
-                      }}
+                      style={messageContentStyle}
                       className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 ${
                         hasCurrentUserReactedToThisEmoji
                           ? "bg-violet-600/30 border-violet-600 border"
@@ -596,13 +582,7 @@ const MessageItem = ({
                     ref={addReactionButtonRef}
                     onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out border border-transparent hover:bg-gray-700 bg-gray-800"
-                    style={{
-                      userSelect: "none",
-                      WebkitUserSelect: "none",
-                      MozUserSelect: "none",
-                      msUserSelect: "none",
-                      touchAction: "manipulation",
-                    }}
+                    style={messageContentStyle}
                     title="Add reaction"
                   >
                     <PiSmileyFill className="size-5" />
