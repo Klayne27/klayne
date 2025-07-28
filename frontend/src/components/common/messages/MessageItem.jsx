@@ -196,7 +196,7 @@ const MessageItem = ({
     <>
       {/* Date Separator */}
       {isNewDay && (
-        <div className="flex items-center my-6">
+        <div className="flex items-center mb-6 mt-7">
           <div className="flex-grow border-t border-gray-700"></div>
           <div className="px-2 text-slate-400 text-xs flex-shrink-0">
             {formatDate(msg.createdAt)}
@@ -207,7 +207,7 @@ const MessageItem = ({
 
       <div
         id={`message-${msg._id}`}
-        className="relative mb-0 p-[1px] rounded-lg hover:bg-secondary"
+        className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${isFirstInGroup ? "mt-2" : ""} `}
         onMouseEnter={() => {
           handleMouseEnter(msg._id);
           setIsHovered(true);

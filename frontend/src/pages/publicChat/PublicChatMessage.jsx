@@ -255,7 +255,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     <>
       {/* Date Separator */}
       {isNewDay && (
-        <div className="flex items-center my-6">
+        <div className="flex items-center mb-6 mt-7">
           <div className="flex-grow border-t border-gray-700"></div>
           <div className="px-2 text-slate-400 text-xs flex-shrink-0">
             {formatDisplayDate(message.createdAt)}
@@ -269,7 +269,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         id={`message-${message._id}`}
         className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${
           fromMe ? "justify-end" : "justify-start"
-        }`}
+        } ${isFirstInGroup ? "mt-4" : ""}`}
         onMouseEnter={() => {
           handleMouseEnter(message._id);
           setIsHovered(true);
@@ -488,6 +488,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                                 w-fit
                                 max-w-full
                                 overflow-hidden
+                                
                             `}
             >
               {message.replyTo && (
