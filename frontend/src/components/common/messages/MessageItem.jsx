@@ -443,6 +443,8 @@ const MessageItem = ({
                     userSelect: "none",
                     WebkitUserSelect: "none",
                     MozUserSelect: "none",
+                    msUserSelect: "none",
+                    touchAction: "manipulation",
                   }}
                 >
                   {/* Reply Block */}
