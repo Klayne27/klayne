@@ -5,6 +5,7 @@ import {
   io,
   emitUnreadMessageStatus,
   userActiveChats,
+  onlineUsersMap,
 } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
@@ -157,6 +158,8 @@ export const sendMessage = async (req, res) => {
         readerId: recipientId,
       });
     }
+
+
 
     await emitUnreadMessageStatus(recipientId.toString());
     await emitUnreadMessageStatus(senderId.toString());

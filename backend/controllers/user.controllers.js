@@ -667,11 +667,7 @@ export const adminDeleteUserAccount = async (req, res) => {
     }
 
     // ✨ NEW STEP: Delete public chat messages sent by the user
-    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
 
-    // ✨ OPTIONAL: If public chat messages can contain images/videos, delete them from Cloudinary too
-    // This requires iterating through PublicChatMessages, similar to how you handle Posts.
-    // Example:
     const publicChatMessagesWithMedia = await PublicChatMessage.find({
       sender: userToDelete._id,
       img: { $ne: "" },
@@ -684,6 +680,8 @@ export const adminDeleteUserAccount = async (req, res) => {
       }
       // If you also support video in public chat messages, add similar logic
     }
+
+    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
 
     // Finally, delete the user document
     await User.findByIdAndDelete(userIdToDelete);
