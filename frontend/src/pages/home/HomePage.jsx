@@ -173,7 +173,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
         </div>
 
         {/* NEW POSTS BUTTON */}
-        {!showNewFeedPostsButton && showScrollButton && !newPostCount && feedType === "forYou" && (
+        {showNewFeedPostsButton && showScrollButton && newPostCount && feedType === "forYou" && (
           <button
             onClick={handleNewPostsButtonClick}
             className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 md:-translate-x-[110%] z-50
