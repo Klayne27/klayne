@@ -6,7 +6,7 @@ export const useMarkPostsAsRead = (setNewPostCount) => {
   const { mutate: markFeedAsRead } = useMutation({
     mutationFn: markPostsAsReadApi,
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] }); // Invalidate feed posts
+    //   queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] }); // Invalidate feed posts
       //   showAppToast("Feed updated!", "success");
     //   setNewPostCount(0); // Immediately clear the local count
     },

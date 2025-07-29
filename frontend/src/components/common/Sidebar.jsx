@@ -230,11 +230,10 @@ const Sidebar = ({
         behavior: "smooth",
       });
 
-    markFeedAsRead()
-    if (hasNewFeedPosts) {
-      // setHasNewFeedPosts(false);
-      setShowNewFeedPostsButton(false);
-    }
+    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
+
+    markFeedAsRead();
+    setShowNewFeedPostsButton(false);
   };
 
   const handleBookmarksClick = () => {
@@ -480,7 +479,7 @@ const Sidebar = ({
           <FeatherIcon />
         </div>
         {/* X-SVG button, apply hover & active */}
-        <Link
+        <div
           to="/"
           onClick={handleHomeClick}
           className={`hidden md:flex justify-start px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
@@ -494,13 +493,12 @@ const Sidebar = ({
           onTouchCancel={handleTouchCancel}
         >
           <XSvg className="fill-primary" />
-        </Link>
+        </div>
 
         <ul className="flex flex-row md:flex-col md:gap-4 mt-0 md:mt-4 w-full  justify-around md:justify-start">
           {/* Home */}
           <li
             onClick={() => {
-              navigate("/");
               handleHomeClick();
             }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[115px] p-1 md:p-0"
@@ -528,18 +526,13 @@ const Sidebar = ({
                 <div
                   className="absolute top-3 right-2.5 w-3 h-3 bg-primary rounded-full border-2 border-black"
                   style={{ transform: "translate(50%, -50%)" }}
-                >
-                </div>
+                ></div>
               )}
             </button>
             <span
               className={`text-xl hidden md:block ${
                 pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
-              onClick={() => {
-                navigate("/");
-                handleHomeClick();
-              }}
             >
               Home
             </span>

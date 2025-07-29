@@ -190,8 +190,7 @@ const CreatePost = () => {
 
     setShowNewFeedPostsButton(false);
     markFeedAsRead()
-    setNewPostCount(0);
-  }, [queryClient, setShowNewFeedPostsButton, setNewPostCount, markFeedAsRead]);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
 
   const handlePaste = useCallback(
     (e) => {

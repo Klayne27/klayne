@@ -40,8 +40,8 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
     markFeedAsRead()
     setShowNewFeedPostsButton(false);
-    setNewPostCount(0);
-  }, [queryClient, setShowNewFeedPostsButton, setNewPostCount, markFeedAsRead]);
+    // setNewPostCount(0);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
 
   useEffect(() => {
     const handleScroll = () => {
