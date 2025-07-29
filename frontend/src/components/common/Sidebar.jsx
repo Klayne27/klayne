@@ -223,18 +223,21 @@ const Sidebar = ({
     navigate("/search");
   };
 
-  const handleHomeClick = () => {
-    if (pathname === "/")
+  const handleHomeClick = useCallback(() => {
+    // Scroll smoothly to the top of the feed
+    if (pathname === "/") {
       window.scrollTo({
         top: 0,
         behavior: "smooth",
       });
+    }
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
     markFeedAsRead();
     setShowNewFeedPostsButton(false);
-  };
+    // setNewPostCount(0);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
 
   const handleBookmarksClick = () => {
     queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
@@ -499,6 +502,7 @@ const Sidebar = ({
           {/* Home */}
           <li
             onClick={() => {
+              navigate("/")
               handleHomeClick();
             }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[115px] p-1 md:p-0"
