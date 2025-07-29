@@ -139,25 +139,25 @@ const ChatWindow = ({
     };
   }, [scrollToBottom, conversationId]);
 
- const handleLoadImage = useCallback(() => {
-   const listEl = messageListRef.current;
-   if (!listEl) return;
+  const handleLoadImage = useCallback(() => {
+    const listEl = messageListRef.current;
+    if (!listEl) return;
 
-   const scrollThreshold = 500;
-   const isUserAtBottom =
-     listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
+    const scrollThreshold = 500;
+    const isUserAtBottom =
+      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
-   // Scroll if:
-   // 1. User is currently at the bottom (image loaded for visible content)
-   // 2. A new message (optimistic or received) just landed, indicated by shouldScrollToBottomOnNewMessage
-   if (isUserAtBottom) {
-     setTimeout(() => {
-       scrollToBottom();
-       setShowNewMessageButton(false);
-      //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
-     }, 50); // Small delay to ensure image height is registered by the browser
-   }
- }, [scrollToBottom]);
+    // Scroll if:
+    // 1. User is currently at the bottom (image loaded for visible content)
+    // 2. A new message (optimistic or received) just landed, indicated by shouldScrollToBottomOnNewMessage
+    if (isUserAtBottom) {
+      setTimeout(() => {
+        scrollToBottom();
+        setShowNewMessageButton(false);
+        //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
+      }, 50); // Small delay to ensure image height is registered by the browser
+    }
+  }, [scrollToBottom]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -299,7 +299,7 @@ const ChatWindow = ({
       socket.emit("markMessagesAsSeen", { conversationId: conversationId });
     }
 
-    queryClient.invalidateQueries({queryKey: ["conversations"]})
+    queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
     return () => {
       setActiveConversationId(null);
@@ -491,9 +491,21 @@ const ChatWindow = ({
             );
             return { ...oldData, pages: updatedPages };
           });
+        }
 
-          // Invalidate conversations to update the last message in the sidebar
-          queryClient.invalidateQueries({ queryKey: ["conversations"] });
+        const currentConversationsData = queryClient.getQueryData(["conversations"]);
+
+        if (currentConversationsData) {
+          // Check if the updatedMessage.conversationId is present in the cached list
+          const isParticipatingInConversation = currentConversationsData.some(
+            (conv) => conv._id === updatedMessage.conversationId.toString()
+          );
+
+          if (isParticipatingInConversation) {
+            // If the current user is a participant in this conversation, invalidate.
+            // This will cause a refetch of the sidebar to get the latest lastMessage text.
+            queryClient.invalidateQueries({ queryKey: ["conversations"] });
+          }
         }
       };
       socket.on("newMessage", handleNewMessage);

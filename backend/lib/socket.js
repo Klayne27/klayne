@@ -86,25 +86,37 @@ export async function emitUnreadMessageStatus(userId) {
       currentUserBlockingData?.blockedUsers?.map((id) => id.toString()) || [];
     const blockedMe =
       currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
-    const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
+    const blockedAndBlockingUserIds = [...new Set([...blockedByMe, ...blockedMe])];
 
-    const baseQueryConditions = [
-      { participants: userIdObj },
-      { "lastMessage.sender": { $ne: userIdObj } },
-      { "lastMessage.seen": false },
-      { "lastMessage.text": { $exists: true, $ne: "" } },
-    ];
+    // Convert blockedAndBlockingUserIds to ObjectIds for the query
+    const blockedAndBlockingObjectIds = blockedAndBlockingUserIds.map(
+      (id) => new mongoose.Types.ObjectId(id)
+    );
 
-    baseQueryConditions.push({
-      participants: {
-        $nin: blockedAndBlockingUsers.map((id) => new mongoose.Types.ObjectId(id)),
-      },
-    });
+    // --- STEP 1: Find eligible conversations that are not hidden and not with blocked users ---
+    const eligibleConversations = await Conversation.find({
+      participants: userIdObj,
+      hiddenFor: { $ne: userIdObj },
+      // Filter out conversations where *any* participant is blocked/blocking
+      // This requires checking both participants in a two-person chat.
+      // A more robust way might be to filter later if performance is an issue,
+      // but for accuracy, this is important.
+      participants: { $nin: blockedAndBlockingObjectIds },
+    }).select("_id"); // Only retrieve conversation IDs
 
+    const eligibleConversationIds = eligibleConversations.map((conv) => conv._id);
+
+    // If the user is currently active in a specific conversation, exclude it from the count
     if (activeConversationId) {
       try {
         activeConversationIdObj = new mongoose.Types.ObjectId(activeConversationId);
-        baseQueryConditions.push({ _id: { $ne: activeConversationIdObj } });
+        // Remove the active conversation from the list of eligible IDs
+        const index = eligibleConversationIds.findIndex((id) =>
+          id.equals(activeConversationIdObj)
+        );
+        if (index > -1) {
+          eligibleConversationIds.splice(index, 1);
+        }
       } catch (objIdError) {
         console.error(
           `Error converting activeConversationId '${activeConversationId}' to ObjectId for user ${userId}:`,
@@ -113,15 +125,21 @@ export async function emitUnreadMessageStatus(userId) {
       }
     }
 
-    const conversationsWithUnseenLastMessage = await Conversation.countDocuments({
-      $and: baseQueryConditions,
+    // --- STEP 2: Count unread messages within the eligible conversations ---
+    // Count messages where:
+    // 1. The message is for an eligible conversation
+    // 2. The message was sent by someone other than the current user (the receiver)
+    // 3. The message has not been seen by the current user
+    const unreadMessageCount = await Message.countDocuments({
+      conversationId: { $in: eligibleConversationIds },
+      sender: { $ne: userIdObj }, // Message sent by the other person
+      seen: false, // Not yet seen by the receiver
+      text: { $exists: true, $ne: "" }, // Ensure it's a valid message (not just an empty placeholder)
     });
-
-    const hasUnread = conversationsWithUnseenLastMessage > 0;
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     recipientSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("unreadMessageStatus", { hasUnread });
+      io.to(socketId).emit("unreadMessageStatus", { unreadMessageCount });
     });
   } catch (error) {
     console.error(
@@ -136,38 +154,39 @@ export async function emitUnreadPublicChatStatus(userId) {
     const userIdObj = new mongoose.Types.ObjectId(userId);
     const recipientSocketIds = getReceiverSocketIds(userId);
 
-    // If the user is currently in the public chat, they should NOT see a red dot.
-    // Their status should always be 'false' as they are actively viewing.
+    // If the user is currently in the public chat, their count should be 0.
     if (activePublicChatUsers.has(userId)) {
       recipientSocketIds.forEach((socketId) => {
-        io.to(socketId).emit("unreadPublicChatStatus", { hasUnreadPublicChat: false });
+        io.to(socketId).emit("unreadPublicChatStatus", { unreadPublicChatCount: 0 }); // Emit 0 count
       });
       return; // Crucially, stop here if the user is active in the chat
     }
 
-    // Otherwise, calculate if they truly have unread messages
-    const latestPublicMessage = await PublicChatMessage.findOne()
-      .sort({ createdAt: -1 })
-      .lean();
-
     const user = await User.findById(userIdObj)
-      .select("lastReadPublicChatTimestamp")
+      .select("lastReadPublicChatTimestamp isBannedInPublicChat") // Select isBannedInPublicChat too
       .lean();
 
-    let hasUnreadPublicChat = false;
-
-    if (latestPublicMessage && user) {
-      if (
-        (user.lastReadPublicChatTimestamp === null ||
-          latestPublicMessage.createdAt > user.lastReadPublicChatTimestamp) &&
-        latestPublicMessage.sender.toString() !== userId // Exclude sender from getting notification for their own message
-      ) {
-        hasUnreadPublicChat = true;
-      }
+    // If user is banned, they shouldn't receive notifications/counts for public chat.
+    if (!user || user.isBannedInPublicChat) {
+      recipientSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("unreadPublicChatStatus", { unreadPublicChatCount: 0 });
+      });
+      return;
     }
 
+    // Determine the cutoff for unread messages
+    const lastReadTimestamp = user.lastReadPublicChatTimestamp || new Date(0); // Use epoch if never read
+
+    // Count messages created *after* the user's lastReadPublicChatTimestamp,
+    // and not sent by the user themselves.
+    const unreadPublicChatCount = await PublicChatMessage.countDocuments({
+      createdAt: { $gt: lastReadTimestamp },
+      sender: { $ne: userIdObj }, // Exclude messages sent by the current user
+    });
+
     recipientSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("unreadPublicChatStatus", { hasUnreadPublicChat });
+      // CHANGE HERE: Emit the count instead of a boolean
+      io.to(socketId).emit("unreadPublicChatStatus", { unreadPublicChatCount });
     });
   } catch (error) {
     console.error(
@@ -197,11 +216,11 @@ export async function emitUnreadNotificationStatus(userId) {
       },
     });
 
-    const hasUnreadNotifications = unreadNotificationsCount > 0;
+    // const hasUnreadNotifications = unreadNotificationsCount > 0;
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     recipientSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("unreadNotificationStatus", { hasUnreadNotifications });
+      io.to(socketId).emit("unreadNotificationStatus", { unreadNotificationsCount });
     });
   } catch (error) {
     console.error(
@@ -448,35 +467,7 @@ io.on("connection", async (socket) => {
       typingUsers: typingUsersArray,
     });
   });
-  // --- END PUBLIC CHAT TYPING EVENTS ---
-
-  // Optional: Add a cleanup mechanism for stale typing indicators on the server
-  // setInterval(() => {
-  //   const currentTime = Date.now();
-  //   const TYPING_TIMEOUT_SERVER = 5000; // e.g., 5 seconds of inactivity
-  //   let changed = false;
-
-  //   for (const [userId, data] of publicChatTypingUsers.entries()) {
-  //     if (currentTime - data.timestamp > TYPING_TIMEOUT_SERVER) {
-  //       publicChatTypingUsers.delete(userId);
-  //       changed = true;
-  //     }
-  //   }
-
-  //   if (changed) {
-  //     const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
-  //       ([userId, data]) => ({
-  //         userId,
-  //         username: data.username,
-  //         isEditing: data.isEditing,
-  //       })
-  //     );
-  //     // Emit this to all clients to keep their lists in sync
-  //     io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-  //       typingUsers: typingUsersArray,
-  //     });
-  //   }
-  // }, TYPING_TIMEOUT_SERVER);
+  // --- END PUBLIC CHAT TYPING EVENTS --
 
   socket.on("leaveConversation", (conversationId) => {
     if (conversationId) {
@@ -600,8 +591,14 @@ io.on("connection", async (socket) => {
       if (conversationUpdateResult.modifiedCount > 0) {
         // Fetch the now-updated conversation with populated details
         const updatedConversation = await Conversation.findById(conversationObjectId)
-          .populate("participants", "username profileImg fullName isVerified isGoldVerified")
-          .populate("lastMessage.sender", "username profileImg fullName isVerified isGoldVerified");
+          .populate(
+            "participants",
+            "username profileImg fullName isVerified isGoldVerified"
+          )
+          .populate(
+            "lastMessage.sender",
+            "username profileImg fullName isVerified isGoldVerified"
+          );
 
         if (updatedConversation) {
           // Emit the full conversation object to all participants so their UI (sidebar) updates

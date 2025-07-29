@@ -33,7 +33,10 @@ const Sidebar = ({
     hasNewFeedPosts,
     setHasNewFeedPosts,
     hasUnreadPublicChat,
-    setShowNewFeedPostsButton
+    setShowNewFeedPostsButton,
+    unreadNotificationsCount,
+    unreadMessageCount,
+    unreadPublicChatCount,
   } = useSocket();
   const queryClient = useQueryClient();
   // const {username} = useParams()
@@ -521,7 +524,7 @@ const Sidebar = ({
               />
               {hasNewFeedPosts && (
                 <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  className="absolute top-3 right-2.5 w-3 h-3 bg-primary rounded-full border-2 border-black"
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
@@ -567,11 +570,16 @@ const Sidebar = ({
                 }`}
                 strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
               />
-              {hasUnreadMessages && (
+              {unreadMessageCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
+               flex items-center justify-center 
+               text-white text-[11px] font-bold 
+               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
-                ></div>
+                >
+                  {unreadMessageCount}
+                </div>
               )}
             </button>
             <span
@@ -610,11 +618,16 @@ const Sidebar = ({
                 }`}
                 strokeWidth={pathname === "/notifications" ? 14 : 10}
               />
-              {hasUnreadNotifications && (
+              {unreadNotificationsCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
+               flex items-center justify-center 
+               text-white text-[11px] font-bold 
+               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
-                ></div>
+                >
+                  {unreadNotificationsCount}
+                </div>
               )}
             </button>
             <span
@@ -654,11 +667,16 @@ const Sidebar = ({
                 strokeWidth={pathname === "/public-chat" ? 2 : 1}
               />
               {/* Red dot for new public chat messages */}
-              {hasUnreadPublicChat && (
+              {unreadPublicChatCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-red-500 rounded-full border-2 border-black"
+                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
+               flex items-center justify-center 
+               text-white text-[11px] font-bold 
+               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
-                ></div>
+                >
+                  {unreadPublicChatCount}
+                </div>
               )}
             </button>
             <span

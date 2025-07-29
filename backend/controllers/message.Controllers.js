@@ -215,7 +215,8 @@ export const getMessagesByConversationId = async (req, res) => {
           path: "sender",
           select: "username fullName profileImg isVerified isGoldVerified",
         },
-      }).lean()
+      })
+      .lean();
 
     res.status(200).json(messages.reverse()); // Reverse to have oldest first for UI display
   } catch (error) {
@@ -533,7 +534,14 @@ export const editMessage = async (req, res) => {
         }
       }
 
-      io.to(conversation._id.toString()).emit("messageEdited", populatedMessage); // Emit to the conversation room for all participants
+      conversation.participants.forEach((participant) => {
+        const participantIdStr = participant._id.toString();
+        const participantSocketIds = getReceiverSocketIds(participantIdStr);
+        if (participantSocketIds.length > 0) {
+          // Send the edited message to both participants
+          io.to(participantSocketIds).emit("messageEdited", populatedMessage);
+        }
+      });
     }
 
     res.status(200).json(populatedMessage);

@@ -17,6 +17,7 @@ import { truncateText } from "../../utils/truncateText";
 import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
 import { HiOutlineReply } from "react-icons/hi";
 import { IoCopy } from "react-icons/io5";
+import { showAppToast } from "../../utils/showAppToast";
 
 // Helper for formatting date (e.g., "July 28, 2025")
 const formatDisplayDate = (dateString) => {
@@ -229,15 +230,16 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   }, []);
 
   const copyMessageToClipboard = useCallback(async () => {
-    if (message.text) {
+    if (message.content) {
       try {
-        await navigator.clipboard.writeText(message.text);
+        await navigator.clipboard.writeText(message.content);
+        // showAppToast("Message copied to clipboard")
       } catch (err) {
         console.error("Failed to copy message: ", err);
         // Handle error (e.g., show an error message to the user)
       }
     }
-  }, [message.text]);
+  }, [message.content]);
 
   const handleActionClick =
     (actionFn, ...args) =>
@@ -485,7 +487,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               </button>
               {message.content && (
                 <button
-                  onClick={handleActionClick(copyMessageToClipboard)}
+                  onClick={handleActionClick(copyMessageToClipboard, message)}
                   className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
                 >
                   Copy Text

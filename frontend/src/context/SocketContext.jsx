@@ -22,8 +22,11 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false);
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false);
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false);
+  const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false);
   const [hasUnreadPublicChat, setHasUnreadPublicChat] = useState(false);
-  const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
+  const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
+  const [unreadMessageCount, setUnreadMessageCount] = useState(0);
+  const [unreadPublicChatCount, setUnreadPublicChatCount] = useState(0)
 
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
@@ -72,17 +75,22 @@ export const SocketContextProvider = ({ children }) => {
         setOnlineUsers(users);
       });
 
-      newSocket.on("unreadMessageStatus", ({ hasUnread }) => {
+      newSocket.on("unreadMessageStatus", ({ hasUnread, unreadMessageCount }) => {
         setHasUnreadMessages(hasUnread);
+        setUnreadMessageCount(unreadMessageCount);
       });
 
-      newSocket.on("unreadNotificationStatus", ({ hasUnreadNotifications }) => {
-        setHasUnreadNotifications(hasUnreadNotifications);
-      });
+      newSocket.on(
+        "unreadNotificationStatus",
+        ({ hasUnreadNotifications, unreadNotificationsCount }) => {
+          setHasUnreadNotifications(hasUnreadNotifications);
+          setUnreadNotificationsCount(unreadNotificationsCount);
+        }
+      );
 
       newSocket.on("newPostAvailable", () => {
         setHasNewFeedPosts(true);
-        setShowNewFeedPostsButton(true)
+        setShowNewFeedPostsButton(true);
       });
 
       newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
@@ -104,28 +112,27 @@ export const SocketContextProvider = ({ children }) => {
         );
       });
 
-       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
+      newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
+        if (actorId === user._id) {
+          return; // Ignore updates from self for reactions to prevent flicker
+        }
 
-         if (actorId === user._id) {
-           return; // Ignore updates from self for reactions to prevent flicker
-         }
+        // Apply the update for reactions from other users, or if actorId is not provided
+        queryClient.setQueryData(["publicMessages"], (oldData) => {
+          if (!oldData) return oldData;
 
-         // Apply the update for reactions from other users, or if actorId is not provided
-         queryClient.setQueryData(["publicMessages"], (oldData) => {
-           if (!oldData) return oldData;
-
-           const updatedPages = oldData.pages.map((page) =>
-             page.map((message) => {
-               if (message._id === updatedMessage._id) {
-                 // Use updatedMessage._id
-                 return { ...message, reactions: updatedMessage.reactions }; // Use reactions from updatedMessage
-               }
-               return message;
-             })
-           );
-           return { ...oldData, pages: updatedPages };
-         });
-       });
+          const updatedPages = oldData.pages.map((page) =>
+            page.map((message) => {
+              if (message._id === updatedMessage._id) {
+                // Use updatedMessage._id
+                return { ...message, reactions: updatedMessage.reactions }; // Use reactions from updatedMessage
+              }
+              return message;
+            })
+          );
+          return { ...oldData, pages: updatedPages };
+        });
+      });
 
       newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
         queryClient.setQueryData(["messages", conversationId], (oldData) => {
@@ -148,9 +155,13 @@ export const SocketContextProvider = ({ children }) => {
         // });
       });
 
-      newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat }) => {
-        setHasUnreadPublicChat(hasUnreadPublicChat);
-      });
+      newSocket.on(
+        "unreadPublicChatStatus",
+        ({ hasUnreadPublicChat, unreadPublicChatCount }) => {
+          setHasUnreadPublicChat(hasUnreadPublicChat);
+          setUnreadPublicChatCount(unreadPublicChatCount);
+        }
+      );
 
       newSocket.on("disconnect", (reason) => {
         console.warn(`Socket disconnected: ${reason}`);
@@ -180,8 +191,10 @@ export const SocketContextProvider = ({ children }) => {
       setActiveConversationId(null);
       setHasUnreadNotifications(false);
       setHasNewFeedPosts(false);
-      setShowNewFeedPostsButton(false)
+      setShowNewFeedPostsButton(false);
       setHasUnreadPublicChat(false); // Clear public chat unread status on logout
+      setUnreadNotificationsCount(0);
+      setUnreadMessageCount(0);
     }
   }, [user, isLoadingAuthUser, queryClient]);
 
@@ -224,6 +237,9 @@ export const SocketContextProvider = ({ children }) => {
         setShowNewFeedPostsButton,
         hasUnreadPublicChat,
         setHasUnreadPublicChat,
+        unreadNotificationsCount,
+        unreadMessageCount,
+        unreadPublicChatCount,
       }}
     >
       {children}

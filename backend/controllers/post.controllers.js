@@ -296,166 +296,6 @@ export const likeUnlikePost = async (req, res) => {
   }
 };
 
-// export const getAllPosts = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 15; // <--- Match frontend limit
-//     const skip = (page - 1) * limit;
-
-//     const userId = req.user?._id;
-
-//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-
-//     const blockedAndBlockingObjectIds = [
-//       ...new Set([
-//         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
-//         ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
-//       ]),
-//     ];
-
-//     const matchConditions = {
-//       $and: [
-//         { "deletedFor.user": { $ne: userId } },
-//         // --- MODIFIED SCHEDULED LOGIC START ---
-//         {
-//           $or: [
-//             // If it's not explicitly scheduled (isScheduled is false or missing)
-//             { isScheduled: { $ne: true } },
-//             // OR if it is scheduled, but the scheduledAt time has passed
-//             {
-//               $and: [
-//                 { isScheduled: true },
-//                 { scheduledAt: { $ne: null } }, // Ensure scheduledAt is set if isScheduled is true
-//                 { scheduledAt: { $lte: new Date() } },
-//               ],
-//             },
-//           ],
-//         },
-//         // --- MODIFIED SCHEDULED LOGIC END ---
-//         {
-//           $or: [
-//             { user: { $nin: blockedAndBlockingObjectIds } },
-//             {
-//               $and: [
-//                 { repostedFrom: { $ne: null } }, // It's a repost
-//                 { user: { $nin: blockedAndBlockingObjectIds } }, // Reposter is not blocked
-//                 { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
-//                 {
-//                   $or: [
-//                     { "repostedFrom.isScheduled": { $ne: true } },
-//                     {
-//                       $and: [
-//                         { "repostedFrom.isScheduled": true },
-//                         { "repostedFrom.scheduledAt": { $ne: null } },
-//                         { "repostedFrom.scheduledAt": { $lte: new Date() } },
-//                       ],
-//                     },
-//                   ],
-//                 },
-//               ],
-//             },
-//           ],
-//         },
-//       ],
-//     };
-
-//     // console.log("Final Match Conditions:", JSON.stringify(matchConditions, null, 2)); // Debug match conditions
-
-//     const totalPostsResult = await Post.aggregate([
-//       { $match: matchConditions },
-//       { $count: "count" },
-//     ]);
-//     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
-
-//     const posts = await Post.aggregate([
-//       { $match: matchConditions },
-//       { $sort: { publishedAt: -1, createdAt: -1 } },
-//       { $skip: skip },
-//       { $limit: limit },
-//       {
-//         $lookup: {
-//           from: "users",
-//           localField: "user",
-//           foreignField: "_id",
-//           as: "user",
-//           pipeline: [{ $project: { password: 0 } }],
-//         },
-//       },
-//       { $unwind: "$user" },
-//       {
-//         $lookup: {
-//           from: "posts",
-//           localField: "repostedFrom",
-//           foreignField: "_id",
-//           as: "repostedFrom",
-//           pipeline: [
-//             {
-//               $lookup: {
-//                 from: "users",
-//                 localField: "user",
-//                 foreignField: "_id",
-//                 as: "user",
-//                 pipeline: [{ $project: { password: 0 } }],
-//               },
-//             },
-//             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-//             {
-//               $project: {
-//                 text: 1,
-//                 img: 1,
-//                 video: 1,
-//                 mediaType: 1,
-//                 likes: 1,
-//                 commentsCount: 1,
-//                 repostsCount: 1,
-//                 repostedBy: 1,
-//                 bookmarkedBy: 1,
-//                 createdAt: 1,
-//                 user: 1,
-//                 isScheduled: 1, // <--- Include these for potential client-side use or deeper filtering
-//                 scheduledAt: 1, // <--- Include these
-//               },
-//             },
-//           ],
-//         },
-//       },
-//       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-//       // { $match: matchConditions },
-//       // { $count: "count" },
-//     ]);
-
-//     const finalFilteredPosts = posts.filter((post) => {
-//       // These client-side filters are fine, but ensure they don't unexpectedly remove posts
-//       // If the aggregation query is strong enough, some of these might be redundant.
-//       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-//         return false;
-//       }
-//       if (post.repostedFrom && !post.repostedFrom.user) {
-//         return false;
-//       }
-//       // Add client-side filter for reposts of future scheduled posts, if not fully covered by aggregation
-//       if (
-//         post.repostedFrom &&
-//         post.repostedFrom.isScheduled &&
-//         post.repostedFrom.scheduledAt &&
-//         new Date(post.repostedFrom.scheduledAt) > new Date()
-//       ) {
-//         return false;
-//       }
-//       return true;
-//     });
-
-//     const hasNextPage = page * limit < totalCount;
-
-//     res
-//       .status(200)
-//       .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
-//   } catch (error) {
-//     res.status(500).json({ error: "Internal server error" });
-//     console.log("Error in getAllPosts controller: ", error); // Keep this for server-side debugging
-//   }
-// };
-
 export const getAllPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -476,6 +316,7 @@ export const getAllPosts = async (req, res) => {
     const matchConditions = {
       $and: [
         { "deletedFor.user": { $ne: userId } },
+        // --- MODIFIED SCHEDULED LOGIC START ---
         {
           $or: [
             // If it's not explicitly scheduled (isScheduled is false or missing)
@@ -490,34 +331,27 @@ export const getAllPosts = async (req, res) => {
             },
           ],
         },
-        // Blocking logic for original posts and reposts
-        {
-          $and: [
-            // Condition for the post's direct author (applies to original posts and reposts' authors)
-            { user: { $nin: blockedAndBlockingObjectIds } },
-            // Condition for the original post's author, if it's a repost
-            {
-              $or: [
-                { repostedFrom: { $eq: null } }, // Not a repost, so no original author to check
-                {
-                  "repostedFrom.user": { $nin: blockedAndBlockingObjectIds }, // Original author of reposted content is not blocked
-                },
-              ],
-            },
-          ],
-        },
-        // Prevent reposts of reposts, or reposts of future scheduled posts in the aggregation level
-        {
-          repostedFrom: { $ne: null } ? { $exists: true } : { $exists: false },
-          "repostedFrom.repostedFrom": { $exists: false },
-        }, // Ensure no repost of a repost
+        // --- MODIFIED SCHEDULED LOGIC END ---
         {
           $or: [
-            { "repostedFrom.isScheduled": { $ne: true } },
+            { user: { $nin: blockedAndBlockingObjectIds } },
             {
               $and: [
-                { "repostedFrom.isScheduled": true },
-                { "repostedFrom.scheduledAt": { $lte: new Date() } },
+                { repostedFrom: { $ne: null } }, // It's a repost
+                { user: { $nin: blockedAndBlockingObjectIds } }, // Reposter is not blocked
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  $or: [
+                    { "repostedFrom.isScheduled": { $ne: true } },
+                    {
+                      $and: [
+                        { "repostedFrom.isScheduled": true },
+                        { "repostedFrom.scheduledAt": { $ne: null } },
+                        { "repostedFrom.scheduledAt": { $lte: new Date() } },
+                      ],
+                    },
+                  ],
+                },
               ],
             },
           ],
@@ -525,150 +359,16 @@ export const getAllPosts = async (req, res) => {
       ],
     };
 
+    // console.log("Final Match Conditions:", JSON.stringify(matchConditions, null, 2)); // Debug match conditions
+
     const totalPostsResult = await Post.aggregate([
-      // First lookup to get original post data for reposts before applying blocking on original author
-      {
-        $lookup: {
-          from: "posts",
-          localField: "repostedFrom",
-          foreignField: "_id",
-          as: "repostedFromDoc",
-        },
-      },
-      {
-        $unwind: { path: "$repostedFromDoc", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $addFields: {
-          // If it's a repost, use the original post's user for the blocking check
-          // Otherwise, use the post's own user
-          userForBlocking: {
-            $cond: {
-              if: "$repostedFromDoc",
-              then: "$repostedFromDoc.user",
-              else: "$user",
-            },
-          },
-        },
-      },
-      {
-        $match: {
-          $and: [
-            { "deletedFor.user": { $ne: userId } },
-            // Scheduled post logic for the main post
-            {
-              $or: [
-                { isScheduled: { $ne: true } },
-                {
-                  $and: [
-                    { isScheduled: true },
-                    { scheduledAt: { $ne: null } },
-                    { scheduledAt: { $lte: new Date() } },
-                  ],
-                },
-              ],
-            },
-            // Blocking logic for the current post's author (reposter or original author)
-            { user: { $nin: blockedAndBlockingObjectIds } },
-            // Blocking logic for the *original* author if it's a repost
-            {
-              $or: [
-                { repostedFromDoc: { $eq: null } }, // Not a repost
-                { "repostedFromDoc.user": { $nin: blockedAndBlockingObjectIds } }, // Original post's author is not blocked
-              ],
-            },
-            // Also ensure that if it's a repost, the original post isn't a scheduled post for the future
-            {
-              $or: [
-                { repostedFromDoc: { $eq: null } }, // Not a repost
-                { "repostedFromDoc.isScheduled": { $ne: true } }, // Original is not scheduled
-                {
-                  $and: [
-                    { "repostedFromDoc.isScheduled": true },
-                    { "repostedFromDoc.scheduledAt": { $ne: null } },
-                    { "repostedFromDoc.scheduledAt": { $lte: new Date() } }, // Original is scheduled but already published
-                  ],
-                },
-              ],
-            },
-            // Prevent reposts of reposts at the aggregation level
-            { "repostedFromDoc.repostedFrom": { $exists: false } },
-          ],
-        },
-      },
+      { $match: matchConditions },
       { $count: "count" },
     ]);
     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
 
     const posts = await Post.aggregate([
-      // First lookup to get original post data for reposts before applying blocking on original author
-      {
-        $lookup: {
-          from: "posts",
-          localField: "repostedFrom",
-          foreignField: "_id",
-          as: "repostedFromDoc",
-        },
-      },
-      {
-        $unwind: { path: "$repostedFromDoc", preserveNullAndEmptyArrays: true },
-      },
-      {
-        $addFields: {
-          userForBlocking: {
-            $cond: {
-              if: "$repostedFromDoc",
-              then: "$repostedFromDoc.user",
-              else: "$user",
-            },
-          },
-        },
-      },
-      {
-        $match: {
-          $and: [
-            { "deletedFor.user": { $ne: userId } },
-            // Scheduled post logic for the main post
-            {
-              $or: [
-                { isScheduled: { $ne: true } },
-                {
-                  $and: [
-                    { isScheduled: true },
-                    { scheduledAt: { $ne: null } },
-                    { scheduledAt: { $lte: new Date() } },
-                  ],
-                },
-              ],
-            },
-            // Blocking logic for the current post's author (reposter or original author)
-            { user: { $nin: blockedAndBlockingObjectIds } },
-            // Blocking logic for the *original* author if it's a repost
-            {
-              $or: [
-                { repostedFromDoc: { $eq: null } }, // Not a repost
-                { "repostedFromDoc.user": { $nin: blockedAndBlockingObjectIds } }, // Original post's author is not blocked
-              ],
-            },
-            // Also ensure that if it's a repost, the original post isn't a scheduled post for the future
-            {
-              $or: [
-                { repostedFromDoc: { $eq: null } }, // Not a repost
-                { "repostedFromDoc.isScheduled": { $ne: true } }, // Original is not scheduled
-                {
-                  $and: [
-                    { "repostedFromDoc.isScheduled": true },
-                    { "repostedFromDoc.scheduledAt": { $ne: null } },
-                    { "repostedFromDoc.scheduledAt": { $lte: new Date() } }, // Original is scheduled but already published
-                  ],
-                },
-              ],
-            },
-            // Prevent reposts of reposts at the aggregation level
-            { "repostedFromDoc.repostedFrom": { $exists: false } },
-          ],
-        },
-      },
+      { $match: matchConditions },
       { $sort: { publishedAt: -1, createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
@@ -712,53 +412,353 @@ export const getAllPosts = async (req, res) => {
                 bookmarkedBy: 1,
                 createdAt: 1,
                 user: 1,
-                isScheduled: 1,
-                scheduledAt: 1,
+                isScheduled: 1, // <--- Include these for potential client-side use or deeper filtering
+                scheduledAt: 1, // <--- Include these
               },
             },
           ],
         },
       },
       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-      // Project to remove the temporary `repostedFromDoc` and `userForBlocking` fields
-      {
-        $project: {
-          repostedFromDoc: 0,
-          userForBlocking: 0,
-        },
-      },
+      // { $match: matchConditions },
+      // { $count: "count" },
     ]);
 
-    // The client-side filtering below becomes largely redundant if the aggregation pipeline is correct.
-    // It's good practice to push as much filtering as possible to the database for performance.
-    // I'm commenting it out, but you can keep it as a fallback if you desire,
-    // although it suggests the aggregation might not be fully optimized.
-    // const finalFilteredPosts = posts.filter((post) => {
-    //   if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-    //     return false;
-    //   }
-    //   if (post.repostedFrom && !post.repostedFrom.user) {
-    //     return false;
-    //   }
-    //   if (
-    //     post.repostedFrom &&
-    //     post.repostedFrom.isScheduled &&
-    //     post.repostedFrom.scheduledAt &&
-    //     new Date(post.repostedFrom.scheduledAt) > new Date()
-    //   ) {
-    //     return false;
-    //   }
-    //   return true;
-    // });
+    const finalFilteredPosts = posts.filter((post) => {
+      // These client-side filters are fine, but ensure they don't unexpectedly remove posts
+      // If the aggregation query is strong enough, some of these might be redundant.
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+        return false;
+      }
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        return false;
+      }
+      // Add client-side filter for reposts of future scheduled posts, if not fully covered by aggregation
+      if (
+        post.repostedFrom &&
+        post.repostedFrom.isScheduled &&
+        post.repostedFrom.scheduledAt &&
+        new Date(post.repostedFrom.scheduledAt) > new Date()
+      ) {
+        return false;
+      }
+      return true;
+    });
 
     const hasNextPage = page * limit < totalCount;
 
-    res.status(200).json({ posts: posts, hasNextPage, totalPosts: totalCount }); // Use 'posts' directly
+    res
+      .status(200)
+      .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.log("Error in getAllPosts controller: ", error);
+    console.log("Error in getAllPosts controller: ", error); // Keep this for server-side debugging
   }
 };
+
+// export const getAllPosts = async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 15; // <--- Match frontend limit
+//     const skip = (page - 1) * limit;
+
+//     const userId = req.user?._id;
+
+//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+
+//     const blockedAndBlockingObjectIds = [
+//       ...new Set([
+//         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+//         ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+//       ]),
+//     ];
+
+//     const matchConditions = {
+//       $and: [
+//         { "deletedFor.user": { $ne: userId } },
+//         {
+//           $or: [
+//             // If it's not explicitly scheduled (isScheduled is false or missing)
+//             { isScheduled: { $ne: true } },
+//             // OR if it is scheduled, but the scheduledAt time has passed
+//             {
+//               $and: [
+//                 { isScheduled: true },
+//                 { scheduledAt: { $ne: null } }, // Ensure scheduledAt is set if isScheduled is true
+//                 { scheduledAt: { $lte: new Date() } },
+//               ],
+//             },
+//           ],
+//         },
+//         // Blocking logic for original posts and reposts
+//         {
+//           $and: [
+//             // Condition for the post's direct author (applies to original posts and reposts' authors)
+//             { user: { $nin: blockedAndBlockingObjectIds } },
+//             // Condition for the original post's author, if it's a repost
+//             {
+//               $or: [
+//                 { repostedFrom: { $eq: null } }, // Not a repost, so no original author to check
+//                 {
+//                   "repostedFrom.user": { $nin: blockedAndBlockingObjectIds }, // Original author of reposted content is not blocked
+//                 },
+//               ],
+//             },
+//           ],
+//         },
+//         // Prevent reposts of reposts, or reposts of future scheduled posts in the aggregation level
+//         {
+//           repostedFrom: { $ne: null } ? { $exists: true } : { $exists: false },
+//           "repostedFrom.repostedFrom": { $exists: false },
+//         }, // Ensure no repost of a repost
+//         {
+//           $or: [
+//             { "repostedFrom.isScheduled": { $ne: true } },
+//             {
+//               $and: [
+//                 { "repostedFrom.isScheduled": true },
+//                 { "repostedFrom.scheduledAt": { $lte: new Date() } },
+//               ],
+//             },
+//           ],
+//         },
+//       ],
+//     };
+
+//     const totalPostsResult = await Post.aggregate([
+//       // First lookup to get original post data for reposts before applying blocking on original author
+//       {
+//         $lookup: {
+//           from: "posts",
+//           localField: "repostedFrom",
+//           foreignField: "_id",
+//           as: "repostedFromDoc",
+//         },
+//       },
+//       {
+//         $unwind: { path: "$repostedFromDoc", preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $addFields: {
+//           // If it's a repost, use the original post's user for the blocking check
+//           // Otherwise, use the post's own user
+//           userForBlocking: {
+//             $cond: {
+//               if: "$repostedFromDoc",
+//               then: "$repostedFromDoc.user",
+//               else: "$user",
+//             },
+//           },
+//         },
+//       },
+//       {
+//         $match: {
+//           $and: [
+//             { "deletedFor.user": { $ne: userId } },
+//             // Scheduled post logic for the main post
+//             {
+//               $or: [
+//                 { isScheduled: { $ne: true } },
+//                 {
+//                   $and: [
+//                     { isScheduled: true },
+//                     { scheduledAt: { $ne: null } },
+//                     { scheduledAt: { $lte: new Date() } },
+//                   ],
+//                 },
+//               ],
+//             },
+//             // Blocking logic for the current post's author (reposter or original author)
+//             { user: { $nin: blockedAndBlockingObjectIds } },
+//             // Blocking logic for the *original* author if it's a repost
+//             {
+//               $or: [
+//                 { repostedFromDoc: { $eq: null } }, // Not a repost
+//                 { "repostedFromDoc.user": { $nin: blockedAndBlockingObjectIds } }, // Original post's author is not blocked
+//               ],
+//             },
+//             // Also ensure that if it's a repost, the original post isn't a scheduled post for the future
+//             {
+//               $or: [
+//                 { repostedFromDoc: { $eq: null } }, // Not a repost
+//                 { "repostedFromDoc.isScheduled": { $ne: true } }, // Original is not scheduled
+//                 {
+//                   $and: [
+//                     { "repostedFromDoc.isScheduled": true },
+//                     { "repostedFromDoc.scheduledAt": { $ne: null } },
+//                     { "repostedFromDoc.scheduledAt": { $lte: new Date() } }, // Original is scheduled but already published
+//                   ],
+//                 },
+//               ],
+//             },
+//             // Prevent reposts of reposts at the aggregation level
+//             { "repostedFromDoc.repostedFrom": { $exists: false } },
+//           ],
+//         },
+//       },
+//       { $count: "count" },
+//     ]);
+//     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
+
+//     const posts = await Post.aggregate([
+//       // First lookup to get original post data for reposts before applying blocking on original author
+//       {
+//         $lookup: {
+//           from: "posts",
+//           localField: "repostedFrom",
+//           foreignField: "_id",
+//           as: "repostedFromDoc",
+//         },
+//       },
+//       {
+//         $unwind: { path: "$repostedFromDoc", preserveNullAndEmptyArrays: true },
+//       },
+//       {
+//         $addFields: {
+//           userForBlocking: {
+//             $cond: {
+//               if: "$repostedFromDoc",
+//               then: "$repostedFromDoc.user",
+//               else: "$user",
+//             },
+//           },
+//         },
+//       },
+//       {
+//         $match: {
+//           $and: [
+//             { "deletedFor.user": { $ne: userId } },
+//             // Scheduled post logic for the main post
+//             {
+//               $or: [
+//                 { isScheduled: { $ne: true } },
+//                 {
+//                   $and: [
+//                     { isScheduled: true },
+//                     { scheduledAt: { $ne: null } },
+//                     { scheduledAt: { $lte: new Date() } },
+//                   ],
+//                 },
+//               ],
+//             },
+//             // Blocking logic for the current post's author (reposter or original author)
+//             { user: { $nin: blockedAndBlockingObjectIds } },
+//             // Blocking logic for the *original* author if it's a repost
+//             {
+//               $or: [
+//                 { repostedFromDoc: { $eq: null } }, // Not a repost
+//                 { "repostedFromDoc.user": { $nin: blockedAndBlockingObjectIds } }, // Original post's author is not blocked
+//               ],
+//             },
+//             // Also ensure that if it's a repost, the original post isn't a scheduled post for the future
+//             {
+//               $or: [
+//                 { repostedFromDoc: { $eq: null } }, // Not a repost
+//                 { "repostedFromDoc.isScheduled": { $ne: true } }, // Original is not scheduled
+//                 {
+//                   $and: [
+//                     { "repostedFromDoc.isScheduled": true },
+//                     { "repostedFromDoc.scheduledAt": { $ne: null } },
+//                     { "repostedFromDoc.scheduledAt": { $lte: new Date() } }, // Original is scheduled but already published
+//                   ],
+//                 },
+//               ],
+//             },
+//             // Prevent reposts of reposts at the aggregation level
+//             { "repostedFromDoc.repostedFrom": { $exists: false } },
+//           ],
+//         },
+//       },
+//       { $sort: { publishedAt: -1, createdAt: -1 } },
+//       { $skip: skip },
+//       { $limit: limit },
+//       {
+//         $lookup: {
+//           from: "users",
+//           localField: "user",
+//           foreignField: "_id",
+//           as: "user",
+//           pipeline: [{ $project: { password: 0 } }],
+//         },
+//       },
+//       { $unwind: "$user" },
+//       {
+//         $lookup: {
+//           from: "posts",
+//           localField: "repostedFrom",
+//           foreignField: "_id",
+//           as: "repostedFrom",
+//           pipeline: [
+//             {
+//               $lookup: {
+//                 from: "users",
+//                 localField: "user",
+//                 foreignField: "_id",
+//                 as: "user",
+//                 pipeline: [{ $project: { password: 0 } }],
+//               },
+//             },
+//             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+//             {
+//               $project: {
+//                 text: 1,
+//                 img: 1,
+//                 video: 1,
+//                 mediaType: 1,
+//                 likes: 1,
+//                 commentsCount: 1,
+//                 repostsCount: 1,
+//                 repostedBy: 1,
+//                 bookmarkedBy: 1,
+//                 createdAt: 1,
+//                 user: 1,
+//                 isScheduled: 1,
+//                 scheduledAt: 1,
+//               },
+//             },
+//           ],
+//         },
+//       },
+//       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+//       // Project to remove the temporary `repostedFromDoc` and `userForBlocking` fields
+//       {
+//         $project: {
+//           repostedFromDoc: 0,
+//           userForBlocking: 0,
+//         },
+//       },
+//     ]);
+
+//     // The client-side filtering below becomes largely redundant if the aggregation pipeline is correct.
+//     // It's good practice to push as much filtering as possible to the database for performance.
+//     // I'm commenting it out, but you can keep it as a fallback if you desire,
+//     // although it suggests the aggregation might not be fully optimized.
+//     // const finalFilteredPosts = posts.filter((post) => {
+//     //   if (post.repostedFrom && post.repostedFrom.repostedFrom) {
+//     //     return false;
+//     //   }
+//     //   if (post.repostedFrom && !post.repostedFrom.user) {
+//     //     return false;
+//     //   }
+//     //   if (
+//     //     post.repostedFrom &&
+//     //     post.repostedFrom.isScheduled &&
+//     //     post.repostedFrom.scheduledAt &&
+//     //     new Date(post.repostedFrom.scheduledAt) > new Date()
+//     //   ) {
+//     //     return false;
+//     //   }
+//     //   return true;
+//     // });
+
+//     const hasNextPage = page * limit < totalCount;
+
+//     res.status(200).json({ posts: posts, hasNextPage, totalPosts: totalCount }); // Use 'posts' directly
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//     console.log("Error in getAllPosts controller: ", error);
+//   }
+// };
 
 export const getLikedPosts = async (req, res) => {
   const userId = req.params.id;
