@@ -128,6 +128,7 @@ const Posts = ({
               <div>
                 {pinnedPosts.map((post) => (
                   <Post
+                    postEndpoint={POST_ENDPOINT}
                     key={post._id}
                     post={post}
                     openImageModal={openImageModal}
@@ -148,6 +149,7 @@ const Posts = ({
         return (
           <div ref={elementRef} key={post._id}>
             <Post
+              postEndpoint={POST_ENDPOINT}
               post={post}
               openImageModal={openImageModal}
               profilePinnedPosts={pinnedPosts} // Also pass to regular posts in case they are also pinned
@@ -173,4 +175,3 @@ const Posts = ({
 };
 
 export default Posts;
-

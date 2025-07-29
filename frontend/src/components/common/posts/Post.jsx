@@ -29,11 +29,13 @@ const Post = ({
   profilePinnedPosts = [],
   currentProfileUsername,
   profileOwnerId,
+  postEndpoint,
 }) => {
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [isSmallScreen, setIsSmallScreen] = useState(false);
   const { username } = useParams();
+  const [isAnimatingRepost, setIsAnimatingRepost] = useState(false);
   const [isAnimatingLike, setIsAnimatingLike] = useState(false);
   const [isAnimatingPin, setIsAnimatingPin] = useState(false); // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false); // NEW
@@ -77,7 +79,7 @@ const Post = ({
     profileOwnerId
   );
 
-  const { repostPost, isReposting } = useRepostPost();
+  const { repostPost, isReposting } = useRepostPost(postEndpoint);
   const { likePost, isLiking } = useLikePost(username, userProfile?._id);
   const { deletePost, isDeleting } = useDeletePosts();
   const { pinUnpinPost, isPinning } = usePinPost();
@@ -194,6 +196,8 @@ const Post = ({
   const handleRepostClick = (e) => {
     handleInteractiveClick(e);
     if (isReposting) return;
+    setIsAnimatingRepost(true);
+
     repostPost(sourcePost._id);
   };
 
@@ -288,7 +292,13 @@ const Post = ({
   };
 
   useEffect(() => {
-    let timerLike, timerPin, timerBookmark;
+    let timerLike, timerPin, timerBookmark, timerRepost;
+
+    if (isAnimatingRepost) {
+      timerRepost = setTimeout(() => {
+        setIsAnimatingRepost(false);
+      }, 400); // Match the animation duration (0.4s)
+    }
 
     if (isAnimatingLike) {
       timerLike = setTimeout(() => {
@@ -311,7 +321,7 @@ const Post = ({
       clearTimeout(timerPin);
       clearTimeout(timerBookmark);
     };
-  }, [isAnimatingLike, isAnimatingPin, isAnimatingBookmark]);
+  }, [isAnimatingLike, isAnimatingPin, isAnimatingBookmark, isAnimatingRepost]);
 
   if (!sourcePost || !originalPostOwner) {
     console.warn("Post or originalPostOwner not fully populated:", post);
@@ -559,30 +569,30 @@ const Post = ({
                   onTouchCancel={handleTouchCancel}
                 >
                   <div
-                    className={`rounded-full p-2 duration-200 transition ${
+                    className={`rounded-full p-2 duration-2000 transition ${
                       !isTouchDevice
-                        ? "group-hover:bg-green-400 group-hover:bg-opacity-15"
+                        ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15"
                         : ""
                     }
                     ${
                       isTouchDevice && activeButton === "repost"
-                        ? "bg-green-400 bg-opacity-15"
+                        ? "bg-emerald-600 bg-opacity-15"
                         : ""
                     }`}
                   >
                     <FaRetweet
                       className={`size-[18px] duration-200 transition ${
                         repostedByCurrentUser
-                          ? "text-green-500"
-                          : "text-slate-500 group-hover:text-green-500"
-                      } ${isReposting ? "animate-spin" : ""}`}
+                          ? "text-emerald-500"
+                          : "text-slate-500 group-hover:text-emerald-500"
+                      } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
                     />
                   </div>
                   <span
                     className={`text-sm duration-200 transition ${
                       repostedByCurrentUser
-                        ? "text-green-500"
-                        : "text-slate-500 group-hover:text-green-500"
+                        ? "text-emerald-500"
+                        : "text-slate-500 group-hover:text-emerald-500"
                     }`}
                   >
                     {sourcePost.repostsCount || 0}{" "}

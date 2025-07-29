@@ -31,12 +31,18 @@ export default {
           "0%, 100%": { transform: "scale(1)" },
           "50%": { transform: "scale(1.2)" }, // Pop out slightly
         },
+        "repost-spin": {
+          "0%": { transform: "rotate(0deg) scale(1)" },
+          "50%": { transform: "rotate(180deg) scale(1.3)" }, // Spin halfway and grow
+          "100%": { transform: "rotate(360deg) scale(1)" }, // Complete the spin and return to normal size
+        },
       },
       animation: {
         // Apply the keyframe animation
         "like-bounce": "like-bounce 0.3s ease-in-out", // 0.3 seconds duration, ease-in-out timing
         "pin-down": "pin-down 0.2s ease-out", // Faster animation for pin
         "bookmark-pop": "bookmark-pop 0.2s ease-out", // Faster animation for bookmark
+        "repost-spin": "repost-spin 0.4s ease-in-out", // 0.4s duration for a smooth effect
       },
     },
   },
