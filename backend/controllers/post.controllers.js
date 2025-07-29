@@ -310,15 +310,11 @@ export const likeUnlikePost = async (req, res) => {
 export const getAllPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
+    const limit = parseInt(req.query.limit) || 15; // <--- Match frontend limit
     const skip = (page - 1) * limit;
 
     const userId = req.user?._id;
-    if (!userId) {
-      return res.status(401).json({ error: "Unauthorized: User ID not found" });
-    }
 
-    // 1. Fetch blocking users efficiently
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
 
     const blockedAndBlockingObjectIds = [
@@ -328,37 +324,45 @@ export const getAllPosts = async (req, res) => {
       ]),
     ];
 
-    // Helper for scheduled post conditions
-    const scheduledPostConditions = {
-      $or: [
-        { isScheduled: { $ne: true } }, // Not scheduled or isScheduled: false
-        {
-          $and: [
-            { isScheduled: true },
-            { scheduledAt: { $ne: null } },
-            { scheduledAt: { $lte: new Date() } }, // Scheduled, but time has passed
-          ],
-        },
-      ],
-    };
-
-    // Main match conditions for posts
     const matchConditions = {
       $and: [
-        { "deletedFor.user": { $ne: userId } }, // Post not deleted for current user
-        scheduledPostConditions, // Apply scheduled logic to main post
+        { "deletedFor.user": { $ne: userId } },
+        // --- MODIFIED SCHEDULED LOGIC START ---
         {
           $or: [
-            { user: { $nin: blockedAndBlockingObjectIds } }, // Post is not from a blocked/blocking user
+            // If it's not explicitly scheduled (isScheduled is false or missing)
+            { isScheduled: { $ne: true } },
+            // OR if it is scheduled, but the scheduledAt time has passed
             {
-              // OR it's a repost (and passes further checks)
               $and: [
-                { repostedFrom: { $ne: null } }, // Must be a repost
+                { isScheduled: true },
+                { scheduledAt: { $ne: null } }, // Ensure scheduledAt is set if isScheduled is true
+                { scheduledAt: { $lte: new Date() } },
+              ],
+            },
+          ],
+        },
+        // --- MODIFIED SCHEDULED LOGIC END ---
+        {
+          $or: [
+            { user: { $nin: blockedAndBlockingObjectIds } },
+            {
+              $and: [
+                { repostedFrom: { $ne: null } }, // It's a repost
                 { user: { $nin: blockedAndBlockingObjectIds } }, // Reposter is not blocked
-                // We'll handle the original post's user and scheduling in the lookup pipeline below
-                // because we need the lookup to happen first to access repostedFrom fields.
-                // The client-side filter for `repostedFrom.repostedFrom` will be harder to move here
-                // directly without `$graphLookup` or similar, leaving it for later.
+                { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
+                {
+                  $or: [
+                    { "repostedFrom.isScheduled": { $ne: true } },
+                    {
+                      $and: [
+                        { "repostedFrom.isScheduled": true },
+                        { "repostedFrom.scheduledAt": { $ne: null } },
+                        { "repostedFrom.scheduledAt": { $lte: new Date() } },
+                      ],
+                    },
+                  ],
+                },
               ],
             },
           ],
@@ -366,11 +370,29 @@ export const getAllPosts = async (req, res) => {
       ],
     };
 
-    // Optimized Aggregation with $facet
-    const aggregationPipeline = [
-      { $match: matchConditions }, // Initial broad filtering
+    // console.log("Final Match Conditions:", JSON.stringify(matchConditions, null, 2)); // Debug match conditions
 
-      // Conditionally look up repostedFrom post and its user
+    const totalPostsResult = await Post.aggregate([
+      { $match: matchConditions },
+      { $count: "count" },
+    ]);
+    const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
+
+    const posts = await Post.aggregate([
+      { $match: matchConditions },
+      { $sort: { publishedAt: -1, createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [{ $project: { password: 0 } }],
+        },
+      },
+      { $unwind: "$user" },
       {
         $lookup: {
           from: "posts",
@@ -378,152 +400,59 @@ export const getAllPosts = async (req, res) => {
           foreignField: "_id",
           as: "repostedFrom",
           pipeline: [
-            // Only include original posts that are not themselves reposts (to prevent reposts of reposts)
-            { $match: { repostedFrom: null } }, // New: Filter out reposts of reposts at the original post level
-            // Apply scheduled logic to the original post being reposted
-            {
-              $match: {
-                $or: [
-                  { isScheduled: { $ne: true } },
-                  {
-                    $and: [
-                      { isScheduled: true },
-                      { scheduledAt: { $ne: null } },
-                      { scheduledAt: { $lte: new Date() } },
-                    ],
-                  },
-                ],
-              },
-            },
             {
               $lookup: {
                 from: "users",
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [
-                  {
-                    // Project only essential user fields
-                    $project: {
-                      _id: 1,
-                      username: 1,
-                      fullName: 1,
-                      profileImg: 1,
-                      isVerified: 1,
-                      isGoldVerified: 1,
-                      // Add more if absolutely needed for display
-                    },
-                  },
-                ],
+                pipeline: [{ $project: { password: 0 } }],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-            // Filter out reposted posts if the original user is blocked/blocking
-            { $match: { "user._id": { $nin: blockedAndBlockingObjectIds } } },
             {
-              // Project only essential repostedFrom post fields
               $project: {
                 text: 1,
                 img: 1,
                 video: 1,
                 mediaType: 1,
+                likes: 1,
+                commentsCount: 1,
+                repostsCount: 1,
+                repostedBy: 1,
+                bookmarkedBy: 1,
                 createdAt: 1,
-                publishedAt: 1,
                 user: 1,
-                isScheduled: 1,
-                scheduledAt: 1,
-                // Only include the fields truly needed for rendering a reposted post
-                // like the original post's content and user.
+                isScheduled: 1, // <--- Include these for potential client-side use or deeper filtering
+                scheduledAt: 1, // <--- Include these
               },
             },
           ],
         },
       },
       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+      // { $match: matchConditions },
+      // { $count: "count" },
+    ]);
 
-      // IMPORTANT: After $unwind for repostedFrom, you might need a $match again
-      // to filter out main posts that *were* reposts but whose original post
-      // was filtered out by the above $lookup pipeline (e.g., if repostedFrom is null after unwind)
-      {
-        $match: {
-          $or: [
-            { repostedFrom: { $exists: false } }, // Not a repost, or original was null
-            { repostedFrom: { $ne: null } }, // It is a repost, and the original post exists
-          ],
-        },
-      },
-
-      // Lookup the main post's user
-      {
-        $lookup: {
-          from: "users",
-          localField: "user",
-          foreignField: "_id",
-          as: "user",
-          pipeline: [
-            {
-              // Project only essential user fields
-              $project: {
-                _id: 1,
-                username: 1,
-                fullName: 1,
-                profileImg: 1,
-                isVerified: 1,
-                isGoldVerified: 1,
-                // Add more if absolutely needed for display
-              },
-            },
-          ],
-        },
-      },
-      { $unwind: "$user" }, // Assumes a post always has a user; if not, use preserveNullAndEmptyArrays: true
-
-      // Sort before skip/limit for correct pagination
-      { $sort: { publishedAt: -1, createdAt: -1 } },
-
-      // Use $facet for concurrent count and paginated results
-      {
-        $facet: {
-          totalCount: [{ $count: "count" }],
-          posts: [
-            { $skip: skip },
-            { $limit: limit },
-            // Final projection for the top-level post if needed, but often not necessary if all fields are already included/excluded correctly
-            // { $project: { /* ... specific fields for the final output ... */ } },
-          ],
-        },
-      },
-    ];
-
-    const result = await Post.aggregate(aggregationPipeline);
-
-    const totalCount =
-      result[0].totalCount.length > 0 ? result[0].totalCount[0].count : 0;
-    const posts = result[0].posts;
-
-    // The client-side filters for `repostedFrom.repostedFrom` and `!repostedFrom.user`
-    // should now be handled mostly by the aggregation pipeline.
-    // The filter for `repostedFrom.scheduledAt > new Date()` is handled by the pipeline.
-    // So, this client-side filtering should be redundant, or at least greatly simplified.
-    // Remove if the aggregation covers all cases.
     const finalFilteredPosts = posts.filter((post) => {
-      // If after all aggregation, a repostedFrom post is found but its user is null,
-      // it means the user was filtered out by the pipeline. This `!post.repostedFrom.user` check
-      // can serve as a final safeguard but should ideally be caught earlier in aggregation.
-      if (post.repostedFrom && !post.repostedFrom.user) {
-        console.warn("Reposted post with null user found after aggregation:", post._id);
+      // These client-side filters are fine, but ensure they don't unexpectedly remove posts
+      // If the aggregation query is strong enough, some of these might be redundant.
+      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
         return false;
       }
-      // The `repostedFrom.repostedFrom` check should be handled by `$match: { repostedFrom: null }`
-      // inside the repostedFrom's $lookup pipeline.
-      if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-        console.warn(
-          "Double repost found after aggregation (should be filtered):",
-          post._id
-        );
-        return false; // Redundant if aggregation is correct
+      if (post.repostedFrom && !post.repostedFrom.user) {
+        return false;
       }
-      // Scheduled logic for repostedFrom is also in aggregation
+      // Add client-side filter for reposts of future scheduled posts, if not fully covered by aggregation
+      if (
+        post.repostedFrom &&
+        post.repostedFrom.isScheduled &&
+        post.repostedFrom.scheduledAt &&
+        new Date(post.repostedFrom.scheduledAt) > new Date()
+      ) {
+        return false;
+      }
       return true;
     });
 
@@ -534,7 +463,7 @@ export const getAllPosts = async (req, res) => {
       .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
-    console.error("Error in getAllPosts controller: ", error); // Use console.error for errors
+    console.log("Error in getAllPosts controller: ", error); // Keep this for server-side debugging
   }
 };
 

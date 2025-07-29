@@ -77,14 +77,14 @@ export const SocketContextProvider = ({ children }) => {
       });
 
       newSocket.on("unreadMessageStatus", ({ hasUnread, unreadMessageCount }) => {
-        setHasUnreadMessages(hasUnread);
+        setHasUnreadMessages(unreadMessageCount > 0);
         setUnreadMessageCount(unreadMessageCount);
       });
 
       newSocket.on(
         "unreadNotificationStatus",
         ({ hasUnreadNotifications, unreadNotificationsCount }) => {
-          setHasUnreadNotifications(hasUnreadNotifications);
+          setHasUnreadNotifications(unreadNotificationsCount > 0);
           setUnreadNotificationsCount(unreadNotificationsCount);
         }
       );

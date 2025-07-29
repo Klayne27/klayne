@@ -114,6 +114,7 @@ export async function emitUnreadMessageStatus(userId) {
     const activeConversationId = userActiveChats.get(userId.toString());
     let activeConversationIdObj = null;
 
+    // Fetch blocking data for the *current* user (userId)
     const currentUserBlockingData = await User.findById(userIdObj)
       .select("blockedUsers blockedBy")
       .lean();
@@ -124,34 +125,73 @@ export async function emitUnreadMessageStatus(userId) {
       currentUserBlockingData?.blockedBy?.map((id) => id.toString()) || [];
     const blockedAndBlockingUserIds = [...new Set([...blockedByMe, ...blockedMe])];
 
-    // Convert blockedAndBlockingUserIds to ObjectIds for the query
     const blockedAndBlockingObjectIds = blockedAndBlockingUserIds.map(
       (id) => new mongoose.Types.ObjectId(id)
     );
 
-    // --- STEP 1: Find eligible conversations that are not hidden and not with blocked users ---
+    // STEP 1: Find eligible conversations for THIS specific user (userId)
+    // - userId must be a participant
+    // - conversation must not be hidden for userId
+    // - conversation must not involve any user blocked by or blocking userId
     const eligibleConversations = await Conversation.find({
       participants: userIdObj,
       hiddenFor: { $ne: userIdObj },
-      // Filter out conversations where *any* participant is blocked/blocking
-      // This requires checking both participants in a two-person chat.
-      // A more robust way might be to filter later if performance is an issue,
-      // but for accuracy, this is important.
-      participants: { $nin: blockedAndBlockingObjectIds },
-    }).select("_id"); // Only retrieve conversation IDs
+      // Important: Use $all and $not (or filter in code if $in is not performant for $nin)
+      // to ensure *none* of the conversation's participants are in the blockedAndBlocking list.
+      // This query might need to be refined for performance depending on number of participants.
+      // For 2-person chats, this is equivalent to finding the other participant and checking.
+      // A more performant way might be to get the conversation's other participant ID and check
+      // if that specific other participant is in blockedAndBlockingObjectIds array.
+      // Given your current `isBlockedOrBlockedBy` logic, let's keep it simple for now and rely on it.
 
-    const eligibleConversationIds = eligibleConversations.map((conv) => conv._id);
+      // Instead of the below, let's refine the query:
+      // Find conversations where the *other* participant is NOT blocked/blocking.
+      $and: [
+        { participants: { $size: 2 } }, // Assuming 2-person chats for simplicity for now
+        { participants: { $nin: blockedAndBlockingObjectIds } },
+      ],
+      // A more precise (but potentially complex) match:
+      // If conversation.participants is always `[user1, user2]`, then:
+      // {
+      //   $and: [
+      //     { participants: userIdObj }, // Current user is a participant
+      //     { hiddenFor: { $ne: userIdObj } }, // Not hidden for current user
+      //     {
+      //       'participants.0': { $nin: blockedAndBlockingObjectIds }, // participant 0 is not blocked/blocking
+      //       'participants.1': { $nin: blockedAndBlockingObjectIds }, // participant 1 is not blocked/blocking
+      //     }
+      //   ]
+      // }
+      // This is often better solved by filtering after fetching, or using $filter with $setIntersection if possible.
+      // For now, keep it as is, but be aware it might not be fully accurate for blocking status.
+    }).select("_id participants"); // Also select participants to filter by blocking status
+
+    const filteredEligibleConversationIds = [];
+    for (const conv of eligibleConversations) {
+      const otherParticipant = conv.participants.find((p) => !p.equals(userIdObj));
+      // If the other participant exists and is not in the blocked list of the current user,
+      // and the current user is not in the blocked list of the other participant.
+      // This is where `isBlockedOrBlockedBy` comes in.
+      const isOtherUserBlocked = await isBlockedOrBlockedBy(userIdObj, otherParticipant);
+      const isUserBlockedByOther = await isBlockedOrBlockedBy(
+        otherParticipant,
+        userIdObj
+      );
+
+      if (!isOtherUserBlocked && !isUserBlockedByOther) {
+        filteredEligibleConversationIds.push(conv._id);
+      }
+    }
 
     // If the user is currently active in a specific conversation, exclude it from the count
     if (activeConversationId) {
       try {
         activeConversationIdObj = new mongoose.Types.ObjectId(activeConversationId);
-        // Remove the active conversation from the list of eligible IDs
-        const index = eligibleConversationIds.findIndex((id) =>
+        const index = filteredEligibleConversationIds.findIndex((id) =>
           id.equals(activeConversationIdObj)
         );
         if (index > -1) {
-          eligibleConversationIds.splice(index, 1);
+          filteredEligibleConversationIds.splice(index, 1);
         }
       } catch (objIdError) {
         console.error(
@@ -161,22 +201,28 @@ export async function emitUnreadMessageStatus(userId) {
       }
     }
 
-    // --- STEP 2: Count unread messages within the eligible conversations ---
-    // Count messages where:
-    // 1. The message is for an eligible conversation
-    // 2. The message was sent by someone other than the current user (the receiver)
-    // 3. The message has not been seen by the current user
+    // STEP 2: Count unread messages within the eligible conversations for THIS user
     const unreadMessageCount = await Message.countDocuments({
-      conversationId: { $in: eligibleConversationIds },
-      sender: { $ne: userIdObj }, // Message sent by the other person
-      seen: false, // Not yet seen by the receiver
-      text: { $exists: true, $ne: "" }, // Ensure it's a valid message (not just an empty placeholder)
+      conversationId: { $in: filteredEligibleConversationIds }, // Messages in eligible conversations
+      sender: { $ne: userIdObj }, // Messages sent by the *other* person
+      seen: false, // Messages not yet seen by THIS user
+      text: { $exists: true, $ne: "" }, // Ensure it's a valid message
     });
 
+    // EMIT ONLY TO THIS USER'S SOCKETS
     const recipientSocketIds = getReceiverSocketIds(userId);
-    recipientSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("unreadMessageStatus", { unreadMessageCount });
-    });
+    if (recipientSocketIds.length > 0) {
+      recipientSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("unreadMessageStatus", { unreadMessageCount });
+      });
+      console.log(
+        `Emitting unreadMessageStatus for user ${userId} (count: ${unreadMessageCount}) to sockets: ${recipientSocketIds.join(
+          ", "
+        )}`
+      );
+    } else {
+      console.log(`User ${userId} is offline. Unread message status not emitted.`);
+    }
   } catch (error) {
     console.error(
       `Unhandled error in emitUnreadMessageStatus for user ${userId}:`,

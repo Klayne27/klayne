@@ -58,6 +58,7 @@ const Post = ({
   const repostedByCurrentUser = sourcePost?.repostedBy?.includes(authUser?._id);
   const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(sourcePost._id);
 
+  console.log(sourcePost);
   const isPinnedForUI =
     sourcePost?.isPinned !== undefined ? sourcePost.isPinned : hasAuthUserPinnedOriginal;
 

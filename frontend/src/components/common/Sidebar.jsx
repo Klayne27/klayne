@@ -135,14 +135,20 @@ const Sidebar = ({
     );
   }, []);
 
-  useEffect(() => {
-    const hasAnyNotification =
-      hasUnreadMessages ||
-      hasUnreadNotifications ||
-      hasNewFeedPosts ||
-      hasUnreadPublicChat;
+  // const hasAnyNewNotification =
+  //   unreadMessageCount > 0 ||
+  //   unreadNotificationsCount > 0 ||
+  //   unreadPublicChatCount > 0 ||
+  //   newPostCount > 0;
 
-    if (hasAnyNotification) {
+  useEffect(() => {
+    const hasAnyNewNotification =
+      unreadMessageCount > 0 ||
+      unreadNotificationsCount > 0 ||
+      unreadPublicChatCount > 0 ||
+      newPostCount > 0;
+
+    if (hasAnyNewNotification) {
       document.title = `(New) ${originalTitle.current}`;
     } else {
       document.title = originalTitle.current;
@@ -156,7 +162,7 @@ const Sidebar = ({
       return;
     }
 
-    if (hasAnyNotification) {
+    if (hasAnyNewNotification) {
       const canvas = document.createElement("canvas");
       canvas.width = 32;
       canvas.height = 32;
@@ -224,22 +230,22 @@ const Sidebar = ({
   };
 
   const handleHomeClick = useCallback(() => {
-    // Scroll smoothly to the top of the feed
-    if (pathname === "/") {
-      window.scrollTo({
-        top: 0,
-        behavior: "smooth",
-      });
-    }
+    navigate("/");
+
+    window.scrollTo({
+      top: 0,
+      behavior: "smooth",
+    });
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
     markFeedAsRead();
     setShowNewFeedPostsButton(false);
     // setNewPostCount(0);
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, pathname]);
 
   const handleBookmarksClick = () => {
+    if (pathname === "/bookmarks") return;
     queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
     navigate("/bookmarks");
   };
@@ -452,6 +458,7 @@ const Sidebar = ({
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
   const handlePublicChatClick = () => {
+    if (pathname === "/public-chat") return;
     navigate("/public-chat");
   };
 
@@ -502,7 +509,8 @@ const Sidebar = ({
           {/* Home */}
           <li
             onClick={() => {
-              navigate("/")
+              // if (pathname === "/") return
+              // navigate("/");
               handleHomeClick();
             }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[115px] p-1 md:p-0"
@@ -544,6 +552,7 @@ const Sidebar = ({
 
           <li
             onClick={() => {
+              if (pathname === "/messages") return;
               navigate("/messages");
               queryClient.invalidateQueries({ queryKey: ["conversations"] });
             }}
@@ -594,7 +603,10 @@ const Sidebar = ({
           </li>
 
           <li
-            onClick={() => navigate("/notifications")}
+            onClick={() => {
+              if (pathname === "/notifications") return;
+              navigate("/notifications");
+            }}
             className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[180px] p-1 md:p-0"
           >
             <button
@@ -817,7 +829,10 @@ const Sidebar = ({
 
           {/* Profile (Desktop Only) */}
           <li
-            onClick={() => navigate(`/profile/${authUser?.username}`)}
+            onClick={() => {
+              if (pathname === `/profile/${authUser?.username}`) return;
+              navigate(`/profile/${authUser?.username}`);
+            }}
             className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[125px] p-1 md:p-0"
           >
             <button
@@ -1068,6 +1083,7 @@ const Sidebar = ({
                 {/* Bookmarks Tab in Side Modal (now visible only in modal on mobile) */}
                 <li
                   onClick={() => {
+                    if (pathname === "/bookmarks") return;
                     navigate("/bookmarks");
                     setShowSideModal(false); // Close modal on navigation
                   }}
@@ -1094,6 +1110,7 @@ const Sidebar = ({
                 {/* Themes Tab in Side Modal */}
                 <li
                   onClick={() => {
+                    if (pathname === "/themes") return;
                     navigate("/themes");
                     setShowSideModal(false); // Close modal on navigation
                   }}
