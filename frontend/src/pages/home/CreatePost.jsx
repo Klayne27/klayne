@@ -18,13 +18,14 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { showAppToast } from "../../utils/showAppToast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
 const MAX_FILE_SIZE_MB = 20;
 
 const CreatePost = () => {
-  const { hasNewFeedPosts, setShowNewFeedPostsButton, setHasNewFeedPosts } = useSocket();
+  const { hasNewFeedPosts, setShowNewFeedPostsButton, setNewPostCount, newPostCount } = useSocket();
   const queryClient = useQueryClient();
 
   // State for post content
@@ -97,6 +98,8 @@ const CreatePost = () => {
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
     debouncedMentionSearchTerm
   );
+      const { markFeedAsRead } = useMarkPostsAsRead();
+  
 
   // Effect to adjust emoji picker width on resize
   useEffect(() => {
@@ -186,8 +189,9 @@ const CreatePost = () => {
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
     setShowNewFeedPostsButton(false);
-    setHasNewFeedPosts(false);
-  }, [queryClient, setShowNewFeedPostsButton, setHasNewFeedPosts]);
+    markFeedAsRead()
+    setNewPostCount(0);
+  }, [queryClient, setShowNewFeedPostsButton, setNewPostCount, markFeedAsRead]);
 
   const handlePaste = useCallback(
     (e) => {
@@ -918,12 +922,12 @@ const CreatePost = () => {
           />
         )}
       </div>
-      {hasNewFeedPosts && (
+      {newPostCount > 0 && (
         <div
           onClick={handleNewPostsButtonClick}
           className="py-3 hover:bg-gray-700/30 transition duration-500 border-b border-accent text-center text-primary cursor-pointer"
         >
-          Show new posts
+          Show {newPostCount} new post(s)
         </div>
       )}
     </>

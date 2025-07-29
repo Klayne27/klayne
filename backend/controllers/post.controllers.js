@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 
 import {
   createAndSendNotification,
+  emitNewPostCount,
   emitUnreadNotificationStatus,
   io,
   onlineUsersMap,
@@ -163,16 +164,26 @@ export const createPost = async (req, res) => {
         }
       }
 
-      // Check if onlineUsersMap and io are defined before using
       if (onlineUsersMap && io) {
         for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+          // Do not send count to the user who just created the post.
+          // They don't need a badge for their own post.
           if (onlineUserId.toString() !== userId.toString()) {
-            socketIdsSet.forEach((socketId) => {
-              io.to(socketId).emit("newPostAvailable", newPost);
-            });
+            await emitNewPostCount(onlineUserId); // Emit count to other users
           }
         }
       }
+
+      // Check if onlineUsersMap and io are defined before using
+      // if (onlineUsersMap && io) {
+      //   for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+      //     if (onlineUserId.toString() !== userId.toString()) {
+      //       socketIdsSet.forEach((socketId) => {
+      //         io.to(socketId).emit("newPostCount", newPost);
+      //       });
+      //     }
+      //   }
+      // }
     } else {
       console.log(`Post scheduled for ${newPost.scheduledAt}`);
     }
@@ -1879,6 +1890,33 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in deleteMultipleScheduledPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// controllers/postController.js (add this function)
+// Don't forget to add a route for this endpoint in your Express router
+
+export const markFeedPostsAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id; // Assuming user ID is from authentication
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    // Get the current time to mark all previous posts as read
+    const now = new Date();
+
+    await User.findByIdAndUpdate(
+      userIdObj,
+      { $set: { lastReadFeedTimestamp: now } },
+      { new: true } // Returns the updated document (optional)
+    );
+
+    // After marking as read, emit a 0 count to the user's connected sockets
+    await emitNewPostCount(userId.toString()); // Ensure it's a string for emitNewPostCount
+
+    res.status(200).json({ message: "Feed posts marked as read." });
+  } catch (error) {
+    console.error("Error marking feed posts as read:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

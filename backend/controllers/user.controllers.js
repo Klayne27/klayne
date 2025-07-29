@@ -72,6 +72,7 @@ export const getUserProfile = async (req, res) => {
       isBlockedByYou: isBlockedByYou,
       hasBlockedYou: hasBlockedYou,
     };
+    console.log(profileData);
 
     res.status(200).json(profileData);
   } catch (error) {

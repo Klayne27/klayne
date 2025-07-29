@@ -20,6 +20,7 @@ import {
   getScheduledPosts,
   deleteScheduledPost,
   deleteMultipleScheduledPosts,
+  markFeedPostsAsRead,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -55,5 +56,6 @@ router.put("/scheduled/:id", protectRoute, updateScheduledPost); // Add protectR
 router.delete("/scheduled/:id", protectRoute, deleteScheduledPost); // Add protectRoute
 router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
 
+router.post("/mark-as-read", protectRoute, markFeedPostsAsRead); // Add this new route
 
 export default router;

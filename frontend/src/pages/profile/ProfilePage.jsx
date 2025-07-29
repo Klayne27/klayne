@@ -62,6 +62,7 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType, openProfileImgModa
     error,
     isBlockedByYou,
     hasBlockedYou,
+    userProfileId,
     httpStatus,
   } = useFetchUserProfile(username);
 

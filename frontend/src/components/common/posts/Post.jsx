@@ -21,6 +21,7 @@ import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUs
 import useFollow from "../../../hooks/usersHooks/useFollow";
 import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { MdBlock } from "react-icons/md";
+import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile";
 
 const Post = ({
   post,
@@ -69,12 +70,15 @@ const Post = ({
   const isMyOriginalPost =
     authUser && originalPostOwner && authUser._id === originalPostOwner._id; // NEW: Check if the original post belongs to the current user
 
+  const { userProfile } = useFetchUserProfile(username);
+
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(
     currentProfileUsername,
     profileOwnerId
   );
+
   const { repostPost, isReposting } = useRepostPost();
-  const { likePost, isLiking } = useLikePost(username);
+  const { likePost, isLiking } = useLikePost(username, userProfile?._id);
   const { deletePost, isDeleting } = useDeletePosts();
   const { pinUnpinPost, isPinning } = usePinPost();
 
@@ -376,10 +380,20 @@ const Post = ({
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
-                  <img src="/verified.png" className="size-[17px]" alt="Verified" loading="lazy" />
+                  <img
+                    src="/verified.png"
+                    className="size-[17px]"
+                    alt="Verified"
+                    loading="lazy"
+                  />
                 )}
                 {originalPostOwner.isGoldVerified && (
-                  <img src="/gold-verified.png" className="size-[17px]" alt="Verified" loading="lazy" />
+                  <img
+                    src="/gold-verified.png"
+                    className="size-[17px]"
+                    alt="Verified"
+                    loading="lazy"
+                  />
                 )}
               </Link>
               <span className="text-slate-500 flex gap-1 text-sm min-w-0">

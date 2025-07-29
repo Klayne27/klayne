@@ -103,6 +103,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastReadFeedTimestamp: {
+      type: Date,
+      default: null,
+    },
   },
   { timestamps: true }
 );

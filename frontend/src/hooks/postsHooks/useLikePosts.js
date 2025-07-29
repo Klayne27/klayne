@@ -3,7 +3,7 @@ import { likePostApi } from "../../api/postsApi"; // Assuming this path is corre
 import { useAuthUser } from "../authHooks/useAuthUser"; // Assuming this path is correct
 
 
-export const useLikePost = (username = null) => {
+export const useLikePost = (username = null, userProfileId = null) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
 
@@ -24,8 +24,8 @@ export const useLikePost = (username = null) => {
 
       // 2. Adjust dynamicUserLikesKey to always use `authUser._id`
       // This key is for the current authenticated user's "liked posts" feed, not the profile being viewed.
-      const dynamicUserLikesKey = authUser?._id
-        ? ["posts", `/api/posts/likes/${authUser._id}`]
+      const dynamicUserLikesKey = userProfileId
+        ? ["posts", `/api/posts/likes/${userProfileId}`]
         : null;
 
       const queryKeysToUpdate = [
@@ -44,7 +44,7 @@ export const useLikePost = (username = null) => {
       );
       // Ensure authUser.username is valid before cancelling this specific query
       if (authUser?.username) {
-        await queryClient.cancelQueries({ queryKey: ["pinnedPosts", authUser.username] });
+        await queryClient.cancelQueries({ queryKey: ["pinnedPosts", username] });
       }
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
 
@@ -65,7 +65,7 @@ export const useLikePost = (username = null) => {
       if (authUser?.username) {
         previousDataSnapshots["pinnedPosts"] = queryClient.getQueryData([
           "pinnedPosts",
-          authUser.username,
+          username,
         ]);
       }
       previousDataSnapshots["postDetail"] = queryClient.getQueryData(["post", postId]);
@@ -99,10 +99,10 @@ export const useLikePost = (username = null) => {
                   const targetPostForLikes = isOriginalTargetOfRepost
                     ? post.repostedFrom
                     : post;
-                  const isAlreadyLiked = targetPostForLikes.likes?.includes(authUser._id);
+                  const isAlreadyLiked = targetPostForLikes.likes?.includes(authUser?._id);
                   const newLikes = isAlreadyLiked
-                    ? (targetPostForLikes.likes || []).filter((id) => id !== authUser._id)
-                    : [...(targetPostForLikes.likes || []), authUser._id];
+                    ? (targetPostForLikes.likes || []).filter((id) => id !== authUser?._id)
+                    : [...(targetPostForLikes.likes || []), authUser?._id];
 
                   if (isOriginalTargetOfRepost) {
                     return {
@@ -180,10 +180,10 @@ export const useLikePost = (username = null) => {
           return oldData;
         }
 
-        const isLiked = targetForLikeUpdate.likes?.includes(authUser._id);
+        const isLiked = targetForLikeUpdate.likes?.includes(authUser?._id);
         const newLikes = isLiked
-          ? (targetForLikeUpdate.likes || []).filter((id) => id !== authUser._id)
-          : [...(targetForLikeUpdate.likes || []), authUser._id];
+          ? (targetForLikeUpdate.likes || []).filter((id) => id !== authUser?._id)
+          : [...(targetForLikeUpdate.likes || []), authUser?._id];
 
         if (oldData._id === postId) {
           return { ...oldData, likes: newLikes };
@@ -204,10 +204,10 @@ export const useLikePost = (username = null) => {
       queryClient.setQueryData(["bookmarkedPosts"], updatePaginatedList);
 
       // C. OPTIMISTIC UPDATE FOR PINNED POSTS LIST
-      if (authUser?.username) {
+      if (username) {
         // Only update if authUser.username is available
         queryClient.setQueryData(
-          ["pinnedPosts", authUser.username],
+          ["pinnedPosts", username],
           updateSinglePostArray
         );
       }
@@ -263,22 +263,22 @@ export const useLikePost = (username = null) => {
           );
         }
         // Rollback dynamic likes key using `authUser._id`
-        if (context.previousDataSnapshots["posts_likes"] && authUser?._id) {
+        if (context.previousDataSnapshots["posts_likes"] && userProfileId) {
           queryClient.setQueryData(
-            ["posts", `/api/posts/likes/${authUser._id}`],
+            ["posts", `/api/posts/likes/${userProfileId}`],
             context.previousDataSnapshots["posts_likes"]
           );
         }
 
         // Rollback pinned posts
-        if (authUser?.username && context.previousDataSnapshots["pinnedPosts"]) {
+        if (username && context.previousDataSnapshots["pinnedPosts"]) {
           queryClient.setQueryData(
-            ["pinnedPosts", authUser.username],
+            ["pinnedPosts", username],
             context.previousDataSnapshots["pinnedPosts"]
           );
-        } else if (authUser?.username) {
+        } else if (username) {
           // Fallback if snapshot wasn't taken (e.g., if authUser.username was missing during mutate)
-          queryClient.invalidateQueries({ queryKey: ["pinnedPosts", authUser.username] });
+          queryClient.invalidateQueries({ queryKey: ["pinnedPosts", username] });
         }
 
         // Rollback single post detail page

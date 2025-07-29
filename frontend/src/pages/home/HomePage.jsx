@@ -5,10 +5,15 @@ import Posts from "../../components/common/posts/Posts";
 import CreatePost from "./CreatePost";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
+import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 
 const HomePage = ({ openImageModal, showUnfollowModal }) => {
-  const { showNewFeedPostsButton, setShowNewFeedPostsButton, setHasNewFeedPosts } =
-    useSocket();
+  const {
+    showNewFeedPostsButton,
+    setShowNewFeedPostsButton,
+    setNewPostCount,
+    newPostCount,
+  } = useSocket();
   const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
@@ -20,6 +25,9 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
   const queryClient = useQueryClient();
 
+    const { markFeedAsRead } = useMarkPostsAsRead();
+  
+
   // Function to scroll to the top and refetch posts
   const handleNewPostsButtonClick = useCallback(() => {
     // Scroll smoothly to the top of the feed
@@ -30,9 +38,10 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
+    markFeedAsRead()
     setShowNewFeedPostsButton(false);
-    setHasNewFeedPosts(false);
-  }, [queryClient, setShowNewFeedPostsButton, setHasNewFeedPosts]);
+    setNewPostCount(0);
+  }, [queryClient, setShowNewFeedPostsButton, setNewPostCount, markFeedAsRead]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -164,16 +173,16 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
         </div>
 
         {/* NEW POSTS BUTTON */}
-        {showNewFeedPostsButton && showScrollButton && feedType === "forYou" && (
+        {!showNewFeedPostsButton && showScrollButton && !newPostCount && feedType === "forYou" && (
           <button
             onClick={handleNewPostsButtonClick}
-            className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 z-50
-                       bg-primary text-white px-4 py-2 rounded-full white-shadow
+            className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 md:-translate-x-[110%] z-50
+                       bg-primary text-white px-3 py-2 rounded-full white-shadow
                        hover:bg-primary/90 transition-all duration-200
-                       flex items-center gap-2 text-sm md:text-md"
+                       flex items-center gap-2 text-xs md:text-sm"
           >
-            <FaArrowUp size={18} />
-            <span>Show new posts</span>
+            <FaArrowUp className="size-4" />
+            <span>{newPostCount} new post(s)</span>
           </button>
         )}
 

@@ -27,6 +27,7 @@ export const SocketContextProvider = ({ children }) => {
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0);
   const [unreadMessageCount, setUnreadMessageCount] = useState(0);
   const [unreadPublicChatCount, setUnreadPublicChatCount] = useState(0)
+  const [newPostCount, setNewPostCount] = useState(0)
 
   const socketRef = useRef(null);
   const queryClient = useQueryClient();
@@ -88,9 +89,10 @@ export const SocketContextProvider = ({ children }) => {
         }
       );
 
-      newSocket.on("newPostAvailable", () => {
-        setHasNewFeedPosts(true);
+      newSocket.on("newPostCount", (data) => {
+        // setHasNewFeedPosts(true);
         setShowNewFeedPostsButton(true);
+        setNewPostCount(data.newPostCount);
       });
 
       newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
@@ -195,6 +197,8 @@ export const SocketContextProvider = ({ children }) => {
       setHasUnreadPublicChat(false); // Clear public chat unread status on logout
       setUnreadNotificationsCount(0);
       setUnreadMessageCount(0);
+      setNewPostCount(0)
+      setUnreadPublicChatCount(0)
     }
   }, [user, isLoadingAuthUser, queryClient]);
 
@@ -240,6 +244,8 @@ export const SocketContextProvider = ({ children }) => {
         unreadNotificationsCount,
         unreadMessageCount,
         unreadPublicChatCount,
+        newPostCount,
+        setNewPostCount
       }}
     >
       {children}

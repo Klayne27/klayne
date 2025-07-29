@@ -17,6 +17,7 @@ import { showAppToast } from "../../utils/showAppToast";
 import { BsThreeDots } from "react-icons/bs";
 import ConfirmationModal from "./ConfirmationModal";
 import FeatherIcon from "../svgs/FeatherIcon";
+import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 
 const Sidebar = ({
   isChatWindowOpen,
@@ -37,6 +38,7 @@ const Sidebar = ({
     unreadNotificationsCount,
     unreadMessageCount,
     unreadPublicChatCount,
+    newPostCount,
   } = useSocket();
   const queryClient = useQueryClient();
   // const {username} = useParams()
@@ -69,6 +71,7 @@ const Sidebar = ({
   const [isTouchDevice, setIsTouchDevice] = useState(false);
   const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
 
+  const { markFeedAsRead } = useMarkPostsAsRead();
   // --- NEW TOUCH HANDLERS ---
   const handleTouchStart = useCallback(
     (id) => {
@@ -221,17 +224,16 @@ const Sidebar = ({
   };
 
   const handleHomeClick = () => {
-
     if (pathname === "/")
-    window.scrollTo({
-      top: 0,
-      behavior: "smooth",
-    });
+      window.scrollTo({
+        top: 0,
+        behavior: "smooth",
+      });
 
-    queryClient.invalidateQueries({ queryKey: ["posts"] });
+    markFeedAsRead()
     if (hasNewFeedPosts) {
-      setHasNewFeedPosts(false);
-      setShowNewFeedPostsButton(false)
+      // setHasNewFeedPosts(false);
+      setShowNewFeedPostsButton(false);
     }
   };
 
@@ -522,11 +524,12 @@ const Sidebar = ({
                 }`}
                 strokeWidth={pathname === "/" ? 10 : 8}
               />
-              {hasNewFeedPosts && (
+              {newPostCount > 0 && (
                 <div
                   className="absolute top-3 right-2.5 w-3 h-3 bg-primary rounded-full border-2 border-black"
                   style={{ transform: "translate(50%, -50%)" }}
-                ></div>
+                >
+                </div>
               )}
             </button>
             <span
@@ -690,7 +693,7 @@ const Sidebar = ({
 
           {/* Search (Mobile Only) */}
           <li
-            className="flex md:flex justify-start lg:hidden items-center cursor-pointer "
+            className="flex justify-start md:hidden items-center cursor-pointer "
             onClick={handleMobileSearchClick}
           >
             <button

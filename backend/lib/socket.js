@@ -7,6 +7,7 @@ import mongoose from "mongoose";
 import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
+import Post from "../models/post.model.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -71,6 +72,41 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
+
+export async function emitNewPostCount(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+
+    const user = await User.findById(userIdObj).select("lastReadFeedTimestamp").lean();
+
+    if (!user) {
+      console.warn(`User ${userId} not found for emitNewPostCount.`);
+      return;
+    }
+
+    // Use epoch if lastReadFeedTimestamp is null or undefined
+    const lastReadTimestamp = user.lastReadFeedTimestamp || new Date(0);
+
+    // Count posts published *after* the user's lastReadFeedTimestamp,
+    // and not sent by the user themselves.
+    // Ensure we only count non-scheduled posts that are actually published.
+    const newPostCount = await Post.countDocuments({
+      user: { $ne: userIdObj }, // Exclude posts made by the user themselves
+      isScheduled: false, // Only count immediately published posts
+      publishedAt: { $gt: lastReadTimestamp }, // Posts published after user's last read
+      // Add conditions to filter out posts from blocked users, etc., if your feed is filtered.
+      // This is crucial for accuracy. Example:
+      // "user": { $nin: blockedAndBlockingUsersIds } (if you fetch them here too)
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newPostCount", { newPostCount });
+    });
+  } catch (error) {
+    console.error(`Unhandled error in emitNewPostCount for user ${userId}:`, error);
+  }
+}
 
 export async function emitUnreadMessageStatus(userId) {
   try {

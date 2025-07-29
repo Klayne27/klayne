@@ -54,7 +54,7 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
         for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
           if (onlineUserId.toString() !== post.user._id.toString()) {
             socketIdsSet.forEach((socketId) => {
-              io.to(socketId).emit("newPostAvailable", post);
+              io.to(socketId).emit("newPostCount", post);
             });
           }
         }

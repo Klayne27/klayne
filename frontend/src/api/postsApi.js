@@ -168,3 +168,16 @@ export const deleteMultipleScheduledPostsApi = async (postIds) => {
   if (!res.ok) throw new Error(data.error || "Failed to delete multiple scheduled posts");
   return data;
 };
+
+export const markPostsAsReadApi = async () => {
+  const res = await fetch("/api/posts/mark-as-read", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to mark posts as read");
+
+  return data;
+};
