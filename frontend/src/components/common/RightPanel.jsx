@@ -5,7 +5,7 @@ import SuggestedUsersPanel from "./SuggestedUsersPanel";
 const RightPanel = ({showUnfollowModal, setShowUnfollowModal}) => {
 
   return (
-    <div className="hidden md:block sticky pt-4 px-4 h-[100vh] w-[380px] top-0 border-l border-accent">
+    <div className="hidden lg:block sticky pt-4 px-4 h-[100vh] w-[380px] top-0 border-l border-accent">
       <SearchPanel />
       <SuggestedUsersPanel
         showUnfollowModal={showUnfollowModal}

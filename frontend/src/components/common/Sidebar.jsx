@@ -141,6 +141,9 @@ const Sidebar = ({
   //   unreadPublicChatCount > 0 ||
   //   newPostCount > 0;
 
+  const totalNotifications =
+    unreadMessageCount + unreadNotificationsCount + unreadPublicChatCount + newPostCount;
+
   useEffect(() => {
     const hasAnyNewNotification =
       unreadMessageCount > 0 ||
@@ -149,7 +152,7 @@ const Sidebar = ({
       newPostCount > 0;
 
     if (hasAnyNewNotification) {
-      document.title = `(New) ${originalTitle.current}`;
+      document.title = `(${totalNotifications}) ${originalTitle.current}`;
     } else {
       document.title = originalTitle.current;
     }
@@ -176,7 +179,7 @@ const Sidebar = ({
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
 
-        const badgeSize = 13;
+        const badgeSize = 10;
         const padding = 0;
         ctx.beginPath();
         ctx.arc(
@@ -223,7 +226,17 @@ const Sidebar = ({
         faviconLink.href = originalFaviconHref.current;
       }
     };
-  }, [hasUnreadMessages, hasUnreadNotifications, hasNewFeedPosts, hasUnreadPublicChat]);
+  }, [
+    hasUnreadMessages,
+    hasUnreadNotifications,
+    hasNewFeedPosts,
+    hasUnreadPublicChat,
+    newPostCount,
+    totalNotifications,
+    unreadMessageCount,
+    unreadNotificationsCount,
+    unreadPublicChatCount,
+  ]);
 
   const handleMobileSearchClick = () => {
     navigate("/search");
@@ -242,7 +255,7 @@ const Sidebar = ({
     markFeedAsRead();
     setShowNewFeedPostsButton(false);
     // setNewPostCount(0);
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, pathname]);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate]);
 
   const handleBookmarksClick = () => {
     if (pathname === "/bookmarks") return;
@@ -492,7 +505,7 @@ const Sidebar = ({
         <div
           to="/"
           onClick={handleHomeClick}
-          className={`hidden md:flex justify-start px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
+          className={`hidden md:flex justify-start cursor-pointer px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
             ${
               isTouchDevice && activeButton === "x-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
@@ -702,7 +715,7 @@ const Sidebar = ({
 
           {/* Search (Mobile Only) */}
           <li
-            className="flex justify-start md:hidden items-center cursor-pointer "
+            className="flex justify-start lg:hidden items-center cursor-pointer "
             onClick={handleMobileSearchClick}
           >
             <button

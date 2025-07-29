@@ -87,6 +87,7 @@ export async function emitNewPostCount(userId) {
 
     // Use epoch if lastReadFeedTimestamp is null or undefined
     const lastReadTimestamp = user.lastReadFeedTimestamp || new Date(0);
+    
 
     // Count posts published *after* the user's lastReadFeedTimestamp,
     // and not sent by the user themselves.
