@@ -43,7 +43,7 @@ const formatDisplayTime = (dateString) => {
   return new Date(dateString).toLocaleTimeString([], {
     hour: "2-digit",
     minute: "2-digit",
-    hour12: true, // Use 12-hour format with AM/PM
+    hour12: false, // Use 12-hour format with AM/PM
   });
 };
 
@@ -93,13 +93,10 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const LONG_PRESS_DURATION = 500; // milliseconds
   const fromMe = message.sender._id === authUser._id;
   useEffect(() => {
-    // Basic mobile detection based on user agent or screen width
     const checkIfMobile = () => {
-      const userAgent = navigator.userAgent || navigator.vendor || window.opera;
-      const isMobileDevice =
-        /android|iphone|ipad|ipod|blackberry|windows phone/i.test(userAgent) ||
-        window.innerWidth < 768;
-      setIsMobile(isMobileDevice);
+      const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice || isSmallScreen);
     };
 
     checkIfMobile();
@@ -265,6 +262,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const allowedEmojis = ["❤️", "👍", "😂"];
 
   const shouldShowTimeOnHover = isHovered || showModal;
+  const isMessageHighlighted = isHovered || showModal;
 
   // --- Grouping Reactions Logic ---
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
@@ -378,17 +376,21 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       <div
         key={message._id}
         id={`message-${message._id}`}
-        className={`relative mb-0 p-[1px] rounded-lg hover:bg-secondary ${
-          fromMe ? "justify-end" : "justify-start"
-        } ${isFirstInGroup ? "mt-4" : ""}`}
+        className={`relative mb-0 p-[1px] rounded-lg ${
+          isMessageHighlighted ? "bg-secondary" : ""
+        } ${fromMe ? "justify-end" : "justify-start"} ${isFirstInGroup ? "mt-4" : ""}`}
         style={messageContentStyle}
         onMouseEnter={() => {
-          handleMouseEnter(message._id);
-          setIsHovered(true);
+          if (!isMobile) {
+            handleMouseEnter(message._id);
+            setIsHovered(true);
+          }
         }}
         onMouseLeave={() => {
-          handleMouseLeave();
-          setIsHovered(false);
+          if (!isMobile) {
+            handleMouseLeave();
+            setIsHovered(false);
+          }
         }}
         onClick={(e) => {
           const modalElement = document.getElementById(
@@ -570,6 +572,16 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           {/* Spacer for non-first messages to align with avatar */}
           {!fromMe && !isFirstInGroup && <div className="w-9 flex-shrink-0" />}
 
+          {shouldShowTimeOnHover && !isSentByCurrentUser && !isFirstInGroup && (
+            <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
+              {formatDisplayTime(message.createdAt)}
+            </div>
+          )}
+          {shouldShowTimeOnHover && isSentByCurrentUser && !isFirstInGroup && (
+            <div className="absolute -left-[58px] top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
+              {formatDisplayTime(message.createdAt)}
+            </div>
+          )}
           {/* Message Content and Timestamp Wrapper */}
           <div
             className={`flex flex-col ${
@@ -760,7 +772,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                       className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 ${
                         hasCurrentUserReactedToThisEmoji
                           ? "bg-violet-600/30 border-violet-600 border"
-                          : "bg-gray-800 border border-gray-800"
+                          : "bg-gray-800 border border-gray-800 hover:bg-gray-700 transition duration-200"
                       }`}
                       style={messageContentStyle}
                       title={

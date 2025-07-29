@@ -676,10 +676,10 @@ const MessageItem = ({
                     <div
                       key={emoji}
                       style={messageContentStyle}
-                      className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5 ${
+                      className={`flex items-center cursor-pointer text-md rounded-lg px-1.5 py-1.5  ${
                         hasCurrentUserReactedToThisEmoji
                           ? "bg-violet-600/30 border-violet-600 border"
-                          : "bg-gray-800 border border-gray-800"
+                          : "bg-gray-800 border border-gray-800 hover:bg-gray-700 transition duration-200"
                       }`}
                       onClick={(e) => {
                         e.stopPropagation();
