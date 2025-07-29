@@ -337,6 +337,7 @@ const MessageItem = ({
         className={`relative mb-0 p-[1px] rounded-lg ${
           isMessageHighlighted ? "bg-secondary" : ""
         } ${isFirstInGroup ? "mt-2" : ""} `}
+        style={messageContentStyle}
         onMouseEnter={() => {
           if (!isMobile) {
             handleMouseEnter(msg._id);
@@ -371,16 +372,17 @@ const MessageItem = ({
         <div
           id={`message-modal-${msg._id}`}
           className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 z-10
-          ${
-            isSentByCurrentUser
-              ? "-left-24 translate-x-1/2"
-              : "-right-24 -translate-x-1/2"
-          }
+            ${
+              isSentByCurrentUser
+                ? "-left-24 translate-x-1/2"
+                : "-right-24 -translate-x-1/2"
+            }
           ${
             showModal
               ? "opacity-100 pointer-events-auto"
               : "opacity-0 pointer-events-none"
           } `}
+          style={messageContentStyle}
         >
           {allowedEmojis.map((emoji) => (
             <button
