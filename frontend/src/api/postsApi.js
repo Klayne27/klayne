@@ -23,7 +23,7 @@ export const likePostApi = async (postId) => {
   return data;
 };
 
-export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 15) => {
+export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
   const res = await fetch(url);
 

@@ -926,7 +926,7 @@ const CreatePost = () => {
           onClick={handleNewPostsButtonClick}
           className="py-3 hover:bg-gray-700/30 transition duration-500 border-b border-accent text-center text-primary cursor-pointer"
         >
-          Show {newPostCount} new post(s)
+          Show {newPostCount} post{newPostCount > 1 ? "s" : ""}
         </div>
       )}
     </>
