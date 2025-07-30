@@ -1,8 +1,5 @@
-// hooks/postsHooks/useToggleBookmarks.js
-
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleBookmarkApi } from "../../api/postsApi";
-import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -30,10 +27,8 @@ export const useToggleBookmarks = (
         ? ["posts", `/api/posts/likes/${profileOwnerId}`]
         : null;
 
-      // Add the specific pinnedPosts key IF it's likely to be used on the current profile
-      // This is crucial if pinnedPosts has its own dedicated query cache entry.
       const pinnedPostsQueryKey = currentProfileUsername
-        ? ["pinnedPosts", currentProfileUsername] // Assuming this is your key for fetching pinned posts for the current user's profile
+        ? ["pinnedPosts", currentProfileUsername]
         : null;
 
       const queryKeysToUpdate = [
@@ -43,25 +38,21 @@ export const useToggleBookmarks = (
         ["post", postId],
         ...(dynamicUserPostsKey ? [dynamicUserPostsKey] : []),
         ...(dynamicUserLikedPostsKey ? [dynamicUserLikedPostsKey] : []),
-        ...(pinnedPostsQueryKey ? [pinnedPostsQueryKey] : []), // Include pinnedPosts key
+        ...(pinnedPostsQueryKey ? [pinnedPostsQueryKey] : []),
       ].filter(Boolean);
 
-      // Cancel any outgoing refetches for the queries we are about to update optimistically
       await Promise.all(
         queryKeysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key }))
       );
 
-      // Snapshot the previous data for rollback in case of an error
       const previousDataSnapshots = {};
       queryKeysToUpdate.forEach((key) => {
-        const snapshotKey = JSON.stringify(key); // Use stringify to create a unique key
+        const snapshotKey = JSON.stringify(key);
         previousDataSnapshots[snapshotKey] = queryClient.getQueryData(key);
       });
 
-      // --- Helper for updating a single post's bookmark status ---
       const updatePostBookmarkStatus = (post, userId) => {
         if (!post) return post;
-        // Determine the actual post object to modify (original or reposted)
         const targetPost =
           post.repostedFrom && post.repostedFrom._id === postId
             ? post.repostedFrom
@@ -69,7 +60,6 @@ export const useToggleBookmarks = (
             ? post
             : null;
 
-        // If this post is not the one we're toggling, or it's a repost but the original isn't the target, return it as is
         if (!targetPost) return post;
 
         const isAlreadyBookmarked = targetPost.bookmarkedBy?.includes(userId);
@@ -79,7 +69,6 @@ export const useToggleBookmarks = (
           : [...(targetPost.bookmarkedBy || []), userId];
 
         if (post.repostedFrom && post.repostedFrom._id === postId) {
-          // If the post is a repost and the target is the original post
           return {
             ...post,
             repostedFrom: {
@@ -88,18 +77,14 @@ export const useToggleBookmarks = (
             },
           };
         } else if (post._id === postId) {
-          // If the post itself is the target
           return {
             ...post,
             bookmarkedBy: newBookmarkedBy,
           };
         }
-        return post; // Should not be reached if targetPost was correctly identified
+        return post;
       };
 
-      // --- Optimistic Update Logic ---
-
-      // Helper for paginated lists (e.g., all posts, following, user posts, liked posts)
       const updatePaginatedList = (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData;
         const newPages = oldData.pages.map((page) => ({
@@ -109,27 +94,20 @@ export const useToggleBookmarks = (
         return { ...oldData, pages: newPages };
       };
 
-      // Helper for a single post object (e.g., post detail page)
       const updateSinglePostObject = (oldData) => {
         return updatePostBookmarkStatus(oldData, authUser._id);
       };
 
-      // Helper for a simple array of posts (like pinned posts)
       const updatePostArray = (oldData) => {
         if (!oldData || !Array.isArray(oldData)) return oldData;
         return oldData.map((post) => updatePostBookmarkStatus(post, authUser._id));
       };
 
-      // Apply updates to all relevant caches
       queryClient.setQueryData(["posts", "/api/posts/all"], updatePaginatedList);
       queryClient.setQueryData(["posts", "/api/posts/following"], updatePaginatedList);
 
-      // Special handling for bookmarkedPosts: if the post is now unbookmarked, remove it from the list
       queryClient.setQueryData(["bookmarkedPosts"], (oldData) => {
         const updatedData = updatePaginatedList(oldData);
-        // Ensure the data structure for bookmarkedPosts is compatible with updatePaginatedList
-        // If it's a simple array of posts, you might need a different filter here.
-        // Assuming it's paginated like other main feeds for consistency.
         if (!updatedData || !Array.isArray(updatedData.pages)) return oldData;
 
         const newPages = updatedData.pages.map((page) => ({
@@ -155,7 +133,6 @@ export const useToggleBookmarks = (
         queryClient.setQueryData(dynamicUserLikedPostsKey, updatePaginatedList);
       }
 
-      // --- NEW: Optimistically update the pinnedPosts cache ---
       if (pinnedPostsQueryKey) {
         queryClient.setQueryData(pinnedPostsQueryKey, updatePostArray);
       }
@@ -165,26 +142,22 @@ export const useToggleBookmarks = (
 
     onSuccess: (data, postId) => {
       showAppToast(data.message, "success");
-
-      // Invalidate general post lists to ensure eventual consistency
-      queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
-      queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/following"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
+      // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
+      // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/following"] });
+      // queryClient.invalidateQueries({ queryKey: ["post", postId] });
 
-      // Invalidate dynamic user posts if applicable
-      if (currentProfileUsername) {
-        queryClient.invalidateQueries({
-          queryKey: ["posts", `/api/posts/user/${currentProfileUsername}`],
-        });
-      }
+      // if (currentProfileUsername) {
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["posts", `/api/posts/user/${currentProfileUsername}`],
+      //   });
+      // }
 
-      // Invalidate liked posts if applicable
-      if (profileOwnerId) {
-        queryClient.invalidateQueries({
-          queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
-        });
-      }
+      // if (profileOwnerId) {
+      //   queryClient.invalidateQueries({
+      //     queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
+      //   });
+      // }
     },
 
     onError: (error, postId, context) => {
@@ -192,13 +165,11 @@ export const useToggleBookmarks = (
       showAppToast(error.message || "Failed to toggle bookmark", "error");
 
       if (context?.previousDataSnapshots) {
-        // Rollback all queries that were optimistically updated
         for (const snapshotKey in context.previousDataSnapshots) {
           const queryKey = JSON.parse(snapshotKey);
           queryClient.setQueryData(queryKey, context.previousDataSnapshots[snapshotKey]);
         }
       } else {
-        // Fallback to invalidation if no snapshot was taken (e.g., during initial load race condition)
         queryClient.invalidateQueries({ queryKey: ["posts"] });
         queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
         queryClient.invalidateQueries({ queryKey: ["post", postId] });
@@ -212,7 +183,6 @@ export const useToggleBookmarks = (
             queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
           });
         }
-        // Invalidate pinned posts on error if a specific query key exists and wasn't snapshotted
         if (currentProfileUsername) {
           queryClient.invalidateQueries({
             queryKey: ["pinnedPosts", currentProfileUsername],

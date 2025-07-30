@@ -1,7 +1,5 @@
-// src/hooks/usersHooks/useAdminDeleteUser.js
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteUserAccountAdmin } from "../../api/usersApi"; // Adjust path if needed
-import toast from "react-hot-toast";
+import { deleteUserAccountAdmin } from "../../api/usersApi";
 import { useNavigate } from "react-router-dom";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -19,11 +17,8 @@ export const useAdminDeleteUser = () => {
     mutationFn: deleteUserAccountAdmin,
     onSuccess: (data) => {
       showAppToast(data.message || "User account deleted successfully!", "success");
-      // Invalidate relevant queries to refresh data after deletion
-      queryClient.invalidateQueries({ queryKey: ["users"] }); // Invalidate general user list
-      queryClient.invalidateQueries({ queryKey: ["userProfile"] }); // Invalidate specific profile if it was cached
-      // Optionally, redirect the admin away from the deleted user's profile
-      navigate("/"); // Redirect to home or admin dashboard
+      queryClient.invalidateQueries({ queryKey: ["userProfile"] });
+      navigate("/");
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to delete user account.", "error");

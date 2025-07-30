@@ -1,7 +1,5 @@
-// useEditMessage.js
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { editMessageApi } from "../../api/messagesApi";
-import toast from "react-hot-toast";
 import { showAppToast } from "../../utils/showAppToast";
 
 export const useEditMessage = (conversationId) => {
@@ -37,13 +35,6 @@ export const useEditMessage = (conversationId) => {
       });
 
       return { previousMessagesData, queryKey };
-    },
-    onSuccess: (updatedMessage, variables, context) => {
-      // **REMOVED queryClient.invalidateQueries({ queryKey: context.queryKey });**
-      // Instead of immediate invalidation, rely on the backend's socket emit
-      // to send the canonical updated message (which you'll listen for
-      // in your central socket listener).
-      // showAppToast("Message updated successfully"); // Optional
     },
     onError: (error, variables, context) => {
       showAppToast("Failed to update message: " + error.message, "error");

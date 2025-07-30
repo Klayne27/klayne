@@ -1,8 +1,5 @@
-// src/hooks/publicChatHooks/publicChatHooks.js
-
 import {
   useMutation,
-  useQuery,
   useInfiniteQuery,
   useQueryClient,
 } from "@tanstack/react-query";

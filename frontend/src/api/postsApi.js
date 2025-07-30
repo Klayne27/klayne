@@ -39,6 +39,16 @@ export const fetchBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" 
   return data;
 };
 
+export const fetchPinnedPostsApi = async (username) => {
+  const res = await fetch(`${BASE_URL}/profile/${username}/pinned-posts`);
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to fetch pinned posts");
+
+  return data;
+};
+
 export const fetchScheduledPostsApi = async () => {
   const res = await fetch(`${BASE_URL}/scheduled`);
   const data = await res.json();

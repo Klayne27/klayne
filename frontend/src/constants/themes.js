@@ -1,5 +1,3 @@
-// src/constants/themes.js
-
 export const AVAILABLE_THEMES = [
   "black",
   "forest",

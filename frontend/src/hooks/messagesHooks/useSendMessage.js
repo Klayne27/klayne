@@ -38,7 +38,6 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
           : null,
       };
 
-      // Update the cache optimistically
       queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData?.pages) {
           return { pages: [[optimisticMessage]], pageParams: [1] };
@@ -49,13 +48,12 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
       });
 
       if (onOptimisticSend) {
-        onOptimisticSend(); // Signal that an optimistic message was added
+        onOptimisticSend(); 
       }
 
       return { previousData, queryKey, optimisticId: optimisticMessage._id };
     },
     onSuccess: (newMessage, variables, context) => {
-      // Replace the optimistic message with the real one from the server
       queryClient.setQueryData(context.queryKey, (oldData) => {
         if (!oldData) return oldData;
         return {
@@ -65,11 +63,9 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
           ),
         };
       });
-      // Invalidate the main conversations list to update the `lastMessage` in the sidebar.
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onError: (err, variables, context) => {
-      // Roll back the optimistic update on error
       showAppToast(err.message, "error");
       queryClient.setQueryData(context.queryKey, context.previousData);
     },

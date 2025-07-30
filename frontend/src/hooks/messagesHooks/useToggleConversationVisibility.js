@@ -11,33 +11,25 @@ export const useToggleConversationVisibility = () => {
     mutationFn: ({ conversationId }) => toggleConversationVisibilityApi(conversationId),
 
     onMutate: async ({ conversationId }) => {
-      // We only need to do optimistic updates for hiding. Un-hiding can wait for the refetch.
       await queryClient.cancelQueries({ queryKey: ["conversations"] });
 
       const previousConversations = queryClient.getQueryData(["conversations"]);
 
-      // If there's no previous data, we can't do anything.
       if (!previousConversations) {
         return;
       }
 
-      // **THE FIX IS HERE**
-      // Optimistically remove the conversation from the list
       queryClient.setQueryData(["conversations"], (oldData) => {
-        // If oldData is not an array, do nothing
         if (!Array.isArray(oldData)) {
           return oldData;
         }
-        // **Directly filter the oldData array**
         return oldData.filter((conv) => conv._id !== conversationId);
       });
 
-      // Return context with the previous data for rollback on error
       return { previousConversations };
     },
 
     onError: (err, variables, context) => {
-      // If the mutation fails, roll back to the previous state
       if (context?.previousConversations) {
         queryClient.setQueryData(["conversations"], context.previousConversations);
       }

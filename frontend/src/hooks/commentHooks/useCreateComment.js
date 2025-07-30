@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { addCommentApi, replyToCommentApi } from "../../api/commentsApi";
-import toast from "react-hot-toast";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -25,16 +24,14 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         console.warn("No authenticated user ID for optimistic comment update.");
         return;
       }
-      // Cancel queries
       await queryClient.cancelQueries({ queryKey: commentsQueryKey });
       await queryClient.cancelQueries({ queryKey: ["post", postId] });
       await queryClient.cancelQueries({ queryKey: ["posts"] });
       await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] });
       await queryClient.cancelQueries({
         queryKey: ["pinnedPosts", currentUser.username],
-      }); // Assuming pinned posts are per user
+      });
 
-      // Store previous data
       const previousComments = queryClient.getQueryData(commentsQueryKey);
       const previousPostData = queryClient.getQueryData(["post", postId]);
       const previousPostsData = queryClient.getQueryData(["posts"]);
@@ -65,13 +62,11 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         isOptimistic: true,
       };
 
-      // A. OPTIMISTIC UPDATE FOR COMMENTS LIST (for the current post/parent comment)
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
         const newPages = oldData?.pages ? [...oldData.pages] : [];
         if (newPages.length === 0) {
           newPages.push({ comments: [], hasNextPage: false });
         }
-        // Add new comment to the first page (assuming comments are ordered chronologically/reverse)
         newPages[0] = {
           ...newPages[0],
           comments: [...newPages[0].comments, newOptimisticComment].sort(
@@ -81,7 +76,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // Helper to update commentsCount on a post object
       const updatePostCommentsCount = (post) => {
         const targetPost = post.repostedFrom ? post.repostedFrom : post;
         return post.repostedFrom
@@ -98,7 +92,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
             };
       };
 
-      // B. OPTIMISTIC UPDATE FOR SINGLE POST DETAIL PAGE (commentsCount)
       if (previousPostData) {
         queryClient.setQueryData(["post", postId], (oldPostData) => {
           if (!oldPostData) return oldPostData;
@@ -106,7 +99,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         });
       }
 
-      // C. OPTIMISTIC UPDATE FOR ALL POSTS LIST (commentsCount)
       queryClient.setQueryData(["posts"], (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData;
         const newPages = oldData.pages.map((page) => ({
@@ -121,7 +113,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // D. OPTIMISTIC UPDATE FOR BOOKMARKED POSTS LIST (commentsCount)
       queryClient.setQueryData(["bookmarkedPosts"], (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData;
         const newPages = oldData.pages.map((page) => ({
@@ -136,7 +127,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // E. OPTIMISTIC UPDATE FOR PINNED POSTS LIST (commentsCount)
       queryClient.setQueryData(["pinnedPosts", currentUser.username], (oldData) => {
         if (!oldData || !Array.isArray(oldData)) return oldData;
         return oldData.map((post) => {
@@ -147,7 +137,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         });
       });
 
-      // F. Optimistic update for parent comment repliesCount
       if (parentCommentId) {
         const parentCommentsListQueryKey = ["comments", postId];
         await queryClient.cancelQueries({ queryKey: parentCommentsListQueryKey });
@@ -181,7 +170,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         previousBookmarkedPostsData,
         previousPinnedPostsData,
         previousParentCommentsData: parentCommentId
-          ? queryClient.getQueryData(["comments", postId]) // This might be already captured above. Be careful not to overwrite.
+          ? queryClient.getQueryData(["comments", postId])
           : undefined,
         newOptimisticCommentId: tempId,
       };
@@ -209,18 +198,16 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages };
       });
 
-      // Invalidate all relevant queries to ensure fresh data and accurate counts
       queryClient.invalidateQueries({ queryKey: ["post", postId] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
       queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] });
       if (parentCommentId) {
-        queryClient.invalidateQueries({ queryKey: ["comments", postId] }); // Invalidate parent comments list
+        queryClient.invalidateQueries({ queryKey: ["comments", postId] });
       }
     },
     onError: (error, variables, context) => {
       showAppToast(error.message || "Failed to add comment.", "error");
-      // Rollback optimistic updates
       if (context.previousComments) {
         queryClient.setQueryData(commentsQueryKey, context.previousComments);
       }

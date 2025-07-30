@@ -1,9 +1,7 @@
-// hooks/useFetchNotifications.jsx
 import { useEffect } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
-import { fetchNotificationsApi } from "../../api/notificationsApi"; // Adjust path if needed
-import { useSocket } from "../../context/SocketContext"; // Assuming this is your SocketContext
+import { fetchNotificationsApi } from "../../api/notificationsApi";
+import { useSocket } from "../../context/SocketContext";
 
 export const useFetchNotifications = () => {
   const { socket, setHasUnreadNotifications } = useSocket();
@@ -13,7 +11,7 @@ export const useFetchNotifications = () => {
     queryKey: ["notifications"],
     queryFn: fetchNotificationsApi,
     onError: (err) => {
-      // showAppToastt((err.message);
+      // showAppToast(err.message);
     },
     retry: false,
     refetchOnWindowFocus: true,
@@ -24,10 +22,7 @@ export const useFetchNotifications = () => {
     if (socket) {
       const handleNewNotification = (newNotification) => {
         queryClient.setQueryData(["notifications"], (oldNotifications) => {
-          // Ensure oldNotifications is an array before spreading.
-          // New notifications should appear at the top.
           const currentNotifications = oldNotifications || [];
-          // Prevent duplicates if the backend sends a notification and it's also fetched via refetchOnWindowFocus
           const isDuplicate = currentNotifications.some(
             (notif) => notif._id === newNotification._id
           );
@@ -35,9 +30,9 @@ export const useFetchNotifications = () => {
           if (!isDuplicate) {
             return [newNotification, ...currentNotifications];
           }
-          return currentNotifications; // Return existing if duplicate
+          return currentNotifications;
         });
-        setHasUnreadNotifications(true); // This correctly updates the badge
+        setHasUnreadNotifications(true);
       };
 
       socket.on("newNotification", handleNewNotification);

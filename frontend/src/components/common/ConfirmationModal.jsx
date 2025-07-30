@@ -1,4 +1,5 @@
 import { useEffect, useRef } from "react"; // Import useRef for potential focus management
+import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 
 const ConfirmationModal = ({
   isOpen,
@@ -14,22 +15,24 @@ const ConfirmationModal = ({
 }) => {
   const modalRef = useRef(null); // Ref for the modal content div
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden";
-      // Optional: Focus the modal or a specific input when it opens
-      // You might want to pass a ref to a child input if you want to auto-focus it.
-      // For now, let's just focus the modal itself (though not always ideal for accessibility)
-      // if (modalRef.current) {
-      //   modalRef.current.focus();
-      // }
-    } else {
-      document.body.style.overflow = "unset";
-    }
-    return () => {
-      document.body.style.overflow = "unset";
-    };
-  }, [isOpen]);
+  useLockBodyScroll(isOpen)
+
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     document.body.style.overflow = "hidden";
+  //     // Optional: Focus the modal or a specific input when it opens
+  //     // You might want to pass a ref to a child input if you want to auto-focus it.
+  //     // For now, let's just focus the modal itself (though not always ideal for accessibility)
+  //     // if (modalRef.current) {
+  //     //   modalRef.current.focus();
+  //     // }
+  //   } else {
+  //     document.body.style.overflow = "unset";
+  //   }
+  //   return () => {
+  //     document.body.style.overflow = "unset";
+  //   };
+  // }, [isOpen]);
 
   if (!isOpen) return null;
 

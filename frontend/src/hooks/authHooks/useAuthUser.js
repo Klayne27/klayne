@@ -1,6 +1,5 @@
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { authUserApi } from "../../api/authApi";
-import { useEffect } from "react";
 
 export const useAuthUser = () => {
 
@@ -8,8 +7,6 @@ export const useAuthUser = () => {
     data: authUser,
     isLoading,
     refetch: refetchAuthUser,
-    isError,
-    error,
   } = useQuery({
     queryKey: ["authUser"],
     queryFn: async () => {
@@ -17,10 +14,10 @@ export const useAuthUser = () => {
       return data;
     },
     retry: false,
-    staleTime: Infinity, // Or a very long time if you only want to refetch on app mount
-    cacheTime: Infinity, // Keep data in cache unless explicitly invalidated
-    refetchOnWindowFocus: false, // Don't refetch on tab refocus for initial auth check
-    refetchOnMount: true, // Crucial: Refetch on mount to check session
+    staleTime: Infinity,
+    cacheTime: Infinity,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
   });
 
   return { authUser, isLoading, refetchAuthUser };

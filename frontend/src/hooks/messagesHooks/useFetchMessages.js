@@ -32,23 +32,15 @@ export const useFetchMessages = (conversationId) => {
     structuralSharing: false, // <--- ADD THIS TEMPORARILY
   });
 
-  // const messages = data ? [...data.pages].reverse().flatMap((page) => page) : [];
-
   const messages = useMemo(() => {
     if (!data || !data.pages) return [];
 
-    // FIX: Create a shallow copy before reversing to prevent mutating the original React Query data
     const allMessages = [...data.pages].reverse().flatMap((page) => page);
 
     const uniqueMessages = [];
     const seenIds = new Set();
 
-    // The messages are already oldest at top, newest at bottom after the backend reversal
-    // and this client-side reversal, assuming the backend's reversal is correct.
-    // So `flattenedAndOrdered` is already the desired order for the UI.
-
     for (let i = 0; i < allMessages.length; i++) {
-      // Changed from flattenedAndOrdered to allMessages
       const msg = allMessages[i];
       if (!seenIds.has(msg._id)) {
         uniqueMessages.push(msg);
@@ -56,7 +48,7 @@ export const useFetchMessages = (conversationId) => {
       }
     }
     return uniqueMessages;
-  }, [data]); // Dependency is `data` - if data.pages or its contents change, `data` object reference changes.
+  }, [data]);
 
   return {
     messages,

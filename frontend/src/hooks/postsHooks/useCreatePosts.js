@@ -1,5 +1,4 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { createPostApi } from "../../api/postsApi";
 import { showAppToast } from "../../utils/showAppToast";
 
@@ -14,7 +13,6 @@ export const useCreatePosts = () => {
   } = useMutation({
     mutationFn: (newPostData) => createPostApi(newPostData),
     onSuccess: (data) => {
-      // 'data' here is the response from createPostApi
       if (data.isScheduled) {
         showAppToast(
           `Post scheduled for ${new Date(data.scheduledAt).toLocaleString()}`,

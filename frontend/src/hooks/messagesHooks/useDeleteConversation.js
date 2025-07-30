@@ -7,29 +7,21 @@ const useDeleteConversation = () => {
 
   const { mutate: deleteConversation, isPending } = useMutation({
     mutationFn: (conversationId) => deleteConversationApi(conversationId),
-    // This is where the magic of optimistic updates happens!
     onMutate: async (conversationIdToDelete) => {
-      // 1. Cancel any outgoing refetches (so they don't overwrite our optimistic update)
       await queryClient.cancelQueries({ queryKey: ["conversations"] });
 
-      // 2. Snapshot the current conversations list
       const previousConversations = queryClient.getQueryData(["conversations"]);
 
-      // 3. Optimistically update the UI by removing the conversation
       queryClient.setQueryData(["conversations"], (oldConversations) =>
         oldConversations?.filter(
           (conversation) => conversation._id !== conversationIdToDelete
         )
       );
 
-      // Return a context object with the snapshot, so we can roll back if needed
       return { previousConversations };
     },
     onSuccess: () => {
-      // Hooray! The server confirmed our optimistic update.
-      showAppToast("Conversation deleted forever!", "success");
-      // No need to invalidate "conversations" here, as we already updated it optimistically.
-      // We still invalidate "authUser" in case its related data needs a refresh.
+      showAppToast("Conversation deleted successfully", "success");
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
     onError: (error, conversationIdToDelete, context) => {
@@ -40,7 +32,6 @@ const useDeleteConversation = () => {
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     onSettled: () => {
-      // Regardless of success or failure, ensure our data is eventually consistent.
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
   });

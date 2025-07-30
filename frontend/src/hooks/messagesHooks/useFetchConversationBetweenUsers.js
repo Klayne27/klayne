@@ -1,4 +1,3 @@
-// src/hooks/messages/useFetchConversationBetweenUsers.js
 import { useQuery } from "@tanstack/react-query";
 import { getConversationBetweenUsersApi } from "../../api/messagesApi";
 
@@ -9,12 +8,12 @@ export const useFetchConversationBetweenUsers = (otherUserId) => {
     isError: isErrorConversationStatus,
     error: conversationStatusError,
   } = useQuery({
-    queryKey: ["conversationBetweenUsers", otherUserId], // Unique key for this query
+    queryKey: ["conversationBetweenUsers", otherUserId],
     queryFn: () => getConversationBetweenUsersApi(otherUserId),
-    enabled: !!otherUserId, // Only enable if otherUserId is not null/undefined
-    staleTime: 5 * 60 * 1000, // Data can be considered fresh for 5 minutes
-    cacheTime: 10 * 60 * 1000, // Keep in cache for 10 minutes
-    retry: 1, // Retry once if it fails
+    enabled: !!otherUserId,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+    retry: 1,
   });
 
   return {

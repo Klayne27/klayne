@@ -59,7 +59,7 @@ const ChatWindow = ({
     didMessageJustLanded.current = true;
   }, []);
 
-  const { deleteMessage, isDeletingMessage } = useDeleteMessage(conversationId);
+  const { deleteMessage, isDeletingMessage } = useDeleteMessage();
   const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId);
 

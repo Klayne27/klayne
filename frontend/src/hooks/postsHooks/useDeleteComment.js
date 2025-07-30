@@ -1,6 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteCommentApi } from "../../api/postsApi";
-import toast from "react-hot-toast";
 import { showAppToast } from "../../utils/showAppToast";
 
 export const useDeleteComment = () => {

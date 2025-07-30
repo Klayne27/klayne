@@ -1,17 +1,15 @@
-// hooks/usersHooks/useFollow.js
-import toast from "react-hot-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { followApi } from "../../api/usersApi"; // Assuming followApi toggles follow/unfollow
+import { followApi } from "../../api/usersApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 
-const useFollow = (user) => {
+const useFollow = () => {
   const queryClient = useQueryClient();
-  const { authUser } = useAuthUser(); // Assuming this hook provides the current authenticated userr
+  const { authUser } = useAuthUser();
   const {
     mutate: follow,
     isPending,
-    error: followError, // Capture specific error for potential display
+    error: followError,
   } = useMutation({
     mutationFn: (userIdToFollow) => followApi(userIdToFollow),
     onMutate: async (userIdToFollow) => {
@@ -24,7 +22,7 @@ const useFollow = (user) => {
       ]);
       if (previousAuthUser) {
         queryClient.setQueryData(["authUser"], (oldData) => {
-          if (!oldData) return oldData; // Should not happen if previousAuthUser exists
+          if (!oldData) return oldData;
           const isCurrentlyFollowing = oldData.following.includes(userIdToFollow);
           let newFollowing;
           if (isCurrentlyFollowing) {
@@ -37,7 +35,7 @@ const useFollow = (user) => {
       }
       if (previousUserProfile) {
         queryClient.setQueryData(["userProfile", userIdToFollow], (oldData) => {
-          if (!oldData) return oldData; // Should not happen if previousUserProfile exists
+          if (!oldData) return oldData;
           const isCurrentlyFollowedByAuthUser = oldData.followers.includes(authUser._id);
           let newFollowers;
           if (isCurrentlyFollowedByAuthUser) {
@@ -51,7 +49,6 @@ const useFollow = (user) => {
       return { previousAuthUser, previousUserProfile };
     },
     onError: (error, userIdToFollow, context) => {
-      // Rollback to the previous data if the mutation fails
       if (context?.previousAuthUser) {
         queryClient.setQueryData(["authUser"], context.previousAuthUser);
       }
@@ -64,25 +61,18 @@ const useFollow = (user) => {
       showAppToast(error.message || "Failed to perform action", "error");
     },
     onSettled: (data, error, userIdToFollow) => {
-      // Invalidate and refetch to ensure the client state is in sync with the server.
-      // This is important because even if optimistic update was correct,
-      // the server might have different data due to other actions.
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      queryClient.invalidateQueries({ queryKey: ["userProfile", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] });
+      queryClient.invalidateQueries({ queryKey: ["followingList", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
       queryClient.invalidateQueries({ queryKey: ["followedUsersForMessaging"] });
       queryClient.invalidateQueries({
         queryKey: ["conversationBetweenUsers", userIdToFollow],
       });
-
-      // queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
+      // queryClient.invalidateQueries({ queryKey: ["userProfile", usernameToFolow] });
     },
     onSuccess: (data, userIdToFollow) => {
-      // Optional: Add a success toast
-      // const isFollowing = authUser?.following?.includes(userIdToFollow); // This might be stale here
-      // const action = isFollowing ? "Unfollowed" : "Followed";
-      // showAppToast(`${action} user successfully!`);
+      queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
   });
 

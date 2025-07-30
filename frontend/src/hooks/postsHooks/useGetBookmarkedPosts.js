@@ -8,7 +8,6 @@ export const useGetBookmarkedPosts = (searchQuery = "") => {
     hasNextPage,
     isFetchingNextPage,
     isLoading,
-    isError,
     error,
   } = useInfiniteQuery({
     queryKey: ["bookmarkedPosts", searchQuery],
