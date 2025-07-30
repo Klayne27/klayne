@@ -1,13 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useGetBookmarkedPosts } from "../../hooks/postsHooks/useGetBookmarkedPosts";
 import { CiSearch } from "react-icons/ci";
 import Post from "../../components/common/posts/Post";
 import { FaArrowLeft } from "react-icons/fa6";
 import PostSkeleton from "../../components/skeletons/PostSkeleton";
 
-const BookmarksPage = ({ openImageModal }) => {
+const BookmarksPage = () => {
   const navigate = useNavigate();
   const [searchQuery, setSearchQuery] = useState("");
   const {
@@ -118,7 +117,7 @@ const BookmarksPage = ({ openImageModal }) => {
         {bookmarkedPosts && bookmarkedPosts.length > 0 && (
           <div>
             {bookmarkedPosts.map((post) => (
-              <Post key={post._id} post={post} openImageModal={openImageModal} />
+              <Post key={post._id} post={post} />
             ))}
           </div>
         )}

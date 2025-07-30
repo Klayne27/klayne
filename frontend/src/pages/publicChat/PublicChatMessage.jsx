@@ -16,6 +16,7 @@ import { IoCopy } from "react-icons/io5";
 import { showAppToast } from "../../utils/showAppToast";
 import { useDeleteOwnPublicMessage } from "../../hooks/publicChatHooks/useDeleteOwnPublicMessage";
 import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
+import { useAppStore } from "../../store/appStore";
 
 // Helper for formatting date (e.g., "July 28, 2025")
 const formatDisplayDate = (dateString) => {
@@ -50,7 +51,6 @@ const formatDisplayTime = (dateString) => {
 const PublicChatMessage = React.memo(function PublicChatMessage({
   message,
   authUser,
-  openImageModal,
   onBan,
   onUnban,
   isCurrentlyTouchDevice,
@@ -70,6 +70,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   onReactionAdded,
   isNewDay, // NEW PROP
 }) {
+  const openImageModal = useAppStore((state) => state.openImageModal);
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
   const { adminDeletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
     useDeletePublicMessage();

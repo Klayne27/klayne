@@ -2,7 +2,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import PublicChatWindow from "./PublicChatWindow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 
-const PublicChatPage = ({ openImageModal }) => {
+const PublicChatPage = () => {
   const { authUser, isLoading: isLoadingAuthUser } = useAuthUser();
 
 
@@ -26,7 +26,7 @@ const PublicChatPage = ({ openImageModal }) => {
     // The PublicChatWindow will now occupy the entire available space within the <main> element
     // We remove the two-panel layout classes here, as it's just one full-width component.
     <div className="flex flex-col h-full">
-      <PublicChatWindow openImageModal={openImageModal} />
+      <PublicChatWindow  />
     </div>
   );
 };

@@ -1,8 +1,10 @@
 import { IoClose } from "react-icons/io5";
+import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 
 const ImageModal = ({ src, onClose }) => {
-  if (!src) return null;
+  useLockBodyScroll(src);
 
+  if (!src) return null;
   return (
     <div
       className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-black bg-opacity-75"
@@ -27,8 +29,8 @@ const ImageModal = ({ src, onClose }) => {
       </div>
       <a
         href={src}
-        target="_blank" 
-        rel="noopener noreferrer" 
+        target="_blank"
+        rel="noopener noreferrer"
         className="text-gray-400 hover:underline cursor-pointer mt-4"
       >
         View original

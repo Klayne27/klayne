@@ -1,39 +1,37 @@
 import toast from "react-hot-toast";
 
-// Define a consistent ID for the single toast
 const SINGLE_TOAST_ID = "app-single-toast";
 
-// Define the common styling for your Twitter/X-like toast
 const commonToastStyle = {
-  background: "#1DA1F2", // Twitter Blue background
+  background: "#1DA1F2",
   color: "#fff",
   borderRadius: "4px",
   padding: "8px 16px",
   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   fontSize: "15px",
   fontWeight: "500",
-  marginBottom: "45px", // Higher from the bottom
+  marginBottom: "45px",
 };
 
 export const showAppToast = (message, type = "blank") => {
   const options = {
-    id: SINGLE_TOAST_ID, // Use the common ID
-    style: { ...commonToastStyle }, // Spread common style
-    duration: 3000, // Default duration
+    id: SINGLE_TOAST_ID,
+    style: { ...commonToastStyle },
+    duration: 3000, 
   };
 
   switch (type) {
     case "success":
       toast.success(message, {
         ...options,
-        duration: 2000, // Shorter duration for success
+        duration: 2000,
       });
       break;
     case "error":
       toast.error(message, {
         ...options,
         style: {
-          ...options.style, // Merge common styles
+          ...options.style,
         },
       });
       break;
@@ -43,5 +41,4 @@ export const showAppToast = (message, type = "blank") => {
   }
 };
 
-// You can also export the 'toast' instance directly if you need its other methods
 export default toast;

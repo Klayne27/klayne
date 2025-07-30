@@ -22,7 +22,6 @@ const ChatWindow = ({
   selectedConversation,
   onBackToConversations,
   onNewMessage,
-  openImageModal,
 }) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
@@ -590,7 +589,6 @@ const ChatWindow = ({
           messageInputRef={messageInputRef}
           isDeletingMessage={isDeletingMessage}
           messages={messages}
-          openImageModal={openImageModal}
           selectedConversation={selectedConversation}
           isLoadingInitialMessages={isLoading && !isFetchingNextPage}
           isFetchingOlderMessages={isFetchingNextPage}

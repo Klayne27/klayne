@@ -2,16 +2,17 @@ import Post from "./Post";
 import PostSkeleton from "../../skeletons/PostSkeleton";
 import { useEffect, useRef, useCallback } from "react";
 import { useFetchPosts } from "../../../hooks/postsHooks/useFetchPosts";
+import { useAppStore } from "../../../store/appStore";
 
 const Posts = ({
   feedType,
   username,
   userId: profileOwnerId,
   onPostsFetched,
-  openImageModal,
   pinnedPosts = [],
   isLoadingPinnedPosts,
 }) => {
+  
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -131,7 +132,6 @@ const Posts = ({
                     postEndpoint={POST_ENDPOINT}
                     key={post._id}
                     post={post}
-                    openImageModal={openImageModal}
                     profilePinnedPosts={pinnedPosts}
                     currentFeedType={feedType}
                     currentProfileUsername={username}
@@ -151,7 +151,6 @@ const Posts = ({
             <Post
               postEndpoint={POST_ENDPOINT}
               post={post}
-              openImageModal={openImageModal}
               profilePinnedPosts={pinnedPosts} // Also pass to regular posts in case they are also pinned
               currentProfileUsername={username}
               profileOwnerId={profileOwnerId}

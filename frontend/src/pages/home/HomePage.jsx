@@ -6,15 +6,19 @@ import CreatePost from "./CreatePost";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
+import { useAppStore } from "../../store/appStore";
 
-const HomePage = ({ openImageModal, showUnfollowModal }) => {
+const HomePage = () => {
   const {
     showNewFeedPostsButton,
     setShowNewFeedPostsButton,
     setNewPostCount,
     newPostCount,
   } = useSocket();
-  const [feedType, setFeedType] = useState("forYou");
+  const feedType = useAppStore((state) => state.feedType);
+  const setFeedType = useAppStore((state) => state.setFeedType);
+  const showUnfollowModal = useAppStore((state) => state.showUnfollowModal);
+  // const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
   const scrollableContentRef = useRef(null); // This ref points to the div containing CreatePost and Posts
@@ -25,8 +29,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
   const queryClient = useQueryClient();
 
-    const { markFeedAsRead } = useMarkPostsAsRead();
-  
+  const { markFeedAsRead } = useMarkPostsAsRead();
 
   // Function to scroll to the top and refetch posts
   const handleNewPostsButtonClick = useCallback(() => {
@@ -38,7 +41,7 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
-    markFeedAsRead()
+    markFeedAsRead();
     setShowNewFeedPostsButton(false);
     // setNewPostCount(0);
   }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
@@ -173,24 +176,27 @@ const HomePage = ({ openImageModal, showUnfollowModal }) => {
         </div>
 
         {/* NEW POSTS BUTTON */}
-        {showNewFeedPostsButton && showScrollButton && newPostCount && feedType === "forYou" && (
-          <button
-            onClick={handleNewPostsButtonClick}
-            className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 md:-translate-x-[110%] z-50
+        {showNewFeedPostsButton &&
+          showScrollButton &&
+          newPostCount &&
+          feedType === "forYou" && (
+            <button
+              onClick={handleNewPostsButtonClick}
+              className="fixed top-[60px] font-semibold md:top-[53px] left-1/2 -translate-x-1/2 md:-translate-x-[110%] z-50
                        bg-primary text-white px-3 py-2 rounded-full white-shadow
                        hover:bg-primary/90 transition-all duration-200
                        flex items-center gap-2 text-xs md:text-sm"
-          >
-            <FaArrowUp className="size-4" />
-            <span>{newPostCount} new post(s)</span>
-          </button>
-        )}
+            >
+              <FaArrowUp className="size-4" />
+              <span>{newPostCount} new post(s)</span>
+            </button>
+          )}
 
         <div ref={scrollableContentRef}>
           {" "}
           {/* Ensure this div is scrollable if mainFeedRef is not */}
           <CreatePost />
-          <Posts feedType={feedType} openImageModal={openImageModal} />
+          <Posts feedType={feedType} />
         </div>
       </div>
     </>

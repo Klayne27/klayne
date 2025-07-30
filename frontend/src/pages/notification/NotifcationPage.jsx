@@ -12,7 +12,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton";
 import { FaArrowLeft } from "react-icons/fa6";
 
-import { FaAt } from "react-icons/fa"; // Import an icon for mentions, e.g., FaAt, FaRegBell, or a custom one.
+import { FaAt } from "react-icons/fa";
 import { useRef } from "react";
 
 const NotificationPage = () => {
@@ -24,11 +24,6 @@ const NotificationPage = () => {
   const dropdownToggleRef = useRef(null);
 
   const filteredNotifications = notifications?.filter((notification) => {
-    // Keep this filter. It ensures users don't see notifications
-    // for their own actions (liking their own post, etc.).
-    // For "mention" type, we *do* want to show it if the authUser is mentioned,
-    // even if they are the one making the post, unless you decide otherwise.
-    // However, the backend logic should ideally prevent self-mentions.
     if (
       (notification.type === "like" ||
         notification.type === "comment" ||
@@ -57,8 +52,6 @@ const NotificationPage = () => {
     if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`;
     } else if (notification.postId && notification.postId._id) {
-      // This path is correct for likes, comments, reposts, AND mentions
-      // For comment replies, we want to go to the specific reply if possible
       if (
         notification.type === "commentReply" &&
         notification.commentId &&
@@ -174,7 +167,7 @@ const NotificationPage = () => {
                 {notification.type === "repost" && (
                   <FaRetweet className="w-7 h-7 text-green-500" />
                 )}
-                {notification.type === "mention" && ( // NEW: Mention icon
+                {notification.type === "mention" && (
                   <FaAt className="w-7 h-7 text-purple-500" />
                 )}
               </div>
@@ -259,8 +252,8 @@ const NotificationPage = () => {
                       replied to your comment{" "}
                       {notification.parentCommentId?.text && (
                         <span className="text-blue-400 hover:underline">
-                          `"${notification.parentCommentId.text.substring(0, 30)}$
-                          {notification.parentCommentId.text.length > 30 ? "..." : ""}"`
+                          "{notification.parentCommentId.text.substring(0, 30)}
+                          {notification.parentCommentId.text.length > 30 ? "..." : ""}"
                         </span>
                       )}{" "}
                       on post{" "}
@@ -289,7 +282,7 @@ const NotificationPage = () => {
                       )}
                     </>
                   )}
-                  {notification.type === "mention" && ( // NEW: Render mention text
+                  {notification.type === "mention" && ( 
                     <>
                       mentioned you in a post{" "}
                       {notification.postId && (

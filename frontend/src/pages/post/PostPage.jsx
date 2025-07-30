@@ -15,11 +15,13 @@ import { useDebounce } from "../../hooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
 import { showAppToast } from "../../utils/showAppToast";
+import { useAppStore } from "../../store/appStore";
 
-const PostPage = ({ openImageModal, setFeedType }) => {
+const PostPage = () => {
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
+  const openImageModal = useAppStore((state) => state.openImageModal);
 
   const [commentText, setCommentText] = useState("");
   const [replyingToComment, setReplyingToComment] = useState(null);
@@ -27,6 +29,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
   const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null);
   const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null);
   const mainCommentMediaInputRef = useRef(null);
+
+  const [showButton, setShowButton] = useState(false)
 
   // --- NEW STATES FOR MENTIONS ---
   const [mentionSearchTerm, setMentionSearchTerm] = useState("");
@@ -168,6 +172,10 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       }
     }
   };
+
+  const handleFocus = () => {
+    setShowButton(true)
+  }
 
   const handleMainCommentMediaChange = (e) => {
     const file = e.target.files[0];
@@ -497,11 +505,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
       </div>
 
       <div className="border-accent">
-        <Post
-          post={displayPost}
-          openImageModal={openImageModal}
-          setFeedType={setFeedType}
-        />
+        <Post post={displayPost} />
       </div>
 
       {authUser && (
@@ -526,6 +530,7 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 value={commentText}
                 onChange={handleCommentTextChange} // Use the new handler
                 onKeyDown={handleKeyDown}
+                onFocus={handleFocus}
                 onPaste={handlePaste}
                 placeholder={
                   replyingToComment
@@ -537,23 +542,24 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                 rows={1}
               />
 
-              {commentText && <div className="flex justify-between">
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  hidden
-                  ref={mainCommentMediaInputRef}
-                  onChange={handleMainCommentMediaChange}
-                />
-                <button
-                  type="button"
-                  onClick={() => mainCommentMediaInputRef.current.click()}
-                  className={`ml-[9px] rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0`}
-                  title="Add image or video to comment"
-                >
-                  <BiImageAdd size={24} />
-                </button>
-                
+              {showButton && (
+                <div className="flex justify-between">
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    hidden
+                    ref={mainCommentMediaInputRef}
+                    onChange={handleMainCommentMediaChange}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => mainCommentMediaInputRef.current.click()}
+                    className={`ml-[9px] rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0`}
+                    title="Add image or video to comment"
+                  >
+                    <BiImageAdd size={24} />
+                  </button>
+
                   <button
                     type="submit"
                     className="block px-3 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-slate-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
@@ -564,8 +570,8 @@ const PostPage = ({ openImageModal, setFeedType }) => {
                   >
                     {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
                   </button>
-                
-              </div>}
+                </div>
+              )}
               {/* Mention Suggestions Dropdown */}
               {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
                 <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">

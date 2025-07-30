@@ -1,10 +1,9 @@
-import { BiArrowBack } from "react-icons/bi";
 import { useNavigate } from "react-router-dom";
 import SearchPanel from "../../components/common/SearchPanel";
 import SuggestedUsersPanel from "../../components/common/SuggestedUsersPanel";
 import { FaArrowLeft } from "react-icons/fa6";
 
-const SearchPage = ({ showUnfollowModal, setShowUnfollowModal }) => {
+const SearchPage = () => {
   const navigate = useNavigate();
 
   const handleBack = () => {
@@ -27,8 +26,7 @@ const SearchPage = ({ showUnfollowModal, setShowUnfollowModal }) => {
         <SearchPanel />
         <div className="mt-4">
           <SuggestedUsersPanel
-            showUnfollowModal={showUnfollowModal}
-            setShowUnfollowModal={setShowUnfollowModal}
+
           />
         </div>
       </div>

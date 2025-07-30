@@ -1,6 +1,3 @@
-// components/skeletons/ConversationListSkeleton.jsx
-import React from "react";
-
 function ConversationItemSkeleton() {
   return (
     <div className="flex items-center gap-3 py-3 px-1">

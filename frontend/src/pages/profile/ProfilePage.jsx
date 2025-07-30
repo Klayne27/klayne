@@ -27,8 +27,14 @@ import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useTo
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
 import { useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";
+import { useAppStore } from "../../store/appStore";
 
-const ProfilePage = ({ openImageModal, feedType, setFeedType, openProfileImgModal }) => {
+const ProfilePage = () => {
+  const openImageModal = useAppStore((state) => state.openImageModal);
+  const openProfileImageModal = useAppStore((state) => state.openProfileImageModal);
+  const feedType = useAppStore((state) => state.feedType);
+  const setFeedType = useAppStore((state) => state.setFeedType);
+
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
   const [modalType, setModalType] = useState(null);
@@ -244,25 +250,17 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType, openProfileImgModa
 
   const handleProfileImageClick = (imageUrl, event) => {
     event.stopPropagation();
-    if (openProfileImgModal) {
-      openProfileImgModal(imageUrl)
-    } else {
-      console.warn(
-        "openImageModal prop is undefined in ProfilePage component. Image modal will not open."
-      );
+    if (openProfileImageModal) {
+      openProfileImageModal(imageUrl);
     }
   };
 
-    const handleImageClick = (imageUrl, event) => {
-      event.stopPropagation();
-      if (openImageModal) {
-        openImageModal(imageUrl);
-      } else {
-        console.warn(
-          "openImageModal prop is undefined in ProfilePage component. Image modal will not open."
-        );
-      }
-    };
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation();
+    if (openImageModal) {
+      openImageModal(imageUrl);
+    } 
+  };
 
   const openFollowListModal = (type) => {
     setModalType(type);
@@ -617,7 +615,6 @@ const ProfilePage = ({ openImageModal, feedType, setFeedType, openProfileImgModa
             username={username}
             userId={userProfile?._id}
             onPostsFetched={handlePostsFetched}
-            openImageModal={openImageModal}
             pinnedPosts={pinnedPosts || []}
             isLoadingPinnedPosts={isLoadingPinnedPosts || isRefetchingPinnedPosts}
           />

@@ -22,15 +22,16 @@ import useFollow from "../../../hooks/usersHooks/useFollow";
 import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { MdBlock } from "react-icons/md";
 import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile";
+import { useAppStore } from "../../../store/appStore";
 
 const Post = ({
   post,
-  openImageModal,
   profilePinnedPosts = [],
   currentProfileUsername,
   profileOwnerId,
   postEndpoint,
 }) => {
+  const openImageModal = useAppStore((state) => state.openImageModal);
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
   const [isSmallScreen, setIsSmallScreen] = useState(false);

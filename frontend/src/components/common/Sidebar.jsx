@@ -1,6 +1,6 @@
 import XSvg from "../svgs/X";
 import { PiBellThin, PiHouseThin } from "react-icons/pi";
-import { Link, useLocation, useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useLogout } from "../../hooks/authHooks/useLogout";
 import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci";
@@ -18,13 +18,14 @@ import { BsThreeDots } from "react-icons/bs";
 import ConfirmationModal from "./ConfirmationModal";
 import FeatherIcon from "../svgs/FeatherIcon";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
+import { useAppStore } from "../../store/appStore";
 
 const Sidebar = ({
-  isChatWindowOpen,
-  isMobileMessagesListScrollingDown,
   onOpenCreatePostModal,
 }) => {
   const { authUser } = useAuthUser();
+  const isChatWindowOpen = useAppStore(state => state.isChatWindowOpen)
+
 
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
@@ -50,7 +51,6 @@ const Sidebar = ({
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
   const [showSideModal, setShowSideModal] = useState(false); // New state for side modal
-  const [modalType, setModalType] = useState("");
   const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true);
 
   const [passwordInput, setPasswordInput] = useState("");
@@ -247,15 +247,14 @@ const Sidebar = ({
 
     window.scrollTo({
       top: 0,
-      behavior: "smooth",
+      behavior: pathname === "/" ? 'smooth' : "instant",
     });
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
     markFeedAsRead();
     setShowNewFeedPostsButton(false);
-    // setNewPostCount(0);
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate]);
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate, pathname]);
 
   const handleBookmarksClick = () => {
     if (pathname === "/bookmarks") return;
@@ -417,7 +416,7 @@ const Sidebar = ({
 
         if (pathname.startsWith("/messages")) {
           // Special handling for messages page, based on prop
-          setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
+          setIsMobileBarVisible(true);
         } else {
           // General scroll-hide/show behavior for other mobile pages
           const currentScrollY = window.scrollY;
@@ -449,7 +448,7 @@ const Sidebar = ({
         setIsMobileBarVisible(false);
         setIsFeatherIconVisible(false);
       } else if (pathname.startsWith("/messages")) {
-        setIsMobileBarVisible(!isMobileMessagesListScrollingDown);
+        setIsMobileBarVisible(true);
       } else {
         setIsMobileBarVisible(true); // Default to visible for other paths
         setIsFeatherIconVisible(true); // Default to visible for other paths on mobile initially
@@ -466,7 +465,7 @@ const Sidebar = ({
       window.removeEventListener("scroll", handleScroll);
       window.removeEventListener("resize", handleScroll);
     };
-  }, [isChatWindowOpen, isMobileMessagesListScrollingDown, pathname]);
+  }, [isChatWindowOpen, pathname]);
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
 
@@ -497,7 +496,7 @@ const Sidebar = ({
             transform transition-all duration-300 ease-in-out white-shadow
              ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
           }
-          onClick={() => onOpenCreatePostModal(true)}
+          onClick={onOpenCreatePostModal}
         >
           <FeatherIcon />
         </div>

@@ -23,6 +23,7 @@ import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { BsThreeDots } from "react-icons/bs";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
+
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
   const isCommentLiked = authUser && comment.likes?.includes(authUser._id);
@@ -36,6 +37,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [isAnimating, setIsAnimating] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
+  const [showButton, setShowButton] = useState(false)
+
 
   const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
@@ -138,6 +141,10 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       }, 150);
     }
   }, [isTouchDevice]);
+
+  const handleFocus = () => {
+    setShowButton(true)
+  }
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   // Intersection Observer for infinite scrolling replies
@@ -872,6 +879,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     onChange={handleReplyTextChange}
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
+                    onFocus={handleFocus}
                     rows={1}
                     placeholder={`Replying to @${comment.user.username}...`}
                     className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
@@ -929,7 +937,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   </button>
                 </div>
               )}
-              {replyText && (
+              {showButton && (
                 <div className="flex justify-between">
                   <input
                     type="file"

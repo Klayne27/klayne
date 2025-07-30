@@ -1,13 +1,11 @@
 import { Link } from "react-router-dom";
 import { useState } from "react";
-
 import XSvg from "../../../components/svgs/X";
-
 import { MdOutlineMail } from "react-icons/md";
 import { FaUser } from "react-icons/fa";
 import { MdPassword } from "react-icons/md";
 import { MdDriveFileRenameOutline } from "react-icons/md";
-import { FaEye, FaEyeSlash } from "react-icons/fa6"; // Import eye icons
+import { FaEye, FaEyeSlash } from "react-icons/fa6";
 
 import { useSignup } from "../../../hooks/authHooks/useSignup";
 
@@ -19,7 +17,7 @@ const SignUpPage = () => {
     password: "",
   });
 
-  const [showPassword, setShowPassword] = useState(false); // New state for password visibility
+  const [showPassword, setShowPassword] = useState(false);
 
   const { signup, isPending, isError, error } = useSignup(formData);
 
@@ -103,12 +101,11 @@ const SignUpPage = () => {
               onChange={handleInputChange}
               value={formData.password}
             />
-            {/* Show/Hide password icon */}
             <span
-              className="absolute text-slate-500 right-4 cursor-pointer" // Position to the right
+              className="absolute text-slate-500 right-4 cursor-pointer"
               onClick={() => setShowPassword(!showPassword)}
             >
-              {!showPassword ? <FaEyeSlash /> : <FaEye />} {/* Toggle eye icon */}
+              {!showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </label>
           <button className="py-3 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/80 transition duration-200">

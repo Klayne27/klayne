@@ -6,9 +6,9 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
 import ImageModal from "./components/common/ImageModal";
 import ProfileImageModal from "./components/common/ProfileImageModal";
-// import CreatePostModal from "./components/common/CreatePostModal";
+import { useAppStore } from "./store/appStore";
 
-const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"))
+const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"));
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
@@ -23,22 +23,14 @@ const SearchPage = lazy(() => import("./pages/search/SearchPage"));
 
 function App() {
   const { authUser, isLoading } = useAuthUser();
+  const selectedProfileImage = useAppStore((state) => state.selectedProfileImage);
+  const closeProfileImageModal = useAppStore((state) => state.closeProfileImageModal);
+  const selectedImage = useAppStore((state) => state.selectedImage);
+  const closeImageModal = useAppStore((state) => state.closeImageModal);
+  const showCreatePostModal = useAppStore((state) => state.showCreatePostModal);
+  const setShowCreatePostModal = useAppStore((state) => state.setShowCreatePostModal);
 
   const location = useLocation();
-  const [selectedImage, setSelectedImage] = useState(null);
-  const [selectedProfileImg, setSelectedProfileImg] = useState(null)
-  const [feedType, setFeedType] = useState("posts");
-  const [isChatWindowOpen, setIsChatWindowOpen] = useState(false);
-  const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
-  const [showCreatePostModal, setShowCreatePostModal] = useState(false);
-
-  const [isMobileMessagesListScrollingDown, setIsMobileMessagesListScrollingDown] =
-    useState(false);
-
-  const openImageModal = (imageUrl) => setSelectedImage(imageUrl);
-  const openProfileImgModal = (imageUrl) => setSelectedProfileImg(imageUrl)
-  const closeImageModal = () => setSelectedImage(null);
-  const closeProfileImageModal = () => setSelectedProfileImg(null);
 
   if (isLoading) {
     return (
@@ -53,24 +45,7 @@ function App() {
 
   return (
     <div className="flex flex-col md:flex-row md:max-w-[1240px] mx-auto min-h-screen">
-      {/* <div
-        className="block md:hidden fixed bottom-[73px] right-5 z-[50] rounded-full cursor-pointer hover:bg-opacity-85 duration-200 transition p-4 bg-primary text-white"
-        style={{
-          width: "56px",
-          height: "56px",
-          boxShadow: "0px 0px 10px 1px rgba(255, 255, 255, 0.60)",
-        }}
-        onClick={() => setShowCreatePostModal(true)}
-      >
-        <FeatherIcon />
-      </div> */}
-      {authUser && (
-        <Sidebar
-          onOpenCreatePostModal={() => setShowCreatePostModal(true)}
-          isChatWindowOpen={isChatWindowOpen}
-          isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown} // Pass new prop
-        />
-      )}
+      {authUser && <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />}
 
       <main
         className={`${
@@ -80,27 +55,15 @@ function App() {
         }`}
       >
         {" "}
-        {/* Added pb-16 for mobile */}
         <Suspense
           fallback={
-            <div className="flex-grow flex justify-center items-center h-screen">
-              {/* <LoadingSpinner size="lg" /> */}
-            </div>
+            <div className="flex-grow flex justify-center items-center h-screen"></div>
           }
         >
           <Routes>
             <Route
               path="/"
-              element={
-                authUser ? (
-                  <HomePage
-                    openImageModal={openImageModal}
-                    showUnfollowModal={showUnfollowModal}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <HomePage /> : <Navigate to="/login" />}
             />
             <Route
               path="/signup"
@@ -116,123 +79,46 @@ function App() {
             />
             <Route
               path="/profile/:username"
-              element={
-                authUser ? (
-                  <ProfilePage
-                    openImageModal={openImageModal}
-                    openProfileImgModal={openProfileImgModal}
-                    feedType={feedType}
-                    setFeedType={setFeedType}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
             />
             <Route
               path="/messages"
-              element={
-                authUser ? (
-                  <MessagesPage
-                    openImageModal={openImageModal}
-                    setIsChatWindowOpen={setIsChatWindowOpen} // Pass setter to MessagesPage
-                    isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown}
-                    setIsMobileMessagesListScrollingDown={
-                      setIsMobileMessagesListScrollingDown
-                    }
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/messages/:conversationId"
-              element={
-                authUser ? (
-                  <MessagesPage
-                    openImageModal={openImageModal}
-                    setIsChatWindowOpen={setIsChatWindowOpen}
-                    isMobileMessagesListScrollingDown={isMobileMessagesListScrollingDown}
-                    setIsMobileMessagesListScrollingDown={
-                      setIsMobileMessagesListScrollingDown
-                    }
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/public-chat"
-              element={
-                authUser ? (
-                  <PublicChatPage openImageModal={openImageModal} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <PublicChatPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/bookmarks"
-              element={
-                authUser ? (
-                  <BookmarksPage openImageModal={openImageModal} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <BookmarksPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/themes"
-              element={
-                authUser ? (
-                  <ThemesPage openImageModal={openImageModal} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <ThemesPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/:username/post/:pid"
-              element={
-                authUser ? (
-                  <PostPage openImageModal={openImageModal} setFeedType={setFeedType} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <PostPage /> : <Navigate to="/login" />}
             />
             <Route
               path="/search"
-              element={
-                authUser ? (
-                  <SearchPage
-                    showUnfollowModal={showUnfollowModal}
-                    setShowUnfollowModal={setShowUnfollowModal}
-                  />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
+              element={authUser ? <SearchPage /> : <Navigate to="/login" />}
             />
           </Routes>
         </Suspense>
       </main>
 
-      {/* RightPanel - Hidden on mobile */}
       {authUser && !isMessagePage && !isPublicChatPage && (
-        <RightPanel
-          showUnfollowModal={showUnfollowModal}
-          setShowUnfollowModal={setShowUnfollowModal}
-          className="hidden md:block"
-        />
+        <RightPanel className="hidden md:block" />
       )}
-      <Toaster
-        position="bottom-center" // Change position to top-center
-      />
+      <Toaster position="bottom-center" />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
-      <ProfileImageModal src={selectedProfileImg} onClose={closeProfileImageModal} />
+      <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
       {showCreatePostModal && (
         <CreatePostModal onClose={() => setShowCreatePostModal(false)} />
       )}

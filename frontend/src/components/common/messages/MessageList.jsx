@@ -4,6 +4,7 @@ import LoadingSpinner from "../LoadingSpinner";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 
 import MessageItem from "./MessageItem";
+import { useAppStore } from "../../../store/appStore";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
@@ -25,7 +26,6 @@ const MessageList = forwardRef(function MessageList(
     deleteMessage,
     messageInputRef,
     isDeletingMessage,
-    openImageModal,
     isLoadingInitialMessages,
     isFetchingOlderMessages,
     hasNextPage,
@@ -38,6 +38,7 @@ const MessageList = forwardRef(function MessageList(
   },
   ref
 ) {
+  const openImageModal = useAppStore((state) => state.openImageModal);
   const { authUser: currentUser } = useAuthUser();
   const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
 
@@ -45,7 +46,7 @@ const MessageList = forwardRef(function MessageList(
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
 
   const mouseLeaveTimeoutRef = useRef(null);
-  const lastMessageDateRef = useRef(null)
+  const lastMessageDateRef = useRef(null);
   const MOUSE_LEAVE_DELAY = 100;
 
   useEffect(() => {

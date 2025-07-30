@@ -24,7 +24,7 @@ import { usePublicMessages } from "../../hooks/publicChatHooks/usePublicMessages
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
 
-const PublicChatWindow = ({ openImageModal }) => {
+const PublicChatWindow = () => {
   const { authUser: currentUser, refetchAuthUser } = useAuthUser();
   const { socket, setActiveConversationId } = useSocket();
 
@@ -477,7 +477,6 @@ const PublicChatWindow = ({ openImageModal }) => {
                     <PublicChatMessage
                       message={message}
                       authUser={currentUser}
-                      openImageModal={openImageModal}
                       // onDelete={handleDeleteMessage}
                       onBan={handleBanUser}
                       onUnban={handleUnbanUser}

@@ -19,12 +19,12 @@ const EditProfileModal = ({ authUser }) => {
 
   const [showCurrentPassword, setShowCurrentPassword] = useState(false);
   const [showNewPassword, setShowNewPassword] = useState(false);
-  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false); // New state for confirm password
+  const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false);
   const [focusedInput, setFocusedInput] = useState(null);
 
   const curPasswordRef = useRef(null);
   const newPasswordRef = useRef(null);
-  const confirmNewPasswordRef = useRef(null); // New ref for confirm password
+  const confirmNewPasswordRef = useRef(null);
 
   const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
     useUpdateUserProfile(formData);
@@ -112,7 +112,6 @@ const EditProfileModal = ({ authUser }) => {
                 </span>
               )}
             </div>
-            {/* Username Input */}
             <div className="relative">
               <input
                 type="text"
@@ -131,16 +130,6 @@ const EditProfileModal = ({ authUser }) => {
                 </span>
               )}
             </div>
-            {/* <div className="flex flex-wrap gap-2">
-              <input
-                type="email"
-                placeholder="Email"
-                className="flex-1 input border border-secondary rounded-lg p-2 input-md"
-                value={formData.email}
-                name="email"
-                onChange={handleInputChange}
-              />
-            </div> */}
             <div className="relative">
               <textarea
                 placeholder="Bio"
@@ -155,14 +144,11 @@ const EditProfileModal = ({ authUser }) => {
               />
               {focusedInput === "bio" && (
                 <span className="absolute right-2 top-[15%] -translate-y-1/2 text-xs text-slate-500">
-                  {" "}
-                  {/* Positioned for textarea */}
                   {formData.bio.length}/{charLimits.bio}
                 </span>
               )}
             </div>
 
-            {/* Link Input */}
             <div className="relative">
               <input
                 type="text"
@@ -184,7 +170,6 @@ const EditProfileModal = ({ authUser }) => {
 
             <h3 className="font-bold text-lg">Change Password</h3>
 
-            {/* Current Password Input */}
             <div className="relative">
               <input
                 ref={curPasswordRef}
@@ -194,7 +179,7 @@ const EditProfileModal = ({ authUser }) => {
                 value={formData.currentPassword}
                 name="currentPassword"
                 onChange={handleInputChange}
-                onFocus={() => setFocusedInput("currentPassword")} // Still track focus for potential future use
+                onFocus={() => setFocusedInput("currentPassword")}
                 onBlur={() => setFocusedInput(null)}
               />
               <span
@@ -208,7 +193,6 @@ const EditProfileModal = ({ authUser }) => {
               </span>
             </div>
 
-            {/* New Password Input */}
             <div className="relative">
               <input
                 ref={newPasswordRef}
@@ -219,7 +203,7 @@ const EditProfileModal = ({ authUser }) => {
                 value={formData.newPassword}
                 name="newPassword"
                 onChange={handleInputChange}
-                onFocus={() => setFocusedInput("newPassword")} // Still track focus for potential future use
+                onFocus={() => setFocusedInput("newPassword")}
                 onBlur={() => setFocusedInput(null)}
               />
               <span
@@ -233,7 +217,6 @@ const EditProfileModal = ({ authUser }) => {
               </span>
             </div>
 
-            {/* Confirm New Password Input - NEW FIELD */}
             <div className="relative">
               <input
                 ref={confirmNewPasswordRef}
@@ -242,7 +225,7 @@ const EditProfileModal = ({ authUser }) => {
                 placeholder="Confirm New Password"
                 className="flex-1 bg-base-100 w-full pr-10 focus:outline-none focus:border-primary border border-secondary rounded-[4px] p-2 input-md"
                 value={formData.confirmNewPassword}
-                name="confirmNewPassword" // Make sure the name matches the state key
+                name="confirmNewPassword"
                 onChange={handleInputChange}
                 onFocus={() => setFocusedInput("confirmNewPassword")}
                 onBlur={() => setFocusedInput(null)}

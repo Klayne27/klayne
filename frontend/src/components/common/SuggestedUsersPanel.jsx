@@ -8,19 +8,20 @@ import { BiRefresh } from "react-icons/bi";
 import React, { useState } from "react";
 import FollowButton from "./FollowButton";
 import ConfirmationModal from "./ConfirmationModal";
+import { useAppStore } from "../../store/appStore";
 
-const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal }) => {
+const SuggestedUsersPanel = () => {
+  const showUnfollowModal = useAppStore((state) => state.showUnfollowModal);
+  const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal);
   const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
-  const { follow, isPending } = useFollow();
+  const { follow } = useFollow();
   const { authUser: currentUser } = useAuthUser();
-  // const [showUnfollowModal, setShowUnfollowModal] = useState(false); // New state for unfollow modal
-  const [userToUnfollow, setUserToUnfollow] = useState(null); // State to hold user info for unfollow modal
+  const [userToUnfollow, setUserToUnfollow] = useState(null);
 
   const handleRefreshClick = () => {
     refetch();
   };
 
-  // New functions for Unfollow Modal
   const openUnfollowModal = (userToUnfollow) => {
     setUserToUnfollow(userToUnfollow);
     setShowUnfollowModal(true);
@@ -33,7 +34,7 @@ const SuggestedUsersPanel = ({ setShowUnfollowModal, showUnfollowModal }) => {
 
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id); // This will unfollow the user
+      follow(userToUnfollow._id);
       closeUnfollowModal();
     }
   };
