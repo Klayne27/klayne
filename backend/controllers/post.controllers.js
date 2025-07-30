@@ -11,37 +11,7 @@ import {
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
-
-const extractAndValidateMentions = async (text) => {
-  const mentionRegex = /@([a-zA-Z0-9_]{1,30})\b/g;
-  let match;
-  const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
-
-  while ((match = mentionRegex.exec(text)) !== null) {
-    mentionedUsernames.add(match[1].toLowerCase()); // Store in lowercase for case-insensitive lookup
-  }
-
-  const mentionedUsersIds = [];
-  if (mentionedUsernames.size > 0) {
-    const users = await User.find({
-      username: { $in: Array.from(mentionedUsernames) },
-    }).select("_id username"); // Select only ID and username
-
-    users.forEach((user) => mentionedUsersIds.push(user._id));
-  }
-  return mentionedUsersIds;
-};
-
-const getBlockingUsers = async (userId) => {
-  if (!userId) {
-    return { blockedByMe: [], blockedMe: [] };
-  }
-  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
-  return {
-    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
-    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
-  };
-};
+import { extractAndValidateMentions, getBlockingUsers } from "../lib/utils/helpers.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) return false;
@@ -110,7 +80,7 @@ export const createPost = async (req, res) => {
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
-    const isScheduled = !!scheduledAt; // Convert to boolean
+    const isScheduled = !!scheduledAt;
     const newPostData = {
       user: userId,
       text,
@@ -118,7 +88,7 @@ export const createPost = async (req, res) => {
       mentionedUsers: mentionedUsersIds,
       isScheduled,
       scheduledAt: isScheduled ? new Date(scheduledAt) : null,
-      publishedAt: new Date(), // <--- ADD THIS LINE FOR IMMEDIATE POSTS
+      publishedAt: new Date(),
     };
 
     if (pollOptions && pollOptions.length > 0) {
@@ -166,24 +136,11 @@ export const createPost = async (req, res) => {
 
       if (onlineUsersMap && io) {
         for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-          // Do not send count to the user who just created the post.
-          // They don't need a badge for their own post.
           if (onlineUserId.toString() !== userId.toString()) {
-            await emitNewPostCount(onlineUserId); // Emit count to other users
+            await emitNewPostCount(onlineUserId);
           }
         }
       }
-
-      // Check if onlineUsersMap and io are defined before using
-      // if (onlineUsersMap && io) {
-      //   for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-      //     if (onlineUserId.toString() !== userId.toString()) {
-      //       socketIdsSet.forEach((socketId) => {
-      //         io.to(socketId).emit("newPostCount", newPost);
-      //       });
-      //     }
-      //   }
-      // }
     } else {
       console.log(`Post scheduled for ${newPost.scheduledAt}`);
     }
@@ -215,7 +172,6 @@ export const deletePost = async (req, res) => {
         .json({ error: "You are not authorized to delete this post" });
     }
 
-    // Case 1: Deleting an ORIGINAL post
     if (!postToDelete.repostedFrom) {
       if (postToDelete.imgPublicId) {
         await cloudinary.uploader.destroy(postToDelete.imgPublicId);
@@ -227,19 +183,15 @@ export const deletePost = async (req, res) => {
       }
       await Post.deleteMany({ repostedFrom: postToDelete._id });
       await Post.deleteOne({ _id: id });
-      // You may want to update user's post count here as well
     }
-    // Case 2: Deleting a REPOST
     else {
-      // Update the original post's metadata
       await Post.updateOne(
         { _id: postToDelete.repostedFrom },
         {
           $inc: { repostsCount: -1 },
-          $pull: { repostedBy: userId }, // Remove user from the 'repostedBy' array
+          $pull: { repostedBy: userId }, 
         }
       );
-      // Delete the actual repost document
       await Post.deleteOne({ _id: id });
     }
 
@@ -284,8 +236,7 @@ export const likeUnlikePost = async (req, res) => {
       await post.save();
 
       if (
-        post.user.toString() !== userId.toString() &&
-        !(await isBlockedOrBlockedBy(userId, post.user))
+        post.user.toString() !== userId.toString()
       ) {
         const notification = new Notification({
           from: userId,
@@ -307,170 +258,10 @@ export const likeUnlikePost = async (req, res) => {
   }
 };
 
-// export const getAllPosts = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 15; // <--- Match frontend limit
-//     const skip = (page - 1) * limit;
-
-//     const userId = req.user?._id;
-
-//     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
-
-//     const blockedAndBlockingObjectIds = [
-//       ...new Set([
-//         ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
-//         ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
-//       ]),
-//     ];
-
-//     const matchConditions = {
-//       $and: [
-//         { "deletedFor.user": { $ne: userId } },
-//         // --- MODIFIED SCHEDULED LOGIC START ---
-//         {
-//           $or: [
-//             // If it's not explicitly scheduled (isScheduled is false or missing)
-//             { isScheduled: { $ne: true } },
-//             // OR if it is scheduled, but the scheduledAt time has passed
-//             {
-//               $and: [
-//                 { isScheduled: true },
-//                 { scheduledAt: { $ne: null } }, // Ensure scheduledAt is set if isScheduled is true
-//                 { scheduledAt: { $lte: new Date() } },
-//               ],
-//             },
-//           ],
-//         },
-//         // --- MODIFIED SCHEDULED LOGIC END ---
-//         {
-//           $or: [
-//             { user: { $nin: blockedAndBlockingObjectIds } },
-//             {
-//               $and: [
-//                 { repostedFrom: { $ne: null } }, // It's a repost
-//                 { user: { $nin: blockedAndBlockingObjectIds } }, // Reposter is not blocked
-//                 { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
-//                 {
-//                   $or: [
-//                     { "repostedFrom.isScheduled": { $ne: true } },
-//                     {
-//                       $and: [
-//                         { "repostedFrom.isScheduled": true },
-//                         { "repostedFrom.scheduledAt": { $ne: null } },
-//                         { "repostedFrom.scheduledAt": { $lte: new Date() } },
-//                       ],
-//                     },
-//                   ],
-//                 },
-//               ],
-//             },
-//           ],
-//         },
-//       ],
-//     };
-
-//     // console.log("Final Match Conditions:", JSON.stringify(matchConditions, null, 2)); // Debug match conditions
-
-//     const totalPostsResult = await Post.aggregate([
-//       { $match: matchConditions },
-//       { $count: "count" },
-//     ]);
-//     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
-
-//     const posts = await Post.aggregate([
-//       { $match: matchConditions },
-//       { $sort: { publishedAt: -1, createdAt: -1 } },
-//       { $skip: skip },
-//       { $limit: limit },
-//       {
-//         $lookup: {
-//           from: "users",
-//           localField: "user",
-//           foreignField: "_id",
-//           as: "user",
-//           pipeline: [{ $project: { password: 0 } }],
-//         },
-//       },
-//       { $unwind: "$user" },
-//       {
-//         $lookup: {
-//           from: "posts",
-//           localField: "repostedFrom",
-//           foreignField: "_id",
-//           as: "repostedFrom",
-//           pipeline: [
-//             {
-//               $lookup: {
-//                 from: "users",
-//                 localField: "user",
-//                 foreignField: "_id",
-//                 as: "user",
-//                 pipeline: [{ $project: { password: 0 } }],
-//               },
-//             },
-//             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-//             {
-//               $project: {
-//                 text: 1,
-//                 img: 1,
-//                 video: 1,
-//                 mediaType: 1,
-//                 likes: 1,
-//                 commentsCount: 1,
-//                 repostsCount: 1,
-//                 repostedBy: 1,
-//                 bookmarkedBy: 1,
-//                 createdAt: 1,
-//                 user: 1,
-//                 isScheduled: 1, // <--- Include these for potential client-side use or deeper filtering
-//                 scheduledAt: 1, // <--- Include these
-//               },
-//             },
-//           ],
-//         },
-//       },
-//       { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
-//       // { $match: matchConditions },
-//       // { $count: "count" },
-//     ]);
-
-//     const finalFilteredPosts = posts.filter((post) => {
-//       // These client-side filters are fine, but ensure they don't unexpectedly remove posts
-//       // If the aggregation query is strong enough, some of these might be redundant.
-//       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
-//         return false;
-//       }
-//       if (post.repostedFrom && !post.repostedFrom.user) {
-//         return false;
-//       }
-//       // Add client-side filter for reposts of future scheduled posts, if not fully covered by aggregation
-//       if (
-//         post.repostedFrom &&
-//         post.repostedFrom.isScheduled &&
-//         post.repostedFrom.scheduledAt &&
-//         new Date(post.repostedFrom.scheduledAt) > new Date()
-//       ) {
-//         return false;
-//       }
-//       return true;
-//     });
-
-//     const hasNextPage = page * limit < totalCount;
-
-//     res
-//       .status(200)
-//       .json({ posts: finalFilteredPosts, hasNextPage, totalPosts: totalCount });
-//   } catch (error) {
-//     res.status(500).json({ error: "Internal server error" });
-//     console.log("Error in getAllPosts controller: ", error); // Keep this for server-side debugging
-//   }
-// };
-
 export const getAllPosts = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 15;
+    const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
 
     const userId = req.user?._id;
@@ -487,9 +278,8 @@ export const getAllPosts = async (req, res) => {
       ]),
     ];
 
-    const now = new Date(); // Get current date once for consistency
+    const now = new Date();
 
-    // --- Shared Scheduled Post Conditions (for both main posts and reposted posts) ---
     const scheduledPostConditions = {
       $or: [
         { isScheduled: { $ne: true } },
@@ -503,7 +293,6 @@ export const getAllPosts = async (req, res) => {
       ],
     };
 
-    // --- PROJECTION DEFINITIONS ---
     const userProjection = {
       _id: 1,
       username: 1,
@@ -527,29 +316,18 @@ export const getAllPosts = async (req, res) => {
       publishedAt: 1,
       isScheduled: 1,
       scheduledAt: 1,
-      user: 1, // Ensure the populated user is included
+      user: 1,
     };
 
-    // --- Aggregation Pipeline ---
-
-    // Stage 1: Initial filtering of direct posts
-    // This `$match` filters out:
-    //   - Posts deleted for the current user.
-    //   - Direct posts that are scheduled for the future.
-    //   - Direct posts from blocked/blocking users.
     const initialMatchConditions = {
       "deletedFor.user": { $ne: userId },
-      ...scheduledPostConditions, // Applies to the main post itself
-      user: { $nin: blockedAndBlockingObjectIds }, // Applies to the main post's author
+      ...scheduledPostConditions, 
+      user: { $nin: blockedAndBlockingObjectIds }, 
     };
 
-    // First, get the total count after the initial filtering
     const totalPostsResult = await Post.aggregate([
       { $match: initialMatchConditions },
       {
-        // This lookup is just to identify reposts and potentially their original posts' users
-        // needed for the subsequent filtering logic.
-        // We're looking up the repostedFrom field to allow filtering on its properties.
         $lookup: {
           from: "posts",
           localField: "repostedFrom",
@@ -562,26 +340,23 @@ export const getAllPosts = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [{ $project: { _id: 1 } }], // Only need _id for blocking check
+                pipeline: [{ $project: { _id: 1 } }],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
-            // This project ensures we have the necessary fields for the subsequent match
             { $project: { _id: 1, user: 1, isScheduled: 1, scheduledAt: 1 } },
           ],
         },
       },
-      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } }, // Reposts become separate docs, non-reposts stay
-      // Now, apply conditions that involve the repostedFrom content or its user
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
       {
         $match: {
           $or: [
-            { repostedFrom: { $eq: null } }, // Include non-reposts that passed initialMatch
+            { repostedFrom: { $eq: null } }, 
             {
               $and: [
-                { repostedFrom: { $ne: null } }, // Ensure it's a repost
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } }, // Original post's user not blocked
-                // Original post's scheduled status
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -605,12 +380,10 @@ export const getAllPosts = async (req, res) => {
     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
 
     const posts = await Post.aggregate([
-      // Stage 1: Initial filtering (as defined in initialMatchConditions)
       { $match: initialMatchConditions },
       { $sort: { publishedAt: -1, createdAt: -1 } },
       { $skip: skip },
       { $limit: limit },
-      // Stage 2: Lookup and unwind for the main post's user
       {
         $lookup: {
           from: "users",
@@ -620,8 +393,7 @@ export const getAllPosts = async (req, res) => {
           pipeline: [{ $project: userProjection }],
         },
       },
-      { $unwind: "$user" }, // A post must have a valid user
-      // Stage 3: Lookup and unwind for the repostedFrom post and its user
+      { $unwind: "$user" },
       {
         $lookup: {
           from: "posts",
@@ -635,27 +407,24 @@ export const getAllPosts = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [{ $project: userProjection }], // Apply user projection for original post's user
+                pipeline: [{ $project: userProjection }], 
               },
             },
-            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } }, // Original post might be by deleted user
-            { $project: repostedPostProjection }, // Apply reposted post projection
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            { $project: repostedPostProjection },
           ],
         },
       },
-      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } }, // Crucial for non-reposts
-      // Stage 4: Apply the repost-specific filtering after lookups
-      // This ensures we only include reposts if the original post and its user meet criteria.
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
       {
         $match: {
           $or: [
-            { repostedFrom: { $eq: null } }, // Include non-reposts (already passed initialMatch)
+            { repostedFrom: { $eq: null } },
             {
               $and: [
-                { repostedFrom: { $ne: null } }, // It's a repost
-                { "repostedFrom.user": { $ne: null } }, // Original post's user must exist
-                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } }, // Original post's user not blocked
-                // Original post's scheduled status
+                { repostedFrom: { $ne: null } },
+                { "repostedFrom.user": { $ne: null } },
+                { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -673,7 +442,6 @@ export const getAllPosts = async (req, res) => {
           ],
         },
       },
-      // Stage 5: Final projection for the top-level Post fields
       {
         $project: {
           _id: 1,
@@ -696,20 +464,11 @@ export const getAllPosts = async (req, res) => {
           pollOptions: 1,
           createdAt: 1,
           updatedAt: 1,
-          user: 1, // Include the populated user object
-          repostedFrom: 1, // Include the populated repostedFrom object
-          // deletedFor is usually sensitive, ensure you want to send it to client:
-          // deletedFor: 1,
+          user: 1,
+          repostedFrom: 1,
         },
       },
     ]);
-
-    // The client-side filter for `post.repostedFrom.repostedFrom` (double reposts)
-    // is still a good safeguard. While the aggregation pipeline won't explicitly
-    // populate deeper, if a `repostedFrom` itself had a `repostedFrom` reference
-    // (and it somehow slipped through your data model or earlier ops), this would catch it.
-    // However, if your data model correctly prevents double reposts at creation,
-    // this might be redundant. Let's keep it for robustness.
     const finalFilteredPosts = posts.filter((post) => {
       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
         return false;
@@ -720,7 +479,7 @@ export const getAllPosts = async (req, res) => {
     const hasNextPage = page * limit < totalCount;
 
     await User.findByIdAndUpdate(userId, { lastReadFeedTimestamp: new Date() });
-    emitNewPostCount(userId.toString()); // Renamed from emitNewPostCount to match usage
+    emitNewPostCount(userId.toString());
 
     res
       .status(200)
@@ -742,7 +501,6 @@ export const getLikedPosts = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    // Blocking check for the user whose liked posts are being viewed
     if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, userId))) {
       return res.status(403).json({
         error: "You cannot view liked posts of this user due to blocking restrictions.",
@@ -761,25 +519,23 @@ export const getLikedPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const now = new Date(); // Current time for scheduled post checks
+    const now = new Date(); 
 
     const baseMatchConditions = {
-      _id: { $in: user.likedPosts }, // Only include posts the user liked
+      _id: { $in: user.likedPosts },
       "deletedFor.user": {
         $ne: currentUserId ? new mongoose.Types.ObjectId(currentUserId) : null,
       },
-      // --- START: MODIFIED SCHEDULED POST LOGIC for the main post ---
       $or: [
-        { isScheduled: { $ne: true } }, // if isScheduled is false or not present
+        { isScheduled: { $ne: true } },
         {
           $and: [
             { isScheduled: true },
             { scheduledAt: { $ne: null } },
-            { scheduledAt: { $lte: now } }, // scheduledAt is in the past or now
+            { scheduledAt: { $lte: now } },
           ],
         },
       ],
-      // --- END: MODIFIED SCHEDULED POST LOGIC ---
     };
 
     const pipeline = [
@@ -826,8 +582,8 @@ export const getLikedPosts = async (req, res) => {
                 repostedBy: 1,
                 createdAt: 1,
                 user: 1,
-                isScheduled: 1, // Include for filtering reposts
-                scheduledAt: 1, // Include for filtering reposts
+                isScheduled: 1,
+                scheduledAt: 1, 
               },
             },
           ],
@@ -850,14 +606,13 @@ export const getLikedPosts = async (req, res) => {
           repostedFrom: 1,
           bookmarkedBy: 1,
           createdAt: 1,
-          isScheduled: 1, // Ensure these are carried through
-          scheduledAt: 1, // Ensure these are carried through
+          isScheduled: 1, 
+          scheduledAt: 1, 
         },
       },
       {
         $match: {
           $and: [
-            // Blocking filters
             { "user._id": { $nin: blockedAndBlockingObjectIds } },
             {
               $or: [
@@ -865,25 +620,21 @@ export const getLikedPosts = async (req, res) => {
                 { "repostedFrom.user._id": { $nin: blockedAndBlockingObjectIds } },
               ],
             },
-            // Prevent reposts of reposts (as per your existing logic)
             { "repostedFrom.repostedFrom": { $eq: null } },
-            // Ensure repostedFrom.user is not null (as per your existing logic)
             { $or: [{ repostedFrom: null }, { "repostedFrom.user": { $ne: null } }] },
-            // --- START: MODIFIED SCHEDULED POST LOGIC for repostedFrom ---
             {
               $or: [
-                { repostedFrom: null }, // If not a repost, this condition doesn't apply
-                { "repostedFrom.isScheduled": { $ne: true } }, // Reposted original is not scheduled
+                { repostedFrom: null },
+                { "repostedFrom.isScheduled": { $ne: true } }, 
                 {
                   $and: [
                     { "repostedFrom.isScheduled": true },
                     { "repostedFrom.scheduledAt": { $ne: null } },
-                    { "repostedFrom.scheduledAt": { $lte: now } }, // Reposted original's scheduled time has passed
+                    { "repostedFrom.scheduledAt": { $lte: now } },
                   ],
                 },
               ],
             },
-            // --- END: MODIFIED SCHEDULED POST LOGIC ---
           ],
         },
       },
@@ -891,14 +642,14 @@ export const getLikedPosts = async (req, res) => {
     ];
 
     const totalLikedPostsResult = await Post.aggregate([
-      ...pipeline, // Use the constructed pipeline for count
+      ...pipeline, 
       { $count: "count" },
     ]);
     const totalLikedPosts =
       totalLikedPostsResult.length > 0 ? totalLikedPostsResult[0].count : 0;
 
     const likedPosts = await Post.aggregate([
-      ...pipeline, // Use the constructed pipeline for fetching
+      ...pipeline,
       { $skip: skip },
       { $limit: limit },
     ]);
@@ -935,19 +686,18 @@ export const getFollowingPosts = async (req, res) => {
     );
 
     if (effectiveFollowing.length === 0) {
-      return res.status(200).json({ posts: [], hasNextPage: false, totalPosts: 0 }); // Added totalPosts for consistency
+      return res.status(200).json({ posts: [], hasNextPage: false, totalPosts: 0 });
     }
 
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const now = new Date(); // Current time for scheduled post checks
+    const now = new Date();
 
     const queryConditions = {
       $and: [
         { "deletedFor.user": { $ne: userId } },
-        // --- START: MODIFIED SCHEDULED POST LOGIC for the main post ---
         {
           $or: [
             { isScheduled: { $ne: true } },
@@ -960,7 +710,6 @@ export const getFollowingPosts = async (req, res) => {
             },
           ],
         },
-        // --- END: MODIFIED SCHEDULED POST LOGIC ---
         {
           $or: [
             { user: { $in: effectiveFollowing } },
@@ -969,7 +718,6 @@ export const getFollowingPosts = async (req, res) => {
                 { user: { $in: effectiveFollowing } },
                 { repostedFrom: { $ne: null } },
                 { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
-                // --- START: MODIFIED SCHEDULED POST LOGIC for repostedFrom in query ---
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
@@ -982,7 +730,6 @@ export const getFollowingPosts = async (req, res) => {
                     },
                   ],
                 },
-                // --- END: MODIFIED SCHEDULED POST LOGIC for repostedFrom in query ---
               ],
             },
           ],
@@ -1006,7 +753,6 @@ export const getFollowingPosts = async (req, res) => {
           path: "user",
           select: "-password",
         },
-        // --- ADDED isScheduled and scheduledAt to repostedFrom select ---
         select:
           "text img video mediaType likes commentsCount repostsCount bookmarkedBy repostedBy createdAt user isScheduled scheduledAt",
       });
@@ -1030,14 +776,10 @@ export const getFollowingPosts = async (req, res) => {
       if (post.repostedFrom && post.repostedFrom.repostedFrom) {
         return false;
       }
-      // This is checking if repostedFrom is an _id, but not its existence
-      // if (post.repostedFrom && !post.repostedFrom._id) { // Not needed if already populated and checked for user
-      //   return false;
-      // }
+
       if (post.repostedFrom && !post.repostedFrom.user) {
         return false;
       }
-      // --- START: Client-side filter for reposts of future-scheduled posts ---
       if (
         post.repostedFrom &&
         post.repostedFrom.isScheduled &&
@@ -1046,7 +788,6 @@ export const getFollowingPosts = async (req, res) => {
       ) {
         return false;
       }
-      // --- END: Client-side filter ---
 
       return true;
     });
@@ -1087,25 +828,24 @@ export const getUserPosts = async (req, res) => {
       ]),
     ];
 
-    const now = new Date(); // Current time for scheduled post checks
+    const now = new Date();
 
     const queryConditions = {
       $and: [
         { "deletedFor.user": { $ne: currentUserId } },
         {
           $or: [
-            { isScheduled: { $ne: true } }, // if isScheduled is false or not present
-            { user: currentUserId }, // Current user can always see their own scheduled posts
+            { isScheduled: { $ne: true } },
+            { user: currentUserId },
             {
               $and: [
                 { isScheduled: true },
                 { scheduledAt: { $ne: null } },
-                { scheduledAt: { $lte: now } }, // scheduledAt is in the past or now
+                { scheduledAt: { $lte: now } }, 
               ],
             },
           ],
         },
-        // --- END: MODIFIED SCHEDULED POST LOGIC ---
         {
           $or: [
             { user: user._id },
@@ -1114,11 +854,10 @@ export const getUserPosts = async (req, res) => {
                 { user: user._id },
                 { repostedFrom: { $ne: null } },
                 { "repostedFrom.user": { $nin: blockedAndBlockingObjectIds } },
-                // --- START: MODIFIED SCHEDULED POST LOGIC for repostedFrom in query ---
                 {
                   $or: [
                     { "repostedFrom.isScheduled": { $ne: true } },
-                    { "repostedFrom.user": currentUserId }, // Current user can see reposts of their own scheduled posts
+                    { "repostedFrom.user": currentUserId },
                     {
                       $and: [
                         { "repostedFrom.isScheduled": true },
@@ -1128,7 +867,6 @@ export const getUserPosts = async (req, res) => {
                     },
                   ],
                 },
-                // --- END: MODIFIED SCHEDULED POST LOGIC for repostedFrom in query ---
               ],
             },
           ],
@@ -1182,21 +920,16 @@ export const getUserPosts = async (req, res) => {
       if (post.repostedFrom && !post.repostedFrom.user) {
         return false;
       }
-      // --- START: Client-side filter for reposts of future-scheduled posts ---
-      // This is mostly handled by the queryConditions now, but as a final safeguard:
       if (
         post.repostedFrom &&
         post.repostedFrom.isScheduled &&
         post.repostedFrom.scheduledAt &&
         new Date(post.repostedFrom.scheduledAt) > now
       ) {
-        // If the reposted post is future-scheduled, and the current user is NOT its owner, hide it.
-        // This ensures that even if somehow it slipped past query, it's caught.
         if (!currentUserId || !post.repostedFrom.user._id.equals(currentUserId)) {
           return false;
         }
       }
-      // --- END: Client-side filter ---
 
       return true;
     });
@@ -1239,14 +972,12 @@ export const getPost = async (req, res) => {
 
     const now = new Date();
 
-    // Check if the main post is scheduled for the future
     if (post.isScheduled && post.scheduledAt && new Date(post.scheduledAt) > now) {
       if (!currentUserId || post.user._id.toString() !== currentUserId.toString()) {
         return res.status(404).json({ error: "Post not found" });
       }
     }
 
-    // If the post is a repost, check the original post's (repostedFrom) schedule
     if (post.repostedFrom) {
       const originalPost = post.repostedFrom;
       if (
@@ -1303,14 +1034,12 @@ export const repostPost = async (req, res) => {
       return res.status(404).json({ error: "Post not found." });
     }
 
-    // A post can be a repost itself. Find the ultimate original post.
     const originalPostId = postToRepost.repostedFrom || postToRepost._id;
     const originalPost = await Post.findById(originalPostId);
     if (!originalPost) {
       return res.status(404).json({ error: "Original post not found." });
     }
 
-    // Block check against the original author
     const originalPostOwnerId = originalPost.user.toString();
     if (await isBlockedOrBlockedBy(userId, originalPostOwnerId)) {
       return res.status(403).json({
@@ -1328,7 +1057,6 @@ export const repostPost = async (req, res) => {
     });
 
     if (existingRepost) {
-      // --- UNDO REPOST ---
       await Post.deleteOne({ _id: existingRepost._id });
       await Post.updateOne(
         { _id: originalPostId },
@@ -1342,7 +1070,7 @@ export const repostPost = async (req, res) => {
       const newRepost = new Post({
         user: userId,
         repostedFrom: originalPostId,
-        publishedAt: new Date(), // A repost happens NOW
+        publishedAt: new Date(), 
       });
       await newRepost.save();
       await Post.updateOne(
@@ -1480,36 +1208,25 @@ export const getBookmarkedPosts = async (req, res) => {
 
 export const voteOnPoll = async (req, res) => {
   try {
-    const { postId } = req.params; // Get post ID from URL parameters
-    const { optionId } = req.body; // Get the ID of the selected poll option from the request body
-    const userId = req.user._id; // Get the ID of the authenticated user
+    const { postId } = req.params;
+    const { optionId } = req.body; 
+    const userId = req.user._id;
 
-    // 1. Find the Post
     const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ error: "Post not found." });
     }
 
-    // 2. Validate if it's a poll
     if (!post.pollOptions || post.pollOptions.length === 0) {
       return res.status(400).json({ error: "This post is not a poll." });
     }
 
-    // Optional: Add blocking checks here if you want to prevent blocked users from voting
-    // if (await isBlockedOrBlockedBy(userId, post.user.toString())) {
-    //   return res.status(403).json({ error: "You cannot vote on this content due to blocking restrictions." });
-    // }
-
-    // 3. Find the specific poll option using its _id (Mongoose subdocument method)
-    const selectedOption = post.pollOptions.id(optionId); // `id()` is a Mongoose array method to find subdocuments by their `_id`
+    const selectedOption = post.pollOptions.id(optionId);
 
     if (!selectedOption) {
       return res.status(404).json({ error: "Poll option not found." });
     }
-
-    // 4. Check if the user has already voted on *any* option in this poll
-    // Iterate through all poll options to see if the current user's ID exists in any 'voters' array
     const hasUserAlreadyVoted = post.pollOptions.some((option) =>
       option.voters.includes(userId)
     );
@@ -1518,31 +1235,16 @@ export const voteOnPoll = async (req, res) => {
       return res.status(400).json({ error: "You have already voted on this poll." });
     }
 
-    // 5. Add the user's ID to the selected option's voters array
     selectedOption.voters.push(userId);
 
-    // 6. Increment the total votes for the poll
     post.pollTotalVotes += 1;
 
-    // 7. Save the updated post
     await post.save();
 
-    // Optional: Send a notification to the post owner that someone voted on their poll
-    // (You might want a new notification `type: "pollVote"` if you implement this)
-    // if (post.user.toString() !== userId.toString()) {
-    //   await createAndSendNotification({
-    //     from: userId,
-    //     to: post.user,
-    //     type: "pollVote", // New notification type
-    //     postId: post._id,
-    //   });
-    // }
-
-    // 8. Send a success response with updated poll data (optional, but useful for frontend)
     res.status(200).json({
       message: "Vote cast successfully!",
-      pollOptions: post.pollOptions, // Return the updated options
-      pollTotalVotes: post.pollTotalVotes, // Return the updated total
+      pollOptions: post.pollOptions,
+      pollTotalVotes: post.pollTotalVotes,
     });
   } catch (error) {
     console.error("Error in voteOnPoll controller:", error.message);
@@ -1553,14 +1255,13 @@ export const voteOnPoll = async (req, res) => {
 export const pinUnpinPost = async (req, res) => {
   try {
     const { id: postId } = req.params;
-    const userId = req.user._id; // Authenticated user's ID
+    const userId = req.user._id;
 
     const post = await Post.findById(postId);
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Ensure only the owner can pin/unpin their own post
     if (post.user.toString() !== userId.toString()) {
       return res
         .status(403)
@@ -1575,16 +1276,12 @@ export const pinUnpinPost = async (req, res) => {
     const isPinned = user.pinnedPosts.includes(postId);
 
     if (isPinned) {
-      // Unpin the post
       user.pinnedPosts = user.pinnedPosts.filter(
         (id) => id.toString() !== postId.toString()
       );
       await user.save();
       res.status(200).json({ message: "Post unpinned successfully" });
     } else {
-      // Pin the post
-      // Add to the beginning of the array for a LIFO (Last-In, First-Out) display
-      // Or you can append: user.pinnedPosts.push(postId); for FIFO
       user.pinnedPosts.unshift(postId);
       await user.save();
       res.status(200).json({ message: "Post pinned successfully" });
@@ -1611,7 +1308,6 @@ export const getPinnedPosts = async (req, res) => {
       });
     }
 
-    // ✨ REVISED POPULATION LOGIC
     const userWithPinnedPosts = await User.findById(user._id)
       .select("pinnedPosts")
       .populate({
@@ -1624,7 +1320,6 @@ export const getPinnedPosts = async (req, res) => {
               path: "user",
               select: "-password",
             },
-            // Select all necessary fields for the original post, including repostedBy
             select:
               "text img video mediaType likes commentsCount bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy",
           },
@@ -1636,8 +1331,6 @@ export const getPinnedPosts = async (req, res) => {
       return res.status(200).json([]);
     }
 
-    // ✨ ENHANCED FILTERING
-    // This ensures consistency with your other feed endpoints
     const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
     const blockedIds = new Set([...blockedByMe, ...blockedMe]);
 
@@ -1645,7 +1338,6 @@ export const getPinnedPosts = async (req, res) => {
       const postOwnerId = post.user?._id?.toString();
       const repostedFromOwnerId = post.repostedFrom?.user?._id?.toString();
 
-      // Filter if viewer has blocked/is blocked by post owner or original post owner
       if (
         blockedIds.has(postOwnerId) ||
         (repostedFromOwnerId && blockedIds.has(repostedFromOwnerId))
@@ -1653,12 +1345,9 @@ export const getPinnedPosts = async (req, res) => {
         return false;
       }
 
-      // Filter if post is "deleted for me"
       if (post.deletedFor?.some((entry) => entry.user.equals(currentUserId))) {
         return false;
       }
-
-      // Add any other necessary filtering (e.g., for scheduled posts) if needed
 
       return true;
     });
@@ -1677,10 +1366,10 @@ export const getScheduledPosts = async (req, res) => {
     const scheduledPosts = await Post.find({
       user: userId,
       isScheduled: true,
-      scheduledAt: { $gt: new Date() }, // Only posts scheduled for the future
+      scheduledAt: { $gt: new Date() },
     })
-      .sort({ scheduledAt: 1 }) // Sort by earliest scheduled time
-      .populate("user", "-password"); // Populate user details, exclude password
+      .sort({ scheduledAt: 1 })
+      .populate("user", "-password");
 
     res.status(200).json(scheduledPosts);
   } catch (error) {
@@ -1692,7 +1381,6 @@ export const getScheduledPosts = async (req, res) => {
 export const updateScheduledPost = async (req, res) => {
   try {
     const { id } = req.params;
-    // Only expect text and scheduledAt for scheduled posts
     const { text, scheduledAt } = req.body;
     const userId = req.user._id;
 
@@ -1714,8 +1402,6 @@ export const updateScheduledPost = async (req, res) => {
       });
     }
 
-    // Since scheduled posts are text-only, ensure no media or poll is present
-    // If the original scheduled post somehow had media/poll, clear it on update.
     if (post.imgPublicId) {
       // Assuming cloudinary is configured to destroy the image
       // await cloudinary.uploader.destroy(post.imgPublicId); // Uncomment if you want to delete associated media from Cloudinary on update
@@ -1725,25 +1411,23 @@ export const updateScheduledPost = async (req, res) => {
       // await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" }); // Uncomment if you want to delete associated media from Cloudinary on update
     }
 
-    // Basic validation for text content
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: "Scheduled post must have text content." });
     }
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
-    // Update the post fields
     post.text = text;
-    post.img = null; // Clear image
-    post.video = null; // Clear video
-    post.imgPublicId = null; // Clear image public ID
-    post.videoPublicId = null; // Clear video public ID
-    post.mediaType = "none"; // Set media type to none for text-only scheduled posts
-    post.pollOptions = []; // Clear poll options
-    post.pollTotalVotes = 0; // Reset poll votes
+    post.img = null;
+    post.video = null;
+    post.imgPublicId = null;
+    post.videoPublicId = null;
+    post.mediaType = "none";
+    post.pollOptions = [];
+    post.pollTotalVotes = 0;
     post.mentionedUsers = mentionedUsersIds;
     post.scheduledAt = scheduledAt ? new Date(scheduledAt) : null;
-    post.isScheduled = !!scheduledAt; // Should remain true for updates unless published immediately
+    post.isScheduled = !!scheduledAt;
 
     await post.save();
 
@@ -1777,7 +1461,6 @@ export const deleteScheduledPost = async (req, res) => {
       });
     }
 
-    // Delete media from cloudinary if it exists
     if (post.imgPublicId) {
       await cloudinary.uploader.destroy(post.imgPublicId);
     }
@@ -1785,7 +1468,7 @@ export const deleteScheduledPost = async (req, res) => {
       await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" });
     }
 
-    await Post.deleteOne({ _id: id }); // Or findByIdAndDelete(id);
+    await Post.deleteOne({ _id: id }); 
 
     res.status(200).json({ message: "Scheduled post deleted successfully" });
   } catch (error) {
@@ -1796,7 +1479,7 @@ export const deleteScheduledPost = async (req, res) => {
 
 export const deleteMultipleScheduledPosts = async (req, res) => {
   try {
-    const { postIds } = req.body; // Expect an array of post IDs
+    const { postIds } = req.body;
     const userId = req.user._id;
 
     if (!Array.isArray(postIds) || postIds.length === 0) {
@@ -1818,7 +1501,6 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
         return { postId, status: "not_scheduled", message: "Not a scheduled post" };
       }
 
-      // Delete media from cloudinary if it exists (only if you want to delete associated media)
       if (post.imgPublicId) {
         await cloudinary.uploader.destroy(post.imgPublicId);
       }
@@ -1857,25 +1539,20 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
   }
 };
 
-// controllers/postController.js (add this function)
-// Don't forget to add a route for this endpoint in your Express router
-
 export const markFeedPostsAsRead = async (req, res) => {
   try {
-    const userId = req.user._id; // Assuming user ID is from authentication
+    const userId = req.user._id;
     const userIdObj = new mongoose.Types.ObjectId(userId);
 
-    // Get the current time to mark all previous posts as read
     const now = new Date();
 
     await User.findByIdAndUpdate(
       userIdObj,
       { $set: { lastReadFeedTimestamp: now } },
-      { new: true } // Returns the updated document (optional)
+      { new: true }
     );
 
-    // After marking as read, emit a 0 count to the user's connected sockets
-    await emitNewPostCount(userId.toString()); // Ensure it's a string for emitNewPostCount
+    await emitNewPostCount(userId.toString());
 
     res.status(200).json({ message: "Feed posts marked as read." });
   } catch (error) {

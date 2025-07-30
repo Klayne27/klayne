@@ -26,7 +26,6 @@ export const usePublicMessages = () => {
   const { authUser } = useAuthUser();
   const MESSAGE_LIMIT = 40;
 
-  // New state to manage typing users
   const [typingUsers, setTypingUsers] = useState([]);
 
   const {
@@ -278,7 +277,6 @@ export const usePublicMessages = () => {
   };
 };
 
-// NEW/UPDATED HOOK: useSendPublicMessage
 export const useSendPublicMessage = () => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser(); // Get authUser here too for sender details
@@ -463,7 +461,6 @@ export const useUnbanUserFromPublicChat = () => {
   return { unbanUser, isPending, isError, error };
 };
 
-// --- New React Query Hooks for Reactions ---
 export const useAddPublicMessageReaction = () => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
@@ -611,7 +608,6 @@ export const useDeleteOwnPublicMessage = () => {
   return { deleteOwnMessage, isDeletingOwnMessage };
 };
 
-// NEW: Hook for editing a public message
 export const useEditPublicMessage = () => {
   const queryClient = useQueryClient();
 

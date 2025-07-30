@@ -1,40 +1,6 @@
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
+import { getBlockingUsers } from "../lib/utils/helpers.js";
 import Notification from "../models/notification.model.js";
-import User from "../models/user.model.js";
-
-const getBlockingUsers = async (userId) => {
-  if (!userId) {
-    return { blockedByMe: [], blockedMe: [] };
-  }
-  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
-  return {
-    blockedByMe: user?.blockedUsers?.map((id) => id.toString()) || [],
-    blockedMe: user?.blockedBy?.map((id) => id.toString()) || [],
-  };
-};
-
-const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
-  if (!currentUserId || !targetUserId) return false;
-  if (currentUserId.toString() === targetUserId.toString()) return false;
-
-  const currentUser = await User.findById(currentUserId)
-    .select("blockedUsers blockedBy")
-    .lean();
-  const targetUser = await User.findById(targetUserId)
-    .select("blockedUsers blockedBy")
-    .lean();
-
-  if (!currentUser || !targetUser) return false;
-
-  const currentUserBlockedTarget = currentUser.blockedUsers.some(
-    (id) => id.toString() === targetUserId.toString()
-  );
-  const targetUserBlockedCurrentUser = targetUser.blockedUsers.some(
-    (id) => id.toString() === currentUserId.toString()
-  );
-
-  return currentUserBlockedTarget || targetUserBlockedCurrentUser;
-};
 
 export const getNotifications = async (req, res) => {
   try {
@@ -51,30 +17,27 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "postId",
-        select: "text img video mediaType", // Select fields relevant for display, include video, mediaType
+        select: "text img video mediaType",
         populate: {
           path: "user",
-          select: "username fullName profileImg", // Populate post's author for context
+          select: "username fullName profileImg",
         },
       })
       .populate({
-        path: "commentId", // If you want to show comment text for comment-related notifications
+        path: "commentId",
         select: "text",
       })
       .limit(50);
 
     const filteredNotifications = notifications.filter((notification) => {
-      // Filter out notifications from blocked users or about posts by blocked users
       if (!notification.from) {
-        return false; // User might have been deleted
+        return false;
       }
 
       if (blockedAndBlockingUsers.includes(notification.from._id.toString())) {
         return false;
       }
 
-      // If the notification is post-related (like, comment, repost, mention)
-      // and the post itself or its author is blocked, filter it out.
       if (notification.postId) {
         const postAuthorId = notification.postId.user?._id?.toString();
         if (postAuthorId && blockedAndBlockingUsers.includes(postAuthorId)) {
@@ -87,10 +50,8 @@ export const getNotifications = async (req, res) => {
 
     res.status(200).json(filteredNotifications);
 
-    // Update notifications to read after sending them
     await Notification.updateMany({ to: userId, read: false }, { read: true });
 
-    // Assuming emitUnreadNotificationStatus is a helper that sends socket events
     await emitUnreadNotificationStatus(userId.toString());
   } catch (error) {
     console.log("Error in getNotifications controller", error.message);

@@ -1,6 +1,5 @@
 import Post from "../models/post.model.js";
 import Comment from "../models/comment.model.js";
-import Notification from "../models/notification.model.js";
 import {
   createAndSendNotification,
   emitUnreadNotificationStatus,
@@ -8,17 +7,11 @@ import {
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
-
-const getBlockingUsers = async (userId) => {
-  if (!userId) {
-    return { blockedByMe: [], blockedMe: [] };
-  }
-  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
-  return {
-    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
-    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
-  };
-};
+import {
+  deleteAllChildComments,
+  extractAndValidateMentions,
+  getBlockingUsers,
+} from "../lib/utils/helpers.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (
@@ -52,57 +45,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
 };
 
-const processMentions = async (text, commenterId) => {
-  const mentionedUserIds = [];
-  if (!text) return [];
-
-  const mentionRegex = /@([a-zA-Z0-9_]+)/g;
-  let match;
-  const uniqueMentionedUsernames = new Set();
-
-  while ((match = mentionRegex.exec(text)) !== null) {
-    uniqueMentionedUsernames.add(match[1]);
-  }
-
-  if (uniqueMentionedUsernames.size > 0) {
-    const users = await User.find({
-      username: { $in: Array.from(uniqueMentionedUsernames) },
-    }).select("_id username");
-    for (const user of users) {
-      const isBlocked = await isBlockedOrBlockedBy(commenterId, user._id);
-      if (!isBlocked) {
-        mentionedUserIds.push(user._id);
-      }
-    }
-  }
-  return mentionedUserIds;
-};
-
 const isValidObjectId = (id) => mongoose.Types.ObjectId.isValid(id);
-
-async function deleteAllChildComments(commentId) {
-  let deletedCount = 0;
-  const commentsToDeleteQueue = [commentId];
-
-  while (commentsToDeleteQueue.length > 0) {
-    const currentCommentId = commentsToDeleteQueue.shift();
-
-    const directReplies = await Comment.find({ parentComment: currentCommentId }).select(
-      "_id"
-    );
-
-    directReplies.forEach((reply) => commentsToDeleteQueue.push(reply._id));
-
-    const deleteResult = await Comment.deleteOne({ _id: currentCommentId });
-    if (deleteResult.deletedCount > 0) {
-      deletedCount++;
-      await Notification.deleteMany({
-        $or: [{ commentId: currentCommentId }, { parentCommentId: currentCommentId }],
-      });
-    }
-  }
-  return deletedCount;
-}
 
 export const getComments = async (req, res) => {
   try {
@@ -257,7 +200,7 @@ export const createComment = async (req, res) => {
       }
     }
 
-    const mentionedUserIds = await processMentions(text, userId);
+    const mentionedUserIds = await extractAndValidateMentions(text);
 
     const newComment = new Comment({
       user: userId,
@@ -278,11 +221,9 @@ export const createComment = async (req, res) => {
       select: "username fullName profileImg isVerified isGoldVerified",
     });
 
-    // Notify the post owner (if not the commenter and not blocked)
     if (
       post.user &&
-      post.user._id.toString() !== userId.toString() &&
-      !(await isBlockedOrBlockedBy(userId, post.user._id)) // Double check blocking
+      post.user._id.toString() !== userId.toString()
     ) {
       await createAndSendNotification({
         from: userId,
@@ -293,10 +234,7 @@ export const createComment = async (req, res) => {
       });
     }
 
-    // Notify mentioned users in the comment
     for (const mentionedUserId of mentionedUserIds) {
-      // Avoid notifying the post owner again if they were already notified for the comment itself
-      // and avoid notifying self if the user mentioned themselves
       if (post.user && mentionedUserId.toString() === post.user._id.toString()) {
         continue;
       }
@@ -309,7 +247,6 @@ export const createComment = async (req, res) => {
       });
     }
 
-    // Emit unread notification status for all involved users
     await emitUnreadNotificationStatus(post.user._id.toString());
     for (const mentionedUserId of mentionedUserIds) {
       await emitUnreadNotificationStatus(mentionedUserId.toString());
@@ -322,7 +259,6 @@ export const createComment = async (req, res) => {
   }
 };
 
-// In replyToComment function
 export const replyToComment = async (req, res) => {
   try {
     const { text } = req.body;
@@ -352,19 +288,17 @@ export const replyToComment = async (req, res) => {
     );
     if (!parentComment) {
       return res.status(404).json({ error: "Parent comment not found" });
-    } // Check blocking between commenter and post owner
+    }
 
     if (await isBlockedOrBlockedBy(userId, post.user._id)) {
       return res
         .status(403)
         .json({ error: "You cannot reply to this post due to blocking restrictions." });
-    } // Check blocking between commenter and parent comment owner
+    }
     if (await isBlockedOrBlockedBy(userId, parentComment.user._id)) {
-      return res
-        .status(403)
-        .json({
-          error: "You cannot reply to this comment due to blocking restrictions.",
-        });
+      return res.status(403).json({
+        error: "You cannot reply to this comment due to blocking restrictions.",
+      });
     }
 
     if (img) {
@@ -377,7 +311,7 @@ export const replyToComment = async (req, res) => {
       }
     }
 
-    const mentionedUserIds = await processMentions(text, userId);
+    const mentionedUserIds = await extractAndValdiateMentions(text);
 
     const newReply = new Comment({
       user: userId,
@@ -388,24 +322,22 @@ export const replyToComment = async (req, res) => {
       mentionedUsers: mentionedUserIds,
     });
 
-    await newReply.save(); // Increment repliesCount on the parent comment
+    await newReply.save();
 
     parentComment.repliesCount = (parentComment.repliesCount || 0) + 1;
     await parentComment.save();
 
-    // Increment commentsCount on the Post document as well
     post.commentsCount = (post.commentsCount || 0) + 1;
-    await post.save(); // Populate user details for the response
+    await post.save();
 
     await newReply.populate({
       path: "user",
       select: "username fullName profileImg isVerified isGoldVerified",
-    }); // Notify the parent comment owner (if not the replier and not blocked)
+    });
 
     if (
       parentComment.user &&
-      parentComment.user._id.toString() !== userId.toString() &&
-      !(await isBlockedOrBlockedBy(userId, parentComment.user._id))
+      parentComment.user._id.toString() !== userId.toString()
     ) {
       await createAndSendNotification({
         from: userId,
@@ -413,9 +345,9 @@ export const replyToComment = async (req, res) => {
         type: "commentReply",
         postId: post._id,
         commentId: newReply._id,
-        parentCommentId: parentCommentId, // <--- Add this line! Pass the ID of the parent comment
+        parentCommentId: parentCommentId,
       });
-    } // Notify mentioned users in the reply
+    }
 
     for (const mentionedUserId of mentionedUserIds) {
       if (
@@ -431,7 +363,7 @@ export const replyToComment = async (req, res) => {
         postId: post._id,
         commentId: newReply._id,
       });
-    } // Emit unread notification status for involved users
+    } 
 
     await emitUnreadNotificationStatus(parentComment.user._id.toString());
     for (const mentionedUserId of mentionedUserIds) {
@@ -488,8 +420,7 @@ export const likeUnlikeComment = async (req, res) => {
 
       if (
         comment.user &&
-        comment.user._id.toString() !== userId.toString() &&
-        !(await isBlockedOrBlockedBy(userId, comment.user._id))
+        comment.user._id.toString() !== userId.toString()
       ) {
         await createAndSendNotification({
           from: userId,
@@ -590,7 +521,7 @@ export const deleteComment = async (req, res) => {
     if (commentToDelete.parentComment) {
       const parentComment = await Comment.findById(commentToDelete.parentComment);
       if (parentComment) {
-        parentComment.repliesCount = Math.max(0, parentComment.repliesCount - 1); // This logic only decrements by 1. If a reply is deleted, this is correct.
+        parentComment.repliesCount = Math.max(0, parentComment.repliesCount - 1);
         await parentComment.save();
       }
     }
@@ -598,8 +529,8 @@ export const deleteComment = async (req, res) => {
     res.status(200).json({
       message: "Comment and its replies deleted successfully",
       commentId,
-      totalDeletedComments, // <--- ADD THIS TO THE RESPONSE
-      parentCommentId: commentToDelete.parentComment, // Also return parentCommentId for frontend reference
+      totalDeletedComments,
+      parentCommentId: commentToDelete.parentComment,
     });
   } catch (error) {
     console.error("Error in deleteComment controller:", error.message);

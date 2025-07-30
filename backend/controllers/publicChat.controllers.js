@@ -10,13 +10,11 @@ import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
 
-// Helper function to check if a user is an admin
 const isAdmin = async (userId) => {
   const user = await User.findById(userId).select("isAdmin");
   return user ? user.isAdmin : false;
 };
 
-// Helper function to check if a user is banned from the public chat
 const isBanned = async (userId) => {
   const user = await User.findById(userId).select("isBannedInPublicChat");
   return user ? user.isBannedInPublicChat : false;
@@ -75,27 +73,22 @@ export const sendPublicMessage = async (req, res) => {
       },
     ]);
 
-    // Emit the new message to all connected clients in the public chat room
     io.to(PUBLIC_CHAT_ROOM).emit("newPublicMessage", newPublicMessage);
 
     await User.findByIdAndUpdate(senderId, {
       lastReadPublicChatTimestamp: newPublicMessage.createdAt,
     });
 
-    // --- REVISED LOGIC START ---
     const allOnlineUserIds = Array.from(onlineUsersMap.keys());
 
-    // Filter out the sender and users who are actively in the public chat
     const usersToNotify = allOnlineUserIds.filter(
       (userId) =>
         userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId)
     );
 
-    // Emit status only to relevant users
     for (const userId of usersToNotify) {
       await emitUnreadPublicChatStatus(userId);
     }
-    // --- REVISED LOGIC END ---
 
     res.status(201).json(newPublicMessage);
   } catch (error) {

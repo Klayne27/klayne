@@ -8,17 +8,7 @@ import Message from "../models/message.model.js";
 import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
-
-const getBlockingUsers = async (userId) => {
-  if (!userId) {
-    return { blockedByMe: [], blockedMe: [] };
-  }
-  const user = await User.findById(userId).select("blockedUsers blockedBy").lean();
-  return {
-    blockedByMe: user.blockedUsers?.map((id) => id.toString()) || [],
-    blockedMe: user.blockedBy?.map((id) => id.toString()) || [],
-  };
-};
+import { getBlockingUsers } from "../lib/utils/helpers.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -48,7 +38,7 @@ export const getUserProfile = async (req, res) => {
       );
 
       if (currentUser) {
-        isBlockedByYou = currentUser.blockedUsers.includes(user._id); // Check if the current user is in the profile owner's blockedBy list // (This means the profile owner has blocked the current user
+        isBlockedByYou = currentUser.blockedUsers.includes(user._id);
         hasBlockedYou = currentUser.blockedBy.includes(user._id);
       }
     }
@@ -56,23 +46,22 @@ export const getUserProfile = async (req, res) => {
     if (hasBlockedYou) {
       return res.status(403).json({
         error: "You are blocked by this user.",
-        isBlockedByYou: false, // You haven't blocked them
-        hasBlockedYou: true, // They have blocked you
+        isBlockedByYou: false,
+        hasBlockedYou: true,
         username: user.username,
         fullName: user.fullName,
         profileImg: user.profileImg,
-        coverImg: user.coverImg, // Include coverImg for header display
-        isVerified: user.isVerified, // Include isVerified
+        coverImg: user.coverImg,
+        isVerified: user.isVerified,
         isGoldVerified: user.isGoldVerified,
       });
-    } // If isBlockedByYou, you (the current user) have blocked this user. // In this case, you might still want to see the basic profile info but // restrict access to some content or interactions. // The current logic passes isBlockedByYou in profileData, which is fine.
+    }
 
     const profileData = {
-      ...user.toObject(), // Convert Mongoose document to a plain JavaScript object
+      ...user.toObject(),
       isBlockedByYou: isBlockedByYou,
       hasBlockedYou: hasBlockedYou,
     };
-    console.log(profileData);
 
     res.status(200).json(profileData);
   } catch (error) {
@@ -84,8 +73,8 @@ export const getUserProfile = async (req, res) => {
 export const followUnfollowUser = async (req, res) => {
   try {
     const { id } = req.params;
-    const userToModify = await User.findById(id); // User B
-    const currentUser = await User.findById(req.user._id); // User A
+    const userToModify = await User.findById(id);
+    const currentUser = await User.findById(req.user._id);
 
     if (id === req.user._id.toString()) {
       return res.status(400).json({ error: "You can't follow/unfollow yourself" });
@@ -95,7 +84,6 @@ export const followUnfollowUser = async (req, res) => {
       return res.status(400).json({ error: "User not found" });
     }
 
-    // Block checks are still important and should remain
     if (currentUser.blockedUsers.includes(userToModify._id)) {
       return res
         .status(400)
@@ -116,7 +104,7 @@ export const followUnfollowUser = async (req, res) => {
 
       await Conversation.updateOne(
         { participants: { $all: [req.user._id, id] } },
-        { $addToSet: { hiddenFor: req.user._id } }, // Add currentUser (A) to hiddenFor
+        { $addToSet: { hiddenFor: req.user._id } },
         { timestamps: false }
       );
 
@@ -126,34 +114,29 @@ export const followUnfollowUser = async (req, res) => {
       await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
       await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
 
-      // ✨ Automatically create a conversation if it doesn't exist
       const existingConversation = await Conversation.findOne({
         participants: { $all: [req.user._id, id] },
       });
 
       if (existingConversation) {
-        // ✨ If it exists, unhide it for the current user (User A)
         await Conversation.updateOne(
           { _id: existingConversation._id },
-          { $pull: { hiddenFor: req.user._id } }, // Remove currentUser (A) from hiddenFor
+          { $pull: { hiddenFor: req.user._id } },
           { timestamps: false }
         );
-        // Ensure userToModify (B) remains in hiddenFor if they were there
         await Conversation.updateOne(
           { _id: existingConversation._id },
-          { $addToSet: { hiddenFor: userToModify._id } }, // Add userToModify (B) to hiddenFor if not already there
+          { $addToSet: { hiddenFor: userToModify._id } },
           { timestamps: false }
         );
       } else {
-        // If it doesn't exist, create it
         const newConversation = new Conversation({
           participants: [req.user._id, id],
-          hiddenFor: [userToModify._id], // ✨ NEW: Hide it for the followed user (User B)
+          hiddenFor: [userToModify._id],
         });
         await newConversation.save();
       }
 
-      // Your existing notification logic
       const newNotification = new Notification({
         type: "follow",
         from: req.user._id,
@@ -296,8 +279,8 @@ export const updateUser = async (req, res) => {
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
 
-    if (profileImg !== undefined) user.profileImg = profileImg; // This will be the new URL or undefined if not provided
-    if (coverImg !== undefined) user.coverImg = coverImg; // This will be the new URL or undefined if not provided
+    if (profileImg !== undefined) user.profileImg = profileImg;
+    if (coverImg !== undefined) user.coverImg = coverImg;
 
     user = await user.save();
 
@@ -322,7 +305,6 @@ export const getFollowingUsers = async (req, res) => {
       return res.status(404).json({ error: "User not found" });
     }
 
-    // Wrap the array in an object with a 'users' key
     res.status(200).json(user.following); // <--- CHANGE HERE
   } catch (error) {
     console.log("Error in getFollowingUsers: ", error.message);
@@ -372,13 +354,10 @@ export const deleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    // Verify password
     const isPasswordCorrect = await bcrypt.compare(password, userToDelete.password);
     if (!isPasswordCorrect) {
       return res.status(401).json({ error: "Invalid password." });
     }
-
-    // --- Start: Existing Deletion Logic (no changes needed here) ---
 
     await User.updateMany(
       { blockedUsers: userToDelete._id },
@@ -404,7 +383,6 @@ export const deleteUserAccount = async (req, res) => {
         const postId = post.img.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(postId);
       }
-      // Assuming 'video' field also exists on Post and needs deletion from Cloudinary
       if (post.video) {
         const videoId = post.video.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
@@ -449,7 +427,7 @@ export const deleteUserAccount = async (req, res) => {
 
     const publicChatMessagesWithMedia = await PublicChatMessage.find({
       sender: userToDelete._id,
-      $or: [{ img: { $ne: "" } }, { video: { $ne: "" } }], // Check for both img and video
+      $or: [{ img: { $ne: "" } }, { video: { $ne: "" } }],
     });
     for (const msg of publicChatMessagesWithMedia) {
       if (msg.img) {
@@ -464,8 +442,6 @@ export const deleteUserAccount = async (req, res) => {
 
     await User.findByIdAndDelete(id);
 
-    // --- End: Existing Deletion Logic ---
-
     res.status(200).json({
       message: "Account deleted successfully. All associated data has been removed.",
     });
@@ -477,7 +453,7 @@ export const deleteUserAccount = async (req, res) => {
 
 export const searchUsers = async (req, res) => {
   try {
-    const { q } = req.query; // q will be the partial username/fullname
+    const { q } = req.query;
 
     if (!q) {
       return res.status(200).json([]);
@@ -485,14 +461,14 @@ export const searchUsers = async (req, res) => {
 
     const users = await User.find({
       $or: [
-        { username: { $regex: `^${q}`, $options: "i" } }, // Starts with `q`
-        { fullName: { $regex: `^${q}`, $options: "i" } }, // Starts with `q`
+        { username: { $regex: `^${q}`, $options: "i" } },
+        { fullName: { $regex: `^${q}`, $options: "i" } },
       ],
     })
-      .select("-password") // Only need these for suggestions
-      .limit(5); // Limit to a smaller number for quick suggestions, e.g., 5-10
+      .select("-password")
+      .limit(5);
 
-    res.status(200).json(users); // Ensure it returns an array directly, as fixed previously
+    res.status(200).json(users);
   } catch (error) {
     console.error("Error in searchUsers controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -580,10 +556,8 @@ export const adminDeleteUserAccount = async (req, res) => {
       });
     }
 
-    const { id: userIdToDelete } = req.params; // Renamed for clarity
+    const { id: userIdToDelete } = req.params;
 
-    // Prevent admin from deleting their own account via this endpoint (optional but good practice)
-    // If an admin wants to delete their own, they should use the standard deleteUserAccount
     if (userIdToDelete === req.user._id.toString()) {
       return res.status(400).json({
         error: "Please use the 'Delete My Account' option to delete your own account.",
@@ -595,9 +569,6 @@ export const adminDeleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    // --- Start Deletion Logic (same as your existing controller) ---
-
-    // Remove user from other users' blockedUsers and blockedBy arrays
     await User.updateMany(
       { blockedUsers: userToDelete._id },
       { $pull: { blockedUsers: userToDelete._id } }
@@ -607,7 +578,6 @@ export const adminDeleteUserAccount = async (req, res) => {
       { $pull: { blockedBy: userToDelete._id } }
     );
 
-    // Delete profile and cover images from Cloudinary
     if (userToDelete.profileImg) {
       const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(profileImgId);
@@ -617,7 +587,6 @@ export const adminDeleteUserAccount = async (req, res) => {
       await cloudinary.uploader.destroy(coverImgId);
     }
 
-    // Delete user's posts and their images from Cloudinary
     const userPosts = await Post.find({ user: userToDelete._id });
     for (const post of userPosts) {
       if (post.img) {
@@ -627,36 +596,30 @@ export const adminDeleteUserAccount = async (req, res) => {
       await Post.findByIdAndDelete(post._id);
     }
 
-    // Remove user's likes from other posts
     await Post.updateMany(
       { likes: userToDelete._id },
       { $pull: { likes: userToDelete._id } }
     );
 
-    // Remove user's comments from other posts
     await Post.updateMany(
       { "comments.user": userToDelete._id },
       { $pull: { comments: { user: userToDelete._id } } }
     );
 
-    // Remove user from other users' following lists
     await User.updateMany(
       { following: userToDelete._id },
       { $pull: { following: userToDelete._id } }
     );
 
-    // Remove user from other users' followers lists
     await User.updateMany(
       { followers: userToDelete._id },
       { $pull: { followers: userToDelete._id } }
     );
 
-    // Delete all notifications related to this user
     await Notification.deleteMany({
       $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
     });
 
-    // Delete all conversations and messages involving this user
     const conversationsToDelete = await Conversation.find({
       participants: userToDelete._id,
     });
@@ -666,27 +629,19 @@ export const adminDeleteUserAccount = async (req, res) => {
       await Conversation.findByIdAndDelete(conversation._id);
     }
 
-    // ✨ NEW STEP: Delete public chat messages sent by the user
-
     const publicChatMessagesWithMedia = await PublicChatMessage.find({
       sender: userToDelete._id,
       img: { $ne: "" },
     });
     for (const msg of publicChatMessagesWithMedia) {
       if (msg.img) {
-        // Assuming public chat images are stored in Cloudinary and follow the same naming convention
         const imgPublicId = msg.img.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(imgPublicId);
       }
-      // If you also support video in public chat messages, add similar logic
     }
 
     await PublicChatMessage.deleteMany({ sender: userToDelete._id });
-
-    // Finally, delete the user document
     await User.findByIdAndDelete(userIdToDelete);
-
-    // --- End Deletion Logic ---
 
     res.status(200).json({
       message: `Account of ${userToDelete.username} deleted successfully. All associated data has been removed.`,

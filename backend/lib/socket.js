@@ -498,7 +498,6 @@ io.on("connection", async (socket) => {
 
   socket.on("leaveConversation", (conversationId) => {
     if (conversationId) {
-      // Basic validation
       socket.leave(conversationId);
       // console.log(
       //   `Socket ${socket.id} (User ${socket.userId}) left private conversation room: ${conversationId}`
