@@ -27,7 +27,7 @@ const MessageItem = ({
   // handleJumpToOriginalMessage,
   // handleReactionClick,
   currentUser,
-  setEditingMessage,
+  // setEditingMessage,
   isTypingOtherUser,
   onReactionAdded,
   // setReplyingToMessage,
@@ -44,6 +44,7 @@ const MessageItem = ({
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
+  const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage);
 
   const [isHovered, setIsHovered] = useState(false);
   const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);

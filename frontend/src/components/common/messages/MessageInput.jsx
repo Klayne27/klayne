@@ -11,20 +11,23 @@ import { FaReply } from "react-icons/fa6";
 import React from "react";
 import { showAppToast } from "../../../utils/showAppToast";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
+import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage";
 
 function MessageInput({
   otherUser,
   actualConversationId,
   currentOptimisticIdRef,
   messageInputRef,
-  isSendingMessage,
-  sendMessage,
+  // isSendingMessage,
+  didMessageJustLanded,
+  // sendMessage,
   socket,
-  editingMessage,
-  setEditingMessage,
 }) {
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
+  const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage);
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage);
+  const editingMessage = usePrivateChatStore((state) => state.editingMessage);
+
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -35,7 +38,14 @@ function MessageInput({
   const typingTimeoutRef = useRef(null);
   const { authUser: currentUser } = useAuthUser();
 
+  const handleOptimisticScroll = useCallback(() => {
+    didMessageJustLanded.current = true;
+  }, []);
+
   const { editMessage, isEditing } = useEditMessage(actualConversationId);
+  const { sendMessage, isSendingMessage } = useSendMessage({
+    onOptimisticSend: handleOptimisticScroll,
+  });
 
   const [isMobile, setIsMobile] = useState(false);
 

@@ -1,16 +1,12 @@
 import {
-  useState,
   useEffect,
   useRef,
-  useMemo,
   useCallback,
   useLayoutEffect,
 } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../../context/SocketContext";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage";
-import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage";
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages";
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
@@ -33,14 +29,10 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
   // const conversationId = selectedConversation?._id;
   // const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
   const {
-    replyingToMessage,
-    setReplyingToMessage, // This setter will be passed to useSendMessage and MessageInput
     isTypingOtherUser,
     setIsTypingOtherUser, // This setter will be used in socket listeners
     showNewMessageButton, // Note the typo 'showNewMessageButon' in your store, fix it there first!
     setShowNewMessageButton, // This setter will be used in scrolling logic
-    editingMessage,
-    setEditingMessage, // This setter will be passed to MessageList and MessageInput
     selectedConversation,
   } = usePrivateChatStore();
 
@@ -63,18 +55,14 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
     (p) => p?._id !== currentUser?._id
   );
 
-  const handleOptimisticScroll = useCallback(() => {
-    didMessageJustLanded.current = true;
-  }, []);
 
   // const { deleteMessage, isDeletingMessage } = useDeleteMessage();
   const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId);
 
-  const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
-    replyingToMessage,
-    onOptimisticSend: handleOptimisticScroll,
-  });
+  // const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
+  //   onOptimisticSend: handleOptimisticScroll,
+  // });
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
 
@@ -552,10 +540,6 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
     setShowNewMessageButton,
   ]);
 
-  const memoizedSetReplyingToMessage = useCallback((message) => {
-    setReplyingToMessage(message);
-  }, []);
-
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();
     setShowNewMessageButton(false);
@@ -587,13 +571,12 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
           ref={messageListRef}
           error={error}
           messagesToRender={messages}
-          setReplyingToMessage={memoizedSetReplyingToMessage}
+          // setReplyingToMessage={memoizedSetReplyingToMessage}
           messageInputRef={messageInputRef}
           messages={messages}
           isLoadingInitialMessages={isLoading && !isFetchingNextPage}
           isFetchingOlderMessages={isFetchingNextPage}
           hasNextPage={hasNextPage}
-          setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
           onReactionAdded={handleReactionAdded}
           handleLoadImage={handleLoadImage}
@@ -613,17 +596,17 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
 
         <MessageInput
           otherUser={otherUser}
-          replyingToMessage={replyingToMessage}
-          // setReplyingToMessage={memoizedSetReplyingToMessage}
+          // replyingToMessage={replyingToMessage}
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
           messageInputRef={messageInputRef}
           isTypingOtherUser={isTypingOtherUser}
-          sendMessage={sendMessage}
-          isSendingMessage={isSendingMessage}
+          didMessageJustLanded={didMessageJustLanded}
+          // sendMessage={sendMessage}
+          // isSendingMessage={isSendingMessage}
           socket={socket}
-          editingMessage={editingMessage}
-          setEditingMessage={setEditingMessage}
+          // editingMessage={editingMessage}
+          // setEditingMessage={setEditingMessage}
         />
       </div>{" "}
     </div>

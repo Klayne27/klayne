@@ -2,12 +2,14 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { sendMessageApi } from "../../api/messagesApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
+import { usePrivateChatStore } from "../../store/usePrivateChatStore";
 
-export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
+export const useSendMessage = ({ onOptimisticSend }) => {
+  const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage);
   const { authUser: currentUser } = useAuthUser();
   const queryClient = useQueryClient();
 
-  return useMutation({
+  const { mutate: sendMessage, isPending: isSendingMessage } = useMutation({
     mutationFn: sendMessageApi,
     onMutate: async (newMessageData) => {
       const { conversationId } = newMessageData;
@@ -48,7 +50,7 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
       });
 
       if (onOptimisticSend) {
-        onOptimisticSend(); 
+        onOptimisticSend();
       }
 
       return { previousData, queryKey, optimisticId: optimisticMessage._id };
@@ -70,4 +72,6 @@ export const useSendMessage = ({ replyingToMessage, onOptimisticSend }) => {
       queryClient.setQueryData(context.queryKey, context.previousData);
     },
   });
+
+  return { sendMessage, isSendingMessage };
 };
