@@ -40,6 +40,7 @@ function MessageInput({
 
   const handleOptimisticScroll = useCallback(() => {
     didMessageJustLanded.current = true;
+    // eslint-disable-next-line
   }, []);
 
   const { editMessage, isEditing } = useEditMessage(actualConversationId);
