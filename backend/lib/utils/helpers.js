@@ -56,3 +56,87 @@ export async function deleteAllChildComments(commentId) {
   }
   return deletedCount;
 }
+
+import mongoose from "mongoose";
+
+/**
+ * Builds the common query stages for filtering posts.
+ * @param {string} userId - The ID of the current user.
+ * @param {Array<string>} blockedAndBlockingIds - An array of user IDs that have blocked or are blocked by the current user.
+ * @returns {object} An object containing common aggregation stages.
+ */
+export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
+  const now = new Date();
+  const blockedObjectIds = blockedAndBlockingIds.map(id => new mongoose.Types.ObjectId(id));
+
+  // Stage to filter out posts from blocked users and posts not yet published
+  const initialMatch = {
+    $match: {
+      user: { $nin: blockedObjectIds },
+      "deletedFor.user": { $ne: new mongoose.Types.ObjectId(userId) },
+      $or: [
+        { isScheduled: { $ne: true } },
+        { scheduledAt: { $lte: now } },
+      ],
+    },
+  };
+
+  // Stage to populate the user data
+  const userLookup = {
+    $lookup: {
+      from: "users",
+      localField: "user",
+      foreignField: "_id",
+      as: "user",
+      pipeline: [{ $project: { username: 1, fullName: 1, profileImg: 1, isVerified: 1, isGoldVerified: 1 } }],
+    },
+  };
+
+  // Stage to populate the reposted post data and its user
+  const repostLookup = {
+    $lookup: {
+      from: "posts",
+      localField: "repostedFrom",
+      foreignField: "_id",
+      as: "repostedFrom",
+      pipeline: [
+        // Match only valid reposts
+        {
+          $match: {
+            "user": { $nin: blockedObjectIds },
+            $or: [
+              { isScheduled: { $ne: true } },
+              { scheduledAt: { $lte: now } },
+            ],
+          }
+        },
+        // Populate the original post's author
+        {
+          $lookup: {
+            from: "users",
+            localField: "user",
+            foreignField: "_id",
+            as: "user",
+            pipeline: [{ $project: { username: 1, fullName: 1, profileImg: 1, isVerified: 1, isGoldVerified: 1 } }],
+          },
+        },
+        { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+        // Ensure we don't populate reposts of reposts
+        { $match: { "repostedFrom": { $exists: false } } }
+      ],
+    },
+  };
+  
+  // Final filter to ensure a repost has a valid (non-blocked, non-deleted) original post
+  const finalMatch = {
+    $match: {
+      $or: [
+        { "repostedFrom": { $eq: [] } }, // It's not a repost
+        { "repostedFrom.user": { $ne: null } } // It's a valid repost with a user
+      ]
+    }
+  };
+
+
+  return { initialMatch, userLookup, repostLookup, finalMatch };
+};

@@ -123,16 +123,16 @@ export const createPost = async (req, res) => {
     if (!newPost.isScheduled) {
       await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
 
-      for (const mentionedUserId of mentionedUsersIds) {
-        if (mentionedUserId.toString() !== userId.toString()) {
-          await createAndSendNotification({
-            from: userId,
-            to: mentionedUserId,
-            type: "mention",
-            postId: newPost._id,
-          });
-        }
-      }
+      const notificationPromises = mentionedUsersIds.map((mentionedUserId) =>
+        createAndSendNotification({
+          from: userId,
+          to: mentionedUserId,
+          type: "mention",
+          postId: newPost._id,
+        })
+      );
+
+      await Promise.all(notificationPromises);
 
       if (onlineUsersMap && io) {
         for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
@@ -183,13 +183,12 @@ export const deletePost = async (req, res) => {
       }
       await Post.deleteMany({ repostedFrom: postToDelete._id });
       await Post.deleteOne({ _id: id });
-    }
-    else {
+    } else {
       await Post.updateOne(
         { _id: postToDelete.repostedFrom },
         {
           $inc: { repostsCount: -1 },
-          $pull: { repostedBy: userId }, 
+          $pull: { repostedBy: userId },
         }
       );
       await Post.deleteOne({ _id: id });
@@ -223,9 +222,10 @@ export const likeUnlikePost = async (req, res) => {
     const userLikedPost = post.likes.includes(userId);
 
     if (userLikedPost) {
-      // Unlike post
-      await Post.updateOne({ _id: postId }, { $pull: { likes: userId } });
-      await User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } });
+      await Promise.all([
+        Post.updateOne({ _id: postId }, { $pull: { likes: userId } }),
+        User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } }),
+      ]);
 
       const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
       res.status(200).json(updatedLikes);
@@ -235,9 +235,7 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      if (
-        post.user.toString() !== userId.toString()
-      ) {
+      if (post.user.toString() !== userId.toString()) {
         const notification = new Notification({
           from: userId,
           to: post.user,
@@ -321,8 +319,8 @@ export const getAllPosts = async (req, res) => {
 
     const initialMatchConditions = {
       "deletedFor.user": { $ne: userId },
-      ...scheduledPostConditions, 
-      user: { $nin: blockedAndBlockingObjectIds }, 
+      ...scheduledPostConditions,
+      user: { $nin: blockedAndBlockingObjectIds },
     };
 
     const totalPostsResult = await Post.aggregate([
@@ -352,7 +350,7 @@ export const getAllPosts = async (req, res) => {
       {
         $match: {
           $or: [
-            { repostedFrom: { $eq: null } }, 
+            { repostedFrom: { $eq: null } },
             {
               $and: [
                 { repostedFrom: { $ne: null } },
@@ -407,7 +405,7 @@ export const getAllPosts = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [{ $project: userProjection }], 
+                pipeline: [{ $project: userProjection }],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
@@ -519,7 +517,7 @@ export const getLikedPosts = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    const now = new Date(); 
+    const now = new Date();
 
     const baseMatchConditions = {
       _id: { $in: user.likedPosts },
@@ -583,7 +581,7 @@ export const getLikedPosts = async (req, res) => {
                 createdAt: 1,
                 user: 1,
                 isScheduled: 1,
-                scheduledAt: 1, 
+                scheduledAt: 1,
               },
             },
           ],
@@ -606,8 +604,8 @@ export const getLikedPosts = async (req, res) => {
           repostedFrom: 1,
           bookmarkedBy: 1,
           createdAt: 1,
-          isScheduled: 1, 
-          scheduledAt: 1, 
+          isScheduled: 1,
+          scheduledAt: 1,
         },
       },
       {
@@ -625,7 +623,7 @@ export const getLikedPosts = async (req, res) => {
             {
               $or: [
                 { repostedFrom: null },
-                { "repostedFrom.isScheduled": { $ne: true } }, 
+                { "repostedFrom.isScheduled": { $ne: true } },
                 {
                   $and: [
                     { "repostedFrom.isScheduled": true },
@@ -642,7 +640,7 @@ export const getLikedPosts = async (req, res) => {
     ];
 
     const totalLikedPostsResult = await Post.aggregate([
-      ...pipeline, 
+      ...pipeline,
       { $count: "count" },
     ]);
     const totalLikedPosts =
@@ -841,7 +839,7 @@ export const getUserPosts = async (req, res) => {
               $and: [
                 { isScheduled: true },
                 { scheduledAt: { $ne: null } },
-                { scheduledAt: { $lte: now } }, 
+                { scheduledAt: { $lte: now } },
               ],
             },
           ],
@@ -1070,7 +1068,7 @@ export const repostPost = async (req, res) => {
       const newRepost = new Post({
         user: userId,
         repostedFrom: originalPostId,
-        publishedAt: new Date(), 
+        publishedAt: new Date(),
       });
       await newRepost.save();
       await Post.updateOne(
@@ -1091,6 +1089,28 @@ export const repostPost = async (req, res) => {
     }
   } catch (error) {
     console.error("Error in repostPost controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const markFeedPostsAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    const now = new Date();
+
+    await User.findByIdAndUpdate(
+      userIdObj,
+      { $set: { lastReadFeedTimestamp: now } },
+      { new: true }
+    );
+
+    await emitNewPostCount(userId.toString());
+
+    res.status(200).json({ message: "Feed posts marked as read." });
+  } catch (error) {
+    console.error("Error marking feed posts as read:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -1209,7 +1229,7 @@ export const getBookmarkedPosts = async (req, res) => {
 export const voteOnPoll = async (req, res) => {
   try {
     const { postId } = req.params;
-    const { optionId } = req.body; 
+    const { optionId } = req.body;
     const userId = req.user._id;
 
     const post = await Post.findById(postId);
@@ -1468,7 +1488,7 @@ export const deleteScheduledPost = async (req, res) => {
       await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" });
     }
 
-    await Post.deleteOne({ _id: id }); 
+    await Post.deleteOne({ _id: id });
 
     res.status(200).json({ message: "Scheduled post deleted successfully" });
   } catch (error) {
@@ -1535,28 +1555,6 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
     });
   } catch (error) {
     console.log("Error in deleteMultipleScheduledPosts controller: ", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const markFeedPostsAsRead = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const userIdObj = new mongoose.Types.ObjectId(userId);
-
-    const now = new Date();
-
-    await User.findByIdAndUpdate(
-      userIdObj,
-      { $set: { lastReadFeedTimestamp: now } },
-      { new: true }
-    );
-
-    await emitNewPostCount(userId.toString());
-
-    res.status(200).json({ message: "Feed posts marked as read." });
-  } catch (error) {
-    console.error("Error marking feed posts as read:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
