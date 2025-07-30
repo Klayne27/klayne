@@ -1,5 +1,3 @@
-// src/pages/publicChat/PublicChatPage.jsx
-import React, { useEffect } from "react";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import PublicChatWindow from "./PublicChatWindow";
 import LoadingSpinner from "../../components/common/LoadingSpinner";

@@ -1,4 +1,3 @@
-// src/components/publicChat/PublicChatWindow.jsx
 import React, {
   useRef,
   useEffect,
@@ -15,15 +14,13 @@ import PublicChatMessage from "./PublicChatMessage";
 import PublicMessageInput from "./PublicMessageInput"; // Import the new component
 import { useQueryClient } from "@tanstack/react-query";
 
-import {
-  usePublicMessages,
-  useSendPublicMessage,
-  useDeletePublicMessage,
-  useBanUserFromPublicChat,
-  useUnbanUserFromPublicChat,
-  useAddPublicMessageReaction,
-} from "../../hooks/publicChatHooks/publicChatHooks";
 import { FaCaretDown } from "react-icons/fa";
+import { useSendPublicMessage } from "../../hooks/publicChatHooks/useSendPublicMessage";
+import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
+import { useBanUserFromPublicChat } from "../../hooks/publicChatHooks/useBanUserFromPublicChat";
+import { useUnbanUserFromPublicChat } from "../../hooks/publicChatHooks/useUnbanUserFromPublicChat";
+import { useAddPublicMessageReaction } from "../../hooks/publicChatHooks/useAddPublicMessageReaction";
+import { usePublicMessages } from "../../hooks/publicChatHooks/usePublicMessages";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
 

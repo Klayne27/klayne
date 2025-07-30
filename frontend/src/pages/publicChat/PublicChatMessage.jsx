@@ -1,16 +1,12 @@
 import React, { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { MdAdminPanelSettings, MdDeleteForever } from "react-icons/md";
-import { FaUserSlash, FaUserCheck, FaReply, FaBan } from "react-icons/fa";
+import { FaUserSlash, FaUserCheck, FaBan } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
 import { BsThreeDots } from "react-icons/bs"; // Import BsThreeDots
 
-import {
-  useDeleteOwnPublicMessage,
-  useDeletePublicMessage,
-} from "../../hooks/publicChatHooks/publicChatHooks";
 import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
 
@@ -18,6 +14,8 @@ import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
 import { HiOutlineReply } from "react-icons/hi";
 import { IoCopy } from "react-icons/io5";
 import { showAppToast } from "../../utils/showAppToast";
+import { useDeleteOwnPublicMessage } from "../../hooks/publicChatHooks/useDeleteOwnPublicMessage";
+import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
 
 // Helper for formatting date (e.g., "July 28, 2025")
 const formatDisplayDate = (dateString) => {

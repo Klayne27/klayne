@@ -2,15 +2,14 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
-import toast from "react-hot-toast";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { truncateText } from "../../utils/truncateText";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa6";
 import { FaCircle } from "react-icons/fa";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useEditPublicMessage } from "../../hooks/publicChatHooks/publicChatHooks";
 import { showAppToast } from "../../utils/showAppToast";
+import { useEditPublicMessage } from "../../hooks/publicChatHooks/useEditPublicMessage";
 
 const PublicMessageInput = ({
   isSendingMessage,

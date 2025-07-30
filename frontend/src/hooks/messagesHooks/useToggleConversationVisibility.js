@@ -1,4 +1,3 @@
-// src/hooks/messagesHooks/useToggleConversationVisibility.js
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toggleConversationVisibilityApi } from "../../api/messagesApi";
