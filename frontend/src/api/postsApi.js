@@ -1,27 +1,4 @@
-export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt }) => {
-  const res = await fetch("/api/posts/create", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, video, pollOptions, scheduledAt }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-  return data;
-};
-
-export const likePostApi = async (postId) => {
-  const res = await fetch(`/api/posts/like/${postId}`, {
-    method: "POST",
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to like/unlike post: Something went wrong");
-  }
-  return data;
-};
+const BASE_URL = "/api/posts";
 
 export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
@@ -33,20 +10,8 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) =>
   return data;
 };
 
-export const deletePostApi = async (postId) => {
-  const res = await fetch(`/api/posts/${postId}`, {
-    method: "DELETE",
-  });
-
-  const data = res.json();
-
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
-
-  return data;
-};
-
 export const fetchPostApi = async (postId) => {
-  const res = await fetch(`/api/posts/${postId}`);
+  const res = await fetch(`${BASE_URL}/${postId}`);
   if (!res.ok) {
     const errorData = await res.json();
     throw new Error(errorData.error || "Failed to fetch post");
@@ -54,8 +19,8 @@ export const fetchPostApi = async (postId) => {
   return res.json();
 };
 
-export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
-  const url = new URL("/api/posts/bookmarked", window.location.origin);
+export const fetchBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
+  const url = new URL(`${BASE_URL}/bookmarked`, window.location.origin);
   url.searchParams.append("page", pageParam);
   url.searchParams.append("limit", 10);
 
@@ -74,8 +39,52 @@ export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" })
   return data;
 };
 
+export const fetchScheduledPostsApi = async () => {
+  const res = await fetch(`${BASE_URL}/scheduled`);
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts");
+  return data;
+};
+
+export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt }) => {
+  const res = await fetch(`${BASE_URL}/create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, img, video, pollOptions, scheduledAt }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+  return data;
+};
+
+export const deletePostApi = async (postId) => {
+  const res = await fetch(`${BASE_URL}/${postId}`, {
+    method: "DELETE",
+  });
+
+  const data = res.json();
+
+  if (!res.ok) throw new Error(data.error || "Something went wrong");
+
+  return data;
+};
+
+export const likePostApi = async (postId) => {
+  const res = await fetch(`${BASE_URL}/like/${postId}`, {
+    method: "POST",
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to like/unlike post: Something went wrong");
+  }
+  return data;
+};
+
 export const toggleBookmarkApi = async (postId) => {
-  const res = await fetch(`/api/posts/bookmark/${postId}`, {
+  const res = await fetch(`${BASE_URL}/bookmark/${postId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });
@@ -88,7 +97,7 @@ export const toggleBookmarkApi = async (postId) => {
 };
 
 export const voteOnPollApi = async ({ postId, optionId }) => {
-  const res = await fetch(`/api/posts/${postId}/vote`, {
+  const res = await fetch(`${BASE_URL}/${postId}/vote`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -104,8 +113,8 @@ export const voteOnPollApi = async ({ postId, optionId }) => {
 };
 
 export const pinUnpinPostApi = async (postId) => {
-  const res = await fetch(`/api/posts/pin/${postId}`, {
-    method: "POST", // POST for pinning
+  const res = await fetch(`${BASE_URL}/pin/${postId}`, {
+    method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
@@ -118,8 +127,8 @@ export const pinUnpinPostApi = async (postId) => {
 };
 
 export const unpinPostApi = async (postId) => {
-  const res = await fetch(`/api/posts/pin/${postId}`, {
-    method: "DELETE", // DELETE for unpinning
+  const res = await fetch(`${BASE_URL}/pin/${postId}`, {
+    method: "DELETE",
     headers: {
       "Content-Type": "application/json",
     },
@@ -131,15 +140,8 @@ export const unpinPostApi = async (postId) => {
   return res.json();
 };
 
-export const fetchScheduledPostsApi = async () => {
-  const res = await fetch("/api/posts/scheduled");
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts");
-  return data;
-};
-
 export const updateScheduledPostApi = async ({ postId, postData }) => {
-  const res = await fetch(`/api/posts/scheduled/${postId}`, {
+  const res = await fetch(`${BASE_URL}/scheduled/${postId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData),
@@ -150,7 +152,7 @@ export const updateScheduledPostApi = async ({ postId, postData }) => {
 };
 
 export const deleteScheduledPostApi = async (postId) => {
-  const res = await fetch(`/api/posts/scheduled/${postId}`, {
+  const res = await fetch(`${BASE_URL}/scheduled/${postId}`, {
     method: "DELETE",
   });
   const data = await res.json();
@@ -159,8 +161,8 @@ export const deleteScheduledPostApi = async (postId) => {
 };
 
 export const deleteMultipleScheduledPostsApi = async (postIds) => {
-  const res = await fetch(`/api/posts/scheduled/bulk-delete`, {
-    method: "POST", // Use POST for bulk operations with a body
+  const res = await fetch(`${BASE_URL}/scheduled/bulk-delete`, {
+    method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ postIds }),
   });
@@ -170,7 +172,7 @@ export const deleteMultipleScheduledPostsApi = async (postIds) => {
 };
 
 export const markPostsAsReadApi = async () => {
-  const res = await fetch("/api/posts/mark-as-read", {
+  const res = await fetch(`${BASE_URL}/mark-as-read`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
   });

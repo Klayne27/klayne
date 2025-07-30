@@ -1,5 +1,7 @@
+const BASE_URL = "/api/auth"
+
 export const signupApi = async (formData) => {
-  const res = await fetch("/api/auth/signup", {
+  const res = await fetch(`${BASE_URL}/signup`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -13,7 +15,7 @@ export const signupApi = async (formData) => {
 };
 
 export const loginApi = async (formData) => {
-  const res = await fetch("/api/auth/login", {
+  const res = await fetch(`${BASE_URL}/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(formData),
@@ -25,7 +27,7 @@ export const loginApi = async (formData) => {
 };
 
 export const logoutApi = async () => {
-  const res = await fetch("/api/auth/logout", {
+  const res = await fetch(`${BASE_URL}/logout`, {
     method: "POST",
   });
   const data = await res.json();
@@ -39,7 +41,7 @@ export const logoutApi = async () => {
 
 export const authUserApi = async () => {
   try {
-    const res = await fetch("/api/auth/me");
+    const res = await fetch(`${BASE_URL}/me`);
     const data = await res.json();
     if (data.error) return null;
     if (!res.ok) {

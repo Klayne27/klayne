@@ -37,6 +37,17 @@ export const addCommentApi = async ({ postId, text, img }) => {
   return data;
 };
 
+export const deleteCommentApi = async ({ commentId }) => {
+  const res = await fetch(`${BASE_URL}/${commentId}`, {
+    method: "DELETE",
+  });
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete comment");
+  }
+  return data;
+};
+
 export const replyToCommentApi = async ({ postId, parentCommentId, text, img }) => {
   const res = await fetch(`${BASE_URL}/${postId}/${parentCommentId}/reply`, {
     method: "POST",
@@ -61,13 +72,3 @@ export const likeUnlikeCommentApi = async ({ commentId }) => {
   return data;
 };
 
-export const deleteCommentApi = async ({ commentId }) => {
-  const res = await fetch(`${BASE_URL}/${commentId}`, {
-    method: "DELETE",
-  });
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to delete comment");
-  }
-  return data;
-};

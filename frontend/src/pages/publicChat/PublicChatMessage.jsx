@@ -73,7 +73,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   isNewDay, // NEW PROP
 }) {
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
-  const { deletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
+  const { adminDeletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
     useDeletePublicMessage();
   const [isHovered, setIsHovered] = useState(false);
 

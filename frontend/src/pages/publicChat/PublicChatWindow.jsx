@@ -48,7 +48,7 @@ const PublicChatWindow = ({ openImageModal }) => {
   } = usePublicMessages();
 
   const { sendPublicMessage, isPending: isSendingMessage } = useSendPublicMessage();
-  const { deletePublicMessage } = useDeletePublicMessage();
+  const { adminDeletePublicMessage } = useDeletePublicMessage();
   const { banUser } = useBanUserFromPublicChat();
   const { unbanUser } = useUnbanUserFromPublicChat();
   const { addReaction } = useAddPublicMessageReaction();
@@ -199,11 +199,11 @@ const PublicChatWindow = ({ openImageModal }) => {
   };
 
   // --- Admin/Self Delete Message Handler ---
-  const handleDeleteMessage = (messageId) => {
-    if (window.confirm("Are you sure you want to delete this message?")) {
-      deletePublicMessage(messageId);
-    }
-  };
+  // const handleDeleteMessage = (messageId) => {
+  //   if (window.confirm("Are you sure you want to delete this message?")) {
+  //     adminDeletePublicMessage(messageId);
+  //   }
+  // };
 
   // --- Ban/Unban User Handlers ---
   const handleBanUser = (userId) => {
@@ -481,7 +481,7 @@ const PublicChatWindow = ({ openImageModal }) => {
                       message={message}
                       authUser={currentUser}
                       openImageModal={openImageModal}
-                      onDelete={handleDeleteMessage}
+                      // onDelete={handleDeleteMessage}
                       onBan={handleBanUser}
                       onUnban={handleUnbanUser}
                       isCurrentlyTouchDevice={isCurrentlyTouchDevice}

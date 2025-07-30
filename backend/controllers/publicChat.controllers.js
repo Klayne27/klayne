@@ -147,7 +147,7 @@ export const getPublicMessages = async (req, res) => {
 };
 
 // Admin action: Delete a public chat message
-export const deletePublicMessage = async (req, res) => {
+export const adminDeletePublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
     const adminId = req.user._id;
@@ -181,7 +181,7 @@ export const deletePublicMessage = async (req, res) => {
 
     res.status(200).json({ message: "Message marked as deleted successfully." });
   } catch (error) {
-    console.error("Error in deletePublicMessage controller: ", error.message);
+    console.error("Error in adminDeletePublicMessage controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

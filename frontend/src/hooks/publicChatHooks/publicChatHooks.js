@@ -13,7 +13,7 @@ import {
   addPublicMessageReactionApi,
   banUserFromPublicChatApi,
   deleteOwnPublicMessageApi,
-  deletePublicMessageApi,
+  adminDeletePublicMessageApi,
   editPublicMessageApi,
   getPublicMessagesApi,
   sendPublicMessageApi,
@@ -404,12 +404,12 @@ export const useSendPublicMessage = () => {
 
 export const useDeletePublicMessage = () => {
   const {
-    mutate: deletePublicMessage,
+    mutate: adminDeletePublicMessage,
     isPending,
     isError,
     error,
   } = useMutation({
-    mutationFn: deletePublicMessageApi,
+    mutationFn: adminDeletePublicMessageApi,
 
     onSuccess: (data, messageId) => {},
     onError: (error) => {
@@ -417,7 +417,7 @@ export const useDeletePublicMessage = () => {
     },
   });
 
-  return { deletePublicMessage, isPending, isError, error };
+  return { adminDeletePublicMessage, isPending, isError, error };
 };
 
 export const useBanUserFromPublicChat = () => {

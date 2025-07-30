@@ -1,6 +1,8 @@
+const BASE_URL = "/api/public-chat";
+
 export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   try {
-    const res = await fetch(`/api/public-chat/messages?page=${pageParam}`, {
+    const res = await fetch(`${BASE_URL}/messages?page=${pageParam}`, {
       method: "GET",
       headers: {
         "Content-Type": "application/json",
@@ -23,13 +25,13 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
 
 export const sendPublicMessageApi = async ({ content, imgBase64, replyTo }) => {
   try {
-    const res = await fetch(`/api/public-chat/send`, {
+    const res = await fetch(`${BASE_URL}/send`, {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ content, imgBase64, replyTo }), // Send content and imgBase64
+      body: JSON.stringify({ content, imgBase64, replyTo }),
     });
 
     const data = await res.json();
@@ -45,9 +47,9 @@ export const sendPublicMessageApi = async ({ content, imgBase64, replyTo }) => {
   }
 };
 
-export const deletePublicMessageApi = async (messageId) => {
+export const adminDeletePublicMessageApi = async (messageId) => {
   try {
-    const res = await fetch(`/api/public-chat/admin/delete/${messageId}`, {
+    const res = await fetch(`${BASE_URL}/admin/delete/${messageId}`, {
       method: "DELETE",
       headers: {
         "Content-Type": "application/json",
@@ -68,9 +70,38 @@ export const deletePublicMessageApi = async (messageId) => {
   }
 };
 
+export const deleteOwnPublicMessageApi = async (messageId) => {
+  const res = await fetch(`${BASE_URL}/${messageId}`, {
+    method: "DELETE",
+    headers: { "Content-type": "application/json" },
+  });
+
+  const data = await res.json();
+
+  if (!res.ok) throw new Error(data.error || "Failed to delete message");
+
+  return data;
+};
+
+export const editPublicMessageApi = async (messageId, newContent) => {
+  const res = await fetch(`${BASE_URL}/edit/${messageId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ newContent }),
+  });
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to edit message.");
+  }
+  return data;
+};
+
 export const banUserFromPublicChatApi = async (userId) => {
   try {
-    const res = await fetch(`/api/public-chat/admin/ban/${userId}`, {
+    const res = await fetch(`${BASE_URL}/admin/ban/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -93,7 +124,7 @@ export const banUserFromPublicChatApi = async (userId) => {
 
 export const unbanUserFromPublicChatApi = async (userId) => {
   try {
-    const res = await fetch(`/api/public-chat/admin/unban/${userId}`, {
+    const res = await fetch(`${BASE_URL}/admin/unban/${userId}`, {
       method: "PUT",
       headers: {
         "Content-Type": "application/json",
@@ -115,7 +146,7 @@ export const unbanUserFromPublicChatApi = async (userId) => {
 };
 
 export const addPublicMessageReactionApi = async (messageId, emoji) => {
-  const res = await fetch(`/api/public-chat/${messageId}/react`, {
+  const res = await fetch(`${BASE_URL}/${messageId}/react`, {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ emoji }),
@@ -125,47 +156,5 @@ export const addPublicMessageReactionApi = async (messageId, emoji) => {
 
   if (!res.ok) throw new Error(data.error || "Failed to react to message");
 
-  return data;
-};
-
-export const removePublicMessageReactionApi = async (messageId) => {
-  const res = await fetch(`/api/public-chat/${messageId}/react`, {
-    method: "DELETE",
-    headers: { "Content-type": "application/json" },
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.error || "Failed to remove reaction");
-
-  return data;
-};
-
-export const deleteOwnPublicMessageApi = async (messageId) => {
-  const res = await fetch(`/api/public-chat/${messageId}`, {
-    method: "DELETE",
-    headers: { "Content-type": "application/json" }, // Can remove this header if no body
-  });
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.error || "Failed to delete message");
-
-  return data;
-};
-
-export const editPublicMessageApi = async (messageId, newContent) => {
-  const res = await fetch(`/api/public-chat/edit/${messageId}`, {
-    method: "PUT",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ newContent }),
-  });
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to edit message.");
-  }
   return data;
 };

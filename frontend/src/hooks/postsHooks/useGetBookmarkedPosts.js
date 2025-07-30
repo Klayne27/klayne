@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { getBookmarkedPostsApi } from "../../api/postsApi";
+import { fetchBookmarkedPostsApi } from "../../api/postsApi";
 
 export const useGetBookmarkedPosts = (searchQuery = "") => {
   const {
@@ -12,7 +12,7 @@ export const useGetBookmarkedPosts = (searchQuery = "") => {
     error,
   } = useInfiniteQuery({
     queryKey: ["bookmarkedPosts", searchQuery],
-    queryFn: ({ pageParam = 1 }) => getBookmarkedPostsApi({ pageParam, searchQuery }),
+    queryFn: ({ pageParam = 1 }) => fetchBookmarkedPostsApi({ pageParam, searchQuery }),
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.hasNextPage) {
         return lastPage.currentPage + 1;

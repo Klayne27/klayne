@@ -2,7 +2,7 @@ import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js"; // Assuming you have this
 import {
   banUserFromPublicChat,
-  deletePublicMessage,
+  adminDeletePublicMessage,
   getPublicMessages,
   sendPublicMessage,
   unbanUserFromPublicChat,
@@ -19,7 +19,7 @@ router.post("/send", protectRoute, sendPublicMessage); // 'img' is the field nam
 router.get("/messages", protectRoute, getPublicMessages);
 
 // Admin-only routes
-router.delete("/admin/delete/:messageId", protectRoute, deletePublicMessage);
+router.delete("/admin/delete/:messageId", protectRoute, adminDeletePublicMessage);
 router.put("/admin/ban/:userId", protectRoute, banUserFromPublicChat);
 router.put("/admin/unban/:userId", protectRoute, unbanUserFromPublicChat);
 
