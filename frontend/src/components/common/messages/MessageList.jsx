@@ -1,4 +1,4 @@
-import React, { useCallback, forwardRef, useState, useEffect, useRef } from "react";
+import React, { useCallback, forwardRef, useState, useEffect, useRef, useMemo } from "react";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import LoadingSpinner from "../LoadingSpinner";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
@@ -8,69 +8,31 @@ import { useAppStore } from "../../../store/appStore";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
-const isTouchDevice = () => {
-  if (typeof window === "undefined") return false;
-  return (
-    "ontouchstart" in window ||
-    navigator.maxTouchPoints > 0 ||
-    navigator.msMaxTouchPoints > 0
-  );
-};
+
 
 const MessageList = forwardRef(function MessageList(
   {
     error,
     isNewChat,
     messagesToRender,
-    setReplyingToMessage,
-    deleteMessage,
     messageInputRef,
-    isDeletingMessage,
     isLoadingInitialMessages,
     isFetchingOlderMessages,
     hasNextPage,
-    selectedConversationId,
-    setEditingMessage,
     isTypingOtherUser,
     onReactionAdded,
     handleLoadImage,
-    selectedConversation,
   },
   ref
 ) {
   const openImageModal = useAppStore((state) => state.openImageModal);
   const { authUser: currentUser } = useAuthUser();
-  const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
+  // const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
 
-  const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+  // const [activeMessageModalId, setActiveMessageModalId] = useState(null);
+  // const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+  
 
-  const mouseLeaveTimeoutRef = useRef(null);
-  const lastMessageDateRef = useRef(null);
-  const MOUSE_LEAVE_DELAY = 100;
-
-  useEffect(() => {
-    setIsCurrentlyTouchDevice(isTouchDevice());
-  }, []);
-
-  const handleDeleteClick = useCallback(
-    ({ messageId, conversationId }) => {
-      deleteMessage({ messageId, conversationId });
-      setActiveMessageModalId(null);
-    },
-    [deleteMessage]
-  );
-
-  const handleReplyClick = useCallback(
-    (message) => {
-      setEditingMessage(false);
-      setReplyingToMessage(message);
-      if (messageInputRef.current) {
-        messageInputRef.current.focus();
-      }
-    },
-    [setReplyingToMessage, messageInputRef, setEditingMessage]
-  );
 
   const handleImageClick = useCallback(
     (imageUrl, event) => {
@@ -86,172 +48,104 @@ const MessageList = forwardRef(function MessageList(
     [openImageModal]
   );
 
-  const handleJumpToOriginalMessage = useCallback((originalMessageId) => {
-    const originalMessageElement = document.getElementById(
-      `message-${originalMessageId}`
-    );
-    if (originalMessageElement) {
-      originalMessageElement.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      });
-      originalMessageElement.classList.add("highlight-message");
-      setTimeout(() => {
-        originalMessageElement.classList.remove("highlight-message");
-      }, 1500);
-    }
-  }, []);
 
-  const handleReactionClick = useCallback(
-    (messageId, emoji) => {
-      reactToMessage({ messageId, emoji });
-      setActiveMessageModalId(null);
-    },
-    [reactToMessage]
-  );
 
-  const handleMouseEnter = useCallback(
-    (messageId) => {
-      if (!isCurrentlyTouchDevice) {
-        if (mouseLeaveTimeoutRef.current) {
-          clearTimeout(mouseLeaveTimeoutRef.current);
-          mouseLeaveTimeoutRef.current = null;
-        }
-        setActiveMessageModalId(messageId);
-      }
-    },
-    [isCurrentlyTouchDevice]
-  );
+  // const handleReactionClick = useCallback(
+  //   (messageId, emoji) => {
+  //     reactToMessage({ messageId, emoji });
+  //     setActiveMessageModalId(null);
+  //   },
+  //   [reactToMessage]
+  // );
 
-  const handleMouseLeave = useCallback(() => {
-    if (!isCurrentlyTouchDevice) {
-      mouseLeaveTimeoutRef.current = setTimeout(() => {
-        setActiveMessageModalId(null);
-      }, MOUSE_LEAVE_DELAY);
-    }
-  }, [isCurrentlyTouchDevice]);
 
-  const handleMessageTap = useCallback(
-    (messageId) => {
-      if (isCurrentlyTouchDevice) {
-        setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId));
-      }
-    },
-    [isCurrentlyTouchDevice]
-  );
-
-  const handleClickOutsideMessage = useCallback(
-    (e) => {
-      if (activeMessageModalId) {
-        const messageItemContainer = document.getElementById(
-          `message-${activeMessageModalId}`
-        );
-        const messageModalElement = document.getElementById(
-          `message-modal-${activeMessageModalId}`
-        );
-        if (
-          messageItemContainer &&
-          !messageItemContainer.contains(e.target) &&
-          messageModalElement &&
-          !messageModalElement.contains(e.target)
-        ) {
-          setActiveMessageModalId(null);
-        }
-      }
-    },
-    [activeMessageModalId]
-  );
-
-  useEffect(() => {
-    if (activeMessageModalId) {
-      document.addEventListener("click", handleClickOutsideMessage);
+  // --- OPTIMIZED MESSAGE ENHANCEMENT LOGIC ---
+  const enhancedMessages = useMemo(() => {
+    if (!messagesToRender || messagesToRender.length === 0) {
+      return [];
     }
 
-    return () => {
-      document.removeEventListener("click", handleClickOutsideMessage);
-      if (mouseLeaveTimeoutRef.current) {
-        clearTimeout(mouseLeaveTimeoutRef.current);
+    // Pre-process dates to avoid creating new Date objects repeatedly inside the loop
+    const messagesWithParsedDates = messagesToRender.map((msg) => ({
+      ...msg,
+      parsedCreatedAt: new Date(msg.createdAt),
+      // Normalize sender ID if it can be an object or string
+      normalizedSenderId: typeof msg.sender === "object" ? msg.sender._id : msg.sender,
+    }));
+
+    return messagesWithParsedDates.map((msg, index) => {
+      const previousMessage = messagesWithParsedDates[index - 1];
+      const nextMessage = messagesWithParsedDates[index + 1];
+
+      const currentSenderId = msg.normalizedSenderId;
+      const prevSenderId = previousMessage ? previousMessage.normalizedSenderId : null;
+      const nextSenderId = nextMessage ? nextMessage.normalizedSenderId : null;
+
+      const isSentByCurrentUser = currentSenderId === currentUser._id;
+
+      let showHeaderInfo = false;
+      let isFirstInGroup = false;
+      let isLastInGroup = false;
+      let isNewDay = false; // This will track new day for the current message relative to previous
+
+      // Determine isNewDay for current message relative to previous
+      if (previousMessage) {
+        const prevDate = previousMessage.parsedCreatedAt;
+        const currDate = msg.parsedCreatedAt;
+        isNewDay =
+          currDate.getDate() !== prevDate.getDate() ||
+          currDate.getMonth() !== prevDate.getMonth() ||
+          currDate.getFullYear() !== prevDate.getFullYear();
+      } else {
+        isNewDay = true; // First message in the list always considered a "new day" for separation
       }
-    };
-  }, [activeMessageModalId, handleClickOutsideMessage]);
 
-  const enhancedMessagesToRender = messagesToRender.map((msg, index) => {
-    const previousMessage = messagesToRender[index - 1];
-    const nextMessage = messagesToRender[index + 1];
-
-    // Helper to get sender ID, handling both object and string formats
-    const getSenderId = (message) => {
-      if (!message || !message.sender) return null;
-      return typeof message.sender === "object" ? message.sender._id : message.sender;
-    };
-
-    const currentSenderId = getSenderId(msg);
-    const prevSenderId = getSenderId(previousMessage);
-    const nextSenderId = getSenderId(nextMessage);
-
-    const isSentByCurrentUser = currentSenderId === currentUser._id;
-
-    let showHeaderInfo = false;
-    let isFirstInGroup = false;
-    let isLastInGroup = false;
-
-    // Determine if the current message starts a new "visual" group
-    if (!previousMessage) {
-      // Always show header for the very first message
-      showHeaderInfo = true;
-      isFirstInGroup = true;
-    } else {
-      const prevDate = new Date(previousMessage.createdAt);
-      const currDate = new Date(msg.createdAt);
-
-      const timeDifference = currDate.getTime() - prevDate.getTime();
-      const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
-
-      const isNewDay =
-        prevDate.getDate() !== currDate.getDate() ||
-        prevDate.getMonth() !== currDate.getMonth() ||
-        prevDate.getFullYear() !== currDate.getFullYear();
-
-      if (currentSenderId !== prevSenderId || isNewDay || isTimeThresholdExceeded) {
+      // Determine if the current message starts a new "visual" group
+      if (!previousMessage) {
         showHeaderInfo = true;
         isFirstInGroup = true;
+      } else {
+        const timeDifference =
+          msg.parsedCreatedAt.getTime() - previousMessage.parsedCreatedAt.getTime();
+        const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
+
+        if (currentSenderId !== prevSenderId || isNewDay || isTimeThresholdExceeded) {
+          showHeaderInfo = true;
+          isFirstInGroup = true;
+        }
       }
-    }
 
-    // Determine if the current message is the last in its "visual" group
-    if (!nextMessage) {
-      // Always the last if there's no next message
-      isLastInGroup = true;
-    } else {
-      const currDate = new Date(msg.createdAt);
-      const nextDate = new Date(nextMessage.createdAt);
-
-      const timeDifference = nextDate.getTime() - currDate.getTime();
-      const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
-
-      const isNextNewDay =
-        currDate.getDate() !== nextDate.getDate() ||
-        currDate.getMonth() !== nextDate.getMonth() ||
-        currDate.getFullYear() !== nextDate.getFullYear();
-
-      if (currentSenderId !== nextSenderId || isNextNewDay || isTimeThresholdExceeded) {
+      // Determine if the current message is the last in its "visual" group
+      if (!nextMessage) {
         isLastInGroup = true;
+      } else {
+        const timeDifference =
+          nextMessage.parsedCreatedAt.getTime() - msg.parsedCreatedAt.getTime();
+        const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
+
+        const isNextNewDay = // Check if the *next* message starts a new day
+          msg.parsedCreatedAt.getDate() !== nextMessage.parsedCreatedAt.getDate() ||
+          msg.parsedCreatedAt.getMonth() !== nextMessage.parsedCreatedAt.getMonth() ||
+          msg.parsedCreatedAt.getFullYear() !== nextMessage.parsedCreatedAt.getFullYear();
+
+        if (currentSenderId !== nextSenderId || isNextNewDay || isTimeThresholdExceeded) {
+          isLastInGroup = true;
+        }
       }
-    }
 
-    return {
-      ...msg,
-      showHeaderInfo,
-      isFirstInGroup,
-      isLastInGroup,
-      senderProfileImg: msg.sender?.profileImg || "/public/avatar-placeholder.png",
-      senderUsername: typeof msg.sender === "object" ? msg.sender?.username : undefined,
-    };
-  });
-
-  // --- END NEW LOGIC ---
-
-  // --- END NEW LOGIC ---
+      return {
+        ...msg, // Include all original message properties
+        isNewDay, // New property for date separators
+        showHeaderInfo,
+        isFirstInGroup,
+        isLastInGroup,
+        // Use optional chaining and fallback for safety
+        senderProfileImg: msg.sender?.profileImg || "/public/avatar-placeholder.png",
+        senderUsername: typeof msg.sender === "object" ? msg.sender?.username : undefined,
+      };
+    });
+  }, [messagesToRender, currentUser._id]); // Recalculate only when dependencies change
+  // --- END OPTIMIZED MESSAGE ENHANCEMENT LOGIC ---
 
   return (
     <div ref={ref} className="flex-1 overflow-y-auto p-4 flex flex-col pt-20 relative">
@@ -273,78 +167,31 @@ const MessageList = forwardRef(function MessageList(
       {!hasNextPage &&
         !isLoadingInitialMessages &&
         !isFetchingOlderMessages &&
-        messagesToRender.length > 0 && (
+        messagesToRender.length > 0 && ( // Use messagesToRender for this check, as enhancedMessages might be empty
           <div className="flex justify-center text-gray-500 text-sm my-2">
             <p>This is the start of your conversation</p>
           </div>
         )}
+
       {!isNewChat &&
-        enhancedMessagesToRender.length > 0 &&
-        enhancedMessagesToRender.map((msg, index) => {
-          const messageDate = new Date(msg.createdAt);
-          let isNewDay = false;
-
-          // Check if it's a new day compared to the last message
-          if (lastMessageDateRef.current) {
-            const lastDate = new Date(lastMessageDateRef.current);
-            isNewDay =
-              messageDate.getDate() !== lastDate.getDate() ||
-              messageDate.getMonth() !== lastDate.getMonth() ||
-              messageDate.getFullYear() !== lastDate.getFullYear();
-          } else {
-            // If it's the very first message, always treat it as a new day for the separator
-            isNewDay = true;
-          }
-
-          // Update the ref for the next message
-          lastMessageDateRef.current = msg.createdAt;
-
-          // Determine if this message is the first in a group based on sender and time
-          const prevMessage = enhancedMessagesToRender[index - 1];
-          const isFirstInGroup =
-            !prevMessage ||
-            msg.sender._id !== prevMessage.sender._id ||
-            isNewDay || // A new day also means a new group
-            new Date(msg.createdAt).getTime() -
-              new Date(prevMessage.createdAt).getTime() >
-              5 * 60 * 1000; // 5 minutes difference
-
-          // Determine if this msg is the last in a group
-          const nextMessage = enhancedMessagesToRender[index + 1];
-          const isLastInGroup =
-            !nextMessage ||
-            msg.sender._id !== nextMessage.sender._id ||
-            new Date(nextMessage.createdAt).getTime() -
-              new Date(msg.createdAt).getTime() >
-              5 * 60 * 1000; // 5 minutes difference
-
+        enhancedMessages.length > 0 && // Iterate over enhancedMessages
+        enhancedMessages.map((msg) => {
+          // All calculated properties are now directly on the `msg` object
           return (
             <MessageItem
-              handleLoadImage={handleLoadImage}
               key={msg._id}
-              msg={msg}
-              isCurrentlyTouchDevice={isCurrentlyTouchDevice}
-              activeMessageModalId={activeMessageModalId}
-              handleMouseEnter={handleMouseEnter}
-              handleMouseLeave={handleMouseLeave}
-              handleMessageTap={handleMessageTap}
-              handleDeleteClick={handleDeleteClick}
-              handleReplyClick={handleReplyClick}
-              handleImageClick={handleImageClick}
-              handleJumpToOriginalMessage={handleJumpToOriginalMessage}
-              handleReactionClick={handleReactionClick}
-              isDeletingMessage={isDeletingMessage}
-              currentUser={currentUser}
-              setEditingMessage={setEditingMessage}
-              onReactionAdded={onReactionAdded}
-              setReplyingToMessage={setReplyingToMessage}
-              showHeaderInfo={msg.showHeaderInfo}
-              senderProfileImg={msg.senderProfileImg}
-              senderUsername={msg.senderUsername}
-              isFirstInGroup={msg.isFirstInGroup} // Pass new prop
-              isLastInGroup={msg.isLastInGroup} // Pass new prop
-              isNewDay={isNewDay}
-              // onOpenFullEmojiPicker={handleOpenFullEmojiPicker}
+              msg={msg} // Pass the enhanced message object
+              currentUser={currentUser} // Still likely needed for 'is my message' logic
+              messageInputRef={messageInputRef} // Still needed if MessageItem focuses input
+              onReactionAdded={onReactionAdded} // If this is a ChatWindow concern
+              handleLoadImage={handleLoadImage} // If this is a ChatWindow concern
+              // No need to pass these anymore:
+              // isCurrentlyTouchDevice={isCurrentlyTouchDevice} // -> MessageItem can get from Zustand or local state
+              // activeMessageModalId={activeMessageModalId} // -> MessageItem can get from Zustand
+              // handleReplyClick={handleReplyClick} // -> MessageItem calls Zustand
+              // handleImageClick={handleImageClick} // -> MessageItem calls Zustand
+              // handleJumpToOriginalMessage={handleJumpToOriginalMessage} // -> MessageItem calls Zustand or local
+              // handleReactionClick={handleReactionClick} // -> MessageItem calls Zustand or local
             />
           );
         })}

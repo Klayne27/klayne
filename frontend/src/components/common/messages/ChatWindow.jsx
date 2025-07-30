@@ -17,25 +17,34 @@ import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
 import { IoChatbubblesOutline } from "react-icons/io5";
+import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 
-const ChatWindow = ({
-  selectedConversation,
-  onBackToConversations,
-  onNewMessage,
-}) => {
+const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
   const currentUserId = currentUser?._id; // <--- Extract primitive ID
 
   const { socket, setActiveConversationId } = useSocket();
 
-  const [replyingToMessage, setReplyingToMessage] = useState(null);
-  const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+  // const [replyingToMessage, setReplyingToMessage] = useState(null);
+  // const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
+
+  // const [showNewMessageButton, setShowNewMessageButton] = useState(false);
+  // const conversationId = selectedConversation?._id;
+  // const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
+  const {
+    replyingToMessage,
+    setReplyingToMessage, // This setter will be passed to useSendMessage and MessageInput
+    isTypingOtherUser,
+    setIsTypingOtherUser, // This setter will be used in socket listeners
+    showNewMessageButton, // Note the typo 'showNewMessageButon' in your store, fix it there first!
+    setShowNewMessageButton, // This setter will be used in scrolling logic
+    editingMessage,
+    setEditingMessage, // This setter will be passed to MessageList and MessageInput
+    selectedConversation,
+  } = usePrivateChatStore();
 
   const conversationId = selectedConversation?._id;
-
-  const [showNewMessageButton, setShowNewMessageButton] = useState(false);
-  const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
 
   const messageInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
@@ -58,7 +67,7 @@ const ChatWindow = ({
     didMessageJustLanded.current = true;
   }, []);
 
-  const { deleteMessage, isDeletingMessage } = useDeleteMessage();
+  // const { deleteMessage, isDeletingMessage } = useDeleteMessage();
   const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId);
 
@@ -535,6 +544,7 @@ const ChatWindow = ({
     otherUser?._id,
     currentUserId,
     selectedConversation,
+    setIsTypingOtherUser,
     // currentUser.username,
     // currentUser.profileImg,
     // currentUser.fullName,
@@ -545,13 +555,6 @@ const ChatWindow = ({
   const memoizedSetReplyingToMessage = useCallback((message) => {
     setReplyingToMessage(message);
   }, []);
-
-  const memoizedDeleteMessage = useCallback(
-    (messageId) => {
-      deleteMessage(messageId);
-    },
-    [deleteMessage]
-  );
 
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();
@@ -585,15 +588,11 @@ const ChatWindow = ({
           error={error}
           messagesToRender={messages}
           setReplyingToMessage={memoizedSetReplyingToMessage}
-          deleteMessage={memoizedDeleteMessage}
           messageInputRef={messageInputRef}
-          isDeletingMessage={isDeletingMessage}
           messages={messages}
-          selectedConversation={selectedConversation}
           isLoadingInitialMessages={isLoading && !isFetchingNextPage}
           isFetchingOlderMessages={isFetchingNextPage}
           hasNextPage={hasNextPage}
-          selectedConversationId={selectedConversation?._id}
           setEditingMessage={setEditingMessage}
           isTypingOtherUser={isTypingOtherUser}
           onReactionAdded={handleReactionAdded}
@@ -615,14 +614,13 @@ const ChatWindow = ({
         <MessageInput
           otherUser={otherUser}
           replyingToMessage={replyingToMessage}
-          setReplyingToMessage={memoizedSetReplyingToMessage}
+          // setReplyingToMessage={memoizedSetReplyingToMessage}
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
           messageInputRef={messageInputRef}
           isTypingOtherUser={isTypingOtherUser}
           sendMessage={sendMessage}
           isSendingMessage={isSendingMessage}
-          selectedConversation={selectedConversation}
           socket={socket}
           editingMessage={editingMessage}
           setEditingMessage={setEditingMessage}

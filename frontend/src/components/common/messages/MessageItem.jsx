@@ -7,38 +7,43 @@ import { PiSmileyFill } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineReply } from "react-icons/hi";
 
-
 import { truncateText } from "../../../utils/truncateText";
 import { renderClickableText } from "../../../utils/textUtils";
 import EmojiPickerPopover from "../EmojiPickerPopover";
 import { IoCopy } from "react-icons/io5";
-
+import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage";
+import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
+import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
+import { useAppStore } from "../../../store/appStore";
 
 const MessageItem = ({
   msg,
-  activeMessageModalId,
-  handleMouseEnter,
-  handleMouseLeave,
-  handleMessageTap,
-  handleDeleteClick,
-  handleReplyClick,
-  handleImageClick,
-  handleJumpToOriginalMessage,
-  handleReactionClick,
+  messageInputRef,
+  // activeMessageModalId,
+  // handleMouseEnter,
+  // handleMouseLeave,
+  // handleMessageTap,
+  // handleImageClick,
+  // handleJumpToOriginalMessage,
+  // handleReactionClick,
   currentUser,
   setEditingMessage,
   isTypingOtherUser,
   onReactionAdded,
-  setReplyingToMessage,
-  senderProfileImg,
-  senderUsername,
-  isFirstInGroup,
-  isLastInGroup,
+  // setReplyingToMessage,
+  // msg.senderProfileImg,
+  // msg.senderUsername,
+  // msg.isFirstInGroup,
+  // msg.isLastInGroup,
   handleLoadImage,
-  showHeaderInfo,
-  isNewDay,
+  // msg.showHeaderInfo,
+  // isNewDay,
 }) => {
   const navigate = useNavigate();
+  const openImageModal = useAppStore((state) => state.openImageModal);
+
+  const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
+  const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
 
   const [isHovered, setIsHovered] = useState(false);
   const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
@@ -49,6 +54,12 @@ const MessageItem = ({
     left: 0,
   }); // New state for more actions modal position
 
+  const [activeMessageModalId, setActiveMessageModalId] = useState(null);
+  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+
+  const { deleteMessage } = useDeleteMessage();
+  const { reactToMessage } = useReactToMessage(selectedConversation._id);
+
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
   const moreButtonRef = useRef(null); // Ref for the new "More" button
@@ -56,6 +67,23 @@ const MessageItem = ({
   const [isMobile, setIsMobile] = useState(false);
   const pressTimer = useRef(null);
   const LONG_PRESS_DURATION = 500;
+
+  const isTouchDevice = () => {
+    if (typeof window === "undefined") return false;
+    return (
+      "ontouchstart" in window ||
+      navigator.maxTouchPoints > 0 ||
+      navigator.msMaxTouchPoints > 0
+    );
+  };
+
+  // const mouseLeaveTimeoutRef = useRef(null);
+  // const lastMessageDateRef = useRef(null);
+  // const MOUSE_LEAVE_DELAY = 100;
+
+  useEffect(() => {
+    setIsCurrentlyTouchDevice(isTouchDevice());
+  }, []);
 
   useEffect(() => {
     const checkIfMobile = () => {
@@ -108,27 +136,20 @@ const MessageItem = ({
     setShowEmojiPickerPopover(false);
   }, []);
 
-  const handleEmojiSelect = useCallback(
-    (emojiObject) => {
-      handleReactionClick(msg._id, emojiObject.emoji);
-      handleCloseEmojiPickerPopover();
-      onReactionAdded();
-    },
-    [handleReactionClick, msg._id, handleCloseEmojiPickerPopover, onReactionAdded]
-  );
-
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false);
   }, []);
 
-  const handleActionClick =
-    (actionFn, ...args) =>
-    (e) => {
-      e.stopPropagation();
-      actionFn(...args);
-      handleMessageTap(null); // Close main modal
-      handleCloseMoreActionsModal(); // Close more actions modal
-    };
+  const handleImageClick = (imageUrl, event) => {
+    event.stopPropagation();
+    if (openImageModal) {
+      openImageModal(imageUrl);
+    } else {
+      console.warn(
+        "openImageModal prop is undefined in Message component. Image modal will not open."
+      );
+    }
+  };
 
   const isSentByCurrentUser =
     (typeof msg.sender === "object" && msg.sender?._id === currentUser._id) ||
@@ -213,17 +234,6 @@ const MessageItem = ({
     [showMoreActionsModal, isEditable]
   );
 
-  const copyMessageToClipboard = useCallback(async () => {
-    if (msg.text) {
-      try {
-        await navigator.clipboard.writeText(msg.text);
-        // Optionally, add a visual feedback like a toast notification
-      } catch (err) {
-        console.error("Failed to copy message: ", err);
-        // Handle error (e.g., show an error message to the user)
-      }
-    }
-  }, [msg.text]);
   // Helper for formatting time (e.g., "10:30 AM")
   const formatTime = (dateString) => {
     return new Date(dateString).toLocaleTimeString([], {
@@ -245,27 +255,82 @@ const MessageItem = ({
   let bubbleClasses = "";
   if (isSentByCurrentUser) {
     bubbleClasses += " bg-primary text-white";
-    if (isFirstInGroup && isLastInGroup) {
+    if (msg.isFirstInGroup && msg.isLastInGroup) {
       bubbleClasses += " rounded-3xl";
-    } else if (isFirstInGroup) {
+    } else if (msg.isFirstInGroup) {
       bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]";
-    } else if (isLastInGroup) {
+    } else if (msg.isLastInGroup) {
       bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl";
     } else {
       bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]";
     }
   } else {
     bubbleClasses += " bg-[#2F3336] text-white";
-    if (isFirstInGroup && isLastInGroup) {
+    if (msg.isFirstInGroup && msg.isLastInGroup) {
       bubbleClasses += " rounded-3xl";
-    } else if (isFirstInGroup) {
+    } else if (msg.isFirstInGroup) {
       bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]";
-    } else if (isLastInGroup) {
+    } else if (msg.isLastInGroup) {
       bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl";
     } else {
       bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]";
     }
   }
+
+  const handleMouseEnter = (messageId) => {
+    if (!isCurrentlyTouchDevice) {
+      //   if (mouseLeaveTimeoutRef.current) {
+      //     clearTimeout(mouseLeaveTimeoutRef.current);
+      //     mouseLeaveTimeoutRef.current = null;
+      //   }
+      setActiveMessageModalId(messageId);
+    }
+  };
+
+  const handleMouseLeave = () => {
+    if (!isCurrentlyTouchDevice) {
+      //   mouseLeaveTimeoutRef.current = setTimeout(() => {
+      setActiveMessageModalId(null);
+    }
+  };
+
+  const handleMessageTap = (messageId) => {
+    if (isCurrentlyTouchDevice) {
+      setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId));
+    }
+  };
+
+  const handleClickOutsideMessage = (e) => {
+    if (activeMessageModalId) {
+      const messageItemContainer = document.getElementById(
+        `message-${activeMessageModalId}`
+      );
+      const messageModalElement = document.getElementById(
+        `message-modal-${activeMessageModalId}`
+      );
+      if (
+        messageItemContainer &&
+        !messageItemContainer.contains(e.target) &&
+        messageModalElement &&
+        !messageModalElement.contains(e.target)
+      ) {
+        setActiveMessageModalId(null);
+      }
+    }
+  };
+
+  // useEffect(() => {
+  //   if (activeMessageModalId) {
+  //     document.addEventListener("click", handleClickOutsideMessage);
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutsideMessage);
+  //     if (mouseLeaveTimeoutRef.current) {
+  //       clearTimeout(mouseLeaveTimeoutRef.current);
+  //     }
+  //   };
+  // }, [activeMessageModalId, handleClickOutsideMessage]);
 
   const shouldShowTimeOnHover = isHovered || showModal;
   const isMessageHighlighted = isHovered || showModal;
@@ -278,6 +343,22 @@ const MessageItem = ({
         touchAction: "manipulation",
       }
     : {};
+
+  const handleJumpToOriginalMessage = (originalMessageId) => {
+    const originalMessageElement = document.getElementById(
+      `message-${originalMessageId}`
+    );
+    if (originalMessageElement) {
+      originalMessageElement.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+      });
+      originalMessageElement.classList.add("highlight-message");
+      setTimeout(() => {
+        originalMessageElement.classList.remove("highlight-message");
+      }, 1500);
+    }
+  };
 
   const handleTouchStart = (e) => {
     e.stopPropagation();
@@ -296,9 +377,42 @@ const MessageItem = ({
       clearTimeout(pressTimer.current);
     }
   };
-  
 
-  // NEW: Typing Indicator MessageItem
+  const handleDeleteMessage = () => {
+    deleteMessage({ messageId: msg._id, conversationId: msg.conversationId });
+  };
+
+  const handleReactionClick = (messageId, emoji) => {
+    reactToMessage({ messageId, emoji });
+    setActiveMessageModalId(null);
+  };
+
+  const handleEmojiSelect = (emojiObject) => {
+    handleReactionClick(msg._id, emojiObject.emoji);
+    handleCloseEmojiPickerPopover();
+    onReactionAdded();
+  };
+
+  const handleReplyClick = () => {
+    messageInputRef.current.focus();
+    setReplyingToMessage(msg);
+    setShowMoreActionsModal(false);
+    handleMessageTap(null);
+  };
+
+  const handleEditClick = () => {
+    messageInputRef.current.focus();
+    setEditingMessage(msg);
+    setShowMoreActionsModal(false);
+    handleMessageTap(null);
+  };
+
+  const handleCopyMessage = () => {
+    navigator.clipboard.writeText(msg.text);
+    setShowMoreActionsModal(false);
+    handleMessageTap(null);
+  };
+
   if (isTypingOtherUser) {
     return (
       <div className="flex justify-start p-1 rounded-lg message-item-container ml-10">
@@ -321,8 +435,7 @@ const MessageItem = ({
 
   return (
     <>
-      {/* Date Separator */}
-      {isNewDay && (
+      {msg.isNewDay && (
         <div className="flex items-center mb-6 mt-7">
           <div className="flex-grow border-t border-gray-700"></div>
           <div className="px-2 text-slate-400 text-xs flex-shrink-0">
@@ -336,7 +449,7 @@ const MessageItem = ({
         id={`message-${msg._id}`}
         className={`relative mb-0 p-[1px] rounded-lg ${
           isMessageHighlighted ? "bg-secondary" : ""
-        } ${isFirstInGroup ? "mt-2" : ""} `}
+        } ${msg.isFirstInGroup ? "mt-2" : ""} `}
         style={messageContentStyle}
         onMouseEnter={() => {
           if (!isMobile) {
@@ -408,7 +521,7 @@ const MessageItem = ({
             <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
           </button>
           <button
-            onClick={handleActionClick(handleReplyClick, msg)}
+            onClick={handleReplyClick}
             className="p-1 text-slate-500 group hover:text-slate-400 rounded-md hover:bg-secondary transition duration-100"
             title="Reply to message"
           >
@@ -425,23 +538,19 @@ const MessageItem = ({
           </button>
         </div>
 
-        {/* --- Discord-like "More Actions" Modal --- */}
         {showMoreActionsModal && (
-          <div
-            className="fixed inset-0 z-20" // Fixed overlay to close on outside click
-            onClick={handleCloseMoreActionsModal}
-          >
+          <div className="fixed inset-0 z-20" onClick={handleCloseMoreActionsModal}>
             <div
               className={`absolute p-2 bg-base-100 rounded-xl gray-shadow  z-30`}
               style={{
                 top: moreActionsModalPosition.top,
                 left: moreActionsModalPosition.left,
-                minWidth: "180px", // Adjust width as needed
+                minWidth: "180px",
               }}
               onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
             >
               <button
-                onClick={handleActionClick(handleReplyClick, msg)}
+                onClick={handleReplyClick}
                 className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
               >
                 Reply
@@ -449,7 +558,7 @@ const MessageItem = ({
               </button>
               {msg.text && (
                 <button
-                  onClick={handleActionClick(copyMessageToClipboard)}
+                  onClick={handleCopyMessage}
                   className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
                 >
                   Copy Text
@@ -458,10 +567,7 @@ const MessageItem = ({
               )}
               {isEditable && (
                 <button
-                  onClick={handleActionClick(() => {
-                    setEditingMessage(msg);
-                    setReplyingToMessage(null);
-                  })}
+                  onClick={handleEditClick}
                   className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
                 >
                   Edit Message
@@ -470,10 +576,7 @@ const MessageItem = ({
               )}
               {isSentByCurrentUser && (
                 <button
-                  onClick={handleActionClick(handleDeleteClick, {
-                    messageId: msg._id,
-                    conversationId: msg.conversationId,
-                  })}
+                  onClick={handleDeleteMessage}
                   className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 duration-200 transition"
                 >
                   Delete Message
@@ -491,28 +594,28 @@ const MessageItem = ({
           }`}
         >
           {/* Avatar - Only for other user's first message in a group */}
-          {!isSentByCurrentUser && isFirstInGroup && (
+          {!isSentByCurrentUser && msg.isFirstInGroup && (
             <div className="flex-shrink-0 items-start">
               <img
-                alt={`${senderUsername}'s profile`}
-                src={senderProfileImg || "/avatar-placeholder.png"}
+                alt={`${msg.senderUsername}'s profile`}
+                src={msg.senderProfileImg || "/avatar-placeholder.png"}
                 onLoad={handleLoadImage}
                 className="size-9 rounded-full object-cover mt-0.5 cursor-pointer"
-                onClick={() => navigate(`/profile/${senderUsername}`)}
+                onClick={() => navigate(`/profile/${msg.senderUsername}`)}
               />
             </div>
           )}
 
-          {!isSentByCurrentUser && !isFirstInGroup && (
+          {!isSentByCurrentUser && !msg.isFirstInGroup && (
             <div className="w-8 h-8 mr-1"></div>
           )}
 
-          {shouldShowTimeOnHover && !isSentByCurrentUser && !showHeaderInfo && (
+          {shouldShowTimeOnHover && !isSentByCurrentUser && !msg.showHeaderInfo && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(msg.createdAt)}
             </div>
           )}
-          {shouldShowTimeOnHover && isSentByCurrentUser && !showHeaderInfo && (
+          {shouldShowTimeOnHover && isSentByCurrentUser && !msg.showHeaderInfo && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(msg.createdAt)}
             </div>
@@ -524,7 +627,7 @@ const MessageItem = ({
               isSentByCurrentUser ? "items-end" : "items-start"
             } w-fit max-w-[75%]`}
           >
-            {isFirstInGroup && (
+            {msg.isFirstInGroup && (
               <div
                 className={`flex items-center gap-1 text-sm mb-0.5 ${
                   isSentByCurrentUser ? "justify-end" : "justify-start"
@@ -532,10 +635,10 @@ const MessageItem = ({
               >
                 {!isSentByCurrentUser && (
                   <span
-                    onClick={() => navigate(`/profile/${senderUsername}`)}
+                    onClick={() => navigate(`/profile/${msg.senderUsername}`)}
                     className="font-semibold cursor-pointer"
                   >
-                    {senderUsername}
+                    {msg.senderUsername}
                   </span>
                 )}
                 <span className="text-xs text-gray-500 mr-5">

@@ -7,7 +7,7 @@ export const useReactToMessage = (selectedConversationId) => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
 
-  return useMutation({
+  const { mutate: reactToMessage } = useMutation({
     mutationFn: ({ messageId, emoji }) => reactToMessageApi(messageId, emoji),
 
     onMutate: async ({ messageId, emoji }) => {
@@ -63,4 +63,6 @@ export const useReactToMessage = (selectedConversationId) => {
       }
     },
   });
+
+  return { reactToMessage };
 };

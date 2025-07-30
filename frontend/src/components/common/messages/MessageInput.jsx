@@ -1,32 +1,30 @@
 import { useEffect, useRef, useState, useCallback } from "react";
-import toast from "react-hot-toast";
 import { truncateText } from "../../../utils/truncateText";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { FaCircle, FaSpinner } from "react-icons/fa";
+import { FaSpinner } from "react-icons/fa";
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage";
 import { FaReply } from "react-icons/fa6";
 import React from "react";
 import { showAppToast } from "../../../utils/showAppToast";
+import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 
 function MessageInput({
   otherUser,
-  replyingToMessage,
-  setReplyingToMessage,
   actualConversationId,
   currentOptimisticIdRef,
   messageInputRef,
   isSendingMessage,
   sendMessage,
-  selectedConversation,
   socket,
-  isTypingOtherUser,
   editingMessage,
   setEditingMessage,
 }) {
+  const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
+  const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage);
   const [messageInput, setMessageInput] = useState("");
   const [imageFile, setImageFile] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);

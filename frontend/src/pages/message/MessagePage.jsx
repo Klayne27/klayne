@@ -9,9 +9,14 @@ import ConversationListSkeleton from "../../components/skeletons/ConversationLis
 import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAppStore } from "../../store/appStore";
+import { usePrivateChatStore } from "../../store/usePrivateChatStore";
 
 const MessagePage = () => {
   const setIsChatWindowOpen = useAppStore((state) => state.setIsChatWindowOpen);
+  const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
+  const setSelectedConversation = usePrivateChatStore(
+    (state) => state.setSelectedConversation
+  );
   const { conversationId: urlConversationId } = useParams();
   const navigate = useNavigate();
   const location = useLocation();
@@ -20,7 +25,7 @@ const MessagePage = () => {
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
 
-  const [selectedConversation, setSelectedConversation] = useState(null);
+  // const [selectedConversation, setSelectedConversation] = useState(null);
 
   useEffect(() => {
     if (isLoadingConversations) return;
@@ -35,7 +40,13 @@ const MessagePage = () => {
     setIsChatWindowOpen(!!urlConversationId);
 
     return () => setIsChatWindowOpen(false);
-  }, [urlConversationId, conversations, isLoadingConversations, setIsChatWindowOpen]);
+  }, [
+    urlConversationId,
+    conversations,
+    isLoadingConversations,
+    setIsChatWindowOpen,
+    setSelectedConversation,
+  ]);
 
   const handleSelectConversation = (conversation) => {
     if (conversation?._id) {

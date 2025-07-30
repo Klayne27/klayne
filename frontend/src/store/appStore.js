@@ -1,5 +1,5 @@
 import { create } from "zustand";
-// import { immer } from "zustand/middleware/immer";
+import { immer } from "zustand/middleware/immer";
 
 const createModalSlice = (set) => ({
   selectedImage: null,
@@ -30,12 +30,14 @@ const createChatSlice = (set) => ({
 
 const createMiscSlice = (set) => ({
   feedType: "forYou",
-  
+
   setFeedType: (type) => set({ feedType: type }),
 });
 
-export const useAppStore = create((set) => ({
-  ...createModalSlice(set),
-  ...createChatSlice(set),
-  ...createMiscSlice(set),
-}));
+export const useAppStore = create(
+  immer((set) => ({
+    ...createModalSlice(set),
+    ...createChatSlice(set),
+    ...createMiscSlice(set),
+  }))
+);
