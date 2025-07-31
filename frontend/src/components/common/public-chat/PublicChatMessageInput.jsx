@@ -1,22 +1,22 @@
-// src/components/publicChat/PublicMessageInput.jsx
+// src/components/publicChat/PublicChatMessageInput.jsx
 import React, { useRef, useEffect, useCallback } from "react";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import { truncateText } from "../../utils/truncateText";
+import LoadingSpinner from "../../ui/LoadingSpinner";
+import { truncateText } from "../../../utils/truncateText";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa6";
 import { FaCircle } from "react-icons/fa";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { showAppToast } from "../../utils/showAppToast";
-import { useEditPublicMessage } from "../../hooks/publicChatHooks/useEditPublicMessage";
-import { usePublicChatStore } from "../../store/usePublicChatStore";
-import { getTypingMessage } from "../../utils/getTypingMessage";
-import { useIsMobile } from "../../hooks/useIsMobile";
-import { usePasteHandler } from "../../hooks/usePasteHandler";
-import { useSendPublicMessage } from "../../hooks/publicChatHooks/useSendPublicMessage";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { showAppToast } from "../../../utils/showAppToast";
+import { useEditPublicMessage } from "../../../hooks/publicChatHooks/useEditPublicMessage";
+import { usePublicChatStore } from "../../../store/usePublicChatStore";
+import { getTypingMessage } from "../../../utils/getTypingMessage";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { useSendPublicMessage } from "../../../hooks/publicChatHooks/useSendPublicMessage";
 
-const PublicMessageInput = ({
+const PublicChatMessageInput = ({
   // isSendingPublicMessage,
   // isEditingMessage,
   isCurrentUserBanned,
@@ -509,4 +509,4 @@ const PublicMessageInput = ({
   );
 };
 
-export default PublicMessageInput;
+export default PublicChatMessageInput;

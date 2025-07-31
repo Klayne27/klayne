@@ -6,16 +6,16 @@ import React, {
   useLayoutEffect,
   useMemo,
 } from "react";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useSocket } from "../../context/SocketContext";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useSocket } from "../../../context/SocketContext";
 import PublicChatHeader from "./PublicChatHeader";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 import PublicChatMessage from "./PublicChatMessage"; // This will become PublicChatMessageList handling the map
-import PublicMessageInput from "./PublicMessageInput";
+import PublicChatMessageInput from "./PublicChatMessageInput";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { FaCaretDown } from "react-icons/fa";
-import { useSendPublicMessage } from "../../hooks/publicChatHooks/useSendPublicMessage";
+import { useSendPublicMessage } from "../../../hooks/publicChatHooks/useSendPublicMessage";
 // Remove useDeletePublicMessage from here, move to PublicChatMessage
 // import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
 // Remove useBanUserFromPublicChat from here, move to PublicChatMessage
@@ -24,8 +24,8 @@ import { useSendPublicMessage } from "../../hooks/publicChatHooks/useSendPublicM
 // import { useUnbanUserFromPublicChat } from "../../hooks/publicChatHooks/useUnbanUserFromPublicChat";
 // Remove useAddPublicMessageReaction from here, move to PublicChatMessage
 // import { useAddPublicMessageReaction } from "../../hooks/publicChatHooks/useAddPublicMessageReaction";
-import { usePublicMessages } from "../../hooks/publicChatHooks/usePublicMessages";
-import { usePublicChatStore } from "../../store/usePublicChatStore";
+import { usePublicMessages } from "../../../hooks/publicChatHooks/usePublicMessages";
+import { usePublicChatStore } from "../../../store/usePublicChatStore";
 
 // Consider moving this constant to a shared `constants.js` or similar
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
@@ -453,7 +453,7 @@ const PublicChatWindow = () => {
             )}
           </div>
 
-          <PublicMessageInput
+          <PublicChatMessageInput
             isCurrentUserBanned={isCurrentUserBanned}
             // editingMessage={editingMessage}
             // setEditingMessage={setEditingMessage}

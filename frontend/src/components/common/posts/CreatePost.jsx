@@ -1,8 +1,8 @@
 import { useRef, useState, useEffect, useCallback } from "react";
 import { IoClose, IoCloseSharp } from "react-icons/io5";
 import { PiSmiley } from "react-icons/pi";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useCreatePosts } from "../../../hooks/postsHooks/useCreatePosts";
 import { Link } from "react-router-dom";
 import { BiImageAdd, BiPoll } from "react-icons/bi";
 import EmojiPicker from "emoji-picker-react";
@@ -10,17 +10,17 @@ import { FaPlus } from "react-icons/fa6";
 import { TbCalendarClock } from "react-icons/tb";
 
 // IMPORTS FOR MENTION FEATURE
-import SchedulePostModal from "../../components/common/SchedulePostModal";
-import ScheduledPostsModal from "../../components/common/ScheduledPostsModal";
-import EditScheduledPostModal from "../../components/common/EditSchedulePostModal";
-import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
-import { useDebounce } from "../../hooks/useDebounce";
-import { showAppToast } from "../../utils/showAppToast";
-import { useSocket } from "../../context/SocketContext";
+import SchedulePostModal from "../SchedulePostModal";
+import ScheduledPostsModal from "../ScheduledPostsModal";
+import EditScheduledPostModal from "../EditSchedulePostModal";
+import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { showAppToast } from "../../../utils/showAppToast";
+import { useSocket } from "../../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
-import { useIsMobile } from "../../hooks/useIsMobile";
-import { usePasteHandler } from "../../hooks/usePasteHandler";
+import { useMarkPostsAsRead } from "../../../hooks/postsHooks/useMarkPostsAsRead";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/usePasteHandler";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -298,7 +298,7 @@ const CreatePost = () => {
         }
 
         let postData = {
-          postInput,
+          text: postInput,
           pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
         };
 
@@ -322,7 +322,7 @@ const CreatePost = () => {
         return;
       }
 
-      let postData = { postInput };
+      let postData = { text:postInput };
 
       if (postSelectedFile) {
         const reader = new FileReader();

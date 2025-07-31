@@ -2,7 +2,7 @@ import { useState, useRef, useEffect, useCallback } from "react"; // Added useCa
 import { FaArrowUp } from "react-icons/fa6";
 
 import Posts from "../../components/common/posts/Posts";
-import CreatePost from "./CreatePost";
+import CreatePost from "../../components/common/posts/CreatePost"
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";

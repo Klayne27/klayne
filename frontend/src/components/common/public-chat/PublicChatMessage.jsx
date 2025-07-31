@@ -7,23 +7,23 @@ import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
 import { BsThreeDots } from "react-icons/bs";
 
-import { renderClickableText } from "../../utils/textUtils";
-import { truncateText } from "../../utils/truncateText";
+import { renderClickableText } from "../../../utils/textUtils";
+import { truncateText } from "../../../utils/truncateText";
 
-import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
+import EmojiPickerPopover from "../EmojiPickerPopover";
 import { HiOutlineReply } from "react-icons/hi";
 import { IoCopy } from "react-icons/io5";
-import { useDeleteOwnPublicMessage } from "../../hooks/publicChatHooks/useDeleteOwnPublicMessage";
-import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
-import { useAppStore } from "../../store/appStore";
-import { formatDate, formatTime } from "../../utils/date";
-import { useEmojiPickerPopover } from "../../hooks/useEmojiPickerPopover";
-import { useBanUserFromPublicChat } from "../../hooks/publicChatHooks/useBanUserFromPublicChat";
-import { useUnbanUserFromPublicChat } from "../../hooks/publicChatHooks/useUnbanUserFromPublicChat";
-import { usePublicChatStore } from "../../store/usePublicChatStore";
-import { useAddPublicMessageReaction } from "../../hooks/publicChatHooks/useAddPublicMessageReaction";
-import { getMessageBubbleClasses } from "../../utils/getMessageBubbleClasses";
-import { useIsMobile } from "../../hooks/useIsMobile";
+import { useDeleteOwnPublicMessage } from "../../../hooks/publicChatHooks/useDeleteOwnPublicMessage";
+import { useDeletePublicMessage } from "../../../hooks/publicChatHooks/useDeletePublicMessage";
+import { useAppStore } from "../../../store/appStore";
+import { formatDate, formatTime } from "../../../utils/date";
+import { useEmojiPickerPopover } from "../../../hooks/useEmojiPickerPopover";
+import { useBanUserFromPublicChat } from "../../../hooks/publicChatHooks/useBanUserFromPublicChat";
+import { useUnbanUserFromPublicChat } from "../../../hooks/publicChatHooks/useUnbanUserFromPublicChat";
+import { usePublicChatStore } from "../../../store/usePublicChatStore";
+import { useAddPublicMessageReaction } from "../../../hooks/publicChatHooks/useAddPublicMessageReaction";
+import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 // --- PublicChatMessage Component ---
 const PublicChatMessage = React.memo(function PublicChatMessage({

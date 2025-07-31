@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import { useState, useRef, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { IoClose, IoCloseSharp } from "react-icons/io5";
 import { BiImageAdd, BiPoll } from "react-icons/bi";
@@ -6,16 +6,17 @@ import { PiSmiley } from "react-icons/pi";
 import { TbCalendarClock } from "react-icons/tb";
 import { FaPlus } from "react-icons/fa";
 import EmojiPicker from "emoji-picker-react";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import EditScheduledPostModal from "./EditSchedulePostModal";
-import ScheduledPostsModal from "./ScheduledPostsModal";
-import SchedulePostModal from "./SchedulePostModal";
-import { showAppToast } from "../../utils/showAppToast";
-import { useDebounce } from "../../hooks/useDebounce";
-import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
-import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
-import { useIsMobile } from "../../hooks/useIsMobile";
-import { usePasteHandler } from "../../hooks/usePasteHandler";
+import { useDebounce } from "../../../hooks/useDebounce";
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
+import { useCreatePosts } from "../../../hooks/postsHooks/useCreatePosts";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
+import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { showAppToast } from "../../../utils/showAppToast";
+import SchedulePostModal from "../SchedulePostModal";
+import ScheduledPostsModal from "../ScheduledPostsModal";
+import EditScheduledPostModal from "../EditSchedulePostModal";
+
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -281,7 +282,7 @@ function CreatePostModal({ onClose }) {
         }
 
         let postData = {
-          postModalInput,
+          text: postModalInput,
           pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
         };
 
@@ -305,7 +306,7 @@ function CreatePostModal({ onClose }) {
         return;
       }
 
-      let postData = { postModalInput };
+      let postData = { text: postModalInput };
 
       if (postModalSelectedFile) {
         const reader = new FileReader();
@@ -598,10 +599,10 @@ function CreatePostModal({ onClose }) {
               <div className="relative w-full">
                 {scheduledAt && (
                   <div
-                    className="flex items-center justify-between absolute -top-4 -left-0.5 "
+                    className="flex items-center justify-between absolute -top-4 -left-8 "
                     onClick={handleOpenSchedulePostModal}
                   >
-                    <p className="text-slate-500 text-sm flex gap-3 items-center cursor-pointer hover:underline">
+                    <p className="text-slate-500 text-xs flex gap-3 items-center cursor-pointer hover:underline">
                       <TbCalendarClock size={16} />
                       Will send on{" "}
                       {new Date(scheduledAt).toLocaleString([], {

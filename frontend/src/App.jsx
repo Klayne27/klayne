@@ -8,7 +8,7 @@ import ImageModal from "./components/ui/ImageModal";
 import ProfileImageModal from "./components/ui/ProfileImageModal";
 import { useAppStore } from "./store/appStore";
 
-const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"));
+const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"));
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
 const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));

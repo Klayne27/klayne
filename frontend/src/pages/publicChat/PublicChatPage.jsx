@@ -1,6 +1,6 @@
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import PublicChatWindow from "./PublicChatWindow";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import PublicChatWindow from "../../components/common/public-chat/PublicChatWindow";
 
 const PublicChatPage = () => {
   const { authUser, isLoading: isLoadingAuthUser } = useAuthUser();
@@ -23,8 +23,6 @@ const PublicChatPage = () => {
   }
 
   return (
-    // The PublicChatWindow will now occupy the entire available space within the <main> element
-    // We remove the two-panel layout classes here, as it's just one full-width component.
     <div className="flex flex-col h-full">
       <PublicChatWindow  />
     </div>
