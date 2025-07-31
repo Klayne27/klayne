@@ -14,7 +14,7 @@ const LoginPage = () => {
 
   const [showPassword, setShowPassword] = useState(false);
 
-  const { login, isPending, isError, error } = useLogin(formData);
+  const { login, isPending, isError, error } = useLogin();
 
   const handleSubmit = (e) => {
     e.preventDefault();

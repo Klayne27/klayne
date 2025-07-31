@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginApi } from "../../api/authApi";
 import { showAppToast } from "../../utils/showAppToast";
 
-export const useLogin = (formData) => {
+export const useLogin = () => {
   const queryClient = useQueryClient();
 
   const {
@@ -11,7 +11,7 @@ export const useLogin = (formData) => {
     isError,
     error,
   } = useMutation({
-    mutationFn: () => loginApi(formData),
+    mutationFn: (formData) => loginApi(formData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
     },
