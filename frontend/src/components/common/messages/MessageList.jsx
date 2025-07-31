@@ -3,7 +3,6 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import LoadingSpinner from "../LoadingSpinner";
 
 import MessageItem from "./MessageItem";
-import { useAppStore } from "../../../store/appStore";
 
 const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
 
@@ -22,39 +21,7 @@ const MessageList = forwardRef(function MessageList(
   },
   ref
 ) {
-  const openImageModal = useAppStore((state) => state.openImageModal);
   const { authUser: currentUser } = useAuthUser();
-  // const { mutate: reactToMessage } = useReactToMessage(selectedConversationId);
-
-  // const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  // const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
-  
-
-
-  const handleImageClick = useCallback(
-    (imageUrl, event) => {
-      event.stopPropagation();
-      if (openImageModal) {
-        openImageModal(imageUrl);
-      } else {
-        console.warn(
-          "openImageModal prop is undefined in Message component. Image modal will not open."
-        );
-      }
-    },
-    [openImageModal]
-  );
-
-
-
-  // const handleReactionClick = useCallback(
-  //   (messageId, emoji) => {
-  //     reactToMessage({ messageId, emoji });
-  //     setActiveMessageModalId(null);
-  //   },
-  //   [reactToMessage]
-  // );
-
 
   // --- OPTIMIZED MESSAGE ENHANCEMENT LOGIC ---
   const enhancedMessages = useMemo(() => {

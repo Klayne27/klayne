@@ -1,12 +1,9 @@
-// src/pages/message/MessagePage.jsx
-
-import { useState, useEffect } from "react";
-import { useParams, useNavigate, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { useParams } from "react-router-dom";
 import ConversationsList from "../../components/common/messages/ConversationsList";
 import ChatWindow from "../../components/common/messages/ChatWindow";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
-import { useQueryClient } from "@tanstack/react-query";
 import LoadingSpinner from "../../components/common/LoadingSpinner";
 import { useAppStore } from "../../store/appStore";
 import { usePrivateChatStore } from "../../store/usePrivateChatStore";
@@ -17,15 +14,11 @@ const MessagePage = () => {
   const setSelectedConversation = usePrivateChatStore(
     (state) => state.setSelectedConversation
   );
+
   const { conversationId: urlConversationId } = useParams();
-  const navigate = useNavigate();
-  const location = useLocation();
-  const queryClient = useQueryClient();
 
   const { conversations, isLoadingConversations, errorConversations } =
     useFetchConversations();
-
-  // const [selectedConversation, setSelectedConversation] = useState(null);
 
   useEffect(() => {
     if (isLoadingConversations) return;
@@ -48,17 +41,6 @@ const MessagePage = () => {
     setSelectedConversation,
   ]);
 
-  const handleSelectConversation = (conversation) => {
-    if (conversation?._id) {
-      navigate(`/messages/${conversation._id}`);
-    }
-  };
-
-  const handleBackToConversations = () => {
-    navigate("/messages");
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
-  };
-
   const isMobile = window.innerWidth < 768;
   const showConversationList = !isMobile || !urlConversationId;
   const showChatWindow = !isMobile || !!urlConversationId;
@@ -79,11 +61,7 @@ const MessagePage = () => {
             {isLoadingConversations ? (
               <ConversationListSkeleton />
             ) : (
-              <ConversationsList
-                conversations={conversations}
-                onSelectConversation={handleSelectConversation}
-                selectedConversation={selectedConversation}
-              />
+              <ConversationsList conversations={conversations} />
             )}
           </div>
         )}
@@ -93,11 +71,7 @@ const MessagePage = () => {
             {isLoadingConversations && urlConversationId ? (
               <LoadingSpinner />
             ) : selectedConversation ? (
-              <ChatWindow
-                key={selectedConversation._id}
-                selectedConversation={selectedConversation}
-                onBackToConversations={handleBackToConversations}
-              />
+              <ChatWindow  />
             ) : (
               <div className="hidden md:flex flex-1 flex-col items-center justify-center text-gray-400 p-4">
                 <p className="text-xl font-bold mb-2">Select a message</p>

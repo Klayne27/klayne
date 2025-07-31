@@ -1,6 +1,6 @@
 // src/components/common/messages/ConversationItem.jsx
 
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
@@ -11,14 +11,13 @@ import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConvers
 import { FiTrash } from "react-icons/fi";
 import { BsThreeDots } from "react-icons/bs";
 import ConfirmationModal from "../ConfirmationModal";
+import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 
-function ConversationItem({
-  conv,
-  selectedConversation,
-  onSelectConversation,
-  onToggleVisibility,
-}) {
+function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser();
+  const navigate = useNavigate();
+
+  const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
 
   const [showMenu, setShowMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
@@ -87,6 +86,10 @@ function ConversationItem({
     setShowDeleteModal(false);
   };
 
+  const handleSelectConversation = (convId) => {
+    navigate(`/messages/${convId}`);
+  };
+
   if (!otherUser) {
     return null;
   }
@@ -96,7 +99,7 @@ function ConversationItem({
       className={`flex items-center gap-1 p-3 cursor-pointer hover:bg-secondary/60 duration-300 transition-colors
         ${isSelected ? "bg-secondary border-r-2 border-r-primary" : ""}
       `}
-      onClick={() => onSelectConversation(conv)} // ✨ Simplified handler
+      onClick={() => handleSelectConversation(conv?._id)} // ✨ Simplified handler
     >
       <Link
         to={`/profile/${otherUser.username}`}
@@ -172,7 +175,7 @@ function ConversationItem({
                 onClick={(e) => {
                   e.stopPropagation();
                   setShowDeleteModal(true);
-                  setShowMenu(false)
+                  setShowMenu(false);
                 }}
               >
                 <FiTrash />

@@ -6,13 +6,10 @@ import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useGetOrCreateConversation } from "../../../hooks/messagesHooks/useGetOrCreateConversation";
 import { useGetFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useGetFollowedUsersForMessaging"; // Updated hook import
-import toast from "react-hot-toast";
 import { showAppToast } from "../../../utils/showAppToast";
 
 const ConversationsList = ({
   conversations,
-  onSelectConversation,
-  selectedConversation,
 }) => {
   const { authUser: currentUser } = useAuthUser();
   const navigate = useNavigate();
@@ -86,7 +83,6 @@ const ConversationsList = ({
     });
   };
 
-  // Close dropdown if click outside. Crucial for custom dropdowns.
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -185,10 +181,6 @@ const ConversationsList = ({
         </div>
       </div>
 
-      {/* Main Conversation List Filter (currently commented out) */}
-      {/* If you re-enable this, it will filter existing conversations locally */}
-
-      {/* Conversation Items */}
       <div className="flex-1 overflow-y-auto scrollbar-on-hover">
         {filteredConversations.length === 0 ? (
           <div className="p-4 text-center text-gray-400">
@@ -200,8 +192,6 @@ const ConversationsList = ({
             <ConversationItem
               key={conv._id}
               conv={conv}
-              onSelectConversation={onSelectConversation}
-              selectedConversation={selectedConversation}
             />
           ))
         )}

@@ -18,10 +18,11 @@ function MessageInput({
   actualConversationId,
   currentOptimisticIdRef,
   messageInputRef,
-  // isSendingMessage,
   didMessageJustLanded,
-  // sendMessage,
   socket,
+  // isTypingOtherUser,
+  // isSendingMessage,
+  // sendMessage,
 }) {
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
   const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage);

@@ -15,10 +15,10 @@ const HomePage = () => {
     setNewPostCount,
     newPostCount,
   } = useSocket();
-  const feedType = useAppStore((state) => state.feedType);
-  const setFeedType = useAppStore((state) => state.setFeedType);
+  // const feedType = useAppStore((state) => state.feedType);
+  // const setFeedType = useAppStore((state) => state.setFeedType);
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal);
-  // const [feedType, setFeedType] = useState("forYou");
+  const [feedType, setFeedType] = useState("forYou");
   const mainFeedRef = useRef(null);
   const [headerWidth, setHeaderWidth] = useState("auto");
   const scrollableContentRef = useRef(null); // This ref points to the div containing CreatePost and Posts

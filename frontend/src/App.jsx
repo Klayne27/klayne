@@ -29,6 +29,7 @@ function App() {
   const closeImageModal = useAppStore((state) => state.closeImageModal);
   const showCreatePostModal = useAppStore((state) => state.showCreatePostModal);
   const setShowCreatePostModal = useAppStore((state) => state.setShowCreatePostModal);
+  const [feedType, setFeedType] = useState("posts");
 
   const location = useLocation();
 
@@ -79,7 +80,13 @@ function App() {
             />
             <Route
               path="/profile/:username"
-              element={authUser ? <ProfilePage /> : <Navigate to="/login" />}
+              element={
+                authUser ? (
+                  <ProfilePage feedType={feedType} setFeedType={setFeedType} />
+                ) : (
+                  <Navigate to="/login" />
+                )
+              }
             />
             <Route
               path="/messages"

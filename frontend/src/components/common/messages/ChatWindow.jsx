@@ -1,9 +1,4 @@
-import {
-  useEffect,
-  useRef,
-  useCallback,
-  useLayoutEffect,
-} from "react";
+import { useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../../context/SocketContext";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
@@ -15,26 +10,32 @@ import { FaCaretDown } from "react-icons/fa";
 import { IoChatbubblesOutline } from "react-icons/io5";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 
-const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
+const ChatWindow = () => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
   const currentUserId = currentUser?._id; // <--- Extract primitive ID
-
   const { socket, setActiveConversationId } = useSocket();
 
   // const [replyingToMessage, setReplyingToMessage] = useState(null);
   // const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
-
   // const [showNewMessageButton, setShowNewMessageButton] = useState(false);
   // const conversationId = selectedConversation?._id;
   // const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
-  const {
-    isTypingOtherUser,
-    setIsTypingOtherUser, // This setter will be used in socket listeners
-    showNewMessageButton, // Note the typo 'showNewMessageButon' in your store, fix it there first!
-    setShowNewMessageButton, // This setter will be used in scrolling logic
-    selectedConversation,
-  } = usePrivateChatStore();
+  // const {
+  //   isTypingOtherUser,
+  //   setIsTypingOtherUser, // This setter will be used in socket listeners
+  //   showNewMessageButton, // Note the typo 'showNewMessageButon' in your store, fix it there first!
+  //   setShowNewMessageButton, // This setter will be used in scrolling logic
+  //   selectedConversation,
+  // } = usePrivateChatStore();
+
+  const isTypingOtherUser = usePrivateChatStore((state) => state.isTypingOtherUser);
+  const setIsTypingOtherUser = usePrivateChatStore((state) => state.setIsTypingOtherUser);
+  const showNewMessageButton = usePrivateChatStore((state) => state.showNewMessageButton);
+  const setShowNewMessageButton = usePrivateChatStore(
+    (state) => state.setShowNewMessageButton
+  );
+  const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
 
   const conversationId = selectedConversation?._id;
 
@@ -43,7 +44,7 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
   const messageListRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
 
-  const didMessageJustLanded = useRef(false); // Renamed for clarity: `didMessageJustArriveOrSend` -> `didMessageJustLanded`
+  const didMessageJustLanded = useRef(false);
 
   const resizeObserverRef = useRef(null);
   const prevScrollHeightRef = useRef(0);
@@ -55,14 +56,8 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
     (p) => p?._id !== currentUser?._id
   );
 
-
-  // const { deleteMessage, isDeletingMessage } = useDeleteMessage();
   const { messages, isLoading, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId);
-
-  // const { mutate: sendMessage, isPending: isSendingMessage } = useSendMessage({
-  //   onOptimisticSend: handleOptimisticScroll,
-  // });
 
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null;
 
@@ -133,7 +128,7 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
         resizeObserverRef.current = null;
       }
     };
-  }, [scrollToBottom, conversationId]);
+  }, [scrollToBottom, conversationId, setShowNewMessageButton]);
 
   const handleLoadImage = useCallback(() => {
     const listEl = messageListRef.current;
@@ -153,7 +148,7 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
         //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
       }, 50); // Small delay to ensure image height is registered by the browser
     }
-  }, [scrollToBottom]);
+  }, [scrollToBottom, setShowNewMessageButton]);
 
   // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
   useLayoutEffect(() => {
@@ -187,7 +182,7 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
     if (isAtBottom) {
       scrollToBottom();
     }
-  }, [messages.length, isLoading, conversationId, scrollToBottom, lastMessageId]);
+  }, [messages.length, isLoading, conversationId, scrollToBottom, lastMessageId, setShowNewMessageButton]);
 
   useEffect(() => {
     if (isTypingOtherUser) {
@@ -540,20 +535,17 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
     setShowNewMessageButton,
   ]);
 
-  const handleNewMessageButtonClick = useCallback(() => {
+  const handleNewMessageButtonClick = () => {
     scrollToBottom();
     setShowNewMessageButton(false);
     didMessageJustLanded.current = false;
-  }, [scrollToBottom]);
+  };
 
   const isChatEmpty = !messages?.length && !isLoading;
 
   return (
     <div className="flex flex-col h-full relative md:border-r border-accent">
-      {/* <div className="absolute bottom-20 right-6 z-[9999] cursor-pointer duration-200 transition hover:bg-gray-800 rounded-full p-1 border-2 bg-base-100 border-accent">
-        <IoArrowDownOutline size={22} />
-      </div> */}
-      <ChatHeader onBackToConversations={onBackToConversations} otherUser={otherUser} />
+      <ChatHeader otherUser={otherUser} />
       {isChatEmpty && (
         <div className="flex flex-col items-center justify-end h-full text-center p-4">
           <IoChatbubblesOutline className="text-6xl text-gray-300 mb-4" />
@@ -567,11 +559,10 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
       )}
       <div className="mx-auto w-full flex flex-col h-full max-w-3xl md:max-w-[585px]">
         <MessageList
-          isNewChat={isChatEmpty} // Pass the simplified boolean
           ref={messageListRef}
+          isNewChat={isChatEmpty} // Pass the simplified boolean
           error={error}
           messagesToRender={messages}
-          // setReplyingToMessage={memoizedSetReplyingToMessage}
           messageInputRef={messageInputRef}
           messages={messages}
           isLoadingInitialMessages={isLoading && !isFetchingNextPage}
@@ -596,15 +587,15 @@ const ChatWindow = ({ onBackToConversations, onNewMessage }) => {
 
         <MessageInput
           otherUser={otherUser}
-          // replyingToMessage={replyingToMessage}
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
           messageInputRef={messageInputRef}
-          isTypingOtherUser={isTypingOtherUser}
           didMessageJustLanded={didMessageJustLanded}
+          socket={socket}
+          // isTypingOtherUser={isTypingOtherUser}
+          // replyingToMessage={replyingToMessage}
           // sendMessage={sendMessage}
           // isSendingMessage={isSendingMessage}
-          socket={socket}
           // editingMessage={editingMessage}
           // setEditingMessage={setEditingMessage}
         />

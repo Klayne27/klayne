@@ -1,7 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
-import { FaCircle, FaReply } from "react-icons/fa";
+import { FaCircle } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
-import { BsCheck2, BsCheck2All, BsThreeDots } from "react-icons/bs"; // Import BsThreeDots
+import { BsCheck2, BsCheck2All, BsThreeDots } from "react-icons/bs";
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
 import { useNavigate } from "react-router-dom";
@@ -16,9 +16,17 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useAppStore } from "../../../store/appStore";
 
+// const mouseLeaveTimeoutRef = useRef(null);
+// const lastMessageDateRef = useRef(null);
+// const MOUSE_LEAVE_DELAY = 100;
+
 const MessageItem = ({
   msg,
   messageInputRef,
+  currentUser,
+  isTypingOtherUser,
+  onReactionAdded,
+  handleLoadImage,
   // activeMessageModalId,
   // handleMouseEnter,
   // handleMouseLeave,
@@ -26,16 +34,12 @@ const MessageItem = ({
   // handleImageClick,
   // handleJumpToOriginalMessage,
   // handleReactionClick,
-  currentUser,
   // setEditingMessage,
-  isTypingOtherUser,
-  onReactionAdded,
   // setReplyingToMessage,
   // msg.senderProfileImg,
   // msg.senderUsername,
   // msg.isFirstInGroup,
   // msg.isLastInGroup,
-  handleLoadImage,
   // msg.showHeaderInfo,
   // isNewDay,
 }) => {
@@ -63,7 +67,7 @@ const MessageItem = ({
 
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
-  const moreButtonRef = useRef(null); // Ref for the new "More" button
+  const moreButtonRef = useRef(null);
 
   const [isMobile, setIsMobile] = useState(false);
   const pressTimer = useRef(null);
@@ -77,10 +81,6 @@ const MessageItem = ({
       navigator.msMaxTouchPoints > 0
     );
   };
-
-  // const mouseLeaveTimeoutRef = useRef(null);
-  // const lastMessageDateRef = useRef(null);
-  // const MOUSE_LEAVE_DELAY = 100;
 
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
