@@ -5,7 +5,7 @@ import { FaUserSlash, FaUserCheck, FaBan } from "react-icons/fa";
 import { FiTrash } from "react-icons/fi";
 import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
-import { BsThreeDots } from "react-icons/bs"; // Import BsThreeDots
+import { BsThreeDots } from "react-icons/bs";
 
 import { renderClickableText } from "../../utils/textUtils";
 import { truncateText } from "../../utils/truncateText";
@@ -13,39 +13,11 @@ import { truncateText } from "../../utils/truncateText";
 import EmojiPickerPopover from "../../components/common/EmojiPickerPopover";
 import { HiOutlineReply } from "react-icons/hi";
 import { IoCopy } from "react-icons/io5";
-import { showAppToast } from "../../utils/showAppToast";
 import { useDeleteOwnPublicMessage } from "../../hooks/publicChatHooks/useDeleteOwnPublicMessage";
 import { useDeletePublicMessage } from "../../hooks/publicChatHooks/useDeletePublicMessage";
 import { useAppStore } from "../../store/appStore";
-
-// Helper for formatting date (e.g., "July 28, 2025")
-const formatDisplayDate = (dateString) => {
-  const date = new Date(dateString);
-  const now = new Date();
-  const yesterday = new Date(now);
-  yesterday.setDate(now.getDate() - 1);
-
-  if (date.toDateString() === now.toDateString()) {
-    return "Today";
-  } else if (date.toDateString() === yesterday.toDateString()) {
-    return "Yesterday";
-  } else {
-    return date.toLocaleDateString("en-US", {
-      month: "long",
-      day: "numeric",
-      year: "numeric",
-    });
-  }
-};
-
-// Helper for formatting time (e.g., "5:02 AM")
-const formatDisplayTime = (dateString) => {
-  return new Date(dateString).toLocaleTimeString([], {
-    hour: "2-digit",
-    minute: "2-digit",
-    hour12: false, // Use 12-hour format with AM/PM
-  });
-};
+import { formatDate, formatTime } from "../../utils/date";
+import { useEmojiPickerPopover } from "../../hooks/useEmojiPickerPopover";
 
 // --- PublicChatMessage Component ---
 const PublicChatMessage = React.memo(function PublicChatMessage({
@@ -72,12 +44,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 }) {
   const openImageModal = useAppStore((state) => state.openImageModal);
   const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage();
-  const { adminDeletePublicMessage: adminDeleteMessage, isPending: isAdminDeleting } =
+  const { adminDeletePublicMessage, isPending: isAdminDeleting } =
     useDeletePublicMessage();
   const [isHovered, setIsHovered] = useState(false);
 
-  const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  // const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
+  // const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
   const moreActionsButtonRef = useRef(null); // Ref for the new More Actions button
@@ -104,71 +76,67 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  const handleOpenEmojiPickerPopover = useCallback(
-    (e, targetRef) => {
-      e.stopPropagation();
-      setShowMoreActionsModal(false); // Close more actions modal if open
+  // const handleOpenEmojiPickerPopover = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setShowMoreActionsModal(false); // Close more actions modal if open
+  //     if (showEmojiPickerPopover) {
+  //       setShowEmojiPickerPopover(false);
+  //       return;
+  //     }
+  //     // if (showEmojiPickerPopover && targetRef.current === addReactionButtonRef.current) {
+  //     //   setShowEmojiPickerPopover(false);
+  //     //   return;
+  //     // }
 
-      if (showEmojiPickerPopover && targetRef.current === moreEmojisButtonRef.current) {
-        setShowEmojiPickerPopover(false);
-        return;
-      }
-      if (showEmojiPickerPopover && targetRef.current === addReactionButtonRef.current) {
-        setShowEmojiPickerPopover(false);
-        return;
-      }
+  //     const buttonRect = e.currentTarget.getBoundingClientRect();
+  //     const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350;
+  //     const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400;
 
-      const buttonRect = targetRef.current.getBoundingClientRect();
+  //     let newTop = buttonRect.top - estimatedPickerHeight - 10;
+  //     let newLeft = buttonRect.left + buttonRect.width / 2;
 
-      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350;
-      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400;
+  //     const padding = 10;
 
-      let newTop = buttonRect.top - estimatedPickerHeight - 10;
-      let newLeft = buttonRect.left + buttonRect.width / 2;
+  //     if (newLeft - estimatedPickerWidth / 2 < padding) {
+  //       newLeft = estimatedPickerWidth / 2 + padding;
+  //     }
 
-      const padding = 10;
+  //     if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
+  //       newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding;
+  //     }
 
-      if (newLeft - estimatedPickerWidth / 2 < padding) {
-        newLeft = estimatedPickerWidth / 2 + padding;
-      }
+  //     if (newTop < padding) {
+  //       newTop = buttonRect.bottom + 10;
+  //     }
 
-      if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
-        newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding;
-      }
+  //     setPopoverPosition({
+  //       top: newTop,
+  //       left: newLeft
+  //     });
+  //     setShowEmojiPickerPopover(true);
+  //   },
+  //   [showEmojiPickerPopover]
+  // );
 
-      if (newTop < padding) {
-        newTop = buttonRect.bottom + 10;
-      }
-
-      setPopoverPosition({
-        top: newTop,
-        left: newLeft,
-      });
-      setShowEmojiPickerPopover(true);
-    },
-    [showEmojiPickerPopover]
-  );
-
-  const handleCloseEmojiPickerPopover = useCallback(() => {
-    setShowEmojiPickerPopover(false);
-  }, []);
-
-  const handleEmojiSelect = useCallback(
-    (emojiObject) => {
-      handleReactionClick(message._id, emojiObject.emoji);
-      handleCloseEmojiPickerPopover();
-      onReactionAdded();
-    },
-    [handleReactionClick, message._id, handleCloseEmojiPickerPopover, onReactionAdded]
-  );
+  // const handleCloseEmojiPickerPopover = useCallback(() => {
+  //   setShowEmojiPickerPopover(false);
+  // }, []);
 
   // --- Handlers for More Actions Modal ---
+
+  const {
+    showEmojiPickerPopover,
+    setShowEmojiPickerPopover,
+    popoverPosition,
+    handleOpenEmojiPickerPopover,
+    handleCloseEmojiPickerPopover,
+  } = useEmojiPickerPopover();
+
   const handleOpenMoreActionsModal = useCallback(
     (e) => {
       e.stopPropagation();
       setShowEmojiPickerPopover(false); // Close emoji picker if open
-
-      // Toggle functionality: if already open, close it
       if (showMoreActionsModal) {
         setShowMoreActionsModal(false);
         return;
@@ -221,8 +189,22 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       message.isDeletedByAdmin,
       message.isDeletedByUser,
       authUser.isAdmin,
+      setShowEmojiPickerPopover,
     ]
   );
+
+  const handleEmojiSelect = useCallback(
+    (emojiObject) => {
+      handleReactionClick(message._id, emojiObject.emoji);
+      handleCloseEmojiPickerPopover();
+      onReactionAdded();
+    },
+    [handleReactionClick, message._id, handleCloseEmojiPickerPopover, onReactionAdded]
+  );
+
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal);
+  };
 
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false);
@@ -253,6 +235,8 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const isAuthUserAdmin = authUser.isAdmin;
   const isSenderBanned = message.sender.isBannedInPublicChat;
   const isMessageDeleted = message.isDeletedByAdmin || message.isDeletedByUser;
+  const isReplyToMessageDeleted =
+    message.replyTo?.isDeletedByAdmin || message.replyTo?.isDeletedByUser;
   const isSenderVerified = message.sender.isVerified;
   const isSenderGoldVerified = message.sender.isGoldVerified;
   const isMessageEdited = message.isEdited;
@@ -361,6 +345,10 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     }
   };
 
+  const messageDeleted = (
+    <span className="text-gray-500 italic text-sm">[Message Deleted]</span>
+  );
+
   return (
     <>
       {/* Date Separator */}
@@ -368,7 +356,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         <div className="flex items-center mb-6 mt-7">
           <div className="flex-grow border-t border-gray-700"></div>
           <div className="px-2 text-slate-400 text-xs flex-shrink-0">
-            {formatDisplayDate(message.createdAt)}
+            {formatDate(message.createdAt)}
           </div>
           <div className="flex-grow border-t border-gray-700"></div>
         </div>
@@ -441,7 +429,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           <div className="w-px h-6 bg-slate-500 mx-1"></div>
           <button
             ref={moreEmojisButtonRef}
-            onClick={(e) => handleOpenEmojiPickerPopover(e, moreEmojisButtonRef)}
+            onClick={(e) => openEmojiPickerWithModalClose(e, moreEmojisButtonRef)}
             className=" text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg duration-100 transtion"
             title="More Emojis"
           >
@@ -519,7 +507,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 <>
                   {!isMessageDeleted && (
                     <button
-                      onClick={handleActionClick(adminDeleteMessage, message._id)}
+                      onClick={handleActionClick(adminDeletePublicMessage, message._id)}
                       disabled={isAdminDeleting}
                       className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
                     >
@@ -575,12 +563,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
           {shouldShowTimeOnHover && !isSentByCurrentUser && !isFirstInGroup && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
-              {formatDisplayTime(message.createdAt)}
+              {formatTime(message.createdAt)}
             </div>
           )}
           {shouldShowTimeOnHover && isSentByCurrentUser && !isFirstInGroup && (
             <div className="absolute -left-[58px] top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
-              {formatDisplayTime(message.createdAt)}
+              {formatTime(message.createdAt)}
             </div>
           )}
           {/* Message Content and Timestamp Wrapper */}
@@ -630,7 +618,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 )}
 
                 <span className="text-xs text-gray-500">
-                  {formatDisplayTime(message.createdAt)}
+                  {formatTime(message.createdAt)}
                 </span>
               </div>
             )}
@@ -678,7 +666,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                       @{message.replyTo.sender?.username || "Unknown User"}
                     </span>
                   </span>
-                  {message.replyTo.isDeletedByAdmin || message.replyTo.isDeletedByUser ? (
+                  {isReplyToMessageDeleted ? (
                     <div></div>
                   ) : (
                     message.replyTo.content && (
@@ -700,14 +688,11 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                       className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
                     />
                   )}
-                  {message.replyTo.isDeletedByAdmin ||
-                    (message.replyTo.isDeletedByUser && (
-                      <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
-                    ))}
+                  {isReplyToMessageDeleted && messageDeleted}
                 </div>
               )}
-              {message.isDeletedByAdmin || message.isDeletedByUser || isSenderBanned ? (
-                <span className="italic text-sm text-gray-400 ">[Message Deleted]</span>
+              {isMessageDeleted || isSenderBanned ? (
+                messageDeleted
               ) : (
                 <>
                   {message.img && (
@@ -744,7 +729,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 {isSentByCurrentUser && (
                   <button
                     ref={addReactionButtonRef}
-                    onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+                    onClick={(e) =>
+                      openEmojiPickerWithModalClose(e, addReactionButtonRef)
+                    }
                     className={`
                                         text-gray-400 hover:text-gray-200
                                         size-[30px] rounded-lg flex items-center justify-center
@@ -794,7 +781,9 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
                 {!isSentByCurrentUser && (
                   <button
                     ref={addReactionButtonRef}
-                    onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+                    onClick={(e) =>
+                      openEmojiPickerWithModalClose(e, addReactionButtonRef)
+                    }
                     className={`
                                         text-gray-400 hover:text-gray-200
                                         size-[30px] rounded-lg flex items-center justify-center

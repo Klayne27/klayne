@@ -40,6 +40,9 @@ const PublicMessageInput = ({
   const [messageContent, setMessageContent] = useState("");
   const [isMobile, setIsMobile] = useState(false);
 
+  const isMessageDeleted =
+    replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser;
+
   const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
 
   const getTypingMessage = (users) => {
@@ -348,6 +351,10 @@ const PublicMessageInput = ({
   // Derive isSomeoneTyping from the length of typingUsers array
   const showTypingIndicator = typingUsers && typingUsers.length > 0;
 
+  const messageDeleted = (
+    <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
+  );
+
   return (
     <>
       {" "}
@@ -499,7 +506,7 @@ const PublicMessageInput = ({
                       @{replyingToMessage.sender.username}:
                     </span>
                   )}
-                  {truncateText(replyingToMessage.content)}
+                  {isMessageDeleted ? messageDeleted : truncateText(replyingToMessage.content)}
                 </div>
                 {replyingToMessage.img && !replyingToMessage.content && (
                   <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>

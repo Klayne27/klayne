@@ -1,7 +1,6 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
-import { toast } from "react-hot-toast";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import Post from "../../components/common/posts/Post";
 import CommentItem from "../../components/common/posts/CommentItem";

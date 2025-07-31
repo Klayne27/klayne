@@ -26,11 +26,9 @@ const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
 
 const PublicChatWindow = () => {
   const { authUser: currentUser, refetchAuthUser } = useAuthUser();
-  const { socket, setActiveConversationId } = useSocket();
+  const { socket } = useSocket();
 
   const lastMessageDateRef = useRef(null); // Ref to store the date of the last rendered message
-
-
 
   const {
     messages,

@@ -15,7 +15,8 @@ import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage"
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useAppStore } from "../../../store/appStore";
-
+import { formatDate, formatTime } from "../../../utils/date";
+import { useEmojiPickerPopover } from "../../../hooks/useEmojiPickerPopover";
 
 // const lastMessageDateRef = useRef(null);
 // const MOUSE_LEAVE_DELAY = 100;
@@ -38,9 +39,9 @@ const MessageItem = ({
   const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage);
 
   const [isHovered, setIsHovered] = useState(false);
-  const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
+  // const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
   const [showMoreActionsModal, setShowMoreActionsModal] = useState(false); // New state for more actions modal
-  const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
+  // const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
   const [moreActionsModalPosition, setMoreActionsModalPosition] = useState({
     top: 0,
     left: 0,
@@ -85,43 +86,21 @@ const MessageItem = ({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  const handleOpenEmojiPickerPopover = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setShowMoreActionsModal(false); // Close more actions modal if open
-      if (showEmojiPickerPopover) {
-        setShowEmojiPickerPopover(false);
-        return;
-      }
+  const {
+    showEmojiPickerPopover,
+    setShowEmojiPickerPopover,
+    popoverPosition,
+    handleOpenEmojiPickerPopover,
+    handleCloseEmojiPickerPopover,
+  } = useEmojiPickerPopover();
 
-      const buttonRect = e.currentTarget.getBoundingClientRect();
-      const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350;
-      const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400;
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal);
+  };
 
-      let newTop = buttonRect.top - estimatedPickerHeight - 10;
-      let newLeft = buttonRect.left + buttonRect.width / 2;
-
-      const padding = 10;
-
-      if (newLeft - estimatedPickerWidth / 2 < padding) {
-        newLeft = estimatedPickerWidth / 2 + padding;
-      }
-      if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
-        newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding;
-      }
-      if (newTop < padding) {
-        newTop = buttonRect.bottom + 10;
-      }
-
-      setPopoverPosition({ top: newTop, left: newLeft });
-      setShowEmojiPickerPopover(true);
-    },
-    [showEmojiPickerPopover]
-  );
-
-  const handleCloseEmojiPickerPopover = useCallback(() => {
-    setShowEmojiPickerPopover(false);
-  }, []);
+  // const handleCloseEmojiPickerPopover = useCallback(() => {
+  //   setShowEmojiPickerPopover(false);
+  // }, []);
 
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false);
@@ -208,26 +187,8 @@ const MessageItem = ({
       setMoreActionsModalPosition({ top: newTop, left: newLeft });
       setShowMoreActionsModal(true);
     },
-    [showMoreActionsModal, isEditable]
+    [showMoreActionsModal, isEditable, setShowEmojiPickerPopover]
   );
-
-  // Helper for formatting time (e.g., "10:30 AM")
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString([], {
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-  };
-
-  // Helper for formatting date (e.g., "July 19, 2025")
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString([], {
-      day: "numeric",
-      month: "long",
-      year: "numeric",
-    });
-  };
 
   let bubbleClasses = "";
   if (isSentByCurrentUser) {
@@ -277,24 +238,27 @@ const MessageItem = ({
     }
   };
 
-  const handleClickOutsideMessage = useCallback((e) => {
-    if (activeMessageModalId) {
-      const messageItemContainer = document.getElementById(
-        `message-${activeMessageModalId}`
-      );
-      const messageModalElement = document.getElementById(
-        `message-modal-${activeMessageModalId}`
-      );
-      if (
-        messageItemContainer &&
-        !messageItemContainer.contains(e.target) &&
-        messageModalElement &&
-        !messageModalElement.contains(e.target)
-      ) {
-        setActiveMessageModalId(null);
+  const handleClickOutsideMessage = useCallback(
+    (e) => {
+      if (activeMessageModalId) {
+        const messageItemContainer = document.getElementById(
+          `message-${activeMessageModalId}`
+        );
+        const messageModalElement = document.getElementById(
+          `message-modal-${activeMessageModalId}`
+        );
+        if (
+          messageItemContainer &&
+          !messageItemContainer.contains(e.target) &&
+          messageModalElement &&
+          !messageModalElement.contains(e.target)
+        ) {
+          setActiveMessageModalId(null);
+        }
       }
-    }
-  }, [activeMessageModalId]);
+    },
+    [activeMessageModalId]
+  );
 
   useEffect(() => {
     if (activeMessageModalId) {
@@ -336,6 +300,7 @@ const MessageItem = ({
       }, 1500);
     }
   };
+
 
   const handleTouchStart = (e) => {
     e.stopPropagation();
@@ -491,7 +456,7 @@ const MessageItem = ({
           <div className="w-px h-6 bg-slate-500 mx-1"></div>
           <button
             ref={moreEmojisButtonRef}
-            onClick={handleOpenEmojiPickerPopover}
+            onClick={(e) => openEmojiPickerWithModalClose(e, moreButtonRef)}
             className="text-slate-500 group hover:text-slate-400 duration-100 hover:bg-secondary rounded-md transtion border-slate-500 mt-[1px]"
             title="More Emojis"
           >
@@ -740,7 +705,9 @@ const MessageItem = ({
                 {isSentByCurrentUser && (
                   <button
                     ref={addReactionButtonRef}
-                    onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+                    onClick={(e) =>
+                      openEmojiPickerWithModalClose(e, addReactionButtonRef)
+                    }
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out hover:bg-gray-700 bg-gray-800"
                     style={messageContentStyle}
                     title="Add reaction"
@@ -777,7 +744,9 @@ const MessageItem = ({
                 {!isSentByCurrentUser && (
                   <button
                     ref={addReactionButtonRef}
-                    onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
+                    onClick={(e) =>
+                      openEmojiPickerWithModalClose(e, addReactionButtonRef)
+                    }
                     className="text-gray-400 hover:text-gray-200 size-[30px] rounded-lg flex items-center justify-center transition-colors duration-200 ease-in-out border border-transparent hover:bg-gray-700 bg-gray-800"
                     style={messageContentStyle}
                     title="Add reaction"

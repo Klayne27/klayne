@@ -4,7 +4,7 @@ import LoadingSpinner from "../../ui/LoadingSpinner";
 
 import MessageItem from "./MessageItem";
 
-const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 1 minute
+const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000; // 5 minutes
 
 const MessageList = forwardRef(function MessageList(
   {
