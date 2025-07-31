@@ -1,33 +1,23 @@
+// components/ChatWindow.jsx
 import { useEffect, useRef, useCallback, useLayoutEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
-import { useSocket } from "../../../context/SocketContext";
+import { useSocket } from "../../../context/SocketContext"; // Still needed for setActiveConversationId
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages";
+// Import the new socket events hook
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
 import { FaCaretDown } from "react-icons/fa";
 import { IoChatbubblesOutline } from "react-icons/io5";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
+import { usePrivateChatSocketEvents } from "../../../hooks/usePrivateChatSocketEvents";
 
 const ChatWindow = () => {
   const queryClient = useQueryClient();
   const { authUser: currentUser } = useAuthUser();
-  const currentUserId = currentUser?._id; // <--- Extract primitive ID
-  const { socket, setActiveConversationId } = useSocket();
-
-  // const [replyingToMessage, setReplyingToMessage] = useState(null);
-  // const [isTypingOtherUser, setIsTypingOtherUser] = useState(false);
-  // const [showNewMessageButton, setShowNewMessageButton] = useState(false);
-  // const conversationId = selectedConversation?._id;
-  // const [editingMessage, setEditingMessage] = useState(null); // State to hold the message being edited
-  // const {
-  //   isTypingOtherUser,
-  //   setIsTypingOtherUser, // This setter will be used in socket listeners
-  //   showNewMessageButton, // Note the typo 'showNewMessageButon' in your store, fix it there first!
-  //   setShowNewMessageButton, // This setter will be used in scrolling logic
-  //   selectedConversation,
-  // } = usePrivateChatStore();
+  const currentUserId = currentUser?._id;
+  const { setActiveConversationId, socket } = useSocket(); // Only need setActiveConversationId from useSocket here
 
   const isTypingOtherUser = usePrivateChatStore((state) => state.isTypingOtherUser);
   const setIsTypingOtherUser = usePrivateChatStore((state) => state.setIsTypingOtherUser);
@@ -72,15 +62,15 @@ const ChatWindow = () => {
     const listEl = messageListRef.current;
     if (!listEl) return;
 
-    const scrollThreshold = 100; // Keep consistent with other checks
+    const scrollThreshold = 100;
     const isUserAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
     if (isUserAtBottom) {
       setTimeout(() => {
         scrollToBottom();
-        setShowNewMessageButton(false); // Hide the new message button if we scrolled
-      }, 1); // Small delay to ensure DOM updates
+        setShowNewMessageButton(false);
+      }, 1);
     }
   }, [scrollToBottom, setShowNewMessageButton]);
 
@@ -100,7 +90,7 @@ const ChatWindow = () => {
           const newScrollHeight = listEl.scrollHeight;
           const oldScrollHeight = prevScrollHeightRef.current;
 
-          const scrollThreshold = 100; // Define how close to the bottom is "at the bottom"
+          const scrollThreshold = 100;
           const isUserAtBottom =
             listEl.scrollHeight - listEl.scrollTop <=
             listEl.clientHeight + scrollThreshold;
@@ -109,8 +99,8 @@ const ChatWindow = () => {
             setTimeout(() => {
               scrollToBottom();
               setShowNewMessageButton(false);
-              didMessageJustLanded.current = false; // Reset after scrolling
-            }, 50); // Small delay to ensure image height is registered
+              didMessageJustLanded.current = false;
+            }, 50);
           } else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
             scrollToBottom();
             setShowNewMessageButton(false);
@@ -138,15 +128,11 @@ const ChatWindow = () => {
     const isUserAtBottom =
       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
-    // Scroll if:
-    // 1. User is currently at the bottom (image loaded for visible content)
-    // 2. A new message (optimistic or received) just landed, indicated by shouldScrollToBottomOnNewMessage
     if (isUserAtBottom) {
       setTimeout(() => {
         scrollToBottom();
         setShowNewMessageButton(false);
-        //  shouldScrollToBottomOnNewMessage.current = false; // Reset the flag
-      }, 50); // Small delay to ensure image height is registered by the browser
+      }, 50);
     }
   }, [scrollToBottom, setShowNewMessageButton]);
 
@@ -162,7 +148,7 @@ const ChatWindow = () => {
     if (conversationChanged) {
       shouldScrollOnFirstFullLoad.current = true;
       prevActualConversationIdRef.current = conversationId;
-      didMessageJustLanded.current = true; // Force scroll on new conversation
+      didMessageJustLanded.current = true;
     }
 
     const isAtBottom =
@@ -182,22 +168,27 @@ const ChatWindow = () => {
     if (isAtBottom) {
       scrollToBottom();
     }
-  }, [messages.length, isLoading, conversationId, scrollToBottom, lastMessageId, setShowNewMessageButton]);
+  }, [
+    messages.length,
+    isLoading,
+    conversationId,
+    scrollToBottom,
+    lastMessageId,
+    setShowNewMessageButton,
+  ]);
 
   useEffect(() => {
     if (isTypingOtherUser) {
       const listEl = messageListRef.current;
       if (listEl) {
-        // Check if the user is already at the bottom or very close to it
-        const scrollThreshold = 100; // Define a threshold, e.g., 100px from the bottom
+        const scrollThreshold = 100;
         const isUserAtBottom =
           listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold;
 
         if (isUserAtBottom) {
-          // Only scroll to bottom if the user is already at the bottom
           const timeoutId = setTimeout(() => {
             scrollToBottom();
-          }, 1); // Small delay to allow DOM to update
+          }, 1);
           return () => clearTimeout(timeoutId);
         }
       }
@@ -220,9 +211,7 @@ const ChatWindow = () => {
           }
         }
 
-        // Fetch more messages when near top
         if (scrollTop < 1 && hasNextPage && !isFetchingNextPage) {
-          // Store the current scroll position and scroll height BEFORE fetching new data
           scrollStateBeforeFetch.current = {
             scrollTop: listEl.scrollTop,
             scrollHeight: listEl.scrollHeight,
@@ -255,10 +244,7 @@ const ChatWindow = () => {
       };
     }
 
-    if (
-      !isFetchingNextPage &&
-      scrollStateBeforeFetch.current.scrollHeight > 0 // Ensure we had a pending fetch
-    ) {
+    if (!isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight > 0) {
       const { scrollTop: oldScrollTop, scrollHeight: oldScrollHeight } =
         scrollStateBeforeFetch.current;
       const newScrollHeight = listEl.scrollHeight;
@@ -271,269 +257,39 @@ const ChatWindow = () => {
     }
   }, [messages, isFetchingNextPage]);
 
-  // --- Socket and active conversation management ---
+  // --- Only this useEffect remains for conversation activation/deactivation ---
+  // This one controls the global `activeConversationId`
+  // and emits "userActiveInChat" and "markMessagesAsSeen" *once* when conversation changes
   useEffect(() => {
     setActiveConversationId(conversationId);
-    return () => {
-      setActiveConversationId(null);
-    };
-  }, [conversationId, setActiveConversationId]);
-
-  useEffect(() => {
-    setActiveConversationId(conversationId);
-
-    if (socket) {
-      socket.emit("userActiveInChat", { conversationId: conversationId });
-    }
-
-    if (socket && conversationId && currentUser?._id) {
+    // It's usually good to mark messages as seen when the user enters the chat
+    // This could also be inside the new `usePrivateChatSocketEvents` or a mutation
+    // For now, keeping it here for clarity, but consider where its side-effect truly belongs.
+    // If it's *only* when the user *opens* the chat, this is okay.
+    // If it's on *any new message received*, the socket handler in the new hook is better.
+    if (socket && conversationId && currentUserId) {
       socket.emit("markMessagesAsSeen", { conversationId: conversationId });
     }
-
-    queryClient.invalidateQueries({ queryKey: ["conversations"] });
+    queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Update sidebar if seen status changes
 
     return () => {
       setActiveConversationId(null);
-      if (socket) {
-        socket.emit("userActiveInChat", { conversationId: null });
-      }
+      // Only emit `userActiveInChat` with null here if this component controls the
+      // "global" active status, otherwise, the `usePrivateChatSocketEvents` cleanup might be enough.
+      // If this `userActiveInChat` is for a UI indicator (like a global "user is chatting" status), keep it.
     };
-  }, [socket, conversationId, currentUser?._id, setActiveConversationId, queryClient]);
+  }, [conversationId, setActiveConversationId, socket, currentUserId, queryClient]);
 
-  // --- Socket event listeners and handling new messages from others ---
-  useEffect(() => {
-    if (socket) {
-      let prevConversationId; // To store the conversation ID before it changes
-
-      if (conversationId) {
-        socket.emit("joinConversation", conversationId);
-        prevConversationId = conversationId; // Store for cleanup
-      }
-
-      const handleNewMessage = (newMessage) => {
-        const targetMessagesQueryKey = ["messages", newMessage.conversationId];
-        const limit = 40; // Use the same page size limit
-
-        queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
-          if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-            return { pages: [[newMessage]], pageParams: [1] };
-          }
-
-          const newData = {
-            ...oldData,
-            pages: oldData.pages.map((page) => [...page]),
-          };
-          // Filter out duplicates (if any) and optimistic messages that are being replaced
-          const firstPage = newData.pages[0];
-
-          firstPage.push(newMessage);
-
-          // **THE SAME FIX**: Maintain page size integrity
-          if (firstPage.length > limit) {
-            firstPage.shift();
-          }
-
-          newData.pages[0] = firstPage;
-          return newData;
-        });
-
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-
-        // Now, handle UI-specific logic ONLY if the message is for the currently active chat
-        const isMessageForCurrentlyActiveChat =
-          newMessage.conversationId === conversationId ||
-          (newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            newMessage.recipientId?.toString() === currentUserId.toString() &&
-            !conversationId); // If it's a new chat, match by sender/recipient until a real ID exists
-
-        if (isMessageForCurrentlyActiveChat) {
-          const listEl = messageListRef.current;
-          if (listEl) {
-            const scrollThreshold = 100;
-            const isAtBottom =
-              listEl.scrollHeight - listEl.scrollTop <=
-              listEl.clientHeight + scrollThreshold;
-
-            if (
-              newMessage.sender._id.toString() === currentUserId.toString() || // Our own message
-              isAtBottom // Already at bottom, so keep scrolling
-            ) {
-              didMessageJustLanded.current = true;
-              setShowNewMessageButton(false);
-            } else {
-              if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-                setShowNewMessageButton(true);
-              }
-            }
-          }
-
-          if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-            socket.emit("markMessagesAsSeen", {
-              conversationId: newMessage.conversationId,
-            });
-          }
-        }
-      };
-
-      const handleMessagesSeen = ({ conversationId: seenConversationId, readerId }) => {
-        if (seenConversationId.toString() === conversationId?.toString()) {
-          queryClient.setQueryData(["messages", conversationId], (oldData) => {
-            if (!oldData) {
-              return oldData;
-            }
-
-            const updatedPages = oldData.pages.map((page, pageIndex) =>
-              page.map((msg) => {
-                // Check if it's the current user's message AND it's currently not seen
-                const shouldBeMarkedSeen =
-                  msg.sender && // Ensure sender exists
-                  msg.sender._id.toString() === currentUserId.toString() &&
-                  !msg.seen;
-
-                if (shouldBeMarkedSeen) {
-                  return { ...msg, seen: true };
-                }
-                return msg;
-              })
-            );
-            // Important: Verify the 'seen' property of your specific message here in the console
-            // For example, find the message by its ID if you know it, or just inspect the last message
-            if (updatedPages && updatedPages.length > 0 && updatedPages[0].length > 0) {
-              const lastMessageOnFirstPage = updatedPages[0][updatedPages[0].length - 1];
-            }
-
-            return { ...oldData, pages: updatedPages };
-          });
-        }
-      };
-
-      const handleMessageDeleted = ({
-        messageId,
-        conversationId: deletedConversationId,
-      }) => {
-        if (deletedConversationId.toString() === conversationId?.toString()) {
-          queryClient.setQueryData(["messages", conversationId], (oldData) => {
-            if (!oldData) return oldData;
-
-            const updatedPages = oldData.pages.map((page) =>
-              page.filter((msg) => msg._id !== messageId)
-            );
-            return { ...oldData, pages: updatedPages };
-          });
-        }
-        queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      };
-
-      // --- MODIFIED: handleTyping event listener ---
-      const handleTyping = ({ conversationId, userId, isEditing }) => {
-        if (conversationId === conversationId && userId === otherUser?._id.toString()) {
-          if (!isEditing) {
-            setIsTypingOtherUser(true);
-          }
-        }
-      };
-
-      const handleConversationUpdate = (updatedConversation) => {
-        queryClient.setQueryData(["conversations"], (oldConversations) => {
-          if (!oldConversations) return [updatedConversation]; // Handle initial empty state
-          const index = oldConversations.findIndex(
-            (conv) => conv._id === updatedConversation._id
-          );
-          if (index !== -1) {
-            const newConversations = [...oldConversations];
-            newConversations[index] = updatedConversation;
-            return newConversations;
-          } else {
-            return [updatedConversation, ...oldConversations]; // Add to the top
-          }
-        });
-      };
-
-      const handleStopTyping = ({ conversationId, userId, isEditing }) => {
-        if (conversationId === conversationId && userId === otherUser?._id.toString()) {
-          setIsTypingOtherUser(false);
-        }
-      };
-
-      const handleMessageEdited = (updatedMessage) => {
-        // Ensure the update is for the currently viewed conversation
-        if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
-          const queryKey = ["messages", conversationId];
-
-          queryClient.setQueryData(queryKey, (oldData) => {
-            if (!oldData) return oldData;
-
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((msg) => {
-                // Case 1: This is the message that was actually edited.
-                if (msg._id === updatedMessage._id) {
-                  return updatedMessage;
-                }
-
-                if (msg.repliedTo && msg.repliedTo._id === updatedMessage._id) {
-                  return {
-                    ...msg, // Keep the reply message itself
-                    repliedTo: updatedMessage, // Update its 'repliedTo' data
-                  };
-                }
-
-                return msg;
-              })
-            );
-            return { ...oldData, pages: updatedPages };
-          });
-        }
-
-        const currentConversationsData = queryClient.getQueryData(["conversations"]);
-
-        if (currentConversationsData) {
-          // Check if the updatedMessage.conversationId is present in the cached list
-          const isParticipatingInConversation = currentConversationsData.some(
-            (conv) => conv._id === updatedMessage.conversationId.toString()
-          );
-
-          if (isParticipatingInConversation) {
-            // If the current user is a participant in this conversation, invalidate.
-            // This will cause a refetch of the sidebar to get the latest lastMessage text.
-            queryClient.invalidateQueries({ queryKey: ["conversations"] });
-          }
-        }
-      };
-      socket.on("newMessage", handleNewMessage);
-      socket.on("messageDeleted", handleMessageDeleted);
-      socket.on("messagesSeen", handleMessagesSeen);
-      socket.on("typing", handleTyping);
-      socket.on("stopTyping", handleStopTyping);
-      socket.on("messageEdited", handleMessageEdited);
-      socket.on("conversationUpdated", handleConversationUpdate);
-
-      return () => {
-        if (prevConversationId) {
-          socket.emit("leaveConversation", prevConversationId);
-        }
-        socket.off("newMessage", handleNewMessage);
-        socket.off("messageDeleted", handleMessageDeleted);
-        socket.off("messagesSeen", handleMessagesSeen);
-        socket.off("typing", handleTyping);
-        socket.off("stopTyping", handleStopTyping);
-        socket.off("messageEdited", handleMessageEdited);
-        socket.off("conversationUpdated", handleConversationUpdate);
-      };
-    }
-  }, [
-    socket,
+  // --- Call the new socket events hook here ---
+  // We pass the refs and setters it needs to interact with the DOM and Zustand store.
+  usePrivateChatSocketEvents(
     conversationId,
-    queryClient,
-    otherUser?._id,
-    currentUserId,
-    selectedConversation,
-    setIsTypingOtherUser,
-    // currentUser.username,
-    // currentUser.profileImg,
-    // currentUser.fullName,
-    // currentOptimisticIdRef,
+    messageListRef,
+    didMessageJustLanded,
     setShowNewMessageButton,
-  ]);
+    setIsTypingOtherUser,
+    otherUser
+  );
 
   const handleNewMessageButtonClick = () => {
     scrollToBottom();
@@ -549,7 +305,7 @@ const ChatWindow = () => {
       {isChatEmpty && (
         <div className="flex flex-col items-center justify-end h-full text-center p-4">
           <IoChatbubblesOutline className="text-6xl text-gray-300 mb-4" />
-          <p className="text-xl font-semibold  mb-2">
+          <p className="text-xl font-semibold  mb-2">
             You're starting a new chat with @{otherUser?.username}!
           </p>
           <p className="text-base text-gray-500 italic max-w-sm">
@@ -560,7 +316,7 @@ const ChatWindow = () => {
       <div className="mx-auto w-full flex flex-col h-full max-w-3xl md:max-w-[585px]">
         <MessageList
           ref={messageListRef}
-          isNewChat={isChatEmpty} // Pass the simplified boolean
+          isNewChat={isChatEmpty}
           error={error}
           messagesToRender={messages}
           messageInputRef={messageInputRef}
@@ -591,15 +347,11 @@ const ChatWindow = () => {
           currentOptimisticIdRef={currentOptimisticIdRef}
           messageInputRef={messageInputRef}
           didMessageJustLanded={didMessageJustLanded}
+          // The `socket` prop below can likely be removed from MessageInput
+          // if it only emits and doesn't listen. MessageInput can use `useSocket` directly.
           socket={socket}
-          // isTypingOtherUser={isTypingOtherUser}
-          // replyingToMessage={replyingToMessage}
-          // sendMessage={sendMessage}
-          // isSendingMessage={isSendingMessage}
-          // editingMessage={editingMessage}
-          // setEditingMessage={setEditingMessage}
         />
-      </div>{" "}
+      </div>
     </div>
   );
 };
