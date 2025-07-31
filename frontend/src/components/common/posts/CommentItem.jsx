@@ -208,12 +208,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     e.stopPropagation();
     setShowReplyInput((prev) => !prev);
     // Clear previous reply state when toggling
-    setReplyInput("");
+    // setReplyInput("");
     setReplyPreviewImage(null);
     setReplySelectedFile(null);
-    if (replyInputRef.current) {
-      replyInputRef.current.value = "";
-    }
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
   }, []);
@@ -970,7 +967,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <CommentItem
                     comment={reply}
                     postId={postId}
-                    onReplyClick={onReplyClick}
+                    // onReplyClick={onReplyClick}
                     isPostOwner={isPostOwner}
                     openImageModal={openImageModal}
                   />

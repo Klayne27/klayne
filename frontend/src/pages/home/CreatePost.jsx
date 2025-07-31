@@ -27,7 +27,7 @@ const MAX_POLL_CHOICES = 4;
 const MAX_FILE_SIZE_MB = 20;
 
 const CreatePost = () => {
-  const { hasNewFeedPosts, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =
+  const { setShowNewFeedPostsButton, newPostCount } =
     useSocket();
   const queryClient = useQueryClient();
 
