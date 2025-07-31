@@ -1,9 +1,8 @@
 // components/common/FollowListModal.jsx
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
-import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "../ui/LoadingSpinner";
 import { useFetchFollowList } from "../../hooks/usersHooks/useFetchFollowList";
-import XSvg from "../svgs/X"; // Assuming you have this close icon
 import { IoClose } from "react-icons/io5";
 
 const FollowListModal = ({ userId, type, onClose, page }) => {

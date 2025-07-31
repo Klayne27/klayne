@@ -1,7 +1,6 @@
 // src/components/common/posts/PollDisplay.jsx
 import { useState, useEffect } from "react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import toast from "react-hot-toast";
 import { voteOnPollApi } from "../../api/postsApi";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";

@@ -2,12 +2,12 @@ import { Link } from "react-router-dom";
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
 import useFollow from "../../hooks/usersHooks/useFollow";
 import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
-import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "../ui/LoadingSpinner";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { BiRefresh } from "react-icons/bi";
 import React, { useState } from "react";
-import FollowButton from "./FollowButton";
-import ConfirmationModal from "./ConfirmationModal";
+import FollowButton from "../ui/FollowButton";
+import ConfirmationModal from "../ui/ConfirmationModal";
 import { useAppStore } from "../../store/appStore";
 
 const SuggestedUsersPanel = () => {

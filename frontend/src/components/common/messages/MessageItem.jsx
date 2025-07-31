@@ -16,7 +16,7 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useAppStore } from "../../../store/appStore";
 
-// const mouseLeaveTimeoutRef = useRef(null);
+
 // const lastMessageDateRef = useRef(null);
 // const MOUSE_LEAVE_DELAY = 100;
 
@@ -27,24 +27,11 @@ const MessageItem = ({
   isTypingOtherUser,
   onReactionAdded,
   handleLoadImage,
-  // activeMessageModalId,
-  // handleMouseEnter,
-  // handleMouseLeave,
-  // handleMessageTap,
-  // handleImageClick,
-  // handleJumpToOriginalMessage,
-  // handleReactionClick,
-  // setEditingMessage,
-  // setReplyingToMessage,
-  // msg.senderProfileImg,
-  // msg.senderUsername,
-  // msg.isFirstInGroup,
-  // msg.isLastInGroup,
-  // msg.showHeaderInfo,
-  // isNewDay,
 }) => {
   const navigate = useNavigate();
   const openImageModal = useAppStore((state) => state.openImageModal);
+
+  const mouseLeaveTimeoutRef = useRef(null);
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage);
@@ -57,7 +44,7 @@ const MessageItem = ({
   const [moreActionsModalPosition, setMoreActionsModalPosition] = useState({
     top: 0,
     left: 0,
-  }); // New state for more actions modal position
+  });
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
@@ -98,7 +85,6 @@ const MessageItem = ({
     return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
-  // --- Handlers for Emoji Picker Popover ---
   const handleOpenEmojiPickerPopover = useCallback(
     (e) => {
       e.stopPropagation();
@@ -188,11 +174,6 @@ const MessageItem = ({
 
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const modalWidth = 180; // Approximate width of the Discord-like modal
-      // We need to accurately estimate the modalHeight to center it vertically.
-      // Let's assume a button height of 36px (from the modal buttons' p-1 which often translates to more)
-      // and each button in the "More Actions" modal is roughly 30px (py-1.5 + some padding/border).
-      // Reply (30) + Edit (30) + Delete (30) = 90px + py-1 (total for modal)
-      // A safer estimate for modalHeight can be derived from the number of items:
       const itemHeight = 38; // px per action item (approximate, including padding)
       const numItems = isEditable ? 3 : 2; // Reply, Edit, Delete (3) or Reply, Delete (2)
       const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
@@ -211,11 +192,6 @@ const MessageItem = ({
         // Keep a minimum 10px padding from the left edge
         newLeft = 10;
       }
-
-      // Calculate newTop to align the vertical middle of the modal with the vertical middle of the button.
-      // `buttonRect.top + buttonRect.height / 2` gives the vertical center coordinate of the button.
-      // `modalHeight / 2` is half the height of the modal.
-      // Subtracting `modalHeight / 2` from the button's center aligns the modal's center with the button's center.
       let newTop = buttonRect.top + buttonRect.height / 2 - modalHeight / 2;
 
       // Ensure the modal doesn't go off the top or bottom edge of the screen
@@ -301,7 +277,7 @@ const MessageItem = ({
     }
   };
 
-  const handleClickOutsideMessage = (e) => {
+  const handleClickOutsideMessage = useCallback((e) => {
     if (activeMessageModalId) {
       const messageItemContainer = document.getElementById(
         `message-${activeMessageModalId}`
@@ -318,20 +294,20 @@ const MessageItem = ({
         setActiveMessageModalId(null);
       }
     }
-  };
+  }, [activeMessageModalId]);
 
-  // useEffect(() => {
-  //   if (activeMessageModalId) {
-  //     document.addEventListener("click", handleClickOutsideMessage);
-  //   }
+  useEffect(() => {
+    if (activeMessageModalId) {
+      document.addEventListener("click", handleClickOutsideMessage);
+    }
 
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutsideMessage);
-  //     if (mouseLeaveTimeoutRef.current) {
-  //       clearTimeout(mouseLeaveTimeoutRef.current);
-  //     }
-  //   };
-  // }, [activeMessageModalId, handleClickOutsideMessage]);
+    return () => {
+      document.removeEventListener("click", handleClickOutsideMessage);
+      if (mouseLeaveTimeoutRef.current) {
+        clearTimeout(mouseLeaveTimeoutRef.current);
+      }
+    };
+  }, [activeMessageModalId, handleClickOutsideMessage]);
 
   const shouldShowTimeOnHover = isHovered || showModal;
   const isMessageHighlighted = isHovered || showModal;

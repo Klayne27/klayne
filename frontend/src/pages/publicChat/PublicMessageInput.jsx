@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useCallback } from "react";
 import { IoClose, IoImageOutline } from "react-icons/io5";
 import { MdCheck, MdEdit, MdSend } from "react-icons/md";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { truncateText } from "../../utils/truncateText";
 import { useState } from "react";
 import { FaReply } from "react-icons/fa6";

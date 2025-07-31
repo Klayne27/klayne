@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState, useCallback } from "react";
 import { MdClose } from "react-icons/md";
 import { useGetScheduledPosts } from "../../hooks/postsHooks/useGetScheduledPosts";
-import LoadingSpinner from "./LoadingSpinner";
+import LoadingSpinner from "../ui/LoadingSpinner";
 import EditScheduledPostModal from "./EditSchedulePostModal";
 import { TbCalendarClock } from "react-icons/tb";
 import { format } from "date-fns";
@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "../ui/ConfirmationModal";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);

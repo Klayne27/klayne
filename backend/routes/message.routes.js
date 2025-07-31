@@ -33,10 +33,8 @@ router.get(
   getConversationBetweenUsers
 );
 
-// Route to get followed users for messaging
 router.get("/followed-for-messaging", protectRoute, getFollowedUsersForMessaging);
 
-// Route to get or create a conversation (if you don't have one that fits this exact need)
 router.post("/conversations/get-or-create", protectRoute, getOrCreateConversation);
 
 router.delete("/conversations/:id", protectRoute, deleteConversation);

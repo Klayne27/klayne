@@ -4,7 +4,7 @@ import { FaRegHeart } from "react-icons/fa6";
 import { FiTrash } from "react-icons/fi";
 
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
-import LoadingSpinner from "../LoadingSpinner";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 import { formatPostDate } from "../../../utils/date";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts";
@@ -14,7 +14,7 @@ import { renderClickableText } from "../../../utils/textUtils";
 import React, { useCallback, useEffect, useState, useRef } from "react";
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks";
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6";
-import PollDisplay from "../PollDisyplay";
+import PollDisplay from "../PollDisplay";
 import { usePinPost } from "../../../hooks/postsHooks/usePinPost";
 import { BsPin, BsPinFill, BsThreeDots } from "react-icons/bs";
 import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser";

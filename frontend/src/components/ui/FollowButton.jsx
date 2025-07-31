@@ -1,5 +1,4 @@
-import React, { useState, useEffect } from "react";
-import LoadingSpinner from "./LoadingSpinner"; // Adjust path as needed
+import { useState, useEffect } from "react";
 import useFollow from "../../hooks/usersHooks/useFollow";
 
 const FollowButton = ({

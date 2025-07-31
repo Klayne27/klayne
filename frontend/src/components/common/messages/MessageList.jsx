@@ -1,6 +1,6 @@
 import React, { useCallback, forwardRef, useMemo } from "react";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import LoadingSpinner from "../LoadingSpinner";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 
 import MessageItem from "./MessageItem";
 

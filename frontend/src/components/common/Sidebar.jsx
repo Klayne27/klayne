@@ -15,7 +15,7 @@ import FollowListModal from "./FollowListModal";
 import React from "react";
 import { showAppToast } from "../../utils/showAppToast";
 import { BsThreeDots } from "react-icons/bs";
-import ConfirmationModal from "./ConfirmationModal";
+import ConfirmationModal from "../ui/ConfirmationModal";
 import FeatherIcon from "../svgs/FeatherIcon";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 import { useAppStore } from "../../store/appStore";

@@ -18,22 +18,18 @@ import { useFetchUserProfile } from "../../hooks/usersHooks/useFetchUserProfile"
 import { CiMail } from "react-icons/ci";
 import ScrollToTop from "../../utils/ScrollToTop";
 import { useBlockUnblockUser } from "../../hooks/usersHooks/useBlockUnblockUser";
-import ConfirmationModal from "../../components/common/ConfirmationModal";
+import ConfirmationModal from "../../components/ui/ConfirmationModal";
 import { useFetchPinnedPosts } from "../../hooks/postsHooks/useFetchPinnedPosts";
-import FollowButton from "../../components/common/FollowButton";
+import FollowButton from "../../components/ui/FollowButton";
 import { useAdminDeleteUser } from "../../hooks/usersHooks/useAdminDeleteUser";
-import DeleteUserConfirmationModal from "../../components/common/DeleteUserConfirmationModal";
 import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useToggleConversationVisibility";
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers";
-import { useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";
 import { useAppStore } from "../../store/appStore";
 
-const ProfilePage = ({feedType, setFeedType}) => {
+const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal);
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal);
-  // const feedType = useAppStore((state) => state.feedType);
-  // const setFeedType = useAppStore((state) => state.setFeedType);
 
   const [coverImg, setCoverImg] = useState(null);
   const [profileImg, setProfileImg] = useState(null);
@@ -45,11 +41,9 @@ const ProfilePage = ({feedType, setFeedType}) => {
   const navigate = useNavigate();
 
   const [userPostsCount, setUserPostsCount] = useState(0);
-  const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false); // NEW state for hover
 
   const coverImgRef = useRef(null);
   const profileImgRef = useRef(null);
-  const queryClient = useQueryClient();
 
   const { username } = useParams();
 
@@ -68,18 +62,15 @@ const ProfilePage = ({feedType, setFeedType}) => {
     error,
     isBlockedByYou,
     hasBlockedYou,
-    userProfileId,
-    httpStatus,
   } = useFetchUserProfile(username);
 
   const {
-    conversationStatus, // Will be { conversationId: string | null, isHiddenForCurrentUser: boolean }
+    conversationStatus,
     isLoadingConversationStatus,
     isErrorConversationStatus,
     conversationStatusError,
   } = useFetchConversationBetweenUsers(userProfile?._id);
 
-  // NEW: Fetch pinned posts separately
   const {
     pinnedPosts,
     isLoading: isLoadingPinnedPosts,
@@ -94,7 +85,7 @@ const ProfilePage = ({feedType, setFeedType}) => {
   const amIFollowing = authUser?.following?.includes(userProfile?._id);
 
   const isAdminUser = authUser?.isAdmin; // Assuming `isAdmin` field on authUser
-  const modalTitle = isBlockedByYou ? `Unblock @${username}?` : `Block @${username}?`;
+  const blockModalTitle = isBlockedByYou ? `Unblock @${username}?` : `Block @${username}?`;
   const confirmButtonText = isBlockedByYou ? "Unblock" : "Block";
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou;
@@ -259,7 +250,7 @@ const ProfilePage = ({feedType, setFeedType}) => {
     event.stopPropagation();
     if (openImageModal) {
       openImageModal(imageUrl);
-    } 
+    }
   };
 
   const openFollowListModal = (type) => {
@@ -646,7 +637,7 @@ const ProfilePage = ({feedType, setFeedType}) => {
         danger={!isBlockedByYou}
         message={message}
         confirmButtonText={confirmButtonText}
-        modalTitle={modalTitle}
+        modalTitle={blockModalTitle}
       />
 
       <ConfirmationModal
@@ -665,11 +656,20 @@ const ProfilePage = ({feedType, setFeedType}) => {
       />
 
       {userProfile && (
-        <DeleteUserConfirmationModal
+        <ConfirmationModal
           isOpen={showDeleteUserModal}
           onClose={closeDeleteUserModal}
           onConfirm={handleConfirmDeleteUser}
-          username={userProfile.username}
+          modalTitle={
+            <>
+              Delete account of <p>@{userProfile?.username}?</p>
+            </>
+          }
+          // modalTitle="Delete User Account?"
+          message="This action is irreversible and will permanently delete all of their posts,
+            comments, likes, messages, and followers."
+          confirmButtonText="Delete Permanently"
+          danger={true}
         />
       )}
     </>

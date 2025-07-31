@@ -1,7 +1,6 @@
-import React, { useEffect, useRef } from "react";
+import { useEffect, useRef } from "react";
 import ReactDOM from "react-dom"; // Import ReactDOM for portals
 import EmojiPicker from "emoji-picker-react"; // Import the EmojiPicker library
-import { useState } from "react";
 
 const EmojiPickerPopover = ({ position, onClose, onEmojiClick, triggerRef }) => {
   const popoverRef = useRef(null);

@@ -25,9 +25,7 @@ const SearchPage = () => {
       <div className="p-3">
         <SearchPanel />
         <div className="mt-4">
-          <SuggestedUsersPanel
-
-          />
+          <SuggestedUsersPanel />
         </div>
       </div>
     </div>

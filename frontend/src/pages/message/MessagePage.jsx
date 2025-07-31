@@ -4,7 +4,7 @@ import ConversationsList from "../../components/common/messages/ConversationsLis
 import ChatWindow from "../../components/common/messages/ChatWindow";
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations";
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import { useAppStore } from "../../store/appStore";
 import { usePrivateChatStore } from "../../store/usePrivateChatStore";
 

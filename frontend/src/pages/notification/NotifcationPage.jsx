@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
 import { IoSettingsOutline } from "react-icons/io5";
 import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6";

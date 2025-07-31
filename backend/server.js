@@ -49,8 +49,8 @@ if (process.env.NODE_ENV === "production") {
 }
 
 setInterval(() => {
-  publishScheduledPosts(io, onlineUsersMap); // Pass io and onlineUsersMap
-}, 60 * 1000); // Check every 1 minute
+  publishScheduledPosts(io, onlineUsersMap); 
+}, 60 * 1000);
 
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);

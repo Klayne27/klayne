@@ -1,6 +1,6 @@
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import PublicChatWindow from "./PublicChatWindow";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 
 const PublicChatPage = () => {
   const { authUser, isLoading: isLoadingAuthUser } = useAuthUser();

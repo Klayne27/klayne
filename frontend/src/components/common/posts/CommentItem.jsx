@@ -4,7 +4,7 @@ import { formatPostDate } from "../../../utils/date";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { FiTrash } from "react-icons/fi";
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa";
-import LoadingSpinner from "../LoadingSpinner";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 import { useLikeComment } from "../../../hooks/commentHooks/useLikeComment";
 import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment";
 import { useCreateComment } from "../../../hooks/commentHooks/useCreateComment";
@@ -354,7 +354,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       setShowReplyMentionSuggestions(false);
       setShowRepliesSection(true); // Automatically show replies section after sending a reply
     },
-    [createComment, isCreatingComment, replyText, replyImageFile, replyImagePreview]
+    [createComment, isCreatingComment, replyText, replyImagePreview]
   );
 
   const handleImageClick = (imageUrl, event) => {

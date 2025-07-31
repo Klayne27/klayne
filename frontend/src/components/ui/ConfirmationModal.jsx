@@ -4,7 +4,7 @@ import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 const ConfirmationModal = ({
   isOpen,
   onClose,
-  onConfirm, // This will now typically be `() => handleConfirm(password)`
+  onConfirm,
   danger,
   message,
   confirmButtonText,

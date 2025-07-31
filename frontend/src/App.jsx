@@ -4,8 +4,8 @@ import Sidebar from "./components/common/Sidebar";
 import RightPanel from "./components/common/RightPanel";
 import { useAuthUser } from "./hooks/authHooks/useAuthUser";
 import { Toaster } from "react-hot-toast";
-import ImageModal from "./components/common/ImageModal";
-import ProfileImageModal from "./components/common/ProfileImageModal";
+import ImageModal from "./components/ui/ImageModal";
+import ProfileImageModal from "./components/ui/ProfileImageModal";
 import { useAppStore } from "./store/appStore";
 
 const CreatePostModal = lazy(() => import("./components/common/CreatePostModal"));

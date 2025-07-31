@@ -9,7 +9,7 @@ import React, {
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { useSocket } from "../../context/SocketContext";
 import PublicChatHeader from "./PublicChatHeader";
-import LoadingSpinner from "../../components/common/LoadingSpinner";
+import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import PublicChatMessage from "./PublicChatMessage";
 import PublicMessageInput from "./PublicMessageInput"; // Import the new component
 import { useQueryClient } from "@tanstack/react-query";
