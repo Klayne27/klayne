@@ -15,6 +15,8 @@ import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
 import { showAppToast } from "../../utils/showAppToast";
 import { useAppStore } from "../../store/appStore";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { usePasteHandler } from "../../hooks/usePasteHandler";
 
 const PostPage = () => {
   const { pid } = useParams();
@@ -22,22 +24,21 @@ const PostPage = () => {
   const { authUser } = useAuthUser();
   const openImageModal = useAppStore((state) => state.openImageModal);
 
-  const [commentText, setCommentText] = useState("");
   const [replyingToComment, setReplyingToComment] = useState(null);
+  
+  const [commentInput, setCommentInput] = useState("");
+  const [commentPreviewImage, setCommentPreviewImage] = useState(null);
+  const [commentSelectedFile, setCommentSelectedFile] = useState(null);
+  const commentFileInputRef = useRef(null);
+  const commentInputRef = useRef(null);
 
-  const [mainCommentMediaPreview, setMainCommentMediaPreview] = useState(null);
-  const [mainCommentMediaFile, setMainCommentMediaFile] = useState(null);
-  const mainCommentMediaInputRef = useRef(null);
-
-  const [showButton, setShowButton] = useState(false)
+  const [showButton, setShowButton] = useState(false);
 
   // --- NEW STATES FOR MENTIONS ---
   const [mentionSearchTerm, setMentionSearchTerm] = useState("");
   const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300);
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
 
-  const commentInputRef = useRef(null); // RENAMED: was commentInputRef, now points to textarea
 
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
     debouncedMentionSearchTerm
@@ -47,19 +48,7 @@ const PostPage = () => {
   const commentsListRef = useRef(null);
   const observerTarget = useRef(null);
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      const mobileBreakpoint = 768; // px
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []);
-  // --- END MOBILE DETECTION ---
+  const isMobile = useIsMobile();
 
   // --- TEXTAREA HEIGHT ADJUSTMENT ---
   const adjustTextareaHeight = useCallback(() => {
@@ -72,7 +61,7 @@ const PostPage = () => {
 
   useEffect(() => {
     adjustTextareaHeight();
-  }, [commentText, adjustTextareaHeight]); // Trigger on commentText change
+  }, [commentInput, adjustTextareaHeight]); // Trigger on commentInput change
   // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
   const { post, isLoading, isError, error, refetch: refetchPost } = useFetchPost(pid);
@@ -90,134 +79,42 @@ const PostPage = () => {
   const displayPost = post?.repostedFrom || post;
 
   // Add this new function
-  const handlePaste = (e) => {
-    e.preventDefault(); // Prevent default paste behavior
-
-    const items = e.clipboardData.items;
-    let fileFound = false;
-
-    for (let i = 0; i < items.length; i++) {
-      if (
-        items[i].type.indexOf("image") !== -1 ||
-        items[i].type.indexOf("video") !== -1
-      ) {
-        const file = items[i].getAsFile();
-
-        if (file) {
-          // Validate file type (image or video)
-          if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-            showAppToast(
-              "Pasted content is not a supported image or video type for comments.",
-              "error"
-            );
-            setMainCommentMediaFile(null);
-            setMainCommentMediaPreview(null);
-            if (mainCommentMediaInputRef.current)
-              mainCommentMediaInputRef.current.value = "";
-            return;
-          }
-
-          // Validate file size (20MB limit for comments)
-          const MAX_COMMENT_MEDIA_SIZE_MB = 20;
-          if (file.size > MAX_COMMENT_MEDIA_SIZE_MB * 1024 * 1024) {
-            showAppToast(
-              `Pasted media size exceeds ${MAX_COMMENT_MEDIA_SIZE_MB}MB limit for comments.`,
-              "error"
-            );
-            setMainCommentMediaFile(null);
-            setMainCommentMediaPreview(null);
-            if (mainCommentMediaInputRef.current)
-              mainCommentMediaInputRef.current.value = "";
-            return;
-          }
-
-          setMainCommentMediaFile(file);
-          setMainCommentMediaPreview(URL.createObjectURL(file));
-          fileFound = true;
-          // Optionally, clear the text input if media is pasted
-          // setCommentText("");
-          break; // Process only the first image/video found
-        }
-      }
-    }
-
-    // If no media was found, paste as plain text
-    if (!fileFound) {
-      const pastedText = e.clipboardData.getData("text/plain");
-      if (pastedText) {
-        const inputElement = commentInputRef.current; // Use the ref for the comment input
-        if (inputElement) {
-          const cursorStart = inputElement.selectionStart;
-          const cursorEnd = inputElement.selectionEnd;
-
-          const newText =
-            commentText.substring(0, cursorStart) +
-            pastedText +
-            commentText.substring(cursorEnd);
-
-          setCommentText(newText);
-
-          // Restore cursor position after paste
-          setTimeout(() => {
-            if (inputElement) {
-              inputElement.setSelectionRange(
-                cursorStart + pastedText.length,
-                cursorStart + pastedText.length
-              );
-              inputElement.focus();
-            }
-          }, 0);
-        }
-      }
-    }
-  };
+ const handlePaste = usePasteHandler({
+    inputRef: commentInputRef,
+    input: commentInput,
+    setInput: setCommentInput,
+    setSelectedFile: setCommentSelectedFile,
+    setPreviewImage: setCommentPreviewImage,
+    fileInputRef: commentFileInputRef
+});
 
   const handleFocus = () => {
-    setShowButton(true)
-  }
+    setShowButton(true);
+  };
 
   const handleMainCommentMediaChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      if (!file.type.startsWith("image/") && !file.type.startsWith("video/")) {
-        showAppToast(
-          "Unsupported file type. Please select an image or a video for your comment.",
-          "error"
-        );
-        setMainCommentMediaFile(null);
-        setMainCommentMediaPreview(null);
-        if (mainCommentMediaInputRef.current) mainCommentMediaInputRef.current.value = "";
-        return;
-      }
-
-      if (file.size > 20 * 1024 * 1024) {
-        showAppToast("Comment media size exceeds 20MB limit.", "error");
-        setMainCommentMediaFile(null);
-        setMainCommentMediaPreview(null);
-        if (mainCommentMediaInputRef.current) mainCommentMediaInputRef.current.value = "";
-        return;
-      }
-
-      setMainCommentMediaFile(file);
-      setMainCommentMediaPreview(URL.createObjectURL(file));
+      setCommentSelectedFile(file);
+      setCommentPreviewImage(URL.createObjectURL(file));
     } else {
-      setMainCommentMediaFile(null);
-      setMainCommentMediaPreview(null);
+      setCommentSelectedFile(null);
+      setCommentPreviewImage(null);
     }
   };
 
   const handleRemoveMainCommentMedia = () => {
-    setMainCommentMediaFile(null);
-    setMainCommentMediaPreview(null);
-    if (mainCommentMediaInputRef.current) {
-      mainCommentMediaInputRef.current.value = "";
+    setCommentSelectedFile(null);
+    setCommentPreviewImage(null);
+    if (commentFileInputRef.current) {
+      commentFileInputRef.current.value = "";
     }
   };
 
   // --- NEW HANDLER FOR MENTION INPUT ---
   const handleCommentTextChange = (e) => {
     const newText = e.target.value;
-    setCommentText(newText);
+    setCommentInput(newText);
 
     const lastAtIndex = newText.lastIndexOf("@");
     if (lastAtIndex !== -1) {
@@ -238,7 +135,7 @@ const PostPage = () => {
 
   const handleSelectMention = useCallback(
     (username) => {
-      const currentText = commentText;
+      const currentText = commentInput;
       const lastAtIndex = currentText.lastIndexOf("@");
 
       if (lastAtIndex !== -1) {
@@ -267,7 +164,7 @@ const PostPage = () => {
           `@${username} ` + // The full @username with a space
           currentText.substring(replaceEndIndex); // Text after the partial mention
 
-        setCommentText(newText);
+        setCommentInput(newText);
         setMentionSearchTerm("");
         setShowMentionSuggestions(false);
 
@@ -283,7 +180,7 @@ const PostPage = () => {
         }, 0);
       }
     },
-    [commentText]
+    [commentInput]
   );
   // --- END NEW HANDLER ---
 
@@ -291,20 +188,20 @@ const PostPage = () => {
     async (e) => {
       e.preventDefault();
 
-      if (!commentText.trim() && !mainCommentMediaFile) {
+      if (!commentInput.trim() && !commentSelectedFile) {
         console.warn("Attempted to send empty comment with no media.");
         return;
       }
       if (isCreatingComment) return;
 
-      let commentPayload = { text: commentText };
+      let commentPayload = { text: commentInput };
 
-      if (mainCommentMediaFile) {
+      if (commentSelectedFile) {
         const reader = new FileReader();
         reader.onloadend = async () => {
-          if (mainCommentMediaFile.type.startsWith("image/")) {
+          if (commentSelectedFile.type.startsWith("image/")) {
             commentPayload.img = reader.result;
-          } else if (mainCommentMediaFile.type.startsWith("video/")) {
+          } else if (commentSelectedFile.type.startsWith("video/")) {
             commentPayload.video = reader.result;
           }
 
@@ -314,52 +211,52 @@ const PostPage = () => {
 
           await createComment(commentPayload);
 
-          setCommentText("");
-          setReplyingToComment(null);
-          setMainCommentMediaPreview(null);
-          setMainCommentMediaFile(null);
-          if (mainCommentMediaInputRef.current) {
-            mainCommentMediaInputRef.current.value = "";
+          setCommentInput("");
+          // setReplyingToComment(null);
+          setCommentPreviewImage(null);
+          setCommentSelectedFile(null);
+          if (commentFileInputRef.current) {
+            commentFileInputRef.current.value = "";
           }
           // Reset mention states after sending
           setMentionSearchTerm("");
           setShowMentionSuggestions(false);
         };
-        reader.readAsDataURL(mainCommentMediaFile);
+        reader.readAsDataURL(commentSelectedFile);
       } else {
         if (replyingToComment) {
           commentPayload.parentCommentId = replyingToComment._id;
         }
         await createComment(commentPayload);
 
-        setCommentText("");
-        setReplyingToComment(null);
+        setCommentInput("");
+        // setReplyingToComment(null);
         // Reset mention states after sending
         setMentionSearchTerm("");
         setShowMentionSuggestions(false);
       }
     },
     [
-      commentText,
+      commentInput,
       createComment,
       isCreatingComment,
-      mainCommentMediaFile,
+      commentSelectedFile,
       replyingToComment,
     ]
   );
 
-  const handleSetReplyingToComment = useCallback((comment) => {
-    setReplyingToComment(comment);
-    setCommentText("");
-    setMainCommentMediaPreview(null);
-    setMainCommentMediaFile(null);
-    if (mainCommentMediaInputRef.current) {
-      mainCommentMediaInputRef.current.value = "";
-    }
-    // Reset mention states when starting a new reply
-    setMentionSearchTerm("");
-    setShowMentionSuggestions(false);
-  }, []);
+  // const handleSetReplyingToComment = useCallback((comment) => {
+  //   setReplyingToComment(comment);
+  //   setCommentInput("");
+  //   setCommentPreviewImage(null);
+  //   setCommentSelectedFile(null);
+  //   if (commentFileInputRef.current) {
+  //     commentFileInputRef.current.value = "";
+  //   }
+  //   // Reset mention states when starting a new reply
+  //   setMentionSearchTerm("");
+  //   setShowMentionSuggestions(false);
+  // }, []);
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -375,8 +272,8 @@ const PostPage = () => {
             const start = input.selectionStart;
             const end = input.selectionEnd;
             const newValue =
-              commentText.substring(0, start) + "\n" + commentText.substring(end);
-            setCommentText(newValue);
+              commentInput.substring(0, start) + "\n" + commentInput.substring(end);
+            setCommentInput(newValue);
             setTimeout(() => {
               input.selectionStart = input.selectionEnd = start + 1;
             }, 0);
@@ -390,8 +287,8 @@ const PostPage = () => {
               const start = input.selectionStart;
               const end = input.selectionEnd;
               const newValue =
-                commentText.substring(0, start) + "\n" + commentText.substring(end);
-              setCommentText(newValue);
+                commentInput.substring(0, start) + "\n" + commentInput.substring(end);
+              setCommentInput(newValue);
               setTimeout(() => {
                 input.selectionStart = input.selectionEnd = start + 1;
               }, 0);
@@ -409,8 +306,8 @@ const PostPage = () => {
     [
       isMobile,
       commentInputRef,
-      commentText,
-      setCommentText,
+      commentInput,
+      setCommentInput,
       showMentionSuggestions,
       suggestedUsers,
       handleSelectMention,
@@ -526,7 +423,7 @@ const PostPage = () => {
               <textarea
                 ref={commentInputRef} // Attach ref to the input
                 type="text"
-                value={commentText}
+                value={commentInput}
                 onChange={handleCommentTextChange} // Use the new handler
                 onKeyDown={handleKeyDown}
                 onFocus={handleFocus}
@@ -547,12 +444,12 @@ const PostPage = () => {
                     type="file"
                     accept="image/*,video/*"
                     hidden
-                    ref={mainCommentMediaInputRef}
+                    ref={commentFileInputRef}
                     onChange={handleMainCommentMediaChange}
                   />
                   <button
                     type="button"
-                    onClick={() => mainCommentMediaInputRef.current.click()}
+                    onClick={() => commentFileInputRef.current.click()}
                     className={`ml-[9px] rounded-full text-primary hover:text-primary/80 transition duration-200 flex-shrink-0`}
                     title="Add image or video to comment"
                   >
@@ -564,7 +461,7 @@ const PostPage = () => {
                     className="block px-3 py-1 md:px-4 md:py-2 bg-primary hover:bg-primary/80 text-sm md:text-md text-white rounded-full transition duration-300 disabled:bg-slate-500 disabled:text-black font-bold disabled:cursor-default flex-shrink-0"
                     disabled={
                       isCreatingComment ||
-                      (!commentText.trim() && !mainCommentMediaPreview)
+                      (!commentInput.trim() && !commentPreviewImage)
                     }
                   >
                     {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
@@ -607,18 +504,18 @@ const PostPage = () => {
             </div>
           </div>
 
-          {mainCommentMediaPreview && (
+          {commentPreviewImage && (
             <div className="relative size-40 mt-2 self-start ml-12">
-              {mainCommentMediaFile.type.startsWith("image/") ? (
+              {commentSelectedFile.type.startsWith("image/") ? (
                 <img
-                  src={mainCommentMediaPreview}
+                  src={commentPreviewImage}
                   alt="Comment preview"
                   className="w-full h-full object-contain rounded-lg"
                 />
               ) : (
                 <video
                   controls
-                  src={mainCommentMediaPreview}
+                  src={commentPreviewImage}
                   className="w-full h-full object-contain rounded-lg"
                   preload="metadata"
                 >
@@ -654,7 +551,7 @@ const PostPage = () => {
                   openImageModal={openImageModal}
                   comment={comment}
                   postId={displayPost._id}
-                  onReplyClick={handleSetReplyingToComment}
+                  // onReplyClick={handleSetReplyingToComment}
                   isPostOwner={authUser?._id === displayPost.user?._id}
                 />
               </div>

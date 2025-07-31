@@ -14,6 +14,8 @@ import { showAppToast } from "../../utils/showAppToast";
 import { useDebounce } from "../../hooks/useDebounce";
 import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { usePasteHandler } from "../../hooks/usePasteHandler";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -21,9 +23,9 @@ const MAX_FILE_SIZE_MB = 20;
 
 function CreatePostModal({ onClose }) {
   // State for post content
-  const [text, setText] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [postModalInput, setPostModalInput] = useState("");
+  const [postModalSelectedFile, setPostModalSelectedFile] = useState(null);
+  const [postModalPreviewImage, setPostModalPreviewImage] = useState(null);
 
   // State for emoji picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -53,10 +55,10 @@ function CreatePostModal({ onClose }) {
   const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300);
 
   // Refs
-  const fileInputRef = useRef(null);
+  const postModalFileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
-  const textareaRef = useRef(null);
+  const postModalInputRef = useRef(null);
   const suggestionBoxRef = useRef(null);
   const modalContentRef = useRef(null);
 
@@ -64,28 +66,7 @@ function CreatePostModal({ onClose }) {
   const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      // Define your breakpoint
-      const mobileBreakpoint = 768; // px
-
-      // Update state based on current window width
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    // Initial check when component mounts
-    checkIsMobile();
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkIsMobile);
-
-    // Clean up event listener when component unmounts
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  const isMobile = useIsMobile();
 
   // Fetch mention suggestions using react-query
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
@@ -130,8 +111,8 @@ function CreatePostModal({ onClose }) {
         showMentionSuggestions &&
         suggestionBoxRef.current &&
         !suggestionBoxRef.current.contains(event.target) &&
-        textareaRef.current &&
-        !textareaRef.current.contains(event.target)
+        postModalInputRef.current &&
+        !postModalInputRef.current.contains(event.target)
       ) {
         setShowMentionSuggestions(false);
       }
@@ -144,18 +125,19 @@ function CreatePostModal({ onClose }) {
 
   // Effect to manage textarea height dynamically
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (postModalInputRef.current) {
+      postModalInputRef.current.style.height = "auto";
+      postModalInputRef.current.style.height =
+        postModalInputRef.current.scrollHeight + "px";
     }
-  }, [text, showPollInputs]); // Also react to poll input visibility as it changes layout
+  }, [postModalInput, showPollInputs]); // Also react to poll input visibility as it changes layout
 
   // Handlers
 
   const resetForm = useCallback(() => {
-    setText("");
-    setSelectedFile(null);
-    setPreviewUrl(null);
+    setPostModalInput("");
+    setPostModalSelectedFile(null);
+    setPostModalPreviewImage(null);
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
     setScheduledAt(null);
@@ -163,85 +145,31 @@ function CreatePostModal({ onClose }) {
     setMentionQuery("");
     setShowMentionSuggestions(false);
     setMentionStartIndex(-1);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = null;
+    if (postModalFileInputRef.current) {
+      postModalFileInputRef.current.value = null;
     }
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+    if (postModalInputRef.current) {
+      postModalInputRef.current.style.height = "auto";
     }
   }, []);
 
-  const handlePaste = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      const items = e.clipboardData.items;
-      let imagePasted = false;
-
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf("image") !== -1) {
-          const file = items[i].getAsFile();
-
-          if (file) {
-            if (!file.type.startsWith("image/")) {
-              showAppToast("Pasted content is not a supported image type.", "error");
-              return;
-            }
-            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-              showAppToast(
-                `Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`,
-                "error"
-              );
-              return;
-            }
-
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-
-            // Reset conflicting states
-            setShowPollInputs(false);
-            setPollChoices([{ text: "" }, { text: "" }]);
-            setShowMentionSuggestions(false);
-            setScheduledAt(null); // Clear scheduled post if media is pasted
-            imagePasted = true;
-            break; // Exit loop after finding the first image
-          }
-        }
-      }
-
-      if (!imagePasted) {
-        // If no image was found, or if it was text, proceed with default text paste
-        const pastedText = e.clipboardData.getData("text/plain");
-        if (pastedText) {
-          const cursorStart = e.target.selectionStart;
-          const cursorEnd = e.target.selectionEnd;
-
-          const newText =
-            text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
-
-          setText(newText);
-
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = cursorStart + pastedText.length;
-              textareaRef.current.selectionEnd = cursorStart + pastedText.length;
-              textareaRef.current.style.height = "auto";
-              textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-            }
-          }, 0);
-        }
-      }
-    },
-    [text]
-  );
+  const handlePaste = usePasteHandler({
+    inputRef: postModalInputRef,
+    input: postModalInput,
+    setInput: setPostModalInput,
+    setSelectedFile: setPostModalSelectedFile,
+    setPreviewImage: setPostModalPreviewImage,
+    fileInputRef: postModalFileInputRef,
+  });
 
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value;
-    setText(newText);
+    setPostModalInput(newText);
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (postModalInputRef.current) {
+      postModalInputRef.current.style.height = "auto";
+      postModalInputRef.current.style.height =
+        postModalInputRef.current.scrollHeight + "px";
     }
 
     const cursorPosition = e.target.selectionStart;
@@ -271,7 +199,7 @@ function CreatePostModal({ onClose }) {
 
   const handleMentionSelect = useCallback(
     (username) => {
-      const currentText = text;
+      const currentText = postModalInput;
       const startReplaceIndex = mentionStartIndex;
 
       const textFromAt = currentText.substring(mentionStartIndex);
@@ -288,22 +216,26 @@ function CreatePostModal({ onClose }) {
         `@${username} ` +
         currentText.substring(endReplaceIndex);
 
-      setText(newText);
+      setPostModalInput(newText);
       setMentionQuery("");
       setMentionStartIndex(-1);
       setShowMentionSuggestions(false);
 
       const newCursorPosition = startReplaceIndex + `@${username} `.length;
       setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
-          textareaRef.current.style.height = "auto";
-          textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        if (postModalInputRef.current) {
+          postModalInputRef.current.focus();
+          postModalInputRef.current.setSelectionRange(
+            newCursorPosition,
+            newCursorPosition
+          );
+          postModalInputRef.current.style.height = "auto";
+          postModalInputRef.current.style.height =
+            postModalInputRef.current.scrollHeight + "px";
         }
       }, 0);
     },
-    [text, mentionStartIndex]
+    [postModalInput, mentionStartIndex]
   );
 
   const handleSubmit = useCallback(
@@ -319,7 +251,7 @@ function CreatePostModal({ onClose }) {
           (choice) => choice.text.trim() !== ""
         );
 
-        if (text.trim() === "") {
+        if (postModalInput.trim() === "") {
           showAppToast("Polls should have a question/text.", "error");
           return;
         }
@@ -339,7 +271,7 @@ function CreatePostModal({ onClose }) {
           return;
         }
 
-        if (selectedFile) {
+        if (postModalSelectedFile) {
           showAppToast("You cannot post a poll with an image or video.", "error");
           return;
         }
@@ -349,7 +281,7 @@ function CreatePostModal({ onClose }) {
         }
 
         let postData = {
-          text,
+          postModalInput,
           pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
         };
 
@@ -363,24 +295,24 @@ function CreatePostModal({ onClose }) {
       }
 
       // Regular post (text or media)
-      if (text.trim() === "" && !selectedFile) {
+      if (postModalInput.trim() === "" && !postModalSelectedFile) {
         // showAppToastt(("Post must have text, an image, or a video.");
         return;
       }
 
-      if (selectedFile && scheduledAt) {
+      if (postModalSelectedFile && scheduledAt) {
         showAppToast("You cannot schedule a post with media.", "error");
         return;
       }
 
-      let postData = { text };
+      let postData = { postModalInput };
 
-      if (selectedFile) {
+      if (postModalSelectedFile) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          if (selectedFile.type.startsWith("image/")) {
+          if (postModalSelectedFile.type.startsWith("image/")) {
             postData.img = reader.result;
-          } else if (selectedFile.type.startsWith("video/")) {
+          } else if (postModalSelectedFile.type.startsWith("video/")) {
             postData.video = reader.result;
           }
 
@@ -391,7 +323,7 @@ function CreatePostModal({ onClose }) {
             },
           });
         };
-        reader.readAsDataURL(selectedFile);
+        reader.readAsDataURL(postModalSelectedFile);
       } else {
         if (scheduledAt) {
           postData.scheduledAt = scheduledAt;
@@ -408,8 +340,8 @@ function CreatePostModal({ onClose }) {
       }
     },
     [
-      text,
-      selectedFile,
+      postModalInput,
+      postModalSelectedFile,
       showPollInputs,
       pollChoices,
       scheduledAt,
@@ -428,22 +360,22 @@ function CreatePostModal({ onClose }) {
           "Unsupported file type. Please select an image or a video.",
           "error"
         );
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
+        setPostModalSelectedFile(null);
+        setPostModalPreviewImage(null);
+        if (postModalFileInputRef.current) postModalFileInputRef.current.value = null;
         return;
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showAppToast(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error");
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
+        setPostModalSelectedFile(null);
+        setPostModalPreviewImage(null);
+        if (postModalFileInputRef.current) postModalFileInputRef.current.value = null;
         return;
       }
 
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setPostModalSelectedFile(file);
+      setPostModalPreviewImage(URL.createObjectURL(file));
 
       // Reset conflicting states
       setShowPollInputs(false);
@@ -451,18 +383,19 @@ function CreatePostModal({ onClose }) {
       setShowMentionSuggestions(false);
       setScheduledAt(null); // Clear scheduledAt if media is selected
     } else {
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      setPostModalSelectedFile(null);
+      setPostModalPreviewImage(null);
     }
   }, []);
 
   const onEmojiClick = useCallback((emojiObject) => {
-    setText((prevText) => prevText + emojiObject.emoji);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    setPostModalInput((prevText) => prevText + emojiObject.emoji);
+    if (postModalInputRef.current) {
+      postModalInputRef.current.focus();
       // Auto-adjust height after emoji insert
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      postModalInputRef.current.style.height = "auto";
+      postModalInputRef.current.style.height =
+        postModalInputRef.current.scrollHeight + "px";
     }
   }, []);
 
@@ -508,8 +441,8 @@ function CreatePostModal({ onClose }) {
   const handleRemovePoll = useCallback(() => {
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+    if (postModalInputRef.current) {
+      postModalInputRef.current.style.height = "auto";
     }
   }, []);
 
@@ -517,9 +450,9 @@ function CreatePostModal({ onClose }) {
     setShowPollInputs((prev) => !prev);
     if (!showPollInputs) {
       // If turning poll inputs ON, clear other conflicting states
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      if (fileInputRef.current) fileInputRef.current.value = null;
+      setPostModalSelectedFile(null);
+      setPostModalPreviewImage(null);
+      if (postModalFileInputRef.current) postModalFileInputRef.current.value = null;
       setScheduledAt(null);
       setPollChoices([{ text: "" }, { text: "" }]);
       setMentionQuery("");
@@ -540,12 +473,11 @@ function CreatePostModal({ onClose }) {
   const handleOpenSchedulePostModal = useCallback(() => {
     setShowSchedulePostModal(true);
     // When opening schedule modal, clear other conflicting states
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = null;
+    setPostModalSelectedFile(null);
+    setPostModalPreviewImage(null);
+    if (postModalFileInputRef.current) postModalFileInputRef.current.value = null;
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
-    
   }, []);
 
   const handleCloseSchedulePostModal = useCallback(() => {
@@ -593,31 +525,33 @@ function CreatePostModal({ onClose }) {
     // setIsScheduledPostsModalOpen(false); // If you prefer this behavior
   };
 
-    const handleBackgroundClick = (e) => {
-        e.stopPropagation()
-      if (modalContentRef.current && !modalContentRef.current.contains(e.target)) {
-        onClose();
-      }
-    };
+  const handleBackgroundClick = (e) => {
+    e.stopPropagation();
+    if (modalContentRef.current && !modalContentRef.current.contains(e.target)) {
+      onClose();
+    }
+  };
   // Determine if the post button should be disabled
   const isButtonDisabled =
     isPending ||
     (() => {
       if (scheduledAt) {
         // Scheduled post requires text, and cannot have media or be a poll
-        return text.trim() === "" || selectedFile !== null || showPollInputs;
+        return (
+          postModalInput.trim() === "" || postModalSelectedFile !== null || showPollInputs
+        );
       }
       if (showPollInputs) {
         // Poll requires text and at least two non-empty choices, and no choice exceeds max length
         return (
-          text.trim() === "" ||
+          postModalInput.trim() === "" ||
           pollChoices[0].text.trim() === "" ||
           pollChoices[1].text.trim() === "" ||
           pollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         );
       }
       // Regular post requires text OR a selected file
-      return text.trim() === "" && !selectedFile;
+      return postModalInput.trim() === "" && !postModalSelectedFile;
     })();
 
   // Prevent scrolling the body when the modal is open
@@ -631,10 +565,10 @@ function CreatePostModal({ onClose }) {
   return (
     <div
       className="fixed inset-0 bg-gray-700 bg-opacity-70 justify-center z-50 p-4"
-        onClick={handleBackgroundClick}
+      onClick={handleBackgroundClick}
     >
       <div
-      onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         ref={modalContentRef}
         className={`bg-base-100 rounded-2xl shadow-lg mt-7 pl-3 pr-7 max-w-xl mx-auto w-full flex flex-col overflow-hidden max-h-[90vh]`}
       >
@@ -684,11 +618,11 @@ function CreatePostModal({ onClose }) {
                 <textarea
                   className="bg-inherit w-full max-h-[2600px] p-0 pb-2 resize-none border-none focus:outline-none text-xl overflow-y-auto"
                   placeholder={showPollInputs ? "Ask a question" : "What is happening?"}
-                  value={text}
+                  value={postModalInput}
                   onChange={handleTextChange}
                   onKeyDown={handleKeyDown}
                   onPaste={handlePaste}
-                  ref={textareaRef}
+                  ref={postModalInputRef}
                   rows={4}
                 />
                 {/* Mention Suggestions Popover */}
@@ -698,7 +632,10 @@ function CreatePostModal({ onClose }) {
                     <div
                       ref={suggestionBoxRef}
                       className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
-                      style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
+                      style={{
+                        top: postModalInputRef.current?.scrollHeight || 0,
+                        left: 0,
+                      }}
                     >
                       {isLoadingSuggestedUsers ? (
                         <p className="p-2 text-gray-400">Loading suggestions...</p>
@@ -728,27 +665,28 @@ function CreatePostModal({ onClose }) {
                       )}
                     </div>
                   )}
-                {previewUrl && (
+                {postModalPreviewImage && (
                   <div className="relative max-w-full mx-auto sm:w-auto">
                     <IoClose
                       size={25}
                       className="absolute -top-2 -right-2 text-white bg-slate-500 transition duration-200 hover:bg-slate-600 rounded-full p-1 cursor-pointer z-10"
                       onClick={() => {
-                        setSelectedFile(null);
-                        setPreviewUrl(null);
-                        if (fileInputRef.current) fileInputRef.current.value = null;
+                        setPostModalSelectedFile(null);
+                        setPostModalPreviewImage(null);
+                        if (postModalFileInputRef.current)
+                          postModalFileInputRef.current.value = null;
                       }}
                     />
-                    {selectedFile.type.startsWith("image/") ? (
+                    {postModalSelectedFile.type.startsWith("image/") ? (
                       <img
-                        src={previewUrl}
+                        src={postModalPreviewImage}
                         className="w-full h-auto max-h-96 object-contain rounded"
                         alt="Image preview"
                       />
                     ) : (
                       <video
                         controls
-                        src={previewUrl}
+                        src={postModalPreviewImage}
                         className="w-full h-auto max-h-96 object-contain rounded"
                         preload="metadata"
                       >
@@ -830,7 +768,7 @@ function CreatePostModal({ onClose }) {
               {!showPollInputs && !scheduledAt && (
                 <BiImageAdd
                   className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
-                  onClick={() => fileInputRef.current.click()}
+                  onClick={() => postModalFileInputRef.current.click()}
                   title="Add image or video"
                   aria-label="Add image or video"
                 />
@@ -839,12 +777,12 @@ function CreatePostModal({ onClose }) {
                 type="file"
                 accept="image/*,video/*"
                 hidden
-                ref={fileInputRef}
+                ref={postModalFileInputRef}
                 onChange={handleFileChange}
               />
 
               {/* Poll icon - hidden if media or schedule is selected/previewed */}
-              {!selectedFile && !scheduledAt && (
+              {!postModalSelectedFile && !scheduledAt && (
                 <BiPoll
                   className="text-primary size-6 cursor-pointer hover:text-primary/80"
                   onClick={handlePollIconClick}
@@ -867,7 +805,7 @@ function CreatePostModal({ onClose }) {
               </div>
 
               {/* Schedule NEW Post icon - hidden if media or poll is active */}
-              {!selectedFile && !showPollInputs && (
+              {!postModalSelectedFile && !showPollInputs && (
                 <TbCalendarClock
                   size={22}
                   className="text-primary cursor-pointer hover:text-primary/80"

@@ -21,24 +21,23 @@ import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUs
 import { MdBlock } from "react-icons/md";
 import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { BsThreeDots } from "react-icons/bs";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/usePasteHandler";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
-
   const { authUser } = useAuthUser();
   const isCommentOwner = authUser && authUser._id === comment.user._id;
   const isCommentLiked = authUser && comment.likes?.includes(authUser._id);
   const isFollowingCommentOwner = authUser?.following.includes(comment.user._id);
 
   const [showReplyInput, setShowReplyInput] = useState(false);
-  const [replyText, setReplyText] = useState("");
-  const [replyImagePreview, setReplyImagePreview] = useState(null);
-  const [replyImageFile, setReplyImageFile] = useState(null);
-  const imageInputRef = useRef(null);
+  const [replyInput, setReplyInput] = useState("");
+  const [replyPreviewImage, setReplyPreviewImage] = useState(null);
+  const [replySelectedFile, setReplySelectedFile] = useState(null);
+  const replyFileInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
-  const [showButton, setShowButton] = useState(false)
-
+  const [showButton, setShowButton] = useState(false);
 
   const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
@@ -81,19 +80,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   // Determine if the current authUser has blocked the original post owner
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(comment.user._id);
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      const mobileBreakpoint = 768; // px
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    checkIsMobile();
-    window.addEventListener("resize", checkIsMobile);
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []);
-  // --- END MOBILE DETECTION ---
+  const isMobile = useIsMobile();
 
   // --- TEXTAREA HEIGHT ADJUSTMENT ---
   const adjustTextareaHeight = useCallback(() => {
@@ -106,7 +93,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   useEffect(() => {
     adjustTextareaHeight();
-  }, [replyText, adjustTextareaHeight]); // Trigger on replyText change
+  }, [replyInput, adjustTextareaHeight]); // Trigger on replyInput change
   // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
   useEffect(() => {
@@ -143,8 +130,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   }, [isTouchDevice]);
 
   const handleFocus = () => {
-    setShowButton(true)
-  }
+    setShowButton(true);
+  };
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   // Intersection Observer for infinite scrolling replies
@@ -207,36 +194,25 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   };
 
   // --- NEW: Handle pasting an image into the input field ---
-  const handlePaste = useCallback((e) => {
-    const items = e.clipboardData.items;
-    for (let i = 0; i < items.length; i++) {
-      const item = items[i];
-      if (item.type.startsWith("image/") && item.kind === "file") {
-        const file = item.getAsFile();
-        if (file) {
-          setReplyImageFile(file);
-          const reader = new FileReader();
-          reader.onloadend = () => {
-            setReplyImagePreview(reader.result);
-          };
-          reader.readAsDataURL(file);
-          e.preventDefault(); // Prevent text from being pasted if an image is found
-          break; // Stop after finding the first image
-        }
-      }
-    }
-  }, []);
+  const handlePaste = usePasteHandler({
+    inputRef: replyInputRef,
+    input: replyInput,
+    setInput: setReplyInput,
+    setSelectedFile: setReplySelectedFile,
+    setPreviewImage: setReplyPreviewImage,
+    fileInputRef: replyFileInputRef,
+  });
 
   // --- HANDLER FOR OPENING/CLOSING REPLY INPUT ---
   const handleToggleReplyInput = useCallback((e) => {
     e.stopPropagation();
     setShowReplyInput((prev) => !prev);
     // Clear previous reply state when toggling
-    setReplyText("");
-    setReplyImagePreview(null);
-    setReplyImageFile(null);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
+    setReplyInput("");
+    setReplyPreviewImage(null);
+    setReplySelectedFile(null);
+    if (replyInputRef.current) {
+      replyInputRef.current.value = "";
     }
     setReplyMentionSearchTerm("");
     setShowReplyMentionSuggestions(false);
@@ -251,29 +227,25 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const handleImageChange = (e) => {
     const file = e.target.files[0];
     if (file) {
-      setReplyImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setReplyImagePreview(reader.result);
-      };
-      reader.readAsDataURL(file);
+      setReplySelectedFile(file);
+      setReplyPreviewImage(URL.createObjectURL(file));
     } else {
-      setReplyImageFile(null);
-      setReplyImagePreview(null);
+      setReplySelectedFile(null);
+      setReplyPreviewImage(null);
     }
   };
 
   const handleRemoveImage = () => {
-    setReplyImageFile(null);
-    setReplyImagePreview(null);
-    if (imageInputRef.current) {
-      imageInputRef.current.value = "";
+    setReplySelectedFile(null);
+    setReplyPreviewImage(null);
+    if (replyFileInputRef.current) {
+      replyFileInputRef.current.value = "";
     }
   };
 
   const handleReplyTextChange = (e) => {
     const newText = e.target.value;
-    setReplyText(newText);
+    setReplyInput(newText);
 
     const lastAtIndex = newText.lastIndexOf("@");
     if (lastAtIndex !== -1) {
@@ -293,7 +265,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const handleSelectReplyMention = useCallback(
     (username) => {
-      const currentText = replyText;
+      const currentText = replyInput;
       const lastAtIndex = currentText.lastIndexOf("@");
 
       if (lastAtIndex !== -1) {
@@ -313,7 +285,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           `@${username} ` +
           currentText.substring(replaceEndIndex);
 
-        setReplyText(newText);
+        setReplyInput(newText);
         setReplyMentionSearchTerm("");
         setShowReplyMentionSuggestions(false);
 
@@ -328,7 +300,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
         }, 0);
       }
     },
-    [replyText]
+    [replyInput]
   );
 
   const handleSendReply = useCallback(
@@ -336,25 +308,36 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       e.preventDefault();
       e.stopPropagation();
 
-      // if (!replyText.trim() && !replyImageFile) {
-      //   return;
-      // }
+      if (!replyInput.trim() && !replySelectedFile) {
+        return;
+      }
       if (isCreatingComment) return;
 
-      await createComment({ text: replyText, img: replyImagePreview });
-
-      setReplyText("");
-      setReplyImagePreview(null);
-      setReplyImageFile(null);
-      if (imageInputRef.current) {
-        imageInputRef.current.value = "";
+      let imgDataToSend = null;
+      if (replySelectedFile) {
+        imgDataToSend = await new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => resolve(reader.result);
+          reader.readAsDataURL(replySelectedFile);
+        });
       }
+
+      // Pass the Base64 string to createComment, NOT the File object or blob URL
+      await createComment({ text: replyInput, img: imgDataToSend });
+
+      setReplyInput("");
+      setReplyPreviewImage(null); // Clear Base64 preview
+      setReplySelectedFile(null); // Clear selected File
+      if (replyFileInputRef.current) {
+        replyFileInputRef.current.value = "";
+      }
+      // ... rest of your clearing logic
       setShowReplyInput(false);
       setReplyMentionSearchTerm("");
       setShowReplyMentionSuggestions(false);
-      setShowRepliesSection(true); // Automatically show replies section after sending a reply
+      setShowRepliesSection(true);
     },
-    [createComment, isCreatingComment, replyText, replyImagePreview]
+    [createComment, isCreatingComment, replyInput, replySelectedFile]
   );
 
   const handleImageClick = (imageUrl, event) => {
@@ -378,8 +361,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             const start = input.selectionStart;
             const end = input.selectionEnd;
             const newValue =
-              replyText.substring(0, start) + "\n" + replyText.substring(end);
-            setReplyText(newValue);
+              replyInput.substring(0, start) + "\n" + replyInput.substring(end);
+            setReplyInput(newValue);
             setTimeout(() => {
               input.selectionStart = input.selectionEnd = start + 1;
             }, 0);
@@ -393,8 +376,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               const start = input.selectionStart;
               const end = input.selectionEnd;
               const newValue =
-                replyText.substring(0, start) + "\n" + replyText.substring(end);
-              setReplyText(newValue);
+                replyInput.substring(0, start) + "\n" + replyInput.substring(end);
+              setReplyInput(newValue);
               setTimeout(() => {
                 input.selectionStart = input.selectionEnd = start + 1;
               }, 0);
@@ -412,8 +395,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     [
       isMobile,
       replyInputRef,
-      replyText,
-      setReplyText,
+      replyInput,
+      setReplyInput,
       showReplyMentionSuggestions,
       suggestedUsers,
       handleSelectReplyMention,
@@ -875,7 +858,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <textarea
                     ref={replyInputRef}
                     type="text"
-                    value={replyText}
+                    value={replyInput}
                     onChange={handleReplyTextChange}
                     onKeyDown={handleKeyDown}
                     onPaste={handlePaste}
@@ -920,10 +903,10 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     )}
                 </div>
               </div>
-              {replyImagePreview && (
+              {replyPreviewImage && (
                 <div className="relative size-40 mt-2 self-start">
                   <img
-                    src={replyImagePreview}
+                    src={replyPreviewImage}
                     alt="Reply preview"
                     className="w-full h-full object-contain rounded-lg"
                   />
@@ -943,12 +926,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     type="file"
                     accept="image/*"
                     hidden
-                    ref={imageInputRef}
+                    ref={replyFileInputRef}
                     onChange={handleImageChange}
                   />
                   <button
                     type="button"
-                    onClick={() => imageInputRef.current.click()}
+                    onClick={() => replyFileInputRef.current.click()}
                     className="ml-[33px] text-primary hover:text-primary/80 transition duration-200 self-start p-1 rounded-full"
                     title="Add image"
                     disabled={isCreatingComment}
@@ -958,7 +941,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <button
                     type="submit"
                     className="block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-white transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
-                    disabled={isCreatingComment || (!replyText.trim() && !replyImageFile)}
+                    disabled={
+                      isCreatingComment || (!replyInput.trim() && !replySelectedFile)
+                    }
                   >
                     Reply
                   </button>

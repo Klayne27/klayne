@@ -12,12 +12,14 @@ import React from "react";
 import { showAppToast } from "../../../utils/showAppToast";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage";
+import { useIsMobile } from "../../../hooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/usePasteHandler";
 
 function MessageInput({
   otherUser,
   actualConversationId,
   currentOptimisticIdRef,
-  messageInputRef,
+  privateChatInputRef,
   didMessageJustLanded,
   socket,
   // isTypingOtherUser,
@@ -29,11 +31,12 @@ function MessageInput({
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage);
   const editingMessage = usePrivateChatStore((state) => state.editingMessage);
 
-  const [messageInput, setMessageInput] = useState("");
-  const [imageFile, setImageFile] = useState(null);
+  const [privateChatInput, setPrivateChatInput] = useState("");
+  const [privateChatPreviewImage, setPrivateChatPreviewImage] = useState(null);
+  const [privateChatSelectedFile, setPrivateChatSelectedFile] = useState(null);
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const [emojiPickerWidth, setEmojiPickerWidth] = useState(150);
-  const imageInputRef = useRef(null);
+  const privateChatFileInputRef = useRef(null);
   const emojiButtonRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -49,28 +52,7 @@ function MessageInput({
     onOptimisticSend: handleOptimisticScroll,
   });
 
-  const [isMobile, setIsMobile] = useState(false);
-
-  useEffect(() => {
-    const checkIsMobile = () => {
-      // Define your breakpoint
-      const mobileBreakpoint = 768; // px
-
-      // Update state based on current window width
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    // Initial check when component mounts
-    checkIsMobile();
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkIsMobile);
-
-    // Clean up event listener when component unmounts
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  const isMobile = useIsMobile();
 
   // --- MODIFIED: emitTyping now accepts isEditing flag ---
   const emitTyping = useCallback(
@@ -100,93 +82,41 @@ function MessageInput({
     [socket, actualConversationId, currentUser?._id]
   );
 
-  const handlePaste = (e) => {
-    e.preventDefault(); // Prevent default paste behavior
-
-    const items = e.clipboardData.items;
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
-
-        if (file) {
-          // Basic validation for image file
-          if (!file.type.startsWith("image/")) {
-            showAppToast("Pasted content is not a supported image type.", "error");
-            setImageFile(null);
-            if (imageInputRef.current) imageInputRef.current.value = null;
-            return;
-          }
-
-          const MAX_IMAGE_SIZE_MB = 5;
-          if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-            showAppToast(
-              `Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`,
-              "error"
-            );
-            setImageFile(null);
-            if (imageInputRef.current) imageInputRef.current.value = null;
-            return;
-          }
-
-          setImageFile(file);
-          return; // Process only the first image found
-        }
-      }
-    }
-
-    // If no image was found, paste as plain text
-    const pastedText = e.clipboardData.getData("text/plain");
-    if (pastedText) {
-      const inputElement = messageInputRef.current;
-      if (inputElement) {
-        const cursorStart = inputElement.selectionStart;
-        const cursorEnd = inputElement.selectionEnd;
-
-        const newText =
-          messageInput.substring(0, cursorStart) +
-          pastedText +
-          messageInput.substring(cursorEnd);
-
-        setMessageInput(newText);
-
-        // Restore cursor position after paste
-        setTimeout(() => {
-          if (inputElement) {
-            inputElement.selectionStart = cursorStart + pastedText.length;
-            inputElement.selectionEnd = cursorStart + pastedText.length;
-          }
-        }, 0);
-      }
-    }
-  };
+  const handlePaste = usePasteHandler({
+    inputRef: privateChatInputRef,
+    input: privateChatInput,
+    setInput: setPrivateChatInput,
+    setSelectedFile: setPrivateChatSelectedFile,
+    setPreviewImage: setPrivateChatPreviewImage,
+    fileInputRef: privateChatFileInputRef,
+    editingMessage,
+  });
 
   useEffect(() => {
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto"; // Reset height first
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+    if (privateChatInputRef.current) {
+      privateChatInputRef.current.style.height = "auto"; // Reset height first
+      privateChatInputRef.current.style.height =
+        privateChatInputRef.current.scrollHeight + "px";
     }
     // eslint-disable-next-line
-  }, [messageInput]);
+  }, [privateChatInput]);
 
   useEffect(() => {
     if (editingMessage) {
-      setMessageInput(editingMessage.text);
-      messageInputRef.current?.focus();
-    } else {
-      // Clear input when exiting edit mode
-      setMessageInput("");
+      setPrivateChatInput(editingMessage.text);
+      privateChatInputRef.current?.focus();
     }
     // eslint-disable-next-line
   }, [editingMessage]);
 
   const handleMessageInputChange = (e) => {
     const text = e.target.value;
-    setMessageInput(text);
+    setPrivateChatInput(text);
 
-    if (messageInputRef.current) {
-      messageInputRef.current.style.height = "auto";
-      messageInputRef.current.style.height = messageInputRef.current.scrollHeight + "px";
+    if (privateChatInputRef.current) {
+      privateChatInputRef.current.style.height = "auto";
+      privateChatInputRef.current.style.height =
+        privateChatInputRef.current.scrollHeight + "px";
     }
 
     const isCurrentlyEditing = !!editingMessage; // Determine if in edit mode
@@ -224,45 +154,46 @@ function MessageInput({
       }
       emitStopTyping();
 
-      if (!messageInput.trim() && !imageFile) return;
+      if (!privateChatInput.trim() && !privateChatSelectedFile) return;
 
       if (!otherUser) {
         showAppToast("No recipient selected.", "error");
         return;
       }
 
-      // const wasInputFocused = messageInputRef.current === document.activeElement;
+      // const wasInputFocused = privateChatInputRef.current === document.activeElement;
 
       const repliedToId = replyingToMessage ? replyingToMessage._id : null;
 
       const messagePayload = {
         recipientId: otherUser._id,
-        message: messageInput,
+        message: privateChatInput,
         img: null,
         conversationId: actualConversationId,
         repliedTo: repliedToId,
       };
 
       try {
-        if (imageFile) {
+        if (privateChatSelectedFile) {
           const reader = new FileReader();
           const imageDataUrl = await new Promise((resolve, reject) => {
             reader.onloadend = () => resolve(reader.result);
             reader.onerror = reject;
-            reader.readAsDataURL(imageFile);
+            reader.readAsDataURL(privateChatSelectedFile);
           });
           messagePayload.img = imageDataUrl;
         }
 
         sendMessage(messagePayload);
 
-        setMessageInput("");
-        setImageFile(null);
+        setPrivateChatInput("");
+        setPrivateChatSelectedFile(null);
         setReplyingToMessage(null);
+        setPrivateChatPreviewImage(null);
         currentOptimisticIdRef.current = null;
 
-        if (isMobile && messageInputRef.current) {
-          messageInputRef.current.focus();
+        if (isMobile && privateChatInputRef.current) {
+          privateChatInputRef.current.focus();
         }
       } catch (error) {
         console.error("Error during message send process:", error);
@@ -271,18 +202,16 @@ function MessageInput({
     },
     [
       emitStopTyping,
-      messageInput,
-      imageFile,
+      privateChatInput,
+      privateChatSelectedFile,
       otherUser,
       replyingToMessage,
       actualConversationId,
       sendMessage,
-      setMessageInput,
-      setImageFile,
-      setReplyingToMessage,
       currentOptimisticIdRef,
+      setReplyingToMessage,
       isMobile,
-      messageInputRef,
+      privateChatInputRef,
     ]
   );
 
@@ -290,47 +219,47 @@ function MessageInput({
     (e) => {
       e.preventDefault();
 
-      const trimmedMessage = messageInput.replace(/\s/g, "");
+      const trimmedMessage = privateChatInput.replace(/\s/g, "");
 
-      if (trimmedMessage.length === 0 && !imageFile) {
+      if (trimmedMessage.length === 0 && !privateChatSelectedFile) {
         // If the input is empty or only whitespace and no image,
         // and it's a mobile device, ensure focus remains to prevent keyboard close.
-        if (isMobile && messageInputRef.current) {
-          messageInputRef.current.focus();
+        if (isMobile && privateChatInputRef.current) {
+          privateChatInputRef.current.focus();
         }
         return;
       }
 
       if (editingMessage) {
         // Handle message editing
-        editMessage({ messageId: editingMessage._id, newText: messageInput });
+        editMessage({ messageId: editingMessage._id, newText: privateChatInput });
         setEditingMessage(null); // Exit edit mode
-        setMessageInput(""); // Clear input after editing
+        setPrivateChatInput(""); // Clear input after editing
 
         // Keep keyboard open after editing on mobile
-        if (isMobile && messageInputRef.current) {
-          messageInputRef.current.focus();
+        if (isMobile && privateChatInputRef.current) {
+          privateChatInputRef.current.focus();
         }
       } else {
         // Handle sending new message
         handleSendMessage(e); // Your original send logic
-        setMessageInput("");
-        if (messageInputRef.current) {
-          messageInputRef.current.style.height = "auto"; // Crucial
-          messageInputRef.current.rows = 1;
+        setPrivateChatInput("");
+        if (privateChatInputRef.current) {
+          privateChatInputRef.current.style.height = "auto"; // Crucial
+          privateChatInputRef.current.rows = 1;
         }
       }
     },
     [
-      messageInput,
-      imageFile,
+      privateChatInput,
+      privateChatSelectedFile,
       isMobile,
-      messageInputRef,
+      privateChatInputRef,
       editingMessage,
       editMessage,
       setEditingMessage,
       handleSendMessage,
-      setMessageInput,
+      setPrivateChatInput,
     ]
   );
 
@@ -347,28 +276,28 @@ function MessageInput({
   };
 
   const onEmojiClick = (emojiObject) => {
-    setMessageInput((prevText) => prevText + emojiObject.emoji);
+    setPrivateChatInput((prevText) => prevText + emojiObject.emoji);
   };
 
   const handleImageButtonClick = (e) => {
     e.preventDefault(); // Prevent default button behavior that might blur
-    imageInputRef.current.click();
+    privateChatFileInputRef.current.click();
     // Re-focus the message input after triggering file input click
-    if (isMobile && messageInputRef.current) {
+    if (isMobile && privateChatInputRef.current) {
       setTimeout(() => {
-        messageInputRef.current.focus();
+        privateChatInputRef.current.focus();
       }, 0);
     }
   };
 
   const handleCancelEdit = () => {
     setEditingMessage(null);
-    setMessageInput("");
+    setPrivateChatInput("");
     emitStopTyping(true); // Indicate it was an edit context
 
     // Keep keyboard open after canceling edit on mobile
-    if (isMobile && messageInputRef.current) {
-      messageInputRef.current.focus();
+    if (isMobile && privateChatInputRef.current) {
+      privateChatInputRef.current.focus();
     }
   };
 
@@ -382,6 +311,13 @@ function MessageInput({
       // And importantly, prevent the event from bubbling to parent scroll containers.
       e.stopPropagation();
     }
+  };
+
+  const handleRemoveImage = () => {
+    setPrivateChatSelectedFile(null);
+    setPrivateChatPreviewImage(null);
+    if (privateChatFileInputRef.current) privateChatFileInputRef.current.value = "";
+    privateChatInputRef.current?.focus();
   };
 
   useEffect(() => {
@@ -425,7 +361,9 @@ function MessageInput({
   }, [actualConversationId, emitStopTyping]);
 
   const isSendButtonDisabled =
-    isSendingMessage || isEditing || (!messageInput.trim() && !imageFile);
+    isSendingMessage ||
+    isEditing ||
+    (!privateChatInput.trim() && !privateChatSelectedFile);
 
   // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
@@ -433,8 +371,8 @@ function MessageInput({
       <input
         type="file"
         accept="image/*"
-        onChange={(e) => setImageFile(e.target.files[0])}
-        ref={imageInputRef}
+        onChange={(e) => setPrivateChatSelectedFile(e.target.files[0])}
+        ref={privateChatFileInputRef}
         className="hidden"
       />
 
@@ -469,10 +407,10 @@ function MessageInput({
         </div>
 
         <textarea
-          value={messageInput}
+          value={privateChatInput}
           onChange={handleMessageInputChange}
           onKeyDown={handleKeyDown}
-          onTouchMove={handleTouchMove} // Add this
+          onTouchMove={handleTouchMove}
           onPaste={handlePaste}
           placeholder={
             isEditingMode
@@ -482,7 +420,7 @@ function MessageInput({
               : "Type your message..."
           }
           className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
-          ref={messageInputRef}
+          ref={privateChatInputRef}
           rows={1}
         />
 
@@ -490,7 +428,7 @@ function MessageInput({
           type="submit"
           disabled={isSendButtonDisabled}
           className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
-            messageInput.trim() || imageFile
+            privateChatInput.trim() || privateChatSelectedFile
               ? "bg-primary text-white"
               : "bg-primary text-white opacity-50 cursor-not-allowed"
           } transition-colors duration-200`}
@@ -511,16 +449,16 @@ function MessageInput({
 
   return (
     <>
-      {imageFile && (
+      {privateChatPreviewImage && (
         <div className="mt-4 border-t border-accent p-5 flex">
           <div className="relative">
             <img
-              src={URL.createObjectURL(imageFile)}
+              src={privateChatPreviewImage}
               alt="Preview"
               className="max-w-[200px] max-h-[200px] object-contain rounded-md"
             />
             <button
-              onClick={() => setImageFile(null)}
+              onClick={handleRemoveImage}
               className="absolute -right-2 -top-2 p-1 text-white rounded-full bg-gray-500 transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />

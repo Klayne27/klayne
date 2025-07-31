@@ -10,7 +10,7 @@ export const useSendPublicMessage = () => {
 
   const {
     mutate: sendPublicMessage,
-    isPending,
+    isPending: isSendingPublicMessage,
     isError,
     error,
     reset,
@@ -120,5 +120,5 @@ export const useSendPublicMessage = () => {
     },
   });
 
-  return { sendPublicMessage, isPending, isError, error, reset };
+  return { sendPublicMessage, isSendingPublicMessage, isError, error, reset };
 };

@@ -10,106 +10,66 @@ import { FaCircle } from "react-icons/fa";
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 import { useEditPublicMessage } from "../../hooks/publicChatHooks/useEditPublicMessage";
+import { usePublicChatStore } from "../../store/usePublicChatStore";
+import { getTypingMessage } from "../../utils/getTypingMessage";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { usePasteHandler } from "../../hooks/usePasteHandler";
+import { useSendPublicMessage } from "../../hooks/publicChatHooks/useSendPublicMessage";
 
 const PublicMessageInput = ({
-  isSendingMessage,
+  // isSendingPublicMessage,
   // isEditingMessage,
   isCurrentUserBanned,
-  editingMessage,
-  setEditingMessage,
-  replyingToMessage,
-  setReplyingToMessage,
-  sendPublicMessage,
+  publicChatInputRef,
+  // editingMessage,
+  // setEditingMessage,
+  // replyingToMessage,
+  // setReplyingToMessage,
+  // sendPublicMessage,
   // editPublicMessage,
   sendTypingEvent, // This function needs to be updated to emit the new event
   isSomeoneTyping, // This will now be derived from typingUsers.length > 0
   typingUsers, // This is the array of users currently typing from the server
 }) => {
-  const fileInputRef = useRef(null);
-  const textareaRef = useRef(null);
+  const { replyingToMessage, setReplyingToMessage, setEditingMessage, editingMessage } =
+    usePublicChatStore();
+
   const typingTimeoutRef = useRef(null);
   const hasSentTypingEvent = useRef(false);
 
   const { authUser } = useAuthUser();
   const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
 
-  const [isAtTextareaBottom, setIsAtTextareaBottom] = useState(true);
-
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewImage, setPreviewImage] = useState(null);
-  const [messageContent, setMessageContent] = useState("");
-  const [isMobile, setIsMobile] = useState(false);
+  const [publicChatInput, setPublicChatInput] = useState("");
+  const [publicChatSelectedFile, setPublicChatSelectedFile] = useState(null);
+  const [publicChatPreviewImage, setPublicChatPreviewImage] = useState(null);
+  const publicChatFileInputRef = useRef(null);
 
   const isMessageDeleted =
     replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser;
 
   const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
+  const { sendPublicMessage, isSendingPublicMessage } = useSendPublicMessage();
 
-  const getTypingMessage = (users) => {
-    if (users.length === 0) return ""; // Should ideally not be called if users.length is 0
-
-    const names = users.map((u) => u.username);
-    const isEditingAny = users.some((u) => u.isEditing); // Check if *any* typing user is editing
-
-    // Determine the verb based on whether anyone is editing
-    const verb = isEditingAny ? "editing" : "typing";
-
-    if (users.length === 1) {
-      return `${names[0]} is ${verb}`;
-    }
-    if (users.length === 2) {
-      return `${names.join(" and ")} are ${verb}`;
-    }
-    return "Several people are typing"; // Or "Several people are editing" if isEditingAny is true for some
-  };
+  const isMobile = useIsMobile();
 
   useEffect(() => {
-    const checkIsMobile = () => {
-      // Define your breakpoint
-      const mobileBreakpoint = 768; // px
-
-      // Update state based on current window width
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    // Initial check when component mounts
-    checkIsMobile();
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkIsMobile);
-
-    // Clean up event listener when component unmounts
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
-
-  useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"; // Reset height first
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (publicChatInputRef.current) {
+      publicChatInputRef.current.style.height = "auto"; // Reset height first
+      publicChatInputRef.current.style.height =
+        publicChatInputRef.current.scrollHeight + "px";
     }
-  }, [messageContent]);
+    // eslint-disable-next-line
+  }, [publicChatInput]);
 
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
-      setMessageContent(editingMessage.content);
-      setReplyingToMessage(null);
-      textareaRef.current?.focus();
-      // setSelectedFile(null);
-      // setPreviewImage(null);
-    } else {
-      setMessageContent("");
+      setPublicChatInput(editingMessage.content);
+      publicChatInputRef.current?.focus();
     }
-  }, [editingMessage, setReplyingToMessage, setSelectedFile, setPreviewImage]);
-
-  // Focus when replying
-  useEffect(() => {
-    if (replyingToMessage) {
-      textareaRef.current?.focus();
-    }
-  }, [replyingToMessage]);
+    // eslint-disable-next-line
+  }, [editingMessage]);
 
   // Cleanup effect for unmounting
   useEffect(() => {
@@ -124,11 +84,12 @@ const PublicMessageInput = ({
 
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value;
-    setMessageContent(newValue);
+    setPublicChatInput(newValue);
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (publicChatInputRef.current) {
+      publicChatInputRef.current.style.height = "auto";
+      publicChatInputRef.current.style.height =
+        publicChatInputRef.current.scrollHeight + "px";
     }
 
     clearTimeout(typingTimeoutRef.current); // Always clear any pending "stop" timer
@@ -154,90 +115,35 @@ const PublicMessageInput = ({
     }
   };
 
-  const handlePaste = (e) => {
-    e.preventDefault(); // Prevent default paste behavior
-
-    const items = e.clipboardData.items;
-
-    for (let i = 0; i < items.length; i++) {
-      if (items[i].type.indexOf("image") !== -1) {
-        const file = items[i].getAsFile();
-
-        if (file) {
-          // Basic validation for image file
-          if (!file.type.startsWith("image/")) {
-            showAppToast("Pasted content is not a supported image type.", "error");
-            setSelectedFile(null);
-            if (fileInputRef.current) fileInputRef.current.value = null;
-            return;
-          }
-
-          // You might want to add a size limit for message images as well
-          // For example, 5MB for chat images, adjust as needed
-          const MAX_IMAGE_SIZE_MB = 5;
-          if (file.size > MAX_IMAGE_SIZE_MB * 1024 * 1024) {
-            showAppToast(
-              `Pasted image size exceeds ${MAX_IMAGE_SIZE_MB}MB limit.`,
-              "error"
-            );
-            setSelectedFile(null);
-            if (fileInputRef.current) fileInputRef.current.value = null;
-            return;
-          }
-
-          setSelectedFile(file);
-          setPreviewImage(URL.createObjectURL(file));
-
-          return; // Process only the first image found
-        }
-      }
-    }
-
-    // If no image was found, paste as plain text
-    const pastedText = e.clipboardData.getData("text/plain");
-    if (pastedText) {
-      const inputElement = textareaRef.current;
-      if (inputElement) {
-        const cursorStart = inputElement.selectionStart;
-        const cursorEnd = inputElement.selectionEnd;
-
-        const newText =
-          messageContent.substring(0, cursorStart) +
-          pastedText +
-          messageContent.substring(cursorEnd);
-
-        setMessageContent(newText);
-
-        // Restore cursor position after paste
-        setTimeout(() => {
-          if (inputElement) {
-            inputElement.selectionStart = cursorStart + pastedText.length;
-            inputElement.selectionEnd = cursorStart + pastedText.length;
-          }
-        }, 0);
-      }
-    }
-  };
+  const handlePaste = usePasteHandler({
+    inputRef: publicChatInputRef,
+    input: publicChatInput,
+    setInput: setPublicChatInput,
+    setSelectedFile: setPublicChatSelectedFile,
+    setPreviewImage: setPublicChatPreviewImage,
+    fileInputRef: publicChatFileInputRef,
+    editingMessage,
+  });
 
   const clearInputState = () => {
-    setMessageContent("");
-    setSelectedFile(null);
-    setPreviewImage(null);
+    setPublicChatInput("");
+    setPublicChatSelectedFile(null);
+    setPublicChatPreviewImage(null);
     setReplyingToMessage(null);
     setEditingMessage(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.focus();
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = "";
+    if (publicChatInputRef.current) {
+      publicChatInputRef.current.style.height = "auto";
+      publicChatInputRef.current.focus();
     }
   };
 
   const handleSendMessageOrEdit = async (e) => {
     e.preventDefault();
-    if (isSendingMessage || isEditingMessage || isCurrentUserBanned) return;
+    if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) return;
 
-    const contentToSend = messageContent.trim();
-    if (!contentToSend && !selectedFile) {
+    const contentToSend = publicChatInput.trim();
+    if (!contentToSend && !publicChatSelectedFile) {
       return;
     }
 
@@ -260,9 +166,9 @@ const PublicMessageInput = ({
         newContent: contentToSend,
       });
     } else {
-      if (selectedFile) {
+      if (publicChatSelectedFile) {
         const reader = new FileReader();
-        reader.readAsDataURL(selectedFile);
+        reader.readAsDataURL(publicChatSelectedFile);
         reader.onloadend = () => {
           sendPublicMessage({ ...payload, imgBase64: reader.result });
         };
@@ -275,9 +181,9 @@ const PublicMessageInput = ({
     }
     clearInputState();
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto"; // Crucial
-      textareaRef.current.rows = 1;
+    if (publicChatInputRef.current) {
+      publicChatInputRef.current.style.height = "auto"; // Crucial
+      publicChatInputRef.current.rows = 1;
     }
   };
 
@@ -295,23 +201,23 @@ const PublicMessageInput = ({
       return;
     }
 
-    setSelectedFile(file);
+    setPublicChatSelectedFile(file);
     const reader = new FileReader();
-    reader.onloadend = () => setPreviewImage(reader.result);
+    reader.onloadend = () => setPublicChatPreviewImage(reader.result);
     reader.readAsDataURL(file);
   };
 
   const handleRemoveImage = () => {
-    setSelectedFile(null);
-    setPreviewImage(null);
-    if (fileInputRef.current) fileInputRef.current.value = "";
-    textareaRef.current?.focus();
+    setPublicChatSelectedFile(null);
+    setPublicChatPreviewImage(null);
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = "";
+    publicChatInputRef.current?.focus();
   };
 
   const handleImageButtonClick = (e) => {
     e.preventDefault();
-    fileInputRef.current.click();
-    textareaRef.current?.focus();
+    publicChatFileInputRef.current.click();
+    publicChatInputRef.current?.focus();
   };
 
   const handleTouchMove = (e) => {
@@ -335,20 +241,18 @@ const PublicMessageInput = ({
 
   const handleCancelEdit = () => {
     setEditingMessage(null);
-    setMessageContent("");
-    // Ensure that when cancelling edit, we also send a stop typing for editing state
-    sendTypingEvent(false); // Send a general stop typing event
+    setPublicChatInput("");
+    sendTypingEvent(false);
   };
 
   const isSendButtonDisabled =
-    isSendingMessage ||
+    isSendingPublicMessage ||
     isEditingMessage ||
     isCurrentUserBanned ||
-    (!messageContent.trim() && !selectedFile);
+    (!publicChatInput.trim() && !publicChatSelectedFile);
 
   const isEditingMode = !!editingMessage;
 
-  // Derive isSomeoneTyping from the length of typingUsers array
   const showTypingIndicator = typingUsers && typingUsers.length > 0;
 
   const messageDeleted = (
@@ -357,13 +261,11 @@ const PublicMessageInput = ({
 
   return (
     <>
-      {" "}
-      {/* --- Image Preview Section --- */}
-      {previewImage && (
+      {publicChatPreviewImage && (
         <div className="mt-4 border-t border-accent p-5 flex sticky bottom-0 z-10 bg-base-100">
           <div className="relative">
             <img
-              src={previewImage}
+              src={publicChatPreviewImage}
               alt="Preview"
               className="max-w-[200px] max-h-[200px] object-contain rounded-md"
             />
@@ -395,7 +297,7 @@ const PublicMessageInput = ({
             <button
               onClick={() => {
                 handleCancelEdit();
-                textareaRef.current.focus();
+                publicChatInputRef.current.focus();
               }}
               className="ml-2 p-1 mr-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
               title="Cancel Edit"
@@ -411,7 +313,7 @@ const PublicMessageInput = ({
           >
             <input
               type="file"
-              ref={fileInputRef}
+              ref={publicChatFileInputRef}
               onChange={handleImageChange}
               className="hidden"
               accept="image/*"
@@ -434,10 +336,11 @@ const PublicMessageInput = ({
               </div>
 
               <textarea
-                value={messageContent}
+                ref={publicChatInputRef}
+                value={publicChatInput}
                 onChange={handleMessageContentChange}
                 onKeyDown={handleKeyDown}
-                onTouch={handleTouchMove}
+                onTouchMove={handleTouchMove}
                 onPaste={handlePaste}
                 placeholder={
                   isCurrentUserBanned
@@ -446,7 +349,6 @@ const PublicMessageInput = ({
                 }
                 className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
                 rows={1}
-                ref={textareaRef}
                 disabled={isCurrentUserBanned}
               />
 
@@ -454,7 +356,7 @@ const PublicMessageInput = ({
                 type="submit"
                 disabled={isSendButtonDisabled}
                 className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
-                  messageContent.trim() || selectedFile
+                  publicChatInput.trim() || publicChatSelectedFile
                     ? "bg-primary text-white"
                     : "bg-primary text-white opacity-50 cursor-not-allowed"
                 } transition-colors duration-200`}
@@ -506,16 +408,18 @@ const PublicMessageInput = ({
                       @{replyingToMessage.sender.username}:
                     </span>
                   )}
-                  {isMessageDeleted ? messageDeleted : truncateText(replyingToMessage.content)}
+                  {isMessageDeleted
+                    ? messageDeleted
+                    : truncateText(replyingToMessage.content)}
                 </div>
                 {replyingToMessage.img && !replyingToMessage.content && (
-                  <span className="text-xs text-gray-400 mt-1">(Image Reply)</span>
+                  <span className="text-xs text-gray-400 mt-1">(Image)</span>
                 )}
               </div>
               <button
                 onClick={() => {
                   setReplyingToMessage(null);
-                  textareaRef.current.focus();
+                  publicChatInputRef.current.focus();
                 }}
                 className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
                 aria-label="Cancel reply"
@@ -527,7 +431,7 @@ const PublicMessageInput = ({
           {/* Main message input for normal mode */}
           <input
             type="file"
-            ref={fileInputRef}
+            ref={publicChatFileInputRef}
             onChange={handleImageChange}
             className="hidden"
             accept="image/*"
@@ -551,10 +455,12 @@ const PublicMessageInput = ({
             </div>
 
             <textarea
-              value={messageContent}
+              ref={publicChatInputRef}
+              value={publicChatInput}
               onChange={handleMessageContentChange}
-              onPaste={handlePaste}
               onKeyDown={handleKeyDown}
+              onTouchMove={handleTouchMove}
+              onPaste={handlePaste}
               placeholder={
                 isCurrentUserBanned
                   ? "You are banned from sending messages."
@@ -564,7 +470,6 @@ const PublicMessageInput = ({
               }
               className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
               rows={1}
-              ref={textareaRef}
               disabled={isCurrentUserBanned}
             />
 
@@ -572,7 +477,7 @@ const PublicMessageInput = ({
               type="submit"
               disabled={isSendButtonDisabled}
               className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
-                messageContent.trim() || selectedFile
+                publicChatInput.trim() || publicChatSelectedFile
                   ? "bg-primary text-white"
                   : "bg-primary text-white opacity-50 cursor-not-allowed"
               } transition-colors duration-200`}

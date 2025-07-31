@@ -17,13 +17,15 @@ import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useAppStore } from "../../../store/appStore";
 import { formatDate, formatTime } from "../../../utils/date";
 import { useEmojiPickerPopover } from "../../../hooks/useEmojiPickerPopover";
+import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses";
+import { useIsMobile } from "../../../hooks/useIsMobile";
 
 // const lastMessageDateRef = useRef(null);
 // const MOUSE_LEAVE_DELAY = 100;
 
 const MessageItem = ({
   msg,
-  messageInputRef,
+  privateChatInputRef,
   currentUser,
   isTypingOtherUser,
   onReactionAdded,
@@ -57,7 +59,8 @@ const MessageItem = ({
   const addReactionButtonRef = useRef(null);
   const moreButtonRef = useRef(null);
 
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile()
+
   const pressTimer = useRef(null);
   const LONG_PRESS_DURATION = 500;
 
@@ -72,18 +75,6 @@ const MessageItem = ({
 
   useEffect(() => {
     setIsCurrentlyTouchDevice(isTouchDevice());
-  }, []);
-
-  useEffect(() => {
-    const checkIfMobile = () => {
-      const isTouchDevice = window.matchMedia("(pointer: coarse)").matches;
-      const isSmallScreen = window.innerWidth < 768;
-      setIsMobile(isTouchDevice || isSmallScreen);
-    };
-
-    checkIfMobile();
-    window.addEventListener("resize", checkIfMobile);
-    return () => window.removeEventListener("resize", checkIfMobile);
   }, []);
 
   const {
@@ -121,7 +112,7 @@ const MessageItem = ({
     (typeof msg.sender === "object" && msg.sender?._id === currentUser._id) ||
     (typeof msg.sender === "string" && msg.sender === currentUser._id);
 
-  const isEditable = isSentByCurrentUser && msg.text && !msg.img;
+  const isEditable = isSentByCurrentUser;
   const showModal = activeMessageModalId === msg._id;
   const allowedEmojis = ["❤️", "👍", "😂"];
 
@@ -190,30 +181,7 @@ const MessageItem = ({
     [showMoreActionsModal, isEditable, setShowEmojiPickerPopover]
   );
 
-  let bubbleClasses = "";
-  if (isSentByCurrentUser) {
-    bubbleClasses += " bg-primary text-white";
-    if (msg.isFirstInGroup && msg.isLastInGroup) {
-      bubbleClasses += " rounded-3xl";
-    } else if (msg.isFirstInGroup) {
-      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-3xl rounded-br-[4px]";
-    } else if (msg.isLastInGroup) {
-      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-3xl";
-    } else {
-      bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]";
-    }
-  } else {
-    bubbleClasses += " bg-[#2F3336] text-white";
-    if (msg.isFirstInGroup && msg.isLastInGroup) {
-      bubbleClasses += " rounded-3xl";
-    } else if (msg.isFirstInGroup) {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]";
-    } else if (msg.isLastInGroup) {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl";
-    } else {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]";
-    }
-  }
+  const bubbleClasses = getMessageBubbleClasses(msg, isSentByCurrentUser);
 
   const handleMouseEnter = (messageId) => {
     if (!isCurrentlyTouchDevice) {
@@ -301,7 +269,6 @@ const MessageItem = ({
     }
   };
 
-
   const handleTouchStart = (e) => {
     e.stopPropagation();
     pressTimer.current = setTimeout(() => {
@@ -336,14 +303,14 @@ const MessageItem = ({
   };
 
   const handleReplyClick = () => {
-    messageInputRef.current.focus();
+    privateChatInputRef.current.focus();
     setReplyingToMessage(msg);
     setShowMoreActionsModal(false);
     handleMessageTap(null);
   };
 
   const handleEditClick = () => {
-    messageInputRef.current.focus();
+    // privateChatInputRef.current.focus();
     setEditingMessage(msg);
     setShowMoreActionsModal(false);
     handleMessageTap(null);

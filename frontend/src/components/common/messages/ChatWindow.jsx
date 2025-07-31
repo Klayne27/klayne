@@ -29,7 +29,7 @@ const ChatWindow = () => {
 
   const conversationId = selectedConversation?._id;
 
-  const messageInputRef = useRef(null);
+  const privateChatInputRef = useRef(null);
   const currentOptimisticIdRef = useRef(null);
   const messageListRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
@@ -319,7 +319,7 @@ const ChatWindow = () => {
           isNewChat={isChatEmpty}
           error={error}
           messagesToRender={messages}
-          messageInputRef={messageInputRef}
+          privateChatInputRef={privateChatInputRef}
           messages={messages}
           isLoadingInitialMessages={isLoading && !isFetchingNextPage}
           isFetchingOlderMessages={isFetchingNextPage}
@@ -345,7 +345,7 @@ const ChatWindow = () => {
           otherUser={otherUser}
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
-          messageInputRef={messageInputRef}
+          privateChatInputRef={privateChatInputRef}
           didMessageJustLanded={didMessageJustLanded}
           // The `socket` prop below can likely be removed from MessageInput
           // if it only emits and doesn't listen. MessageInput can use `useSocket` directly.

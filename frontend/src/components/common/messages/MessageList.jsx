@@ -11,7 +11,7 @@ const MessageList = forwardRef(function MessageList(
     error,
     isNewChat,
     messagesToRender,
-    messageInputRef,
+    privateChatInputRef,
     isLoadingInitialMessages,
     isFetchingOlderMessages,
     hasNextPage,
@@ -146,7 +146,7 @@ const MessageList = forwardRef(function MessageList(
               key={msg._id}
               msg={msg} // Pass the enhanced message object
               currentUser={currentUser} // Still likely needed for 'is my message' logic
-              messageInputRef={messageInputRef} // Still needed if MessageItem focuses input
+              privateChatInputRef={privateChatInputRef} // Still needed if MessageItem focuses input
               onReactionAdded={onReactionAdded} // If this is a ChatWindow concern
               handleLoadImage={handleLoadImage} // If this is a ChatWindow concern
               // No need to pass these anymore:

@@ -311,7 +311,7 @@ export const replyToComment = async (req, res) => {
       }
     }
 
-    const mentionedUserIds = await extractAndValdiateMentions(text);
+    const mentionedUserIds = await extractAndValidateMentions(text);
 
     const newReply = new Comment({
       user: userId,

@@ -19,19 +19,22 @@ import { showAppToast } from "../../utils/showAppToast";
 import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
+import { useIsMobile } from "../../hooks/useIsMobile";
+import { usePasteHandler } from "../../hooks/usePasteHandler";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
 const MAX_FILE_SIZE_MB = 20;
 
 const CreatePost = () => {
-  const { hasNewFeedPosts, setShowNewFeedPostsButton, setNewPostCount, newPostCount } = useSocket();
+  const { hasNewFeedPosts, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =
+    useSocket();
   const queryClient = useQueryClient();
 
   // State for post content
-  const [text, setText] = useState("");
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [previewUrl, setPreviewUrl] = useState(null);
+  const [postInput, setPostInput] = useState("");
+  const [postSelectedFile, setPostSelectedFile] = useState(null);
+  const [postPreviewImage, setPostPreviewImage] = useState(null);
 
   // State for emoji picker
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -61,45 +64,25 @@ const CreatePost = () => {
   const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300);
 
   // Refs
-  const fileInputRef = useRef(null);
+  const postFileInputRef = useRef(null);
   const emojiPickerRef = useRef(null);
   const emojiButtonRef = useRef(null);
-  const textareaRef = useRef(null);
+  const postInputRef = useRef(null);
   const suggestionBoxRef = useRef(null);
 
   // Hooks
   const { authUser } = useAuthUser();
   const { createPost, isPending, isError, error } = useCreatePosts();
 
-  const [isMobile, setIsMobile] = useState(false);
+  const isMobile = useIsMobile();
 
-  useEffect(() => {
-    const checkIsMobile = () => {
-      // Define your breakpoint
-      const mobileBreakpoint = 768; // px
-
-      // Update state based on current window width
-      setIsMobile(window.innerWidth <= mobileBreakpoint);
-    };
-
-    // Initial check when component mounts
-    checkIsMobile();
-
-    // Add event listener for window resize
-    window.addEventListener("resize", checkIsMobile);
-
-    // Clean up event listener when component unmounts
-    return () => {
-      window.removeEventListener("resize", checkIsMobile);
-    };
-  }, []); // Empty dependency array means this runs once on mount and cleans up on unmount
+  // Empty dependency array means this runs once on mount and cleans up on unmount
 
   // Fetch mention suggestions using react-query
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
     debouncedMentionSearchTerm
   );
-      const { markFeedAsRead } = useMarkPostsAsRead();
-  
+  const { markFeedAsRead } = useMarkPostsAsRead();
 
   // Effect to adjust emoji picker width on resize
   useEffect(() => {
@@ -139,8 +122,8 @@ const CreatePost = () => {
         showMentionSuggestions &&
         suggestionBoxRef.current &&
         !suggestionBoxRef.current.contains(event.target) &&
-        textareaRef.current &&
-        !textareaRef.current.contains(event.target)
+        postInputRef.current &&
+        !postInputRef.current.contains(event.target)
       ) {
         setShowMentionSuggestions(false);
       }
@@ -153,18 +136,18 @@ const CreatePost = () => {
 
   // Effect to manage textarea height dynamically
   useEffect(() => {
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (postInputRef.current) {
+      postInputRef.current.style.height = "auto";
+      postInputRef.current.style.height = postInputRef.current.scrollHeight + "px";
     }
-  }, [text, showPollInputs]); // Also react to poll input visibility as it changes layout
+  }, [postInput, showPollInputs]); // Also react to poll input visibility as it changes layout
 
   // Handlers
 
   const resetForm = useCallback(() => {
-    setText("");
-    setSelectedFile(null);
-    setPreviewUrl(null);
+    setPostInput("");
+    setPostSelectedFile(null);
+    setPostPreviewImage(null);
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
     setScheduledAt(null);
@@ -172,11 +155,11 @@ const CreatePost = () => {
     setMentionQuery("");
     setShowMentionSuggestions(false);
     setMentionStartIndex(-1);
-    if (fileInputRef.current) {
-      fileInputRef.current.value = null;
+    if (postFileInputRef.current) {
+      postFileInputRef.current.value = null;
     }
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+    if (postInputRef.current) {
+      postInputRef.current.style.height = "auto";
     }
   }, []);
 
@@ -189,80 +172,25 @@ const CreatePost = () => {
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
 
     setShowNewFeedPostsButton(false);
-    markFeedAsRead()
+    markFeedAsRead();
   }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead]);
 
-  const handlePaste = useCallback(
-    (e) => {
-      e.preventDefault();
-
-      const items = e.clipboardData.items;
-      let imagePasted = false;
-
-      for (let i = 0; i < items.length; i++) {
-        if (items[i].type.indexOf("image") !== -1) {
-          const file = items[i].getAsFile();
-
-          if (file) {
-            if (!file.type.startsWith("image/")) {
-              showAppToast("Pasted content is not a supported image type.", "error");
-              return;
-            }
-            if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
-              showAppToast(
-                `Pasted image size exceeds ${MAX_FILE_SIZE_MB}MB limit.`,
-                "error"
-              );
-              return;
-            }
-
-            setSelectedFile(file);
-            setPreviewUrl(URL.createObjectURL(file));
-
-            // Reset conflicting states
-            setShowPollInputs(false);
-            setPollChoices([{ text: "" }, { text: "" }]);
-            setShowMentionSuggestions(false);
-            setScheduledAt(null); // Clear scheduled post if media is pasted
-            imagePasted = true;
-            break; // Exit loop after finding the first image
-          }
-        }
-      }
-
-      if (!imagePasted) {
-        // If no image was found, or if it was text, proceed with default text paste
-        const pastedText = e.clipboardData.getData("text/plain");
-        if (pastedText) {
-          const cursorStart = e.target.selectionStart;
-          const cursorEnd = e.target.selectionEnd;
-
-          const newText =
-            text.substring(0, cursorStart) + pastedText + text.substring(cursorEnd);
-
-          setText(newText);
-
-          setTimeout(() => {
-            if (textareaRef.current) {
-              textareaRef.current.selectionStart = cursorStart + pastedText.length;
-              textareaRef.current.selectionEnd = cursorStart + pastedText.length;
-              textareaRef.current.style.height = "auto";
-              textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
-            }
-          }, 0);
-        }
-      }
-    },
-    [text]
-  );
+  const handlePaste = usePasteHandler({
+    inputRef: postInputRef,
+    input: postInput,
+    setInput: setPostInput,
+    setSelectedFile: setPostSelectedFile,
+    setPreviewImage: setPostPreviewImage,
+    postFileInputRef: postFileInputRef,
+  });
 
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value;
-    setText(newText);
+    setPostInput(newText);
 
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+    if (postInputRef.current) {
+      postInputRef.current.style.height = "auto";
+      postInputRef.current.style.height = postInputRef.current.scrollHeight + "px";
     }
 
     const cursorPosition = e.target.selectionStart;
@@ -292,7 +220,7 @@ const CreatePost = () => {
 
   const handleMentionSelect = useCallback(
     (username) => {
-      const currentText = text;
+      const currentText = postInput;
       const startReplaceIndex = mentionStartIndex;
 
       const textFromAt = currentText.substring(mentionStartIndex);
@@ -309,22 +237,22 @@ const CreatePost = () => {
         `@${username} ` +
         currentText.substring(endReplaceIndex);
 
-      setText(newText);
+      setPostInput(newText);
       setMentionQuery("");
       setMentionStartIndex(-1);
       setShowMentionSuggestions(false);
 
       const newCursorPosition = startReplaceIndex + `@${username} `.length;
       setTimeout(() => {
-        if (textareaRef.current) {
-          textareaRef.current.focus();
-          textareaRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
-          textareaRef.current.style.height = "auto";
-          textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+        if (postInputRef.current) {
+          postInputRef.current.focus();
+          postInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition);
+          postInputRef.current.style.height = "auto";
+          postInputRef.current.style.height = postInputRef.current.scrollHeight + "px";
         }
       }, 0);
     },
-    [text, mentionStartIndex]
+    [postInput, mentionStartIndex]
   );
 
   const handleSubmit = useCallback(
@@ -340,7 +268,7 @@ const CreatePost = () => {
           (choice) => choice.text.trim() !== ""
         );
 
-        if (text.trim() === "") {
+        if (postInput.trim() === "") {
           showAppToast("Polls should have a question/text.", "error");
           return;
         }
@@ -360,7 +288,7 @@ const CreatePost = () => {
           return;
         }
 
-        if (selectedFile) {
+        if (postSelectedFile) {
           showAppToast("You cannot post a poll with an image or video.", "error");
           return;
         }
@@ -370,7 +298,7 @@ const CreatePost = () => {
         }
 
         let postData = {
-          text,
+          postInput,
           pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
         };
 
@@ -384,24 +312,24 @@ const CreatePost = () => {
       }
 
       // Regular post (text or media)
-      if (text.trim() === "" && !selectedFile) {
+      if (postInput.trim() === "" && !postSelectedFile) {
         // showAppToastt(("Post must have text, an image, or a video.");
         return;
       }
 
-      if (selectedFile && scheduledAt) {
+      if (postSelectedFile && scheduledAt) {
         showAppToast("You cannot schedule a post with media.", "error");
         return;
       }
 
-      let postData = { text };
+      let postData = { postInput };
 
-      if (selectedFile) {
+      if (postSelectedFile) {
         const reader = new FileReader();
         reader.onloadend = () => {
-          if (selectedFile.type.startsWith("image/")) {
+          if (postSelectedFile.type.startsWith("image/")) {
             postData.img = reader.result;
-          } else if (selectedFile.type.startsWith("video/")) {
+          } else if (postSelectedFile.type.startsWith("video/")) {
             postData.video = reader.result;
           }
 
@@ -412,7 +340,7 @@ const CreatePost = () => {
             },
           });
         };
-        reader.readAsDataURL(selectedFile);
+        reader.readAsDataURL(postSelectedFile);
       } else {
         if (scheduledAt) {
           postData.scheduledAt = scheduledAt;
@@ -427,8 +355,8 @@ const CreatePost = () => {
       }
     },
     [
-      text,
-      selectedFile,
+      postInput,
+      postSelectedFile,
       showPollInputs,
       pollChoices,
       scheduledAt,
@@ -446,22 +374,22 @@ const CreatePost = () => {
           "Unsupported file type. Please select an image or a video.",
           "error"
         );
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
+        setPostSelectedFile(null);
+        setPostPreviewImage(null);
+        if (postFileInputRef.current) postFileInputRef.current.value = null;
         return;
       }
 
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) {
         showAppToast(`File size exceeds ${MAX_FILE_SIZE_MB}MB limit.`, "error");
-        setSelectedFile(null);
-        setPreviewUrl(null);
-        if (fileInputRef.current) fileInputRef.current.value = null;
+        setPostSelectedFile(null);
+        setPostPreviewImage(null);
+        if (postFileInputRef.current) postFileInputRef.current.value = null;
         return;
       }
 
-      setSelectedFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      setPostSelectedFile(file);
+      setPostPreviewImage(URL.createObjectURL(file));
 
       // Reset conflicting states
       setShowPollInputs(false);
@@ -469,18 +397,18 @@ const CreatePost = () => {
       setShowMentionSuggestions(false);
       setScheduledAt(null); // Clear scheduledAt if media is selected
     } else {
-      setSelectedFile(null);
-      setPreviewUrl(null);
+      setPostSelectedFile(null);
+      setPostPreviewImage(null);
     }
   }, []);
 
   const onEmojiClick = useCallback((emojiObject) => {
-    setText((prevText) => prevText + emojiObject.emoji);
-    if (textareaRef.current) {
-      textareaRef.current.focus();
+    setPostInput((prevText) => prevText + emojiObject.emoji);
+    if (postInputRef.current) {
+      postInputRef.current.focus();
       // Auto-adjust height after emoji insert
-      textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = textareaRef.current.scrollHeight + "px";
+      postInputRef.current.style.height = "auto";
+      postInputRef.current.style.height = postInputRef.current.scrollHeight + "px";
     }
   }, []);
 
@@ -526,8 +454,8 @@ const CreatePost = () => {
   const handleRemovePoll = useCallback(() => {
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
-    if (textareaRef.current) {
-      textareaRef.current.style.height = "auto";
+    if (postInputRef.current) {
+      postInputRef.current.style.height = "auto";
     }
   }, []);
 
@@ -535,9 +463,9 @@ const CreatePost = () => {
     setShowPollInputs((prev) => !prev);
     if (!showPollInputs) {
       // If turning poll inputs ON, clear other conflicting states
-      setSelectedFile(null);
-      setPreviewUrl(null);
-      if (fileInputRef.current) fileInputRef.current.value = null;
+      setPostSelectedFile(null);
+      setPostPreviewImage(null);
+      if (postFileInputRef.current) postFileInputRef.current.value = null;
       setScheduledAt(null);
       setPollChoices([{ text: "" }, { text: "" }]);
       setMentionQuery("");
@@ -558,9 +486,9 @@ const CreatePost = () => {
   const handleOpenSchedulePostModal = useCallback(() => {
     setShowSchedulePostModal(true);
     // When opening schedule modal, clear other conflicting states
-    setSelectedFile(null);
-    setPreviewUrl(null);
-    if (fileInputRef.current) fileInputRef.current.value = null;
+    setPostSelectedFile(null);
+    setPostPreviewImage(null);
+    if (postFileInputRef.current) postFileInputRef.current.value = null;
     setShowPollInputs(false);
     setPollChoices([{ text: "" }, { text: "" }]);
   }, []);
@@ -616,19 +544,19 @@ const CreatePost = () => {
     (() => {
       if (scheduledAt) {
         // Scheduled post requires text, and cannot have media or be a poll
-        return text.trim() === "" || selectedFile !== null || showPollInputs;
+        return postInput.trim() === "" || postSelectedFile !== null || showPollInputs;
       }
       if (showPollInputs) {
-        // Poll requires text and at least two non-empty choices, and no choice exceeds max length
+        // Poll requires postInput and at least two non-empty choices, and no choice exceeds max length
         return (
-          text.trim() === "" ||
+          postInput.trim() === "" ||
           pollChoices[0].text.trim() === "" ||
           pollChoices[1].text.trim() === "" ||
           pollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)
         );
       }
       // Regular post requires text OR a selected file
-      return text.trim() === "" && !selectedFile;
+      return postInput.trim() === "" && !postSelectedFile;
     })();
 
   return (
@@ -678,11 +606,11 @@ const CreatePost = () => {
                   ? "Ask a question"
                   : "What is happening?"
               }
-              value={text}
+              value={postInput}
               onChange={handleTextChange}
               onKeyDown={handleKeyDown}
               onPaste={handlePaste}
-              ref={textareaRef}
+              ref={postInputRef}
               rows={2}
               style={{ minHeight: "28px" }}
             />
@@ -691,7 +619,7 @@ const CreatePost = () => {
               <div
                 ref={suggestionBoxRef}
                 className="absolute z-50 bg-base-100 border border-accent rounded-md shadow-lg max-h-60 overflow-y-auto w-full"
-                style={{ top: textareaRef.current?.scrollHeight || 0, left: 0 }}
+                style={{ top: postInputRef.current?.scrollHeight || 0, left: 0 }}
               >
                 {isLoadingSuggestedUsers ? (
                   <p className="p-2 text-slate-400">Loading suggestions...</p>
@@ -723,27 +651,27 @@ const CreatePost = () => {
             )}
           </div>
 
-          {previewUrl && (
+          {postPreviewImage && (
             <div className="relative max-w-full mx-auto sm:w-auto">
               <IoClose
                 size={25}
                 className="absolute -top-2 -right-2 text-white bg-slate-500 transition duration-200 hover:bg-gray-600 rounded-full p-1 cursor-pointer z-10"
                 onClick={() => {
-                  setSelectedFile(null);
-                  setPreviewUrl(null);
-                  if (fileInputRef.current) fileInputRef.current.value = null;
+                  setPostSelectedFile(null);
+                  setPostPreviewImage(null);
+                  if (postFileInputRef.current) postFileInputRef.current.value = null;
                 }}
               />
-              {selectedFile.type.startsWith("image/") ? (
+              {postSelectedFile.type.startsWith("image/") ? (
                 <img
-                  src={previewUrl}
+                  src={postPreviewImage}
                   className="w-full h-auto max-h-96 object-contain rounded"
                   alt="Image preview"
                 />
               ) : (
                 <video
                   controls
-                  src={previewUrl}
+                  src={postPreviewImage}
                   className="w-full h-auto max-h-96 object-contain rounded"
                   preload="metadata"
                 >
@@ -823,7 +751,7 @@ const CreatePost = () => {
               {!showPollInputs && !scheduledAt && (
                 <BiImageAdd
                   className="text-primary w-6 h-6 cursor-pointer hover:text-primary/80"
-                  onClick={() => fileInputRef.current.click()}
+                  onClick={() => postFileInputRef.current.click()}
                   title="Add image or video"
                   aria-label="Add image or video"
                 />
@@ -832,12 +760,12 @@ const CreatePost = () => {
                 type="file"
                 accept="image/*,video/*"
                 hidden
-                ref={fileInputRef}
+                ref={postFileInputRef}
                 onChange={handleFileChange}
               />
 
               {/* Poll icon - hidden if media or schedule is selected/previewed */}
-              {!selectedFile && !scheduledAt && (
+              {!postSelectedFile && !scheduledAt && (
                 <BiPoll
                   className="text-primary size-6 cursor-pointer hover:text-primary/80"
                   onClick={handlePollIconClick}
@@ -873,7 +801,7 @@ const CreatePost = () => {
               </div>
 
               {/* Schedule NEW Post icon - hidden if media or poll is active */}
-              {!selectedFile && !showPollInputs && (
+              {!postSelectedFile && !showPollInputs && (
                 <TbCalendarClock
                   size={22}
                   className="text-primary cursor-pointer hover:text-primary/80"
@@ -921,7 +849,7 @@ const CreatePost = () => {
           />
         )}
       </div>
-      {newPostCount > 0 &&  (
+      {newPostCount > 0 && (
         <div
           onClick={handleNewPostsButtonClick}
           className="py-3 hover:bg-gray-700/30 transition duration-500 border-b border-accent text-center text-primary cursor-pointer"
