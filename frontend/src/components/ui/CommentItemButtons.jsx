@@ -3,8 +3,6 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa6";
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6";
 
-
-
 function CommentItemButtons({
   onLikeCommentClick,
   isLikingComment,

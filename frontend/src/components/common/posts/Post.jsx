@@ -23,6 +23,7 @@ import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { MdBlock } from "react-icons/md";
 import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile";
 import { useAppStore } from "../../../store/appStore";
+import useDropdownMenu from "../../../hooks/useDropdownMenu";
 
 const Post = ({
   post,
@@ -41,14 +42,14 @@ const Post = ({
   const [isAnimatingPin, setIsAnimatingPin] = useState(false); // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false); // NEW
   const [isAnimatingComment, setIsAnimatingComment] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
 
   const { pathname } = useLocation();
 
   const isDraggingRef = useRef(0);
   const initialClientY = useRef(0);
   const initialClientX = useRef(0);
-  const menuRef = useRef(null); // Ref for the menu to handle clicks outside
+
+  const { toggleMenu, showMenu, setShowMenu, menuRef } = useDropdownMenu();
 
   const isRepost = !!post.repostedFrom;
   const sourcePost = post.repostedFrom || post;
@@ -233,11 +234,6 @@ const Post = ({
     }
   };
 
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setShowMenu((prev) => !prev);
-  };
-
   // New: Handle follow/unfollow
   const handleFollowClick = (e) => {
     e.stopPropagation();
@@ -253,19 +249,6 @@ const Post = ({
     blockUnblockUser(originalPostOwner._id);
     setShowMenu(false); // Close menu after clicking
   };
-
-  // Close menu when clicking outside
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (menuRef.current && !menuRef.current.contains(event.target)) {
-  //       setShowMenu(false);
-  //     }
-  //   };
-  //   document.addEventListener("mousedown", handleClickOutside);
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleClickOutside);
-  //   };
-  // }, [menuRef]);
 
   const navigateToReposterProfile = (e) => {
     e.stopPropagation();
@@ -442,7 +425,6 @@ const Post = ({
                     onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                   >
                     {isMyOriginalPost ? (
-                      // Menu for post owner
                       <button
                         className="w-full text-left px-4 py-2 text-red-500 hover:bg-gray-700/30 duration-200 transition flex items-center gap-2 font-semibold z-50"
                         onClick={handleDeletePostClick}

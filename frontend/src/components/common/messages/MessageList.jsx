@@ -30,18 +30,18 @@ const MessageList = forwardRef(function MessageList(
     }
 
     // Pre-process dates to avoid creating new Date objects repeatedly inside the loop
-    const messagesWithParsedDates = messagesToRender.map((msg) => ({
-      ...msg,
-      parsedCreatedAt: new Date(msg.createdAt),
+    const messagesWithParsedDates = messagesToRender.map((message) => ({
+      ...message,
+      parsedCreatedAt: new Date(message.createdAt),
       // Normalize sender ID if it can be an object or string
-      normalizedSenderId: typeof msg.sender === "object" ? msg.sender._id : msg.sender,
+      normalizedSenderId: typeof message.sender === "object" ? message.sender._id : message.sender,
     }));
 
-    return messagesWithParsedDates.map((msg, index) => {
+    return messagesWithParsedDates.map((message, index) => {
       const previousMessage = messagesWithParsedDates[index - 1];
       const nextMessage = messagesWithParsedDates[index + 1];
 
-      const currentSenderId = msg.normalizedSenderId;
+      const currentSenderId = message.normalizedSenderId;
       const prevSenderId = previousMessage ? previousMessage.normalizedSenderId : null;
       const nextSenderId = nextMessage ? nextMessage.normalizedSenderId : null;
 
@@ -55,7 +55,7 @@ const MessageList = forwardRef(function MessageList(
       // Determine isNewDay for current message relative to previous
       if (previousMessage) {
         const prevDate = previousMessage.parsedCreatedAt;
-        const currDate = msg.parsedCreatedAt;
+        const currDate = message.parsedCreatedAt;
         isNewDay =
           currDate.getDate() !== prevDate.getDate() ||
           currDate.getMonth() !== prevDate.getMonth() ||
@@ -70,7 +70,7 @@ const MessageList = forwardRef(function MessageList(
         isFirstInGroup = true;
       } else {
         const timeDifference =
-          msg.parsedCreatedAt.getTime() - previousMessage.parsedCreatedAt.getTime();
+          message.parsedCreatedAt.getTime() - previousMessage.parsedCreatedAt.getTime();
         const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
         if (currentSenderId !== prevSenderId || isNewDay || isTimeThresholdExceeded) {
@@ -84,13 +84,13 @@ const MessageList = forwardRef(function MessageList(
         isLastInGroup = true;
       } else {
         const timeDifference =
-          nextMessage.parsedCreatedAt.getTime() - msg.parsedCreatedAt.getTime();
+          nextMessage.parsedCreatedAt.getTime() - message.parsedCreatedAt.getTime();
         const isTimeThresholdExceeded = timeDifference > MESSAGE_GROUP_TIME_THRESHOLD_MS;
 
         const isNextNewDay = // Check if the *next* message starts a new day
-          msg.parsedCreatedAt.getDate() !== nextMessage.parsedCreatedAt.getDate() ||
-          msg.parsedCreatedAt.getMonth() !== nextMessage.parsedCreatedAt.getMonth() ||
-          msg.parsedCreatedAt.getFullYear() !== nextMessage.parsedCreatedAt.getFullYear();
+          message.parsedCreatedAt.getDate() !== nextMessage.parsedCreatedAt.getDate() ||
+          message.parsedCreatedAt.getMonth() !== nextMessage.parsedCreatedAt.getMonth() ||
+          message.parsedCreatedAt.getFullYear() !== nextMessage.parsedCreatedAt.getFullYear();
 
         if (currentSenderId !== nextSenderId || isNextNewDay || isTimeThresholdExceeded) {
           isLastInGroup = true;
@@ -98,14 +98,14 @@ const MessageList = forwardRef(function MessageList(
       }
 
       return {
-        ...msg, // Include all original message properties
+        ...message, // Include all original message properties
         isNewDay, // New property for date separators
         showHeaderInfo,
         isFirstInGroup,
         isLastInGroup,
         // Use optional chaining and fallback for safety
-        senderProfileImg: msg.sender?.profileImg || "/public/avatar-placeholder.png",
-        senderUsername: typeof msg.sender === "object" ? msg.sender?.username : undefined,
+        senderProfileImg: message.sender?.profileImg || "/public/avatar-placeholder.png",
+        senderUsername: typeof message.sender === "object" ? message.sender?.username : undefined,
       };
     });
   }, [messagesToRender, currentUser._id]); // Recalculate only when dependencies change
@@ -139,12 +139,12 @@ const MessageList = forwardRef(function MessageList(
 
       {!isNewChat &&
         enhancedMessages.length > 0 && // Iterate over enhancedMessages
-        enhancedMessages.map((msg) => {
-          // All calculated properties are now directly on the `msg` object
+        enhancedMessages.map((message) => {
+          // All calculated properties are now directly on the `message` object
           return (
             <MessageItem
-              key={msg._id}
-              msg={msg} // Pass the enhanced message object
+              key={message._id}
+              message={message} // Pass the enhanced message object
               currentUser={currentUser} // Still likely needed for 'is my message' logic
               privateChatInputRef={privateChatInputRef} // Still needed if MessageItem focuses input
               onReactionAdded={onReactionAdded} // If this is a ChatWindow concern
@@ -164,7 +164,7 @@ const MessageList = forwardRef(function MessageList(
         <MessageItem
           key="typing-indicator"
           isTypingOtherUser={true}
-          msg={{ sender: { _id: "dummy" }, text: "", img: "" }}
+          message={{ sender: { _id: "dummy" }, text: "", img: "" }}
           currentUser={currentUser}
         />
       )}

@@ -22,6 +22,8 @@ import { BsThreeDots } from "react-icons/bs";
 import { useIsMobile } from "../../../hooks/useIsMobile";
 import { usePasteHandler } from "../../../hooks/usePasteHandler";
 import CommentItemButtons from "../../ui/CommentItemButtons";
+import useDropdownMenu from "../../../hooks/useDropdownMenu";
+import DropdownMenu from "../../ui/DropdownMenu";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser();
@@ -34,10 +36,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [replySelectedFile, setReplySelectedFile] = useState(null);
   const replyFileInputRef = useRef(null);
   const [isAnimating, setIsAnimating] = useState(false);
-  const [showMenu, setShowMenu] = useState(false);
   const [showButton, setShowButton] = useState(false);
-
-  const menuRef = useRef(null); // Ref for the menu to handle clicks outside
 
   // --- STATES FOR MENTIONS IN REPLIES ---
   const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
@@ -68,6 +67,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
+
+  const { setShowMenu } = useDropdownMenu();
 
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
@@ -365,11 +366,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     ]
   );
 
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setShowMenu((prev) => !prev);
-  };
-
   // New: Handle follow/unfollow
   const handleFollowClick = (e) => {
     e.stopPropagation();
@@ -385,19 +381,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     blockUnblockUser(comment.user._id);
     setShowMenu(false); // Close menu after clicking
   };
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuRef]);
 
   // Reset animation state after it completes
   useEffect(() => {
@@ -471,108 +454,87 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               )}
             </div>
 
-            <span
-              className="flex ml-auto absolute right-0 group rounded-full p-2 mr-0.5 hover:bg-primary/20 transition duration-200"
-              onClick={toggleMenu}
-            >
-              <div className="group duration-200 transition hover:text-primary rounded-full">
-                <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
-              </div>
-
-              {showMenu && (
+            <DropdownMenu>
+              {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
+              {isCommentOwner && (
                 <>
-                  <div
-                    className="fixed inset-0 bg-transparent z-10 cursor-default"
-                    onClick={toggleMenu}
-                  ></div>
-                  <div
-                    ref={menuRef}
-                    className="absolute right-0 white-shadow top-0 w-max bg-base-100 rounded-xl text-lg z-10 menu-popover py-2"
-                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
-                  >
-                    {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
-                    {isCommentOwner && (
-                      <>
-                        {/* If the current user is the comment owner AND the post owner, only show delete */}
-                        {isPostOwner ? (
-                          <button
-                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                            onClick={handleDeleteCommentClick}
-                            disabled={isDeletingComment}
-                          >
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <FiTrash /> Delete Reply
-                            </span>
-                          </button>
-                        ) : (
-                          // If the current user is the comment owner but NOT the post owner, only show delete
-                          <button
-                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                            onClick={handleDeleteCommentClick}
-                            disabled={isDeletingComment}
-                          >
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <FiTrash /> Delete Reply
-                            </span>
-                          </button>
-                        )}
-                      </>
-                    )}
-
-                    {/* Scenario 2 & 3: Current user is NOT the comment owner */}
-                    {!isCommentOwner && (
-                      <>
-                        {/* Follow/Unfollow button (always shown if not comment owner) */}
-                        <button
-                          className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
-                          onClick={handleFollowClick}
-                          disabled={isFollowingOrUnfollowing}
-                        >
-                          {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <LuUserRoundMinus strokeWidth={2} /> Unfollow
-                            </span>
-                          ) : (
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <LuUserRoundPlus strokeWidth={2} /> Follow @
-                              {comment.user.username}
-                            </span>
-                          )}
-                        </button>
-
-                        {/* Block/Unblock button (always shown if not comment owner) */}
-                        <button
-                          className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
-                          onClick={handleBlockClick}
-                          disabled={isBlocking}
-                        >
-                          {isBlockedByAuthUser ? ( // Assuming this variable tracks if current user blocked the comment owner
-                            "Unblock"
-                          ) : (
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <MdBlock /> Block @{comment.user.username}
-                            </span>
-                          )}
-                        </button>
-
-                        {/* Scenario 3: Post owner interacting with another user's comment */}
-                        {isPostOwner && (
-                          <button
-                            className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
-                            onClick={handleDeleteCommentClick}
-                            disabled={isDeletingComment}
-                          >
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <FiTrash /> Delete Reply
-                            </span>
-                          </button>
-                        )}
-                      </>
-                    )}
-                  </div>
+                  {/* If the current user is the comment owner AND the post owner, only show delete */}
+                  {isPostOwner ? (
+                    <button
+                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      onClick={handleDeleteCommentClick}
+                      disabled={isDeletingComment}
+                    >
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <FiTrash /> Delete Reply
+                      </span>
+                    </button>
+                  ) : (
+                    // If the current user is the comment owner but NOT the post owner, only show delete
+                    <button
+                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      onClick={handleDeleteCommentClick}
+                      disabled={isDeletingComment}
+                    >
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <FiTrash /> Delete Reply
+                      </span>
+                    </button>
+                  )}
                 </>
               )}
-            </span>
+
+              {/* Scenario 2 & 3: Current user is NOT the comment owner */}
+              {!isCommentOwner && (
+                <>
+                  {/* Follow/Unfollow button (always shown if not comment owner) */}
+                  <button
+                    className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                    onClick={handleFollowClick}
+                    disabled={isFollowingOrUnfollowing}
+                  >
+                    {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                      </span>
+                    ) : (
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <LuUserRoundPlus strokeWidth={2} /> Follow @
+                        {comment.user.username}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Block/Unblock button (always shown if not comment owner) */}
+                  <button
+                    className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                    onClick={handleBlockClick}
+                    disabled={isBlocking}
+                  >
+                    {isBlockedByAuthUser ? ( // Assuming this variable tracks if current user blocked the comment owner
+                      "Unblock"
+                    ) : (
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <MdBlock /> Block @{comment.user.username}
+                      </span>
+                    )}
+                  </button>
+
+                  {/* Scenario 3: Post owner interacting with another user's comment */}
+                  {isPostOwner && (
+                    <button
+                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      onClick={handleDeleteCommentClick}
+                      disabled={isDeletingComment}
+                    >
+                      <span className="flex items-center justify-center gap-3 font-semibold">
+                        <FiTrash /> Delete Reply
+                      </span>
+                    </button>
+                  )}
+                </>
+              )}
+            </DropdownMenu>
           </div>
           {comment.parentComment && comment.parentComment.user && (
             <div className="text-gray-500 text-xs mt-1 mb-2 ">

@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { formatPostDate } from "../../../utils/date";
 import { MdImage } from "react-icons/md";
-import React, { useEffect, useRef, useState } from "react";
+import React, { useState } from "react";
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility";
 import { CiCircleMinus } from "react-icons/ci";
 import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConversation";
@@ -12,17 +12,16 @@ import { FiTrash } from "react-icons/fi";
 import { BsThreeDots } from "react-icons/bs";
 import ConfirmationModal from "../../ui/ConfirmationModal";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
+import useDropdownMenu from "../../../hooks/useDropdownMenu";
+import DropdownMenu from "../../ui/DropdownMenu";
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser();
   const navigate = useNavigate();
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation);
-
-  const [showMenu, setShowMenu] = useState(false);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
-
-  const menuRef = useRef(null);
+  // const { toggleMenu, showMenu, menuRef } = useDropdownMenu();
 
   const otherUser = conv.participants.find(
     (p) => p?._id.toString() !== currentUser._id.toString()
@@ -56,24 +55,6 @@ function ConversationItem({ conv }) {
   const handleToggleHide = (e) => {
     e.stopPropagation();
     toggleVisibility({ conversationId: conv._id, isHiding: true });
-  };
-
-  // Close menu when clicking outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [menuRef]);
-
-  const toggleMenu = (e) => {
-    e.stopPropagation();
-    setShowMenu(!showMenu);
   };
 
   const handleCloseModal = (e) => {
@@ -145,46 +126,25 @@ function ConversationItem({ conv }) {
           </p>
         </div>
       </div>
-      <span
-        className="flex ml-auto relative right-0 group rounded-full p-2 mr-0.5 hover:bg-primary/20 transition duration-200"
-        onClick={toggleMenu}
-      >
-        <div className="group duration-200 transition hover:text-primary rounded-full">
-          <BsThreeDots className="group-hover:text-primary cursor-pointer text-slate-500" />
-        </div>
-        {showMenu && (
-          <>
-            <div
-              className="fixed inset-0 bg-transparent z-10 cursor-default"
-              onClick={toggleMenu}
-            ></div>
-            <div
-              ref={menuRef}
-              className="absolute right-0 top-0 w-max bg-base-100 white-shadow rounded-xl text-md z-10 menu-popover py-2"
-              onClick={(e) => e.stopPropagation()}
-            >
-              <button
-                className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
-                onClick={handleToggleHide}
-              >
-                <CiCircleMinus />
-                Hide Conversation
-              </button>
-              <button
-                className="w-full text-left px-4 py-2 text-red-500  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setShowDeleteModal(true);
-                  setShowMenu(false);
-                }}
-              >
-                <FiTrash />
-                Delete Conversation
-              </button>
-            </div>
-          </>
-        )}
-      </span>
+      <DropdownMenu>
+        <button
+          className="w-full text-left px-4 py-2 text-white  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+          onClick={handleToggleHide}
+        >
+          <CiCircleMinus />
+          Hide Conversation
+        </button>
+        <button
+          className="w-full text-left px-4 py-2 text-red-500  flex items-center gap-2 font-semibold duration-200 transition hover:bg-gray-700/30"
+          onClick={(e) => {
+            e.stopPropagation();
+            setShowDeleteModal(true);
+          }}
+        >
+          <FiTrash />
+          Delete Conversation
+        </button>
+      </DropdownMenu>
 
       {showDeleteModal && (
         <ConfirmationModal
