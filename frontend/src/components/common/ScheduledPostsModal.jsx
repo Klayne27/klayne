@@ -13,6 +13,7 @@ import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 import useLockBodyScroll from "../../hooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
 import ConfirmationModal from "../ui/ConfirmationModal";
+import { useTouchHoverEffect } from "../../hooks/useTouchHoverEffect";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
@@ -27,38 +28,46 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   useLockBodyScroll(isOpen);
 
   // --- NEW STATE FOR TOUCH EFFECT ---
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
+  // const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
 
   const { scheduledPosts, isLoading, isError, error, refetch } = useGetScheduledPosts();
   const { deleteMultipleScheduledPosts, isPending: isDeletingMultiple } =
     useDeleteMultipleScheduledPosts();
 
+  const {
+    isTouchDevice,
+    activeButtonId,
+    handleTouchCancel,
+    handleTouchEnd,
+    handleTouchStart,
+  } = useTouchHoverEffect();
+
   // --- NEW TOUCH HANDLERS ---
-  const handleTouchStart = useCallback(
-    (id) => {
-      if (isTouchDevice) {
-        setActiveButton(id);
-      }
-    },
-    [isTouchDevice]
-  );
+  // const handleTouchStart = useCallback(
+  //   (id) => {
+  //     if (isTouchDevice) {
+  //       setActiveButton(id);
+  //     }
+  //   },
+  //   [isTouchDevice]
+  // );
 
-  const handleTouchEnd = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
-    }
-  }, [isTouchDevice]);
+  // const handleTouchEnd = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
+  //   }
+  // }, [isTouchDevice]);
 
-  const handleTouchCancel = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 200);
-    }
-  }, [isTouchDevice]);
+  // const handleTouchCancel = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 200);
+  //   }
+  // }, [isTouchDevice]);
 
   const handleCheckboxChange = (postId, isChecked) => {
     setSelectedPostIds((prevSelected) =>
@@ -135,14 +144,14 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     setShowDeleteConfirmModal(false);
   };
 
-  // --- EFFECT TO DETECT TOUCH DEVICE ---
-  useEffect(() => {
-    setIsTouchDevice(
-      "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0
-    );
-  }, []);
+  // // --- EFFECT TO DETECT TOUCH DEVICE ---
+  // useEffect(() => {
+  //   setIsTouchDevice(
+  //     "ontouchstart" in window ||
+  //       navigator.maxTouchPoints > 0 ||
+  //       navigator.msMaxTouchPoints > 0
+  //   );
+  // }, []);
 
   if (!isOpen) return null;
 
@@ -217,7 +226,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                   className={`px-4 py-2 border-b border-slate-500  transition duration-200 flex items-center gap-3 ${
                     !isTouchDevice ? "hover:bg-secondary" : ""
                   }  ${
-                    isTouchDevice && activeButton === "scheduled-post"
+                    isTouchDevice && activeButtonId === "scheduled-post"
                       ? "bg-secondary transition duration-150"
                       : ""
                   }`}

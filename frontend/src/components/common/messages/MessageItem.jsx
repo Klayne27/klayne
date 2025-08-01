@@ -42,14 +42,13 @@ const MessageItem = ({
   const [isHovered, setIsHovered] = useState(false);
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
-  const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
+  const [isTouchDevice, setIsTouchDevice] = useState(false);
 
   const { deleteMessage } = useDeleteMessage();
   const { reactToMessage } = useReactToMessage(selectedConversation._id);
 
   const moreEmojisButtonRef = useRef(null);
   const addReactionButtonRef = useRef(null);
-  const moreButtonRef = useRef(null);
 
   const isMobile = useIsMobile();
 
@@ -59,18 +58,14 @@ const MessageItem = ({
   const isSentByCurrentUser = message?.sender._id === currentUser._id;
   const isEditable = isSentByCurrentUser;
 
-  const isTouchDevice = () => {
-    if (typeof window === "undefined") return false;
-    return (
-      "ontouchstart" in window ||
-      navigator.maxTouchPoints > 0 ||
-      navigator.msMaxTouchPoints > 0
-    );
-  };
-
   useEffect(() => {
-    setIsCurrentlyTouchDevice(isTouchDevice());
+    setIsTouchDevice(
+      "ontouchstart" in window ||
+        navigator.maxTouchPoints > 0 ||
+        navigator.msMaxTouchPoints > 0
+    );
   }, []);
+
 
   const {
     showEmojiPickerPopover,
@@ -110,7 +105,7 @@ const MessageItem = ({
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser);
 
   const handleMouseEnter = (messageId) => {
-    if (!isCurrentlyTouchDevice) {
+    if (!isTouchDevice) {
       //   if (mouseLeaveTimeoutRef.current) {
       //     clearTimeout(mouseLeaveTimeoutRef.current);
       //     mouseLeaveTimeoutRef.current = null;
@@ -120,14 +115,14 @@ const MessageItem = ({
   };
 
   const handleMouseLeave = () => {
-    if (!isCurrentlyTouchDevice) {
+    if (!isTouchDevice) {
       //   mouseLeaveTimeoutRef.current = setTimeout(() => {
       setActiveMessageModalId(null);
     }
   };
 
   const handleMessageTap = (messageId) => {
-    if (isCurrentlyTouchDevice) {
+    if (isTouchDevice) {
       setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId));
     }
   };
@@ -167,20 +162,19 @@ const MessageItem = ({
     [activeMessageModalId]
   );
 
-  // useEffect(() => {
-  //   if (activeMessageModalId) {
-  //     document.addEventListener("click", handleClickOutsideMessage);
-  //   }
+  useEffect(() => {
+    if (activeMessageModalId) {
+      document.addEventListener("click", handleClickOutsideMessage);
+    }
 
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutsideMessage);
-  //     if (mouseLeaveTimeoutRef.current) {
-  //       clearTimeout(mouseLeaveTimeoutRef.current);
-  //     }
-  //   };
-  // }, [activeMessageModalId, handleClickOutsideMessage]);
+    return () => {
+      document.removeEventListener("click", handleClickOutsideMessage);
+      if (mouseLeaveTimeoutRef.current) {
+        clearTimeout(mouseLeaveTimeoutRef.current);
+      }
+    };
+  }, [activeMessageModalId, handleClickOutsideMessage]);
 
-  const shouldShowTimeOnHover = isHovered || showModal;
   const isMessageHighlighted = isHovered || showModal;
   const messageContentStyle = isMobile
     ? {
@@ -318,9 +312,9 @@ const MessageItem = ({
             handleMessageTap(message._id);
           }
         }}
-        onTouchStart={isMobile ? handleTouchStart : undefined}
-        onTouchEnd={isMobile ? handleTouchEnd : undefined}
-        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onTouchStart={isTouchDevice ? handleTouchStart : undefined}
+        onTouchEnd={isTouchDevice ? handleTouchEnd : undefined}
+        onTouchMove={isTouchDevice ? handleTouchMove : undefined}
       >
         {/* Main Reaction Picker and Action Modal */}
 
@@ -334,7 +328,6 @@ const MessageItem = ({
           moreEmojisButtonRef={moreEmojisButtonRef}
           openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
           onReplyClick={handleReplyClick}
-          moreActionsButtonRef={moreActionsModalPosition}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
 
@@ -361,12 +354,12 @@ const MessageItem = ({
             <div className="w-8 h-8 mr-1"></div>
           )}
 
-          {shouldShowTimeOnHover && !isSentByCurrentUser && (
+          {isMessageHighlighted && !isSentByCurrentUser && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(message.createdAt)}
             </div>
           )}
-          {shouldShowTimeOnHover && isSentByCurrentUser && (
+          {isMessageHighlighted && isSentByCurrentUser && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(message.createdAt)}
             </div>

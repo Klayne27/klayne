@@ -304,7 +304,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           moreEmojisButtonRef={moreEmojisButtonRef}
           openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
           onReplyClick={handleReplyClick}
-          moreActionsButtonRef={moreActionsButtonRef}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
 

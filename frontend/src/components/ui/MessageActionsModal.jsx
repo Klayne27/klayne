@@ -12,7 +12,6 @@ function MessageActionsModal({
   moreEmojisButtonRef,
   openEmojiPickerWithModalClose,
   onReplyClick,
-  moreActionsButtonRef,
   onOpenMoreActionsModal,
 }) {
   const allowedEmojis = ["❤️", "👍", "😂"];
@@ -64,7 +63,6 @@ function MessageActionsModal({
         <HiOutlineReply size={18} className="group-hover:scale-110" />
       </button>
       <button
-        ref={moreActionsButtonRef}
         onClick={onOpenMoreActionsModal}
         className="text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg p-1 transition duration-100"
         title="More actions"

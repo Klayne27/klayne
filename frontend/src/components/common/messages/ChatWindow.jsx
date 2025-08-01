@@ -4,7 +4,6 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useSocket } from "../../../context/SocketContext"; // Still needed for setActiveConversationId
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages";
-// Import the new socket events hook
 import MessageInput from "./MessageInput";
 import MessageList from "./MessageList";
 import ChatHeader from "./ChatHeader";
@@ -232,7 +231,6 @@ const ChatWindow = () => {
     };
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, setShowNewMessageButton]);
 
-  // --- NEW/UPDATED: Maintain scroll position when fetching older messages ---
   useLayoutEffect(() => {
     const listEl = messageListRef.current;
     if (!listEl) return;

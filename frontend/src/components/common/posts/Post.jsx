@@ -24,6 +24,7 @@ import { MdBlock } from "react-icons/md";
 import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile";
 import { useAppStore } from "../../../store/appStore";
 import useDropdownMenu from "../../../hooks/useDropdownMenu";
+import { useTouchHoverEffect } from "../../../hooks/useTouchHoverEffect";
 
 const Post = ({
   post,
@@ -96,41 +97,49 @@ const Post = ({
 
   const formattedDate = formatPostDate(displayTimestamp);
 
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeButton, setActiveButton] = useState(null);
+  // const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // const [activeButtonId, setActiveButton] = useState(null);
 
-  useEffect(() => {
-    setIsTouchDevice(
-      "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0
-    );
-  }, []);
+  const {
+    isTouchDevice,
+    activeButtonId,
+    handleTouchCancel,
+    handleTouchEnd,
+    handleTouchStart,
+  } = useTouchHoverEffect();
 
-  const handleTouchStart = useCallback(
-    (id) => {
-      if (isTouchDevice) {
-        setActiveButton(id);
-      }
-    },
-    [isTouchDevice]
-  );
+  // useEffect(() => {
+  //   setIsTouchDevice(
+  //     "ontouchstart" in window ||
+  //       navigator.maxTouchPoints > 0 ||
+  //       navigator.msMaxTouchPoints > 0
+  //   );
+  // }, []);
 
-  const handleTouchEnd = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 150);
-    }
-  }, [isTouchDevice]);
+  // const handleTouchStart = useCallback(
+  //   (id) => {
+  //     if (isTouchDevice) {
+  //       setActiveButton(id);
+  //     }
+  //   },
+  //   [isTouchDevice]
+  // );
 
-  const handleTouchCancel = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 150);
-    }
-  }, [isTouchDevice]);
+  // const handleTouchEnd = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 150);
+  //   }
+  // }, [isTouchDevice]);
+
+  // const handleTouchCancel = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 150);
+  //   }
+  // }, [isTouchDevice]);
 
   const navigateToPostPage = (e) => {
     if (isDraggingRef.current) {
@@ -525,7 +534,7 @@ const Post = ({
                         : ""
                     }
                     ${
-                      isTouchDevice && activeButton === "comment"
+                      isTouchDevice && activeButtonId === "comment"
                         ? "bg-sky-400 bg-opacity-15"
                         : ""
                     }`}
@@ -558,7 +567,7 @@ const Post = ({
                         : ""
                     }
                     ${
-                      isTouchDevice && activeButton === "repost"
+                      isTouchDevice && activeButtonId === "repost"
                         ? "bg-emerald-600 bg-opacity-15"
                         : ""
                     }`}
@@ -598,7 +607,7 @@ const Post = ({
                       : ""
                   }
                   ${
-                    isTouchDevice && activeButton === "like"
+                    isTouchDevice && activeButtonId === "like"
                       ? "bg-pink-600 bg-opacity-15"
                       : ""
                   }
@@ -638,7 +647,7 @@ const Post = ({
                       className={`flex gap-1 items-center cursor-pointer group right-0.5 p-2 duration-200 transition rounded-full
                       ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""}
                       ${
-                        isTouchDevice && activeButton === "pin"
+                        isTouchDevice && activeButtonId === "pin"
                           ? "bg-primary bg-opacity-15"
                           : ""
                       }
@@ -669,7 +678,7 @@ const Post = ({
                     className={`flex items-center cursor-pointer group right-0.5 p-2 duration-200 transition rounded-full
                       ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""}
                       ${
-                        isTouchDevice && activeButton === "bookmark"
+                        isTouchDevice && activeButtonId === "bookmark"
                           ? "bg-primary bg-opacity-15"
                           : ""
                       }

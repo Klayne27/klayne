@@ -19,13 +19,11 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import FeatherIcon from "../svgs/FeatherIcon";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 import { useAppStore } from "../../store/appStore";
+import { useTouchHoverEffect } from "../../hooks/useTouchHoverEffect";
 
-const Sidebar = ({
-  onOpenCreatePostModal,
-}) => {
+const Sidebar = ({ onOpenCreatePostModal }) => {
   const { authUser } = useAuthUser();
-  const isChatWindowOpen = useAppStore(state => state.isChatWindowOpen)
-
+  const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen);
 
   const { logout } = useLogout();
   const { deleteAccount, isDeletingAccount } = useDeleteAccount();
@@ -68,35 +66,43 @@ const Sidebar = ({
   const originalFaviconHref = useRef(null);
 
   // --- NEW STATE FOR TOUCH EFFECT ---
-  const [isTouchDevice, setIsTouchDevice] = useState(false);
-  const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
+  // const [isTouchDevice, setIsTouchDevice] = useState(false);
+  // const [activeButtonId, setActiveButton] = useState(null); // Tracks which button is "active" on touch
 
   const { markFeedAsRead } = useMarkPostsAsRead();
+
+  const {
+    isTouchDevice,
+    activeButtonId,
+    handleTouchCancel,
+    handleTouchEnd,
+    handleTouchStart,
+  } = useTouchHoverEffect();
   // --- NEW TOUCH HANDLERS ---
-  const handleTouchStart = useCallback(
-    (id) => {
-      if (isTouchDevice) {
-        setActiveButton(id);
-      }
-    },
-    [isTouchDevice]
-  );
+  // const handleTouchStart = useCallback(
+  //   (id) => {
+  //     if (isTouchDevice) {
+  //       setActiveButton(id);
+  //     }
+  //   },
+  //   [isTouchDevice]
+  // );
 
-  const handleTouchEnd = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
-    }
-  }, [isTouchDevice]);
+  // const handleTouchEnd = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
+  //   }
+  // }, [isTouchDevice]);
 
-  const handleTouchCancel = useCallback(() => {
-    if (isTouchDevice) {
-      setTimeout(() => {
-        setActiveButton(null);
-      }, 200);
-    }
-  }, [isTouchDevice]);
+  // const handleTouchCancel = useCallback(() => {
+  //   if (isTouchDevice) {
+  //     setTimeout(() => {
+  //       setActiveButton(null);
+  //     }, 200);
+  //   }
+  // }, [isTouchDevice]);
 
   const togglePopover = useCallback((e) => {
     e.stopPropagation();
@@ -127,13 +133,13 @@ const Sidebar = ({
   }, []);
 
   // --- EFFECT TO DETECT TOUCH DEVICE ---
-  useEffect(() => {
-    setIsTouchDevice(
-      "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0
-    );
-  }, []);
+  // useEffect(() => {
+  //   setIsTouchDevice(
+  //     "ontouchstart" in window ||
+  //       navigator.maxTouchPoints > 0 ||
+  //       navigator.msMaxTouchPoints > 0
+  //   );
+  // }, []);
 
   // const hasAnyNewNotification =
   //   unreadMessageCount > 0 ||
@@ -247,7 +253,7 @@ const Sidebar = ({
 
     window.scrollTo({
       top: 0,
-      behavior: pathname === "/" ? 'smooth' : "instant",
+      behavior: pathname === "/" ? "smooth" : "instant",
     });
 
     queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
@@ -506,7 +512,7 @@ const Sidebar = ({
           onClick={handleHomeClick}
           className={`hidden md:flex justify-start cursor-pointer px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
             ${
-              isTouchDevice && activeButton === "x-logo"
+              isTouchDevice && activeButtonId === "x-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
             }`}
@@ -532,7 +538,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "home"
+                  isTouchDevice && activeButtonId === "home"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -575,7 +581,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "messages"
+                  isTouchDevice && activeButtonId === "messages"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -626,7 +632,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "notifications"
+                  isTouchDevice && activeButtonId === "notifications"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -674,7 +680,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
                 ${
-                  isTouchDevice && activeButton === "public-chat"
+                  isTouchDevice && activeButtonId === "public-chat"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -724,7 +730,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "search"
+                  isTouchDevice && activeButtonId === "search"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -758,7 +764,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "bookmarks"
+                  isTouchDevice && activeButtonId === "bookmarks"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -792,7 +798,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "themes"
+                  isTouchDevice && activeButtonId === "themes"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -823,7 +829,7 @@ const Sidebar = ({
                 transition duration-200
                 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
                 ${
-                  isTouchDevice && activeButton === "mobile-profile-img"
+                  isTouchDevice && activeButtonId === "mobile-profile-img"
                     ? "bg-secondary bg-opacity-80"
                     : ""
                 }`}
@@ -854,7 +860,7 @@ const Sidebar = ({
                   : "opacity-80"
               } flex gap-[10px] items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer
                 ${
-                  isTouchDevice && activeButton === "desktop-profile"
+                  isTouchDevice && activeButtonId === "desktop-profile"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
                 }`}
@@ -895,7 +901,7 @@ const Sidebar = ({
               onClick={togglePopover}
               className={`flex gap-2 items-start duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]
                 ${
-                  isTouchDevice && activeButton === "user-profile-button"
+                  isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
                 }`}
@@ -930,7 +936,7 @@ const Sidebar = ({
                   onClick={handleConfirmDeleteClick}
                   className={`w-full flex items-center text-left px-3 py-2 text-red-500 text-md hover:bg-secondary font-bold
                     ${
-                      isTouchDevice && activeButton === "delete-account-popover"
+                      isTouchDevice && activeButtonId === "delete-account-popover"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -947,7 +953,7 @@ const Sidebar = ({
                   onClick={handleLogout}
                   className={`w-full flex items-center text-left px-3 py-2 pl-2 text-md hover:bg-secondary font-bold
                     ${
-                      isTouchDevice && activeButton === "logout-popover"
+                      isTouchDevice && activeButtonId === "logout-popover"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -982,7 +988,7 @@ const Sidebar = ({
                   <div
                     className={`w-11 rounded-full cursor-pointer
                     ${
-                      isTouchDevice && activeButton === "modal-profile-img"
+                      isTouchDevice && activeButtonId === "modal-profile-img"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1005,7 +1011,7 @@ const Sidebar = ({
                   onClick={() => setShowSideModal(false)}
                   className={`p-1 rounded-full hover:bg-secondary
                     ${
-                      isTouchDevice && activeButton === "modal-close-button"
+                      isTouchDevice && activeButtonId === "modal-close-button"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1029,7 +1035,7 @@ const Sidebar = ({
                   }}
                   className={`cursor-pointer font-bold p-1 rounded-md
                     ${
-                      isTouchDevice && activeButton === "modal-following"
+                      isTouchDevice && activeButtonId === "modal-following"
                         ? "underline"
                         : "transition duration-150"
                     }`}
@@ -1047,7 +1053,7 @@ const Sidebar = ({
                   }}
                   className={`cursor-pointer font-bold p-1 rounded-md
                     ${
-                      isTouchDevice && activeButton === "modal-followers"
+                      isTouchDevice && activeButtonId === "modal-followers"
                         ? "underline"
                         : "transition duration-150"
                     }`}
@@ -1072,7 +1078,7 @@ const Sidebar = ({
                   }}
                   className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
                     ${
-                      isTouchDevice && activeButton === "modal-profile"
+                      isTouchDevice && activeButtonId === "modal-profile"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1101,7 +1107,7 @@ const Sidebar = ({
                   }}
                   className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
                     ${
-                      isTouchDevice && activeButton === "modal-bookmarks"
+                      isTouchDevice && activeButtonId === "modal-bookmarks"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1128,7 +1134,7 @@ const Sidebar = ({
                   }}
                   className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
                     ${
-                      isTouchDevice && activeButton === "modal-themes"
+                      isTouchDevice && activeButtonId === "modal-themes"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1152,7 +1158,7 @@ const Sidebar = ({
                   onClick={handleConfirmDeleteClick}
                   className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 text-red-500 font-bold gap-1
                     ${
-                      isTouchDevice && activeButton === "modal-delete-account"
+                      isTouchDevice && activeButtonId === "modal-delete-account"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
@@ -1170,7 +1176,7 @@ const Sidebar = ({
                   onClick={handleLogout}
                   className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 font-bold
                     ${
-                      isTouchDevice && activeButton === "modal-logout"
+                      isTouchDevice && activeButtonId === "modal-logout"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
