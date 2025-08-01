@@ -69,7 +69,7 @@ const MessagePage = () => {
         {showChatWindow && (
           <div className="w-full md:flex-1 flex flex-col h-screen">
             {isLoadingConversations && urlConversationId ? (
-              <LoadingSpinner />
+              <div></div>
             ) : selectedConversation ? (
               <ChatWindow  />
             ) : (
