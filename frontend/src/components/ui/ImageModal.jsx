@@ -1,5 +1,5 @@
 import { IoClose } from "react-icons/io5";
-import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 
 const ImageModal = ({ src, onClose }) => {
   useLockBodyScroll(src);

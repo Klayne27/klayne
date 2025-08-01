@@ -11,18 +11,17 @@ import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments";
 import { renderClickableText } from "../../../utils/textUtils";
 import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
-import { useDebounce } from "../../../hooks/useDebounce";
+import { useDebounce } from "../../../hooks/customHooks/useDebounce";
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
 import RepliesSkeleton from "../../skeletons/RepliesSkeleton";
 import useFollow from "../../../hooks/usersHooks/useFollow";
 import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser";
 import { MdBlock } from "react-icons/md";
 import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
-import { BsThreeDots } from "react-icons/bs";
-import { useIsMobile } from "../../../hooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
 import CommentItemButtons from "../../ui/CommentItemButtons";
-import useDropdownMenu from "../../../hooks/useDropdownMenu";
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu";
 import DropdownMenu from "../../ui/DropdownMenu";
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {

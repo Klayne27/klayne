@@ -10,13 +10,13 @@ import { useCreateComment } from "../../hooks/commentHooks/useCreateComment";
 import { useFetchComments } from "../../hooks/commentHooks/useFetchComments";
 import { BiImageAdd } from "react-icons/bi";
 import { IoClose } from "react-icons/io5";
-import { useDebounce } from "../../hooks/useDebounce";
+import { useDebounce } from "../../hooks/customHooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
 import { showAppToast } from "../../utils/showAppToast";
 import { useAppStore } from "../../store/appStore";
-import { useIsMobile } from "../../hooks/useIsMobile";
-import { usePasteHandler } from "../../hooks/usePasteHandler";
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile";
+import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler";
 
 const PostPage = () => {
   const { pid } = useParams();

@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from "react";
 import { IoClose } from "react-icons/io5";
 import { TbCalendarClock } from "react-icons/tb";
-import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
 import { RxCaretDown } from "react-icons/rx";
 

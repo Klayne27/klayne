@@ -10,10 +10,10 @@ import { IoClose } from "react-icons/io5";
 import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
 import toast from "react-hot-toast";
 import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
-import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
 import ConfirmationModal from "../ui/ConfirmationModal";
-import { useTouchHoverEffect } from "../../hooks/useTouchHoverEffect";
+import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);

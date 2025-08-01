@@ -12,8 +12,8 @@ import React from "react";
 import { showAppToast } from "../../../utils/showAppToast";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage";
-import { useIsMobile } from "../../../hooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
 
 function MessageInput({
   otherUser,

@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { MESSAGE_GROUP_TIME_THRESHOLD_MS } from "../constants/numberConstants";
+import { MESSAGE_GROUP_TIME_THRESHOLD_MS } from "../../constants/numberConstants";
 
 export const useProcessedMessage = (messages) => {
   const processedMessages = useMemo(() => {

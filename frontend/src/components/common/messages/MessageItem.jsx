@@ -9,17 +9,17 @@ import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessag
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { useAppStore } from "../../../store/appStore"
 import { formatTime } from "../../../utils/date"
-import { useEmojiPickerPopover } from "../../../hooks/useEmojiPickerPopover"
+import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses"
-import { useIsMobile } from "../../../hooks/useIsMobile"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import DateSeparator from "../../ui/DateSeperator"
 import MessageReactions from "../../ui/MessageReactions"
 import MessageBubble from "../../ui/MessageBubble"
 import MessageContentLayout from "../../ui/MessageContentLayout"
-import { useOpenMoreActionsModal } from "../../../hooks/useOpenMoreActionsModal"
+import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal"
 import MessageActionsModal from "../../ui/MessageActionsModal"
-import { useLongPress } from "../../../hooks/useLongPress"
+import { useLongPress } from "../../../hooks/customHooks/useLongPress"
 
 // const lastMessageDateRef = useRef(null);
 // const MOUSE_LEAVE_DELAY = 100;

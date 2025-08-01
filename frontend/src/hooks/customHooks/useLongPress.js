@@ -3,7 +3,6 @@ import { useRef, useCallback, useEffect } from "react"
 export const useLongPress = (callback, duration = 500, isEnabled = true) => {
   const pressTimer = useRef(null)
 
-  // Memoized handlers
   const handleTouchStart = useCallback(
     (e) => {
       e.stopPropagation()
@@ -38,7 +37,6 @@ export const useLongPress = (callback, duration = 500, isEnabled = true) => {
     }
   }, [])
 
-  // Cleanup timeout when component unmounts or is disabled
   useEffect(() => {
     return () => {
       if (pressTimer.current) {
@@ -46,12 +44,12 @@ export const useLongPress = (callback, duration = 500, isEnabled = true) => {
         pressTimer.current = null
       }
     }
-  }, []) // Empty dependency array because the handlers themselves are memoized
+  }, []) 
 
   return {
     handleTouchStart,
     handleTouchEnd,
     handleTouchMove,
-    handleTouchCancel, // Good practice to include this
+    handleTouchCancel,
   }
 }

@@ -1,4 +1,3 @@
-// hooks/useTouchHoverEffect.js
 import { useState, useCallback, useEffect, useRef } from "react";
 export const useTouchHoverEffect = (activeStateDelay = 200) => {
   const [isTouchDevice, setIsTouchDevice] = useState(false);

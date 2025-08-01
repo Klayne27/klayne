@@ -12,8 +12,8 @@ import { showAppToast } from "../../../utils/showAppToast";
 import { useEditPublicMessage } from "../../../hooks/publicChatHooks/useEditPublicMessage";
 import { usePublicChatStore } from "../../../store/usePublicChatStore";
 import { getTypingMessage } from "../../../utils/getTypingMessage";
-import { useIsMobile } from "../../../hooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
 import { useSendPublicMessage } from "../../../hooks/publicChatHooks/useSendPublicMessage";
 
 const PublicChatMessageInput = ({

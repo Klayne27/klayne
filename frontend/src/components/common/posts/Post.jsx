@@ -23,8 +23,8 @@ import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
 import { MdBlock } from "react-icons/md";
 import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile";
 import { useAppStore } from "../../../store/appStore";
-import useDropdownMenu from "../../../hooks/useDropdownMenu";
-import { useTouchHoverEffect } from "../../../hooks/useTouchHoverEffect";
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu";
+import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect";
 
 const Post = ({
   post,

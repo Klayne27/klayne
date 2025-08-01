@@ -1,5 +1,5 @@
 import { BsThreeDots } from "react-icons/bs";
-import useDropdownMenu from "../../hooks/useDropdownMenu";
+import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu";
 
 const DropdownMenu = ({ children }) => {
   const { showMenu, toggleMenu, menuRef } = useDropdownMenu();

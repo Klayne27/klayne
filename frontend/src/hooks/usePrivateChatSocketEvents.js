@@ -1,4 +1,3 @@
-// hooks/messagesHooks/usePrivateChatSocketEvents.js
 import { useEffect, useCallback } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthUser } from "./authHooks/useAuthUser";
@@ -6,33 +5,25 @@ import { useSocket } from "../context/SocketContext";
 
 export const usePrivateChatSocketEvents = (
   conversationId,
-  messageListRef, // Pass ref for direct DOM access (scrolling)
-  didMessageJustLanded, // Pass ref for scroll flag
-  setShowNewMessageButton, // Pass setter for button visibility
-  setIsTypingOtherUser, // Pass setter for typing status
+  messageListRef,
+  didMessageJustLanded,
+  setShowNewMessageButton,
+  setIsTypingOtherUser,
   otherUser
 ) => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
   const { authUser: currentUser } = useAuthUser();
   const currentUserId = currentUser?._id;
-  const MESSAGE_LIMIT = 40; // Keep consistent with your useFetchMessages
+  const MESSAGE_LIMIT = 40;
 
-  // These handlers need to be stable across renders
-  // If `otherUser` can change frequently within a component's lifetime,
-  // then include it in the dependency array. Otherwise, it's fairly stable.
-
-  // Using useCallback for each handler is a good practice here
-  // as they are passed to socket.on/off.
   const handleNewMessage = useCallback(
     (newMessage) => {
-      // Only process if it's for the currently active conversation OR
-      // if it's a new message for a new private chat (where conversationId might be null initially)
       const isForActiveConversation =
         newMessage.conversationId === conversationId ||
-        (newMessage.sender._id === otherUser?._id && !conversationId); // For new chats
+        (newMessage.sender._id === otherUser?._id && !conversationId);
 
-      if (!isForActiveConversation) return; // Ignore messages not for this chat window
+      if (!isForActiveConversation) return;
 
       const targetMessagesQueryKey = ["messages", newMessage.conversationId];
 
@@ -43,32 +34,28 @@ export const usePrivateChatSocketEvents = (
 
         const newData = {
           ...oldData,
-          pages: oldData.pages.map((page) => [...page]), // Deep copy pages
+          pages: oldData.pages.map((page) => [...page]), 
         };
         const firstPage = newData.pages[0];
 
-        // Remove any optimistic message if this new message confirms it
         if (newMessage.sender._id.toString() === currentUserId.toString()) {
           const optimisticIndex = firstPage.findIndex(
             (msg) =>
               msg.isOptimistic && msg.sender._id.toString() === currentUserId.toString()
           );
           if (optimisticIndex !== -1) {
-            firstPage[optimisticIndex] = newMessage; // Replace optimistic with real
+            firstPage[optimisticIndex] = newMessage;
           } else {
-            // Fallback: if optimistic not found, ensure no duplicates
             if (!firstPage.some((msg) => msg._id === newMessage._id)) {
               firstPage.push(newMessage);
             }
           }
         } else {
-          // Message from other user, just add it if not already present
           if (!firstPage.some((msg) => msg._id === newMessage._id)) {
             firstPage.push(newMessage);
           }
         }
 
-        // Maintain page size integrity (if you are only keeping `MESSAGE_LIMIT` on the first page)
         if (firstPage.length > MESSAGE_LIMIT) {
           firstPage.shift();
         }
@@ -77,9 +64,8 @@ export const usePrivateChatSocketEvents = (
         return newData;
       });
 
-      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Update sidebar last message/seen status
+      queryClient.invalidateQueries({ queryKey: ["conversations"] });
 
-      // UI-specific logic: Handle scrolling and new message button
       if (isForActiveConversation) {
         const listEl = messageListRef.current;
         if (listEl) {
@@ -92,14 +78,13 @@ export const usePrivateChatSocketEvents = (
             newMessage.sender._id.toString() === currentUserId.toString() ||
             isAtBottom
           ) {
-            didMessageJustLanded.current = true; // Flag for LayoutEffect to scroll
+            didMessageJustLanded.current = true;
             setShowNewMessageButton(false);
           } else if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-            setShowNewMessageButton(true); // Show button for new messages from other user
+            setShowNewMessageButton(true);
           }
         }
 
-        // Mark messages as seen if the other user sent them and we're currently viewing the chat
         if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
           socket.emit("markMessagesAsSeen", {
             conversationId: newMessage.conversationId,
@@ -136,7 +121,6 @@ export const usePrivateChatSocketEvents = (
           );
           return { ...oldData, pages: updatedPages };
         });
-        // Also invalidate conversations to update the seen status in the sidebar
         queryClient.invalidateQueries({ queryKey: ["conversations"] });
       }
     },
@@ -154,7 +138,7 @@ export const usePrivateChatSocketEvents = (
           return { ...oldData, pages: updatedPages };
         });
       }
-      queryClient.invalidateQueries({ queryKey: ["conversations"] }); // Update sidebar
+      queryClient.invalidateQueries({ queryKey: ["conversations"] }); 
     },
     [conversationId, queryClient]
   );
@@ -179,7 +163,6 @@ export const usePrivateChatSocketEvents = (
 
   const handleMessageEdited = useCallback(
     (updatedMessage) => {
-      // Update messages cache
       if (updatedMessage.conversationId.toString() === conversationId?.toString()) {
         queryClient.setQueryData(["messages", conversationId], (oldData) => {
           if (!oldData) return oldData;
@@ -195,7 +178,6 @@ export const usePrivateChatSocketEvents = (
           return { ...oldData, pages: updatedPages };
         });
       }
-      // Invalidate conversations to update lastMessage text in sidebar if needed
       queryClient.invalidateQueries({ queryKey: ["conversations"] });
     },
     [conversationId, queryClient]
@@ -213,7 +195,7 @@ export const usePrivateChatSocketEvents = (
           newConversations[index] = updatedConversation;
           return newConversations;
         } else {
-          return [updatedConversation, ...oldConversations]; // Add to the top
+          return [updatedConversation, ...oldConversations];
         }
       });
     },
@@ -228,12 +210,10 @@ export const usePrivateChatSocketEvents = (
       return;
     }
 
-    console.log(`Joining conversation: ${conversationId}`);
     socket.emit("joinConversation", conversationId);
-    socket.emit("userActiveInChat", { conversationId: conversationId }); // Announce user is active
-    socket.emit("markMessagesAsSeen", { conversationId: conversationId }); // Mark existing messages seen
+    socket.emit("userActiveInChat", { conversationId: conversationId });
+    socket.emit("markMessagesAsSeen", { conversationId: conversationId }); 
 
-    // --- Attach Listeners ---
     socket.on("newMessage", handleNewMessage);
     socket.on("messageDeleted", handleMessageDeleted);
     socket.on("messagesSeen", handleMessagesSeen);
@@ -242,11 +222,9 @@ export const usePrivateChatSocketEvents = (
     socket.on("messageEdited", handleMessageEdited);
     socket.on("conversationUpdated", handleConversationUpdated);
 
-    // --- Cleanup Function ---
     return () => {
-      console.log(`Leaving conversation: ${conversationId}`);
-      socket.emit("leaveConversation", conversationId); // Leave the specific conversation room
-      socket.emit("userActiveInChat", { conversationId: null }); // Announce user is no longer active in *any* chat
+      socket.emit("leaveConversation", conversationId);
+      socket.emit("userActiveInChat", { conversationId: null });
       socket.off("newMessage", handleNewMessage);
       socket.off("messageDeleted", handleMessageDeleted);
       socket.off("messagesSeen", handleMessagesSeen);
@@ -265,15 +243,5 @@ export const usePrivateChatSocketEvents = (
     handleStopTyping,
     handleMessageEdited,
     handleConversationUpdated,
-    // Note: setActiveConversationId is part of useSocket, which is passed in implicitly by `socket` dependency
-    // but the `setActiveConversationId` call at the very top of ChatWindow's useEffect
-    // should probably remain there or be moved to a higher-level context if it influences global state.
-    // For now, let's keep it in ChatWindow's useEffect or a more global context.
   ]);
-
-  // This hook doesn't return any state that's *managed* by it,
-  // it just performs side-effects (socket listening/cache updates).
-  // The state it *affects* (typingUsers, showNewMessageButton) is managed
-  // by usePrivateChatStore and passed in as setters.
-  // So, there's no need to return anything here explicitly.
 };

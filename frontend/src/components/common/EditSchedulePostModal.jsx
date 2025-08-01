@@ -12,7 +12,7 @@ import { useDeleteScheduledPost } from "../../hooks/postsHooks/useDeleteSchedule
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
 import { PiSmiley } from "react-icons/pi";
 import EmojiPicker from "emoji-picker-react";
-import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
 import { RxCaretDown } from "react-icons/rx";
 

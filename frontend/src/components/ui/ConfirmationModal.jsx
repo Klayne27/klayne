@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"; // Import useRef for potential focus management
-import useLockBodyScroll from "../../hooks/useLockBodyScroll";
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 
 const ConfirmationModal = ({
   isOpen,

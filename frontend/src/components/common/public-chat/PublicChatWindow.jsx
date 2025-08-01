@@ -10,9 +10,9 @@ import { FaCaretDown } from "react-icons/fa";
 import { usePublicMessages } from "../../../hooks/publicChatHooks/usePublicMessages";
 import { usePublicChatStore } from "../../../store/usePublicChatStore";
 import { usePublicChatSocketEvents } from "../../../hooks/usePublicChatSocketEvents";
-import { useMessageScroll } from "../../../hooks/useMessageScroll";
+import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll";
 import { MESSAGE_GROUP_TIME_THRESHOLD_MS } from "../../../constants/numberConstants";
-import { useProcessedMessage } from "../../../hooks/useProcessedMessages";
+import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages";
 
 const PublicChatWindow = () => {
   const { authUser: currentUser } = useAuthUser();

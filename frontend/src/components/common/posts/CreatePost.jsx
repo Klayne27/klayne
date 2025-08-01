@@ -14,13 +14,13 @@ import SchedulePostModal from "../SchedulePostModal";
 import ScheduledPostsModal from "../ScheduledPostsModal";
 import EditScheduledPostModal from "../EditSchedulePostModal";
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
-import { useDebounce } from "../../../hooks/useDebounce";
+import { useDebounce } from "../../../hooks/customHooks/useDebounce";
 import { showAppToast } from "../../../utils/showAppToast";
 import { useSocket } from "../../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
 import { useMarkPostsAsRead } from "../../../hooks/postsHooks/useMarkPostsAsRead";
-import { useIsMobile } from "../../../hooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/usePasteHandler";
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
 
 const POLL_CHOICE_MAX_LENGTH = 25;
 const MAX_POLL_CHOICES = 4;
@@ -563,7 +563,7 @@ const CreatePost = () => {
     <>
       <div
         className={` flex p-4 items-start gap-3 border-b border-accent relative ${
-          scheduledAt ? "mt-14" : "mt-12"
+          scheduledAt ? "mt-2" : ""
         } `}
       >
         {scheduledAt && (

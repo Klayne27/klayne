@@ -26,7 +26,7 @@ import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useTo
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers"
 import { showAppToast } from "../../utils/showAppToast"
 import { useAppStore } from "../../store/appStore"
-import { useTouchHoverEffect } from "../../hooks/useTouchHoverEffect"
+import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)

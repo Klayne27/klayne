@@ -1,4 +1,3 @@
-// hooks/usePublicChatSocketEvents.js
 import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthUser } from "./authHooks/useAuthUser";
@@ -7,19 +6,17 @@ import { useSocket } from "../context/SocketContext";
 export const usePublicChatSocketEvents = () => {
   const queryClient = useQueryClient();
   const { socket } = useSocket();
-  const { authUser } = useAuthUser(); // Get authUser if needed for optimistic updates/sender checks
+  const { authUser } = useAuthUser();
 
-  // State for typing users (if you want this managed by the socket hook)
-  const [typingUsers, setTypingUsers] = useState([]); // Or pass setTypingUsers from parent
+  const [typingUsers, setTypingUsers] = useState([]);
 
   useEffect(() => {
-    if (!socket || !authUser) return; // Ensure socket and user are available
+    if (!socket || !authUser) return;
 
-    socket.emit("public_chat_room"); // Join the room when this hook mounts
+    socket.emit("public_chat_room");
 
     const handleNewPublicMessage = (newMessage) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
-        // ... (your existing logic for handleNewPublicMessage) ...
         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
           return { pages: [[newMessage]], pageParams: [1] };
         }
@@ -46,7 +43,6 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handleMessageDeleted = ({ messageId }) => {
-      // ... (your existing logic for handleMessageDeleted) ...
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) =>
@@ -77,7 +73,6 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlepublicOwnMessageDeleted = ({ messageId }) => {
-      // ... (your existing logic for handlepublicOwnMessageDeleted) ...
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) => {
@@ -108,7 +103,6 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlePublicMessageEdited = (updatedMessage) => {
-      // ... (your existing logic for handlePublicMessageEdited) ...
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData || !oldData.pages) {
           return oldData;
@@ -132,7 +126,6 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlePublicMessageReactionUpdated = ({ messageId, reactions }) => {
-      // ... (your existing logic for handlePublicMessageReactionUpdated) ...
       queryClient.setQueryData(["publicMessages"], (oldData) => {
         if (!oldData) return oldData;
 
@@ -164,7 +157,7 @@ export const usePublicChatSocketEvents = () => {
     socket.on("publicMessageDeleted", handleMessageDeleted);
     socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
     socket.on("publicMessageEdited", handlePublicMessageEdited);
-    socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated); // You had this commented out
+    socket.on("publicMessageReactionUpdated", handlePublicMessageReactionUpdated); 
     socket.on("userBanned", handleUserBannedGlobal);
     socket.on("userUnbanned", handleUserUnbannedGlobal);
     socket.on("public_typing_update", handlePublicTypingUpdate);
@@ -174,13 +167,13 @@ export const usePublicChatSocketEvents = () => {
       socket.off("publicMessageDeleted", handleMessageDeleted);
       socket.off("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
       socket.off("publicMessageEdited", handlePublicMessageEdited);
-      socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated); // Unsubscribe
+      socket.off("publicMessageReactionUpdated", handlePublicMessageReactionUpdated);
       socket.off("userBanned", handleUserBannedGlobal);
       socket.off("userUnbanned", handleUserUnbannedGlobal);
       socket.off("public_typing_update");
-      socket.emit("leavePublicChat"); // Ensure this is only emitted once when the entire chat context unmounts
+      socket.emit("leavePublicChat");
     };
-  }, [socket, queryClient, authUser]); // Dependencies for this hook
+  }, [socket, queryClient, authUser]);
 
-  return { typingUsers }; // Return typingUsers state
+  return { typingUsers };
 };

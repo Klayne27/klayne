@@ -1,11 +1,10 @@
 import { useCallback, useEffect, useLayoutEffect, useRef } from "react";
-import { useSocket } from "../context/SocketContext";
+import { useSocket } from "../../context/SocketContext";
 import { useQueryClient } from "@tanstack/react-query";
-import { useAuthUser } from "./authHooks/useAuthUser";
-import { usePublicChatStore } from "../store/usePublicChatStore";
+import { useAuthUser } from "../authHooks/useAuthUser";
+import { usePublicChatStore } from "../../store/usePublicChatStore";
 
 export const useMessageScroll = ({
-  //   setShowNewMessageButton,
   messages,
   hasNextPage,
   fetchNextPage,
@@ -28,11 +27,8 @@ export const useMessageScroll = ({
 
   const shouldScrollOnSenderMessage = useRef(false);
 
-  // Function to imperatively trigger a scroll to bottom from outside
   const triggerScrollOnSenderMessage = useCallback(() => {
     shouldScrollOnSenderMessage.current = true;
-    // We don't call scrollToBottom immediately here.
-    // We let the useLayoutEffect handle the actual scroll on the next render cycle.
   }, []);
 
   const scrollToBottom = useCallback(() => {
@@ -87,15 +83,15 @@ export const useMessageScroll = ({
       !scrollStateBeforeFetch.current.scrollHeight
     ) {
       scrollToBottom();
-      shouldScrollToBottom.current = false; // Reset just in case
-      shouldScrollOnSenderMessage.current = false; // Reset sender flag
+      shouldScrollToBottom.current = false;
+      shouldScrollOnSenderMessage.current = false;
       return;
     }
 
     if (shouldScrollOnSenderMessage.current) {
       scrollToBottom();
-      shouldScrollOnSenderMessage.current = false; // Reset the flag immediately after scrolling
-      shouldScrollToBottom.current = false; // Ensure other flags are also reset
+      shouldScrollOnSenderMessage.current = false;
+      shouldScrollToBottom.current = false;
       return;
     }
 
@@ -112,15 +108,12 @@ export const useMessageScroll = ({
     const { scrollTop, scrollHeight, clientHeight } = listEl;
     const scrollThreshold = 50;
 
-    // Determine if the user is scrolled up
     isUserScrollingUp.current = scrollHeight - scrollTop - clientHeight > scrollThreshold;
 
-    // If user scrolls back down, hide the new message button
     if (!isUserScrollingUp.current) {
       setShowNewMessageButton(false);
     }
 
-    // Fetch older messages when scrolled to top
     if (scrollTop < 1 && hasNextPage && !isFetchingNextPage) {
       scrollStateBeforeFetch.current = {
         scrollTop: listEl.scrollTop,
@@ -149,7 +142,7 @@ export const useMessageScroll = ({
       listEl.scrollTop = oldScrollTop + heightDifference;
       scrollStateBeforeFetch.current = { scrollTop: 0, scrollHeight: 0 };
     }
-  }, [isFetchingNextPage, messages]); // messages dependency ensures it runs after new messages are loaded
+  }, [isFetchingNextPage, messages]);
 
   useEffect(() => {
     if (messages.length === 0) {
@@ -167,22 +160,19 @@ export const useMessageScroll = ({
       }
     }
 
-    // Update the ref for the next comparison
     prevLastMessageId.current = newLastMessage._id;
-  }, [messages, currentUser?._id, isUserScrollingUp, setShowNewMessageButton]); // Add all dependencies
+  }, [messages, currentUser?._id, isUserScrollingUp, setShowNewMessageButton]);
 
   useEffect(() => {
     if (socket) {
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
         queryClient.invalidateQueries({ queryKey: ["authUser"] });
         if (isBanned) {
-          // Clear public messages if banned to avoid showing old content
           queryClient.setQueryData(["publicMessages"], (oldData) => ({
             pages: [[]],
             pageParams: [undefined],
           }));
         } else {
-          // Refetch messages if unbanned
           queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
         }
       });
@@ -191,7 +181,7 @@ export const useMessageScroll = ({
         socket.off("bannedFromPublicChat");
       };
     }
-  }, [socket, queryClient]); // Removed currentUser and refetchAuthUser from dependencies, as queryClient handles invalidation.
+  }, [socket, queryClient]);
 
   return {
     handleLoadImage,

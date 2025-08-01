@@ -1,5 +1,5 @@
 import { useCallback } from "react";
-import { showAppToast } from "../utils/showAppToast"; // Assuming this utility is globally accessible
+import { showAppToast } from "../../utils/showAppToast";
 
 export const usePasteHandler = ({
   inputRef,
@@ -7,7 +7,7 @@ export const usePasteHandler = ({
   setInput,
   setSelectedFile,
   setPreviewImage,
-  fileInputRef, // Optional, only if you have a hidden file input to clear
+  fileInputRef,
   editingMessage = false,
   maxImageSizeMB = 5,
   onImagePasted,
@@ -15,7 +15,7 @@ export const usePasteHandler = ({
 }) => {
   const handlePaste = useCallback(
     (e) => {
-      e.preventDefault(); // Prevent default paste behavior
+      e.preventDefault();
 
       if (editingMessage) {
         return;
@@ -28,7 +28,6 @@ export const usePasteHandler = ({
           const file = items[i].getAsFile();
 
           if (file) {
-            // Basic validation for image file
             if (!file.type.startsWith("image/")) {
               showAppToast("Pasted content is not a supported image type.", "error");
               setSelectedFile(null);
@@ -36,7 +35,6 @@ export const usePasteHandler = ({
               return;
             }
 
-            // Size limit validation
             if (file.size > maxImageSizeMB * 1024 * 1024) {
               showAppToast(
                 `Pasted image size exceeds ${maxImageSizeMB}MB limit.`,
@@ -51,17 +49,15 @@ export const usePasteHandler = ({
             const previewUrl = URL.createObjectURL(file);
             setPreviewImage(previewUrl);
 
-            // Optional callback for external handling/logging
             if (onImagePasted) {
               onImagePasted(file, previewUrl);
             }
 
-            return; // Process only the first image found
+            return; 
           }
         }
       }
 
-      // If no image was found, paste as plain text
       const pastedText = e.clipboardData.getData("text/plain");
       if (pastedText) {
         const inputElement = inputRef.current;
@@ -76,13 +72,10 @@ export const usePasteHandler = ({
 
           setInput(newText);
 
-          // Optional callback for external handling/logging
           if (onTextPasted) {
             onTextPasted(pastedText, newText);
           }
 
-          // Restore cursor position after paste
-          // Use a timeout to ensure state update has rendered before setting selection
           setTimeout(() => {
             if (inputElement) {
               inputElement.selectionStart = cursorStart + pastedText.length;

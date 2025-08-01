@@ -3,7 +3,7 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
 import LoadingSpinner from "../../ui/LoadingSpinner";
 
 import MessageItem from "./MessageItem";
-import { useProcessedMessage } from "../../../hooks/useProcessedMessages";
+import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages";
 
 
 const MessageList = forwardRef(function MessageList(

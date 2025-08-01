@@ -19,7 +19,7 @@ import ConfirmationModal from "../ui/ConfirmationModal";
 import FeatherIcon from "../svgs/FeatherIcon";
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
 import { useAppStore } from "../../store/appStore";
-import { useTouchHoverEffect } from "../../hooks/useTouchHoverEffect";
+import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect";
 
 const Sidebar = ({ onOpenCreatePostModal }) => {
   const { authUser } = useAuthUser();
