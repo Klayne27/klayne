@@ -112,7 +112,7 @@ const MessageList = forwardRef(function MessageList(
   // --- END OPTIMIZED MESSAGE ENHANCEMENT LOGIC ---
 
   return (
-    <div ref={ref} className="flex-1 overflow-y-auto p-4 flex flex-col pt-20 relative">
+    <div ref={ref} className="flex overflow-y-auto p-4 flex-1 flex-col pt-20 relative">
       {isLoadingInitialMessages && (
         <div className="flex justify-center items-center h-full ">
           <LoadingSpinner size="md" />

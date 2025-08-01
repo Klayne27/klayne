@@ -1,27 +1,25 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { FaCircle } from "react-icons/fa";
-import { FiTrash } from "react-icons/fi";
 import { BsCheck2, BsCheck2All, BsThreeDots } from "react-icons/bs";
-import { MdEdit } from "react-icons/md";
 import { PiSmileyFill } from "react-icons/pi";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { HiOutlineReply } from "react-icons/hi";
 
-import { truncateText } from "../../../utils/truncateText";
-import { renderClickableText } from "../../../utils/textUtils";
 import EmojiPickerPopover from "../EmojiPickerPopover";
-import { IoCopy } from "react-icons/io5";
 import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage";
 import { useReactToMessage } from "../../../hooks/messagesHooks/useReactToMessage";
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore";
 import { useAppStore } from "../../../store/appStore";
-import { formatDate, formatTime } from "../../../utils/date";
+import { formatTime } from "../../../utils/date";
 import { useEmojiPickerPopover } from "../../../hooks/useEmojiPickerPopover";
 import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses";
 import { useIsMobile } from "../../../hooks/useIsMobile";
 import DateSeparator from "../../ui/DateSeperator";
 import MessageReactions from "../../ui/MessageReactions";
 import MessageBubble from "../../ui/MessageBubble";
+import MessageContentLayout from "../../ui/MessageContentLayout";
+import { useOpenMoreActionsModal } from "../../../hooks/useOpenMoreActionsModal";
+import MessageActionsModal from "../../ui/MessageActionsModal";
 
 // const lastMessageDateRef = useRef(null);
 // const MOUSE_LEAVE_DELAY = 100;
@@ -34,7 +32,6 @@ const MessageItem = ({
   onReactionAdded,
   handleLoadImage,
 }) => {
-  const navigate = useNavigate();
   const openImageModal = useAppStore((state) => state.openImageModal);
 
   const mouseLeaveTimeoutRef = useRef(null);
@@ -45,12 +42,8 @@ const MessageItem = ({
 
   const [isHovered, setIsHovered] = useState(false);
   // const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
-  const [showMoreActionsModal, setShowMoreActionsModal] = useState(false); // New state for more actions modal
+  // const [showMoreActionsModal, setShowMoreActionsModal] = useState(false); // New state for more actions modal
   // const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
-  const [moreActionsModalPosition, setMoreActionsModalPosition] = useState({
-    top: 0,
-    left: 0,
-  });
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
@@ -66,6 +59,9 @@ const MessageItem = ({
 
   const pressTimer = useRef(null);
   const LONG_PRESS_DURATION = 500;
+
+  const isSentByCurrentUser = message?.sender._id === currentUser._id;
+  const isEditable = isSentByCurrentUser;
 
   const isTouchDevice = () => {
     if (typeof window === "undefined") return false;
@@ -88,6 +84,13 @@ const MessageItem = ({
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover();
 
+  const {
+    moreActionsModalPosition,
+    handleOpenMoreActionsModal,
+    setShowMoreActionsModal,
+    showMoreActionsModal,
+  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable });
+
   const openEmojiPickerWithModalClose = (e) => {
     handleOpenEmojiPickerPopover(e, setShowMoreActionsModal);
   };
@@ -98,24 +101,16 @@ const MessageItem = ({
 
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false);
-  }, []);
+  }, [setShowMoreActionsModal]);
 
-  const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation();
-    if (openImageModal) {
-      openImageModal(imageUrl);
-    } else {
-      console.warn(
-        "openImageModal prop is undefined in Message component. Image modal will not open."
-      );
-    }
+  const handleImageClick = (imageUrl) => {
+    openImageModal(imageUrl);
   };
 
-  const isSentByCurrentUser =
-    (typeof message.sender === "object" && message.sender?._id === currentUser._id) ||
-    (typeof message.sender === "string" && message.sender === currentUser._id);
+  // const isSentByCurrentUser =
+  //   (typeof message.sender === "object" && message.sender?._id === currentUser._id) ||
+  //   (typeof message.sender === "string" && message.sender === currentUser._id);
 
-  const isEditable = isSentByCurrentUser;
   const showModal = activeMessageModalId === message._id;
   const allowedEmojis = ["❤️", "👍", "😂"];
 
@@ -136,53 +131,53 @@ const MessageItem = ({
 
   const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0;
 
-  const handleOpenMoreActionsModal = useCallback(
-    (e) => {
-      e.stopPropagation();
-      setShowEmojiPickerPopover(false);
-      if (showMoreActionsModal) {
-        setShowMoreActionsModal(false);
-        return;
-      }
+  // const handleOpenMoreActionsModal = useCallback(
+  //   (e) => {
+  //     e.stopPropagation();
+  //     setShowEmojiPickerPopover(false);
+  //     if (showMoreActionsModal) {
+  //       setShowMoreActionsModal(false);
+  //       return;
+  //     }
 
-      const buttonRect = e.currentTarget.getBoundingClientRect();
-      const modalWidth = 180; // Approximate width of the Discord-like modal
-      const itemHeight = 38; // px per action item (approximate, including padding)
-      const numItems = isEditable ? 3 : 2; // Reply, Edit, Delete (3) or Reply, Delete (2)
-      const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
+  //     const buttonRect = e.currentTarget.getBoundingClientRect();
+  //     const modalWidth = 180; // Approximate width of the Discord-like modal
+  //     const itemHeight = 38; // px per action item (approximate, including padding)
+  //     const numItems = isEditable ? 3 : 2; // Reply, Edit, Delete (3) or Reply, Delete (2)
+  //     const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
 
-      const modalHeight = estimatedModalHeight;
+  //     const modalHeight = estimatedModalHeight;
 
-      // Calculate newLeft to position the modal to the left of the button.
-      let newLeft = buttonRect.left - modalWidth;
+  //     // Calculate newLeft to position the modal to the left of the button.
+  //     let newLeft = buttonRect.left - modalWidth;
 
-      // Add a small offset (e.g., 5-10px) to the left for better visual spacing.
-      const offsetLeft = 5;
-      newLeft = buttonRect.left - modalWidth - offsetLeft;
+  //     // Add a small offset (e.g., 5-10px) to the left for better visual spacing.
+  //     const offsetLeft = 5;
+  //     newLeft = buttonRect.left - modalWidth - offsetLeft;
 
-      // Ensure the modal doesn't go off the left edge of the screen
-      if (newLeft < 10) {
-        // Keep a minimum 10px padding from the left edge
-        newLeft = 10;
-      }
-      let newTop = buttonRect.top + buttonRect.height / 2 - modalHeight / 2;
+  //     // Ensure the modal doesn't go off the left edge of the screen
+  //     if (newLeft < 10) {
+  //       // Keep a minimum 10px padding from the left edge
+  //       newLeft = 10;
+  //     }
+  //     let newTop = buttonRect.top + buttonRect.height / 2 - modalHeight / 2;
 
-      // Ensure the modal doesn't go off the top or bottom edge of the screen
-      const paddingVertical = 10; // Minimum padding from top/bottom viewport edge
-      if (newTop < paddingVertical) {
-        // If it goes off the top
-        newTop = paddingVertical;
-      }
-      if (newTop + modalHeight > window.innerHeight - paddingVertical) {
-        // If it goes off the bottom
-        newTop = window.innerHeight - modalHeight - paddingVertical;
-      }
+  //     // Ensure the modal doesn't go off the top or bottom edge of the screen
+  //     const paddingVertical = 10; // Minimum padding from top/bottom viewport edge
+  //     if (newTop < paddingVertical) {
+  //       // If it goes off the top
+  //       newTop = paddingVertical;
+  //     }
+  //     if (newTop + modalHeight > window.innerHeight - paddingVertical) {
+  //       // If it goes off the bottom
+  //       newTop = window.innerHeight - modalHeight - paddingVertical;
+  //     }
 
-      setMoreActionsModalPosition({ top: newTop, left: newLeft });
-      setShowMoreActionsModal(true);
-    },
-    [showMoreActionsModal, isEditable, setShowEmojiPickerPopover]
-  );
+  //     setMoreActionsModalPosition({ top: newTop, left: newLeft });
+  //     setShowMoreActionsModal(true);
+  //   },
+  //   [showMoreActionsModal, isEditable, setShowEmojiPickerPopover]
+  // );
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser);
 
@@ -290,7 +285,7 @@ const MessageItem = ({
     }
   };
 
-  const handleDeleteMessage = () => {
+  const handleDeleteOwnMessage = () => {
     deleteMessage({ messageId: message._id, conversationId: message.conversationId });
   };
 
@@ -353,7 +348,9 @@ const MessageItem = ({
         id={`message-${message._id}`}
         className={`relative mb-0 p-[1px] rounded-lg ${
           isMessageHighlighted ? "bg-secondary" : ""
-        } ${message.isFirstInGroup ? "mt-2" : ""} `}
+        } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${
+          message.isFirstInGroup ? "mt-2" : ""
+        } `}
         style={messageContentStyle}
         onMouseEnter={() => {
           if (!isMobile) {
@@ -443,74 +440,24 @@ const MessageItem = ({
         </div>
 
         {showMoreActionsModal && (
-          <div className="fixed inset-0 z-20" onClick={handleCloseMoreActionsModal}>
-            <div
-              className={`absolute p-2 bg-base-100 rounded-xl gray-shadow  z-30`}
-              style={{
-                top: moreActionsModalPosition.top,
-                left: moreActionsModalPosition.left,
-                minWidth: "180px",
-              }}
-              onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-            >
-              <button
-                onClick={handleReplyClick}
-                className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-              >
-                Reply
-                <HiOutlineReply size={18} className="text-slate-400" />
-              </button>
-              {message.text && (
-                <button
-                  onClick={handleCopyMessage}
-                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-                >
-                  Copy Text
-                  <IoCopy size={18} className="text-slate-400" />
-                </button>
-              )}
-              {isEditable && (
-                <button
-                  onClick={handleEditClick}
-                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-                >
-                  Edit Message
-                  <MdEdit size={16} className="text-slate-400" />
-                </button>
-              )}
-              {isSentByCurrentUser && (
-                <button
-                  onClick={handleDeleteMessage}
-                  className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 duration-200 transition"
-                >
-                  Delete Message
-                  <FiTrash size={16} />
-                </button>
-              )}
-            </div>
-          </div>
+          <MessageActionsModal
+            message={message}
+            onCloseMoreActionsModal={handleCloseMoreActionsModal}
+            moreActionsModalPosition={moreActionsModalPosition}
+            onReplyClick={handleReplyClick}
+            onEditClick={handleEditClick}
+            onCopyMessage={handleCopyMessage}
+            onDeleteOwnMessage={handleDeleteOwnMessage}
+            isEditable={isEditable}
+            isSentByCurrentUser={isSentByCurrentUser}
+          />
         )}
 
-        {/* Message Content Layout */}
-        <div
-          className={`relative flex gap-2 items-start ${
-            isSentByCurrentUser ? "justify-end" : "justify-start"
-          }`}
-          style={messageContentStyle}
+        <MessageContentLayout
+          isSentByCurrentUser={isSentByCurrentUser}
+          messageContentStyle={messageContentStyle}
+          message={message}
         >
-          {/* Avatar - Only for other user's first message in a group */}
-          {!isSentByCurrentUser && message.isFirstInGroup && (
-            <div className="flex-shrink-0 items-start">
-              <img
-                alt={`${message.senderUsername}'s profile`}
-                src={message.senderProfileImg || "/avatar-placeholder.png"}
-                onLoad={handleLoadImage}
-                className="size-9 rounded-full object-cover mt-0.5 cursor-pointer"
-                onClick={() => navigate(`/profile/${message.senderUsername}`)}
-              />
-            </div>
-          )}
-
           {!isSentByCurrentUser && !message.isFirstInGroup && (
             <div className="w-8 h-8 mr-1"></div>
           )}
@@ -525,26 +472,20 @@ const MessageItem = ({
               {formatTime(message.createdAt)}
             </div>
           )}
-
-          {/* This container holds the main content */}
           <div
             className={`flex flex-col ${
               isSentByCurrentUser ? "items-end" : "items-start"
             } w-fit max-w-[75%]`}
           >
             {message.isFirstInGroup && (
-              <div
-                className={`flex items-center gap-1 text-sm mb-0.5 ${
-                  isSentByCurrentUser ? "justify-end" : "justify-start"
-                }`}
-              >
+              <div className={`flex items-center text-sm mb-0.5`}>
                 {!isSentByCurrentUser && (
-                  <span
-                    onClick={() => navigate(`/profile/${message.senderUsername}`)}
-                    className="font-semibold cursor-pointer"
+                  <Link
+                    to={`/profile/${message.senderUsername}`}
+                    className="font-semibold cursor-pointer mr-1"
                   >
                     {message.senderUsername}
-                  </span>
+                  </Link>
                 )}
                 <span className="text-xs text-gray-500 mr-5">
                   {formatTime(message.createdAt)}
@@ -598,7 +539,7 @@ const MessageItem = ({
               />
             )}
           </div>
-        </div>
+        </MessageContentLayout>
 
         {/* Emoji Picker Popover */}
         {showEmojiPickerPopover && (

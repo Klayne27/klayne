@@ -23,7 +23,7 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   }
 };
 
-export const sendPublicMessageApi = async ({ content, imgBase64, replyTo }) => {
+export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo }) => {
   try {
     const res = await fetch(`${BASE_URL}/send`, {
       method: "POST",
@@ -31,7 +31,7 @@ export const sendPublicMessageApi = async ({ content, imgBase64, replyTo }) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ content, imgBase64, replyTo }),
+      body: JSON.stringify({ text, imgBase64, repliedTo }),
     });
 
     const data = await res.json();

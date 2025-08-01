@@ -20,15 +20,15 @@ export const useDeleteOwnPublicMessage = () => {
               return {
                 ...message,
                 isDeletedByUser: true,
-                content: "[Message Deleted]", // Set the desired display text
+                text: "[Message Deleted]", // Set the desired display text
                 img: null, // Clear image optimistically
                 // You might also want to clear reactions or other sensitive data
                 reactions: [],
-                replyTo: message.replyTo
+                repliedTo: message.repliedTo
                   ? {
-                      // Preserve replyTo structure but clear content
-                      ...message.replyTo,
-                      content: "", // Clear the content of the replied-to message in the optimistic state
+                      // Preserve repliedTo structure but clear text
+                      ...message.repliedTo,
+                      text: "", // Clear the text of the replied-to message in the optimistic state
                       img: null,
                       isOriginalMessageDeleted: true, // Mark the original as deleted
                     }
@@ -36,12 +36,12 @@ export const useDeleteOwnPublicMessage = () => {
               };
             }
             // Also handle if this message was a reply to the one being deleted
-            if (message.replyTo && message.replyTo._id === messageIdToDelete) {
+            if (message.repliedTo && message.repliedTo._id === messageIdToDelete) {
               return {
                 ...message,
-                replyTo: {
-                  ...message.replyTo,
-                  content: "[Message Deleted]", // For the reply block
+                repliedTo: {
+                  ...message.repliedTo,
+                  text: "[Message Deleted]", // For the reply block
                   img: null,
                   isDeletedByUser: true,
                   isOriginalMessageDeleted: true,

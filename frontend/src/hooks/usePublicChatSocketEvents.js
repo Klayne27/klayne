@@ -58,11 +58,11 @@ export const usePublicChatSocketEvents = () => {
                 img: null,
               };
             }
-            if (message.replyTo && message.replyTo._id === messageId) {
+            if (message.repliedTo && message.repliedTo._id === messageId) {
               return {
                 ...message,
-                replyTo: {
-                  ...message.replyTo,
+                repliedTo: {
+                  ...message.repliedTo,
                   img: null,
                   isDeletedByAdmin: true,
                   isOriginalMessageDeleted: true,
@@ -89,11 +89,11 @@ export const usePublicChatSocketEvents = () => {
                 img: null,
               };
             }
-            if (message.replyTo && message.replyTo._id === messageId) {
+            if (message.repliedTo && message.repliedTo._id === messageId) {
               return {
                 ...message,
-                replyTo: {
-                  ...message.replyTo,
+                repliedTo: {
+                  ...message.repliedTo,
                   img: null,
                   isDeletedByUser: true,
                   isOriginalMessageDeleted: true,
@@ -118,10 +118,10 @@ export const usePublicChatSocketEvents = () => {
             if (msg._id == updatedMessage._id) {
               return updatedMessage;
             }
-            if (msg.replyTo && msg.replyTo._id === updatedMessage._id) {
+            if (msg.repliedTo && msg.repliedTo._id === updatedMessage._id) {
               return {
                 ...msg,
-                replyTo: updatedMessage,
+                repliedTo: updatedMessage,
               };
             }
             return msg;

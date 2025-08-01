@@ -26,18 +26,18 @@ export const useSendPublicMessage = () => {
 
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
 
-      let populatedReplyTo = null;
-      if (messageData.replyTo) {
+      let populatedRepliedTo = null;
+      if (messageData.repliedTo) {
         // Use previousMessages if it exists, otherwise flatMap an empty array
         const allMessages = previousMessages?.pages.flat() || [];
         const repliedMessageInCache = allMessages.find(
-          (msg) => msg._id === messageData.replyTo
+          (msg) => msg._id === messageData.repliedTo
         );
 
         if (repliedMessageInCache) {
-          populatedReplyTo = {
+          populatedRepliedTo = {
             _id: repliedMessageInCache._id,
-            content: repliedMessageInCache.content,
+            text: repliedMessageInCache.text,
             img: repliedMessageInCache.img,
             isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
             isDeletedByUser: repliedMessageInCache.isDeletedByUser,
@@ -51,7 +51,7 @@ export const useSendPublicMessage = () => {
 
       const optimisticMessage = {
         _id: tempId,
-        content: messageData.content,
+        text: messageData.text,
         img: messageData.imgBase64,
         sender: {
           _id: authUser._id,
@@ -66,7 +66,7 @@ export const useSendPublicMessage = () => {
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         isOptimistic: true,
-        replyTo: populatedReplyTo,
+        repliedTo: populatedRepliedTo,
         isDeletedByAdmin: false,
         isDeletedByUser: false,
         reactions: [],

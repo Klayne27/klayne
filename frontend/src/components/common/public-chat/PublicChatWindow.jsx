@@ -69,7 +69,7 @@ const PublicChatWindow = () => {
 
   // Refs for scroll management
   const messageListRef = useRef(null);
-  const publicChatInputRef = useRef(null)
+  const publicChatInputRef = useRef(null);
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 });
   const shouldScrollToBottom = useRef(false);
   const isUserScrollingUp = useRef(false);
@@ -168,7 +168,6 @@ const PublicChatWindow = () => {
       }, 1);
     }
   }, [scrollToBottom, setShowNewMessageButton]);
-
 
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom();

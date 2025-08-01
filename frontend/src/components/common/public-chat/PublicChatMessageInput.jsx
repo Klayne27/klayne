@@ -65,7 +65,7 @@ const PublicChatMessageInput = ({
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
-      setPublicChatInput(editingMessage.content);
+      setPublicChatInput(editingMessage.text);
       publicChatInputRef.current?.focus();
     }
     // eslint-disable-next-line
@@ -156,8 +156,8 @@ const PublicChatMessageInput = ({
     hasSentTypingEvent.current = false; // Reset flag after sending message
 
     const payload = {
-      content: contentToSend,
-      replyTo: replyingToMessage ? replyingToMessage._id : null,
+      text: contentToSend,
+      repliedTo: replyingToMessage ? replyingToMessage._id : null,
     };
 
     if (editingMessage) {
@@ -290,7 +290,7 @@ const PublicChatMessageInput = ({
                 <span className="text-primary font-bold">Editing message</span>
               </div>
               <span className="font-semibold text-gray-400">
-                "{truncateText(editingMessage.content)}"
+                "{truncateText(editingMessage.text)}"
               </span>
             </span>
 
@@ -410,9 +410,9 @@ const PublicChatMessageInput = ({
                   )}
                   {isMessageDeleted
                     ? messageDeleted
-                    : truncateText(replyingToMessage.content)}
+                    : truncateText(replyingToMessage.text)}
                 </div>
-                {replyingToMessage.img && !replyingToMessage.content && (
+                {replyingToMessage.img && !replyingToMessage.text && (
                   <span className="text-xs text-gray-400 mt-1">(Image)</span>
                 )}
               </div>

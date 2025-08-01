@@ -7,7 +7,7 @@ const publicChatMessageSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
-    content: {
+    text: {
       type: String,
       default: "", // Keep default as empty string for consistency
     },
@@ -40,7 +40,7 @@ const publicChatMessageSchema = new mongoose.Schema(
         _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
       },
     ],
-    replyTo: {
+    repliedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "PublicChatMessage", // References another public chat message
       default: null, // If null, it's not a reply

@@ -64,11 +64,11 @@ export const SocketContextProvider = ({ children }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
       });
 
-      newSocket.on("publicMessageDeleted", ({ messageId, senderId, content, img }) => {
+      newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
       });
 
-      newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, content, img }) => {
+      newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, text, img }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
       });
 

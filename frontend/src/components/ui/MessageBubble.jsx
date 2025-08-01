@@ -3,21 +3,29 @@ import { truncateText } from "../../utils/truncateText";
 
 const MessageBubble = ({
   message,
-  messageText,
   isSentByCurrentUser,
   bubbleClasses,
   onLoadImage,
   onImageClick,
   messageContentStyle,
+  isReplyToMessageDeleted,
   onJumpToOriginalMessage,
-}) => (
+  isMessageDeleted,
+  isSenderBanned
+}) => {
+  const messageDeleted = (
+    <span className="text-gray-500 italic text-sm">[Message Deleted]</span>
+  );
+
+
+  return (
     <div
       className={`flex items-end gap-2 ${
         isSentByCurrentUser ? "flex-row-reverse" : "flex-row"
       }`}
     >
       <div
-        className={`p-3 flex flex-col w-full overflow-hidden ${bubbleClasses}`}
+        className={`p-3 py-2 flex flex-col w-full overflow-hidden ${bubbleClasses}`}
         style={messageContentStyle}
       >
         {/* Reply Block */}
@@ -43,16 +51,23 @@ const MessageBubble = ({
                 isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
               }`}
             >
-              Replying to:
-            </span>
-            {message.repliedTo.text && (
-              <span
-                className={`font-bold truncate ${
-                  isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
-                } mt-1 italic`}
-              >
-                {renderClickableText(truncateText(message.repliedTo.text, 20))}
+              Replying to:{" "}
+              <span className="font-normal">
+                @{message.repliedTo.sender?.username || "Unknown User"}
               </span>
+            </span>
+            {isReplyToMessageDeleted ? (
+              messageDeleted
+            ) : (
+              message.repliedTo.text && (
+                <span
+                  className={`font-bold truncate ${
+                    isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
+                  } mt-1 italic`}
+                >
+                  {renderClickableText(truncateText(message.repliedTo.text, 20))}
+                </span>
+              )
             )}
             {message.repliedTo.img && (
               <img
@@ -63,38 +78,42 @@ const MessageBubble = ({
                 className="mt-1 rounded-md max-w-[100px] max-h-[100px] object-cover"
               />
             )}
+
           </div>
         )}
-        {/* Image */}
-        {message.img && (
-          <img
-            src={message.img}
-            onLoad={onLoadImage}
-            onError={onLoadImage}
-            alt="message attachment"
-            className="mt-2 rounded-lg max-w-[200px] w-full h-auto object-cover cursor-pointer"
-            onClick={(e) => {
-              e.stopPropagation();
-              onImageClick(message.img, e);
-            }}
-          />
+        {isMessageDeleted || isSenderBanned ? (
+          messageDeleted
+        ) : (
+          <>
+            {message.img && (
+              <div className="mb-2 max-w-[200px] h-auto rounded-lg overflow-hidden shadow-md border border-gray-600 cursor-pointer">
+                <img
+                  src={message.img}
+                  onLoad={onLoadImage}
+                  onError={onLoadImage}
+                  alt="Chat image"
+                  className="w-full h-full object-cover"
+                  onClick={onImageClick}
+                />
+              </div>
+            )}
+            {message.text && (
+              <p
+                className="whitespace-pre-wrap break-words text-sm"
+                style={{
+                  wordBreak: "break-word",
+                  // overflowWrap: "break-word",
+                }}
+              >
+                {renderClickableText(message.text)}
+              </p>
+            )}
+          </>
         )}
-        {/* Message Text */}
-        {messageText && (
-          <p
-            className={`whitespace-pre-wrap text-sm ${
-              isSentByCurrentUser ? "text-white" : ""
-            }`}
-            style={{
-              wordBreak: "break-word",
-              // overflowWrap: "break-word",
-            }}
-          >
-            {renderClickableText(messageText, isSentByCurrentUser)}
-          </p>
-        )}
+ 
       </div>
     </div>
-);
+  );
+};
 
 export default MessageBubble;

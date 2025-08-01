@@ -22,7 +22,7 @@ const isBanned = async (userId) => {
 
 export const sendPublicMessage = async (req, res) => {
   try {
-    const { content, imgBase64, replyTo } = req.body;
+    const { text, imgBase64, repliedTo } = req.body;
     const senderId = req.user._id;
     let img = null;
 
@@ -37,22 +37,22 @@ export const sendPublicMessage = async (req, res) => {
       img = uploadResponse.secure_url;
     }
 
-    if (!content && !img) {
-      return res.status(400).json({ error: "Message content or image is required." });
+    if (!text && !img) {
+      return res.status(400).json({ error: "Message text or image is required." });
     }
 
     let newMessageData = {
       sender: senderId,
-      content: content || "",
+      text: text || "",
       img: img,
     };
 
-    if (replyTo) {
-      const repliedMessage = await PublicChatMessage.findById(replyTo);
+    if (repliedTo) {
+      const repliedMessage = await PublicChatMessage.findById(repliedTo);
       if (!repliedMessage) {
         return res.status(404).json({ error: "Message being replied to not found." });
       }
-      newMessageData.replyTo = replyTo;
+      newMessageData.repliedTo = repliedTo;
     }
 
     const newPublicMessage = new PublicChatMessage(newMessageData);
@@ -64,8 +64,8 @@ export const sendPublicMessage = async (req, res) => {
         select: "username fullName profileImg isAdmin isVerified isGoldVerified",
       },
       {
-        path: "replyTo",
-        select: "sender content img isDeletedByAdmin isDeletedByUser",
+        path: "repliedTo",
+        select: "sender text img isDeletedByAdmin isDeletedByUser",
         populate: {
           path: "sender",
           select: "username isBannedInPublicChat",
@@ -114,8 +114,8 @@ export const getPublicMessages = async (req, res) => {
             "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
         },
         {
-          path: "replyTo",
-          select: "sender content img isDeletedByAdmin isDeletedByUser",
+          path: "repliedTo",
+          select: "sender text img isDeletedByAdmin isDeletedByUser",
           populate: {
             path: "sender",
             select: "username isBannedInPublicChat", 
@@ -337,8 +337,8 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    // const message = await PublicChatMessage.findById(messageId);
-    const message = await PublicChatMessage.findByIdAndDelete(messageId);
+    const message = await PublicChatMessage.findById(messageId);
+    // const message = await PublicChatMessage.findByIdAndDelete(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
@@ -352,9 +352,9 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     const imageUrlToDelete = message.img;
 
-    // message.isDeletedByUser = true;
-    // message.img = null; 
-    // await message.save();
+    message.isDeletedByUser = true;
+    message.img = null; 
+    await message.save();
 
     if (imageUrlToDelete) {
       let imgId;
@@ -432,7 +432,7 @@ export const editPublicMessage = async (req, res) => {
     const userId = req.user._id; 
 
     if (!newContent || newContent.trim() === "") {
-      return res.status(400).json({ error: "Edited content cannot be empty." });
+      return res.status(400).json({ error: "Edited text cannot be empty." });
     }
 
     const message = await PublicChatMessage.findById(messageId);
@@ -451,7 +451,7 @@ export const editPublicMessage = async (req, res) => {
       return res.status(403).json({ error: "Cannot edit a deleted message." });
     }
 
-    message.content = newContent;
+    message.text = newContent;
     message.isEdited = true;
     message.editedAt = new Date();
 
@@ -465,8 +465,8 @@ export const editPublicMessage = async (req, res) => {
             "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
         },
         {
-          path: "replyTo",
-          select: "sender content img isDeletedByAdmin isDeletedByUser",
+          path: "repliedTo",
+          select: "sender text img isDeletedByAdmin isDeletedByUser",
           populate: {
             path: "sender",
             select: "username isBannedInPublicChat",

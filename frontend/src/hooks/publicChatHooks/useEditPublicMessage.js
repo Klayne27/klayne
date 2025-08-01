@@ -23,7 +23,7 @@ export const useEditPublicMessage = () => {
             if (message._id === messageId) {
               return {
                 ...message,
-                content: newContent,
+                text: newContent,
                 isEdited: true,
                 // editedAt: new Date().toISOString(),
               };
