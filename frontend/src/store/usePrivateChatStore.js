@@ -1,5 +1,5 @@
-import { create } from "zustand";
-import { immer } from "zustand/middleware/immer";
+import { create } from "zustand"
+import { immer } from "zustand/middleware/immer"
 
 export const usePrivateChatStore = create(
   immer((set) => ({
@@ -8,15 +8,17 @@ export const usePrivateChatStore = create(
     isTypingOtherUser: false,
     showNewMessageButton: false,
     selectedConversation: null,
+    activeMessageModalId: null,
 
-    setReplyingToMessage: (message) =>
-      set({ replyingToMessage: message, editingMessage: null }),
-    setEditingMessage: (message) =>
-      set({ editingMessage: message, replyingToMessage: null }),
+    setReplyingToMessage: (message) => set({ replyingToMessage: message, editingMessage: null }),
+    setEditingMessage: (message) => set({ editingMessage: message, replyingToMessage: null }),
     setShowNewMessageButton: (show) => set({ showNewMessageButton: show }),
     setIsTypingOtherUser: (isTyping) => set({ isTypingOtherUser: isTyping }),
     clearReplyAndEdit: () => set({ replyingToMessage: null }),
-    setSelectedConversation: (conversationId) =>
-      set({ selectedConversation: conversationId }),
-  }))
-);
+    setSelectedConversation: (conversationId) => set({ selectedConversation: conversationId }),
+    setActiveMessageModalId: (id) =>
+      set((state) => {
+        state.activeMessageModalId = id
+      }),
+  })),
+)

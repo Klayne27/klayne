@@ -1,79 +1,69 @@
-import { Navigate, Route, Routes, useLocation } from "react-router-dom";
-import { Suspense, lazy, useState } from "react";
-import Sidebar from "./components/common/Sidebar";
-import RightPanel from "./components/common/RightPanel";
-import { useAuthUser } from "./hooks/authHooks/useAuthUser";
-import { Toaster } from "react-hot-toast";
-import ImageModal from "./components/ui/ImageModal";
-import ProfileImageModal from "./components/ui/ProfileImageModal";
-import { useAppStore } from "./store/appStore";
+import { Navigate, Route, Routes, useLocation } from "react-router-dom"
+import { Suspense, lazy, useState } from "react"
+import Sidebar from "./components/common/Sidebar"
+import RightPanel from "./components/common/RightPanel"
+import { useAuthUser } from "./hooks/authHooks/useAuthUser"
+import { Toaster } from "react-hot-toast"
+import ImageModal from "./components/ui/ImageModal"
+import ProfileImageModal from "./components/ui/ProfileImageModal"
+import { useAppStore } from "./store/appStore"
 
-const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"));
-const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"));
-const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"));
-const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"));
-const HomePage = lazy(() => import("./pages/home/HomePage"));
-const LoginPage = lazy(() => import("./pages/auth/login/LoginPage"));
-const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"));
-const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"));
-const NotificationPage = lazy(() => import("./pages/notification/NotifcationPage"));
-const MessagesPage = lazy(() => import("./pages/message/MessagePage"));
-const PostPage = lazy(() => import("./pages/post/PostPage"));
-const SearchPage = lazy(() => import("./pages/search/SearchPage"));
+const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
+const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
+const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"))
+const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"))
+const HomePage = lazy(() => import("./pages/home/HomePage"))
+const LoginPage = lazy(() => import("./pages/auth/login/LoginPage"))
+const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"))
+const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"))
+const NotificationPage = lazy(() => import("./pages/notification/NotifcationPage"))
+const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
+const PostPage = lazy(() => import("./pages/post/PostPage"))
+const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
 function App() {
-  const { authUser, isLoading } = useAuthUser();
-  const selectedProfileImage = useAppStore((state) => state.selectedProfileImage);
-  const closeProfileImageModal = useAppStore((state) => state.closeProfileImageModal);
-  const selectedImage = useAppStore((state) => state.selectedImage);
-  const closeImageModal = useAppStore((state) => state.closeImageModal);
-  const showCreatePostModal = useAppStore((state) => state.showCreatePostModal);
-  const setShowCreatePostModal = useAppStore((state) => state.setShowCreatePostModal);
-  const [feedType, setFeedType] = useState("posts");
+  const { authUser, isLoading } = useAuthUser()
+  const {
+    selectedProfileImage,
+    closeProfileImageModal,
+    selectedImage,
+    closeImageModal,
+    showCreatePostModal,
+    setShowCreatePostModal,
+  } = useAppStore()
+  
+  const [feedType, setFeedType] = useState("posts")
 
-  const location = useLocation();
+  const location = useLocation()
 
   if (isLoading) {
     return (
-      <div className="h-screen flex justify-center items-center">
+      <div className="flex h-screen items-center justify-center">
         {/* <LoadingSpinner size="lg" /> */}
       </div>
-    );
+    )
   }
 
-  const isMessagePage = location.pathname.includes("/messages");
-  const isPublicChatPage = location.pathname.includes("/public-chat");
+  const isMessagePage = location.pathname.includes("/messages")
+  const isPublicChatPage = location.pathname.includes("/public-chat")
 
   return (
-    <div className="flex flex-col md:flex-row md:max-w-[1240px] mx-auto min-h-screen">
+    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row">
       {authUser && <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />}
 
       <main
         className={`${
-          isPublicChatPage
-            ? "flex flex-col h-screen max-h-screen md:flex-1"
-            : "flex-1 md:pb-0"
+          isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
         }`}
       >
         {" "}
         <Suspense
-          fallback={
-            <div className="flex-grow flex justify-center items-center h-screen"></div>
-          }
+          fallback={<div className="flex h-screen flex-grow items-center justify-center"></div>}
         >
           <Routes>
-            <Route
-              path="/"
-              element={authUser ? <HomePage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/signup"
-              element={!authUser ? <SignupPage /> : <Navigate to="/" />}
-            />
-            <Route
-              path="/login"
-              element={!authUser ? <LoginPage /> : <Navigate to="/" />}
-            />
+            <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
+            <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
+            <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
             <Route
               path="/notifications"
               element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
@@ -104,18 +94,12 @@ function App() {
               path="/bookmarks"
               element={authUser ? <BookmarksPage /> : <Navigate to="/login" />}
             />
-            <Route
-              path="/themes"
-              element={authUser ? <ThemesPage /> : <Navigate to="/login" />}
-            />
+            <Route path="/themes" element={authUser ? <ThemesPage /> : <Navigate to="/login" />} />
             <Route
               path="/:username/post/:pid"
               element={authUser ? <PostPage /> : <Navigate to="/login" />}
             />
-            <Route
-              path="/search"
-              element={authUser ? <SearchPage /> : <Navigate to="/login" />}
-            />
+            <Route path="/search" element={authUser ? <SearchPage /> : <Navigate to="/login" />} />
           </Routes>
         </Suspense>
       </main>
@@ -126,11 +110,9 @@ function App() {
       <Toaster position="bottom-center" />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
-      {showCreatePostModal && (
-        <CreatePostModal onClose={() => setShowCreatePostModal(false)} />
-      )}
+      {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}
     </div>
-  );
+  )
 }
 
-export default App;
+export default App

@@ -36,19 +36,16 @@ const MessageItem = ({
 
   const mouseLeaveTimeoutRef = useRef(null)
 
-  const selectedConversation = usePrivateChatStore(
-    (state) => state.selectedConversation,
-  )
-  const setReplyingToMessage = usePrivateChatStore(
-    (state) => state.setReplyingToMessage,
-  )
-  const setEditingMessage = usePrivateChatStore(
-    (state) => state.setEditingMessage,
-  )
+  const {
+    selectedConversation,
+    setReplyingToMessage,
+    setEditingMessage,
+    setActiveMessageModalId,
+    activeMessageModalId,
+  } = usePrivateChatStore()
 
   const [isHovered, setIsHovered] = useState(false)
 
-  const [activeMessageModalId, setActiveMessageModalId] = useState(null)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
 
   const { deleteMessage } = useDeleteMessage()
@@ -59,32 +56,24 @@ const MessageItem = ({
 
   const isMobile = useIsMobile()
 
-  const pressTimer = useRef(null)
-  const LONG_PRESS_DURATION = 500
-
   const isSentByCurrentUser = message?.sender._id === currentUser._id
   const isEditable = isSentByCurrentUser
 
   const handleLongPress = useCallback(() => {
     if (isMobile) {
-      setActiveMessageModalId((prevId) =>
-        prevId === message._id ? null : message._id,
-      )
+      setActiveMessageModalId((prevId) => (prevId === message._id ? null : message._id))
     }
-  }, [isMobile, message._id])
+  }, [isMobile, message._id, setActiveMessageModalId])
 
-  const {
-    handleTouchCancel,
-    handleTouchEnd,
-    handleTouchMove,
-    handleTouchStart,
-  } = useLongPress(handleLongPress, 500, isTouchDevice)
+  const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
+    handleLongPress,
+    500,
+    isMobile,
+  )
 
   useEffect(() => {
     setIsTouchDevice(
-      "ontouchstart" in window ||
-        navigator.maxTouchPoints > 0 ||
-        navigator.msMaxTouchPoints > 0,
+      "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0,
     )
   }, [])
 
@@ -113,8 +102,7 @@ const MessageItem = ({
     }
     acc[reaction.emoji].count++
 
-    const reactorId =
-      reaction.user?._id?.toString() || reaction.user?.toString()
+    const reactorId = reaction.user?._id?.toString() || reaction.user?.toString()
     if (reactorId) {
       acc[reaction.emoji].userIds.push(reactorId)
     }
@@ -144,9 +132,7 @@ const MessageItem = ({
 
   const handleMessageTap = (messageId) => {
     if (isTouchDevice) {
-      setActiveMessageModalId((prevId) =>
-        prevId === messageId ? null : messageId,
-      )
+      setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId))
     }
   }
 
@@ -165,12 +151,8 @@ const MessageItem = ({
   const handleClickOutsideMessage = useCallback(
     (e) => {
       if (activeMessageModalId) {
-        const messageItemContainer = document.getElementById(
-          `message-${activeMessageModalId}`,
-        )
-        const messageModalElement = document.getElementById(
-          `message-modal-${activeMessageModalId}`,
-        )
+        const messageItemContainer = document.getElementById(`message-${activeMessageModalId}`)
+        const messageModalElement = document.getElementById(`message-modal-${activeMessageModalId}`)
         if (
           messageItemContainer &&
           !messageItemContainer.contains(e.target) &&
@@ -209,9 +191,7 @@ const MessageItem = ({
     : {}
 
   const handleJumpToOriginalMessage = (originalMessageId) => {
-    const originalMessageElement = document.getElementById(
-      `message-${originalMessageId}`,
-    )
+    const originalMessageElement = document.getElementById(`message-${originalMessageId}`)
     if (originalMessageElement) {
       originalMessageElement.scrollIntoView({
         behavior: "smooth",
@@ -307,9 +287,7 @@ const MessageItem = ({
         id={`message-${message._id}`}
         className={`relative mb-0 rounded-lg p-[1px] ${
           isMessageHighlighted ? "bg-secondary" : ""
-        } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${
-          message.isFirstInGroup ? "mt-2" : ""
-        } `}
+        } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${message.isFirstInGroup ? "mt-2" : ""} `}
         style={messageContentStyle}
         onMouseEnter={() => {
           if (!isMobile) {
@@ -330,9 +308,7 @@ const MessageItem = ({
             }
             e.stopPropagation()
           } else {
-            const modalElement = document.getElementById(
-              `message-modal-${message._id}`,
-            )
+            const modalElement = document.getElementById(`message-modal-${message._id}`)
             if (modalElement && modalElement.contains(e.target)) {
               return
             }
@@ -378,9 +354,7 @@ const MessageItem = ({
           messageContentStyle={messageContentStyle}
           message={message}
         >
-          {!isSentByCurrentUser && !message.isFirstInGroup && (
-            <div className="mr-1 h-8 w-8"></div>
-          )}
+          {!isSentByCurrentUser && !message.isFirstInGroup && <div className="mr-1 h-8 w-8"></div>}
 
           {isMessageHighlighted && !isSentByCurrentUser && (
             <div className="absolute left-1.5 top-1/2 z-0 mr-2 -translate-y-1/2 whitespace-nowrap text-xs text-gray-400">
@@ -393,9 +367,7 @@ const MessageItem = ({
             </div>
           )}
           <div
-            className={`flex flex-col ${
-              isSentByCurrentUser ? "items-end" : "items-start"
-            } w-fit max-w-[75%]`}
+            className={`flex flex-col ${isSentByCurrentUser ? "items-end" : "items-start"} w-fit max-w-[75%]`}
           >
             {message.isFirstInGroup && (
               <div className={`mb-0.5 flex items-center text-sm`}>
@@ -407,18 +379,14 @@ const MessageItem = ({
                     {message.senderUsername}
                   </Link>
                 )}
-                <span className="mr-5 text-xs text-gray-500">
-                  {formatTime(message.createdAt)}
-                </span>
+                <span className="mr-5 text-xs text-gray-500">{formatTime(message.createdAt)}</span>
               </div>
             )}
 
             {/* Edited Status */}
             {message.isEdited && message.text && (
               <span
-                className={`mr-5 text-xs italic text-gray-500 ${
-                  isSentByCurrentUser ? "self-end" : "self-start"
-                }`}
+                className={`mr-5 text-xs italic text-gray-500 ${isSentByCurrentUser ? "self-end" : "self-start"}`}
               >
                 (Edited)
               </span>
