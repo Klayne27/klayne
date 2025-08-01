@@ -1,9 +1,7 @@
 import React, { useState, useRef, useCallback, useEffect } from "react";
 import { FaCircle } from "react-icons/fa";
-import { BsCheck2, BsCheck2All, BsThreeDots } from "react-icons/bs";
-import { PiSmileyFill } from "react-icons/pi";
+import { BsCheck2, BsCheck2All } from "react-icons/bs";
 import { Link } from "react-router-dom";
-import { HiOutlineReply } from "react-icons/hi";
 
 import EmojiPickerPopover from "../EmojiPickerPopover";
 import { useDeleteMessage } from "../../../hooks/messagesHooks/useDeleteMessage";
@@ -19,6 +17,7 @@ import MessageReactions from "../../ui/MessageReactions";
 import MessageBubble from "../../ui/MessageBubble";
 import MessageContentLayout from "../../ui/MessageContentLayout";
 import { useOpenMoreActionsModal } from "../../../hooks/useOpenMoreActionsModal";
+import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal";
 import MessageActionsModal from "../../ui/MessageActionsModal";
 
 // const lastMessageDateRef = useRef(null);
@@ -41,9 +40,6 @@ const MessageItem = ({
   const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage);
 
   const [isHovered, setIsHovered] = useState(false);
-  // const [showEmojiPickerPopover, setShowEmojiPickerPopover] = useState(false);
-  // const [showMoreActionsModal, setShowMoreActionsModal] = useState(false); // New state for more actions modal
-  // const [popoverPosition, setPopoverPosition] = useState({ top: 0, left: 0 });
 
   const [activeMessageModalId, setActiveMessageModalId] = useState(null);
   const [isCurrentlyTouchDevice, setIsCurrentlyTouchDevice] = useState(false);
@@ -91,28 +87,8 @@ const MessageItem = ({
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable });
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal);
-  };
-
-  // const handleCloseEmojiPickerPopover = useCallback(() => {
-  //   setShowEmojiPickerPopover(false);
-  // }, []);
-
-  const handleCloseMoreActionsModal = useCallback(() => {
-    setShowMoreActionsModal(false);
-  }, [setShowMoreActionsModal]);
-
-  const handleImageClick = (imageUrl) => {
-    openImageModal(imageUrl);
-  };
-
-  // const isSentByCurrentUser =
-  //   (typeof message.sender === "object" && message.sender?._id === currentUser._id) ||
-  //   (typeof message.sender === "string" && message.sender === currentUser._id);
 
   const showModal = activeMessageModalId === message._id;
-  const allowedEmojis = ["❤️", "👍", "😂"];
 
   const groupedReactions = message.reactions?.reduce((acc, reaction) => {
     acc[reaction.emoji] = acc[reaction.emoji] || {
@@ -130,54 +106,6 @@ const MessageItem = ({
   }, {});
 
   const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0;
-
-  // const handleOpenMoreActionsModal = useCallback(
-  //   (e) => {
-  //     e.stopPropagation();
-  //     setShowEmojiPickerPopover(false);
-  //     if (showMoreActionsModal) {
-  //       setShowMoreActionsModal(false);
-  //       return;
-  //     }
-
-  //     const buttonRect = e.currentTarget.getBoundingClientRect();
-  //     const modalWidth = 180; // Approximate width of the Discord-like modal
-  //     const itemHeight = 38; // px per action item (approximate, including padding)
-  //     const numItems = isEditable ? 3 : 2; // Reply, Edit, Delete (3) or Reply, Delete (2)
-  //     const estimatedModalHeight = numItems * itemHeight + 10; // Add some vertical padding for the modal itself
-
-  //     const modalHeight = estimatedModalHeight;
-
-  //     // Calculate newLeft to position the modal to the left of the button.
-  //     let newLeft = buttonRect.left - modalWidth;
-
-  //     // Add a small offset (e.g., 5-10px) to the left for better visual spacing.
-  //     const offsetLeft = 5;
-  //     newLeft = buttonRect.left - modalWidth - offsetLeft;
-
-  //     // Ensure the modal doesn't go off the left edge of the screen
-  //     if (newLeft < 10) {
-  //       // Keep a minimum 10px padding from the left edge
-  //       newLeft = 10;
-  //     }
-  //     let newTop = buttonRect.top + buttonRect.height / 2 - modalHeight / 2;
-
-  //     // Ensure the modal doesn't go off the top or bottom edge of the screen
-  //     const paddingVertical = 10; // Minimum padding from top/bottom viewport edge
-  //     if (newTop < paddingVertical) {
-  //       // If it goes off the top
-  //       newTop = paddingVertical;
-  //     }
-  //     if (newTop + modalHeight > window.innerHeight - paddingVertical) {
-  //       // If it goes off the bottom
-  //       newTop = window.innerHeight - modalHeight - paddingVertical;
-  //     }
-
-  //     setMoreActionsModalPosition({ top: newTop, left: newLeft });
-  //     setShowMoreActionsModal(true);
-  //   },
-  //   [showMoreActionsModal, isEditable, setShowEmojiPickerPopover]
-  // );
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser);
 
@@ -204,6 +132,19 @@ const MessageItem = ({
     }
   };
 
+  
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal);
+  };
+
+  const handleCloseMoreActionsModal = useCallback(() => {
+    setShowMoreActionsModal(false);
+  }, [setShowMoreActionsModal]);
+
+  const handleImageClick = (imageUrl) => {
+    openImageModal(imageUrl);
+  };
+
   const handleClickOutsideMessage = useCallback(
     (e) => {
       if (activeMessageModalId) {
@@ -226,18 +167,18 @@ const MessageItem = ({
     [activeMessageModalId]
   );
 
-  useEffect(() => {
-    if (activeMessageModalId) {
-      document.addEventListener("click", handleClickOutsideMessage);
-    }
+  // useEffect(() => {
+  //   if (activeMessageModalId) {
+  //     document.addEventListener("click", handleClickOutsideMessage);
+  //   }
 
-    return () => {
-      document.removeEventListener("click", handleClickOutsideMessage);
-      if (mouseLeaveTimeoutRef.current) {
-        clearTimeout(mouseLeaveTimeoutRef.current);
-      }
-    };
-  }, [activeMessageModalId, handleClickOutsideMessage]);
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutsideMessage);
+  //     if (mouseLeaveTimeoutRef.current) {
+  //       clearTimeout(mouseLeaveTimeoutRef.current);
+  //     }
+  //   };
+  // }, [activeMessageModalId, handleClickOutsideMessage]);
 
   const shouldShowTimeOnHover = isHovered || showModal;
   const isMessageHighlighted = isHovered || showModal;
@@ -308,7 +249,6 @@ const MessageItem = ({
   };
 
   const handleEditClick = () => {
-    // privateChatInputRef.current.focus();
     setEditingMessage(message);
     setShowMoreActionsModal(false);
     handleMessageTap(null);
@@ -383,64 +323,23 @@ const MessageItem = ({
         onTouchMove={isMobile ? handleTouchMove : undefined}
       >
         {/* Main Reaction Picker and Action Modal */}
-        <div
-          id={`message-modal-${message._id}`}
-          className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 z-10
-            ${
-              isSentByCurrentUser
-                ? "-left-24 translate-x-1/2"
-                : "-right-24 -translate-x-1/2"
-            }
-          ${
-            showModal
-              ? "opacity-100 pointer-events-auto"
-              : "opacity-0 pointer-events-none"
-          } `}
-          style={messageContentStyle}
-        >
-          {allowedEmojis.map((emoji) => (
-            <button
-              key={emoji}
-              onClick={(e) => {
-                e.stopPropagation();
-                handleReactionClick(message._id, emoji);
-                onReactionAdded();
-              }}
-              className="text-xl md:hover:scale-125 py-1 transition duration-100"
-              title={`React with ${emoji}`}
-            >
-              {emoji}
-            </button>
-          ))}
-          <div className="w-px h-6 bg-slate-500 mx-1"></div>
-          <button
-            ref={moreEmojisButtonRef}
-            onClick={(e) => openEmojiPickerWithModalClose(e, moreButtonRef)}
-            className="text-slate-500 group hover:text-slate-400 duration-100 hover:bg-secondary rounded-md transtion border-slate-500 mt-[1px]"
-            title="More Emojis"
-          >
-            <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
-          </button>
-          <button
-            onClick={handleReplyClick}
-            className="p-1 text-slate-500 group hover:text-slate-400 rounded-md hover:bg-secondary transition duration-100"
-            title="Reply to message"
-          >
-            <HiOutlineReply size={18} className="group-hover:scale-110" />
-          </button>
-          {/* New "More" button */}
-          <button
-            ref={moreButtonRef}
-            onClick={handleOpenMoreActionsModal}
-            className="text-slate-500 hover:text-slate-400 group hover:bg-secondary rounded-md transition duration-100 p-1"
-            title="More actions"
-          >
-            <BsThreeDots size={18} className="group-hover:scale-110" />
-          </button>
-        </div>
+
+        <MessageActionsModal
+          message={message}
+          isSentByCurrentUser={isSentByCurrentUser}
+          showModal={showModal}
+          messageContentStyle={messageContentStyle}
+          onReactionClick={handleReactionClick}
+          onReactionAdded={onReactionAdded}
+          moreEmojisButtonRef={moreEmojisButtonRef}
+          openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
+          onReplyClick={handleReplyClick}
+          moreActionsButtonRef={moreActionsModalPosition}
+          onOpenMoreActionsModal={handleOpenMoreActionsModal}
+        />
 
         {showMoreActionsModal && (
-          <MessageActionsModal
+          <MoreMessageActionsModal
             message={message}
             onCloseMoreActionsModal={handleCloseMoreActionsModal}
             moreActionsModalPosition={moreActionsModalPosition}
@@ -462,12 +361,12 @@ const MessageItem = ({
             <div className="w-8 h-8 mr-1"></div>
           )}
 
-          {shouldShowTimeOnHover && !isSentByCurrentUser && !message.showHeaderInfo && (
+          {shouldShowTimeOnHover && !isSentByCurrentUser && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(message.createdAt)}
             </div>
           )}
-          {shouldShowTimeOnHover && isSentByCurrentUser && !message.showHeaderInfo && (
+          {shouldShowTimeOnHover && isSentByCurrentUser && (
             <div className="absolute left-1.5 top-1/2 -translate-y-1/2 text-xs text-gray-400 mr-2 z-0 whitespace-nowrap">
               {formatTime(message.createdAt)}
             </div>

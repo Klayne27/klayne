@@ -27,8 +27,8 @@ const PublicChatMessageInput = ({
   // setReplyingToMessage,
   // sendPublicMessage,
   // editPublicMessage,
+  onSenderMessageSent,
   sendTypingEvent, // This function needs to be updated to emit the new event
-  isSomeoneTyping, // This will now be derived from typingUsers.length > 0
   typingUsers, // This is the array of users currently typing from the server
 }) => {
   const { replyingToMessage, setReplyingToMessage, setEditingMessage, editingMessage } =
@@ -49,7 +49,9 @@ const PublicChatMessageInput = ({
     replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser;
 
   const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
-  const { sendPublicMessage, isSendingPublicMessage } = useSendPublicMessage();
+
+  const { sendPublicMessage, isSendingPublicMessage } =
+    useSendPublicMessage(onSenderMessageSent);
 
   const isMobile = useIsMobile();
 

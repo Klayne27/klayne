@@ -1,104 +1,76 @@
+import { BsThreeDots } from "react-icons/bs";
 import { HiOutlineReply } from "react-icons/hi";
-import { FiTrash } from "react-icons/fi";
-import { MdEdit } from "react-icons/md";
-import { IoCopy } from "react-icons/io5";
+import { PiSmileyFill } from "react-icons/pi";
 
 function MessageActionsModal({
-  onCloseMoreActionsModal,
-  moreActionsModalPosition,
-  onReplyClick,
-  onEditClick,
-  onCopyMessage,
-  onDeleteOwnMessage,
-  onAdminDeleteMessage,
-  onBanUser,
-  onUnbanUser,
   message,
-  isEditable,
   isSentByCurrentUser,
-  isAuthUserAdmin = false,
-  isMessageDeleted = false,
-  isSenderBanned,
-  isAdminDeleting,
+  showModal,
+  messageContentStyle,
+  onReactionClick,
+  onReactionAdded,
+  moreEmojisButtonRef,
+  openEmojiPickerWithModalClose,
+  onReplyClick,
+  moreActionsButtonRef,
+  onOpenMoreActionsModal,
 }) {
-  return (
-    <div className="fixed inset-0 z-20" onClick={onCloseMoreActionsModal}>
-      <div
-        className={`absolute p-2 bg-base-100 rounded-xl gray-shadow  z-30`}
-        style={{
-          top: moreActionsModalPosition.top,
-          left: moreActionsModalPosition.left,
-          minWidth: "180px",
-        }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
-      >
-        <button
-          onClick={onReplyClick}
-          className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-        >
-          Reply
-          <HiOutlineReply size={18} className="text-slate-400" />
-        </button>
-        {message.text && (
-          <button
-            onClick={onCopyMessage}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-          >
-            Copy Text
-            <IoCopy size={18} className="text-slate-400" />
-          </button>
-        )}
-        {isEditable && !isMessageDeleted &&  (
-          <button
-            onClick={onEditClick}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
-          >
-            Edit Message
-            <MdEdit size={16} className="text-slate-400" />
-          </button>
-        )}
-        {isSentByCurrentUser && !isMessageDeleted && (
-          <button
-            onClick={onDeleteOwnMessage}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 duration-200 transition"
-          >
-            Delete Message
-            <FiTrash size={16} />
-          </button>
-        )}
+  const allowedEmojis = ["❤️", "👍", "😂"];
 
-        {isAuthUserAdmin && !isSentByCurrentUser && (
-          <>
-            {!isMessageDeleted && (
-              <button
-                onClick={onAdminDeleteMessage}
-                disabled={isAdminDeleting}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
-              >
-                Delete (Admin)
-                <MdDeleteForever size={18} />
-              </button>
-            )}
-            {isSenderBanned ? (
-              <button
-                onClick={onUnbanUser}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-green-400 hover:bg-green-400/10 transition duration-200"
-              >
-                Unban User
-                <FaUserCheck size={16} />
-              </button>
-            ) : (
-              <button
-                onClick={onBanUser}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
-              >
-                Ban User
-                <FaUserSlash size={16} />
-              </button>
-            )}
-          </>
-        )}
-      </div>
+  return (
+    <div
+      id={`message-reaction-modal-${message._id}`}
+      className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
+              ${
+                isSentByCurrentUser
+                  ? "-left-24 translate-x-1/2"
+                  : "-right-24 -translate-x-1/2"
+              }
+              ${
+                showModal
+                  ? "opacity-100 pointer-events-auto"
+                  : "opacity-0 pointer-events-none"
+              } `}
+      style={messageContentStyle}
+    >
+      {allowedEmojis.map((emoji) => (
+        <button
+          key={emoji}
+          onClick={(e) => {
+            e.stopPropagation();
+            onReactionClick(message._id, emoji);
+            onReactionAdded();
+          }}
+          className={`text-xl hover:scale-125 py-1 transition duration-100`}
+          title={`React with ${emoji}`}
+        >
+          {emoji}
+        </button>
+      ))}
+      <div className="w-px h-6 bg-slate-500 mx-1"></div>
+      <button
+        ref={moreEmojisButtonRef}
+        onClick={(e) => openEmojiPickerWithModalClose(e, moreEmojisButtonRef)}
+        className=" text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg duration-100 transtion"
+        title="More Emojis"
+      >
+        <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
+      </button>
+      <button
+        onClick={onReplyClick}
+        className="p-1 text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg transition duration-100"
+        title="Reply to message"
+      >
+        <HiOutlineReply size={18} className="group-hover:scale-110" />
+      </button>
+      <button
+        ref={moreActionsButtonRef}
+        onClick={onOpenMoreActionsModal}
+        className="text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg p-1 transition duration-100"
+        title="More actions"
+      >
+        <BsThreeDots size={18} className="group-hover:scale-110" />
+      </button>
     </div>
   );
 }

@@ -3,10 +3,9 @@ import { showAppToast } from "../../utils/showAppToast";
 import { sendPublicMessageApi } from "../../api/publicChatApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
-export const useSendPublicMessage = () => {
+export const useSendPublicMessage = (onSenderMessageSent) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser(); // Get authUser here too for sender details
-  const MESSAGE_LIMIT = 40; // Use the same limit
 
   const {
     mutate: sendPublicMessage,
@@ -92,6 +91,9 @@ export const useSendPublicMessage = () => {
         };
       });
 
+      if (onSenderMessageSent) {
+        onSenderMessageSent();
+      }
       return { previousMessages };
     },
 

@@ -1,21 +1,18 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getPublicMessagesApi } from "../../api/publicChatApi";
-import { usePublicChatSocketEvents } from "../usePublicChatSocketEvents";
 
 export const usePublicMessages = () => {
   const MESSAGE_LIMIT = 40;
-
-  const { typingUsers } = usePublicChatSocketEvents();
 
   const {
     data,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
-    isError,
-    error,
+    isLoading: isLoadingMessages,
+    isError: isMessagesError,
+    error: messagesError,
     refetch,
   } = useInfiniteQuery({
     queryKey: ["publicMessages"],
@@ -37,21 +34,14 @@ export const usePublicMessages = () => {
     return data ? [...data.pages].reverse().flatMap((page) => page) : [];
   }, [data]);
 
-  // Determine if 'someone' (excluding current user) is typing
-  const isSomeoneTyping = useMemo(() => {
-    return typingUsers.length > 0;
-  }, [typingUsers]);
-
   return {
     messages,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
-    isError,
-    error,
+    isLoadingMessages,
+    isMessagesError,
+    messagesError,
     refetch,
-    typingUsers,
-    isSomeoneTyping, // Export the typing indicator status
   };
 };

@@ -1,0 +1,1 @@
+export const MESSAGE_GROUP_TIME_THRESHOLD_MS = 5 * 60 * 1000;
