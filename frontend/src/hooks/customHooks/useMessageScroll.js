@@ -8,6 +8,7 @@ export const useMessageScroll = ({
   isFetchingNextPage,
   isLoadingMessages,
   setShowNewMessageButton,
+  isTypingOtherUser
 }) => {
   const { authUser: currentUser } = useAuthUser()
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
@@ -144,7 +145,23 @@ export const useMessageScroll = ({
     prevLastMessageId.current = newLastMessage._id
   }, [messages, currentUser?._id, isUserScrollingUp, setShowNewMessageButton])
 
+  useEffect(() => {
+    if (isTypingOtherUser) {
+      const listEl = messageListRef.current
+      if (listEl) {
+        const scrollThreshold = 100
+        const isUserAtBottom =
+          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
 
+        if (isUserAtBottom) {
+          const timeoutId = setTimeout(() => {
+            scrollToBottom()
+          }, 1)
+          return () => clearTimeout(timeoutId)
+        }
+      }
+    }
+  }, [isTypingOtherUser, scrollToBottom, messageListRef])
   
   return {
     handleLoadImage,

@@ -1,4 +1,4 @@
-import { useRef, useEffect, useCallback, useMemo } from "react"
+import { useRef, useEffect, useCallback } from "react"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import PublicChatHeader from "./PublicChatHeader"

@@ -13,30 +13,16 @@ import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 
 const ChatWindow = () => {
-  const queryClient = useQueryClient()
   const { authUser: currentUser } = useAuthUser()
-  const currentUserId = currentUser?._id
-  const { setActiveConversationId, socket } = useSocket() // Only need setActiveConversationId from useSocket here
-
-  const isTypingOtherUser = usePrivateChatStore((state) => state.isTypingOtherUser)
-  const setIsTypingOtherUser = usePrivateChatStore((state) => state.setIsTypingOtherUser)
-  const setShowNewMessageButton = usePrivateChatStore((state) => state.setShowNewMessageButton)
+  const { setActiveConversationId, socket } = useSocket()
+  const queryClient = useQueryClient()
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
+
+  const otherUser = selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
 
   const conversationId = selectedConversation?._id
 
-  const privateChatInputRef = useRef(null)
-  const currentOptimisticIdRef = useRef(null)
-  // const messageListRef = useRef(null)
-  const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 })
-
-  const didMessageJustLanded = useRef(false)
-
-  const resizeObserverRef = useRef(null)
-  const prevScrollHeightRef = useRef(0)
-
-  const shouldScrollOnFirstFullLoad = useRef(true)
-  const prevActualConversationIdRef = useRef(conversationId)
+  const { isTypingOtherUser, setIsTypingOtherUser, setShowNewMessageButton } = usePrivateChatStore()
 
   const {
     messages,
@@ -53,7 +39,6 @@ const ChatWindow = () => {
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
-    scrollToBottom,
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -61,10 +46,12 @@ const ChatWindow = () => {
     fetchNextPage,
     isFetchingNextPage,
     isLoadingMessages,
+    isTypingOtherUser,
   })
-
-  const otherUser = selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
-
+  usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser)
+  const privateChatInputRef = useRef(null)
+  const currentOptimisticIdRef = useRef(null)
+  
   const handleSenderMessageSent = useCallback(() => {
     if (triggerScrollOnSenderMessage) {
       triggerScrollOnSenderMessage()
@@ -72,55 +59,16 @@ const ChatWindow = () => {
   }, [triggerScrollOnSenderMessage])
 
   useEffect(() => {
-    if (isTypingOtherUser) {
-      const listEl = messageListRef.current
-      if (listEl) {
-        const scrollThreshold = 100
-        const isUserAtBottom =
-          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-        if (isUserAtBottom) {
-          const timeoutId = setTimeout(() => {
-            scrollToBottom()
-          }, 1)
-          return () => clearTimeout(timeoutId)
-        }
-      }
-    }
-  }, [isTypingOtherUser, scrollToBottom, messageListRef])
-
-  // --- Only this useEffect remains for conversation activation/deactivation ---
-  // This one controls the global `activeConversationId`
-  // and emits "userActiveInChat" and "markMessagesAsSeen" *once* when conversation changes
-  useEffect(() => {
     setActiveConversationId(conversationId)
-    // It's usually good to mark messages as seen when the user enters the chat
-    // This could also be inside the new `usePrivateChatSocketEvents` or a mutation
-    // For now, keeping it here for clarity, but consider where its side-effect truly belongs.
-    // If it's *only* when the user *opens* the chat, this is okay.
-    // If it's on *any new message received*, the socket handler in the new hook is better.
-    if (socket && conversationId && currentUserId) {
+
+    if (socket && conversationId && currentUser?._id) {
       socket.emit("markMessagesAsSeen", { conversationId: conversationId })
     }
-    // queryClient.invalidateQueries({ queryKey: ["conversations"] }) // Update sidebar if seen status changes
 
     return () => {
       setActiveConversationId(null)
-      // Only emit `userActiveInChat` with null here if this component controls the
-      // "global" active status, otherwise, the `usePrivateChatSocketEvents` cleanup might be enough.
-      // If this `userActiveInChat` is for a UI indicator (like a global "user is chatting" status), keep it.
     }
-  }, [conversationId, setActiveConversationId, socket, currentUserId, queryClient])
-
-  // --- Call the new socket events hook here ---
-  // We pass the refs and setters it needs to interact with the DOM and Zustand store.
-  usePrivateChatSocketEvents(
-    conversationId,
-
-    setIsTypingOtherUser,
-    otherUser,
-  )
-
+  }, [conversationId, setActiveConversationId, socket, currentUser?._id, queryClient])
 
   const isChatEmpty = !messages?.length && !isLoadingMessages
 
@@ -159,7 +107,6 @@ const ChatWindow = () => {
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
           privateChatInputRef={privateChatInputRef}
-          didMessageJustLanded={didMessageJustLanded}
           onSenderMessageSent={handleSenderMessageSent}
           socket={socket}
           onNewMessageButtonClick={handleNewMessageButtonClick}
