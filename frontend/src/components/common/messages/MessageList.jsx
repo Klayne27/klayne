@@ -1,10 +1,9 @@
-import React, { forwardRef } from "react";
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import LoadingSpinner from "../../ui/LoadingSpinner";
+import React, { forwardRef } from "react"
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import LoadingSpinner from "../../ui/LoadingSpinner"
 
-import MessageItem from "./MessageItem";
-import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages";
-
+import MessageItem from "./MessageItem"
+import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 
 const MessageList = forwardRef(function MessageList(
   {
@@ -19,25 +18,25 @@ const MessageList = forwardRef(function MessageList(
     onReactionAdded,
     handleLoadImage,
   },
-  ref
+  ref,
 ) {
-  const { authUser: currentUser } = useAuthUser();
+  const { authUser: currentUser } = useAuthUser()
   const processedMessages = useProcessedMessage(messagesToRender)
 
   return (
-    <div ref={ref} className="flex overflow-y-auto p-4 flex-1 flex-col pt-20 relative">
+    <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
       {isLoadingInitialMessages && (
-        <div className="flex justify-center items-center h-full ">
+        <div className="flex h-full items-center justify-center">
           <LoadingSpinner size="md" />
         </div>
       )}
       {error && !isNewChat && !isLoadingInitialMessages && (
-        <div className="flex justify-center items-center h-full text-red-500">
+        <div className="flex h-full items-center justify-center text-red-500">
           <p>Error loading messages: {error.message}</p>
         </div>
       )}
       {isFetchingOlderMessages && (
-        <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
+        <div className="absolute left-1/2 top-24 -translate-x-1/2 -translate-y-1/2">
           <LoadingSpinner size="sm" />
         </div>
       )}
@@ -45,24 +44,24 @@ const MessageList = forwardRef(function MessageList(
         !isLoadingInitialMessages &&
         !isFetchingOlderMessages &&
         messagesToRender.length > 0 && (
-          <div className="flex justify-center text-gray-500 text-sm my-2">
+          <div className="my-2 flex justify-center text-sm text-gray-500">
             <p>This is the start of your conversation</p>
           </div>
         )}
 
       {!isNewChat &&
-        processedMessages.length > 0 && 
+        processedMessages.length > 0 &&
         processedMessages.map((message) => {
           return (
             <MessageItem
               key={message._id}
               message={message}
               currentUser={currentUser}
-              privateChatInputRef={privateChatInputRef} 
+              privateChatInputRef={privateChatInputRef}
               onReactionAdded={onReactionAdded}
               handleLoadImage={handleLoadImage}
             />
-          );
+          )
         })}
 
       {isTypingOtherUser && (
@@ -74,7 +73,7 @@ const MessageList = forwardRef(function MessageList(
         />
       )}
     </div>
-  );
-});
+  )
+})
 
-export default React.memo(MessageList);
+export default React.memo(MessageList)

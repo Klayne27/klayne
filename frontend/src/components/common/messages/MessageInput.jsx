@@ -5,7 +5,7 @@ import { PiSmiley } from "react-icons/pi"
 import EmojiPicker from "emoji-picker-react"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
-import { FaSpinner } from "react-icons/fa"
+import { FaCaretDown, FaSpinner } from "react-icons/fa"
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage"
 import { FaReply } from "react-icons/fa6"
 import React from "react"
@@ -20,13 +20,13 @@ import EmojiPickerPopover from "../EmojiPickerPopover"
 function MessageInput({
   otherUser,
   actualConversationId,
-  currentOptimisticIdRef,
   privateChatInputRef,
-  didMessageJustLanded,
+  // didMessageJustLanded,
   socket,
+  onSenderMessageSent,
   // isTypingOtherUser,
   // isSendingMessage,
-  // sendMessage,
+  // sendPrivateMessage,
 }) {
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
   const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage)
@@ -36,21 +36,20 @@ function MessageInput({
   const [privateChatInput, setPrivateChatInput] = useState("")
   const [privateChatPreviewImage, setPrivateChatPreviewImage] = useState(null)
   const [privateChatSelectedFile, setPrivateChatSelectedFile] = useState(null)
-  const [showEmojiPicker, setShowEmojiPicker] = useState(false)
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
   // const emojiPickerRef = useRef(null)
   const typingTimeoutRef = useRef(null)
   const { authUser: currentUser } = useAuthUser()
 
-  const handleOptimisticScroll = useCallback(() => {
-    didMessageJustLanded.current = true
-    // eslint-disable-next-line
-  }, [])
+  // const handleOptimisticScroll = useCallback(() => {
+  //   didMessageJustLanded.current = true
+  //   // eslint-disable-next-line
+  // }, [])
 
   const { editMessage, isEditing } = useEditMessage(actualConversationId)
-  const { sendMessage, isSendingMessage } = useSendMessage({
-    onOptimisticSend: handleOptimisticScroll,
+  const { sendPrivateMessage, isSendingMessage } = useSendMessage({
+    onSenderMessageSent,
   })
 
   const {
@@ -104,6 +103,19 @@ function MessageInput({
     editingMessage,
   })
 
+  const clearInputState = useCallback(() => {
+    setPrivateChatInput("")
+    setPrivateChatSelectedFile(null)
+    setPrivateChatPreviewImage(null)
+    setReplyingToMessage(null)
+    setEditingMessage(null)
+    if (privateChatFileInputRef.current) privateChatFileInputRef.current.value = ""
+    if (privateChatInputRef.current) {
+      privateChatInputRef.current.style.height = "auto"
+      privateChatInputRef.current.focus()
+    }
+  }, [setEditingMessage, setReplyingToMessage, privateChatInputRef])
+
   useEffect(() => {
     if (privateChatInputRef.current) {
       privateChatInputRef.current.style.height = "auto" // Reset height first
@@ -154,7 +166,27 @@ function MessageInput({
     }, 1500)
   }
 
-  const handleSendMessage = useCallback(
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      showAppToast("Only image files are supported.", "error")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      // 5MB limit
+      showAppToast("Image size cannot exceed 5MB.", "error")
+      return
+    }
+
+    setPrivateChatSelectedFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setPrivateChatPreviewImage(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handleSendPrivateMessage = useCallback(
     async (e) => {
       e.preventDefault()
 
@@ -194,17 +226,8 @@ function MessageInput({
           messagePayload.img = imageDataUrl
         }
 
-        sendMessage(messagePayload)
-
-        setPrivateChatInput("")
-        setPrivateChatSelectedFile(null)
-        setReplyingToMessage(null)
-        setPrivateChatPreviewImage(null)
-        currentOptimisticIdRef.current = null
-
-        if (isMobile && privateChatInputRef.current) {
-          privateChatInputRef.current.focus()
-        }
+        sendPrivateMessage(messagePayload)
+        clearInputState()
       } catch (error) {
         console.error("Error during message send process:", error)
         showAppToast("Failed to send message.", "error")
@@ -217,11 +240,8 @@ function MessageInput({
       otherUser,
       replyingToMessage,
       actualConversationId,
-      sendMessage,
-      currentOptimisticIdRef,
-      setReplyingToMessage,
-      isMobile,
-      privateChatInputRef,
+      sendPrivateMessage,
+      clearInputState,
     ],
   )
 
@@ -243,16 +263,10 @@ function MessageInput({
       if (editingMessage) {
         // Handle message editing
         editMessage({ messageId: editingMessage._id, newText: privateChatInput })
-        setEditingMessage(null) // Exit edit mode
-        setPrivateChatInput("") // Clear input after editing
-
-        // Keep keyboard open after editing on mobile
-        if (isMobile && privateChatInputRef.current) {
-          privateChatInputRef.current.focus()
-        }
+        clearInputState()
       } else {
         // Handle sending new message
-        handleSendMessage(e) // Your original send logic
+        handleSendPrivateMessage(e) // Your original send logic
         setPrivateChatInput("")
         if (privateChatInputRef.current) {
           privateChatInputRef.current.style.height = "auto" // Crucial
@@ -267,9 +281,9 @@ function MessageInput({
       privateChatInputRef,
       editingMessage,
       editMessage,
-      setEditingMessage,
-      handleSendMessage,
+      handleSendPrivateMessage,
       setPrivateChatInput,
+      clearInputState,
     ],
   )
 
@@ -334,27 +348,6 @@ function MessageInput({
     privateChatInputRef.current?.focus()
   }
 
-  // useEffect(() => {
-  //   const handleClickOutside = (event) => {
-  //     if (
-  //       showEmojiPicker &&
-  //       emojiPickerRef.current &&
-  //       !emojiPickerRef.current.contains(event.target) &&
-  //       emojiButtonRef.current &&
-  //       !emojiButtonRef.current.contains(event.target)
-  //     ) {
-  //       setShowEmojiPicker(false)
-  //     }
-  //   }
-
-  //   if (showEmojiPicker) {
-  //     document.addEventListener("mousedown", handleClickOutside)
-  //   }
-  //   return () => {
-  //     document.removeEventListener("mousedown", handleClickOutside)
-  //   }
-  // }, [showEmojiPicker])
-
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
@@ -374,7 +367,7 @@ function MessageInput({
       <input
         type="file"
         accept="image/*"
-        onChange={(e) => setPrivateChatSelectedFile(e.target.files[0])}
+        onChange={handleImageChange}
         ref={privateChatFileInputRef}
         className="hidden"
       />

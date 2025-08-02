@@ -19,10 +19,10 @@ import MessageContentLayout from "../../ui/MessageContentLayout"
 import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal"
 import MessageActionsModal from "../../ui/MessageActionsModal"
-import { useLongPress } from "../../../hooks/customHooks/useLongPress"
-
-// const lastMessageDateRef = useRef(null);
-// const MOUSE_LEAVE_DELAY = 100;
+import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
+import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
+import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
+import PrivateChatFirstMessageInGroup from "../PrivateChatFirstMessageInGroup"
 
 const MessageItem = ({
   message,
@@ -34,8 +34,6 @@ const MessageItem = ({
 }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
 
-  const mouseLeaveTimeoutRef = useRef(null)
-
   const {
     selectedConversation,
     setReplyingToMessage,
@@ -43,8 +41,6 @@ const MessageItem = ({
     setActiveMessageModalId,
     activeMessageModalId,
   } = usePrivateChatStore()
-
-  const [isHovered, setIsHovered] = useState(false)
 
   const [isTouchDevice, setIsTouchDevice] = useState(false)
 
@@ -56,20 +52,31 @@ const MessageItem = ({
 
   const isMobile = useIsMobile()
 
-  const isSentByCurrentUser = message?.sender._id === currentUser._id
-  const isEditable = isSentByCurrentUser
+  const { isSentByCurrentUser, isEditable, isMessageEdited, groupedReactions, hasAnyReactions } =
+    useMessagingMetaData(message, currentUser)
+
+  const {
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchCancel,
+    showModal,
+    isMessageHighlighted,
+  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId)
 
   const handleLongPress = useCallback(() => {
     if (isMobile) {
-      setActiveMessageModalId((prevId) => (prevId === message._id ? null : message._id))
+      setActiveMessageModalId(message._id)
     }
   }, [isMobile, message._id, setActiveMessageModalId])
 
-  const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
-    handleLongPress,
-    500,
-    isMobile,
-  )
+  // const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
+  //   handleLongPress,
+  //   500,
+  //   isMobile,
+  // )
 
   useEffect(() => {
     setIsTouchDevice(
@@ -92,49 +99,27 @@ const MessageItem = ({
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
-  const showModal = activeMessageModalId === message._id
-
-  const groupedReactions = message.reactions?.reduce((acc, reaction) => {
-    acc[reaction.emoji] = acc[reaction.emoji] || {
-      count: 0,
-      users: [],
-      userIds: [],
-    }
-    acc[reaction.emoji].count++
-
-    const reactorId = reaction.user?._id?.toString() || reaction.user?.toString()
-    if (reactorId) {
-      acc[reaction.emoji].userIds.push(reactorId)
-    }
-    return acc
-  }, {})
-
-  const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0
+  // const showModal = activeMessageModalId === message._id
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
-  const handleMouseEnter = (messageId) => {
-    if (!isTouchDevice) {
-      //   if (mouseLeaveTimeoutRef.current) {
-      //     clearTimeout(mouseLeaveTimeoutRef.current);
-      //     mouseLeaveTimeoutRef.current = null;
-      //   }
-      setActiveMessageModalId(messageId)
-    }
-  }
+  // const handleMouseEnter = (messageId) => {
+  //   if (!isTouchDevice) {
+  //     setActiveMessageModalId(messageId)
+  //   }
+  // }
 
-  const handleMouseLeave = () => {
-    if (!isTouchDevice) {
-      //   mouseLeaveTimeoutRef.current = setTimeout(() => {
-      setActiveMessageModalId(null)
-    }
-  }
+  // const handleMouseLeave = () => {
+  //   if (!isTouchDevice) {
+  //     setActiveMessageModalId(null)
+  //   }
+  // }
 
-  const handleMessageTap = (messageId) => {
-    if (isTouchDevice) {
-      setActiveMessageModalId((prevId) => (prevId === messageId ? null : messageId))
-    }
-  }
+  // const handleMessageTap = (messageId) => {
+  //   if (isTouchDevice) {
+  //     setActiveMessageModalId(messageId)
+  //   }
+  // }
 
   const openEmojiPickerWithModalClose = (e) => {
     handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
@@ -150,20 +135,14 @@ const MessageItem = ({
 
   const handleClickOutsideMessage = useCallback(
     (e) => {
-      if (activeMessageModalId) {
-        const messageItemContainer = document.getElementById(`message-${activeMessageModalId}`)
-        const messageModalElement = document.getElementById(`message-modal-${activeMessageModalId}`)
-        if (
-          messageItemContainer &&
-          !messageItemContainer.contains(e.target) &&
-          messageModalElement &&
-          !messageModalElement.contains(e.target)
-        ) {
+      if (activeMessageModalId && isMobile) {
+        const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
+        if (messageModalElement && !messageModalElement.contains(e.target)) {
           setActiveMessageModalId(null)
         }
       }
     },
-    [activeMessageModalId],
+    [activeMessageModalId, setActiveMessageModalId, message._id, isMobile],
   )
 
   useEffect(() => {
@@ -173,13 +152,9 @@ const MessageItem = ({
 
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage)
-      if (mouseLeaveTimeoutRef.current) {
-        clearTimeout(mouseLeaveTimeoutRef.current)
-      }
     }
   }, [activeMessageModalId, handleClickOutsideMessage])
 
-  const isMessageHighlighted = isHovered || showModal
   const messageContentStyle = isMobile
     ? {
         userSelect: "none",
@@ -244,19 +219,19 @@ const MessageItem = ({
     privateChatInputRef.current.focus()
     setReplyingToMessage(message)
     setShowMoreActionsModal(false)
-    handleMessageTap(null)
+    // handleMessageTap(null)
   }
 
   const handleEditClick = () => {
     setEditingMessage(message)
     setShowMoreActionsModal(false)
-    handleMessageTap(null)
+    // handleMessageTap(null)
   }
 
   const handleCopyMessage = () => {
     navigator.clipboard.writeText(message.text)
     setShowMoreActionsModal(false)
-    handleMessageTap(null)
+    // handleMessageTap(null)
   }
 
   if (isTypingOtherUser) {
@@ -289,39 +264,13 @@ const MessageItem = ({
           isMessageHighlighted ? "bg-secondary" : ""
         } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${message.isFirstInGroup ? "mt-2" : ""} `}
         style={messageContentStyle}
-        onMouseEnter={() => {
-          if (!isMobile) {
-            handleMouseEnter(message._id)
-            setIsHovered(true)
-          }
-        }}
-        onMouseLeave={() => {
-          if (!isMobile) {
-            handleMouseLeave()
-            setIsHovered(false)
-          }
-        }}
-        onClick={(e) => {
-          if (isMobile) {
-            if (showModal) {
-              handleMessageTap(null)
-            }
-            e.stopPropagation()
-          } else {
-            const modalElement = document.getElementById(`message-modal-${message._id}`)
-            if (modalElement && modalElement.contains(e.target)) {
-              return
-            }
-            handleMessageTap(message._id)
-          }
-        }}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
         onTouchStart={handleTouchStart}
         onTouchEnd={handleTouchEnd}
         onTouchMove={handleTouchMove}
         onTouchCancel={handleTouchCancel}
       >
-        {/* Main Reaction Picker and Action Modal */}
-
         <MessageActionsModal
           message={message}
           isSentByCurrentUser={isSentByCurrentUser}
@@ -353,38 +302,27 @@ const MessageItem = ({
           isSentByCurrentUser={isSentByCurrentUser}
           messageContentStyle={messageContentStyle}
           message={message}
+          handleLoadImage={handleLoadImage}
         >
+          {/* Indent messages not first in group */}
           {!isSentByCurrentUser && !message.isFirstInGroup && <div className="mr-1 h-8 w-8"></div>}
 
-          {isMessageHighlighted && !isSentByCurrentUser && (
-            <div className="absolute left-1.5 top-1/2 z-0 mr-2 -translate-y-1/2 whitespace-nowrap text-xs text-gray-400">
-              {formatTime(message.createdAt)}
-            </div>
-          )}
-          {isMessageHighlighted && isSentByCurrentUser && (
-            <div className="absolute left-1.5 top-1/2 z-0 mr-2 -translate-y-1/2 whitespace-nowrap text-xs text-gray-400">
-              {formatTime(message.createdAt)}
-            </div>
-          )}
+          <ShowMessageTimeOnHover
+            message={message}
+            isSentByCurrentUser={isSentByCurrentUser}
+            isMessageHighlighted={isMessageHighlighted}
+          />
+
           <div
             className={`flex flex-col ${isSentByCurrentUser ? "items-end" : "items-start"} w-fit max-w-[75%]`}
           >
-            {message.isFirstInGroup && (
-              <div className={`mb-0.5 flex items-center text-sm`}>
-                {!isSentByCurrentUser && (
-                  <Link
-                    to={`/profile/${message.senderUsername}`}
-                    className="mr-1 cursor-pointer font-semibold"
-                  >
-                    {message.senderUsername}
-                  </Link>
-                )}
-                <span className="mr-5 text-xs text-gray-500">{formatTime(message.createdAt)}</span>
-              </div>
-            )}
+            <PrivateChatFirstMessageInGroup
+              message={message}
+              isSentByCurrentUser={isSentByCurrentUser}
+            />
 
             {/* Edited Status */}
-            {message.isEdited && message.text && (
+            {isMessageEdited && (
               <span
                 className={`mr-5 text-xs italic text-gray-500 ${isSentByCurrentUser ? "self-end" : "self-start"}`}
               >
@@ -392,7 +330,6 @@ const MessageItem = ({
               </span>
             )}
             <div className="flex">
-              {/* Chat Bubble Container */}
               <MessageBubble
                 message={message}
                 messageText={message.text}

@@ -139,7 +139,7 @@ const PublicChatMessageInput = ({
     editingMessage,
   })
 
-  const clearInputState = () => {
+  const clearInputState = useCallback(() => {
     setPublicChatInput("")
     setPublicChatSelectedFile(null)
     setPublicChatPreviewImage(null)
@@ -150,70 +150,120 @@ const PublicChatMessageInput = ({
       publicChatInputRef.current.style.height = "auto"
       publicChatInputRef.current.focus()
     }
-  }
+  }, [setEditingMessage, setReplyingToMessage, publicChatInputRef])
 
-  const handleSendMessageOrEdit = async (e) => {
-    e.preventDefault()
-    if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) return
-
-    const contentToSend = publicChatInput.trim()
-    if (!contentToSend && !publicChatSelectedFile) {
-      return
-    }
-
-    // Immediately stop typing indicator
+  const handleSendPublicMessage = useCallback(async () => {
+    // Clear typing indicator
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
       typingTimeoutRef.current = null
     }
-    sendTypingEvent(false) // Ensure stop typing is sent when message is sent
-    hasSentTypingEvent.current = false // Reset flag after sending message
+    sendTypingEvent(false)
+    hasSentTypingEvent.current = false
+
+    const contentToSend = publicChatInput.trim()
+
+    // Guard for empty message (should also be in handleSubmit)
+    if (!contentToSend && !publicChatSelectedFile) {
+      return
+    }
 
     const payload = {
       text: contentToSend,
       repliedTo: replyingToMessage ? replyingToMessage._id : null,
+      imgBase64: null, // Initialize imgBase64
     }
 
-    if (editingMessage) {
-      editPublicMessage({
-        messageId: editingMessage._id,
-        newContent: contentToSend,
-      })
-    } else {
+    try {
       if (publicChatSelectedFile) {
         const reader = new FileReader()
-        reader.readAsDataURL(publicChatSelectedFile)
-        reader.onloadend = () => {
-          sendPublicMessage({ ...payload, imgBase64: reader.result })
+        const imageDataUrl = await new Promise((resolve, reject) => {
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = (error) => {
+            console.error("FileReader error:", error)
+            reject(new Error("Failed to read image file."))
+          }
+          reader.readAsDataURL(publicChatSelectedFile)
+        })
+        payload.imgBase64 = imageDataUrl
+      }
+
+      // Call the actual send function
+      sendPublicMessage(payload) // Assuming sendPublicMessage is async or returns a promise
+
+      // Clear input and reset textarea height after successful send
+      clearInputState()
+    } catch (error) {
+      console.error("Error during public message send process:", error)
+      showAppToast(error.message || "Failed to send message.", "error")
+    }
+  }, [
+    publicChatInput,
+    publicChatSelectedFile,
+    replyingToMessage,
+    sendTypingEvent, // Add if sendTypingEvent is not stable
+    sendPublicMessage, // Add if sendPublicMessage is not stable
+    clearInputState, // Add if clearInputState is not stable
+  ])
+
+  const handleSubmitPublicChat = useCallback(
+     (e) => {
+      // Make it async because handleSendPublicMessage is async
+      e.preventDefault()
+
+      // Guards (from your original function)
+      if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) {
+        if (isCurrentUserBanned) {
+          showAppToast("You are banned from chatting.", "error")
         }
-        reader.onerror = () => {
-          showAppToast("Failed to read image file.", "error")
+        return
+      }
+
+      const contentToSend = publicChatInput.trim()
+
+      // Check for empty message (text or file)
+      if (!contentToSend && !publicChatSelectedFile) {
+        // Optionally, keep input focused if on mobile and no content
+        // if (isMobile && publicChatInputRef.current) {
+        //   publicChatInputRef.current.focus();
+        // }
+        return
+      }
+
+      if (editingMessage) {
+        // Handle message editing
+        try {
+          editPublicMessage({
+            // Assuming editPublicMessage is async or returns a Promise
+            messageId: editingMessage._id,
+            newContent: contentToSend,
+          })
+          // Clear input and state after successful edit
+          clearInputState()
+        } catch (error) {
+          console.error("Error during public message edit process:", error)
+          showAppToast("Failed to edit message.", "error")
         }
       } else {
-        sendPublicMessage({ ...payload, imgBase64: null })
+       handleSendPublicMessage()
       }
-    }
-    clearInputState()
-
-    if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto" // Crucial
-      publicChatInputRef.current.rows = 1
-    }
-  }
+    },
+    [
+      publicChatInput,
+      publicChatSelectedFile,
+      editingMessage,
+      isSendingPublicMessage,
+      isEditingMessage,
+      isCurrentUserBanned,
+      editPublicMessage,
+      handleSendPublicMessage,
+      clearInputState,
+    ],
+  )
 
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      showAppToast("Only image files are supported.", "error")
-      return
-    }
-    if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
-      showAppToast("Image size cannot exceed 5MB.", "error")
-      return
-    }
 
     setPublicChatSelectedFile(file)
     const reader = new FileReader()
@@ -248,7 +298,7 @@ const PublicChatMessageInput = ({
     if (e.key === "Enter") {
       if (!e.shiftKey) {
         e.preventDefault()
-        handleSendMessageOrEdit(e)
+        handleSubmitPublicChat(e)
       }
     }
   }
@@ -320,7 +370,7 @@ const PublicChatMessageInput = ({
 
           {/* The form for editing */}
           <form
-            onSubmit={handleSendMessageOrEdit}
+            onSubmit={handleSubmitPublicChat}
             className="relative z-10 flex items-center bg-black/0 px-2"
           >
             <input
@@ -395,7 +445,7 @@ const PublicChatMessageInput = ({
       ) : (
         // NORMAL MODE (not editing)
         <form
-          onSubmit={handleSendMessageOrEdit}
+          onSubmit={handleSubmitPublicChat}
           className="sticky bottom-0 flex flex-col bg-base-100"
         >
           {replyingToMessage && (

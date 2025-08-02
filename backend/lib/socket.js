@@ -87,7 +87,6 @@ export async function emitNewPostCount(userId) {
 
     // Use epoch if lastReadFeedTimestamp is null or undefined
     const lastReadTimestamp = user.lastReadFeedTimestamp || new Date(0);
-    
 
     // Count posts published *after* the user's lastReadFeedTimestamp,
     // and not sent by the user themselves.
@@ -110,7 +109,6 @@ export async function emitNewPostCount(userId) {
 }
 
 export async function emitUnreadMessageStatus(userId) {
-
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
 
@@ -166,11 +164,9 @@ export async function emitUnreadMessageStatus(userId) {
     const recipientSocketIds = getReceiverSocketIds(userId);
 
     if (recipientSocketIds.length > 0) {
-
-
       // We emit to the room created by the array of socket IDs
       io.to(recipientSocketIds).emit("unreadMessageStatus", { unreadMessageCount });
-    } 
+    }
   } catch (error) {
     console.error(`Error in emitUnreadMessageStatus for user ${userId}:`, error);
   }

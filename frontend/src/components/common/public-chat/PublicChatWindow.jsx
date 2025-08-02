@@ -1,25 +1,26 @@
-import { useRef, useEffect, useCallback, useMemo } from "react";
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { useSocket } from "../../../context/SocketContext";
-import PublicChatHeader from "./PublicChatHeader";
-import LoadingSpinner from "../../ui/LoadingSpinner";
-import PublicChatMessage from "./PublicChatMessage";
-import PublicChatMessageInput from "./PublicChatMessageInput";
+import { useRef, useEffect, useCallback, useMemo } from "react"
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { useSocket } from "../../../context/SocketContext"
+import PublicChatHeader from "./PublicChatHeader"
+import LoadingSpinner from "../../ui/LoadingSpinner"
+import PublicChatMessage from "./PublicChatMessage"
+import PublicChatMessageInput from "./PublicChatMessageInput"
 
-import { FaCaretDown } from "react-icons/fa";
-import { usePublicMessages } from "../../../hooks/publicChatHooks/usePublicMessages";
-import { usePublicChatStore } from "../../../store/usePublicChatStore";
-import { usePublicChatSocketEvents } from "../../../hooks/usePublicChatSocketEvents";
-import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll";
-import { MESSAGE_GROUP_TIME_THRESHOLD_MS } from "../../../constants/numberConstants";
-import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages";
+import { FaCaretDown } from "react-icons/fa"
+import { usePublicMessages } from "../../../hooks/publicChatHooks/usePublicMessages"
+import { usePublicChatStore } from "../../../store/usePublicChatStore"
+import { usePublicChatSocketEvents } from "../../../hooks/usePublicChatSocketEvents"
+import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
+import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
+import { useQueryClient } from "@tanstack/react-query"
 
 const PublicChatWindow = () => {
-  const { authUser: currentUser } = useAuthUser();
-  const { socket } = useSocket();
+  const { authUser: currentUser } = useAuthUser()
+  const { socket } = useSocket()
+  const queryClient = useQueryClient()
 
   const { setIsCurrentlyTouchDevice, showNewMessageButton, setShowNewMessageButton } =
-    usePublicChatStore();
+    usePublicChatStore()
 
   const {
     messages,
@@ -29,7 +30,7 @@ const PublicChatWindow = () => {
     isLoadingMessages,
     isMessagesError,
     messagesError,
-  } = usePublicMessages();
+  } = usePublicMessages()
 
   const {
     handleLoadImage,
@@ -44,86 +45,101 @@ const PublicChatWindow = () => {
     fetchNextPage,
     isFetchingNextPage,
     isLoadingMessages,
-  });
+  })
 
-  const { typingUsers } = usePublicChatSocketEvents();
-  const publicChatInputRef = useRef(null);
-  const isCurrentUserBanned = currentUser?.isBannedInPublicChat;
+  const { typingUsers } = usePublicChatSocketEvents()
+  const publicChatInputRef = useRef(null)
+  const isCurrentUserBanned = currentUser?.isBannedInPublicChat
 
   const handleSenderMessageSent = useCallback(() => {
     if (triggerScrollOnSenderMessage) {
-      triggerScrollOnSenderMessage();
+      triggerScrollOnSenderMessage()
     }
-  }, []);
+  }, [triggerScrollOnSenderMessage])
 
   useEffect(() => {
     const checkTouch = () =>
-      setIsCurrentlyTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0);
-    checkTouch();
-    window.addEventListener("resize", checkTouch);
-    return () => window.removeEventListener("resize", checkTouch);
-  }, [setIsCurrentlyTouchDevice]); // Add setIsCurrentlyTouchDevice to dependencies
+      setIsCurrentlyTouchDevice("ontouchstart" in window || navigator.maxTouchPoints > 0)
+    checkTouch()
+    window.addEventListener("resize", checkTouch)
+    return () => window.removeEventListener("resize", checkTouch)
+  }, [setIsCurrentlyTouchDevice]) // Add setIsCurrentlyTouchDevice to dependencies
+
+  useEffect(() => {
+    if (socket) {
+      socket.on("bannedFromPublicChat", ({ isBanned }) => {
+        queryClient.invalidateQueries({ queryKey: ["authUser"] })
+        if (isBanned) {
+          queryClient.setQueryData(["publicMessages"], (oldData) => ({
+            pages: [[]],
+            pageParams: [undefined],
+          }))
+        } else {
+          queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
+        }
+      })
+
+      return () => {
+        socket.off("bannedFromPublicChat")
+      }
+    }
+  }, [socket, queryClient])
 
   const sendTypingEvent = useCallback(
     (isTyping, isEditing) => {
       if (socket) {
         if (isTyping) {
-          socket.emit("public_typing", { isEditing });
+          socket.emit("public_typing", { isEditing })
         } else {
-          socket.emit("public_stop_typing");
+          socket.emit("public_stop_typing")
         }
       }
     },
-    [socket]
-  );
+    [socket],
+  )
 
-  const processedMessages = useProcessedMessage(messages);
+  const processedMessages = useProcessedMessage(messages)
 
   if (isLoadingMessages && processedMessages.length === 0) {
     return (
-      <div className="flex flex-col items-center justify-center h-full">
+      <div className="flex h-full flex-col items-center justify-center">
         <LoadingSpinner size="lg" />
       </div>
-    );
+    )
   }
 
   if (isMessagesError && processedMessages.length === 0 && !isLoadingMessages) {
     return (
-      <div className="flex justify-center items-center h-full text-red-500">
+      <div className="flex h-full items-center justify-center text-red-500">
         <p>Error loading messages: {messagesError?.message || "Unknown error"}</p>
       </div>
-    );
+    )
   }
 
   return (
-    <div className="flex flex-col h-full relative md:border-r border-accent ">
+    <div className="relative flex h-full flex-col border-accent md:border-r">
       <PublicChatHeader />
       {isCurrentUserBanned ? (
         <div className="flex flex-grow items-center justify-center">
-          <div className="bg-base-100 p-6 rounded-2xl border-accent text-center mx-auto my-5 max-w-sm shadow-lg animate-fade-in">
-            <p className="mb-3 font-bold text-lg">
-              You are currently banned from the public chat.
-            </p>
+          <div className="animate-fade-in mx-auto my-5 max-w-sm rounded-2xl border-accent bg-base-100 p-6 text-center shadow-lg">
+            <p className="mb-3 text-lg font-bold">You are currently banned from the public chat.</p>
             <p className="text-base">You cannot view messages or send new ones.</p>
           </div>
         </div>
       ) : (
         <>
-          <div
-            className="flex-grow overflow-y-auto p-4 pb-7 min-h-0"
-            ref={messageListRef}
-          >
+          <div className="min-h-0 flex-grow overflow-y-auto p-4 pb-7" ref={messageListRef}>
             {isFetchingNextPage && (
-              <div className="top-24 left-1/2 -translate-x-1/2 -translate-y-1/2 absolute">
+              <div className="absolute left-1/2 top-24 -translate-x-1/2 -translate-y-1/2">
                 <LoadingSpinner size="sm" />
               </div>
             )}
-            <div className="mx-auto w-full max-w-3xl md:max-w-[968px] mt-16">
+            <div className="mx-auto mt-16 w-full max-w-3xl md:max-w-[968px]">
               {!hasNextPage &&
                 !isLoadingMessages && // Use isLoadingMessages instead of isLoadingInitialMessages
                 !isFetchingNextPage &&
                 processedMessages.length > 0 && ( // Use processedMessages for length check
-                  <div className="flex justify-center text-gray-500 text-sm my-2">
+                  <div className="my-2 flex justify-center text-sm text-gray-500">
                     <p>This is the start of your conversation</p>
                   </div>
                 )}
@@ -141,10 +157,10 @@ const PublicChatWindow = () => {
             </div>
 
             {showNewMessageButton && (
-              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 z-10">
+              <div className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2">
                 <button
                   onClick={handleNewMessageButtonClick}
-                  className="bg-primary text-sm px-3 py-1 text-white rounded-full shadow-lg flex items-center space-x-2 animate-bounce"
+                  className="flex animate-bounce items-center space-x-2 rounded-full bg-primary px-3 py-1 text-sm text-white shadow-lg"
                 >
                   <span>New Message</span>
                   <FaCaretDown />
@@ -163,7 +179,7 @@ const PublicChatWindow = () => {
         </>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default PublicChatWindow;
+export default PublicChatWindow

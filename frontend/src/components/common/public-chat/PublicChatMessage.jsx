@@ -1,13 +1,9 @@
-import React, { useState, useCallback, useRef } from "react"
-import { Link } from "react-router-dom"
-import { MdAdminPanelSettings } from "react-icons/md"
-import { FaBan } from "react-icons/fa"
+import React, { useState, useCallback, useRef, useEffect } from "react"
 
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useDeleteOwnPublicMessage } from "../../../hooks/publicChatHooks/useDeleteOwnPublicMessage"
 import { useDeletePublicMessage } from "../../../hooks/publicChatHooks/useDeletePublicMessage"
 import { useAppStore } from "../../../store/useAppStore"
-import { formatTime } from "../../../utils/date"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import { useBanUserFromPublicChat } from "../../../hooks/publicChatHooks/useBanUserFromPublicChat"
 import { useUnbanUserFromPublicChat } from "../../../hooks/publicChatHooks/useUnbanUserFromPublicChat"
@@ -23,6 +19,10 @@ import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreA
 import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal"
 import MessageActionsModal from "../../ui/MessageActionsModal"
 import { useLongPress } from "../../../hooks/customHooks/useLongPress"
+import PublicChatFirstMessageInGroup from "../PublicChatFirstMessageInGroup"
+import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
+import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
+import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
 
 const PublicChatMessage = React.memo(function PublicChatMessage({
   message,
@@ -40,16 +40,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   } = usePublicChatStore()
 
   const openImageModal = useAppStore((state) => state.openImageModal)
-  const { deleteOwnMessage, isDeletingOwnMessage } = useDeleteOwnPublicMessage()
+  const { deleteOwnMessage } = useDeleteOwnPublicMessage()
   const { adminDeletePublicMessage, isPending: isAdminDeleting } = useDeletePublicMessage()
-  const [isHovered, setIsHovered] = useState(false)
+  // const [isHovered, setIsHovered] = useState(false)
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
-  const moreActionsButtonRef = useRef(null) // Ref for the new More Actions button
-
-  const pressTimer = useRef(null)
-  const LONG_PRESS_DURATION = 500 // milliseconds
 
   const { banUser } = useBanUserFromPublicChat()
   const { unbanUser } = useUnbanUserFromPublicChat()
@@ -57,9 +53,29 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const isMobile = useIsMobile()
 
-  const isSentByCurrentUser = message.sender?._id === currentUser?._id
+  const {
+    isSenderBanned,
+    isSentByCurrentUser,
+    isEditable,
+    isAuthUserAdmin,
+    isMessageDeleted,
+    isReplyToMessageDeleted,
+    isMessageEdited,
+    groupedReactions,
+    hasAnyReactions,
+  } = useMessagingMetaData(message, currentUser)
 
-  const isEditable = isSentByCurrentUser && !message.isDeletedByAdmin && !message.isDeletedByUser
+  // 3. Modal Interactions
+  const {
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchCancel,
+    showModal,
+    isMessageHighlighted,
+  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId)
 
   const {
     showEmojiPickerPopover,
@@ -78,60 +94,17 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const handleLongPress = useCallback(() => {
     if (isMobile) {
-      setActiveMessageModalId((prevId) => (prevId === message._id ? null : message._id))
+      setActiveMessageModalId(message._id)
     }
   }, [isMobile, message._id, setActiveMessageModalId])
 
-  const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
-    handleLongPress,
-    500,
-    isMobile,
-  )
+  // const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
+  //   handleLongPress,
+  //   500,
+  //   isMobile,
+  // )
+  // const showModal = activeMessageModalId === message._id
 
-  const isSenderAdmin = message.sender.isAdmin
-  const isAuthUserAdmin = currentUser.isAdmin
-  const isSenderBanned = message.sender.isBannedInPublicChat
-  const isMessageDeleted = message.isDeletedByAdmin || message.isDeletedByUser
-  const isReplyToMessageDeleted =
-    message.repliedTo?.isDeletedByAdmin || message.repliedTo?.isDeletedByUser
-  const isSenderVerified = message.sender.isVerified
-  const isSenderGoldVerified = message.sender.isGoldVerified
-  const isMessageEdited = message.isEdited
-
-  const showModal = activeMessageModalId === message._id
-
-  const shouldShowTimeOnHover = isHovered || showModal
-  const isMessageHighlighted = isHovered || showModal
-
-  const groupedReactions = message.reactions?.reduce((acc, reaction) => {
-    const reactorId = reaction.userId?._id?.toString() || reaction.userId?.toString()
-    const reactorUsername = reaction?.userId?.username || "Unknown"
-    const reactorProfileImg = reaction.userId?.profileImg || "/avatar-placeholder.png"
-
-    if (!reactorId) return acc
-
-    acc[reaction.emoji] = acc[reaction.emoji] || {
-      count: 0,
-      users: [],
-      userIds: [],
-    }
-
-    acc[reaction.emoji].count++
-
-    if (!acc[reaction.emoji].userIds.includes(reactorId)) {
-      acc[reaction.emoji].users.push({
-        _id: reactorId,
-        username: reactorUsername,
-        profileImg: reactorProfileImg,
-        fullName: reaction?.userId?.fullName,
-      })
-      acc[reaction.emoji].userIds.push(reactorId)
-    }
-
-    return acc
-  }, {})
-
-  const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0
   const messageContentStyle = isMobile
     ? {
         userSelect: "none",
@@ -145,7 +118,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
   const handleReactionClick = (messageId, emoji) => {
-    addReaction({ messageId, emoji }) // `addReaction` should be memoized or from a stable hook
+    addReaction({ messageId, emoji })
     setActiveMessageModalId(null)
   }
 
@@ -161,28 +134,22 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const handleCopyMessage = () => {
     navigator.clipboard.writeText(message.text)
-    handleMessageTap(null) // Close main reaction modal
-    setShowMoreActionsModal(false) // Close this modal
+    setShowMoreActionsModal(false)
   }
 
-  // --- Message hover/tap handlers (now update Zustand state) ---
-  const handleMouseEnter = (messageId) => {
-    if (!isCurrentlyTouchDevice) {
-      setActiveMessageModalId(messageId)
-    }
-  }
+  // const handleMouseEnter = () => {
+  //   if (!isCurrentlyTouchDevice) {
+  //     setActiveMessageModalId(message._id)
+  //     setIsHovered(true)
+  //   }
+  // }
 
-  const handleMouseLeave = () => {
-    if (!isCurrentlyTouchDevice) {
-      setActiveMessageModalId(null)
-    }
-  }
-
-  const handleMessageTap = (messageId) => {
-    if (isCurrentlyTouchDevice) {
-      setActiveMessageModalId(activeMessageModalId === messageId ? null : messageId)
-    }
-  }
+  // const handleMouseLeave = () => {
+  //   if (!isCurrentlyTouchDevice) {
+  //     setActiveMessageModalId(null)
+  //     setIsHovered(false)
+  //   }
+  // }
 
   const handleJumpToMessage = (messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`)
@@ -200,36 +167,15 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     }
   }
 
-  // NEW: Mobile Touch Handlers
-  // const handleTouchStart = (e) => {
-  //   e.stopPropagation()
-  //   pressTimer.current = setTimeout(() => {
-  //     handleMessageTap(message._id) // Show modal after long press
-  //   }, LONG_PRESS_DURATION)
-  // }
-
-  // const handleTouchEnd = (e) => {
-  //   e.stopPropagation()
-  //   clearTimeout(pressTimer.current) // Clear timer if finger lifted before long press
-  // }
-
-  // const handleTouchMove = (e) => {
-  //   if (pressTimer.current) {
-  //     clearTimeout(pressTimer.current)
-  //   }
-  // }
-
   const handleEditClick = () => {
     publicChatInputRef.current.focus()
     setEditingMessage(message)
-    handleMessageTap(null) // Close main reaction modal
     setShowMoreActionsModal(false)
   }
 
   const handleReplyClick = () => {
     publicChatInputRef.current.focus()
     setReplyingToMessage(message)
-    handleMessageTap(null) // Close main reaction modal
     setShowMoreActionsModal(false)
   }
 
@@ -257,11 +203,32 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const handleDeleteOwnMessage = () => {
     deleteOwnMessage(message._id)
+    setShowMoreActionsModal(false)
   }
 
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false)
   }, [setShowMoreActionsModal])
+
+  // Close actions modal on outside click for mobile
+  useEffect(() => {
+    const handleClickOutsideMessage = (e) => {
+      if (activeMessageModalId && isMobile) {
+        const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
+        if (messageModalElement && !messageModalElement.contains(e.target)) {
+          setActiveMessageModalId(null)
+        }
+      }
+    }
+
+    if (activeMessageModalId) {
+      document.addEventListener("click", handleClickOutsideMessage)
+    }
+
+    return () => {
+      document.removeEventListener("click", handleClickOutsideMessage)
+    }
+  }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
 
   return (
     <>
@@ -276,35 +243,12 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           message.isFirstInGroup ? "mt-4" : ""
         }`}
         style={messageContentStyle}
-        onMouseEnter={() => {
-          if (!isMobile) {
-            handleMouseEnter(message._id)
-            setIsHovered(true)
-          }
-        }}
-        onMouseLeave={() => {
-          if (!isMobile) {
-            handleMouseLeave()
-            setIsHovered(false)
-          }
-        }}
-        onClick={(e) => {
-          if (isMobile) {
-            if (showModal) {
-              handleMessageTap(null)
-            }
-            e.stopPropagation()
-          } else {
-            const modalElement = document.getElementById(`message-modal-${message._id}`)
-            if (modalElement && modalElement.contains(e.target)) {
-              return
-            }
-            handleMessageTap(message._id)
-          }
-        }}
-        onTouchStart={isMobile ? handleTouchStart : undefined}
-        onTouchEnd={isMobile ? handleTouchEnd : undefined}
-        onTouchMove={isMobile ? handleTouchMove : undefined}
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+        onTouchStart={handleTouchStart}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchCancel={handleTouchCancel}
       >
         <MessageActionsModal
           message={message}
@@ -341,61 +285,27 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
         )}
 
         <MessageContentLayout isSentByCurrentUser={isSentByCurrentUser} message={message}>
+          {/* Indent messages not first in group */}
           {!isSentByCurrentUser && !message.isFirstInGroup && <div className="w-9 flex-shrink-0" />}
 
-          {shouldShowTimeOnHover && !isSentByCurrentUser && !message.isFirstInGroup && (
-            <div className="absolute left-1.5 top-1/2 z-0 mr-2 -translate-y-1/2 whitespace-nowrap text-xs text-gray-400">
-              {formatTime(message.createdAt)}
-            </div>
-          )}
-          {shouldShowTimeOnHover && isSentByCurrentUser && !message.isFirstInGroup && (
-            <div className="absolute -left-[58px] top-1/2 z-0 mr-2 -translate-y-1/2 whitespace-nowrap text-xs text-gray-400">
-              {formatTime(message.createdAt)}
-            </div>
-          )}
+          <ShowMessageTimeOnHover
+            message={message}
+            isSentByCurrentUser={isSentByCurrentUser}
+            isMessageHighlighted={isMessageHighlighted}
+          />
+
           <div
             className={`flex flex-col ${
               isSentByCurrentUser ? "items-end" : "items-start"
             } w-fit max-w-[75%]`}
           >
-            {message.isFirstInGroup && (
-              <div className={`mb-0.5 flex items-center text-sm`}>
-                {!isSentByCurrentUser && (
-                  <Link
-                    to={`/profile/${message.sender.username}`}
-                    className={`mr-1 font-semibold ${
-                      isSenderVerified
-                        ? "text-[#1D9BF0]"
-                        : isSenderGoldVerified
-                          ? "text-[#E3B812]"
-                          : "text-white"
-                    }`}
-                  >
-                    {message.sender.username}
-                  </Link>
-                )}
-                {isSenderVerified && !isSentByCurrentUser && (
-                  <img src="/verified.png" className="mr-1 size-[17px]" />
-                )}
-                {isSenderGoldVerified && !isSentByCurrentUser && (
-                  <img src="/gold-verified.png" className="mr-1 size-[17px]" />
-                )}
+            <PublicChatFirstMessageInGroup
+              message={message}
+              isSentByCurrentUser={isSentByCurrentUser}
+              isSenderBanned={isSenderBanned}
+            />
 
-                {isSenderAdmin && !isSentByCurrentUser && (
-                  <span>
-                    <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />
-                  </span>
-                )}
-                {isSenderBanned && !isSentByCurrentUser && (
-                  <span>
-                    <FaBan size={15} className="mr-1 fill-red-500" />
-                  </span>
-                )}
-
-                <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>
-              </div>
-            )}
-
+            {/* Edited message indicator */}
             {isMessageEdited && message.text && (
               <span
                 className={`ml-1 text-xs italic text-gray-500 ${
@@ -418,7 +328,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               isSenderBanned={isSenderBanned}
             />
 
-            {/* Grouped Reactions Display */}
+            {/* Grouped reactions display */}
             {hasAnyReactions && (
               <MessageReactions
                 groupedReactions={groupedReactions}

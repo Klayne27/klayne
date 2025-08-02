@@ -14,6 +14,8 @@ const MessagePage = () => {
 
   const { conversationId: urlConversationId } = useParams()
 
+  usePrivateChatStore()
+
   const { conversations, isLoadingConversations, errorConversations } = useFetchConversations()
 
   useEffect(() => {
@@ -28,7 +30,10 @@ const MessagePage = () => {
 
     setIsChatWindowOpen(!!urlConversationId)
 
-    return () => setIsChatWindowOpen(false)
+    return () => {
+      setIsChatWindowOpen(false)
+      setSelectedConversation(null) // Reset selectedConversation when MessagePage unmounts
+    }
   }, [
     urlConversationId,
     conversations,
