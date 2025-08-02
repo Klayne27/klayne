@@ -15,7 +15,7 @@ export const useMessageScroll = ({
   const { socket } = useSocket()
   const queryClient = useQueryClient()
   const { authUser: currentUser } = useAuthUser()
-
+  const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
   const messageListRef = useRef(null)
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 })
   // const shouldScrollToBottom = useRef(null);
@@ -75,10 +75,6 @@ export const useMessageScroll = ({
     const listEl = messageListRef.current
     if (!listEl || isLoadingMessages) return
 
-    const scrollThreshold = 100
-
-    const isAtBottom =
-      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
 
     if (
       messages.length > 0 &&
@@ -97,15 +93,12 @@ export const useMessageScroll = ({
     //   // shouldScrollToBottom.current = false;
     //   return
     // }
-     if (isAtBottom) {
-       scrollToBottom()
-     }
 
     // if (shouldScrollToBottom.current) {
     //   scrollToBottom();
     //   shouldScrollToBottom.current = false;
     // }
-  }, [messages.length, isLoadingMessages, scrollToBottom])
+  }, [messages.length, isLoadingMessages, scrollToBottom, lastMessageId])
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current

@@ -1,7 +1,7 @@
 import { useEffect, useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { useAuthUser } from "./authHooks/useAuthUser"
-import { useSocket } from "../context/SocketContext"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import { useSocket } from "../../context/SocketContext"
 
 export const usePrivateChatSocketEvents = (
   conversationId,

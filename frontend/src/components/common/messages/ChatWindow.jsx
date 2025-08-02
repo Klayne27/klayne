@@ -10,7 +10,7 @@ import ChatHeader from "./ChatHeader"
 import { FaCaretDown } from "react-icons/fa"
 import { IoChatbubblesOutline } from "react-icons/io5"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { usePrivateChatSocketEvents } from "../../../hooks/usePrivateChatSocketEvents"
+import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 
 const ChatWindow = () => {
@@ -92,113 +92,39 @@ const ChatWindow = () => {
     }
   }, [triggerScrollOnSenderMessage])
 
-  // const scrollToBottom = useCallback(() => {
-  //   if (messageListRef.current) {
-  //     messageListRef.current.scrollTop = messageListRef.current.scrollHeight
-  //   }
-  // }, [messageListRef])
-
   // useLayoutEffect(() => {
   //   const listEl = messageListRef.current
   //   if (!listEl) return
 
-  //   if (resizeObserverRef.current) {
-  //     resizeObserverRef.current.disconnect()
-  //   }
+  //   const scrollThreshold = 100
 
-  //   prevScrollHeightRef.current = listEl.scrollHeight
+   
 
-  //   resizeObserverRef.current = new ResizeObserver((entries) => {
-  //     for (let entry of entries) {
-  //       if (entry.target === listEl) {
-  //         const newScrollHeight = listEl.scrollHeight
-  //         const oldScrollHeight = prevScrollHeightRef.current
-
-  //         const scrollThreshold = 100
-  //         const isUserAtBottom =
-  //           listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-  //         if (didMessageJustLanded.current) {
-  //           setTimeout(() => {
-  //             scrollToBottom()
-  //             setShowNewMessageButton(false)
-  //             didMessageJustLanded.current = false
-  //           }, 50)
-  //         } else if (newScrollHeight > oldScrollHeight && isUserAtBottom) {
-  //           scrollToBottom()
-  //           setShowNewMessageButton(false)
-  //         }
-  //         prevScrollHeightRef.current = newScrollHeight
-  //       }
-  //     }
-  //   })
-
-  //   resizeObserverRef.current.observe(listEl)
-
-  //   return () => {
-  //     if (resizeObserverRef.current) {
-  //       resizeObserverRef.current.disconnect()
-  //       resizeObserverRef.current = null
-  //     }
-  //   }
-  // }, [scrollToBottom, conversationId, setShowNewMessageButton])
-
-  // const handleLoadImage = useCallback(() => {
-  //   const listEl = messageListRef.current
-  //   if (!listEl) return
-
-  //   const scrollThreshold = 500
-  //   const isUserAtBottom =
+  //   const isAtBottom =
   //     listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
 
-  //   if (isUserAtBottom) {
-  //     setTimeout(() => {
-  //       scrollToBottom()
-  //       setShowNewMessageButton(false)
-  //     }, 50)
+  //   // const isReadyForAnyScroll =
+  //   //   (shouldScrollOnFirstFullLoad.current && !isLoadingMessages && messages.length > 0) 
+
+  //   // if (isReadyForAnyScroll) {
+  //   //   scrollToBottom()
+  //   //   shouldScrollOnFirstFullLoad.current = false
+  //   //   didMessageJustLanded.current = false
+  //   //   setShowNewMessageButton(false)
+  //   // }
+
+  //   if (isAtBottom) {
+  //     scrollToBottom()
   //   }
-  // }, [scrollToBottom, setShowNewMessageButton])
-
-  // --- Primary scrolling logic for initial load, conversation change, and optimistic sends ---
-  useLayoutEffect(() => {
-    const listEl = messageListRef.current
-    if (!listEl) return
-
-    const scrollThreshold = 100
-
-    // const conversationChanged = prevActualConversationIdRef.current !== conversationId
-
-    // if (conversationChanged) {
-    //   shouldScrollOnFirstFullLoad.current = true
-    //   prevActualConversationIdRef.current = conversationId
-    //   didMessageJustLanded.current = true
-    // }
-
-    const isAtBottom =
-      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-    // const isReadyForAnyScroll =
-    //   (shouldScrollOnFirstFullLoad.current && !isLoadingMessages && messages.length > 0) 
-
-    // if (isReadyForAnyScroll) {
-    //   scrollToBottom()
-    //   shouldScrollOnFirstFullLoad.current = false
-    //   didMessageJustLanded.current = false
-    //   setShowNewMessageButton(false)
-    // }
-
-    if (isAtBottom) {
-      scrollToBottom()
-    }
-  }, [
-    messages.length,
-    isLoadingMessages,
-    conversationId,
-    scrollToBottom,
-    lastMessageId,
-    messageListRef,
-    setShowNewMessageButton,
-  ])
+  // }, [
+  //   messages.length,
+  //   isLoadingMessages,
+  //   conversationId,
+  //   scrollToBottom,
+  //   lastMessageId,
+  //   messageListRef,
+  //   setShowNewMessageButton,
+  // ])
 
   useEffect(() => {
     if (isTypingOtherUser) {
