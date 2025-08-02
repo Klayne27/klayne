@@ -8,7 +8,7 @@ import { BiRefresh } from "react-icons/bi";
 import React, { useState } from "react";
 import FollowButton from "../ui/FollowButton";
 import ConfirmationModal from "../ui/ConfirmationModal";
-import { useAppStore } from "../../store/appStore";
+import { useAppStore } from "../../store/useAppStore";
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal);

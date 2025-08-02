@@ -29,11 +29,9 @@ const AnimatedCount = ({ count, className }) => {
   return (
     <div
       // This container clips the animation and holds the numbers
-      className={`relative h-5 w-6 overflow-hidden text-left tabular-nums`}
+      className={`relative h-5 w-2 overflow-hidden text-left tabular-nums`}
     >
-      {/* This block renders only when an animation is active.
-        It places both the old and new numbers in the DOM to be animated.
-      */}
+
       {direction && (
         <>
           <span

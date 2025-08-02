@@ -6,7 +6,7 @@ import { useAuthUser } from "./hooks/authHooks/useAuthUser"
 import { Toaster } from "react-hot-toast"
 import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"
-import { useAppStore } from "./store/appStore"
+import { useAppStore } from "./store/useAppStore"
 
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
@@ -31,7 +31,7 @@ function App() {
     showCreatePostModal,
     setShowCreatePostModal,
   } = useAppStore()
-  
+
   const [feedType, setFeedType] = useState("posts")
 
   const location = useLocation()

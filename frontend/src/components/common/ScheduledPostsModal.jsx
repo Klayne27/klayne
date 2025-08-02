@@ -92,6 +92,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const handleConfirmDelete = () => {
     deleteMultipleScheduledPosts(selectedPostIds);
     setShowDeleteConfirmModal(false);
+    setIsEditMode(false)
   };
 
   if (!isOpen) return null;

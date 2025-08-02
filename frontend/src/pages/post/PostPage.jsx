@@ -14,7 +14,7 @@ import { useDebounce } from "../../hooks/customHooks/useDebounce";
 import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
 import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
 import { showAppToast } from "../../utils/showAppToast";
-import { useAppStore } from "../../store/appStore";
+import { useAppStore } from "../../store/useAppStore";
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile";
 import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler";
 

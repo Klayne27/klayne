@@ -1,237 +1,186 @@
-import XSvg from "../svgs/X";
-import { PiBellThin, PiHouseThin } from "react-icons/pi";
-import { useLocation, useNavigate } from "react-router-dom";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { useLogout } from "../../hooks/authHooks/useLogout";
-import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci";
-import { useState, useRef, useEffect, useCallback } from "react";
-import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount";
-import { useSocket } from "../../context/SocketContext";
-import { useQueryClient } from "@tanstack/react-query";
-import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu";
-import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"; // Import a close icon
-import { BiLogOut } from "react-icons/bi";
-import FollowListModal from "./FollowListModal";
-import React from "react";
-import { showAppToast } from "../../utils/showAppToast";
-import { BsThreeDots } from "react-icons/bs";
-import ConfirmationModal from "../ui/ConfirmationModal";
-import FeatherIcon from "../svgs/FeatherIcon";
-import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead";
-import { useAppStore } from "../../store/appStore";
-import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect";
+import XSvg from "../svgs/X"
+import { PiBellThin, PiHouseThin } from "react-icons/pi"
+import { useLocation, useNavigate } from "react-router-dom"
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useLogout } from "../../hooks/authHooks/useLogout"
+import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci"
+import { useState, useRef, useEffect, useCallback } from "react"
+import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount"
+import { useSocket } from "../../context/SocketContext"
+import { useQueryClient } from "@tanstack/react-query"
+import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
+import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5" // Import a close icon
+import { BiLogOut } from "react-icons/bi"
+import FollowListModal from "./FollowListModal"
+import React from "react"
+import { showAppToast } from "../../utils/showAppToast"
+import { BsThreeDots } from "react-icons/bs"
+import ConfirmationModal from "../ui/ConfirmationModal"
+import FeatherIcon from "../svgs/FeatherIcon"
+import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
+import { useAppStore } from "../../store/useAppStore"
+import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 
 const Sidebar = ({ onOpenCreatePostModal }) => {
-  const { authUser } = useAuthUser();
-  const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen);
+  const { authUser } = useAuthUser()
+  const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
 
-  const { logout } = useLogout();
-  const { deleteAccount, isDeletingAccount } = useDeleteAccount();
+  const { logout } = useLogout()
+  const { deleteAccount, isDeletingAccount } = useDeleteAccount()
   const {
     hasUnreadMessages,
     hasUnreadNotifications,
     hasNewFeedPosts,
-    setHasNewFeedPosts,
     hasUnreadPublicChat,
     setShowNewFeedPostsButton,
     unreadNotificationsCount,
     unreadMessageCount,
     unreadPublicChatCount,
     newPostCount,
-  } = useSocket();
-  const queryClient = useQueryClient();
+  } = useSocket()
+  const queryClient = useQueryClient()
   // const {username} = useParams()
 
-  const { pathname } = useLocation();
-  const navigate = useNavigate();
+  const { pathname } = useLocation()
+  const navigate = useNavigate()
 
-  const [showPopover, setShowPopover] = useState(false);
-  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false);
-  const [isMobileBarVisible, setIsMobileBarVisible] = useState(true);
-  const [showSideModal, setShowSideModal] = useState(false); // New state for side modal
-  const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true);
+  const [showPopover, setShowPopover] = useState(false)
+  const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
+  const [isMobileBarVisible, setIsMobileBarVisible] = useState(true)
+  const [showSideModal, setShowSideModal] = useState(false) // New state for side modal
+  const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true)
 
-  const [passwordInput, setPasswordInput] = useState("");
+  const [passwordInput, setPasswordInput] = useState("")
 
   // NEW STATE: To track if FollowListModals are open
-  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false);
-  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false);
+  const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
+  const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
 
-  const lastScrollY = useRef(0);
-  const profileButtonRef = useRef(null); // Used for desktop popover
-  const popoverRef = useRef(null); // Used for desktop popover
-  const sideModalRef = useRef(null); // Ref for the new side modal
+  const lastScrollY = useRef(0)
+  const profileButtonRef = useRef(null) // Used for desktop popover
+  const popoverRef = useRef(null) // Used for desktop popover
+  const sideModalRef = useRef(null) // Ref for the new side modal
 
-  const originalTitle = useRef(document.title);
-  const originalFaviconHref = useRef(null);
+  const originalTitle = useRef(document.title)
+  const originalFaviconHref = useRef(null)
 
-  // --- NEW STATE FOR TOUCH EFFECT ---
-  // const [isTouchDevice, setIsTouchDevice] = useState(false);
-  // const [activeButtonId, setActiveButton] = useState(null); // Tracks which button is "active" on touch
+  const { markFeedAsRead } = useMarkPostsAsRead()
 
-  const { markFeedAsRead } = useMarkPostsAsRead();
-
-  const {
-    isTouchDevice,
-    activeButtonId,
-    handleTouchCancel,
-    handleTouchEnd,
-    handleTouchStart,
-  } = useTouchHoverEffect();
-  // --- NEW TOUCH HANDLERS ---
-  // const handleTouchStart = useCallback(
-  //   (id) => {
-  //     if (isTouchDevice) {
-  //       setActiveButton(id);
-  //     }
-  //   },
-  //   [isTouchDevice]
-  // );
-
-  // const handleTouchEnd = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
-  //   }
-  // }, [isTouchDevice]);
-
-  // const handleTouchCancel = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 200);
-  //   }
-  // }, [isTouchDevice]);
+  const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
+    useTouchHoverEffect()
 
   const togglePopover = useCallback((e) => {
-    e.stopPropagation();
-    setShowPopover((prev) => !prev);
-  }, []);
+    e.stopPropagation()
+    setShowPopover((prev) => !prev)
+  }, [])
 
   // New function to toggle the side modal
   const toggleSideModal = useCallback((e) => {
-    e.stopPropagation();
-    setShowSideModal((prev) => !prev);
-  }, []);
+    e.stopPropagation()
+    setShowSideModal((prev) => !prev)
+  }, [])
 
   // Effect to handle favicon and title updates
   useEffect(() => {
-    let faviconLink = document.querySelector('link[rel="icon"]');
+    let faviconLink = document.querySelector('link[rel="icon"]')
     if (faviconLink && !originalFaviconHref.current) {
-      originalFaviconHref.current = faviconLink.href;
+      originalFaviconHref.current = faviconLink.href
     } else if (!faviconLink) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 32;
-      canvas.height = 32;
-      canvas.getContext("2d").clearRect(0, 0, 0, 0);
-      originalFaviconHref.current = canvas.toDataURL();
-      faviconLink = document.createElement("link");
-      faviconLink.rel = "icon";
-      document.head.appendChild(faviconLink);
+      const canvas = document.createElement("canvas")
+      canvas.width = 32
+      canvas.height = 32
+      canvas.getContext("2d").clearRect(0, 0, 0, 0)
+      originalFaviconHref.current = canvas.toDataURL()
+      faviconLink = document.createElement("link")
+      faviconLink.rel = "icon"
+      document.head.appendChild(faviconLink)
     }
-  }, []);
+  }, [])
 
-  // --- EFFECT TO DETECT TOUCH DEVICE ---
-  // useEffect(() => {
-  //   setIsTouchDevice(
-  //     "ontouchstart" in window ||
-  //       navigator.maxTouchPoints > 0 ||
-  //       navigator.msMaxTouchPoints > 0
-  //   );
-  // }, []);
-
-  // const hasAnyNewNotification =
-  //   unreadMessageCount > 0 ||
-  //   unreadNotificationsCount > 0 ||
-  //   unreadPublicChatCount > 0 ||
-  //   newPostCount > 0;
 
   const totalNotifications =
-    unreadMessageCount + unreadNotificationsCount + unreadPublicChatCount + newPostCount;
+    unreadMessageCount + unreadNotificationsCount + unreadPublicChatCount + newPostCount
 
   useEffect(() => {
     const hasAnyNewNotification =
       unreadMessageCount > 0 ||
       unreadNotificationsCount > 0 ||
       unreadPublicChatCount > 0 ||
-      newPostCount > 0;
+      newPostCount > 0
 
     if (hasAnyNewNotification) {
-      document.title = `(${totalNotifications}) ${originalTitle.current}`;
+      document.title = `(${totalNotifications}) ${originalTitle.current}`
     } else {
-      document.title = originalTitle.current;
+      document.title = originalTitle.current
     }
 
-    const faviconLink = document.querySelector('link[rel="icon"]');
+    const faviconLink = document.querySelector('link[rel="icon"]')
     if (!faviconLink || !originalFaviconHref.current) {
-      console.warn(
-        "Favicon link not found or original favicon not captured. Cannot apply badge."
-      );
-      return;
+      console.warn("Favicon link not found or original favicon not captured. Cannot apply badge.")
+      return
     }
 
     if (hasAnyNewNotification) {
-      const canvas = document.createElement("canvas");
-      canvas.width = 32;
-      canvas.height = 32;
-      const ctx = canvas.getContext("2d");
+      const canvas = document.createElement("canvas")
+      canvas.width = 32
+      canvas.height = 32
+      const ctx = canvas.getContext("2d")
 
-      const img = new Image();
-      img.src = originalFaviconHref.current;
-      img.crossOrigin = "anonymous";
+      const img = new Image()
+      img.src = originalFaviconHref.current
+      img.crossOrigin = "anonymous"
 
       const drawFaviconWithBadge = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
 
-        const badgeSize = 10;
-        const padding = 0;
-        ctx.beginPath();
+        const badgeSize = 10
+        const padding = 0
+        ctx.beginPath()
         ctx.arc(
           canvas.width - badgeSize / 2 - padding,
           badgeSize / 2 + padding,
           badgeSize / 2,
           0,
           Math.PI * 2,
-          false
-        );
-        ctx.fillStyle = "red";
-        ctx.fill();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "#000";
-        ctx.stroke();
+          false,
+        )
+        ctx.fillStyle = "red"
+        ctx.fill()
+        ctx.lineWidth = 1
+        ctx.strokeStyle = "#000"
+        ctx.stroke()
 
-        faviconLink.href = canvas.toDataURL("image/png");
-      };
+        faviconLink.href = canvas.toDataURL("image/png")
+      }
 
-      img.onload = drawFaviconWithBadge;
+      img.onload = drawFaviconWithBadge
 
       img.onerror = () => {
         console.warn(
-          "Could not load original favicon for badging. Reverting to basic red dot as fallback."
-        );
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.beginPath();
-        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false);
-        ctx.fillStyle = "red";
-        ctx.fill();
-        faviconLink.href = canvas.toDataURL("image/png");
-      };
+          "Could not load original favicon for badging. Reverting to basic red dot as fallback.",
+        )
+        ctx.clearRect(0, 0, canvas.width, canvas.height)
+        ctx.beginPath()
+        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false)
+        ctx.fillStyle = "red"
+        ctx.fill()
+        faviconLink.href = canvas.toDataURL("image/png")
+      }
 
       if (img.complete) {
-        drawFaviconWithBadge();
+        drawFaviconWithBadge()
       }
     } else {
-      faviconLink.href = originalFaviconHref.current;
+      faviconLink.href = originalFaviconHref.current
     }
 
     return () => {
-      document.title = originalTitle.current;
+      document.title = originalTitle.current
       if (faviconLink && originalFaviconHref.current) {
-        faviconLink.href = originalFaviconHref.current;
+        faviconLink.href = originalFaviconHref.current
       }
-    };
+    }
   }, [
     hasUnreadMessages,
     hasUnreadNotifications,
@@ -242,31 +191,33 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
     unreadMessageCount,
     unreadNotificationsCount,
     unreadPublicChatCount,
-  ]);
+  ])
 
   const handleMobileSearchClick = () => {
-    navigate("/search");
-  };
+    navigate("/search")
+  }
 
   const handleHomeClick = useCallback(() => {
-    navigate("/");
+    if (pathname === "/") {
+      window.scrollTo({
+        top: 0,
+        behavior: pathname === "/" ? "smooth" : "instant",
+      })
+      return
+    } else {
+      navigate("/")
+    }
+    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
 
-    window.scrollTo({
-      top: 0,
-      behavior: pathname === "/" ? "smooth" : "instant",
-    });
-
-    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
-
-    markFeedAsRead();
-    setShowNewFeedPostsButton(false);
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate, pathname]);
+    markFeedAsRead()
+    setShowNewFeedPostsButton(false)
+  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate, pathname])
 
   const handleBookmarksClick = () => {
-    if (pathname === "/bookmarks") return;
-    queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-    navigate("/bookmarks");
-  };
+    if (pathname === "/bookmarks") return
+    queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] })
+    navigate("/bookmarks")
+  }
 
   // Function to open FollowListModal
   const openFollowListModal = (type) => {
@@ -274,38 +225,36 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
     const modalId =
       type === "following"
         ? `follow_modal_list_following` // Use the fixed IDs from FollowListModal
-        : `follow_modal_list_followers`;
+        : `follow_modal_list_followers`
 
-    const modalElement = document.getElementById(modalId);
+    const modalElement = document.getElementById(modalId)
     if (modalElement) {
-      modalElement.showModal();
+      modalElement.showModal()
       if (type === "following") {
-        setIsFollowingModalOpen(true);
+        setIsFollowingModalOpen(true)
       } else {
-        setIsFollowersModalOpen(true);
+        setIsFollowersModalOpen(true)
       }
     }
-  };
+  }
 
   // Function to close FollowListModal
   const closeFollowListModal = (type) => {
     const modalId =
-      type === "following"
-        ? `follow_modal_list_following`
-        : `follow_modal_list_followers`;
+      type === "following" ? `follow_modal_list_following` : `follow_modal_list_followers`
 
-    const modalElement = document.getElementById(modalId);
+    const modalElement = document.getElementById(modalId)
     if (modalElement) {
-      modalElement.close(); // Use native close
+      modalElement.close() // Use native close
       if (type === "following") {
-        setIsFollowingModalOpen(false);
-        setShowSideModal(true);
+        setIsFollowingModalOpen(false)
+        setShowSideModal(true)
       } else {
-        setIsFollowersModalOpen(false);
-        setShowSideModal(true);
+        setIsFollowersModalOpen(false)
+        setShowSideModal(true)
       }
     }
-  };
+  }
 
   useEffect(() => {
     if (pathname === "/" || pathname === "/bookmarks") {
@@ -313,9 +262,9 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
         top: 0,
         left: 0,
         behavior: "instant",
-      });
+      })
     }
-  }, [pathname]);
+  }, [pathname])
 
   // Handle click outside desktop popover
   useEffect(() => {
@@ -326,20 +275,20 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
         popoverRef.current &&
         !popoverRef.current.contains(event.target)
       ) {
-        setShowPopover(false);
+        setShowPopover(false)
       }
-    };
+    }
 
     if (showPopover) {
-      document.addEventListener("mousedown", handleClickOutside);
+      document.addEventListener("mousedown", handleClickOutside)
     } else {
-      document.removeEventListener("mousedown", handleClickOutside);
+      document.removeEventListener("mousedown", handleClickOutside)
     }
 
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [showPopover]);
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [showPopover])
 
   // Logic for handling clicks outside the mobile sidebar itself
   useEffect(() => {
@@ -353,56 +302,56 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
         !isFollowersModalOpen // Check if followers modal is NOT open
       ) {
         // We only close the sidebar if *no* follow list modal is active
-        setShowSideModal(false);
+        setShowSideModal(false)
       }
-    };
+    }
 
     // Add event listener to the document
-    document.addEventListener("mousedown", handleClickOutsideSideModal);
+    document.addEventListener("mousedown", handleClickOutsideSideModal)
 
     // Cleanup the event listener
     return () => {
-      document.removeEventListener("mousedown", handleClickOutsideSideModal);
-    };
-  }, [showSideModal, isFollowingModalOpen, isFollowersModalOpen]); // Dependencies
+      document.removeEventListener("mousedown", handleClickOutsideSideModal)
+    }
+  }, [showSideModal, isFollowingModalOpen, isFollowersModalOpen]) // Dependencies
 
   const handleLogout = (e) => {
-    e.preventDefault();
-    logout();
-    setShowPopover(false);
-    setShowSideModal(false); // Close side modal on logout
-  };
+    e.preventDefault()
+    logout()
+    setShowPopover(false)
+    setShowSideModal(false) // Close side modal on logout
+  }
 
   const handleConfirmDeleteClick = () => {
-    setShowPopover(false);
-    setShowSideModal(false); // Close side modal before showing delete confirmation
-    setShowConfirmDeleteModal(true);
-  };
+    setShowPopover(false)
+    setShowSideModal(false) // Close side modal before showing delete confirmation
+    setShowConfirmDeleteModal(true)
+  }
 
   const handleDeleteAccount = async () => {
     if (!passwordInput) {
-      showAppToast("Please enter your password.", "error");
-      return;
+      showAppToast("Please enter your password.", "error")
+      return
     }
 
     if (authUser && authUser._id) {
       try {
-        await deleteAccount({ userId: authUser._id, password: passwordInput });
+        await deleteAccount({ userId: authUser._id, password: passwordInput })
         // On success, the useDeleteAccount hook redirects, so the modal will unmount anyway.
         // If it didn't redirect, you'd setShowConfirmDeleteModal(false);
       } catch (error) {
         // Error handling is already done by useDeleteAccount's onError,
         // but you can add more specific modal closing logic if needed.
         // For example, if you want the modal to stay open on error for correction.
-        console.error("Deletion failed:", error);
+        console.error("Deletion failed:", error)
       } finally {
         // Clear password input regardless of success/failure when the async operation finishes
-        setPasswordInput("");
+        setPasswordInput("")
       }
     } else {
-      showAppToast("User ID not available. Cannot proceed with deletion.", "error");
+      showAppToast("User ID not available. Cannot proceed with deletion.", "error")
     }
-  };
+  }
 
   useEffect(() => {
     const handleScroll = () => {
@@ -410,97 +359,91 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
       const shouldAlwaysHide =
         pathname.includes("/public-chat") || // Public chat
         pathname.includes("/post/") || // Individual post page
-        isChatWindowOpen; // Private chat window is open
+        isChatWindowOpen // Private chat window is open
 
       if (window.innerWidth < 768) {
         if (shouldAlwaysHide) {
-          setIsMobileBarVisible(false);
-          setIsFeatherIconVisible(false); // Immediately hid
-          lastScrollY.current = window.scrollY; // Reset lastScrollY to current to prevent immediate re-showing
-          return; // Exit early, no further scroll logic needed for these paths
+          setIsMobileBarVisible(false)
+          setIsFeatherIconVisible(false) // Immediately hid
+          lastScrollY.current = window.scrollY // Reset lastScrollY to current to prevent immediate re-showing
+          return // Exit early, no further scroll logic needed for these paths
         }
 
         if (pathname.startsWith("/messages")) {
           // Special handling for messages page, based on prop
-          setIsMobileBarVisible(true);
+          setIsMobileBarVisible(true)
         } else {
           // General scroll-hide/show behavior for other mobile pages
-          const currentScrollY = window.scrollY;
+          const currentScrollY = window.scrollY
           if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-            setIsMobileBarVisible(false);
-            setIsFeatherIconVisible(false);
+            setIsMobileBarVisible(false)
+            setIsFeatherIconVisible(false)
           } else if (currentScrollY < lastScrollY.current) {
-            setIsMobileBarVisible(true);
-            setIsFeatherIconVisible(true);
+            setIsMobileBarVisible(true)
+            setIsFeatherIconVisible(true)
           }
-          lastScrollY.current = currentScrollY;
+          lastScrollY.current = currentScrollY
         }
       } else {
         // Always visible on desktop
-        setIsMobileBarVisible(true);
-        setIsFeatherIconVisible(true);
+        setIsMobileBarVisible(true)
+        setIsFeatherIconVisible(true)
       }
-    };
+    }
 
     // Initial check when component mounts or dependencies change
     // This handles navigation directly to a hidden path
     if (window.innerWidth < 768) {
       const shouldAlwaysHide =
-        pathname.includes("/public-chat") ||
-        pathname.includes("/post/") ||
-        isChatWindowOpen;
+        pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
 
       if (shouldAlwaysHide) {
-        setIsMobileBarVisible(false);
-        setIsFeatherIconVisible(false);
+        setIsMobileBarVisible(false)
+        setIsFeatherIconVisible(false)
       } else if (pathname.startsWith("/messages")) {
-        setIsMobileBarVisible(true);
+        setIsMobileBarVisible(true)
       } else {
-        setIsMobileBarVisible(true); // Default to visible for other paths
-        setIsFeatherIconVisible(true); // Default to visible for other paths on mobile initially
+        setIsMobileBarVisible(true) // Default to visible for other paths
+        setIsFeatherIconVisible(true) // Default to visible for other paths on mobile initially
       }
     } else {
-      setIsMobileBarVisible(true);
-      setIsFeatherIconVisible(true);
+      setIsMobileBarVisible(true)
+      setIsFeatherIconVisible(true)
     }
 
-    window.addEventListener("scroll", handleScroll);
-    window.addEventListener("resize", handleScroll);
+    window.addEventListener("scroll", handleScroll)
+    window.addEventListener("resize", handleScroll)
 
     return () => {
-      window.removeEventListener("scroll", handleScroll);
-      window.removeEventListener("resize", handleScroll);
-    };
-  }, [isChatWindowOpen, pathname]);
+      window.removeEventListener("scroll", handleScroll)
+      window.removeEventListener("resize", handleScroll)
+    }
+  }, [isChatWindowOpen, pathname])
 
-  const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768;
+  const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768
 
   const handlePublicChatClick = () => {
-    if (pathname === "/public-chat") return;
-    navigate("/public-chat");
-  };
+    if (pathname === "/public-chat") return
+    navigate("/public-chat")
+  }
 
-  const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount;
+  const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount
 
   if (!shouldRenderMobileSidebar) {
-    return null;
+    return null
   }
 
   return (
     <>
       {/* Main Sidebar */}
       <div
-        className={`fixed bottom-0 left-0 w-full bg-base-100 md:sticky md:top-0 md:h-dvh flex md:flex-col items-center md:items-start justify-around md:justify-start border-t md:border-t-0 md:border-r border-accent md:z-0 z-[10] md:flex-[2_2_0] md:max-w-56
-          transition-transform duration-300 ease-out
-          ${!isMobileBarVisible ? "translate-y-full" : ""}`}
+        className={`fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >
         <div
           className={
             `block md:hidden ${
               pathname.includes("/messages") ? "hidden" : ""
-            } fixed bottom-[73px] right-5 z-[50] rounded-full size-[56px] cursor-pointer hover:bg-opacity-85 p-4 bg-primary text-white
-            transform transition-all duration-300 ease-in-out white-shadow
-             ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
+            } white-shadow fixed bottom-[73px] right-5 z-[50] size-[56px] transform cursor-pointer rounded-full bg-primary p-4 text-white transition-all duration-300 ease-in-out hover:bg-opacity-85 ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
           }
           onClick={onOpenCreatePostModal}
         >
@@ -510,12 +453,11 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
         <div
           to="/"
           onClick={handleHomeClick}
-          className={`hidden md:flex justify-start cursor-pointer px-2 w-12 h-12 fill-primary rounded-full hover:bg-secondary duration-200
-            ${
-              isTouchDevice && activeButtonId === "x-logo"
-                ? "bg-secondary bg-opacity-50 transition duration-150"
-                : ""
-            }`}
+          className={`hidden h-12 w-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
+            isTouchDevice && activeButtonId === "x-logo"
+              ? "bg-secondary bg-opacity-50 transition duration-150"
+              : ""
+          }`}
           onTouchStart={() => handleTouchStart("x-logo")}
           onTouchEnd={handleTouchEnd}
           onTouchCancel={handleTouchCancel}
@@ -523,25 +465,20 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
           <XSvg className="fill-primary" />
         </div>
 
-        <ul className="flex flex-row md:flex-col md:gap-4 mt-0 md:mt-4 w-full  justify-around md:justify-start">
+        <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
           {/* Home */}
           <li
             onClick={() => {
               // if (pathname === "/") return
               // navigate("/");
-              handleHomeClick();
+              handleHomeClick()
             }}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[115px] p-1 md:p-0"
+            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[115px] md:justify-start md:p-0 md:hover:bg-secondary"
           >
             <button
-              className={`relative flex items-center rounded-full py-2 px-2 pl-[9px] pr-[7px] max-w-fit cursor-pointer
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "home"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              className={`relative flex max-w-fit cursor-pointer items-center rounded-full px-2 py-2 pl-[9px] pr-[7px] transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "home" ? "bg-secondary bg-opacity-80" : ""
+              }`}
               onTouchStart={() => handleTouchStart("home")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
@@ -554,13 +491,13 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               />
               {newPostCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 w-3 h-3 bg-primary rounded-full border-2 border-black"
+                  className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
                   style={{ transform: "translate(50%, -50%)" }}
                 ></div>
               )}
             </button>
             <span
-              className={`text-xl hidden md:block ${
+              className={`hidden text-xl md:block ${
                 pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -570,39 +507,29 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           <li
             onClick={() => {
-              if (pathname === "/messages") return;
-              navigate("/messages");
-              queryClient.invalidateQueries({ queryKey: ["conversations"] });
+              if (pathname === "/messages") return
+              navigate("/messages")
+              queryClient.invalidateQueries({ queryKey: ["conversations"] })
             }}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[150px] p-1 md:p-0"
+            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[150px] md:justify-start md:p-0 md:hover:bg-secondary"
           >
             <button
-              className={` flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "messages"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "messages" ? "bg-secondary bg-opacity-80" : ""
+              }`}
               onTouchStart={() => handleTouchStart("messages")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
               <CiMail
                 className={`size-7 ${
-                  pathname.startsWith("/messages")
-                    ? "font-bold text-opacity-100"
-                    : "opacity-80"
+                  pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
                 strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
               />
               {unreadMessageCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
-               flex items-center justify-center 
-               text-white text-[11px] font-bold 
-               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
+                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {unreadMessageCount}
@@ -610,10 +537,8 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               )}
             </button>
             <span
-              className={`text-xl hidden md:block ${
-                pathname.startsWith("/messages")
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
+              className={`hidden text-xl md:block ${
+                pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
               Messages
@@ -622,38 +547,30 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           <li
             onClick={() => {
-              if (pathname === "/notifications") return;
-              navigate("/notifications");
+              if (pathname === "/notifications") return
+              navigate("/notifications")
             }}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[180px] p-1 md:p-0"
+            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[180px] md:justify-start md:p-0 md:hover:bg-secondary"
           >
             <button
-              className={`flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "notifications"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              className={`relative flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "notifications"
+                  ? "bg-secondary bg-opacity-80"
+                  : ""
+              }`}
               onTouchStart={() => handleTouchStart("notifications")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
               <PiBellThin
                 className={`size-7 ${
-                  pathname === "/notifications"
-                    ? "font-bold text-opacity-100"
-                    : "opacity-80"
+                  pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
                 strokeWidth={pathname === "/notifications" ? 14 : 10}
               />
               {unreadNotificationsCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
-               flex items-center justify-center 
-               text-white text-[11px] font-bold 
-               min-w-[1.25rem] h-5 px-1"
+                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {unreadNotificationsCount}
@@ -661,10 +578,8 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               )}
             </button>
             <span
-              className={`text-xl hidden md:block ${
-                pathname === "/notifications"
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
+              className={`hidden text-xl md:block ${
+                pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
               Notifications
@@ -673,17 +588,14 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           <li
             onClick={handlePublicChatClick}
-            className="flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[170px] p-1 md:p-0"
+            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[170px] md:justify-start md:p-0 md:hover:bg-secondary"
           >
             <button
-              className={`flex gap-3 items-center justify-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer relative
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""}
-                ${
-                  isTouchDevice && activeButtonId === "public-chat"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "public-chat"
+                  ? "bg-secondary bg-opacity-80"
+                  : ""
+              }`}
               onTouchStart={() => handleTouchStart("public-chat")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
@@ -699,10 +611,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               {/* Red dot for new public chat messages */}
               {unreadPublicChatCount > 0 && (
                 <div
-                  className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
-               flex items-center justify-center 
-               text-white text-[11px] font-bold 
-               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
+                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {unreadPublicChatCount}
@@ -710,7 +619,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               )}
             </button>
             <span
-              className={`text-xl hidden md:block ${
+              className={`hidden text-xl md:block ${
                 pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -720,31 +629,23 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           {/* Search (Mobile Only) */}
           <li
-            className="flex justify-start lg:hidden items-center cursor-pointer "
+            className="flex cursor-pointer items-center justify-start lg:hidden"
             onClick={handleMobileSearchClick}
           >
             <button
               className={` ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center rounded-full py-2 px-[1px] max-w-fit cursor-pointer
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "search"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              } flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-[1px] py-2 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "search" ? "bg-secondary bg-opacity-80" : ""
+              }`}
               onTouchStart={() => handleTouchStart("search")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <CiSearch
-                className="size-7 w-11"
-                strokeWidth={pathname === "/search" ? 1 : 0.5}
-              />
+              <CiSearch className="size-7 w-11" strokeWidth={pathname === "/search" ? 1 : 0.5} />
             </button>
             <span
-              className={`text-xl hidden md:block ${
+              className={`hidden text-xl md:block ${
                 pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -754,31 +655,23 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           {/* Bookmarks - Hidden on mobile, visible on desktop */}
           <li
-            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[165px] p-1 md:p-0"
+            className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[165px] md:p-0 md:hover:bg-secondary"
             onClick={handleBookmarksClick}
           >
             <button
               className={`${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "bookmarks"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "bookmarks" ? "bg-secondary bg-opacity-80" : ""
+              }`}
               onTouchStart={() => handleTouchStart("bookmarks")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <CiBookmark
-                className="size-7"
-                strokeWidth={pathname === "/bookmarks" ? 2 : 1}
-              />
+              <CiBookmark className="size-7" strokeWidth={pathname === "/bookmarks" ? 2 : 1} />
             </button>
             <span
-              className={`text-xl hidden md:block ${
+              className={`hidden text-xl md:block ${
                 pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
               }`}
             >
@@ -788,28 +681,20 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
           {/* Themes */}
           <li
-            className="hidden md:flex justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[125px] md:p-0"
+            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
             onClick={() => navigate("/themes")}
           >
             <button
               className={`${
                 pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex gap-3 items-center rounded-full py-2 px-2 pl-2.5 max-w-fit cursor-pointer w-full
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "themes"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
+              }`}
               onTouchStart={() => handleTouchStart("themes")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <LuPalette
-                className="size-7"
-                strokeWidth={pathname === "/themes" ? 2.5 : 2}
-              />
+              <LuPalette className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
             </button>
             <span
               className={`text-lg ${
@@ -821,18 +706,15 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
           </li>
 
           {/* Mobile Profile Image (to open side modal) */}
-          <li className="flex md:hidden justify-center items-center cursor-pointer py-1 px-[7px]">
+          <li className="flex cursor-pointer items-center justify-center px-[7px] py-1 md:hidden">
             <button
               id="mobile-profile-img-button" // Add an ID for click outside logic
               onClick={toggleSideModal}
-              className={`p-1 rounded-full hover:bg-secondary
-                transition duration-200
-                ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} 
-                ${
-                  isTouchDevice && activeButtonId === "mobile-profile-img"
-                    ? "bg-secondary bg-opacity-80"
-                    : ""
-                }`}
+              className={`rounded-full p-1 transition duration-200 hover:bg-secondary ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "mobile-profile-img"
+                  ? "bg-secondary bg-opacity-80"
+                  : ""
+              }`}
               onTouchStart={() => handleTouchStart("mobile-profile-img")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
@@ -848,22 +730,21 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
           {/* Profile (Desktop Only) */}
           <li
             onClick={() => {
-              if (pathname === `/profile/${authUser?.username}`) return;
-              navigate(`/profile/${authUser?.username}`);
+              if (pathname === `/profile/${authUser?.username}`) return
+              navigate(`/profile/${authUser?.username}`)
             }}
-            className="hidden md:flex justify-center md:justify-start items-center cursor-pointer md:hover:bg-secondary rounded-full md:w-[125px] p-1 md:p-0"
+            className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
           >
             <button
               className={`hidden md:block ${
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
-              } flex gap-[10px] items-center hover:bg-secondary md:hover:bg-transparent rounded-full py-2 px-2 pl-2 max-w-fit cursor-pointer
-                ${
-                  isTouchDevice && activeButtonId === "desktop-profile"
-                    ? "bg-secondary bg-opacity-50 transition duration-150"
-                    : "transition duration-150"
-                }`}
+              } flex max-w-fit cursor-pointer items-center gap-[10px] rounded-full px-2 py-2 pl-2 hover:bg-secondary md:hover:bg-transparent ${
+                isTouchDevice && activeButtonId === "desktop-profile"
+                  ? "bg-secondary bg-opacity-50 transition duration-150"
+                  : "transition duration-150"
+              }`}
               onTouchStart={() => handleTouchStart("desktop-profile")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
@@ -874,7 +755,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               />
             </button>
             <span
-              className={`text-xl hidden md:block ${
+              className={`hidden text-xl md:block ${
                 pathname === `/profile/${authUser?.username}`
                   ? "font-bold text-opacity-100"
                   : "opacity-80"
@@ -883,9 +764,9 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               Profile
             </span>
           </li>
-          <div className="hidden md:block mr-7">
+          <div className="mr-7 hidden md:block">
             <button
-              className="font-semibold  rounded-full w-full px-4 py-3 bg-primary duration-200 transition hover:bg-primary/85 cursor-pointer text-white"
+              className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
               onClick={onOpenCreatePostModal}
             >
               Post
@@ -895,74 +776,68 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
         {/* User Profile and Popover (Desktop only) */}
         {authUser && (
-          <div className="hidden md:flex mt-auto mb-3 relative w-full justify-start">
+          <div className="relative mb-3 mt-auto hidden w-full justify-start md:flex">
             <button
               ref={profileButtonRef}
               onClick={togglePopover}
-              className={`flex gap-2 items-start duration-300 hover:bg-secondary py-2 px-2 rounded-full w-full max-w-[220px]
-                ${
-                  isTouchDevice && activeButtonId === "user-profile-button"
-                    ? "bg-secondary bg-opacity-50 transition duration-150"
-                    : "transition duration-150"
-                }`}
+              className={`flex w-full max-w-[220px] items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                isTouchDevice && activeButtonId === "user-profile-button"
+                  ? "bg-secondary bg-opacity-50 transition duration-150"
+                  : "transition duration-150"
+              }`}
               onTouchStart={() => handleTouchStart("user-profile-button")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
               <div className="avatar">
                 <div className="w-8 rounded-full">
-                  <img
-                    src={authUser?.profileImg || "/avatar-placeholder.png"}
-                    alt="User Profile"
-                  />
+                  <img src={authUser?.profileImg || "/avatar-placeholder.png"} alt="User Profile" />
                 </div>
               </div>
-              <div className="flex justify-between flex-1 items-center">
+              <div className="flex flex-1 items-center justify-between">
                 <div>
-                  <p className="font-bold text-sm w-20 truncate">{authUser?.fullName}</p>
-                  <p className="text-slate-500 text-sm">@{authUser?.username}</p>
+                  <p className="w-20 truncate text-sm font-bold">{authUser?.fullName}</p>
+                  <p className="text-sm text-slate-500">@{authUser?.username}</p>
                 </div>
-                <BsThreeDots className="w-5 h-5 cursor-pointer " />
+                <BsThreeDots className="h-5 w-5 cursor-pointer" />
               </div>
             </button>
 
             {showPopover && (
               <div
                 ref={popoverRef}
-                className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 bg-base-100 py-3 rounded-2xl border border-accent min-w-[250px] z-1000 flex flex-col gap-1 white-shadow"
+                className="z-1000 white-shadow absolute bottom-full left-1/2 mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 py-3"
               >
                 {/* Popover buttons also need the touch effect */}
                 <button
                   onClick={handleConfirmDeleteClick}
-                  className={`w-full flex items-center text-left px-3 py-2 text-red-500 text-md hover:bg-secondary font-bold
-                    ${
-                      isTouchDevice && activeButtonId === "delete-account-popover"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "delete-account-popover"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("delete-account-popover")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <span>
-                    <LuUserRoundX className="size-6 mr-3" />
+                    <LuUserRoundX className="mr-3 size-6" />
                   </span>
                   Delete Account
                 </button>
                 <button
                   onClick={handleLogout}
-                  className={`w-full flex items-center text-left px-3 py-2 pl-2 text-md hover:bg-secondary font-bold
-                    ${
-                      isTouchDevice && activeButtonId === "logout-popover"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "logout-popover"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("logout-popover")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <span>
-                    <BiLogOut className="size-6 mr-4" />
+                    <BiLogOut className="mr-4 size-6" />
                   </span>
                   Logout @{authUser?.username}
                 </button>
@@ -975,26 +850,23 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
       {/* Mobile Side Modal */}
       <div
         ref={sideModalRef}
-        className={`fixed top-0 left-0 h-full w-[80vw] max-w-[300px] bg-base-100 border-r border-accent z-[1000] transform transition-transform duration-300 ease-out
-          ${showSideModal ? "translate-x-0" : "-translate-x-full"}
-          md:hidden`} // Only show on mobile
+        className={`fixed left-0 top-0 z-[1000] h-full w-[80vw] max-w-[300px] transform border-r border-accent bg-base-100 transition-transform duration-300 ease-out ${showSideModal ? "translate-x-0" : "-translate-x-full"} md:hidden`} // Only show on mobile
       >
         {authUser && (
-          <div className="flex flex-col h-full">
+          <div className="flex h-full flex-col">
             {/* Header with user info and close button */}
-            <div className="p-4 border-b border-accent">
-              <div className="flex justify-between items-center mb-1">
+            <div className="border-b border-accent p-4">
+              <div className="mb-1 flex items-center justify-between">
                 <div className="avatar">
                   <div
-                    className={`w-11 rounded-full cursor-pointer
-                    ${
+                    className={`w-11 cursor-pointer rounded-full ${
                       isTouchDevice && activeButtonId === "modal-profile-img"
                         ? "bg-secondary bg-opacity-50 transition duration-150"
                         : "transition duration-150"
                     }`}
                     onClick={() => {
-                      navigate(`/profile/${authUser?.username}`);
-                      setShowSideModal(false); // Close modal on navigation
+                      navigate(`/profile/${authUser?.username}`)
+                      setShowSideModal(false) // Close modal on navigation
                     }}
                     onTouchStart={() => handleTouchStart("modal-profile-img")}
                     onTouchEnd={handleTouchEnd}
@@ -1009,36 +881,34 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
 
                 <button
                   onClick={() => setShowSideModal(false)}
-                  className={`p-1 rounded-full hover:bg-secondary
-                    ${
-                      isTouchDevice && activeButtonId === "modal-close-button"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`rounded-full p-1 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-close-button"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-close-button")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
-                  <IoClose className="w-6 h-6" />
+                  <IoClose className="h-6 w-6" />
                 </button>
               </div>
               <div className="flex flex-col">
-                <p className="font-bold text-lg">{authUser?.fullName}</p>
-                <p className="text-slate-500 text-sm">@{authUser?.username}</p>
+                <p className="text-lg font-bold">{authUser?.fullName}</p>
+                <p className="text-sm text-slate-500">@{authUser?.username}</p>
               </div>
-              <div className="flex gap-4 mt-4 text-sm">
+              <div className="mt-4 flex gap-4 text-sm">
                 {/* Follower/Following links in modal */}
                 <p
                   onClick={() => {
-                    openFollowListModal("following");
+                    openFollowListModal("following")
                     // setShowSideModal(false); // Add this line if you want the sidebar to close
                   }}
-                  className={`cursor-pointer font-bold p-1 rounded-md
-                    ${
-                      isTouchDevice && activeButtonId === "modal-following"
-                        ? "underline"
-                        : "transition duration-150"
-                    }`}
+                  className={`cursor-pointer rounded-md p-1 font-bold ${
+                    isTouchDevice && activeButtonId === "modal-following"
+                      ? "underline"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-following")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
@@ -1048,15 +918,14 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                 </p>
                 <p
                   onClick={() => {
-                    openFollowListModal("followers");
+                    openFollowListModal("followers")
                     // setShowSideModal(false); // Add this line if you want the sidebar to close
                   }}
-                  className={`cursor-pointer font-bold p-1 rounded-md
-                    ${
-                      isTouchDevice && activeButtonId === "modal-followers"
-                        ? "underline"
-                        : "transition duration-150"
-                    }`}
+                  className={`cursor-pointer rounded-md p-1 font-bold ${
+                    isTouchDevice && activeButtonId === "modal-followers"
+                      ? "underline"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-followers")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
@@ -1068,26 +937,25 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
             </div>
 
             {/* Scrollable navigation links */}
-            <div className="flex-1 overflow-y-auto scrollbar-on-hover py-2">
+            <div className="scrollbar-on-hover flex-1 overflow-y-auto py-2">
               <ul className="flex flex-col gap-0">
                 {/* Profile Tab in Side Modal */}
                 <li
                   onClick={() => {
-                    navigate(`/profile/${authUser?.username}`);
-                    setShowSideModal(false); // Close modal on navigation
+                    navigate(`/profile/${authUser?.username}`)
+                    setShowSideModal(false) // Close modal on navigation
                   }}
-                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
-                    ${
-                      isTouchDevice && activeButtonId === "modal-profile"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-profile"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-profile")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <LuUserRound
-                    className="size-7 mr-4"
+                    className="mr-4 size-7"
                     strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 2}
                   />
                   <span
@@ -1101,91 +969,80 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                 {/* Bookmarks Tab in Side Modal (now visible only in modal on mobile) */}
                 <li
                   onClick={() => {
-                    if (pathname === "/bookmarks") return;
-                    navigate("/bookmarks");
-                    setShowSideModal(false); // Close modal on navigation
+                    if (pathname === "/bookmarks") return
+                    navigate("/bookmarks")
+                    setShowSideModal(false) // Close modal on navigation
                   }}
-                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
-                    ${
-                      isTouchDevice && activeButtonId === "modal-bookmarks"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-bookmarks"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-bookmarks")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <CiBookmark
-                    className="size-7 mr-4"
+                    className="mr-4 size-7"
                     strokeWidth={pathname === "/bookmarks" ? 2 : 1}
                   />
-                  <span
-                    className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}
-                  >
+                  <span className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}>
                     Bookmarks
                   </span>
                 </li>
                 {/* Themes Tab in Side Modal */}
                 <li
                   onClick={() => {
-                    if (pathname === "/themes") return;
-                    navigate("/themes");
-                    setShowSideModal(false); // Close modal on navigation
+                    if (pathname === "/themes") return
+                    navigate("/themes")
+                    setShowSideModal(false) // Close modal on navigation
                   }}
-                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4
-                    ${
-                      isTouchDevice && activeButtonId === "modal-themes"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-themes"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                 >
-                  <LuPalette
-                    className="size-7 mr-4"
-                    strokeWidth={pathname === "/themes" ? 2 : 2}
-                  />
-                  <span
-                    className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}
-                  >
+                  <LuPalette className="mr-4 size-7" strokeWidth={pathname === "/themes" ? 2 : 2} />
+                  <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
                     Themes
                   </span>
                 </li>
 
                 {/* Separator if needed */}
-                <div className="border-t border-accent my-2"></div>
+                <div className="my-2 border-t border-accent"></div>
 
                 {/* Delete Account Button in Side Modal */}
                 <li
                   onClick={handleConfirmDeleteClick}
-                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 text-red-500 font-bold gap-1
-                    ${
-                      isTouchDevice && activeButtonId === "modal-delete-account"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`flex cursor-pointer items-center gap-1 px-4 py-2 font-bold text-red-500 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-delete-account"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-delete-account")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <span>
-                    <LuUserRoundX className="size-6 mr-3" />
+                    <LuUserRoundX className="mr-3 size-6" />
                   </span>
                   Delete Account
                 </li>
                 {/* Logout Button in Side Modal */}
                 <li
                   onClick={handleLogout}
-                  className={`flex items-center cursor-pointer hover:bg-secondary py-2 px-4 font-bold
-                    ${
-                      isTouchDevice && activeButtonId === "modal-logout"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
+                  className={`flex cursor-pointer items-center px-4 py-2 font-bold hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-logout"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
                   onTouchStart={() => handleTouchStart("modal-logout")}
                   onTouchEnd={handleTouchEnd}
                   onTouchCancel={handleTouchCancel}
                 >
                   <span>
-                    <BiLogOut className="size-6 mr-4" />
+                    <BiLogOut className="mr-4 size-6" />
                   </span>
                   Logout @{authUser?.username}
                 </li>
@@ -1216,7 +1073,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
       {/* Background Overlay for Side Modal */}
       {showSideModal && !isFollowingModalOpen && !isFollowersModalOpen && (
         <div
-          className="fixed inset-0 bg-black bg-opacity-75 z-[999] md:hidden"
+          className="fixed inset-0 z-[999] bg-black bg-opacity-75 md:hidden"
           onClick={() => setShowSideModal(false)}
         ></div>
       )}
@@ -1225,8 +1082,8 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
         modalTitle="Confirm Account Deletion"
         isOpen={showConfirmDeleteModal}
         onClose={() => {
-          setShowConfirmDeleteModal(false);
-          setPasswordInput(""); // Clear password when modal is closed without confirmation
+          setShowConfirmDeleteModal(false)
+          setPasswordInput("") // Clear password when modal is closed without confirmation
         }}
         onConfirm={handleDeleteAccount}
         isConfirmDisabled={isConfirmButtonDisabled} // Control disabled state from here
@@ -1240,11 +1097,11 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
           placeholder="Enter your password"
           value={passwordInput}
           onChange={(e) => setPasswordInput(e.target.value)}
-          className="w-full p-2 px-4 mb-2 bg-base-100 border border-slate-500 rounded-xl focus:outline-none focus:border-primary focus:ring-primary"
+          className="mb-2 w-full rounded-xl border border-slate-500 bg-base-100 p-2 px-4 focus:border-primary focus:outline-none focus:ring-primary"
           autoFocus // Optional: Automatically focus this input when modal opens
         />
       </ConfirmationModal>
     </>
-  );
-};
-export default React.memo(Sidebar);
+  )
+}
+export default React.memo(Sidebar)

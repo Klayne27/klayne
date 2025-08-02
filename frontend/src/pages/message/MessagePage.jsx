@@ -4,7 +4,7 @@ import ConversationsList from "../../components/common/messages/ConversationsLis
 import ChatWindow from "../../components/common/messages/ChatWindow"
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations"
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
-import { useAppStore } from "../../store/appStore"
+import { useAppStore } from "../../store/useAppStore"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const MessagePage = () => {

@@ -6,7 +6,7 @@ import CreatePost from "../../components/common/posts/CreatePost"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
-import { useAppStore } from "../../store/appStore"
+import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile" // Import your useIsMobile hook
 

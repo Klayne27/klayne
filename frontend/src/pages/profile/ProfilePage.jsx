@@ -25,7 +25,7 @@ import { useAdminDeleteUser } from "../../hooks/usersHooks/useAdminDeleteUser"
 import { useToggleConversationVisibility } from "../../hooks/messagesHooks/useToggleConversationVisibility"
 import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useFetchConversationBetweenUsers"
 import { showAppToast } from "../../utils/showAppToast"
-import { useAppStore } from "../../store/appStore"
+import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
