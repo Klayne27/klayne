@@ -15,9 +15,8 @@ const SchedulePostModal = ({
   onRemoveSchedule,
 }) => {
   const modalRef = useRef(null)
-  const { isOverallPast, getScheduledDateTime, initializeDateTime, validateDateTime } =
-    useDateTimeStore() // Initialize DateTimeStore when modal opens or initialDate changes
-  // validateDateTime is now called inside initializeDateTime, so it handles initial validation
+  const { isOverallPast, getScheduledDateTime, initializeDateTime } =
+    useDateTimeStore() 
 
   useEffect(() => {
     if (isOpen) {
@@ -103,8 +102,7 @@ const SchedulePostModal = ({
           </div>
         </div>
 
-        <DateTimeSelector // initialDateTime is not needed here as DateTimeSelector gets state directly from store
-        />
+        <DateTimeSelector />
 
         <div className="flex border-t border-slate-500 p-4">
           <p

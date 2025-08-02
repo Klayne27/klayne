@@ -1,43 +1,41 @@
-import { useEffect, useRef } from "react";
-import ReactDOM from "react-dom"; // Import ReactDOM for portals
-import EmojiPicker from "emoji-picker-react"; // Import the EmojiPicker library
+import { useEffect, useRef } from "react"
+import ReactDOM from "react-dom" // Import ReactDOM for portals
+import EmojiPicker from "emoji-picker-react" // Import the EmojiPicker library
 
 const EmojiPickerPopover = ({ position, onClose, onEmojiClick, triggerRef }) => {
-  const popoverRef = useRef(null);
+  const popoverRef = useRef(null)
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      // Check if the click occurred outside the popover AND outside the trigger button
       if (
         popoverRef.current &&
         !popoverRef.current.contains(event.target) &&
         triggerRef.current &&
         !triggerRef.current.contains(event.target)
       ) {
-        onClose();
+        onClose()
       }
-    };
+    }
 
-    document.addEventListener("mousedown", handleClickOutside);
+    document.addEventListener("mousedown", handleClickOutside)
     return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, [onClose, triggerRef]); // Add triggerRef to dependencies
+      document.removeEventListener("mousedown", handleClickOutside)
+    }
+  }, [onClose, triggerRef])
 
-  // Define the style for the popover container
   const popoverStyle = {
     position: "absolute",
     top: position.top,
     left: position.left,
     transform: "translateX(-50%)", // Centering relative to `left`
     zIndex: 1000, // Ensure it's above other content
-  };
+  }
 
   // Get the portal root element (defined in public/index.html)
-  const portalRoot = document.getElementById("emoji-popover-root");
+  const portalRoot = document.getElementById("emoji-popover-root")
   if (!portalRoot) {
-    console.error("Portal root 'emoji-popover-root' not found in document.");
-    return null; // Or handle this error appropriately
+    console.error("Portal root 'emoji-popover-root' not found in document.")
+    return null // Or handle this error appropriately
   }
 
   return ReactDOM.createPortal(
@@ -55,8 +53,8 @@ const EmojiPickerPopover = ({ position, onClose, onEmojiClick, triggerRef }) => 
         autoFocusSearch={false}
       />
     </div>,
-    portalRoot // This is where the popover will be rendered in the DOM
-  );
-};
+    portalRoot, // This is where the popover will be rendered in the DOM
+  )
+}
 
-export default EmojiPickerPopover;
+export default EmojiPickerPopover

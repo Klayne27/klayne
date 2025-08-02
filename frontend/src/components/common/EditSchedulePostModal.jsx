@@ -61,7 +61,6 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
     }
   }, [isOpen, post, initializeDateTime])
 
-  // Effect to close emoji picker on click outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -83,35 +82,16 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   }, [showEmojiPicker])
 
   const handleUpdateConfirm = () => {
-    // Re-validate just before confirming to catch last-second changes
-    const validationFailed = validateDateTime()
-    if (validationFailed) {
-      showAppToast("Scheduled time must be at least 1 minute in the future.", "error")
-      return
-    }
-
     const newScheduledDateTime = getScheduledDateTime()
-    const nowPlusOneMinute = new Date(Date.now() + 60 * 1000)
 
-    if (newScheduledDateTime < nowPlusOneMinute) {
-      showAppToast("Scheduled time must be at least 1 minute in the future.", "error")
-      return
-    }
-
-    updateScheduledPost(
-      {
-        postId: post._id,
-        postData: {
-          text: editedText,
-          scheduledAt: newScheduledDateTime.toISOString(),
-        },
+    updateScheduledPost({
+      postId: post._id,
+      postData: {
+        text: editedText,
+        scheduledAt: newScheduledDateTime.toISOString(),
       },
-      {
-        onSuccess: () => {
-          onClose()
-        },
-      },
-    )
+    })
+    onClose()
   }
 
   const handleBackgroundClick = (e) => {
@@ -178,137 +158,9 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
           </div>
         </div>
 
-        {/* <div className="flex items-center gap-4 p-4 text-sm text-slate-500">
-          <TbCalendarClock size={18} />
-          Will send on {formattedScheduledTime()}
-        </div>
+        <DateTimeSelector />
 
-        <div className="px-4">
-          <h3 className="mb-1 text-slate-500">Date</h3>
-          <div className="grid grid-cols-[4fr_2fr_2fr] gap-3">
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedMonth}
-                onChange={(e) => {
-                  const newMonth = parseInt(e.target.value)
-                  setSelectedMonth(newMonth)
-                  const maxDaysInNewMonth = getDaysInMonth(selectedYear, newMonth)
-                  if (selectedDay > maxDaysInNewMonth) {
-                    setSelectedDay(maxDaysInNewMonth)
-                  }
-                }}
-              >
-                {months.map((month) => (
-                  <option key={month.value} value={month.value}>
-                    {month.name}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedDay}
-                onChange={(e) => setSelectedDay(parseInt(e.target.value))}
-              >
-                {days.map((day) => (
-                  <option key={day} value={day}>
-                    {day}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedYear}
-                onChange={(e) => {
-                  const newYear = parseInt(e.target.value)
-                  setSelectedYear(newYear)
-                  const maxDaysInNewMonth = getDaysInMonth(newYear, selectedMonth)
-                  if (selectedDay > maxDaysInNewMonth) {
-                    setSelectedDay(maxDaysInNewMonth)
-                  }
-                }}
-              >
-                {years.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="p-4 py-2">
-          <h3 className="text-slate-500">Time</h3>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedHour}
-                onChange={(e) => setSelectedHour(parseInt(e.target.value))}
-              >
-                {hours.map((hour) => (
-                  <option key={hour} value={hour}>
-                    {hour}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedMinute}
-                onChange={(e) => setSelectedMinute(parseInt(e.target.value))}
-              >
-                {minutes.map((minute) => (
-                  <option key={minute} value={minute}>
-                    {minute < 10 ? `0${minute}` : minute}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-            <div className="relative">
-              <select
-                className="w-full cursor-pointer appearance-none rounded-[4px] border border-slate-500 bg-base-100 px-3 py-3 text-base focus:outline-none focus:ring-2 focus:ring-primary"
-                value={selectedAmPm}
-                onChange={(e) => setSelectedAmPm(e.target.value)}
-              >
-                <option value="AM">AM</option>
-                <option value="PM">PM</option>
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2">
-                <RxCaretDown size={20} />
-              </div>
-            </div>
-          </div>
-        </div> */}
-
-        <DateTimeSelector  />
-
-        {/* Timezone Display */}
         <div className="p-4">
-          {/* <h3 className="text-slate-500">Time zone</h3>
-          <div className="text-xl">{currentTimezone}</div> */}
-          {/* Action Buttons */}
           <div className="flex items-center justify-end">
             <button
               className={`rounded-full bg-primary px-4 py-2 text-sm font-semibold text-white transition duration-200 ${

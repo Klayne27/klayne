@@ -431,16 +431,22 @@ const MessageItem = ({
 
         {/* Emoji Picker Popover */}
         {showEmojiPickerPopover && (
-          <EmojiPickerPopover
-            position={popoverPosition}
-            onClose={handleCloseEmojiPickerPopover}
-            onEmojiClick={handleEmojiSelect}
-            triggerRef={
-              addReactionButtonRef.current && showEmojiPickerPopover
-                ? addReactionButtonRef
-                : moreEmojisButtonRef
-            }
-          />
+          <>
+            <div
+              className="fixed inset-0 z-10 cursor-default bg-transparent"
+              onClick={handleCloseEmojiPickerPopover}
+            ></div>
+            <EmojiPickerPopover
+              position={popoverPosition}
+              onClose={handleCloseEmojiPickerPopover}
+              onEmojiClick={handleEmojiSelect}
+              triggerRef={
+                addReactionButtonRef.current && showEmojiPickerPopover
+                  ? addReactionButtonRef
+                  : moreEmojisButtonRef
+              }
+            />
+          </>
         )}
       </div>
     </>

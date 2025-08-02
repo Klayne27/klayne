@@ -1,121 +1,133 @@
 // src/components/publicChat/PublicChatMessageInput.jsx
-import React, { useRef, useEffect, useCallback } from "react";
-import { IoClose, IoImageOutline } from "react-icons/io5";
-import { MdCheck, MdEdit, MdSend } from "react-icons/md";
-import LoadingSpinner from "../../ui/LoadingSpinner";
-import { truncateText } from "../../../utils/truncateText";
-import { useState } from "react";
-import { FaReply } from "react-icons/fa6";
-import { FaCircle } from "react-icons/fa";
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { showAppToast } from "../../../utils/showAppToast";
-import { useEditPublicMessage } from "../../../hooks/publicChatHooks/useEditPublicMessage";
-import { usePublicChatStore } from "../../../store/usePublicChatStore";
-import { getTypingMessage } from "../../../utils/getTypingMessage";
-import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
-import { useSendPublicMessage } from "../../../hooks/publicChatHooks/useSendPublicMessage";
+import React, { useRef, useEffect, useCallback } from "react"
+import { IoClose, IoImageOutline } from "react-icons/io5"
+import { MdCheck, MdEdit, MdSend } from "react-icons/md"
+import LoadingSpinner from "../../ui/LoadingSpinner"
+import { truncateText } from "../../../utils/truncateText"
+import { useState } from "react"
+import { FaReply } from "react-icons/fa6"
+import { FaCircle } from "react-icons/fa"
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { showAppToast } from "../../../utils/showAppToast"
+import { useEditPublicMessage } from "../../../hooks/publicChatHooks/useEditPublicMessage"
+import { usePublicChatStore } from "../../../store/usePublicChatStore"
+import { getTypingMessage } from "../../../utils/getTypingMessage"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
+import { useSendPublicMessage } from "../../../hooks/publicChatHooks/useSendPublicMessage"
+import { PiSmiley } from "react-icons/pi"
+import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
+import EmojiPickerPopover from "../EmojiPickerPopover"
 
 const PublicChatMessageInput = ({
-  // isSendingPublicMessage,
-  // isEditingMessage,
   isCurrentUserBanned,
   publicChatInputRef,
-  // editingMessage,
-  // setEditingMessage,
-  // replyingToMessage,
-  // setReplyingToMessage,
-  // sendPublicMessage,
-  // editPublicMessage,
   onSenderMessageSent,
   sendTypingEvent, // This function needs to be updated to emit the new event
   typingUsers, // This is the array of users currently typing from the server
 }) => {
   const { replyingToMessage, setReplyingToMessage, setEditingMessage, editingMessage } =
-    usePublicChatStore();
+    usePublicChatStore()
 
-  const typingTimeoutRef = useRef(null);
-  const hasSentTypingEvent = useRef(false);
+  const typingTimeoutRef = useRef(null)
+  const hasSentTypingEvent = useRef(false)
 
-  const { authUser } = useAuthUser();
-  const canSendImages = authUser?.isVerified || authUser?.isGoldVerified;
+  const emojiButtonRef = useRef(null)
 
-  const [publicChatInput, setPublicChatInput] = useState("");
-  const [publicChatSelectedFile, setPublicChatSelectedFile] = useState(null);
-  const [publicChatPreviewImage, setPublicChatPreviewImage] = useState(null);
-  const publicChatFileInputRef = useRef(null);
+  const { authUser } = useAuthUser()
+  const canSendImages = authUser?.isVerified || authUser?.isGoldVerified
 
-  const isMessageDeleted =
-    replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser;
+  const [publicChatInput, setPublicChatInput] = useState("")
+  const [publicChatSelectedFile, setPublicChatSelectedFile] = useState(null)
+  const [publicChatPreviewImage, setPublicChatPreviewImage] = useState(null)
+  const publicChatFileInputRef = useRef(null)
 
-  const { editPublicMessage, isEditingMessage } = useEditPublicMessage();
+  const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
 
-  const { sendPublicMessage, isSendingPublicMessage } =
-    useSendPublicMessage(onSenderMessageSent);
+  const { editPublicMessage, isEditingMessage } = useEditPublicMessage()
 
-  const isMobile = useIsMobile();
+  const { sendPublicMessage, isSendingPublicMessage } = useSendPublicMessage(onSenderMessageSent)
+
+  const isMobile = useIsMobile()
+
+  const {
+    showEmojiPickerPopover,
+    popoverPosition,
+    handleOpenEmojiPickerPopover,
+    handleCloseEmojiPickerPopover,
+  } = useEmojiPickerPopover()
+
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e)
+  }
+
+  const onEmojiClick = useCallback(
+    (emojiObject) => {
+      setPublicChatInput((prevText) => prevText + emojiObject.emoji)
+      publicChatInputRef.current.focus()
+    },
+    [publicChatInputRef],
+  )
 
   useEffect(() => {
     if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto"; // Reset height first
-      publicChatInputRef.current.style.height =
-        publicChatInputRef.current.scrollHeight + "px";
+      publicChatInputRef.current.style.height = "auto" // Reset height first
+      publicChatInputRef.current.style.height = publicChatInputRef.current.scrollHeight + "px"
     }
     // eslint-disable-next-line
-  }, [publicChatInput]);
+  }, [publicChatInput])
 
   // Handle entering/exiting edit mode
   useEffect(() => {
     if (editingMessage) {
-      setPublicChatInput(editingMessage.text);
-      publicChatInputRef.current?.focus();
+      setPublicChatInput(editingMessage.text)
+      publicChatInputRef.current?.focus()
     }
     // eslint-disable-next-line
-  }, [editingMessage]);
+  }, [editingMessage])
 
   // Cleanup effect for unmounting
   useEffect(() => {
     return () => {
       if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
+        clearTimeout(typingTimeoutRef.current)
       }
       // Ensure we send a stop typing event if the component unmounts
       // sendTypingEvent(false); // This call is still fine
-    };
-  }, []); // sendTypingEvent is not a dependency if it doesn't change on re-renders,
+    }
+  }, []) // sendTypingEvent is not a dependency if it doesn't change on re-renders,
 
   const handleMessageContentChange = (e) => {
-    const newValue = e.target.value;
-    setPublicChatInput(newValue);
+    const newValue = e.target.value
+    setPublicChatInput(newValue)
 
     if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto";
-      publicChatInputRef.current.style.height =
-        publicChatInputRef.current.scrollHeight + "px";
+      publicChatInputRef.current.style.height = "auto"
+      publicChatInputRef.current.style.height = publicChatInputRef.current.scrollHeight + "px"
     }
 
-    clearTimeout(typingTimeoutRef.current); // Always clear any pending "stop" timer
+    clearTimeout(typingTimeoutRef.current) // Always clear any pending "stop" timer
 
     if (newValue.trim().length > 0) {
       if (!hasSentTypingEvent.current) {
-        const isCurrentlyEditing = !!editingMessage;
-        sendTypingEvent(true, isCurrentlyEditing);
-        hasSentTypingEvent.current = true; // Mark that we've notified the server
+        const isCurrentlyEditing = !!editingMessage
+        sendTypingEvent(true, isCurrentlyEditing)
+        hasSentTypingEvent.current = true // Mark that we've notified the server
       }
 
       // Set a new timer to signal "stop typing" after a pause.
       typingTimeoutRef.current = setTimeout(() => {
-        sendTypingEvent(false);
-        hasSentTypingEvent.current = false; // Reset the flag
-      }, 1500); // 1.5-second pause
+        sendTypingEvent(false)
+        hasSentTypingEvent.current = false // Reset the flag
+      }, 1500) // 1.5-second pause
     } else {
       // If the input is empty, immediately send a "stop typing" event.
       if (hasSentTypingEvent.current) {
-        sendTypingEvent(false);
-        hasSentTypingEvent.current = false;
+        sendTypingEvent(false)
+        hasSentTypingEvent.current = false
       }
     }
-  };
+  }
 
   const handlePaste = usePasteHandler({
     inputRef: publicChatInputRef,
@@ -125,155 +137,153 @@ const PublicChatMessageInput = ({
     setPreviewImage: setPublicChatPreviewImage,
     fileInputRef: publicChatFileInputRef,
     editingMessage,
-  });
+  })
 
   const clearInputState = () => {
-    setPublicChatInput("");
-    setPublicChatSelectedFile(null);
-    setPublicChatPreviewImage(null);
-    setReplyingToMessage(null);
-    setEditingMessage(null);
-    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = "";
+    setPublicChatInput("")
+    setPublicChatSelectedFile(null)
+    setPublicChatPreviewImage(null)
+    setReplyingToMessage(null)
+    setEditingMessage(null)
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
     if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto";
-      publicChatInputRef.current.focus();
+      publicChatInputRef.current.style.height = "auto"
+      publicChatInputRef.current.focus()
     }
-  };
+  }
 
   const handleSendMessageOrEdit = async (e) => {
-    e.preventDefault();
-    if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) return;
+    e.preventDefault()
+    if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) return
 
-    const contentToSend = publicChatInput.trim();
+    const contentToSend = publicChatInput.trim()
     if (!contentToSend && !publicChatSelectedFile) {
-      return;
+      return
     }
 
     // Immediately stop typing indicator
     if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-      typingTimeoutRef.current = null;
+      clearTimeout(typingTimeoutRef.current)
+      typingTimeoutRef.current = null
     }
-    sendTypingEvent(false); // Ensure stop typing is sent when message is sent
-    hasSentTypingEvent.current = false; // Reset flag after sending message
+    sendTypingEvent(false) // Ensure stop typing is sent when message is sent
+    hasSentTypingEvent.current = false // Reset flag after sending message
 
     const payload = {
       text: contentToSend,
       repliedTo: replyingToMessage ? replyingToMessage._id : null,
-    };
+    }
 
     if (editingMessage) {
       editPublicMessage({
         messageId: editingMessage._id,
         newContent: contentToSend,
-      });
+      })
     } else {
       if (publicChatSelectedFile) {
-        const reader = new FileReader();
-        reader.readAsDataURL(publicChatSelectedFile);
+        const reader = new FileReader()
+        reader.readAsDataURL(publicChatSelectedFile)
         reader.onloadend = () => {
-          sendPublicMessage({ ...payload, imgBase64: reader.result });
-        };
+          sendPublicMessage({ ...payload, imgBase64: reader.result })
+        }
         reader.onerror = () => {
-          showAppToast("Failed to read image file.", "error");
-        };
+          showAppToast("Failed to read image file.", "error")
+        }
       } else {
-        sendPublicMessage({ ...payload, imgBase64: null });
+        sendPublicMessage({ ...payload, imgBase64: null })
       }
     }
-    clearInputState();
+    clearInputState()
 
     if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto"; // Crucial
-      publicChatInputRef.current.rows = 1;
+      publicChatInputRef.current.style.height = "auto" // Crucial
+      publicChatInputRef.current.rows = 1
     }
-  };
+  }
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
+    const file = e.target.files[0]
+    if (!file) return
 
     if (!file.type.startsWith("image/")) {
-      showAppToast("Only image files are supported.", "error");
-      return;
+      showAppToast("Only image files are supported.", "error")
+      return
     }
     if (file.size > 5 * 1024 * 1024) {
       // 5MB limit
-      showAppToast("Image size cannot exceed 5MB.", "error");
-      return;
+      showAppToast("Image size cannot exceed 5MB.", "error")
+      return
     }
 
-    setPublicChatSelectedFile(file);
-    const reader = new FileReader();
-    reader.onloadend = () => setPublicChatPreviewImage(reader.result);
-    reader.readAsDataURL(file);
-  };
+    setPublicChatSelectedFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setPublicChatPreviewImage(reader.result)
+    reader.readAsDataURL(file)
+  }
 
   const handleRemoveImage = () => {
-    setPublicChatSelectedFile(null);
-    setPublicChatPreviewImage(null);
-    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = "";
-    publicChatInputRef.current?.focus();
-  };
+    setPublicChatSelectedFile(null)
+    setPublicChatPreviewImage(null)
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
+    publicChatInputRef.current?.focus()
+  }
 
   const handleImageButtonClick = (e) => {
-    e.preventDefault();
-    publicChatFileInputRef.current.click();
-    publicChatInputRef.current?.focus();
-  };
+    e.preventDefault()
+    publicChatFileInputRef.current.click()
+    publicChatInputRef.current?.focus()
+  }
 
   const handleTouchMove = (e) => {
-    const target = e.target;
+    const target = e.target
     if (target.scrollHeight > target.clientHeight) {
-      e.stopPropagation();
+      e.stopPropagation()
     }
-  };
+  }
 
   const handleKeyDown = (e) => {
     if (isMobile) {
-      return;
+      return
     }
     if (e.key === "Enter") {
       if (!e.shiftKey) {
-        e.preventDefault();
-        handleSendMessageOrEdit(e);
+        e.preventDefault()
+        handleSendMessageOrEdit(e)
       }
     }
-  };
+  }
 
   const handleCancelEdit = () => {
-    setEditingMessage(null);
-    setPublicChatInput("");
-    sendTypingEvent(false);
-  };
+    setEditingMessage(null)
+    setPublicChatInput("")
+    sendTypingEvent(false)
+  }
 
   const isSendButtonDisabled =
     isSendingPublicMessage ||
     isEditingMessage ||
     isCurrentUserBanned ||
-    (!publicChatInput.trim() && !publicChatSelectedFile);
+    (!publicChatInput.trim() && !publicChatSelectedFile)
 
-  const isEditingMode = !!editingMessage;
+  const isEditingMode = !!editingMessage
 
-  const showTypingIndicator = typingUsers && typingUsers.length > 0;
+  const showTypingIndicator = typingUsers && typingUsers.length > 0
 
-  const messageDeleted = (
-    <span className="text-gray-500 italic mt-1">[Message Deleted]</span>
-  );
+  const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>
 
   return (
     <>
       {publicChatPreviewImage && (
-        <div className="mt-4 border-t border-accent p-5 flex sticky bottom-0 z-10 bg-base-100">
+        <div className="sticky bottom-0 z-10 mt-4 flex border-t border-accent bg-base-100 p-5">
           <div className="relative">
             <img
               src={publicChatPreviewImage}
               alt="Preview"
-              className="max-w-[200px] max-h-[200px] object-contain rounded-md"
+              className="max-h-[200px] max-w-[200px] rounded-md object-contain"
             />
             <button
               onClick={handleRemoveImage}
-              className="absolute -right-2 -top-2 p-1 text-white rounded-full bg-gray-500 transition duration-200 hover:bg-gray-600"
+              className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
             </button>
@@ -283,13 +293,13 @@ const PublicChatMessageInput = ({
       {/* --- Conditional Rendering for Input Section (Edit Mode vs. Normal Mode) --- */}
       {isEditingMode ? (
         // EDIT MODE CONTAINER
-        <div className="w-full bg-base-100 z-50 flex flex-col border-t border-accent sticky bottom-0 ">
+        <div className="sticky bottom-0 z-50 flex w-full flex-col border-t border-accent bg-base-100">
           {/* Edit Message Indicator Bar */}
           <div className="flex items-center justify-between p-2 px-1 pt-0 text-sm">
-            <span className="flex flex-col items-start p-3 ">
-              <div className="flex gap-2 items-center">
-                <MdEdit className="w-4 h-4 text-yellow-400" />
-                <span className="text-primary font-bold">Editing message</span>
+            <span className="flex flex-col items-start p-3">
+              <div className="flex items-center gap-2">
+                <MdEdit className="h-4 w-4 text-yellow-400" />
+                <span className="font-bold text-primary">Editing message</span>
               </div>
               <span className="font-semibold text-gray-400">
                 "{truncateText(editingMessage.text)}"
@@ -298,10 +308,10 @@ const PublicChatMessageInput = ({
 
             <button
               onClick={() => {
-                handleCancelEdit();
-                publicChatInputRef.current.focus();
+                handleCancelEdit()
+                publicChatInputRef.current.focus()
               }}
-              className="ml-2 p-1 mr-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
+              className="ml-2 mr-1 rounded-full p-1 text-gray-500 hover:bg-gray-700 hover:text-white"
               title="Cancel Edit"
             >
               <IoClose size={20} />
@@ -311,7 +321,7 @@ const PublicChatMessageInput = ({
           {/* The form for editing */}
           <form
             onSubmit={handleSendMessageOrEdit}
-            className="px-2 bg-black/0 flex items-center relative z-10"
+            className="relative z-10 flex items-center bg-black/0 px-2"
           >
             <input
               type="file"
@@ -322,18 +332,16 @@ const PublicChatMessageInput = ({
               id="image-upload-public-chat"
             />
             <div
-              className={`flex-1 relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
-                ${isCurrentUserBanned ? "opacity-50 cursor-not-allowed" : ""}
-              `}
+              className={`focus-within:border-accent/99 relative mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary ${isCurrentUserBanned ? "cursor-not-allowed opacity-50" : ""} `}
             >
               <div className="flex pl-1">
                 <button
                   type="button"
                   onClick={handleImageButtonClick}
-                  className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+                  className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
                   disabled={!canSendImages}
                 >
-                  <IoImageOutline className="w-5 h-5" />
+                  <IoImageOutline className="h-5 w-5" />
                 </button>
               </div>
 
@@ -349,7 +357,7 @@ const PublicChatMessageInput = ({
                     ? "You are banned from sending messages."
                     : "Editing message..."
                 }
-                className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
+                className="flex max-h-[140px] w-full resize-none overflow-y-auto rounded-r-xl bg-secondary py-2 pl-3 pr-14 placeholder-gray-400 focus:outline-none"
                 rows={1}
                 disabled={isCurrentUserBanned}
               />
@@ -357,33 +365,27 @@ const PublicChatMessageInput = ({
               <button
                 type="submit"
                 disabled={isSendButtonDisabled}
-                className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+                className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
                   publicChatInput.trim() || publicChatSelectedFile
                     ? "bg-primary text-white"
-                    : "bg-primary text-white opacity-50 cursor-not-allowed"
+                    : "cursor-not-allowed bg-primary text-white opacity-50"
                 } transition-colors duration-200`}
               >
-                {isEditingMessage ? (
-                  <LoadingSpinner size="sm" />
-                ) : (
-                  <MdCheck className="w-5 h-5" />
-                )}
+                {isEditingMessage ? <LoadingSpinner size="sm" /> : <MdCheck className="h-5 w-5" />}
               </button>
             </div>
           </form>
           {showTypingIndicator && (
-            <div className="flex justify-start px-4 left-0 p-1 absolute border-accent -top-[29px] bg-base-100 w-full items-center text-gray-400 text-sm">
-              <span className="animate-pulse font-semibold">
-                {getTypingMessage(typingUsers)}
-              </span>
-              <span className="flex ml-1 gap-0.5 mt-2.5">
-                <span className="inline-block pulsing-dot pulsing-dot-1">
+            <div className="absolute -top-[29px] left-0 flex w-full items-center justify-start border-accent bg-base-100 p-1 px-4 text-sm text-gray-400">
+              <span className="animate-pulse font-semibold">{getTypingMessage(typingUsers)}</span>
+              <span className="ml-1 mt-2.5 flex gap-0.5">
+                <span className="pulsing-dot pulsing-dot-1 inline-block">
                   <FaCircle size={6} />
                 </span>
-                <span className="inline-block pulsing-dot pulsing-dot-2">
+                <span className="pulsing-dot pulsing-dot-2 inline-block">
                   <FaCircle size={6} />
                 </span>
-                <span className="inline-block pulsing-dot pulsing-dot-3">
+                <span className="pulsing-dot pulsing-dot-3 inline-block">
                   <FaCircle size={6} />
                 </span>
               </span>
@@ -394,36 +396,34 @@ const PublicChatMessageInput = ({
         // NORMAL MODE (not editing)
         <form
           onSubmit={handleSendMessageOrEdit}
-          className="sticky bottom-0 bg-base-100 flex flex-col"
+          className="sticky bottom-0 flex flex-col bg-base-100"
         >
           {replyingToMessage && (
-            <div className="p-2 pt-0 border-t border-accent bg-black/0 flex items-center justify-between">
-              <div className="flex-1 p-3 rounded-md flex flex-col">
-                <div className="flex gap-2 items-center">
+            <div className="flex items-center justify-between border-t border-accent bg-black/0 p-2 pt-0">
+              <div className="flex flex-1 flex-col rounded-md p-3">
+                <div className="flex items-center gap-2">
                   <FaReply className="size-3 text-blue-400" />
 
-                  <div className="text-sm text-primary font-bold">Replying to</div>
+                  <div className="text-sm font-bold text-primary">Replying to</div>
                 </div>
-                <div className="text-xs text-gray-400 mt-1 italic">
+                <div className="mt-1 text-xs italic text-gray-400">
                   {replyingToMessage.sender?.username && (
-                    <span className="font-semibold mr-1">
+                    <span className="mr-1 font-semibold">
                       @{replyingToMessage.sender.username}:
                     </span>
                   )}
-                  {isMessageDeleted
-                    ? messageDeleted
-                    : truncateText(replyingToMessage.text)}
+                  {isMessageDeleted ? messageDeleted : truncateText(replyingToMessage.text)}
                 </div>
                 {replyingToMessage.img && !replyingToMessage.text && (
-                  <span className="text-xs text-gray-400 mt-1">(Image)</span>
+                  <span className="mt-1 text-xs text-gray-400">(Image)</span>
                 )}
               </div>
               <button
                 onClick={() => {
-                  setReplyingToMessage(null);
-                  publicChatInputRef.current.focus();
+                  setReplyingToMessage(null)
+                  publicChatInputRef.current.focus()
                 }}
-                className="ml-2 p-1 text-gray-500 hover:text-white rounded-full hover:bg-gray-700"
+                className="ml-2 rounded-full p-1 text-gray-500 hover:bg-gray-700 hover:text-white"
                 aria-label="Cancel reply"
               >
                 <IoClose size={20} />
@@ -441,18 +441,42 @@ const PublicChatMessageInput = ({
           />
 
           <div
-            className={`flex-1 mx-2 relative mb-4 flex items-center rounded-xl bg-secondary border border-transparent focus-within:border-accent/99
-              ${isCurrentUserBanned ? "opacity-50 cursor-not-allowed" : ""}
-            `}
+            className={`focus-within:border-accent/99 relative mx-2 mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary ${isCurrentUserBanned ? "cursor-not-allowed opacity-50" : ""} `}
           >
             <div className="flex pl-1">
               <button
                 type="button"
                 onClick={handleImageButtonClick}
-                className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 disabled:cursor-not-allowed cursor-pointer"
+                className="cursor-pointer rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700 disabled:cursor-not-allowed"
                 disabled={!canSendImages}
               >
-                <IoImageOutline className="w-5 h-5" />
+                <IoImageOutline className="h-5 w-5" />
+              </button>
+              <button
+                type="button"
+                className="relative hidden rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700 md:block"
+              >
+                <PiSmiley
+                  className="h-5 w-5"
+                  ref={emojiButtonRef}
+                  onClick={(e) => openEmojiPickerWithModalClose(e, emojiButtonRef)}
+                />
+                {showEmojiPickerPopover && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10 cursor-default bg-transparent"
+                      onClick={handleCloseEmojiPickerPopover}
+                    ></div>
+                    <div className="absolute -left-40 bottom-full z-10">
+                      <EmojiPickerPopover
+                        position={popoverPosition}
+                        onClose={handleCloseEmojiPickerPopover}
+                        onEmojiClick={onEmojiClick}
+                        triggerRef={emojiButtonRef}
+                      />
+                    </div>
+                  </>
+                )}
               </button>
             </div>
 
@@ -467,10 +491,10 @@ const PublicChatMessageInput = ({
                 isCurrentUserBanned
                   ? "You are banned from sending messages."
                   : replyingToMessage
-                  ? "Send your reply..."
-                  : "Type your message..."
+                    ? "Send your reply..."
+                    : "Type your message..."
               }
-              className="flex py-2 bg-secondary rounded-r-xl placeholder-gray-400 focus:outline-none pl-3 pr-14 w-full resize-none overflow-y-auto max-h-[140px]"
+              className="flex max-h-[140px] w-full resize-none overflow-y-auto rounded-r-xl bg-secondary py-2 pl-3 pr-14 placeholder-gray-400 focus:outline-none"
               rows={1}
               disabled={isCurrentUserBanned}
             />
@@ -478,28 +502,26 @@ const PublicChatMessageInput = ({
             <button
               type="submit"
               disabled={isSendButtonDisabled}
-              className={` absolute right-4 top-1/2 -translate-y-1/2 p-1.5 rounded-full ${
+              className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
                 publicChatInput.trim() || publicChatSelectedFile
                   ? "bg-primary text-white"
-                  : "bg-primary text-white opacity-50 cursor-not-allowed"
+                  : "cursor-not-allowed bg-primary text-white opacity-50"
               } transition-colors duration-200`}
             >
-              <MdSend className="w-5 h-5" />
+              <MdSend className="h-5 w-5" />
             </button>
           </div>
           {showTypingIndicator && (
-            <div className="flex justify-start px-4 z-20 left-0 p-1 absolute -top-7 bg-base-100 w-full items-center text-gray-400 text-sm">
-              <span className="animate-pulse font-semibold">
-                {getTypingMessage(typingUsers)}
-              </span>
-              <span className="flex ml-1 gap-0.5 mt-2.5">
-                <span className="inline-block pulsing-dot pulsing-dot-1">
+            <div className="absolute -top-7 left-0 z-20 flex w-full items-center justify-start bg-base-100 p-1 px-4 text-sm text-gray-400">
+              <span className="animate-pulse font-semibold">{getTypingMessage(typingUsers)}</span>
+              <span className="ml-1 mt-2.5 flex gap-0.5">
+                <span className="pulsing-dot pulsing-dot-1 inline-block">
                   <FaCircle size={6} />
                 </span>
-                <span className="inline-block pulsing-dot pulsing-dot-2">
+                <span className="pulsing-dot pulsing-dot-2 inline-block">
                   <FaCircle size={6} />
                 </span>
-                <span className="inline-block pulsing-dot pulsing-dot-3">
+                <span className="pulsing-dot pulsing-dot-3 inline-block">
                   <FaCircle size={6} />
                 </span>
               </span>
@@ -508,7 +530,7 @@ const PublicChatMessageInput = ({
         </form>
       )}
     </>
-  );
-};
+  )
+}
 
-export default PublicChatMessageInput;
+export default PublicChatMessageInput
