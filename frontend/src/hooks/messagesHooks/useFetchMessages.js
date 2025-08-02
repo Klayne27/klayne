@@ -1,6 +1,6 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchMessagesApi } from "../../api/messagesApi";
-import { useMemo } from "react";
+import { useInfiniteQuery } from "@tanstack/react-query"
+import { fetchMessagesApi } from "../../api/messagesApi"
+import { useMemo } from "react"
 
 export const useFetchMessages = (conversationId) => {
   const {
@@ -8,7 +8,7 @@ export const useFetchMessages = (conversationId) => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-    isLoading,
+    isLoading: isLoadingMessages,
     error,
     refetch: refetchMessages,
     isFetching,
@@ -17,11 +17,11 @@ export const useFetchMessages = (conversationId) => {
     queryFn: ({ pageParam = 1 }) => fetchMessagesApi(conversationId, pageParam),
 
     getNextPageParam: (lastPage, allPages) => {
-      const limit = 40;
+      const limit = 40
       if (lastPage.length < limit) {
-        return undefined;
+        return undefined
       }
-      return allPages.length + 1;
+      return allPages.length + 1
     },
     enabled: !!conversationId,
     // staleTime: Infinity,
@@ -30,34 +30,34 @@ export const useFetchMessages = (conversationId) => {
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     structuralSharing: false, // <--- ADD THIS TEMPORARILY
-  });
+  })
 
   const messages = useMemo(() => {
-    if (!data || !data.pages) return [];
+    if (!data || !data.pages) return []
 
-    const allMessages = [...data.pages].reverse().flatMap((page) => page);
+    const allMessages = [...data.pages].reverse().flatMap((page) => page)
 
-    const uniqueMessages = [];
-    const seenIds = new Set();
+    const uniqueMessages = []
+    const seenIds = new Set()
 
     for (let i = 0; i < allMessages.length; i++) {
-      const msg = allMessages[i];
+      const msg = allMessages[i]
       if (!seenIds.has(msg._id)) {
-        uniqueMessages.push(msg);
-        seenIds.add(msg._id);
+        uniqueMessages.push(msg)
+        seenIds.add(msg._id)
       }
     }
-    return uniqueMessages;
-  }, [data]);
+    return uniqueMessages
+  }, [data])
 
   return {
     messages,
-    isLoading,
+    isLoadingMessages,
     error,
     refetchMessages,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isFetching,
-  };
-};
+  }
+}

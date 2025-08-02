@@ -63,7 +63,7 @@ const PublicChatWindow = () => {
     checkTouch()
     window.addEventListener("resize", checkTouch)
     return () => window.removeEventListener("resize", checkTouch)
-  }, [setIsCurrentlyTouchDevice]) // Add setIsCurrentlyTouchDevice to dependencies
+  }, [setIsCurrentlyTouchDevice])
 
   useEffect(() => {
     if (socket) {

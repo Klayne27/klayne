@@ -7,11 +7,10 @@ import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages"
 import MessageInput from "./MessageInput"
 import MessageList from "./MessageList"
 import ChatHeader from "./ChatHeader"
-import { FaCaretDown } from "react-icons/fa"
 import { IoChatbubblesOutline } from "react-icons/io5"
+import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
-import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 
 const ChatWindow = () => {
   const queryClient = useQueryClient()
@@ -23,7 +22,6 @@ const ChatWindow = () => {
   const setIsTypingOtherUser = usePrivateChatStore((state) => state.setIsTypingOtherUser)
   const setShowNewMessageButton = usePrivateChatStore((state) => state.setShowNewMessageButton)
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
-  const showNewMessageButton = usePrivateChatStore((state) => state.showNewMessageButton)
 
   const conversationId = selectedConversation?._id
 
@@ -39,23 +37,6 @@ const ChatWindow = () => {
 
   const shouldScrollOnFirstFullLoad = useRef(true)
   const prevActualConversationIdRef = useRef(conversationId)
-
-  // NEW: Function to explicitly trigger scroll-to-bottom after a reaction
-  // const handleReactionAdded = useCallback(() => {
-  //   const listEl = messageListRef.current
-  //   if (!listEl) return
-
-  //   const scrollThreshold = 100
-  //   const isUserAtBottom =
-  //     listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-  //   if (isUserAtBottom) {
-  //     setTimeout(() => {
-  //       scrollToBottom()
-  //       setShowNewMessageButton(false)
-  //     }, 1)
-  //   }
-  // }, [scrollToBottom, setShowNewMessageButton])
 
   const {
     messages,
@@ -84,47 +65,11 @@ const ChatWindow = () => {
 
   const otherUser = selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
 
-  const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
-
   const handleSenderMessageSent = useCallback(() => {
     if (triggerScrollOnSenderMessage) {
       triggerScrollOnSenderMessage()
     }
   }, [triggerScrollOnSenderMessage])
-
-  // useLayoutEffect(() => {
-  //   const listEl = messageListRef.current
-  //   if (!listEl) return
-
-  //   const scrollThreshold = 100
-
-   
-
-  //   const isAtBottom =
-  //     listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-  //   // const isReadyForAnyScroll =
-  //   //   (shouldScrollOnFirstFullLoad.current && !isLoadingMessages && messages.length > 0) 
-
-  //   // if (isReadyForAnyScroll) {
-  //   //   scrollToBottom()
-  //   //   shouldScrollOnFirstFullLoad.current = false
-  //   //   didMessageJustLanded.current = false
-  //   //   setShowNewMessageButton(false)
-  //   // }
-
-  //   if (isAtBottom) {
-  //     scrollToBottom()
-  //   }
-  // }, [
-  //   messages.length,
-  //   isLoadingMessages,
-  //   conversationId,
-  //   scrollToBottom,
-  //   lastMessageId,
-  //   messageListRef,
-  //   setShowNewMessageButton,
-  // ])
 
   useEffect(() => {
     if (isTypingOtherUser) {
@@ -143,67 +88,6 @@ const ChatWindow = () => {
       }
     }
   }, [isTypingOtherUser, scrollToBottom, messageListRef])
-
-  // --- Existing scroll handling for fetching older messages ---
-  // useEffect(() => {
-  //   const handleScroll = () => {
-  //     const listEl = messageListRef.current
-  //     if (listEl) {
-  //       const { scrollTop, scrollHeight, clientHeight } = listEl
-  //       const scrollThreshold = 100
-
-  //       if (scrollHeight - scrollTop <= clientHeight + scrollThreshold) {
-  //         setShowNewMessageButton(false)
-  //       } else {
-  //         if (didMessageJustLanded.current) {
-  //           didMessageJustLanded.current = false
-  //         }
-  //       }
-
-  //       if (scrollTop < 1 && hasNextPage && !isFetchingNextPage) {
-  //         scrollStateBeforeFetch.current = {
-  //           scrollTop: listEl.scrollTop,
-  //           scrollHeight: listEl.scrollHeight,
-  //         }
-  //         fetchNextPage()
-  //       }
-  //     }
-  //   }
-
-  //   const currentMessageListRef = messageListRef.current
-  //   if (currentMessageListRef) {
-  //     currentMessageListRef.addEventListener("scroll", handleScroll)
-  //   }
-  //   return () => {
-  //     if (currentMessageListRef) {
-  //       currentMessageListRef.removeEventListener("scroll", handleScroll)
-  //     }
-  //   }
-  // }, [fetchNextPage, hasNextPage, isFetchingNextPage, setShowNewMessageButton])
-
-  // useLayoutEffect(() => {
-  //   const listEl = messageListRef.current
-  //   if (!listEl) return
-
-  //   if (isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight === 0) {
-  //     scrollStateBeforeFetch.current = {
-  //       scrollTop: listEl.scrollTop,
-  //       scrollHeight: listEl.scrollHeight,
-  //     }
-  //   }
-
-  //   if (!isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight > 0) {
-  //     const { scrollTop: oldScrollTop, scrollHeight: oldScrollHeight } =
-  //       scrollStateBeforeFetch.current
-  //     const newScrollHeight = listEl.scrollHeight
-
-  //     const heightDifference = newScrollHeight - oldScrollHeight
-
-  //     listEl.scrollTop = oldScrollTop + heightDifference
-
-  //     scrollStateBeforeFetch.current = { scrollTop: 0, scrollHeight: 0 }
-  //   }
-  // }, [messages, isFetchingNextPage])
 
   // --- Only this useEffect remains for conversation activation/deactivation ---
   // This one controls the global `activeConversationId`
@@ -232,18 +116,11 @@ const ChatWindow = () => {
   // We pass the refs and setters it needs to interact with the DOM and Zustand store.
   usePrivateChatSocketEvents(
     conversationId,
-    messageListRef,
-    didMessageJustLanded,
-    setShowNewMessageButton,
+
     setIsTypingOtherUser,
     otherUser,
   )
 
-  // const handleNewMessageButtonClick = () => {
-  //   scrollToBottom()
-  //   setShowNewMessageButton(false)
-  //   didMessageJustLanded.current = false
-  // }
 
   const isChatEmpty = !messages?.length && !isLoadingMessages
 
@@ -277,18 +154,6 @@ const ChatWindow = () => {
           handleLoadImage={handleLoadImage}
         />
 
-        {showNewMessageButton && (
-          <div className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2">
-            <button
-              onClick={handleNewMessageButtonClick}
-              className="animate-bounce-custom flex items-center space-x-2 rounded-full bg-primary px-3 py-1 text-sm text-white shadow-lg"
-            >
-              <span>New Message</span>
-              <FaCaretDown />
-            </button>
-          </div>
-        )}
-
         <MessageInput
           otherUser={otherUser}
           actualConversationId={conversationId}
@@ -297,6 +162,7 @@ const ChatWindow = () => {
           didMessageJustLanded={didMessageJustLanded}
           onSenderMessageSent={handleSenderMessageSent}
           socket={socket}
+          onNewMessageButtonClick={handleNewMessageButtonClick}
         />
       </div>
     </div>

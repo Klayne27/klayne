@@ -67,7 +67,7 @@ const MessageList = forwardRef(function MessageList(
       {isTypingOtherUser && (
         <MessageItem
           key="typing-indicator"
-          isTypingOtherUser={true}
+          isTypingOtherUser={isTypingOtherUser}
           message={{ sender: { _id: "dummy" }, text: "", img: "" }}
           currentUser={currentUser}
         />

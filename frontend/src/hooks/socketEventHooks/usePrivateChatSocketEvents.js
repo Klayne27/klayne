@@ -3,14 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { useSocket } from "../../context/SocketContext"
 
-export const usePrivateChatSocketEvents = (
-  conversationId,
-  messageListRef,
-  didMessageJustLanded,
-  setShowNewMessageButton,
-  setIsTypingOtherUser,
-  otherUser,
-) => {
+export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser, otherUser) => {
   const queryClient = useQueryClient()
   const { socket } = useSocket()
   const { authUser: currentUser } = useAuthUser()
@@ -23,7 +16,6 @@ export const usePrivateChatSocketEvents = (
         newMessage.conversationId === conversationId ||
         (newMessage.sender._id === otherUser?._id && !conversationId) // This logic is correct for initial chat setup
 
-      // --- 1. Update the 'messages' query cache (already doing this, good!) ---
       const targetMessagesQueryKey = ["messages", newMessage.conversationId]
 
       queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
@@ -201,11 +193,11 @@ export const usePrivateChatSocketEvents = (
 
   const handleTyping = useCallback(
     ({ conversationId: typingConvId, userId, isEditing }) => {
-      if (typingConvId === conversationId && userId === otherUser?._id.toString()) {
+      if (typingConvId === conversationId && userId === otherUser._id.toString()) {
         setIsTypingOtherUser(true)
       }
     },
-    [conversationId, otherUser?._id, setIsTypingOtherUser],
+    [conversationId, setIsTypingOtherUser, otherUser?._id],
   )
 
   const handleStopTyping = useCallback(

@@ -21,12 +21,8 @@ function MessageInput({
   otherUser,
   actualConversationId,
   privateChatInputRef,
-  // didMessageJustLanded,
   socket,
   onSenderMessageSent,
-  // isTypingOtherUser,
-  // isSendingMessage,
-  // sendPrivateMessage,
 }) {
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
   const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage)
@@ -42,10 +38,6 @@ function MessageInput({
   const typingTimeoutRef = useRef(null)
   const { authUser: currentUser } = useAuthUser()
 
-  // const handleOptimisticScroll = useCallback(() => {
-  //   didMessageJustLanded.current = true
-  //   // eslint-disable-next-line
-  // }, [])
 
   const { editMessage, isEditing } = useEditMessage(actualConversationId)
   const { sendPrivateMessage, isSendingMessage } = useSendMessage({
