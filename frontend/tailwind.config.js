@@ -1,5 +1,5 @@
-import daisyui from "daisyui";
-import daisyUIThemes from "daisyui/src/theming/themes";
+import daisyui from "daisyui"
+import daisyUIThemes from "daisyui/src/theming/themes"
 /** @type {import('tailwindcss').Config} */
 export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
@@ -16,9 +16,12 @@ export default {
       keyframes: {
         // Define a 'like-bounce' keyframe animation
         "like-bounce": {
-          "0%, 100%": { transform: "scale(1)" }, // Start and end at normal size
-          "50%": { transform: "scale(1.4)" }, // Enlarge in the middle
-          "75%": { transform: "scale(0.5)" }, // Slightly shrink for a bounce effect
+          "0%": { transform: "scale(1)" },
+          "30%": { transform: "scale(1.4)" }, // Main jump up
+          "60%": { transform: "scale(0.8)" }, // Initial squash on landing
+          "80%": { transform: "scale(1.1)" }, // Primary overshoot
+          "90%": { transform: "scale(0.95)" }, // Secondary small squash
+          "100%": { transform: "scale(1)" }, // Settle
         },
         // NEW: Pin animation (down and back up)
         "pin-down": {
@@ -36,13 +39,33 @@ export default {
           "50%": { transform: "rotate(180deg) scale(1.3)" }, // Spin halfway and grow
           "100%": { transform: "rotate(360deg) scale(1)" }, // Complete the spin and return to normal size
         },
+        // ✨ NEW: Keyframes for the count animation
+        "slide-up-new": {
+          from: { transform: "translateY(100%)" },
+          to: { transform: "translateY(0)" },
+        },
+        "slide-up-old": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(-100%)" },
+        },
+        "slide-down-new": {
+          from: { transform: "translateY(-100%)" },
+          to: { transform: "translateY(0)" },
+        },
+        "slide-down-old": {
+          from: { transform: "translateY(0)" },
+          to: { transform: "translateY(100%)" },
+        },
       },
       animation: {
-        // Apply the keyframe animation
-        "like-bounce": "like-bounce 0.3s ease-in-out", // 0.3 seconds duration, ease-in-out timing
+        "like-bounce": "like-bounce 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275)",
         "pin-down": "pin-down 0.2s ease-out", // Faster animation for pin
         "bookmark-pop": "bookmark-pop 0.2s ease-out", // Faster animation for bookmark
         "repost-spin": "repost-spin 0.4s ease-in-out", // 0.4s duration for a smooth effect
+        "slide-up-new": "slide-up-new 0.3s forwards",
+        "slide-up-old": "slide-up-old 0.3s forwards",
+        "slide-down-new": "slide-down-new 0.3s forwards",
+        "slide-down-old": "slide-down-old 0.3s forwards",
       },
     },
   },
@@ -131,4 +154,4 @@ export default {
       "lemonade",
     ],
   },
-};
+}

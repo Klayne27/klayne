@@ -547,7 +547,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </Link>
             </div>
           )}
-          <p className="text-sm break-words mt-1 whitespace-pre-wrap">
+          <p className="text-sm break-words whitespace-pre-wrap">
             {renderClickableText(comment.text)}
           </p>
 

@@ -3,6 +3,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa6"
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
+import AnimatedCount from "./AnimatedCount"
 
 function CommentItemButtons({
     onLikeCommentClick,
@@ -27,39 +28,6 @@ function CommentItemButtons({
         handleTouchEnd,
         handleTouchStart,
     } = useTouchHoverEffect()
-
-    // useEffect(() => {
-    //   setIsTouchDevice(
-    //     "ontouchstart" in window ||
-    //       navigator.maxTouchPoints > 0 ||
-    //       navigator.msMaxTouchPoints > 0
-    //   );
-    // }, []);
-
-    // const handleTouchStart = useCallback(
-    //   (id) => {
-    //     if (isTouchDevice) {
-    //       setActiveButton(id);
-    //     }
-    //   },
-    //   [isTouchDevice]
-    // );
-
-    // const handleTouchEnd = useCallback(() => {
-    //   if (isTouchDevice) {
-    //     setTimeout(() => {
-    //       setActiveButton(null);
-    //     }, 150);
-    //   }
-    // }, [isTouchDevice]);
-
-    // const handleTouchCancel = useCallback(() => {
-    //   if (isTouchDevice) {
-    //     setTimeout(() => {
-    //       setActiveButton(null);
-    //     }, 150);
-    //   }
-    // }, [isTouchDevice]);
 
     return (
         <>
@@ -101,13 +69,12 @@ function CommentItemButtons({
                         />
                     )}
                 </div>
-                <span
-                    className={`text-sm transition duration-200 group-hover:text-pink-600 ${
-                        isCommentLiked ? "text-pink-600" : "text-slate-500"
+                  <AnimatedCount
+                    count={comment.likes?.length || 0}
+                    className={`text-sm transition absolute duration-200 group-hover:text-pink-600 ${
+                      isCommentLiked ? "text-pink-600" : "text-slate-500"
                     }`}
-                >
-                    {comment.likes?.length || 0}
-                </span>
+                  />
             </button>
 
             {authUser && (

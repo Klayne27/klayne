@@ -1,15 +1,10 @@
-// components/common/ScheduledPostsModal.jsx
-import React, { useRef, useEffect, useState, useCallback } from "react";
-import { MdClose } from "react-icons/md";
+import { useRef, useState } from "react";
 import { useGetScheduledPosts } from "../../hooks/postsHooks/useGetScheduledPosts";
 import LoadingSpinner from "../ui/LoadingSpinner";
-import EditScheduledPostModal from "./EditSchedulePostModal";
 import { TbCalendarClock } from "react-icons/tb";
 import { format } from "date-fns";
 import { IoClose } from "react-icons/io5";
 import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
-import toast from "react-hot-toast";
-import DeleteScheduledPostsModal from "./DeleteScheduledPostsModal";
 import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
 import { showAppToast } from "../../utils/showAppToast";
 import ConfirmationModal from "../ui/ConfirmationModal";
@@ -17,21 +12,14 @@ import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);
-  const [showEditModal, setShowEditModal] = useState(false);
 
   const [isEditMode, setIsEditMode] = useState(false);
   const [selectedPostIds, setSelectedPostIds] = useState([]);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedPostToEdit, setSelectedPostToEdit] = useState(null);
   const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
 
   useLockBodyScroll(isOpen);
 
-  // --- NEW STATE FOR TOUCH EFFECT ---
-  // const [isTouchDevice, setIsTouchDevice] = useState(false);
-  // const [activeButton, setActiveButton] = useState(null); // Tracks which button is "active" on touch
-
-  const { scheduledPosts, isLoading, isError, error, refetch } = useGetScheduledPosts();
+  const { scheduledPosts, isLoading, isError, error } = useGetScheduledPosts();
   const { deleteMultipleScheduledPosts, isPending: isDeletingMultiple } =
     useDeleteMultipleScheduledPosts();
 
@@ -42,32 +30,6 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     handleTouchEnd,
     handleTouchStart,
   } = useTouchHoverEffect();
-
-  // --- NEW TOUCH HANDLERS ---
-  // const handleTouchStart = useCallback(
-  //   (id) => {
-  //     if (isTouchDevice) {
-  //       setActiveButton(id);
-  //     }
-  //   },
-  //   [isTouchDevice]
-  // );
-
-  // const handleTouchEnd = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 200); // Match your desired fade-out duration (e.g., 150ms for a quick fade)
-  //   }
-  // }, [isTouchDevice]);
-
-  // const handleTouchCancel = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 200);
-  //   }
-  // }, [isTouchDevice]);
 
   const handleCheckboxChange = (postId, isChecked) => {
     setSelectedPostIds((prevSelected) =>
@@ -80,17 +42,15 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
       showAppToast("Please select at least one post to delete.", "error");
       return;
     }
-    setShowDeleteConfirmModal(true); // Open the confirmation modal
+    setShowDeleteConfirmModal(true);
   };
 
   const areAllPostsSelected =
     (scheduledPosts && selectedPostIds.length === scheduledPosts.length) ||
     selectedPostIds.length > 0;
 
-  // New function to handle select/deselect all
   const handleSelectAllToggle = () => {
     if (areAllPostsSelected) {
-      // If all are selected, deselect all
       setSelectedPostIds([]);
     } else {
       // If not all are selected, select all
@@ -104,16 +64,6 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     setSelectedPostIds([]); // Clear selections when toggling edit mode
   };
 
-  // useEffect(() => {
-  //   if (isOpen) {
-  //     document.body.style.overflow = "hidden";
-  //   } else {
-  //     document.body.style.overflow = "unset";
-  //   }
-  //   return () => {
-  //     document.body.style.overflow = "unset";
-  //   };
-  // }, [isOpen]);
 
   const handleBackgroundClick = (e) => {
     e.stopPropagation();
@@ -143,15 +93,6 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
     deleteMultipleScheduledPosts(selectedPostIds);
     setShowDeleteConfirmModal(false);
   };
-
-  // // --- EFFECT TO DETECT TOUCH DEVICE ---
-  // useEffect(() => {
-  //   setIsTouchDevice(
-  //     "ontouchstart" in window ||
-  //       navigator.maxTouchPoints > 0 ||
-  //       navigator.msMaxTouchPoints > 0
-  //   );
-  // }, []);
 
   if (!isOpen) return null;
 

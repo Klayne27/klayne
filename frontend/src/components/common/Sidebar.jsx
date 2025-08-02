@@ -653,7 +653,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                   className="absolute top-3 right-2.5 bg-primary rounded-full border-2 border-black 
                flex items-center justify-center 
                text-white text-[11px] font-bold 
-               min-w-[1.25rem] h-5 px-1" // Adjusted for Tailwind's direct utility classes
+               min-w-[1.25rem] h-5 px-1"
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {unreadNotificationsCount}
