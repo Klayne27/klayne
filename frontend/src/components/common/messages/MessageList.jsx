@@ -25,11 +25,6 @@ const MessageList = forwardRef(function MessageList(
 
   return (
     <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
-      {isLoadingInitialMessages && (
-        <div className="flex h-full items-center justify-center">
-          <LoadingSpinner size="md" />
-        </div>
-      )}
       {error && !isNewChat && !isLoadingInitialMessages && (
         <div className="flex h-full items-center justify-center text-red-500">
           <p>Error loading messages: {error.message}</p>

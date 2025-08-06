@@ -11,6 +11,7 @@ export const useMessageScroll = ({
   isTypingOtherUser,
 }) => {
   const { authUser: currentUser } = useAuthUser()
+
   const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
   const messageListRef = useRef(null)
   const scrollStateBeforeFetch = useRef({ scrollTop: 0, scrollHeight: 0 })
@@ -20,6 +21,8 @@ export const useMessageScroll = ({
   // const shouldScrollOnSenderMessage = useRef(false)
 
   const [shouldScrollOnSenderMessage, setShouldScrollOnSenderMessage] = useState(false)
+  const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
+  const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
 
   const triggerScrollOnSenderMessage = useCallback(() => {
     setShouldScrollOnSenderMessage(true)
@@ -33,12 +36,16 @@ export const useMessageScroll = ({
 
   // New function to wait for images
   const waitForImagesToLoad = useCallback(() => {
-    if (!messageListRef.current) {
+    const listEl = messageListRef.current
+    if (!listEl) {
+      // If the element doesn't exist, we can't find images.
+      // Resolve the promise immediately.
       return Promise.resolve()
     }
 
-    const images = messageListRef.current.querySelectorAll("img")
+    const images = listEl.querySelectorAll("img")
     if (images.length === 0) {
+      // No images to wait for, so resolve immediately.
       return Promise.resolve()
     }
 
@@ -47,10 +54,17 @@ export const useMessageScroll = ({
         new Promise((resolve) => {
           if (img.complete) {
             resolve()
-          } else {
-            img.addEventListener("load", resolve, { once: true })
-            img.addEventListener("error", resolve, { once: true }) // Also resolve on error to not get stuck
+            return
           }
+
+          const handleLoadOrError = () => {
+            // You can also add a small delay here if you want to be extra cautious.
+            // For example: setTimeout(resolve, 50);
+            resolve()
+          }
+
+          img.addEventListener("load", handleLoadOrError, { once: true })
+          img.addEventListener("error", handleLoadOrError, { once: true })
         }),
     )
 
@@ -97,12 +111,6 @@ export const useMessageScroll = ({
     setShowNewMessageButton(false)
   }, [scrollToBottom, setShowNewMessageButton])
 
-  // useLayoutEffect(() => {
-  //   if (!isLoadingMessages) {
-  //     scrollToBottom()
-  //   }
-  // }, [scrollToBottom, isLoadingMessages])
-
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl || isLoadingMessages) return
@@ -115,27 +123,17 @@ export const useMessageScroll = ({
       // Wait for all images to load before scrolling
       waitForImagesToLoad().then(() => {
         scrollToBottom()
-        shouldScrollOnSenderMessage.current = false
+        setShouldScrollOnSenderMessage(false)
       })
     }
-  }, [messages.length, isLoadingMessages, scrollToBottom, lastMessageId, waitForImagesToLoad])
-
-  // useLayoutEffect(() => {
-  //   const listEl = messageListRef.current
-  //   if (!listEl || isLoadingMessages) return
-
-  //   if (
-  //     messages.length > 0 &&
-  //     !isUserScrollingUp.current &&
-  //     !scrollStateBeforeFetch.current.scrollHeight
-  //   ) {
-  //     // Wait for all images to load before scrolling
-  //     waitForImagesToLoad().then(() => {
-  //       scrollToBottom()
-  //       shouldScrollOnSenderMessage.current = false
-  //     })
-  //   }
-  // }, [messages.length, isLoadingMessages, scrollToBottom, lastMessageId, waitForImagesToLoad])
+  }, [
+    messages.length,
+    isLoadingMessages,
+    shouldScrollOnSenderMessage,
+    scrollToBottom,
+    lastMessageId,
+    waitForImagesToLoad,
+  ])
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current
@@ -169,21 +167,20 @@ export const useMessageScroll = ({
 
   // 3. New useLayoutEffect to handle the scroll specifically for sender messages
   useLayoutEffect(() => {
-    if (shouldScrollOnSenderMessage) {
-      waitForImagesToLoad().then(() => {
-        scrollToBottom()
-        setShouldScrollOnSenderMessage(false) // Reset the state after scrolling
-      })
+    // Only scroll if the signal is true.
+    if (shouldPerformInitialScroll) {
+      scrollToBottom()
     }
-  }, [shouldScrollOnSenderMessage, scrollToBottom, waitForImagesToLoad])
+  }, [shouldPerformInitialScroll, scrollToBottom])
 
+  // The rest of the useLayoutEffect for pagination scroll remains unchanged.
+  // ...
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl) return
     if (!isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight > 0) {
       const { scrollTop: oldScrollTop, scrollHeight: oldScrollHeight } =
         scrollStateBeforeFetch.current
-
       const newScrollHeight = listEl.scrollHeight
       const heightDifference = newScrollHeight - oldScrollHeight
       listEl.scrollTop = oldScrollTop + heightDifference
@@ -211,6 +208,21 @@ export const useMessageScroll = ({
   }, [messages, currentUser?._id, isUserScrollingUp, setShowNewMessageButton])
 
   useEffect(() => {
+    if (!isLoadingMessages) {
+      // Data is loaded, now start waiting for images.
+      waitForImagesToLoad().then(() => {
+        // All images are loaded, now we can render the chat window and scroll.
+        setIsInitialLoadComplete(true)
+        setShouldPerformInitialScroll(true)
+      })
+    } else {
+      // While data is loading, reset the states.
+      setIsInitialLoadComplete(false)
+      setShouldPerformInitialScroll(false)
+    }
+  }, [isLoadingMessages, waitForImagesToLoad])
+
+  useEffect(() => {
     if (isTypingOtherUser) {
       const listEl = messageListRef.current
       if (listEl) {
@@ -230,10 +242,12 @@ export const useMessageScroll = ({
 
   return {
     handleLoadImage,
+    waitForImagesToLoad,
     handleReactionAdded,
     handleNewMessageButtonClick,
     messageListRef,
     triggerScrollOnSenderMessage,
     scrollToBottom,
+    isInitialLoadComplete
   }
 }

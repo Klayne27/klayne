@@ -1,7 +1,6 @@
-// components/ChatWindow.jsx
-import { useEffect, useRef, useCallback } from "react"
+import { useEffect, useRef, useCallback, useState } from "react"
 import { useQueryClient } from "@tanstack/react-query"
-import { useSocket } from "../../../context/SocketContext" // Still needed for setActiveConversationId
+import { useSocket } from "../../../context/SocketContext"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages"
 import MessageInput from "./MessageInput"
@@ -12,6 +11,7 @@ import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import { FaCaretDown } from "react-icons/fa"
+import LoadingSpinner from "../../ui/LoadingSpinner"
 
 const ChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -29,12 +29,16 @@ const ChatWindow = () => {
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId)
 
+  // const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
+  // const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
+
   const {
     handleLoadImage,
     handleReactionAdded,
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
+    isInitialLoadComplete
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -45,6 +49,7 @@ const ChatWindow = () => {
     isTypingOtherUser,
   })
   usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser, handleReactionAdded)
+
   const privateChatInputRef = useRef(null)
   const currentOptimisticIdRef = useRef(null)
 
@@ -66,6 +71,7 @@ const ChatWindow = () => {
     }
   }, [conversationId, setActiveConversationId, socket, currentUser?._id, queryClient])
 
+
   const isChatEmpty = !messages?.length
 
   return (
@@ -83,21 +89,26 @@ const ChatWindow = () => {
         </div>
       )}
       <div className="mx-auto flex h-full w-full max-w-3xl flex-col md:max-w-[585px]">
-        <MessageList
-          ref={messageListRef}
-          isNewChat={isChatEmpty}
-          error={error}
-          messagesToRender={messages}
-          privateChatInputRef={privateChatInputRef}
-          messages={messages}
-          isLoadingInitialMessages={isLoadingMessages && !isFetchingNextPage}
-          isFetchingOlderMessages={isFetchingNextPage}
-          hasNextPage={hasNextPage}
-          isTypingOtherUser={isTypingOtherUser}
-          onReactionAdded={handleReactionAdded}
-          handleLoadImage={handleLoadImage}
-        />
-
+        {isLoadingMessages || !isInitialLoadComplete ? (
+          <div className="flex h-full items-center justify-center">
+            <LoadingSpinner size="md" />
+          </div>
+        ) : (
+          <MessageList
+            ref={messageListRef}
+            isNewChat={isChatEmpty}
+            error={error}
+            messagesToRender={messages}
+            privateChatInputRef={privateChatInputRef}
+            messages={messages}
+            isLoadingInitialMessages={isLoadingMessages && !isFetchingNextPage}
+            isFetchingOlderMessages={isFetchingNextPage}
+            hasNextPage={hasNextPage}
+            isTypingOtherUser={isTypingOtherUser}
+            onReactionAdded={handleReactionAdded}
+            handleLoadImage={handleLoadImage}
+          />
+        )}
         {showNewMessageButton && (
           <div className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2">
             <button
