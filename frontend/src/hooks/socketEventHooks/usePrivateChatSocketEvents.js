@@ -1,4 +1,4 @@
-import { useEffect, useCallback, useRef } from "react"
+import { useEffect, useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { useSocket } from "../../context/SocketContext"
@@ -17,10 +17,6 @@ export const usePrivateChatSocketEvents = (
 
   const handleNewMessage = useCallback(
     (newMessage) => {
-      const isForActiveConversation =
-        newMessage.conversationId === conversationId ||
-        (newMessage.sender._id === otherUser?._id && !conversationId) // This logic is correct for initial chat setup
-
       const targetMessagesQueryKey = ["messages", newMessage.conversationId]
 
       queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
@@ -54,9 +50,6 @@ export const usePrivateChatSocketEvents = (
 
         // Limit the number of messages in the first page if needed
         if (firstPage.length > MESSAGE_LIMIT) {
-          // This typically should remove from the beginning, but ensure your `MESSAGE_LIMIT` logic is sound.
-          // For a chat, you usually want new messages at the end, so maybe this `shift` is for very long pages fetched at once?
-          // If MESSAGE_LIMIT is for the total number of messages displayed in the view, this should work.
           firstPage.shift()
         }
 
@@ -82,33 +75,11 @@ export const usePrivateChatSocketEvents = (
           conversationToUpdate.lastMessage = newMessage
           conversationToUpdate.updatedAt = newMessage.createdAt // Also update updatedAt for sorting
 
-          // If the message is from 'otherUser' and the user is NOT in this specific chat
-          // (i.e., isForActiveConversation is false OR current conversationId doesn't match new message's conversationId),
-          // increment unread count.
-          // This requires careful handling with `isForActiveConversation` if it also implies `socket.emit("markMessagesAsSeen")` happened.
-          // For now, let's assume if `isForActiveConversation` is false, it's an unread message.
-          if (
-            newMessage.sender._id.toString() === otherUser?._id.toString() &&
-            !isForActiveConversation
-          ) {
-            // Increment unread count if applicable. You might have an 'unreadCount' field.
-            // For example: conversationToUpdate.unreadCount = (conversationToUpdate.unreadCount || 0) + 1;
-            // Make sure your backend logic for unread count is consistent with this client-side update.
-          }
-
-          // Move the updated conversation to the top (or second if new ones are added at 0 index)
-          // This assumes `ConversationsList` sorts by `updatedAt` or similar.
           updatedConversations.splice(conversationIndex, 1) // Remove from current position
           updatedConversations.unshift(conversationToUpdate) // Add to the beginning
 
           return updatedConversations
         } else {
-          // If the conversation doesn't exist in the list (e.g., first message in a new chat),
-          // you might need to fetch the conversation details or rely on a subsequent `invalidateQueries`.
-          // For this specific bug (lastMessage text not updating), it's about existing conversations.
-          // If the *first* message for a new conversation that wasn't in the list before,
-          // you'd typically have a `conversationCreated` event or rely on `invalidateQueries` to add it.
-          // For simplicity, we'll just invalidate if not found to ensure it eventually shows up.
           console.warn(
             "Received message for a conversation not in cache, invalidating conversations.",
           )
@@ -116,48 +87,9 @@ export const usePrivateChatSocketEvents = (
           return oldConversations // Return old data for now, invalidation will handle the fetch.
         }
       })
-
-      // Invalidate queries for conversations to ensure any other components watching
-      // this query (like the sidebar list) also refetch if they haven't been updated by `setQueryData`.
-      // This can act as a fallback or to trigger updates in cases `setQueryData` might miss.
-      // However, if the `setQueryData` above is comprehensive, `invalidateQueries` might become less critical here
-      // but is generally harmless.
       queryClient.invalidateQueries({ queryKey: ["conversations"] })
-
-      // --- 3. Handle scroll and unread button (existing logic, mostly fine) ---
-      // if (isForActiveConversation) {
-      //   const listEl = messageListRef.current
-      //   if (listEl) {
-      //     const scrollThreshold = 100
-      //     const isAtBottom =
-      //       listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-      //     if (newMessage.sender._id.toString() === currentUserId.toString() || isAtBottom) {
-      //       didMessageJustLanded.current = true
-      //       setShowNewMessageButton(false)
-      //     } else if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-      //       setShowNewMessageButton(true)
-      //     }
-      //   }
-
-      //   if (newMessage.sender._id.toString() === otherUser?._id.toString()) {
-      //     socket.emit("markMessagesAsSeen", {
-      //       conversationId: newMessage.conversationId,
-      //     })
-      //   }
-      // }
     },
-    [
-      conversationId,
-      queryClient,
-      currentUserId,
-      otherUser,
-      // messageListRef,
-      // didMessageJustLanded,
-      // setShowNewMessageButton,
-      // socket,
-      MESSAGE_LIMIT,
-    ],
+    [queryClient, currentUserId, MESSAGE_LIMIT],
   )
 
   const handleMessagesSeen = useCallback(

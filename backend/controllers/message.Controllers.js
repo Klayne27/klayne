@@ -93,22 +93,24 @@ export const sendMessage = async (req, res) => {
       uploadedImgUrl = uploadedResponse.secure_url;
     }
 
+    // ✅ FIX 2: Use the `isSeen` variable when creating the new message
     const newMessage = new Message({
       conversationId: conversation._id,
       sender: senderId,
       text: message || "",
       img: uploadedImgUrl,
       repliedTo: repliedTo || null,
-      seen: isSeen,
+      seen: isSeen, // Correctly set `seen` status
     });
 
     await newMessage.save();
 
+    // ✅ FIX 3: Use the `isSeen` variable when updating the lastMessage
     conversation.lastMessage = {
       text: newMessage.text,
       img: newMessage.img,
       sender: senderId,
-      seen: isSeen,
+      seen: isSeen, // Correctly set `seen` status
       messageId: newMessage._id,
     };
     await conversation.save();

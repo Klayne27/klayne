@@ -38,7 +38,7 @@ const ChatWindow = () => {
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
-    isInitialLoadComplete
+    isInitialLoadComplete,
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -70,7 +70,6 @@ const ChatWindow = () => {
       setActiveConversationId(null)
     }
   }, [conversationId, setActiveConversationId, socket, currentUser?._id, queryClient])
-
 
   const isChatEmpty = !messages?.length
 

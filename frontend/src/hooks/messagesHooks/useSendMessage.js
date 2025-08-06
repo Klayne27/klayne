@@ -13,11 +13,17 @@ export const useSendMessage = ({ onSenderMessageSent }) => {
     mutationFn: sendMessageApi,
     onMutate: async (newMessageData) => {
       const { conversationId } = newMessageData
-      const queryKey = ["messages", conversationId]
+      const messagesQueryKey = ["messages", conversationId]
+      const conversationsQueryKey = ["conversations"]
 
-      await queryClient.cancelQueries({ queryKey })
-      const previousData = queryClient.getQueryData(queryKey)
+      // 1. Cancel ongoing queries for both messages and conversations to prevent race conditions
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey })
+      await queryClient.cancelQueries({ queryKey: conversationsQueryKey })
 
+      const previousMessages = queryClient.getQueryData(messagesQueryKey)
+      const previousConversations = queryClient.getQueryData(conversationsQueryKey)
+
+      // 2. Create the optimistic message
       const optimisticMessage = {
         _id: `optimistic-${Date.now()}`,
         text: newMessageData.message,
@@ -25,8 +31,8 @@ export const useSendMessage = ({ onSenderMessageSent }) => {
         conversationId,
         createdAt: new Date().toISOString(),
         img: newMessageData.img || null,
-        seen: false,
-        isOptimistic: false,
+        seen: false, // Optimistically set to false
+        isOptimistic: true, // Add this flag to distinguish from server data
         repliedTo: replyingToMessage
           ? {
               _id: replyingToMessage._id,
@@ -40,7 +46,8 @@ export const useSendMessage = ({ onSenderMessageSent }) => {
           : null,
       }
 
-      queryClient.setQueryData(queryKey, (oldData) => {
+      // 3. Optimistically update the messages query
+      queryClient.setQueryData(messagesQueryKey, (oldData) => {
         if (!oldData?.pages) {
           return { pages: [[optimisticMessage]], pageParams: [1] }
         }
@@ -49,27 +56,72 @@ export const useSendMessage = ({ onSenderMessageSent }) => {
         return newData
       })
 
+      // 4. Optimistically update the conversations query
+      // queryClient.setQueryData(conversationsQueryKey, (oldConversations) => {
+      //   if (!oldConversations) return oldConversations
+
+      //   const updatedConversations = oldConversations.map((conversation) => {
+      //     if (conversation._id === conversationId) {
+      //       return {
+      //         ...conversation,
+      //         lastMessage: {
+      //           text: optimisticMessage.text,
+      //           img: optimisticMessage.img,
+      //           sender: currentUser,
+      //           seen: false, // Set to false, as the recipient is assumed not to have the chat open
+      //           messageId: optimisticMessage._id,
+      //         },
+      //       }
+      //     }
+      //     return conversation
+      //   })
+
+      //   // Optional: Move the updated conversation to the top of the list for better UX
+      //   const updatedConversation = updatedConversations.find((c) => c._id === conversationId)
+      //   if (updatedConversation) {
+      //     const filteredConversations = updatedConversations.filter((c) => c._id !== conversationId)
+      //     return [updatedConversation, ...filteredConversations]
+      //   }
+
+      //   return updatedConversations
+      // })
+
       if (onSenderMessageSent) {
         onSenderMessageSent()
       }
 
-      return { previousData, queryKey, optimisticId: optimisticMessage._id }
+      // Return context for onError to use
+      return {
+        previousMessages,
+        previousConversations,
+        messagesQueryKey,
+        conversationsQueryKey,
+        optimisticId: optimisticMessage._id,
+      }
     },
     onSuccess: (newMessage, variables, context) => {
-      queryClient.setQueryData(context.queryKey, (oldData) => {
+      // 5. On success, update the messages and conversations queries with the real data from the server
+      queryClient.setQueryData(context.messagesQueryKey, (oldData) => {
         if (!oldData) return oldData
         return {
           ...oldData,
           pages: oldData.pages.map((page) =>
-            page.map((msg) => (msg._id === context.optimisticId ? newMessage : msg)),
+            page.map((msg) =>
+              msg._id === context.optimisticId ? { ...newMessage, isOptimistic: false } : msg,
+            ),
           ),
         }
       })
-      queryClient.invalidateQueries({ queryKey: ["conversations"] })
+
+      // We already updated the conversation list optimistically, so we just need to ensure it's still fresh
+      // Invalidate the conversations query to re-fetch the accurate data from the server, including the real `seen` status
+      queryClient.invalidateQueries({ queryKey: context.conversationsQueryKey })
     },
     onError: (err, variables, context) => {
       showAppToast(err.message, "error")
-      queryClient.setQueryData(context.queryKey, context.previousData)
+      // 6. On error, revert the optimistic updates
+      queryClient.setQueryData(context.messagesQueryKey, context.previousMessages)
+      queryClient.setQueryData(context.conversationsQueryKey, context.previousConversations)
     },
   })
 
