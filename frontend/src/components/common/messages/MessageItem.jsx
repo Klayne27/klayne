@@ -23,6 +23,7 @@ import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMet
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
 import PrivateChatFirstMessageInGroup from "../PrivateChatFirstMessageInGroup"
+import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
 
 const MessageItem = ({
   message,
@@ -32,23 +33,14 @@ const MessageItem = ({
   onReactionAdded,
   handleLoadImage,
 }) => {
-  const openImageModal = useAppStore((state) => state.openImageModal)
-
-  const {
-    selectedConversation,
-    setReplyingToMessage,
-    setEditingMessage,
-    setActiveMessageModalId,
-    activeMessageModalId,
-  } = usePrivateChatStore()
-
-  const [isTouchDevice, setIsTouchDevice] = useState(false)
-
-  const { deleteMessage } = useDeleteMessage()
-  const { reactToMessage } = useReactToMessage(selectedConversation._id)
+  const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
+    usePrivateChatStore()
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
+
+  const { deleteMessage } = useDeleteMessage()
+  const { reactToMessage } = useReactToMessage(selectedConversation._id)
 
   const isMobile = useIsMobile()
 
@@ -66,24 +58,6 @@ const MessageItem = ({
     isMessageHighlighted,
   } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId)
 
-  const handleLongPress = useCallback(() => {
-    if (isMobile) {
-      setActiveMessageModalId(message._id)
-    }
-  }, [isMobile, message._id, setActiveMessageModalId])
-
-  // const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
-  //   handleLongPress,
-  //   500,
-  //   isMobile,
-  // )
-
-  useEffect(() => {
-    setIsTouchDevice(
-      "ontouchstart" in window || navigator.maxTouchPoints > 0 || navigator.msMaxTouchPoints > 0,
-    )
-  }, [])
-
   const {
     showEmojiPickerPopover,
     setShowEmojiPickerPopover,
@@ -99,62 +73,27 @@ const MessageItem = ({
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
-  // const showModal = activeMessageModalId === message._id
-
-  const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
-
-  // const handleMouseEnter = (messageId) => {
-  //   if (!isTouchDevice) {
-  //     setActiveMessageModalId(messageId)
-  //   }
-  // }
-
-  // const handleMouseLeave = () => {
-  //   if (!isTouchDevice) {
-  //     setActiveMessageModalId(null)
-  //   }
-  // }
-
-  // const handleMessageTap = (messageId) => {
-  //   if (isTouchDevice) {
-  //     setActiveMessageModalId(messageId)
-  //   }
-  // }
-
-
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
-  }
-
-  const handleCloseMoreActionsModal = useCallback(() => {
-    setShowMoreActionsModal(false)
-  }, [setShowMoreActionsModal])
-
-  const handleImageClick = () => {
-    openImageModal(message.img)
-  }
-
-  const handleClickOutsideMessage = useCallback(
-    (e) => {
-      if (activeMessageModalId && isMobile) {
-        const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
-        if (messageModalElement && !messageModalElement.contains(e.target)) {
-          setActiveMessageModalId(null)
-        }
-      }
-    },
-    [activeMessageModalId, setActiveMessageModalId, message._id, isMobile],
-  )
-
-  useEffect(() => {
-    if (activeMessageModalId) {
-      document.addEventListener("click", handleClickOutsideMessage)
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutsideMessage)
-    }
-  }, [activeMessageModalId, handleClickOutsideMessage])
+  const {
+    openEmojiPickerWithModalClose,
+    handleJumpToOriginalMessage,
+    handleReactionClick,
+    handleEditClick,
+    handleEmojiSelect,
+    handleCopyMessage,
+    handleReplyClick,
+    handleImageClick,
+    handleCloseMoreActionsModal,
+  } = useChatHandlers({
+    message,
+    setShowMoreActionsModal,
+    onReactionAdded,
+    isMobile,
+    handleCloseEmojiPickerPopover,
+    handleOpenEmojiPickerPopover,
+    addReaction: reactToMessage,
+    chatStore: usePrivateChatStore,
+    chatInputRef: privateChatInputRef,
+  })
 
   const messageContentStyle = isMobile
     ? {
@@ -166,74 +105,85 @@ const MessageItem = ({
       }
     : {}
 
-  const handleJumpToOriginalMessage = (originalMessageId) => {
-    const originalMessageElement = document.getElementById(`message-${originalMessageId}`)
-    if (originalMessageElement) {
-      originalMessageElement.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      })
-      originalMessageElement.classList.add("highlight-message")
-      setTimeout(() => {
-        originalMessageElement.classList.remove("highlight-message")
-      }, 1500)
-    }
-  }
+  const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
-
-  // const handleTouchStart = (e) => {
-  //   e.stopPropagation()
-  //   pressTimer.current = setTimeout(() => {
-  //     handleMessageTap(message._id)
-  //   }, LONG_PRESS_DURATION)
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
   // }
 
-  // const handleTouchEnd = (e) => {
-  //   e.stopPropagation()
-  //   clearTimeout(pressTimer.current)
-  // }
-
-  // const handleTouchMove = (e) => {
-  //   if (pressTimer.current) {
-  //     clearTimeout(pressTimer.current)
+  // const handleJumpToOriginalMessage = (originalMessageId) => {
+  //   const originalMessageElement = document.getElementById(`message-${originalMessageId}`)
+  //   if (originalMessageElement) {
+  //     originalMessageElement.scrollIntoView({
+  //       behavior: "smooth",
+  //       block: "center",
+  //     })
+  //     originalMessageElement.classList.add("highlight-message")
+  //     setTimeout(() => {
+  //       originalMessageElement.classList.remove("highlight-message")
+  //     }, 1500)
   //   }
   // }
+
+  // const handleReactionClick = (messageId, emoji) => {
+  //   reactToMessage({ messageId, emoji })
+  //   setActiveMessageModalId(null)
+  // }
+
+  // const handleEditClick = () => {
+  //   setEditingMessage(message)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleEmojiSelect = (emojiObject) => {
+  //   handleReactionClick(message._id, emojiObject.emoji)
+  //   handleCloseEmojiPickerPopover()
+  //   onReactionAdded()
+  // }
+
+  // const handleCopyMessage = () => {
+  //   navigator.clipboard.writeText(message.text)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleReplyClick = () => {
+  //   privateChatInputRef.current.focus()
+  //   setReplyingToMessage(message)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleImageClick = () => {
+  //   openImageModal(message.img)
+  // }
+
+  // const handleCloseMoreActionsModal = useCallback(() => {
+  //   setShowMoreActionsModal(false)
+  // }, [setShowMoreActionsModal])
+
+  // useEffect(() => {
+  //   const handleClickOutsideMessage = (e) => {
+  //     if (activeMessageModalId && isMobile) {
+  //       const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
+  //       if (messageModalElement && !messageModalElement.contains(e.target)) {
+  //         setActiveMessageModalId(null)
+  //       }
+  //     }
+  //   }
+  //   if (activeMessageModalId) {
+  //     document.addEventListener("click", handleClickOutsideMessage)
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutsideMessage)
+  //   }
+  // }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
 
   const handleDeleteOwnMessage = () => {
     deleteMessage({
       messageId: message._id,
       conversationId: message.conversationId,
     })
-  }
-
-  const handleReactionClick = (messageId, emoji) => {
-    reactToMessage({ messageId, emoji })
-    setActiveMessageModalId(null)
-  }
-
-  const handleEmojiSelect = (emojiObject) => {
-    handleReactionClick(message._id, emojiObject.emoji)
-    handleCloseEmojiPickerPopover()
-    onReactionAdded()
-  }
-
-  const handleReplyClick = () => {
-    privateChatInputRef.current.focus()
-    setReplyingToMessage(message)
     setShowMoreActionsModal(false)
-    // handleMessageTap(null)
-  }
-
-  const handleEditClick = () => {
-    setEditingMessage(message)
-    setShowMoreActionsModal(false)
-    // handleMessageTap(null)
-  }
-
-  const handleCopyMessage = () => {
-    navigator.clipboard.writeText(message.text)
-    setShowMoreActionsModal(false)
-    // handleMessageTap(null)
   }
 
   if (isTypingOtherUser) {

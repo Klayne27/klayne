@@ -1,5 +1,5 @@
 // components/ChatWindow.jsx
-import { useEffect, useRef, useCallback, useLayoutEffect } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../../context/SocketContext" // Still needed for setActiveConversationId
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
@@ -11,7 +11,6 @@ import { IoChatbubblesOutline } from "react-icons/io5"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
-import LoadingSpinner from "../../ui/LoadingSpinner"
 import { FaCaretDown } from "react-icons/fa"
 
 const ChatWindow = () => {

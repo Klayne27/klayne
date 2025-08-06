@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useLayoutEffect, useRef } from "react"
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react"
 import { useAuthUser } from "../authHooks/useAuthUser"
 
 export const useMessageScroll = ({
@@ -17,10 +17,12 @@ export const useMessageScroll = ({
   const isUserScrollingUp = useRef(null)
   const prevLastMessageId = useRef(messages?.length > 0 ? messages[messages.length - 1]._id : null)
 
-  const shouldScrollOnSenderMessage = useRef(false)
+  // const shouldScrollOnSenderMessage = useRef(false)
+
+  const [shouldScrollOnSenderMessage, setShouldScrollOnSenderMessage] = useState(false)
 
   const triggerScrollOnSenderMessage = useCallback(() => {
-    shouldScrollOnSenderMessage.current = true
+    setShouldScrollOnSenderMessage(true)
   }, [])
 
   const scrollToBottom = useCallback(() => {
@@ -71,24 +73,24 @@ export const useMessageScroll = ({
     }
   }, [scrollToBottom, setShowNewMessageButton])
 
-const handleReactionAdded = useCallback(
-  (updatedMessage) => {
-    // 👈 Add this check to prevent the error
-    if (!updatedMessage) {
-      return
-    }
+  const handleReactionAdded = useCallback(
+    (updatedMessage) => {
+      // 👈 Add this check to prevent the error
+      if (!updatedMessage) {
+        return
+      }
 
-    const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
+      const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
 
-    if (lastMessageId && updatedMessage._id === lastMessageId) {
-      setTimeout(() => {
-        scrollToBottom()
-        setShowNewMessageButton(false)
-      }, 10)
-    }
-  },
-  [messages, scrollToBottom, setShowNewMessageButton],
-)
+      if (lastMessageId && updatedMessage._id === lastMessageId) {
+        setTimeout(() => {
+          scrollToBottom()
+          setShowNewMessageButton(false)
+        }, 10)
+      }
+    },
+    [messages, scrollToBottom, setShowNewMessageButton],
+  )
 
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom()
@@ -164,6 +166,16 @@ const handleReactionAdded = useCallback(
       return () => currentRef.removeEventListener("scroll", handleScroll)
     }
   }, [handleScroll])
+
+  // 3. New useLayoutEffect to handle the scroll specifically for sender messages
+  useLayoutEffect(() => {
+    if (shouldScrollOnSenderMessage) {
+      waitForImagesToLoad().then(() => {
+        scrollToBottom()
+        setShouldScrollOnSenderMessage(false) // Reset the state after scrolling
+      })
+    }
+  }, [shouldScrollOnSenderMessage, scrollToBottom, waitForImagesToLoad])
 
   useLayoutEffect(() => {
     const listEl = messageListRef.current

@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef, useEffect } from "react"
+import React, { useCallback, useRef, useEffect } from "react"
 
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useDeleteOwnPublicMessage } from "../../../hooks/publicChatHooks/useDeleteOwnPublicMessage"
@@ -18,11 +18,11 @@ import MessageContentLayout from "../../ui/MessageContentLayout"
 import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal"
 import MessageActionsModal from "../../ui/MessageActionsModal"
-import { useLongPress } from "../../../hooks/customHooks/useLongPress"
 import PublicChatFirstMessageInGroup from "../PublicChatFirstMessageInGroup"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
+import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
 
 const PublicChatMessage = React.memo(function PublicChatMessage({
   message,
@@ -31,24 +31,15 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   handleLoadImage,
   onReactionAdded,
 }) {
-  const {
-    setReplyingToMessage,
-    setEditingMessage,
-    activeMessageModalId,
-    setActiveMessageModalId,
-    isCurrentlyTouchDevice,
-  } = usePublicChatStore()
-
-  const openImageModal = useAppStore((state) => state.openImageModal)
-  const { deleteOwnMessage } = useDeleteOwnPublicMessage()
-  const { adminDeletePublicMessage, isPending: isAdminDeleting } = useDeletePublicMessage()
-  // const [isHovered, setIsHovered] = useState(false)
+  const { activeMessageModalId, setActiveMessageModalId } = usePublicChatStore()
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
 
   const { banUser } = useBanUserFromPublicChat()
   const { unbanUser } = useUnbanUserFromPublicChat()
+  const { adminDeletePublicMessage } = useDeletePublicMessage()
+  const { deleteOwnMessage } = useDeleteOwnPublicMessage()
   const { addReaction } = useAddPublicMessageReaction()
 
   const isMobile = useIsMobile()
@@ -65,7 +56,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     hasAnyReactions,
   } = useMessagingMetaData(message, currentUser)
 
-  // 3. Modal Interactions
   const {
     handleMouseEnter,
     handleMouseLeave,
@@ -86,6 +76,28 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   } = useEmojiPickerPopover()
 
   const {
+    openEmojiPickerWithModalClose,
+    handleJumpToOriginalMessage,
+    handleReactionClick,
+    handleEditClick,
+    handleEmojiSelect,
+    handleCopyMessage,
+    handleReplyClick,
+    handleImageClick,
+    handleCloseMoreActionsModal,
+  } = useChatHandlers({
+    message,
+    setShowMoreActionsModal,
+    onReactionAdded,
+    isMobile,
+    handleCloseEmojiPickerPopover,
+    handleOpenEmojiPickerPopover,
+    addReaction,
+    chatStore: usePublicChatStore,
+    chatInputRef: publicChatInputRef,
+  })
+
+  const {
     moreActionsModalPosition,
     handleOpenMoreActionsModal,
     setShowMoreActionsModal,
@@ -104,56 +116,83 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
-  const handleReactionClick = (messageId, emoji) => {
-    addReaction({ messageId, emoji })
-    setActiveMessageModalId(null)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
+  // }
 
-  const handleEmojiSelect = (emojiObject) => {
-    handleReactionClick(message._id, emojiObject.emoji)
-    handleCloseEmojiPickerPopover()
-    onReactionAdded()
-  }
+  // const handleJumpToOriginalMessage = (messageId) => {
+  //   const messageElement = document.getElementById(`message-${messageId}`)
+  //   if (messageElement) {
+  //     messageElement.scrollIntoView({
+  //       behavior: "smooth",
+  //       block: "center",
+  //     })
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
-  }
+  //     messageElement.classList.add("highlight-message")
 
-  const handleCopyMessage = () => {
-    navigator.clipboard.writeText(message.text)
+  //     setTimeout(() => {
+  //       messageElement.classList.remove("highlight-message")
+  //     }, 1500)
+  //   }
+  // }
+
+  // const handleReactionClick = (messageId, emoji) => {
+  //   addReaction({ messageId, emoji })
+  //   setActiveMessageModalId(null)
+  // }
+
+  // const handleEditClick = () => {
+  //   setEditingMessage(message)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleEmojiSelect = (emojiObject) => {
+  //   handleReactionClick(message._id, emojiObject.emoji)
+  //   handleCloseEmojiPickerPopover()
+  //   onReactionAdded()
+  // }
+
+  // const handleCopyMessage = () => {
+  //   navigator.clipboard.writeText(message.text)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleReplyClick = () => {
+  //   publicChatInputRef.current.focus()
+  //   setReplyingToMessage(message)
+  //   setShowMoreActionsModal(false)
+  // }
+
+  // const handleImageClick = () => {
+  //   openImageModal(message.img)
+  // }
+
+  // const handleCloseMoreActionsModal = useCallback(() => {
+  //   setShowMoreActionsModal(false)
+  // }, [setShowMoreActionsModal])
+
+  // useEffect(() => {
+  //   const handleClickOutsideMessage = (e) => {
+  //     if (activeMessageModalId && isMobile) {
+  //       const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
+  //       if (messageModalElement && !messageModalElement.contains(e.target)) {
+  //         setActiveMessageModalId(null)
+  //       }
+  //     }
+  //   }
+
+  //   if (activeMessageModalId) {
+  //     document.addEventListener("click", handleClickOutsideMessage)
+  //   }
+
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutsideMessage)
+  //   }
+  // }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
+
+  const handleDeleteOwnMessage = () => {
+    deleteOwnMessage(message._id)
     setShowMoreActionsModal(false)
-  }
-
-  const handleJumpToMessage = (messageId) => {
-    const messageElement = document.getElementById(`message-${messageId}`)
-    if (messageElement) {
-      messageElement.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      })
-
-      messageElement.classList.add("highlight-message")
-
-      setTimeout(() => {
-        messageElement.classList.remove("highlight-message")
-      }, 1500)
-    }
-  }
-
-  const handleEditClick = () => {
-    publicChatInputRef.current.focus()
-    setEditingMessage(message)
-    setShowMoreActionsModal(false)
-  }
-
-  const handleReplyClick = () => {
-    publicChatInputRef.current.focus()
-    setReplyingToMessage(message)
-    setShowMoreActionsModal(false)
-  }
-
-  const handleImageClick = (imageUrl) => {
-    openImageModal(message.img)
   }
 
   const handleAdminDeleteMessage = () => {
@@ -173,35 +212,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
       unbanUser(message.sender._id)
     }
   }
-
-  const handleDeleteOwnMessage = () => {
-    deleteOwnMessage(message._id)
-    setShowMoreActionsModal(false)
-  }
-
-  const handleCloseMoreActionsModal = useCallback(() => {
-    setShowMoreActionsModal(false)
-  }, [setShowMoreActionsModal])
-
-  // Close actions modal on outside click for mobile
-  useEffect(() => {
-    const handleClickOutsideMessage = (e) => {
-      if (activeMessageModalId && isMobile) {
-        const messageModalElement = document.getElementById(`message-reaction-modal-${message._id}`)
-        if (messageModalElement && !messageModalElement.contains(e.target)) {
-          setActiveMessageModalId(null)
-        }
-      }
-    }
-
-    if (activeMessageModalId) {
-      document.addEventListener("click", handleClickOutsideMessage)
-    }
-
-    return () => {
-      document.removeEventListener("click", handleClickOutsideMessage)
-    }
-  }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
 
   return (
     <>
@@ -253,7 +263,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             isAuthUserAdmin={isAuthUserAdmin}
             isMessageDeleted={isMessageDeleted}
             isSenderBanned={isSenderBanned}
-            isAdminDeleting={isAdminDeleting}
+            // isAdminDeleting={isAdminDeleting}
           />
         )}
 
@@ -296,7 +306,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
               onImageClick={handleImageClick}
               messageContentStyle={messageContentStyle}
               isReplyToMessageDeleted={isReplyToMessageDeleted}
-              onJumpToOriginalMessage={handleJumpToMessage}
+              onJumpToOriginalMessage={handleJumpToOriginalMessage}
               isMessageDeleted={isMessageDeleted}
               isSenderBanned={isSenderBanned}
             />

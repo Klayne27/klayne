@@ -20,7 +20,7 @@ function MoreMessageActionsModal({
   isAuthUserAdmin = false,
   isMessageDeleted = false,
   isSenderBanned,
-  isAdminDeleting,
+  // isAdminDeleting,
 }) {
   return (
     <div className="fixed inset-0 z-20" onClick={onCloseMoreActionsModal}>
@@ -73,7 +73,7 @@ function MoreMessageActionsModal({
             {!isMessageDeleted && (
               <button
                 onClick={onAdminDeleteMessage}
-                disabled={isAdminDeleting}
+                // disabled={isAdminDeleting}
                 className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
               >
                 Delete (Admin)
