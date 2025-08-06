@@ -4,56 +4,48 @@ import { useState, useEffect } from "react"
 const AnimatedCount = ({ count, className }) => {
   const [displayCount, setDisplayCount] = useState(count)
   const [previousCount, setPreviousCount] = useState(null)
-  const [direction, setDirection] = useState(null) // 'up', 'down', or null
+  const [direction, setDirection] = useState(null)
 
   useEffect(() => {
-    // This effect runs whenever the 'count' from props changes
     if (count !== displayCount) {
-      // Set the number that will slide OUT
       setPreviousCount(displayCount)
-      // Determine the direction for the animation
       setDirection(count > displayCount ? "up" : "down")
-      // Set the new number that will slide IN
       setDisplayCount(count)
 
-      // After the animation duration, reset the direction.
-      // This removes the animation elements and leaves only the final count.
       const timer = setTimeout(() => {
         setDirection(null)
-      }, 300) // This must match your animation duration in tailwind.config.js
+      }, 300)
 
       return () => clearTimeout(timer)
     }
   }, [count, displayCount])
 
-  return (
-    <div
-      // This container clips the animation and holds the numbers
-      className={`relative h-5 w-2 overflow-hidden text-left tabular-nums`}
-    >
+  const digitCount = String(displayCount).length
+  const widthClass =
+    digitCount === 1 ? "w-2" : digitCount === 2 ? "w-4" : digitCount === 3 ? "w-6" : "w-8" // For 4+ digits
 
+  return (
+    // The container now has a dynamic width
+    <div className={`relative h-5 overflow-hidden text-left tabular-nums ${widthClass}`}>
       {direction && (
         <>
           <span
             className={`absolute inset-0 ${
               direction === "up" ? "animate-slide-up-old" : "animate-slide-down-old"
-            } ${className}`} // Pass down color class
+            } ${className}`}
           >
             {previousCount}
           </span>
           <span
             className={`absolute inset-0 ${
               direction === "up" ? "animate-slide-up-new" : "animate-slide-down-new"
-            } ${className}`} // Pass down color class
+            } ${className}`}
           >
             {displayCount}
           </span>
         </>
       )}
 
-      {/* This block renders only when there is NO animation.
-        It shows the stable, final count.
-      */}
       {!direction && <span className={className}>{displayCount}</span>}
     </div>
   )

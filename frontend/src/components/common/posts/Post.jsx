@@ -499,159 +499,153 @@ const Post = ({
           </div>
 
           <div className="mt-3 w-2/3">
-            <div>
-              <div className="flex justify-between">
+            <div className="flex justify-between">
+              <div
+                className="group flex cursor-pointer items-center"
+                onClick={handleCommentClick}
+                onTouchStart={() => handleTouchStart("comment")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
                 <div
-                  className="group flex cursor-pointer items-center"
-                  onClick={handleCommentClick}
-                  onTouchStart={() => handleTouchStart("comment")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
+                  className={`group rounded-full p-2 transition duration-200 ${
+                    !isTouchDevice ? "group-hover:bg-sky-400 group-hover:bg-opacity-15" : ""
+                  } ${
+                    isTouchDevice && activeButtonId === "comment" ? "bg-sky-400 bg-opacity-15" : ""
+                  }`}
                 >
-                  <div
-                    className={`group rounded-full p-2 transition duration-200 ${
-                      !isTouchDevice ? "group-hover:bg-sky-400 group-hover:bg-opacity-15" : ""
-                    } ${
-                      isTouchDevice && activeButtonId === "comment"
-                        ? "bg-sky-400 bg-opacity-15"
-                        : ""
+                  <FaRegComment
+                    className={`h-4 w-4 text-slate-500 transition duration-200 group-hover:text-sky-400 ${
+                      isAnimatingComment ? "animate-bookmark-pop" : ""
                     }`}
-                  >
-                    <FaRegComment
-                      className={`h-4 w-4 text-slate-500 transition duration-200 group-hover:text-sky-400 ${
-                        isAnimatingComment ? "animate-bookmark-pop" : ""
-                      }`}
-                      strokeWidth={10}
-                    />
-                  </div>
-                  <span
-                    className={`text-sm text-slate-500 transition duration-200 group-hover:text-sky-400`}
-                  >
-                    {sourcePost.commentsCount || 0}
-                  </span>
+                    strokeWidth={10}
+                  />
                 </div>
-
-                <div
-                  className="group flex cursor-pointer items-center"
-                  onClick={handleRepostClick}
-                  onTouchStart={() => handleTouchStart("repost")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
+                <span
+                  className={`text-sm text-slate-500 transition duration-200 group-hover:text-sky-400`}
                 >
-                  <div
-                    className={`duration-2000 rounded-full p-2 transition ${
-                      !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
-                    } ${
-                      isTouchDevice && activeButtonId === "repost"
-                        ? "bg-emerald-600 bg-opacity-15"
-                        : ""
-                    }`}
-                  >
-                    <FaRetweet
-                      className={`size-[18px] transition duration-200 ${
-                        repostedByCurrentUser
-                          ? "text-emerald-500"
-                          : "text-slate-500 group-hover:text-emerald-500"
-                      } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
-                    />
-                  </div>
-                  <AnimatedCount
-                    count={sourcePost.repostsCount || 0}
-                    className={`text-sm transition duration-200 absolute ${
+                  {sourcePost.commentsCount || 0}
+                </span>
+              </div>
+
+              <div
+                className="group flex cursor-pointer items-center"
+                onClick={handleRepostClick}
+                onTouchStart={() => handleTouchStart("repost")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <div
+                  className={`duration-2000 rounded-full p-2 transition ${
+                    !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
+                  } ${
+                    isTouchDevice && activeButtonId === "repost"
+                      ? "bg-emerald-600 bg-opacity-15"
+                      : ""
+                  }`}
+                >
+                  <FaRetweet
+                    className={`size-[18px] transition duration-200 ${
                       repostedByCurrentUser
                         ? "text-emerald-500"
                         : "text-slate-500 group-hover:text-emerald-500"
-                    }`}
+                    } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
                   />
                 </div>
+                <AnimatedCount
+                  count={sourcePost.repostsCount || 0}
+                  className={`absolute text-sm transition duration-200 ${
+                    repostedByCurrentUser
+                      ? "text-emerald-500"
+                      : "text-slate-500 group-hover:text-emerald-500"
+                  }`}
+                />
+              </div>
 
+              <div
+                className="group flex cursor-pointer items-center rounded-full"
+                onClick={handleLikePostClick}
+                onTouchStart={() => handleTouchStart("like")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
                 <div
-                  className="group flex cursor-pointer items-center rounded-full"
-                  onClick={handleLikePostClick}
-                  onTouchStart={() => handleTouchStart("like")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
+                  className={`relative rounded-full p-2 transition duration-200 ${
+                    !isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""
+                  } ${
+                    isTouchDevice && activeButtonId === "like" ? "bg-pink-600 bg-opacity-15" : ""
+                  } cursor-pointer`}
                 >
-                  <div
-                    className={`relative rounded-full p-2 transition duration-200 ${
-                      !isTouchDevice ? "group-hover:bg-pink-600 group-hover:bg-opacity-15" : ""
-                    } ${
-                      isTouchDevice && activeButtonId === "like" ? "bg-pink-600 bg-opacity-15" : ""
-                    } cursor-pointer`}
-                  >
-                    {!isLiked && (
-                      <FaRegHeart
-                        className={`h-4 w-4 text-slate-500 transition duration-200 group-hover:text-pink-600 ${isAnimatingLike && !isLiked ? "animate-like-bounce" : ""} `}
-                      />
-                    )}
-                    {isLiked && (
-                      <FaHeart
-                        strokeWidth={10}
-                        className={`h-4 w-4 text-pink-600 transition duration-200 ${isAnimatingLike && isLiked ? "animate-like-bounce" : ""} `}
-                      />
-                    )}
-                  </div>
-                  <AnimatedCount
-                    count={sourcePost.likes?.length || 0}
-                    className={`text-sm transition absolute duration-200 group-hover:text-pink-600 ${
-                      isLiked ? "text-pink-600" : "text-slate-500"
-                    }`}
-                  />
-                </div>
-
-                <div className="absolute right-0.5 flex">
-                  {isMyOriginalPost && (
-                    <div
-                      className={`group right-0.5 flex cursor-pointer items-center gap-1 rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
-                        isTouchDevice && activeButtonId === "pin" ? "bg-primary bg-opacity-15" : ""
-                      } `}
-                      onClick={handlePinPost}
-                      onTouchStart={() => handleTouchStart("pin")}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchCancel={handleTouchCancel}
-                    >
-                      {isPinnedOnThisProfile || isPinnedForUI ? (
-                        <BsPinFill
-                          className={`size-4.5 text-primary ${
-                            isAnimatingPin ? "animate-pin-down" : ""
-                          }`}
-                          strokeWidth={0.5}
-                        />
-                      ) : (
-                        <BsPin
-                          strokeWidth={0.5}
-                          className={`size-4.5 text-slate-500 transition duration-200 group-hover:text-primary ${
-                            isAnimatingPin ? "animate-pin-down" : ""
-                          }`}
-                        />
-                      )}
-                    </div>
+                  {!isLiked && (
+                    <FaRegHeart
+                      className={`h-4 w-4 text-slate-500 transition duration-200 group-hover:text-pink-600 ${isAnimatingLike && !isLiked ? "animate-like-bounce" : ""} `}
+                    />
                   )}
+                  {isLiked && (
+                    <FaHeart
+                      strokeWidth={10}
+                      className={`h-4 w-4 text-pink-600 transition duration-200 ${isAnimatingLike && isLiked ? "animate-like-bounce" : ""} `}
+                    />
+                  )}
+                </div>
+                <AnimatedCount
+                  count={sourcePost.likes?.length || 0}
+                  className={`absolute text-sm transition duration-200 group-hover:text-pink-600 ${
+                    isLiked ? "text-pink-600" : "text-slate-500"
+                  }`}
+                />
+              </div>
+
+              <div className="absolute right-0.5 flex">
+                {isMyOriginalPost && (
                   <div
-                    className={`group right-0.5 flex cursor-pointer items-center rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
-                      isTouchDevice && activeButtonId === "bookmark"
-                        ? "bg-primary bg-opacity-15"
-                        : ""
+                    className={`group right-0.5 flex cursor-pointer items-center gap-1 rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
+                      isTouchDevice && activeButtonId === "pin" ? "bg-primary bg-opacity-15" : ""
                     } `}
-                    onClick={handleBookmarkPost}
-                    onTouchStart={() => handleTouchStart("bookmark")}
+                    onClick={handlePinPost}
+                    onTouchStart={() => handleTouchStart("pin")}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchCancel}
                   >
-                    {isBookmarked ? (
-                      <FaBookmark
-                        className={`size-4 text-primary ${
-                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                    {isPinnedOnThisProfile || isPinnedForUI ? (
+                      <BsPinFill
+                        className={`size-4.5 text-primary ${
+                          isAnimatingPin ? "animate-pin-down" : ""
                         }`}
+                        strokeWidth={0.5}
                       />
                     ) : (
-                      <FaRegBookmark
-                        className={`size-4 text-slate-500 transition duration-200 group-hover:text-primary ${
-                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                      <BsPin
+                        strokeWidth={0.5}
+                        className={`size-4.5 text-slate-500 transition duration-200 group-hover:text-primary ${
+                          isAnimatingPin ? "animate-pin-down" : ""
                         }`}
                       />
                     )}
                   </div>
+                )}
+                <div
+                  className={`group right-0.5 flex cursor-pointer items-center rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
+                    isTouchDevice && activeButtonId === "bookmark" ? "bg-primary bg-opacity-15" : ""
+                  } `}
+                  onClick={handleBookmarkPost}
+                  onTouchStart={() => handleTouchStart("bookmark")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  {isBookmarked ? (
+                    <FaBookmark
+                      className={`size-4 text-primary ${
+                        isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                      }`}
+                    />
+                  ) : (
+                    <FaRegBookmark
+                      className={`size-4 text-slate-500 transition duration-200 group-hover:text-primary ${
+                        isAnimatingBookmark ? "animate-bookmark-pop" : ""
+                      }`}
+                    />
+                  )}
                 </div>
               </div>
             </div>
