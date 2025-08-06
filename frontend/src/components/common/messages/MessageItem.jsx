@@ -122,8 +122,6 @@ const MessageItem = ({
   // }
 
 
-  console.log(message);
-
   const openEmojiPickerWithModalClose = (e) => {
     handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
   }
