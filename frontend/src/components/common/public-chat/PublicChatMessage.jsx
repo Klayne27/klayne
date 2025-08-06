@@ -76,6 +76,13 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   } = useEmojiPickerPopover()
 
   const {
+    moreActionsModalPosition,
+    handleOpenMoreActionsModal,
+    setShowMoreActionsModal,
+    showMoreActionsModal,
+  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
+
+  const {
     openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
@@ -96,13 +103,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     chatStore: usePublicChatStore,
     chatInputRef: publicChatInputRef,
   })
-
-  const {
-    moreActionsModalPosition,
-    handleOpenMoreActionsModal,
-    setShowMoreActionsModal,
-    showMoreActionsModal,
-  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
   const messageContentStyle = isMobile
     ? {
