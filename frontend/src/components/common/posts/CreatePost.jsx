@@ -10,9 +10,9 @@ import { FaPlus } from "react-icons/fa6"
 import { TbCalendarClock } from "react-icons/tb"
 
 // IMPORTS FOR MENTION FEATURE
-import SchedulePostModal from "../SchedulePostModal"
-import ScheduledPostsModal from "../ScheduledPostsModal"
-import EditScheduledPostModal from "../EditSchedulePostModal"
+import SchedulePostModal from "../post-scheduler/SchedulePostModal"
+import ScheduledPostsModal from "../post-scheduler/ScheduledPostsModal"
+import EditScheduledPostModal from "../post-scheduler/EditSchedulePostModal"
 import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers"
 import { useDebounce } from "../../../hooks/customHooks/useDebounce"
 import { showAppToast } from "../../../utils/showAppToast"

@@ -1,21 +1,21 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { editMessageApi } from "../../api/messagesApi";
-import { showAppToast } from "../../utils/showAppToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { editMessageApi } from "../../api/messagesApi"
+import { showAppToast } from "../../utils/showAppToast"
 
 export const useEditMessage = (conversationId) => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const { mutate: editMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newText }) => editMessageApi(messageId, newText),
     onMutate: async ({ messageId, newText }) => {
-      const queryKey = ["messages", conversationId];
+      const queryKey = ["messages", conversationId]
 
-      await queryClient.cancelQueries({ queryKey: queryKey });
+      await queryClient.cancelQueries({ queryKey: queryKey })
 
-      const previousMessagesData = queryClient.getQueryData(queryKey);
+      const previousMessagesData = queryClient.getQueryData(queryKey)
 
       queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData || !oldData.pages) return oldData;
+        if (!oldData || !oldData.pages) return oldData
 
         const updatedPages = oldData.pages.map((page) =>
           page.map((msg) =>
@@ -27,22 +27,22 @@ export const useEditMessage = (conversationId) => {
                   // IMPORTANT: Preserve repliedTo here in optimistic update if it exists
                   // repliedTo: msg.repliedTo,
                 }
-              : msg
-          )
-        );
+              : msg,
+          ),
+        )
 
-        return { ...oldData, pages: updatedPages };
-      });
+        return { ...oldData, pages: updatedPages }
+      })
 
-      return { previousMessagesData, queryKey };
+      return { previousMessagesData, queryKey }
     },
     onError: (error, variables, context) => {
-      showAppToast("Failed to update message: " + error.message, "error");
+      showAppToast("Failed to update message: " + error.message, "error")
       if (context?.previousMessagesData) {
-        queryClient.setQueryData(context.queryKey, context.previousMessagesData);
+        queryClient.setQueryData(context.queryKey, context.previousMessagesData)
       }
     },
-  });
+  })
 
-  return { editMessage, isEditing };
-};
+  return { editMessage, isEditing }
+}

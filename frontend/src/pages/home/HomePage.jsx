@@ -83,13 +83,8 @@ const HomePage = () => {
     }
 
     window.addEventListener("scroll", handleHeaderScroll)
-    // You might want to also listen to resize, or rely on `isMobile` changing
-    // if `isMobile` changes, the effect will re-run, effectively resetting behavior
-    // window.addEventListener("resize", handleHeaderScroll); // Re-evaluate on resize too
-
     return () => {
       window.removeEventListener("scroll", handleHeaderScroll)
-      // window.removeEventListener("resize", handleHeaderScroll);
     }
   }, [isMobile]) // Re-run effect if isMobile changes
 

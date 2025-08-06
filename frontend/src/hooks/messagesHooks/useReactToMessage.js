@@ -35,7 +35,6 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
                 newReactions.push({
                   _id: `optimistic-${Date.now()}-${userId}-${emoji}`,
                   emoji: emoji,
-                  // 👈 Change `user` to `userId`
                   userId: {
                     _id: userId,
                     username: currentUser.username,

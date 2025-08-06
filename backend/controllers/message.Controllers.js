@@ -319,7 +319,11 @@ export const deleteMessage = async (req, res) => {
         } else {
           updatedConversation.lastMessage = null;
         }
-        await updatedConversation.save();
+        await Conversation.updateOne(
+          { _id: conversation._id },
+          { $set: { lastMessage: newLastMessage } },
+          { timestamps: false }
+        );
       }
     }
 

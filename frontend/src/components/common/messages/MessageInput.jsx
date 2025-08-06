@@ -2,10 +2,9 @@ import { useEffect, useRef, useState, useCallback } from "react"
 import { truncateText } from "../../../utils/truncateText"
 import { IoClose, IoImageOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
-import EmojiPicker from "emoji-picker-react"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
-import { FaCaretDown, FaSpinner } from "react-icons/fa"
+import { FaSpinner } from "react-icons/fa"
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage"
 import { FaReply } from "react-icons/fa6"
 import React from "react"
@@ -57,7 +56,6 @@ function MessageInput({
 
   const isMobile = useIsMobile()
 
-  // --- MODIFIED: emitTyping now accepts isEditing flag ---
   const emitTyping = useCallback(
     (isEditingActive) => {
       if (socket && actualConversationId && currentUser?._id) {
@@ -71,7 +69,6 @@ function MessageInput({
     [socket, actualConversationId, currentUser?._id],
   )
 
-  // --- MODIFIED: emitStopTyping now accepts isEditing flag ---
   const emitStopTyping = useCallback(
     (isEditingActive) => {
       if (socket && actualConversationId && currentUser?._id) {
@@ -322,13 +319,8 @@ function MessageInput({
   }
 
   const handleTouchMove = (e) => {
-    // Check if the textarea content itself is overflowing
-    // This is crucial: only prevent default if the textarea can actually scroll
     const target = e.target
     if (target.scrollHeight > target.clientHeight) {
-      // If the content is larger than the visible area,
-      // allow the textarea to scroll by not preventing its default behavior.
-      // And importantly, prevent the event from bubbling to parent scroll containers.
       e.stopPropagation()
     }
   }

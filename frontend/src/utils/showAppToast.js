@@ -11,6 +11,7 @@ const commonToastStyle = {
   fontSize: "15px",
   fontWeight: "500",
   marginBottom: "45px",
+  zIndex: 9999
 };
 
 export const showAppToast = (message, type = "blank") => {

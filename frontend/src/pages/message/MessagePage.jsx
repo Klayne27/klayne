@@ -6,6 +6,7 @@ import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConvers
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
 import { useAppStore } from "../../store/useAppStore"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 
 const MessagePage = () => {
   const setIsChatWindowOpen = useAppStore((state) => state.setIsChatWindowOpen)
@@ -13,6 +14,8 @@ const MessagePage = () => {
   const setSelectedConversation = usePrivateChatStore((state) => state.setSelectedConversation)
 
   const { conversationId: urlConversationId } = useParams()
+
+  const isMobile = useIsMobile()
 
   usePrivateChatStore()
 
@@ -42,7 +45,7 @@ const MessagePage = () => {
     setSelectedConversation,
   ])
 
-  const isMobile = window.innerWidth < 768
+  // const isMobile = window.innerWidth < 768
   const showConversationList = !isMobile || !urlConversationId
   const showChatWindow = !isMobile || !!urlConversationId
 

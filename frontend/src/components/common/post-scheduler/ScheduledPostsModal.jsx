@@ -1,14 +1,14 @@
 import { useRef, useState } from "react";
-import { useGetScheduledPosts } from "../../hooks/postsHooks/useGetScheduledPosts";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import { useGetScheduledPosts } from "../../../hooks/postsHooks/useGetScheduledPosts";
+import LoadingSpinner from "../../ui/LoadingSpinner";
 import { TbCalendarClock } from "react-icons/tb";
 import { format } from "date-fns";
 import { IoClose } from "react-icons/io5";
-import { useDeleteMultipleScheduledPosts } from "../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll";
-import { showAppToast } from "../../utils/showAppToast";
-import ConfirmationModal from "../ui/ConfirmationModal";
-import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect";
+import { useDeleteMultipleScheduledPosts } from "../../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
+import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll";
+import { showAppToast } from "../../../utils/showAppToast";
+import ConfirmationModal from "../../ui/ConfirmationModal";
+import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect";
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
   const modalRef = useRef(null);

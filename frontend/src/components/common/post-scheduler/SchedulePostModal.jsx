@@ -1,9 +1,9 @@
 // components/common/SchedulePostModal.jsx
 import { useEffect, useRef } from "react"
 import { IoClose } from "react-icons/io5"
-import { showAppToast } from "../../utils/showAppToast"
-import DateTimeSelector from "../ui/DateTimeSelector" // Make sure this path is correct
-import useDateTimeStore from "../../store/useDateTimeStore"
+import { showAppToast } from "../../../utils/showAppToast"
+import DateTimeSelector from "../../ui/DateTimeSelector" // Make sure this path is correct
+import useDateTimeStore from "../../../store/useDateTimeStore"
 
 const SchedulePostModal = ({
   isOpen,
