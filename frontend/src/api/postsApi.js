@@ -161,15 +161,6 @@ export const updateScheduledPostApi = async ({ postId, postData }) => {
   return data;
 };
 
-export const deleteScheduledPostApi = async (postId) => {
-  const res = await fetch(`${BASE_URL}/scheduled/${postId}`, {
-    method: "DELETE",
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to delete scheduled post");
-  return data;
-};
-
 export const deleteMultipleScheduledPostsApi = async (postIds) => {
   const res = await fetch(`${BASE_URL}/scheduled/bulk-delete`, {
     method: "POST",

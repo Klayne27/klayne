@@ -18,7 +18,6 @@ import {
   getPinnedPosts,
   updateScheduledPost,
   getScheduledPosts,
-  deleteScheduledPost,
   deleteMultipleScheduledPosts,
   markFeedPostsAsRead,
 } from "../controllers/post.controllers.js";
@@ -48,7 +47,6 @@ router.get("/user/:username", protectRoute, getUserPosts);
 router.get("/:id", protectRoute, getPost);
 
 router.put("/scheduled/:id", protectRoute, updateScheduledPost);
-router.delete("/scheduled/:id", protectRoute, deleteScheduledPost);
 router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
 
 router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);

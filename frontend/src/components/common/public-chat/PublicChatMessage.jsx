@@ -1,9 +1,8 @@
-import React, { useCallback, useRef, useEffect } from "react"
+import React, { useRef } from "react"
 
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useDeleteOwnPublicMessage } from "../../../hooks/publicChatHooks/useDeleteOwnPublicMessage"
 import { useDeletePublicMessage } from "../../../hooks/publicChatHooks/useDeletePublicMessage"
-import { useAppStore } from "../../../store/useAppStore"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import { useBanUserFromPublicChat } from "../../../hooks/publicChatHooks/useBanUserFromPublicChat"
 import { useUnbanUserFromPublicChat } from "../../../hooks/publicChatHooks/useUnbanUserFromPublicChat"

@@ -19,7 +19,7 @@ createRoot(document.getElementById("root")).render(
           <ThemeProvider>
             <App />
             
-            <ReactQueryDevtools initialIsOpen={false} /> 
+            {/* <ReactQueryDevtools initialIsOpen={false} />  */}
           </ThemeProvider>
         </SocketContextProvider>
       </QueryClientProvider>

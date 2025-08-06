@@ -23,10 +23,8 @@ import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../EmojiPickerPopover"
+import { MAX_FILE_SIZE_MB, MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../../constants/numberConstants"
 
-const POLL_CHOICE_MAX_LENGTH = 25
-const MAX_POLL_CHOICES = 4
-const MAX_FILE_SIZE_MB = 20
 
 const CreatePost = () => {
   const { setShowNewFeedPostsButton, newPostCount } = useSocket()

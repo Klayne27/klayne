@@ -18,10 +18,7 @@ import ScheduledPostsModal from "../ScheduledPostsModal"
 import EditScheduledPostModal from "../EditSchedulePostModal"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../EmojiPickerPopover"
-
-const POLL_CHOICE_MAX_LENGTH = 25
-const MAX_POLL_CHOICES = 4
-const MAX_FILE_SIZE_MB = 20
+import { MAX_FILE_SIZE_MB, MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../../constants/numberConstants"
 
 function CreatePostModal({ onClose }) {
   // State for post content

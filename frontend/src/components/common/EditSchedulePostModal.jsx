@@ -1,20 +1,11 @@
-// EditScheduledPostModal.jsx
-import React, { useState, useEffect, useRef, useCallback } from "react"
-import { MdClose } from "react-icons/md"
-import { IoClose, IoTrashOutline } from "react-icons/io5"
-import toast from "react-hot-toast"
-import { TbCalendarClock } from "react-icons/tb"
+import { useState, useEffect, useRef, useCallback } from "react"
+import { IoClose } from "react-icons/io5"
 
-// Import your mutation hooks
-import { useCreatePosts } from "../../hooks/postsHooks/useCreatePosts"
 import { useUpdateScheduledPost } from "../../hooks/postsHooks/useUpdateScheduledPost"
-import { useDeleteScheduledPost } from "../../hooks/postsHooks/useDeleteScheduledPost"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { PiSmiley } from "react-icons/pi"
 import EmojiPicker from "emoji-picker-react"
 import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
-import { showAppToast } from "../../utils/showAppToast"
-import { RxCaretDown } from "react-icons/rx"
 import DateTimeSelector from "../ui/DateTimeSelector"
 import useDateTimeStore from "../../store/useDateTimeStore"
 
