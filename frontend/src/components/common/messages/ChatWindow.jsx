@@ -11,6 +11,7 @@ import { IoChatbubblesOutline } from "react-icons/io5"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
+import LoadingSpinner from "../../ui/LoadingSpinner"
 
 const ChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -24,14 +25,8 @@ const ChatWindow = () => {
 
   const { isTypingOtherUser, setIsTypingOtherUser, setShowNewMessageButton } = usePrivateChatStore()
 
-  const {
-    messages,
-    isLoading: isLoadingMessages,
-    error,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useFetchMessages(conversationId)
+  const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
+    useFetchMessages(conversationId)
 
   const {
     handleLoadImage,
@@ -51,7 +46,7 @@ const ChatWindow = () => {
   usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser)
   const privateChatInputRef = useRef(null)
   const currentOptimisticIdRef = useRef(null)
-  
+
   const handleSenderMessageSent = useCallback(() => {
     if (triggerScrollOnSenderMessage) {
       triggerScrollOnSenderMessage()
@@ -70,12 +65,12 @@ const ChatWindow = () => {
     }
   }, [conversationId, setActiveConversationId, socket, currentUser?._id, queryClient])
 
-  const isChatEmpty = !messages?.length && !isLoadingMessages
+  const isChatEmpty = !messages?.length
 
   return (
     <div className="relative flex h-full flex-col border-accent md:border-r">
       <ChatHeader otherUser={otherUser} />
-      {isChatEmpty && (
+      {isChatEmpty && !isLoadingMessages && (
         <div className="flex h-full flex-col items-center justify-end p-4 text-center">
           <IoChatbubblesOutline className="mb-4 text-6xl text-gray-300" />
           <p className="mb-2 text-xl font-semibold">
