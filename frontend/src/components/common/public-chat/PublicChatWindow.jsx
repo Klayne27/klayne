@@ -38,6 +38,7 @@ const PublicChatWindow = () => {
     handleNewMessageButtonClick,
     messageListRef,
     triggerScrollOnSenderMessage,
+    isInitialLoadComplete,
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -100,7 +101,7 @@ const PublicChatWindow = () => {
 
   const processedMessages = useProcessedMessage(messages)
 
-  if (isLoadingMessages && processedMessages.length === 0) {
+  if (isLoadingMessages &&  !isInitialLoadComplete) {
     return (
       <div className="flex h-full flex-col items-center justify-center">
         <LoadingSpinner size="lg" />
