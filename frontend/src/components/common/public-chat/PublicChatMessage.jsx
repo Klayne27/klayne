@@ -153,7 +153,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   }
 
   const handleImageClick = (imageUrl) => {
-    openImageModal(imageUrl)
+    openImageModal(message.img)
   }
 
   const handleAdminDeleteMessage = () => {

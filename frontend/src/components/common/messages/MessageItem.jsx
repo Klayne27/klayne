@@ -121,6 +121,7 @@ const MessageItem = ({
   //   }
   // }
 
+
   const openEmojiPickerWithModalClose = (e) => {
     handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
   }
@@ -129,8 +130,8 @@ const MessageItem = ({
     setShowMoreActionsModal(false)
   }, [setShowMoreActionsModal])
 
-  const handleImageClick = (imageUrl) => {
-    openImageModal(imageUrl)
+  const handleImageClick = () => {
+    openImageModal(message.img)
   }
 
   const handleClickOutsideMessage = useCallback(
