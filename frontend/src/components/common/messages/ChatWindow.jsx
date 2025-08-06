@@ -20,7 +20,6 @@ const ChatWindow = () => {
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
 
   const otherUser = selectedConversation?.participants.find((p) => p?._id !== currentUser?._id)
-
   const conversationId = selectedConversation?._id
 
   const { isTypingOtherUser, setIsTypingOtherUser, setShowNewMessageButton, showNewMessageButton } =

@@ -70,7 +70,7 @@ function ConversationItem({ conv }) {
   return (
     <div
       className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
-      onClick={handleSelectConversation} // ✨ Simplified handler
+      onClick={handleSelectConversation}
     >
       <Link
         to={`/profile/${otherUser.username}`}
