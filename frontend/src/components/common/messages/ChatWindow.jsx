@@ -12,6 +12,7 @@ import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import LoadingSpinner from "../../ui/LoadingSpinner"
+import { FaCaretDown } from "react-icons/fa"
 
 const ChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -23,7 +24,8 @@ const ChatWindow = () => {
 
   const conversationId = selectedConversation?._id
 
-  const { isTypingOtherUser, setIsTypingOtherUser, setShowNewMessageButton } = usePrivateChatStore()
+  const { isTypingOtherUser, setIsTypingOtherUser, setShowNewMessageButton, showNewMessageButton } =
+    usePrivateChatStore()
 
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId)
@@ -97,6 +99,18 @@ const ChatWindow = () => {
           handleLoadImage={handleLoadImage}
         />
 
+        {showNewMessageButton && (
+          <div className="absolute bottom-20 left-1/2 z-10 -translate-x-1/2">
+            <button
+              onClick={handleNewMessageButtonClick}
+              className="flex animate-bounce items-center space-x-2 rounded-full bg-primary px-3 py-1 text-sm text-white shadow-lg"
+            >
+              <span>New Message</span>
+              <FaCaretDown />
+            </button>
+          </div>
+        )}
+
         <MessageInput
           otherUser={otherUser}
           actualConversationId={conversationId}
@@ -104,7 +118,7 @@ const ChatWindow = () => {
           privateChatInputRef={privateChatInputRef}
           onSenderMessageSent={handleSenderMessageSent}
           socket={socket}
-          onNewMessageButtonClick={handleNewMessageButtonClick}
+          // onNewMessageButtonClick={handleNewMessageButtonClick}
         />
       </div>
     </div>

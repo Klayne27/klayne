@@ -67,7 +67,7 @@ export const useMessageScroll = ({
       setTimeout(() => {
         scrollToBottom()
         setShowNewMessageButton(false)
-      }, 50)
+      }, 10)
     }
   }, [scrollToBottom, setShowNewMessageButton])
 
@@ -114,6 +114,23 @@ export const useMessageScroll = ({
       })
     }
   }, [messages.length, isLoadingMessages, scrollToBottom, lastMessageId, waitForImagesToLoad])
+
+  // useLayoutEffect(() => {
+  //   const listEl = messageListRef.current
+  //   if (!listEl || isLoadingMessages) return
+
+  //   if (
+  //     messages.length > 0 &&
+  //     !isUserScrollingUp.current &&
+  //     !scrollStateBeforeFetch.current.scrollHeight
+  //   ) {
+  //     // Wait for all images to load before scrolling
+  //     waitForImagesToLoad().then(() => {
+  //       scrollToBottom()
+  //       shouldScrollOnSenderMessage.current = false
+  //     })
+  //   }
+  // }, [messages.length, isLoadingMessages, scrollToBottom, lastMessageId, waitForImagesToLoad])
 
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current
