@@ -33,11 +33,12 @@ const messageSchema = new mongoose.Schema(
           // enum: ["❤️", "👍", "😂", "😭", "😡"],
           required: true,
         },
-        user: {
+        userId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,
         },
+        _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
       },
     ],
   },

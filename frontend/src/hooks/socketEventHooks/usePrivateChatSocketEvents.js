@@ -3,7 +3,12 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { useSocket } from "../../context/SocketContext"
 
-export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser, otherUser) => {
+export const usePrivateChatSocketEvents = (
+  conversationId,
+  setIsTypingOtherUser,
+  otherUser,
+  handleReactionAdded,
+) => {
   const queryClient = useQueryClient()
   const { socket } = useSocket()
   const { authUser: currentUser } = useAuthUser()
@@ -249,6 +254,28 @@ export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser,
     [queryClient],
   )
 
+  const handleMessageReacted = useCallback(
+    ({ actorId, updatedMessage }) => {
+      // You should only update the messages for the active conversation
+      if (actorId === currentUser._id) {
+        return
+      }
+
+      queryClient.setQueryData(["messages", updatedMessage.conversationId], (oldData) => {
+        if (!oldData) return oldData
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
+        )
+        return { ...oldData, pages: updatedPages }
+      })
+
+      if (handleReactionAdded) {
+        handleReactionAdded()
+      }
+    },
+    [queryClient, handleReactionAdded, currentUser?._id],
+  )
+
   useEffect(() => {
     if (!socket || !conversationId) {
       console.log("Socket or conversationId not available for private chat, skipping setup.")
@@ -265,6 +292,7 @@ export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser,
     socket.on("stopTyping", handleStopTyping)
     socket.on("messageEdited", handleMessageEdited)
     socket.on("conversationUpdated", handleConversationUpdated)
+    socket.on("messageReacted", handleMessageReacted)
 
     return () => {
       socket.emit("leaveConversation", conversationId)
@@ -276,6 +304,7 @@ export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser,
       socket.off("stopTyping", handleStopTyping)
       socket.off("messageEdited", handleMessageEdited)
       socket.off("conversationUpdated", handleConversationUpdated)
+      socket.off("messageReacted", handleMessageReacted) // 👈 Clean up the listener
     }
   }, [
     socket,
@@ -287,5 +316,6 @@ export const usePrivateChatSocketEvents = (conversationId, setIsTypingOtherUser,
     handleStopTyping,
     handleMessageEdited,
     handleConversationUpdated,
+    handleMessageReacted,
   ])
 }

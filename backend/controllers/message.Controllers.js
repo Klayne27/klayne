@@ -199,6 +199,10 @@ export const getMessagesByConversationId = async (req, res) => {
           select: "username fullName profileImg isVerified isGoldVerified",
         },
       })
+      .populate({
+        path: "reactions.userId", // 👈 Add this new population for reactions
+        select: "username fullName profileImg",
+      })
       .lean();
 
     res.status(200).json(messages.reverse());
@@ -365,20 +369,22 @@ export const reactToMessage = async (req, res) => {
 
     const reactionExists = message.reactions.some(
       (reaction) =>
-        reaction.user.toString() === userId.toString() && reaction.emoji === emoji
+        reaction.userId.toString() === userId.toString() && reaction.emoji === emoji // 👈 Changed from `reaction.user` to `reaction.userId`
     );
 
     let updatedMessage;
     if (reactionExists) {
+      // 2. Change `reactions.user` in the update query
       updatedMessage = await Message.findOneAndUpdate(
-        { _id: messageId, "reactions.user": userId, "reactions.emoji": emoji },
-        { $pull: { reactions: { user: userId, emoji: emoji } } },
+        { _id: messageId, "reactions.userId": userId, "reactions.emoji": emoji }, // 👈 Changed from `reactions.user`
+        { $pull: { reactions: { userId: userId, emoji: emoji } } }, // 👈 Changed from `user: userId`
         { new: true }
       );
     } else {
+      // 3. Change `user` to `userId` in the push operation
       updatedMessage = await Message.findOneAndUpdate(
         { _id: messageId },
-        { $push: { reactions: { emoji, user: userId } } },
+        { $push: { reactions: { emoji, userId: userId } } }, // 👈 Changed from `user: userId`
         { new: true }
       );
     }
@@ -401,7 +407,7 @@ export const reactToMessage = async (req, res) => {
         },
       })
       .populate({
-        path: "reactions.user",
+        path: "reactions.userId", // 👈 Change population path to `reactions.userId`
         select: "username fullName profileImg",
       });
 
@@ -460,6 +466,10 @@ export const editMessage = async (req, res) => {
           select: "username fullName",
         },
         select: "text img sender",
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username profileImg fullName",
       });
 
     const conversation = await Conversation.findById(message.conversationId);

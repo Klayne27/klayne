@@ -95,24 +95,24 @@ export const SocketContextProvider = ({ children }) => {
         setNewPostCount(data.newPostCount);
       });
 
-      newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
-        if (actorId === user._id) {
-          return;
-        }
+      // newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
+      //   if (actorId === user._id) {
+      //     return;
+      //   }
 
-        queryClient.setQueryData(
-          ["messages", updatedMessage.conversationId],
-          (oldData) => {
-            if (!oldData) return oldData;
-            const updatedPages = oldData.pages.map((page) =>
-              page.map((message) =>
-                message._id === updatedMessage._id ? updatedMessage : message
-              )
-            );
-            return { ...oldData, pages: updatedPages };
-          }
-        );
-      });
+      //   queryClient.setQueryData(
+      //     ["messages", updatedMessage.conversationId],
+      //     (oldData) => {
+      //       if (!oldData) return oldData;
+      //       const updatedPages = oldData.pages.map((page) =>
+      //         page.map((message) =>
+      //           message._id === updatedMessage._id ? updatedMessage : message
+      //         )
+      //       );
+      //       return { ...oldData, pages: updatedPages };
+      //     }
+      //   );
+      // });
 
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
         if (actorId === user._id) {

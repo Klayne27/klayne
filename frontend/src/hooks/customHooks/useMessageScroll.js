@@ -71,21 +71,19 @@ export const useMessageScroll = ({
     }
   }, [scrollToBottom, setShowNewMessageButton])
 
-  const handleReactionAdded = useCallback(() => {
-    const listEl = messageListRef.current
-    if (!listEl) return
+const handleReactionAdded = useCallback(
+  (updatedMessage) => {
+    const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
 
-    const scrollThreshold = 100
-    const isUserAtBottom =
-      listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-    if (isUserAtBottom) {
+    if (lastMessageId && updatedMessage._id === lastMessageId) {
       setTimeout(() => {
         scrollToBottom()
         setShowNewMessageButton(false)
-      }, 1)
+      }, 100)
     }
-  }, [scrollToBottom, setShowNewMessageButton])
+  },
+  [messages, scrollToBottom, setShowNewMessageButton],
+)
 
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom()
