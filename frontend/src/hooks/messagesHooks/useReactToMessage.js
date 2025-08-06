@@ -4,7 +4,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { reactToMessageApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
 
-export const useReactToMessage = (selectedConversationId) => {
+export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) => {
   const queryClient = useQueryClient()
   const { authUser: currentUser } = useAuthUser()
 
@@ -51,6 +51,10 @@ export const useReactToMessage = (selectedConversationId) => {
         )
         return { ...oldData, pages: updatedPages }
       })
+      if (onReactionAdded) {
+        onReactionAdded(messageId)
+      }
+
       return { previousMessages }
     },
     onSuccess: (updatedMessage) => {

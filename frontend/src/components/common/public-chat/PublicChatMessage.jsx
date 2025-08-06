@@ -39,7 +39,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   const { unbanUser } = useUnbanUserFromPublicChat()
   const { adminDeletePublicMessage } = useDeletePublicMessage()
   const { deleteOwnMessage } = useDeleteOwnPublicMessage()
-  const { addReaction } = useAddPublicMessageReaction()
+  const { addReaction } = useAddPublicMessageReaction({ onReactionAdded })
 
   const isMobile = useIsMobile()
 
@@ -94,7 +94,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   } = useChatHandlers({
     message,
     setShowMoreActionsModal,
-    onReactionAdded,
     isMobile,
     handleCloseEmojiPickerPopover,
     handleOpenEmojiPickerPopover,
@@ -164,7 +163,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
           showModal={showModal}
           messageContentStyle={messageContentStyle}
           onReactionClick={handleReactionClick}
-          onReactionAdded={onReactionAdded}
           moreEmojisButtonRef={moreEmojisButtonRef}
           openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
           onReplyClick={handleReplyClick}

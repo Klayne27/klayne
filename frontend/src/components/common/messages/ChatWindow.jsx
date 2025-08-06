@@ -29,9 +29,6 @@ const ChatWindow = () => {
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId)
 
-  // const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
-  // const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
-
   const {
     handleLoadImage,
     handleReactionAdded,
@@ -104,8 +101,8 @@ const ChatWindow = () => {
             isFetchingOlderMessages={isFetchingNextPage}
             hasNextPage={hasNextPage}
             isTypingOtherUser={isTypingOtherUser}
-            onReactionAdded={handleReactionAdded}
             handleLoadImage={handleLoadImage}
+            onReactionAdded={handleReactionAdded}
           />
         )}
         {showNewMessageButton && (

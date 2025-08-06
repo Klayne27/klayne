@@ -202,7 +202,7 @@ export const usePrivateChatSocketEvents = (
       })
 
       if (handleReactionAdded) {
-        handleReactionAdded()
+        handleReactionAdded(updatedMessage._id)
       }
     },
     [queryClient, handleReactionAdded, currentUser?._id],

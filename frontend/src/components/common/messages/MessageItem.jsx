@@ -27,8 +27,8 @@ const MessageItem = ({
   privateChatInputRef,
   currentUser,
   isTypingOtherUser,
-  onReactionAdded,
   handleLoadImage,
+  onReactionAdded,
 }) => {
   const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
     usePrivateChatStore()
@@ -37,7 +37,10 @@ const MessageItem = ({
   const addReactionButtonRef = useRef(null)
 
   const { deleteMessage } = useDeleteMessage()
-  const { reactToMessage } = useReactToMessage(selectedConversation._id)
+  const { reactToMessage } = useReactToMessage({
+    selectedConversationId: selectedConversation._id,
+    onReactionAdded,
+  })
 
   const isMobile = useIsMobile()
 
@@ -83,7 +86,6 @@ const MessageItem = ({
   } = useChatHandlers({
     message,
     setShowMoreActionsModal,
-    onReactionAdded,
     isMobile,
     handleCloseEmojiPickerPopover,
     handleOpenEmojiPickerPopover,
@@ -155,7 +157,6 @@ const MessageItem = ({
           showModal={showModal}
           messageContentStyle={messageContentStyle}
           onReactionClick={handleReactionClick}
-          onReactionAdded={onReactionAdded}
           moreEmojisButtonRef={moreEmojisButtonRef}
           openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
           onReplyClick={handleReplyClick}

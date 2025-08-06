@@ -15,8 +15,8 @@ const MessageList = forwardRef(function MessageList(
     isFetchingOlderMessages,
     hasNextPage,
     isTypingOtherUser,
-    onReactionAdded,
     handleLoadImage,
+    onReactionAdded,
   },
   ref,
 ) {
@@ -53,8 +53,8 @@ const MessageList = forwardRef(function MessageList(
               message={message}
               currentUser={currentUser}
               privateChatInputRef={privateChatInputRef}
-              onReactionAdded={onReactionAdded}
               handleLoadImage={handleLoadImage}
+              onReactionAdded={onReactionAdded}
             />
           )
         })}

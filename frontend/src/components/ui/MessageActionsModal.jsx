@@ -8,7 +8,6 @@ function MessageActionsModal({
   showModal,
   messageContentStyle,
   onReactionClick,
-  onReactionAdded,
   moreEmojisButtonRef,
   openEmojiPickerWithModalClose,
   onReplyClick,
@@ -38,7 +37,6 @@ function MessageActionsModal({
           onClick={(e) => {
             e.stopPropagation();
             onReactionClick(message._id, emoji);
-            onReactionAdded();
           }}
           className={`text-xl hover:scale-125 py-1 transition duration-100`}
           title={`React with ${emoji}`}

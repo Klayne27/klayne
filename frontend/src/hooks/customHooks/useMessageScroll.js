@@ -34,18 +34,14 @@ export const useMessageScroll = ({
     }
   }, [])
 
-  // New function to wait for images
   const waitForImagesToLoad = useCallback(() => {
     const listEl = messageListRef.current
     if (!listEl) {
-      // If the element doesn't exist, we can't find images.
-      // Resolve the promise immediately.
       return Promise.resolve()
     }
 
     const images = listEl.querySelectorAll("img")
     if (images.length === 0) {
-      // No images to wait for, so resolve immediately.
       return Promise.resolve()
     }
 
@@ -58,8 +54,6 @@ export const useMessageScroll = ({
           }
 
           const handleLoadOrError = () => {
-            // You can also add a small delay here if you want to be extra cautious.
-            // For example: setTimeout(resolve, 50);
             resolve()
           }
 
@@ -88,24 +82,20 @@ export const useMessageScroll = ({
   }, [scrollToBottom, setShowNewMessageButton])
 
   const handleReactionAdded = useCallback(
-    (updatedMessage) => {
-      // 👈 Add this check to prevent the error
-      if (!updatedMessage) {
-        return
-      }
+    (reactedMessageId) => {
+      const listEl = messageListRef.current
+      if (!listEl) return
 
-      const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
-
-      if (lastMessageId && updatedMessage._id === lastMessageId) {
+      if (reactedMessageId === lastMessageId) {
         setTimeout(() => {
           scrollToBottom()
           setShowNewMessageButton(false)
-        }, 10)
+        }, 1)
       }
     },
-    [messages, scrollToBottom, setShowNewMessageButton],
+    [ scrollToBottom, setShowNewMessageButton, lastMessageId],
   )
-
+  
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom()
     setShowNewMessageButton(false)
@@ -248,6 +238,6 @@ export const useMessageScroll = ({
     messageListRef,
     triggerScrollOnSenderMessage,
     scrollToBottom,
-    isInitialLoadComplete
+    isInitialLoadComplete,
   }
 }

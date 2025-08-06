@@ -34,11 +34,11 @@ const PublicChatWindow = () => {
 
   const {
     handleLoadImage,
-    handleReactionAdded,
     handleNewMessageButtonClick,
     messageListRef,
     triggerScrollOnSenderMessage,
     isInitialLoadComplete,
+    handleReactionAdded,
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -151,8 +151,8 @@ const PublicChatWindow = () => {
                   message={message} // Pass the fully processed message object
                   currentUser={currentUser}
                   onLoadImage={handleLoadImage} // Renamed to `onLoadImage` for consistency
-                  onReactionAdded={handleReactionAdded}
                   publicChatInputRef={publicChatInputRef}
+                  onReactionAdded={handleReactionAdded}
                 />
               ))}
             </div>

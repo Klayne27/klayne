@@ -4,7 +4,6 @@ import { useAppStore } from "../../store/useAppStore"
 export const useChatHandlers = ({
   message,
   setShowMoreActionsModal,
-  onReactionAdded,
   addReaction,
   chatStore,
   isMobile,
@@ -54,7 +53,6 @@ export const useChatHandlers = ({
   const handleEmojiSelect = (emojiObject) => {
     handleReactionClick(message._id, emojiObject.emoji)
     handleCloseEmojiPickerPopover()
-    onReactionAdded()
   }
 
   const handleCopyMessage = () => {
