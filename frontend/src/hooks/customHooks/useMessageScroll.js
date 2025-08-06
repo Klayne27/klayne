@@ -73,13 +73,18 @@ export const useMessageScroll = ({
 
 const handleReactionAdded = useCallback(
   (updatedMessage) => {
+    // 👈 Add this check to prevent the error
+    if (!updatedMessage) {
+      return
+    }
+
     const lastMessageId = messages.length > 0 ? messages[messages.length - 1]._id : null
 
     if (lastMessageId && updatedMessage._id === lastMessageId) {
       setTimeout(() => {
         scrollToBottom()
         setShowNewMessageButton(false)
-      }, 100)
+      }, 10)
     }
   },
   [messages, scrollToBottom, setShowNewMessageButton],
