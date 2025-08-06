@@ -92,19 +92,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
-  const handleLongPress = useCallback(() => {
-    if (isMobile) {
-      setActiveMessageModalId(message._id)
-    }
-  }, [isMobile, message._id, setActiveMessageModalId])
-
-  // const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
-  //   handleLongPress,
-  //   500,
-  //   isMobile,
-  // )
-  // const showModal = activeMessageModalId === message._id
-
   const messageContentStyle = isMobile
     ? {
         userSelect: "none",
@@ -136,20 +123,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     navigator.clipboard.writeText(message.text)
     setShowMoreActionsModal(false)
   }
-
-  // const handleMouseEnter = () => {
-  //   if (!isCurrentlyTouchDevice) {
-  //     setActiveMessageModalId(message._id)
-  //     setIsHovered(true)
-  //   }
-  // }
-
-  // const handleMouseLeave = () => {
-  //   if (!isCurrentlyTouchDevice) {
-  //     setActiveMessageModalId(null)
-  //     setIsHovered(false)
-  //   }
-  // }
 
   const handleJumpToMessage = (messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`)
