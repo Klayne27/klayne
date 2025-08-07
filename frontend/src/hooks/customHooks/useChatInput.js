@@ -124,7 +124,7 @@ const handleTextInputChange = (e) => {
 
   const handleImageButtonClick = (e) => {
     e.preventDefault()
-    fileInputRef.current.click()
+    fileInputRef.current?.click()
     inputRef.current?.focus()
   }
 

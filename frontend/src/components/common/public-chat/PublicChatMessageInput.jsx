@@ -107,7 +107,6 @@ const PublicChatMessageInput = ({
     handleOpenEmojiPickerPopover(e)
   }
 
-
   const isEditingMode = !!editingMessage
   const showTypingIndicator = typingUsers && typingUsers.length > 0
   const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>
@@ -118,8 +117,9 @@ const PublicChatMessageInput = ({
         type="file"
         accept="image/*"
         onChange={handlers.handleFileChange}
-        ref={publicChatInputRef}
+        ref={publicChatFileInputRef}
         className="hidden"
+        disabled={!canSendImages}
       />
 
       <div className="focus-within:border-accent/99 relative mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary">
@@ -127,7 +127,8 @@ const PublicChatMessageInput = ({
           <button
             type="button"
             onClick={handlers.handleImageButtonClick}
-            className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
+            className={`${canSendImages ? "cursor-pointer" : "cursor-not-allowed"} rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700`}
+            disabled={!canSendImages}
           >
             <IoImageOutline className="h-5 w-5" />
           </button>
