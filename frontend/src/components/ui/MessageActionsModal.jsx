@@ -18,7 +18,7 @@ function MessageActionsModal({
   return (
     <div
       id={`message-reaction-modal-${message._id}`}
-      className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 transition-opacity z-10
+      className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 z-10
               ${
                 isSentByCurrentUser
                   ? "-left-24 translate-x-1/2"

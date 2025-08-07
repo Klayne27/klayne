@@ -34,7 +34,6 @@ const ChatWindow = () => {
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
-    isInitialLoadComplete,
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,

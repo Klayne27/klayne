@@ -1,51 +1,30 @@
-import { useEffect, useRef, useState, useCallback, useMemo } from "react"
+import { useRef, useCallback, useMemo } from "react"
 import { truncateText } from "../../../utils/truncateText"
 import { IoClose, IoImageOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage"
 import { FaReply } from "react-icons/fa6"
 import React from "react"
-import { showAppToast } from "../../../utils/showAppToast"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { useSendMessage } from "../../../hooks/messagesHooks/useSendMessage"
-import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
 
-function MessageInput({
-  otherUser,
-  actualConversationId,
-  privateChatInputRef,
-  socket,
-  onSenderMessageSent,
-}) {
-  const { authUser: currentUser } = useAuthUser()
-  const { setReplyingToMessage, setEditingMessage, replyingToMessage, editingMessage } =
-    usePrivateChatStore()
-
-  // const [privateChatInput, setPrivateChatInput] = useState("")
-  // const [privateChatPreviewImage, setPrivateChatPreviewImage] = useState(null)
-  // const [privateChatSelectedFile, setPrivateChatSelectedFile] = useState(null)
-
-  // const typingTimeoutRef = useRef(null)
+function MessageInput({ actualConversationId, privateChatInputRef, socket, onSenderMessageSent }) {
+  const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
 
   const { editPrivateMessage } = useEditMessage(actualConversationId)
-  const { sendPrivateMessage } = useSendMessage(
-    onSenderMessageSent,
-  )
+  const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
 
   const handleSendMessage = useCallback(
     async ({ text, file, repliedToId }) => {
-      // Make the function async
       let imgBase64 = null
       if (file) {
-        // Await the promise to get the actual base64 string
         imgBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result)
@@ -70,8 +49,6 @@ function MessageInput({
     },
     [editPrivateMessage],
   )
-
-  // const isMobile = useIsMobile()
 
   const typingConfig = useMemo(
     () => ({
@@ -110,21 +87,6 @@ function MessageInput({
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  // The new, merged callback function
-  // const emitTypingEvent = useCallback(
-  //   (isTyping, isEditingActive) => {
-  //     if (socket && actualConversationId && currentUser?._id) {
-  //       const eventName = isTyping ? "typing" : "stopTyping"
-  //       socket.emit(eventName, {
-  //         conversationId: actualConversationId,
-  //         userId: currentUser._id,
-  //         isEditing: isEditingActive,
-  //       })
-  //     }
-  //   },
-  //   [socket, actualConversationId, currentUser?._id],
-  // )
-
   const handlePaste = usePasteHandler({
     inputRef: privateChatInputRef,
     input: textInput,
@@ -135,243 +97,10 @@ function MessageInput({
     editingMessage,
   })
 
-  // const clearInputState = useCallback(() => {
-  //   setPrivateChatInput("")
-  //   setPrivateChatSelectedFile(null)
-  //   setPrivateChatPreviewImage(null)
-  //   setReplyingToMessage(null)
-  //   setEditingMessage(null)
-  //   if (privateChatFileInputRef.current) privateChatFileInputRef.current.value = ""
-  //   if (privateChatInputRef.current) {
-  //     privateChatInputRef.current.style.height = "auto"
-  //     privateChatInputRef.current.focus()
-  //   }
-  // }, [setEditingMessage, setReplyingToMessage, privateChatInputRef])
-
-  // useEffect(() => {
-  //   if (privateChatInputRef.current) {
-  //     privateChatInputRef.current.style.height = "auto"
-  //     privateChatInputRef.current.style.height = privateChatInputRef.current.scrollHeight + "px"
-  //   }
-  //   // eslint-disable-next-line
-  // }, [privateChatInput])
-
-  // useEffect(() => {
-  //   if (editingMessage) {
-  //     setPrivateChatInput(editingMessage.text)
-  //     privateChatInputRef.current?.focus()
-  //   }
-  //   // eslint-disable-next-line
-  // }, [editingMessage])
-
-  // // Refactored handler to use the new emitTypingEvent
-  // const handleMessageInputChange = (e) => {
-  //   const text = e.target.value
-  //   setPrivateChatInput(text)
-
-  //   if (privateChatInputRef.current) {
-  //     privateChatInputRef.current.style.height = "auto"
-  //     privateChatInputRef.current.style.height = privateChatInputRef.current.scrollHeight + "px"
-  //   }
-
-  //   const isCurrentlyEditing = !!editingMessage
-
-  //   // Clear any existing timeout to prevent sending "stop typing" too early
-  //   if (typingTimeoutRef.current) {
-  //     clearTimeout(typingTimeoutRef.current)
-  //   }
-
-  //   if (text.trim() === "") {
-  //     // If input is empty, immediately send a "stop typing" event
-  //     emitTypingEvent(false, isCurrentlyEditing)
-  //     typingTimeoutRef.current = null
-  //   } else {
-  //     // If input has content, send a "typing" event
-  //     emitTypingEvent(true, isCurrentlyEditing)
-
-  //     // Set a new timeout to send "stop typing" after a pause
-  //     typingTimeoutRef.current = setTimeout(() => {
-  //       emitTypingEvent(false, isCurrentlyEditing)
-  //       typingTimeoutRef.current = null
-  //     }, 1500)
-  //   }
-  // }
-
-  // const handleSendPrivateMessage = useCallback(
-  //   async (e) => {
-  //     e.preventDefault()
-
-  //     if (typingTimeoutRef.current) {
-  //       clearTimeout(typingTimeoutRef.current)
-  //       typingTimeoutRef.current = null
-  //     }
-  //     // Use the new unified function
-  //     emitTypingEvent(false, !!editingMessage)
-
-  //     if (!privateChatInput.trim() && !privateChatSelectedFile) return
-
-  //     if (!otherUser) {
-  //       showAppToast("No recipient selected.", "error")
-  //       return
-  //     }
-
-  //     const repliedToId = replyingToMessage ? replyingToMessage._id : null
-
-  //     const messagePayload = {
-  //       recipientId: otherUser._id,
-  //       message: privateChatInput,
-  //       img: null,
-  //       conversationId: actualConversationId,
-  //       repliedTo: repliedToId,
-  //     }
-
-  //     try {
-  //       if (privateChatSelectedFile) {
-  //         const reader = new FileReader()
-  //         const imageDataUrl = await new Promise((resolve, reject) => {
-  //           reader.onloadend = () => resolve(reader.result)
-  //           reader.onerror = reject
-  //           reader.readAsDataURL(privateChatSelectedFile)
-  //         })
-  //         messagePayload.img = imageDataUrl
-  //       }
-
-  //       sendPrivateMessage(messagePayload)
-  //       clearInputState()
-  //     } catch (error) {
-  //       console.error("Error during message send process:", error)
-  //       showAppToast("Failed to send message.", "error")
-  //     }
-  //   },
-  //   [
-  //     emitTypingEvent, // Use the new dependency
-  //     privateChatInput,
-  //     privateChatSelectedFile,
-  //     otherUser,
-  //     replyingToMessage,
-  //     editingMessage,
-  //     actualConversationId,
-  //     sendPrivateMessage,
-  //     clearInputState,
-  //   ],
-  // )
-
-  // const handleSubmit = useCallback(
-  //   (e) => {
-  //     e.preventDefault()
-
-  //     const trimmedMessage = privateChatInput.replace(/\s/g, "")
-
-  //     if (trimmedMessage.length === 0 && !privateChatSelectedFile) {
-  //       if (isMobile && privateChatInputRef.current) {
-  //         privateChatInputRef.current.focus()
-  //       }
-  //       return
-  //     }
-
-  //     if (editingMessage) {
-  //       editMessage({ messageId: editingMessage._id, newText: privateChatInput })
-  //       clearInputState()
-  //     } else {
-  //       handleSendPrivateMessage(e)
-  //       setPrivateChatInput("")
-  //       if (privateChatInputRef.current) {
-  //         privateChatInputRef.current.style.height = "auto"
-  //         privateChatInputRef.current.rows = 1
-  //       }
-  //     }
-  //   },
-  //   [
-  //     privateChatInput,
-  //     privateChatSelectedFile,
-  //     isMobile,
-  //     privateChatInputRef,
-  //     editingMessage,
-  //     editMessage,
-  //     handleSendPrivateMessage,
-  //     setPrivateChatInput,
-  //     clearInputState,
-  //   ],
-  // )
-
   const openEmojiPickerWithModalClose = (e) => {
     handleOpenEmojiPickerPopover(e)
   }
 
-  // const handleEmojiClick = useCallback(
-  //   (emojiObject) => {
-  //     setPrivateChatInput((prevText) => prevText + emojiObject.emoji)
-  //     privateChatInputRef.current.focus()
-  //   },
-  //   [privateChatInputRef],
-  // )
-
-  // const handleImageChange = (e) => {
-  //   const file = e.target.files[0]
-  //   if (!file) return
-
-  //   if (!file.type.startsWith("image/")) {
-  //     showAppToast("Only image files are supported.", "error")
-  //     return
-  //   }
-  //   if (file.size > 5 * 1024 * 1024) {
-  //     showAppToast("Image size cannot exceed 5MB.", "error")
-  //     return
-  //   }
-
-  //   setPrivateChatSelectedFile(file)
-  //   const reader = new FileReader()
-  //   reader.onloadend = () => setPrivateChatPreviewImage(reader.result)
-  //   reader.readAsDataURL(file)
-  // }
-
-  // const handleImageButtonClick = (e) => {
-  //   e.preventDefault()
-  //   privateChatFileInputRef.current.click()
-  //   privateChatInputRef.current.focus()
-  // }
-
-  // const handleKeyDown = (e) => {
-  //   if (isMobile) {
-  //     return
-  //   }
-  //   if (e.key === "Enter") {
-  //     if (!e.shiftKey) {
-  //       e.preventDefault()
-  //       handleSubmit(e)
-  //     }
-  //   }
-  // }
-
-  // const handleCancelEdit = () => {
-  //   setEditingMessage(null)
-  //   setPrivateChatInput("")
-  //   emitTypingEvent(false)
-  // }
-
-  // const handleRemoveImage = () => {
-  //   setPrivateChatSelectedFile(null)
-  //   setPrivateChatPreviewImage(null)
-  //   if (privateChatFileInputRef.current) privateChatFileInputRef.current.value = ""
-  //   privateChatInputRef.current?.focus()
-  // }
-
-  // useEffect(() => {
-  //   // Return a cleanup function to handle unmounting
-  //   return () => {
-  //     if (typingTimeoutRef.current) {
-  //       clearTimeout(typingTimeoutRef.current)
-  //       typingTimeoutRef.current = null
-  //     }
-  //     // Use the new unified function to stop typing when leaving the conversation
-  //     emitTypingEvent(false)
-  //   }
-  //   // The dependency array now correctly includes `emitTypingEvent` and `editingMessage`
-  // }, [actualConversationId, emitTypingEvent])
-
-  // const isSendButtonDisabled = !privateChatInput.trim() && !privateChatSelectedFile
-
-  // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
     <>
       <input
@@ -428,7 +157,7 @@ function MessageInput({
             isEditingMode
               ? "Editing message..."
               : replyingToMessage
-                ? `Replying to ${truncateText(replyingToMessage.text, 20)}...`
+                ? `Replying to @${replyingToMessage.sender.username}...`
                 : "Type your message..."
           }
           className="flex max-h-[140px] w-full resize-none overflow-y-auto rounded-r-xl bg-secondary py-2 pl-3 pr-14 placeholder-gray-400 focus:outline-none"
@@ -454,7 +183,7 @@ function MessageInput({
   return (
     <>
       {previewImage && (
-        <div className="mt-4 flex border-t border-accent p-5">
+        <div className="flex border-t border-accent p-5">
           <div className="relative">
             <img
               src={previewImage}

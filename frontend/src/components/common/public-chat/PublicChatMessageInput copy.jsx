@@ -107,7 +107,6 @@ const PublicChatMessageInput = ({
     handleOpenEmojiPickerPopover(e)
   }
 
-
   const isEditingMode = !!editingMessage
   const showTypingIndicator = typingUsers && typingUsers.length > 0
   const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>

@@ -179,16 +179,29 @@ export const useMessageScroll = ({
   }, [isFetchingNextPage, messages])
 
   useEffect(() => {
+    if (messages.length === 0) return
+
+    const lastMessage = messages[messages.length - 1]
+
+    // Check if the last message was sent by the current user
+    if (lastMessage.sender?._id === currentUser?._id) {
+      // Always scroll to the bottom unconditionally
+      scrollToBottom()
+    }
+  }, [messages, currentUser, scrollToBottom])
+
+  // Modified useEffect for handling new messages from other users
+  useEffect(() => {
     if (messages.length === 0) {
       prevLastMessageId.current = null
       return
     }
 
     const newLastMessage = messages[messages.length - 1]
-
     const isNewMessageAdded = newLastMessage._id !== prevLastMessageId.current
 
     if (isNewMessageAdded) {
+      // Only show the "New Message" button if another user sent it and the current user is scrolled up
       if (isUserScrollingUp.current && newLastMessage.sender?._id !== currentUser?._id) {
         setShowNewMessageButton(true)
       }
@@ -236,7 +249,7 @@ export const useMessageScroll = ({
     handleReactionAdded,
     handleNewMessageButtonClick,
     messageListRef,
-    triggerScrollOnSenderMessage,
+    // triggerScrollOnSenderMessage,
     scrollToBottom,
     isInitialLoadComplete,
   }
