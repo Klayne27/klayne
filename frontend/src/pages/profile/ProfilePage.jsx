@@ -27,18 +27,16 @@ import { useFetchConversationBetweenUsers } from "../../hooks/messagesHooks/useF
 import { showAppToast } from "../../utils/showAppToast"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
+import { formatProfileLink, getFullProfileLink } from "../../utils/textUtils"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
-  const openProfileImageModal = useAppStore(
-    (state) => state.openProfileImageModal,
-  )
+  const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
 
   const [coverImg, setCoverImg] = useState(null)
   const [profileImg, setProfileImg] = useState(null)
   const [modalType, setModalType] = useState(null)
-  const [showBlockConfirmationModal, setShowBlockConfirmationModal] =
-    useState(false)
+  const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
   const [showUnfollowModal, setShowUnfollowModal] = useState(false) // New state for unfollow modal
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false) // NEW STATE for delete modal
   const [userToUnfollow, setUserToUnfollow] = useState(null) // State to hold user info for unfollow modal
@@ -83,16 +81,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   } = useFetchPinnedPosts(username)
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
-  const { toggleVisibility, isTogglingVisibility } =
-    useToggleConversationVisibility()
+  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility()
 
   const isMyProfile = authUser?._id === userProfile?._id
   const amIFollowing = authUser?.following?.includes(userProfile?._id)
 
   const isAdminUser = authUser?.isAdmin // Assuming `isAdmin` field on authUser
-  const blockModalTitle = isBlockedByYou
-    ? `Unblock @${username}?`
-    : `Block @${username}?`
+  const blockModalTitle = isBlockedByYou ? `Unblock @${username}?` : `Block @${username}?`
   const confirmButtonText = isBlockedByYou ? "Unblock" : "Block"
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou
@@ -101,13 +96,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   // const [isTouchDevice, setIsTouchDevice] = useState(false)
   // const [activeTab, setActiveTab] = useState(null) // To control the active state for touch feedback
 
-  const {
-    isTouchDevice,
-    activeButtonId,
-    handleTouchCancel,
-    handleTouchEnd,
-    handleTouchStart,
-  } = useTouchHoverEffect()
+  const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
+    useTouchHoverEffect()
 
   // useEffect(() => {
   //   setIsTouchDevice(
@@ -221,10 +211,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
 
     if (isErrorConversationStatus) {
-      console.error(
-        "Error fetching conversation status:",
-        conversationStatusError,
-      )
+      console.error("Error fetching conversation status:", conversationStatusError)
       showAppToast("Failed to get conversation status.", "error") // Inform the user
       return
     }
@@ -243,8 +230,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             },
             onError: (err) => {
               showAppToast(
-                "Failed to unhide conversation: " +
-                  (err.message || "Unknown error", "error"),
+                "Failed to unhide conversation: " + (err.message || "Unknown error", "error"),
               )
             },
           },
@@ -293,8 +279,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     showFullProfileHeader = false
     showFullProfileContent = false
   } else if (hasBlockedYou) {
-    displayMessage =
-      "You are blocked by this user. You cannot view their profile content."
+    displayMessage = "You are blocked by this user. You cannot view their profile content."
     showFullProfileHeader = false
     showFullProfileContent = false
   } else if (!userProfile) {
@@ -302,8 +287,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     showFullProfileHeader = false
     showFullProfileContent = false
   } else if (isBlockedByYou) {
-    displayMessage =
-      "Content is unavailable because you have blocked this user."
+    displayMessage = "Content is unavailable because you have blocked this user."
     showFullProfileHeader = true
     showFullProfileContent = false
   } else {
@@ -323,9 +307,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     <>
       <ScrollToTop />
       <div className="min-h-screen flex-[4_4_0] border-accent">
-        {!hasBlockedYou && (isLoading || isRefetching) && !isError && (
-          <ProfileHeaderSkeleton />
-        )}
+        {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
 
         {showFullProfileHeader && userProfile && (
           <>
@@ -339,9 +321,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="flex flex-col">
                 <p className="text-lg font-bold">{userProfile?.fullName}</p>
                 <span className="text-sm text-slate-500">
-                  {feedType === "posts"
-                    ? `${userPostsCount} posts`
-                    : `${userPostsCount} likes`}
+                  {feedType === "posts" ? `${userPostsCount} posts` : `${userPostsCount} likes`}
                 </span>
               </div>
             </div>
@@ -379,24 +359,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
                   <img
-                    src={
-                      profileImg ||
-                      userProfile?.profileImg ||
-                      "/avatar-placeholder.png"
-                    }
+                    src={profileImg || userProfile?.profileImg || "/avatar-placeholder.png"}
                     alt="user avatar"
                     className="cursor-pointer"
-                    onClick={(e) =>
-                      handleProfileImageClick(userProfile?.profileImg, e)
-                    }
+                    onClick={(e) => handleProfileImageClick(userProfile?.profileImg, e)}
                     loading="lazy"
                   />
                   {isMyProfile && (
                     <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
-                      <MdEdit
-                        className="h-4 w-4"
-                        onClick={() => profileImgRef.current.click()}
-                      />
+                      <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />
                     </div>
                   )}
                 </div>
@@ -419,19 +390,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {!isMyProfile && !hasBlockedYou && (
                 <button
                   className={`absolute top-20 flex items-center gap-1 rounded-full border border-red-700 px-1.5 py-1 text-xs font-bold transition duration-200 md:px-3 md:text-base ${
-                    isBlockedByYou
-                      ? "bg-red-700 hover:bg-red-800"
-                      : "bg-red-700 hover:bg-red-800"
+                    isBlockedByYou ? "bg-red-700 hover:bg-red-800" : "bg-red-700 hover:bg-red-800"
                   } `}
                   onClick={openBlockConfirmationModal}
                   disabled={isBlocking}
                 >
                   {!isBlockedByYou && <MdBlock size={20} />}
-                  {isBlocking
-                    ? "Loading..."
-                    : isBlockedByYou
-                      ? "Unblock"
-                      : "Block"}
+                  {isBlocking ? "Loading..." : isBlockedByYou ? "Unblock" : "Block"}
                 </button>
               )}
 
@@ -501,9 +466,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
         )}
 
         {!isLoading && !isRefetching && displayMessage && (
-          <p className="mt-16 text-center text-lg text-slate-400">
-            {displayMessage}
-          </p>
+          <p className="mt-16 text-center text-lg text-slate-400">{displayMessage}</p>
         )}
 
         {showFullProfileContent && userProfile && (
@@ -511,19 +474,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             <div className="mt-3 flex flex-col gap-4 px-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-lg font-bold">
-                    {userProfile?.fullName}
-                  </span>
-                  {userProfile?.isVerified && (
-                    <img src="/verified.png" className="size-[18px]" />
-                  )}
+                  <span className="text-lg font-bold">{userProfile?.fullName}</span>
+                  {userProfile?.isVerified && <img src="/verified.png" className="size-[18px]" />}
                   {userProfile?.isGoldVerified && (
                     <img src="/gold-verified.png" className="size-[18px]" />
                   )}
                 </div>
-                <span className="text-sm text-slate-500">
-                  @{userProfile?.username}
-                </span>
+                <span className="text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
               </div>
 
@@ -533,12 +490,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     <>
                       <FaLink className="h-3 w-3 text-slate-500" />
                       <a
-                        href={userProfile?.link}
+                        href={getFullProfileLink(userProfile?.link)} // Use the new function for the href
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-primary hover:underline"
                       >
-                        {userProfile?.link.slice(12)}
+                        {formatProfileLink(userProfile?.link)}
                       </a>
                     </>
                   </div>
@@ -556,18 +513,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   className="flex cursor-pointer items-center gap-1 hover:underline"
                   onClick={() => openFollowListModal("following")}
                 >
-                  <span className="text-sm font-bold">
-                    {userProfile?.following?.length}
-                  </span>{" "}
+                  <span className="text-sm font-bold">{userProfile?.following?.length}</span>{" "}
                   <span className="text-sm text-slate-500">Following</span>{" "}
                 </div>
                 <div
                   className="flex cursor-pointer items-center gap-1 hover:underline"
                   onClick={() => openFollowListModal("followers")}
                 >
-                  <span className="text-sm font-bold">
-                    {userProfile?.followers?.length}
-                  </span>{" "}
+                  <span className="text-sm font-bold">{userProfile?.followers?.length}</span>{" "}
                   <span className="text-sm text-slate-500">Followers</span>{" "}
                 </div>
               </div>
@@ -576,9 +529,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {/* Posts Tab */}
               <div
                 className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "posts"
-                    ? "bg-secondary bg-opacity-50"
-                    : ""
+                  isTouchDevice && activeButtonId === "posts" ? "bg-secondary bg-opacity-50" : ""
                 } ${feedType === "posts" ? "font-bold" : "opacity-50"} `}
                 onClick={() => {
                   setFeedType("posts")
@@ -597,9 +548,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {/* Likes Tab */}
               <div
                 className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "likes"
-                    ? "bg-secondary bg-opacity-50"
-                    : ""
+                  isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""
                 } {/* Active background for touch */} ${
                   feedType === "likes" ? "font-bold" : "opacity-50"
                 } {/* Existing text styling */} active`}
@@ -628,9 +577,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             userId={userProfile?._id}
             onPostsFetched={handlePostsFetched}
             pinnedPosts={pinnedPosts || []}
-            isLoadingPinnedPosts={
-              isLoadingPinnedPosts || isRefetchingPinnedPosts
-            }
+            isLoadingPinnedPosts={isLoadingPinnedPosts || isRefetchingPinnedPosts}
           />
         )}
       </div>

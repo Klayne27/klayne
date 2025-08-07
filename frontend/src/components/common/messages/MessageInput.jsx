@@ -23,23 +23,20 @@ function MessageInput({
   socket,
   onSenderMessageSent,
 }) {
-  const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
-  const setEditingMessage = usePrivateChatStore((state) => state.setEditingMessage)
-  const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)
-  const editingMessage = usePrivateChatStore((state) => state.editingMessage)
+  const { authUser: currentUser } = useAuthUser()
+  const { setReplyingToMessage, setEditingMessage, replyingToMessage, editingMessage } =
+    usePrivateChatStore()
 
   const [privateChatInput, setPrivateChatInput] = useState("")
   const [privateChatPreviewImage, setPrivateChatPreviewImage] = useState(null)
   const [privateChatSelectedFile, setPrivateChatSelectedFile] = useState(null)
+  
+  const typingTimeoutRef = useRef(null)
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
-  // const emojiPickerRef = useRef(null)
-  const typingTimeoutRef = useRef(null)
-  const { authUser: currentUser } = useAuthUser()
 
-
-  const { editMessage, isEditing } = useEditMessage(actualConversationId)
-  const { sendPrivateMessage, isSendingMessage } = useSendMessage({
+  const { editMessage } = useEditMessage(actualConversationId)
+  const { sendPrivateMessage } = useSendMessage({
     onSenderMessageSent,
   })
 
@@ -164,7 +161,6 @@ function MessageInput({
       return
     }
     if (file.size > 5 * 1024 * 1024) {
-      // 5MB limit
       showAppToast("Image size cannot exceed 5MB.", "error")
       return
     }
@@ -342,8 +338,7 @@ function MessageInput({
     }
   }, [actualConversationId, emitStopTyping])
 
-  const isSendButtonDisabled =
-    isSendingMessage || isEditing || (!privateChatInput.trim() && !privateChatSelectedFile)
+  const isSendButtonDisabled = !privateChatInput.trim() && !privateChatSelectedFile
 
   // Helper for rendering the common form content
   const renderFormContent = (isEditingMode = false) => (
@@ -420,15 +415,7 @@ function MessageInput({
               : "cursor-not-allowed bg-primary text-white opacity-50"
           } transition-colors duration-200`}
         >
-          {isEditingMode ? (
-            isEditing ? (
-              <FaSpinner className="animate-spin" />
-            ) : (
-              <MdCheck className="h-5 w-5" />
-            )
-          ) : (
-            <MdSend className="h-5 w-5" />
-          )}
+          {isEditingMode ? <MdCheck className="h-5 w-5" /> : <MdSend className="h-5 w-5" />}
         </button>
       </div>
     </>

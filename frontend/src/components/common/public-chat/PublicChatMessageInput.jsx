@@ -26,21 +26,20 @@ const PublicChatMessageInput = ({
   sendTypingEvent, // This function needs to be updated to emit the new event
   typingUsers, // This is the array of users currently typing from the server
 }) => {
+  const { authUser: currentUser } = useAuthUser()
   const { replyingToMessage, setReplyingToMessage, setEditingMessage, editingMessage } =
     usePublicChatStore()
-
-  const typingTimeoutRef = useRef(null)
-  const hasSentTypingEvent = useRef(false)
-
-  const emojiButtonRef = useRef(null)
-
-  const { authUser } = useAuthUser()
-  const canSendImages = authUser?.isVerified || authUser?.isGoldVerified
 
   const [publicChatInput, setPublicChatInput] = useState("")
   const [publicChatSelectedFile, setPublicChatSelectedFile] = useState(null)
   const [publicChatPreviewImage, setPublicChatPreviewImage] = useState(null)
+
+  const typingTimeoutRef = useRef(null)
+  const hasSentTypingEvent = useRef(false)
+  const emojiButtonRef = useRef(null)
   const publicChatFileInputRef = useRef(null)
+
+  const canSendImages = currentUser?.isVerified || currentUser?.isGoldVerified
 
   const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
 
@@ -207,7 +206,7 @@ const PublicChatMessageInput = ({
   ])
 
   const handleSubmitPublicChat = useCallback(
-     (e) => {
+    (e) => {
       // Make it async because handleSendPublicMessage is async
       e.preventDefault()
 
@@ -245,7 +244,7 @@ const PublicChatMessageInput = ({
           showAppToast("Failed to edit message.", "error")
         }
       } else {
-       handleSendPublicMessage()
+        handleSendPublicMessage()
       }
     },
     [
@@ -264,6 +263,15 @@ const PublicChatMessageInput = ({
   const handleImageChange = (e) => {
     const file = e.target.files[0]
     if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      showAppToast("Only image files are supported.", "error")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showAppToast("Image size cannot exceed 5MB.", "error")
+      return
+    }
 
     setPublicChatSelectedFile(file)
     const reader = new FileReader()
@@ -316,9 +324,7 @@ const PublicChatMessageInput = ({
     (!publicChatInput.trim() && !publicChatSelectedFile)
 
   const isEditingMode = !!editingMessage
-
   const showTypingIndicator = typingUsers && typingUsers.length > 0
-
   const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>
 
   return (
