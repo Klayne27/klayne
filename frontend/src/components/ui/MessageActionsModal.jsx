@@ -9,66 +9,58 @@ function MessageActionsModal({
   messageContentStyle,
   onReactionClick,
   moreEmojisButtonRef,
-  openEmojiPickerWithModalClose,
+  handleOpenEmojiPickerPopover,
   onReplyClick,
   onOpenMoreActionsModal,
 }) {
-  const allowedEmojis = ["❤️", "👍", "😂"];
+  const allowedEmojis = ["❤️", "👍", "😂"]
 
   return (
     <div
       id={`message-reaction-modal-${message._id}`}
-      className={`absolute -top-5 bg-base-100 gray-shadow rounded-xl px-2 flex items-center gap-1 z-10
-              ${
-                isSentByCurrentUser
-                  ? "-left-24 translate-x-1/2"
-                  : "-right-24 -translate-x-1/2"
-              }
-              ${
-                showModal
-                  ? "opacity-100 pointer-events-auto"
-                  : "opacity-0 pointer-events-none"
-              } `}
+      className={`gray-shadow absolute -top-5 z-10 flex items-center gap-1 rounded-xl bg-base-100 px-2 ${
+        isSentByCurrentUser ? "-left-24 translate-x-1/2" : "-right-24 -translate-x-1/2"
+      } ${showModal ? "pointer-events-auto opacity-100" : "pointer-events-none opacity-0"} `}
       style={messageContentStyle}
     >
       {allowedEmojis.map((emoji) => (
         <button
           key={emoji}
           onClick={(e) => {
-            e.stopPropagation();
-            onReactionClick(message._id, emoji);
+            e.stopPropagation()
+            onReactionClick(message._id, emoji)
           }}
-          className={`text-xl hover:scale-125 py-1 transition duration-100`}
+          className={`py-1 text-xl transition duration-100 hover:scale-125`}
           title={`React with ${emoji}`}
         >
           {emoji}
         </button>
       ))}
-      <div className="w-px h-6 bg-slate-500 mx-1"></div>
+      <div className="mx-1 h-6 w-px bg-slate-500"></div>
       <button
         ref={moreEmojisButtonRef}
-        onClick={(e) => openEmojiPickerWithModalClose(e, moreEmojisButtonRef)}
-        className=" text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg duration-100 transtion"
+        onClick={(e) => handleOpenEmojiPickerPopover(e)}
+        className="transtion group rounded-lg text-slate-500 duration-100 hover:bg-secondary hover:text-slate-400"
         title="More Emojis"
       >
-        <PiSmileyFill size={27} className="group-hover:scale-110 p-[3px]" />
+        <PiSmileyFill size={27} className="p-[3px] group-hover:scale-110" />
       </button>
       <button
         onClick={onReplyClick}
-        className="p-1 text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg transition duration-100"
+        className="group rounded-lg p-1 text-slate-500 transition duration-100 hover:bg-secondary hover:text-slate-400"
         title="Reply to message"
       >
         <HiOutlineReply size={18} className="group-hover:scale-110" />
       </button>
       <button
         onClick={onOpenMoreActionsModal}
-        className="text-slate-500 group hover:text-slate-400 hover:bg-secondary rounded-lg p-1 transition duration-100"
+        className="group rounded-lg p-1 text-slate-500 transition duration-100 hover:bg-secondary hover:text-slate-400"
         title="More actions"
       >
         <BsThreeDots size={18} className="group-hover:scale-110" />
       </button>
     </div>
-  );
+  )
 }
 
 export default MessageActionsModal;

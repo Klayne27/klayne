@@ -73,7 +73,14 @@ const PublicChatMessageInput = ({
     setTextInput,
     selectedFile,
     isSendButtonDisabled,
-    handlers,
+    handleTextInputChange,
+    handleFileChange,
+    handleSubmit,
+    handleKeyDown,
+    handleEmojiClick,
+    handleRemoveImage,
+    handleCancelEdit,
+    handleImageButtonClick,
   } = useChatInput({
     inputRef: publicChatInputRef,
     fileInputRef: publicChatFileInputRef,
@@ -103,20 +110,20 @@ const PublicChatMessageInput = ({
     editingMessage,
   })
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e)
+  // }
 
   const isEditingMode = !!editingMessage
   const showTypingIndicator = typingUsers && typingUsers.length > 0
   const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>
 
   const renderInputForm = (isEditingMode, typingIndicator) => (
-    <form onSubmit={handlers.handleSubmit} className="relative flex items-center bg-black/0 px-2">
+    <form onSubmit={handleSubmit} className="relative flex items-center bg-black/0 px-2">
       <input
         type="file"
         accept="image/*"
-        onChange={handlers.handleFileChange}
+        onChange={handleFileChange}
         ref={publicChatFileInputRef}
         className="hidden"
         disabled={!canSendImages}
@@ -126,7 +133,7 @@ const PublicChatMessageInput = ({
         <div className="flex pl-1">
           <button
             type="button"
-            onClick={handlers.handleImageButtonClick}
+            onClick={handleImageButtonClick}
             className={`${canSendImages ? "cursor-pointer" : "cursor-not-allowed"} rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700`}
             disabled={!canSendImages}
           >
@@ -139,7 +146,7 @@ const PublicChatMessageInput = ({
             <PiSmiley
               className="h-5 w-5"
               ref={emojiButtonRef}
-              onClick={(e) => openEmojiPickerWithModalClose(e, emojiButtonRef)}
+              onClick={(e) => handleOpenEmojiPickerPopover(e)}
             />
             {showEmojiPickerPopover && (
               <>
@@ -151,7 +158,7 @@ const PublicChatMessageInput = ({
                   <EmojiPickerPopover
                     position={popoverPosition}
                     onClose={handleCloseEmojiPickerPopover}
-                    onEmojiClick={handlers.handleEmojiClick}
+                    onEmojiClick={handleEmojiClick}
                     triggerRef={emojiButtonRef}
                   />
                 </div>
@@ -162,8 +169,8 @@ const PublicChatMessageInput = ({
 
         <textarea
           value={textInput}
-          onChange={handlers.handleTextInputChange}
-          onKeyDown={handlers.handleKeyDown}
+          onChange={handleTextInputChange}
+          onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={
             isEditingMode
@@ -207,7 +214,7 @@ const PublicChatMessageInput = ({
               className="max-h-[200px] max-w-[200px] rounded-md object-contain"
             />
             <button
-              onClick={handlers.handleRemoveImage}
+              onClick={handleRemoveImage}
               className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
@@ -252,7 +259,7 @@ const PublicChatMessageInput = ({
               </span>
             </div>
             <button
-              onClick={handlers.handleCancelEdit}
+              onClick={handleCancelEdit}
               className="ml-2 mr-1 rounded-full p-1 text-gray-500 hover:bg-gray-700 hover:text-white"
               title="Cancel Edit"
             >

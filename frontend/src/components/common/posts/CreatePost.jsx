@@ -177,9 +177,9 @@ const CreatePost = () => {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e)
+  // }
 
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value
@@ -754,7 +754,7 @@ const CreatePost = () => {
                   ref={emojiButtonRef}
                   className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
                   size={22}
-                  onClick={(e) => openEmojiPickerWithModalClose(e, emojiButtonRef)}
+                  onClick={(e) => handleOpenEmojiPickerPopover(e)}
                   strokeWidth={10}
                   title="Choose an emoji"
                   aria-label="Choose an emoji"

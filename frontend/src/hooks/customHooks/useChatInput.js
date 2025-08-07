@@ -14,7 +14,7 @@ const useTypingEmitter = (socket, typingConfig) => {
 
       socket.emit(event, finalPayload)
     },
-    [socket, startEvent, stopEvent], 
+    [socket, startEvent, stopEvent],
   )
 }
 
@@ -22,7 +22,7 @@ const useAutoResizeTextarea = (inputRef, value) => {
   useEffect(() => {
     const textarea = inputRef.current
     if (textarea) {
-      textarea.style.height = "auto" 
+      textarea.style.height = "auto"
       textarea.style.height = `${textarea.scrollHeight}px`
     }
   }, [value, inputRef])
@@ -79,31 +79,30 @@ export const useChatInput = ({
     if (inputRef.current) inputRef.current.focus()
   }, [setReplyingToMessage, setEditingMessage, fileInputRef, inputRef])
 
+  const handleTextInputChange = (e) => {
+    const value = e.target.value
+    setTextInput(value)
 
-const handleTextInputChange = (e) => {
-  const value = e.target.value
-  setTextInput(value)
+    clearTimeout(typingTimeoutRef.current)
 
-  clearTimeout(typingTimeoutRef.current)
-
-  if (value.trim().length > 0) {
-    if (!hasSentTypingEvent.current) {
-      emitTyping(true, !!editingMessage, typingConfig.payload)
-      hasSentTypingEvent.current = true
-    }
-    typingTimeoutRef.current = setTimeout(() => {
-      // FIX: Add the payload here
-      emitTyping(false, false, typingConfig.payload)
-      hasSentTypingEvent.current = false
-    }, 1500)
-  } else {
-    if (hasSentTypingEvent.current) {
-      // FIX: Add the payload here too
-      emitTyping(false, false, typingConfig.payload)
-      hasSentTypingEvent.current = false
+    if (value.trim().length > 0) {
+      if (!hasSentTypingEvent.current) {
+        emitTyping(true, !!editingMessage, typingConfig.payload)
+        hasSentTypingEvent.current = true
+      }
+      typingTimeoutRef.current = setTimeout(() => {
+        // FIX: Add the payload here
+        emitTyping(false, false, typingConfig.payload)
+        hasSentTypingEvent.current = false
+      }, 1500)
+    } else {
+      if (hasSentTypingEvent.current) {
+        // FIX: Add the payload here too
+        emitTyping(false, false, typingConfig.payload)
+        hasSentTypingEvent.current = false
+      }
     }
   }
-}
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -196,19 +195,14 @@ const handleTextInputChange = (e) => {
     previewImage,
     setPreviewImage,
     setSelectedFile,
-    // editingMessage,
-    // replyingToMessage,
-    // setReplyingToMessage,
     isSendButtonDisabled: !textInput.trim() && !selectedFile,
-    handlers: {
-      handleTextInputChange,
-      handleFileChange,
-      handleSubmit,
-      handleKeyDown,
-      handleEmojiClick,
-      handleRemoveImage,
-      handleCancelEdit,
-      handleImageButtonClick,
-    },
+    handleTextInputChange,
+    handleFileChange,
+    handleSubmit,
+    handleKeyDown,
+    handleEmojiClick,
+    handleRemoveImage,
+    handleCancelEdit,
+    handleImageButtonClick,
   }
 }

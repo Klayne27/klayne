@@ -16,9 +16,9 @@ export const useChatHandlers = ({
 
   const openImageModal = useAppStore((state) => state.openImageModal)
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
+  // }
 
   const handleJumpToOriginalMessage = (messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`)
@@ -94,7 +94,7 @@ export const useChatHandlers = ({
   }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
 
   return {
-    openEmojiPickerWithModalClose,
+    // openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
     handleEditClick,

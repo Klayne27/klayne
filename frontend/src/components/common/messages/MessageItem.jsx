@@ -74,7 +74,7 @@ const MessageItem = ({
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
   const {
-    openEmojiPickerWithModalClose,
+    // openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
     handleEditClick,
@@ -88,7 +88,7 @@ const MessageItem = ({
     setShowMoreActionsModal,
     isMobile,
     handleCloseEmojiPickerPopover,
-    handleOpenEmojiPickerPopover,
+    // handleOpenEmojiPickerPopover,
     addReaction: reactToMessage,
     chatStore: usePrivateChatStore,
     chatInputRef: privateChatInputRef,
@@ -158,7 +158,7 @@ const MessageItem = ({
           messageContentStyle={messageContentStyle}
           onReactionClick={handleReactionClick}
           moreEmojisButtonRef={moreEmojisButtonRef}
-          openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
+          handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
           onReplyClick={handleReplyClick}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
@@ -237,7 +237,7 @@ const MessageItem = ({
                 isSentByCurrentUser={isSentByCurrentUser}
                 messageContentStyle={messageContentStyle}
                 addReactionButtonRef={addReactionButtonRef}
-                openEmojiPickerWithModalClose={openEmojiPickerWithModalClose}
+                handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
                 message={message}
                 onReactionClick={handleReactionClick}
               />

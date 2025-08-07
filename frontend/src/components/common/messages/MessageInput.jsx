@@ -21,6 +21,17 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
   const { editPrivateMessage } = useEditMessage(actualConversationId)
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
 
+  const typingConfig = useMemo(
+    () => ({
+      startEvent: "typing",
+      stopEvent: "stopTyping",
+      payload: {
+        conversationId: actualConversationId,
+      },
+    }),
+    [actualConversationId],
+  )
+
   const handleSendMessage = useCallback(
     async ({ text, file, repliedToId }) => {
       let imgBase64 = null
@@ -50,26 +61,22 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
     [editPrivateMessage],
   )
 
-  const typingConfig = useMemo(
-    () => ({
-      startEvent: "typing",
-      stopEvent: "stopTyping",
-      payload: {
-        conversationId: actualConversationId,
-      },
-    }),
-    [actualConversationId],
-  )
-
   const {
     textInput,
+    setTextInput,
     previewImage,
     setPreviewImage,
-    setSelectedFile,
-    setTextInput,
     selectedFile,
+    setSelectedFile,
+    handleTextInputChange,
+    handleFileChange,
+    handleSubmit,
+    handleKeyDown,
+    handleEmojiClick,
+    handleRemoveImage,
+    handleCancelEdit,
+    handleImageButtonClick,
     isSendButtonDisabled,
-    handlers,
   } = useChatInput({
     inputRef: privateChatInputRef,
     fileInputRef: privateChatFileInputRef,
@@ -97,16 +104,16 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
     editingMessage,
   })
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e)
+  // }
 
   const renderFormContent = (isEditingMode = false) => (
     <>
       <input
         type="file"
         accept="image/*"
-        onChange={handlers.handleFileChange}
+        onChange={handleFileChange}
         ref={privateChatFileInputRef}
         className="hidden"
       />
@@ -115,7 +122,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
         <div className="flex pl-1">
           <button
             type="button"
-            onClick={handlers.handleImageButtonClick} // Use the new handler
+            onClick={handleImageButtonClick} // Use the new handler
             className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
           >
             <IoImageOutline className="h-5 w-5" />
@@ -127,7 +134,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
             <PiSmiley
               className="h-5 w-5"
               ref={emojiButtonRef}
-              onClick={(e) => openEmojiPickerWithModalClose(e, emojiButtonRef)}
+              onClick={(e) => handleOpenEmojiPickerPopover(e)}
             />
             {showEmojiPickerPopover && (
               <>
@@ -139,7 +146,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
                   <EmojiPickerPopover
                     position={popoverPosition}
                     onClose={handleCloseEmojiPickerPopover}
-                    onEmojiClick={handlers.handleEmojiClick}
+                    onEmojiClick={handleEmojiClick}
                     triggerRef={emojiButtonRef}
                   />
                 </div>
@@ -150,8 +157,8 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
 
         <textarea
           value={textInput}
-          onChange={handlers.handleTextInputChange}
-          onKeyDown={handlers.handleKeyDown}
+          onChange={handleTextInputChange}
+          onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={
             isEditingMode
@@ -191,7 +198,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
               className="max-h-[200px] max-w-[200px] rounded-md object-contain"
             />
             <button
-              onClick={handlers.handleRemoveImage}
+              onClick={handleRemoveImage}
               className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
@@ -237,7 +244,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
               </span>
             </div>
             <button
-              onClick={handlers.handleCancelEdit}
+              onClick={handleCancelEdit}
               className="ml-2 mr-1 rounded-full p-1 text-gray-500 hover:bg-gray-700 hover:text-white"
               title="Cancel Edit"
             >
@@ -247,7 +254,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
 
           {/* The form, now nested inside the edit mode container */}
           <form
-            onSubmit={handlers.handleSubmit}
+            onSubmit={handleSubmit}
             className="relative flex items-center bg-black/0 px-2" // change back to p-2 if new typing indicator is ugly
           >
             {renderFormContent(true)}{" "}
@@ -257,7 +264,7 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
       ) : (
         // NORMAL MODE (not editing)
         <form
-          onSubmit={handlers.handleSubmit}
+          onSubmit={handleSubmit}
           className="relative flex items-center bg-black/0 px-2" // change back to p-2
         >
           {renderFormContent(false)} {/* Pass false for normal mode */}

@@ -6,7 +6,7 @@ const MessageReactions = ({
   isSentByCurrentUser,
   messageContentStyle,
   addReactionButtonRef,
-  openEmojiPickerWithModalClose,
+  handleOpenEmojiPickerPopover,
   message,
   onReactionClick,
 }) => (
@@ -18,7 +18,7 @@ const MessageReactions = ({
     {isSentByCurrentUser && (
       <button
         ref={addReactionButtonRef}
-        onClick={(e) => openEmojiPickerWithModalClose(e, addReactionButtonRef)}
+        onClick={(e) => handleOpenEmojiPickerPopover(e)}
         className={`flex size-[30px] items-center justify-center rounded-lg bg-gray-800 text-gray-400 transition-colors duration-200 ease-in-out hover:bg-gray-700 hover:text-gray-200`}
         style={messageContentStyle}
         title="Add reaction"
@@ -59,7 +59,7 @@ const MessageReactions = ({
     {!isSentByCurrentUser && (
       <button
         ref={addReactionButtonRef}
-        onClick={(e) => openEmojiPickerWithModalClose(e, addReactionButtonRef)}
+        onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
         className={`flex size-[30px] items-center justify-center rounded-lg border border-transparent bg-gray-800 text-gray-400 transition-colors duration-200 ease-in-out hover:bg-gray-700 hover:text-gray-200`}
         title="Add reaction"
       >

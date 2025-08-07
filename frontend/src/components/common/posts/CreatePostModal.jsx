@@ -126,9 +126,9 @@ function CreatePostModal({ onClose }) {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
+  // const openEmojiPickerWithModalClose = (e) => {
+  //   handleOpenEmojiPickerPopover(e)
+  // }
 
   const resetForm = useCallback(() => {
     setPostModalInput("")
@@ -771,7 +771,7 @@ function CreatePostModal({ onClose }) {
                   ref={emojiButtonRef}
                   className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
                   size={22}
-                  onClick={(e) => openEmojiPickerWithModalClose(e, emojiButtonRef)}
+                  onClick={(e) => handleOpenEmojiPickerPopover(e)}
                   strokeWidth={10}
                   title="Choose an emoji"
                   aria-label="Choose an emoji"
