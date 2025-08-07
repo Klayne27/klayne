@@ -104,10 +104,6 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
     editingMessage,
   })
 
-  // const openEmojiPickerWithModalClose = (e) => {
-  //   handleOpenEmojiPickerPopover(e)
-  // }
-
   const renderFormContent = (isEditingMode = false) => (
     <>
       <input

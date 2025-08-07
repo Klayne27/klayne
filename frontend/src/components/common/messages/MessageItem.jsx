@@ -74,7 +74,6 @@ const MessageItem = ({
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
   const {
-    // openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
     handleEditClick,
@@ -88,7 +87,6 @@ const MessageItem = ({
     setShowMoreActionsModal,
     isMobile,
     handleCloseEmojiPickerPopover,
-    // handleOpenEmojiPickerPopover,
     addReaction: reactToMessage,
     chatStore: usePrivateChatStore,
     chatInputRef: privateChatInputRef,

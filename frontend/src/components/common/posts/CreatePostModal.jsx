@@ -5,7 +5,6 @@ import { BiImageAdd, BiPoll } from "react-icons/bi"
 import { PiSmiley } from "react-icons/pi"
 import { TbCalendarClock } from "react-icons/tb"
 import { FaPlus } from "react-icons/fa"
-import EmojiPicker from "emoji-picker-react"
 import { useDebounce } from "../../../hooks/customHooks/useDebounce"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useCreatePosts } from "../../../hooks/postsHooks/useCreatePosts"
@@ -118,7 +117,6 @@ function CreatePostModal({ onClose }) {
   }, [postModalInput, showPollInputs]) // Also react to poll input visibility as it changes layout
 
   // Handlers
-
   const {
     showEmojiPickerPopover,
     popoverPosition,
@@ -126,9 +124,6 @@ function CreatePostModal({ onClose }) {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  // const openEmojiPickerWithModalClose = (e) => {
-  //   handleOpenEmojiPickerPopover(e)
-  // }
 
   const resetForm = useCallback(() => {
     setPostModalInput("")

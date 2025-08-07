@@ -11,21 +11,21 @@ function MoreMessageActionsModal({
   onEditClick,
   onCopyMessage,
   onDeleteOwnMessage,
-  onAdminDeleteMessage,
-  onBanUser,
-  onUnbanUser,
   message,
   isEditable,
   isSentByCurrentUser,
   isAuthUserAdmin = false,
   isMessageDeleted = false,
   isSenderBanned,
-  // isAdminDeleting,
+  handleAdminDeleteMessageClick,
+  handleBanUserClick,
+  handleUnbanUserClick,
+  onOpenConfirmationModal
 }) {
   return (
     <div className="fixed inset-0 z-20" onClick={onCloseMoreActionsModal}>
       <div
-        className={`absolute p-2 bg-base-100 rounded-xl gray-shadow  z-30`}
+        className={`gray-shadow absolute z-30 rounded-xl bg-base-100 p-2`}
         style={{
           top: moreActionsModalPosition.top,
           left: moreActionsModalPosition.left,
@@ -35,7 +35,7 @@ function MoreMessageActionsModal({
       >
         <button
           onClick={onReplyClick}
-          className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
+          className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
         >
           Reply
           <HiOutlineReply size={18} className="text-slate-400" />
@@ -43,16 +43,16 @@ function MoreMessageActionsModal({
         {message.text && (
           <button
             onClick={onCopyMessage}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
             Copy Text
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
-        {isEditable && !isMessageDeleted &&  (
+        {isEditable && !isMessageDeleted && (
           <button
             onClick={onEditClick}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-slate-300 hover:bg-secondary duration-200 transition"
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
             Edit Message
             <MdEdit size={16} className="text-slate-400" />
@@ -61,7 +61,7 @@ function MoreMessageActionsModal({
         {isSentByCurrentUser && !isMessageDeleted && (
           <button
             onClick={onDeleteOwnMessage}
-            className="flex justify-between items-center gap-2 rounded-md w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 duration-200 transition"
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
             Delete Message
             <FiTrash size={16} />
@@ -72,9 +72,9 @@ function MoreMessageActionsModal({
           <>
             {!isMessageDeleted && (
               <button
-                onClick={onAdminDeleteMessage}
+                onClick={() => onOpenConfirmationModal("delete")}
                 // disabled={isAdminDeleting}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
+                className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
               >
                 Delete (Admin)
                 <MdDeleteForever size={18} />
@@ -82,16 +82,16 @@ function MoreMessageActionsModal({
             )}
             {isSenderBanned ? (
               <button
-                onClick={onUnbanUser}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-green-400 hover:bg-green-400/10 transition duration-200"
+                onClick={() => onOpenConfirmationModal("unban")}
+                className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-green-400 transition duration-200 hover:bg-green-400/10"
               >
                 Unban User
                 <FaUserCheck size={16} />
               </button>
             ) : (
               <button
-                onClick={onBanUser}
-                className="flex justify-between rounded-md items-center gap-2 w-full px-3 py-1.5 text-red-400 hover:bg-red-400/10 transition duration-200"
+                onClick={() => onOpenConfirmationModal('ban')}
+                className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
               >
                 Ban User
                 <FaUserSlash size={16} />
@@ -101,7 +101,7 @@ function MoreMessageActionsModal({
         )}
       </div>
     </div>
-  );
+  )
 }
 
 export default MoreMessageActionsModal;

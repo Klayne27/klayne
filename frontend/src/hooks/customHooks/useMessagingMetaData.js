@@ -9,6 +9,7 @@ export const useMessagingMetaData = (message, currentUser) => {
   const isReplyToMessageDeleted =
     message.repliedTo?.isDeletedByAdmin || message.repliedTo?.isDeletedByUser
   const isMessageEdited = message.isEdited
+  const senderUsername = message.sender.username
 
   const groupedReactions = useMemo(() => {
     return message.reactions?.reduce((acc, reaction) => {
@@ -65,5 +66,6 @@ export const useMessagingMetaData = (message, currentUser) => {
     isMessageEdited,
     groupedReactions,
     hasAnyReactions,
+    senderUsername,
   }
 }

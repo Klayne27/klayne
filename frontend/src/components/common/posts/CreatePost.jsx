@@ -177,9 +177,6 @@ const CreatePost = () => {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  // const openEmojiPickerWithModalClose = (e) => {
-  //   handleOpenEmojiPickerPopover(e)
-  // }
 
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value

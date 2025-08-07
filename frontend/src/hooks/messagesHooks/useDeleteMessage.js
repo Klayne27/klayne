@@ -6,7 +6,7 @@ export const useDeleteMessage = () => {
   const queryClient = useQueryClient();
 
   const { mutate: deleteMessage, isPending: isDeletingMessage } = useMutation({
-    mutationFn: deleteMessageApi,
+    mutationFn:  deleteMessageApi,
     onMutate: async ({ messageId, conversationId }) => {
       const queryKey = ["messages", conversationId];
       await queryClient.cancelQueries({ queryKey: queryKey });

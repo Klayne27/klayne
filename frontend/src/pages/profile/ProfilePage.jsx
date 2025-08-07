@@ -92,49 +92,10 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou
 
-  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
-  // const [isTouchDevice, setIsTouchDevice] = useState(false)
-  // const [activeTab, setActiveTab] = useState(null) // To control the active state for touch feedback
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
 
-  // useEffect(() => {
-  //   setIsTouchDevice(
-  //     "ontouchstart" in window ||
-  //       navigator.maxTouchPoints > 0 ||
-  //       navigator.msMaxTouchPoints > 0,
-  //   )
-  // }, [])
-
-  // const handleTouchStart = useCallback(
-  //   (type) => {
-  //     if (isTouchDevice) {
-  //       setActiveTab(type)
-  //     }
-  //   },
-  //   [isTouchDevice],
-  // )
-
-  // const handleTouchEnd = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveTab(null)
-  //     }, 150) // Use 150ms to match common touch feedback duration
-  //   }
-  // }, [isTouchDevice])
-
-  // const handleTouchCancel = useCallback(() => {
-  //   // Good practice for touches that don't complete
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveTab(null)
-  //     }, 150)
-  //   }
-  // }, [isTouchDevice])
-  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
-
-  // NEW: Functions for Admin Delete User Modal
   const openDeleteUserModal = () => {
     if (!userProfile?._id) return
     setShowDeleteUserModal(true)
@@ -403,7 +364,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="z-20 rounded-full border border-accent px-1 transition duration-200 hover:bg-secondary"
+                  className="z-1 rounded-full border border-accent px-1 transition duration-200 hover:bg-secondary"
                   disabled={
                     isLoadingConversationStatus ||
                     isTogglingVisibility ||

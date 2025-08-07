@@ -13,7 +13,7 @@ const PublicChatHeader = () => {
   };
 
   return (
-    <div className="text-white fixed w-full md:w-[1015px] top-0 z-[1000] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
+    <div className="text-white fixed w-full md:w-[1015px] top-0 z-[50] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
       <div className="flex items-center gap-3 text-white">
         <div className="avatar">
           <button

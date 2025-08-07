@@ -9,16 +9,11 @@ export const useChatHandlers = ({
   isMobile,
   chatInputRef,
   handleCloseEmojiPickerPopover,
-  handleOpenEmojiPickerPopover,
 }) => {
   const { setReplyingToMessage, setEditingMessage, activeMessageModalId, setActiveMessageModalId } =
     chatStore()
 
   const openImageModal = useAppStore((state) => state.openImageModal)
-
-  // const openEmojiPickerWithModalClose = (e) => {
-  //   handleOpenEmojiPickerPopover(e, setShowMoreActionsModal)
-  // }
 
   const handleJumpToOriginalMessage = (messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`)
@@ -35,10 +30,6 @@ export const useChatHandlers = ({
       }, 1500)
     }
   }
-  //   const handleDeleteOwnMessage = () => {
-  //     deleteOwnMessage(message._id)
-  //     setShowMoreActionsModal(false)
-  //   }
 
   const handleReactionClick = (messageId, emoji) => {
     addReaction({ messageId, emoji })
@@ -94,7 +85,6 @@ export const useChatHandlers = ({
   }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
 
   return {
-    // openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
     handleEditClick,

@@ -44,8 +44,8 @@ const SuggestedUsersPanel = () => {
   }
 
   return (
-    <div className="p-4 rounded-2xl border border-accent">
-      <p className="font-bold mb-4 text-xl">Who to follow</p>
+    <div className="rounded-2xl border border-accent p-4">
+      <p className="mb-4 text-xl font-bold">Who to follow</p>
       <div className="flex flex-col gap-4">
         {!suggestedUsers && isLoading && (
           <>
@@ -57,7 +57,7 @@ const SuggestedUsersPanel = () => {
         )}
         {suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
-            const isFollowing = currentUser?.following?.includes(user._id);
+            const isFollowing = currentUser?.following?.includes(user._id)
 
             return (
               <Link
@@ -65,20 +65,18 @@ const SuggestedUsersPanel = () => {
                 className="flex items-center justify-between gap-4"
                 key={user._id}
               >
-                <div className="flex gap-2 items-center flex-grow">
+                <div className="flex flex-grow items-center gap-2">
                   <div className="avatar">
                     <div className="w-8 rounded-full">
                       <img src={user.profileImg || "/avatar-placeholder.png"} />
                     </div>
                   </div>
                   <div className="flex flex-col">
-                    <span className="font-bold tracking-tight truncate w-full hover:underline flex items-center gap-1">
+                    <span className="flex w-full items-center gap-1 truncate font-bold tracking-tight hover:underline">
                       {user.fullName.length > 15
                         ? user.fullName.slice(0, 15) + "..."
                         : user.fullName}{" "}
-                      {user.isVerified && (
-                        <img src="/verified.png" className="size-[17px]" />
-                      )}
+                      {user.isVerified && <img src="/verified.png" className="size-[17px]" />}
                       {user.isGoldVerified && (
                         <img src="/gold-verified.png" className="size-[17px]" />
                       )}
@@ -95,17 +93,17 @@ const SuggestedUsersPanel = () => {
                   />
                 </div>
               </Link>
-            );
+            )
           })}
         <button
           onClick={handleRefreshClick}
-          className="flex items-center justify-center gap-1 text-primary "
+          className="flex items-center justify-center gap-1 text-primary"
           disabled={isRefetching || isLoading}
         >
           {isLoading || isRefetching ? (
             <LoadingSpinner size="xs" />
           ) : (
-            <BiRefresh className="w-5 h-5" />
+            <BiRefresh className="h-5 w-5" />
           )}
           {isLoading || isRefetching ? "Refreshing..." : "Refresh Suggestions"}
         </button>
@@ -113,7 +111,11 @@ const SuggestedUsersPanel = () => {
 
       <ConfirmationModal
         isOpen={showUnfollowModal}
-        modalTitle={`Unfollow  @${userToUnfollow?.username}`}
+        modalTitle={
+          <>
+            Unfollow <p>@{userToUnfollow?.username}</p>
+          </>
+        }
         message="Their posts will no longer show up in your For You timeline. You can still view
           their profile, unless their posts are protected."
         confirmButtonText="Unfollow"
@@ -122,7 +124,7 @@ const SuggestedUsersPanel = () => {
         danger={false}
       />
     </div>
-  );
+  )
 };
 
 export default React.memo(SuggestedUsersPanel);

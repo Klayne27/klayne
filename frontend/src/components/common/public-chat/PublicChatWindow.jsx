@@ -159,7 +159,6 @@ const PublicChatWindow = () => {
           </div>
 
           <PublicChatMessageInput
-            isCurrentUserBanned={isCurrentUserBanned}
             publicChatInputRef={publicChatInputRef}
             socket={socket}
             typingUsers={typingUsers}

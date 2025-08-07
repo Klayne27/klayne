@@ -1,4 +1,4 @@
-import React, { useRef } from "react"
+import React, { useRef, useState } from "react"
 
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useDeleteOwnPublicMessage } from "../../../hooks/publicChatHooks/useDeleteOwnPublicMessage"
@@ -22,6 +22,9 @@ import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMet
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
 import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
+import { usePublicChatAdminHandlers } from "../../../hooks/customHooks/usePublicChatAdminHandlers"
+import ConfirmationModal from "../../ui/ConfirmationModal"
+import { PUBLIC_CHAT_MODAL_CONFIGS } from "../../../constants/publicChatModalConfigs"
 
 const PublicChatMessage = React.memo(function PublicChatMessage({
   message,
@@ -53,6 +56,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     isMessageEdited,
     groupedReactions,
     hasAnyReactions,
+    senderUsername,
   } = useMessagingMetaData(message, currentUser)
 
   const {
@@ -82,7 +86,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
 
   const {
-    // openEmojiPickerWithModalClose,
     handleJumpToOriginalMessage,
     handleReactionClick,
     handleEditClick,
@@ -96,7 +99,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     setShowMoreActionsModal,
     isMobile,
     handleCloseEmojiPickerPopover,
-    // handleOpenEmojiPickerPopover,
     addReaction,
     chatStore: usePublicChatStore,
     chatInputRef: publicChatInputRef,
@@ -114,27 +116,39 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
+  const [modalConfig, setModalConfig] = useState(null)
+
+  // Use the refactored, simplified admin actions hook
+  const { handleAdminDeleteMessage, handleBanUser, handleUnbanUser } = usePublicChatAdminHandlers({
+    message,
+    banUser,
+    unbanUser,
+    adminDeletePublicMessage,
+  })
+
+  const openConfirmationModal = (modalType) => {
+    setShowMoreActionsModal(false)
+
+    const config = PUBLIC_CHAT_MODAL_CONFIGS(message, {
+      handleAdminDeleteMessage,
+      handleBanUser,
+      handleUnbanUser,
+    })[modalType]
+
+    if (config) {
+      setModalConfig({
+        ...config,
+        onConfirm: () => {
+          config.onConfirm()
+          setModalConfig(null)
+        },
+      })
+    }
+  }
+
   const handleDeleteOwnMessage = () => {
     deleteOwnMessage(message._id)
     setShowMoreActionsModal(false)
-  }
-
-  const handleAdminDeleteMessage = () => {
-    if (window.confirm("Are you sure you want to delete this message?")) {
-      adminDeletePublicMessage(message._id)
-    }
-  }
-
-  const handleBanUser = () => {
-    if (window.confirm(`Are you sure you want to ban this user from public chat?`)) {
-      banUser(message.sender._id)
-    }
-  }
-
-  const handleUnbanUser = () => {
-    if (window.confirm(`Are you sure you want to unban this user from public chat?`)) {
-      unbanUser(message.sender._id)
-    }
   }
 
   return (
@@ -186,7 +200,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             isAuthUserAdmin={isAuthUserAdmin}
             isMessageDeleted={isMessageDeleted}
             isSenderBanned={isSenderBanned}
-            // isAdminDeleting={isAdminDeleting}
+            onOpenConfirmationModal={openConfirmationModal}
           />
         )}
 
@@ -267,6 +281,18 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
             )}
           </div>
         </MessageContentLayout>
+
+        {modalConfig && (
+          <ConfirmationModal
+            isOpen={true}
+            message={modalConfig.message}
+            onConfirm={modalConfig.onConfirm}
+            modalTitle={modalConfig.modalTitle}
+            confirmButtonText={modalConfig.confirmButtonText}
+            onClose={() => setModalConfig(null)}
+            danger={!isSenderBanned} // Or other logic
+          />
+        )}
       </div>
     </>
   )
