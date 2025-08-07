@@ -86,22 +86,10 @@ const PublicChatWindow = () => {
     }
   }, [socket, queryClient])
 
-  const sendTypingEvent = useCallback(
-    (isTyping, isEditing) => {
-      if (socket) {
-        if (isTyping) {
-          socket.emit("public_typing", { isEditing })
-        } else {
-          socket.emit("public_stop_typing")
-        }
-      }
-    },
-    [socket],
-  )
 
   const processedMessages = useProcessedMessage(messages)
 
-  if (isLoadingMessages &&  !isInitialLoadComplete) {
+  if (isLoadingMessages && !isInitialLoadComplete) {
     return (
       <div className="flex h-full flex-col items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -173,7 +161,7 @@ const PublicChatWindow = () => {
           <PublicChatMessageInput
             isCurrentUserBanned={isCurrentUserBanned}
             publicChatInputRef={publicChatInputRef}
-            sendTypingEvent={sendTypingEvent}
+            socket={socket}
             typingUsers={typingUsers}
             onSenderMessageSent={handleSenderMessageSent}
           />

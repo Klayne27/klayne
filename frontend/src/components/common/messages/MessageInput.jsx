@@ -4,7 +4,6 @@ import { IoClose, IoImageOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
-import { FaSpinner } from "react-icons/fa"
 import { useEditMessage } from "../../../hooks/messagesHooks/useEditMessage"
 import { FaReply } from "react-icons/fa6"
 import React from "react"
@@ -30,7 +29,7 @@ function MessageInput({
   const [privateChatInput, setPrivateChatInput] = useState("")
   const [privateChatPreviewImage, setPrivateChatPreviewImage] = useState(null)
   const [privateChatSelectedFile, setPrivateChatSelectedFile] = useState(null)
-  
+
   const typingTimeoutRef = useRef(null)
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
@@ -40,6 +39,8 @@ function MessageInput({
     onSenderMessageSent,
   })
 
+  const isMobile = useIsMobile()
+
   const {
     showEmojiPickerPopover,
     popoverPosition,
@@ -47,32 +48,15 @@ function MessageInput({
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
-
-  const isMobile = useIsMobile()
-
-  const emitTyping = useCallback(
-    (isEditingActive) => {
+  // The new, merged callback function
+  const emitTypingEvent = useCallback(
+    (isTyping, isEditingActive) => {
       if (socket && actualConversationId && currentUser?._id) {
-        socket.emit("typing", {
+        const eventName = isTyping ? "typing" : "stopTyping"
+        socket.emit(eventName, {
           conversationId: actualConversationId,
-          userId: currentUser._id, // This should be the current user's ID
-          isEditing: isEditingActive, // Pass the flag
-        })
-      }
-    },
-    [socket, actualConversationId, currentUser?._id],
-  )
-
-  const emitStopTyping = useCallback(
-    (isEditingActive) => {
-      if (socket && actualConversationId && currentUser?._id) {
-        socket.emit("stopTyping", {
-          conversationId: actualConversationId,
-          userId: currentUser._id, // This should be the current user's ID
-          isEditing: isEditingActive, // Pass the flag
+          userId: currentUser._id,
+          isEditing: isEditingActive,
         })
       }
     },
@@ -104,7 +88,7 @@ function MessageInput({
 
   useEffect(() => {
     if (privateChatInputRef.current) {
-      privateChatInputRef.current.style.height = "auto" // Reset height first
+      privateChatInputRef.current.style.height = "auto"
       privateChatInputRef.current.style.height = privateChatInputRef.current.scrollHeight + "px"
     }
     // eslint-disable-next-line
@@ -118,6 +102,7 @@ function MessageInput({
     // eslint-disable-next-line
   }, [editingMessage])
 
+  // Refactored handler to use the new emitTypingEvent
   const handleMessageInputChange = (e) => {
     const text = e.target.value
     setPrivateChatInput(text)
@@ -127,48 +112,27 @@ function MessageInput({
       privateChatInputRef.current.style.height = privateChatInputRef.current.scrollHeight + "px"
     }
 
-    const isCurrentlyEditing = !!editingMessage // Determine if in edit mode
+    const isCurrentlyEditing = !!editingMessage
 
-    if (text.trim() === "") {
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current)
-        typingTimeoutRef.current = null
-      }
-      emitStopTyping(isCurrentlyEditing) // Pass the flag
-      return
-    }
-
-    if (!typingTimeoutRef.current) {
-      emitTyping(isCurrentlyEditing) // Pass the flag
-    }
-
+    // Clear any existing timeout to prevent sending "stop typing" too early
     if (typingTimeoutRef.current) {
       clearTimeout(typingTimeoutRef.current)
     }
 
-    typingTimeoutRef.current = setTimeout(() => {
-      emitStopTyping(isCurrentlyEditing) // Pass the flag
+    if (text.trim() === "") {
+      // If input is empty, immediately send a "stop typing" event
+      emitTypingEvent(false, isCurrentlyEditing)
       typingTimeoutRef.current = null
-    }, 1500)
-  }
+    } else {
+      // If input has content, send a "typing" event
+      emitTypingEvent(true, isCurrentlyEditing)
 
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-
-    if (!file.type.startsWith("image/")) {
-      showAppToast("Only image files are supported.", "error")
-      return
+      // Set a new timeout to send "stop typing" after a pause
+      typingTimeoutRef.current = setTimeout(() => {
+        emitTypingEvent(false, isCurrentlyEditing)
+        typingTimeoutRef.current = null
+      }, 1500)
     }
-    if (file.size > 5 * 1024 * 1024) {
-      showAppToast("Image size cannot exceed 5MB.", "error")
-      return
-    }
-
-    setPrivateChatSelectedFile(file)
-    const reader = new FileReader()
-    reader.onloadend = () => setPrivateChatPreviewImage(reader.result)
-    reader.readAsDataURL(file)
   }
 
   const handleSendPrivateMessage = useCallback(
@@ -179,7 +143,8 @@ function MessageInput({
         clearTimeout(typingTimeoutRef.current)
         typingTimeoutRef.current = null
       }
-      emitStopTyping()
+      // Use the new unified function
+      emitTypingEvent(false, !!editingMessage)
 
       if (!privateChatInput.trim() && !privateChatSelectedFile) return
 
@@ -187,8 +152,6 @@ function MessageInput({
         showAppToast("No recipient selected.", "error")
         return
       }
-
-      // const wasInputFocused = privateChatInputRef.current === document.activeElement;
 
       const repliedToId = replyingToMessage ? replyingToMessage._id : null
 
@@ -219,11 +182,12 @@ function MessageInput({
       }
     },
     [
-      emitStopTyping,
+      emitTypingEvent, // Use the new dependency
       privateChatInput,
       privateChatSelectedFile,
       otherUser,
       replyingToMessage,
+      editingMessage,
       actualConversationId,
       sendPrivateMessage,
       clearInputState,
@@ -237,8 +201,6 @@ function MessageInput({
       const trimmedMessage = privateChatInput.replace(/\s/g, "")
 
       if (trimmedMessage.length === 0 && !privateChatSelectedFile) {
-        // If the input is empty or only whitespace and no image,
-        // and it's a mobile device, ensure focus remains to prevent keyboard close.
         if (isMobile && privateChatInputRef.current) {
           privateChatInputRef.current.focus()
         }
@@ -246,15 +208,13 @@ function MessageInput({
       }
 
       if (editingMessage) {
-        // Handle message editing
         editMessage({ messageId: editingMessage._id, newText: privateChatInput })
         clearInputState()
       } else {
-        // Handle sending new message
-        handleSendPrivateMessage(e) // Your original send logic
+        handleSendPrivateMessage(e)
         setPrivateChatInput("")
         if (privateChatInputRef.current) {
-          privateChatInputRef.current.style.height = "auto" // Crucial
+          privateChatInputRef.current.style.height = "auto"
           privateChatInputRef.current.rows = 1
         }
       }
@@ -272,6 +232,43 @@ function MessageInput({
     ],
   )
 
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e)
+  }
+
+  const handleEmojiClick = useCallback(
+    (emojiObject) => {
+      setPrivateChatInput((prevText) => prevText + emojiObject.emoji)
+      privateChatInputRef.current.focus()
+    },
+    [privateChatInputRef],
+  )
+
+  const handleImageChange = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+
+    if (!file.type.startsWith("image/")) {
+      showAppToast("Only image files are supported.", "error")
+      return
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      showAppToast("Image size cannot exceed 5MB.", "error")
+      return
+    }
+
+    setPrivateChatSelectedFile(file)
+    const reader = new FileReader()
+    reader.onloadend = () => setPrivateChatPreviewImage(reader.result)
+    reader.readAsDataURL(file)
+  }
+
+  const handleImageButtonClick = (e) => {
+    e.preventDefault()
+    privateChatFileInputRef.current.click()
+    privateChatInputRef.current.focus()
+  }
+
   const handleKeyDown = (e) => {
     if (isMobile) {
       return
@@ -284,41 +281,10 @@ function MessageInput({
     }
   }
 
-  const onEmojiClick = useCallback(
-    (emojiObject) => {
-      setPrivateChatInput((prevText) => prevText + emojiObject.emoji)
-      privateChatInputRef.current.focus()
-    },
-    [privateChatInputRef],
-  )
-
-  const handleImageButtonClick = (e) => {
-    e.preventDefault() // Prevent default button behavior that might blur
-    privateChatFileInputRef.current.click()
-    // Re-focus the message input after triggering file input click
-    if (isMobile && privateChatInputRef.current) {
-      setTimeout(() => {
-        privateChatInputRef.current.focus()
-      }, 0)
-    }
-  }
-
   const handleCancelEdit = () => {
     setEditingMessage(null)
     setPrivateChatInput("")
-    emitStopTyping(true) // Indicate it was an edit context
-
-    // Keep keyboard open after canceling edit on mobile
-    if (isMobile && privateChatInputRef.current) {
-      privateChatInputRef.current.focus()
-    }
-  }
-
-  const handleTouchMove = (e) => {
-    const target = e.target
-    if (target.scrollHeight > target.clientHeight) {
-      e.stopPropagation()
-    }
+    emitTypingEvent(false)
   }
 
   const handleRemoveImage = () => {
@@ -329,14 +295,17 @@ function MessageInput({
   }
 
   useEffect(() => {
+    // Return a cleanup function to handle unmounting
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
         typingTimeoutRef.current = null
       }
-      emitStopTyping()
+      // Use the new unified function to stop typing when leaving the conversation
+      emitTypingEvent(false)
     }
-  }, [actualConversationId, emitStopTyping])
+    // The dependency array now correctly includes `emitTypingEvent` and `editingMessage`
+  }, [actualConversationId, emitTypingEvent])
 
   const isSendButtonDisabled = !privateChatInput.trim() && !privateChatSelectedFile
 
@@ -379,7 +348,7 @@ function MessageInput({
                   <EmojiPickerPopover
                     position={popoverPosition}
                     onClose={handleCloseEmojiPickerPopover}
-                    onEmojiClick={onEmojiClick}
+                    onEmojiClick={handleEmojiClick}
                     triggerRef={emojiButtonRef}
                   />
                 </div>
@@ -392,13 +361,12 @@ function MessageInput({
           value={privateChatInput}
           onChange={handleMessageInputChange}
           onKeyDown={handleKeyDown}
-          onTouchMove={handleTouchMove}
           onPaste={handlePaste}
           placeholder={
             isEditingMode
               ? "Editing message..."
               : replyingToMessage
-                ? "Send your reply..."
+                ? `Replying to ${truncateText(replyingToMessage.text, 20)}...`
                 : "Type your message..."
           }
           className="flex max-h-[140px] w-full resize-none overflow-y-auto rounded-r-xl bg-secondary py-2 pl-3 pr-14 placeholder-gray-400 focus:outline-none"

@@ -3,7 +3,7 @@ import { showAppToast } from "../../utils/showAppToast";
 import { sendPublicMessageApi } from "../../api/publicChatApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 
-export const useSendPublicMessage = (onSenderMessageSent) => {
+export const useSendPublicMessage = ({onSenderMessageSent}) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser(); // Get authUser here too for sender details
 

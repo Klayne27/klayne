@@ -2,7 +2,6 @@
 import React, { useRef, useEffect, useCallback } from "react"
 import { IoClose, IoImageOutline } from "react-icons/io5"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
-import LoadingSpinner from "../../ui/LoadingSpinner"
 import { truncateText } from "../../../utils/truncateText"
 import { useState } from "react"
 import { FaReply } from "react-icons/fa6"
@@ -22,8 +21,8 @@ import EmojiPickerPopover from "../EmojiPickerPopover"
 const PublicChatMessageInput = ({
   isCurrentUserBanned,
   publicChatInputRef,
+  socket,
   onSenderMessageSent,
-  sendTypingEvent, // This function needs to be updated to emit the new event
   typingUsers, // This is the array of users currently typing from the server
 }) => {
   const { authUser: currentUser } = useAuthUser()
@@ -35,17 +34,16 @@ const PublicChatMessageInput = ({
   const [publicChatPreviewImage, setPublicChatPreviewImage] = useState(null)
 
   const typingTimeoutRef = useRef(null)
-  const hasSentTypingEvent = useRef(false)
-  const emojiButtonRef = useRef(null)
   const publicChatFileInputRef = useRef(null)
+  const emojiButtonRef = useRef(null)
+
+  const hasSentTypingEvent = useRef(false)
 
   const canSendImages = currentUser?.isVerified || currentUser?.isGoldVerified
-
   const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
 
-  const { editPublicMessage, isEditingMessage } = useEditPublicMessage()
-
-  const { sendPublicMessage, isSendingPublicMessage } = useSendPublicMessage(onSenderMessageSent)
+  const { editPublicMessage } = useEditPublicMessage()
+  const { sendPublicMessage } = useSendPublicMessage({ onSenderMessageSent })
 
   const isMobile = useIsMobile()
 
@@ -56,21 +54,22 @@ const PublicChatMessageInput = ({
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const openEmojiPickerWithModalClose = (e) => {
-    handleOpenEmojiPickerPopover(e)
-  }
-
-  const onEmojiClick = useCallback(
-    (emojiObject) => {
-      setPublicChatInput((prevText) => prevText + emojiObject.emoji)
-      publicChatInputRef.current.focus()
+  const sendTypingEvent = useCallback(
+    (isTyping, isEditing) => {
+      if (socket) {
+        if (isTyping) {
+          socket.emit("public_typing", { isEditing })
+        } else {
+          socket.emit("public_stop_typing")
+        }
+      }
     },
-    [publicChatInputRef],
+    [socket],
   )
 
   useEffect(() => {
     if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto" // Reset height first
+      publicChatInputRef.current.style.height = "auto"
       publicChatInputRef.current.style.height = publicChatInputRef.current.scrollHeight + "px"
     }
     // eslint-disable-next-line
@@ -90,11 +89,34 @@ const PublicChatMessageInput = ({
     return () => {
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current)
+        typingTimeoutRef.current = null
       }
-      // Ensure we send a stop typing event if the component unmounts
-      // sendTypingEvent(false); // This call is still fine
+      sendTypingEvent(false) // This call is still fine
     }
-  }, []) // sendTypingEvent is not a dependency if it doesn't change on re-renders,
+  }, [sendTypingEvent]) // sendTypingEvent is not a dependency if it doesn't change on re-renders,
+
+  const handlePaste = usePasteHandler({
+    inputRef: publicChatInputRef,
+    input: publicChatInput,
+    setInput: setPublicChatInput,
+    setSelectedFile: setPublicChatSelectedFile,
+    setPreviewImage: setPublicChatPreviewImage,
+    fileInputRef: publicChatFileInputRef,
+    editingMessage,
+  })
+
+  const clearInputState = useCallback(() => {
+    setPublicChatInput("")
+    setPublicChatSelectedFile(null)
+    setPublicChatPreviewImage(null)
+    setReplyingToMessage(null)
+    setEditingMessage(null)
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
+    if (publicChatInputRef.current) {
+      publicChatInputRef.current.style.height = "auto"
+      publicChatInputRef.current.focus()
+    }
+  }, [setEditingMessage, setReplyingToMessage, publicChatInputRef])
 
   const handleMessageContentChange = (e) => {
     const newValue = e.target.value
@@ -128,95 +150,68 @@ const PublicChatMessageInput = ({
     }
   }
 
-  const handlePaste = usePasteHandler({
-    inputRef: publicChatInputRef,
-    input: publicChatInput,
-    setInput: setPublicChatInput,
-    setSelectedFile: setPublicChatSelectedFile,
-    setPreviewImage: setPublicChatPreviewImage,
-    fileInputRef: publicChatFileInputRef,
-    editingMessage,
-  })
+  const handleSendPublicMessage = useCallback(
+    async (e) => {
+      e.preventDefault()
 
-  const clearInputState = useCallback(() => {
-    setPublicChatInput("")
-    setPublicChatSelectedFile(null)
-    setPublicChatPreviewImage(null)
-    setReplyingToMessage(null)
-    setEditingMessage(null)
-    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
-    if (publicChatInputRef.current) {
-      publicChatInputRef.current.style.height = "auto"
-      publicChatInputRef.current.focus()
-    }
-  }, [setEditingMessage, setReplyingToMessage, publicChatInputRef])
+      if (typingTimeoutRef.current) {
+        clearTimeout(typingTimeoutRef.current)
+        typingTimeoutRef.current = null
+      }
+      sendTypingEvent(false)
+      hasSentTypingEvent.current = false
 
-  const handleSendPublicMessage = useCallback(async () => {
-    // Clear typing indicator
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current)
-      typingTimeoutRef.current = null
-    }
-    sendTypingEvent(false)
-    hasSentTypingEvent.current = false
+      const contentToSend = publicChatInput.trim()
 
-    const contentToSend = publicChatInput.trim()
-
-    // Guard for empty message (should also be in handleSubmit)
-    if (!contentToSend && !publicChatSelectedFile) {
-      return
-    }
-
-    const payload = {
-      text: contentToSend,
-      repliedTo: replyingToMessage ? replyingToMessage._id : null,
-      imgBase64: null, // Initialize imgBase64
-    }
-
-    try {
-      if (publicChatSelectedFile) {
-        const reader = new FileReader()
-        const imageDataUrl = await new Promise((resolve, reject) => {
-          reader.onloadend = () => resolve(reader.result)
-          reader.onerror = (error) => {
-            console.error("FileReader error:", error)
-            reject(new Error("Failed to read image file."))
-          }
-          reader.readAsDataURL(publicChatSelectedFile)
-        })
-        payload.imgBase64 = imageDataUrl
+      // Guard for empty message (should also be in handleSubmit)
+      if (!contentToSend && !publicChatSelectedFile) {
+        return
       }
 
-      // Call the actual send function
-      sendPublicMessage(payload) // Assuming sendPublicMessage is async or returns a promise
+      const payload = {
+        text: contentToSend,
+        repliedTo: replyingToMessage ? replyingToMessage._id : null,
+        imgBase64: null, // Initialize imgBase64
+      }
 
-      // Clear input and reset textarea height after successful send
-      clearInputState()
-    } catch (error) {
-      console.error("Error during public message send process:", error)
-      showAppToast(error.message || "Failed to send message.", "error")
-    }
-  }, [
-    publicChatInput,
-    publicChatSelectedFile,
-    replyingToMessage,
-    sendTypingEvent, // Add if sendTypingEvent is not stable
-    sendPublicMessage, // Add if sendPublicMessage is not stable
-    clearInputState, // Add if clearInputState is not stable
-  ])
+      try {
+        if (publicChatSelectedFile) {
+          const reader = new FileReader()
+          const imageDataUrl = await new Promise((resolve, reject) => {
+            reader.onloadend = () => resolve(reader.result)
+            reader.onerror = (error) => {
+              console.error("FileReader error:", error)
+              reject(new Error("Failed to read image file."))
+            }
+            reader.readAsDataURL(publicChatSelectedFile)
+          })
+          payload.imgBase64 = imageDataUrl
+        }
+
+        // Call the actual send function
+        sendPublicMessage(payload) // Assuming sendPublicMessage is async or returns a promise
+
+        // Clear input and reset textarea height after successful send
+        clearInputState()
+      } catch (error) {
+        console.error("Error during public message send process:", error)
+        showAppToast(error.message || "Failed to send message.", "error")
+      }
+    },
+    [
+      publicChatInput,
+      publicChatSelectedFile,
+      replyingToMessage,
+      sendTypingEvent, // Add if sendTypingEvent is not stable
+      sendPublicMessage, // Add if sendPublicMessage is not stable
+      clearInputState, // Add if clearInputState is not stable
+    ],
+  )
 
   const handleSubmitPublicChat = useCallback(
     (e) => {
       // Make it async because handleSendPublicMessage is async
       e.preventDefault()
-
-      // Guards (from your original function)
-      if (isSendingPublicMessage || isEditingMessage || isCurrentUserBanned) {
-        if (isCurrentUserBanned) {
-          showAppToast("You are banned from chatting.", "error")
-        }
-        return
-      }
 
       const contentToSend = publicChatInput.trim()
 
@@ -233,11 +228,9 @@ const PublicChatMessageInput = ({
         // Handle message editing
         try {
           editPublicMessage({
-            // Assuming editPublicMessage is async or returns a Promise
             messageId: editingMessage._id,
             newContent: contentToSend,
           })
-          // Clear input and state after successful edit
           clearInputState()
         } catch (error) {
           console.error("Error during public message edit process:", error)
@@ -251,13 +244,22 @@ const PublicChatMessageInput = ({
       publicChatInput,
       publicChatSelectedFile,
       editingMessage,
-      isSendingPublicMessage,
-      isEditingMessage,
-      isCurrentUserBanned,
       editPublicMessage,
       handleSendPublicMessage,
       clearInputState,
     ],
+  )
+
+  const openEmojiPickerWithModalClose = (e) => {
+    handleOpenEmojiPickerPopover(e)
+  }
+
+  const handleEmojiClick = useCallback(
+    (emojiObject) => {
+      setPublicChatInput((prevText) => prevText + emojiObject.emoji)
+      publicChatInputRef.current.focus()
+    },
+    [publicChatInputRef],
   )
 
   const handleImageChange = (e) => {
@@ -279,24 +281,10 @@ const PublicChatMessageInput = ({
     reader.readAsDataURL(file)
   }
 
-  const handleRemoveImage = () => {
-    setPublicChatSelectedFile(null)
-    setPublicChatPreviewImage(null)
-    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
-    publicChatInputRef.current?.focus()
-  }
-
   const handleImageButtonClick = (e) => {
     e.preventDefault()
     publicChatFileInputRef.current.click()
     publicChatInputRef.current?.focus()
-  }
-
-  const handleTouchMove = (e) => {
-    const target = e.target
-    if (target.scrollHeight > target.clientHeight) {
-      e.stopPropagation()
-    }
   }
 
   const handleKeyDown = (e) => {
@@ -317,11 +305,14 @@ const PublicChatMessageInput = ({
     sendTypingEvent(false)
   }
 
-  const isSendButtonDisabled =
-    isSendingPublicMessage ||
-    isEditingMessage ||
-    isCurrentUserBanned ||
-    (!publicChatInput.trim() && !publicChatSelectedFile)
+  const handleRemoveImage = () => {
+    setPublicChatSelectedFile(null)
+    setPublicChatPreviewImage(null)
+    if (publicChatFileInputRef.current) publicChatFileInputRef.current.value = ""
+    publicChatInputRef.current?.focus()
+  }
+
+  const isSendButtonDisabled = !publicChatInput.trim() && !publicChatSelectedFile
 
   const isEditingMode = !!editingMessage
   const showTypingIndicator = typingUsers && typingUsers.length > 0
@@ -406,7 +397,6 @@ const PublicChatMessageInput = ({
                 value={publicChatInput}
                 onChange={handleMessageContentChange}
                 onKeyDown={handleKeyDown}
-                onTouchMove={handleTouchMove}
                 onPaste={handlePaste}
                 placeholder={
                   isCurrentUserBanned
@@ -427,7 +417,7 @@ const PublicChatMessageInput = ({
                     : "cursor-not-allowed bg-primary text-white opacity-50"
                 } transition-colors duration-200`}
               >
-                {isEditingMessage ? <LoadingSpinner size="sm" /> : <MdCheck className="h-5 w-5" />}
+                <MdCheck className="h-5 w-5" />
               </button>
             </div>
           </form>
@@ -527,7 +517,7 @@ const PublicChatMessageInput = ({
                       <EmojiPickerPopover
                         position={popoverPosition}
                         onClose={handleCloseEmojiPickerPopover}
-                        onEmojiClick={onEmojiClick}
+                        onEmojiClick={handleEmojiClick}
                         triggerRef={emojiButtonRef}
                       />
                     </div>
@@ -541,7 +531,6 @@ const PublicChatMessageInput = ({
               value={publicChatInput}
               onChange={handleMessageContentChange}
               onKeyDown={handleKeyDown}
-              onTouchMove={handleTouchMove}
               onPaste={handlePaste}
               placeholder={
                 isCurrentUserBanned
