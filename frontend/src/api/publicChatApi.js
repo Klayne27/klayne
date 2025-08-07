@@ -83,13 +83,13 @@ export const deleteOwnPublicMessageApi = async (messageId) => {
   return data;
 };
 
-export const editPublicMessageApi = async (messageId, newContent) => {
+export const editPublicMessageApi = async (messageId, newText) => {
   const res = await fetch(`${BASE_URL}/edit/${messageId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ newContent }),
+    body: JSON.stringify({ newText }),
   });
 
   const data = await res.json();

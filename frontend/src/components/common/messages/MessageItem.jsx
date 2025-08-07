@@ -117,7 +117,7 @@ const MessageItem = ({
   if (isTypingOtherUser) {
     return (
       <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
-        <div className="flex max-w-[70%] flex-col rounded-3xl rounded-bl-[4px] bg-[#2F3336] p-3 text-white">
+        <div className="flex max-w-[70%] flex-col rounded-full bg-[#2F3336] p-3 text-white">
           <span className="flex items-center gap-0.5">
             <span className="pulsing-dot pulsing-dot-1 inline-block">
               <FaCircle size={6} />

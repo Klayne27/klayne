@@ -5,7 +5,7 @@ import { showAppToast } from "../../utils/showAppToast"
 export const useEditMessage = (conversationId) => {
   const queryClient = useQueryClient()
 
-  const { mutate: editMessage, isPending: isEditing } = useMutation({
+  const { mutate: editPrivateMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newText }) => editMessageApi(messageId, newText),
     onMutate: async ({ messageId, newText }) => {
       const queryKey = ["messages", conversationId]
@@ -44,5 +44,5 @@ export const useEditMessage = (conversationId) => {
     },
   })
 
-  return { editMessage, isEditing }
+  return { editPrivateMessage, isEditing }
 }

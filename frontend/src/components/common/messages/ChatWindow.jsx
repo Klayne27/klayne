@@ -84,7 +84,7 @@ const ChatWindow = () => {
         </div>
       )}
       <div className="mx-auto flex h-full w-full max-w-3xl flex-col md:max-w-[585px]">
-        {isLoadingMessages || !isInitialLoadComplete ? (
+        {isLoadingMessages ? (
           <div className="flex h-full items-center justify-center">
             <LoadingSpinner size="md" />
           </div>

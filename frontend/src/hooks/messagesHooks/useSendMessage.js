@@ -4,7 +4,7 @@ import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
-export const useSendMessage = ({ onSenderMessageSent }) => {
+export const useSendMessage = (onSenderMessageSent ) => {
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)
   const { authUser: currentUser } = useAuthUser()
   const queryClient = useQueryClient()

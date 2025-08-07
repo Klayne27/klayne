@@ -337,8 +337,8 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    const message = await PublicChatMessage.findById(messageId);
-    // const message = await PublicChatMessage.findByIdAndDelete(messageId);
+    // const message = await PublicChatMessage.findById(messageId);
+    const message = await PublicChatMessage.findByIdAndDelete(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
@@ -352,9 +352,9 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     const imageUrlToDelete = message.img;
 
-    message.isDeletedByUser = true;
-    message.img = null; 
-    await message.save();
+    // message.isDeletedByUser = true;
+    // message.img = null; 
+    // await message.save();
 
     if (imageUrlToDelete) {
       let imgId;
@@ -428,10 +428,10 @@ export const deleteOwnPublicMessage = async (req, res) => {
 export const editPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { newContent } = req.body;
+    const { newText } = req.body;
     const userId = req.user._id; 
 
-    if (!newContent || newContent.trim() === "") {
+    if (!newText || newText.trim() === "") {
       return res.status(400).json({ error: "Edited text cannot be empty." });
     }
 
@@ -451,7 +451,7 @@ export const editPublicMessage = async (req, res) => {
       return res.status(403).json({ error: "Cannot edit a deleted message." });
     }
 
-    message.text = newContent;
+    message.text = newText;
     message.isEdited = true;
     message.editedAt = new Date();
 

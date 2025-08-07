@@ -7,10 +7,10 @@ export const useEditPublicMessage = () => {
 
   // The 'mutate' function is returned from useMutation, let's capture it.
   const { mutate: editPublicMessage, isPending: isEditing } = useMutation({
-    mutationFn: ({ messageId, newContent }) =>
-      editPublicMessageApi(messageId, newContent),
+    mutationFn: ({ messageId, newText }) =>
+      editPublicMessageApi(messageId, newText),
 
-    onMutate: async ({ messageId, newContent }) => {
+    onMutate: async ({ messageId, newText }) => {
       // Your onMutate logic is correct for the optimistic update.
       await queryClient.cancelQueries({ queryKey: ["publicMessages"] });
       const previousMessages = queryClient.getQueryData(["publicMessages"]);
@@ -23,7 +23,7 @@ export const useEditPublicMessage = () => {
             if (message._id === messageId) {
               return {
                 ...message,
-                text: newContent,
+                text: newText,
                 isEdited: true,
                 // editedAt: new Date().toISOString(),
               };
