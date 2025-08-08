@@ -1,27 +1,27 @@
-import { useNavigate } from "react-router-dom";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
+import { useNavigate } from "react-router-dom"
+import LoadingSpinner from "../../components/ui/LoadingSpinner"
 
-import { IoSettingsOutline } from "react-icons/io5";
-import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6";
-import { FiTrash } from "react-icons/fi";
-import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications";
-import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification";
-import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications";
-import { formatPostDate } from "../../utils/date";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton";
-import { FaArrowLeft } from "react-icons/fa6";
+import { IoSettingsOutline } from "react-icons/io5"
+import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6"
+import { FiTrash } from "react-icons/fi"
+import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications"
+import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification"
+import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications"
+import { formatPostDate } from "../../utils/date"
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton"
+import { FaArrowLeft } from "react-icons/fa6"
 
-import { FaAt } from "react-icons/fa";
-import { useRef } from "react";
+import { FaAt } from "react-icons/fa"
+import { useRef } from "react"
 
 const NotificationPage = () => {
-  const { notifications, isLoading } = useFetchNotifications();
-  const { deleteNotification, isDeleting } = useDeleteNotification();
-  const { deleteNotifications } = useDeleteNotifications();
-  const { authUser } = useAuthUser();
-  const navigate = useNavigate();
-  const dropdownToggleRef = useRef(null);
+  const { notifications, isLoading } = useFetchNotifications()
+  const { deleteNotification, isDeleting } = useDeleteNotification()
+  const { deleteNotifications } = useDeleteNotifications()
+  const { authUser } = useAuthUser()
+  const navigate = useNavigate()
+  const dropdownToggleRef = useRef(null)
 
   const filteredNotifications = notifications?.filter((notification) => {
     if (
@@ -32,69 +32,69 @@ const NotificationPage = () => {
         notification.type === "commentReply") &&
       notification.from?._id.toString() === authUser?._id.toString()
     ) {
-      return false;
+      return false
     }
-    return true;
-  });
+    return true
+  })
 
   const handleProfileClick = (e, username) => {
-    e.stopPropagation();
-    navigate(`/profile/${username}`);
-  };
+    e.stopPropagation()
+    navigate(`/profile/${username}`)
+  }
 
   const handleNotificationItemClick = (e, notification) => {
     if (e.target.closest("button")) {
-      return;
+      return
     }
 
-    let targetLink = "";
+    let targetLink = ""
 
     if (notification.type === "follow") {
-      targetLink = `/profile/${notification.from?.username}`;
+      targetLink = `/profile/${notification.from?.username}`
     } else if (notification.postId && notification.postId._id) {
       if (
         notification.type === "commentReply" &&
         notification.commentId &&
         notification.commentId._id
       ) {
-        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}?commentId=${notification.commentId._id}`;
+        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}?commentId=${notification.commentId._id}`
       } else {
-        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`;
+        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`
       }
     } else {
-      console.warn("Could not determine navigation link for notification:", notification);
-      return;
+      console.warn("Could not determine navigation link for notification:", notification)
+      return
     }
 
-    navigate(targetLink);
-  };
+    navigate(targetLink)
+  }
 
   const handleDeleteAllNotifications = () => {
-    deleteNotifications();
+    deleteNotifications()
 
     if (dropdownToggleRef.current) {
-      dropdownToggleRef.current.blur();
+      dropdownToggleRef.current.blur()
     }
-  };
+  }
 
   return (
     <>
-      <div className="flex-1 border-accent min-h-screen w-full overflow-x-hidden md:max-w-3xl lg:max-w-4xl mx-auto">
-        <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+      <div className="mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
+        <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
             onClick={() => navigate(-1)}
-            className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
+            className="flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
           >
             <FaArrowLeft />
           </button>
-          <h1 className="font-bold text-xl flex-1 truncate">Notifications</h1>
+          <h1 className="flex-1 truncate text-xl font-bold">Notifications</h1>
           <div className="dropdown dropdown-end">
-            <div tabIndex={0} role="button" className="btn btn-ghost btn-circle btn-sm">
-              <IoSettingsOutline className="w-5 h-5" />
+            <div tabIndex={0} role="button" className="btn btn-circle btn-ghost btn-sm">
+              <IoSettingsOutline className="h-5 w-5" />
             </div>
             <ul
               tabIndex={0}
-              className="dropdown-content z-[1] menu p-2 shadow bg-base-100 rounded-box w-52 border border-accent"
+              className="menu dropdown-content z-[1] w-52 rounded-box border border-accent bg-base-100 p-2 shadow"
               ref={dropdownToggleRef}
             >
               <li>
@@ -120,60 +120,50 @@ const NotificationPage = () => {
         )}
 
         {filteredNotifications?.length === 0 && !isLoading && (
-          <div className="text-center p-4 font-bold">No notifications 🤔</div>
+          <div className="p-4 text-center font-bold">No notifications 🤔</div>
         )}
 
         {filteredNotifications?.map((notification) => {
+          const isGoldVerified = notification.from.isGoldVerified
+          const isVerified = notification.from.isVerified
+
           return (
             <div
-              className="border-b border-accent px-3 py-4 relative flex items-start gap-2 sm:gap-4 hover:bg-secondary transition-colors cursor-pointer"
+              className="relative flex cursor-pointer items-start gap-2 border-b border-accent px-3 py-4 transition-colors hover:bg-secondary sm:gap-4"
               key={notification._id}
               onClick={(e) => handleNotificationItemClick(e, notification)}
             >
-              <div
-                className="absolute right-3 top-3"
-                onClick={(e) => e.stopPropagation()}
-              >
+              <div className="absolute right-3 top-3" onClick={(e) => e.stopPropagation()}>
                 <button
-                  className="group hover:bg-red-600 duration-200 transition hover:text-red-500 hover:bg-opacity-15 rounded-full p-2"
+                  className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
                   onClick={(e) => {
-                    e.stopPropagation();
-                    deleteNotification(notification._id);
+                    e.stopPropagation()
+                    deleteNotification(notification._id)
                   }}
                 >
                   <FiTrash
-                    className="group-hover:text-red-600 transition duration-200 cursor-pointer text-slate-500"
+                    className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
                     size={20}
                   />
                 </button>
               </div>
 
-              <div className="flex-shrink-0 mt-1">
-                {notification.type === "follow" && (
-                  <FaUser className="w-7 h-7 text-primary" />
-                )}
-                {notification.type === "like" && (
-                  <FaHeart className="w-7 h-7 text-red-500" />
-                )}
+              <div className="mt-1 flex-shrink-0">
+                {notification.type === "follow" && <FaUser className="h-7 w-7 text-primary" />}
+                {notification.type === "like" && <FaHeart className="h-7 w-7 text-red-500" />}
                 {notification.type === "commentLike" && (
-                  <FaHeart className="w-7 h-7 text-pink-500" />
+                  <FaHeart className="h-7 w-7 text-pink-500" />
                 )}
-                {notification.type === "comment" && (
-                  <FaComment className="w-7 h-7 text-blue-500" />
-                )}
+                {notification.type === "comment" && <FaComment className="h-7 w-7 text-blue-500" />}
                 {notification.type === "commentReply" && (
-                  <FaReply className="w-7 h-7 text-sky-500" />
+                  <FaReply className="h-7 w-7 text-sky-500" />
                 )}
-                {notification.type === "repost" && (
-                  <FaRetweet className="w-7 h-7 text-green-500" />
-                )}
-                {notification.type === "mention" && (
-                  <FaAt className="w-7 h-7 text-purple-500" />
-                )}
+                {notification.type === "repost" && <FaRetweet className="h-7 w-7 text-green-500" />}
+                {notification.type === "mention" && <FaAt className="h-7 w-7 text-purple-500" />}
               </div>
 
-              <div className="flex flex-col min-w-0 flex-1">
-                <div className="flex gap-1 items-center">
+              <div className="flex min-w-0 flex-1 flex-col">
+                <div className="flex items-center gap-1">
                   <div
                     className="avatar flex-shrink-0 cursor-pointer"
                     onClick={(e) => handleProfileClick(e, notification.from?.username)}
@@ -186,17 +176,19 @@ const NotificationPage = () => {
                     </div>
                   </div>
                   <span
-                    className="font-bold truncate w-fit max-w-full cursor-pointer hover:underline"
+                    className="w-fit max-w-full cursor-pointer truncate font-bold hover:underline"
                     onClick={(e) => handleProfileClick(e, notification.from?.username)}
                   >
                     @{notification.from?.username}
                   </span>
+                  {isVerified && <img src="/verified.png" className="mr-1 size-[17px]" />}
+                  {isGoldVerified && <img src="/gold-verified.png" className="mr-1 size-[17px]" />}
                   <span className="text-[8px]">●</span>
-                  <span className="text-slate-500 text-sm">
+                  <span className="text-sm text-slate-500">
                     {formatPostDate(notification.createdAt)}
                   </span>
                 </div>
-                <span className="text-sm overflow-hidden text-ellipsis whitespace-normal">
+                <span className="overflow-hidden text-ellipsis whitespace-normal text-sm">
                   {notification.type === "follow" && "followed you."}
                   {notification.type === "like" && (
                     <>
@@ -282,7 +274,7 @@ const NotificationPage = () => {
                       )}
                     </>
                   )}
-                  {notification.type === "mention" && ( 
+                  {notification.type === "mention" && (
                     <>
                       mentioned you in a post{" "}
                       {notification.postId && (
@@ -299,10 +291,10 @@ const NotificationPage = () => {
                 </span>
               </div>
             </div>
-          );
+          )
         })}
       </div>
     </>
-  );
-};
-export default NotificationPage;
+  )
+}
+export default NotificationPage
