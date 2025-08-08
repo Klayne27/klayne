@@ -1330,12 +1330,20 @@ export const getBookmarkedPosts = async (req, res) => {
       .populate({
         path: "user",
         select: "-password",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
         select:
           "text img video mediaType likes commentsCount repostsCount createdAt user repostedBy",
@@ -1345,6 +1353,10 @@ export const getBookmarkedPosts = async (req, res) => {
         populate: {
           path: "user",
           select: "-password",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       })
       .populate("image", "imageUrl")
@@ -1472,7 +1484,15 @@ export const getPinnedPosts = async (req, res) => {
       .populate({
         path: "pinnedPosts",
         populate: [
-          { path: "user", select: "-password" },
+          {
+            path: "user",
+            select: "-password",
+            populate: {
+              path: "profileImg",
+              select: "imageUrl",
+            },
+          },
+
           {
             path: "repostedFrom",
             populate: {
