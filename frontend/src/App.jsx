@@ -22,7 +22,6 @@ const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
 const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
-// 1. Create a layout component for pages that have the Sidebar and RightPanel
 const MainLayout = ({ children }) => {
   const location = useLocation()
   const isMessagePage = location.pathname.includes("/messages")
@@ -73,7 +72,6 @@ function App() {
     <>
       <Suspense fallback={<div className="flex h-screen items-center justify-center"></div>}>
         <Routes>
-          {/* Routes that should NOT have the main layout */}
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
           <Route
@@ -81,9 +79,8 @@ function App() {
             element={authUser ? <ImageViewerPage /> : <Navigate to="/login" />}
           />
 
-          {/* Routes that SHOULD have the main layout */}
           <Route
-            path="/*" // This will match all other routes
+            path="/*"
             element={
               authUser ? (
                 <MainLayout>
@@ -111,7 +108,7 @@ function App() {
         </Routes>
       </Suspense>
 
-      {authUser && !isMessagePage && !isPublicChatPage && (
+      {authUser && !isMessagePage && !isPublicChatPage && isLoading && (
         <RightPanel className="hidden md:block" />
       )}
       <Toaster position="bottom-center" />
