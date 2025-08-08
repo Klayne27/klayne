@@ -18,9 +18,6 @@ const MessageBubble = ({
     <span className="text-gray-600 italic text-sm">[Message Deleted]</span>
   );
 
-  console.log(message);
-
-
   return (
     <div
       className={`flex items-end gap-2 ${isSentByCurrentUser ? "flex-row-reverse" : "flex-row"}`}
