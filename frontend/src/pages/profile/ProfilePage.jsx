@@ -320,17 +320,17 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               />
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
-                  <Link to={`/images/${userProfile?.profileImg?._id}`}>
+                  {/* <Link to={`/images/${userProfile?.profileImg?._id}`}> */}
                     <img
                       src={
                         profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
                       }
                       alt="user avatar"
                       className="cursor-pointer"
-                      // onClick={(e) => handleProfileImageClick(userProfile?.profileImg, e)}
+                      onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
                       loading="lazy"
                     />
-                  </Link>
+                  {/* </Link> */}
                   {isMyProfile && (
                     <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
                       <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />
