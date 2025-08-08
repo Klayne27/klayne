@@ -288,7 +288,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             <div className="group/cover relative">
               <Link to={`/images/${userProfile?.coverImg?._id}`}>
                 <img
-                  src={coverImg || userProfile?.coverImg?.imageUrl}
+                  src={coverImg || userProfile?.coverImg?.imageUrl || "/cover.png"}
                   className="h-52 w-full cursor-pointer object-cover"
                   alt="cover image"
                   // onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
