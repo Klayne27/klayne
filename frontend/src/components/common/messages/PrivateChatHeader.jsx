@@ -1,7 +1,7 @@
 import { FaArrowLeft } from "react-icons/fa6";
 import { Link, useNavigate } from "react-router-dom";
 
-function ChatHeader({ otherUser }) {
+function PrivateChatHeader({ otherUser }) {
   const navigate = useNavigate();
 
   const handleBackToConversations = () => {
@@ -35,4 +35,4 @@ function ChatHeader({ otherUser }) {
   );
 }
 
-export default ChatHeader;
+export default PrivateChatHeader;

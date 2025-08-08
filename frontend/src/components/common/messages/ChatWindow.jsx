@@ -5,13 +5,13 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages"
 import MessageInput from "./MessageInput"
 import MessageList from "./MessageList"
-import ChatHeader from "./ChatHeader"
 import { IoChatbubblesOutline } from "react-icons/io5"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import { FaCaretDown } from "react-icons/fa"
 import LoadingSpinner from "../../ui/LoadingSpinner"
+import PrivateChatHeader from "./PrivateChatHeader"
 
 const ChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -73,7 +73,7 @@ const ChatWindow = () => {
 
   return (
     <div className="relative flex h-full flex-col border-accent md:border-r">
-      <ChatHeader otherUser={otherUser} />
+      <PrivateChatHeader otherUser={otherUser} />
       {isChatEmpty && !isLoadingMessages && (
         <div className="flex h-full flex-col items-center justify-end p-4 text-center">
           <IoChatbubblesOutline className="mb-4 text-6xl text-gray-300" />
