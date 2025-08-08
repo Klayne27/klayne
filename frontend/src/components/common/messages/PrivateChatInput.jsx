@@ -13,7 +13,7 @@ import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPicker
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
 
-function MessageInput({ actualConversationId, privateChatInputRef, socket, onSenderMessageSent }) {
+function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, onSenderMessageSent }) {
   const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
@@ -270,4 +270,4 @@ function MessageInput({ actualConversationId, privateChatInputRef, socket, onSen
   )
 }
 
-export default React.memo(MessageInput)
+export default React.memo(PrivateChatInput)

@@ -3,7 +3,7 @@ import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import PublicChatHeader from "./PublicChatHeader"
 import LoadingSpinner from "../../ui/LoadingSpinner"
-import PublicChatMessage from "./PublicChatMessage"
+import PublicChatMessageList from "./PublicChatMessageList"
 import PublicChatMessageInput from "./PublicChatMessageInput"
 
 import { FaCaretDown } from "react-icons/fa"
@@ -134,7 +134,7 @@ const PublicChatWindow = () => {
                 )}
 
               {processedMessages.map((message) => (
-                <PublicChatMessage
+                <PublicChatMessageList
                   key={message._id}
                   message={message} // Pass the fully processed message object
                   currentUser={currentUser}

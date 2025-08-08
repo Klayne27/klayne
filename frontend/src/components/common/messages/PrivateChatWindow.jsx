@@ -3,8 +3,8 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../../context/SocketContext"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { useFetchMessages } from "../../../hooks/messagesHooks/useFetchMessages"
-import MessageInput from "./MessageInput"
-import MessageList from "./MessageList"
+import PrivateChatInput from "./PrivateChatInput"
+import PrivateChatMessageList from "./PrivateChatMessageList"
 import { IoChatbubblesOutline } from "react-icons/io5"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
@@ -13,7 +13,7 @@ import { FaCaretDown } from "react-icons/fa"
 import LoadingSpinner from "../../ui/LoadingSpinner"
 import PrivateChatHeader from "./PrivateChatHeader"
 
-const ChatWindow = () => {
+const PrivateChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
   const { setActiveConversationId, socket } = useSocket()
   const queryClient = useQueryClient()
@@ -91,7 +91,7 @@ const ChatWindow = () => {
             <LoadingSpinner size="md" />
           </div>
         ) : (
-          <MessageList
+          <PrivateChatMessageList
             ref={messageListRef}
             isNewChat={isChatEmpty}
             error={error}
@@ -119,7 +119,7 @@ const ChatWindow = () => {
           </div>
         )}
 
-        <MessageInput
+        <PrivateChatInput
           otherUser={otherUser}
           actualConversationId={conversationId}
           currentOptimisticIdRef={currentOptimisticIdRef}
@@ -133,4 +133,4 @@ const ChatWindow = () => {
   )
 }
 
-export default ChatWindow
+export default PrivateChatWindow

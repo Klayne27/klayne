@@ -26,7 +26,7 @@ import { usePublicChatAdminHandlers } from "../../../hooks/customHooks/usePublic
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { PUBLIC_CHAT_MODAL_CONFIGS } from "../../../constants/publicChatModalConfigs"
 
-const PublicChatMessage = React.memo(function PublicChatMessage({
+const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
   currentUser,
   publicChatInputRef,
@@ -299,4 +299,4 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   )
 })
 
-export default PublicChatMessage
+export default PublicChatMessageList

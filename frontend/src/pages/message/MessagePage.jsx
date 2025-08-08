@@ -1,7 +1,7 @@
 import { useEffect } from "react"
 import { useParams } from "react-router-dom"
 import ConversationsList from "../../components/common/messages/ConversationsList"
-import ChatWindow from "../../components/common/messages/ChatWindow"
+import PrivateChatWindow from "../../components/common/messages/PrivateChatWindow"
 import { useFetchConversations } from "../../hooks/messagesHooks/useFetchConversations"
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
 import { useAppStore } from "../../store/useAppStore"
@@ -73,7 +73,7 @@ const MessagePage = () => {
             {isLoadingConversations && urlConversationId ? (
               <div></div>
             ) : selectedConversation ? (
-              <ChatWindow />
+              <PrivateChatWindow />
             ) : (
               <div className="hidden flex-1 flex-col items-center justify-center p-4 text-gray-400 md:flex">
                 <p className="mb-2 text-xl font-bold">Select a message</p>

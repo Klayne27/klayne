@@ -5,7 +5,7 @@ import LoadingSpinner from "../../ui/LoadingSpinner"
 import MessageItem from "./MessageItem"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 
-const MessageList = forwardRef(function MessageList(
+const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
     error,
     isNewChat,
@@ -73,4 +73,4 @@ const MessageList = forwardRef(function MessageList(
   )
 })
 
-export default React.memo(MessageList)
+export default React.memo(PriveChatMessageList)
