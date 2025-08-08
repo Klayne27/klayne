@@ -87,7 +87,6 @@ const Post = ({
   const { deletePost, isDeleting } = useDeletePosts()
   const { pinUnpinPost, isPinning } = usePinPost()
 
-  // New: Call useFollow and useBlockUnblockUser hooks
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow()
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
 
@@ -95,44 +94,10 @@ const Post = ({
 
   const formattedDate = formatPostDate(displayTimestamp)
 
-  // const [isTouchDevice, setIsTouchDevice] = useState(false);
-  // const [activeButtonId, setActiveButton] = useState(null);
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
 
-  // useEffect(() => {
-  //   setIsTouchDevice(
-  //     "ontouchstart" in window ||
-  //       navigator.maxTouchPoints > 0 ||
-  //       navigator.msMaxTouchPoints > 0
-  //   );
-  // }, []);
-
-  // const handleTouchStart = useCallback(
-  //   (id) => {
-  //     if (isTouchDevice) {
-  //       setActiveButton(id);
-  //     }
-  //   },
-  //   [isTouchDevice]
-  // );
-
-  // const handleTouchEnd = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 150);
-  //   }
-  // }, [isTouchDevice]);
-
-  // const handleTouchCancel = useCallback(() => {
-  //   if (isTouchDevice) {
-  //     setTimeout(() => {
-  //       setActiveButton(null);
-  //     }, 150);
-  //   }
-  // }, [isTouchDevice]);
 
   const navigateToPostPage = (e) => {
     if (isDraggingRef.current) {
@@ -475,7 +440,6 @@ const Post = ({
                 <img
                   src={sourcePost.img}
                   className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                  // Removed w-full from img to allow wrapper to dictate width based on content
                   alt="post image"
                   onClick={(e) => handleMediaClick(sourcePost.img, "image", e)}
                   loading="lazy"

@@ -56,7 +56,6 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     isMessageEdited,
     groupedReactions,
     hasAnyReactions,
-    senderUsername,
   } = useMessagingMetaData(message, currentUser)
 
   const {

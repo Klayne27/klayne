@@ -1,58 +1,58 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { formatPostDate } from "../../../utils/date";
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser";
-import { FiTrash } from "react-icons/fi";
-import LoadingSpinner from "../../ui/LoadingSpinner";
-import { useLikeComment } from "../../../hooks/commentHooks/useLikeComment";
-import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment";
-import { useCreateComment } from "../../../hooks/commentHooks/useCreateComment";
-import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments";
-import { renderClickableText } from "../../../utils/textUtils";
-import { BiImageAdd } from "react-icons/bi";
-import { IoClose } from "react-icons/io5";
-import { useDebounce } from "../../../hooks/customHooks/useDebounce";
-import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers";
-import RepliesSkeleton from "../../skeletons/RepliesSkeleton";
-import useFollow from "../../../hooks/usersHooks/useFollow";
-import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser";
-import { MdBlock } from "react-icons/md";
-import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu";
-import { useIsMobile } from "../../../hooks/customHooks/useIsMobile";
-import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler";
-import CommentItemButtons from "../../ui/CommentItemButtons";
-import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu";
-import DropdownMenu from "../../ui/DropdownMenu";
+import React, { useState, useRef, useEffect, useCallback } from "react"
+import { Link } from "react-router-dom"
+import { formatPostDate } from "../../../utils/date"
+import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { FiTrash } from "react-icons/fi"
+import LoadingSpinner from "../../ui/LoadingSpinner"
+import { useLikeComment } from "../../../hooks/commentHooks/useLikeComment"
+import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment"
+import { useCreateComment } from "../../../hooks/commentHooks/useCreateComment"
+import { useFetchComments } from "../../../hooks/commentHooks/useFetchComments"
+import { renderClickableText } from "../../../utils/textUtils"
+import { BiImageAdd } from "react-icons/bi"
+import { IoClose } from "react-icons/io5"
+import { useDebounce } from "../../../hooks/customHooks/useDebounce"
+import { useSearchUsers } from "../../../hooks/usersHooks/userSearchUsers"
+import RepliesSkeleton from "../../skeletons/RepliesSkeleton"
+import useFollow from "../../../hooks/usersHooks/useFollow"
+import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser"
+import { MdBlock } from "react-icons/md"
+import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
+import CommentItemButtons from "../../ui/CommentItemButtons"
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
+import DropdownMenu from "../../ui/DropdownMenu"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
-  const { authUser } = useAuthUser();
-  const isCommentOwner = authUser && authUser._id === comment.user._id;
-  const isFollowingCommentOwner = authUser?.following.includes(comment.user._id);
+  const { authUser } = useAuthUser()
+  const isCommentOwner = authUser && authUser._id === comment.user._id
+  const isFollowingCommentOwner = authUser?.following.includes(comment.user._id)
 
-  const [showReplyInput, setShowReplyInput] = useState(false);
-  const [replyInput, setReplyInput] = useState("");
-  const [replyPreviewImage, setReplyPreviewImage] = useState(null);
-  const [replySelectedFile, setReplySelectedFile] = useState(null);
-  const replyFileInputRef = useRef(null);
-  const [isAnimating, setIsAnimating] = useState(false);
-  const [showButton, setShowButton] = useState(false);
+  const [showReplyInput, setShowReplyInput] = useState(false)
+  const [replyInput, setReplyInput] = useState("")
+  const [replyPreviewImage, setReplyPreviewImage] = useState(null)
+  const [replySelectedFile, setReplySelectedFile] = useState(null)
+  const replyFileInputRef = useRef(null)
+  const [isAnimating, setIsAnimating] = useState(false)
+  const [showButton, setShowButton] = useState(false)
 
   // --- STATES FOR MENTIONS IN REPLIES ---
-  const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("");
-  const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300);
-  const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false);
-  const replyInputRef = useRef(null); // Ref for reply input
+  const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("")
+  const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300)
+  const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false)
+  const replyInputRef = useRef(null) // Ref for reply input
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
-    debouncedReplyMentionSearchTerm
-  );
+    debouncedReplyMentionSearchTerm,
+  )
   // --- END MENTION STATES ---
 
-  const { likeComment, isLikingComment } = useLikeComment();
-  const { deleteComment, isDeletingComment } = useDeleteComment();
-  const { createComment, isCreatingComment } = useCreateComment(postId, comment._id);
+  const { likeComment, isLikingComment } = useLikeComment()
+  const { deleteComment, isDeletingComment } = useDeleteComment()
+  const { createComment, isCreatingComment } = useCreateComment(postId, comment._id)
 
   // --- NEW STATE TO CONTROL REPLIES FETCHING/DISPLAY ---
-  const [showRepliesSection, setShowRepliesSection] = useState(false); // Controls rendering of the entire replies section
+  const [showRepliesSection, setShowRepliesSection] = useState(false) // Controls rendering of the entire replies section
 
   const {
     comments: replies,
@@ -60,41 +60,41 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     isFetchingNextPage: isFetchingNextRepliesPage,
     hasNextPage: hasNextRepliesPage,
     fetchNextPage: fetchNextRepliesPage,
-  } = useFetchComments(postId, comment._id, showRepliesSection); // Pass showRepliesSection to enable fetching
+  } = useFetchComments(postId, comment._id, showRepliesSection) // Pass showRepliesSection to enable fetching
 
-  const observerTarget = useRef(null);
+  const observerTarget = useRef(null)
 
-  const { follow, isPending: isFollowingOrUnfollowing } = useFollow();
-  const { blockUnblockUser, isBlocking } = useBlockUnblockUser();
+  const { follow, isPending: isFollowingOrUnfollowing } = useFollow()
+  const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
 
-  const { setShowMenu } = useDropdownMenu();
+  const { setShowMenu } = useDropdownMenu()
 
   // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   // Determine if the current authUser is following the original post owner
-  const isFollowingOriginalPostOwner = authUser?.following?.includes(comment.user._id);
+  const isFollowingOriginalPostOwner = authUser?.following?.includes(comment.user._id)
   // Determine if the current authUser has blocked the original post owner
-  const isBlockedByAuthUser = authUser?.blockedUsers?.includes(comment.user._id);
+  const isBlockedByAuthUser = authUser?.blockedUsers?.includes(comment.user._id)
 
-  const isMobile = useIsMobile();
+  const isMobile = useIsMobile()
 
   // --- TEXTAREA HEIGHT ADJUSTMENT ---
   const adjustTextareaHeight = useCallback(() => {
-    const textarea = replyInputRef.current; // Use the new ref
+    const textarea = replyInputRef.current // Use the new ref
     if (textarea) {
-      textarea.style.height = "auto"; // Reset height
-      textarea.style.height = `${textarea.scrollHeight}px`;
+      textarea.style.height = "auto" // Reset height
+      textarea.style.height = `${textarea.scrollHeight}px`
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    adjustTextareaHeight();
-  }, [replyInput, adjustTextareaHeight]); // Trigger on replyInput change
+    adjustTextareaHeight()
+  }, [replyInput, adjustTextareaHeight]) // Trigger on replyInput change
   // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
   const handleFocus = () => {
-    setShowButton(true);
-  };
+    setShowButton(true)
+  }
   // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
   // Intersection Observer for infinite scrolling replies
@@ -105,56 +105,52 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       isFetchingNextRepliesPage ||
       !showRepliesSection
     )
-      return; // Only observe if replies section is open
+      return // Only observe if replies section is open
 
     const observer = new IntersectionObserver(
       (entries) => {
-        if (
-          entries[0].isIntersecting &&
-          hasNextRepliesPage &&
-          !isFetchingNextRepliesPage
-        ) {
-          fetchNextRepliesPage();
+        if (entries[0].isIntersecting && hasNextRepliesPage && !isFetchingNextRepliesPage) {
+          fetchNextRepliesPage()
         }
       },
-      { threshold: 0.1 }
-    );
+      { threshold: 0.1 },
+    )
 
-    observer.observe(observerTarget.current);
+    observer.observe(observerTarget.current)
 
     return () => {
       if (observerTarget.current) {
-        observer.unobserve(observerTarget.current);
+        observer.unobserve(observerTarget.current)
       }
-    };
+    }
   }, [
     hasNextRepliesPage,
     isFetchingNextRepliesPage,
     fetchNextRepliesPage,
     comment._id,
     showRepliesSection,
-  ]);
+  ])
 
   const handleLikeCommentClick = (e) => {
-    e.stopPropagation();
-    setIsAnimating(true);
-    if (isLikingComment) return;
+    e.stopPropagation()
+    setIsAnimating(true)
+    if (isLikingComment) return
     likeComment({
       commentId: comment._id,
       postId: postId,
       parentCommentId: comment.parentComment?._id || null,
-    });
-  };
+    })
+  }
 
   const handleDeleteCommentClick = (e) => {
-    e.stopPropagation();
-    if (isDeletingComment) return;
+    e.stopPropagation()
+    if (isDeletingComment) return
     deleteComment({
       commentId: comment._id,
       postId: postId,
       parentCommentId: comment.parentComment?._id || null,
-    });
-  };
+    })
+  }
 
   // --- NEW: Handle pasting an image into the input field ---
   const handlePaste = usePasteHandler({
@@ -164,189 +160,187 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     setSelectedFile: setReplySelectedFile,
     setPreviewImage: setReplyPreviewImage,
     fileInputRef: replyFileInputRef,
-  });
+  })
 
   // --- HANDLER FOR OPENING/CLOSING REPLY INPUT ---
   const handleToggleReplyInput = useCallback((e) => {
-    e.stopPropagation();
-    setShowReplyInput((prev) => !prev);
+    e.stopPropagation()
+    setShowReplyInput((prev) => !prev)
     // Clear previous reply state when toggling
     // setReplyInput("");
-    setReplyPreviewImage(null);
-    setReplySelectedFile(null);
-    setReplyMentionSearchTerm("");
-    setShowReplyMentionSuggestions(false);
-  }, []);
+    setReplyPreviewImage(null)
+    setReplySelectedFile(null)
+    setReplyMentionSearchTerm("")
+    setShowReplyMentionSuggestions(false)
+  }, [])
 
   // --- HANDLER FOR TOGGLING REPLIES SECTION VISIBILITY ---
   const handleToggleRepliesVisibility = useCallback((e) => {
-    e.stopPropagation();
-    setShowRepliesSection((prev) => !prev);
-  }, []);
+    e.stopPropagation()
+    setShowRepliesSection((prev) => !prev)
+  }, [])
 
   const handleImageChange = (e) => {
-    const file = e.target.files[0];
+    const file = e.target.files[0]
     if (file) {
-      setReplySelectedFile(file);
-      setReplyPreviewImage(URL.createObjectURL(file));
+      setReplySelectedFile(file)
+      setReplyPreviewImage(URL.createObjectURL(file))
     } else {
-      setReplySelectedFile(null);
-      setReplyPreviewImage(null);
+      setReplySelectedFile(null)
+      setReplyPreviewImage(null)
     }
-  };
+  }
 
   const handleRemoveImage = () => {
-    setReplySelectedFile(null);
-    setReplyPreviewImage(null);
+    setReplySelectedFile(null)
+    setReplyPreviewImage(null)
     if (replyFileInputRef.current) {
-      replyFileInputRef.current.value = "";
+      replyFileInputRef.current.value = ""
     }
-  };
+  }
 
   const handleReplyTextChange = (e) => {
-    const newText = e.target.value;
-    setReplyInput(newText);
+    const newText = e.target.value
+    setReplyInput(newText)
 
-    const lastAtIndex = newText.lastIndexOf("@");
+    const lastAtIndex = newText.lastIndexOf("@")
     if (lastAtIndex !== -1) {
-      const potentialMention = newText.substring(lastAtIndex + 1);
+      const potentialMention = newText.substring(lastAtIndex + 1)
       if (potentialMention.length > 0 && !/\s/.test(potentialMention)) {
-        setReplyMentionSearchTerm(potentialMention);
-        setShowReplyMentionSuggestions(true);
+        setReplyMentionSearchTerm(potentialMention)
+        setShowReplyMentionSuggestions(true)
       } else {
-        setReplyMentionSearchTerm("");
-        setShowReplyMentionSuggestions(false);
+        setReplyMentionSearchTerm("")
+        setShowReplyMentionSuggestions(false)
       }
     } else {
-      setReplyMentionSearchTerm("");
-      setShowReplyMentionSuggestions(false);
+      setReplyMentionSearchTerm("")
+      setShowReplyMentionSuggestions(false)
     }
-  };
+  }
 
   const handleSelectReplyMention = useCallback(
     (username) => {
-      const currentText = replyInput;
-      const lastAtIndex = currentText.lastIndexOf("@");
+      const currentText = replyInput
+      const lastAtIndex = currentText.lastIndexOf("@")
 
       if (lastAtIndex !== -1) {
-        const textFromAt = currentText.substring(lastAtIndex);
-        const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/);
+        const textFromAt = currentText.substring(lastAtIndex)
+        const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/)
 
-        let partialMentionLength = 0;
+        let partialMentionLength = 0
         if (match && match[1]) {
-          partialMentionLength = match[1].length;
+          partialMentionLength = match[1].length
         }
 
-        const replaceStartIndex = lastAtIndex;
-        const replaceEndIndex = lastAtIndex + 1 + partialMentionLength;
+        const replaceStartIndex = lastAtIndex
+        const replaceEndIndex = lastAtIndex + 1 + partialMentionLength
 
         const newText =
           currentText.substring(0, replaceStartIndex) +
           `@${username} ` +
-          currentText.substring(replaceEndIndex);
+          currentText.substring(replaceEndIndex)
 
-        setReplyInput(newText);
-        setReplyMentionSearchTerm("");
-        setShowReplyMentionSuggestions(false);
+        setReplyInput(newText)
+        setReplyMentionSearchTerm("")
+        setShowReplyMentionSuggestions(false)
 
         setTimeout(() => {
-          const input = replyInputRef.current;
+          const input = replyInputRef.current
           if (input) {
             const newCursorPos =
-              currentText.substring(0, replaceStartIndex).length + `@${username} `.length;
-            input.setSelectionRange(newCursorPos, newCursorPos);
-            input.focus();
+              currentText.substring(0, replaceStartIndex).length + `@${username} `.length
+            input.setSelectionRange(newCursorPos, newCursorPos)
+            input.focus()
           }
-        }, 0);
+        }, 0)
       }
     },
-    [replyInput]
-  );
+    [replyInput],
+  )
 
   const handleSendReply = useCallback(
     async (e) => {
-      e.preventDefault();
-      e.stopPropagation();
+      e.preventDefault()
+      e.stopPropagation()
 
       if (!replyInput.trim() && !replySelectedFile) {
-        return;
+        return
       }
-      if (isCreatingComment) return;
+      if (isCreatingComment) return
 
-      let imgDataToSend = null;
+      let imgDataToSend = null
       if (replySelectedFile) {
         imgDataToSend = await new Promise((resolve) => {
-          const reader = new FileReader();
-          reader.onloadend = () => resolve(reader.result);
-          reader.readAsDataURL(replySelectedFile);
-        });
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.readAsDataURL(replySelectedFile)
+        })
       }
 
       // Pass the Base64 string to createComment, NOT the File object or blob URL
-      await createComment({ text: replyInput, img: imgDataToSend });
+      await createComment({ text: replyInput, img: imgDataToSend })
 
-      setReplyInput("");
-      setReplyPreviewImage(null); // Clear Base64 preview
-      setReplySelectedFile(null); // Clear selected File
+      setReplyInput("")
+      setReplyPreviewImage(null) // Clear Base64 preview
+      setReplySelectedFile(null) // Clear selected File
       if (replyFileInputRef.current) {
-        replyFileInputRef.current.value = "";
+        replyFileInputRef.current.value = ""
       }
       // ... rest of your clearing logic
-      setShowReplyInput(false);
-      setReplyMentionSearchTerm("");
-      setShowReplyMentionSuggestions(false);
-      setShowRepliesSection(true);
+      setShowReplyInput(false)
+      setReplyMentionSearchTerm("")
+      setShowReplyMentionSuggestions(false)
+      setShowRepliesSection(true)
     },
-    [createComment, isCreatingComment, replyInput, replySelectedFile]
-  );
+    [createComment, isCreatingComment, replyInput, replySelectedFile],
+  )
 
   const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation();
+    event.stopPropagation()
     if (openImageModal) {
-      openImageModal(imageUrl);
+      openImageModal(imageUrl)
     }
-  };
+  }
 
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter") {
         if (showReplyMentionSuggestions && suggestedUsers.length > 0) {
-          e.preventDefault();
+          e.preventDefault()
           // Automatically select the first suggestion on Enter
-          handleSelectReplyMention(suggestedUsers[0].username);
+          handleSelectReplyMention(suggestedUsers[0].username)
         } else if (isMobile) {
-          e.preventDefault(); // Prevent default form submission
-          const { current: input } = replyInputRef;
+          e.preventDefault() // Prevent default form submission
+          const { current: input } = replyInputRef
           if (input) {
-            const start = input.selectionStart;
-            const end = input.selectionEnd;
-            const newValue =
-              replyInput.substring(0, start) + "\n" + replyInput.substring(end);
-            setReplyInput(newValue);
+            const start = input.selectionStart
+            const end = input.selectionEnd
+            const newValue = replyInput.substring(0, start) + "\n" + replyInput.substring(end)
+            setReplyInput(newValue)
             setTimeout(() => {
-              input.selectionStart = input.selectionEnd = start + 1;
-            }, 0);
+              input.selectionStart = input.selectionEnd = start + 1
+            }, 0)
           }
         } else {
           // Desktop logic
           if (e.shiftKey) {
-            e.preventDefault(); // Prevent default form submission
-            const { current: input } = replyInputRef;
+            e.preventDefault() // Prevent default form submission
+            const { current: input } = replyInputRef
             if (input) {
-              const start = input.selectionStart;
-              const end = input.selectionEnd;
-              const newValue =
-                replyInput.substring(0, start) + "\n" + replyInput.substring(end);
-              setReplyInput(newValue);
+              const start = input.selectionStart
+              const end = input.selectionEnd
+              const newValue = replyInput.substring(0, start) + "\n" + replyInput.substring(end)
+              setReplyInput(newValue)
               setTimeout(() => {
-                input.selectionStart = input.selectionEnd = start + 1;
-              }, 0);
+                input.selectionStart = input.selectionEnd = start + 1
+              }, 0)
             }
           } else {
             // On desktop, Enter sends the message (and not pending)
             if (!isCreatingComment) {
-              e.preventDefault(); // Prevent default new line behavior for Enter
-              handleSendReply(e);
+              e.preventDefault() // Prevent default new line behavior for Enter
+              handleSendReply(e)
             }
           }
         }
@@ -362,50 +356,50 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
       handleSelectReplyMention,
       isCreatingComment,
       handleSendReply,
-    ]
-  );
+    ],
+  )
 
   // New: Handle follow/unfollow
   const handleFollowClick = (e) => {
-    e.stopPropagation();
-    if (!authUser || isFollowingOrUnfollowing) return;
-    follow(comment.user._id);
-    setShowMenu(false); // Close menu after clicking
-  };
+    e.stopPropagation()
+    if (!authUser || isFollowingOrUnfollowing) return
+    follow(comment.user._id)
+    setShowMenu(false) // Close menu after clicking
+  }
 
   // New: Handle block/unblock
   const handleBlockClick = (e) => {
-    e.stopPropagation();
-    if (!authUser || isBlocking) return;
-    blockUnblockUser(comment.user._id);
-    setShowMenu(false); // Close menu after clicking
-  };
+    e.stopPropagation()
+    if (!authUser || isBlocking) return
+    blockUnblockUser(comment.user._id)
+    setShowMenu(false) // Close menu after clicking
+  }
 
   // Reset animation state after it completes
   useEffect(() => {
     if (isAnimating) {
       const timer = setTimeout(() => {
-        setIsAnimating(false);
-      }, 300);
-      return () => clearTimeout(timer);
+        setIsAnimating(false)
+      }, 300)
+      return () => clearTimeout(timer)
     }
-  }, [isAnimating]);
+  }, [isAnimating])
 
   if (!comment || !comment.user) {
-    console.warn("Comment or comment user not populated:", comment);
-    return null;
+    console.warn("Comment or comment user not populated:", comment)
+    return null
   }
 
   return (
-    <div className="flex flex-col gap-0 md:gap-2 border-accent p-2 md:p-4 relative">
-      <div className="flex gap-1 md:gap-3 items-start">
+    <div className="relative flex flex-col gap-0 border-accent p-2 md:gap-2 md:p-4">
+      <div className="flex items-start gap-1 md:gap-3">
         <Link
           to={`/profile/${comment.user.username}`}
           className="flex-shrink-0"
           onClick={(e) => e.stopPropagation()}
         >
           <div className="avatar">
-            <div className="w-8 md:w-9 rounded-full">
+            <div className="w-8 rounded-full md:w-9">
               <img
                 src={comment.user.profileImg || "/avatar-placeholder.png"}
                 alt={`${comment.user.username}'s profile`}
@@ -414,22 +408,18 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           </div>
         </Link>
 
-        <div className="flex flex-col flex-grow min-w-0">
-          <div className="flex flex-wrap gap-1 items-center relative">
-            <div className="flex gap-1 items-center flex-wrap">
+        <div className="flex min-w-0 flex-grow flex-col">
+          <div className="relative flex flex-wrap items-center gap-1">
+            <div className="flex flex-wrap items-center gap-1">
               <Link
                 to={`/profile/${comment.user.username}`}
-                className="font-semibold text-sm hover:underline flex-shrink-0"
+                className="flex-shrink-0 text-sm font-semibold hover:underline"
                 onClick={(e) => e.stopPropagation()}
               >
                 {comment.user.fullName}
               </Link>
               {comment.user.isVerified && (
-                <img
-                  src="/verified.png"
-                  className="size-[17px] flex-shrink-0"
-                  alt="Verified"
-                />
+                <img src="/verified.png" className="size-[17px] flex-shrink-0" alt="Verified" />
               )}
               {comment.user.isGoldVerified && (
                 <img
@@ -440,13 +430,13 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               )}
               <Link
                 to={`/profile/${comment.user.username}`}
-                className="text-gray-500 text-sm truncate flex-grow min-w-0"
+                className="min-w-0 flex-grow truncate text-sm text-gray-500"
                 onClick={(e) => e.stopPropagation()}
               >
                 @{comment.user.username}
               </Link>
               {comment.createdAt && (
-                <span className="text-gray-500 text-xs text-center flex items-center justify-center gap-1 flex-shrink-0 ml-auto">
+                <span className="ml-auto flex flex-shrink-0 items-center justify-center gap-1 text-center text-xs text-gray-500">
                   <span className="text-[7px]">●</span>
                   {formatPostDate(comment.createdAt)}
                 </span>
@@ -460,7 +450,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   {/* If the current user is the comment owner AND the post owner, only show delete */}
                   {isPostOwner ? (
                     <button
-                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
                       onClick={handleDeleteCommentClick}
                       disabled={isDeletingComment}
                     >
@@ -471,7 +461,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   ) : (
                     // If the current user is the comment owner but NOT the post owner, only show delete
                     <button
-                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
                       onClick={handleDeleteCommentClick}
                       disabled={isDeletingComment}
                     >
@@ -488,7 +478,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 <>
                   {/* Follow/Unfollow button (always shown if not comment owner) */}
                   <button
-                    className="w-full text-left px-4 py-1 text-white flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                    className="flex w-full items-center gap-2 px-4 py-1 text-left text-white transition duration-200 hover:bg-gray-700/30"
                     onClick={handleFollowClick}
                     disabled={isFollowingOrUnfollowing}
                   >
@@ -498,15 +488,14 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <LuUserRoundPlus strokeWidth={2} /> Follow @
-                        {comment.user.username}
+                        <LuUserRoundPlus strokeWidth={2} /> Follow @{comment.user.username}
                       </span>
                     )}
                   </button>
 
                   {/* Block/Unblock button (always shown if not comment owner) */}
                   <button
-                    className="w-full text-left px-4 py-1 text-red-500 flex items-center gap-2 duration-200 transition hover:bg-gray-700/30"
+                    className="flex w-full items-center gap-2 px-4 py-1 text-left text-red-500 transition duration-200 hover:bg-gray-700/30"
                     onClick={handleBlockClick}
                     disabled={isBlocking}
                   >
@@ -522,7 +511,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   {/* Scenario 3: Post owner interacting with another user's comment */}
                   {isPostOwner && (
                     <button
-                      className="w-full text-left px-4 py-2 text-red-500 flex items-center gap-2 font-semibold duration transition-200 hover:bg-gray-700/30"
+                      className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
                       onClick={handleDeleteCommentClick}
                       disabled={isDeletingComment}
                     >
@@ -536,7 +525,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             </DropdownMenu>
           </div>
           {comment.parentComment && comment.parentComment.user && (
-            <div className="text-gray-500 text-xs mt-1 mb-2 ">
+            <div className="mb-2 mt-1 text-xs text-gray-500">
               Replying to{" "}
               <Link
                 to={`/profile/${comment.parentComment.user.username}`}
@@ -547,20 +536,21 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               </Link>
             </div>
           )}
-          <p className="text-sm break-words whitespace-pre-wrap">
+          <p className="whitespace-pre-wrap break-words text-sm">
             {renderClickableText(comment.text)}
           </p>
+          <div className="inline-flex max-w-full justify-center">
+            {comment.img && (
+              <img
+                src={comment.img}
+                alt="Comment attachment"
+                className="block h-auto max-h-80 rounded-2xl border border-accent object-contain cursor-pointer"
+                onClick={(e) => handleImageClick(comment.img, e)}
+              />
+            )}
+          </div>
 
-          {comment.img && (
-            <img
-              src={comment.img}
-              alt="Comment attachment"
-              className="mt-2 rounded-lg max-w-xs max-h-48 object-cover cursor-pointer"
-              onClick={(e) => handleImageClick(comment.img, e)}
-            />
-          )}
-
-          <div className="flex gap-4 mt-0 md:mt-2 items-center">
+          <div className="mt-0 flex items-center gap-4 md:mt-2">
             <CommentItemButtons
               onLikeCommentClick={handleLikeCommentClick}
               isLikingComment={isLikingComment}
@@ -574,10 +564,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           </div>
 
           {showReplyInput && authUser && (
-            <form
-              onSubmit={handleSendReply}
-              className="mt-4 flex flex-col gap-2 relative"
-            >
+            <form onSubmit={handleSendReply} className="relative mt-4 flex flex-col gap-2">
               <div className="flex items-start md:gap-2">
                 <div className="avatar flex-shrink-0">
                   <div className="w-7 rounded-full">
@@ -587,7 +574,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     />
                   </div>
                 </div>
-                <div className="flex-1 relative">
+                <div className="relative flex-1">
                   <textarea
                     ref={replyInputRef}
                     type="text"
@@ -598,55 +585,54 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     onFocus={handleFocus}
                     rows={1}
                     placeholder={`Replying to @${comment.user.username}...`}
-                    className="w-full pl-3  bg-black/0 placeholder-gray-400 focus:outline-none text-sm resize-none max-h-[140px] overflow-y-auto" // Added resize-none, max-height, and overflow-y-auto
+                    className="max-h-[140px] w-full resize-none overflow-y-auto bg-black/0 pl-3 text-sm placeholder-gray-400 focus:outline-none" // Added resize-none, max-height, and overflow-y-auto
                     disabled={isCreatingComment}
                   />
-                  {showReplyMentionSuggestions &&
-                    debouncedReplyMentionSearchTerm.length > 0 && (
-                      <div className="absolute z-10 top-full left-0 right-0 mt-1 bg-base-200 border border-accent rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                        {isLoadingSuggestedUsers ? (
-                          <div className="p-2 text-center">
-                            <LoadingSpinner size="sm" />
-                          </div>
-                        ) : suggestedUsers.length > 0 ? (
-                          suggestedUsers.map((user) => (
-                            <div
-                              key={user._id}
-                              className="flex items-center gap-2 p-2 hover:bg-secondary cursor-pointer"
-                              onClick={() => handleSelectReplyMention(user.username)}
-                            >
-                              <div className="avatar">
-                                <div className="w-7 rounded-full">
-                                  <img
-                                    src={user.profileImg || "/avatar-placeholder.png"}
-                                    alt={user.username}
-                                  />
-                                </div>
-                              </div>
-                              <div>
-                                <p className="font-semibold text-xs">{user.fullName}</p>
-                                <p className="text-gray-400 text-xs">@{user.username}</p>
+                  {showReplyMentionSuggestions && debouncedReplyMentionSearchTerm.length > 0 && (
+                    <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-accent bg-base-200 shadow-lg">
+                      {isLoadingSuggestedUsers ? (
+                        <div className="p-2 text-center">
+                          <LoadingSpinner size="sm" />
+                        </div>
+                      ) : suggestedUsers.length > 0 ? (
+                        suggestedUsers.map((user) => (
+                          <div
+                            key={user._id}
+                            className="flex cursor-pointer items-center gap-2 p-2 hover:bg-secondary"
+                            onClick={() => handleSelectReplyMention(user.username)}
+                          >
+                            <div className="avatar">
+                              <div className="w-7 rounded-full">
+                                <img
+                                  src={user.profileImg || "/avatar-placeholder.png"}
+                                  alt={user.username}
+                                />
                               </div>
                             </div>
-                          ))
-                        ) : (
-                          <p className="p-2 text-gray-400">No users found.</p>
-                        )}
-                      </div>
-                    )}
+                            <div>
+                              <p className="text-xs font-semibold">{user.fullName}</p>
+                              <p className="text-xs text-gray-400">@{user.username}</p>
+                            </div>
+                          </div>
+                        ))
+                      ) : (
+                        <p className="p-2 text-gray-400">No users found.</p>
+                      )}
+                    </div>
+                  )}
                 </div>
               </div>
               {replyPreviewImage && (
-                <div className="relative size-40 mt-2 self-start">
+                <div className="relative mt-2 size-40 self-start">
                   <img
                     src={replyPreviewImage}
                     alt="Reply preview"
-                    className="w-full h-full object-contain rounded-lg"
+                    className="h-full w-full rounded-lg object-contain"
                   />
                   <button
                     type="button"
                     onClick={handleRemoveImage}
-                    className="absolute -top-2 -right-2 bg-gray-500 text-white transition duration-200 hover:bg-gray-600 rounded-full p-1 text-xs"
+                    className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-xs text-white transition duration-200 hover:bg-gray-600"
                     title="Remove image"
                   >
                     <IoClose size={15} />
@@ -665,7 +651,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <button
                     type="button"
                     onClick={() => replyFileInputRef.current.click()}
-                    className="ml-[33px] text-primary hover:text-primary/80 transition duration-200 self-start p-1 rounded-full"
+                    className="ml-[33px] self-start rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
                     title="Add image"
                     disabled={isCreatingComment}
                   >
@@ -673,10 +659,8 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   </button>
                   <button
                     type="submit"
-                    className="block px-3 py-1 bg-primary hover:bg-primary/80 text-sm rounded-full text-white transition duration-300 disabled:bg-gray-500 disabled:text-black font-bold "
-                    disabled={
-                      isCreatingComment || (!replyInput.trim() && !replySelectedFile)
-                    }
+                    className="block rounded-full bg-primary px-3 py-1 text-sm font-bold text-white transition duration-300 hover:bg-primary/80 disabled:bg-gray-500 disabled:text-black"
+                    disabled={isCreatingComment || (!replyInput.trim() && !replySelectedFile)}
                   >
                     Reply
                   </button>
@@ -686,14 +670,14 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
           )}
         </div>
       </div>
-      <div className="flex justify-center items-center">
+      <div className="flex items-center justify-center">
         {isCreatingComment && <LoadingSpinner />}
       </div>
       {/* Conditional rendering for replies section, based on showRepliesSection */}
       {comment.repliesCount > 0 && showRepliesSection && (
-        <div className="border-l border-accent mt-2">
+        <div className="mt-2 border-l border-accent">
           {isLoadingReplies ? (
-            <div className="flex flex-col justify-center py-2 md:py-4 px-4 md:px-5">
+            <div className="flex flex-col justify-center px-4 py-2 md:px-5 md:py-4">
               <RepliesSkeleton />
             </div>
           ) : (
@@ -714,13 +698,9 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   <button
                     onClick={() => fetchNextRepliesPage()}
                     disabled={isFetchingNextRepliesPage}
-                    className="text-primary hover:underline text-sm"
+                    className="text-sm text-primary hover:underline"
                   >
-                    {isFetchingNextRepliesPage ? (
-                      <LoadingSpinner size="sm" />
-                    ) : (
-                      "Load more replies"
-                    )}
+                    {isFetchingNextRepliesPage ? <LoadingSpinner size="sm" /> : "Load more replies"}
                   </button>
                 </div>
               )}
@@ -729,7 +709,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
         </div>
       )}
     </div>
-  );
-};
+  )
+}
 
-export default React.memo(CommentItem);
+export default React.memo(CommentItem)
