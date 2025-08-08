@@ -72,11 +72,11 @@ const MessageBubble = ({
           messageDeleted
         ) : (
           <>
-            {isSentByCurrentUser && message.isOptimistic && (
+            {/* {isSentByCurrentUser && message.isOptimistic && (
               <div>
                 <ImageSkeleton />
               </div>
-            )}
+            )} */}
             {message.image?._id && (
               <div className="mb-2 h-[200px] w-auto cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                 <img
