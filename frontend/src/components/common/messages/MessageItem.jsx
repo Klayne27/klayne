@@ -29,6 +29,7 @@ const MessageItem = ({
   isTypingOtherUser,
   handleLoadImage,
   onReactionAdded,
+  messageListRef
 }) => {
   const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
     usePrivateChatStore()
@@ -90,6 +91,7 @@ const MessageItem = ({
     addReaction: reactToMessage,
     chatStore: usePrivateChatStore,
     chatInputRef: privateChatInputRef,
+    messageListRef
   })
 
   const messageContentStyle = isMobile
@@ -179,7 +181,6 @@ const MessageItem = ({
           isSentByCurrentUser={isSentByCurrentUser}
           messageContentStyle={messageContentStyle}
           message={message}
-          handleLoadImage={handleLoadImage}
         >
           {/* Indent messages not first in group */}
           {!isSentByCurrentUser && !message.isFirstInGroup && <div className="mr-1 h-8 w-8"></div>}

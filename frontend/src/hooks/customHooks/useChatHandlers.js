@@ -10,6 +10,7 @@ export const useChatHandlers = ({
   isMobile,
   chatInputRef,
   handleCloseEmojiPickerPopover,
+  messageListRef,
 }) => {
   const { setReplyingToMessage, setEditingMessage, activeMessageModalId, setActiveMessageModalId } =
     chatStore()
@@ -59,6 +60,9 @@ export const useChatHandlers = ({
   }
 
   const handleImageClick = () => {
+    if (messageListRef?.current) {
+      sessionStorage.setItem("chatScrollPosition", messageListRef.current.scrollTop)
+    }
     navigate(`/images/${message.image?._id}`)
   }
 

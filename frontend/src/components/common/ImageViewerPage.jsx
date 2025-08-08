@@ -1,5 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom"
-import { FaArrowLeft } from "react-icons/fa"
+import { FaArrowLeft } from "react-icons/fa6"
 import { useImage } from "../../hooks/imageHooks/useImage"
 import LoadingSpinner from "../ui/LoadingSpinner"
 
@@ -35,7 +35,7 @@ const ImageViewerPage = () => {
     <div className="fixed inset-0 z-50 flex h-screen flex-col items-center justify-center bg-black">
       <button
         onClick={() => navigate(-1)}
-        className="absolute left-4 top-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+        className="absolute left-4 top-3.5 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 bg-gray-800/50"
         aria-label="Go back"
       >
         <FaArrowLeft />

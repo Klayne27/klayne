@@ -141,6 +141,7 @@ const PublicChatWindow = () => {
                   onLoadImage={handleLoadImage} // Renamed to `onLoadImage` for consistency
                   publicChatInputRef={publicChatInputRef}
                   onReactionAdded={handleReactionAdded}
+                  messageListRef={messageListRef}
                 />
               ))}
             </div>

@@ -104,6 +104,7 @@ const ChatWindow = () => {
             isTypingOtherUser={isTypingOtherUser}
             handleLoadImage={handleLoadImage}
             onReactionAdded={handleReactionAdded}
+            messageListRef={messageListRef} // Pass it as a regular prop too
           />
         )}
         {showNewMessageButton && (

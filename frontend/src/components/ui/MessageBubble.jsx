@@ -1,4 +1,3 @@
-import { Link } from "react-router-dom"
 import { renderClickableText } from "../../utils/textUtils"
 import { truncateText } from "../../utils/truncateText"
 

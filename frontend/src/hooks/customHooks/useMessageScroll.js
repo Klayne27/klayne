@@ -18,21 +18,25 @@ export const useMessageScroll = ({
   const isUserScrollingUp = useRef(null)
   const prevLastMessageId = useRef(messages?.length > 0 ? messages[messages.length - 1]._id : null)
 
+  const hasRestoredScroll = useRef(false)
+
   // const shouldScrollOnSenderMessage = useRef(false)
 
   const [shouldScrollOnSenderMessage, setShouldScrollOnSenderMessage] = useState(false)
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
   const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
 
-  const triggerScrollOnSenderMessage = useCallback(() => {
-    setShouldScrollOnSenderMessage(true)
-  }, [])
-
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
       messageListRef.current.scrollTop = messageListRef.current.scrollHeight
     }
   }, [])
+
+  const triggerScrollOnSenderMessage = useCallback(() => {
+    setTimeout(() => {
+      scrollToBottom()
+    }, 0)
+  }, [scrollToBottom])
 
   const waitForImagesToLoad = useCallback(() => {
     const listEl = messageListRef.current
@@ -93,9 +97,9 @@ export const useMessageScroll = ({
         }, 1)
       }
     },
-    [ scrollToBottom, setShowNewMessageButton, lastMessageId],
+    [scrollToBottom, setShowNewMessageButton, lastMessageId],
   )
-  
+
   const handleNewMessageButtonClick = useCallback(() => {
     scrollToBottom()
     setShowNewMessageButton(false)
@@ -157,11 +161,23 @@ export const useMessageScroll = ({
 
   // 3. New useLayoutEffect to handle the scroll specifically for sender messages
   useLayoutEffect(() => {
-    // Only scroll if the signal is true.
     if (shouldPerformInitialScroll) {
-      scrollToBottom()
+      const listEl = messageListRef.current
+      if (!listEl) return
+
+      const savedPosition = sessionStorage.getItem("chatScrollPosition")
+
+      if (savedPosition !== null) {
+        listEl.scrollTop = parseInt(savedPosition, 10)
+        sessionStorage.removeItem("chatScrollPosition")
+
+        // STEP 2: Set the flag to true after restoring.
+        hasRestoredScroll.current = true
+      } else {
+        scrollToBottom()
+      }
     }
-  }, [shouldPerformInitialScroll, scrollToBottom])
+  }, [shouldPerformInitialScroll, scrollToBottom, messageListRef])
 
   // The rest of the useLayoutEffect for pagination scroll remains unchanged.
   // ...
@@ -178,17 +194,22 @@ export const useMessageScroll = ({
     }
   }, [isFetchingNextPage, messages])
 
-  useEffect(() => {
-    if (messages.length === 0) return
+  // useEffect(() => {
+  //   if (messages.length === 0) return
 
-    const lastMessage = messages[messages.length - 1]
+  //   // If scroll was just restored in this render cycle,
+  //   // reset the flag and skip this effect.
+  //   if (hasRestoredScroll.current === true) {
+  //     hasRestoredScroll.current = false
+  //     return
+  //   }
 
-    // Check if the last message was sent by the current user
-    if (lastMessage.sender?._id === currentUser?._id) {
-      // Always scroll to the bottom unconditionally
-      scrollToBottom()
-    }
-  }, [messages, currentUser, scrollToBottom])
+  //   const lastMessage = messages[messages.length - 1]
+
+  //   if (lastMessage.sender?._id === currentUser?._id) {
+  //     scrollToBottom()
+  //   }
+  // }, [messages, currentUser, scrollToBottom])
 
   // Modified useEffect for handling new messages from other users
   useEffect(() => {
@@ -249,7 +270,7 @@ export const useMessageScroll = ({
     handleReactionAdded,
     handleNewMessageButtonClick,
     messageListRef,
-    // triggerScrollOnSenderMessage,
+    triggerScrollOnSenderMessage,
     scrollToBottom,
     isInitialLoadComplete,
   }

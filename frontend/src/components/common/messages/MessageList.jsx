@@ -17,6 +17,7 @@ const MessageList = forwardRef(function MessageList(
     isTypingOtherUser,
     handleLoadImage,
     onReactionAdded,
+    messageListRef,
   },
   ref,
 ) {
@@ -54,7 +55,9 @@ const MessageList = forwardRef(function MessageList(
               currentUser={currentUser}
               privateChatInputRef={privateChatInputRef}
               handleLoadImage={handleLoadImage}
-              onReactionAdded={onReactionAdded}            />
+              onReactionAdded={onReactionAdded}
+              messageListRef={messageListRef}
+            />
           )
         })}
 

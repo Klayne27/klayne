@@ -31,6 +31,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
   currentUser,
   publicChatInputRef,
   handleLoadImage,
+  messageListRef,
   onReactionAdded,
 }) {
   const { activeMessageModalId, setActiveMessageModalId } = usePublicChatStore()
@@ -101,6 +102,7 @@ const PublicChatMessage = React.memo(function PublicChatMessage({
     addReaction,
     chatStore: usePublicChatStore,
     chatInputRef: publicChatInputRef,
+    messageListRef,
   })
 
   const messageContentStyle = isMobile
