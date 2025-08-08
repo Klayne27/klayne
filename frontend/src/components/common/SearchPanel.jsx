@@ -73,9 +73,9 @@ const SearchPanel = () => {
                       <div className="w-8 rounded-full">
                         <img
                           src={
-                            hasBlockedYou || !user.profileImg
+                            hasBlockedYou || !user.profileImg?.imageUrl
                               ? "/avatar-placeholder.png"
-                              : user.profileImg
+                              : user.profileImg?.imageUrl
                           }
                           alt={`${user.username}'s profile`}
                         />

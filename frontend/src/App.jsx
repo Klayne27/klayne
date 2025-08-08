@@ -7,8 +7,8 @@ import { Toaster } from "react-hot-toast"
 import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
-import ImageViewerPage from "./components/common/ImageViewerPage"
 
+const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
 const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"))

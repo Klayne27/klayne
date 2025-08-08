@@ -177,8 +177,6 @@ const CreatePost = () => {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  console.log(authUser);
-
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value
     setPostInput(newText)

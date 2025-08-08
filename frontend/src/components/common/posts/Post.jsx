@@ -178,8 +178,6 @@ const Post = ({
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
   }
 
-  console.log(originalPostOwner);
-
   const handlePinPost = (e) => {
     e.stopPropagation()
     setIsAnimatingPin(true)
