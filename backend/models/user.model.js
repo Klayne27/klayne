@@ -62,12 +62,14 @@ const userSchema = new mongoose.Schema(
       default: false,
     },
     profileImg: {
-      type: String,
-      default: "",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
     },
     coverImg: {
-      type: String,
-      default: "",
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
     },
     bio: {
       type: String,

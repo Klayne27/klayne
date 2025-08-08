@@ -54,8 +54,7 @@ const MessageList = forwardRef(function MessageList(
               currentUser={currentUser}
               privateChatInputRef={privateChatInputRef}
               handleLoadImage={handleLoadImage}
-              onReactionAdded={onReactionAdded}
-            />
+              onReactionAdded={onReactionAdded}            />
           )
         })}
 

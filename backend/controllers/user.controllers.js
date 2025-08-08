@@ -9,6 +9,7 @@ import { emitUnreadNotificationStatus } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
+import Image from "../models/image.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -23,7 +24,9 @@ export const getUserProfile = async (req, res) => {
           path: "user",
           select: "username fullName profileImg isVerified isGoldVerified",
         },
-      });
+      })
+      .populate("profileImg") // Populate the profile image
+      .populate("coverImg"); // Populate the cover image
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -212,81 +215,110 @@ export const updateUser = async (req, res) => {
     link,
     confirmNewPassword,
   } = req.body;
-  let { profileImg, coverImg } = req.body;
+  const { profileImg, coverImg } = req.body;
 
   const userId = req.user._id;
 
   try {
-    let user = await User.findById(userId);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    // Fetch the user and populate the image fields to handle both old and new data types
+    let user = await User.findById(userId).populate("profileImg").populate("coverImg");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
 
-    if ((!newPassword && currentPassword) || (!currentPassword && newPassword)) {
+    // --- Password and Validation Logic ---
+    if ((newPassword && !currentPassword) || (!newPassword && currentPassword)) {
       return res
         .status(400)
-        .json({ error: "Please provide both current password and new password" });
+        .json({ error: "Please provide both current and new password" });
     }
 
-    if (username && username !== user.username) {
-      const existingUser = await User.findOne({ username });
-      if (existingUser) {
-        return res
-          .status(409)
-          .json({ error: "Username already taken. Please choose a different one." });
-      }
-    }
-
-    if (currentPassword && newPassword) {
-      // New: Check if newPassword matches confirmNewPassword
+    if (newPassword && currentPassword) {
       if (newPassword !== confirmNewPassword) {
         return res.status(400).json({ error: "New passwords do not match" });
       }
-
       const isMatch = await bcrypt.compare(currentPassword, user.password);
-      if (!isMatch)
+      if (!isMatch) {
         return res.status(400).json({ error: "Current password is incorrect" });
+      }
       if (newPassword.length < 6) {
         return res
           .status(400)
           .json({ error: "Password must be at least 6 characters long" });
       }
-
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
     }
 
-    if (profileImg) {
+    // --- Profile Image Logic ---
+    // If a new profileImg is provided (e.g., from a file input)
+    if (profileImg !== undefined) {
+      // If there's an existing image, delete it from Cloudinary and the database
       if (user.profileImg) {
-        await cloudinary.uploader.destroy(user.profileImg.split("/").pop().split(".")[0]);
+        await cloudinary.uploader.destroy(
+          user.profileImg.imageUrl.split("/").pop().split(".")[0]
+        );
+        await Image.findByIdAndDelete(user.profileImg._id);
       }
 
-      const uploadedResponse = await cloudinary.uploader.upload(profileImg);
-      profileImg = uploadedResponse.secure_url;
+      // If the new image is an empty string, we're removing it
+      if (profileImg === "") {
+        user.profileImg = null;
+      } else {
+        // Otherwise, it's a new image, so upload it and create a new Image document
+        const uploadedResponse = await cloudinary.uploader.upload(profileImg);
+        const newProfileImage = await Image.create({
+          imageUrl: uploadedResponse.secure_url,
+          parentDocument: userId,
+          parentModel: "User",
+          uploadedBy: userId,
+        });
+        user.profileImg = newProfileImage._id;
+      }
     }
 
-    if (coverImg) {
+    // --- Cover Image Logic ---
+    // If a new coverImg is provided
+    if (coverImg !== undefined) {
+      // If there's an existing image, delete it first
       if (user.coverImg) {
-        await cloudinary.uploader.destroy(user.coverImg.split("/").pop().split(".")[0]);
+        await cloudinary.uploader.destroy(
+          user.coverImg.imageUrl.split("/").pop().split(".")[0]
+        );
+        await Image.findByIdAndDelete(user.coverImg._id);
       }
 
-      const uploadedResponse = await cloudinary.uploader.upload(coverImg);
-      coverImg = uploadedResponse.secure_url;
+      // If the new image is an empty string, we're removing it
+      if (coverImg === "") {
+        user.coverImg = null;
+      } else {
+        // Otherwise, it's a new image, so upload it and create a new Image document
+        const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+        const newCoverImage = await Image.create({
+          imageUrl: uploadedResponse.secure_url,
+          parentDocument: userId,
+          parentModel: "User",
+          uploadedBy: userId,
+        });
+        user.coverImg = newCoverImage._id;
+      }
     }
 
+    // --- Update other user fields ---
     if (fullName !== undefined) user.fullName = fullName;
     if (email !== undefined) user.email = email;
     if (username !== undefined) user.username = username;
-
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
 
-    if (profileImg !== undefined) user.profileImg = profileImg;
-    if (coverImg !== undefined) user.coverImg = coverImg;
+    await user.save();
 
-    user = await user.save();
+    // Re-fetch the user to ensure all fields, including the new images, are populated
+    const updatedUser = await User.findById(userId)
+      .populate("profileImg coverImg")
+      .select("-password");
 
-    user.password = null;
-
-    return res.status(200).json(user);
+    return res.status(200).json(updatedUser);
   } catch (error) {
     console.error("Error in updateUser: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });

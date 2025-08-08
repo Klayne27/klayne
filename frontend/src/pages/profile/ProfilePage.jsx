@@ -1,5 +1,5 @@
 import { useRef, useState } from "react" // Import useCallback
-import { useNavigate, useParams } from "react-router-dom"
+import { Link, useNavigate, useParams } from "react-router-dom"
 import useFollow from "../../hooks/usersHooks/useFollow"
 
 import Posts from "../../components/common/posts/Posts"
@@ -91,7 +91,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const confirmButtonText = isBlockedByYou ? "Unblock" : "Block"
 
   const isBlockingRelationship = isBlockedByYou || hasBlockedYou
-
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -211,12 +210,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
-  const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation()
-    if (openImageModal) {
-      openImageModal(imageUrl)
-    }
-  }
+  // const handleImageClick = (imageUrl, event) => {
+  //   event.stopPropagation()
+  //   if (openImageModal) {
+  //     openImageModal(imageUrl)
+  //   }
+  // }
 
   const openFollowListModal = (type) => {
     setModalType(type)
@@ -287,13 +286,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <img
-                src={coverImg || userProfile?.coverImg || "/cover.png"}
-                className="h-52 w-full cursor-pointer object-cover"
-                alt="cover image"
-                onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
-                loading="lazy"
-              />
+              <Link to={`/images/${userProfile?.coverImg?._id}`}>
+                <img
+                  src={coverImg || userProfile?.coverImg?.imageUrl}
+                  className="h-52 w-full cursor-pointer object-cover"
+                  alt="cover image"
+                  // onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
+                  loading="lazy"
+                />
+              </Link>
               {isMyProfile && (
                 <div
                   className="absolute right-2 top-2 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
@@ -319,13 +320,17 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               />
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
-                  <img
-                    src={profileImg || userProfile?.profileImg || "/avatar-placeholder.png"}
-                    alt="user avatar"
-                    className="cursor-pointer"
-                    onClick={(e) => handleProfileImageClick(userProfile?.profileImg, e)}
-                    loading="lazy"
-                  />
+                  <Link to={`/images/${userProfile?.profileImg?._id}`}>
+                    <img
+                      src={
+                        profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                      }
+                      alt="user avatar"
+                      className="cursor-pointer"
+                      // onClick={(e) => handleProfileImageClick(userProfile?.profileImg, e)}
+                      loading="lazy"
+                    />
+                  </Link>
                   {isMyProfile && (
                     <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
                       <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />

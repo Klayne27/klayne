@@ -296,12 +296,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     [createComment, isCreatingComment, replyInput, replySelectedFile],
   )
 
-  const handleImageClick = (imageUrl, event) => {
-    event.stopPropagation()
-    if (openImageModal) {
-      openImageModal(imageUrl)
-    }
-  }
+  // const handleImageClick = (imageUrl, event) => {
+  //   event.stopPropagation()
+  //   if (openImageModal) {
+  //     openImageModal(imageUrl)
+  //   }
+  // }
 
   const handleKeyDown = useCallback(
     (e) => {
@@ -691,7 +691,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     postId={postId}
                     // onReplyClick={onReplyClick}
                     isPostOwner={isPostOwner}
-                    openImageModal={openImageModal}
+                    // openImageModal={openImageModal}
                   />
                 </div>
               ))}

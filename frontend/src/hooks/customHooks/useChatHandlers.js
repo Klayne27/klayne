@@ -1,5 +1,6 @@
 import { useCallback, useEffect } from "react"
 import { useAppStore } from "../../store/useAppStore"
+import { useNavigate } from "react-router-dom"
 
 export const useChatHandlers = ({
   message,
@@ -12,7 +13,7 @@ export const useChatHandlers = ({
 }) => {
   const { setReplyingToMessage, setEditingMessage, activeMessageModalId, setActiveMessageModalId } =
     chatStore()
-
+  const navigate = useNavigate()
   const openImageModal = useAppStore((state) => state.openImageModal)
 
   const handleJumpToOriginalMessage = (messageId) => {
@@ -58,7 +59,7 @@ export const useChatHandlers = ({
   }
 
   const handleImageClick = () => {
-    openImageModal(message.img)
+    navigate(`/images/${message.image?._id}`)
   }
 
   const handleCloseMoreActionsModal = useCallback(() => {

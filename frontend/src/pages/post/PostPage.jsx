@@ -22,7 +22,7 @@ const PostPage = () => {
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
-  const openImageModal = useAppStore((state) => state.openImageModal);
+  // const openImageModal = useAppStore((state) => state.openImageModal);
 
   const [replyingToComment, setReplyingToComment] = useState(null);
   
@@ -550,7 +550,7 @@ const PostPage = () => {
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
                 <CommentItem
-                  openImageModal={openImageModal}
+                  // openImageModal={openImageModal}
                   comment={comment}
                   postId={displayPost._id}
                   // onReplyClick={handleSetReplyingToComment}

@@ -1,22 +1,20 @@
-import { Link } from "react-router-dom";
-import { renderClickableText } from "../../utils/textUtils";
-import { truncateText } from "../../utils/truncateText";
+import { Link } from "react-router-dom"
+import { renderClickableText } from "../../utils/textUtils"
+import { truncateText } from "../../utils/truncateText"
 
 const MessageBubble = ({
   message,
   isSentByCurrentUser,
   bubbleClasses,
   onLoadImage,
-  onImageClick,
   messageContentStyle,
   isReplyToMessageDeleted,
   onJumpToOriginalMessage,
   isMessageDeleted,
-  isSenderBanned
+  isSenderBanned,
+  onImageClick,
 }) => {
-  const messageDeleted = (
-    <span className="text-gray-600 italic text-sm">[Message Deleted]</span>
-  );
+  const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
 
   return (
     <div
@@ -74,11 +72,14 @@ const MessageBubble = ({
         ) : (
           <>
             {message.image?._id && (
-              <Link to={`/images/${message.image?._id}`}>
-                <div className="mb-2 max-w-[300px] h-auto cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
-                  <img src={message.image.imageUrl} alt="Chat image" className="h-full w-full object-cover" />
-                </div>
-              </Link>
+              <div className="mb-2 h-auto max-w-[300px] cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
+                <img
+                  src={message.image.imageUrl}
+                  alt="Chat image"
+                  className="h-full w-full object-cover"
+                  onClick={onImageClick}
+                />
+              </div>
             )}
             {message.text && (
               <p
@@ -96,6 +97,6 @@ const MessageBubble = ({
       </div>
     </div>
   )
-};
+}
 
-export default MessageBubble;
+export default MessageBubble

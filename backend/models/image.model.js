@@ -9,7 +9,7 @@ const imageSchema = new mongoose.Schema({
   },
   parentModel: {
     type: String,
-    enum: ["Post", "Comment", "Message", "PublicChatMessage"],
+    enum: ["Post", "Comment", "Message", "PublicChatMessage", "User"],
     required: true,
   },
   uploadedBy: {

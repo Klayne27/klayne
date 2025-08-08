@@ -28,6 +28,9 @@ const ChatWindow = () => {
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId)
 
+
+  // This function will be called when an image is clicked to save the current scroll position.
+
   const {
     handleLoadImage,
     handleReactionAdded,
