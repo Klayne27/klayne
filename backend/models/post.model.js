@@ -13,6 +13,11 @@ const postSchema = new mongoose.Schema(
     img: {
       type: String,
     },
+    image: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
+    },
     video: {
       type: String,
     },
@@ -93,7 +98,7 @@ const postSchema = new mongoose.Schema(
         ],
       },
     ],
-    
+
     pollTotalVotes: {
       type: Number,
       default: 0,

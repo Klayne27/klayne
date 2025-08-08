@@ -1,110 +1,110 @@
-const BASE_URL = "/api/posts";
+const BASE_URL = "/api/posts"
 
 export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
-  const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`;
-  const res = await fetch(url);
+  const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`
+  const res = await fetch(url)
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
-  return data;
-};
+  if (!res.ok) throw new Error(data.error || "Something went wrong")
+  return data
+}
 
 export const fetchPostApi = async (postId) => {
-  const res = await fetch(`${BASE_URL}/${postId}`);
+  const res = await fetch(`${BASE_URL}/${postId}`)
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to fetch post");
+    const errorData = await res.json()
+    throw new Error(errorData.error || "Failed to fetch post")
   }
-  return res.json();
-};
+  return res.json()
+}
 
 export const fetchBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
-  const url = new URL(`${BASE_URL}/bookmarked`, window.location.origin);
-  url.searchParams.append("page", pageParam);
-  url.searchParams.append("limit", 10);
+  const url = new URL(`${BASE_URL}/bookmarked`, window.location.origin)
+  url.searchParams.append("page", pageParam)
+  url.searchParams.append("limit", 10)
 
   if (searchQuery) {
-    url.searchParams.append("query", searchQuery);
+    url.searchParams.append("query", searchQuery)
   }
 
-  const res = await fetch(url.toString(), {});
+  const res = await fetch(url.toString(), {})
 
-  const data = await res.json();
+  const data = await res.json()
 
   if (!res.ok) {
-    throw new Error(data.error || "Failed to load bookmarks");
+    throw new Error(data.error || "Failed to load bookmarks")
   }
 
-  return data;
-};
+  return data
+}
 
 export const fetchPinnedPostsApi = async (username) => {
-  const res = await fetch(`${BASE_URL}/profile/${username}/pinned-posts`);
+  const res = await fetch(`${BASE_URL}/profile/${username}/pinned-posts`)
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to fetch pinned posts");
+  if (!res.ok) throw new Error(data.error || "Failed to fetch pinned posts")
 
-  return data;
-};
+  return data
+}
 
 export const fetchScheduledPostsApi = async () => {
-  const res = await fetch(`${BASE_URL}/scheduled`);
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts");
-  return data;
-};
+  const res = await fetch(`${BASE_URL}/scheduled`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts")
+  return data
+}
 
 export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt }) => {
   const res = await fetch(`${BASE_URL}/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, img, video, pollOptions, scheduledAt }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Something went wrong")
 
-  return data;
-};
+  return data
+}
 
 export const deletePostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/${postId}`, {
     method: "DELETE",
-  });
+  })
 
-  const data = res.json();
+  const data = res.json()
 
-  if (!res.ok) throw new Error(data.error || "Something went wrong");
+  if (!res.ok) throw new Error(data.error || "Something went wrong")
 
-  return data;
-};
+  return data
+}
 
 export const likePostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/like/${postId}`, {
     method: "POST",
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
   if (!res.ok) {
-    throw new Error(data.error || "Failed to like/unlike post: Something went wrong");
+    throw new Error(data.error || "Failed to like/unlike post: Something went wrong")
   }
-  return data;
-};
+  return data
+}
 
 export const toggleBookmarkApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/bookmark/${postId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to bookmark post");
+  if (!res.ok) throw new Error(data.error || "Failed to bookmark post")
 
-  return data;
-};
+  return data
+}
 
 export const voteOnPollApi = async ({ postId, optionId }) => {
   const res = await fetch(`${BASE_URL}/${postId}/vote`, {
@@ -113,14 +113,14 @@ export const voteOnPollApi = async ({ postId, optionId }) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ optionId }),
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to cast vote on poll.");
+    throw new Error(data.error || "Failed to cast vote on poll.")
   }
-  return data;
-};
+  return data
+}
 
 export const pinUnpinPostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/pin/${postId}`, {
@@ -128,13 +128,13 @@ export const pinUnpinPostApi = async (postId) => {
     headers: {
       "Content-Type": "application/json",
     },
-  });
+  })
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to pin post");
+    const errorData = await res.json()
+    throw new Error(errorData.error || "Failed to pin post")
   }
-  return res.json();
-};
+  return res.json()
+}
 
 export const unpinPostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/pin/${postId}`, {
@@ -142,45 +142,45 @@ export const unpinPostApi = async (postId) => {
     headers: {
       "Content-Type": "application/json",
     },
-  });
+  })
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to unpin post");
+    const errorData = await res.json()
+    throw new Error(errorData.error || "Failed to unpin post")
   }
-  return res.json();
-};
+  return res.json()
+}
 
 export const updateScheduledPostApi = async ({ postId, postData }) => {
   const res = await fetch(`${BASE_URL}/scheduled/${postId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(postData),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to update scheduled post");
-  return data;
-};
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to update scheduled post")
+  return data
+}
 
 export const deleteMultipleScheduledPostsApi = async (postIds) => {
   const res = await fetch(`${BASE_URL}/scheduled/bulk-delete`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ postIds }),
-  });
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to delete multiple scheduled posts");
-  return data;
-};
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to delete multiple scheduled posts")
+  return data
+}
 
 export const markPostsAsReadApi = async () => {
   const res = await fetch(`${BASE_URL}/mark-as-read`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to mark posts as read");
+  if (!res.ok) throw new Error(data.error || "Failed to mark posts as read")
 
-  return data;
-};
+  return data
+}

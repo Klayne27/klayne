@@ -110,7 +110,7 @@ const PublicChatMessageInput = ({
   })
 
   const showTypingIndicator = typingUsers && typingUsers.length > 0
-  const messageDeleted = <span className="mt-1 italic text-gray-500">[Message Deleted]</span>
+  const messageDeleted = <span className="mt-1 italic text-gray-600">[Message Deleted]</span>
 
   const renderInputForm = (isEditingMode, typingIndicator) => (
     <form onSubmit={handleSubmit} className="relative flex items-center bg-black/0 px-2">

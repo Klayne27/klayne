@@ -12,6 +12,7 @@ import {
   onlineUsersMap,
 } from "../lib/socket.js";
 import { extractAndValidateMentions, getBlockingUsers } from "../lib/utils/helpers.js";
+import Image from "../models/image.model.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) return false;
@@ -120,6 +121,24 @@ export const createPost = async (req, res) => {
     const newPost = new Post(newPostData);
     await newPost.save();
 
+    // ✅ FIX 1: Create Image document and link it to the Post
+    let newImage = null;
+    let newVideo = null;
+
+    if (img) {
+      newImage = new Image({
+        imageUrl: uploadedImgUrl,
+        parentDocument: newPost._id,
+        parentModel: "Post",
+        uploadedBy: userId,
+        publicId: imgPublicId,
+      });
+      await newImage.save();
+
+      newPost.image = newImage._id;
+      await newPost.save(); // Save again to update the post with the new image ID
+    }
+
     if (!newPost.isScheduled) {
       await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
 
@@ -145,7 +164,21 @@ export const createPost = async (req, res) => {
       console.log(`Post scheduled for ${newPost.scheduledAt}`);
     }
 
-    res.status(201).json(newPost);
+    // ✅ FIX 2: Populate the user and media fields before sending the response
+    const populatedPost = await Post.findById(newPost._id)
+      .populate({
+        path: "user",
+        select: "username profileImg fullName isVerified isGoldVerified",
+      })
+      .populate({
+        path: "image",
+      })
+      .populate({
+        path: "video",
+      })
+      .exec();
+
+    res.status(201).json(populatedPost);
   } catch (error) {
     if (error.message.includes("Poll options cannot be empty.")) {
       return res.status(400).json({ error: error.message });
@@ -303,6 +336,7 @@ export const getAllPosts = async (req, res) => {
     const repostedPostProjection = {
       text: 1,
       img: 1,
+      image: 1,
       video: 1,
       mediaType: 1,
       likes: 1,
@@ -394,6 +428,15 @@ export const getAllPosts = async (req, res) => {
       { $unwind: "$user" },
       {
         $lookup: {
+          from: "images", // The name of your image collection
+          localField: "image",
+          foreignField: "_id",
+          as: "image",
+        },
+      },
+      { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+      {
+        $lookup: {
           from: "posts",
           localField: "repostedFrom",
           foreignField: "_id",
@@ -445,6 +488,7 @@ export const getAllPosts = async (req, res) => {
           _id: 1,
           text: 1,
           img: 1,
+          image: 1,
           video: 1,
           mediaType: 1,
           imgPublicId: 1,
@@ -549,7 +593,15 @@ export const getLikedPosts = async (req, res) => {
         },
       },
       { $unwind: "$user" },
-
+      {
+        $lookup: {
+          from: "images", // The name of your image collection
+          localField: "image",
+          foreignField: "_id",
+          as: "image",
+        },
+      },
+      { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
       {
         $lookup: {
           from: "posts",
@@ -571,6 +623,7 @@ export const getLikedPosts = async (req, res) => {
               $project: {
                 text: 1,
                 img: 1,
+                image: 1,
                 video: 1,
                 mediaType: 1,
                 likes: 1,
@@ -594,6 +647,7 @@ export const getLikedPosts = async (req, res) => {
           user: 1,
           text: 1,
           img: 1,
+          image: 1,
           video: 1,
           mediaType: 1,
           likes: 1,
@@ -753,7 +807,9 @@ export const getFollowingPosts = async (req, res) => {
         },
         select:
           "text img video mediaType likes commentsCount repostsCount bookmarkedBy repostedBy createdAt user isScheduled scheduledAt",
-      });
+      })
+      .populate("image", "imageUrl")
+      .lean();
 
     const finalFeedPosts = rawFeedPosts.filter((post) => {
       const postOwnerId = post.user?._id;
@@ -890,7 +946,9 @@ export const getUserPosts = async (req, res) => {
         },
         select:
           "text img video mediaType likes commentsCount bookmarkedBy repostsCount repostedBy createdAt user isScheduled scheduledAt",
-      });
+      })
+      .populate("image", "imageUrl")
+      .lean();
 
     const finalUserPosts = rawUserPosts.filter((post) => {
       const postOwnerId = post.user?._id;
@@ -962,7 +1020,9 @@ export const getPost = async (req, res) => {
         ],
         select:
           "text img video mediaType likes commentsCount repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
-      });
+      })
+      .populate("image", "imageUrl")
+      .lean();
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
@@ -1209,6 +1269,7 @@ export const getBookmarkedPosts = async (req, res) => {
           select: "-password",
         },
       })
+      .populate("image", "imageUrl")
       .lean();
 
     const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
@@ -1517,5 +1578,26 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
   } catch (error) {
     console.log("Error in deleteMultipleScheduledPosts controller: ", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getPostImageByPostId = async (req, res) => {
+  try {
+    const { postId } = req.params;
+
+    if (!postId) {
+      return res.status(400).json({ message: "Post ID is required." });
+    }
+
+    const post = await Post.findById(postId);
+
+    if (!post || !post.img) {
+      return res.status(404).json({ message: "Post or image not found." });
+    }
+
+    res.status(200).json({ imageUrl: post.img });
+  } catch (error) {
+    console.error("Error fetching image:", error);
+    res.status(500).json({ message: "Internal server error." });
   }
 };

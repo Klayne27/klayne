@@ -9,6 +9,7 @@ import {
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
+import Image from "../models/image.model.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) {
@@ -87,6 +88,7 @@ export const sendMessage = async (req, res) => {
     const recipientActiveConversation = userActiveChats.get(recipientId.toString());
     const isSeen = recipientActiveConversation === conversationId.toString();
 
+    let newImage = null;
     let uploadedImgUrl = "";
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img);
@@ -105,6 +107,19 @@ export const sendMessage = async (req, res) => {
 
     await newMessage.save();
 
+    if (img) {
+      newImage = new Image({
+        imageUrl: uploadedImgUrl,
+        parentDocument: newMessage._id, // Set the parentDocument here
+        parentModel: "Message",
+        uploadedBy: senderId,
+      });
+      await newImage.save();
+
+      newMessage.image = newImage._id;
+      await newMessage.save();
+    }
+
     // ✅ FIX 3: Use the `isSeen` variable when updating the lastMessage
     conversation.lastMessage = {
       text: newMessage.text,
@@ -115,10 +130,30 @@ export const sendMessage = async (req, res) => {
     };
     await conversation.save();
 
-    await newMessage.populate(
-      "sender",
-      "username profileImg fullName isVerified isGoldVerified"
-    );
+    // newImage.parentDocument = newMessage._id;
+    // await newImage.save();
+    await newMessage.populate([
+      {
+        path: "sender",
+        select: "username profileImg fullName isVerified isGoldVerified",
+      },
+      {
+        path: "repliedTo",
+        select: "text img sender createdAt",
+        populate: {
+          path: "sender",
+          select: "username profileImg",
+        },
+      },
+    ]);
+
+    // Then, if a new image exists, populate the image field
+    if (newImage) {
+      await newMessage.populate({
+        path: "image",
+        select: "imageUrl", // Select only the fields you need
+      });
+    }
 
     if (newMessage.repliedTo) {
       await newMessage.populate({
@@ -205,6 +240,7 @@ export const getMessagesByConversationId = async (req, res) => {
         path: "reactions.userId", // 👈 Add this new population for reactions
         select: "username fullName profileImg",
       })
+      .populate("image", "imageUrl")
       .lean();
 
     res.status(200).json(messages.reverse());

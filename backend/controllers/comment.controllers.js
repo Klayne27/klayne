@@ -12,6 +12,7 @@ import {
   extractAndValidateMentions,
   getBlockingUsers,
 } from "../lib/utils/helpers.js";
+import Image from "../models/image.model.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (
@@ -117,7 +118,8 @@ export const getComments = async (req, res) => {
           path: "user",
           select: "username fullName blockedUsers blockedBy",
         },
-      });
+      })
+      .populate("image", "imageUrl");
 
     const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
@@ -157,15 +159,11 @@ export const createComment = async (req, res) => {
   try {
     const { text } = req.body;
     let { img } = req.body;
+    let newImage = null;
 
     const postId = req.params.postId;
     const userId = req.user._id;
 
-    if (!text && !img) {
-      return res
-        .status(400)
-        .json({ error: "Comment must contain either text or an image." });
-    }
     if (!isValidObjectId(postId)) {
       return res.status(400).json({ error: "Invalid Post ID" });
     }
@@ -194,10 +192,24 @@ export const createComment = async (req, res) => {
       try {
         const uploadedResponse = await cloudinary.uploader.upload(img);
         img = uploadedResponse.secure_url;
+
+        newImage = new Image({
+          imageUrl: img,
+          parentDocument: null, // This will be set after the comment is created
+          parentModel: "Comment",
+          uploadedBy: userId,
+          publicId: uploadedResponse.public_id,
+        });
       } catch (uploadError) {
         console.error("Cloudinary upload error in createComment:", uploadError);
         return res.status(500).json({ error: "Image upload failed." });
       }
+    }
+
+    if (!text && !img) {
+      return res
+        .status(400)
+        .json({ error: "Comment must contain either text or an image." });
     }
 
     const mentionedUserIds = await extractAndValidateMentions(text);
@@ -207,24 +219,33 @@ export const createComment = async (req, res) => {
       post: postId,
       text,
       img,
+      image: newImage?._id || null, // Store the image ID
       parentComment: null,
       mentionedUsers: mentionedUserIds,
     });
+
+    if (newImage) {
+      newImage.parentDocument = newComment._id;
+      await newImage.save();
+    }
 
     await newComment.save();
 
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    await newComment.populate({
-      path: "user",
-      select: "username fullName profileImg isVerified isGoldVerified",
-    });
+    await newComment.populate([
+      {
+        path: "user",
+        select: "username fullName profileImg isVerified isGoldVerified",
+      },
+      {
+        path: "image",
+        select: "imageUrl",
+      },
+    ]);
 
-    if (
-      post.user &&
-      post.user._id.toString() !== userId.toString()
-    ) {
+    if (post.user && post.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
         to: post.user._id,
@@ -263,6 +284,7 @@ export const replyToComment = async (req, res) => {
   try {
     const { text } = req.body;
     let { img } = req.body;
+    let newImage = null;
 
     const postId = req.params.postId;
     const parentCommentId = req.params.parentCommentId;
@@ -305,8 +327,17 @@ export const replyToComment = async (req, res) => {
       try {
         const uploadedResponse = await cloudinary.uploader.upload(img);
         img = uploadedResponse.secure_url;
+
+        newImage = new Image({
+          imageUrl: img,
+          parentDocument: null, // Set after the comment is created
+          parentModel: "Comment",
+          uploadedBy: userId,
+          publicId: uploadedResponse.public_id,
+        });
+        await newImage.save();
       } catch (uploadError) {
-        console.error("Cloudinary upload error in replyToComment:", uploadError);
+        console.log("Cloudinary upload error in replyToComment:", uploadError);
         return res.status(500).json({ error: "Image upload failed." });
       }
     }
@@ -318,10 +349,14 @@ export const replyToComment = async (req, res) => {
       post: postId,
       text,
       img,
+      image: newImage?._id || null,
       parentComment: parentCommentId,
       mentionedUsers: mentionedUserIds,
     });
-
+    if (newImage) {
+      newImage.parentDocument = newReply._id;
+      await newImage.save();
+    }
     await newReply.save();
 
     parentComment.repliesCount = (parentComment.repliesCount || 0) + 1;
@@ -330,15 +365,17 @@ export const replyToComment = async (req, res) => {
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    await newReply.populate({
-      path: "user",
-      select: "username fullName profileImg isVerified isGoldVerified",
-    });
-
-    if (
-      parentComment.user &&
-      parentComment.user._id.toString() !== userId.toString()
-    ) {
+    await newReply.populate([
+      {
+        path: "user",
+        select: "username fullName profileImg isVerified isGoldVerified",
+      },
+      {
+        path: "image",
+        select: "imageUrl",
+      },
+    ]);
+    if (parentComment.user && parentComment.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
         to: parentComment.user._id,
@@ -363,7 +400,7 @@ export const replyToComment = async (req, res) => {
         postId: post._id,
         commentId: newReply._id,
       });
-    } 
+    }
 
     await emitUnreadNotificationStatus(parentComment.user._id.toString());
     for (const mentionedUserId of mentionedUserIds) {
@@ -418,10 +455,7 @@ export const likeUnlikeComment = async (req, res) => {
     } else {
       comment.likes.push(userId);
 
-      if (
-        comment.user &&
-        comment.user._id.toString() !== userId.toString()
-      ) {
+      if (comment.user && comment.user._id.toString() !== userId.toString()) {
         await createAndSendNotification({
           from: userId,
           to: comment.user._id,

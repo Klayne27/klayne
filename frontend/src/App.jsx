@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast"
 import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
+import ImageViewerPage from "./components/common/ImageViewerPage"
 
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
@@ -90,6 +91,11 @@ function App() {
               path="/public-chat"
               element={authUser ? <PublicChatPage /> : <Navigate to="/login" />}
             />
+            <Route
+              path="/images/:imageId"
+              element={authUser ? <ImageViewerPage /> : <Navigate to="/login" />}
+            />
+
             <Route
               path="/bookmarks"
               element={authUser ? <BookmarksPage /> : <Navigate to="/login" />}

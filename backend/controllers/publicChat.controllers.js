@@ -9,6 +9,7 @@ import {
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
+import Image from "../models/image.model.js";
 
 const isAdmin = async (userId) => {
   const user = await User.findById(userId).select("isAdmin");
@@ -25,6 +26,7 @@ export const sendPublicMessage = async (req, res) => {
     const { text, imgBase64, repliedTo } = req.body;
     const senderId = req.user._id;
     let img = null;
+    let newImage = null;
 
     if (await isBanned(senderId)) {
       return res.status(403).json({ error: "You are banned from the public chat." });
@@ -35,6 +37,15 @@ export const sendPublicMessage = async (req, res) => {
         folder: "public-chat-images",
       });
       img = uploadResponse.secure_url;
+
+      newImage = new Image({
+        imageUrl: img,
+        parentDocument: null, // Will be set after the message is created
+        parentModel: "PublicChatMessage",
+        uploadedBy: senderId,
+        publicId: uploadResponse.public_id,
+      });
+      await newImage.save();
     }
 
     if (!text && !img) {
@@ -56,6 +67,14 @@ export const sendPublicMessage = async (req, res) => {
     }
 
     const newPublicMessage = new PublicChatMessage(newMessageData);
+
+    // ✅ FIX 2: Link the Image document to the message
+    if (newImage) {
+      newPublicMessage.image = newImage._id;
+      newImage.parentDocument = newPublicMessage._id;
+      await newImage.save();
+    }
+
     await newPublicMessage.save();
 
     await newPublicMessage.populate([
@@ -70,6 +89,10 @@ export const sendPublicMessage = async (req, res) => {
           path: "sender",
           select: "username isBannedInPublicChat",
         },
+      },
+      {
+        path: "image",
+        select: "imageUrl publicId",
       },
     ]);
 
@@ -104,7 +127,7 @@ export const getPublicMessages = async (req, res) => {
     const skip = (page - 1) * limit;
 
     const messages = await PublicChatMessage.find()
-      .sort({ createdAt: -1 }) 
+      .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
       .populate([
@@ -118,15 +141,19 @@ export const getPublicMessages = async (req, res) => {
           select: "sender text img isDeletedByAdmin isDeletedByUser",
           populate: {
             path: "sender",
-            select: "username isBannedInPublicChat", 
+            select: "username isBannedInPublicChat",
           },
         },
         {
           path: "reactions.userId",
           select: "username profileImg fullName",
         },
+        {
+          path: "image",
+          select: "imageUrl publicId",
+        },
       ])
-      .lean(); 
+      .lean();
 
     res.status(200).json(messages.reverse());
   } catch (error) {
@@ -308,7 +335,7 @@ export const addReactionToPublicMessage = async (req, res) => {
         select: "username fullName profileImg isAdmin isBannedInPublicChat",
       })
       .populate({
-        path: "reactions.userId", 
+        path: "reactions.userId",
         select: "username profileImg fullName",
       })
       .lean();
@@ -321,8 +348,8 @@ export const addReactionToPublicMessage = async (req, res) => {
     }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageReactionUpdated", {
-      actorId: userId, 
-      updatedMessage: populatedMessage, 
+      actorId: userId,
+      updatedMessage: populatedMessage,
     });
 
     return res.status(200).json(populatedMessage);
@@ -353,7 +380,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const imageUrlToDelete = message.img;
 
     message.isDeletedByUser = true;
-    message.img = null; 
+    message.img = null;
     await message.save();
 
     if (imageUrlToDelete) {
@@ -361,14 +388,14 @@ export const deleteOwnPublicMessage = async (req, res) => {
       try {
         const parts = imageUrlToDelete.split("/upload/");
         if (parts.length > 1) {
-          const pathAfterUpload = parts[1]; 
+          const pathAfterUpload = parts[1];
           const idWithExtension = pathAfterUpload.split("/").slice(1).join("/");
           imgId = idWithExtension.split(".")[0];
 
           const urlSegments = imageUrlToDelete.split("/");
           const uploadIndex = urlSegments.indexOf("upload");
           if (uploadIndex !== -1 && urlSegments.length > uploadIndex + 1) {
-            let startIndex = uploadIndex + 1; 
+            let startIndex = uploadIndex + 1;
             if (
               urlSegments[startIndex].startsWith("v") &&
               urlSegments[startIndex].length === 11 &&
@@ -429,7 +456,7 @@ export const editPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
     const { newText } = req.body;
-    const userId = req.user._id; 
+    const userId = req.user._id;
 
     if (!newText || newText.trim() === "") {
       return res.status(400).json({ error: "Edited text cannot be empty." });

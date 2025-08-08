@@ -20,6 +20,11 @@ const commentSchema = new mongoose.Schema(
       type: String,
       default: null,
     },
+    image: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
+    },
     parentComment: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Comment",

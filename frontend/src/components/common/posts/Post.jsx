@@ -11,7 +11,7 @@ import { useDeletePosts } from "../../../hooks/postsHooks/useDeletePosts"
 import { useLikePost } from "../../../hooks/postsHooks/useLikePosts"
 import { useRepostPost } from "../../../hooks/postsHooks/useRepostPost"
 import { renderClickableText } from "../../../utils/textUtils"
-import React, { useCallback, useEffect, useState, useRef } from "react"
+import React, { useEffect, useState, useRef } from "react"
 import { useToggleBookmarks } from "../../../hooks/postsHooks/useToggleBookmarks"
 import { FaBookmark, FaRegBookmark } from "react-icons/fa6"
 import PollDisplay from "../PollDisplay"
@@ -94,10 +94,8 @@ const Post = ({
 
   const formattedDate = formatPostDate(displayTimestamp)
 
-
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
-
 
   const navigateToPostPage = (e) => {
     if (isDraggingRef.current) {
@@ -240,6 +238,11 @@ const Post = ({
       return username.slice(0, 5) + "..."
     }
     return username
+  }
+
+  const handleImageClick = (imageUrl) => {
+    // Navigate to a new route, passing the image URL as a state
+    navigate("/image-view", { state: { src: imageUrl } })
   }
 
   useEffect(() => {
@@ -432,18 +435,16 @@ const Post = ({
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
               {renderClickableText(sourcePost.text)}
             </span>
-            {sourcePost.mediaType === "image" && sourcePost.img && (
-              // <div className="w-full max-w-full flex justify-center"> // Optional: for true centering if parent isn't flex-col
+            {sourcePost.mediaType === "image" && sourcePost?.image?.imageUrl && sourcePost.image?._id && (
               <div className="inline-flex max-w-full justify-center">
-                {" "}
-                {/* Use inline-flex so it wraps the content, and max-w-full */}
-                <img
-                  src={sourcePost.img}
-                  className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                  alt="post image"
-                  onClick={(e) => handleMediaClick(sourcePost.img, "image", e)}
-                  loading="lazy"
-                />
+                <Link to={`/images/${sourcePost.image?._id}`}>
+                  <img
+                    src={sourcePost.image.imageUrl}
+                    className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
+                    alt="post image"
+                    loading="lazy"
+                  />
+                </Link>
               </div>
             )}
             {sourcePost.mediaType === "video" && sourcePost.video && (

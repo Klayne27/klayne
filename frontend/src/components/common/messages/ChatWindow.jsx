@@ -122,7 +122,7 @@ const ChatWindow = () => {
           privateChatInputRef={privateChatInputRef}
           onSenderMessageSent={handleSenderMessageSent}
           socket={socket}
-          // onNewMessageButtonClick={handleNewMessageButtonClick}
+          onNewMessageButtonClick={handleNewMessageButtonClick}
         />
       </div>
     </div>
