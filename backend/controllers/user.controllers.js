@@ -186,6 +186,17 @@ export const getSuggestedUsers = async (req, res) => {
       { $sample: { size: 4 } },
       { $limit: 4 },
       {
+        $lookup: {
+          from: "images", // Name of your image collection
+          localField: "profileImg",
+          foreignField: "_id",
+          as: "profileImg",
+        },
+      },
+      {
+        $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true },
+      },
+      {
         $project: {
           username: 1,
           fullName: 1,
@@ -328,10 +339,14 @@ export const updateUser = async (req, res) => {
 export const getFollowingUsers = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id).populate(
-      "following",
-      "username fullName profileImg isVerified isGoldVerified"
-    );
+    const user = await User.findById(id).populate({
+      path: "following",
+      select: "username fullName isVerified isGoldVerified",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -347,10 +362,14 @@ export const getFollowingUsers = async (req, res) => {
 export const getFollowers = async (req, res) => {
   try {
     const { id } = req.params;
-    const user = await User.findById(id).populate(
-      "followers",
-      "username fullName profileImg isVerified isGoldVerified"
-    );
+    const user = await User.findById(id).populate({
+      path: "followers",
+      select: "username fullName isVerified isGoldVerified",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -498,6 +517,7 @@ export const searchUsers = async (req, res) => {
       ],
     })
       .select("-password")
+      .populate("profileImg", "imageUrl") // Add this population
       .limit(5);
 
     res.status(200).json(users);

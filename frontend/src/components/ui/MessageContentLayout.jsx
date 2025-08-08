@@ -18,7 +18,7 @@ function MessageContentLayout({
           <Link to={`/profile/${message.sender.username}`}>
             <img
               alt="User Avatar"
-              src={message.sender.profileImg || "/avatar-placeholder.png"}
+              src={message.sender.profileImg?.imageUrl || "/avatar-placeholder.png"}
               className="size-9 rounded-full object-cover mt-0.5"
             />
           </Link>

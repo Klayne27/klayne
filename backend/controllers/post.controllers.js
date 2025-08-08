@@ -168,7 +168,10 @@ export const createPost = async (req, res) => {
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
-        select: "username profileImg fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+        },
       })
       .populate({
         path: "image",
@@ -422,7 +425,18 @@ export const getAllPosts = async (req, res) => {
           localField: "user",
           foreignField: "_id",
           as: "user",
-          pipeline: [{ $project: userProjection }],
+          pipeline: [
+            {
+              $lookup: {
+                from: "images", // Lookup the Image collection
+                localField: "profileImg",
+                foreignField: "_id",
+                as: "profileImg",
+              },
+            },
+            { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+            { $project: { ...userProjection, profileImg: "$profileImg" } },
+          ],
         },
       },
       { $unwind: "$user" },
@@ -580,6 +594,32 @@ export const getLikedPosts = async (req, res) => {
       ],
     };
 
+    const userProjection = {
+      _id: 1,
+      username: 1,
+      fullName: 1,
+      isVerified: 1,
+      isGoldVerified: 1,
+    };
+
+    const repostedPostProjection = {
+      text: 1,
+      img: 1,
+      image: 1,
+      video: 1,
+      mediaType: 1,
+      likes: 1,
+      commentsCount: 1,
+      repostsCount: 1,
+      repostedBy: 1,
+      bookmarkedBy: 1,
+      createdAt: 1,
+      publishedAt: 1,
+      isScheduled: 1,
+      scheduledAt: 1,
+      user: 1,
+    };
+
     const pipeline = [
       { $match: baseMatchConditions },
 
@@ -589,13 +629,24 @@ export const getLikedPosts = async (req, res) => {
           localField: "user",
           foreignField: "_id",
           as: "user",
-          pipeline: [{ $project: { password: 0 } }],
+          pipeline: [
+            {
+              $lookup: {
+                from: "images", // Lookup the Image collection for the user's profile image
+                localField: "profileImg",
+                foreignField: "_id",
+                as: "profileImg",
+              },
+            },
+            { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+            { $project: { ...userProjection, profileImg: "$profileImg" } },
+          ],
         },
       },
       { $unwind: "$user" },
       {
         $lookup: {
-          from: "images", // The name of your image collection
+          from: "images",
           localField: "image",
           foreignField: "_id",
           as: "image",
@@ -615,28 +666,31 @@ export const getLikedPosts = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [{ $project: { password: 0 } }],
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "images", // Lookup for the reposted user's profile image
+                      localField: "profileImg",
+                      foreignField: "_id",
+                      as: "profileImg",
+                    },
+                  },
+                  { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+                  { $project: { ...userProjection, profileImg: "$profileImg" } },
+                ],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
             {
-              $project: {
-                text: 1,
-                img: 1,
-                image: 1,
-                video: 1,
-                mediaType: 1,
-                likes: 1,
-                commentsCount: 1,
-                repostsCount: 1,
-                bookmarkedBy: 1,
-                repostedBy: 1,
-                createdAt: 1,
-                user: 1,
-                isScheduled: 1,
-                scheduledAt: 1,
+              $lookup: {
+                from: "images",
+                localField: "image",
+                foreignField: "_id",
+                as: "image",
               },
             },
+            { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            { $project: repostedPostProjection },
           ],
         },
       },
@@ -798,12 +852,20 @@ export const getFollowingPosts = async (req, res) => {
       .populate({
         path: "user",
         select: "-password",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
         select:
           "text img video mediaType likes commentsCount repostsCount bookmarkedBy repostedBy createdAt user isScheduled scheduledAt",
@@ -937,12 +999,20 @@ export const getUserPosts = async (req, res) => {
       .populate({
         path: "user",
         select: "-password",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       })
       .populate({
         path: "repostedFrom",
         populate: {
           path: "user",
           select: "-password",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
         select:
           "text img video mediaType likes commentsCount bookmarkedBy repostsCount repostedBy createdAt user isScheduled scheduledAt",
@@ -1009,6 +1079,10 @@ export const getPost = async (req, res) => {
       .populate({
         path: "user",
         select: "-password",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       })
       .populate({
         path: "repostedFrom",
@@ -1016,6 +1090,10 @@ export const getPost = async (req, res) => {
           {
             path: "user",
             select: "-password",
+            populate: {
+              path: "profileImg coverImg",
+              select: "imageUrl publicId",
+            },
           },
         ],
         select:

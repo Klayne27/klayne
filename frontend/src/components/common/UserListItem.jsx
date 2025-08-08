@@ -15,7 +15,7 @@ const UserListItem = ({ user: listUser }) => {
         <div className="avatar">
           <div className="w-8 rounded-full">
             <img
-              src={listUser?.profileImg || "/avatar-placeholder.png"}
+              src={listUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
               alt={`${listUser.username}'s avatar`}
             />
           </div>

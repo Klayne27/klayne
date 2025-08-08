@@ -227,18 +227,33 @@ export const getMessagesByConversationId = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(parseInt(limit))
-      .populate("sender", "username profileImg fullName isVerified isGoldVerified")
+      .populate({
+        path: "sender",
+        select: "username fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
       .populate({
         path: "repliedTo",
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified isGoldVerified",
+          select: "username fullName isVerified isGoldVerified",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       })
       .populate({
-        path: "reactions.userId", // 👈 Add this new population for reactions
-        select: "username fullName profileImg",
+        path: "reactions.userId",
+        select: "username fullName",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       })
       .populate("image", "imageUrl")
       .lean();
@@ -268,7 +283,11 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username profileImg fullName isVerified isGoldVerified",
+        select: "username  fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       })
       .sort({ updatedAt: -1 })
       .lean();
@@ -664,6 +683,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
     const followedUsers = await User.find(query)
       .select("-password -email -blockedUsers -followers -following")
+      .populate("profileImg", "imageUrl") 
       .limit(10);
 
     res.status(200).json(followedUsers);

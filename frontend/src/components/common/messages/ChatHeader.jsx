@@ -19,7 +19,7 @@ function ChatHeader({ otherUser }) {
 
       <Link to={`/profile/${otherUser?.username}`}>
         <img
-          src={otherUser?.profileImg || "/avatar-placeholder.png"}
+          src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser?.username}
           className="w-8 h-8 rounded-full object-cover mr-2"
         />

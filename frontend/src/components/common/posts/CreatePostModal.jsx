@@ -563,7 +563,7 @@ function CreatePostModal({ onClose }) {
             <Link to={`/profile/${authUser.username}`}>
               <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
                 <div className="size-10 rounded-full">
-                  <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+                  <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
                 </div>
               </div>
             </Link>
@@ -622,7 +622,7 @@ function CreatePostModal({ onClose }) {
                           <div className="avatar">
                             <div className="w-8 rounded-full">
                               <img
-                                src={user.profileImg || "/avatar-placeholder.png"}
+                                src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
                                 alt="profile"
                               />
                             </div>

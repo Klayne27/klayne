@@ -17,7 +17,7 @@ export const signup = async (req, res) => {
     if (username.length === 0) {
       return res.status(400).json({ error: "Username cannot be empty." });
     }
-    
+
     if (fullName.length === 0) {
       return res.status(400).json({ error: "Full Name cannot be empty." });
     }
@@ -53,15 +53,20 @@ export const signup = async (req, res) => {
       generateTokenAndSetCookie(newUser._id, res);
       await newUser.save();
 
+      const populatedUser = await User.findById(newUser._id)
+        .populate("profileImg", "imageUrl")
+        .populate("coverImg", "imageUrl")
+        .select("-password");
+
       res.status(201).json({
-        _id: newUser.id,
-        fullName: newUser.fullName,
-        username: newUser.username,
-        email: newUser.email,
-        followers: newUser.followers,
-        following: newUser.following,
-        profileImg: newUser.profileImg,
-        coverImg: newUser.coverImg,
+        _id: populatedUser._id,
+        fullName: populatedUser.fullName,
+        username: populatedUser.username,
+        email: populatedUser.email,
+        followers: populatedUser.followers,
+        following: populatedUser.following,
+        profileImg: populatedUser.profileImg,
+        coverImg: populatedUser.coverImg,
       });
     } else {
       res.status(400).json({ error: "Invalid user data" });
@@ -84,15 +89,20 @@ export const login = async (req, res) => {
 
     generateTokenAndSetCookie(user._id, res);
 
+    const populatedUser = await User.findById(user._id)
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl")
+      .select("-password");
+
     res.status(200).json({
-      _id: user.id,
-      fullName: user.fullName,
-      username: user.username,
-      email: user.email,
-      followers: user.followers,
-      following: user.following,
-      profileImg: user.profileImg,
-      coverImg: user.coverImg,
+      _id: populatedUser._id,
+      fullName: populatedUser.fullName,
+      username: populatedUser.username,
+      email: populatedUser.email,
+      followers: populatedUser.followers,
+      following: populatedUser.following,
+      profileImg: populatedUser.profileImg,
+      coverImg: populatedUser.coverImg,
     });
   } catch (error) {
     console.log("Error in login controller", error.message);
@@ -112,7 +122,10 @@ export const logout = async (req, res) => {
 
 export const getMe = async (req, res) => {
   try {
-    const user = await User.findById(req.user._id).select("-password");
+    const user = await User.findById(req.user._id)
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl")
+      .select("-password");
     return res.status(200).json(user);
   } catch (error) {
     console.log("Error in getMe controller", error.message);

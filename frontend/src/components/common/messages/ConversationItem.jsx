@@ -78,7 +78,7 @@ function ConversationItem({ conv }) {
         className="relative p-1"
       >
         <img
-          src={otherUser.profileImg || "/avatar-placeholder.png"}
+          src={otherUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />

@@ -178,6 +178,8 @@ const Post = ({
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
   }
 
+  console.log(originalPostOwner);
+
   const handlePinPost = (e) => {
     e.stopPropagation()
     setIsAnimatingPin(true)
@@ -323,7 +325,7 @@ const Post = ({
             onClick={(e) => handleInteractiveClick(e)}
           >
             <img
-              src={originalPostOwner.profileImg || "/avatar-placeholder.png"}
+              src={originalPostOwner.profileImg?.imageUrl || "/avatar-placeholder.png"}
               alt={`${originalPostOwner.username}'s profile`}
               loading="lazy"
             />

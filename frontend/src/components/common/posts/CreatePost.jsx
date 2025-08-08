@@ -177,6 +177,7 @@ const CreatePost = () => {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
+  console.log(authUser);
 
   const handleTextChange = useCallback((e) => {
     const newText = e.target.value
@@ -567,7 +568,7 @@ const CreatePost = () => {
         <Link to={`/profile/${authUser.username}`}>
           <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
             <div className="w-10 rounded-full">
-              <img src={authUser?.profileImg || "/avatar-placeholder.png"} />
+              <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
             </div>
           </div>
         </Link>

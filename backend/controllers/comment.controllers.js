@@ -109,7 +109,11 @@ export const getComments = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg isVerified isGoldVerified blockedUsers blockedBy",
+          "username fullName  isVerified isGoldVerified blockedUsers blockedBy",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       })
       .populate({
         path: "parentComment",
@@ -117,6 +121,10 @@ export const getComments = async (req, res) => {
         populate: {
           path: "user",
           select: "username fullName blockedUsers blockedBy",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       })
       .populate("image", "imageUrl");

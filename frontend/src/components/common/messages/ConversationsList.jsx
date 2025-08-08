@@ -122,7 +122,7 @@ const ConversationsList = ({ conversations }) => {
                       <div className="avatar">
                         <div className="w-8 rounded-full">
                           <img
-                            src={user.profileImg || "/avatar-placeholder.png"}
+                            src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
                             alt={`${user.username}'s profile`}
                           />
                         </div>

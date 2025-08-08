@@ -80,7 +80,11 @@ export const sendPublicMessage = async (req, res) => {
     await newPublicMessage.populate([
       {
         path: "sender",
-        select: "username fullName profileImg isAdmin isVerified isGoldVerified",
+        select: "username fullName isAdmin isVerified isGoldVerified",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       },
       {
         path: "repliedTo",
@@ -134,7 +138,11 @@ export const getPublicMessages = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
+            "username fullName  isAdmin isVerified isGoldVerified isBannedInPublicChat",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
         {
           path: "repliedTo",
@@ -146,7 +154,11 @@ export const getPublicMessages = async (req, res) => {
         },
         {
           path: "reactions.userId",
-          select: "username profileImg fullName",
+          select: "username fullName",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
         {
           path: "image",
@@ -332,11 +344,19 @@ export const addReactionToPublicMessage = async (req, res) => {
     const populatedMessage = await PublicChatMessage.findById(updatedMessage._id)
       .populate({
         path: "sender",
-        select: "username fullName profileImg isAdmin isBannedInPublicChat",
+        select: "username fullName  isAdmin isBannedInPublicChat",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       })
       .populate({
         path: "reactions.userId",
-        select: "username profileImg fullName",
+        select: "username  fullName",
+        populate: {
+          path: "profileImg coverImg",
+          select: "imageUrl publicId",
+        },
       })
       .lean();
 
@@ -489,7 +509,11 @@ export const editPublicMessage = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName profileImg isAdmin isVerified isGoldVerified isBannedInPublicChat",
+            "username fullName isAdmin isVerified isGoldVerified isBannedInPublicChat",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
         {
           path: "repliedTo",
@@ -501,7 +525,11 @@ export const editPublicMessage = async (req, res) => {
         },
         {
           path: "reactions.userId",
-          select: "username profileImg fullName",
+          select: "username fullName",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
         },
       ])
       .lean();

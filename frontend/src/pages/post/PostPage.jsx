@@ -415,7 +415,7 @@ const PostPage = () => {
             <div className="avatar flex-shrink-0">
               <div className={`w-8 md:w-9 rounded-full`}>
                 <img
-                  src={authUser?.profileImg || "/avatar-placeholder.png"}
+                  src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                   alt="Your profile"
                 />
               </div>
@@ -487,7 +487,7 @@ const PostPage = () => {
                         <div className="avatar">
                           <div className="w-8 rounded-full">
                             <img
-                              src={user.profileImg || "/avatar-placeholder.png"}
+                              src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
                               alt={user.username}
                             />
                           </div>

@@ -720,7 +720,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
               onTouchCancel={handleTouchCancel}
             >
               <img
-                src={authUser?.profileImg || "/avatar-placeholder.png"}
+                src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                 className="size-7 rounded-full"
                 alt="User Profile"
               />
@@ -791,7 +791,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
             >
               <div className="avatar">
                 <div className="w-8 rounded-full">
-                  <img src={authUser?.profileImg || "/avatar-placeholder.png"} alt="User Profile" />
+                  <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="User Profile" />
                 </div>
               </div>
               <div className="flex flex-1 items-center justify-between">
@@ -873,7 +873,7 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                     onTouchCancel={handleTouchCancel}
                   >
                     <img
-                      src={authUser?.profileImg || "/avatar-placeholder.png"}
+                      src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                       alt="User Profile"
                     />
                   </div>
