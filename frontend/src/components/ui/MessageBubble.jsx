@@ -64,7 +64,7 @@ const MessageBubble = ({
                 onLoad={onLoadImage}
                 onError={onLoadImage}
                 alt="replied message attachment"
-                className="mt-1 max-h-[100px] max-w-[100px] rounded-md object-cover"
+                className="mt-1 h-auto max-w-[100px] rounded-md object-cover"
               />
             )}
           </div>
@@ -75,7 +75,7 @@ const MessageBubble = ({
           <>
             {message.image?._id && (
               <Link to={`/images/${message.image?._id}`}>
-                <div className="mb-2 h-auto  cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
+                <div className="mb-2 max-w-[300px] h-auto cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                   <img src={message.image.imageUrl} alt="Chat image" className="h-full w-full object-cover" />
                 </div>
               </Link>
