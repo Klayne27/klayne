@@ -22,6 +22,29 @@ const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
 const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
+// 1. Create a layout component for pages that have the Sidebar and RightPanel
+const MainLayout = ({ children }) => {
+  const location = useLocation()
+  const isMessagePage = location.pathname.includes("/messages")
+  const isPublicChatPage = location.pathname.includes("/public-chat")
+
+  const { setShowCreatePostModal } = useAppStore()
+
+  return (
+    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row">
+      <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />
+      <main
+        className={`${
+          isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
+        }`}
+      >
+        {children}
+      </main>
+      {!isMessagePage && !isPublicChatPage && <RightPanel className="hidden md:block" />}
+    </div>
+  )
+}
+
 function App() {
   const { authUser, isLoading } = useAuthUser()
   const {
@@ -35,8 +58,6 @@ function App() {
 
   const [feedType, setFeedType] = useState("posts")
 
-  const location = useLocation()
-
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -49,66 +70,46 @@ function App() {
   const isPublicChatPage = location.pathname.includes("/public-chat")
 
   return (
-    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row">
-      {authUser && <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />}
+    <>
+      <Suspense fallback={<div className="flex h-screen items-center justify-center"></div>}>
+        <Routes>
+          {/* Routes that should NOT have the main layout */}
+          <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
+          <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
+          <Route
+            path="/images/:imageId"
+            element={authUser ? <ImageViewerPage /> : <Navigate to="/login" />}
+          />
 
-      <main
-        className={`${
-          isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
-        }`}
-      >
-        {" "}
-        <Suspense
-          fallback={<div className="flex h-screen flex-grow items-center justify-center"></div>}
-        >
-          <Routes>
-            <Route path="/" element={authUser ? <HomePage /> : <Navigate to="/login" />} />
-            <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
-            <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-            <Route
-              path="/notifications"
-              element={authUser ? <NotificationPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/profile/:username"
-              element={
-                authUser ? (
-                  <ProfilePage feedType={feedType} setFeedType={setFeedType} />
-                ) : (
-                  <Navigate to="/login" />
-                )
-              }
-            />
-            <Route
-              path="/messages"
-              element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/messages/:conversationId"
-              element={authUser ? <MessagesPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/public-chat"
-              element={authUser ? <PublicChatPage /> : <Navigate to="/login" />}
-            />
-            <Route
-              path="/images/:imageId"
-              element={authUser ? <ImageViewerPage /> : <Navigate to="/login" />}
-            />
-
-            <Route
-              path="/bookmarks"
-              element={authUser ? <BookmarksPage /> : <Navigate to="/login" />}
-            />
-            <Route path="/themes" element={authUser ? <ThemesPage /> : <Navigate to="/login" />} />
-            <Route
-              path="/:username/post/:pid"
-              element={authUser ? <PostPage /> : <Navigate to="/login" />}
-            />
-            <Route path="/search" element={authUser ? <SearchPage /> : <Navigate to="/login" />} />
-          </Routes>
-        </Suspense>
-      </main>
+          {/* Routes that SHOULD have the main layout */}
+          <Route
+            path="/*" // This will match all other routes
+            element={
+              authUser ? (
+                <MainLayout>
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route
+                      path="/profile/:username"
+                      element={<ProfilePage feedType={feedType} setFeedType={setFeedType} />}
+                    />
+                    <Route path="/notifications" element={<NotificationPage />} />
+                    <Route path="/messages" element={<MessagesPage />} />
+                    <Route path="/messages/:conversationId" element={<MessagesPage />} />
+                    <Route path="/public-chat" element={<PublicChatPage />} />
+                    <Route path="/bookmarks" element={<BookmarksPage />} />
+                    <Route path="/themes" element={<ThemesPage />} />
+                    <Route path="/:username/post/:pid" element={<PostPage />} />
+                    <Route path="/search" element={<SearchPage />} />
+                  </Routes>
+                </MainLayout>
+              ) : (
+                <Navigate to="/login" />
+              )
+            }
+          />
+        </Routes>
+      </Suspense>
 
       {authUser && !isMessagePage && !isPublicChatPage && (
         <RightPanel className="hidden md:block" />
@@ -117,7 +118,7 @@ function App() {
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}
-    </div>
+    </>
   )
 }
 
