@@ -25,11 +25,11 @@ const ImageViewerPage = () => {
     )
   }
 
-  if (!image?.imageUrl) {
-    return (
-      <div className="flex h-screen items-center justify-center text-white">Image not found.</div>
-    )
-  }
+//   if (!image?.imageUrl) {
+//     return (
+//       <div className="flex h-screen items-center justify-center text-white">Image not found.</div>
+//     )
+//   }
 
   return (
     <div className="fixed inset-0 z-50 flex h-screen flex-col items-center justify-center bg-black">
