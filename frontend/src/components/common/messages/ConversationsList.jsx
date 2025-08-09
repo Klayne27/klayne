@@ -63,9 +63,9 @@ const ConversationsList = ({ conversations }) => {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between bg-black/0 p-4 backdrop-blur-sm">
         <h1 className="text-xl font-bold">Messages</h1>
-        <div className="cursor-pointer rounded-full p-1.5 hover:bg-gray-800">
+        {/* <div className="cursor-pointer rounded-full p-1.5 hover:bg-gray-800">
           <IoSettingsOutline className="w-4" />
-        </div>
+        </div> */}
       </div>
 
       {/* Search Bar for followed users */}
