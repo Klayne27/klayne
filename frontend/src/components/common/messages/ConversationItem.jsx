@@ -257,7 +257,7 @@ function ConversationItem({ conv }) {
             Block
           </button>
         </div>
-        <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
+        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
           <button
             className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
             onClick={(e) => {
@@ -270,7 +270,7 @@ function ConversationItem({ conv }) {
           </button>
           <div className="h-[1px] bg-accent"></div>
           <button
-            className="mb-2 flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+            className=" flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteModal(true)

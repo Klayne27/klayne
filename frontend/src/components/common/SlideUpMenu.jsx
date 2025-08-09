@@ -5,17 +5,12 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
 
-  // This useEffect now has a new purpose: resetting the inline transform
-  // when the 'isOpen' prop changes from false to true.
   useEffect(() => {
     if (isOpen) {
-      // When the menu is opened, ensure any inline transform styles are removed
-      // so the Tailwind CSS class `translate-y-0` can take effect.
       if (menuRef.current) {
         menuRef.current.style.transform = ""
       }
     } else {
-      // When the menu is closed, reset the dragging state
       setIsDragging(false)
       initialYRef.current = 0
     }
@@ -86,9 +81,20 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [handleTouchStart, handleTouchMove, handleTouchEnd])
 
+  // New onClick handler for the backdrop
+  const handleBackdropClick = () => {
+    if (menuRef.current) {
+      menuRef.current.style.transition = "transform 300ms ease-out"
+      menuRef.current.style.transform = "translateY(100%)"
+    }
+    setTimeout(() => {
+      onClose()
+    }, 0)
+  }
+
   return (
     <>
-      {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={onClose} />}
+      {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
       <div
         ref={menuRef}
         className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
