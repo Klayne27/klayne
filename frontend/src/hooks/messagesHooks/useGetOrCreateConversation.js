@@ -12,10 +12,11 @@ export const useGetOrCreateConversation = () => {
     onSuccess: (conversation) => {
       if (conversation && conversation._id) {
         navigate(`/messages/${conversation._id}`)
-        queryClient.invalidateQueries({queryKey: ["conversations"]})
+        // queryClient.invalidateQueries({ queryKey: ["conversations"] })
       } else {
         showAppToast("Failed to open chat: Conversation ID missing.")
       }
+      queryClient.invalidateQueries({ queryKey: ["conversations"] })
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to open conversation.", "error")

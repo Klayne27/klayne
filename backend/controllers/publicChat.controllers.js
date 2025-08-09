@@ -346,7 +346,7 @@ export const addReactionToPublicMessage = async (req, res) => {
         path: "sender",
         select: "username fullName  isAdmin isBannedInPublicChat",
         populate: {
-          path: "profileImg coverImg",
+          path: "profileImg",
           select: "imageUrl publicId",
         },
       })
@@ -354,7 +354,7 @@ export const addReactionToPublicMessage = async (req, res) => {
         path: "reactions.userId",
         select: "username  fullName",
         populate: {
-          path: "profileImg coverImg",
+          path: "profileImg",
           select: "imageUrl publicId",
         },
       })

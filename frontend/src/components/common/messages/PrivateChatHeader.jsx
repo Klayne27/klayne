@@ -5,7 +5,7 @@ function PrivateChatHeader({ otherUser }) {
   const navigate = useNavigate();
 
   const handleBackToConversations = () => {
-    navigate("/messages");
+    navigate(-1);
   };
 
   return (

@@ -135,14 +135,22 @@ export const sendMessage = async (req, res) => {
     await newMessage.populate([
       {
         path: "sender",
-        select: "username profileImg fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       },
       {
         path: "repliedTo",
         select: "text img sender createdAt",
         populate: {
           path: "sender",
-          select: "username profileImg",
+          select: "username",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       },
     ]);
@@ -161,7 +169,11 @@ export const sendMessage = async (req, res) => {
         select: "text img sender createdAt",
         populate: {
           path: "sender",
-          select: "username profileImg",
+          select: "username",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       });
     }
@@ -458,20 +470,32 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(updatedMessage._id)
       .populate({
         path: "sender",
-        select: "username fullName profileImg isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       })
       .populate({
         path: "repliedTo",
         select: "text img",
         populate: {
           path: "sender",
-          select: "username fullName profileImg isVerified isGoldVerified",
+          select: "username fullName isVerified isGoldVerified",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
         },
       })
       .populate({
         path: "reactions.userId", // 👈 Change population path to `reactions.userId`
-        select: "username fullName profileImg",
-      });
+        select: "username fullName ",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      }).populate("image", "imageUrl")
 
     const conversation = await Conversation.findById(populatedMessage.conversationId);
     if (conversation) {
@@ -727,10 +751,14 @@ export const getOrCreateConversation = async (req, res) => {
     }
 
     // If the conversation exists (or was just created), populate the participants.
-    conversation = await conversation.populate(
-      "participants",
-      "-password -email -blockedUsers -blockedBy -following -followers"
-    );
+    conversation = await conversation.populate({
+      path: "participants",
+      select: "-password -email -blockedUsers -blockedBy -following -followers",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
 
     return res.status(200).json(conversation);
   } catch (error) {

@@ -10,7 +10,7 @@ import { FiTrash } from "react-icons/fi"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
-import { FaTrashCan } from "react-icons/fa6"
+import { FaBroom, FaTrashCan } from "react-icons/fa6"
 import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 
@@ -95,7 +95,7 @@ function ConversationItem({ conv }) {
         className="relative p-1"
       >
         <img
-          src={otherUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
+          src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
@@ -149,7 +149,7 @@ function ConversationItem({ conv }) {
           }}
           disabled={isDeletingOnMySide}
         >
-          <FaTrashCan />
+          <FaBroom />
           Delete All Messages
         </button>
         {/* Old button for two-sided deletion */}
