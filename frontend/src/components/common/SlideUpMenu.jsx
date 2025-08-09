@@ -18,6 +18,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchStart = useCallback(
     (e) => {
+      e.preventDefault()
+
       if (!isOpen) return
       e.stopPropagation()
       setIsDragging(true)

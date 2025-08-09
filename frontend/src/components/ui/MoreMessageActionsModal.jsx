@@ -43,7 +43,7 @@ function MoreMessageActionsModal({
   }
 
   return (
-    <div className="fixed inset-0 z-20" onClick={onCloseMoreActionsModal}>
+    <div className="fixed inset-0 z-50" onClick={onCloseMoreActionsModal}>
       <div
         className={`gray-shadow absolute z-30 rounded-xl bg-base-100 p-2`}
         style={{
