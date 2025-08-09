@@ -4,6 +4,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
+  const menuRefContent = useRef(null)
 
   useEffect(() => {
     if (isOpen) {
@@ -18,9 +19,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchStart = useCallback(
     (e) => {
-      e.preventDefault()
-
       if (!isOpen) return
+      // e.preventDefault()
       e.stopPropagation()
       setIsDragging(true)
       initialYRef.current = e.touches[0].clientY
@@ -34,8 +34,17 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchMove = useCallback(
     (e) => {
       if (!isDragging || !isOpen) return
+
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
+
+      // If the user is dragging down (deltaY > 0), prevent the browser's default
+      // pull-to-refresh behavior.
+      if (deltaY > 0) {
+        e.preventDefault()
+      }
+
+      // We still prevent upward dragging (scrolling up to close)
       if (deltaY < 0) return
 
       if (menuRef.current) {
@@ -90,13 +99,20 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       >
         <div className="flex flex-col items-center rounded-t-3xl bg-base-200">
           <div
-            className="my-1.5 h-1 w-10 cursor-grab rounded-full bg-accent"
-            // Apply event listeners directly to the handle
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-          />
-          <div className="flex w-full flex-col gap-5">{children}</div>
+            className="w-full flex justify-center items-center"
+          >
+            <div
+              className="my-1.5 h-1 w-10 rounded-full bg-accent"
+
+              // Apply event listeners directly to the handle
+            />
+          </div>
+          <div className="flex w-full flex-col gap-5" ref={menuRefContent}>
+            {children}
+          </div>
         </div>
       </div>
     </>
