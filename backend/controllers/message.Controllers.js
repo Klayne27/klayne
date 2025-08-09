@@ -703,35 +703,34 @@ export const getOrCreateConversation = async (req, res) => {
       return res.status(400).json({ error: "Cannot create conversation with yourself." });
     }
 
+    // Find an existing conversation.
     let conversation = await Conversation.findOne({
       participants: { $all: [currentUserId, targetUserId] },
     });
 
+    // If no conversation is found, check if the users are following each other
+    // and create a new conversation.
     if (!conversation) {
-      return res.status(404).json({
-        error: "Conversation not found. You can only message users you follow.",
+      const currentUser = await User.findById(currentUserId);
+      if (!currentUser || !currentUser.following.includes(targetUserId)) {
+        return res.status(404).json({
+          error: "Conversation not found. You can only message users you follow.",
+        });
+      }
+
+      // Create a new conversation since it doesn't exist and the users follow each other.
+      conversation = new Conversation({
+        participants: [currentUserId, targetUserId],
+        messages: [],
       });
+      await conversation.save();
     }
 
-    const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
-
-    if (isHiddenForCurrentUser) {
-      await Conversation.updateOne(
-        { _id: conversation._id },
-        { $pull: { hiddenFor: currentUserId } },
-        { timestamps: false }
-      );
-
-      conversation = await Conversation.findById(conversation._id).populate(
-        "participants",
-        "-password -email -blockedUsers -blockedBy -following -followers"
-      );
-    } else {
-      conversation = await conversation.populate(
-        "participants",
-        "-password -email -blockedUsers -blockedBy -following -followers"
-      );
-    }
+    // If the conversation exists (or was just created), populate the participants.
+    conversation = await conversation.populate(
+      "participants",
+      "-password -email -blockedUsers -blockedBy -following -followers"
+    );
 
     return res.status(200).json(conversation);
   } catch (error) {
@@ -744,59 +743,54 @@ export const deleteConversation = async (req, res) => {
   const { id: conversationId } = req.params;
   const { _id: currentUserId } = req.user;
 
+  // Use a transaction to ensure all operations succeed or fail together.
   const session = await mongoose.startSession();
 
   try {
-    await session.withTransaction(async () => {
-      const conversation = await Conversation.findById(conversationId).session(session);
+    session.startTransaction();
 
-      if (!conversation) {
-        throw new Error("Conversation not found");
-      }
+    const conversation = await Conversation.findById(conversationId).session(session);
 
-      if (!conversation.participants.includes(currentUserId)) {
-        throw new Error("Unauthorized: You are not a participant of this conversation");
-      }
+    if (!conversation) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "Conversation not found" });
+    }
 
-      const otherUserId = conversation.participants.find(
-        (p) => p && !p.equals(currentUserId)
-      );
+    if (!conversation.participants.includes(currentUserId)) {
+      await session.abortTransaction();
+      return res
+        .status(403)
+        .json({ error: "Unauthorized: You are not a participant of this conversation" });
+    }
 
-      if (!otherUserId) {
-        throw new Error("Could not identify the other participant");
-      }
+    const otherUserId = conversation.participants.find(
+      (p) => p && !p.equals(currentUserId)
+    );
 
-      await Message.deleteMany({ conversationId: conversationId }).session(session);
+    if (!otherUserId) {
+      await session.abortTransaction();
+      return res.status(500).json({ error: "Could not identify the other participant" });
+    }
 
-      await User.findByIdAndUpdate(currentUserId, {
-        $pull: { following: otherUserId },
-      }).session(session);
-      await User.findByIdAndUpdate(otherUserId, {
-        $pull: { followers: currentUserId },
-      }).session(session);
+    // Unfollow logic is no longer required as per your new requirement.
+    // However, if you still want to manage follow/unfollow status,
+    // this is where you would do it.
+    // The previous code had this logic here.
 
-      await User.findByIdAndUpdate(currentUserId, {
-        $pull: { followers: otherUserId },
-      }).session(session);
-      await User.findByIdAndUpdate(otherUserId, {
-        $pull: { following: currentUserId },
-      }).session(session);
+    // Delete all messages associated with the conversation.
+    await Message.deleteMany({ conversationId: conversationId }).session(session);
 
-      await Conversation.findByIdAndDelete(conversationId).session(session);
-    });
+    // Delete the conversation document itself.
+    await Conversation.findByIdAndDelete(conversationId).session(session);
 
+    await session.commitTransaction();
     res.status(200).json({ message: "Conversation deleted successfully." });
   } catch (error) {
     console.error("Error in deleteConversation:", error.message);
-    if (error.message === "Conversation not found") {
-      return res.status(404).json({ error: error.message });
-    }
-    if (error.message.startsWith("Unauthorized")) {
-      return res.status(403).json({ error: error.message });
-    }
+    await session.abortTransaction();
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
-    await session.endSession();
+    session.endSession();
   }
 };
 

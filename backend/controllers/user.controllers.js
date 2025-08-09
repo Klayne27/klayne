@@ -99,56 +99,68 @@ export const followUnfollowUser = async (req, res) => {
     }
 
     const isFollowing = currentUser.following.includes(id);
+    const session = await mongoose.startSession();
 
-    if (isFollowing) {
-      // --- UNFOLLOW LOGIC ---
-      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+    try {
+      session.startTransaction();
 
-      await Conversation.updateOne(
-        { participants: { $all: [req.user._id, id] } },
-        { $addToSet: { hiddenFor: req.user._id } },
-        { timestamps: false }
-      );
+      if (isFollowing) {
+        // --- UNFOLLOW LOGIC ---
+        await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
+        await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
 
-      res.status(200).json({ message: "User unfollowed successfully" });
-    } else {
-      // --- FOLLOW LOGIC ---
-      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
-
-      const existingConversation = await Conversation.findOne({
-        participants: { $all: [req.user._id, id] },
-      });
-
-      if (existingConversation) {
         await Conversation.updateOne(
-          { _id: existingConversation._id },
-          { $pull: { hiddenFor: req.user._id } },
+          { participants: { $all: [req.user._id, id] } },
+          { $addToSet: { hiddenFor: req.user._id } },
           { timestamps: false }
-        );
-        await Conversation.updateOne(
-          { _id: existingConversation._id },
-          { $addToSet: { hiddenFor: userToModify._id } },
-          { timestamps: false }
-        );
+        ).session(session);
+
+        await session.commitTransaction();
+        res.status(200).json({ message: "User unfollowed successfully" });
       } else {
-        const newConversation = new Conversation({
-          participants: [req.user._id, id],
-          hiddenFor: [userToModify._id],
+        // --- FOLLOW LOGIC ---
+        await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
+        await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+
+        const existingConversation = await Conversation.findOne({
+          participants: { $all: [req.user._id, id] },
+        }).session(session);
+
+        if (existingConversation) {
+          await Conversation.updateOne(
+            { _id: existingConversation._id },
+            { $pull: { hiddenFor: req.user._id } },
+            { timestamps: false }
+          );
+          await Conversation.updateOne(
+            { _id: existingConversation._id },
+            { $addToSet: { hiddenFor: userToModify._id } },
+            { timestamps: false }
+          ).session(session);
+        } else {
+          const newConversation = new Conversation({
+            participants: [req.user._id, id],
+            hiddenFor: [userToModify._id],
+          });
+          await newConversation.save({ session });
+        }
+
+        const newNotification = new Notification({
+          type: "follow",
+          from: req.user._id,
+          to: userToModify._id,
         });
-        await newConversation.save();
+        await newNotification.save();
+        await emitUnreadNotificationStatus(userToModify._id.toString());
+
+        await session.commitTransaction();
+        res.status(200).json({ message: "User followed successfully" });
       }
-
-      const newNotification = new Notification({
-        type: "follow",
-        from: req.user._id,
-        to: userToModify._id,
-      });
-      await newNotification.save();
-      await emitUnreadNotificationStatus(userToModify._id.toString());
-
-      res.status(200).json({ message: "User followed successfully" });
+    } catch (error) {
+      await session.abortTransaction();
+      throw error;
+    } finally {
+      session.endSession();
     }
   } catch (error) {
     console.log("Error in followUnfollowUser", error.message);

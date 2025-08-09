@@ -28,6 +28,7 @@ import { showAppToast } from "../../utils/showAppToast"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../../utils/textUtils"
+import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -82,6 +83,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
   const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility()
+  const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
+    useGetOrCreateConversation()
 
   const isMyProfile = authUser?._id === userProfile?._id
   const amIFollowing = authUser?.following?.includes(userProfile?._id)
@@ -156,6 +159,50 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
+  // const handleMessageClick = () => {
+  //   if (isBlockingRelationship) return
+
+  //   if (!authUser || !userProfile?._id) {
+  //     showAppToast("Authentication or profile data is missing.", "error")
+  //     return
+  //   }
+
+  //   if (isLoadingConversationStatus || isTogglingVisibility) {
+  //     return
+  //   }
+
+  //   if (isErrorConversationStatus) {
+  //     showAppToast("Failed to get conversation status.", "error") // Inform the user
+  //     return
+  //   }
+
+  //   if (conversationStatus && conversationStatus.conversationId) {
+  //     const existingConversationId = conversationStatus.conversationId
+  //     const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser
+
+  //     if (isHiddenForCurrentUser) {
+  //       toggleVisibility(
+  //         { conversationId: existingConversationId, isHiding: false },
+  //         {
+  //           onSuccess: () => {
+  //             // Navigate only after the unhide operation is successful
+  //             navigate(`/messages/${existingConversationId}`)
+  //           },
+  //           onError: (err) => {
+  //             showAppToast(
+  //               "Failed to unhide conversation: " + (err.message || "Unknown error", "error"),
+  //             )
+  //           },
+  //         },
+  //       )
+  //     } else {
+  //       // Case 2: Conversation exists and is NOT hidden for the current user.
+  //       // Just navigate to it directly. No API call to toggle visibility needed.
+  //       navigate(`/messages/${existingConversationId}`)
+  //     }
+  //   }
+  // }
+
   const handleMessageClick = () => {
     if (isBlockingRelationship) return
 
@@ -164,42 +211,24 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       return
     }
 
-    // Good to disable interaction while these are loading/in-progress
-    if (isLoadingConversationStatus || isTogglingVisibility) {
-      // Maybe return a loading spinner or disable the button instead of a <p> tag
-      return // Or return a loading indicator JSX
-    }
-
-    if (isErrorConversationStatus) {
-      console.error("Error fetching conversation status:", conversationStatusError)
-      showAppToast("Failed to get conversation status.", "error") // Inform the user
+    // Add the new loading state to the check
+    if (isLoadingConversationStatus || isTogglingVisibility || isCreatingConversation) {
       return
     }
 
-    if (conversationStatus && conversationStatus.conversationId) {
-      const existingConversationId = conversationStatus.conversationId
-      const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser
+    if (isErrorConversationStatus) {
+      showAppToast("Failed to get conversation status.", "error")
+      return
+    }
 
-      if (isHiddenForCurrentUser) {
-        toggleVisibility(
-          { conversationId: existingConversationId, isHiding: false },
-          {
-            onSuccess: () => {
-              // Navigate only after the unhide operation is successful
-              navigate(`/messages/${existingConversationId}`)
-            },
-            onError: (err) => {
-              showAppToast(
-                "Failed to unhide conversation: " + (err.message || "Unknown error", "error"),
-              )
-            },
-          },
-        )
-      } else {
-        // Case 2: Conversation exists and is NOT hidden for the current user.
-        // Just navigate to it directly. No API call to toggle visibility needed.
-        navigate(`/messages/${existingConversationId}`)
-      }
+    // This is the key logic change:
+    // If no conversationId exists, call the mutation to create/get one.
+    if (!conversationStatus.conversationId) {
+      getOrCreateConversation(userProfile._id)
+    } else {
+      // If a conversation already exists, simply navigate to it.
+      // The isHiddenForCurrentUser check is no longer needed with hard-delete logic.
+      navigate(`/messages/${conversationStatus.conversationId}`)
     }
   }
 
@@ -286,10 +315,10 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <Link to={`/images/${userProfile?.coverImg?._id}`}>
+              <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}>
                 <img
                   src={coverImg || userProfile?.coverImg?.imageUrl || "/cover.png"}
-                  className="h-52 w-full cursor-pointer object-cover"
+                  className={`h-52 w-full cursor-pointer object-cover`}
                   alt="cover image"
                   // onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
                   loading="lazy"
@@ -321,15 +350,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
                   {/* <Link to={`/images/${userProfile?.profileImg?._id}`}> */}
-                    <img
-                      src={
-                        profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
-                      }
-                      alt="user avatar"
-                      className="cursor-pointer"
-                      onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
-                      loading="lazy"
-                    />
+                  <img
+                    src={
+                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                    }
+                    alt="user avatar"
+                    className="cursor-pointer"
+                    onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
+                    loading="lazy"
+                  />
                   {/* </Link> */}
                   {isMyProfile && (
                     <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
