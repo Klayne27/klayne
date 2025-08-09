@@ -188,8 +188,6 @@ body {
 
 .slide-up-menu .options {
   width: 100%;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid #374151; /* Subtle separator line */
 }
 
 .slide-up-menu .options button {
