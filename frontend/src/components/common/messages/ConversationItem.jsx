@@ -27,7 +27,7 @@ function ConversationItem({ conv }) {
 
   const { toggleVisibility } = useToggleConversationVisibility()
   const { deleteConversation } = useDeleteConversation()
-  const { deleteAllMessages, isDeleting: isDeletingOnMySide } = useDeleteAllMessagesOnMySide()
+  const { deleteAllMessages } = useDeleteAllMessagesOnMySide()
 
   const {
     activeConversationId,
@@ -158,7 +158,7 @@ function ConversationItem({ conv }) {
           </p>
         </div>
       </div>
-      {!isMobile && (
+      { (
         <DropdownMenu>
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
@@ -173,7 +173,6 @@ function ConversationItem({ conv }) {
               e.stopPropagation()
               setShowOneSidedDeleteModal(true)
             }}
-            disabled={isDeletingOnMySide}
           >
             <FaBroom />
             Delete all messages
@@ -205,7 +204,6 @@ function ConversationItem({ conv }) {
             e.stopPropagation()
             setShowOneSidedDeleteModal(true)
           }}
-          disabled={isDeletingOnMySide}
         >
           <FaBroom />
           Delete all messages
