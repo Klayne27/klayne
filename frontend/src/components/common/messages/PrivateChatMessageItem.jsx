@@ -25,7 +25,7 @@ import ViewReactionsModal from "../ViewReactionsModal"
 import SlideUpMenu from "../SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
 
-const MessageItem = ({
+const PrivateChatMessageItem = ({
   message,
   privateChatInputRef,
   currentUser,
@@ -129,7 +129,7 @@ const MessageItem = ({
     setShowMoreActionsModal(false)
   }
 
-  if (isTypingOtherUser) {
+  if (!isTypingOtherUser) {
     return (
       <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
         <div className="flex max-w-[70%] flex-col rounded-full bg-[#2F3336] p-3 text-white">
@@ -302,4 +302,4 @@ const MessageItem = ({
   )
 }
 
-export default React.memo(MessageItem)
+export default React.memo(PrivateChatMessageItem)

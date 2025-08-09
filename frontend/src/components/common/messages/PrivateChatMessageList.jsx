@@ -2,7 +2,7 @@ import React, { forwardRef } from "react"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import LoadingSpinner from "../../ui/LoadingSpinner"
 
-import MessageItem from "./MessageItem"
+import PrivateChatMessageItem from "./PrivateChatMessageItem"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
@@ -49,7 +49,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
         processedMessages.length > 0 &&
         processedMessages.map((message) => {
           return (
-            <MessageItem
+            <PrivateChatMessageItem
               key={message._id}
               message={message}
               currentUser={currentUser}
@@ -62,7 +62,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
         })}
 
       {isTypingOtherUser && (
-        <MessageItem
+        <PrivateChatMessageItem
           key="typing-indicator"
           isTypingOtherUser={isTypingOtherUser}
           message={{ sender: { _id: "dummy" }, text: "", img: "" }}

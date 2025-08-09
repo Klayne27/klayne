@@ -1,15 +1,13 @@
-// hooks/customHooks/useMobileConversationLongPress.js
 import { useCallback, useState } from "react"
 import { useIsMobile } from "./useIsMobile"
 import { useLongPress } from "./useLongPress"
-import { useNavigate } from "react-router-dom"
+// import { useNavigate } from "react-router-dom"
 
 function useMobileConversationLongPress() {
   const [activeConversationId, setActiveConversationId] = useState(null)
   const isMobile = useIsMobile()
-  const navigate = useNavigate()
+  // const navigate = useNavigate()
 
-  // The callback now correctly receives the event object and extracts the convId.
   const handleLongPress = useCallback(
     (e) => {
       if (isMobile && e && e.convId) {
