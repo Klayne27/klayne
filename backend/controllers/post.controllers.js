@@ -47,16 +47,23 @@ export const createPost = async (req, res) => {
       }
     }
 
-    if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
-      return res
-        .status(400)
-        .json({ error: "Post must have text, image, video, or poll options." });
-    }
+    try {
+      if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
+        return res
+          .status(400)
+          .json({ error: "Post must have text, image, video, or poll options." });
+      }
 
-    if ((img || video) && pollOptions && pollOptions.length > 0) {
-      return res
-        .status(400)
-        .json({ error: "You cannot post a poll with an image or video." });
+      if ((img || video) && pollOptions && pollOptions.length > 0) {
+        return res
+          .status(400)
+          .json({ error: "You cannot post a poll with an image or video." });
+      }
+    } catch (uploadError) {
+      return res.status(500).json({
+        error: "Failed to upload media. Please try again.",
+        details: uploadError.message,
+      });
     }
 
     let uploadedImgUrl = null;

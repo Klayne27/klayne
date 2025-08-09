@@ -1,7 +1,5 @@
 import { renderClickableText } from "../../utils/textUtils"
 import { truncateText } from "../../utils/truncateText"
-import ImageSkeleton from "../skeletons/ImageSkeleton"
-import LoadingSpinner from "./LoadingSpinner"
 
 const MessageBubble = ({
   message,
@@ -72,11 +70,6 @@ const MessageBubble = ({
           messageDeleted
         ) : (
           <>
-            {/* {isSentByCurrentUser && message.isOptimistic && (
-              <div>
-                <ImageSkeleton />
-              </div>
-            )} */}
             {message.image?._id && (
               <div className="mb-2 h-[200px] w-auto cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                 <img

@@ -28,9 +28,6 @@ const PrivateChatWindow = () => {
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useFetchMessages(conversationId)
 
-
-  // This function will be called when an image is clicked to save the current scroll position.
-
   const {
     handleLoadImage,
     handleReactionAdded,
@@ -97,14 +94,13 @@ const PrivateChatWindow = () => {
             error={error}
             messagesToRender={messages}
             privateChatInputRef={privateChatInputRef}
-            messages={messages}
             isLoadingInitialMessages={isLoadingMessages && !isFetchingNextPage}
             isFetchingOlderMessages={isFetchingNextPage}
             hasNextPage={hasNextPage}
             isTypingOtherUser={isTypingOtherUser}
             handleLoadImage={handleLoadImage}
             onReactionAdded={handleReactionAdded}
-            messageListRef={messageListRef} // Pass it as a regular prop too
+            messageListRef={messageListRef} 
           />
         )}
         {showNewMessageButton && (

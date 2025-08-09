@@ -15,32 +15,21 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
     const dialogElement = dialogRef.current;
     if (!dialogElement) return;
 
-    // This handler captures closing via:
-    // 1. User pressing the Escape key.
-    // 2. User clicking on the ::backdrop (the dimmed area around the modal content).
     const handleDialogClose = () => {
       onClose(); // Call the parent's onClose handler
     };
 
-    // Add the event listener for the native 'close' event
     dialogElement.addEventListener("close", handleDialogClose);
 
-    // Cleanup function
     return () => {
       dialogElement.removeEventListener("close", handleDialogClose);
     };
   }, [onClose]); // Dependency array: re-run if onClose changes
 
-  // Optional: Add a specific onMouseDown handler for clicks directly on the dialog element itself (the backdrop)
-  // This is often redundant with the 'close' event, but can be a robust fallback.
   const handleMouseDownOnDialog = (e) => {
-    // If the click target is exactly the <dialog> element (i.e., the backdrop)
-    // and NOT one of its children (like the inner div, or a button inside)
     if (dialogRef.current && e.target === dialogRef.current) {
       onClose();
     }
-    // If the click is on a child, let it bubble up normally,
-    // unless the child itself stops propagation.
   };
 
   return (
@@ -50,7 +39,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
         page === "profilePage" ? `follow_list_modal_${type}` : `follow_modal_list_${type}`
       }`}
       className="modal modal-middle sm:modal-middle flex justify-center px-10"
-      // Attach the onMouseDown handler to the dialog element
       onMouseDown={handleMouseDownOnDialog}
     >
       <div className="w-[350px] md:w-[500px] bg-base-100 rounded-2xl border border-accent relative">
@@ -75,8 +63,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
               <UserListItem
                 key={user._id}
                 user={user}
-                // Pass onClose if UserListItem's actions should also close the modal.
-                // Otherwise, ensure UserListItem's clickable elements stop propagation if needed.
                 onModalClose={onClose} // Renamed prop to avoid confusion if UserListItem has its own onClose
               />
             ))}
@@ -87,7 +73,6 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             onClick={(e) => {
               e.stopPropagation(); // VERY IMPORTANT: Prevents the button click from bubbling up
-              // to the dialog's onMouseDown or document's mousedown listeners.
               onClose(); // Call the close function
             }}
           >

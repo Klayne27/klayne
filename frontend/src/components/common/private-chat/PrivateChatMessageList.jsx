@@ -7,8 +7,8 @@ import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMess
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
-    error,
     isNewChat,
+    error,
     messagesToRender,
     privateChatInputRef,
     isLoadingInitialMessages,

@@ -1,9 +1,7 @@
-// components/ui/ViewReactionsModal.jsx
 import { Link } from "react-router-dom"
 import { useEffect, useState } from "react"
 
 const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
-  // Group reactions by emoji and count users
   const groupedReactions = reactions.reduce((acc, reaction) => {
     if (!acc[reaction.emoji]) {
       acc[reaction.emoji] = []
@@ -12,7 +10,6 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
     return acc
   }, {})
 
-  // Get a list of unique emojis
   const uniqueEmojis = Object.keys(groupedReactions)
   const [selectedEmoji, setSelectedEmoji] = useState(uniqueEmojis[0])
 
@@ -54,7 +51,6 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
           ))}
         </div>
 
-        {/* Right Panel: Users List */}
         <div className="flex-1 px-3">
           <div className="h-[50vh] overflow-y-auto py-1">
             {usersForSelectedEmoji.map((user) => (
@@ -75,11 +71,6 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
                 <span className="text-gray-400">@{user.username}</span>
               </div>
             ))}
-            {usersForSelectedEmoji.length === 0 && (
-              <p className="text-center text-gray-400">
-                No users have reacted with this emoji yet.
-              </p>
-            )}
           </div>
         </div>
       </div>
