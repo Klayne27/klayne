@@ -1,18 +1,18 @@
 // hooks/customHooks/useMobileConversationLongPress.js
-import { useCallback, useRef, useState } from "react"
+import { useCallback, useState } from "react"
 import { useIsMobile } from "./useIsMobile"
 import { useLongPress } from "./useLongPress"
+import { useNavigate } from "react-router-dom"
 
 function useMobileConversationLongPress() {
   const [activeConversationId, setActiveConversationId] = useState(null)
   const isMobile = useIsMobile()
-  const longPressTriggeredRef = useRef(false) // Ref to track if long press fired
+  const navigate = useNavigate()
 
-  // This callback now also sets our ref to true
+  // The callback now correctly receives the event object and extracts the convId.
   const handleLongPress = useCallback(
     (e) => {
       if (isMobile && e && e.convId) {
-        longPressTriggeredRef.current = true
         setActiveConversationId(e.convId)
       }
     },
@@ -21,36 +21,26 @@ function useMobileConversationLongPress() {
 
   const handleCloseMenu = useCallback(() => {
     setActiveConversationId(null)
-  }, [])
+    setTimeout(() => {
+      navigate("/messages")
+    }, 0)
+  }, [navigate])
 
-  // Get the original handlers from the useLongPress hook
-  const {
-    handleTouchCancel,
-    handleTouchEnd,
-    handleTouchMove,
-    handleTouchStart: originalHandleTouchStart, // Rename the original handler
-  } = useLongPress(handleLongPress, 500, isMobile)
-
-  // Create a new handleTouchStart that wraps the original one
-  const handleTouchStart = useCallback(
-    (e) => {
-      // ALWAYS reset the flag at the beginning of a touch event
-      longPressTriggeredRef.current = false
-      originalHandleTouchStart(e)
-    },
-    [originalHandleTouchStart],
+  const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
+    handleLongPress,
+    500,
+    isMobile,
   )
 
   return {
     activeConversationId,
     setActiveConversationId,
     handleCloseMenu,
-    handleTouchStart, // Return our new wrapped function
+    handleTouchStart,
     handleTouchEnd,
     handleTouchMove,
     handleTouchCancel,
     isMobile,
-    longPressTriggeredRef, // Return the ref for the component to use
   }
 }
 
