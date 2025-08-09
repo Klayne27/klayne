@@ -21,10 +21,10 @@ function useMobileConversationLongPress() {
 
   const handleCloseMenu = useCallback(() => {
     setActiveConversationId(null)
-    setTimeout(() => {
-      navigate("/messages")
-    }, 0)
-  }, [navigate])
+    // setTimeout(() => {
+    //   navigate("/messages")
+    // }, 0)
+  }, [])
 
   const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
     handleLongPress,

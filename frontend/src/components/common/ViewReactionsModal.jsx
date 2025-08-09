@@ -32,7 +32,10 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
         onClose()
       }}
     >
-      <div className="mx-4 flex w-full max-w-lg overflow-hidden rounded-2xl bg-base-100 shadow-lg">
+      <div
+        className="mx-4 flex w-full max-w-lg overflow-hidden rounded-2xl bg-base-100 shadow-lg"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="flex h-[50vh] w-[18%] flex-col gap-2 overflow-y-auto bg-base-200 p-2">
           {uniqueEmojis.map((emoji) => (
             <button

@@ -69,7 +69,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   }, [isDragging, isOpen, onClose])
 
   // New onClick handler for the backdrop
-  const handleBackdropClick = () => {
+  const handleBackdropClick = (e) => {
+    e.stopPropagation()
     if (menuRef.current) {
       menuRef.current.style.transition = "transform 300ms ease-out"
       menuRef.current.style.transform = "translateY(100%)"
@@ -83,6 +84,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
       <div
+        onClick={e => e.stopPropagation()}
         ref={menuRef}
         className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"

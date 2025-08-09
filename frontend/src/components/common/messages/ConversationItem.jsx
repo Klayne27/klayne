@@ -44,7 +44,7 @@ function ConversationItem({ conv }) {
     handleTouchCancel,
     isMobile,
   } = useMobileConversationLongPress()
-  
+
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
 
@@ -219,68 +219,65 @@ function ConversationItem({ conv }) {
 
       <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
         <div className="flex flex-col gap-5 px-4">
-        <div className="flex items-center justify-start gap-2 font-bold">
-          <img
-            src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-            className="size-10 rounded-full"
-            onClick={() => navigate(`/profile/${otherUser?.username}`)}
-          />
-          <span onClick={() => navigate(`/profile/${otherUser?.username}`)}>
-            @{otherUser?.username}
-          </span>
-        </div>
-        <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
-          <button
-            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate(`/profile/${otherUser?.username}`)
-            }}
-          >
-            <LuUserRound />
-            View profile
-          </button>
-          <div className="h-[1px] bg-accent"></div>
-          <button
-            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-            onClick={handleToggleHide}
-          >
-            <LuUserRoundMinus />
-            Hide conversation
-          </button>
-        </div>
-        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
-          <button
-            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-            onClick={openBlockConfirmationModal}
-          >
-            <MdBlock />
-            Block
-          </button>
-        </div>
-        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
-          <button
-            className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowOneSidedDeleteModal(true)
-            }}
-          >
-            <FaBroom />
-            Delete all messages
-          </button>
-          <div className="h-[1px] bg-accent"></div>
-          <button
-            className=" flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
-            onClick={(e) => {
-              e.stopPropagation()
-              setShowDeleteModal(true)
-            }}
-          >
-            <FiTrash />
-            Delete conversation
-          </button>
-        </div>
+          <div className="flex items-center justify-start gap-2 font-bold">
+            <img
+              src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+              className="size-10 rounded-full"
+            />
+            <span>@{otherUser?.username}</span>
+          </div>
+          <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              onClick={(e) => {
+                e.stopPropagation()
+                navigate(`/profile/${otherUser?.username}`)
+              }}
+            >
+              <LuUserRound />
+              View profile
+            </button>
+            <div className="h-[1px] bg-accent"></div>
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              onClick={handleToggleHide}
+            >
+              <LuUserRoundMinus />
+              Hide conversation
+            </button>
+          </div>
+          <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              onClick={openBlockConfirmationModal}
+            >
+              <MdBlock />
+              Block
+            </button>
+          </div>
+          <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowOneSidedDeleteModal(true)
+              }}
+            >
+              <FaBroom />
+              Delete all messages
+            </button>
+            <div className="h-[1px] bg-accent"></div>
+            <button
+              className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+              onClick={(e) => {
+                e.stopPropagation()
+                setShowDeleteModal(true)
+              }}
+            >
+              <FiTrash />
+              Delete conversation
+            </button>
+          </div>
         </div>
       </SlideUpMenu>
 
