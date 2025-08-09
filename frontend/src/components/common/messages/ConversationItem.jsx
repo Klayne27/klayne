@@ -12,7 +12,6 @@ import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
 import { FaBroom, FaTrashCan } from "react-icons/fa6"
 import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
-import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -27,8 +26,6 @@ function ConversationItem({ conv }) {
   const { toggleVisibility } = useToggleConversationVisibility()
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages, isDeleting: isDeletingOnMySide } = useDeleteAllMessagesOnMySide() // Use the new hook
-
-  const { setShowMenu } = useDropdownMenu()
 
   const isSelected = selectedConversation?._id === conv._id
 
@@ -144,7 +141,6 @@ function ConversationItem({ conv }) {
           className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
           onClick={(e) => {
             e.stopPropagation()
-            setShowMenu(false)
             setShowOneSidedDeleteModal(true)
           }}
           disabled={isDeletingOnMySide}
@@ -157,7 +153,6 @@ function ConversationItem({ conv }) {
           className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
           onClick={(e) => {
             e.stopPropagation()
-            setShowMenu(false)
             setShowDeleteModal(true)
           }}
         >
@@ -171,7 +166,7 @@ function ConversationItem({ conv }) {
         <ConfirmationModal
           isOpen={showDeleteModal}
           modalTitle="Confirm Conversation Deletion"
-          message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants and unfollow ${otherUser.username}. You will also be unfollowed by them.`}
+          message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants.`}
           confirmButtonText="Yes, Delete Conversation"
           onConfirm={handleDelete}
           onClose={handleCloseModal}
