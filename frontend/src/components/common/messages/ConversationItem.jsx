@@ -1,7 +1,7 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { formatPostDate } from "../../../utils/date"
-import { MdImage } from "react-icons/md"
+import { MdBlock, MdImage } from "react-icons/md"
 import React, { useState } from "react"
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility"
 import { CiCircleMinus } from "react-icons/ci"
@@ -11,9 +11,12 @@ import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
 import { FaBroom } from "react-icons/fa6"
+import { FaUser } from "react-icons/fa"
 import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../SlideUpMenu"
+import { LuUserRound, LuUserRoundMinus } from "react-icons/lu"
+import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -22,12 +25,14 @@ function ConversationItem({ conv }) {
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
+  const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
 
   const otherUser = conv.participants.find((p) => p?._id.toString() !== currentUser._id.toString())
 
   const { toggleVisibility } = useToggleConversationVisibility()
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
+  const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
 
   const {
     activeConversationId,
@@ -67,8 +72,7 @@ function ConversationItem({ conv }) {
     toggleVisibility({ conversationId: conv._id, isHiding: true })
   }
 
-  const handleCloseModal = (e) => {
-    e.stopPropagation()
+  const handleCloseDeleteConversationModal = () => {
     setShowDeleteModal(false)
   }
 
@@ -96,6 +100,22 @@ function ConversationItem({ conv }) {
     handleTouchStart(e)
   }
 
+  const handleConfirmblock = (e) => {
+    e.stopPropagation()
+    if (!currentUser || isBlocking) return
+    blockUnblockUser(otherUser?._id)
+  }
+
+  const closeBlockConfirmationModal = () => {
+    setShowBlockConfirmationModal(false)
+  }
+
+  const openBlockConfirmationModal = (e) => {
+    e.stopPropagation()
+    if (!otherUser?._id) return
+    setShowBlockConfirmationModal(true)
+  }
+
   if (!otherUser) {
     return null
   }
@@ -110,17 +130,13 @@ function ConversationItem({ conv }) {
       onTouchCancel={handleTouchCancel}
     >
       {/* ... (rest of the component's JSX remains the same) */}
-      <Link
-        to={`/profile/${otherUser.username}`}
-        onClick={(e) => e.stopPropagation()}
-        className="relative p-1"
-      >
+      <div className="p-1">
         <img
           src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
-      </Link>
+      </div>
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 truncate">
@@ -152,64 +168,118 @@ function ConversationItem({ conv }) {
           </p>
         </div>
       </div>
-     {!isMobile && <DropdownMenu>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
-          onClick={handleToggleHide}
-        >
-          <CiCircleMinus />
-          Hide conversation
-        </button>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowOneSidedDeleteModal(true)
-          }}
-        >
-          <FaBroom />
-          Delete all messages
-        </button>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowDeleteModal(true)
-          }}
-        >
-          <FiTrash />
-          Delete conversation
-        </button>
-      </DropdownMenu>}
+      {!isMobile && (
+        <DropdownMenu>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/profile/${otherUser?.username}`)
+            }}
+          >
+            <LuUserRound />
+            View profile
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            onClick={handleToggleHide}
+          >
+            <LuUserRoundMinus />
+            Hide conversation
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            onClick={openBlockConfirmationModal}
+          >
+            <MdBlock />
+            Block
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-400 transition duration-200 hover:bg-gray-700/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowOneSidedDeleteModal(true)
+            }}
+          >
+            <FaBroom />
+            Delete all messages
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-400 transition duration-200 hover:bg-gray-700/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDeleteModal(true)
+            }}
+          >
+            <FiTrash />
+            Delete conversation
+          </button>
+        </DropdownMenu>
+      )}
 
       <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
-          onClick={handleToggleHide}
-        >
-          <CiCircleMinus />
-          Hide conversation
-        </button>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowOneSidedDeleteModal(true)
-          }}
-        >
-          <FaBroom />
-          Delete all messages
-        </button>
-        <button
-          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-          onClick={(e) => {
-            e.stopPropagation()
-            setShowDeleteModal(true)
-          }}
-        >
-          <FiTrash />
-          Delete conversation
-        </button>
+        <div className="flex items-center justify-start gap-2 font-bold">
+          <img
+            src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+            className="size-10 rounded-full"
+            onClick={() => navigate(`/profile/${otherUser?.username}`)}
+          />
+          <span onClick={() => navigate(`/profile/${otherUser?.username}`)}>
+            @{otherUser?.username}
+          </span>
+        </div>
+        <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
+          <button
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+            onClick={(e) => {
+              e.stopPropagation()
+              navigate(`/profile/${otherUser?.username}`)
+            }}
+          >
+            <LuUserRound />
+            View profile
+          </button>
+          <div className="h-[1px] bg-accent"></div>
+          <button
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+            onClick={handleToggleHide}
+          >
+            <LuUserRoundMinus />
+            Hide conversation
+          </button>
+        </div>
+        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
+          <button
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+            onClick={openBlockConfirmationModal}
+          >
+            <MdBlock />
+            Block
+          </button>
+        </div>
+        <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
+          <button
+            className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowOneSidedDeleteModal(true)
+            }}
+          >
+            <FaBroom />
+            Delete all messages
+          </button>
+          <div className="h-[1px] bg-accent"></div>
+          <button
+            className="mb-2 flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDeleteModal(true)
+            }}
+          >
+            <FiTrash />
+            Delete conversation
+          </button>
+        </div>
       </SlideUpMenu>
 
       {/* Confirmation Modal for two-sided deletion */}
@@ -220,7 +290,7 @@ function ConversationItem({ conv }) {
           message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants.`}
           confirmButtonText="Yes, Delete Conversation"
           onConfirm={handleDelete}
-          onClose={handleCloseModal}
+          onClose={handleCloseDeleteConversationModal}
           danger={true}
         />
       )}
@@ -237,6 +307,16 @@ function ConversationItem({ conv }) {
           danger={true}
         />
       )}
+
+      <ConfirmationModal
+        isOpen={showBlockConfirmationModal}
+        onClose={closeBlockConfirmationModal}
+        onConfirm={handleConfirmblock}
+        danger={true}
+        message={`They will not be able to see your public posts and will no longer be able to engage with them. @${otherUser?.username} will also not be able to follow or message you, and you will not see notifications from them.`}
+        confirmButtonText={"Block"}
+        modalTitle={`Block @${otherUser?.username}?`}
+      />
     </div>
   )
 }

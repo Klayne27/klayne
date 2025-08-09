@@ -24,7 +24,7 @@ const DropdownMenu = ({ children }) => {
           ></div>
           <div
             ref={menuRef}
-            className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2 text-lg"
+            className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2"
             onClick={(e) => e.stopPropagation()}
           >
             {children}

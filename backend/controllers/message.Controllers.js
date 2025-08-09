@@ -296,7 +296,7 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username  fullName isVerified isGoldVerified",
+        select: "username profileImg fullName isVerified isGoldVerified",
         populate: {
           path: "profileImg",
           select: "imageUrl",
