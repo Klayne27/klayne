@@ -148,3 +148,98 @@ body {
 .gray-shadow {
   box-shadow: 0px 0px 5px 1px rgba(122, 122, 122, 0.90);
 }
+
+/* SlideUpMenu.css */
+/* components/ui/SlideUpMenu.css */
+.slide-up-menu {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 50;
+  transform: translateY(100%);
+  transition: transform 300ms ease-out;
+  pointer-events: none;
+}
+
+.slide-up-menu.is-open {
+  transform: translateY(0);
+  pointer-events: auto;
+}
+
+.slide-up-menu .menu-content {
+  background-color: var(--secondary); /* or a specific color like #1f2937 */
+  border-top-left-radius: 1rem;
+  border-top-right-radius: 1rem;
+  box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.slide-up-menu .handle {
+  width: 2.5rem;
+  height: 0.25rem;
+  background-color: #4b5563; /* A medium gray handle */
+  border-radius: 9999px;
+  margin-top: 0.75rem;
+  margin-bottom: 0.5rem;
+}
+
+.slide-up-menu .options {
+  width: 100%;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #374151; /* Subtle separator line */
+}
+
+.slide-up-menu .options button {
+  padding-left: 1rem;
+  padding-right: 1rem;
+  padding-top: 0.75rem;
+  padding-bottom: 0.75rem;
+  font-weight: 600;
+  color: white;
+  width: 100%;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition-property: background-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+.slide-up-menu .options button:hover {
+  background-color: rgba(75, 85, 99, 0.3); /* a light gray/blue tint on hover */
+}
+
+.slide-up-menu .cancel-button-wrapper {
+  width: 100%;
+  padding: 0.5rem 1rem;
+}
+
+.slide-up-menu .cancel-button {
+  width: 100%;
+  background-color: #374151; /* A distinct background for the cancel button */
+  border-radius: 9999px;
+  padding: 0.75rem 1rem;
+  font-weight: 600;
+  color: white;
+  transition-property: background-color;
+  transition-duration: 200ms;
+  transition-timing-function: ease-in-out;
+}
+
+.slide-up-menu .cancel-button:hover {
+  background-color: #4b5563;
+}
+
+.fixed.inset-0.z-40 {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  z-index: 40;
+  background-color: rgba(0, 0, 0, 0.5);
+}

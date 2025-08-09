@@ -6,7 +6,11 @@ export const getImageById = async (req, res) => {
 
     const image = await Image.findById(imageId).populate({
       path: "uploadedBy",
-      select: "username fullName profileImg",
+      select: "username fullName",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl"
+      }
     });
 
     // If no image is found, return a 404 error.

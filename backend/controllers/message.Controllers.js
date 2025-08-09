@@ -495,7 +495,8 @@ export const reactToMessage = async (req, res) => {
           path: "profileImg",
           select: "imageUrl",
         },
-      }).populate("image", "imageUrl")
+      })
+      .populate("image", "imageUrl");
 
     const conversation = await Conversation.findById(populatedMessage.conversationId);
     if (conversation) {
@@ -544,7 +545,11 @@ export const editMessage = async (req, res) => {
     await message.save();
 
     const populatedMessage = await Message.findById(message._id)
-      .populate("sender", "username fullName profileImg isVerified isGoldVerified")
+      .populate({
+        path: "sender",
+        select: "username fullName isVerified isGoldVerified",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
       .populate({
         path: "repliedTo",
         populate: {
@@ -555,7 +560,8 @@ export const editMessage = async (req, res) => {
       })
       .populate({
         path: "reactions.userId",
-        select: "username profileImg fullName",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
       });
 
     const conversation = await Conversation.findById(message.conversationId);
@@ -572,14 +578,16 @@ export const editMessage = async (req, res) => {
         await conversation.save();
 
         const updatedConversation = await Conversation.findById(conversation._id)
-          .populate(
-            "participants",
-            "username fullName profileImg isVerified isGoldVerified"
-          )
-          .populate(
-            "lastMessage.sender",
-            "username fullName profileImg isVerified isGoldVerified"
-          )
+          .populate({
+            path: "participants",
+            select: "username fullName isVerified isGoldVerified",
+            populate: { path: "profileImg", select: "imageUrl" },
+          })
+          .populate({
+            path: "lastMessage.sender",
+            select: "username fullName isVerified isGoldVerified",
+            populate: { path: "profileImg", select: "imageUrl" },
+          })
           .lean();
 
         io.to(senderId.toString()).emit("conversationUpdated", updatedConversation);
@@ -748,6 +756,19 @@ export const getOrCreateConversation = async (req, res) => {
         messages: [],
       });
       await conversation.save();
+    } else {
+      // New logic: Check if the conversation was hidden for the current user.
+      const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
+      if (isHiddenForCurrentUser) {
+        await Conversation.updateOne(
+          { _id: conversation._id },
+          { $pull: { hiddenFor: currentUserId } },
+          { timestamps: false }
+        );
+
+        // Re-fetch the conversation to get the updated document
+        conversation = await Conversation.findById(conversation._id);
+      }
     }
 
     // If the conversation exists (or was just created), populate the participants.

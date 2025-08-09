@@ -10,8 +10,10 @@ import { FiTrash } from "react-icons/fi"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
-import { FaBroom, FaTrashCan } from "react-icons/fa6"
+import { FaBroom } from "react-icons/fa6"
 import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
+import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
+import SlideUpMenu from "../SlideUpMenu"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -25,8 +27,20 @@ function ConversationItem({ conv }) {
 
   const { toggleVisibility } = useToggleConversationVisibility()
   const { deleteConversation } = useDeleteConversation()
-  const { deleteAllMessages, isDeleting: isDeletingOnMySide } = useDeleteAllMessagesOnMySide() // Use the new hook
+  const { deleteAllMessages, isDeleting: isDeletingOnMySide } = useDeleteAllMessagesOnMySide()
 
+  const {
+    activeConversationId,
+    handleCloseMenu,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchCancel,
+    isMobile,
+    longPressTriggeredRef, // Get the ref from the hook
+  } = useMobileConversationLongPress()
+
+  const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
 
   const isLastMessageUnread =
@@ -72,8 +86,20 @@ function ConversationItem({ conv }) {
     setShowOneSidedDeleteModal(false)
   }
 
+  // This function is now "smarter"
   const handleSelectConversation = () => {
+    // Check the ref. If a long press happened, do not navigate.
+    // The ref is reset automatically on the next touch start.
+    if (longPressTriggeredRef.current) {
+      return
+    }
     navigate(`/messages/${conv._id}`)
+  }
+
+  // This function now calls the wrapped handleTouchStart from our hook
+  const handleTouchStartWithId = (e) => {
+    e.convId = conv._id
+    handleTouchStart(e)
   }
 
   if (!otherUser) {
@@ -84,6 +110,10 @@ function ConversationItem({ conv }) {
     <div
       className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
       onClick={handleSelectConversation}
+      onTouchStart={handleTouchStartWithId}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={handleTouchCancel}
     >
       {/* ... (rest of the component's JSX remains the same) */}
       <Link
@@ -128,17 +158,49 @@ function ConversationItem({ conv }) {
           </p>
         </div>
       </div>
-      <DropdownMenu>
+      {!isMobile && (
+        <DropdownMenu>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+            onClick={handleToggleHide}
+          >
+            <CiCircleMinus />
+            Hide conversation
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowOneSidedDeleteModal(true)
+            }}
+            disabled={isDeletingOnMySide}
+          >
+            <FaBroom />
+            Delete all messages
+          </button>
+          <button
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+            onClick={(e) => {
+              e.stopPropagation()
+              setShowDeleteModal(true)
+            }}
+          >
+            <FiTrash />
+            Delete conversation
+          </button>
+        </DropdownMenu>
+      )}
+
+      <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
         <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
           onClick={handleToggleHide}
         >
           <CiCircleMinus />
-          Hide Conversation
+          Hide conversation
         </button>
-        {/* New button for one-sided deletion */}
         <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
           onClick={(e) => {
             e.stopPropagation()
             setShowOneSidedDeleteModal(true)
@@ -146,22 +208,20 @@ function ConversationItem({ conv }) {
           disabled={isDeletingOnMySide}
         >
           <FaBroom />
-          Delete All Messages
+          Delete all messages
         </button>
-        {/* Old button for two-sided deletion */}
         <button
-          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+          className="flex w-full items-center gap-2 px-4 py-3 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
           onClick={(e) => {
             e.stopPropagation()
             setShowDeleteModal(true)
           }}
         >
           <FiTrash />
-          Delete Conversation
+          Delete conversation
         </button>
-      </DropdownMenu>
+      </SlideUpMenu>
 
-      {/* Confirmation Modal for two-sided deletion */}
       {showDeleteModal && (
         <ConfirmationModal
           isOpen={showDeleteModal}
@@ -174,7 +234,6 @@ function ConversationItem({ conv }) {
         />
       )}
 
-      {/* New Confirmation Modal for one-sided deletion */}
       {showOneSidedDeleteModal && (
         <ConfirmationModal
           isOpen={showOneSidedDeleteModal}

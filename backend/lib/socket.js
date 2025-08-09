@@ -283,7 +283,11 @@ export const createAndSendNotification = async ({
 
     await newNotification.populate({
       path: "from",
-      select: "username fullName profileImg",
+      select: "username fullName",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
     });
     if (postId) {
       await newNotification.populate({
@@ -613,14 +617,22 @@ io.on("connection", async (socket) => {
       if (conversationUpdateResult.modifiedCount > 0) {
         // Fetch the now-updated conversation with populated details
         const updatedConversation = await Conversation.findById(conversationObjectId)
-          .populate(
-            "participants",
-            "username profileImg fullName isVerified isGoldVerified"
-          )
-          .populate(
-            "lastMessage.sender",
-            "username profileImg fullName isVerified isGoldVerified"
-          );
+          .populate({
+            path: "participants",
+            select: "username fullName isVerified isGoldVerified",
+            populate: {
+              path: "profileImg",
+              select: "imageUrl",
+            },
+          })
+          .populate({
+            path: "lastMessage.sender",
+            select: "username  fullName isVerified isGoldVerified",
+            populate: {
+              path: "profileImg",
+              select: "imageUrl",
+            },
+          });
 
         if (updatedConversation) {
           // Emit the full conversation object to all participants so their UI (sidebar) updates

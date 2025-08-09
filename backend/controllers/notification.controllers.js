@@ -13,7 +13,7 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username fullName  isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -24,7 +24,7 @@ export const getNotifications = async (req, res) => {
         select: "text img video mediaType",
         populate: {
           path: "user",
-          select: "username fullName ",
+          select: "username fullName",
           populate: {
             path: "profileImg",
             select: "imageUrl",
