@@ -53,7 +53,7 @@ const ConfirmationModal = ({
             className={`w-full py-2.5 rounded-full font-bold transition duration-200
                          ${
                            danger
-                             ? "bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:opacity-50" // Added disabled styles
+                             ? "bg-red-600 hover:bg-red-700 disabled:bg-red-800 disabled:opacity-50 text-white" // Added disabled styles
                              : "bg-white text-black hover:bg-gray-200 disabled:bg-slate-500 disabled:text-slate-600" // Added disabled styles
                          }
                          ${isLoading ? "opacity-70 cursor-not-allowed" : ""}

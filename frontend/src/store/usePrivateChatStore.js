@@ -10,6 +10,9 @@ export const usePrivateChatStore = create(
     selectedConversation: null,
     activeMessageModalId: null,
 
+    isSlideMenuOpen: false,
+    messageForSlideMenu: null,
+
     setReplyingToMessage: (message) => set({ replyingToMessage: message, editingMessage: null }),
     setEditingMessage: (message) => set({ editingMessage: message, replyingToMessage: null }),
     setShowNewMessageButton: (show) => set({ showNewMessageButton: show }),
@@ -19,6 +22,16 @@ export const usePrivateChatStore = create(
     setActiveMessageModalId: (id) =>
       set((state) => {
         state.activeMessageModalId = id
+      }),
+    openSlideMenu: (message) =>
+      set((state) => {
+        state.isSlideMenuOpen = true
+        state.messageForSlideMenu = message
+      }),
+    closeSlideMenu: () =>
+      set((state) => {
+        state.isSlideMenuOpen = false
+        state.messageForSlideMenu = null
       }),
   })),
 )

@@ -1,4 +1,4 @@
-import React, { useRef } from "react"
+import React, { useRef, useState } from "react"
 import { FaCircle } from "react-icons/fa"
 import { BsCheck2, BsCheck2All } from "react-icons/bs"
 
@@ -21,6 +21,9 @@ import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessa
 import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
 import PrivateChatFirstMessageInGroup from "../PrivateChatFirstMessageInGroup"
 import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
+import ViewReactionsModal from "../ViewReactionsModal"
+import SlideUpMenu from "../SlideUpMenu"
+import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
 
 const MessageItem = ({
   message,
@@ -29,10 +32,12 @@ const MessageItem = ({
   isTypingOtherUser,
   handleLoadImage,
   onReactionAdded,
-  messageListRef
+  messageListRef,
 }) => {
   const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
     usePrivateChatStore()
+
+  const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
@@ -91,7 +96,7 @@ const MessageItem = ({
     addReaction: reactToMessage,
     chatStore: usePrivateChatStore,
     chatInputRef: privateChatInputRef,
-    messageListRef
+    messageListRef,
   })
 
   const messageContentStyle = isMobile
@@ -105,6 +110,16 @@ const MessageItem = ({
     : {}
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
+
+  const handleOpenViewReactionsModal = (e) => {
+    e.stopPropagation()
+    setShowMoreActionsModal(false)
+    setShowViewReactionsModal(true)
+  }
+
+  const handleCloseViewReactionsModal = () => {
+    setShowViewReactionsModal(false)
+  }
 
   const handleDeleteOwnMessage = () => {
     deleteMessage({
@@ -174,6 +189,8 @@ const MessageItem = ({
             onDeleteOwnMessage={handleDeleteOwnMessage}
             isEditable={isEditable}
             isSentByCurrentUser={isSentByCurrentUser}
+            onOpenViewReactionsModal={handleOpenViewReactionsModal}
+            onReactionAdded={onReactionAdded}
           />
         )}
 
@@ -243,6 +260,22 @@ const MessageItem = ({
             )}
           </div>
         </MessageContentLayout>
+        {isMobile ? (
+          <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
+            <div className="flex h-[70vh] w-full flex-col">
+              <ReactionsSlideUpMenuContent
+                reactions={message.reactions ? message.reactions : []}
+                onClose={handleCloseViewReactionsModal}
+              />
+            </div>
+          </SlideUpMenu>
+        ) : (
+          <ViewReactionsModal
+            isOpen={showViewReactionsModal}
+            onClose={handleCloseViewReactionsModal}
+            reactions={message.reactions}
+          />
+        )}
 
         {/* Emoji Picker Popover */}
         {showEmojiPickerPopover && (

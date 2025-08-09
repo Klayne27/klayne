@@ -38,24 +38,24 @@ export const useMessageModalInteractions = (
   }, [isMobile, setActiveMessageModalId])
 
   // Close actions modal on outside click for mobile
-  useEffect(() => {
-    const handleClickOutsideMessage = (e) => {
-      if (activeMessageModalId && isMobile) {
-        const messageModalElement = document.getElementById(`message-reaction-modal-${messageId}`)
-        if (messageModalElement && !messageModalElement.contains(e.target)) {
-          setActiveMessageModalId(null)
-        }
-      }
-    }
+  // useEffect(() => {
+  //   const handleClickOutsideMessage = (e) => {
+  //     if (activeMessageModalId && isMobile) {
+  //       const messageModalElement = document.getElementById(`message-reaction-modal-${messageId}`)
+  //       if (messageModalElement && !messageModalElement.contains(e.target)) {
+  //         setActiveMessageModalId(null)
+  //       }
+  //     }
+  //   }
 
-    if (activeMessageModalId) {
-      document.addEventListener("click", handleClickOutsideMessage)
-    }
+  //   if (activeMessageModalId) {
+  //     document.addEventListener("click", handleClickOutsideMessage)
+  //   }
 
-    return () => {
-      document.removeEventListener("click", handleClickOutsideMessage)
-    }
-  }, [activeMessageModalId, isMobile, setActiveMessageModalId, messageId])
+  //   return () => {
+  //     document.removeEventListener("click", handleClickOutsideMessage)
+  //   }
+  // }, [activeMessageModalId, isMobile, setActiveMessageModalId, messageId])
 
   const showModal = activeMessageModalId === messageId
   const isMessageHighlighted = isHovered || showModal

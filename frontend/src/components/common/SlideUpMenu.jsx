@@ -32,7 +32,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchMove = useCallback(
     (e) => {
       if (!isDragging || !isOpen) return
-      e.preventDefault()
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
       if (deltaY < 0) return
@@ -67,20 +66,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isDragging, isOpen, onClose])
 
-  useEffect(() => {
-    const menuElement = menuRef.current
-    if (menuElement) {
-      menuElement.addEventListener("touchstart", handleTouchStart)
-      menuElement.addEventListener("touchmove", handleTouchMove)
-      menuElement.addEventListener("touchend", handleTouchEnd)
-      return () => {
-        menuElement.removeEventListener("touchstart", handleTouchStart)
-        menuElement.removeEventListener("touchmove", handleTouchMove)
-        menuElement.removeEventListener("touchend", handleTouchEnd)
-      }
-    }
-  }, [handleTouchStart, handleTouchMove, handleTouchEnd])
-
   // New onClick handler for the backdrop
   const handleBackdropClick = () => {
     if (menuRef.current) {
@@ -97,10 +82,18 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
       <div
         ref={menuRef}
-        className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
+          isOpen ? "translate-y-0" : "translate-y-full"
+        }`}
       >
-        <div className="flex flex-col items-center rounded-t-3xl bg-base-200 px-4">
-          <div className="my-1.5 h-1 w-10 cursor-grab rounded-full bg-accent" />
+        <div className="flex flex-col items-center rounded-t-3xl bg-base-200">
+          <div
+            className="my-1.5 h-1 w-10 cursor-grab rounded-full bg-accent"
+            // Apply event listeners directly to the handle
+            onTouchStart={handleTouchStart}
+            onTouchMove={handleTouchMove}
+            onTouchEnd={handleTouchEnd}
+          />
           <div className="flex w-full flex-col gap-5">{children}</div>
         </div>
       </div>

@@ -18,7 +18,7 @@ export const useOpenMoreActionsModal = ({ setShowEmojiPickerPopover, isEditable 
 
       const buttonRect = e.currentTarget.getBoundingClientRect();
       const modalWidth = 180;
-      const itemHeight = 38;
+      const itemHeight = 60;
       const numItems = isEditable ? 3 : 2; 
       const estimatedModalHeight = numItems * itemHeight + 10;
 
