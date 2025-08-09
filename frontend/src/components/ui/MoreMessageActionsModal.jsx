@@ -28,11 +28,6 @@ function MoreMessageActionsModal({
   onReactionAdded,
   reactToMessage,
 }) {
-  // const { selectedConversation } = usePrivateChatStore()
-  // const { reactToMessage } = useReactToMessage({
-  //   selectedConversationId: selectedConversation._id,
-  //   onReactionAdded,
-  // })
 
   const hasReactions = message.reactions.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"] // Your desired default emojis
@@ -108,7 +103,7 @@ function MoreMessageActionsModal({
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
             Delete Message
-            <FiTrash size={16} />
+            <FiTrash size={18} />
           </button>
         )}
 

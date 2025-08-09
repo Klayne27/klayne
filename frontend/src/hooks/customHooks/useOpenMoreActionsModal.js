@@ -34,7 +34,7 @@ export const useOpenMoreActionsModal = ({ setShowEmojiPickerPopover, isEditable 
       }
       let newTop = buttonRect.top + buttonRect.height / 2 - modalHeight / 2;
 
-      const paddingVertical = 10;
+      const paddingVertical = 50;
       if (newTop < paddingVertical) {
         newTop = paddingVertical;
       }

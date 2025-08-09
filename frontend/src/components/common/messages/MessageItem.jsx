@@ -274,7 +274,7 @@ const MessageItem = ({
           <ViewReactionsModal
             isOpen={showViewReactionsModal}
             onClose={handleCloseViewReactionsModal}
-            reactions={message.reactions}
+            reactions={message.reactions ? message.reactions : []}
           />
         )}
 
