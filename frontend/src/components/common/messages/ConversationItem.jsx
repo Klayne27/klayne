@@ -10,6 +10,9 @@ import { FiTrash } from "react-icons/fi"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
+import { FaTrashCan } from "react-icons/fa6"
+import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -17,11 +20,15 @@ function ConversationItem({ conv }) {
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
 
   const otherUser = conv.participants.find((p) => p?._id.toString() !== currentUser._id.toString())
 
   const { toggleVisibility } = useToggleConversationVisibility()
   const { deleteConversation } = useDeleteConversation()
+  const { deleteAllMessages, isDeleting: isDeletingOnMySide } = useDeleteAllMessagesOnMySide() // Use the new hook
+
+  const { setShowMenu } = useDropdownMenu()
 
   const isSelected = selectedConversation?._id === conv._id
 
@@ -50,13 +57,22 @@ function ConversationItem({ conv }) {
   }
 
   const handleCloseModal = (e) => {
-    // e.stopPropagation();
+    e.stopPropagation()
     setShowDeleteModal(false)
+  }
+
+  const handleCloseOneSidedDeleteModal = () => {
+    setShowOneSidedDeleteModal(false)
   }
 
   const handleDelete = () => {
     deleteConversation(conv._id)
     setShowDeleteModal(false)
+  }
+
+  const handleDeleteOnMySide = () => {
+    deleteAllMessages(conv._id)
+    setShowOneSidedDeleteModal(false)
   }
 
   const handleSelectConversation = () => {
@@ -72,6 +88,7 @@ function ConversationItem({ conv }) {
       className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
       onClick={handleSelectConversation}
     >
+      {/* ... (rest of the component's JSX remains the same) */}
       <Link
         to={`/profile/${otherUser.username}`}
         onClick={(e) => e.stopPropagation()}
@@ -122,10 +139,25 @@ function ConversationItem({ conv }) {
           <CiCircleMinus />
           Hide Conversation
         </button>
+        {/* New button for one-sided deletion */}
         <button
           className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
           onClick={(e) => {
             e.stopPropagation()
+            setShowMenu(false)
+            setShowOneSidedDeleteModal(true)
+          }}
+          disabled={isDeletingOnMySide}
+        >
+          <FaTrashCan />
+          Delete All Messages
+        </button>
+        {/* Old button for two-sided deletion */}
+        <button
+          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowMenu(false)
             setShowDeleteModal(true)
           }}
         >
@@ -134,6 +166,7 @@ function ConversationItem({ conv }) {
         </button>
       </DropdownMenu>
 
+      {/* Confirmation Modal for two-sided deletion */}
       {showDeleteModal && (
         <ConfirmationModal
           isOpen={showDeleteModal}
@@ -142,6 +175,19 @@ function ConversationItem({ conv }) {
           confirmButtonText="Yes, Delete Conversation"
           onConfirm={handleDelete}
           onClose={handleCloseModal}
+          danger={true}
+        />
+      )}
+
+      {/* New Confirmation Modal for one-sided deletion */}
+      {showOneSidedDeleteModal && (
+        <ConfirmationModal
+          isOpen={showOneSidedDeleteModal}
+          modalTitle="Confirm One-Sided Deletion"
+          message={`Are you sure you want to delete all messages in this conversation for yourself? This action is permanent and will not affect ${otherUser.username}.`}
+          confirmButtonText="Yes, Delete Messages"
+          onConfirm={handleDeleteOnMySide}
+          onClose={handleCloseOneSidedDeleteModal}
           danger={true}
         />
       )}

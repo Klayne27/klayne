@@ -1,27 +1,18 @@
 import { useEffect, useRef, useState } from "react"
 import { IoSearch, IoSettingsOutline } from "react-icons/io5"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import ConversationItem from "./ConversationItem"
 import React from "react"
-import { useNavigate } from "react-router-dom"
 import { useGetOrCreateConversation } from "../../../hooks/messagesHooks/useGetOrCreateConversation"
 import { useGetFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useGetFollowedUsersForMessaging" // Updated hook import
-import { showAppToast } from "../../../utils/showAppToast"
 
 const ConversationsList = ({ conversations }) => {
-  // const { authUser: currentUser } = useAuthUser();
-  const navigate = useNavigate()
-
-  // const [searchTerm, setSearchTerm] = useState("");
 
   const [followedSearchQuery, setFollowedSearchQuery] = useState("")
   const [debouncedFollowedQuery, setDebouncedFollowedQuery] = useState("")
   const [showFollowedDropdown, setShowFollowedDropdown] = useState(false) // Controls dropdown visibility
 
-  // Ref to the input wrapper to measure its width if needed, or simply for focus/blur management
   const searchInputWrapperRef = useRef(null)
 
-  // Debounce logic for the followed users search
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedFollowedQuery(followedSearchQuery)
@@ -32,8 +23,6 @@ const ConversationsList = ({ conversations }) => {
     }
   }, [followedSearchQuery])
 
-  // Fetch followed users based on debounced query
-  // This will now only fetch when debouncedFollowedQuery has a value
   const {
     data: searchedFollowedUsers, // Renamed to clarify these are search results
     isLoading: isLoadingFollowedUsers,
@@ -45,16 +34,6 @@ const ConversationsList = ({ conversations }) => {
   // Mutation hook to get or create a conversation
   const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
     useGetOrCreateConversation()
-
-  // Filter existing conversations based on the main search term
-  // const filteredConversations = conversations.filter((conv) => {
-  //   const otherUser = conv.participants.find(
-  //     (p) => p?._id.toString() !== currentUser._id.toString()
-  //   );
-  //   return (
-  //     otherUser && otherUser.fullName.toLowerCase().includes(searchTerm.toLowerCase())
-  //   );
-  // });
 
   // Handler for when a followed user is selected from the dropdown
   const handleSelectFollowedUserForMessage = (selectedUser) => {

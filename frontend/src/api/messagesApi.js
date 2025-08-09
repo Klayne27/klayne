@@ -156,6 +156,22 @@ export const reactToMessageApi = async (messageId, emoji) => {
 };
 
 
+export const deleteAllMessagesOnMySide = async (conversationId) => {
+  const res = await fetch(`${BASE_URL}/all/${conversationId}`, {
+    method: "DELETE",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  })
+
+  const data = await res.json();
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to delete messages on your side");
+  }
+
+  return data;
+};
+
 
 
 

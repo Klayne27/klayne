@@ -46,6 +46,10 @@ const messageSchema = new mongoose.Schema(
         _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
       },
     ],
+    deletedFor: {
+      type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+      default: [],
+    },
   },
   { timestamps: true }
 );

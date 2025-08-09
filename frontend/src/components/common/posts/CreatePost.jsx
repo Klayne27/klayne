@@ -612,7 +612,7 @@ const CreatePost = () => {
                     >
                       <div className="avatar">
                         <div className="w-8 rounded-full">
-                          <img src={user.profileImg || "/avatar-placeholder.png"} alt="profile" />
+                          <img src={user.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="profile" />
                         </div>
                       </div>
                       <div>

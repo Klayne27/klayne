@@ -223,6 +223,7 @@ export const getMessagesByConversationId = async (req, res) => {
 
     const messages = await Message.find({
       conversationId: conversationId,
+      deletedFor: { $nin: [userId] },
     })
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -683,7 +684,7 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
     const followedUsers = await User.find(query)
       .select("-password -email -blockedUsers -followers -following")
-      .populate("profileImg", "imageUrl") 
+      .populate("profileImg", "imageUrl")
       .limit(10);
 
     res.status(200).json(followedUsers);
@@ -796,5 +797,35 @@ export const deleteConversation = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   } finally {
     await session.endSession();
+  }
+};
+
+export const deleteAllMessagesOnMySide = async (req, res) => {
+  const { conversationId } = req.params;
+  const userId = req.user._id;
+
+  try {
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found." });
+    }
+
+    if (!conversation.participants.includes(userId)) {
+      return res.status(403).json({ error: "Unauthorized access to conversation." });
+    }
+
+    await Message.updateMany(
+      { conversationId: conversationId },
+      { $addToSet: { deletedFor: userId } }
+    );
+
+    res.status(200).json({
+      message: "All messages in conversation deleted on your side successfully.",
+      conversationId: conversationId,
+    });
+  } catch (error) {
+    console.error("Error in deleteAllMessagesOnMySide controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

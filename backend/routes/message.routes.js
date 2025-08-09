@@ -12,6 +12,7 @@ import {
   getFollowedUsersForMessaging,
   getOrCreateConversation,
   deleteConversation,
+  deleteAllMessagesOnMySide,
 } from "../controllers/message.Controllers.js";
 
 const router = express.Router();
@@ -38,5 +39,7 @@ router.get("/followed-for-messaging", protectRoute, getFollowedUsersForMessaging
 router.post("/conversations/get-or-create", protectRoute, getOrCreateConversation);
 
 router.delete("/conversations/:id", protectRoute, deleteConversation);
+router.delete("/all/:conversationId", protectRoute, deleteAllMessagesOnMySide);
+
 
 export default router;
