@@ -64,13 +64,17 @@ function MoreMessageActionsModal({
             </div>
           ))}
         </div>
-        {hasReactions && <button
-          onClick={onOpenViewReactionsModal}
-          className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
-        >
-          View Reactions
-          <PiSmileyFill size={20} className="text-slate-400" />
-        </button>}
+
+        {hasReactions && (
+          <button
+            onClick={onOpenViewReactionsModal}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
+          >
+            View Reactions
+            <PiSmileyFill size={20} className="text-slate-400" />
+          </button>
+        )}
+        <div className="my-1 h-[1px] bg-accent"></div>
         <button
           onClick={onReplyClick}
           className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
@@ -78,15 +82,6 @@ function MoreMessageActionsModal({
           Reply
           <HiOutlineReply size={18} className="text-slate-400" />
         </button>
-        {message.text && (
-          <button
-            onClick={onCopyMessage}
-            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
-          >
-            Copy Text
-            <IoCopy size={18} className="text-slate-400" />
-          </button>
-        )}
         {isEditable && !isMessageDeleted && (
           <button
             onClick={onEditClick}
@@ -96,6 +91,17 @@ function MoreMessageActionsModal({
             <MdEdit size={16} className="text-slate-400" />
           </button>
         )}
+        {message.text && (
+          <button
+            onClick={onCopyMessage}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
+          >
+            Copy Text
+            <IoCopy size={18} className="text-slate-400" />
+          </button>
+        )}
+
+        {isSentByCurrentUser && <div className="my-1 h-[1px] bg-accent"></div>}
         {isSentByCurrentUser && !isMessageDeleted && (
           <button
             onClick={onDeleteOwnMessage}
