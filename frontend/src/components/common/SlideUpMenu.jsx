@@ -20,7 +20,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchStart = useCallback(
     (e) => {
       if (!isOpen) return
-      // e.preventDefault()
+      e.preventDefault()
       e.stopPropagation()
       setIsDragging(true)
       initialYRef.current = e.touches[0].clientY
@@ -34,17 +34,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchMove = useCallback(
     (e) => {
       if (!isDragging || !isOpen) return
-
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
-
-      // If the user is dragging down (deltaY > 0), prevent the browser's default
-      // pull-to-refresh behavior.
-      if (deltaY > 0) {
-        e.preventDefault()
-      }
-
-      // We still prevent upward dragging (scrolling up to close)
       if (deltaY < 0) return
 
       if (menuRef.current) {
@@ -102,7 +93,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
             onTouchStart={handleTouchStart}
             onTouchMove={handleTouchMove}
             onTouchEnd={handleTouchEnd}
-            className="w-full flex justify-center items-center"
+            className="flex w-full items-center justify-center"
           >
             <div
               className="my-1.5 h-1 w-10 rounded-full bg-accent"

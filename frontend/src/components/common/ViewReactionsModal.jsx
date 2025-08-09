@@ -52,8 +52,8 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
         </div>
 
         {/* Right Panel: Users List */}
-        <div className="flex-1 px-3 py-1">
-          <div className="h-[50vh] overflow-y-auto">
+        <div className="flex-1 px-3">
+          <div className="h-[50vh] overflow-y-auto py-1">
             {usersForSelectedEmoji.map((user) => (
               <div
                 key={user._id}
