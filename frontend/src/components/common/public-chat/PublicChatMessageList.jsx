@@ -25,6 +25,9 @@ import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
 import { usePublicChatAdminHandlers } from "../../../hooks/customHooks/usePublicChatAdminHandlers"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { PUBLIC_CHAT_MODAL_CONFIGS } from "../../../constants/publicChatModalConfigs"
+import ViewReactionsModal from "../ViewReactionsModal"
+import SlideUpMenu from "../SlideUpMenu"
+import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
@@ -35,6 +38,9 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
   onReactionAdded,
 }) {
   const { activeMessageModalId, setActiveMessageModalId } = usePublicChatStore()
+
+  const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
+  const [modalConfig, setModalConfig] = useState(null)
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
@@ -117,8 +123,6 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
 
-  const [modalConfig, setModalConfig] = useState(null)
-
   // Use the refactored, simplified admin actions hook
   const { handleAdminDeleteMessage, handleBanUser, handleUnbanUser } = usePublicChatAdminHandlers({
     message,
@@ -145,6 +149,16 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
         },
       })
     }
+  }
+
+  const handleOpenViewReactionsModal = (e) => {
+    e.stopPropagation()
+    setShowMoreActionsModal(false)
+    setShowViewReactionsModal(true)
+  }
+
+  const handleCloseViewReactionsModal = () => {
+    setShowViewReactionsModal(false)
   }
 
   const handleDeleteOwnMessage = () => {
@@ -202,6 +216,9 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             isMessageDeleted={isMessageDeleted}
             isSenderBanned={isSenderBanned}
             onOpenConfirmationModal={openConfirmationModal}
+            onOpenViewReactionsModal={handleOpenViewReactionsModal}
+            onReactionAdded={onReactionAdded}
+            reactToMessage={addReaction}
           />
         )}
 
@@ -282,6 +299,22 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             )}
           </div>
         </MessageContentLayout>
+        {isMobile ? (
+          <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
+            <div className="flex h-[70vh] w-full flex-col">
+              <ReactionsSlideUpMenuContent
+                reactions={message.reactions ? message.reactions : []}
+                onClose={handleCloseViewReactionsModal}
+              />
+            </div>
+          </SlideUpMenu>
+        ) : (
+          <ViewReactionsModal
+            isOpen={showViewReactionsModal}
+            onClose={handleCloseViewReactionsModal}
+            reactions={message.reactions}
+          />
+        )}
 
         {modalConfig && (
           <ConfirmationModal

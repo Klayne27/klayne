@@ -191,6 +191,7 @@ const MessageItem = ({
             isSentByCurrentUser={isSentByCurrentUser}
             onOpenViewReactionsModal={handleOpenViewReactionsModal}
             onReactionAdded={onReactionAdded}
+            reactToMessage={reactToMessage}
           />
         )}
 

@@ -25,13 +25,14 @@ function MoreMessageActionsModal({
   handleUnbanUserClick,
   onOpenConfirmationModal,
   onOpenViewReactionsModal,
-  onReactionAdded
+  onReactionAdded,
+  reactToMessage,
 }) {
-  const { selectedConversation } = usePrivateChatStore()
-  const { reactToMessage } = useReactToMessage({
-    selectedConversationId: selectedConversation._id,
-    onReactionAdded,
-  })
+  // const { selectedConversation } = usePrivateChatStore()
+  // const { reactToMessage } = useReactToMessage({
+  //   selectedConversationId: selectedConversation._id,
+  //   onReactionAdded,
+  // })
 
   const hasReactions = message.reactions.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"] // Your desired default emojis

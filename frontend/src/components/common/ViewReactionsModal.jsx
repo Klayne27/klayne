@@ -55,26 +55,22 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
         <div className="flex-1 px-3 py-1">
           <div className="h-[50vh] overflow-y-auto">
             {usersForSelectedEmoji.map((user) => (
-              <>
-                <div
-                  key={user._id}
-                  className="flex items-center gap-3 border-b border-gray-800 py-2 last:border-b-0"
-                >
-                  <Link to={`/profile/${user.username}`} onClick={onClose}>
-                    <img
-                      src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                      alt={user.username}
-                      className="size-7 rounded-full object-cover"
-                    />
-                  </Link>
-                  <Link to={`/profile/${user.username}`} onClick={onClose}>
-                    <span className="font-semibold text-white hover:underline">
-                      {user.fullName}
-                    </span>
-                  </Link>
-                  <span className="text-gray-400">@{user.username}</span>
-                </div>
-              </>
+              <div
+                key={user._id}
+                className="flex items-center gap-3 border-b border-gray-800 py-2 last:border-b-0"
+              >
+                <Link to={`/profile/${user.username}`} onClick={onClose}>
+                  <img
+                    src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    alt={user.username}
+                    className="size-7 rounded-full object-cover"
+                  />
+                </Link>
+                <Link to={`/profile/${user.username}`} onClick={onClose}>
+                  <span className="font-semibold text-white hover:underline">{user.fullName}</span>
+                </Link>
+                <span className="text-gray-400">@{user.username}</span>
+              </div>
             ))}
             {usersForSelectedEmoji.length === 0 && (
               <p className="text-center text-gray-400">
