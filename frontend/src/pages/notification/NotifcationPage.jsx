@@ -23,6 +23,7 @@ const NotificationPage = () => {
   const navigate = useNavigate()
   const dropdownToggleRef = useRef(null)
 
+
   const filteredNotifications = notifications?.filter((notification) => {
     if (
       (notification.type === "like" ||
@@ -289,6 +290,11 @@ const NotificationPage = () => {
                     </>
                   )}
                 </span>
+                <div className="flex justify-center items-center mt-2">
+                  {notification?.postId?.img && (
+                    <img src={notification?.postId?.img} className="rounded-xl border border-accent" />
+                  )}
+                </div>
               </div>
             </div>
           )
