@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
@@ -22,6 +23,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   //   }
   // }, [isOpen])
 
+   useEffect(() => {
+     if (isOpen) {
+       document.body.style.overflow = "hidden"
+       // This is a good place to also handle the overscroll behavior for the body
+       document.body.style.overscrollBehavior = "none"
+     } else {
+       document.body.style.overflow = ""
+       document.body.style.overscrollBehavior = ""
+     }
+
+     return () => {
+       document.body.style.overflow = ""
+       document.body.style.overscrollBehavior = ""
+     }
+   }, [isOpen])
+
   // Reset styles when closing
   useEffect(() => {
     if (!isOpen && menuRef.current) {
@@ -43,9 +60,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchMove = useCallback(
     (e) => {
-      // This is the key: prevent default behavior unconditionally when menu is open
       e.preventDefault()
-
+      // e.stopPropagation()
       if (!isDragging) return
 
       const currentY = e.touches[0].clientY
@@ -125,12 +141,11 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 }
 
 export const SlideUpMenuContent = React.forwardRef(
-  ({ children, className, disablePullToRefresh }, ref) => {
+  ({ children, className }, ref) => {
     return (
       <div
         ref={ref}
         className={className}
-        style={disablePullToRefresh ? { overscrollBehaviorY: "contain" } : undefined}
       >
         {children}
       </div>

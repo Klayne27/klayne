@@ -27,7 +27,6 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   return (
     <div
       ref={ref}
-      style={{ overscrollBehaviorY: "contain" }}
       className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20"
     >
       {error && !isNewChat && !isLoadingInitialMessages && (
