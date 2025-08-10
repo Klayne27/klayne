@@ -13,7 +13,7 @@ export default defineConfig({
       manifest: {
         name: "Twitter Clone",
         short_name: "Twitter",
-        theme_color: "#1D9BF0", // The Twitter-blue primary color
+        theme_color: "#000000", // The Twitter-blue primary color
         background_color: "#181818", // A dark background color
         display: "standalone",
         scope: "/",
