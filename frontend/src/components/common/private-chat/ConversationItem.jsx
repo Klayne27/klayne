@@ -17,10 +17,12 @@ import useMobileConversationLongPress from "../../../hooks/customHooks/useMobile
 import SlideUpMenu from "../SlideUpMenu"
 import { LuUserRound, LuUserRoundMinus } from "react-icons/lu"
 import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser"
+import { useSocket } from "../../../context/SocketContext"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
   const navigate = useNavigate()
+  const { onlineUsers } = useSocket()
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
@@ -33,6 +35,7 @@ function ConversationItem({ conv }) {
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
+  const isOnline = onlineUsers.includes(otherUser?._id)
 
   const {
     activeConversationId,
@@ -130,13 +133,17 @@ function ConversationItem({ conv }) {
       onTouchCancel={handleTouchCancel}
     >
       {/* ... (rest of the component's JSX remains the same) */}
-      <div className="p-1">
+      <div className="p-1 relative">
         <img
           src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
+        {/* {isOnline && (
+          <span className="absolute right-0.5 bottom-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+        )} */}
       </div>
+
       <div className="flex flex-1 flex-col overflow-hidden">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 truncate">
