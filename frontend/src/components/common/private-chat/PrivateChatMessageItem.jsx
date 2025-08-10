@@ -22,7 +22,7 @@ import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
 import PrivateChatFirstMessageInGroup from "../PrivateChatFirstMessageInGroup"
 import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
 import ViewReactionsModal from "../ViewReactionsModal"
-import SlideUpMenu from "../SlideUpMenu"
+import SlideUpMenu, { SlideUpMenuContent } from "../SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
 
 const PrivateChatMessageItem = ({
@@ -263,12 +263,12 @@ const PrivateChatMessageItem = ({
         </MessageContentLayout>
         {isMobile ? (
           <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
-            <div className="flex h-[70vh] w-full flex-col">
+            <SlideUpMenuContent className="flex h-[70vh] w-full flex-col overflow-y-auto">
               <ReactionsSlideUpMenuContent
                 reactions={message.reactions ? message.reactions : []}
                 onClose={handleCloseViewReactionsModal}
               />
-            </div>
+            </SlideUpMenuContent>
           </SlideUpMenu>
         ) : (
           <ViewReactionsModal
