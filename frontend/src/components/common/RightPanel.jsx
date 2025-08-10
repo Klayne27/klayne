@@ -1,11 +1,8 @@
 import React from "react"
 import SearchPanel from "./SearchPanel"
 import SuggestedUsersPanel from "./SuggestedUsersPanel"
-import { usePWAInstall } from "../../hooks/customHooks/usePWAInstall"
 
-const RightPanel = () => {
-  const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
-
+const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
   return (
     <div className="sticky top-0 hidden h-[100vh] w-[380px] border-l border-accent px-4 pt-4 lg:block">
       <SearchPanel />

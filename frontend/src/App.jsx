@@ -8,6 +8,7 @@ import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
+import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -23,7 +24,7 @@ const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
 const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
-const MainLayout = ({ children }) => {
+const MainLayout = ({ children, deferredPrompt, isInstalled, installApp }) => {
   const location = useLocation()
   const isMessagePage = location.pathname.includes("/messages")
   const isPublicChatPage = location.pathname.includes("/public-chat")
@@ -40,7 +41,14 @@ const MainLayout = ({ children }) => {
       >
         {children}
       </main>
-      {!isMessagePage && !isPublicChatPage && <RightPanel className="hidden md:block" />}
+      {!isMessagePage && !isPublicChatPage && (
+        <RightPanel
+          deferredPrompt={deferredPrompt}
+          isInstalled={isInstalled}
+          installApp={installApp}
+          className="hidden md:block"
+        />
+      )}
     </div>
   )
 }
@@ -57,6 +65,8 @@ function App() {
   } = useAppStore()
 
   const [feedType, setFeedType] = useState("posts")
+
+  const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
 
   if (isLoading) {
     return (
@@ -84,7 +94,11 @@ function App() {
             path="/*"
             element={
               authUser ? (
-                <MainLayout>
+                <MainLayout
+                  deferredPrompt={deferredPrompt}
+                  isInstalled={isInstalled}
+                  installApp={installApp}
+                >
                   <Routes>
                     <Route path="/" element={<HomePage />} />
                     <Route
@@ -116,7 +130,6 @@ function App() {
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}
-
     </>
   )
 }
