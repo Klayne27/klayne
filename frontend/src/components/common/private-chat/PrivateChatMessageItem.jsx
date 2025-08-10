@@ -264,7 +264,7 @@ const PrivateChatMessageItem = ({
         {isMobile ? (
           <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
             <SlideUpMenuContent
-              className="flex h-[70vh] w-full flex-col overflow-y-auto"
+              className="flex h-[50vh] w-full flex-col overflow-y-auto"
               disablePullToRefresh={true} // <-- Add this prop
             >
               <ReactionsSlideUpMenuContent

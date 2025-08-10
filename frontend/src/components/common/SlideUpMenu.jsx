@@ -23,21 +23,21 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   //   }
   // }, [isOpen])
 
-   useEffect(() => {
-     if (isOpen) {
-       document.body.style.overflow = "hidden"
-       // This is a good place to also handle the overscroll behavior for the body
-       document.body.style.overscrollBehavior = "none"
-     } else {
-       document.body.style.overflow = ""
-       document.body.style.overscrollBehavior = ""
-     }
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden"
+      // This is a good place to also handle the overscroll behavior for the body
+      document.body.style.overscrollBehavior = "none"
+    } else {
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehavior = ""
+    }
 
-     return () => {
-       document.body.style.overflow = ""
-       document.body.style.overscrollBehavior = ""
-     }
-   }, [isOpen])
+    return () => {
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehavior = ""
+    }
+  }, [isOpen])
 
   // Reset styles when closing
   useEffect(() => {
@@ -127,11 +127,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex w-full items-center justify-center">
-            <div
-              className="my-1.5 h-1 w-10 rounded-full bg-accent"
-
-              // Apply event listeners directly to the handle
-            />
+            <div className="my-1.5 h-1  rounded-full bg-accent" />
           </div>
           {React.cloneElement(React.Children.only(children), { ref: contentRef })}
         </div>
