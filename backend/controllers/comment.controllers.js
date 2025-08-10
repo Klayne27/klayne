@@ -108,8 +108,7 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select:
-          "username fullName  isVerified isGoldVerified blockedUsers blockedBy",
+        select: "username fullName  isVerified isGoldVerified blockedUsers blockedBy",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -242,10 +241,14 @@ export const createComment = async (req, res) => {
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    await newComment.populate([
+    const populatedComment = await newComment.populate([
       {
         path: "user",
-        select: "username fullName profileImg isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
       },
       {
         path: "image",
@@ -281,7 +284,7 @@ export const createComment = async (req, res) => {
       await emitUnreadNotificationStatus(mentionedUserId.toString());
     }
 
-    res.status(201).json(newComment);
+    res.status(201).json(populatedComment);
   } catch (error) {
     console.error("Error in createComment controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -373,16 +376,14 @@ export const replyToComment = async (req, res) => {
     post.commentsCount = (post.commentsCount || 0) + 1;
     await post.save();
 
-    await newReply.populate([
-      {
-        path: "user",
-        select: "username fullName profileImg isVerified isGoldVerified",
-      },
-      {
-        path: "image",
+    await newReply.populate({
+      path: "user",
+      select: "username fullName isVerified isGoldVerified",
+      populate: {
+        path: "profileImg",
         select: "imageUrl",
       },
-    ]);
+    });
     if (parentComment.user && parentComment.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,

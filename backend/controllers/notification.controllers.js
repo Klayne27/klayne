@@ -33,7 +33,7 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "commentId",
-        select: "text",
+        select: "text img",
       })
       .limit(50);
 
