@@ -7,17 +7,20 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const contentRef = useRef(null) // Ref for the scrollable content area
 
   useEffect(() => {
-    // Only add a class to the body to prevent scrolling
     if (isOpen) {
-      document.body.style.overflow = "hidden";
+      document.body.style.overflow = "hidden"
+      // Add the overscroll behavior directly to the body
+      document.body.style.overscrollBehaviorY = "contain"
     } else {
-      document.body.style.overflow = "";
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehaviorY = ""
     }
-    return () => {
-      document.body.style.overflow = "";
-    };
-  }, [isOpen]);
 
+    return () => {
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehaviorY = ""
+    }
+  }, [isOpen])
 
   // Reset styles when closing
   useEffect(() => {
@@ -40,7 +43,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchMove = useCallback(
     (e) => {
-          e.preventDefault();
+      // This is the key: prevent default behavior unconditionally when menu is open
+      e.preventDefault()
 
       if (!isDragging) return
 
@@ -99,7 +103,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
         className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
-        
       >
         <div
           className="flex flex-col items-center rounded-t-3xl bg-base-200"
@@ -115,7 +118,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
             />
           </div>
           {React.cloneElement(React.Children.only(children), { ref: contentRef })}
-
         </div>
       </div>
     </>
