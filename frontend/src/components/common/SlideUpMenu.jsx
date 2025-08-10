@@ -23,21 +23,21 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   //   }
   // }, [isOpen])
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-      // This is a good place to also handle the overscroll behavior for the body
-      document.body.style.overscrollBehavior = "none"
-    } else {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehavior = ""
-    }
+   useEffect(() => {
+     if (isOpen) {
+       document.body.style.overflow = "hidden"
+       // This is a good place to also handle the overscroll behavior for the body
+       document.body.style.overscrollBehavior = "none"
+     } else {
+       document.body.style.overflow = ""
+       document.body.style.overscrollBehavior = ""
+     }
 
-    return () => {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehavior = ""
-    }
-  }, [isOpen])
+     return () => {
+       document.body.style.overflow = ""
+       document.body.style.overscrollBehavior = ""
+     }
+   }, [isOpen])
 
   // Reset styles when closing
   useEffect(() => {
@@ -120,13 +120,16 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
       >
-        <div className="flex flex-col items-center rounded-t-3xl bg-base-200">
+        <div
+          className="flex flex-col items-center rounded-t-3xl bg-base-200"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
           <div className="flex w-full items-center justify-center">
             <div
               className="my-1.5 h-1 w-10 rounded-full bg-accent"
-              onTouchStart={handleTouchStart}
-              onTouchMove={handleTouchMove}
-              onTouchEnd={handleTouchEnd}
+
               // Apply event listeners directly to the handle
             />
           </div>
@@ -137,12 +140,18 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   )
 }
 
-export const SlideUpMenuContent = React.forwardRef(({ children, className }, ref) => {
-  return (
-    <div ref={ref} className={className}>
-      {children}
-    </div>
-  )
-})
+export const SlideUpMenuContent = React.forwardRef(
+  ({ children, className, disablePullToRefresh }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={className}
+        style={disablePullToRefresh ? { overscrollBehaviorY: "contain" } : undefined}
+      >
+        {children}
+      </div>
+    )
+  },
+)
 
 export default SlideUpMenu
