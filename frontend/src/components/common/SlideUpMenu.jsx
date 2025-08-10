@@ -124,12 +124,18 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   )
 }
 
-export const SlideUpMenuContent = React.forwardRef(({ children, className }, ref) => {
-  return (
-    <div ref={ref} className={className}>
-      {children}
-    </div>
-  )
-})
+export const SlideUpMenuContent = React.forwardRef(
+  ({ children, className, disablePullToRefresh }, ref) => {
+    return (
+      <div
+        ref={ref}
+        className={className}
+        style={disablePullToRefresh ? { overscrollBehaviorY: "contain" } : undefined}
+      >
+        {children}
+      </div>
+    )
+  },
+)
 
 export default SlideUpMenu
