@@ -84,45 +84,54 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isDragging, onClose])
 
-  const handleBackdropClick = () => {
+  const handleBackdropClick = (e) => {
+    e.stopPropagation()
     if (menuRef.current) {
       menuRef.current.style.transition = "transform 300ms ease-out"
       menuRef.current.style.transform = "translateY(100%)"
     }
-    setTimeout(onClose, 300)
+    setTimeout(() => {
+      onClose()
+    }, 0)
   }
-
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
       <div
+        onClick={(e) => e.stopPropagation()}
         ref={menuRef}
-        className={`fixed bottom-0 left-0 right-0 z-50 transform touch-none rounded-t-3xl bg-base-200 transition-transform duration-300 ease-out ${
+        className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
-        // Apply touch listeners to the entire menu
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
-        <div className="flex flex-col items-center">
-          {/* The visual handle */}
-          <div className="my-1.5 h-1 w-10 shrink-0 rounded-full bg-accent" />
+        <div
+          className="flex flex-col items-center rounded-t-3xl bg-base-200"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="flex w-full items-center justify-center">
+            <div
+              className="my-1.5 h-1 w-10 rounded-full bg-accent"
 
-          {/* We pass the contentRef to the child wrapper */}
-          {React.cloneElement(React.Children.only(children), { ref: contentRef })}
+              // Apply event listeners directly to the handle
+            />
+          </div>
+          <div className="flex w-full flex-col gap-5" ref={contentRef}>
+            {children}
+          </div>
         </div>
       </div>
     </>
   )
 }
 
-
 export const SlideUpMenuContent = React.forwardRef(({ children, className }, ref) => {
   return (
     <div ref={ref} className={className}>
       {children}
     </div>
-  );
-});
+  )
+})
+
 export default SlideUpMenu
