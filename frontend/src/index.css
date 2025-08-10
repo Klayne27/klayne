@@ -21,6 +21,9 @@ html,
 body {
   height: 100vh;
   height: 100dvh;
+  margin: 0;
+  padding: 0;
+  background-color: #000000;
 }
 
 .highlight-comment {
@@ -160,4 +163,3 @@ body {
   z-index: 40;
   background-color: rgba(0, 0, 0, 0.5);
 }
-

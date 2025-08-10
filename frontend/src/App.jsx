@@ -32,7 +32,7 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp }) => {
   const { setShowCreatePostModal } = useAppStore()
 
   return (
-    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row">
+    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row bg-base-100">
       <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />
       <main
         className={`${

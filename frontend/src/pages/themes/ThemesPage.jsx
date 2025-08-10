@@ -20,16 +20,16 @@ const ThemesPage = () => {
   const isThemeLocked = authUser && authUser.forceBlackTheme;
 
   return (
-    <main className="flex-[4_4_0] border-accent min-h-screen">
-      <div className="flex items-center gap-2 md:gap-4 px-3 md:px-4 py-2 md:py-3.5 border-accent sticky top-0 z-10 bg-opacity-20 backdrop-blur-md">
+    <main className="min-h-screen flex-[4_4_0] border-accent">
+      <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
-          className="hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"
+          className="flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
         >
           {" "}
           <FaArrowLeft />
         </button>
-        <h1 className="font-bold text-xl flex-1 truncate">Themes</h1>
+        <h1 className="flex-1 truncate text-xl font-bold">Themes</h1>
       </div>
 
       <div className="space-y-6 p-4">
@@ -44,69 +44,55 @@ const ThemesPage = () => {
           )}
         </div>
 
-        <div className="grid grid-cols-4 sm:grid-cols-6 md:grid-cols-8 gap-2">
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 md:grid-cols-8">
           {AVAILABLE_THEMES.map((t) => (
             <button
               key={t}
-              className={`
-                  group flex flex-col items-center gap-1.5 p-2 rounded-2xl transition duration-200
-                  ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"}
-                  ${
-                    isThemeLocked ? "cursor-not-allowed opacity-50" : ""
-                  } // Disable if locked
-                `}
+              className={`group flex flex-col items-center gap-1.5 rounded-2xl p-2 transition duration-200 ${theme === t ? "bg-base-200" : "hover:bg-base-200/50"} ${
+                isThemeLocked ? "cursor-not-allowed opacity-50" : ""
+              } // Disable if locked`}
               onClick={() => setTheme(t)}
               disabled={isThemeLocked}
             >
-              <div
-                className="relative h-8 w-full rounded-2xl overflow-hidden"
-                data-theme={t}
-              >
+              <div className="relative h-8 w-full overflow-hidden rounded-2xl" data-theme={t}>
                 <div className="absolute inset-0 grid grid-cols-3 gap-px p-1">
                   <div className="rounded-xl bg-primary"></div>
                   <div className="rounded-xl bg-secondary"></div>
                   <div className="rounded-xl bg-accent"></div>
                 </div>
               </div>
-              <span className="text-[11px] font-medium truncate w-full text-center">
+              <span className="w-full truncate text-center text-[11px] font-medium">
                 {t.charAt(0).toUpperCase() + t.slice(1)}
               </span>
             </button>
           ))}
         </div>
-        <h3 className="text-lg font-semibold mb-3 px-4">Preview</h3>
-        <div className="rounded-xl border border-base-300 overflow-hidden bg-base-100 shadow-lg mx-4">
-          <div className="p-4 bg-base-200">
-            <div className="max-w-lg mx-auto">
-              <div className="bg-base-100 rounded-xl shadow-sm overflow-hidden">
-                <div className="px-4 py-3 border-b border-base-300 bg-base-100">
+        <h3 className="mb-3 px-4 text-lg font-semibold">Preview</h3>
+        <div className="mx-4 overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-lg">
+          <div className="bg-base-200 p-4">
+            <div className="mx-auto max-w-lg">
+              <div className="overflow-hidden rounded-xl bg-base-100 shadow-sm">
+                <div className="border-b border-base-300 bg-base-100 px-4 py-3">
                   <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-primary flex items-center justify-center text-primary-content font-medium">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-medium text-primary-content">
                       J
                     </div>
                     <div>
-                      <h3 className="font-medium text-sm">John Doe</h3>
+                      <h3 className="text-sm font-medium">John Doe</h3>
                     </div>
                   </div>
                 </div>
 
-                <div className="p-4 space-y-4 min-h-[200px] max-h-[200px] overflow-y-auto bg-base-100">
+                <div className="max-h-[200px] min-h-[200px] space-y-4 overflow-y-auto bg-base-100 p-4">
                   {PREVIEW_MESSAGES.map((message) => (
                     <div
                       key={message.id}
-                      className={`flex ${
-                        message.isSent ? "justify-end" : "justify-start"
-                      }`}
+                      className={`flex ${message.isSent ? "justify-end" : "justify-start"}`}
                     >
                       <div
-                        className={`
-                          max-w-[80%] rounded-3xl p-3 shadow-sm
-                          ${
-                            message.isSent
-                              ? "bg-primary text-white rounded-br-[5px]"
-                              : "bg-base-200 text-white rounded-bl-[5px]"
-                          }
-                        `}
+                        className={`max-w-[80%] rounded-3xl p-3 shadow-sm ${
+                          message.isSent ? "bg-primary text-white" : "bg-[#2F3336] text-white"
+                        } `}
                       >
                         <p className="text-sm">{message.content}</p>
                       </div>
@@ -114,33 +100,33 @@ const ThemesPage = () => {
                   ))}
                 </div>
 
-                <div className="flex-1 relative mb-4 flex items-center rounded-full bg-secondary  focus-within:border-accent/99 mx-4">
+                <div className="focus-within:border-accent/99 relative mx-4 mb-4 flex flex-1 items-center rounded-xl bg-secondary">
                   <div className="flex pl-1">
                     <button
                       type="button"
-                      className="p-2 text-primary rounded-full hover:bg-gray-700 transition-colors duration-200"
+                      className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
                     >
-                      <IoImageOutline className="w-5 h-5" />
+                      <IoImageOutline className="h-5 w-5" />
                     </button>
                     <button
                       type="button"
-                      className="p-2 relative text-primary rounded-full hover:bg-gray-700 transition-colors duration-200 hidden md:block"
+                      className="relative hidden rounded-xl p-2 text-primary transition-colors duration-200 hover:bg-gray-700 md:block"
                     >
-                      <PiSmiley className="w-5 h-5" />
+                      <PiSmiley className="h-5 w-5" />
                     </button>
                   </div>
 
                   <input
                     type="text"
                     placeholder="This is a preview"
-                    className="flex-1 py-2  bg-secondary rounded-full placeholder-gray-500 focus:outline-none pl-1 pr-10 w-1"
+                    className="w-1 flex-1 rounded-xl bg-secondary py-2 pl-1 pr-10 placeholder-gray-500 focus:outline-none"
                   />
 
                   <button
                     type="submit"
-                    className={`hidden md:block absolute right-1 top-1/2 -translate-y-1/2 p-1.5 rounded-full bg-primary text-blue-200 transition-colors duration-200`}
+                    className={`absolute right-1 top-1/2 hidden -translate-y-1/2 rounded-full bg-primary p-1.5 text-blue-200 transition-colors duration-200 md:block`}
                   >
-                    <MdSend className="w-5 h-5" />
+                    <MdSend className="h-5 w-5" />
                   </button>
                 </div>
               </div>
@@ -149,7 +135,7 @@ const ThemesPage = () => {
         </div>
       </div>
     </main>
-  );
+  )
 };
 
 export default ThemesPage;
