@@ -20,7 +20,6 @@ import {
   getScheduledPosts,
   deleteMultipleScheduledPosts,
   markFeedPostsAsRead,
-  // getPostImageByPostId,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -51,7 +50,6 @@ router.put("/scheduled/:id", protectRoute, updateScheduledPost);
 router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
 
 router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);
-// router.get("/image-view/:postId", protectRoute, getPostImageByPostId);
 
 
 export default router;
