@@ -26,7 +26,7 @@ import { usePublicChatAdminHandlers } from "../../../hooks/customHooks/usePublic
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { PUBLIC_CHAT_MODAL_CONFIGS } from "../../../constants/publicChatModalConfigs"
 import ViewReactionsModal from "../ViewReactionsModal"
-import SlideUpMenu from "../SlideUpMenu"
+import SlideUpMenu, { SlideUpMenuContent } from "../SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
@@ -301,12 +301,12 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
         </MessageContentLayout>
         {isMobile ? (
           <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
-            <div className="flex h-[70vh] w-full flex-col">
+            <SlideUpMenuContent className="flex h-[70vh] w-full flex-col overflow-y-auto">
               <ReactionsSlideUpMenuContent
                 reactions={message.reactions ? message.reactions : []}
                 onClose={handleCloseViewReactionsModal}
               />
-            </div>
+            </SlideUpMenuContent>
           </SlideUpMenu>
         ) : (
           <ViewReactionsModal

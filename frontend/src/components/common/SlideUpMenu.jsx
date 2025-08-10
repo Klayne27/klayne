@@ -94,6 +94,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       onClose()
     }, 0)
   }
+
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
@@ -103,6 +104,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
         className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
+        
       >
         <div
           className="flex flex-col items-center rounded-t-3xl bg-base-200"
@@ -117,9 +119,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
               // Apply event listeners directly to the handle
             />
           </div>
-          <div className="flex w-full flex-col gap-5" ref={contentRef}>
-            {children}
-          </div>
+          {React.cloneElement(React.Children.only(children), { ref: contentRef })}
+
         </div>
       </div>
     </>
