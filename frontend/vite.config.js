@@ -1,9 +1,38 @@
-import { defineConfig } from "vite";
-import react from "@vitejs/plugin-react";
+import { defineConfig } from "vite"
+import react from "@vitejs/plugin-react"
+import { VitePWA } from "vite-plugin-pwa"
 
 // https://vite.dev/config/
 export default defineConfig({
-  plugins: [react()],
+  plugins: [
+    react(),
+    VitePWA({
+      registerType: "autoUpdate",
+      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
+
+      manifest: {
+        name: "Twitter Clone",
+        short_name: "Twitter",
+        theme_color: "#1D9BF0", // The Twitter-blue primary color
+        background_color: "#181818", // A dark background color
+        display: "standalone",
+        scope: "/",
+        start_url: "/",
+        icons: [
+          {
+            src: "x-logo2.png",
+            sizes: "192x192",
+            type: "image/png",
+          },
+          {
+            src: "x-logo2.png",
+            sizes: "512x512",
+            type: "image/png",
+          },
+        ],
+      },
+    }),
+  ],
   optimizeDeps: {
     exclude: ["date-fns"], // Add any problematic packages here
   },
@@ -16,4 +45,4 @@ export default defineConfig({
       },
     },
   },
-});
+})
