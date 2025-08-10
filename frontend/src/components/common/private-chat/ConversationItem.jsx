@@ -225,7 +225,8 @@ function ConversationItem({ conv }) {
       )}
 
       <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-        <div className="flex flex-col gap-5 px-4">
+        {/* className="flex w-full flex-col gap-5" */}
+        <div className="flex w-full flex-col gap-5 px-4">
           <div className="flex items-center justify-start gap-2 font-bold">
             <img
               src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}

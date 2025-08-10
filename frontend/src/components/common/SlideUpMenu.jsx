@@ -4,71 +4,86 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
-  const menuRefContent = useRef(null)
+  const contentRef = useRef(null) // Ref for the scrollable content area
 
+  // Effect to control body scroll and overscroll behavior
   useEffect(() => {
     if (isOpen) {
-      if (menuRef.current) {
-        menuRef.current.style.transform = ""
-      }
+      document.body.style.overflow = "hidden" // Prevent background from scrolling
+      document.body.style.overscrollBehaviorY = "contain" // The KEY FIX for pull-to-refresh
     } else {
-      setIsDragging(false)
-      initialYRef.current = 0
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehaviorY = ""
+    }
+
+    // Cleanup on component unmount
+    return () => {
+      document.body.style.overflow = ""
+      document.body.style.overscrollBehaviorY = ""
     }
   }, [isOpen])
 
-  const handleTouchStart = useCallback(
-    (e) => {
-      if (!isOpen) return
-      e.preventDefault()
-      e.stopPropagation()
-      setIsDragging(true)
-      initialYRef.current = e.touches[0].clientY
-      if (menuRef.current) {
-        menuRef.current.style.transition = "none"
-      }
-    },
-    [isOpen],
-  )
+  // Reset styles when closing
+  useEffect(() => {
+    if (!isOpen && menuRef.current) {
+      menuRef.current.style.transform = ""
+    }
+  }, [isOpen])
+
+  const handleTouchStart = useCallback((e) => {
+    // Only start dragging if the content is scrolled to the top
+    if (contentRef.current && contentRef.current.scrollTop !== 0) {
+      return
+    }
+    setIsDragging(true)
+    initialYRef.current = e.touches[0].clientY
+    if (menuRef.current) {
+      menuRef.current.style.transition = "none"
+    }
+  }, [])
 
   const handleTouchMove = useCallback(
     (e) => {
-      if (!isDragging || !isOpen) return
+      if (!isDragging) return
+
+      // Prevent default browser actions (like scrolling) ONLY when dragging
+      e.preventDefault()
+
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
+
+      // Only allow dragging down
       if (deltaY < 0) return
 
       if (menuRef.current) {
         menuRef.current.style.transform = `translateY(${deltaY}px)`
       }
     },
-    [isDragging, isOpen],
+    [isDragging],
   )
 
   const handleTouchEnd = useCallback(() => {
-    if (!isDragging || !isOpen) return
+    if (!isDragging) return
     setIsDragging(false)
 
-    const menuHeight = menuRef.current.clientHeight
-    const currentY = menuRef.current.getBoundingClientRect().top
-    const startY = window.innerHeight - menuHeight
-    const draggedDistance = currentY - startY
+    const menu = menuRef.current
+    if (!menu) return
 
-    if (menuRef.current) {
-      menuRef.current.style.transition = "transform 300ms ease-out"
-    }
+    const menuHeight = menu.clientHeight
+    // Get the final transform value after dragging
+    const currentTransform = new DOMMatrix(getComputedStyle(menu).transform).m42
 
-    if (draggedDistance > menuHeight * 0.5) {
-      menuRef.current.style.transform = "translateY(100%)"
-      setTimeout(() => {
-        onClose()
-      }, 300)
+    menu.style.transition = "transform 300ms ease-out"
+
+    // Close if dragged more than 40% of its height
+    if (currentTransform > menuHeight * 0.4) {
+      menu.style.transform = "translateY(100%)"
+      setTimeout(onClose, 300)
     } else {
-      menuRef.current.style.transform = "translateY(0)"
+      menu.style.transform = "translateY(0)"
     }
-  }, [isDragging, isOpen, onClose])
+  }, [isDragging, onClose])
 
-  // New onClick handler for the backdrop
   const handleBackdropClick = (e) => {
     e.stopPropagation()
     if (menuRef.current) {
@@ -84,32 +99,40 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
       <div
-        onClick={e => e.stopPropagation()}
+        onClick={(e) => e.stopPropagation()}
         ref={menuRef}
         className={`fixed bottom-0 left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           isOpen ? "translate-y-0" : "translate-y-full"
         }`}
+        
       >
-        <div className="flex flex-col items-center rounded-t-3xl bg-base-200">
-          <div
-            onTouchStart={handleTouchStart}
-            onTouchMove={handleTouchMove}
-            onTouchEnd={handleTouchEnd}
-            className="flex w-full items-center justify-center"
-          >
+        <div
+          className="flex flex-col items-center rounded-t-3xl bg-base-200"
+          onTouchStart={handleTouchStart}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+        >
+          <div className="flex w-full items-center justify-center">
             <div
               className="my-1.5 h-1 w-10 rounded-full bg-accent"
 
               // Apply event listeners directly to the handle
             />
           </div>
-          <div className="flex w-full flex-col gap-5" ref={menuRefContent}>
-            {children}
-          </div>
+          {React.cloneElement(React.Children.only(children), { ref: contentRef })}
+
         </div>
       </div>
     </>
   )
 }
+
+export const SlideUpMenuContent = React.forwardRef(({ children, className }, ref) => {
+  return (
+    <div ref={ref} className={className}>
+      {children}
+    </div>
+  )
+})
 
 export default SlideUpMenu
