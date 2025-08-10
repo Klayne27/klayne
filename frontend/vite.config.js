@@ -13,8 +13,8 @@ export default defineConfig({
       manifest: {
         name: "X-ayne",
         short_name: "X-ayne",
-        theme_color: "#000000", // The Twitter-blue primary color
-        background_color: "#181818", // A dark background color
+        theme_color: "#000000",
+        background_color: "#000000",
         display: "standalone",
         scope: "/",
         start_url: "/",
