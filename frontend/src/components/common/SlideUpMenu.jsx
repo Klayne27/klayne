@@ -6,21 +6,21 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const menuRef = useRef(null)
   const contentRef = useRef(null) // Ref for the scrollable content area
 
-  useEffect(() => {
-    if (isOpen) {
-      document.body.style.overflow = "hidden"
-      // Add the overscroll behavior directly to the body
-      document.body.style.overscrollBehaviorY = "contain"
-    } else {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehaviorY = ""
-    }
+  // useEffect(() => {
+  //   if (isOpen) {
+  //     document.body.style.overflow = "hidden"
+  //     // Add the overscroll behavior directly to the body
+  //     document.body.style.overscrollBehaviorY = "contain"
+  //   } else {
+  //     document.body.style.overflow = ""
+  //     document.body.style.overscrollBehaviorY = ""
+  //   }
 
-    return () => {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehaviorY = ""
-    }
-  }, [isOpen])
+  //   return () => {
+  //     document.body.style.overflow = ""
+  //     document.body.style.overscrollBehaviorY = ""
+  //   }
+  // }, [isOpen])
 
   // Reset styles when closing
   useEffect(() => {

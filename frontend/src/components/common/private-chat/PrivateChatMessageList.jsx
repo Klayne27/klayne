@@ -25,7 +25,11 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   const processedMessages = useProcessedMessage(messagesToRender)
 
   return (
-    <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
+    <div
+      ref={ref}
+      style={{ overscrollBehaviorY: "contain" }}
+      className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20"
+    >
       {error && !isNewChat && !isLoadingInitialMessages && (
         <div className="flex h-full items-center justify-center text-red-500">
           <p>Error loading messages: {error.message}</p>
