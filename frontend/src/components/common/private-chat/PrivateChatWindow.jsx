@@ -34,6 +34,7 @@ const PrivateChatWindow = () => {
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
+    isReadyToRenderMessages
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,

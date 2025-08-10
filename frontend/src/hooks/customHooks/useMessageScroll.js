@@ -159,7 +159,6 @@ export const useMessageScroll = ({
     }
   }, [handleScroll])
 
-  // 3. New useLayoutEffect to handle the scroll specifically for sender messages
   useLayoutEffect(() => {
     if (shouldPerformInitialScroll) {
       const listEl = messageListRef.current
@@ -179,8 +178,6 @@ export const useMessageScroll = ({
     }
   }, [shouldPerformInitialScroll, scrollToBottom, messageListRef])
 
-  // The rest of the useLayoutEffect for pagination scroll remains unchanged.
-  // ...
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl) return
