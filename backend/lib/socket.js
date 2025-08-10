@@ -16,6 +16,7 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
+  process.env.RENDER_EXTERNAL_URL,
 ];
 
 export const userActiveChats = new Map();
@@ -242,6 +243,7 @@ export async function emitUnreadNotificationStatus(userId) {
     // const hasUnreadNotifications = unreadNotificationsCount > 0;
 
     const recipientSocketIds = getReceiverSocketIds(userId);
+
     recipientSocketIds.forEach((socketId) => {
       io.to(socketId).emit("unreadNotificationStatus", { unreadNotificationsCount });
     });
@@ -310,6 +312,7 @@ export const createAndSendNotification = async ({
 
     const receiverSocketIds = getReceiverSocketIds(to.toString());
 
+
     if (receiverSocketIds.length === 0) {
       const payload = {
         title: "New Notification",
@@ -318,6 +321,7 @@ export const createAndSendNotification = async ({
       };
       await sendPushNotification(to.toString(), payload);
     }
+
     receiverSocketIds.forEach((socketId) => {
       io.to(socketId).emit("newNotification", newNotification);
     });
