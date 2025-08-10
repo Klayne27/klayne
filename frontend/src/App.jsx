@@ -9,6 +9,7 @@ import ProfileImageModal from "./components/ui/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
 import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
+import { registerSW } from "virtual:pwa-register"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -32,7 +33,7 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp }) => {
   const { setShowCreatePostModal } = useAppStore()
 
   return (
-    <div className="mx-auto flex min-h-screen flex-col md:max-w-[1240px] md:flex-row bg-base-100">
+    <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
       <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />
       <main
         className={`${
@@ -67,6 +68,18 @@ function App() {
   const [feedType, setFeedType] = useState("posts")
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
+
+  useEffect(() => {
+    // This function checks for a new service worker update.
+    const updateSW = registerSW({
+      onNeedRefresh() {
+        // When a new version is detected, force a page reload.
+        window.location.reload()
+      },
+    })
+    // Don't forget to call it.
+    updateSW()
+  }, []) // The empty dependency array ensures this runs only once on mount.
 
   if (isLoading) {
     return (

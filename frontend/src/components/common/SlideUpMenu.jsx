@@ -6,22 +6,18 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const menuRef = useRef(null)
   const contentRef = useRef(null) // Ref for the scrollable content area
 
-  // Effect to control body scroll and overscroll behavior
   useEffect(() => {
+    // Only add a class to the body to prevent scrolling
     if (isOpen) {
-      document.body.style.overflow = "hidden" // Prevent background from scrolling
-      document.body.style.overscrollBehaviorY = "contain" // The KEY FIX for pull-to-refresh
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehaviorY = ""
+      document.body.style.overflow = "";
     }
-
-    // Cleanup on component unmount
     return () => {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehaviorY = ""
-    }
-  }, [isOpen])
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
+
 
   // Reset styles when closing
   useEffect(() => {
@@ -44,10 +40,9 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchMove = useCallback(
     (e) => {
-      if (!isDragging) return
+          e.preventDefault();
 
-      // Prevent default browser actions (like scrolling) ONLY when dragging
-      e.preventDefault()
+      if (!isDragging) return
 
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
