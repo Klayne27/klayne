@@ -11,8 +11,8 @@ export default defineConfig({
       includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
 
       manifest: {
-        name: "Twitter Clone",
-        short_name: "Twitter",
+        name: "X-ayne",
+        short_name: "X-ayne",
         theme_color: "#000000", // The Twitter-blue primary color
         background_color: "#181818", // A dark background color
         display: "standalone",
