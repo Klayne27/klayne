@@ -1,5 +1,4 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)

@@ -1,8 +1,33 @@
 import React from "react"
 import SearchPanel from "./SearchPanel"
 import SuggestedUsersPanel from "./SuggestedUsersPanel"
+import { subscribeUserToPush } from "../../utils/push"
 
 const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
+  const handleEnablePushNotifications = async () => {
+    const subscription = await subscribeUserToPush()
+    if (subscription) {
+      // Send the subscription object to your backend
+      try {
+        const response = await fetch("/api/push/subscribe", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(subscription),
+        })
+
+        if (response.ok) {
+          console.log("Push subscription sent to backend successfully.")
+        } else {
+          console.error("Failed to send push subscription to backend.")
+        }
+      } catch (error) {
+        console.error("Error sending push subscription to backend:", error)
+      }
+    }
+  }
+
   return (
     <div className="sticky top-0 hidden h-[100vh] w-[380px] border-l border-accent px-4 pt-4 lg:block">
       <SearchPanel />
@@ -20,6 +45,18 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
           </button>
         </div>
       )}
+      <div className="mt-4 rounded-2xl border border-accent p-4">
+        <p className="mb-2 text-xl font-bold">Stay Updated</p>
+        <p className="mb-4 text-sm text-gray-500">
+          Enable push notifications to get real-time updates.
+        </p>
+        <button
+          onClick={handleEnablePushNotifications}
+          className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+        >
+          Enable Notifications
+        </button>
+      </div>
     </div>
   )
 }

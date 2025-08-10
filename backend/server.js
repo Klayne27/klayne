@@ -6,7 +6,8 @@ import { v2 as cloudinary } from "cloudinary";
 
 import { app, io, onlineUsersMap, server } from "./lib/socket.js";
 
-import imageRoutes from "./routes/image.routes.js"
+import pushRoutes from "./routes/push.routes.js";
+import imageRoutes from "./routes/image.routes.js";
 import publicChatRoutes from "./routes/publicChat.routes.js";
 import authRoutes from "./routes/auth.routes.js";
 import userRoutes from "./routes/user.routes.js";
@@ -18,6 +19,11 @@ import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
 
 dotenv.config();
+
+import { initPush } from "./lib/utils/sendPush.js";
+
+initPush()
+
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,
@@ -41,6 +47,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/public-chat", publicChatRoutes);
 app.use("/api/images", imageRoutes);
+app.use("/api/push", pushRoutes); // <-- ADD THIS LINE
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "/frontend/dist")));

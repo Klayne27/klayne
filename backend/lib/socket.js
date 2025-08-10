@@ -8,6 +8,7 @@ import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import Post from "../models/post.model.js";
+import { sendPushNotification } from "./utils/sendPush.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -15,7 +16,6 @@ const server = http.createServer(app);
 const allowedOrigins = [
   "http://localhost:3000",
   "http://localhost:5173",
-  process.env.RENDER_EXTERNAL_URL,
 ];
 
 export const userActiveChats = new Map();
@@ -309,6 +309,15 @@ export const createAndSendNotification = async ({
     }
 
     const receiverSocketIds = getReceiverSocketIds(to.toString());
+
+    if (receiverSocketIds.length === 0) {
+      const payload = {
+        title: "New Notification",
+        body: "You have a new notification on X-ayne!",
+        url: `/notifications`, // URL to open when the notification is clicked
+      };
+      await sendPushNotification(to.toString(), payload);
+    }
     receiverSocketIds.forEach((socketId) => {
       io.to(socketId).emit("newNotification", newNotification);
     });

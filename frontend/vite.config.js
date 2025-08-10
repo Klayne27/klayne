@@ -31,6 +31,20 @@ export default defineConfig({
           },
         ],
       },
+      injectRegister: "auto",
+      pwaAssets: {
+        disabled: false,
+        config: true,
+      },
+      selfDestroying: false,
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
+      },
+      injectManifest: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+      },
+      srcDir: "src",
+      filename: "sw.js", // This is the file we will create
     }),
   ],
   optimizeDeps: {
