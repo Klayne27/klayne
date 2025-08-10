@@ -7,6 +7,7 @@ import { Toaster } from "react-hot-toast"
 import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
+import { useEffect } from "react"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -115,6 +116,7 @@ function App() {
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}
+
     </>
   )
 }
