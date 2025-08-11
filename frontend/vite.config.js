@@ -8,6 +8,15 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      // Use the injectManifest object to point to your service worker
+      srcDir: "src",
+
+      injectManifest: {
+        swSrc: "src/sw.js", // Path to your source service worker
+        swDest: "dist/sw.js", // Output path for the service worker
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+      },
       devOptions: {
         enabled: true, // This enables the service worker in development mode
       },
@@ -32,15 +41,6 @@ export default defineConfig({
           },
         ],
       },
-      injectRegister: "auto",
-      selfDestroying: false,
-
-      injectManifest: {
-        swSrc: "src/sw.js",
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-      },
-      srcDir: "src",
-      filename: "sw.js",
     }),
   ],
   optimizeDeps: {

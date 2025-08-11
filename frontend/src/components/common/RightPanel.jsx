@@ -4,7 +4,7 @@ import SuggestedUsersPanel from "./SuggestedUsersPanel"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { handleEnablePushNotifications } from "../../utils/push"
 
-const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
+const RightPanel = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { authUser } = useAuthUser()
 
   return (

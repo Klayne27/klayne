@@ -25,7 +25,7 @@ const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
 const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
-const MainLayout = ({ children, deferredPrompt, isInstalled, installApp }) => {
+const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const location = useLocation()
   const isMessagePage = location.pathname.includes("/messages")
   const isPublicChatPage = location.pathname.includes("/public-chat")
@@ -47,6 +47,7 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp }) => {
           deferredPrompt={deferredPrompt}
           isInstalled={isInstalled}
           installApp={installApp}
+          isPushSubscribed={isPushSubscribed}
           className="hidden md:block"
         />
       )}
@@ -68,6 +69,19 @@ function App() {
   const [feedType, setFeedType] = useState("posts")
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
+  const [isPushSubscribed, setIsPushSubscribed] = useState(false)
+
+  useEffect(() => {
+    // Check subscription status on component mount
+    const checkSubscription = async () => {
+      if ("serviceWorker" in navigator && "PushManager" in window) {
+        const registration = await navigator.serviceWorker.ready
+        const subscription = await registration.pushManager.getSubscription()
+        setIsPushSubscribed(!!subscription)
+      }
+    }
+    checkSubscription()
+  }, [])
 
   useEffect(() => {
     // This function checks for a new service worker update.
@@ -111,6 +125,7 @@ function App() {
                   deferredPrompt={deferredPrompt}
                   isInstalled={isInstalled}
                   installApp={installApp}
+                  isPushSubscribed={isPushSubscribed}
                 >
                   <Routes>
                     <Route path="/" element={<HomePage />} />
@@ -136,9 +151,9 @@ function App() {
         </Routes>
       </Suspense>
 
-      {authUser && !isMessagePage && !isPublicChatPage && isLoading && (
+      {/* {authUser && !isMessagePage && !isPublicChatPage && isLoading && (
         <RightPanel className="hidden md:block" />
-      )}
+      )} */}
       <Toaster position="bottom-center" />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />

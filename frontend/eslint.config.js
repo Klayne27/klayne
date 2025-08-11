@@ -29,7 +29,7 @@ export default [
     },
   },
   {
-    files: ["src/sw.js"], // <-- This targets only your service worker file
+    files: ["src/sw.js"],
     languageOptions: {
       globals: {
         self: "readonly",

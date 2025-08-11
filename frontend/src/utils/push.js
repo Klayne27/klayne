@@ -19,17 +19,22 @@ export const subscribeUserToPush = async () => {
   }
 
   try {
-    // Wait for the service worker to be ready
     const registration = await navigator.serviceWorker.ready
-    console.log("Service worker is ready.")
+    console.log("Service worker is ready.") // Check if the user is already subscribed
 
-    const subscription = await registration.pushManager.subscribe({
+    const existingSubscription = await registration.pushManager.getSubscription()
+    if (existingSubscription) {
+      console.log("User is already subscribed:", existingSubscription)
+      return existingSubscription
+    } // If not subscribed, create a new one
+
+    const newSubscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
 
-    console.log("Push subscription created:", subscription)
-    return subscription
+    console.log("New push subscription created:", newSubscription)
+    return newSubscription
   } catch (error) {
     console.error("Failed to subscribe the user:", error)
     return null
