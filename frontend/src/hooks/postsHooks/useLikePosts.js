@@ -3,7 +3,7 @@ import { likePostApi } from "../../api/postsApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 
-export const useLikePost = (username = null, userProfileId = null) => {
+export const useLikePost = (username = null) => {
   const queryClient = useQueryClient();
   const { authUser } = useAuthUser();
 
@@ -20,8 +20,8 @@ export const useLikePost = (username = null, userProfileId = null) => {
         ? ["posts", `/api/posts/user/${username}`]
         : null;
 
-      const dynamicUserLikesKey = userProfileId
-        ? ["posts", `/api/posts/likes/${userProfileId}`]
+      const dynamicUserLikesKey = username
+        ? ["posts", `/api/posts/likes/${username}`]
         : null;
 
       const queryKeysToUpdate = [
@@ -225,9 +225,9 @@ export const useLikePost = (username = null, userProfileId = null) => {
             context.previousDataSnapshots["posts_user"]
           );
         }
-        if (context.previousDataSnapshots["posts_likes"] && userProfileId) {
+        if (context.previousDataSnapshots["posts_likes"] && username) {
           queryClient.setQueryData(
-            ["posts", `/api/posts/likes/${userProfileId}`],
+            ["posts", `/api/posts/likes/${username}`],
             context.previousDataSnapshots["posts_likes"]
           );
         }

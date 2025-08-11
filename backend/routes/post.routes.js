@@ -35,7 +35,7 @@ router.post("/pin/:id", protectRoute, pinUnpinPost);
 router.delete("/pin/:id", protectRoute, pinUnpinPost);
 
 router.get("/all", protectRoute, getAllPosts);
-router.get("/likes/:id", protectRoute, getLikedPosts);
+router.get("/likes/:username", protectRoute, getLikedPosts);
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/bookmarked", protectRoute, getBookmarkedPosts);
 router.get("/check-repost/:originalPostId", protectRoute, checkIfUserReposted);

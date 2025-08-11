@@ -588,14 +588,14 @@ export const getAllPosts = async (req, res) => {
 };
 
 export const getLikedPosts = async (req, res) => {
-  const userId = req.params.id;
+  const { username } = req.params;
   const currentUserId = req.user?._id;
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, userId))) {
+    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
       return res.status(403).json({
         error: "You cannot view liked posts of this user due to blocking restrictions.",
       });

@@ -10,20 +10,6 @@ import { ReactQueryDevtools } from "@tanstack/react-query-devtools" // Import de
 
 const queryClient = new QueryClient()
 
-// if ("serviceWorker" in navigator) {
-//   window.addEventListener("load", () => {
-//     navigator.serviceWorker.register("/sw.js").then(
-//       (registration) => {
-//         console.log("Service Worker registration successful with scope: ", registration.scope)
-//       },
-//       (err) => {
-//         console.log("Service Worker registration failed: ", err)
-//       },
-//     )
-//   })
-// }
-
-
 createRoot(document.getElementById("root")).render(
   <StrictMode>
     <BrowserRouter>

@@ -75,7 +75,7 @@ const Post = ({
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
 
-  const { userProfile } = useFetchUserProfile(username)
+  // const { userProfile } = useFetchUserProfile(username)
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(
     currentProfileUsername,
@@ -83,7 +83,7 @@ const Post = ({
   )
 
   const { repostPost, isReposting } = useRepostPost(postEndpoint)
-  const { likePost, isLiking } = useLikePost(username, userProfile?._id)
+  const { likePost, isLiking } = useLikePost(username)
   const { deletePost, isDeleting } = useDeletePosts()
   const { pinUnpinPost, isPinning } = usePinPost()
 
