@@ -13,7 +13,6 @@ const urlBase64ToUint8Array = (base64String) => {
 }
 
 export const subscribeUserToPush = async () => {
-  // Check for Service Worker and Push API compatibility
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     console.warn("Push notifications are not supported by this browser.")
     return null

@@ -1,15 +1,30 @@
 // The self variable refers to the service worker itself
 self.addEventListener("push", (event) => {
-  const data = event.data.json()
+  let data = {
+    title: "New Notification",
+    body: "Something new happened!",
+    url: "/",
+  }
+
+  // Check if the event has data and is valid JSON
+  if (event.data) {
+    try {
+      data = event.data.json()
+    } catch (e) {
+      console.error("Push event data was not valid JSON.", e)
+    }
+  }
+
   const title = data.title
   const options = {
     body: data.body,
-    icon: "/x-logo2.png", // The path to your icon
-    badge: "/x-logo2.png", // The path to your badge icon (optional)
+    icon: "/x-logo2.png", 
+    badge: "/x-logo2.png",
     data: {
       url: data.url,
     },
   }
+
   event.waitUntil(self.registration.showNotification(title, options))
 })
 

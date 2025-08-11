@@ -8,8 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
-
+      // pwaAssets: {
+      //   images: "public/x-logo2.png",
+      // },
+      // includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "X-ayne",
         short_name: "X-ayne",
@@ -32,10 +34,6 @@ export default defineConfig({
         ],
       },
       injectRegister: "auto",
-      pwaAssets: {
-        disabled: false,
-        config: true,
-      },
       selfDestroying: false,
       workbox: {
         globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
