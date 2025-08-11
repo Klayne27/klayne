@@ -9,6 +9,7 @@ import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import Post from "../models/post.model.js";
 import { sendPushNotification } from "./utils/sendPush.js";
+import { getDynamicPushBody } from "./utils/helpers.js";
 
 const app = express();
 const server = http.createServer(app);
@@ -317,7 +318,7 @@ export const createAndSendNotification = async ({
       const username = fromUser ? fromUser.username : "A user";
 
       // Use the new function to create a dynamic body
-      const dynamicBody = getDynamicBody(type, username);
+      const dynamicBody = getDynamicPushBody(type, username);
       
       const payload = {
         title: "New Notification",

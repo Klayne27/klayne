@@ -156,7 +156,7 @@ export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
   return { initialMatch, userLookup, repostLookup, finalMatch };
 };
 
-const getDynamicPushBody = (type, username) => {
+export const getDynamicPushBody = (type, username) => {
   switch (type) {
     case "follow":
       return `@${username} is now following you.`;

@@ -126,24 +126,19 @@ export const followUnfollowUser = async (req, res) => {
           participants: { $all: [req.user._id, id] },
         }).session(session);
 
-        if (existingConversation) {
-          await Conversation.updateOne(
-            { _id: existingConversation._id },
-            { $pull: { hiddenFor: req.user._id } },
-            { timestamps: false }
-          );
-          await Conversation.updateOne(
-            { _id: existingConversation._id },
-            { $addToSet: { hiddenFor: userToModify._id } },
-            { timestamps: false }
-          ).session(session);
-        } else {
-          const newConversation = new Conversation({
-            participants: [req.user._id, id],
-            hiddenFor: [userToModify._id],
-          });
-          await newConversation.save({ session });
-        }
+if (existingConversation) {
+  await Conversation.updateOne(
+    { _id: existingConversation._id },
+    { $pull: { hiddenFor: req.user._id } },
+    { timestamps: false }
+  ).session(session);
+} else {
+  const newConversation = new Conversation({
+    participants: [req.user._id, id],
+    hiddenFor: [userToModify._id],
+  });
+  await newConversation.save({ session });
+}
 
         const newNotification = new Notification({
           type: "follow",
