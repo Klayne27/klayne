@@ -184,13 +184,17 @@ export const sendMessage = async (req, res) => {
       io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
     } else {
       // ------------------ FIX: Add push notification logic here ------------------
-      const senderUser = await User.findById(senderId).select("username").lean();
+      const senderUser = await User.findById(senderId)
+        .select("username")
+        .populate("profileImg", "imageUrl")
+        .lean();
       const senderUsername = senderUser ? senderUser.username : "A user";
 
       const payload = {
         title: `New Message from @${senderUsername}`,
         body: message || "Image Message", // Show message text or "Image Message"
         url: `/messages/${conversationId.toString()}`, // URL to open the specific chat
+        icon: senderUser?.profileImg?.imageUrl || process.env.RENDER_EXTERNAL_URL,
       };
 
       await sendPushNotification(recipientId.toString(), payload);

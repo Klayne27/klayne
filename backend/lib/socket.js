@@ -9,7 +9,13 @@ import User from "../models/user.model.js";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import Post from "../models/post.model.js";
 import { sendPushNotification } from "./utils/sendPush.js";
-import { getDynamicPushBody } from "./utils/helpers.js";
+import {
+  getDynamicPushBody,
+  getDynamicPushTitle,
+  getDynamicPushUrl,
+} from "./utils/helpers.js";
+
+const BASE_URL = process.env.RENDER_EXTERNAL_URL || "http://localhost:5000";
 
 const app = express();
 const server = http.createServer(app);
@@ -317,13 +323,21 @@ export const createAndSendNotification = async ({
       const fromUser = await User.findById(from).select("username").lean();
       const username = fromUser ? fromUser.username : "A user";
 
-      // Use the new function to create a dynamic body
+      let postOwnerUsername = null;
+      const post = await Post.findById(postId).populate("user", "username").lean();
+      if (post) {
+        postOwnerUsername = post.user.username;
+      }
+
       const dynamicBody = getDynamicPushBody(type, username);
-      
+      const dynamicTitle = getDynamicPushTitle(type);
+      const dynamicUrl = getDynamicPushUrl(type, postOwnerUsername, postId);
+
       const payload = {
-        title: "New Notification",
+        title: dynamicTitle,
         body: dynamicBody,
-        url: `/notifications`, // URL to open when the notification is clicked
+        url: dynamicUrl,
+        icon: `${BASE_URL}/x-logo2.png`,
       };
       await sendPushNotification(to.toString(), payload);
     }

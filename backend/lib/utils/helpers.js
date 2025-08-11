@@ -177,3 +177,22 @@ export const getDynamicPushBody = (type, username) => {
   }
 };
 
+export const getDynamicPushTitle = (type) => {
+  switch (type) {
+    case "follow":
+      return `New Follower`;
+    case "mention":
+      return "New Mention";
+    default:
+      return "New Notification";
+  }
+};
+
+export const getDynamicPushUrl = (type, postOwnerUsername, postId) => {
+  switch (type) {
+    case "follow":
+      return `/profile/${username}`;
+    default:
+      return `/${postOwnerUsername}/post/${postId}`;
+  }
+};
