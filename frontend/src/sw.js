@@ -17,7 +17,6 @@ self.addEventListener("push", (event) => {
     console.error("Push event data was not valid JSON.", e)
     payload = { title: "Notification Error", body: "Could not parse notification.", url: "/" }
   }
-  console.log("push payload:", payload)
   const title = payload.title || "Default Title"
   const options = {
     body: payload.body || "Default body message.",
@@ -27,10 +26,7 @@ self.addEventListener("push", (event) => {
       url: payload.url || "/",
     },
   }
-  console.log("title: ", title)
-  console.log("options: ", options)
   event.waitUntil(self.registration.showNotification(title, options))
-  console.log("push after?")
 })
 
 // Your notification click handler

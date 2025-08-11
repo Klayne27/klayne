@@ -11,7 +11,6 @@ export const initPush = () => {
   }
 
   webpush.setVapidDetails("mailto:weavonklayne@gmail.com", publicKey, privateKey);
-  console.log("Web Push VAPID details initialized successfully.");
 };
 
 export const sendPushNotification = async (userId, payload) => {
@@ -36,7 +35,6 @@ export const sendPushNotification = async (userId, payload) => {
       message
     );
 
-    console.log(`Push notification sent to user ${userId}:`, result);
     return result;
   } catch (error) {
     console.error(`Failed to send push notification to user ${userId}:`, error);

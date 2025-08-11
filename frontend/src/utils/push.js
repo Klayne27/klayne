@@ -20,11 +20,9 @@ export const subscribeUserToPush = async () => {
 
   try {
     const registration = await navigator.serviceWorker.ready
-    console.log("Service worker is ready.") // Check if the user is already subscribed
 
     const existingSubscription = await registration.pushManager.getSubscription()
     if (existingSubscription) {
-      console.log("User is already subscribed:", existingSubscription)
       return existingSubscription
     } // If not subscribed, create a new one
 
@@ -33,7 +31,6 @@ export const subscribeUserToPush = async () => {
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
 
-    console.log("New push subscription created:", newSubscription)
     return newSubscription
   } catch (error) {
     console.error("Failed to subscribe the user:", error)
@@ -61,11 +58,6 @@ export const handleEnablePushNotifications = async () => {
         }),
       })
 
-      if (response.ok) {
-        console.log("Push subscription sent to backend successfully.")
-      } else {
-        console.error("Failed to send push subscription to backend.")
-      }
     } catch (error) {
       console.error("Error sending push subscription to backend:", error)
     }

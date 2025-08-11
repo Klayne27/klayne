@@ -9,13 +9,11 @@ export const usePWAInstall = () => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
-      console.log("beforeinstallprompt event fired")
     }
 
     const handleAppInstalled = () => {
       setDeferredPrompt(null)
       setIsInstalled(true)
-      console.log("PWA was installed")
     }
 
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt)
@@ -31,7 +29,6 @@ export const usePWAInstall = () => {
     if (deferredPrompt) {
       deferredPrompt.prompt()
       const { outcome } = await deferredPrompt.userChoice
-      console.log(`User response to the install prompt: ${outcome}`)
       setDeferredPrompt(null)
       if (outcome === "accepted") {
         setIsInstalled(true)
