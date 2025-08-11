@@ -8,17 +8,40 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
-      strategies: "injectManifest",
-      // Use the injectManifest object to point to your service worker
-      srcDir: "src",
+      strategies: "generateSW",
 
-      injectManifest: {
-        swSrc: "src/sw.js", // Path to your source service worker
-        swDest: "dist/sw.js", // Output path for the service worker
-        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-      },
       devOptions: {
-        enabled: true, // This enables the service worker in development mode
+        enabled: true,
+      },
+      workbox: {
+        globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        runtimeCaching: [
+          {
+            // Only cache GET requests to the API
+            urlPattern: ({ url, request }) =>
+              url.pathname.startsWith("/api/") && request.method === "GET",
+            handler: "CacheFirst",
+            options: {
+              cacheName: "api-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24,
+              },
+            },
+          },
+          {
+            // Cache images from Cloudinary
+            urlPattern: ({ url }) => url.origin.includes("cloudinary.com"),
+            handler: "StaleWhileRevalidate",
+            options: {
+              cacheName: "image-cache",
+              expiration: {
+                maxEntries: 100,
+                maxAgeSeconds: 60 * 60 * 24 * 7,
+              },
+            },
+          },
+        ],
       },
       manifest: {
         name: "X-ayne",
