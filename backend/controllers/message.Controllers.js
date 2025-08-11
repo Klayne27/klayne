@@ -11,6 +11,9 @@ import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Image from "../models/image.model.js";
 import { sendPushNotification } from "../lib/utils/sendPush.js";
+import { transformCloudinaryUrl } from "../lib/utils/helpers.js";
+
+const BASE_URL = process.env.RENDER_EXTERNAL_URL
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) {
@@ -188,13 +191,19 @@ export const sendMessage = async (req, res) => {
         .select("username")
         .populate("profileImg", "imageUrl")
         .lean();
+
       const senderUsername = senderUser ? senderUser.username : "A user";
+      const resizedProfileImg = transformCloudinaryUrl(
+        senderUser?.profileImg?.imageUrl,
+        128,
+        128
+      );
 
       const payload = {
         title: `New Message from @${senderUsername}`,
         body: message || "Image Message", // Show message text or "Image Message"
         url: `/messages/${conversationId.toString()}`, // URL to open the specific chat
-        icon: senderUser?.profileImg?.imageUrl || process.env.RENDER_EXTERNAL_URL,
+        icon: resizedProfileImg || `${BASE_URL}/avatar-placeholder.png`,
       };
 
       await sendPushNotification(recipientId.toString(), payload);

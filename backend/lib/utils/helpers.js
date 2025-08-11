@@ -196,3 +196,10 @@ export const getDynamicPushUrl = (type, postOwnerUsername, postId) => {
       return `/${postOwnerUsername}/post/${postId}`;
   }
 };
+
+export const transformCloudinaryUrl = (url, width, height) => {
+  if (!url) return null;
+  const parts = url.split("/upload/");
+  if (parts.length !== 2) return url;
+  return `${parts[0]}/upload/w_${width},h_${height},c_fill,g_face,f_png/${parts[1]}`;
+};
