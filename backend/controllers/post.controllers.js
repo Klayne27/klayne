@@ -278,19 +278,30 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
+      // if (post.user.toString() !== userId.toString()) {
+      //   const notification = new Notification({
+      //     from: userId,
+      //     to: post.user,
+      //     type: "like",
+      //     postId: postId,
+      //     read: false,
+      //   });
+
+      //   await notification.save();
+
+      //   await emitUnreadNotificationStatus(post.user.toString());
+      // }
       if (post.user.toString() !== userId.toString()) {
-        const notification = new Notification({
+        // ------------------ FIX: Call the unified function ------------------
+        await createAndSendNotification({
           from: userId,
           to: post.user,
           type: "like",
           postId: postId,
-          read: false,
         });
-
-        await notification.save();
-
-        await emitUnreadNotificationStatus(post.user.toString());
+        // --------------------------------------------------------------------
       }
+
       res.status(200).json(post.likes);
     }
   } catch (error) {

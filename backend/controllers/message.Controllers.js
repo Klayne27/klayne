@@ -181,6 +181,19 @@ export const sendMessage = async (req, res) => {
     const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
     if (recipientSocketIds.length > 0) {
       io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
+    } else {
+      // ------------------ FIX: Add push notification logic here ------------------
+      const senderUser = await User.findById(senderId).select("username").lean();
+      const senderUsername = senderUser ? senderUser.username : "A user";
+
+      const payload = {
+        title: `New Message from @${senderUsername}`,
+        body: message || "Image Message", // Show message text or "Image Message"
+        url: `/messages/${conversationId.toString()}`, // URL to open the specific chat
+      };
+
+      await sendPushNotification(recipientId.toString(), payload);
+      // ---------------------------------------------------------------------------
     }
 
     if (isSeen) {
@@ -192,7 +205,7 @@ export const sendMessage = async (req, res) => {
     }
 
     await emitUnreadMessageStatus(recipientId.toString());
-    await emitUnreadMessageStatus(senderId.toString());
+    // await emitUnreadMessageStatus(senderId.toString());
 
     res.status(201).json(newMessage.toObject());
   } catch (error) {

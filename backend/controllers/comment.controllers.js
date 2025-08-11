@@ -279,10 +279,10 @@ export const createComment = async (req, res) => {
       });
     }
 
-    await emitUnreadNotificationStatus(post.user._id.toString());
-    for (const mentionedUserId of mentionedUserIds) {
-      await emitUnreadNotificationStatus(mentionedUserId.toString());
-    }
+    // await emitUnreadNotificationStatus(post.user._id.toString());
+    // for (const mentionedUserId of mentionedUserIds) {
+    //   await emitUnreadNotificationStatus(mentionedUserId.toString());
+    // }
 
     res.status(201).json(populatedComment);
   } catch (error) {
@@ -411,10 +411,10 @@ export const replyToComment = async (req, res) => {
       });
     }
 
-    await emitUnreadNotificationStatus(parentComment.user._id.toString());
-    for (const mentionedUserId of mentionedUserIds) {
-      await emitUnreadNotificationStatus(mentionedUserId.toString());
-    }
+    // await emitUnreadNotificationStatus(parentComment.user._id.toString());
+    // for (const mentionedUserId of mentionedUserIds) {
+    //   await emitUnreadNotificationStatus(mentionedUserId.toString());
+    // }
 
     res.status(201).json(newReply);
   } catch (error) {
@@ -474,7 +474,7 @@ export const likeUnlikeComment = async (req, res) => {
         });
       }
 
-      await emitUnreadNotificationStatus(comment.user._id.toString());
+      // await emitUnreadNotificationStatus(comment.user._id.toString());
 
       await comment.save();
       res
