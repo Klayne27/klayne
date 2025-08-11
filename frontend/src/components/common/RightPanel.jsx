@@ -1,41 +1,11 @@
 import React from "react"
 import SearchPanel from "./SearchPanel"
 import SuggestedUsersPanel from "./SuggestedUsersPanel"
-import { subscribeUserToPush } from "../../utils/push"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { handleEnablePushNotifications } from "../../utils/push"
 
 const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
   const { authUser } = useAuthUser()
-  const handleEnablePushNotifications = async () => {
-    const subscription = await subscribeUserToPush()
-    if (subscription) {
-      const subscriptionObject = subscription.toJSON()
-
-      try {
-        const response = await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            endpoint: subscriptionObject.endpoint,
-            keys: {
-              p256dh: subscriptionObject.keys.p256dh,
-              auth: subscriptionObject.keys.auth,
-            },
-          }),
-        })
-
-        if (response.ok) {
-          console.log("Push subscription sent to backend successfully.")
-        } else {
-          console.error("Failed to send push subscription to backend.")
-        }
-      } catch (error) {
-        console.error("Error sending push subscription to backend:", error)
-      }
-    }
-  }
 
   return (
     <div className="sticky top-0 hidden h-[100vh] w-[380px] border-l border-accent px-4 pt-4 lg:block">

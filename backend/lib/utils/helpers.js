@@ -67,17 +67,16 @@ import mongoose from "mongoose";
  */
 export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
   const now = new Date();
-  const blockedObjectIds = blockedAndBlockingIds.map(id => new mongoose.Types.ObjectId(id));
+  const blockedObjectIds = blockedAndBlockingIds.map(
+    (id) => new mongoose.Types.ObjectId(id)
+  );
 
   // Stage to filter out posts from blocked users and posts not yet published
   const initialMatch = {
     $match: {
       user: { $nin: blockedObjectIds },
       "deletedFor.user": { $ne: new mongoose.Types.ObjectId(userId) },
-      $or: [
-        { isScheduled: { $ne: true } },
-        { scheduledAt: { $lte: now } },
-      ],
+      $or: [{ isScheduled: { $ne: true } }, { scheduledAt: { $lte: now } }],
     },
   };
 
@@ -88,7 +87,17 @@ export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
       localField: "user",
       foreignField: "_id",
       as: "user",
-      pipeline: [{ $project: { username: 1, fullName: 1, profileImg: 1, isVerified: 1, isGoldVerified: 1 } }],
+      pipeline: [
+        {
+          $project: {
+            username: 1,
+            fullName: 1,
+            profileImg: 1,
+            isVerified: 1,
+            isGoldVerified: 1,
+          },
+        },
+      ],
     },
   };
 
@@ -103,12 +112,9 @@ export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
         // Match only valid reposts
         {
           $match: {
-            "user": { $nin: blockedObjectIds },
-            $or: [
-              { isScheduled: { $ne: true } },
-              { scheduledAt: { $lte: now } },
-            ],
-          }
+            user: { $nin: blockedObjectIds },
+            $or: [{ isScheduled: { $ne: true } }, { scheduledAt: { $lte: now } }],
+          },
         },
         // Populate the original post's author
         {
@@ -117,26 +123,57 @@ export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
             localField: "user",
             foreignField: "_id",
             as: "user",
-            pipeline: [{ $project: { username: 1, fullName: 1, profileImg: 1, isVerified: 1, isGoldVerified: 1 } }],
+            pipeline: [
+              {
+                $project: {
+                  username: 1,
+                  fullName: 1,
+                  profileImg: 1,
+                  isVerified: 1,
+                  isGoldVerified: 1,
+                },
+              },
+            ],
           },
         },
         { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
         // Ensure we don't populate reposts of reposts
-        { $match: { "repostedFrom": { $exists: false } } }
+        { $match: { repostedFrom: { $exists: false } } },
       ],
     },
   };
-  
+
   // Final filter to ensure a repost has a valid (non-blocked, non-deleted) original post
   const finalMatch = {
     $match: {
       $or: [
-        { "repostedFrom": { $eq: [] } }, // It's not a repost
-        { "repostedFrom.user": { $ne: null } } // It's a valid repost with a user
-      ]
-    }
+        { repostedFrom: { $eq: [] } }, // It's not a repost
+        { "repostedFrom.user": { $ne: null } }, // It's a valid repost with a user
+      ],
+    },
   };
-
 
   return { initialMatch, userLookup, repostLookup, finalMatch };
 };
+
+const getDynamicPushBody = (type, username) => {
+  switch (type) {
+    case "follow":
+      return `@${username} is now following you.`;
+    case "like":
+      return `@${username} liked your post.`;
+    case "comment":
+      return `@${username} commented on your post.`;
+    case "repost":
+      return `@${username} reposted your post.`;
+    case "commentLike":
+      return `@${username} liked your comment.`;
+    case "commentReply":
+      return `@${username} replied to your comment.`;
+    case "mention":
+      return `@${username} mentioned you in a post.`;
+    default:
+      return "You have a new notification on X-ayne!";
+  }
+};
+

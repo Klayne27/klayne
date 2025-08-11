@@ -20,6 +20,7 @@ import FeatherIcon from "../svgs/FeatherIcon"
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
+import { handleEnablePushNotifications } from "../../utils/push"
 
 const Sidebar = ({ onOpenCreatePostModal }) => {
   const { authUser } = useAuthUser()
@@ -96,7 +97,6 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
       document.head.appendChild(faviconLink)
     }
   }, [])
-
 
   const totalNotifications =
     unreadMessageCount + unreadNotificationsCount + unreadPublicChatCount + newPostCount
@@ -791,7 +791,10 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
             >
               <div className="avatar">
                 <div className="w-8 rounded-full">
-                  <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="User Profile" />
+                  <img
+                    src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    alt="User Profile"
+                  />
                 </div>
               </div>
               <div className="flex flex-1 items-center justify-between">
@@ -1047,6 +1050,14 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                   Logout @{authUser?.username}
                 </li>
               </ul>
+            </div>
+            <div className="px-4 mb-4">
+              <button
+                onClick={handleEnablePushNotifications}
+                className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+              >
+                Enable Notifications
+              </button>
             </div>
           </div>
         )}

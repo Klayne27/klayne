@@ -35,3 +35,34 @@ export const subscribeUserToPush = async () => {
     return null
   }
 }
+
+export const handleEnablePushNotifications = async () => {
+  const subscription = await subscribeUserToPush()
+  if (subscription) {
+    const subscriptionObject = subscription.toJSON()
+
+    try {
+      const response = await fetch("/api/push/subscribe", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          endpoint: subscriptionObject.endpoint,
+          keys: {
+            p256dh: subscriptionObject.keys.p256dh,
+            auth: subscriptionObject.keys.auth,
+          },
+        }),
+      })
+
+      if (response.ok) {
+        console.log("Push subscription sent to backend successfully.")
+      } else {
+        console.error("Failed to send push subscription to backend.")
+      }
+    } catch (error) {
+      console.error("Error sending push subscription to backend:", error)
+    }
+  }
+}

@@ -313,9 +313,15 @@ export const createAndSendNotification = async ({
     const receiverSocketIds = getReceiverSocketIds(to.toString());
 
     if (receiverSocketIds.length === 0) {
+      const fromUser = await User.findById(from).select("username").lean();
+      const username = fromUser ? fromUser.username : "A user";
+
+      // Use the new function to create a dynamic body
+      const dynamicBody = getDynamicBody(type, username);
+      
       const payload = {
         title: "New Notification",
-        body: "You have a new notification on X-ayne!",
+        body: dynamicBody,
         url: `/notifications`, // URL to open when the notification is clicked
       };
       await sendPushNotification(to.toString(), payload);

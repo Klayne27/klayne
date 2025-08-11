@@ -10,12 +10,7 @@ export default defineConfig({
       registerType: "autoUpdate",
       devOptions: {
         enabled: true, // This enables the service worker in development mode
-        type: "module",
       },
-      // pwaAssets: {
-      //   images: "public/x-logo2.png",
-      // },
-      // includeAssets: ["favicon.ico", "apple-touch-icon.png", "mask-icon.svg"],
       manifest: {
         name: "X-ayne",
         short_name: "X-ayne",
@@ -39,19 +34,17 @@ export default defineConfig({
       },
       injectRegister: "auto",
       selfDestroying: false,
-      workbox: {
-        globPatterns: ["**/*.{js,css,html,png,svg,ico}"],
-      },
+
       injectManifest: {
+        swSrc: "src/sw.js",
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
-        swSrc: "src/sw.js", // This is where your custom logic lives
       },
       srcDir: "src",
-      filename: "sw.js", // This is the file we will create
+      filename: "sw.js",
     }),
   ],
   optimizeDeps: {
-    exclude: ["date-fns"], // Add any problematic packages here
+    exclude: ["date-fns"],
   },
   server: {
     port: 3000,
