@@ -47,7 +47,7 @@ app.use("/api/messages", messageRoutes);
 app.use("/api/comments", commentRoutes);
 app.use("/api/public-chat", publicChatRoutes);
 app.use("/api/images", imageRoutes);
-app.use("/api/push", pushRoutes); // <-- ADD THIS LINE
+app.use("/api/push", pushRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "/frontend/dist")));

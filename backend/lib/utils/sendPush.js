@@ -1,9 +1,6 @@
-// backend/lib/utils/sendPush.js
-
 import webpush from "web-push";
 import PushSubscription from "../../models/pushSubscription.js";
 
-// The initPush function now reads the process.env directly.
 export const initPush = () => {
   const publicKey = process.env.VAPID_PUBLIC_KEY;
   const privateKey = process.env.VAPID_PRIVATE_KEY;
@@ -17,7 +14,6 @@ export const initPush = () => {
   console.log("Web Push VAPID details initialized successfully.");
 };
 
-// Your sendPushNotification function remains the same
 export const sendPushNotification = async (userId, payload) => {
   try {
     const subscription = await PushSubscription.findOne({ userId });

@@ -4,29 +4,29 @@ import SuggestedUsersPanel from "./SuggestedUsersPanel"
 import { subscribeUserToPush } from "../../utils/push"
 
 const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
-  const handleEnablePushNotifications = async () => {
-    const subscription = await subscribeUserToPush()
-    if (subscription) {
-      // Send the subscription object to your backend
-      try {
-        const response = await fetch("/api/push/subscribe", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(subscription),
-        })
+  // const handleEnablePushNotifications = async () => {
+  //   const subscription = await subscribeUserToPush()
+  //   if (subscription) {
+  //     // Send the subscription object to your backend
+  //     try {
+  //       const response = await fetch("/api/push/subscribe", {
+  //         method: "POST",
+  //         headers: {
+  //           "Content-Type": "application/json",
+  //         },
+  //         body: JSON.stringify(subscription),
+  //       })
 
-        if (response.ok) {
-          console.log("Push subscription sent to backend successfully.")
-        } else {
-          console.error("Failed to send push subscription to backend.")
-        }
-      } catch (error) {
-        console.error("Error sending push subscription to backend:", error)
-      }
-    }
-  }
+  //       if (response.ok) {
+  //         console.log("Push subscription sent to backend successfully.")
+  //       } else {
+  //         console.error("Failed to send push subscription to backend.")
+  //       }
+  //     } catch (error) {
+  //       console.error("Error sending push subscription to backend:", error)
+  //     }
+  //   }
+  // }
 
   return (
     <div className="sticky top-0 hidden h-[100vh] w-[380px] border-l border-accent px-4 pt-4 lg:block">
@@ -45,7 +45,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
           </button>
         </div>
       )}
-      <div className="mt-4 rounded-2xl border border-accent p-4">
+      {/* <div className="mt-4 rounded-2xl border border-accent p-4">
         <p className="mb-2 text-xl font-bold">Stay Updated</p>
         <p className="mb-4 text-sm text-gray-500">
           Enable push notifications to get real-time updates.
@@ -56,7 +56,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
         >
           Enable Notifications
         </button>
-      </div>
+      </div> */}
     </div>
   )
 }

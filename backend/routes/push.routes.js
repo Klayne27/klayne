@@ -41,7 +41,6 @@ router.post("/subscribe", protectRoute, async (req, res) => {
   }
 });
 
-// A route to show the notification manually
 router.post("/notify", protectRoute, async (req, res) => {
   const { userId, title, body, url } = req.body;
   try {

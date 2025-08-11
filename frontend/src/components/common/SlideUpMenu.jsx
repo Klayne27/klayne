@@ -4,28 +4,12 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
-  const contentRef = useRef(null) // Ref for the scrollable content area
+  const contentRef = useRef(null)
 
-  // useEffect(() => {
-  //   if (isOpen) {
-  //     document.body.style.overflow = "hidden"
-  //     // Add the overscroll behavior directly to the body
-  //     document.body.style.overscrollBehaviorY = "contain"
-  //   } else {
-  //     document.body.style.overflow = ""
-  //     document.body.style.overscrollBehaviorY = ""
-  //   }
-
-  //   return () => {
-  //     document.body.style.overflow = ""
-  //     document.body.style.overscrollBehaviorY = ""
-  //   }
-  // }, [isOpen])
 
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
-      // This is a good place to also handle the overscroll behavior for the body
       document.body.style.overscrollBehavior = "none"
     } else {
       document.body.style.overflow = ""
@@ -60,13 +44,11 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchMove = useCallback(
     (e) => {
       e.preventDefault()
-      // e.stopPropagation()
       if (!isDragging) return
 
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
 
-      // Only allow dragging down
       if (deltaY < 0) return
 
       if (menuRef.current) {
@@ -84,12 +66,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     if (!menu) return
 
     const menuHeight = menu.clientHeight
-    // Get the final transform value after dragging
     const currentTransform = new DOMMatrix(getComputedStyle(menu).transform).m42
 
     menu.style.transition = "transform 300ms ease-out"
 
-    // Close if dragged more than 40% of its height
     if (currentTransform > menuHeight * 0.4) {
       menu.style.transform = "translateY(100%)"
       setTimeout(onClose, 300)

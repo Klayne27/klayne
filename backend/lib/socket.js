@@ -312,7 +312,6 @@ export const createAndSendNotification = async ({
 
     const receiverSocketIds = getReceiverSocketIds(to.toString());
 
-
     if (receiverSocketIds.length === 0) {
       const payload = {
         title: "New Notification",
