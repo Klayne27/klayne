@@ -22,7 +22,13 @@ import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { handleEnablePushNotifications } from "../../utils/push"
 
-const Sidebar = ({ onOpenCreatePostModal }) => {
+const Sidebar = ({
+  onOpenCreatePostModal,
+  isPushSubscribed,
+  installApp,
+  isInstalled,
+  deferredPrompt,
+}) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
 
@@ -1051,11 +1057,21 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                 </li>
               </ul>
             </div>
-            {authUser?.isAdmin && (
+            {!isInstalled && deferredPrompt && (
+              <div className="mb-4 px-4">
+                <button
+                  onClick={installApp}
+                  className="w-full rounded-full bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+                >
+                  Install The App
+                </button>
+              </div>
+            )}
+            {!isPushSubscribed && (
               <div className="mb-4 px-4">
                 <button
                   onClick={handleEnablePushNotifications}
-                  className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+                  className="w-full rounded-full bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
                 >
                   Enable Notifications
                 </button>

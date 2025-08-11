@@ -34,7 +34,13 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
 
   return (
     <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
-      <Sidebar onOpenCreatePostModal={() => setShowCreatePostModal(true)} />
+      <Sidebar
+        onOpenCreatePostModal={() => setShowCreatePostModal(true)}
+        isPushSubscribed={isPushSubscribed}
+        deferredPrompt={deferredPrompt}
+        isInstalled={isInstalled}
+        installApp={installApp}
+      />
       <main
         className={`${
           isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
