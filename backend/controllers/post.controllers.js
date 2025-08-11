@@ -446,7 +446,7 @@ export const getAllPosts = async (req, res) => {
           pipeline: [
             {
               $lookup: {
-                from: "images", // Lookup the Image collection
+                from: "images",
                 localField: "profileImg",
                 foreignField: "_id",
                 as: "profileImg",
@@ -480,10 +480,30 @@ export const getAllPosts = async (req, res) => {
                 localField: "user",
                 foreignField: "_id",
                 as: "user",
-                pipeline: [{ $project: userProjection }],
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "images",
+                      localField: "profileImg",
+                      foreignField: "_id",
+                      as: "profileImg",
+                    },
+                  },
+                  { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+                  { $project: userProjection },
+                ],
               },
             },
             { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "images",
+                localField: "image",
+                foreignField: "_id",
+                as: "image",
+              },
+            },
+            { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
             { $project: repostedPostProjection },
           ],
         },
