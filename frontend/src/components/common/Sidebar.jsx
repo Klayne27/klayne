@@ -1051,14 +1051,16 @@ const Sidebar = ({ onOpenCreatePostModal }) => {
                 </li>
               </ul>
             </div>
-            <div className="px-4 mb-4">
-              <button
-                onClick={handleEnablePushNotifications}
-                className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
-              >
-                Enable Notifications
-              </button>
-            </div>
+            {authUser?.isAdmin && (
+              <div className="mb-4 px-4">
+                <button
+                  onClick={handleEnablePushNotifications}
+                  className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+                >
+                  Enable Notifications
+                </button>
+              </div>
+            )}
           </div>
         )}
       </div>
