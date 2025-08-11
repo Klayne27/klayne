@@ -10,6 +10,7 @@ import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Image from "../models/image.model.js";
+import { sendPushNotification } from "../lib/utils/sendPush.js";
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) {
