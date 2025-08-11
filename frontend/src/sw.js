@@ -1,4 +1,7 @@
-// The self variable refers to the service worker itself
+import { precacheAndRoute } from "workbox-precaching"
+
+precacheAndRoute(self.__WB_MANIFEST || [])
+
 self.addEventListener("push", (event) => {
   let data = {
     title: "New Notification",
@@ -15,14 +18,15 @@ self.addEventListener("push", (event) => {
     }
   }
 
-  const title = data.title
+  const payload = event.data
+    ? event.data.json()
+    : { title: "Simulated Push", body: "This is a test notification." }
+
+  const title = payload.title || "Default Title"
   const options = {
-    body: data.body,
-    icon: "/x-logo2.png", 
-    badge: "/x-logo2.png",
-    data: {
-      url: data.url,
-    },
+    body: payload.body || "Default body message.",
+    icon: "/x-logo2.png", // Make sure this icon exists
+    badge: "/x-logo2.png", // Optional
   }
 
   event.waitUntil(self.registration.showNotification(title, options))

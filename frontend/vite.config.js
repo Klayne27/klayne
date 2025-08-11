@@ -8,6 +8,10 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      devOptions: {
+        enabled: true, // This enables the service worker in development mode
+        type: "module",
+      },
       // pwaAssets: {
       //   images: "public/x-logo2.png",
       // },
@@ -40,6 +44,7 @@ export default defineConfig({
       },
       injectManifest: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
+        swSrc: "src/sw.js", // This is where your custom logic lives
       },
       srcDir: "src",
       filename: "sw.js", // This is the file we will create

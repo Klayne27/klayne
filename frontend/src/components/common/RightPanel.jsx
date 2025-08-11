@@ -9,14 +9,21 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
   const handleEnablePushNotifications = async () => {
     const subscription = await subscribeUserToPush()
     if (subscription) {
-      // Send the subscription object to your backend
+      const subscriptionObject = subscription.toJSON()
+
       try {
         const response = await fetch("/api/push/subscribe", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(subscription),
+          body: JSON.stringify({
+            endpoint: subscriptionObject.endpoint,
+            keys: {
+              p256dh: subscriptionObject.keys.p256dh,
+              auth: subscriptionObject.keys.auth,
+            },
+          }),
         })
 
         if (response.ok) {
