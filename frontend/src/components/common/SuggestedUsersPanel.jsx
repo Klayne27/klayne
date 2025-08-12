@@ -1,46 +1,46 @@
-import { Link } from "react-router-dom";
-import RightPanelSkeleton from "../skeletons/RightPanelSkeleton";
-import useFollow from "../../hooks/usersHooks/useFollow";
-import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers";
-import LoadingSpinner from "../ui/LoadingSpinner";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
-import { BiRefresh } from "react-icons/bi";
-import React, { useState } from "react";
-import FollowButton from "../ui/FollowButton";
-import ConfirmationModal from "../ui/ConfirmationModal";
-import { useAppStore } from "../../store/useAppStore";
+import { Link } from "react-router-dom"
+import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
+import useFollow from "../../hooks/usersHooks/useFollow"
+import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers"
+import LoadingSpinner from "../ui/LoadingSpinner"
+import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { BiRefresh } from "react-icons/bi"
+import React, { useState } from "react"
+import FollowButton from "../ui/FollowButton"
+import ConfirmationModal from "../ui/ConfirmationModal"
+import { useAppStore } from "../../store/useAppStore"
 
 const SuggestedUsersPanel = () => {
-  const showUnfollowModal = useAppStore((state) => state.showUnfollowModal);
-  const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal);
-  const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers();
-  const { follow } = useFollow();
-  const { authUser: currentUser } = useAuthUser();
-  const [userToUnfollow, setUserToUnfollow] = useState(null);
+  const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
+  const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal)
+  const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers()
+  const { follow } = useFollow()
+  const { authUser: currentUser } = useAuthUser()
+  const [userToUnfollow, setUserToUnfollow] = useState(null)
 
   const handleRefreshClick = () => {
-    refetch();
-  };
+    refetch()
+  }
 
   const openUnfollowModal = (userToUnfollow) => {
-    setUserToUnfollow(userToUnfollow);
-    setShowUnfollowModal(true);
-  };
+    setUserToUnfollow(userToUnfollow)
+    setShowUnfollowModal(true)
+  }
 
   const closeUnfollowModal = () => {
-    setShowUnfollowModal(false);
-    setUserToUnfollow(null);
-  };
+    setShowUnfollowModal(false)
+    setUserToUnfollow(null)
+  }
 
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id);
-      closeUnfollowModal();
+      follow(userToUnfollow._id)
+      closeUnfollowModal()
     }
-  };
+  }
 
   if (!isLoading && !isRefetching && suggestedUsers?.length === 0) {
-    return null;
+    return null
   }
 
   return (
@@ -48,12 +48,12 @@ const SuggestedUsersPanel = () => {
       <p className="mb-4 text-xl font-bold">Who to follow</p>
       <div className="flex flex-col gap-4">
         {!suggestedUsers && isLoading && (
-          <>
+          <div className="flex flex-col gap-2.5">
             <RightPanelSkeleton />
             <RightPanelSkeleton />
             <RightPanelSkeleton />
             <RightPanelSkeleton />
-          </>
+          </div>
         )}
         {suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
@@ -101,7 +101,7 @@ const SuggestedUsersPanel = () => {
           disabled={isRefetching || isLoading}
         >
           {isLoading || isRefetching ? (
-            <LoadingSpinner size="xs" />
+            <div></div>
           ) : (
             <BiRefresh className="h-5 w-5" />
           )}
@@ -125,6 +125,6 @@ const SuggestedUsersPanel = () => {
       />
     </div>
   )
-};
+}
 
-export default React.memo(SuggestedUsersPanel);
+export default React.memo(SuggestedUsersPanel)

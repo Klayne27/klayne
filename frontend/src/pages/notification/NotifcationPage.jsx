@@ -145,7 +145,7 @@ const NotificationPage = () => {
         </div>
 
         {isLoading && (
-          <div>
+          <div className="mt-4">
             <NotificationsSkeleton />
             <NotificationsSkeleton />
             <NotificationsSkeleton />
