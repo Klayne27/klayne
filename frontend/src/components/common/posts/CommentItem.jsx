@@ -540,13 +540,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
             {renderClickableText(comment.text)}
           </p>
           <div className="inline-flex max-w-full justify-center">
-            {comment.img && comment.image?._id && (
+            {comment.image?._id && (
               <Link to={`/images/${comment.image?._id}`}>
                 <img
-                  src={comment.img}
+                  src={comment.image.imageUrl}
                   alt="Comment attachment"
                   className="block h-auto max-h-80 cursor-pointer rounded-2xl border border-accent object-contain"
-                  // onClick={(e) => handleImageClick(comment.img, e)}
                 />
               </Link>
             )}

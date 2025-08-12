@@ -21,8 +21,10 @@ import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
 dotenv.config();
 
 import { initPush } from "./lib/utils/sendPush.js";
+import { initFirebaseAdmin } from "./config/firebaseAdmin.js";
 
-initPush()
+initPush();
+initFirebaseAdmin();
 
 cloudinary.config({
   cloud_name: process.env.CLOUDINARY_CLOUD_NAME,

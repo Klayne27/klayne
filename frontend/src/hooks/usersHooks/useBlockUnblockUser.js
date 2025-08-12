@@ -1,4 +1,3 @@
-import toast from "react-hot-toast";
 import { blockUnblockUserApi } from "../../api/usersApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";

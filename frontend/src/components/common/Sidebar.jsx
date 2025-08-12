@@ -336,25 +336,12 @@ const Sidebar = ({
   }
 
   const handleDeleteAccount = async () => {
-    if (!passwordInput) {
-      showAppToast("Please enter your password.", "error")
-      return
-    }
-
     if (authUser && authUser._id) {
       try {
-        await deleteAccount({ userId: authUser._id, password: passwordInput })
-        // On success, the useDeleteAccount hook redirects, so the modal will unmount anyway.
-        // If it didn't redirect, you'd setShowConfirmDeleteModal(false);
+        await deleteAccount({ userId: authUser._id })
       } catch (error) {
-        // Error handling is already done by useDeleteAccount's onError,
-        // but you can add more specific modal closing logic if needed.
-        // For example, if you want the modal to stay open on error for correction.
         console.error("Deletion failed:", error)
-      } finally {
-        // Clear password input regardless of success/failure when the async operation finishes
-        setPasswordInput("")
-      }
+      } 
     } else {
       showAppToast("User ID not available. Cannot proceed with deletion.", "error")
     }
@@ -1111,26 +1098,13 @@ const Sidebar = ({
       <ConfirmationModal
         modalTitle="Confirm Account Deletion"
         isOpen={showConfirmDeleteModal}
-        onClose={() => {
-          setShowConfirmDeleteModal(false)
-          setPasswordInput("") // Clear password when modal is closed without confirmation
-        }}
+        onClose={() => setShowConfirmDeleteModal(false)}
         onConfirm={handleDeleteAccount}
-        isConfirmDisabled={isConfirmButtonDisabled} // Control disabled state from here
         message="This action is irreversible. Please enter your password to confirm."
         danger={true}
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
-        isLoading={isDeletingAccount} // Show loading state
-      >
-        <input
-          type="password"
-          placeholder="Enter your password"
-          value={passwordInput}
-          onChange={(e) => setPasswordInput(e.target.value)}
-          className="mb-2 w-full rounded-xl border border-slate-500 bg-base-100 p-2 px-4 focus:border-primary focus:outline-none focus:ring-primary"
-          autoFocus // Optional: Automatically focus this input when modal opens
-        />
-      </ConfirmationModal>
+        isLoading={isDeletingAccount}
+      ></ConfirmationModal>
     </>
   )
 }

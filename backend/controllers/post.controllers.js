@@ -178,10 +178,12 @@ export const createPost = async (req, res) => {
         select: "username fullName isVerified isGoldVerified",
         populate: {
           path: "profileImg",
+          select: "imageUrl",
         },
       })
       .populate({
         path: "image",
+        select: "imageUrl"
       })
       .populate({
         path: "video",

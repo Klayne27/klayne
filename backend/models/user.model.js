@@ -13,13 +13,19 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: true,
+      required: false,
       minLength: 6,
     },
+
     email: {
       type: String,
       required: true,
       unique: true,
+    },
+    googleId: {
+      type: String,
+      unique: true,
+      sparse: true, // Allow multiple null values
     },
     isVerified: {
       type: Boolean,

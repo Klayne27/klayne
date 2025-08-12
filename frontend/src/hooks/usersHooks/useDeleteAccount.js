@@ -6,15 +6,12 @@ export const useDeleteAccount = () => {
   const queryClient = useQueryClient();
 
   const { mutateAsync: deleteAccount, isPending: isDeletingAccount } = useMutation({
-    mutationFn: ({ userId, password }) => deleteUserAccountApi(userId, password),
+    mutationFn: ({ userId }) => deleteUserAccountApi(userId),
     onSuccess: () => {
       showAppToast("Account deleted successfully!", "success");
       localStorage.removeItem("authUser");
       queryClient.removeQueries();
       window.location.href = "/login";
-    },
-    onError: (error) => {
-      showAppToast(error.message || "Failed to delete account.", "error");
     },
   });
 

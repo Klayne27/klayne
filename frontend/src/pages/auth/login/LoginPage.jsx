@@ -1,41 +1,42 @@
-import { useState } from "react";
-import { Link } from "react-router-dom";
-import XSvg from "../../../components/svgs/X";
-import { MdOutlineMail } from "react-icons/md";
-import { MdPassword } from "react-icons/md";
-import { useLogin } from "../../../hooks/authHooks/useLogin";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { useState } from "react"
+import { Link } from "react-router-dom"
+import XSvg from "../../../components/svgs/X"
+import { MdOutlineMail } from "react-icons/md"
+import { MdPassword } from "react-icons/md"
+import { useLogin } from "../../../hooks/authHooks/useLogin"
+import { FaEye, FaEyeSlash } from "react-icons/fa6"
+import GoogleSignInButton from "../../../components/common/GoogleSignInButton"
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
     email: "",
     password: "",
-  });
+  })
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
 
-  const { login, isPending, isError, error } = useLogin();
+  const { login, isPending, isError, error } = useLogin()
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    login(formData);
-  };
+    e.preventDefault()
+    login(formData)
+  }
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+  }
 
   return (
-    <div className="max-w-screen-xl mx-auto flex h-screen">
-      <div className="flex-1 hidden lg:flex items-center  justify-center">
-        <XSvg className="lg:w-2/3 fill-primary" />
+    <div className="mx-auto flex h-screen max-w-screen-xl">
+      <div className="hidden flex-1 items-center justify-center lg:flex">
+        <XSvg className="fill-primary lg:w-2/3" />
       </div>
-      <div className="flex-1 flex flex-col justify-center items-center">
-        <form className="flex gap-4 flex-col" onSubmit={handleSubmit}>
-          <XSvg className="w-24 lg:hidden fill-primary" />
-          <h1 className="text-4xl font-extrabold ">Let's go.</h1>
-          <label className="input input-bordered rounded flex items-center gap-2">
+      <div className="flex flex-1 flex-col items-center justify-center">
+        <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
+          <XSvg className="w-24 fill-primary lg:hidden" />
+          <h1 className="text-4xl font-extrabold">Let's go.</h1>
+          <label className="input input-bordered flex items-center gap-2 rounded">
             <MdOutlineMail />
             <input
               type="text"
@@ -47,38 +48,45 @@ const LoginPage = () => {
             />
           </label>
 
-          <label className="input input-bordered rounded flex items-center gap-2 relative">
+          <label className="input input-bordered relative flex items-center gap-2 rounded">
             <MdPassword />
             <input
               type={showPassword ? "text" : "password"}
-              className="grow mr-6"
+              className="mr-6 grow"
               placeholder="Password"
               name="password"
               onChange={handleInputChange}
               value={formData.password}
             />
             <span
-              className="absolute text-slate-500 right-4 cursor-pointer"
+              className="absolute right-4 cursor-pointer text-slate-500"
               onClick={() => setShowPassword(!showPassword)}
             >
               {!showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </label>
-          <button className="py-3 text-sm font-semibold bg-primary rounded-full text-white  hover:bg-primary/80 transition duration-200">
+          <button className="rounded-full bg-primary py-3 text-sm font-semibold text-white transition duration-200 hover:bg-primary/80">
             {isPending ? "Loading..." : "Login"}
           </button>
-          {isError && <p className="text-red-500 text-center">{error.message}</p>}
+          {isError && <p className="text-center text-red-500">{error.message}</p>}
         </form>
-        <div className="flex flex-col gap-2 mt-4">
-          <p className=" text-lg">{"Don't"} have an account?</p>
+        <Link to="/forgot-password">
+          <p className="mt-4 text-center text-sm text-primary hover:underline">Forgot password?</p>
+        </Link>
+        <div className="divider my-4">OR</div>
+        <GoogleSignInButton />
+        <div className="divider my-4"></div>
+
+        <div className="flex flex-col gap-2">
+          <p className="text-lg">{"Don't"} have an account?</p>
           <Link to="/signup">
-            <button className="btn rounded-full btn-primary text-white btn-outline w-full">
+            <button className="btn btn-outline btn-primary w-full rounded-full text-white">
               Sign up
             </button>
           </Link>
         </div>
       </div>
     </div>
-  );
-};
-export default LoginPage;
+  )
+}
+export default LoginPage

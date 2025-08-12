@@ -21,8 +21,10 @@
     "emoji-picker-react": "^4.12.2",
     "express": "^5.1.0",
     "express-rate-limit": "^8.0.1",
+    "firebase-admin": "^13.4.0",
     "jsonwebtoken": "^9.0.2",
     "mongoose": "^8.15.1",
+    "nodemailer": "^7.0.5",
     "socket.io": "^4.8.1",
     "uuid": "^11.1.0",
     "web-push": "^3.6.7"

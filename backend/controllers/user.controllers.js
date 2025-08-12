@@ -5,7 +5,10 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import { createAndSendNotification, emitUnreadNotificationStatus } from "../lib/socket.js";
+import {
+  createAndSendNotification,
+  emitUnreadNotificationStatus,
+} from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
@@ -25,8 +28,8 @@ export const getUserProfile = async (req, res) => {
           select: "username fullName profileImg isVerified isGoldVerified",
         },
       })
-      .populate("profileImg") // Populate the profile image
-      .populate("coverImg"); // Populate the cover image
+      .populate("profileImg", "imageUrl") // Populate the profile image
+      .populate("coverImg", "imageUrl"); // Populate the cover image
 
     if (!user) {
       return res.status(404).json({ error: "User not found" });
@@ -227,9 +230,27 @@ export const updateUser = async (req, res) => {
 
   try {
     // Fetch the user and populate the image fields to handle both old and new data types
-    let user = await User.findById(userId).populate("profileImg").populate("coverImg");
+    let user = await User.findById(userId)
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl");
+
     if (!user) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    if (email !== undefined && email !== user.email) {
+      const existingUserWithEmail = await User.findOne({ email });
+      if (existingUserWithEmail) {
+        return res.status(409).json({ error: "Email is already taken." });
+      }
+    }
+
+    // Check if the new username is already taken by another user
+    if (username !== undefined && username !== user.username) {
+      const existingUserWithUsername = await User.findOne({ username });
+      if (existingUserWithUsername) {
+        return res.status(409).json({ error: "Username is already taken." });
+      }
     }
 
     // --- Password and Validation Logic ---
@@ -257,21 +278,19 @@ export const updateUser = async (req, res) => {
     }
 
     // --- Profile Image Logic ---
-    // If a new profileImg is provided (e.g., from a file input)
     if (profileImg !== undefined) {
-      // If there's an existing image, delete it from Cloudinary and the database
       if (user.profileImg) {
-        await cloudinary.uploader.destroy(
-          user.profileImg.imageUrl.split("/").pop().split(".")[0]
-        );
+        // Delete existing image from Cloudinary and the database
+        const publicId = user.profileImg.imageUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
         await Image.findByIdAndDelete(user.profileImg._id);
       }
 
-      // If the new image is an empty string, we're removing it
       if (profileImg === "") {
+        // If the new image is an empty string, just set the user reference to null
         user.profileImg = null;
       } else {
-        // Otherwise, it's a new image, so upload it and create a new Image document
+        // Otherwise, upload the new image and create a new Image document
         const uploadedResponse = await cloudinary.uploader.upload(profileImg);
         const newProfileImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -284,21 +303,16 @@ export const updateUser = async (req, res) => {
     }
 
     // --- Cover Image Logic ---
-    // If a new coverImg is provided
     if (coverImg !== undefined) {
-      // If there's an existing image, delete it first
       if (user.coverImg) {
-        await cloudinary.uploader.destroy(
-          user.coverImg.imageUrl.split("/").pop().split(".")[0]
-        );
+        const publicId = user.coverImg.imageUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
         await Image.findByIdAndDelete(user.coverImg._id);
       }
 
-      // If the new image is an empty string, we're removing it
       if (coverImg === "") {
         user.coverImg = null;
       } else {
-        // Otherwise, it's a new image, so upload it and create a new Image document
         const uploadedResponse = await cloudinary.uploader.upload(coverImg);
         const newCoverImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -310,7 +324,7 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    // --- Update other user fields ---
+    // Update other user fields
     if (fullName !== undefined) user.fullName = fullName;
     if (email !== undefined) user.email = email;
     if (username !== undefined) user.username = username;
@@ -321,7 +335,8 @@ export const updateUser = async (req, res) => {
 
     // Re-fetch the user to ensure all fields, including the new images, are populated
     const updatedUser = await User.findById(userId)
-      .populate("profileImg coverImg")
+      .populate("profileImg", "imageUrl")
+      .populate("coverImg", "imageUrl")
       .select("-password");
 
     return res.status(200).json(updatedUser);
@@ -380,14 +395,6 @@ export const getFollowers = async (req, res) => {
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
-    // Extract password from request body
-    const { password } = req.body;
-
-    if (!password) {
-      return res
-        .status(400)
-        .json({ error: "Password is required to delete your account." });
-    }
 
     if (id !== req.user._id.toString()) {
       return res
@@ -400,35 +407,20 @@ export const deleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    const isPasswordCorrect = await bcrypt.compare(password, userToDelete.password);
-    if (!isPasswordCorrect) {
-      return res.status(401).json({ error: "Invalid password." });
-    }
+    // 1. Find all images uploaded by the user to delete from Cloudinary and the database
+    const userImages = await Image.find({ uploadedBy: userToDelete._id });
 
-    await User.updateMany(
-      { blockedUsers: userToDelete._id },
-      { $pull: { blockedUsers: userToDelete._id } }
-    );
-    await User.updateMany(
-      { blockedBy: userToDelete._id },
-      { $pull: { blockedBy: userToDelete._id } }
-    );
-
-    if (userToDelete.profileImg) {
-      const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(profileImgId);
+    // Delete all images from Cloudinary
+    for (const image of userImages) {
+      const publicId = image.imageUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
     }
-    if (userToDelete.coverImg) {
-      const coverImgId = userToDelete.coverImg.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(coverImgId);
-    }
+    // Delete all image documents from the database
+    await Image.deleteMany({ uploadedBy: userToDelete._id });
 
+    // 2. Find and delete user's posts, including any associated videos
     const userPosts = await Post.find({ user: userToDelete._id });
     for (const post of userPosts) {
-      if (post.img) {
-        const postId = post.img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(postId);
-      }
       if (post.video) {
         const videoId = post.video.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
@@ -436,56 +428,27 @@ export const deleteUserAccount = async (req, res) => {
       await Post.findByIdAndDelete(post._id);
     }
 
-    await Post.updateMany(
-      { likes: userToDelete._id },
-      { $pull: { likes: userToDelete._id } }
-    );
-
-    await Post.updateMany(
-      { "comments.user": userToDelete._id },
-      { $pull: { comments: { user: userToDelete._id } } }
-    );
-
+    // 3. Update all other related documents
     await User.updateMany(
-      { following: userToDelete._id },
-      { $pull: { following: userToDelete._id } }
+      { $or: [{ blockedUsers: id }, { blockedBy: id }] },
+      { $pull: { blockedUsers: id, blockedBy: id } }
     );
-
+    await Post.updateMany({ likes: id }, { $pull: { likes: id } });
+    await Post.updateMany({ "comments.user": id }, { $pull: { comments: { user: id } } });
     await User.updateMany(
-      { followers: userToDelete._id },
-      { $pull: { followers: userToDelete._id } }
+      { $or: [{ following: id }, { followers: id }] },
+      { $pull: { following: id, followers: id } }
     );
+    await Notification.deleteMany({ $or: [{ from: id }, { to: id }] });
+    await PublicChatMessage.deleteMany({ sender: id });
 
-    await Notification.deleteMany({
-      $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
-    });
+    // 4. Delete messages and conversations
+    const conversationsToDelete = await Conversation.find({ participants: id });
+    const conversationIds = conversationsToDelete.map((conv) => conv._id);
+    await Message.deleteMany({ conversationId: { $in: conversationIds } });
+    await Conversation.deleteMany({ _id: { $in: conversationIds } });
 
-    const conversationsToDelete = await Conversation.find({
-      participants: userToDelete._id,
-    });
-
-    for (const conversation of conversationsToDelete) {
-      await Message.deleteMany({ conversationId: conversation._id });
-      await Conversation.findByIdAndDelete(conversation._id);
-    }
-
-    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
-
-    const publicChatMessagesWithMedia = await PublicChatMessage.find({
-      sender: userToDelete._id,
-      $or: [{ img: { $ne: "" } }, { video: { $ne: "" } }],
-    });
-    for (const msg of publicChatMessagesWithMedia) {
-      if (msg.img) {
-        const imgPublicId = msg.img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(imgPublicId);
-      }
-      if (msg.video) {
-        const videoPublicId = msg.video.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(videoPublicId, { resource_type: "video" });
-      }
-    }
-
+    // 5. Finally, delete the user document
     await User.findByIdAndDelete(id);
 
     res.status(200).json({

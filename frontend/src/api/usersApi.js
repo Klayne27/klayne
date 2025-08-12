@@ -102,11 +102,10 @@ export const blockUnblockUserApi = async (userId) => {
   return data;
 };
 
-export const deleteUserAccountApi = async (userId, password) => {
+export const deleteUserAccountApi = async (userId) => {
   const res = await fetch(`${BASE_URL}/delete/${userId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ password }),
   });
   const data = await res.json();
 

@@ -12,6 +12,8 @@ import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
+import ResetPasswordPage from "./pages/ResetPasswordPage"
+import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -123,6 +125,15 @@ function App() {
         <Routes>
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
+          <Route
+            path="/reset-password/:token"
+            element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
+          />
+          <Route
+            path="/forgot-password"
+            element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
+          />
+
           <Route
             path="/images/:imageId"
             element={authUser ? <ImageViewerPage /> : <Navigate to="/login" />}
