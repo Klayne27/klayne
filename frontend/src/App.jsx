@@ -10,7 +10,8 @@ import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
 import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
-import { useGlobalChatSocketEvents } from "./hooks/socketEventHooks/useGlobalChatSocketEvents"
+import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
+import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -78,7 +79,8 @@ function App() {
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
 
-  useGlobalChatSocketEvents()
+  useGlobalPrivateChatSocketEvents()
+  useGlobalPublicChatSocketEvents()
 
   useEffect(() => {
     // Check subscription status on component mount

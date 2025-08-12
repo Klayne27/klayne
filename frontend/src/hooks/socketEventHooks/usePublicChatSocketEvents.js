@@ -15,32 +15,32 @@ export const usePublicChatSocketEvents = () => {
 
     socket.emit("public_chat_room");
 
-    const handleNewPublicMessage = (newMessage) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
-        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          return { pages: [[newMessage]], pageParams: [1] };
-        }
+    // const handleNewPublicMessage = (newMessage) => {
+    //   queryClient.setQueryData(["publicMessages"], (oldData) => {
+    //     if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+    //       return { pages: [[newMessage]], pageParams: [1] };
+    //     }
 
-        const newPages = oldData.pages.map((page) => [...page]);
-        const mostRecentPage = newPages[0];
+    //     const newPages = oldData.pages.map((page) => [...page]);
+    //     const mostRecentPage = newPages[0];
 
-        if (newMessage.sender._id === authUser._id) {
-          const optimisticIndex = mostRecentPage.findIndex((msg) => msg.isOptimistic);
-          if (optimisticIndex !== -1) {
-            mostRecentPage[optimisticIndex] = newMessage;
-          } else {
-            if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
-              mostRecentPage.push(newMessage);
-            }
-          }
-        } else {
-          if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
-            mostRecentPage.push(newMessage);
-          }
-        }
-        return { ...oldData, pages: newPages };
-      });
-    };
+    //     if (newMessage.sender._id === authUser._id) {
+    //       const optimisticIndex = mostRecentPage.findIndex((msg) => msg.isOptimistic);
+    //       if (optimisticIndex !== -1) {
+    //         mostRecentPage[optimisticIndex] = newMessage;
+    //       } else {
+    //         if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+    //           mostRecentPage.push(newMessage);
+    //         }
+    //       }
+    //     } else {
+    //       if (!mostRecentPage.some((msg) => msg._id === newMessage._id)) {
+    //         mostRecentPage.push(newMessage);
+    //       }
+    //     }
+    //     return { ...oldData, pages: newPages };
+    //   });
+    // };
 
     const handleMessageDeleted = ({ messageId }) => {
       queryClient.setQueryData(["publicMessages"], (oldData) => {
@@ -153,7 +153,7 @@ export const usePublicChatSocketEvents = () => {
       setTypingUsers(serverTypingUsers.filter((user) => user.userId !== authUser._id));
     };
 
-    socket.on("newPublicMessage", handleNewPublicMessage);
+    // socket.on("newPublicMessage", handleNewPublicMessage);
     socket.on("publicMessageDeleted", handleMessageDeleted);
     socket.on("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
     socket.on("publicMessageEdited", handlePublicMessageEdited);
@@ -163,7 +163,7 @@ export const usePublicChatSocketEvents = () => {
     socket.on("public_typing_update", handlePublicTypingUpdate);
 
     return () => {
-      socket.off("newPublicMessage", handleNewPublicMessage);
+      // socket.off("newPublicMessage", handleNewPublicMessage);
       socket.off("publicMessageDeleted", handleMessageDeleted);
       socket.off("publicOwnMessageDeleted", handlepublicOwnMessageDeleted);
       socket.off("publicMessageEdited", handlePublicMessageEdited);

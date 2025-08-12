@@ -3,7 +3,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../context/SocketContext"
 import { useAuthUser } from "../authHooks/useAuthUser"
 
-export const useGlobalChatSocketEvents = () => {
+export const useGlobalPrivateChatSocketEvents = () => {
   const queryClient = useQueryClient()
   const { socket } = useSocket()
   const { authUser: currentUser } = useAuthUser()
@@ -73,6 +73,8 @@ export const useGlobalChatSocketEvents = () => {
         return [conversationToUpdate, ...updatedConversations]
       })
     }
+
+
 
     socket.on("newMessage", handleNewMessage)
 
