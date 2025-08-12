@@ -210,8 +210,8 @@ export const sendMessage = async (req, res) => {
       // ---------------------------------------------------------------------------
     }
 
-    const senderSocketIds = getReceiverSocketIds(senderId.toString());
-    io.to(senderSocketIds).emit("newMessage", newMessage.toObject());
+    // const senderSocketIds = getReceiverSocketIds(senderId.toString());
+    // io.to(senderSocketIds).emit("newMessage", newMessage.toObject());
 
     if (isSeen) {
       const senderSocketIds = getReceiverSocketIds(senderId.toString());
