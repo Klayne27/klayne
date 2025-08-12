@@ -13,6 +13,7 @@ import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
+import { admin } from "../config/firebaseAdmin.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -407,6 +408,10 @@ export const deleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
+    if (userToDelete.firebaseUid) {
+      await admin.auth().deleteUser(userToDelete.firebaseUid);
+    }
+
     // 1. Find all images uploaded by the user to delete from Cloudinary and the database
     const userImages = await Image.find({ uploadedBy: userToDelete._id });
 
@@ -569,15 +574,19 @@ export const adminDeleteUserAccount = async (req, res) => {
 
     const { id: userIdToDelete } = req.params;
 
+    const userToDelete = await User.findById(userIdToDelete);
+    if (!userToDelete) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
     if (userIdToDelete === req.user._id.toString()) {
       return res.status(400).json({
         error: "Please use the 'Delete My Account' option to delete your own account.",
       });
     }
 
-    const userToDelete = await User.findById(userIdToDelete);
-    if (!userToDelete) {
-      return res.status(404).json({ error: "User not found." });
+    if (userToDelete.firebaseUid) {
+      await admin.auth().deleteUser(userToDelete.firebaseUid);
     }
 
     // 2. Delete all images associated with the user from Cloudinary and the database

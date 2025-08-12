@@ -37,7 +37,7 @@ const ForgotPasswordPage = () => {
 
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">
           <label
-            className={`${focusedField === "email" ? "border-primary" : "border-gray-600"}  relative flex w-full items-center gap-2 rounded-lg border border-gray-600 bg-black px-4 py-3`}
+            className={`${focusedField === "email" ? "border-primary" : "border-gray-600"} relative flex w-full items-center gap-2 rounded-lg border border-gray-600 bg-black px-4 py-3`}
           >
             <MdOutlineMail className="text-gray-500" />
             <input
@@ -58,7 +58,7 @@ const ForgotPasswordPage = () => {
             {isSending ? "Sending..." : "Send Reset Link"}
           </button>
         </form>
-        <Link to="/login" className="cursor-pointer hover:underline">
+        <Link to="/login" className="text-center text-sm text-primary hover:underline">
           Back to Login
         </Link>
       </div>

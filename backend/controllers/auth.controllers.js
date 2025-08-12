@@ -163,8 +163,6 @@ export const googleAuth = async (req, res) => {
         await user.save();
         console.log("Existing user linked Google account successfully.");
       } else if (user.googleId !== uid) {
-        // This is a rare edge case: a different Google account is trying to link
-        // to an existing email. This should be a security error.
         console.error("Attempt to link a different Google account to an existing user.");
         return res
           .status(400)
