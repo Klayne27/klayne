@@ -214,11 +214,11 @@ const Sidebar = ({
     } else {
       navigate("/")
     }
-    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
+    // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
 
-    markFeedAsRead()
-    setShowNewFeedPostsButton(false)
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead, navigate, pathname])
+    // markFeedAsRead()
+    setShowNewFeedPostsButton(true)
+  }, [setShowNewFeedPostsButton, navigate, pathname])
 
   const handleBookmarksClick = () => {
     if (pathname === "/bookmarks") return
