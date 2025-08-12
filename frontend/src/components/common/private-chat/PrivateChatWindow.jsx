@@ -44,6 +44,7 @@ const PrivateChatWindow = () => {
     isLoadingMessages,
     isTypingOtherUser,
   })
+  
   usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser, handleReactionAdded)
 
   const privateChatInputRef = useRef(null)

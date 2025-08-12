@@ -15,6 +15,7 @@ const MessagePage = () => {
 
   const { conversationId: urlConversationId } = useParams()
 
+
   const isMobile = useIsMobile()
 
   usePrivateChatStore()

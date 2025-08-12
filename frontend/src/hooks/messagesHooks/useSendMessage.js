@@ -56,35 +56,7 @@ export const useSendMessage = (onSenderMessageSent ) => {
         return newData
       })
 
-      // 4. Optimistically update the conversations query
-      // queryClient.setQueryData(conversationsQueryKey, (oldConversations) => {
-      //   if (!oldConversations) return oldConversations
-
-      //   const updatedConversations = oldConversations.map((conversation) => {
-      //     if (conversation._id === conversationId) {
-      //       return {
-      //         ...conversation,
-      //         lastMessage: {
-      //           text: optimisticMessage.text,
-      //           img: optimisticMessage.img,
-      //           sender: currentUser,
-      //           seen: false, // Set to false, as the recipient is assumed not to have the chat open
-      //           messageId: optimisticMessage._id,
-      //         },
-      //       }
-      //     }
-      //     return conversation
-      //   })
-
-      //   // Optional: Move the updated conversation to the top of the list for better UX
-      //   const updatedConversation = updatedConversations.find((c) => c._id === conversationId)
-      //   if (updatedConversation) {
-      //     const filteredConversations = updatedConversations.filter((c) => c._id !== conversationId)
-      //     return [updatedConversation, ...filteredConversations]
-      //   }
-
-      //   return updatedConversations
-      // })
+   
 
       if (onSenderMessageSent) {
         onSenderMessageSent()

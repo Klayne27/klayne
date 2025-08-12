@@ -26,7 +26,7 @@ export const useFetchMessages = (conversationId) => {
     enabled: !!conversationId,
     // staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
-    refetchOnMount: true,
+    refetchOnMount: false,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
     structuralSharing: false, // <--- ADD THIS TEMPORARILY

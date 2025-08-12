@@ -15,82 +15,82 @@ export const usePrivateChatSocketEvents = (
   const currentUserId = currentUser?._id
   const MESSAGE_LIMIT = 40
 
-  const handleNewMessage = useCallback(
-    (newMessage) => {
-      const targetMessagesQueryKey = ["messages", newMessage.conversationId]
+  // const handleNewMessage = useCallback(
+  //   (newMessage) => {
+  //     const targetMessagesQueryKey = ["messages", newMessage.conversationId]
 
-      queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
-        if (!oldData || !oldData.pages || oldData.pages.length === 0) {
-          return { pages: [[newMessage]], pageParams: [1] }
-        }
+  //     queryClient.setQueryData(targetMessagesQueryKey, (oldData) => {
+  //       if (!oldData || !oldData.pages || oldData.pages.length === 0) {
+  //         return { pages: [[newMessage]], pageParams: [1] }
+  //       }
 
-        const newData = {
-          ...oldData,
-          pages: oldData.pages.map((page) => [...page]), // Deep copy pages to ensure immutability
-        }
-        const firstPage = newData.pages[0]
+  //       const newData = {
+  //         ...oldData,
+  //         pages: oldData.pages.map((page) => [...page]), // Deep copy pages to ensure immutability
+  //       }
+  //       const firstPage = newData.pages[0]
 
-        // Handle optimistic message replacement or new message addition
-        if (newMessage.sender._id.toString() === currentUserId.toString()) {
-          const optimisticIndex = firstPage.findIndex(
-            (msg) => msg.isOptimistic && msg.sender._id.toString() === currentUserId.toString(),
-          )
-          if (optimisticIndex !== -1) {
-            firstPage[optimisticIndex] = newMessage
-          } else {
-            if (!firstPage.some((msg) => msg._id === newMessage._id)) {
-              firstPage.push(newMessage)
-            }
-          }
-        } else {
-          if (!firstPage.some((msg) => msg._id === newMessage._id)) {
-            firstPage.push(newMessage)
-          }
-        }
+  //       // Handle optimistic message replacement or new message addition
+  //       if (newMessage.sender._id.toString() === currentUserId.toString()) {
+  //         const optimisticIndex = firstPage.findIndex(
+  //           (msg) => msg.isOptimistic && msg.sender._id.toString() === currentUserId.toString(),
+  //         )
+  //         if (optimisticIndex !== -1) {
+  //           firstPage[optimisticIndex] = newMessage
+  //         } else {
+  //           if (!firstPage.some((msg) => msg._id === newMessage._id)) {
+  //             firstPage.push(newMessage)
+  //           }
+  //         }
+  //       } else {
+  //         if (!firstPage.some((msg) => msg._id === newMessage._id)) {
+  //           firstPage.push(newMessage)
+  //         }
+  //       }
 
-        // Limit the number of messages in the first page if needed
-        if (firstPage.length > MESSAGE_LIMIT) {
-          firstPage.shift()
-        }
+  //       // Limit the number of messages in the first page if needed
+  //       if (firstPage.length > MESSAGE_LIMIT) {
+  //         firstPage.shift()
+  //       }
 
-        newData.pages[0] = firstPage
-        return newData
-      })
+  //       newData.pages[0] = firstPage
+  //       return newData
+  //     })
 
-      // --- 2. Crucial: Update the 'conversations' query cache directly ---
-      queryClient.setQueryData(["conversations"], (oldConversations) => {
-        if (!oldConversations) return [] // If no conversations, return empty array
+  //     // --- 2. Crucial: Update the 'conversations' query cache directly ---
+  //     queryClient.setQueryData(["conversations"], (oldConversations) => {
+  //       if (!oldConversations) return [] // If no conversations, return empty array
 
-        // Find the conversation that corresponds to the new message
-        const conversationIndex = oldConversations.findIndex(
-          (conv) => conv._id === newMessage.conversationId,
-        )
+  //       // Find the conversation that corresponds to the new message
+  //       const conversationIndex = oldConversations.findIndex(
+  //         (conv) => conv._id === newMessage.conversationId,
+  //       )
 
-        if (conversationIndex !== -1) {
-          // If found, create a new array to ensure immutability
-          const updatedConversations = [...oldConversations]
-          const conversationToUpdate = { ...updatedConversations[conversationIndex] }
+  //       if (conversationIndex !== -1) {
+  //         // If found, create a new array to ensure immutability
+  //         const updatedConversations = [...oldConversations]
+  //         const conversationToUpdate = { ...updatedConversations[conversationIndex] }
 
-          // Update lastMessage and potentially seen status
-          conversationToUpdate.lastMessage = newMessage
-          conversationToUpdate.updatedAt = newMessage.createdAt // Also update updatedAt for sorting
+  //         // Update lastMessage and potentially seen status
+  //         conversationToUpdate.lastMessage = newMessage
+  //         conversationToUpdate.updatedAt = newMessage.createdAt // Also update updatedAt for sorting
 
-          updatedConversations.splice(conversationIndex, 1) // Remove from current position
-          updatedConversations.unshift(conversationToUpdate) // Add to the beginning
+  //         updatedConversations.splice(conversationIndex, 1) // Remove from current position
+  //         updatedConversations.unshift(conversationToUpdate) // Add to the beginning
 
-          return updatedConversations
-        } else {
-          console.warn(
-            "Received message for a conversation not in cache, invalidating conversations.",
-          )
-          // queryClient.invalidateQueries({ queryKey: ["conversations"] })
-          return oldConversations // Return old data for now, invalidation will handle the fetch.
-        }
-      })
-      queryClient.invalidateQueries({ queryKey: ["conversations"] })
-    },
-    [queryClient, currentUserId, MESSAGE_LIMIT],
-  )
+  //         return updatedConversations
+  //       } else {
+  //         console.warn(
+  //           "Received message for a conversation not in cache, invalidating conversations.",
+  //         )
+  //         // queryClient.invalidateQueries({ queryKey: ["conversations"] })
+  //         return oldConversations // Return old data for now, invalidation will handle the fetch.
+  //       }
+  //     })
+  //     queryClient.invalidateQueries({ queryKey: ["conversations"] })
+  //   },
+  //   [queryClient, currentUserId, MESSAGE_LIMIT],
+  // )
 
   const handleMessagesSeen = useCallback(
     ({ conversationId: seenConversationId, readerId }) => {
@@ -217,7 +217,7 @@ export const usePrivateChatSocketEvents = (
     socket.emit("joinConversation", conversationId)
     socket.emit("userActiveInChat", { conversationId: conversationId })
 
-    socket.on("newMessage", handleNewMessage)
+    // socket.on("newMessage", handleNewMessage)
     socket.on("messageDeleted", handleMessageDeleted)
     socket.on("messagesSeen", handleMessagesSeen)
     socket.on("typing", handleTyping)
@@ -229,7 +229,7 @@ export const usePrivateChatSocketEvents = (
     return () => {
       socket.emit("leaveConversation", conversationId)
       socket.emit("userActiveInChat", { conversationId: null })
-      socket.off("newMessage", handleNewMessage)
+      // socket.off("newMessage", handleNewMessage)
       socket.off("messageDeleted", handleMessageDeleted)
       socket.off("messagesSeen", handleMessagesSeen)
       socket.off("typing", handleTyping)
@@ -241,7 +241,7 @@ export const usePrivateChatSocketEvents = (
   }, [
     socket,
     conversationId,
-    handleNewMessage,
+    // handleNewMessage,
     handleMessageDeleted,
     handleMessagesSeen,
     handleTyping,

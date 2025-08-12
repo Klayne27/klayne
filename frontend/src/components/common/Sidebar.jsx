@@ -21,6 +21,7 @@ import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { handleEnablePushNotifications } from "../../utils/push"
+// import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -46,7 +47,7 @@ const Sidebar = ({
     newPostCount,
   } = useSocket()
   const queryClient = useQueryClient()
-  // const {username} = useParams()
+  // usePrivateChatStore()
 
   const { pathname } = useLocation()
   const navigate = useNavigate()

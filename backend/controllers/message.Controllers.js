@@ -13,7 +13,7 @@ import Image from "../models/image.model.js";
 import { sendPushNotification } from "../lib/utils/sendPush.js";
 import { transformCloudinaryUrl } from "../lib/utils/helpers.js";
 
-const BASE_URL = process.env.RENDER_EXTERNAL_URL
+const BASE_URL = process.env.RENDER_EXTERNAL_URL;
 
 const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUserId || !targetUserId) {
@@ -209,6 +209,9 @@ export const sendMessage = async (req, res) => {
       await sendPushNotification(recipientId.toString(), payload);
       // ---------------------------------------------------------------------------
     }
+
+    const senderSocketIds = getReceiverSocketIds(senderId.toString());
+    io.to(senderSocketIds).emit("newMessage", newMessage.toObject());
 
     if (isSeen) {
       const senderSocketIds = getReceiverSocketIds(senderId.toString());

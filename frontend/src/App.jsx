@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom"
-import { Suspense, lazy, useState } from "react"
+import { Suspense, lazy, useRef, useState } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
 import { useAuthUser } from "./hooks/authHooks/useAuthUser"
@@ -10,6 +10,7 @@ import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
 import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
+import { useGlobalChatSocketEvents } from "./hooks/socketEventHooks/useGlobalChatSocketEvents"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -76,6 +77,8 @@ function App() {
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
+
+  useGlobalChatSocketEvents()
 
   useEffect(() => {
     // Check subscription status on component mount
