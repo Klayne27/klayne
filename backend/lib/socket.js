@@ -324,9 +324,11 @@ export const createAndSendNotification = async ({
       const username = fromUser ? fromUser.username : "A user";
 
       let postOwnerUsername = null;
-      const post = await Post.findById(postId).populate("user", "username").lean();
-      if (post) {
-        postOwnerUsername = post.user.username;
+      if (postId) {
+        const post = await Post.findById(postId).populate("user", "username").lean();
+        if (post && post.user) {
+          postOwnerUsername = post.user.username;
+        }
       }
 
       const dynamicBody = getDynamicPushBody(type, username);
