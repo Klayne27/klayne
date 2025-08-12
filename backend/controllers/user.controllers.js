@@ -560,6 +560,7 @@ export const blockUnblockUser = async (req, res) => {
 
 export const adminDeleteUserAccount = async (req, res) => {
   try {
+    // 1. Authorization check
     if (!req.user || !req.user.isAdmin) {
       return res.status(403).json({
         error: "Forbidden: Only administrators can delete other user accounts.",
@@ -579,78 +580,55 @@ export const adminDeleteUserAccount = async (req, res) => {
       return res.status(404).json({ error: "User not found." });
     }
 
-    await User.updateMany(
-      { blockedUsers: userToDelete._id },
-      { $pull: { blockedUsers: userToDelete._id } }
-    );
-    await User.updateMany(
-      { blockedBy: userToDelete._id },
-      { $pull: { blockedBy: userToDelete._id } }
-    );
-
-    if (userToDelete.profileImg) {
-      const profileImgId = userToDelete.profileImg.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(profileImgId);
+    // 2. Delete all images associated with the user from Cloudinary and the database
+    const userImages = await Image.find({ uploadedBy: userIdToDelete });
+    for (const image of userImages) {
+      const publicId = image.imageUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
     }
-    if (userToDelete.coverImg) {
-      const coverImgId = userToDelete.coverImg.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(coverImgId);
-    }
+    await Image.deleteMany({ uploadedBy: userIdToDelete });
 
-    const userPosts = await Post.find({ user: userToDelete._id });
+    // 3. Find and delete user's posts and their videos
+    const userPosts = await Post.find({ user: userIdToDelete });
     for (const post of userPosts) {
-      if (post.img) {
-        const postId = post.img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(postId);
+      if (post.video) {
+        const videoId = post.video.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
       await Post.findByIdAndDelete(post._id);
     }
 
-    await Post.updateMany(
-      { likes: userToDelete._id },
-      { $pull: { likes: userToDelete._id } }
-    );
-
-    await Post.updateMany(
-      { "comments.user": userToDelete._id },
-      { $pull: { comments: { user: userToDelete._id } } }
-    );
-
+    // 4. Update all other related documents to remove references to the deleted user
     await User.updateMany(
-      { following: userToDelete._id },
-      { $pull: { following: userToDelete._id } }
+      { $or: [{ blockedUsers: userIdToDelete }, { blockedBy: userIdToDelete }] },
+      { $pull: { blockedUsers: userIdToDelete, blockedBy: userIdToDelete } }
     );
-
+    await Post.updateMany(
+      { likes: userIdToDelete },
+      { $pull: { likes: userIdToDelete } }
+    );
+    await Post.updateMany(
+      { "comments.user": userIdToDelete },
+      { $pull: { comments: { user: userIdToDelete } } }
+    );
     await User.updateMany(
-      { followers: userToDelete._id },
-      { $pull: { followers: userToDelete._id } }
+      { $or: [{ following: userIdToDelete }, { followers: userIdToDelete }] },
+      { $pull: { following: userIdToDelete, followers: userIdToDelete } }
     );
-
     await Notification.deleteMany({
-      $or: [{ from: userToDelete._id }, { to: userToDelete._id }],
+      $or: [{ from: userIdToDelete }, { to: userIdToDelete }],
     });
+    await PublicChatMessage.deleteMany({ sender: userIdToDelete });
 
+    // 5. Delete messages and conversations
     const conversationsToDelete = await Conversation.find({
-      participants: userToDelete._id,
+      participants: userIdToDelete,
     });
+    const conversationIds = conversationsToDelete.map((conv) => conv._id);
+    await Message.deleteMany({ conversationId: { $in: conversationIds } });
+    await Conversation.deleteMany({ _id: { $in: conversationIds } });
 
-    for (const conversation of conversationsToDelete) {
-      await Message.deleteMany({ conversationId: conversation._id });
-      await Conversation.findByIdAndDelete(conversation._id);
-    }
-
-    const publicChatMessagesWithMedia = await PublicChatMessage.find({
-      sender: userToDelete._id,
-      img: { $ne: "" },
-    });
-    for (const msg of publicChatMessagesWithMedia) {
-      if (msg.img) {
-        const imgPublicId = msg.img.split("/").pop().split(".")[0];
-        await cloudinary.uploader.destroy(imgPublicId);
-      }
-    }
-
-    await PublicChatMessage.deleteMany({ sender: userToDelete._id });
+    // 6. Finally, delete the user document
     await User.findByIdAndDelete(userIdToDelete);
 
     res.status(200).json({
