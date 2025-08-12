@@ -21,6 +21,7 @@ import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { handleEnablePushNotifications } from "../../utils/push"
+import { formatCount } from "../../utils/textUtils"
 // import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const Sidebar = ({
@@ -526,7 +527,7 @@ const Sidebar = ({
                   className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
-                  {unreadMessageCount}
+                  {formatCount(unreadMessageCount)}
                 </div>
               )}
             </button>
@@ -567,7 +568,7 @@ const Sidebar = ({
                   className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                   style={{ transform: "translate(50%, -50%)" }}
                 >
-                  {unreadNotificationsCount}
+                  {formatCount(unreadNotificationsCount)}
                 </div>
               )}
             </button>
@@ -608,7 +609,7 @@ const Sidebar = ({
                   className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
-                  {unreadPublicChatCount}
+                  {formatCount(unreadPublicChatCount)}
                 </div>
               )}
             </button>

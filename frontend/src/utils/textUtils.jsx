@@ -95,3 +95,15 @@ const getFullProfileLink = (link) => {
   // Otherwise, prepend https://
   return `https://${link}`
 }
+
+export function formatCount(count) {
+  if (count < 1000) {
+    return count
+  }
+
+  if (count < 1000000) {
+    return (count / 1000).toFixed(1) + "k"
+  } else {
+    return (count / 1000000).toFixed(1) + "m"
+  }
+}
