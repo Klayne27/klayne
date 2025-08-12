@@ -82,7 +82,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   } = useFetchPinnedPosts(username)
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
-  const { toggleVisibility, isTogglingVisibility } = useToggleConversationVisibility()
   const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
     useGetOrCreateConversation()
 
@@ -212,7 +211,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
 
     // Add the new loading state to the check
-    if (isLoadingConversationStatus || isTogglingVisibility || isCreatingConversation) {
+    if (isLoadingConversationStatus || isCreatingConversation) {
       return
     }
 
@@ -401,7 +400,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   className="z-1 rounded-full border border-accent px-1 transition duration-200 hover:bg-secondary"
                   disabled={
                     isLoadingConversationStatus ||
-                    isTogglingVisibility ||
+                    isCreatingConversation ||
                     !authUser ||
                     !userProfile?._id ||
                     isBlockingRelationship
