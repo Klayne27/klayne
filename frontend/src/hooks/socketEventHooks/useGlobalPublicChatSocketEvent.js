@@ -12,6 +12,10 @@ export const useGlobalPublicChatSocketEvents = () => {
     (newMessage) => {
       const queryKey = ["publicMessages"]
 
+      if (newMessage.sender._id === currentUser._id) {
+        return
+      }
+
       // --- START FIX ---
       // First, check if the public messages cache has any data yet.
       const publicMessagesCache = queryClient.getQueryData(queryKey)
@@ -35,7 +39,7 @@ export const useGlobalPublicChatSocketEvents = () => {
       // If the cache is empty, do nothing. Let usePublicMessages handle the initial fetch.
       // --- END FIX ---
     },
-    [queryClient],
+    [queryClient, currentUser],
   )
 
   useEffect(() => {
@@ -46,5 +50,5 @@ export const useGlobalPublicChatSocketEvents = () => {
     return () => {
       socket.off("newPublicMessage", handleNewPublicMessage)
     }
-  }, [queryClient, socket, currentUser, handleNewPublicMessage])
+  }, [socket, currentUser, handleNewPublicMessage])
 }
