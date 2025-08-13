@@ -26,10 +26,10 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             </Link>
           )}
           {isSenderVerified && !isSentByCurrentUser && (
-            <img src="/verified.png" className="mr-1 size-[17px]" />
+            <img src="/verified2.png" className="mr-1 size-[17px]" />
           )}
           {isSenderGoldVerified && !isSentByCurrentUser && (
-            <img src="/gold-verified.png" className="mr-1 size-[17px]" />
+            <img src="/gold-verified2.png" className="mr-1 size-[17px]" />
           )}
 
           {isSenderAdmin && !isSentByCurrentUser && (

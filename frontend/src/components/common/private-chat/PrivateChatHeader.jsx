@@ -26,10 +26,10 @@ function PrivateChatHeader({ otherUser }) {
       </Link>
       <h3 className="text-lg font-bold">{otherUser?.fullName}</h3>
       {otherUser?.isVerified && (
-        <img src="/verified.png" className="size-[17px] ml-1" alt="Verified badge" />
+        <img src="/verified2.png" className="size-[17px] ml-1" alt="Verified badge" />
       )}
       {otherUser?.isGoldVerified && (
-        <img src="/gold-verified.png" className="size-[17px] ml-1" alt="Verified badge" />
+        <img src="/gold-verified2.png" className="size-[17px] ml-1" alt="Verified badge" />
       )}
     </div>
   );

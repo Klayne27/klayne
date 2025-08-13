@@ -211,11 +211,11 @@ const NotificationPage = () => {
                       </span>
 
                       {isVerified && (
-                        <img src="/verified.png" className="size-[17px]" alt="Verified" />
+                        <img src="/verified2.png" className="size-[17px]" alt="Verified" />
                       )}
 
                       {isGoldVerified && (
-                        <img src="/gold-verified.png" className="size-[17px]" alt="Gold Verified" />
+                        <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
                       )}
                     </div>
                     <div className="text-sm">{getNotificationMessage(notification)}</div>

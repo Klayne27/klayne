@@ -149,10 +149,10 @@ function ConversationItem({ conv }) {
           <div className="flex items-center gap-1 truncate">
             <span className="font-bold">{otherUser.fullName}</span>
             {otherUser.isVerified && (
-              <img src="/verified.png" className="size-[17px]" alt="Verified" />
+              <img src="/verified2.png" className="size-[17px]" alt="Verified" />
             )}
             {otherUser.isGoldVerified && (
-              <img src="/gold-verified.png" className="size-[17px]" alt="Gold Verified" />
+              <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
             <span className="text-gray-400">@{otherUser.username}</span>
             <span className="mx-1 text-xs text-gray-400">·</span>

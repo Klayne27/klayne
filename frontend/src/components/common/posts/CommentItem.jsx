@@ -419,11 +419,11 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 {comment.user.fullName}
               </Link>
               {comment.user.isVerified && (
-                <img src="/verified.png" className="size-[17px] flex-shrink-0" alt="Verified" />
+                <img src="/verified2.png" className="size-[17px] flex-shrink-0" alt="Verified" />
               )}
               {comment.user.isGoldVerified && (
                 <img
-                  src="/gold-verified.png"
+                  src="/gold-verified2.png"
                   className="size-[17px] flex-shrink-0"
                   alt="Verified"
                 />

@@ -76,9 +76,9 @@ const SuggestedUsersPanel = () => {
                       {user.fullName.length > 15
                         ? user.fullName.slice(0, 15) + "..."
                         : user.fullName}{" "}
-                      {user.isVerified && <img src="/verified.png" className="size-[17px]" />}
+                      {user.isVerified && <img src="/verified2.png" className="size-[17px]" />}
                       {user.isGoldVerified && (
-                        <img src="/gold-verified.png" className="size-[17px]" />
+                        <img src="/gold-verified2.png" className="size-[17px]" />
                       )}
                     </span>
                     <span className="text-sm text-slate-500">@{user.username}</span>

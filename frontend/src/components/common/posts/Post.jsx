@@ -339,11 +339,11 @@ const Post = ({
               >
                 {originalPostOwner.fullName}
                 {originalPostOwner.isVerified && (
-                  <img src="/verified.png" className="size-[17px]" alt="Verified" loading="lazy" />
+                  <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
                 )}
                 {originalPostOwner.isGoldVerified && (
                   <img
-                    src="/gold-verified.png"
+                    src="/gold-verified2.png"
                     className="size-[17px]"
                     alt="Verified"
                     loading="lazy"

@@ -469,9 +469,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
                   <span className="text-lg font-bold">{userProfile?.fullName}</span>
-                  {userProfile?.isVerified && <img src="/verified.png" className="size-[18px]" />}
+                  {userProfile?.isVerified && <img src="/verified2.png" className="size-[18px]" />}
                   {userProfile?.isGoldVerified && (
-                    <img src="/gold-verified.png" className="size-[18px]" />
+                    <img src="/gold-verified2.png" className="size-[18px]" />
                   )}
                 </div>
                 <span className="text-sm text-slate-500">@{userProfile?.username}</span>

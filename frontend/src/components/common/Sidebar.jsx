@@ -448,7 +448,7 @@ const Sidebar = ({
         <div
           to="/"
           onClick={handleHomeClick}
-          className={`hidden h-12 w-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
+          className={`hidden size-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
             isTouchDevice && activeButtonId === "x-logo"
               ? "bg-secondary bg-opacity-50 transition duration-150"
               : ""
