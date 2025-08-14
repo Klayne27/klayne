@@ -38,7 +38,7 @@ const SignUpPage = () => {
       </div>
       <div className="flex-1 flex flex-col items-center pt-8 md:justify-center">
         {/* Warning/Reminder Section */}
-        <div className="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-6 max-w-md text-center text-sm shadow-lg border border-yellow-700">
+        {/* <div className="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-6 max-w-md text-center text-sm shadow-lg border border-yellow-700">
           <p className="font-semibold mb-1">Important Account Note:</p>
           <p>
             You <strong>don't have to use a real email address</strong> here. Just enter
@@ -48,7 +48,7 @@ const SignUpPage = () => {
             <strong>Please write down your password!</strong> If you lose it, there's
             currently <strong>no way to recover your account</strong>.
           </p>
-        </div>
+        </div> */}
         {/* End Warning/Reminder Section */}
         <form
           className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"

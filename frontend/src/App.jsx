@@ -14,6 +14,9 @@ import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGl
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+import PomodoroPage from "./pages/PomodoroPage"
+import StudyActivityPage from "./pages/StudyActivityPage"
+import StudyLeaderboard from "./pages/StudyLeaderboard"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
@@ -30,21 +33,23 @@ const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
 const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
-  const location = useLocation()
-  const isMessagePage = location.pathname.includes("/messages")
-  const isPublicChatPage = location.pathname.includes("/public-chat")
+  const {pathname} = useLocation()
+  const isMessagePage = pathname.includes("/messages")
+  const isPublicChatPage = pathname.includes("/public-chat")
 
   const { setShowCreatePostModal } = useAppStore()
 
+  const shouldHideSidePanels = pathname.includes("/study") || pathname.includes("/pomodoro")
+
   return (
     <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
-      <Sidebar
+      {!shouldHideSidePanels && <Sidebar
         onOpenCreatePostModal={() => setShowCreatePostModal(true)}
         isPushSubscribed={isPushSubscribed}
         deferredPrompt={deferredPrompt}
         isInstalled={isInstalled}
         installApp={installApp}
-      />
+      />}
       <main
         className={`${
           isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
@@ -52,15 +57,17 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
       >
         {children}
       </main>
-      {!isMessagePage && !isPublicChatPage && (
-        <RightPanel
-          deferredPrompt={deferredPrompt}
-          isInstalled={isInstalled}
-          installApp={installApp}
-          isPushSubscribed={isPushSubscribed}
-          className="hidden md:block"
-        />
-      )}
+      {!isMessagePage &&
+        !isPublicChatPage &&
+        !shouldHideSidePanels && (
+          <RightPanel
+            deferredPrompt={deferredPrompt}
+            isInstalled={isInstalled}
+            installApp={installApp}
+            isPushSubscribed={isPushSubscribed}
+            className="hidden md:block"
+          />
+        )}
     </div>
   )
 }
@@ -97,16 +104,13 @@ function App() {
   }, [])
 
   useEffect(() => {
-    // This function checks for a new service worker update.
     const updateSW = registerSW({
       onNeedRefresh() {
-        // When a new version is detected, force a page reload.
         window.location.reload()
       },
     })
-    // Don't forget to call it.
     updateSW()
-  }, []) // The empty dependency array ensures this runs only once on mount.
+  }, [])
 
   if (isLoading) {
     return (
@@ -115,9 +119,6 @@ function App() {
       </div>
     )
   }
-
-  const isMessagePage = location.pathname.includes("/messages")
-  const isPublicChatPage = location.pathname.includes("/public-chat")
 
   return (
     <>
@@ -163,6 +164,9 @@ function App() {
                     <Route path="/themes" element={<ThemesPage />} />
                     <Route path="/:username/post/:pid" element={<PostPage />} />
                     <Route path="/search" element={<SearchPage />} />
+                    <Route path="/pomodoro" element={<PomodoroPage />} />
+                    <Route path="/study-activity" element={<StudyActivityPage />} />
+                    <Route path="/study-leaderboard" element={<StudyLeaderboard />} />
                   </Routes>
                 </MainLayout>
               ) : (

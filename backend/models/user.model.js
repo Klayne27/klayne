@@ -115,6 +115,36 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    totalStudyDuration: {
+      type: Number,
+      default: 0,
+    },
+    studyStreak: {
+      type: Number,
+      default: 0,
+    },
+    lastStudyDate: {
+      type: Date,
+      default: null,
+    },
+    badges: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
+    pomodoroSettings: {
+      sessionDuration: { type: Number, default: 25 },
+      shortBreakDuration: { type: Number, default: 5 },
+      longBreakDuration: { type: Number, default: 15 },
+      sessionsBeforeLongBreak: { type: Number, default: 4 },
+      sessionGoalCount: { type: Number, default: 0 },
+      autoplay: { type: Boolean, default: false },
+    },
+    totalSessionsCompleted: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true }
 );

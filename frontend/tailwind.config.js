@@ -5,6 +5,10 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      colors: {
+        "primary-glow": "var(--p)",
+        "secondary-glow": "var(--s)",
+      },
       height: {
         dvh: "100dvh",
         "screen-d": "var(--dvh)",
@@ -14,6 +18,14 @@ export default {
         "screen-d": "var(--dvh)",
       },
       keyframes: {
+        "fade-in": {
+          "0%": { opacity: "0", transform: "translateY(-10px)" },
+          "100%": { opacity: "1", transform: "translateY(0)" },
+        },
+        pulseGlow: {
+          "0%, 100%": { boxShadow: "0 0 20px rgba(255,255,255,0.1)" },
+          "50%": { boxShadow: "0 0 40px rgba(255,255,255,0.3)" },
+        },
         // Define a 'like-bounce' keyframe animation
         "like-bounce": {
           "0%": { transform: "scale(1)" },
@@ -66,6 +78,7 @@ export default {
         "slide-up-old": "slide-up-old 0.3s forwards",
         "slide-down-new": "slide-down-new 0.3s forwards",
         "slide-down-old": "slide-down-old 0.3s forwards",
+        "fade-in": "fade-in 0.5s ease-out forwards",
       },
     },
   },

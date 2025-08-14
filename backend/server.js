@@ -6,6 +6,7 @@ import { v2 as cloudinary } from "cloudinary";
 
 import { app, io, onlineUsersMap, server } from "./lib/socket.js";
 
+import studyRoutes from "./routes/study.routes.js";
 import pushRoutes from "./routes/push.routes.js";
 import imageRoutes from "./routes/image.routes.js";
 import publicChatRoutes from "./routes/publicChat.routes.js";
@@ -49,6 +50,7 @@ app.use("/api/comments", commentRoutes);
 app.use("/api/public-chat", publicChatRoutes);
 app.use("/api/images", imageRoutes);
 app.use("/api/push", pushRoutes);
+app.use("/api/study", studyRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "/frontend/dist")));

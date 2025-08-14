@@ -354,6 +354,7 @@ export const getAllPosts = async (req, res) => {
       profileImg: 1,
       isVerified: 1,
       isGoldVerified: 1,
+      badges: 1
     };
 
     const repostedPostProjection = {

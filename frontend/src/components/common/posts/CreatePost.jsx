@@ -340,6 +340,52 @@ const CreatePost = () => {
         })
       }
     },
+
+    // fix for palmer video post error maybe
+
+  //    if (postSelectedFile) {
+  //     // Create a promise to handle file reading
+  //     const readFileAsDataURL = (file) => {
+  //       return new Promise((resolve, reject) => {
+  //         const reader = new FileReader();
+  //         reader.onloadend = () => resolve(reader.result);
+  //         reader.onerror = reject;
+  //         reader.readAsDataURL(file);
+  //       });
+  //     };
+
+  //     try {
+  //       const fileData = await readFileAsDataURL(postSelectedFile);
+  //       let postData = { text: postInput };
+
+  //       if (postSelectedFile.type.startsWith("image/")) {
+  //         postData.img = fileData;
+  //       } else if (postSelectedFile.type.startsWith("video/")) {
+  //         postData.video = fileData;
+  //       }
+
+  //       createPost(postData, {
+  //         onSuccess: resetForm,
+  //         onError: (err) => {
+  //           showAppToast(err?.message || "Failed to create post with media.", "error");
+  //         },
+  //       });
+  //     } catch (err) {
+  //       showAppToast("Failed to read the selected file.", "error");
+  //     }
+  //   } else {
+  //     let postData = { text: postInput };
+  //     if (scheduledAt) {
+  //       postData.scheduledAt = scheduledAt;
+  //     }
+  //     createPost(postData, {
+  //       onSuccess: resetForm,
+  //       onError: (err) => {
+  //         showAppToast(err?.message || "Failed to create post.", "error");
+  //       },
+  //     });
+  //   }
+  // },
     [
       postInput,
       postSelectedFile,

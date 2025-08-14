@@ -22,6 +22,9 @@ import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { handleEnablePushNotifications } from "../../utils/push"
 import { formatCount } from "../../utils/textUtils"
+import { IoIosTimer } from "react-icons/io"
+
+
 // import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const Sidebar = ({
@@ -73,7 +76,7 @@ const Sidebar = ({
   const originalTitle = useRef(document.title)
   const originalFaviconHref = useRef(null)
 
-  const { markFeedAsRead } = useMarkPostsAsRead()
+  // const { markFeedAsRead } = useMarkPostsAsRead()
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -342,19 +345,28 @@ const Sidebar = ({
         await deleteAccount({ userId: authUser._id })
       } catch (error) {
         console.error("Deletion failed:", error)
-      } 
+      }
     } else {
       showAppToast("User ID not available. Cannot proceed with deletion.", "error")
     }
   }
 
+  const shouldAlwaysHide =
+    pathname.includes("/public-chat") || // Public chat
+    pathname.includes("/post/") || // Individual post page
+    pathname.includes("/pomodoro") ||
+    pathname.includes("/study") ||
+    isChatWindowOpen // Private chat window is open
+
   useEffect(() => {
     const handleScroll = () => {
       // Always hide on specific paths regardless of scroll on mobile
-      const shouldAlwaysHide =
-        pathname.includes("/public-chat") || // Public chat
-        pathname.includes("/post/") || // Individual post page
-        isChatWindowOpen // Private chat window is open
+      // const shouldAlwaysHide =
+      //   pathname.includes("/public-chat") || // Public chat
+      //   pathname.includes("/post/") || // Individual post page
+      //   pathname.includes("/pomodoro") ||
+      //   pathname.includes("/study") ||
+      //   isChatWindowOpen // Private chat window is open
 
       if (window.innerWidth < 768) {
         if (shouldAlwaysHide) {
@@ -389,8 +401,8 @@ const Sidebar = ({
     // Initial check when component mounts or dependencies change
     // This handles navigation directly to a hidden path
     if (window.innerWidth < 768) {
-      const shouldAlwaysHide =
-        pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
+      // const shouldAlwaysHide =
+      //   pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
 
       if (shouldAlwaysHide) {
         setIsMobileBarVisible(false)
@@ -759,6 +771,30 @@ const Sidebar = ({
               Profile
             </span>
           </li>
+          <li
+            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
+            onClick={() => navigate("/pomodoro")}
+          >
+            <button
+              className={`${
+                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
+              }`}
+              onTouchStart={() => handleTouchStart("themes")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              <IoIosTimer className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
+            </button>
+            <span
+              className={`text-lg ${
+                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+              }`}
+            >
+              Pomodoro
+            </span>
+          </li>
           <div className="mr-7 hidden md:block">
             <button
               className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
@@ -1004,6 +1040,26 @@ const Sidebar = ({
                   <LuPalette className="mr-4 size-7" strokeWidth={pathname === "/themes" ? 2 : 2} />
                   <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
                     Themes
+                  </span>
+                </li>
+                <li
+                  onClick={() => {
+                    if (pathname === "/pomodoro") return
+                    navigate("/pomodoro")
+                    setShowSideModal(false) // Close modal on navigation
+                  }}
+                  className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                    isTouchDevice && activeButtonId === "modal-pomodoro"
+                      ? "bg-secondary bg-opacity-50 transition duration-150"
+                      : "transition duration-150"
+                  }`}
+                >
+                  <IoIosTimer
+                    className="mr-4 size-7"
+                    strokeWidth={pathname === "/pomodoro" ? 2 : 2}
+                  />
+                  <span className={`text-xl ${pathname === "/pomodoro" ? "font-bold" : ""}`}>
+                    Pomodoro
                   </span>
                 </li>
 

@@ -338,6 +338,7 @@ const Post = ({
                 onClick={handleInteractiveClick}
               >
                 {originalPostOwner.fullName}
+
                 {originalPostOwner.isVerified && (
                   <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
                 )}
@@ -349,6 +350,7 @@ const Post = ({
                     loading="lazy"
                   />
                 )}
+                {/* {originalPostOwner?.badges?.includes("hour-study") && <div>B</div>} */}
               </Link>
               <span className="flex min-w-0 gap-1 text-sm text-slate-500">
                 {" "}
@@ -435,18 +437,20 @@ const Post = ({
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
               {renderClickableText(sourcePost.text)}
             </span>
-            {sourcePost.mediaType === "image" && sourcePost?.image?.imageUrl && sourcePost.image?._id && (
-              <div className="inline-flex max-w-full justify-center">
-                <Link to={`/images/${sourcePost.image?._id}`}>
-                  <img
-                    src={sourcePost.image.imageUrl}
-                    className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                    alt="post image"
-                    loading="lazy"
-                  />
-                </Link>
-              </div>
-            )}
+            {sourcePost.mediaType === "image" &&
+              sourcePost?.image?.imageUrl &&
+              sourcePost.image?._id && (
+                <div className="inline-flex max-w-full justify-center">
+                  <Link to={`/images/${sourcePost.image?._id}`}>
+                    <img
+                      src={sourcePost.image.imageUrl}
+                      className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
+                      alt="post image"
+                      loading="lazy"
+                    />
+                  </Link>
+                </div>
+              )}
             {sourcePost.mediaType === "video" && sourcePost.video && (
               <video
                 controls
