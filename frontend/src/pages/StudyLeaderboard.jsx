@@ -93,13 +93,13 @@ function StudyLeaderboard() {
     return buttons
   }
 
-  const getRingColor = (index) => {
-    switch (index) {
-      case 0:
-        return "ring-amber-400"
+  const getRingColor = (rank) => {
+    switch (rank) {
       case 1:
-        return "ring-slate-400"
+        return "ring-amber-400"
       case 2:
+        return "ring-slate-400"
+      case 3:
         return "ring-yellow-800"
       default:
         return "ring-base-100"
@@ -108,7 +108,7 @@ function StudyLeaderboard() {
 
   if (isLoading) {
     return (
-      <div className="flex h-screen ring- items-center justify-center p-6">
+      <div className="ring- flex h-screen items-center justify-center p-6">
         <LoadingSpinner />
       </div>
     )
@@ -145,50 +145,52 @@ function StudyLeaderboard() {
         <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
       </div>
       <ul className="space-y-4">
-        {leaderboard.map((entry, index) => (
-          <li
-            key={entry._id}
-            className={`flex items-center rounded-lg p-3 shadow-lg transition-transform duration-200 ease-in-out ${
-              currentUser && currentUser._id === entry._id
-                ? "scale-[1.01] bg-secondary"
-                : ""
-            } `}
-          >
-            <span className={`w-10 text-center text-lg font-bold`}>
-              {(page - 1) * 10 + index + 1}.
-            </span>
-            <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
-              <div className="avatar">
-                <div className={`${getRingColor(index)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}>
-                  <img
-                    src={
-                      entry?.profileImg?.imageUrl
-                        ? entry.profileImg.imageUrl
-                        : "/avatar-placeholder.png"
-                    }
-                    alt={`${entry.fullName} avatar`}
-                  />
+        {leaderboard.map((entry, index) => {
+          const globalRank = (page - 1) * 10 + index + 1
+
+          return (
+            <li
+              key={entry._id}
+              className={`flex items-center rounded-lg p-3 shadow-lg transition-transform duration-200 ease-in-out ${
+                currentUser && currentUser._id === entry._id ? "scale-[1.01] bg-secondary" : ""
+              } `}
+            >
+              <span className={`w-10 text-center text-lg font-bold`}>{globalRank}.</span>
+              <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
+                <div className="avatar">
+                  <div
+                    className={`${getRingColor(globalRank)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
+                  >
+                    <img
+                      src={
+                        entry?.profileImg?.imageUrl
+                          ? entry.profileImg.imageUrl
+                          : "/avatar-placeholder.png"
+                      }
+                      alt={`${entry.fullName} avatar`}
+                    />
+                  </div>
+                </div>
+              </Link>
+              <div className="flex-1 overflow-hidden">
+                <p className={`truncate text-lg font-bold`}>{entry.fullName}</p>
+                <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
+              </div>
+              <div className={`ml-4 flex flex-col items-end text-right text-slate-300`}>
+                <div className="flex items-center gap-1">
+                  <FaClock className="text-sm" />
+                  <span className="text-sm font-semibold">
+                    {Math.round(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center gap-1 text-slate-500">
+                  <FaCheckCircle className="text-sm" />
+                  <span className="text-sm">{entry.totalSessionsCompleted} sessions</span>
                 </div>
               </div>
-            </Link>
-            <div className="flex-1 overflow-hidden">
-              <p className={`truncate text-lg font-bold`}>{entry.fullName}</p>
-              <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
-            </div>
-            <div className={`text-right text-slate-300 ml-4 flex flex-col items-end`}>
-              <div className="flex items-center gap-1">
-                <FaClock className="text-sm" />
-                <span className="text-sm font-semibold">
-                  {Math.round(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
-                </span>
-              </div>
-              <div className="mt-1 flex items-center gap-1 text-slate-500">
-                <FaCheckCircle className="text-sm" />
-                <span className="text-sm">{entry.totalSessionsCompleted} sessions</span>
-              </div>
-            </div>
-          </li>
-        ))}
+            </li>
+          )
+        })}
       </ul>
 
       {/* Pagination Controls */}

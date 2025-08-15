@@ -5,17 +5,52 @@ import { io } from "../lib/socket.js";
 
 // Helper function to check and award badges
 const checkAndAwardBadges = async (user) => {
-  // Badge 1: 1 hour of study time (60 minutes)
-  if (user.totalStudyDuration >= 60 && !user.badges.includes("hour-study")) {
-    user.badges.push("hour-study");
-  } // Badge 2: 5 hours of study time (300 minutes)
+  // --- Study Duration Badges ---
+  // 20 hours = 1200 minutes
+  if (user.totalStudyDuration >= 1200 && !user.badges.includes("twenty-hour-scholar")) {
+    user.badges.push("twenty-hour-scholar");
+  }
 
-  if (user.totalStudyDuration >= 300 && !user.badges.includes("five-hour-study")) {
-    user.badges.push("five-hour-study");
-  } // Badge 3: 7-day study streak
+  // 100 hours = 6000 minutes
+  if (user.totalStudyDuration >= 6000 && !user.badges.includes("centurion-scholar")) {
+    user.badges.push("centurion-scholar");
+  }
 
+  // 300 hours = 18000 minutes
+  if (
+    user.totalStudyDuration >= 18000 &&
+    !user.badges.includes("three-hundred-hour-master")
+  ) {
+    user.badges.push("three-hundred-hour-master");
+  }
+
+  // --- Session Completion Badges ---
+  if (
+    user.totalSessionsCompleted >= 10 &&
+    !user.badges.includes("ten-sessions-achiever")
+  ) {
+    user.badges.push("ten-sessions-achiever");
+  }
+
+  if (user.totalSessionsCompleted >= 50 && !user.badges.includes("fifty-sessions-pro")) {
+    user.badges.push("fifty-sessions-pro");
+  }
+
+  if (user.totalSessionsCompleted >= 150 && !user.badges.includes("session-master")) {
+    user.badges.push("session-master");
+  }
+
+  // --- Study Streak Badges ---
   if (user.studyStreak >= 7 && !user.badges.includes("seven-day-streak")) {
     user.badges.push("seven-day-streak");
+  }
+
+  if (user.studyStreak >= 14 && !user.badges.includes("fourteen-day-streak")) {
+    user.badges.push("fourteen-day-streak");
+  }
+
+  if (user.studyStreak >= 30 && !user.badges.includes("thirty-day-streak")) {
+    user.badges.push("thirty-day-streak");
   }
 
   await user.save();

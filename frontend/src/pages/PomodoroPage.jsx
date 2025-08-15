@@ -64,11 +64,11 @@ const PomodoroPage = () => {
     }
   }, [])
 
-useEffect(() => {
-  if (settings && typeof settings.volumeLevel === "number" && !isNaN(settings.volumeLevel)) {
-    alarmAudioRef.current.volume = settings.volumeLevel
-  }
-}, [settings])
+  useEffect(() => {
+    if (settings && typeof settings.volumeLevel === "number" && !isNaN(settings.volumeLevel)) {
+      alarmAudioRef.current.volume = settings.volumeLevel
+    }
+  }, [settings])
 
   useEffect(() => {
     isBreakRef.current = isBreak
@@ -400,7 +400,7 @@ useEffect(() => {
           {isBreak ? "Break Time" : "Study Time"}
         </h1>
         {/* Radial Timer using SVG for better styling control */}
-        <div className="relative h-64 w-64 sm:h-72 sm:w-72">
+        <div className={`${minutes === 0 && seconds < 10 && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}>
           <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
             {/* Background track */}
             <circle
