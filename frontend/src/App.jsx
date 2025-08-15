@@ -12,12 +12,14 @@ import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
-import ResetPasswordPage from "./pages/ResetPasswordPage"
-import ForgotPasswordPage from "./pages/ForgotPasswordPage"
+// import ResetPasswordPage from "./pages/ResetPasswordPage"
+// import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 // import PomodoroPage from "./pages/PomodoroPage"
 // import StudyActivityPage from "./pages/StudyActivityPage"
 // import StudyLeaderboard from "./pages/StudyLeaderboard"
 
+const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
+const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
 const StudyLeaderboard = lazy(() => import("./pages/StudyLeaderboard"))
 const PomodoroPage = lazy(() => import("./pages/PomodoroPage"))

@@ -52,7 +52,6 @@ export const useEndStudySession = () => {
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
       queryClient.invalidateQueries({ queryKey: ["authUser"] })
 
-      // queryClient.refetchQueries({ queryKey: ["authUser"] })
     },
     onError: (error) => {
       showAppToast(error.message, "error")

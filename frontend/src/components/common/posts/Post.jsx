@@ -466,7 +466,6 @@ const Post = ({
             )}
             {post.pollOptions && post.pollOptions.length > 0 && <PollDisplay post={post} />}
           </div>
-
           <div className="mt-3 w-2/3">
             <div className="flex justify-between">
               <div

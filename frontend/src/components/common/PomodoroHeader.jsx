@@ -13,6 +13,20 @@ const xpForLevel = (level) => {
 const PomodoroHeader = () => {
   const { authUser: currentUser, isLoading } = useAuthUser()
 
+  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel } = currentUser
+  const xpNeededForNextLevel = xpForLevel(pomodoroLevel)
+  const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
+
+  const getFireColor = (level) => {
+    if (level <= 5) {
+      return "text-yellow-700"
+    } else if (level <= 10) {
+      return "text-slate-400"
+    } else if (level >= 11) {
+      return "text-amber-400"
+    }
+  }
+
   if (isLoading) {
     return <LoadingSpinner />
   }
@@ -20,17 +34,14 @@ const PomodoroHeader = () => {
   if (!currentUser) {
     return null
   }
-  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel } = currentUser
-  const xpNeededForNextLevel = xpForLevel(pomodoroLevel)
-  const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
   return (
     <header className="w-full">
-      <div className="flex items-center justify-between gap-4 rounded-xl border border-gray-800 bg-gray-900 p-3 shadow-lg sm:p-4">
+      <div className="flex items-center justify-between gap-4 border-b border-accent px-4 pb-3 sm:p-4">
         {/* User Info Section */}
         <div className="flex items-center gap-3">
           <div className="avatar">
-            <div className="h-10 w-10 overflow-hidden rounded-full ring-1 ring-primary ring-offset-1 ring-offset-gray-900">
+            <div className="h-10 w-10 overflow-hidden rounded-full">
               <img
                 src={profileImg?.imageUrl || "/avatar-placeholder.png"}
                 alt={`${fullName} avatar`}
@@ -41,17 +52,17 @@ const PomodoroHeader = () => {
 
           <div className="flex flex-col">
             <h2 className="text-base font-bold text-white sm:text-lg">{fullName}</h2>
-            <p className="text-xs font-medium text-gray-400">@{username}</p>
+            <p className="text-xs font-medium text-slate-500">@{username}</p>
           </div>
         </div>
         {/* XP Progress and Level Section */}
-        <div className="flex flex-col items-start">
+        <div className="flex w-full flex-col items-start">
           <div className="flex items-center gap-1">
-            <FaFire className="text-sm text-orange-400" />
+            <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />
             <span className="text-xs font-semibold text-gray-300">Level {pomodoroLevel}</span>
           </div>
 
-          <div className="mt-1 w-24">
+          <div className="mt-1 w-full">
             <div className="h-1.5 overflow-hidden rounded-full bg-gray-700">
               <div
                 className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
@@ -59,7 +70,7 @@ const PomodoroHeader = () => {
               ></div>
             </div>
 
-            <div className="mt-1 flex justify-between font-mono text-[10px] text-gray-500">
+            <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-500">
               <span>{pomodoroXP} XP</span>
               <span>{xpNeededForNextLevel}</span>
             </div>
