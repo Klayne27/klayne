@@ -93,16 +93,16 @@ function StudyLeaderboard() {
     return buttons
   }
 
-  const getRingColor = (rank) => {
+  const getRankColor = (rank) => {
     switch (rank) {
       case 1:
-        return "ring-amber-400"
+        return "ring-amber-400 bg-amber-300/30"
       case 2:
-        return "ring-slate-400"
+        return "ring-slate-400 bg-slate-300/30"
       case 3:
-        return "ring-yellow-800"
+        return "ring-yellow-800 bg-yellow-700/30"
       default:
-        return "ring-base-100"
+        return "ring-base-100 bg-base-200"
     }
   }
 
@@ -151,7 +151,7 @@ function StudyLeaderboard() {
           return (
             <li
               key={entry._id}
-              className={`flex items-center rounded-lg p-3 shadow-lg transition-transform duration-200 ease-in-out ${
+              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} shadow-lg border border-accent transition-transform duration-200 ease-in-out ${
                 currentUser && currentUser._id === entry._id ? "scale-[1.01] bg-secondary" : ""
               } `}
             >
@@ -159,7 +159,7 @@ function StudyLeaderboard() {
               <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
                 <div className="avatar">
                   <div
-                    className={`${getRingColor(globalRank)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
+                    className={`${getRankColor(globalRank)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
                   >
                     <img
                       src={
