@@ -771,7 +771,7 @@ const Sidebar = ({
               Profile
             </span>
           </li>
-          <li
+          {/* <li
             className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
             onClick={() => navigate("/pomodoro")}
           >
@@ -794,7 +794,7 @@ const Sidebar = ({
             >
               Pomodoro
             </span>
-          </li>
+          </li> */}
           <div className="mr-7 hidden md:block">
             <button
               className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
@@ -1042,7 +1042,7 @@ const Sidebar = ({
                     Themes
                   </span>
                 </li>
-                <li
+                {/* <li
                   onClick={() => {
                     if (pathname === "/pomodoro") return
                     navigate("/pomodoro")
@@ -1061,7 +1061,7 @@ const Sidebar = ({
                   <span className={`text-xl ${pathname === "/pomodoro" ? "font-bold" : ""}`}>
                     Pomodoro
                   </span>
-                </li>
+                </li> */}
 
                 {/* Separator if needed */}
                 <div className="my-2 border-t border-accent"></div>

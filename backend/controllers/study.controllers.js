@@ -56,6 +56,28 @@ const checkAndAwardBadges = async (user) => {
   await user.save();
 };
 
+const xpForLevel = (level) => {
+  if (level <= 1) {
+    return 1500; // Base XP for level 2
+  }
+  return Math.floor(2000 * Math.pow(level - 1, 1.5));
+};
+
+// Main function to manage XP and leveling
+const handleXPAndLeveling = async (user, duration) => {
+  // Award XP based on duration (10 XP per minute)
+  const xpGained = duration * 10; 
+  user.pomodoroXP += xpGained;
+
+  // Loop to check for multiple level-ups
+  while (user.pomodoroXP >= xpForLevel(user.pomodoroLevel + 1)) {
+    const xpNeededForNextLevel = xpForLevel(user.pomodoroLevel + 1);
+    user.pomodoroXP -= xpNeededForNextLevel; // Carry over excess XP
+    user.pomodoroLevel += 1;
+  }
+  await user.save();
+};
+
 export const startStudySession = async (req, res) => {
   try {
     const userId = req.user._id; // Optionally create a post to announce the session
@@ -134,6 +156,8 @@ export const endStudySession = async (req, res) => {
       });
     }
 
+    await handleXPAndLeveling(user, duration);
+
     // Check and award badges with the updated user document
     await checkAndAwardBadges(user);
 
@@ -211,34 +235,6 @@ export const getLeaderboard = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// export const getSessionCountLeaderboard = async (req, res) => {
-//   try {
-//     const page = parseInt(req.query.page) || 1;
-//     const limit = parseInt(req.query.limit) || 10;
-//     const skipIndex = (page - 1) * limit;
-
-//     const totalCount = await User.countDocuments();
-
-//     const leaderboard = await User.find()
-//       .sort({ totalSessionsCompleted: -1 }) // Sort by total sessions completed
-//       .skip(skipIndex)
-//       .limit(limit)
-//       .select("username fullName totalSessionsCompleted profileImg") // Select the new field
-//       .populate({
-//         path: "profileImg",
-//         select: "imageUrl",
-//       });
-
-//     res.status(200).json({
-//       leaderboard,
-//       totalPages: Math.ceil(totalCount / limit),
-//       currentPage: page,
-//     });
-//   } catch (error) {
-//     res.status(500).json({ error: "Internal server error" });
-//   }
-// };
 
 export const updatePomodoroSettings = async (req, res) => {
   try {

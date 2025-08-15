@@ -14,6 +14,8 @@ import { PiHouseThin } from "react-icons/pi"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
+import PomodoroHeader from "../components/common/PomodoroHeader"
+import { useQueryClient } from "@tanstack/react-query"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -25,6 +27,7 @@ const POST_ID_KEY = "pomodoro_post_id"
 const GOAL_REACHED_KEY = "pomodoro_goal_reached" // New key for localStorage
 
 const PomodoroPage = () => {
+  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { newPostCount } = useSocket()
   const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
@@ -156,12 +159,13 @@ const PomodoroPage = () => {
 
     if (!isBreakRef.current) {
       playAlarm()
-
       const duration = settings.sessionDuration
       endSessionMutation.mutate(
         { duration, postId: postIdRef.current },
         {
           onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ["authUser"] })
+
             const newSessionCount = sessionCountRef.current + 1
             if (settings.sessionGoalCount > 0 && newSessionCount >= settings.sessionGoalCount) {
               showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
@@ -195,6 +199,8 @@ const PomodoroPage = () => {
 
       startSessionMutation.mutate(undefined, {
         onSuccess: (data) => {
+          queryClient.invalidateQueries({ queryKey: ["authUser"] })
+
           if (data?.postId) {
             setPostId(data.postId)
             localStorage.setItem(POST_ID_KEY, data.postId)
@@ -210,7 +216,15 @@ const PomodoroPage = () => {
         },
       })
     }
-  }, [settings, playAlarm, endSessionMutation, startNextTimer, handleReset, startSessionMutation])
+  }, [
+    settings,
+    playAlarm,
+    endSessionMutation,
+    queryClient,
+    startNextTimer,
+    handleReset,
+    startSessionMutation,
+  ])
 
   useEffect(() => {
     handleSessionEndRef.current = handleSessionEnd
@@ -220,7 +234,7 @@ const PomodoroPage = () => {
     const tick = () => {
       if (!isActiveRef.current || isGoalReachedRef.current) return
 
-      const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
+      const elapsedSec = (Date.now() - startTimestampRef.current) / 50
       const remaining = durationAtStartRef.current - elapsedSec
 
       if (remaining <= 0) {
@@ -344,6 +358,7 @@ const PomodoroPage = () => {
     if (!isBreak && !postId) {
       try {
         const data = await startSessionMutation.mutateAsync()
+
         if (data?.postId) {
           setPostId(data.postId)
           localStorage.setItem(POST_ID_KEY, data.postId)
@@ -390,17 +405,21 @@ const PomodoroPage = () => {
   }
 
   return (
-    <main className="flex min-h-screen w-full animate-fade-in flex-col items-center justify-center bg-base-100 p-4 font-sans text-white">
+    <main className="container mx-auto flex min-h-screen w-full max-w-2xl animate-fade-in flex-col items-center justify-center bg-base-100 p-4 font-sans text-white">
+      {/* <PomodoroHeader /> */}
+
       <div className="flex w-full max-w-md flex-col items-center gap-8 rounded-3xl p-6 shadow-2xl sm:p-10">
         {/* Header: Dynamic title */}
         <h1
           key={isBreak ? "break" : "study"} // Key ensures remount and animation on change
           className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
         >
-          {isBreak ? "Break Time" : "Study Time"}
+          {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
         </h1>
         {/* Radial Timer using SVG for better styling control */}
-        <div className={`${minutes === 0 && seconds < 10 && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}>
+        <div
+          className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
+        >
           <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
             {/* Background track */}
             <circle

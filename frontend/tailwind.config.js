@@ -22,6 +22,10 @@ export default {
           "0%": { opacity: "0", transform: "translateY(-10px)" },
           "100%": { opacity: "1", transform: "translateY(0)" },
         },
+        "fade-out": {
+          "0%": { transform: "translateY(0)", opacity: "1" },
+          "100%": { transform: "translateY(-2rem)", opacity: "0" },
+        },
         pulseGlow: {
           "0%, 100%": { boxShadow: "0 0 20px rgba(255,255,255,0.1)" },
           "50%": { boxShadow: "0 0 40px rgba(255,255,255,0.3)" },
@@ -79,6 +83,7 @@ export default {
         "slide-down-new": "slide-down-new 0.3s forwards",
         "slide-down-old": "slide-down-old 0.3s forwards",
         "fade-in": "fade-in 0.5s ease-out forwards",
+        "fade-out": "fade-out 2s ease-out forwards",
       },
     },
   },

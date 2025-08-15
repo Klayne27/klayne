@@ -147,6 +147,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    pomodoroXP: {
+      type: Number,
+      default: 0,
+    },
+    pomodoroLevel: {
+      type: Number,
+      default: 1,
+    },
   },
   { timestamps: true }
 );
