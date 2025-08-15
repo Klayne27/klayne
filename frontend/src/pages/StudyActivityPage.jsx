@@ -4,6 +4,17 @@ import { FaArrowLeft, FaClock } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
+import { formatTime } from "../utils/date"
+
+const formatDate = (dateString) => {
+  const date = new Date(dateString)
+  const options = {
+    month: "short",
+    day: "numeric",
+    year: "numeric",
+  }
+  return date.toLocaleString("en-US", options)
+}
 
 const StudyActivityPage = () => {
   const navigate = useNavigate()
@@ -103,7 +114,7 @@ const StudyActivityPage = () => {
         <div className="mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
           >
             <FaArrowLeft className="text-xl" />
           </button>
@@ -121,7 +132,7 @@ const StudyActivityPage = () => {
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
         >
           <FaArrowLeft className="text-xl" />
         </button>
@@ -177,7 +188,8 @@ const StudyActivityPage = () => {
               <span className="font-semibold">
                 {activity.duration ? "Session on: " : "Achieved on: "}
               </span>
-              {new Date(activity?.date || activity.createdAt).toLocaleString()}
+              {formatTime(activity?.date || activity?.createdAt)} •{" "}
+              {formatDate(activity?.date || activity?.createdAt)}
             </div>
           </div>
         ))}

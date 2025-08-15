@@ -4,7 +4,6 @@ import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
 import {
   useEndStudySession,
   useGetPomodoroSettings,
-  useStartStudySession,
 } from "../hooks/pomodoroHooks/usePomodo"
 import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
 import { CiTrophy } from "react-icons/ci"
@@ -14,6 +13,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
+import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -28,6 +28,7 @@ const PomodoroPage = () => {
   const { newPostCount } = useSocket()
   const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
+  const isMobile = useIsMobile()
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
@@ -55,12 +56,6 @@ const PomodoroPage = () => {
       }
     }
   }, [])
-
-  useEffect(() => {
-    if (settings && typeof settings.volumeLevel === "number" && !isNaN(settings.volumeLevel)) {
-      alarmAudioRef.current.volume = settings.volumeLevel
-    }
-  }, [settings])
 
   const playAlarm = useCallback(() => {
     if (settings && !settings.isMuted && alarmAudioRef.current) {
@@ -164,7 +159,7 @@ const PomodoroPage = () => {
 
   const startAnimation = useCallback(() => {
     const tick = () => {
-      const elapsedSec = (Date.now() - startTimestampRef.current) / 50
+      const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
       const remaining = durationAtStartRef.current - elapsedSec
       if (remaining <= 0) {
         setTimer(0)
@@ -211,7 +206,7 @@ const PomodoroPage = () => {
       return
     }
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsedTime = (Date.now() - savedStartTime) / 50
+      const elapsedTime = (Date.now() - savedStartTime) / 1000
       const newTimer = savedDurationAtStart - elapsedTime
       setTimer(newTimer > 0 ? newTimer : 0)
       setIsActive(newTimer > 0)
@@ -239,7 +234,7 @@ const PomodoroPage = () => {
         const startTime = parseInt(localStorage.getItem(START_TIMESTAMP_KEY), 10)
         const durationAtStart = parseInt(localStorage.getItem(DURATION_AT_START_KEY), 10)
         if (startTime && durationAtStart) {
-          const elapsedTime = (Date.now() - startTime) / 50
+          const elapsedTime = (Date.now() - startTime) / 1000
           const newTimer = durationAtStart - elapsedTime
           if (newTimer <= 0) {
             setTimer(0)
@@ -280,6 +275,14 @@ const PomodoroPage = () => {
     localStorage.setItem(ACTIVE_KEY, "false")
   }
 
+  const handleOpenSettingsPage = () => {
+    if (isMobile) {
+      navigate("/study-settings")
+    } else {
+      setIsSettingsOpen(true)
+    }
+  }
+
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
   let totalDuration = 25 * 60
@@ -306,119 +309,121 @@ const PomodoroPage = () => {
   }
 
   return (
-    <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-x border-accent bg-base-100 font-sans text-white">
-       <PomodoroHeader showXpGain={showXpGain} xpGainedAmount={xpGainedAmount} />
-      <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 shadow-2xl sm:p-10">
-        <h1
-          key={isBreak ? "break" : "study"}
-          className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
-        >
-          {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
-        </h1>
-        <div
-          className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
-        >
-          <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-            <circle
-              cx="50"
-              cy="50"
-              r={radius}
-              fill="none"
-              strokeWidth="8"
-              className="stroke-slate-700"
-            />
-            <circle
-              cx="50"
-              cy="50"
-              r={radius}
-              fill="none"
-              strokeWidth="8"
-              strokeLinecap="round"
-              className={`transition-colors duration-500 ease-linear ${isBreak ? "stroke-teal-400" : "stroke-primary"}`}
-              style={{
-                strokeDasharray: circumference,
-                strokeDashoffset: circumference * (1 - progress),
-              }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex items-center justify-center">
-            <span className="font-mono text-6xl tracking-tighter sm:text-7xl">
-              {isGoalReached
-                ? "00:00"
-                : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
-            </span>
-          </div>
-        </div>
-        <div className="flex flex-col items-center gap-2">
-          <p className="text-sm uppercase tracking-widest text-slate-400">
-            Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /
-            {settings?.sessionGoalCount || "∞"}
-          </p>
-          {settings?.sessionGoalCount > 0 && (
-            <div className="flex gap-2">
-              {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
-                <div
-                  key={i}
-                  className={`h-2 w-2 rounded-full transition-colors ${i < sessionCount ? (isBreak ? "bg-teal-400" : "bg-primary") : "bg-slate-600"}`}
-                />
-              ))}
+    <>
+      <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-accent bg-base-100 font-sans md:border-x">
+        <PomodoroHeader showXpGain={showXpGain} xpGainedAmount={xpGainedAmount} />
+        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3  sm:p-10">
+          <h1
+            key={isBreak ? "break" : "study"}
+            className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
+          >
+            {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
+          </h1>
+          <div
+            className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
+          >
+            <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                strokeWidth="8"
+                className="stroke-slate-700"
+              />
+              <circle
+                cx="50"
+                cy="50"
+                r={radius}
+                fill="none"
+                strokeWidth="8"
+                strokeLinecap="round"
+                className={`transition-colors duration-500 ease-linear ${isBreak ? "stroke-teal-400" : "stroke-primary"}`}
+                style={{
+                  strokeDasharray: circumference,
+                  strokeDashoffset: circumference * (1 - progress),
+                }}
+              />
+            </svg>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <span className="font-mono text-6xl tracking-tighter sm:text-7xl">
+                {isGoalReached
+                  ? "00:00"
+                  : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+              </span>
             </div>
-          )}
-        </div>
-        <div className="flex w-full items-center justify-center gap-6">
-          <button
-            onClick={() => setIsSettingsOpen(true)}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
-            aria-label="Open settings"
-            disabled={isActive || isGoalReached}
-          >
-            <FaCog size={20} />
-          </button>
-          <button
-            onClick={isActive ? handlePause : handleStart}
-            className={`flex h-[72px] w-[72px] items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 ${isActive ? "bg-teal-500 shadow-teal-500/50" : "bg-primary shadow-primary/50"}`}
-            aria-label={isActive ? "Pause timer" : "Start timer"}
-            disabled={timer <= 0 || isGoalReached}
-          >
-            {isActive ? <FaPause size={28} /> : <FaPlay size={28} className="ml-1" />}
-          </button>
-          <button
-            onClick={handleReset}
-            className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
-            aria-label="Reset timer"
-          >
-            <FaRedo size={18} />
-          </button>
-        </div>
-        <footer className="w-full">
-          <div className="flex items-center justify-center gap-4">
+          </div>
+          <div className="flex flex-col items-center gap-2">
+            <p className="text-sm uppercase tracking-widest text-slate-400">
+              Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /
+              {settings?.sessionGoalCount || " ∞"}
+            </p>
+            {settings?.sessionGoalCount > 0 && (
+              <div className="flex gap-2">
+                {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-2 w-2 rounded-full transition-colors ${i < sessionCount ? (isBreak ? "bg-teal-400" : "bg-primary") : "bg-slate-600"}`}
+                  />
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="flex w-full items-center justify-center gap-6">
             <button
-              onClick={() => navigate("/study-activity")}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
+              onClick={handleOpenSettingsPage}
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 bg-slate-700/50  transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              aria-label="Open settings"
+              disabled={isActive || isGoalReached}
             >
-              <MdLibraryBooks size={25} />
+              <FaCog size={20} />
             </button>
             <button
-              onClick={() => navigate("/")}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
+              onClick={isActive ? handlePause : handleStart}
+              className={`flex h-[72px] w-[72px] items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 ${isActive ? "bg-teal-500 shadow-teal-500/50" : "bg-primary shadow-primary/50"}`}
+              aria-label={isActive ? "Pause timer" : "Start timer"}
+              disabled={timer <= 0 || isGoalReached}
             >
-              <PiHouseThin size={25} strokeWidth={15} />
-              {newPostCount > 0 && (
-                <div
-                  className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
-                  style={{ transform: "translate(50%, -50%)" }}
-                ></div>
-              )}
+              {isActive ? <FaPause size={28} /> : <FaPlay size={28} className="ml-1" />}
             </button>
             <button
-              onClick={() => navigate("/study-leaderboard")}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
+              onClick={handleReset}
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              aria-label="Reset timer"
             >
-              <CiTrophy size={25} strokeWidth={1} />
+              <FaRedo size={18} />
             </button>
           </div>
-        </footer>
-      </div>
+          <footer className="w-full">
+            <div className="flex items-center justify-center gap-4">
+              <button
+                onClick={() => navigate("/study-activity")}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              >
+                <MdLibraryBooks size={25} />
+              </button>
+              <button
+                onClick={() => navigate("/")}
+                className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              >
+                <PiHouseThin size={25} strokeWidth={15} />
+                {newPostCount > 0 && (
+                  <div
+                    className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
+                    style={{ transform: "translate(50%, -50%)" }}
+                  ></div>
+                )}
+              </button>
+              <button
+                onClick={() => navigate("/study-leaderboard")}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              >
+                <CiTrophy size={25} strokeWidth={1} />
+              </button>
+            </div>
+          </footer>
+        </div>
+      </main>
       {settings && (
         <PomodoroSettingsModal
           isOpen={isSettingsOpen}
@@ -426,7 +431,7 @@ const PomodoroPage = () => {
           initialSettings={settings}
         />
       )}
-    </main>
+    </>
   )
 }
 export default PomodoroPage

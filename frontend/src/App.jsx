@@ -12,6 +12,7 @@ import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
+import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
 // import ResetPasswordPage from "./pages/ResetPasswordPage"
 // import ForgotPasswordPage from "./pages/ForgotPasswordPage"
 // import PomodoroPage from "./pages/PomodoroPage"
@@ -172,6 +173,7 @@ function App() {
                     <Route path="/pomodoro" element={<PomodoroPage />} />
                     <Route path="/study-activity" element={<StudyActivityPage />} />
                     <Route path="/study-leaderboard" element={<StudyLeaderboard />} />
+                    <Route path="/study-settings" element={<PomodoroSettingsPage />} />
                   </Routes>
                 </MainLayout>
               ) : (

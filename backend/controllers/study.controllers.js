@@ -4,7 +4,7 @@ import LevelUp from "../models/levelup.model.js";
 
 const checkAndAwardBadges = async (user) => {
   if (user.totalStudyDuration >= 1500 && !user.badges.includes("twenty-hour-scholar")) {
-    user.badges.push("twenty-hour-scholar");
+    user.badges.push("twentyfive-hour-scholar");
   }
   if (user.totalStudyDuration >= 6000 && !user.badges.includes("centurion-scholar")) {
     user.badges.push("centurion-scholar");
@@ -116,20 +116,40 @@ export const endStudySession = async (req, res) => {
     user.totalStudyDuration += duration;
     user.totalSessionsCompleted += 1;
 
-    // Handle study streak logic
-    const today = new Date().setHours(0, 0, 0, 0);
-    const lastStudy = user.lastStudyDate
-      ? new Date(user.lastStudyDate).setHours(0, 0, 0, 0)
-      : null;
-    const oneDay = 24 * 60 * 60 * 1000;
+    const getDateString = (date) => {
+      return date.toISOString().split("T")[0];
+    };
 
-    if (lastStudy && today - lastStudy === oneDay) {
-      user.studyStreak += 1;
-    } else if (!lastStudy || today - lastStudy > oneDay) {
+    // Updated streak logic in endStudySession
+    const today = new Date();
+    const todayString = getDateString(today);
+    const lastStudyDate = user.lastStudyDate ? new Date(user.lastStudyDate) : null;
+    const lastStudyString = lastStudyDate ? getDateString(lastStudyDate) : null;
+
+    if (!lastStudyDate) {
+      // First time studying - start streak at 1
       user.studyStreak = 1;
+    } else if (lastStudyString === todayString) {
+      // Already studied today - don't change streak
+      // (Multiple sessions in same day don't affect streak)
+    } else {
+      // Calculate yesterday's date string
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const yesterdayString = getDateString(yesterday);
+
+      if (lastStudyString === yesterdayString) {
+        // Studied yesterday, increment streak
+        user.studyStreak += 1;
+      } else {
+        // Gap in studying - reset streak to 1 (today's session)
+        user.studyStreak = 1;
+      }
     }
 
-    user.lastStudyDate = new Date();
+    // Always update lastStudyDate to today
+    user.lastStudyDate = today;
+
     await user.save();
 
     // Process XP and leveling
@@ -207,7 +227,7 @@ export const getLeaderboard = async (req, res) => {
       .sort({ totalStudyDuration: -1 })
       .skip(skipIndex)
       .limit(limit)
-      .select("username fullName totalStudyDuration totalSessionsCompleted profileImg")
+      .select("username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel")
       .populate({
         path: "profileImg",
         select: "imageUrl",

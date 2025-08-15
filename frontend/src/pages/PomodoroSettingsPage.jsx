@@ -1,14 +1,29 @@
 import { useState, useEffect } from "react"
-import { useUpdatePomodoroSettings } from "../../hooks/pomodoroHooks/usePomodo"
+import { useNavigate } from "react-router-dom" // For the "Go Back" button
+import { useGetPomodoroSettings, useUpdatePomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
+import LoadingSpinner from "../components/ui/LoadingSpinner"
 
-const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
-  const [settings, setSettings] = useState(initialSettings)
-  const updateSettingsMutation = useUpdatePomodoroSettings()
+function PomodoroSettingsPage() {
+  // Hook to navigate back after saving or canceling
+  const navigate = useNavigate()
 
+  // Fetch initial settings
+  const { data: initialSettings, isLoading } = useGetPomodoroSettings()
+
+  // State to manage form inputs
+  const [settings, setSettings] = useState(null)
+
+  // Mutation hook for updating settings
+  const { mutate: updateSettings, isPending: isUpdating } = useUpdatePomodoroSettings()
+
+  // When initialSettings are fetched, update the local state
   useEffect(() => {
-    setSettings(initialSettings)
+    if (initialSettings) {
+      setSettings(initialSettings)
+    }
   }, [initialSettings])
 
+  // Handler for form input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setSettings((prev) => ({
@@ -17,22 +32,30 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
     }))
   }
 
+  // Handler for form submission
   const handleSubmit = (e) => {
     e.preventDefault()
-    updateSettingsMutation.mutate(settings, {
-      onSuccess: () => onClose(),
+    updateSettings(settings, {
+      onSuccess: () => {
+        // Navigate back to the previous page on successful update
+        navigate(-1)
+      },
     })
   }
 
-  if (!isOpen) return null
+  // Show a loading spinner while fetching settings
+  if (isLoading || !settings) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <LoadingSpinner />
+      </div>
+    )
+  }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center bg-slate-700/70 justify-center" onClick={onClose}>
-      <div
-        className="relative w-full max-w-lg rounded-3xl bg-base-100 p-8 shadow-xl"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-bold">Pomodoro Settings</h3>
+    <div className="flex justify-center items-center min-h-screen bg-base-100 p-4 sm:p-6">
+      <div className="mx-auto w-full max-w-lg">
+        <h3 className="mb-6 text-2xl font-bold text-white">Pomodoro Settings</h3>
         <form onSubmit={handleSubmit} className="py-4">
           {/* Session Duration Range Input */}
           <div className="form-control mb-4">
@@ -133,6 +156,7 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
             </label>
           </div>
 
+          {/* Mute Alarm checkbox */}
           <div className="form-control mb-4">
             <label className="label cursor-pointer">
               <span className="label-text">Mute Alarm</span>
@@ -145,16 +169,13 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
               />
             </label>
           </div>
-          <div className="modal-action mt-6 flex justify-end gap-2">
-            <button type="button" className="btn" onClick={onClose}>
-              Cancel
+          {/* Action Buttons */}
+          <div className="mt-8 flex justify-end gap-3">
+            <button type="button" className="btn" onClick={() => navigate(-1)}>
+              Go Back
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={updateSettingsMutation.isPending}
-            >
-              Save
+            <button type="submit" className="btn btn-primary" disabled={isUpdating}>
+              {isUpdating ? "Saving..." : "Save"}
             </button>
           </div>
         </form>
@@ -163,4 +184,4 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   )
 }
 
-export default PomodoroSettingsModal
+export default PomodoroSettingsPage

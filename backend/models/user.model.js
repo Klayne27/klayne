@@ -139,7 +139,7 @@ const userSchema = new mongoose.Schema(
       longBreakDuration: { type: Number, default: 15 },
       sessionsBeforeLongBreak: { type: Number, default: 4 },
       sessionGoalCount: { type: Number, default: 0 },
-      autoplay: { type: Boolean, default: false },
+      autoplay: { type: Boolean, default: true },
       isMuted: { type: Boolean, default: false },
       volumeLevel: { type: Number, default: 0.5, min: 0.0, max: 1.0 }, // ADD THIS LINE
     },
@@ -153,7 +153,7 @@ const userSchema = new mongoose.Schema(
     },
     pomodoroLevel: {
       type: Number,
-      default: 1,
+      default: 0,
     },
   },
   { timestamps: true }

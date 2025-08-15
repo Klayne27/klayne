@@ -139,9 +139,9 @@ function ConversationItem({ conv }) {
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
-        {/* {isOnline && (
+        {isOnline && (
           <span className="absolute right-0.5 bottom-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
-        )} */}
+        )}
       </div>
 
       <div className="flex flex-1 flex-col overflow-hidden">

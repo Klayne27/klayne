@@ -120,7 +120,7 @@ function StudyLeaderboard() {
         <div className="mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+            className="mr-2 flex flex-shrink-0 hover:text-white items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
           >
             <FaArrowLeft className="text-xl" />
           </button>
@@ -138,7 +138,7 @@ function StudyLeaderboard() {
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
         >
           <FaArrowLeft className="text-xl" />
         </button>
@@ -173,8 +173,16 @@ function StudyLeaderboard() {
                 </div>
               </Link>
               <div className="flex-1 overflow-hidden">
-                <p className={`truncate text-lg font-bold`}>{entry.fullName}</p>
-                <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
+                <div className="flex items-center gap-2">
+                  <Link
+                    to={`/profile/${entry.username}`}
+                    className={`truncate text-lg font-bold hover:underline`}
+                  >
+                    {entry.fullName}
+                  </Link>
+                  <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
+                </div>
+                <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
               </div>
               <div className={`ml-4 flex flex-col items-end text-right text-slate-300`}>
                 <div className="flex items-center gap-1">

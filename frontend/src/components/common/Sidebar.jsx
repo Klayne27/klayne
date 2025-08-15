@@ -24,7 +24,6 @@ import { handleEnablePushNotifications } from "../../utils/push"
 import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 
-
 // import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const Sidebar = ({
@@ -536,7 +535,7 @@ const Sidebar = ({
               />
               {unreadMessageCount > 0 && (
                 <div
-                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
+                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {formatCount(unreadMessageCount)}
@@ -577,7 +576,7 @@ const Sidebar = ({
               />
               {unreadNotificationsCount > 0 && (
                 <div
-                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {formatCount(unreadNotificationsCount)}
@@ -618,7 +617,7 @@ const Sidebar = ({
               {/* Red dot for new public chat messages */}
               {unreadPublicChatCount > 0 && (
                 <div
-                  className="absolute right-2.5 top-3 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
+                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
                   style={{ transform: "translate(50%, -50%)" }}
                 >
                   {formatCount(unreadPublicChatCount)}
@@ -685,7 +684,30 @@ const Sidebar = ({
               Bookmarks
             </span>
           </li>
-
+          <li
+            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
+            onClick={() => navigate("/pomodoro")}
+          >
+            <button
+              className={`${
+                pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                isTouchDevice && activeButtonId === "pomodoro" ? "bg-secondary bg-opacity-80" : ""
+              }`}
+              onTouchStart={() => handleTouchStart("pomodoro")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
+            </button>
+            <span
+              className={`text-lg ${
+                pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+              }`}
+            >
+              Pomodoro
+            </span>
+          </li>
           {/* Themes */}
           <li
             className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
@@ -771,30 +793,7 @@ const Sidebar = ({
               Profile
             </span>
           </li>
-          {/* <li
-            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
-            onClick={() => navigate("/pomodoro")}
-          >
-            <button
-              className={`${
-                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("themes")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <IoIosTimer className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
-            </button>
-            <span
-              className={`text-lg ${
-                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Pomodoro
-            </span>
-          </li> */}
+
           <div className="mr-7 hidden md:block">
             <button
               className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
@@ -1042,7 +1041,7 @@ const Sidebar = ({
                     Themes
                   </span>
                 </li>
-                {/* <li
+                <li
                   onClick={() => {
                     if (pathname === "/pomodoro") return
                     navigate("/pomodoro")
@@ -1061,7 +1060,7 @@ const Sidebar = ({
                   <span className={`text-xl ${pathname === "/pomodoro" ? "font-bold" : ""}`}>
                     Pomodoro
                   </span>
-                </li> */}
+                </li>
 
                 {/* Separator if needed */}
                 <div className="my-2 border-t border-accent"></div>
