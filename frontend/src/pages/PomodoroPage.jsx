@@ -14,7 +14,6 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
-import { useQueryClient } from "@tanstack/react-query"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -25,7 +24,6 @@ const SESSION_COUNT_KEY = "pomodoro_session_count"
 const GOAL_REACHED_KEY = "pomodoro_goal_reached"
 
 const PomodoroPage = () => {
-  const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { newPostCount } = useSocket()
   const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
@@ -159,10 +157,6 @@ const PomodoroPage = () => {
     setTimeout(setupNextPhase, 50)
   }, [settings, isBreak, sessionCount, playAlarm, endSessionMutation, startNextTimer])
 
-  useEffect(() => {
-    handleSessionEndRef.current = handleSessionEnd
-  }, [handleSessionEnd])
-
   const startAnimation = useCallback(() => {
     const tick = () => {
       const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
@@ -187,6 +181,10 @@ const PomodoroPage = () => {
     }
     return () => cancelAnimationFrame(rafRef.current)
   }, [isActive, isGoalReached, startAnimation])
+
+  useEffect(() => {
+    handleSessionEndRef.current = handleSessionEnd
+  }, [handleSessionEnd])
 
   useEffect(() => {
     if (isSettingsLoading || !settings) return
@@ -303,9 +301,9 @@ const PomodoroPage = () => {
   }
 
   return (
-    <main className="container mx-auto flex min-h-screen w-full max-w-2xl animate-fade-in flex-col items-center justify-center bg-base-100 p-4 font-sans text-white">
+    <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between bg-base-100 p-4 font-sans text-white">
       <PomodoroHeader />
-      <div className="flex w-full max-w-md flex-col items-center gap-8 rounded-3xl p-6 shadow-2xl sm:p-10">
+      <div className="mb-40 flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 shadow-2xl sm:p-10">
         <h1
           key={isBreak ? "break" : "study"}
           className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
