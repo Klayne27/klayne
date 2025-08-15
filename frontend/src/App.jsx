@@ -1,5 +1,5 @@
 import { Navigate, Route, Routes, useLocation } from "react-router-dom"
-import { Suspense, lazy, useRef, useState } from "react"
+import { Suspense, lazy, useState } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
 import { useAuthUser } from "./hooks/authHooks/useAuthUser"

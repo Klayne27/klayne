@@ -27,12 +27,9 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   if (!isOpen) return null
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      onClick={onClose}
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
       <div
-        className="relative w-full max-w-lg rounded-3xl p-8 shadow-xl bg-slate-800"
+        className="relative w-full max-w-lg rounded-3xl bg-slate-800 p-8 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="text-lg font-bold">Pomodoro Settings</h3>
@@ -134,6 +131,34 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
                 className="checkbox"
               />
             </label>
+          </div>
+
+          <div className="form-control mb-4">
+            <label className="label cursor-pointer">
+              <span className="label-text">Mute Alarm</span>
+              <input
+                type="checkbox"
+                name="isMuted"
+                checked={settings.isMuted}
+                onChange={handleChange}
+                className="checkbox"
+              />
+            </label>
+          </div>
+          <div className="form-control mb-4">
+            <label className="label">
+              <span className="label-text">Alarm Volume</span>
+            </label>
+            <input
+              type="range"
+              name="volumeLevel"
+              min="0"
+              max="1"
+              step="0.1"
+              value={settings.volumeLevel}
+              onChange={handleChange}
+              className="range range-primary"
+            />
           </div>
           <div className="modal-action mt-6 flex justify-end gap-2">
             <button type="button" className="btn" onClick={onClose}>

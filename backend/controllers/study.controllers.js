@@ -116,19 +116,33 @@ export const endStudySession = async (req, res) => {
   }
 };
 
+// Before the try-catch block, destructure the query parameters
 export const getStudyActivityFeed = async (req, res) => {
   try {
-    // Get the latest 50 study sessions
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const skip = (page - 1) * limit;
+
     const activityFeed = await StudySession.find()
       .sort({ createdAt: -1 })
-      .limit(50)
+      .skip(skip)
+      .limit(limit)
       .populate({
         path: "user",
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       });
 
-    res.status(200).json(activityFeed);
+    // Also get the total count of documents to calculate total pages
+    const totalSessions = await StudySession.countDocuments();
+    const totalPages = Math.ceil(totalSessions / limit);
+
+    // Send back the activity feed, the current page, and the total pages
+    res.status(200).json({
+      activityFeed,
+      currentPage: page,
+      totalPages,
+    });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
@@ -201,6 +215,7 @@ export const updatePomodoroSettings = async (req, res) => {
       sessionsBeforeLongBreak,
       sessionGoalCount,
       autoplay,
+      isMuted,
     } = req.body;
 
     const user = await User.findByIdAndUpdate(
@@ -212,6 +227,7 @@ export const updatePomodoroSettings = async (req, res) => {
         "pomodoroSettings.sessionsBeforeLongBreak": sessionsBeforeLongBreak,
         "pomodoroSettings.sessionGoalCount": sessionGoalCount, // <-- Update this field
         "pomodoroSettings.autoplay": autoplay,
+        "pomodoroSettings.isMuted": isMuted,
       },
       { new: true } // returns the updated document
     );

@@ -10,7 +10,7 @@ function StudyLeaderboard() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const { leaderboard, totalPages, isLoading } = useGetLeaderboard(page)
- 
+
   const { authUser: currentUser } = useAuthUser()
 
   const handlePageChange = (newPage) => {
@@ -93,9 +93,22 @@ function StudyLeaderboard() {
     return buttons
   }
 
+  const getRingColor = (index) => {
+    switch (index) {
+      case 0:
+        return "ring-amber-400"
+      case 1:
+        return "ring-slate-400"
+      case 2:
+        return "ring-yellow-800"
+      default:
+        return "ring-base-100"
+    }
+  }
+
   if (isLoading) {
     return (
-      <div className="flex items-center justify-center p-6 h-screen">
+      <div className="flex h-screen ring- items-center justify-center p-6">
         <LoadingSpinner />
       </div>
     )
@@ -103,75 +116,75 @@ function StudyLeaderboard() {
 
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="flex items-center justify-center p-6 text-gray-500">
-        No study data available to create a leaderboard yet.
+      <div className="p-6">
+        <div className="mb-4 flex items-center">
+          <button
+            onClick={() => navigate(-1)}
+            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          >
+            <FaArrowLeft className="text-xl" />
+          </button>
+          <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
+        </div>
+        <div className="mt-8 flex items-center justify-center text-gray-500">
+          No study data available to create a leaderboard yet.
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="rounded-lg bg-base-100 p-4 shadow-md">
-      <div className="mb-4 flex">
+    <div className="container mx-auto max-w-2xl p-4">
+      <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
         >
-          <FaArrowLeft />
+          <FaArrowLeft className="text-xl" />
         </button>
-        <h2 className="text-center text-2xl font-bold">Study Leaderboard</h2>
+        <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
       </div>
-      <ul className="space-y-2">
+      <ul className="space-y-4">
         {leaderboard.map((entry, index) => (
           <li
             key={entry._id}
-            className={`flex transform items-center rounded-lg p-3 shadow-sm transition-transform duration-200 ease-in-out ${
+            className={`flex items-center rounded-lg p-3 shadow-lg transition-transform duration-200 ease-in-out ${
               currentUser && currentUser._id === entry._id
-                ? "scale-105 bg-secondary"
-                : "bg-base-200/70"
-            }`}
+                ? "scale-[1.01] bg-secondary"
+                : ""
+            } `}
           >
-            <span className="w-8 text-lg font-bold">{(page - 1) * 10 + index + 1}.</span>
-            <Link to={`/profile/${entry?.username}`} className="mr-3 w-10">
-              <div className="rounded-full">
-                <img
-                  className="size-10 rounded-full"
-                  src={
-                    entry?.profileImg?.imageUrl
-                      ? entry.profileImg.imageUrl
-                      : "/avatar-placeholder.png"
-                  }
-                  alt={`${entry.fullName} avatar`}
-                />
+            <span className={`w-10 text-center text-lg font-bold`}>
+              {(page - 1) * 10 + index + 1}.
+            </span>
+            <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
+              <div className="avatar">
+                <div className={`${getRingColor(index)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}>
+                  <img
+                    src={
+                      entry?.profileImg?.imageUrl
+                        ? entry.profileImg.imageUrl
+                        : "/avatar-placeholder.png"
+                    }
+                    alt={`${entry.fullName} avatar`}
+                  />
+                </div>
               </div>
             </Link>
-            <div className="flex-1">
-              <p
-                className={`font-semibold ${
-                  currentUser && currentUser.id === entry._id ? "text-primary-content" : ""
-                }`}
-              >
-                {entry.fullName}
-              </p>
-              <p
-                className={`text-sm ${
-                  currentUser && currentUser.id === entry._id
-                    ? "text-primary-content"
-                    : "text-slate-500"
-                }`}
-              >
-                @{entry.username}
-              </p>
+            <div className="flex-1 overflow-hidden">
+              <p className={`truncate text-lg font-bold`}>{entry.fullName}</p>
+              <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
             </div>
-            <div className="flex flex-col items-end text-right text-xs">
-              <div className="flex items-center gap-1 font-bold">
-                <FaClock className="text-slate-500" />
-                <span>
+            <div className={`text-right text-slate-300 ml-4 flex flex-col items-end`}>
+              <div className="flex items-center gap-1">
+                <FaClock className="text-sm" />
+                <span className="text-sm font-semibold">
                   {Math.round(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
                 </span>
               </div>
-              <div className="flex items-center gap-1 text-slate-500">
-                <FaCheckCircle className="text-secondary" />
-                <span>{entry.totalSessionsCompleted} sessions</span>
+              <div className="mt-1 flex items-center gap-1 text-slate-500">
+                <FaCheckCircle className="text-sm" />
+                <span className="text-sm">{entry.totalSessionsCompleted} sessions</span>
               </div>
             </div>
           </li>
@@ -179,25 +192,27 @@ function StudyLeaderboard() {
       </ul>
 
       {/* Pagination Controls */}
-      <div className="mt-6 flex justify-center">
-        <div className="join">
-          <button
-            className="btn join-item"
-            onClick={() => handlePageChange(page - 1)}
-            disabled={page === 1}
-          >
-            «
-          </button>
-          {renderPaginationButtons()}
-          <button
-            className="btn join-item"
-            onClick={() => handlePageChange(page + 1)}
-            disabled={page === totalPages}
-          >
-            »
-          </button>
+      {totalPages > 1 && (
+        <div className="mt-6 flex justify-center">
+          <div className="join">
+            <button
+              className="btn join-item"
+              onClick={() => handlePageChange(page - 1)}
+              disabled={page === 1}
+            >
+              «
+            </button>
+            {renderPaginationButtons()}
+            <button
+              className="btn join-item"
+              onClick={() => handlePageChange(page + 1)}
+              disabled={page === totalPages}
+            >
+              »
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   )
 }

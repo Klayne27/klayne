@@ -140,6 +140,8 @@ const userSchema = new mongoose.Schema(
       sessionsBeforeLongBreak: { type: Number, default: 4 },
       sessionGoalCount: { type: Number, default: 0 },
       autoplay: { type: Boolean, default: false },
+      isMuted: { type: Boolean, default: false },
+      volumeLevel: { type: Number, default: 0.5, min: 0.0, max: 1.0 }, // ADD THIS LINE
     },
     totalSessionsCompleted: {
       type: Number,

@@ -57,11 +57,17 @@ export const useEndStudySession = () => {
   })
 }
 
-export const useGetStudyActivityFeed = () => {
-  return useQuery({
-    queryKey: ["studyActivity"],
-    queryFn: getStudyActivityFeed,
+export const useGetStudyActivityFeed = (page) => {
+  const { data, isLoading } = useQuery({
+    queryKey: ["studyActivity", page], // Add page to the queryKey
+    queryFn: () => getStudyActivityFeed(page),
   })
+
+  return {
+    activityFeed: data?.activityFeed,
+    totalPages: data?.totalPages,
+    isLoading
+  }
 }
 
 export const useGetLeaderboard = (page) => {

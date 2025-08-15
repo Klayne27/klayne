@@ -46,8 +46,8 @@ export const endStudySession = async ({ duration, postId }) => {
   return res.json()
 }
 
-export const getStudyActivityFeed = async () => {
-  const res = await fetch(`${BASE_URL}/activity`)
+export const getStudyActivityFeed = async (page = 1) => {
+  const res = await fetch(`${BASE_URL}/activity?page=${page}&limit=10`)
   if (!res.ok) {
     throw new Error("Failed to fetch study activity feed")
   }
