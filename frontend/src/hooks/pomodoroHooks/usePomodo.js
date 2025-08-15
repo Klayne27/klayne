@@ -50,6 +50,9 @@ export const useEndStudySession = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["studyActivity"] })
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
+      queryClient.invalidateQueries({ queryKey: ["authUser"] })
+
+      // queryClient.refetchQueries({ queryKey: ["authUser"] })
     },
     onError: (error) => {
       showAppToast(error.message, "error")
@@ -66,7 +69,7 @@ export const useGetStudyActivityFeed = (page) => {
   return {
     activityFeed: data?.activityFeed,
     totalPages: data?.totalPages,
-    isLoading
+    isLoading,
   }
 }
 

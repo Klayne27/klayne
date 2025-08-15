@@ -1,46 +1,18 @@
-// components/PomodoroHeader.jsx
-import { useEffect, useRef, useState } from "react"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import LoadingSpinner from "../ui/LoadingSpinner"
-import { FaFire } from "react-icons/fa"
+import { FaFire } from "react-icons/fa" // Use a 🔥 icon for the XP section
 
 // A helper function to calculate XP needed for the next level
 const xpForLevel = (level) => {
   if (level <= 1) {
-    return 1500
+    return 1500 // Base XP for level 2
   }
   return Math.floor(2000 * Math.pow(level - 1, 1.5))
 }
 
 const PomodoroHeader = () => {
-  const { authUser: currentUser, isLoading, initialData } = useAuthUser()
-  const [xpChange, setXpChange] = useState(0)
+  const { authUser: currentUser, isLoading } = useAuthUser()
 
-  // Set the initial XP state to prevent animation on first load
-  const prevXpRef = useRef()
-
-  useEffect(() => {
-    // If we have user data, but haven't stored a previous value yet,
-    // store the initial XP value in our ref and do nothing else.
-    if (currentUser && prevXpRef.current === undefined) {
-      prevXpRef.current = currentUser.pomodoroXP
-      return
-    } // On subsequent renders, if the new XP is greater than our stored previous XP...
-
-    if (currentUser && currentUser.pomodoroXP > prevXpRef.current) {
-      const newXp = currentUser.pomodoroXP - prevXpRef.current
-      setXpChange(newXp) // Trigger the animation
-      // IMPORTANT: Update the ref with the new value for the next comparison.
-
-      prevXpRef.current = currentUser.pomodoroXP
-
-      const timer = setTimeout(() => {
-        setXpChange(0)
-      }, 2000)
-
-      return () => clearTimeout(timer)
-    }
-  }, [currentUser])
   if (isLoading) {
     return <LoadingSpinner />
   }
@@ -74,7 +46,7 @@ const PomodoroHeader = () => {
         </div>
 
         {/* XP Progress and Level Section */}
-        <div className="relative flex w-full flex-col items-start sm:w-auto">
+        <div className="flex w-full flex-col items-start sm:w-auto">
           <div className="mb-2 flex items-center gap-2">
             <FaFire className="text-lg text-orange-400" />
             <span className="text-sm font-semibold text-gray-300">Level {pomodoroLevel}</span>
@@ -94,13 +66,6 @@ const PomodoroHeader = () => {
               </span>
             </div>
           </div>
-
-          {/* XP Change Notification UI */}
-          {xpChange > 0 && (
-            <div className="animate-fade-out absolute -top-0 right-0 translate-x-1/2 transform md:left-auto md:right-10 md:translate-x-0">
-              <span className="text-lg font-bold tracking-wide text-primary">+ {xpChange} XP</span>
-            </div>
-          )}
         </div>
       </div>
     </header>

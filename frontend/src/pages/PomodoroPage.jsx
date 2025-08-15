@@ -1,7 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
-
 import {
   useEndStudySession,
   useGetPomodoroSettings,
@@ -23,41 +22,31 @@ const DURATION_AT_START_KEY = "pomodoro_duration_at_start"
 const PAUSED_TIME_KEY = "pomodoro_paused_time"
 const BREAK_KEY = "pomodoro_is_break"
 const SESSION_COUNT_KEY = "pomodoro_session_count"
-const POST_ID_KEY = "pomodoro_post_id"
-const GOAL_REACHED_KEY = "pomodoro_goal_reached" // New key for localStorage
+const GOAL_REACHED_KEY = "pomodoro_goal_reached"
 
 const PomodoroPage = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const { newPostCount } = useSocket()
   const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
-  const startSessionMutation = useStartStudySession()
   const endSessionMutation = useEndStudySession()
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [isBreak, setIsBreak] = useState(false)
   const [sessionCount, setSessionCount] = useState(0)
-  const [postId, setPostId] = useState(null)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [isGoalReached, setIsGoalReached] = useState(false) // NEW: State to track if the goal is met
+  const [isGoalReached, setIsGoalReached] = useState(false)
 
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
   const durationAtStartRef = useRef(0)
-
-  const isBreakRef = useRef(isBreak)
-  const postIdRef = useRef(postId)
-  const sessionCountRef = useRef(sessionCount)
-  const isActiveRef = useRef(isActive)
   const handleSessionEndRef = useRef(() => {})
-  const isGoalReachedRef = useRef(isGoalReached) // NEW: Ref for goal status
   const alarmAudioRef = useRef(null)
 
   useEffect(() => {
-    // Check if the ref has been initialized to avoid creating duplicates if the component somehow remounts
     if (!alarmAudioRef.current) {
-      alarmAudioRef.current = new Audio("/alarm.mp3")
+      alarmAudioRef.current = new Audio("")
     }
     return () => {
       if (alarmAudioRef.current) {
@@ -73,18 +62,9 @@ const PomodoroPage = () => {
     }
   }, [settings])
 
-  useEffect(() => {
-    isBreakRef.current = isBreak
-    postIdRef.current = postId
-    sessionCountRef.current = sessionCount
-    isActiveRef.current = isActive
-    isGoalReachedRef.current = isGoalReached
-  }, [isBreak, postId, sessionCount, isActive, isGoalReached])
-
   const playAlarm = useCallback(() => {
     if (settings && !settings.isMuted && alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0
-      // It's good practice to try to play the audio and catch any potential errors
       alarmAudioRef.current.play().catch((e) => console.error("Audio playback failed:", e))
     }
   }, [settings])
@@ -95,8 +75,7 @@ const PomodoroPage = () => {
     setTimer(settings.sessionDuration * 60)
     setIsBreak(false)
     setSessionCount(0)
-    setPostId(null)
-    setIsGoalReached(false) // Reset goal status
+    setIsGoalReached(false)
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("pomodoro_")) localStorage.removeItem(key)
     })
@@ -112,7 +91,6 @@ const PomodoroPage = () => {
           nextSessionCount > 0 &&
           settings.sessionsBeforeLongBreak > 0 &&
           nextSessionCount % settings.sessionsBeforeLongBreak === 0
-
         nextTimerDuration =
           (isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration) * 60
       } else {
@@ -122,7 +100,7 @@ const PomodoroPage = () => {
       setTimer(nextTimerDuration || 0)
       setIsBreak(nextIsBreak)
       setSessionCount(nextSessionCount)
-      setIsGoalReached(false) // Ensure goal is not reached on a new timer
+      setIsGoalReached(false)
 
       localStorage.setItem(BREAK_KEY, nextIsBreak)
       localStorage.setItem(SESSION_COUNT_KEY, nextSessionCount)
@@ -151,80 +129,35 @@ const PomodoroPage = () => {
   )
 
   const handleSessionEnd = useCallback(() => {
-    if (!settings || isGoalReachedRef.current) return // Prevent multiple ends
+    if (!settings) return
 
     setIsActive(false)
 
-    const shouldAutoplay = settings.autoplay
+    const setupNextPhase = () => {
+      if (!isBreak) {
+        playAlarm()
+        const newSessionCount = sessionCount + 1
+        const isGoalMet =
+          settings.sessionGoalCount > 0 && newSessionCount >= settings.sessionGoalCount
+        endSessionMutation.mutate({ duration: settings.sessionDuration })
 
-    if (!isBreakRef.current) {
-      playAlarm()
-      const duration = settings.sessionDuration
-      endSessionMutation.mutate(
-        { duration, postId: postIdRef.current },
-        {
-          onSuccess: () => {
-            queryClient.invalidateQueries({ queryKey: ["authUser"] })
-
-            const newSessionCount = sessionCountRef.current + 1
-            if (settings.sessionGoalCount > 0 && newSessionCount >= settings.sessionGoalCount) {
-              showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
-              setIsActive(false)
-              setTimer(0) // Timer to 00:00
-              setSessionCount(newSessionCount)
-              setIsGoalReached(true) // Set goal as reached
-              localStorage.setItem(GOAL_REACHED_KEY, "true")
-              localStorage.setItem(SESSION_COUNT_KEY, newSessionCount)
-              localStorage.setItem(ACTIVE_KEY, "false")
-            } else {
-              startNextTimer(shouldAutoplay, newSessionCount, true)
-            }
-          },
-          onError: () => {
-            showAppToast("Failed to save session. Please try again.", "error")
-            handleReset()
-          },
-        },
-      )
-    } else {
-      const nextSessionCount = sessionCountRef.current
-      const nextIsBreak = false
-
-      if (!shouldAutoplay) {
-        setPostId(null)
-        localStorage.removeItem(POST_ID_KEY)
-        startNextTimer(false, nextSessionCount, nextIsBreak)
-        return
+        if (isGoalMet) {
+          showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
+          setTimer(0)
+          setSessionCount(newSessionCount)
+          setIsGoalReached(true)
+          localStorage.setItem(GOAL_REACHED_KEY, "true")
+          localStorage.setItem(SESSION_COUNT_KEY, String(newSessionCount))
+          localStorage.setItem(ACTIVE_KEY, "false")
+          return
+        }
+        startNextTimer(settings.autoplay, newSessionCount, true)
+      } else {
+        startNextTimer(settings.autoplay, sessionCount, false)
       }
-
-      startSessionMutation.mutate(undefined, {
-        onSuccess: (data) => {
-          queryClient.invalidateQueries({ queryKey: ["authUser"] })
-
-          if (data?.postId) {
-            setPostId(data.postId)
-            localStorage.setItem(POST_ID_KEY, data.postId)
-          } else {
-            setPostId(null)
-            localStorage.removeItem(POST_ID_KEY)
-          }
-          startNextTimer(true, nextSessionCount, nextIsBreak)
-        },
-        onError: () => {
-          showAppToast("Failed to start the next session automatically.", "error")
-          handleReset()
-        },
-      })
     }
-  }, [
-    settings,
-    playAlarm,
-    endSessionMutation,
-    queryClient,
-    startNextTimer,
-    handleReset,
-    startSessionMutation,
-  ])
+    setTimeout(setupNextPhase, 50)
+  }, [settings, isBreak, sessionCount, playAlarm, endSessionMutation, startNextTimer])
 
   useEffect(() => {
     handleSessionEndRef.current = handleSessionEnd
@@ -232,21 +165,16 @@ const PomodoroPage = () => {
 
   const startAnimation = useCallback(() => {
     const tick = () => {
-      if (!isActiveRef.current || isGoalReachedRef.current) return
-
-      const elapsedSec = (Date.now() - startTimestampRef.current) / 50
+      const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
       const remaining = durationAtStartRef.current - elapsedSec
-
       if (remaining <= 0) {
         setTimer(0)
         handleSessionEndRef.current()
         return
       }
-
       setTimer(remaining)
       rafRef.current = requestAnimationFrame(tick)
     }
-
     cancelAnimationFrame(rafRef.current)
     rafRef.current = requestAnimationFrame(tick)
   }, [])
@@ -262,34 +190,28 @@ const PomodoroPage = () => {
 
   useEffect(() => {
     if (isSettingsLoading || !settings) return
-
     const savedIsActive = localStorage.getItem(ACTIVE_KEY) === "true"
     const savedStartTime = parseInt(localStorage.getItem(START_TIMESTAMP_KEY), 10)
     const savedDurationAtStart = parseInt(localStorage.getItem(DURATION_AT_START_KEY), 10)
     const savedPausedTime = parseFloat(localStorage.getItem(PAUSED_TIME_KEY))
     const savedIsBreak = localStorage.getItem(BREAK_KEY) === "true"
     const savedSessionCount = parseInt(localStorage.getItem(SESSION_COUNT_KEY), 10) || 0
-    const savedPostId = localStorage.getItem(POST_ID_KEY) || null
-    const savedGoalReached = localStorage.getItem(GOAL_REACHED_KEY) === "true" // Load goal status
+    const savedGoalReached = localStorage.getItem(GOAL_REACHED_KEY) === "true"
 
     setIsBreak(savedIsBreak)
     setSessionCount(savedSessionCount)
-    setPostId(savedPostId)
-    setIsGoalReached(savedGoalReached) // Set goal status on load
+    setIsGoalReached(savedGoalReached)
 
     if (savedGoalReached) {
-      setTimer(0) // Goal reached, timer should be 0
+      setTimer(0)
       setIsActive(false)
       return
     }
-
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
       const elapsedTime = (Date.now() - savedStartTime) / 1000
       const newTimer = savedDurationAtStart - elapsedTime
-
       setTimer(newTimer > 0 ? newTimer : 0)
       setIsActive(newTimer > 0)
-
       startTimestampRef.current = savedStartTime
       durationAtStartRef.current = savedDurationAtStart
     } else if (!isNaN(savedPausedTime)) {
@@ -304,22 +226,18 @@ const PomodoroPage = () => {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.hidden) return
-
       if (localStorage.getItem(GOAL_REACHED_KEY) === "true") {
         setIsActive(false)
         setTimer(0)
         setIsGoalReached(true)
         return
       }
-
       if (localStorage.getItem(ACTIVE_KEY) === "true") {
         const startTime = parseInt(localStorage.getItem(START_TIMESTAMP_KEY), 10)
         const durationAtStart = parseInt(localStorage.getItem(DURATION_AT_START_KEY), 10)
-
         if (startTime && durationAtStart) {
           const elapsedTime = (Date.now() - startTime) / 1000
           const newTimer = durationAtStart - elapsedTime
-
           if (newTimer <= 0) {
             setTimer(0)
             setIsActive(false)
@@ -333,18 +251,15 @@ const PomodoroPage = () => {
         }
       }
     }
-
     document.addEventListener("visibilitychange", handleVisibilityChange)
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [])
 
   const handleStart = async () => {
-    if (isActive || !settings || timer <= 0 || isGoalReached) return // Disable start if goal is reached
-
+    if (isActive || !settings || timer <= 0 || isGoalReached) return
     const now = Date.now()
     startTimestampRef.current = now
     durationAtStartRef.current = timer
-
     localStorage.setItem(ACTIVE_KEY, "true")
     localStorage.setItem(START_TIMESTAMP_KEY, now)
     localStorage.setItem(DURATION_AT_START_KEY, timer)
@@ -352,21 +267,7 @@ const PomodoroPage = () => {
     localStorage.setItem(SESSION_COUNT_KEY, sessionCount)
     localStorage.removeItem(PAUSED_TIME_KEY)
     localStorage.setItem(GOAL_REACHED_KEY, "false")
-
     setIsActive(true)
-
-    if (!isBreak && !postId) {
-      try {
-        const data = await startSessionMutation.mutateAsync()
-
-        if (data?.postId) {
-          setPostId(data.postId)
-          localStorage.setItem(POST_ID_KEY, data.postId)
-        }
-      } catch {
-        setIsActive(false)
-      }
-    }
   }
 
   const handlePause = () => {
@@ -378,7 +279,6 @@ const PomodoroPage = () => {
 
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
-
   let totalDuration = 25 * 60
   if (settings) {
     const isCurrentBreakLong =
@@ -386,13 +286,11 @@ const PomodoroPage = () => {
       sessionCount > 0 &&
       settings.sessionsBeforeLongBreak > 0 &&
       sessionCount % settings.sessionsBeforeLongBreak === 0
-
     totalDuration = isBreak
       ? (isCurrentBreakLong ? settings.longBreakDuration : settings.shortBreakDuration) * 60
       : settings.sessionDuration * 60
   }
   const progress = totalDuration ? Math.max(timer / totalDuration, 0) : 0
-
   const radius = 45
   const circumference = 2 * Math.PI * radius
 
@@ -406,22 +304,18 @@ const PomodoroPage = () => {
 
   return (
     <main className="container mx-auto flex min-h-screen w-full max-w-2xl animate-fade-in flex-col items-center justify-center bg-base-100 p-4 font-sans text-white">
-      {/* <PomodoroHeader /> */}
-
+      <PomodoroHeader />
       <div className="flex w-full max-w-md flex-col items-center gap-8 rounded-3xl p-6 shadow-2xl sm:p-10">
-        {/* Header: Dynamic title */}
         <h1
-          key={isBreak ? "break" : "study"} // Key ensures remount and animation on change
+          key={isBreak ? "break" : "study"}
           className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
         >
           {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
         </h1>
-        {/* Radial Timer using SVG for better styling control */}
         <div
           className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
         >
           <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-            {/* Background track */}
             <circle
               cx="50"
               cy="50"
@@ -430,7 +324,6 @@ const PomodoroPage = () => {
               strokeWidth="8"
               className="stroke-slate-700"
             />
-            {/* Progress arc */}
             <circle
               cx="50"
               cy="50"
@@ -445,7 +338,6 @@ const PomodoroPage = () => {
               }}
             />
           </svg>
-          {/* Time display centered over the SVG */}
           <div className="absolute inset-0 flex items-center justify-center">
             <span className="font-mono text-6xl tracking-tighter sm:text-7xl">
               {isGoalReached
@@ -454,10 +346,9 @@ const PomodoroPage = () => {
             </span>
           </div>
         </div>
-        {/* Visual Session Counter */}
         <div className="flex flex-col items-center gap-2">
           <p className="text-sm uppercase tracking-widest text-slate-400">
-            Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /{" "}
+            Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /
             {settings?.sessionGoalCount || "∞"}
           </p>
           {settings?.sessionGoalCount > 0 && (
@@ -471,7 +362,6 @@ const PomodoroPage = () => {
             </div>
           )}
         </div>
-        {/* Main Controls: Clearer hierarchy */}
         <div className="flex w-full items-center justify-center gap-6">
           <button
             onClick={() => setIsSettingsOpen(true)}
@@ -497,7 +387,6 @@ const PomodoroPage = () => {
             <FaRedo size={18} />
           </button>
         </div>
-        {/* Footer Links */}
         <footer className="w-full">
           <div className="flex items-center justify-center gap-4">
             <button
@@ -506,7 +395,6 @@ const PomodoroPage = () => {
             >
               <MdLibraryBooks size={25} />
             </button>
-
             <button
               onClick={() => navigate("/")}
               className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
@@ -519,7 +407,6 @@ const PomodoroPage = () => {
                 ></div>
               )}
             </button>
-
             <button
               onClick={() => navigate("/study-leaderboard")}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-400 transition-all hover:bg-slate-700 hover:text-white"
@@ -529,7 +416,6 @@ const PomodoroPage = () => {
           </div>
         </footer>
       </div>
-      {/* Modal remains unchanged, it will just appear over the new UI */}
       {settings && (
         <PomodoroSettingsModal
           isOpen={isSettingsOpen}
@@ -540,5 +426,4 @@ const PomodoroPage = () => {
     </main>
   )
 }
-
 export default PomodoroPage

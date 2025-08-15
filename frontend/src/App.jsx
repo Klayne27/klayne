@@ -14,10 +14,13 @@ import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGl
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import ResetPasswordPage from "./pages/ResetPasswordPage"
 import ForgotPasswordPage from "./pages/ForgotPasswordPage"
-import PomodoroPage from "./pages/PomodoroPage"
-import StudyActivityPage from "./pages/StudyActivityPage"
-import StudyLeaderboard from "./pages/StudyLeaderboard"
+// import PomodoroPage from "./pages/PomodoroPage"
+// import StudyActivityPage from "./pages/StudyActivityPage"
+// import StudyLeaderboard from "./pages/StudyLeaderboard"
 
+const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
+const StudyLeaderboard = lazy(() => import("./pages/StudyLeaderboard"))
+const PomodoroPage = lazy(() => import("./pages/PomodoroPage"))
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const CreatePostModal = lazy(() => import("./components/common/posts/CreatePostModal"))
 const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
@@ -33,7 +36,7 @@ const PostPage = lazy(() => import("./pages/post/PostPage"))
 const SearchPage = lazy(() => import("./pages/search/SearchPage"))
 
 const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
-  const {pathname} = useLocation()
+  const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")
   const isPublicChatPage = pathname.includes("/public-chat")
 
@@ -43,13 +46,15 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
 
   return (
     <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
-      {!shouldHideSidePanels && <Sidebar
-        onOpenCreatePostModal={() => setShowCreatePostModal(true)}
-        isPushSubscribed={isPushSubscribed}
-        deferredPrompt={deferredPrompt}
-        isInstalled={isInstalled}
-        installApp={installApp}
-      />}
+      {!shouldHideSidePanels && (
+        <Sidebar
+          onOpenCreatePostModal={() => setShowCreatePostModal(true)}
+          isPushSubscribed={isPushSubscribed}
+          deferredPrompt={deferredPrompt}
+          isInstalled={isInstalled}
+          installApp={installApp}
+        />
+      )}
       <main
         className={`${
           isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
@@ -57,17 +62,15 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
       >
         {children}
       </main>
-      {!isMessagePage &&
-        !isPublicChatPage &&
-        !shouldHideSidePanels && (
-          <RightPanel
-            deferredPrompt={deferredPrompt}
-            isInstalled={isInstalled}
-            installApp={installApp}
-            isPushSubscribed={isPushSubscribed}
-            className="hidden md:block"
-          />
-        )}
+      {!isMessagePage && !isPublicChatPage && !shouldHideSidePanels && (
+        <RightPanel
+          deferredPrompt={deferredPrompt}
+          isInstalled={isInstalled}
+          installApp={installApp}
+          isPushSubscribed={isPushSubscribed}
+          className="hidden md:block"
+        />
+      )}
     </div>
   )
 }
