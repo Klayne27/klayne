@@ -1,9 +1,9 @@
 import User from "../models/user.model.js";
 import StudySession from "../models/studySession.js";
-import { io } from "../lib/socket.js";
+import LevelUp from "../models/levelup.model.js";
 
 const checkAndAwardBadges = async (user) => {
-  if (user.totalStudyDuration >= 1200 && !user.badges.includes("twenty-hour-scholar")) {
+  if (user.totalStudyDuration >= 1500 && !user.badges.includes("twenty-hour-scholar")) {
     user.badges.push("twenty-hour-scholar");
   }
   if (user.totalStudyDuration >= 6000 && !user.badges.includes("centurion-scholar")) {
@@ -41,46 +41,54 @@ const checkAndAwardBadges = async (user) => {
 
 const xpForLevel = (level) => {
   if (level <= 1) {
-    return 1500;
+    return 500; // ~2 sessions to reach level 2
   }
-  return Math.floor(2000 * Math.pow(level - 1, 1.5));
+  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100);
 };
 
 const handleXPAndLeveling = async (user, duration) => {
+  // XP gained is 10 per minute of study
   const xpGained = duration * 10;
-  user.pomodoroXP += xpGained;
-  while (user.pomodoroXP >= xpForLevel(user.pomodoroLevel + 1)) {
-    const xpNeededForNextLevel = xpForLevel(user.pomodoroLevel + 1);
-    user.pomodoroXP -= xpNeededForNextLevel;
-    user.pomodoroLevel += 1;
-  }
-  await user.save();
-};
+  const initialLevel = user.pomodoroLevel;
 
-const processPostSessionTasks = async (userId, duration) => {
-  try {
-    const user = await User.findById(userId);
-    if (!user) return;
-    await handleXPAndLeveling(user, duration);
-    await checkAndAwardBadges(user);
-    io.emit("studySessionEnded", {
-      userId: userId,
-      username: user.username,
-      duration,
+  user.pomodoroXP += xpGained;
+  let levelsGained = [];
+
+  // Check for level up. Loop in case of multiple level ups from one session.
+  let xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1); // XP needed for NEXT level
+
+  while (user.pomodoroXP >= xpNeededForCurrentLevel) {
+    // Subtract the XP needed for this level up
+    user.pomodoroXP -= xpNeededForCurrentLevel;
+
+    // Increment the user's level
+    user.pomodoroLevel += 1;
+    levelsGained.push(user.pomodoroLevel);
+
+    // Create a record of the level up event for the activity feed
+    await LevelUp.create({
+      user: user._id,
+      newLevel: user.pomodoroLevel,
     });
-  } catch (error) {
-    console.error("Error in post-session processing:", error.message);
+
+    // Get the XP needed for the next level
+    xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
   }
+
+  await user.save();
+
+  return {
+    xpGained,
+    levelsGained,
+    finalLevel: user.pomodoroLevel,
+    finalXP: user.pomodoroXP,
+    xpNeededForNext: xpNeededForCurrentLevel,
+  };
 };
 
 export const startStudySession = async (req, res) => {
   try {
     const userId = req.user._id;
-    io.emit("studySessionStarted", {
-      userId: userId,
-      username: req.user.username,
-      startedAt: new Date(),
-    });
     res.status(200).json({ message: "Study session started" });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
@@ -91,31 +99,49 @@ export const endStudySession = async (req, res) => {
   try {
     const userId = req.user._id;
     const { duration } = req.body;
+
     if (!duration) {
       return res.status(400).json({ error: "Duration is required" });
     }
+
+    // Create study session record
     await StudySession.create({
       user: userId,
       duration,
       date: new Date(),
     });
+
+    // Update user stats
     const user = await User.findById(userId);
     user.totalStudyDuration += duration;
     user.totalSessionsCompleted += 1;
+
+    // Handle study streak logic
     const today = new Date().setHours(0, 0, 0, 0);
     const lastStudy = user.lastStudyDate
       ? new Date(user.lastStudyDate).setHours(0, 0, 0, 0)
       : null;
     const oneDay = 24 * 60 * 60 * 1000;
+
     if (lastStudy && today - lastStudy === oneDay) {
       user.studyStreak += 1;
     } else if (!lastStudy || today - lastStudy > oneDay) {
       user.studyStreak = 1;
     }
+
     user.lastStudyDate = new Date();
     await user.save();
-    res.status(200).json({ message: "Study session logged successfully" });
-    processPostSessionTasks(userId, duration);
+
+    // Process XP and leveling
+    const xpResult = await handleXPAndLeveling(user, duration);
+
+    // Award badges
+    await checkAndAwardBadges(user);
+
+    res.status(200).json({
+      message: "Study session logged successfully",
+      xpResult,
+    });
   } catch (error) {
     console.error("Error in endStudySession", error.message);
     res.status(500).json({ error: "Internal server error" });
@@ -127,19 +153,42 @@ export const getStudyActivityFeed = async (req, res) => {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
-    const activityFeed = await StudySession.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: "user",
-        select: "username fullName",
-        populate: { path: "profileImg", select: "imageUrl" },
-      });
+
+    // Fetch study sessions and level-ups in parallel
+    const [studySessions, levelUps] = await Promise.all([
+      StudySession.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: "user",
+          select: "username fullName",
+          populate: { path: "profileImg", select: "imageUrl" },
+        }),
+      LevelUp.find()
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(limit)
+        .populate({
+          path: "user",
+          select: "username fullName",
+          populate: { path: "profileImg", select: "imageUrl" },
+        }),
+    ]);
+
+    // Combine and sort all activities by createdAt date
+    const combinedFeed = [...studySessions, ...levelUps];
+    combinedFeed.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
+
+    // You might want to limit the combined feed to ensure a consistent page size
+    const paginatedFeed = combinedFeed.slice(0, limit);
+
     const totalSessions = await StudySession.countDocuments();
-    const totalPages = Math.ceil(totalSessions / limit);
+    const totalLevelUps = await LevelUp.countDocuments();
+    const totalPages = Math.ceil((totalSessions + totalLevelUps) / limit);
+
     res.status(200).json({
-      activityFeed,
+      activityFeed: paginatedFeed,
       currentPage: page,
       totalPages,
     });

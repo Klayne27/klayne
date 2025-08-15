@@ -2,30 +2,15 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import { FaFire } from "react-icons/fa"
 
-// A helper function to calculate XP needed for the next level
 const xpForLevel = (level) => {
   if (level <= 1) {
-    return 1500
+    return 500 
   }
-  return Math.floor(2000 * Math.pow(level - 1, 1.5))
+  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100)
 }
 
-const PomodoroHeader = () => {
+const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
   const { authUser: currentUser, isLoading } = useAuthUser()
-
-  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel } = currentUser
-  const xpNeededForNextLevel = xpForLevel(pomodoroLevel)
-  const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
-
-  const getFireColor = (level) => {
-    if (level <= 5) {
-      return "text-yellow-700"
-    } else if (level <= 10) {
-      return "text-slate-400"
-    } else if (level >= 11) {
-      return "text-amber-400"
-    }
-  }
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -35,9 +20,26 @@ const PomodoroHeader = () => {
     return null
   }
 
+  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel } = currentUser
+
+  const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
+  const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
+
+  const getFireColor = (level) => {
+    if (level <= 10) {
+      return ""
+    } else if (level <= 25) {
+      return "text-yellow-700"
+    } else if (level <= 50) {
+      return "text-slate-400"
+    } else if (level >= 51) {
+      return "text-amber-400"
+    }
+  }
+
   return (
     <header className="w-full">
-      <div className="flex items-center justify-between gap-4 border-b border-accent px-4 pb-3 sm:p-4">
+      <div className="flex items-center justify-between gap-4 border-b border-accent p-3 pb-3 md:p-4">
         {/* User Info Section */}
         <div className="flex items-center gap-3">
           <div className="avatar">
@@ -55,12 +57,20 @@ const PomodoroHeader = () => {
             <p className="text-xs font-medium text-slate-500">@{username}</p>
           </div>
         </div>
+
         {/* XP Progress and Level Section */}
         <div className="flex w-full flex-col items-start">
           <div className="flex items-center gap-1">
-            <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />
+            {pomodoroLevel > 0 && <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />}
+            {/* Fixed: Display actual level without adding +1 */}
             <span className="text-xs font-semibold text-gray-300">Level {pomodoroLevel}</span>
           </div>
+
+          {showXpGain && (
+            <div className="animate-fade-out absolute right-3 top-5 text-xs font-bold text-primary">
+              +{xpGainedAmount * 10} XP
+            </div>
+          )}
 
           <div className="mt-1 w-full">
             <div className="h-1.5 overflow-hidden rounded-full bg-gray-700">
@@ -70,9 +80,11 @@ const PomodoroHeader = () => {
               ></div>
             </div>
 
-            <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-500">
-              <span>{pomodoroXP} XP</span>
-              <span>{xpNeededForNextLevel}</span>
+            <div className="mt-1 flex justify-between font-mono text-[10px] text-slate-500 md:text-xs">
+              {/* Fixed: Show progress toward next level */}
+              <span>
+                {pomodoroXP} / {xpNeededForNextLevel} XP - Level {pomodoroLevel + 1}
+              </span>
             </div>
           </div>
         </div>

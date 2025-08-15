@@ -35,6 +35,8 @@ const PomodoroPage = () => {
   const [sessionCount, setSessionCount] = useState(0)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isGoalReached, setIsGoalReached] = useState(false)
+  const [xpGainedAmount, setXpGainedAmount] = useState(0)
+  const [showXpGain, setShowXpGain] = useState(false)
 
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
@@ -44,7 +46,7 @@ const PomodoroPage = () => {
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
-      alarmAudioRef.current = new Audio("")
+      alarmAudioRef.current = new Audio("/alarm.mp3")
     }
     return () => {
       if (alarmAudioRef.current) {
@@ -138,6 +140,9 @@ const PomodoroPage = () => {
         const isGoalMet =
           settings.sessionGoalCount > 0 && newSessionCount >= settings.sessionGoalCount
         endSessionMutation.mutate({ duration: settings.sessionDuration })
+        setXpGainedAmount(settings.sessionDuration)
+        setShowXpGain(true)
+        setTimeout(() => setShowXpGain(false), 2000) // Hide after animation ends
 
         if (isGoalMet) {
           showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
@@ -301,8 +306,8 @@ const PomodoroPage = () => {
   }
 
   return (
-    <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between bg-base-100 py-3 font-sans text-white">
-      <PomodoroHeader />
+    <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-x border-accent bg-base-100 font-sans text-white">
+       <PomodoroHeader showXpGain={showXpGain} xpGainedAmount={xpGainedAmount} />
       <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 shadow-2xl sm:p-10">
         <h1
           key={isBreak ? "break" : "study"}

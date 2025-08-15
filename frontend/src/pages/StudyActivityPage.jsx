@@ -3,7 +3,7 @@ import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/usePomodo"
 import { FaArrowLeft, FaClock } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
-import { FaCheckCircle } from "react-icons/fa"
+import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 
 const StudyActivityPage = () => {
   const navigate = useNavigate()
@@ -99,7 +99,7 @@ const StudyActivityPage = () => {
   }
   if (!activityFeed || activityFeed.length === 0) {
     return (
-      <div className="p-6">
+      <div className="container mx-auto max-w-2xl p-6">
         <div className="mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
@@ -107,7 +107,7 @@ const StudyActivityPage = () => {
           >
             <FaArrowLeft className="text-xl" />
           </button>
-          <h2 className="text-center text-2xl font-bold">Study Activity Feed</h2>
+          <h2 className="flex-1 text-center text-2xl font-bold">Study Activity Feed</h2>
         </div>
         <div className="mt-8 flex items-center justify-center text-gray-500">
           No study sessions to show yet.
@@ -125,43 +125,59 @@ const StudyActivityPage = () => {
         >
           <FaArrowLeft className="text-xl" />
         </button>
-        <h2 className="flex-1 text-center text-2xl font-bold">Study Activity Feed</h2>
+        <h2 className="flex-1 text-center text-2xl font-bold">Activity Feed</h2>
       </div>
       <div className="space-y-4">
-        {activityFeed.map((session) => (
+        {activityFeed.map((activity) => (
           <div
-            key={session._id}
-            className="card bg-base-200/70 p-5 shadow-lg transition-transform duration-200 hover:scale-[1.01] hover:bg-base-200"
+            key={activity._id}
+            className="card bg-base-200/70 p-5 shadow-lg transition-transform duration-200"
           >
             <div className="flex items-center space-x-4">
-              <Link to={`/profile/${session.user.username}`} className="avatar">
+              <Link to={`/profile/${activity.user.username}`} className="avatar">
                 <div className="w-12 rounded-full">
                   <img
-                    src={session.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                    alt={`${session.user.username}'s profile`}
+                    src={activity.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    alt={`${activity.user.username}'s profile`}
                   />
                 </div>
               </Link>
               <div className="flex-1">
-                <div
-                  className="text-lg font-bold"
+                <Link
+                  to={`/profile/${activity.user.username}`}
+                  className="text-lg font-bold hover:underline"
                 >
-                  {session.user.fullName}
-                </div>
-                <div className="text-sm text-gray-500"> @{session.user.username}</div>
+                  {activity.user.fullName}
+                </Link>
+                <div className="text-sm text-gray-500"> @{activity.user.username}</div>
               </div>
-              <div className="flex flex-col items-end text-right text-sm">
-                <div className="flex items-center gap-1 font-bold text-success">
-                  <FaCheckCircle /> <span>Completed</span>
+              {activity.duration ? (
+                // Render Study Session card content
+                <div className="flex flex-col items-end text-right text-sm">
+                  <div className="flex items-center gap-1 font-bold text-success">
+                    <FaCheckCircle /> <span>Completed</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1 text-slate-500">
+                    <FaClock /> <span>{activity.duration} min</span>
+                  </div>
                 </div>
-                <div className="mt-1 flex items-center gap-1 text-slate-500">
-                  <FaClock /> <span>{session.duration} min</span>
+              ) : (
+                // Render Level-Up card content
+                <div className="flex flex-col items-end text-right text-sm">
+                  <div className="flex items-center gap-1 font-bold text-primary">
+                    <FaArrowUp /> <span>Leveled Up!</span>
+                  </div>
+                  <div className="mt-1 flex items-center gap-1 text-slate-500">
+                    Level {activity.newLevel}
+                  </div>
                 </div>
-              </div>
+              )}
             </div>
             <div className="mt-4 border-t border-gray-700 pt-3 text-right text-xs text-gray-400">
-              <span className="font-semibold">Session on: </span>
-              {new Date(session.date).toLocaleString()}
+              <span className="font-semibold">
+                {activity.duration ? "Session on: " : "Achieved on: "}
+              </span>
+              {new Date(activity?.date || activity.createdAt).toLocaleString()}
             </div>
           </div>
         ))}
