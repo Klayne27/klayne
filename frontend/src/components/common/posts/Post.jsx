@@ -102,8 +102,6 @@ const Post = ({
 
   const displayTimestamp = sourcePost.publishedAt ? sourcePost.publishedAt : sourcePost.createdAt
 
-
-  console.log(originalPostOwner);
   const formattedDate = formatPostDate(displayTimestamp)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
