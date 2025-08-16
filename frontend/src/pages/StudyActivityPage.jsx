@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/usePomodo"
-import { FaArrowLeft, FaClock } from "react-icons/fa6"
+import { FaArrowLeft, FaClock, FaFire } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
@@ -169,7 +169,12 @@ const StudyActivityPage = () => {
                     <FaCheckCircle /> <span>Completed</span>
                   </div>
                   <div className="mt-1 flex items-center gap-1 text-slate-500">
-                    <FaClock /> <span>{activity.duration} min</span>
+                    {
+                      <>
+                        <p>{activity.duration >= 60 && <FaFire className="text-orange-400" />}</p>
+                        <FaClock /> <span>{activity.duration} min</span>
+                      </>
+                    }
                   </div>
                 </div>
               ) : (

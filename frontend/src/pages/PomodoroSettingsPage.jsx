@@ -82,7 +82,7 @@ function PomodoroSettingsPage() {
               type="range"
               name="shortBreakDuration"
               min="1"
-              max="15"
+              max="20"
               step="1"
               value={settings.shortBreakDuration}
               onChange={handleChange}
@@ -98,7 +98,7 @@ function PomodoroSettingsPage() {
               type="range"
               name="longBreakDuration"
               min="5"
-              max="30"
+              max="60"
               step="5"
               value={settings.longBreakDuration}
               onChange={handleChange}

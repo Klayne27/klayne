@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import LoadingSpinner from "../ui/LoadingSpinner"
-import { FaFire } from "react-icons/fa"
+import { FaFire } from "react-icons/fa6"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
