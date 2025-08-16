@@ -1,4 +1,54 @@
+import React from "react"
+
 const PomodoroInfoModal = ({ onClose }) => {
+  const badges = [
+    {
+      name: "25-Hour Scholar",
+      src: "/badge-hrs-25.png",
+      description: "Achieve 25 total study hours.",
+    },
+    {
+      name: "100-Hour Scholar",
+      src: "/badge-hrs-100.png",
+      description: "Achieve 100 total study hours.",
+    },
+    {
+      name: "300-Hour Master",
+      src: "/badge-hrs-300.png",
+      description: "Achieve 300 total study hours.",
+    },
+    {
+      name: "10-Session Achiever",
+      src: "/badge-sessions-10.png",
+      description: "Complete 10 total sessions.",
+    },
+    {
+      name: "50-Session Pro",
+      src: "/badge-sessions-50.png",
+      description: "Complete 50 total sessions.",
+    },
+    {
+      name: "Session Master",
+      src: "/badge-sessions-150.png",
+      description: "Complete 150 total sessions.",
+    },
+    {
+      name: "7-Day Streak",
+      src: "/badge-streak-7.png",
+      description: "Maintain a 7-day study streak.",
+    },
+    {
+      name: "14-Day Streak",
+      src: "/badge-streak-14.png",
+      description: "Maintain a 14-day study streak.",
+    },
+    {
+      name: "30-Day Streak",
+      src: "/badge-streak-30.png",
+      description: "Maintain a 30-day study streak.",
+    },
+  ]
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
@@ -66,14 +116,36 @@ const PomodoroInfoModal = ({ onClose }) => {
               the most productive.
             </p>
           </div>
-          <div>
-            <h4 className="font-semibold text-white">Badges and Rewards</h4>
-            <p className="mt-1">
-              Badges are special flair rewards for your profile, earned by achieving specific
-              milestones. These include badges for your total study duration, total sessions
-              completed, and study streaks. <strong>Badges are coming soon!</strong>
-            </p>
+
+          {/* Badge Showcase Section */}
+          <div className="pt-4">
+            <h4 className="font-semibold text-white">Badge Showcase</h4>
+            <p className="mt-1">These are all the badges you can earn by hitting key milestones.</p>
+            {/* The grid layout is the main change here */}
+            <div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-3">
+              {badges.map((badge, index) => (
+                <div key={index} className="flex flex-col items-center text-center">
+                  {/* Adjusted size to be smaller and added a consistent aspect ratio */}
+                  <div className="size-16 md:size-20">
+                    <img
+                      src={badge.src}
+                      alt={badge.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  {/* Reduced top margin for better spacing */}
+                  <span className="mt-2 text-[10px] font-medium text-gray-100 sm:text-xs">
+                    {badge.name}
+                  </span>
+                  {/* Made description text smaller */}
+                  <p className="mt-1 text-[8px] text-gray-400 sm:text-[10px]">
+                    {badge.description}
+                  </p>
+                </div>
+              ))}
+            </div>
           </div>
+          {/* End of Badge Showcase Section */}
         </div>
       </div>
     </div>
