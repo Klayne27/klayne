@@ -5,6 +5,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
+import { renderHourBadge, renderSessionBadge } from "../utils/renderBadges"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -189,12 +190,17 @@ const StudyActivityPage = () => {
                 </div>
               )}
             </div>
-            <div className="mt-4 border-t border-gray-700 pt-3 text-right text-xs text-gray-400">
-              <span className="font-semibold">
+
+            <div className="mt-4 border-t border-gray-700 pt-3 text-xs text-gray-400">
+              <span className="flex justify-between font-semibold">
+                <span className="flex">
+                  {renderHourBadge(activity.user.badges)}
+                  {renderSessionBadge(activity.user.badges)}
+                </span>
                 {activity.duration ? "Session on: " : "Achieved on: "}
+                {formatTime(activity?.date || activity?.createdAt)} •{" "}
+                {formatDate(activity?.date || activity?.createdAt)}
               </span>
-              {formatTime(activity?.date || activity?.createdAt)} •{" "}
-              {formatDate(activity?.date || activity?.createdAt)}
             </div>
           </div>
         ))}

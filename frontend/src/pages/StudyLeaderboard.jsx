@@ -189,7 +189,7 @@ function StudyLeaderboard() {
                       {entry.fullName}
                     </Link>
 
-                    <span className="flex gap-1">
+                    <span className="flex items-center">
                       {renderHourBadge(entry.badges)}
                       {renderSessionBadge(entry.badges)}
                     </span>
@@ -201,6 +201,9 @@ function StudyLeaderboard() {
                     )}
                   </div>
                   <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
+                <span className="flex">
+
+                </span>
                 </div>
               </div>
 

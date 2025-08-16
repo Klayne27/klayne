@@ -139,7 +139,7 @@ export const sendMessage = async (req, res) => {
     await newMessage.populate([
       {
         path: "sender",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -272,7 +272,7 @@ export const getMessagesByConversationId = async (req, res) => {
       .limit(parseInt(limit))
       .populate({
         path: "sender",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -283,7 +283,7 @@ export const getMessagesByConversationId = async (req, res) => {
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName isVerified isGoldVerified",
+          select: "username fullName isVerified isGoldVerified badges",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -326,7 +326,7 @@ export const getConversations = async (req, res) => {
     })
       .populate({
         path: "participants",
-        select: "username profileImg fullName isVerified isGoldVerified",
+        select: "username profileImg fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -500,7 +500,7 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(updatedMessage._id)
       .populate({
         path: "sender",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -511,7 +511,7 @@ export const reactToMessage = async (req, res) => {
         select: "text img",
         populate: {
           path: "sender",
-          select: "username fullName isVerified isGoldVerified",
+          select: "username fullName isVerified isGoldVerified badges",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -577,7 +577,7 @@ export const editMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
@@ -610,12 +610,12 @@ export const editMessage = async (req, res) => {
         const updatedConversation = await Conversation.findById(conversation._id)
           .populate({
             path: "participants",
-            select: "username fullName isVerified isGoldVerified",
+            select: "username fullName isVerified isGoldVerified badges",
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .populate({
             path: "lastMessage.sender",
-            select: "username fullName isVerified isGoldVerified",
+            select: "username fullName isVerified isGoldVerified badges",
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .lean();

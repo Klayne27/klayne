@@ -59,6 +59,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
           profileImg: currentUser.profileImg,
           isVerified: currentUser.isVerified,
           isGoldVerified: currentUser.isGoldVerified,
+          badges: currentUser.badges
         },
         post: postId,
         text: text,

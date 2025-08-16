@@ -29,6 +29,7 @@ import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../../utils/textUtils"
 import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation"
+import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -469,10 +470,17 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
                   <span className="text-lg font-bold">{userProfile?.fullName}</span>
-                  {userProfile?.isVerified && <img src="/verified2.png" className="size-[18px]" />}
-                  {userProfile?.isGoldVerified && (
-                    <img src="/gold-verified2.png" className="size-[18px]" />
-                  )}
+                  <span className="flex items-center">
+                    {userProfile?.isVerified && (
+                      <img src="/verified2.png" className="size-[18px]" />
+                    )}
+                    {userProfile?.isGoldVerified && (
+                      <img src="/gold-verified2.png" className="size-[18px]" />
+                    )}
+
+                    {renderHourBadge(userProfile.badges)}
+                    {renderSessionBadge(userProfile.badges)}
+                  </span>
                 </div>
                 <span className="text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>

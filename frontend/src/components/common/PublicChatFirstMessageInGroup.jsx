@@ -2,6 +2,7 @@ import { Link } from "react-router-dom"
 import { formatTime } from "../../utils/date"
 import { MdAdminPanelSettings } from "react-icons/md"
 import { FaBan } from "react-icons/fa"
+import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {
   const isSenderAdmin = message.sender.isAdmin
@@ -10,11 +11,11 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
   return (
     <>
       {message.isFirstInGroup && (
-        <div className={`mb-0.5 flex items-center text-sm`}>
+        <div className={`mb-0.5 flex items-center gap-1 text-sm`}>
           {!isSentByCurrentUser && (
             <Link
               to={`/profile/${message.sender.username}`}
-              className={`mr-1 font-semibold ${
+              className={`font-semibold ${
                 isSenderVerified
                   ? "text-[#1D9BF0]"
                   : isSenderGoldVerified
@@ -25,24 +26,28 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
               {message.sender.username}
             </Link>
           )}
-          {isSenderVerified && !isSentByCurrentUser && (
-            <img src="/verified2.png" className="mr-1 size-[17px]" />
-          )}
-          {isSenderGoldVerified && !isSentByCurrentUser && (
-            <img src="/gold-verified2.png" className="mr-1 size-[17px]" />
-          )}
+          <span className="flex items-center">
+            {isSenderVerified && !isSentByCurrentUser && (
+              <img src="/verified2.png" className="size-[17px]" />
+            )}
+            {isSenderGoldVerified && !isSentByCurrentUser && (
+              <img src="/gold-verified2.png" className="size-[17px]" />
+            )}
 
-          {isSenderAdmin && !isSentByCurrentUser && (
-            <span>
-              <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />
-            </span>
-          )}
-          {isSenderBanned && !isSentByCurrentUser && (
-            <span>
-              <FaBan size={15} className="mr-1 fill-red-500" />
-            </span>
-          )}
+            {isSenderAdmin && !isSentByCurrentUser && (
+              <span>
+                <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />
+              </span>
+            )}
 
+            {isSenderBanned && !isSentByCurrentUser && (
+              <span>
+                <FaBan size={15} className="mr-1 fill-red-500" />
+              </span>
+            )}
+            {renderHourBadge(message.sender.badges)}
+            {renderSessionBadge(message.sender.badges)}
+          </span>
           <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>
         </div>
       )}

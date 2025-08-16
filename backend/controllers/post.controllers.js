@@ -175,7 +175,7 @@ export const createPost = async (req, res) => {
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -183,7 +183,7 @@ export const createPost = async (req, res) => {
       })
       .populate({
         path: "image",
-        select: "imageUrl"
+        select: "imageUrl",
       })
       .populate({
         path: "video",
@@ -641,6 +641,7 @@ export const getLikedPosts = async (req, res) => {
       fullName: 1,
       isVerified: 1,
       isGoldVerified: 1,
+      badges: 1
     };
 
     const repostedPostProjection = {

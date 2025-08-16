@@ -26,7 +26,7 @@ export const getUserProfile = async (req, res) => {
         path: "pinnedPosts",
         populate: {
           path: "user",
-          select: "username fullName profileImg isVerified isGoldVerified",
+          select: "username fullName profileImg isVerified isGoldVerified badges",
         },
       })
       .populate("profileImg", "imageUrl") // Populate the profile image
@@ -203,6 +203,7 @@ export const getSuggestedUsers = async (req, res) => {
           _id: 1,
           isVerified: 1,
           isGoldVerified: 1,
+          badges: 1
         },
       },
     ]);
@@ -352,7 +353,7 @@ export const getFollowingUsers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "following",
-      select: "username fullName isVerified isGoldVerified",
+      select: "username fullName isVerified isGoldVerified badges",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -375,7 +376,7 @@ export const getFollowers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "followers",
-      select: "username fullName isVerified isGoldVerified",
+      select: "username fullName isVerified isGoldVerified badges",
       populate: {
         path: "profileImg",
         select: "imageUrl",

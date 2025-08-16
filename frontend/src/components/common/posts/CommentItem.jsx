@@ -23,6 +23,7 @@ import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import CommentItemButtons from "../../ui/CommentItemButtons"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../ui/DropdownMenu"
+import { renderHourBadge, renderSessionBadge } from "../../../utils/renderBadges"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser()
@@ -418,16 +419,20 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               >
                 {comment.user.fullName}
               </Link>
-              {comment.user.isVerified && (
-                <img src="/verified2.png" className="size-[17px] flex-shrink-0" alt="Verified" />
-              )}
-              {comment.user.isGoldVerified && (
-                <img
-                  src="/gold-verified2.png"
-                  className="size-[17px] flex-shrink-0"
-                  alt="Verified"
-                />
-              )}
+              <span className="flex items-center">
+                {comment.user.isVerified && (
+                  <img src="/verified2.png" className="size-[17px] flex-shrink-0" alt="Verified" />
+                )}
+                {comment.user.isGoldVerified && (
+                  <img
+                    src="/gold-verified2.png"
+                    className="size-[17px] flex-shrink-0"
+                    alt="Verified"
+                  />
+                )}
+                  {renderHourBadge(comment.user.badges)}
+                  {renderSessionBadge(comment.user.badges)}
+              </span>
               <Link
                 to={`/profile/${comment.user.username}`}
                 className="min-w-0 flex-grow truncate text-sm text-gray-500"

@@ -5,6 +5,7 @@ import LoadingSpinner from "../ui/LoadingSpinner"
 import { FaFire } from "react-icons/fa6"
 import { FaInfoCircle } from "react-icons/fa"
 import PomodoroInfoModal from "./PomodoroInfoModal"
+import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -25,7 +26,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
     return null
   }
 
-  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel } = currentUser
+  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel, badges } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
@@ -65,6 +66,8 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
                 <div className="flex items-center gap-1">
                   <h2 className="text-base font-bold sm:text-lg">{fullName}</h2>
                   <img src={"/verified2.png"} className="size-[17px]" />
+                  {renderHourBadge(badges)}
+                  {renderSessionBadge(badges)}
                 </div>
 
                 <span className="flex gap-1">

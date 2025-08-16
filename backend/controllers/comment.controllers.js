@@ -108,7 +108,7 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName  isVerified isGoldVerified blockedUsers blockedBy",
+        select: "username fullName isVerified isGoldVerified blockedUsers blockedBy badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -244,7 +244,7 @@ export const createComment = async (req, res) => {
     const populatedComment = await newComment.populate([
       {
         path: "user",
-        select: "username fullName isVerified isGoldVerified",
+        select: "username fullName isVerified isGoldVerified badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -378,7 +378,7 @@ export const replyToComment = async (req, res) => {
 
     await newReply.populate({
       path: "user",
-      select: "username fullName isVerified isGoldVerified",
+      select: "username fullName isVerified isGoldVerified badges",
       populate: {
         path: "profileImg",
         select: "imageUrl",

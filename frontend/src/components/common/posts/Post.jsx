@@ -26,6 +26,16 @@ import { useAppStore } from "../../../store/useAppStore"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../ui/AnimatedCount"
+import { renderHourBadge, renderSessionBadge } from "../../../utils/renderBadges"
+
+const badges = [
+  "twentyfive-hour-scholar",
+  "centurion-scholar",
+  "three-hundred-hour-master",
+  "ten-sessions-achiever",
+  "fifty-sessions-pro",
+  "session-master",
+]
 
 const Post = ({
   post,
@@ -92,6 +102,8 @@ const Post = ({
 
   const displayTimestamp = sourcePost.publishedAt ? sourcePost.publishedAt : sourcePost.createdAt
 
+
+  console.log(originalPostOwner);
   const formattedDate = formatPostDate(displayTimestamp)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
@@ -339,17 +351,26 @@ const Post = ({
               >
                 {originalPostOwner.fullName}
 
-                {originalPostOwner.isVerified && (
-                  <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
-                )}
-                {originalPostOwner.isGoldVerified && (
-                  <img
-                    src="/gold-verified2.png"
-                    className="size-[17px]"
-                    alt="Verified"
-                    loading="lazy"
-                  />
-                )}
+                <span className="flex items-center">
+                  {originalPostOwner.isVerified && (
+                    <img
+                      src="/verified2.png"
+                      className="size-[17px]"
+                      alt="Verified"
+                      loading="lazy"
+                    />
+                  )}
+                  {originalPostOwner.isGoldVerified && (
+                    <img
+                      src="/gold-verified2.png"
+                      className="size-[17px]"
+                      alt="Verified"
+                      loading="lazy"
+                    />
+                  )}
+                  {renderHourBadge(originalPostOwner.badges)}
+                  {renderSessionBadge(originalPostOwner.badges)}
+                </span>
                 {/* {originalPostOwner?.badges?.includes("hour-study") && <div>B</div>} */}
               </Link>
               <span className="flex min-w-0 gap-1 text-sm text-slate-500">
