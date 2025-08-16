@@ -7,7 +7,7 @@ const checkAndAwardBadges = async (user) => {
     user.badges.push("twentyfive-hour-scholar");
   }
   if (user.totalStudyDuration >= 6000 && !user.badges.includes("centurion-scholar")) {
-    user.badges.push("centurion-scholar");
+    user.badges.push("onehundred-hour-scholar");
   }
   if (
     user.totalStudyDuration >= 18000 &&
@@ -227,7 +227,9 @@ export const getLeaderboard = async (req, res) => {
       .sort({ totalStudyDuration: -1 })
       .skip(skipIndex)
       .limit(limit)
-      .select("username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel")
+      .select(
+        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges"
+      )
       .populate({
         path: "profileImg",
         select: "imageUrl",

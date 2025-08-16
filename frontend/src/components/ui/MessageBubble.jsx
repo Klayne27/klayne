@@ -71,7 +71,7 @@ const MessageBubble = ({
         ) : (
           <>
             {message.image?._id && (
-              <div className="mb-2 h-[200px] w-auto cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
+              <div className="mb-2 h-auto w-[200px] cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                 <img
                   src={message.image.imageUrl}
                   alt="Chat image"

@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import { useGetLeaderboard } from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaClock } from "react-icons/fa6"
+import { FaArrowLeft, FaClock, FaMedal } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 
@@ -102,7 +102,7 @@ function StudyLeaderboard() {
       case 3:
         return "ring-yellow-800 bg-yellow-700/30"
       default:
-        return "ring-base-100 bg-base-200"
+        return "ring-base-300 bg-base-200"
     }
   }
 
@@ -133,6 +133,7 @@ function StudyLeaderboard() {
     )
   }
 
+
   return (
     <div className="container mx-auto max-w-2xl p-4">
       <div className="mb-6 flex items-center">
@@ -151,7 +152,7 @@ function StudyLeaderboard() {
           return (
             <li
               key={entry._id}
-              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} shadow-lg border border-accent transition-transform duration-200 ease-in-out ${
+              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} border border-accent shadow-lg transition-transform duration-200 ease-in-out ${
                 currentUser && currentUser._id === entry._id ? "scale-[1.01] bg-secondary" : ""
               } `}
             >
@@ -180,7 +181,9 @@ function StudyLeaderboard() {
                   >
                     {entry.fullName}
                   </Link>
-                  <p className={`truncate text-sm text-slate-500`}>@{entry.username}</p>
+                  <span>
+                      {/* <img src="/badge-hrs-25.png" className="size-4" /> */}
+                  </span>
                 </div>
                 <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
               </div>
