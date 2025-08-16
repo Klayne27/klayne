@@ -69,10 +69,10 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                   {renderStreakBadge(badges)}
                 </div>
 
-                <span class="inline-flex items-center gap-1 rounded-md bg-secondary py-[1px] px-2">
-                  <span class="text-xs font-semibold text-slate-500">Level {pomodoroLevel}</span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-secondary py-[1px] px-2">
+                  <span className="text-xs font-semibold text-slate-500">Level {pomodoroLevel}</span>
                   {/* {pomodoroLevel >= 0 && (
-                    <FaFire class={`text-sm ${getFireColor(pomodoroLevel)}`} />
+                    <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />
                   )} */}
                 </span>
               </div>
