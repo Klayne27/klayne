@@ -356,7 +356,7 @@ const PomodoroPage = () => {
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm uppercase tracking-widest text-slate-400">
               Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /
-              {settings?.sessionGoalCount || " ∞"}
+              {" "}{settings?.sessionGoalCount || " ∞"}
             </p>
             {settings?.sessionGoalCount > 0 && (
               <div className="flex gap-2">
