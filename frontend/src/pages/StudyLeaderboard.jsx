@@ -5,7 +5,17 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaFire } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
-import { renderHourBadge } from "../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge } from "../utils/renderBadges"
+
+const badges = [
+  "twentyfive-hour-scholar",
+  "centurion-scholar",
+  "three-hundred-hour-master",
+  "ten-sessions-achiever",
+  "fifty-sessions-pro",
+  "session-master",
+]
+
 
 function StudyLeaderboard() {
   const navigate = useNavigate()
@@ -24,7 +34,6 @@ function StudyLeaderboard() {
     const buttons = []
     const maxButtons = 5 // Maximum number of page buttons to show
 
-    // Show the first page button
     buttons.push(
       <button
         key={1}
@@ -35,7 +44,6 @@ function StudyLeaderboard() {
       </button>,
     )
 
-    // Add "..." if we're not near the beginning
     if (page > 3) {
       buttons.push(
         <button key="dots-start" className="btn join-item pointer-events-none">
@@ -44,11 +52,9 @@ function StudyLeaderboard() {
       )
     }
 
-    // Show a few buttons around the current page
     let startPage = Math.max(2, page - Math.floor(maxButtons / 2) + 1)
     let endPage = Math.min(totalPages - 1, page + Math.floor(maxButtons / 2) - 1)
 
-    // Adjust start and end to fit maxButtons
     if (endPage - startPage + 1 < maxButtons - 2) {
       if (startPage === 2) {
         endPage = Math.min(totalPages - 1, endPage + (maxButtons - 2 - (endPage - startPage + 1)))
@@ -69,7 +75,6 @@ function StudyLeaderboard() {
       )
     }
 
-    // Add "..." if we're not near the end
     if (page < totalPages - 2) {
       buttons.push(
         <button key="dots-end" className="btn join-item pointer-events-none">
@@ -78,7 +83,6 @@ function StudyLeaderboard() {
       )
     }
 
-    // Show the last page button if there's more than one page
     if (totalPages > 1 && totalPages !== 1) {
       buttons.push(
         <button
@@ -152,56 +156,66 @@ function StudyLeaderboard() {
           return (
             <li
               key={entry._id}
-              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} relative border border-accent shadow-lg transition-transform duration-200 ease-in-out ${
+              className={`flex flex-col items-start rounded-lg p-3 md:flex-row md:items-center md:gap-0 ${getRankColor(
+                globalRank,
+              )} relative border border-accent shadow-lg transition-transform duration-200 ease-in-out ${
                 currentUser && currentUser._id === entry._id ? "scale-[1.01] bg-secondary" : ""
               } `}
             >
-              <span className={`w-10 text-center text-lg font-bold`}>{globalRank}.</span>
-              <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
-                <div className="avatar">
-                  <div
-                    className={`${getRankColor(globalRank)} w-10 md:w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
-                  >
-                    <img
-                      src={
-                        entry?.profileImg?.imageUrl
-                          ? entry.profileImg.imageUrl
-                          : "/avatar-placeholder.png"
-                      }
-                      alt={`${entry.fullName} avatar`}
-                    />
+              <div className="flex w-full items-center md:w-auto">
+                <span className={`mr-4 text-center text-lg font-bold md:w-10`}>{globalRank}.</span>
+                <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
+                  <div className="avatar">
+                    <div
+                      className={`${getRankColor(globalRank)} w-10 rounded-full ring ring-offset-2 ring-offset-base-100 md:w-12`}
+                    >
+                      <img
+                        src={
+                          entry?.profileImg?.imageUrl
+                            ? entry.profileImg.imageUrl
+                            : "/avatar-placeholder.png"
+                        }
+                        alt={`${entry.fullName} avatar`}
+                      />
+                    </div>
                   </div>
-                </div>
-              </Link>
-              <div className="flex-1 overflow-hidden">
-                <div className="flex items-center gap-2">
-                  <Link
-                    to={`/profile/${entry.username}`}
-                    className={`truncate text-md md:text-lg font-bold hover:underline`}
-                  >
-                    {entry.fullName}
-                  </Link>
-                  <span>{renderHourBadge(entry.badges)}</span>
+                </Link>
+                <div className="flex-1 overflow-hidden">
+                  <div className="flex items-center gap-1">
+                    <Link
+                      to={`/profile/${entry.username}`}
+                      className={`text-md truncate font-bold hover:underline md:text-lg`}
+                    >
+                      {entry.fullName}
+                    </Link>
 
+                    <span className="flex gap-1">
+                      {renderHourBadge(entry.badges)}
+                      {renderSessionBadge(entry.badges)}
+                    </span>
+                    {entry.studyStreak >= 3 && (
+                      <div className="order-1 flex items-center gap-1 text-sm font-semibold text-orange-400 md:order-none md:ml-auto">
+                        <FaFire className="text-xl" />
+                        <span>{entry.studyStreak}</span>
+                      </div>
+                    )}
+                  </div>
+                  <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
                 </div>
-                <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
               </div>
-              {entry.studyStreak >= 3 && (
-                <div className="flex items-center gap-1 text-sm font-semibold text-orange-400">
-                  <FaFire className="text-xl" />
-                  <span>{entry.studyStreak}</span>
-                </div>
-              )}
-              <div className={`ml-4 flex flex-col items-end text-right text-slate-300`}>
-                <div className="flex items-center gap-1">
+
+              <div className="flex w-full flex-wrap items-center justify-between md:ml-auto md:w-auto md:flex-col md:flex-nowrap md:justify-end">
+                <div
+                  className={`order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold text-slate-300 md:order-none md:ml-4 md:mt-0`}
+                >
                   <FaClock className="text-sm" />
-                  <span className="text-sm font-semibold">
+                  <span>
                     {Math.floor(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
                   </span>
                 </div>
-                <div className="mt-1 flex items-center gap-1 text-slate-500">
+                <div className="order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold text-slate-500 md:order-none md:ml-4 md:mt-0">
                   <FaCheckCircle className="text-sm" />
-                  <span className="text-sm">{entry.totalSessionsCompleted} sessions</span>
+                  <span>{entry.totalSessionsCompleted} sessions</span>
                 </div>
               </div>
             </li>
@@ -209,7 +223,6 @@ function StudyLeaderboard() {
         })}
       </ul>
 
-      {/* Pagination Controls */}
       {totalPages > 1 && (
         <div className="mt-6 flex justify-center">
           <div className="join">

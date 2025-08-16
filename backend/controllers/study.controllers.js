@@ -3,40 +3,49 @@ import StudySession from "../models/studySession.js";
 import LevelUp from "../models/levelup.model.js";
 
 const checkAndAwardBadges = async (user) => {
-  if (user.totalStudyDuration >= 1500 && !user.badges.includes("twenty-hour-scholar")) {
-    user.badges.push("twentyfive-hour-scholar");
+  const newBadges = [];
+  const existingBadges = new Set(user.badges);
+
+  // Study Duration Badges
+  if (user.totalStudyDuration >= 1500 && !existingBadges.has("twentyfive-hour-scholar")) {
+    newBadges.push("twentyfive-hour-scholar");
   }
-  if (user.totalStudyDuration >= 6000 && !user.badges.includes("centurion-scholar")) {
-    user.badges.push("onehundred-hour-scholar");
+  if (user.totalStudyDuration >= 6000 && !existingBadges.has("onehundred-hour-scholar")) {
+    newBadges.push("onehundred-hour-scholar");
   }
   if (
     user.totalStudyDuration >= 18000 &&
-    !user.badges.includes("three-hundred-hour-master")
+    !existingBadges.has("three-hundred-hour-master")
   ) {
-    user.badges.push("three-hundred-hour-master");
+    newBadges.push("three-hundred-hour-master");
   }
-  if (
-    user.totalSessionsCompleted >= 10 &&
-    !user.badges.includes("ten-sessions-achiever")
-  ) {
-    user.badges.push("ten-sessions-achiever");
+
+  // Session Completion Badges
+  if (user.totalSessionsCompleted >= 10 && !existingBadges.has("ten-sessions-achiever")) {
+    newBadges.push("ten-sessions-achiever");
   }
-  if (user.totalSessionsCompleted >= 50 && !user.badges.includes("fifty-sessions-pro")) {
-    user.badges.push("fifty-sessions-pro");
+  if (user.totalSessionsCompleted >= 50 && !existingBadges.has("fifty-sessions-pro")) {
+    newBadges.push("fifty-sessions-pro");
   }
-  if (user.totalSessionsCompleted >= 150 && !user.badges.includes("session-master")) {
-    user.badges.push("session-master");
+  if (user.totalSessionsCompleted >= 150 && !existingBadges.has("session-master")) {
+    newBadges.push("session-master");
   }
-  if (user.studyStreak >= 7 && !user.badges.includes("seven-day-streak")) {
-    user.badges.push("seven-day-streak");
+
+  // Study Streak Badges
+  if (user.studyStreak >= 7 && !existingBadges.has("seven-day-streak")) {
+    newBadges.push("seven-day-streak");
   }
-  if (user.studyStreak >= 14 && !user.badges.includes("fourteen-day-streak")) {
-    user.badges.push("fourteen-day-streak");
+  if (user.studyStreak >= 14 && !existingBadges.has("fourteen-day-streak")) {
+    newBadges.push("fourteen-day-streak");
   }
-  if (user.studyStreak >= 30 && !user.badges.includes("thirty-day-streak")) {
-    user.badges.push("thirty-day-streak");
+  if (user.studyStreak >= 30 && !existingBadges.has("thirty-day-streak")) {
+    newBadges.push("thirty-day-streak");
   }
-  await user.save();
+
+  if (newBadges.length > 0) {
+    user.badges = [...new Set([...user.badges, ...newBadges])];
+    await user.save();
+  }
 };
 
 const xpForLevel = (level) => {
