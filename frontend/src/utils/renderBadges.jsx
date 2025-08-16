@@ -23,3 +23,16 @@ export const renderSessionBadge = (badges) => {
   }
   return null
 }
+
+export const renderStreakBadge = (badges) => {
+  if (badges?.includes("thirty-day-streak")) {
+    return <img src="/badge-streak-30.png" className="size-5" />
+  }
+  if (badges?.includes("fourteen-day-streak")) {
+    return <img src="/badge-streak-14.png" className="size-5" />
+  }
+  if (badges?.includes("seven-day-streak")) {
+    return <img src="/badge-streak-7.png" className="size-5" />
+  }
+  return null
+}

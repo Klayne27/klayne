@@ -5,7 +5,7 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
-import { renderHourBadge, renderSessionBadge } from "../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -204,6 +204,7 @@ const renderPaginationButtons = () => {
                 <span className="flex">
                   {renderHourBadge(activity.user.badges)}
                   {renderSessionBadge(activity.user.badges)}
+                  {renderStreakBadge(activity.user.badges)}
                 </span>
                 {activity.duration ? "Session on: " : "Achieved on: "}
                 {formatTime(activity?.date || activity?.createdAt)} •{" "}

@@ -2,7 +2,7 @@ import { Link } from "react-router-dom"
 import { formatTime } from "../../utils/date"
 import { MdAdminPanelSettings } from "react-icons/md"
 import { FaBan } from "react-icons/fa"
-import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {
   const isSenderAdmin = message.sender.isAdmin
@@ -47,6 +47,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             )}
             {renderHourBadge(message.sender.badges)}
             {renderSessionBadge(message.sender.badges)}
+            {renderStreakBadge(message.sender.badges)}
           </span>
           <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>
         </div>

@@ -23,7 +23,7 @@ import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import CommentItemButtons from "../../ui/CommentItemButtons"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../ui/DropdownMenu"
-import { renderHourBadge, renderSessionBadge } from "../../../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../../utils/renderBadges"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser()
@@ -432,6 +432,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 )}
                   {renderHourBadge(comment.user.badges)}
                   {renderSessionBadge(comment.user.badges)}
+                  {renderStreakBadge(comment.user.badges)}
               </span>
               <Link
                 to={`/profile/${comment.user.username}`}

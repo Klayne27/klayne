@@ -5,7 +5,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaFire } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
-import { renderHourBadge, renderSessionBadge } from "../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 
 
 function StudyLeaderboard() {
@@ -183,6 +183,7 @@ function StudyLeaderboard() {
                     <span className="flex items-center">
                       {renderHourBadge(entry.badges)}
                       {renderSessionBadge(entry.badges)}
+                      {renderStreakBadge(entry.badges)}
                     </span>
                     {entry.studyStreak >= 3 && (
                       <div className="order-1 flex items-center gap-1 text-sm font-semibold text-orange-400 md:order-none md:ml-auto">

@@ -25,7 +25,7 @@ import { useAppStore } from "../../../store/useAppStore"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../ui/AnimatedCount"
-import { renderHourBadge, renderSessionBadge } from "../../../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../../utils/renderBadges"
 
 const Post = ({
   post,
@@ -358,6 +358,7 @@ const Post = ({
                   )}
                   {renderHourBadge(originalPostOwner.badges)}
                   {renderSessionBadge(originalPostOwner.badges)}
+                  {renderStreakBadge(originalPostOwner.badges)}
                 </span>
                 {/* {originalPostOwner?.badges?.includes("hour-study") && <div>B</div>} */}
               </Link>

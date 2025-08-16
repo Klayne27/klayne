@@ -14,6 +14,7 @@ import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import MilestoneModal from "../components/common/MilestoneModal"
 import { FaForward } from "react-icons/fa6"
+import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -43,6 +44,8 @@ const PomodoroPage = () => {
 
   const [showShareModal, setShowShareModal] = useState(false)
   const [milestoneLevel, setMilestoneLevel] = useState(null)
+
+  const [showInfoModal, setShowInfoModal] = useState(false)
 
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
@@ -182,8 +185,8 @@ const PomodoroPage = () => {
                 localStorage.setItem(ACTIVE_KEY, "false")
                 return
               }
-               const shouldStartBreak = !settings.skipBreaks
-               startNextTimer(settings.autoplay, newSessionCount, shouldStartBreak)
+              const shouldStartBreak = !settings.skipBreaks
+              startNextTimer(settings.autoplay, newSessionCount, shouldStartBreak)
             },
             onError: (error) => {
               showAppToast(error.message || "Failed to log session.", "error")
@@ -361,7 +364,11 @@ const PomodoroPage = () => {
   return (
     <>
       <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-accent bg-base-100 font-sans md:border-x">
-        <PomodoroHeader showXpGain={showXpGain} xpGainedAmount={xpGainedAmount} />
+        <PomodoroHeader
+          showXpGain={showXpGain}
+          xpGainedAmount={xpGainedAmount}
+          setShowInfoModal={setShowInfoModal}
+        />
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
           <h1
             key={isBreak ? "break" : "study"}
@@ -404,7 +411,7 @@ const PomodoroPage = () => {
               </span>
             </div>
           </div>
-         
+
           <div className="relative flex flex-col items-center gap-2">
             <p className="text-sm uppercase tracking-widest text-slate-400">
               Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /{" "}
@@ -423,7 +430,7 @@ const PomodoroPage = () => {
             {isBreak && !isGoalReached && (
               <button
                 onClick={handleSkipBreak}
-                className="flex h-12 w-12 -right-[76px] absolute items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Skip break"
               >
                 <FaForward size={20} />{" "}
@@ -493,6 +500,8 @@ const PomodoroPage = () => {
           initialSettings={settings}
         />
       )}
+
+      {showInfoModal && <PomodoroInfoModal onClose={() => setShowInfoModal(false)} />}
 
       {showShareModal && (
         <MilestoneModal

@@ -29,7 +29,7 @@ import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../../utils/textUtils"
 import { useGetOrCreateConversation } from "../../hooks/messagesHooks/useGetOrCreateConversation"
-import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -480,6 +480,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
                     {renderHourBadge(userProfile.badges)}
                     {renderSessionBadge(userProfile.badges)}
+                    {renderStreakBadge(userProfile.badges)}
                   </span>
                 </div>
                 <span className="text-sm text-slate-500">@{userProfile?.username}</span>

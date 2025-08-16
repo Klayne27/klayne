@@ -4,8 +4,8 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import { FaFire } from "react-icons/fa6"
 import { FaInfoCircle } from "react-icons/fa"
-import PomodoroInfoModal from "./PomodoroInfoModal"
-import { renderHourBadge, renderSessionBadge } from "../../utils/renderBadges"
+import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -14,9 +14,8 @@ const xpForLevel = (level) => {
   return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100)
 }
 
-const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
+const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const { authUser: currentUser, isLoading } = useAuthUser()
-  const [showInfoModal, setShowInfoModal] = useState(false)
 
   if (isLoading) {
     return <LoadingSpinner />
@@ -68,6 +67,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
                   <img src={"/verified2.png"} className="size-[17px]" />
                   {renderHourBadge(badges)}
                   {renderSessionBadge(badges)}
+                  {renderStreakBadge(badges)}
                 </div>
 
                 <span className="flex gap-1">
@@ -109,7 +109,6 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
           </div>
         </div>
       </div>
-      {showInfoModal && <PomodoroInfoModal onClose={() => setShowInfoModal(false)} />}
     </header>
   )
 }
