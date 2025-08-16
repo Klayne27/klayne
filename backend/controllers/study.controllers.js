@@ -301,6 +301,7 @@ export const updatePomodoroSettings = async (req, res) => {
       sessionGoalCount,
       autoplay,
       isMuted,
+      skipBreaks,
     } = req.body;
     const user = await User.findByIdAndUpdate(
       userId,
@@ -312,6 +313,7 @@ export const updatePomodoroSettings = async (req, res) => {
         "pomodoroSettings.sessionGoalCount": sessionGoalCount,
         "pomodoroSettings.autoplay": autoplay,
         "pomodoroSettings.isMuted": isMuted,
+        "pomodoroSettings.skipBreaks": skipBreaks,
       },
       { new: true }
     );

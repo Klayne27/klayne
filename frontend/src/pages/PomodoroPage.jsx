@@ -11,6 +11,9 @@ import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
+import { useAuthUser } from "../hooks/authHooks/useAuthUser"
+import MilestoneModal from "../components/common/MilestoneModal"
+import { FaForward } from "react-icons/fa6"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -26,6 +29,8 @@ const PomodoroPage = () => {
   const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
   const isMobile = useIsMobile()
+
+  // const { authUser: currentUser } = useAuthUser()
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
@@ -148,29 +153,43 @@ const PomodoroPage = () => {
         const calculatedXpGained = settings.sessionDuration * xpMultiplier
         // --- End of dynamic XP calculation ---
 
-        endSessionMutation.mutate({ duration: settings.sessionDuration })
-        setXpGainedAmount(calculatedXpGained) // Set the calculated amount directly
-        setShowXpGain(true)
-        setTimeout(() => setShowXpGain(false), 2000) // Hide after animation ends
+        endSessionMutation.mutate(
+          { duration: settings.sessionDuration },
+          {
+            onSuccess: (data) => {
+              // This is the data returned from the backend's endStudySession controller
+              setXpGainedAmount(calculatedXpGained)
+              setShowXpGain(true)
+              setTimeout(() => setShowXpGain(false), 2000)
 
-        // Check if any levels were gained
-        // if (data?.xpResult?.levelsGained?.length > 0) {
-        //   const newLevel = Math.max(...data.xpResult.levelsGained)
-        //   setMilestoneLevel(newLevel)
-        //   setShowShareModal(true)
-        // }
+              // Check if any levels were gained
+              if (data?.xpResult?.levelsGained?.length > 0) {
+                const newLevel = Math.max(...data.xpResult.levelsGained)
+                // NEW LOGIC: Check if the new level is a multiple of 10
+                if (newLevel % 10 === 0) {
+                  setMilestoneLevel(newLevel)
+                  setShowShareModal(true)
+                }
+              }
 
-        if (isGoalMet) {
-          showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
-          setTimer(0)
-          setSessionCount(newSessionCount)
-          setIsGoalReached(true)
-          localStorage.setItem(GOAL_REACHED_KEY, "true")
-          localStorage.setItem(SESSION_COUNT_KEY, String(newSessionCount))
-          localStorage.setItem(ACTIVE_KEY, "false")
-          return
-        }
-        startNextTimer(settings.autoplay, newSessionCount, true)
+              if (isGoalMet) {
+                showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")
+                setTimer(0)
+                setSessionCount(newSessionCount)
+                setIsGoalReached(true)
+                localStorage.setItem(GOAL_REACHED_KEY, "true")
+                localStorage.setItem(SESSION_COUNT_KEY, String(newSessionCount))
+                localStorage.setItem(ACTIVE_KEY, "false")
+                return
+              }
+               const shouldStartBreak = !settings.skipBreaks
+               startNextTimer(settings.autoplay, newSessionCount, shouldStartBreak)
+            },
+            onError: (error) => {
+              showAppToast(error.message || "Failed to log session.", "error")
+            },
+          },
+        )
       } else {
         startNextTimer(settings.autoplay, sessionCount, false)
       }
@@ -304,6 +323,16 @@ const PomodoroPage = () => {
     }
   }
 
+  const handleSkipBreak = useCallback(() => {
+    if (isBreak) {
+      // Stop the current timer
+      setIsActive(false)
+      // Directly start the next study session
+      startNextTimer(true, sessionCount, false)
+      showAppToast("Break skipped!", "info")
+    }
+  }, [isBreak, startNextTimer, sessionCount])
+
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
   let totalDuration = 25 * 60
@@ -340,6 +369,7 @@ const PomodoroPage = () => {
           >
             {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
           </h1>
+
           <div
             className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
           >
@@ -374,7 +404,8 @@ const PomodoroPage = () => {
               </span>
             </div>
           </div>
-          <div className="flex flex-col items-center gap-2">
+         
+          <div className="relative flex flex-col items-center gap-2">
             <p className="text-sm uppercase tracking-widest text-slate-400">
               Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /{" "}
               {settings?.sessionGoalCount || " ∞"}
@@ -388,6 +419,15 @@ const PomodoroPage = () => {
                   />
                 ))}
               </div>
+            )}
+            {isBreak && !isGoalReached && (
+              <button
+                onClick={handleSkipBreak}
+                className="flex h-12 w-12 -right-[76px] absolute items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                aria-label="Skip break"
+              >
+                <FaForward size={20} />{" "}
+              </button>
             )}
           </div>
           <div className="flex w-full items-center justify-center gap-6">
@@ -435,6 +475,7 @@ const PomodoroPage = () => {
                   ></div>
                 )}
               </button>
+
               <button
                 onClick={() => navigate("/study-leaderboard")}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
@@ -450,6 +491,15 @@ const PomodoroPage = () => {
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
           initialSettings={settings}
+        />
+      )}
+
+      {showShareModal && (
+        <MilestoneModal
+          level={milestoneLevel}
+          // username={currentUser?.username}
+          onClose={() => setShowShareModal(false)}
+          isOpen={!showShareModal}
         />
       )}
     </>

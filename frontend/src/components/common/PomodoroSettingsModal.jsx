@@ -27,7 +27,10 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center bg-slate-700/70 justify-center" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
+      onClick={onClose}
+    >
       <div
         className="relative w-full max-w-lg rounded-3xl bg-base-100 p-8 shadow-xl"
         onClick={(e) => e.stopPropagation()}
@@ -127,6 +130,18 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
                 type="checkbox"
                 name="autoplay"
                 checked={settings.autoplay}
+                onChange={handleChange}
+                className="checkbox"
+              />
+            </label>
+          </div>
+          <div className="form-control mb-4">
+            <label className="label cursor-pointer">
+              <span className="label-text">Skip All breaks</span>
+              <input
+                type="checkbox"
+                name="skipBreaks"
+                checked={settings.skipBreaks}
                 onChange={handleChange}
                 className="checkbox"
               />

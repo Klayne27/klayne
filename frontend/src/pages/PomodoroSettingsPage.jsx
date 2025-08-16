@@ -53,12 +53,12 @@ function PomodoroSettingsPage() {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen bg-base-100 p-4 sm:p-6">
+    <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
         <h3 className="mb-6 text-2xl font-bold text-white">Pomodoro Settings</h3>
-        <form onSubmit={handleSubmit} className="py-4">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Session Duration Range Input */}
-          <div className="form-control mb-4">
+          <div className="form-control">
             <label className="label">
               <span className="label-text">Session Duration: {settings.sessionDuration} min</span>
             </label>
@@ -74,7 +74,7 @@ function PomodoroSettingsPage() {
             />
           </div>
           {/* Short Break Range Input */}
-          <div className="form-control mb-4">
+          <div className="form-control">
             <label className="label">
               <span className="label-text">Short Break: {settings.shortBreakDuration} min</span>
             </label>
@@ -90,7 +90,7 @@ function PomodoroSettingsPage() {
             />
           </div>
           {/* Long Break Range Input */}
-          <div className="form-control mb-4">
+          <div className="form-control">
             <label className="label">
               <span className="label-text">Long Break: {settings.longBreakDuration} min</span>
             </label>
@@ -106,7 +106,7 @@ function PomodoroSettingsPage() {
             />
           </div>
           {/* Sessions before Long Break Range Input */}
-          <div className="form-control mb-4">
+          <div className="form-control">
             <label className="label">
               <span className="label-text">
                 Sessions before Long Break: {settings.sessionsBeforeLongBreak} sessions
@@ -124,7 +124,7 @@ function PomodoroSettingsPage() {
             />
           </div>
           {/* Session Goal Range Input */}
-          <div className="form-control mb-4">
+          <div className="form-control">
             <label className="label">
               <span className="label-text">
                 Session Goal: {settings.sessionGoalCount}{" "}
@@ -142,32 +142,45 @@ function PomodoroSettingsPage() {
               className="range range-primary"
             />
           </div>
-          {/* Autoplay checkbox */}
-          <div className="form-control mb-4">
-            <label className="label cursor-pointer">
-              <span className="label-text">Autoplay Next Session</span>
-              <input
-                type="checkbox"
-                name="autoplay"
-                checked={settings.autoplay}
-                onChange={handleChange}
-                className="checkbox"
-              />
-            </label>
-          </div>
+          <div className="flex flex-col">
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Autoplay Next Session</span>
+                <input
+                  type="checkbox"
+                  name="autoplay"
+                  checked={settings.autoplay}
+                  onChange={handleChange}
+                  className="checkbox"
+                />
+              </label>
+            </div>
 
-          {/* Mute Alarm checkbox */}
-          <div className="form-control mb-4">
-            <label className="label cursor-pointer">
-              <span className="label-text">Mute Alarm</span>
-              <input
-                type="checkbox"
-                name="isMuted"
-                checked={settings.isMuted}
-                onChange={handleChange}
-                className="checkbox"
-              />
-            </label>
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Skip All breaks</span>
+                <input
+                  type="checkbox"
+                  name="skipBreaks"
+                  checked={settings.skipBreaks}
+                  onChange={handleChange}
+                  className="checkbox"
+                />
+              </label>
+            </div>
+
+            <div className="form-control">
+              <label className="label cursor-pointer">
+                <span className="label-text">Mute Alarm</span>
+                <input
+                  type="checkbox"
+                  name="isMuted"
+                  checked={settings.isMuted}
+                  onChange={handleChange}
+                  className="checkbox"
+                />
+              </label>
+            </div>
           </div>
           {/* Action Buttons */}
           <div className="mt-8 flex justify-end gap-3">

@@ -142,6 +142,10 @@ const userSchema = new mongoose.Schema(
       autoplay: { type: Boolean, default: true },
       isMuted: { type: Boolean, default: false },
       volumeLevel: { type: Number, default: 0.5, min: 0.0, max: 1.0 }, // ADD THIS LINE
+      skipBreaks: {
+        type: Boolean,
+        default: false,
+      },
     },
     totalSessionsCompleted: {
       type: Number,
