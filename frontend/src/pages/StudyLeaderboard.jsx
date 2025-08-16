@@ -2,9 +2,10 @@ import { useState } from "react"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import { useGetLeaderboard } from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaClock, FaMedal } from "react-icons/fa6"
+import { FaArrowLeft, FaClock } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
+import { renderHourBadge } from "../utils/renderBadges"
 
 function StudyLeaderboard() {
   const navigate = useNavigate()
@@ -182,7 +183,7 @@ function StudyLeaderboard() {
                     {entry.fullName}
                   </Link>
                   <span>
-                      {/* <img src="/badge-hrs-25.png" className="size-4" /> */}
+                      {renderHourBadge(entry.badges)}
                   </span>
                 </div>
                 <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
@@ -191,7 +192,7 @@ function StudyLeaderboard() {
                 <div className="flex items-center gap-1">
                   <FaClock className="text-sm" />
                   <span className="text-sm font-semibold">
-                    {Math.round(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
+                    {Math.floor(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
                   </span>
                 </div>
                 <div className="mt-1 flex items-center gap-1 text-slate-500">

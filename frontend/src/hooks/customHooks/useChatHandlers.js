@@ -39,6 +39,10 @@ export const useChatHandlers = ({
   }
 
   const handleEditClick = () => {
+    if (!message) {
+      setShowMoreActionsModal(false)
+      return
+    }
     setEditingMessage(message)
     setShowMoreActionsModal(false)
   }

@@ -182,7 +182,7 @@ export const getStudyActivityFeed = async (req, res) => {
         .limit(limit)
         .populate({
           path: "user",
-          select: "username fullName",
+          select: "username fullName badges",
           populate: { path: "profileImg", select: "imageUrl" },
         }),
       LevelUp.find()
@@ -191,7 +191,7 @@ export const getStudyActivityFeed = async (req, res) => {
         .limit(limit)
         .populate({
           path: "user",
-          select: "username fullName",
+          select: "username fullName badges",
           populate: { path: "profileImg", select: "imageUrl" },
         }),
     ]);
