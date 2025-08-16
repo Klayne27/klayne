@@ -83,8 +83,8 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
               </div>
             </div>
             {showXpGain && (
-              <div className="absolute top-6 right-2 animate-fade-out text-sm font-bold text-primary">
-                +{xpGainedAmount * 10} XP
+              <div className="absolute right-2 top-6 animate-fade-out text-sm font-bold text-primary">
+                +{xpGainedAmount} XP
               </div>
             )}
           </div>
@@ -93,5 +93,4 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount }) => {
     </header>
   )
 }
-
 export default PomodoroHeader

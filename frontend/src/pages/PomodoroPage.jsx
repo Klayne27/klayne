@@ -1,10 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
-import {
-  useEndStudySession,
-  useGetPomodoroSettings,
-} from "../hooks/pomodoroHooks/usePomodo"
+import { useEndStudySession, useGetPomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
 import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
 import { CiTrophy } from "react-icons/ci"
 import { MdLibraryBooks } from "react-icons/md"
@@ -134,8 +131,22 @@ const PomodoroPage = () => {
         const newSessionCount = sessionCount + 1
         const isGoalMet =
           settings.sessionGoalCount > 0 && newSessionCount >= settings.sessionGoalCount
+
+        // --- Calculate dynamic XP gained amount ---
+        let xpMultiplier
+        if (settings.sessionDuration >= 120) {
+          xpMultiplier = 20
+        } else if (settings.sessionDuration >= 60) {
+          xpMultiplier = 15
+        } else {
+          xpMultiplier = 10
+        }
+
+        const calculatedXpGained = settings.sessionDuration * xpMultiplier
+        // --- End of dynamic XP calculation ---
+
         endSessionMutation.mutate({ duration: settings.sessionDuration })
-        setXpGainedAmount(settings.sessionDuration)
+        setXpGainedAmount(calculatedXpGained) // Set the calculated amount directly
         setShowXpGain(true)
         setTimeout(() => setShowXpGain(false), 2000) // Hide after animation ends
 
@@ -312,7 +323,7 @@ const PomodoroPage = () => {
     <>
       <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-accent bg-base-100 font-sans md:border-x">
         <PomodoroHeader showXpGain={showXpGain} xpGainedAmount={xpGainedAmount} />
-        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3  sm:p-10">
+        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
           <h1
             key={isBreak ? "break" : "study"}
             className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
@@ -355,8 +366,8 @@ const PomodoroPage = () => {
           </div>
           <div className="flex flex-col items-center gap-2">
             <p className="text-sm uppercase tracking-widest text-slate-400">
-              Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /
-              {" "}{settings?.sessionGoalCount || " ∞"}
+              Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /{" "}
+              {settings?.sessionGoalCount || " ∞"}
             </p>
             {settings?.sessionGoalCount > 0 && (
               <div className="flex gap-2">
@@ -372,7 +383,7 @@ const PomodoroPage = () => {
           <div className="flex w-full items-center justify-center gap-6">
             <button
               onClick={handleOpenSettingsPage}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 bg-slate-700/50  transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Open settings"
               disabled={isActive || isGoalReached}
             >
