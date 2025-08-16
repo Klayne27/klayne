@@ -1,6 +1,7 @@
 import { useCallback, useEffect } from "react"
 import { useAppStore } from "../../store/useAppStore"
 import { useNavigate } from "react-router-dom"
+import { showAppToast } from "../../utils/showAppToast"
 
 export const useChatHandlers = ({
   message,
@@ -38,9 +39,10 @@ export const useChatHandlers = ({
     setActiveMessageModalId(null)
   }
 
+
   const handleEditClick = () => {
-    if (!message) {
-      setShowMoreActionsModal(false)
+    if (message.isOptimistic) {
+      showAppToast("Message is still being sent. Please wait to edit.")
       return
     }
     setEditingMessage(message)
@@ -58,6 +60,10 @@ export const useChatHandlers = ({
   }
 
   const handleReplyClick = () => {
+    if (message.isOptimistic) {
+      showAppToast("Message is still being sent. Please wait to reply.")
+      return
+    }
     chatInputRef.current.focus()
     setReplyingToMessage(message)
     setShowMoreActionsModal(false)
