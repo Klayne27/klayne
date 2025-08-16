@@ -2,7 +2,7 @@ import { useState } from "react"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import { useGetLeaderboard } from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaClock } from "react-icons/fa6"
+import { FaArrowLeft, FaClock, FaFire } from "react-icons/fa6"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge } from "../utils/renderBadges"
@@ -121,7 +121,7 @@ function StudyLeaderboard() {
         <div className="mb-4 flex items-center">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 flex flex-shrink-0 hover:text-white items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
           >
             <FaArrowLeft className="text-xl" />
           </button>
@@ -133,7 +133,6 @@ function StudyLeaderboard() {
       </div>
     )
   }
-
 
   return (
     <div className="container mx-auto max-w-2xl p-4">
@@ -153,7 +152,7 @@ function StudyLeaderboard() {
           return (
             <li
               key={entry._id}
-              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} border border-accent shadow-lg transition-transform duration-200 ease-in-out ${
+              className={`flex items-center rounded-lg p-3 ${getRankColor(globalRank)} relative border border-accent shadow-lg transition-transform duration-200 ease-in-out ${
                 currentUser && currentUser._id === entry._id ? "scale-[1.01] bg-secondary" : ""
               } `}
             >
@@ -161,7 +160,7 @@ function StudyLeaderboard() {
               <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
                 <div className="avatar">
                   <div
-                    className={`${getRankColor(globalRank)} w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
+                    className={`${getRankColor(globalRank)} w-10 md:w-12 rounded-full ring ring-offset-2 ring-offset-base-100`}
                   >
                     <img
                       src={
@@ -178,16 +177,21 @@ function StudyLeaderboard() {
                 <div className="flex items-center gap-2">
                   <Link
                     to={`/profile/${entry.username}`}
-                    className={`truncate text-lg font-bold hover:underline`}
+                    className={`truncate text-md md:text-lg font-bold hover:underline`}
                   >
                     {entry.fullName}
                   </Link>
-                  <span>
-                      {renderHourBadge(entry.badges)}
-                  </span>
+                  <span>{renderHourBadge(entry.badges)}</span>
+
                 </div>
                 <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
               </div>
+              {entry.studyStreak >= 3 && (
+                <div className="flex items-center gap-1 text-sm font-semibold text-orange-400">
+                  <FaFire className="text-xl" />
+                  <span>{entry.studyStreak}</span>
+                </div>
+              )}
               <div className={`ml-4 flex flex-col items-end text-right text-slate-300`}>
                 <div className="flex items-center gap-1">
                   <FaClock className="text-sm" />
