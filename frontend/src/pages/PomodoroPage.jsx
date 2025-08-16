@@ -31,8 +31,6 @@ const PomodoroPage = () => {
   const endSessionMutation = useEndStudySession()
   const isMobile = useIsMobile()
 
-  // const { authUser: currentUser } = useAuthUser()
-
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
   const [isBreak, setIsBreak] = useState(false)
@@ -52,6 +50,7 @@ const PomodoroPage = () => {
   const durationAtStartRef = useRef(0)
   const handleSessionEndRef = useRef(() => {})
   const alarmAudioRef = useRef(null)
+  const isEndingSessionRef = useRef(false)
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
@@ -74,6 +73,7 @@ const PomodoroPage = () => {
 
   const handleReset = useCallback(() => {
     if (!settings) return
+    isEndingSessionRef.current = false
     setIsActive(false)
     setTimer(settings.sessionDuration * 60)
     setIsBreak(false)
@@ -132,7 +132,9 @@ const PomodoroPage = () => {
   )
 
   const handleSessionEnd = useCallback(() => {
-    if (!settings) return
+    if (isEndingSessionRef.current || !settings) return // <-- ADD THIS GUARD
+
+    isEndingSessionRef.current = true
 
     setIsActive(false)
 
@@ -165,12 +167,13 @@ const PomodoroPage = () => {
               setShowXpGain(true)
               setTimeout(() => setShowXpGain(false), 2000)
 
-              // Check if any levels were gained
               if (data?.xpResult?.levelsGained?.length > 0) {
-                const newLevel = Math.max(...data.xpResult.levelsGained)
-                // NEW LOGIC: Check if the new level is a multiple of 10
-                if (newLevel % 10 === 0) {
-                  setMilestoneLevel(newLevel)
+                const milestoneLevelReached = Math.max(
+                  ...data.xpResult.levelsGained.filter((level) => level % 10 === 0),
+                )
+
+                if (milestoneLevelReached > 0) {
+                  setMilestoneLevel(milestoneLevelReached)
                   setShowShareModal(true)
                 }
               }
@@ -183,6 +186,7 @@ const PomodoroPage = () => {
                 localStorage.setItem(GOAL_REACHED_KEY, "true")
                 localStorage.setItem(SESSION_COUNT_KEY, String(newSessionCount))
                 localStorage.setItem(ACTIVE_KEY, "false")
+                isEndingSessionRef.current = false
                 return
               }
               const shouldStartBreak = !settings.skipBreaks
@@ -190,10 +194,12 @@ const PomodoroPage = () => {
             },
             onError: (error) => {
               showAppToast(error.message || "Failed to log session.", "error")
+              isEndingSessionRef.current = false
             },
           },
         )
       } else {
+        isEndingSessionRef.current = false
         startNextTimer(settings.autoplay, sessionCount, false)
       }
     }
@@ -506,9 +512,8 @@ const PomodoroPage = () => {
       {showShareModal && (
         <MilestoneModal
           level={milestoneLevel}
-          // username={currentUser?.username}
           onClose={() => setShowShareModal(false)}
-          isOpen={!showShareModal}
+          isOpen={showShareModal}
         />
       )}
     </>

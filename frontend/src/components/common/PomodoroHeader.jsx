@@ -6,7 +6,6 @@ import { FaFire } from "react-icons/fa6"
 import { FaInfoCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 
-
 const xpForLevel = (level) => {
   if (level <= 1) {
     return 500
@@ -30,17 +29,17 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
-  const getFireColor = (level) => {
-    if (level <= 10) {
-      return ""
-    } else if (level <= 25) {
-      return "text-yellow-700"
-    } else if (level <= 50) {
-      return "text-slate-400"
-    } else if (level >= 51) {
-      return "text-amber-400"
-    }
-  }
+  // const getFireColor = (level) => {
+  //   if (level <= 10) {
+  //     return ""
+  //   } else if (level <= 25) {
+  //     return "text-yellow-700"
+  //   } else if (level <= 50) {
+  //     return "text-slate-400"
+  //   } else if (level >= 51) {
+  //     return "text-amber-400"
+  //   }
+  // }
 
   return (
     <header className="w-full">
@@ -70,13 +69,11 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                   {renderStreakBadge(badges)}
                 </div>
 
-                <span className="flex gap-1">
-                  {pomodoroLevel > 1 && (
-                    <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />
-                  )}
-                  <span className="text-xs font-semibold text-slate-500">
-                    Level {pomodoroLevel}
-                  </span>
+                <span class="inline-flex items-center gap-1 rounded-md bg-secondary py-[1px] px-2">
+                  <span class="text-xs font-semibold text-slate-500">Level {pomodoroLevel}</span>
+                  {/* {pomodoroLevel >= 0 && (
+                    <FaFire class={`text-sm ${getFireColor(pomodoroLevel)}`} />
+                  )} */}
                 </span>
               </div>
             </div>

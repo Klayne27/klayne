@@ -50,7 +50,7 @@ const checkAndAwardBadges = async (user) => {
 
 const xpForLevel = (level) => {
   if (level <= 1) {
-    return 500; // ~2 sessions to reach level 2
+    return 500;
   }
   return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100);
 };
