@@ -21,21 +21,11 @@ import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUs
 import useFollow from "../../../hooks/usersHooks/useFollow"
 import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu"
 import { MdBlock } from "react-icons/md"
-import { useFetchUserProfile } from "../../../hooks/usersHooks/useFetchUserProfile"
 import { useAppStore } from "../../../store/useAppStore"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../ui/AnimatedCount"
 import { renderHourBadge, renderSessionBadge } from "../../../utils/renderBadges"
-
-const badges = [
-  "twentyfive-hour-scholar",
-  "centurion-scholar",
-  "three-hundred-hour-master",
-  "ten-sessions-achiever",
-  "fifty-sessions-pro",
-  "session-master",
-]
 
 const Post = ({
   post,

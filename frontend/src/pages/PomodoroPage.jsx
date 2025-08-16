@@ -36,6 +36,9 @@ const PomodoroPage = () => {
   const [xpGainedAmount, setXpGainedAmount] = useState(0)
   const [showXpGain, setShowXpGain] = useState(false)
 
+  const [showShareModal, setShowShareModal] = useState(false)
+  const [milestoneLevel, setMilestoneLevel] = useState(null)
+
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
   const durationAtStartRef = useRef(0)
@@ -149,6 +152,13 @@ const PomodoroPage = () => {
         setXpGainedAmount(calculatedXpGained) // Set the calculated amount directly
         setShowXpGain(true)
         setTimeout(() => setShowXpGain(false), 2000) // Hide after animation ends
+
+        // Check if any levels were gained
+        // if (data?.xpResult?.levelsGained?.length > 0) {
+        //   const newLevel = Math.max(...data.xpResult.levelsGained)
+        //   setMilestoneLevel(newLevel)
+        //   setShowShareModal(true)
+        // }
 
         if (isGoalMet) {
           showAppToast(`Goal of ${settings.sessionGoalCount} sessions reached! 🎉`, "success")

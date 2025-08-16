@@ -7,15 +7,6 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge } from "../utils/renderBadges"
 
-const badges = [
-  "twentyfive-hour-scholar",
-  "centurion-scholar",
-  "three-hundred-hour-master",
-  "ten-sessions-achiever",
-  "fifty-sessions-pro",
-  "session-master",
-]
-
 
 function StudyLeaderboard() {
   const navigate = useNavigate()

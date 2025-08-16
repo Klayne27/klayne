@@ -190,45 +190,75 @@ export const getStudyActivityFeed = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Fetch study sessions and level-ups in parallel
-    const [studySessions, levelUps] = await Promise.all([
-      StudySession.find()
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate({
-          path: "user",
-          select: "username fullName badges",
-          populate: { path: "profileImg", select: "imageUrl" },
-        }),
-      LevelUp.find()
-        .sort({ createdAt: -1 })
-        .skip(skip)
-        .limit(limit)
-        .populate({
-          path: "user",
-          select: "username fullName badges",
-          populate: { path: "profileImg", select: "imageUrl" },
-        }),
+    // Use a single aggregation pipeline for both collections
+    const combinedPipeline = [
+      {
+        $unionWith: {
+          coll: "levelups", // Assuming the collection name is 'levelups'
+        },
+      },
+      {
+        $sort: { createdAt: -1 }, // Sort by date to get a single, chronological feed
+      },
+      {
+        $skip: skip,
+      },
+      {
+        $limit: limit,
+      },
+      // You may need a lookup to populate the user data here
+      {
+        $lookup: {
+          from: "users", // Assuming your user collection is named 'users'
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+        },
+      },
+      {
+        $unwind: "$user",
+      },
+      {
+        $lookup: {
+          from: "images",
+          localField: "user.profileImg",
+          foreignField: "_id",
+          as: "user.profileImg",
+        },
+      },
+      {
+        $unwind: { path: "$user.profileImg", preserveNullAndEmptyArrays: true },
+      },
+    ];
+
+    const totalCountPipeline = [
+      {
+        $unionWith: {
+          coll: "levelups",
+        },
+      },
+      {
+        $count: "totalCount",
+      },
+    ];
+
+    // Execute both pipelines in parallel
+    const [combinedResults, totalCountResult] = await Promise.all([
+      StudySession.aggregate(combinedPipeline),
+      StudySession.aggregate(totalCountPipeline),
     ]);
 
-    // Combine and sort all activities by createdAt date
-    const combinedFeed = [...studySessions, ...levelUps];
-    combinedFeed.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime());
-
-    // You might want to limit the combined feed to ensure a consistent page size
-    const paginatedFeed = combinedFeed.slice(0, limit);
-
-    const totalSessions = await StudySession.countDocuments();
-    const totalLevelUps = await LevelUp.countDocuments();
-    const totalPages = Math.ceil((totalSessions + totalLevelUps) / limit);
+    const totalActivities =
+      totalCountResult.length > 0 ? totalCountResult[0].totalCount : 0;
+    const totalPages = Math.ceil(totalActivities / limit);
 
     res.status(200).json({
-      activityFeed: paginatedFeed,
+      activityFeed: combinedResults,
       currentPage: page,
       totalPages,
     });
   } catch (error) {
+    console.error("Error in getStudyActivityFeed:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
