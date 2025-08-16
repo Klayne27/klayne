@@ -48,7 +48,14 @@ const xpForLevel = (level) => {
 
 const handleXPAndLeveling = async (user, duration) => {
   // XP gained is 10 per minute of study
-  const xpGained = duration * 10;
+  let xpGained;
+  if (duration >= 120) {
+    xpGained = duration * 20; // 20 XP for sessions 2 hours (120 duration) or more
+  } else if (duration > 60) {
+    xpGained = duration * 15; // 15 XP for sessions over 60 duration
+  } else {
+    xpGained = duration * 10; // 10 XP for all other sessions
+  }
   const initialLevel = user.pomodoroLevel;
 
   user.pomodoroXP += xpGained;
