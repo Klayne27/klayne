@@ -77,7 +77,7 @@ const PrivateChatMessageItem = ({
     handleOpenMoreActionsModal,
     setShowMoreActionsModal,
     showMoreActionsModal,
-  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable })
+  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, message })
 
   const {
     handleJumpToOriginalMessage,
