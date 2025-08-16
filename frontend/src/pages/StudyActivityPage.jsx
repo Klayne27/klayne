@@ -199,7 +199,7 @@ const renderPaginationButtons = () => {
               )}
             </div>
 
-            <div className="mt-4 border-t border-gray-700 pt-3 text-xs text-gray-400">
+            <div className="mt-4 border-t border-accent pt-3 text-xs text-gray-400">
               <span className="flex justify-between font-semibold">
                 <span className="flex">
                   {renderHourBadge(activity.user.badges)}
