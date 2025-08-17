@@ -60,7 +60,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
         </div>
       )}
 
-      { (
+      {isInstalled && !isCheckingSubscription && !isPushSubscribed && (
         <div className="mt-4 rounded-2xl border border-accent p-4">
           <p className="mb-2 text-xl font-bold">Stay Updated</p>
           <p className="mb-4 text-sm text-gray-500">
