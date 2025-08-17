@@ -146,6 +146,8 @@ export const followUnfollowUser = async (req, res) => {
       });
       // --------------------------------------------------------------------
 
+      console.log(req.user._id);
+
       res.status(200).json({ message: "User followed successfully" });
     }
   } catch (error) {

@@ -190,7 +190,7 @@ export const getDynamicPushTitle = (type) => {
   }
 };
 
-export const getDynamicPushUrl = (type, postOwnerUsername, postId) => {
+export const getDynamicPushUrl = (type, postOwnerUsername, postId, username) => {
   switch (type) {
     case "follow":
       return `/profile/${username}`;

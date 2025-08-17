@@ -290,9 +290,6 @@ export const createAndSendNotification = async ({
     });
     await newNotification.save();
 
-    const fromUser = await User.findById(from).select("username").lean();
-    const username = fromUser ? fromUser.username : "A user";
-
     await newNotification.populate({
       path: "from",
       select: "username fullName",
@@ -323,6 +320,9 @@ export const createAndSendNotification = async ({
     const receiverSocketIds = getReceiverSocketIds(to.toString());
 
     if (receiverSocketIds.length === 0) {
+      const fromUser = await User.findById(from).select("username").lean();
+      const username = fromUser ? fromUser.username : "A user";
+
       let postOwnerUsername = null;
       if (postId) {
         const post = await Post.findById(postId).populate("user", "username").lean();
@@ -333,7 +333,7 @@ export const createAndSendNotification = async ({
 
       const dynamicBody = getDynamicPushBody(type, username);
       const dynamicTitle = getDynamicPushTitle(type);
-      const dynamicUrl = getDynamicPushUrl(type, postOwnerUsername, postId);
+      const dynamicUrl = getDynamicPushUrl(type, postOwnerUsername, postId, username);
 
       const payload = {
         title: dynamicTitle,
