@@ -313,12 +313,12 @@ function MobileSideModal({
             </div>
           )}
 
-          {isInstalled && !isCheckingSubscription && isPushSubscribed && (
+          {/* {isInstalled && !isCheckingSubscription && isPushSubscribed && (
             <div className="mt-4 rounded-2xl border border-green-500 p-4">
               <p className="mb-2 text-xl font-bold text-green-600">✓ Notifications Enabled</p>
               <p className="text-sm text-gray-500">You're all set to receive push notifications!</p>
             </div>
-          )}
+          )} */}
         </div>
       )}
     </div>
