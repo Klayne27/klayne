@@ -6,9 +6,15 @@ export const usePWAInstall = () => {
   const [isInstalled, setIsInstalled] = useState(false)
 
   useEffect(() => {
+    if (window.matchMedia("(display-mode: standalone)").matches) {
+      setIsInstalled(true)
+    }
+
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
+
+      // setIsInstalled(false)
     }
 
     const handleAppInstalled = () => {
