@@ -67,6 +67,8 @@ const Sidebar = ({
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
 
+  const [showTodoPageNavbar, setShowTodoPageNavbar] = useState(false)
+
   const lastScrollY = useRef(0)
   const profileButtonRef = useRef(null) // Used for desktop popover
   const popoverRef = useRef(null) // Used for desktop popover
@@ -276,6 +278,12 @@ const Sidebar = ({
     }
   }, [pathname])
 
+  // useEffect(() => {
+  //   if (pathname.includes("/todos")) {
+  //     setShowTodoPageNavbar(true)
+  //   }
+  // }, [pathname])
+
   // Handle click outside desktop popover
   useEffect(() => {
     const handleClickOutside = (event) => {
@@ -359,14 +367,6 @@ const Sidebar = ({
 
   useEffect(() => {
     const handleScroll = () => {
-      // Always hide on specific paths regardless of scroll on mobile
-      // const shouldAlwaysHide =
-      //   pathname.includes("/public-chat") || // Public chat
-      //   pathname.includes("/post/") || // Individual post page
-      //   pathname.includes("/pomodoro") ||
-      //   pathname.includes("/study") ||
-      //   isChatWindowOpen // Private chat window is open
-
       if (window.innerWidth < 768) {
         if (shouldAlwaysHide) {
           setIsMobileBarVisible(false)
@@ -406,9 +406,7 @@ const Sidebar = ({
       if (shouldAlwaysHide) {
         setIsMobileBarVisible(false)
         setIsFeatherIconVisible(false)
-      } else if (pathname.startsWith("/messages")) {
-        setIsMobileBarVisible(true)
-      } else {
+      }  else {
         setIsMobileBarVisible(true) // Default to visible for other paths
         setIsFeatherIconVisible(true) // Default to visible for other paths on mobile initially
       }
@@ -442,7 +440,7 @@ const Sidebar = ({
   return (
     <>
       {/* Main Sidebar */}
-      <div
+      {<div
         className={`fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
       >
         <div
@@ -878,8 +876,7 @@ const Sidebar = ({
             )}
           </div>
         )}
-      </div>
-
+      </div>}
 
       <MobileSideModal
         showSideModal={showSideModal}

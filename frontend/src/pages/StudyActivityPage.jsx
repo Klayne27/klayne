@@ -54,6 +54,7 @@ const renderPaginationButtons = () => {
     )
   }
 
+
   // Determine the range of pages to show
   let startPage = Math.max(2, page - 1)
   let endPage = Math.min(totalPages - 1, page + 1)
@@ -169,7 +170,7 @@ const renderPaginationButtons = () => {
                 >
                   {activity.user.fullName}
                 </Link>
-                <div className="text-sm text-gray-500"> @{activity.user.username}</div>
+                <div className="text-sm text-gray-500"> Level {activity.user.pomodoroLevel}</div>
               </div>
               {activity.duration ? (
                 // Render Study Session card content

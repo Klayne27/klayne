@@ -13,8 +13,9 @@ import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import MilestoneModal from "../components/common/MilestoneModal"
-import { FaForward } from "react-icons/fa6"
+import { FaForward, FaListCheck } from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
+import ConfirmationModal from "../components/ui/ConfirmationModal"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -44,6 +45,8 @@ const PomodoroPage = () => {
   const [milestoneLevel, setMilestoneLevel] = useState(null)
 
   const [showInfoModal, setShowInfoModal] = useState(false)
+
+  const [showResetTimerModal, setShowResetTimerModal] = useState(false)
 
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
@@ -79,9 +82,11 @@ const PomodoroPage = () => {
     setIsBreak(false)
     setSessionCount(0)
     setIsGoalReached(false)
+    setShowResetTimerModal(false)
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("pomodoro_")) localStorage.removeItem(key)
     })
+  showAppToast("Timer reset")
   }, [settings])
 
   const startNextTimer = useCallback(
@@ -342,6 +347,10 @@ const PomodoroPage = () => {
     }
   }, [isBreak, startNextTimer, sessionCount])
 
+  const handleResetTimerClick = () => {
+    setShowResetTimerModal(true)
+  }
+
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
   let totalDuration = 25 * 60
@@ -461,7 +470,7 @@ const PomodoroPage = () => {
               {isActive ? <FaPause size={28} /> : <FaPlay size={28} className="ml-1" />}
             </button>
             <button
-              onClick={handleReset}
+              onClick={handleResetTimerClick}
               className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
               aria-label="Reset timer"
             >
@@ -495,6 +504,12 @@ const PomodoroPage = () => {
               >
                 <CiTrophy size={25} strokeWidth={1} />
               </button>
+              <button
+                onClick={() => navigate("/todos")}
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              >
+                <FaListCheck size={25} strokeWidth={1} />
+              </button>
             </div>
           </footer>
         </div>
@@ -514,6 +529,18 @@ const PomodoroPage = () => {
           level={milestoneLevel}
           onClose={() => setShowShareModal(false)}
           isOpen={showShareModal}
+        />
+      )}
+
+      {showResetTimerModal && (
+        <ConfirmationModal
+          isOpen={showResetTimerModal}
+          onClose={() => setShowResetTimerModal(false)}
+          onConfirm={handleReset}
+          danger={false}
+          message="Are you sure you want to reset the timer?"
+          confirmButtonText="Reset"
+          modalTitle="Reset Timer"
         />
       )}
     </>

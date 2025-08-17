@@ -23,6 +23,7 @@ const NotificationPage = () => {
   const filteredNotifications = notifications?.filter((notification) => {
     if (
       (notification.type === "like" ||
+        notification.type === "mention" ||
         notification.type === "comment" ||
         notification.type === "repost" ||
         notification.type === "commentLike" ||

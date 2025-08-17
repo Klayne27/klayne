@@ -13,12 +13,8 @@ import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
-// import ResetPasswordPage from "./pages/ResetPasswordPage"
-// import ForgotPasswordPage from "./pages/ForgotPasswordPage"
-// import PomodoroPage from "./pages/PomodoroPage"
-// import StudyActivityPage from "./pages/StudyActivityPage"
-// import StudyLeaderboard from "./pages/StudyLeaderboard"
 
+const TodoPage = lazy(() => import("./pages/TodoPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
@@ -45,7 +41,8 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
 
   const { setShowCreatePostModal } = useAppStore()
 
-  const shouldHideSidePanels = pathname.includes("/study") || pathname.includes("/pomodoro")
+  const shouldHideSidePanels =
+    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos")
 
   return (
     <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
@@ -174,6 +171,7 @@ function App() {
                     <Route path="/study-activity" element={<StudyActivityPage />} />
                     <Route path="/study-leaderboard" element={<StudyLeaderboard />} />
                     <Route path="/study-settings" element={<PomodoroSettingsPage />} />
+                    <Route path="/todos" element={<TodoPage />} />
                   </Routes>
                 </MainLayout>
               ) : (

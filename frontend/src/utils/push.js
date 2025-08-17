@@ -23,46 +23,34 @@ const getOrCreateDeviceId = () => {
 }
 
 export const checkSubscriptionStatus = async () => {
-  console.log("🔍 Checking subscription status...")
-
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     console.warn("❌ Push notifications not supported")
     return false
   }
 
   try {
-    console.log("⏳ Waiting for service worker...")
     const registration = await navigator.serviceWorker.ready
-    console.log("✅ Service worker ready:", registration)
 
     const subscription = await registration.pushManager.getSubscription()
-    console.log("📱 Current subscription:", subscription)
 
     if (!subscription) {
-      console.log("❌ No subscription found")
       return false
     }
 
-    console.log("🌐 Checking with backend...")
     const response = await fetch("/api/push/status")
-    console.log("📡 Backend response:", response.status, response.statusText)
 
     if (!response.ok) {
-      console.error("❌ Backend check failed:", response.status)
       return false
     }
 
     const data = await response.json()
-    console.log("📊 Backend data:", data)
     return data.hasActiveSubscription
   } catch (error) {
-    console.error("💥 Error checking subscription:", error)
     return false
   }
 }
 
 export const subscribeUserToPush = async () => {
-  console.log("🚀 Starting push subscription...")
 
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     console.warn("❌ Push notifications not supported")
@@ -70,24 +58,19 @@ export const subscribeUserToPush = async () => {
   }
 
   try {
-    console.log("⏳ Waiting for service worker...")
     const registration = await navigator.serviceWorker.ready
-    console.log("✅ Service worker ready")
 
     // Check existing subscription
     const existingSubscription = await registration.pushManager.getSubscription()
     if (existingSubscription) {
-      console.log("🗑️ Unsubscribing from existing subscription...")
       await existingSubscription.unsubscribe()
     }
 
-    console.log("📝 Creating new subscription...")
     const newSubscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidPublicKey),
     })
 
-    console.log("✅ New subscription created:", newSubscription)
     return newSubscription
   } catch (error) {
     console.error("💥 Failed to subscribe:", error)
@@ -96,16 +79,12 @@ export const subscribeUserToPush = async () => {
 }
 
 export const handleEnablePushNotifications = async () => {
-  console.log("🔔 Enabling push notifications...")
 
   try {
     // Check current permission
-    console.log("🔍 Current permission:", Notification.permission)
 
     if (Notification.permission !== "granted") {
-      console.log("🙋 Requesting permission...")
       const permission = await Notification.requestPermission()
-      console.log("📋 Permission result:", permission)
 
       if (permission !== "granted") {
         throw new Error("Notification permission denied")
@@ -119,9 +98,6 @@ export const handleEnablePushNotifications = async () => {
 
     const subscriptionObject = subscription.toJSON()
     const deviceId = getOrCreateDeviceId()
-
-    console.log("📤 Sending subscription to backend...")
-    console.log("🔑 Subscription object:", subscriptionObject)
 
     const response = await fetch("/api/push/subscribe", {
       method: "POST",
@@ -138,7 +114,6 @@ export const handleEnablePushNotifications = async () => {
       }),
     })
 
-    console.log("📡 Backend response:", response.status, response.statusText)
 
     if (!response.ok) {
       const errorData = await response.json()
@@ -147,7 +122,6 @@ export const handleEnablePushNotifications = async () => {
     }
 
     const result = await response.json()
-    console.log("✅ Success:", result)
     return true
   } catch (error) {
     console.error("💥 Error enabling notifications:", error)
@@ -158,7 +132,6 @@ export const handleEnablePushNotifications = async () => {
 export const resubscribeIfNeeded = async () => {
   const isSubscribed = await checkSubscriptionStatus()
   if (!isSubscribed) {
-    console.log("🔄 Re-subscribing user...")
     return await handleEnablePushNotifications()
   }
   return true
