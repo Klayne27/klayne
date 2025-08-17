@@ -15,33 +15,63 @@ export const initPush = () => {
 
 export const sendPushNotification = async (userId, payload) => {
   try {
-    const subscription = await PushSubscription.findOne({ userId });
+    // Get ALL active subscriptions for the user
+    const subscriptions = await PushSubscription.find({
+      userId,
+      isActive: true,
+    });
 
-    if (!subscription) {
-      console.warn(`No push subscription found for user ${userId}`);
+    if (subscriptions.length === 0) {
+      console.warn(`No push subscriptions found for user ${userId}`);
       return;
     }
 
     const message = JSON.stringify(payload);
+    const results = [];
 
-    const result = await webpush.sendNotification(
-      {
-        endpoint: subscription.endpoint,
-        keys: {
-          p256dh: subscription.p256dh,
-          auth: subscription.auth,
-        },
-      },
-      message
-    );
+    // Send to all user's devices
+    for (const subscription of subscriptions) {
+      try {
+        const result = await webpush.sendNotification(
+          {
+            endpoint: subscription.endpoint,
+            keys: {
+              p256dh: subscription.p256dh,
+              auth: subscription.auth,
+            },
+          },
+          message
+        );
+        results.push({ success: true, subscriptionId: subscription._id });
+      } catch (error) {
+        console.error(`Failed to send to subscription ${subscription._id}:`, error);
 
-    return result;
-  } catch (error) {
-    console.error(`Failed to send push notification to user ${userId}:`, error);
-    if (error.statusCode === 410) {
-      console.warn(`Subscription for user ${userId} is no longer valid. Deleting...`);
-      await PushSubscription.deleteOne({ userId });
+        // Handle different error types
+        if (error.statusCode === 410 || error.statusCode === 404) {
+          // Subscription is no longer valid
+          await PushSubscription.findByIdAndUpdate(subscription._id, { isActive: false });
+        } else if (error.statusCode === 413) {
+          // Payload too large
+          console.warn("Payload too large for subscription:", subscription._id);
+        }
+
+        results.push({ success: false, subscriptionId: subscription._id, error });
+      }
     }
+
+    return results;
+  } catch (error) {
+    console.error(`Failed to send push notifications to user ${userId}:`, error);
     throw error;
+  }
+};
+
+// New function to clean up invalid subscriptions
+export const cleanupInvalidSubscriptions = async () => {
+  try {
+    const deleted = await PushSubscription.deleteMany({ isActive: false });
+    console.log(`Cleaned up ${deleted.deletedCount} invalid subscriptions`);
+  } catch (error) {
+    console.error("Error cleaning up subscriptions:", error);
   }
 };

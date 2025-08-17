@@ -1111,7 +1111,7 @@ const Sidebar = ({
                 </button>
               </div>
             )}
-            {!isPushSubscribed && isInstalled && (
+            {isInstalled && (
               <div className="mb-4 px-4">
                 <button
                   onClick={handleEnablePushNotifications}

@@ -19,9 +19,20 @@ const pushSubscriptionSchema = new mongoose.Schema(
       type: String,
       required: true,
     },
+    deviceInfo: {
+      userAgent: String,
+      deviceId: String, // You can generate this on frontend
+    },
+    isActive: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );
+
+// Add compound index to prevent duplicate subscriptions
+pushSubscriptionSchema.index({ userId: 1, endpoint: 1 }, { unique: true });
 
 const PushSubscription = mongoose.model("PushSubscription", pushSubscriptionSchema);
 export default PushSubscription;

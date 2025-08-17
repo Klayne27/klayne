@@ -1623,15 +1623,6 @@ export const updateScheduledPost = async (req, res) => {
       });
     }
 
-    if (post.imgPublicId) {
-      // Assuming cloudinary is configured to destroy the image
-      // await cloudinary.uploader.destroy(post.imgPublicId); // Uncomment if you want to delete associated media from Cloudinary on update
-    }
-    if (post.videoPublicId) {
-      // Assuming cloudinary is configured to destroy the video
-      // await cloudinary.uploader.destroy(post.videoPublicId, { resource_type: "video" }); // Uncomment if you want to delete associated media from Cloudinary on update
-    }
-
     if (!text || text.trim().length === 0) {
       return res.status(400).json({ error: "Scheduled post must have text content." });
     }

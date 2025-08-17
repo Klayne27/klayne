@@ -11,14 +11,15 @@ export default defineConfig({
       strategies: "injectManifest",
       // Use the injectManifest object to point to your service worker
       srcDir: "src",
-
+      filename: "sw.js", // Add this
       injectManifest: {
         swSrc: "src/sw.js", // Path to your source service worker
         swDest: "dist/sw.js", // Output path for the service worker
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
       },
       devOptions: {
-        enabled: true, 
+        enabled: true,
+        type: "module", 
       },
       manifest: {
         name: "X-ayne",

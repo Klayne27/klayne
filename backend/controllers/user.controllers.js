@@ -143,7 +143,6 @@ export const followUnfollowUser = async (req, res) => {
         type: "follow",
         from: req.user._id,
         to: userToModify._id,
-        // Note: 'postId' is not needed for a 'follow' notification type
       });
       // --------------------------------------------------------------------
 
