@@ -51,7 +51,7 @@ function ConversationItem({ conv }) {
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
 
-  const isLastMessageByOtherUser = conv.lastMessage?.sender.toString() === otherUser?._id.toString()
+  const isLastMessageByOtherUser = conv.lastMessage?.sender === otherUser?._id
 
   const isLastMessageUnread =
     conv.lastMessage?.sender?.toString() === otherUser?._id.toString() && !conv.lastMessage?.seen

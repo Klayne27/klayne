@@ -2,35 +2,7 @@ import { useGetTodoActivities } from "../hooks/todoActivitiesHooks/useGetTodoAct
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
 import { formatTime } from "../utils/date"
 import { FaCheck, FaMinus, FaPen, FaPlus } from "react-icons/fa6"
-
-const getBadgeColor = (action) => {
-    switch (action) {
-        case "created_todo":
-            return "bg-yellow-500"
-        case "completed_todo":
-            return "bg-green-500"
-        case "updated_todo":
-            return "bg-blue-500"
-        case "deleted_todo":
-            return "bg-gray-500"
-        default:
-            break;
-    }
-}
-
-const getTextColor = (priority) => {
-  switch (priority) {
-    case "urgent":
-      return "text-red-400"
-    case "high":
-      return "text-orange-400"
-    case "medium":
-      return "text-yellow-400"
-    case "low":
-    default:
-      return "text-slate-400"
-  }
-}
+import { getBadgeColor, getTextColor } from "../utils/todoUtils"
 
 const getActionIcon = (action) => {
   switch (action) {
@@ -43,7 +15,7 @@ const getActionIcon = (action) => {
     case "updated_todo":
       return <FaPen className="size-2" />
     default:
-      return null // Or a default icon
+      return null
   }
 }
 
@@ -72,7 +44,8 @@ const TodoActivityLogPage = () => {
               </div>
               <div className="">
                 <p>
-                  You {activity.action.split('_')[0]} a task: <strong className={getTextColor(activity.priority)}>{activity.todoTitle}</strong>
+                  You {activity.action.split("_")[0]} a task:{" "}
+                  <strong className={getTextColor(activity.priority)}>{activity.todoTitle}</strong>
                 </p>
                 <p className="text-slate-400">{formatTime(activity.createdAt)}</p>
               </div>

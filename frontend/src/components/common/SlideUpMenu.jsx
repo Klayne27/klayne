@@ -106,7 +106,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
           onTouchEnd={handleTouchEnd}
         >
           <div className="flex w-full items-center justify-center">
-            <div className="my-1.5 h-1  rounded-full bg-accent" />
+            <div className="my-1.5 h-1 w-10 rounded-full bg-accent" />
           </div>
           {React.cloneElement(React.Children.only(children), { ref: contentRef })}
         </div>
