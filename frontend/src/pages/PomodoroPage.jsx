@@ -504,12 +504,12 @@ const PomodoroPage = () => {
               >
                 <CiTrophy size={25} strokeWidth={1} />
               </button>
-              <button
+              {/* <button
                 onClick={() => navigate("/todos")}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
               >
                 <FaListCheck size={25} strokeWidth={1} />
-              </button>
+              </button> */}
             </div>
           </footer>
         </div>

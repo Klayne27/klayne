@@ -17,15 +17,20 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     }
   }, [todo])
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    const updateData = {
-      ...formData,
-      dueDate: formData.dueDate || null,
-    }
-    onSave(updateData)
-  }
-
+ const handleSubmit = (e) => {
+   e.preventDefault()
+   const updateData = {
+     // Pass the todo ID to the parent on save
+     id: todo._id,
+     todoData: {
+       title: formData.title,
+       dueDate: formData.dueDate || null,
+       priority: formData.priority,
+     },
+   }
+   onSave(updateData)
+   onClose() // Add this to close the modal after saving
+ }
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({
       ...prev,

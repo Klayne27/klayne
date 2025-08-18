@@ -9,6 +9,7 @@ import SlideUpMenu from "./SlideUpMenu"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { FiTrash } from "react-icons/fi"
 import Portal from "./Portal"
+import TodoEditModal from "./TodoEditModal"
 
 const getPriorityColor = (priority) => {
   switch (priority) {
@@ -40,7 +41,7 @@ const getCompletedColor = (priority) => {
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
-  const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
+  const { setSelectedTodo, setShowEditTodoModal, showEditTodoModal } = useTodoStore()
   const ellipsisRef = useRef(null)
 
   const [completingTodoId, setCompletingTodoId] = useState(null)
@@ -98,9 +99,13 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
   const handleDelete = (e) => {
     if (e) e.stopPropagation()
-      deleteTodo(todo._id)
+    deleteTodo(todo._id)
     handleCloseMenu()
     setOpenTodoDropdownId(null)
+  }
+
+  const handleSaveUpdate = (updateData) => {
+    updateTodo(updateData)
   }
 
   const isVisuallyCompleted = visuallyCompleted[todo._id] || todo.completed
@@ -225,6 +230,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </div>
         </SlideUpMenu>
       )}
+
     </>
   )
 }

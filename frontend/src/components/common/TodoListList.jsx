@@ -135,9 +135,9 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                   <span className="text-xs">{list.totalTodos || ""}</span>
                 </div>
                 <div className="relative flex gap-1">
-                  <button onClick={(e) => handleToggleTodoList(e, list._id)} className="p-[5px] hover:bg-secondary transition duration-200 rounded-full">
+                  {list.todos.length > 0 && <button onClick={(e) => handleToggleTodoList(e, list._id)} className="p-[5px] hover:bg-secondary transition duration-200 rounded-full">
                     {isListOpen(list._id) ? <RxCaretUp size={20} /> : <RxCaretDown size={20} />}
-                  </button>
+                  </button>}
 
                   {list.owner._id === authUser._id && (
                     <button

@@ -100,7 +100,7 @@ export const useGetUserTodos = () => {
 
 export const useUpdateTodo = () => {
   const queryClient = useQueryClient()
-  const { mutation: updateTodo, isPending: isUpdatingTodo } = useMutation({
+  const { mutate: updateTodo, isPending: isUpdatingTodo } = useMutation({
     mutationFn: (data) => updateTodoApi(data.id, data.todoData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] })
