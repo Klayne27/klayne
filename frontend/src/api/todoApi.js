@@ -1,10 +1,17 @@
 const API_URL = "/api/todos"
 
-export const createTodoApi = async (todoData) => {
+export const createTodoApi = async ({
+  title,
+  description,
+  todoListId,
+  isPublic,
+  priority,
+  dueDate,
+}) => {
   const res = await fetch(API_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(todoData),
+    body: JSON.stringify({ title, description, todoListId, isPublic, priority, dueDate }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to create todo")
@@ -61,10 +68,9 @@ export const deleteTodoApi = async (todoId) => {
   return data
 }
 
-// Add this function to call the new endpoint
 export const getCompletedTodosApi = async () => {
-    const res = await fetch(`${API_URL}/completed`);
-    const data = await res.json();
-    if (!res.ok) throw new Error(data.error || "Failed to fetch completed todos");
-    return data;
-};
+  const res = await fetch(`${API_URL}/completed`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch completed todos")
+  return data
+}

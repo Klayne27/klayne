@@ -1,11 +1,12 @@
 import Todo from "../models/todo.model.js";
+import TodoActivity from "../models/todoActivity.model.js";
 import TodoList from "../models/todoList.model.js";
 import User from "../models/user.model.js";
 
 // A new function you must create or update in your Todo controller
 export const createTodo = async (req, res) => {
   try {
-    const { title, description, todoListId, ...otherFields } = req.body;
+    const { title, description, todoListId, priority, dueDate } = req.body;
 
     // 1. Find the parent todo list
     const parentList = await TodoList.findById(todoListId);
@@ -19,9 +20,18 @@ export const createTodo = async (req, res) => {
       description,
       user: req.user._id,
       todoList: todoListId, // <-- Crucial: This links the todo to the list
-      ...otherFields,
+      priority, // Add priority
+      dueDate, // Add dueDate
     });
-    await newTodo.save();
+    await newTodo.save(); // Log the activity
+
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "created_todo",
+      todoId: newTodo._id,
+      todoTitle: newTodo.title,
+    });
+    await activity.save();
 
     // 3. Update the parent todo list by pushing the new todo's ID
     await TodoList.findByIdAndUpdate(todoListId, {
@@ -35,9 +45,10 @@ export const createTodo = async (req, res) => {
     res.status(500).json({ error: "Failed to create todo" });
   }
 };
+
 export const getUserTodos = async (req, res) => {
   try {
-    const todos = await Todo.find({ user: req.user._id }).sort({ createdAt: -1 });
+    const todos = await Todo.find({ user: req.user._id });
     res.status(200).json(todos);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch todos" });
@@ -106,6 +117,15 @@ export const updateTodo = async (req, res) => {
     todo.isPublic = isPublic ?? todo.isPublic;
 
     await todo.save();
+
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "updated_todo",
+      todoId: todo._id,
+      todoTitle: todo.title,
+    });
+    await activity.save();
+
     res.status(200).json(todo);
   } catch (error) {
     res.status(500).json({ error: "Failed to update todo" });
@@ -128,6 +148,14 @@ export const completeTodo = async (req, res) => {
     todo.completedAt = new Date();
     await todo.save();
 
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "completed_todo",
+      todoId: todo._id,
+      todoTitle: todo.title,
+    });
+    await activity.save();
+
     // Increment completedTodos count for the associated list
     if (todo.todoList) {
       await TodoList.findByIdAndUpdate(todo.todoList, {
@@ -135,7 +163,6 @@ export const completeTodo = async (req, res) => {
           completedTodos: 1,
           totalTodos: -1,
         },
-        $pull: { todos: todo._id }, // <-- This is the new line
       });
     }
 
@@ -159,6 +186,14 @@ export const deleteTodo = async (req, res) => {
 
     await todo.deleteOne();
 
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "deleted_todo",
+      todoId: todo._id,
+      todoTitle: todo.title,
+    });
+    await activity.save();
+
     // Decrement totalTodos and completedTodos (if applicable) for the associated list
     if (todoListId) {
       const update = { $inc: { totalTodos: -1 } };
@@ -174,17 +209,70 @@ export const deleteTodo = async (req, res) => {
   }
 };
 
-// Add this new controller function to fetch completed todos
 export const getCompletedTodos = async (req, res) => {
   try {
-    // Find todos that belong to the user and are marked as completed
     const completedTodos = await Todo.find({
       user: req.user._id,
       completed: true,
-    }).sort({ completedAt: -1 }); // Sort by most recently completed
+    })
+      .populate({
+        path: "user",
+        select: "username",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .sort({ completedAt: -1 });
 
     res.status(200).json(completedTodos);
   } catch (error) {
+    console.error("Error in getCompletedTodos:", error); // Log the full error
     res.status(500).json({ error: "Failed to fetch completed todos" });
   }
 };
+
+// const updateTodo = async (req, res) => {
+//   try {
+//     const { id } = req.params;
+//     const { title, dueDate, priority } = req.body;
+//     const userId = req.user.id; // Assuming auth middleware provides user
+
+//     // Validate priority
+//     const validPriorities = ["low", "medium", "high", "urgent"];
+//     if (priority && !validPriorities.includes(priority)) {
+//       return res.status(400).json({
+//         error: "Invalid priority. Must be low, medium, or high",
+//       });
+//     }
+
+//     // Find and update todo
+//     const todo = await Todo.findOne({ _id: id, userId });
+
+//     if (!todo) {
+//       return res.status(404).json({ error: "Todo not found" });
+//     }
+
+//     // Update fields
+//     if (title !== undefined) todo.title = title;
+//     if (dueDate !== undefined) todo.dueDate = dueDate ? new Date(dueDate) : null;
+//     if (priority !== undefined) todo.priority = priority;
+
+//     todo.updatedAt = new Date();
+
+//     await todo.save();
+
+//     res.json({
+//       success: true,
+//       todo: {
+//         id: todo._id,
+//         title: todo.title,
+//         dueDate: todo.dueDate,
+//         priority: todo.priority,
+//         completed: todo.completed,
+//         createdAt: todo.createdAt,
+//         updatedAt: todo.updatedAt,
+//       },
+//     });
+//   } catch (error) {
+//     console.error("Update todo error:", error);
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };

@@ -1,6 +1,7 @@
 import TodoList from "../models/todoList.model.js";
 import Todo from "../models/todo.model.js";
 import User from "../models/user.model.js";
+import TodoActivity from "../models/todoActivity.model.js";
 // import mongoose from "mongoose";
 
 const getPaginationParams = (req) => {
@@ -44,7 +45,15 @@ export const createTodoList = async (req, res) => {
       color,
       icon,
     });
-    await newTodoList.save();
+    await newTodoList.save(); // Log the activity
+
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "created_list",
+      listId: newTodoList._id,
+      listName: newTodoList.name,
+    });
+    await activity.save();
     res.status(201).json(newTodoList);
   } catch (error) {
     console.error("Error creating todo list:", error);
@@ -60,8 +69,15 @@ export const getUserTodoLists = async (req, res) => {
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit)
-      .populate("owner", "username fullName profileImg") // 👈 Populate the owner
-      .populate("todos");
+      .populate({
+        path: "owner",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "todos",
+        match: { completed: false }, // Filter for uncompleted todos
+      });
 
     // Pagination counting remains the same
     const totalCount = await TodoList.countDocuments({ owner: req.user._id });
@@ -89,7 +105,11 @@ export const getFollowingTodoLists = async (req, res) => {
       owner: { $in: following },
       isPublic: true,
     })
-      .populate("owner", "username fullName profileImg")
+      .populate({
+        path: "owner",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
       .populate("todos") // <-- Simply add this to populate the virtual field
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -117,7 +137,11 @@ export const getPublicTodoLists = async (req, res) => {
     const { page, limit, skip } = getPaginationParams(req);
 
     const todoLists = await TodoList.find({ isPublic: true })
-      .populate("owner", "username fullName profileImg")
+      .populate({
+        path: "owner",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
       .populate("todos") // <-- And add it here as well
       .sort({ createdAt: -1 })
       .skip(skip)
@@ -185,8 +209,16 @@ export const updateTodoList = async (req, res) => {
     todoList.color = color ?? todoList.color;
     todoList.icon = icon ?? todoList.icon;
     todoList.settings = settings ?? todoList.settings;
-
     await todoList.save();
+
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "updated_list",
+      listId: todoList._id,
+      listName: todoList.name,
+    });
+    await activity.save();
+
     res.status(200).json(todoList);
   } catch (error) {
     res.status(500).json({ error: "Failed to update todo list" });
@@ -201,10 +233,20 @@ export const deleteTodoList = async (req, res) => {
     }
     if (todoList.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: "Access denied" });
-    }
-    await Todo.deleteMany({ todoList: req.params.id });
+    } // Log the activity before deletion
+
+    await Todo.deleteMany({ todoList: req.params.id }); // Then delete the list itself
 
     await todoList.deleteOne();
+
+    const activity = new TodoActivity({
+      user: req.user._id,
+      action: "deleted_list",
+      listId: todoList._id,
+      listName: todoList.name,
+    });
+    await activity.save(); // Delete the associated todos first
+
     res.status(200).json({ message: "Todo list and its todos deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete todo list" });

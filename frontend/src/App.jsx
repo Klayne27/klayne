@@ -13,8 +13,14 @@ import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
+import TodoPageLayout from "./components/common/TodoPageLayout"
+// import TodoActivityLogPage from "./pages/TodoActivityLogPage"
 
-const TodoPage = lazy(() => import("./pages/TodoPage"))
+const TodoActivityLogPage = lazy(() => import("./pages/TodoActivityLogPage"))
+const MyTodoListsPage = lazy(() => import("./pages/MyTodoListsPage"))
+const FollowingListsPage = lazy(() => import("./pages/FollowingListsPage"))
+const PublicListsPage = lazy(() => import("./pages/PublicListsPage"))
+const CompletedTodosPage = lazy(() => import("./pages/CompletedTodosPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
@@ -171,7 +177,13 @@ function App() {
                     <Route path="/study-activity" element={<StudyActivityPage />} />
                     <Route path="/study-leaderboard" element={<StudyLeaderboard />} />
                     <Route path="/study-settings" element={<PomodoroSettingsPage />} />
-                    <Route path="/todos" element={<TodoPage />} />
+                    <Route path="/todos" element={<TodoPageLayout />}>
+                      <Route index element={<MyTodoListsPage />} />
+                      <Route path="following" element={<FollowingListsPage />} />
+                      <Route path="public" element={<PublicListsPage />} />
+                      <Route path="completed" element={<CompletedTodosPage />} />
+                      <Route path="activity-log" element={<TodoActivityLogPage />} />
+                    </Route>
                   </Routes>
                 </MainLayout>
               ) : (

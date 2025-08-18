@@ -1,8 +1,8 @@
+// src/components/todos/TodoListList.jsx
 import React, { useState, useRef, useEffect } from "react"
 import { FaTrash, FaEdit, FaCaretDown, FaCaretUp, FaEllipsisV, FaPlus } from "react-icons/fa"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useDeleteTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
-import TodosInList from "./TodosInList"
 import TodoList from "./TodoList"
 import {
   FaBook,
@@ -14,6 +14,10 @@ import {
   FaPen,
 } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useLocation } from "react-router-dom"
+import { RxCaretDown, RxCaretUp } from "react-icons/rx"
+import { BsThreeDotsVertical } from "react-icons/bs"
+import { FiTrash } from "react-icons/fi"
 
 const iconMap = {
   FaPen: FaPen,
@@ -34,8 +38,10 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
     activeTab,
   } = useTodoStore()
   const deleteTodoListMutation = useDeleteTodoList()
-  const [openDropdownId, setOpenDropdownId] = useState(null) // Intersection Observer for infinite scroll
+  const [openListDropdownId, setOpenListDropdownId] = useState(null)
+  const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
   const { authUser } = useAuthUser()
+  const { pathname } = useLocation()
 
   const observerRef = useRef()
   const lastItemRef = useRef()
@@ -80,103 +86,130 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
     return <div className="text-center text-gray-500">List is empty.</div>
   }
 
-  const toggleDropdown = (id) => {
-    setOpenDropdownId(openDropdownId === id ? null : id)
+  const handleToggleListDropdown = (e, listId) => {
+    e.stopPropagation()
+    setOpenListDropdownId(openListDropdownId === listId ? null : listId)
+    setOpenTodoDropdownId(null) // Close any todo dropdown when a list dropdown is opened
+  }
+
+  const handleToggleTodoList = (e, listId) => {
+    e.stopPropagation()
+    toggleTodoList(listId)
+    setOpenListDropdownId(null) // Close list dropdown when a list is opened/closed
+    setOpenTodoDropdownId(null) // Close todo dropdown when a list is opened/closed
   }
 
   const isListOpen = (id) => selectedTodoListIds.includes(id)
 
-
-
   return (
-    <ul className="flex flex-col gap-6">
+    <ul className="flex flex-col gap-5">
       {allLists.map((list, index) => {
         const isLastItem = index === allLists.length - 1
         const IconComponent = iconMap[list.icon]
 
         return (
           <li key={list._id} className="bg-base-100" ref={isLastItem ? lastItemRef : null}>
-            {activeTab !== "myLists" && (
-              <div className="flex items-center gap-1">
+            {pathname.startsWith("/todos/") && (
+              <div className="flex items-center gap-3 p-2">
                 <img
                   src={list.owner.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                  className="size-8 rounded-full"
+                  className="size-8 rounded-full object-cover"
                   alt={`${list.owner.username}'s profile`}
                 />
-                <div className="flex flex-col text-xs">
-                  <p>{list.owner.fullName}</p> <p>@{list.owner.username}</p>
+                <div className="flex flex-col">
+                  <p className="text-sm font-bold">{list.owner.fullName}</p>
+                  <p className="text-xs text-gray-500">@{list.owner.username}</p>
                 </div>
               </div>
             )}
-            <div className="border-b border-slate-600 px-2 py-1">
+            <div className="border-b border-slate-600 px-3 py-1">
               <div className="flex justify-between">
-                <div className="flex items-center gap-2">
+                <div
+                  className="flex w-full  items-center gap-2"
+                  onClick={(e) => handleToggleTodoList(e, list._id)}
+                >
                   <span className="flex items-center gap-2 font-bold">
                     {IconComponent && <IconComponent className={`${colorMap[list.color]}`} />}
                     {list.name}
                   </span>
                   <span className="text-xs">{list.totalTodos || ""}</span>
                 </div>
-                <div className="flex gap-2">
-                  {list.todos.length > 0 && (
+                <div className="relative flex gap-1">
+                  <button onClick={(e) => handleToggleTodoList(e, list._id)} className="p-[5px] hover:bg-secondary transition duration-200 rounded-full">
+                    {isListOpen(list._id) ? <RxCaretUp size={20} /> : <RxCaretDown size={20} />}
+                  </button>
+
+                  {list.owner._id === authUser._id && (
                     <button
-                      className=""
-                      data-tip="View todos"
-                      onClick={() => toggleTodoList(list._id)}
+                      className="rounded-full p-[7px] transition duration-200 md:hover:bg-secondary"
+                      onClick={(e) => handleToggleListDropdown(e, list._id)}
                     >
-                      {isListOpen(list._id) ? <FaCaretUp /> : <FaCaretDown />}
+                      <BsThreeDotsVertical size={16} />
                     </button>
                   )}
-                  <div className="relative">
-                    {list.owner._id === authUser._id && (
-                      <button
-                        className="btn btn-circle btn-ghost btn-sm"
-                        onClick={() => toggleDropdown(list._id)}
-                      >
-                        <FaEllipsisV />
-                      </button>
-                    )}
-                    {openDropdownId === list._id && (
-                      <ul className="menu dropdown-content absolute right-0 top-10 z-10 w-40 rounded-box bg-base-100 p-2 shadow">
+                  {openListDropdownId === list._id && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10 cursor-default bg-transparent"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setOpenListDropdownId(null)
+                        }}
+                      ></div>
+                      <ul className="white-shadow absolute right-2 top-3 z-10 w-44 rounded-xl bg-base-100 p-2">
                         <li>
                           <button
-                            onClick={() => {
-                              toggleDropdown(null)
-                            }}
-                          >
-                            <FaEdit /> Edit List
-                          </button>
-                        </li>
-                        <li>
-                          <button
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation()
                               setCurrentListIdForTodoCreation(list._id)
                               setShowCreateTodoModal(true)
-                              toggleDropdown(null)
+                              setOpenListDropdownId(null)
                             }}
+                            className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
                           >
-                            <FaPlus /> Add Todo
+                            <FaPlus />
+                            <span>Add Todo</span>
                           </button>
                         </li>
                         <li>
                           <button
-                            onClick={() => {
-                              deleteTodoListMutation.mutate(list._id)
-                              toggleDropdown(null)
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setOpenListDropdownId(null)
                             }}
+                            className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
                           >
-                            <FaTrash /> Delete List
+                            <FaEdit />
+                            <span>Rename Section</span>
+                          </button>
+                        </li>
+
+                        <li>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteTodoListMutation.mutate(list._id)
+                              setOpenListDropdownId(null)
+                            }}
+                            className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"
+                          >
+                            <FiTrash />
+                            <span>Delete Section</span>
                           </button>
                         </li>
                       </ul>
-                    )}
-                  </div>
+                    </>
+                  )}
                 </div>
               </div>
             </div>
             {isListOpen(list._id) && (
               <div className="pl-4">
-                <TodoList todos={list.todos} />
+                <TodoList
+                  todos={list.todos}
+                  openTodoDropdownId={openTodoDropdownId}
+                  setOpenTodoDropdownId={setOpenTodoDropdownId}
+                />
               </div>
             )}
           </li>

@@ -822,7 +822,6 @@ export const deleteConversation = async (req, res) => {
   const { id: conversationId } = req.params;
   const { _id: currentUserId } = req.user;
 
-  // Use a transaction to ensure all operations succeed or fail together.
   const session = await mongoose.startSession();
 
   try {
@@ -840,30 +839,31 @@ export const deleteConversation = async (req, res) => {
       return res
         .status(403)
         .json({ error: "Unauthorized: You are not a participant of this conversation" });
-    }
+    } // 1. Find all messages in the conversation that have an image URL.
 
-    const otherUserId = conversation.participants.find(
-      (p) => p && !p.equals(currentUserId)
-    );
+    const messagesWithImages = await Message.find({
+      conversationId: conversationId,
+      img: { $exists: true, $ne: "" },
+    }).session(session); // 2. Extract the public IDs from the image URLs.
 
-    if (!otherUserId) {
-      await session.abortTransaction();
-      return res.status(500).json({ error: "Could not identify the other participant" });
-    }
+    const publicIdsToDelete = messagesWithImages.map((message) => {
+      const urlParts = message.img.split("/");
+      const filename = urlParts[urlParts.length - 1];
+      return filename.split(".")[0];
+    }); // 3. Delete the images from Cloudinary.
 
-    // Unfollow logic is no longer required as per your new requirement.
-    // However, if you still want to manage follow/unfollow status,
-    // this is where you would do it.
-    // The previous code had this logic here.
+    if (publicIdsToDelete.length > 0) {
+      await cloudinary.uploader.destroy(publicIdsToDelete);
+    } // 4. Delete all messages associated with the conversation.
 
-    // Delete all messages associated with the conversation.
-    await Message.deleteMany({ conversationId: conversationId }).session(session);
+    await Message.deleteMany({ conversationId: conversationId }).session(session); // 5. Delete the conversation document itself.
 
-    // Delete the conversation document itself.
     await Conversation.findByIdAndDelete(conversationId).session(session);
 
     await session.commitTransaction();
-    res.status(200).json({ message: "Conversation deleted successfully." });
+    res
+      .status(200)
+      .json({ message: "Conversation and all associated images deleted successfully." });
   } catch (error) {
     console.error("Error in deleteConversation:", error.message);
     await session.abortTransaction();

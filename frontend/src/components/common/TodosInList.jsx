@@ -3,7 +3,6 @@ import { useGetTodosInList, useGetTodoListById } from "../../hooks/todoListHooks
 import { useTodoStore } from "../../store/useTodoStore"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser" // Assuming you have this hook
 import TodoList from "./TodoList"
-import { FaPlus } from "react-icons/fa"
 
 const TodosInList = ({ listId }) => {
   const { authUser } = useAuthUser()

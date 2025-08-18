@@ -19,7 +19,7 @@ const CreateTodoListModal = () => {
   const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("FaPen")
-  const [color, setColor] = useState("blue")
+  const [color, setColor] = useState("red")
 
   const iconOptions = [
     { name: "FaPen", icon: <FaPen /> },
@@ -72,7 +72,7 @@ const CreateTodoListModal = () => {
           setDescription("")
           setIsPublic(false)
           setIcon("FaPen")
-          setColor("blue")
+          setColor("red")
         },
       },
     )
@@ -83,7 +83,7 @@ const CreateTodoListModal = () => {
   return (
     <div className="modal modal-open">
       <div className="modal-box">
-        <h3 className="text-lg font-bold">Create a new Todo List</h3>
+        <h3 className="text-lg font-bold">Create a new Todo Section</h3>
         <form onSubmit={handleSubmit}>
           {/* Name Input */}
           <div className="mb-4 mt-2">
