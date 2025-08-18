@@ -11,6 +11,7 @@ import {
   getUserTodosApi,
   updateTodoApi,
 } from "../../api/todoApi"
+import { showAppToast } from "../../utils/showAppToast"
 
 export const useCreateTodo = () => {
   const queryClient = useQueryClient()
@@ -77,7 +78,7 @@ export const useCreateTodo = () => {
       if (context?.previousTodoLists) {
         queryClient.setQueryData(["todoLists"], context.previousTodoLists)
       }
-      toast.error(error.message || "Failed to create todo. Please try again.")
+      showAppToast(error.message || "Failed to create todo. Please try again.", "error")
     },
     onSettled: () => {
       // Invalidate all relevant queries to refetch fresh data
@@ -86,7 +87,7 @@ export const useCreateTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
-      toast.success("Todo created successfully!")
+      showAppToast("Todo created successfully!", "success")
     },
   })
 }
@@ -107,10 +108,10 @@ export const useUpdateTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
-      toast.success("Todo updated successfully!")
+      showAppToast("Todo updated successfully!", "success")
     },
     onError: (error) => {
-      toast.error(error.message)
+      showAppToast(error.message, "error")
     },
   })
 
@@ -169,15 +170,18 @@ export const useCompleteTodo = () => {
     // If the mutation fails, use the context returned from onMutate to roll back
     onError: (err, todoId, context) => {
       queryClient.setQueryData(["todoLists"], context.previousTodoLists)
-      toast.error(err.message || "Failed to complete todo")
+      showAppToast(err.message || "Failed to complete todo", "error")
     },
     // Finally, always refetch after the mutation is settled (success or error)
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["completedTodos"] }) // Invalidate the new query
+      queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
+      queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
+      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
     },
     onSuccess: () => {
-      toast.success("Todo completed! ✨")
+      showAppToast("Todo completed! ✨", "success")
     },
   })
 
@@ -248,7 +252,7 @@ export const useDeleteTodo = () => {
       if (context?.previousCompletedTodos) {
         queryClient.setQueryData(["completedTodos"], context.previousCompletedTodos)
       }
-      toast.error(error.message || "Failed to delete todo. Please try again.")
+      showAppToast(error.message || "Failed to delete todo. Please try again.", "error")
     },
     onSettled: () => {
       // After the mutation is complete, invalidate all relevant queries
@@ -259,7 +263,7 @@ export const useDeleteTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
       queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-      toast.success("Todo deleted successfully!")
+      showAppToast("Todo deleted successfully!", "success")
     },
   })
 

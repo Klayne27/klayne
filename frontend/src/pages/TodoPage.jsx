@@ -45,13 +45,6 @@ const TodoPage = () => {
     fetchNextPage: publicFetchNextPage,
   } = useGetPublicTodoLists()
 
-  const {
-    data: completedTodos,
-    isLoading: completedLoading,
-    isError: completedError,
-  } = useGetCompletedTodos()
-
-
   const getActiveLists = () => {
     switch (activeTab) {
       case "myLists":
@@ -80,13 +73,6 @@ const TodoPage = () => {
           isError: publicError,
           hasNextPage: publicHasNextPage,
           fetchNextPage: publicFetchNextPage,
-        }
-      case "completedTodos":
-        return {
-          isList: false,
-          data: completedTodos,
-          isLoading: completedLoading,
-          isError: completedError,
         }
       default:
         return {
@@ -135,17 +121,13 @@ const TodoPage = () => {
       </div>
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-y-auto pb-36 md:pb-4">
-        {isList ? (
-          <TodoListList
-            todoLists={lists}
-            isLoading={isLoading}
-            isError={isError}
-            hasNextPage={hasNextPage}
-            fetchNextPage={fetchNextPage}
-          />
-        ) : (
-          <CompletedTodoList todos={data} isLoading={isLoading} isError={isError} />
-        )}
+        <TodoListList
+          todoLists={lists}
+          isLoading={isLoading}
+          isError={isError}
+          hasNextPage={hasNextPage}
+          fetchNextPage={fetchNextPage}
+        />
       </div>
       {/* Floating "Create List" button */}
       <button

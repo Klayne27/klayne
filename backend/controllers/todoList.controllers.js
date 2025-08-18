@@ -110,7 +110,10 @@ export const getFollowingTodoLists = async (req, res) => {
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate("todos") // <-- Simply add this to populate the virtual field
+      .populate({
+        path: "todos",
+        match: { completed: false }, // Filter for uncompleted todos
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);
@@ -142,7 +145,10 @@ export const getPublicTodoLists = async (req, res) => {
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate("todos") // <-- And add it here as well
+      .populate({
+        path: "todos",
+        match: { completed: false }, // Filter for uncompleted todos
+      })
       .sort({ createdAt: -1 })
       .skip(skip)
       .limit(limit);

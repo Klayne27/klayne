@@ -10,11 +10,12 @@ const commonToastStyle = {
   boxShadow: "0 4px 12px rgba(0, 0, 0, 0.15)",
   fontSize: "15px",
   fontWeight: "500",
-  marginBottom: "45px",
+  marginBottom: "60px",
   zIndex: 9999
 };
 
 export const showAppToast = (message, type = "blank") => {
+
   const options = {
     id: SINGLE_TOAST_ID,
     style: { ...commonToastStyle },

@@ -18,6 +18,7 @@ import { useLocation } from "react-router-dom"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import { FiTrash } from "react-icons/fi"
+import { FaEllipsisVertical } from "react-icons/fa6"
 
 const iconMap = {
   FaPen: FaPen,
@@ -125,7 +126,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
             <div className="border-b border-slate-600 px-3 py-1">
               <div className="flex justify-between">
                 <div
-                  className="flex w-full  items-center gap-2"
+                  className="flex w-full items-center gap-2"
                   onClick={(e) => handleToggleTodoList(e, list._id)}
                 >
                   <span className="flex items-center gap-2 font-bold">
@@ -135,16 +136,21 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                   <span className="text-xs">{list.totalTodos || ""}</span>
                 </div>
                 <div className="relative flex gap-1">
-                  {list.todos.length > 0 && <button onClick={(e) => handleToggleTodoList(e, list._id)} className="p-[5px] hover:bg-secondary transition duration-200 rounded-full">
-                    {isListOpen(list._id) ? <RxCaretUp size={20} /> : <RxCaretDown size={20} />}
-                  </button>}
+                  {list.todos.length > 0 && (
+                    <button
+                      onClick={(e) => handleToggleTodoList(e, list._id)}
+                      className="rounded-full p-[5px] transition duration-200 hover:bg-secondary"
+                    >
+                      {isListOpen(list._id) ? <RxCaretUp size={20} /> : <RxCaretDown size={20} />}
+                    </button>
+                  )}
 
                   {list.owner._id === authUser._id && (
                     <button
                       className="rounded-full p-[7px] transition duration-200 md:hover:bg-secondary"
                       onClick={(e) => handleToggleListDropdown(e, list._id)}
                     >
-                      <BsThreeDotsVertical size={16} />
+                      <FaEllipsisVertical size={16} />
                     </button>
                   )}
                   {openListDropdownId === list._id && (
@@ -204,7 +210,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
               </div>
             </div>
             {isListOpen(list._id) && (
-              <div className="pl-4">
+              <div className="pl-5">
                 <TodoList
                   todos={list.todos}
                   openTodoDropdownId={openTodoDropdownId}

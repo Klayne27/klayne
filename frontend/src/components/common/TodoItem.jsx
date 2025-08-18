@@ -10,6 +10,7 @@ import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { FiTrash } from "react-icons/fi"
 import Portal from "./Portal"
 import TodoEditModal from "./TodoEditModal"
+import { showAppToast } from "../../utils/showAppToast"
 
 const getPriorityColor = (priority) => {
   switch (priority) {
@@ -67,6 +68,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   }, [openTodoDropdownId, todo._id])
 
   const handleMenuToggle = (e) => {
+    if (todo.user !== currentUser._id) return
+
     e.stopPropagation()
     setIsMenuOpen(!isMenuOpen)
   }
@@ -76,6 +79,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   }
 
   const handleToggleDropdownMenu = (e) => {
+    if (todo.user !== currentUser._id) return
+
     e.stopPropagation()
     setOpenTodoDropdownId(openTodoDropdownId === todo._id ? null : todo._id)
   }
@@ -89,7 +94,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   }
 
   const handleComplete = (todoId, e) => {
-    if (e) e.stopPropagation()
+    if (todo.user !== currentUser._id) return
+    e.stopPropagation()
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     setCompletingTodoId(todoId)
     setTimeout(() => {
@@ -230,7 +236,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </div>
         </SlideUpMenu>
       )}
-
     </>
   )
 }

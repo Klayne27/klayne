@@ -11,6 +11,7 @@ import {
   getUserTodoListsApi,
   updateTodoListApi,
 } from "../../api/todoListApi"
+import { showAppToast } from "../../utils/showAppToast"
 
 export const useCreateTodoList = () => {
   const queryClient = useQueryClient()
@@ -18,10 +19,10 @@ export const useCreateTodoList = () => {
     mutationFn: createTodoListApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      toast.success("Todo list created!")
+      showAppToast("Todo list created!", "success")
     },
     onError: (error) => {
-      toast.error(error.message)
+      showAppToast(error.message, "error")
     },
   })
 }
@@ -97,10 +98,10 @@ export const useUpdateTodoList = () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodoLists"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
-      toast.success("Todo list updated!")
+      showAppToast("Todo list updated!", "success")
     },
     onError: (error) => {
-      toast.error(error.message)
+      showAppToast(error.message, "error")
     },
   })
 }
@@ -111,10 +112,10 @@ export const useDeleteTodoList = () => {
     mutationFn: deleteTodoListApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      toast.success("Todo list deleted!")
+      showAppToast("Todo list deleted!", "success")
     },
     onError: (error) => {
-      toast.error(error.message)
+    showAppToast(error.message, "error")
     },
   })
 }

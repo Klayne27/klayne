@@ -17,20 +17,20 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     }
   }, [todo])
 
- const handleSubmit = (e) => {
-   e.preventDefault()
-   const updateData = {
-     // Pass the todo ID to the parent on save
-     id: todo._id,
-     todoData: {
-       title: formData.title,
-       dueDate: formData.dueDate || null,
-       priority: formData.priority,
-     },
-   }
-   onSave(updateData)
-   onClose() // Add this to close the modal after saving
- }
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    const updateData = {
+      // Pass the todo ID to the parent on save
+      id: todo._id,
+      todoData: {
+        title: formData.title,
+        dueDate: formData.dueDate || null,
+        priority: formData.priority,
+      },
+    }
+    onSave(updateData)
+    onClose() // Add this to close the modal after saving
+  }
   const handleInputChange = (field) => (e) => {
     setFormData((prev) => ({
       ...prev,
@@ -41,9 +41,15 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl dark:bg-gray-800">
-        <div className="flex items-center justify-between border-b border-gray-200 p-4 dark:border-gray-700">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-700/70"
+      onClick={onClose}
+    >
+      <div
+        className="mx-4 w-full max-w-md rounded-3xl bg-base-100 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="flex items-center justify-between border-b border-slate-600 p-4">
           <h2 className="text-lg font-semibold">Edit Todo</h2>
           <button
             onClick={onClose}
@@ -97,6 +103,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
               <option value="low">Low</option>
               <option value="medium">Medium</option>
               <option value="high">High</option>
+              <option value="urgent">Urgent</option>
             </select>
           </div>
 
@@ -112,7 +119,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 rounded-lg bg-blue-600 px-4 py-2 text-white transition-colors hover:bg-blue-700 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex-1 rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
