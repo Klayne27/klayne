@@ -51,6 +51,8 @@ function ConversationItem({ conv }) {
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
 
+  const isLastMessageByOtherUser = conv.lastMessage?.sender.toString() === otherUser?._id.toString()
+
   const isLastMessageUnread =
     conv.lastMessage?.sender?.toString() === otherUser?._id.toString() && !conv.lastMessage?.seen
 
@@ -133,14 +135,14 @@ function ConversationItem({ conv }) {
       onTouchCancel={handleTouchCancel}
     >
       {/* ... (rest of the component's JSX remains the same) */}
-      <div className="p-1 relative">
+      <div className="relative p-1">
         <img
           src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
         {isOnline && (
-          <span className="absolute right-0.5 bottom-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
         )}
       </div>
 
@@ -170,7 +172,7 @@ function ConversationItem({ conv }) {
             {lastMessageContent === "No messages yet..." ? (
               <span className="italic">{lastMessageContent}</span>
             ) : (
-              truncatedLastMessage
+              <span>{isLastMessageByOtherUser ? otherUser?.fullName : "You"}: {truncatedLastMessage}</span>
             )}
           </p>
         </div>
