@@ -1,22 +1,23 @@
-import { useState } from "react"
-import { FaCalendar, FaFlag, FaPlus, FaTrashCan } from "react-icons/fa6"
+import { useEffect, useRef, useState } from "react"
+import { FaCalendar, FaFlag, FaPlus } from "react-icons/fa6"
 import { useCreateTodo } from "../../hooks/todoHooks/useTodoQueries"
 import { useTodoStore } from "../../store/useTodoStore"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
 import { showAppToast } from "../../utils/showAppToast"
 import DatePicker from "react-datepicker"
 import { forwardRef } from "react"
+import { IoClose } from "react-icons/io5"
 
 // A custom button component for the date picker.
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
     type="button"
-    className="flex items-center gap-2 rounded-lg border-2 border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
     onClick={onClick}
     ref={ref}
   >
     <FaCalendar />
-    <span>{value ? value : "Due date"}</span>
+    <span>{"Due date"}</span>
   </button>
 ))
 
@@ -28,6 +29,8 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
   const [isPublic, setIsPublic] = useState(false)
   const [priority, setPriority] = useState("low")
   const [dueDate, setDueDate] = useState(null)
+
+  const titleInputRef = useRef(null)
 
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
 
@@ -74,6 +77,10 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
     setDueDate(null)
   }
 
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
+
   return (
     <>
       <form
@@ -105,12 +112,13 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
         <div>
           <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
           <input
+            ref={titleInputRef}
             type="text"
             value={title}
             onChange={(e) => setTitle(e.target.value)}
             className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
           />
-          {/* {dueDate && (
+          {dueDate && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <span className="font-semibold">Due:</span>
               <span>
@@ -129,12 +137,12 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
                 <IoClose size={16} />
               </button>
             </div>
-          )} */}
+          )}
         </div>
         <div className="relative mt-2 flex gap-2">
           <button
             type="button"
-            className={`flex items-center gap-2 rounded-lg border-2 px-2 py-1 text-sm ${getPriorityColor(priority)}`}
+            className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
             onClick={(e) => {
               e.stopPropagation()
               setIsPriorityMenuOpen(!isPriorityMenuOpen)

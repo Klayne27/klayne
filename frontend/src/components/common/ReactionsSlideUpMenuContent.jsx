@@ -42,8 +42,11 @@ const ReactionsSlideUpMenuContent = ({ reactions, onClose }) => {
       </div>
 
       <div className="flex-1 overflow-y-auto px-3">
-        {usersForSelectedEmoji.map((user) => (
-          <div key={user._id} className="flex items-center gap-3 border-gray-800 py-2">
+        {usersForSelectedEmoji.map((user, index) => (
+          <div
+            key={`${user._id}-${index}`}
+            className="flex items-center gap-3 border-gray-800 py-2"
+          >
             <Link to={`/profile/${user.username}`} onClick={onClose}>
               <img
                 src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}

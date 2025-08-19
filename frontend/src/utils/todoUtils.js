@@ -2,11 +2,11 @@
 export const getPriorityColor = (priority) => {
   switch (priority) {
     case "urgent":
-      return "border-red-400 bg-red-500/30 rounded-full border-2"
+      return "border-red-400 bg-red-500/30 rounded-full border"
     case "high":
-      return "border-orange-400 bg-orange-500/30 rounded-full border-2"
+      return "border-orange-400 bg-orange-500/30 rounded-full border"
     case "medium":
-      return "border-yellow-400 bg-yellow-500/30 rounded-full border-2"
+      return "border-yellow-400 bg-yellow-500/30 rounded-full border"
     case "low":
     default:
       return "border-slate-400 rounded-full border"

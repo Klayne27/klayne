@@ -261,7 +261,7 @@ const PrivateChatMessageItem = ({
             )}
           </div>
         </MessageContentLayout>
-        {isMobile ? (
+        {isMobile && showViewReactionsModal ? (
           <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
             <SlideUpMenuContent
               className="flex h-[50vh] w-full flex-col overflow-y-auto"
@@ -274,11 +274,13 @@ const PrivateChatMessageItem = ({
             </SlideUpMenuContent>
           </SlideUpMenu>
         ) : (
-          <ViewReactionsModal
-            isOpen={showViewReactionsModal}
-            onClose={handleCloseViewReactionsModal}
-            reactions={message.reactions ? message.reactions : []}
-          />
+          showViewReactionsModal && (
+            <ViewReactionsModal
+              isOpen={showViewReactionsModal}
+              onClose={handleCloseViewReactionsModal}
+              reactions={message.reactions ? message.reactions : []}
+            />
+          )
         )}
 
         {/* Emoji Picker Popover */}

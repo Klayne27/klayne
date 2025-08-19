@@ -34,32 +34,7 @@ const getPaginationParams = (req) => {
 //   },
 // ];
 
-export const createTodoList = async (req, res) => {
-  try {
-    const { name, description, isPublic, color, icon } = req.body;
-    const newTodoList = new TodoList({
-      name,
-      description,
-      owner: req.user._id,
-      isPublic,
-      color,
-      icon,
-    });
-    await newTodoList.save(); // Log the activity
 
-    // const activity = new TodoActivity({
-    //   user: req.user._id,
-    //   action: "created_list",
-    //   listId: newTodoList._id,
-    //   listName: newTodoList.name,
-    // });
-    // await activity.save();
-    res.status(201).json(newTodoList);
-  } catch (error) {
-    console.error("Error creating todo list:", error);
-    res.status(500).json({ error: "Failed to create todo list" });
-  }
-};
 
 export const getUserTodoLists = async (req, res) => {
   try {
@@ -196,6 +171,33 @@ export const getTodosInList = async (req, res) => {
     res.status(200).json(todos);
   } catch (error) {
     res.status(500).json({ error: "Failed to fetch todos" });
+  }
+};
+
+export const createTodoList = async (req, res) => {
+  try {
+    const { name, description, isPublic, color, icon } = req.body;
+    const newTodoList = new TodoList({
+      name,
+      description,
+      owner: req.user._id,
+      isPublic,
+      color,
+      icon,
+    });
+    await newTodoList.save(); // Log the activity
+
+    // const activity = new TodoActivity({
+    //   user: req.user._id,
+    //   action: "created_list",
+    //   listId: newTodoList._id,
+    //   listName: newTodoList.name,
+    // });
+    // await activity.save();
+    res.status(201).json(newTodoList);
+  } catch (error) {
+    console.error("Error creating todo list:", error);
+    res.status(500).json({ error: "Failed to create todo list" });
   }
 };
 

@@ -53,9 +53,6 @@ const TodoPageLayout = () => {
 
   return (
     <div className="container relative mx-auto flex h-screen min-h-screen max-w-2xl flex-col border-slate-600 bg-base-100 md:border-x">
-      {/* Header */}
-
-      {/* Main Content Area - This is where the specific page component will be rendered */}
       <div
         className={`flex flex-1 flex-col overflow-y-auto ${isCreateSectionPage ? "" : "pb-36 md:pb-4"}`}
       >

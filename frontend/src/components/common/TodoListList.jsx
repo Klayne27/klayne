@@ -92,7 +92,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
 
-  if (isLoading && allLists.length === 0)
+  if (isLoading && allLists?.length === 0)
     return (
       <div className="flex h-screen items-center justify-center text-primary">
         <LoadingSpinner />
@@ -101,7 +101,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
 
   if (isError) return <div>Error fetching lists.</div>
 
-  if (allLists.length === 0) {
+  if (allLists?.length === 0) {
     return <div className="text-center text-gray-500">List is empty.</div>
   }
 
@@ -141,8 +141,8 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
 
   return (
     <ul className="flex flex-col gap-5">
-      {allLists.map((list, index) => {
-        const isLastItem = index === allLists.length - 1
+      {allLists?.map((list, index) => {
+        const isLastItem = index === allLists?.length - 1
         const IconComponent = iconMap[list.icon]
 
         return (
@@ -173,7 +173,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                   <span className="text-xs">{list.totalTodos || ""}</span>
                 </div>
                 <div className="relative flex gap-1">
-                  {list.todos.length > 0 && (
+                  {list?.todos?.length > 0 && (
                     <button
                       onClick={(e) => handleToggleTodoList(e, list._id)}
                       className="rounded-full p-[5px] transition duration-200 hover:bg-secondary"
@@ -257,14 +257,14 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
           </li>
         )
       })}
-      {isMobile && (
+      {isMobile && isMenuOpen &&  (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          <div className="z-50 flex h-[30vh] w-full flex-col gap-5 px-4">
+          <div className="z-50 flex h-[35vh] w-full flex-col gap-5 px-4">
             <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsMenuOpen} />
           </div>
         </SlideUpMenu>
       )}
-      {isLoading && allLists.length > 0 && <div>Loading more...</div>}
+      {isLoading && allLists?.length > 0 && <div>Loading more...</div>}
     </ul>
   )
 }

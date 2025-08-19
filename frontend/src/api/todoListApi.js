@@ -1,15 +1,6 @@
 const API_URL = "/api/todolists"
 
-export const createTodoListApi = async (listData) => {
-  const res = await fetch(API_URL, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(listData),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || "Failed to create todo list")
-  return data
-}
+
 
 export const getUserTodoListsApi = async ({ pageParam = 1 }) => {
   const res = await fetch(`${API_URL}?page=${pageParam}`)
@@ -43,6 +34,17 @@ export const getTodosInListApi = async (listId) => {
   const res = await fetch(`${API_URL}/${listId}/todos`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch todos in list")
+  return data
+}
+
+export const createTodoListApi = async (listData) => {
+  const res = await fetch(API_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(listData),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to create todo list")
   return data
 }
 

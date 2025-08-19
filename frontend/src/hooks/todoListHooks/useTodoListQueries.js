@@ -13,20 +13,6 @@ import {
 } from "../../api/todoListApi"
 import { showAppToast } from "../../utils/showAppToast"
 
-export const useCreateTodoList = () => {
-  const queryClient = useQueryClient()
-  return useMutation({
-    mutationFn: createTodoListApi,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      showAppToast("Todo section created!", "success")
-    },
-    onError: (error) => {
-      showAppToast(error.message, "error")
-    },
-  })
-}
-
 export const useGetTodoListById = (listId) => {
   return useQuery({
     queryKey: ["todoList", listId],
@@ -90,18 +76,71 @@ export const useGetPublicTodoLists = () => {
   })
 }
 
+const TODO_LISTS_QUERY_KEY = ["todoLists"]
+
+export const useCreateTodoList = () => {
+  const queryClient = useQueryClient()
+
+  return useMutation({
+    mutationFn: createTodoListApi,
+    // The onMutate function is called before the mutation function
+    onMutate: async (newTodoList) => {
+      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+
+      // 2. Snapshot the previous value
+      const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
+
+      // 3. Optimistically update to the new value
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) => [
+        ...(old || []),
+        // Add a temporary ID and default values for instant UI feedback
+        { ...newTodoList, _id: `temp-${Date.now()}`, todos: [] },
+      ])
+
+      // 4. Return a context object with the snapshotted value
+      return { previousTodoLists }
+    },
+    // If the mutation fails, use the context returned from onMutate to roll back
+    onError: (err, newTodoList, context) => {
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.previousTodoLists)
+      showAppToast(err.message, "error")
+    },
+    // Always refetch after error or success to ensure server state
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+    },
+    onSuccess: () => {
+      showAppToast("Todo section created!", "success")
+    },
+  })
+}
+
 export const useUpdateTodoList = () => {
   const queryClient = useQueryClient()
+
   const { mutate: updateTodoList, isPending: isUpdatingTodoList } = useMutation({
     mutationFn: (data) => updateTodoListApi(data.id, data.listData),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["followingTodoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
-      showAppToast("Todo section updated!", "success")
+    onMutate: async ({ id, listData }) => {
+      await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+      const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
+
+      // Find the specific list and update it in the cache
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) =>
+        old.map((list) => (list._id === id ? { ...list, ...listData } : list)),
+      )
+
+      return { previousTodoLists }
     },
-    onError: (error) => {
-      showAppToast(error.message, "error")
+    onError: (err, variables, context) => {
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.previousTodoLists)
+      showAppToast(err.message, "error")
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+    },
+    onSuccess: () => {
+      showAppToast("Todo section updated!", "success")
     },
   })
 
@@ -110,14 +149,29 @@ export const useUpdateTodoList = () => {
 
 export const useDeleteTodoList = () => {
   const queryClient = useQueryClient()
+
   return useMutation({
     mutationFn: deleteTodoListApi,
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      showAppToast("Todo section deleted!", "success")
+    onMutate: async (listId) => {
+      await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+      const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
+
+      // Filter out the deleted list from the cache
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) =>
+        old.filter((list) => list._id !== listId),
+      )
+
+      return { previousTodoLists }
     },
-    onError: (error) => {
-      showAppToast(error.message, "error")
+    onError: (err, listId, context) => {
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.previousTodoLists)
+      showAppToast(err.message, "error")
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+    },
+    onSuccess: () => {
+      showAppToast("Todo section deleted!", "success")
     },
   })
 }

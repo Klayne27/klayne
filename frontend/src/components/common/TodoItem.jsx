@@ -170,9 +170,9 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       )}
 
       {/* Mobile Slide Up Menu with Edit Form */}
-      {isMobile && (
+      {isMobile && isMenuOpen && (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          <div className="z-50 flex h-[70vh] w-full flex-col gap-5 px-4">
+          <div className="z-50 flex h-[35vh] w-full flex-col gap-5 px-4">
             <TodoEditForm
               todo={todo}
               onClose={handleCloseMenu}

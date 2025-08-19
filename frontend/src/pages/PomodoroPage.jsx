@@ -432,7 +432,7 @@ const PomodoroPage = () => {
               )}
             </button>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/messages")}
               className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <CiMail size={25} strokeWidth={1} />
@@ -446,7 +446,7 @@ const PomodoroPage = () => {
               )}
             </button>
             <button
-              onClick={() => navigate("/")}
+              onClick={() => navigate("/public-chat")}
               className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <IoChatbubbleEllipsesOutline size={25} />
