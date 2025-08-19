@@ -95,7 +95,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             disabled={isLoading}
             aria-label="Delete Todo"
           ></div>
-          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Add Task</h2>
+          <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Add Todo</h2>
           <button
             type="submit"
             disabled={isLoading}

@@ -104,7 +104,7 @@ const CreateTodoListModal = () => {
           {/* Name Input */}
           <div className="mb-4 mt-2">
             <label className="">
-              <span className="text-xs text-slate-600">List Name</span>
+              <span className="text-xs text-slate-500">List Name</span>
             </label>
 
             <input

@@ -44,20 +44,20 @@ const ReactionsSlideUpMenuContent = ({ reactions, onClose }) => {
       <div className="flex-1 overflow-y-auto px-3">
         {usersForSelectedEmoji.map((user, index) => (
           <div
-            key={`${user._id}-${index}`}
+            key={`${user?._id}-${index}`}
             className="flex items-center gap-3 border-gray-800 py-2"
           >
-            <Link to={`/profile/${user.username}`} onClick={onClose}>
+            <Link to={`/profile/${user?.username}`} onClick={onClose}>
               <img
                 src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                alt={user.username}
+                alt={user?.username}
                 className="size-7 rounded-full object-cover"
               />
             </Link>
-            <Link to={`/profile/${user.username}`} onClick={onClose}>
-              <span className="font-semibold hover:underline">{user.fullName}</span>
+            <Link to={`/profile/${user?.username}`} onClick={onClose}>
+              <span className="font-semibold hover:underline">{user?.fullName}</span>
             </Link>
-            <span className="text-gray-400">@{user.username}</span>
+            <span className="text-gray-400">@{user?.username}</span>
           </div>
         ))}
       </div>

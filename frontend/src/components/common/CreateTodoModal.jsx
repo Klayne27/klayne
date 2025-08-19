@@ -93,7 +93,7 @@ const CreateTodoModal = () => {
         onClick={(e) => e.stopPropagation()}
         className="relative mx-2 w-full max-w-md rounded-2xl bg-base-100 p-6"
       >
-        <h3 className="mb-2 text-xl font-bold">Add Task</h3>
+        <h3 className="mb-2 text-xl font-bold">Add Todo</h3>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>

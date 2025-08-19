@@ -4,7 +4,7 @@ import { useCompleteTodo, useDeleteTodo, useUpdateTodo } from "../../hooks/todoH
 import { useTodoStore } from "../../store/useTodoStore"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { FaCheckCircle } from "react-icons/fa"
-import { FaEllipsisVertical, FaPen } from "react-icons/fa6"
+import { FaCalendar, FaEllipsisVertical, FaPen } from "react-icons/fa6"
 import SlideUpMenu from "./SlideUpMenu"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import Portal from "./Portal"
@@ -109,7 +109,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           <div className="flex flex-col">
             <span className="text-base">{todo.title}</span>
             {formattedDueDate && (
-              <span className="text-xs text-gray-500">Due: {formattedDueDate}</span>
+              <span className="text-xs flex gap-1 items-center text-slate-500"><span className="text-[16px]"><FaCalendar /> </span> {formattedDueDate}</span>
             )}
           </div>
         </div>
@@ -152,7 +152,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
                 className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
               >
                 <FaPen />
-                <span>Edit Task</span>
+                <span>Edit Todo</span>
               </button>
             </li>
 
@@ -162,7 +162,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
                 className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"
               >
                 <FaTrashCan />
-                <span>Delete Task</span>
+                <span>Delete Todo</span>
               </button>
             </li>
           </ul>

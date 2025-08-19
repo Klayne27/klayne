@@ -134,7 +134,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
         >
           <FaTrashCan size={16} />
         </button>
-        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Edit Task</h2>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Edit Todo</h2>
         <button
           type="submit"
           disabled={isLoading}

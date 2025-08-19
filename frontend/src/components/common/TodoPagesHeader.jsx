@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import { FaCheckSquare } from "react-icons/fa"
-import { FaArrowLeft } from "react-icons/fa6"
+import { FaArrowLeft, FaEllipsisVertical } from "react-icons/fa6"
 import { LuSquareActivity } from "react-icons/lu"
 import { useNavigate } from "react-router-dom"
 
@@ -34,14 +34,20 @@ function TodoPagesHeader({ pageTitle }) {
   return (
     <div className="flex items-center justify-between gap-4 px-1 py-1 pb-6">
       <div className="flex items-center gap-4">
-        <button onClick={() => navigate(-1)} className="rounded-full p-2 duration-200 transition hover:bg-secondary">
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-full p-2 transition duration-200 hover:bg-secondary"
+        >
           <FaArrowLeft className="size-5" />
         </button>
         <h1 className="text-xl font-bold">{pageTitle}</h1>
       </div>
       <div className="">
-        <button onClick={handleToggleDropdown} className="p-[7px] duration-200 transition md:hover:bg-secondary rounded-full">
-          <BsThreeDotsVertical size={16} />
+        <button
+          onClick={handleToggleDropdown}
+          className="rounded-full p-[7px] transition duration-200 md:hover:bg-secondary"
+        >
+          <FaEllipsisVertical />
         </button>
         {showDropdown && (
           <>

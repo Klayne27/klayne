@@ -13,6 +13,7 @@ import { useNavigate } from "react-router-dom"
 import { useTodoStore } from "../store/useTodoStore"
 import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
+import { showAppToast } from "../utils/showAppToast"
 
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
@@ -25,7 +26,7 @@ const CreateTodoListPage = () => {
   const [color, setColor] = useState("red")
 
   const iconOptions = [
-    { name: "None", icon: <ImBlocked />},
+    { name: "None", icon: <ImBlocked /> },
     { name: "FaPen", icon: <FaPen /> },
     { name: "FaCheckCircle", icon: <FaCheckCircle /> },
     { name: "FaStar", icon: <FaStar /> },
@@ -68,6 +69,11 @@ const CreateTodoListPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!name) {
+      showAppToast("List name can't be empty")
+      return
+    }
+    
     createTodoListMutation.mutate(
       { name, description, isPublic, icon, color },
       {
@@ -92,18 +98,17 @@ const CreateTodoListPage = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
-            <label className="label">
-              <span className="label-text">List Name</span>
+            <label className="">
+              <span className="text-xs text-slate-500">List Name</span>
             </label>
 
             <input
               type="text"
               placeholder="e.g., Study Tasks"
-              className="input input-bordered w-full"
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              required
             />
           </div>
 

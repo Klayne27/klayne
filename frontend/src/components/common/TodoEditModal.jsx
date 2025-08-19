@@ -103,7 +103,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-slate-600">
-          <h2 className="mb-2 text-xl font-semibold">Edit Task</h2>
+          <h2 className="mb-2 text-xl font-semibold">Edit Todo</h2>
           <button
             onClick={onClose}
             className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
