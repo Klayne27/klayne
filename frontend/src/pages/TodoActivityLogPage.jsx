@@ -3,6 +3,7 @@ import TodoPagesHeader from "../components/common/TodoPagesHeader"
 import { formatTime } from "../utils/date"
 import { FaCheck, FaMinus, FaPen, FaPlus } from "react-icons/fa6"
 import { getBadgeColor, getTextColor } from "../utils/todoUtils"
+import LoadingSpinner from "../components/ui/LoadingSpinner"
 
 const getActionIcon = (action) => {
   switch (action) {
@@ -21,9 +22,14 @@ const getActionIcon = (action) => {
 
 const TodoActivityLogPage = () => {
   const { todoActivities, todoActivitiesLoading } = useGetTodoActivities()
-  if (todoActivitiesLoading) return <div>Loading activity log...</div>
+  if (todoActivitiesLoading)
+    return (
+      <div className="flex h-screen items-center justify-center text-primary">
+        <LoadingSpinner />
+      </div>
+    )
 
-  console.log(todoActivities);
+  console.log(todoActivities)
 
   return (
     <>
@@ -47,7 +53,9 @@ const TodoActivityLogPage = () => {
               <div className="">
                 <p>
                   You {activity.action.split("_")[0]} a task:{" "}
-                  <strong className={getTextColor(activity.todoPriority)}>{activity.todoTitle}</strong>
+                  <strong className={getTextColor(activity.todoPriority)}>
+                    {activity.todoTitle}
+                  </strong>
                 </p>
                 <p className="text-slate-400">{formatTime(activity.createdAt)}</p>
               </div>

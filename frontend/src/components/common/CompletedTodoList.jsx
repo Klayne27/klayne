@@ -1,8 +1,13 @@
 import { formatTime } from "../../utils/date"
 import { FaCheck } from "react-icons/fa6"
+import LoadingSpinner from "../ui/LoadingSpinner"
 
 const CompletedTodoList = ({ todos, isLoading, isError }) => {
-  if (isLoading) return <div className="p-4">Loading completed tasks...</div>
+  if (isLoading) return (
+    <div className="flex h-screen items-center justify-center text-primary">
+      <LoadingSpinner />
+    </div>
+  )
   if (isError) return <div className="p-4 text-error">Error fetching completed tasks.</div>
   if (!todos || todos.length === 0) {
     return <div className="p-4 text-center text-gray-500">No completed tasks yet.</div>

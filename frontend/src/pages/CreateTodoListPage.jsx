@@ -7,6 +7,7 @@ import {
   FaCheckCircle,
   FaStar,
   FaPen,
+  FaUserFriends,
 } from "react-icons/fa"
 import { useNavigate } from "react-router-dom"
 import { useTodoStore } from "../store/useTodoStore"
@@ -15,7 +16,6 @@ import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
   const createTodoListMutation = useCreateTodoList()
-  const { setShowCreateTodoListModal } = useTodoStore()
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -31,6 +31,7 @@ const CreateTodoListPage = () => {
     { name: "FaDumbbell", icon: <FaDumbbell /> },
     { name: "FaLightbulb", icon: <FaLightbulb /> },
     { name: "FaPaintBrush", icon: <FaPaintBrush /> },
+    { name: "FaUserFriends", icon: <FaUserFriends /> },
   ]
 
   const colorOptions = [
@@ -85,7 +86,7 @@ const CreateTodoListPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
-        <h3 className="mb-6 text-2xl font-bold text-white">Pomodoro Settings</h3>
+        <h3 className="mb-6 text-2xl font-bold text-white">Create a Todo Section</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
@@ -104,7 +105,7 @@ const CreateTodoListPage = () => {
             />
           </div>
           {/* Description Input */}
-          <div className="mb-4">
+          {/* <div className="mb-4">
             <label className="label">
               <span className="label-text">Description (optional)</span>
             </label>
@@ -116,7 +117,7 @@ const CreateTodoListPage = () => {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={200}
             ></textarea>
-          </div>
+          </div> */}
           {/* Icon Picker */}
           <div className="mb-4">
             <label className="label">
@@ -168,7 +169,7 @@ const CreateTodoListPage = () => {
           </div>
           {/* Action Buttons */}
           <div className="modal-action">
-            <button type="button" className="btn" onClick={() => setShowCreateTodoListModal(false)}>
+            <button type="button" className="btn" onClick={() => navigate(-1)}>
               Cancel
             </button>
 

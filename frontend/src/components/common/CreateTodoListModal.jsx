@@ -9,6 +9,7 @@ import {
   FaCheckCircle,
   FaStar,
   FaPen,
+  FaUserFriends,
 } from "react-icons/fa"
 
 const CreateTodoListModal = () => {
@@ -29,6 +30,7 @@ const CreateTodoListModal = () => {
     { name: "FaDumbbell", icon: <FaDumbbell /> },
     { name: "FaLightbulb", icon: <FaLightbulb /> },
     { name: "FaPaintBrush", icon: <FaPaintBrush /> },
+    { name: "FaUserFriends", icon: <FaUserFriends /> },
   ]
   const colorOptions = [
     "red",

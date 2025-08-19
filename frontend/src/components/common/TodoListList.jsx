@@ -12,6 +12,7 @@ import {
   FaCheckCircle,
   FaStar,
   FaPen,
+  FaUserFriends,
 } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useLocation } from "react-router-dom"
@@ -22,6 +23,7 @@ import { FaCheck, FaEllipsisVertical } from "react-icons/fa6"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import SlideUpMenu from "./SlideUpMenu"
 import TodoAddForm from "./TodoAddForm"
+import LoadingSpinner from "../ui/LoadingSpinner"
 
 const iconMap = {
   FaPen: FaPen,
@@ -31,6 +33,7 @@ const iconMap = {
   FaDumbbell: FaDumbbell,
   FaLightbulb: FaLightbulb,
   FaPaintBrush: FaPaintBrush,
+  FaUserFriends: FaUserFriends,
 }
 
 const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPage }) => {
@@ -87,8 +90,15 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
 
-  if (isLoading && allLists.length === 0) return <div>Loading your lists...</div>
+  if (isLoading && allLists.length === 0)
+    return (
+      <div className="flex h-screen items-center justify-center text-primary">
+        <LoadingSpinner />
+      </div>
+    )
+
   if (isError) return <div>Error fetching lists.</div>
+
   if (allLists.length === 0) {
     return <div className="text-center text-gray-500">List is empty.</div>
   }
