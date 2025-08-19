@@ -6,11 +6,13 @@ import CreateTodoListModal from "./CreateTodoListModal"
 import CreateTodoModal from "./CreateTodoModal"
 import { RxActivityLog } from "react-icons/rx"
 import { IoIosTimer } from "react-icons/io"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 
 const TodoPageLayout = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
   const navigate = useNavigate()
   const location = useLocation()
+  const isMobile = useIsMobile()
 
   const navItems = [
     { tab: "myLists", label: "My Lists", icon: <FaListUl className="size-5" />, path: "/todos" },
@@ -58,7 +60,9 @@ const TodoPageLayout = () => {
       </div>
       {/* Floating "Create List" button */}
       <button
-        onClick={() => setShowCreateTodoListModal(true)}
+        onClick={() =>
+          isMobile ? navigate("/todos/create-todo-section") : setShowCreateTodoListModal(true)
+        }
         className="white-shadow absolute bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg transition-transform duration-300 hover:scale-110 focus:outline-none"
       >
         <FaPlus className="h-6 w-6" />

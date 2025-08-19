@@ -1,6 +1,4 @@
 import React, { useState } from "react"
-import { useCreateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
-import { useTodoStore } from "../../store/useTodoStore"
 import {
   FaBook,
   FaDumbbell,
@@ -10,10 +8,14 @@ import {
   FaStar,
   FaPen,
 } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
+import { useTodoStore } from "../store/useTodoStore"
+import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 
-const CreateTodoListModal = () => {
-  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
+const CreateTodoListPage = () => {
+  const navigate = useNavigate()
   const createTodoListMutation = useCreateTodoList()
+  const { setShowCreateTodoListModal } = useTodoStore()
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -30,6 +32,7 @@ const CreateTodoListModal = () => {
     { name: "FaLightbulb", icon: <FaLightbulb /> },
     { name: "FaPaintBrush", icon: <FaPaintBrush /> },
   ]
+
   const colorOptions = [
     "red",
     "orange",
@@ -45,7 +48,6 @@ const CreateTodoListModal = () => {
     "stone",
   ]
 
-  // Create a map to hold the full Tailwind CSS class strings
   const colorMap = {
     red: "bg-red-400",
     orange: "bg-orange-400",
@@ -67,7 +69,8 @@ const CreateTodoListModal = () => {
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
-          setShowCreateTodoListModal(false)
+          // Navigate back to the previous page or a specific page after success
+          navigate(-1)
           setName("")
           setDescription("")
           setIsPublic(false)
@@ -78,19 +81,12 @@ const CreateTodoListModal = () => {
     )
   }
 
-  if (!showCreateTodoListModal) return null
-
+  // To match the modal's UI, the page has a card-like appearance on a light background.
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
-      onClick={() => setShowCreateTodoListModal(false)}
-    >
-      <div
-        className="w-full max-w-lg rounded-3xl bg-base-100 p-8"
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h3 className="text-lg font-bold">Create a new Todo Section</h3>
-        <form onSubmit={handleSubmit}>
+    <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
+      <div className="mx-auto w-full max-w-lg">
+        <h3 className="mb-6 text-2xl font-bold text-white">Pomodoro Settings</h3>
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
             <label className="label">
@@ -108,7 +104,7 @@ const CreateTodoListModal = () => {
             />
           </div>
           {/* Description Input */}
-          {/* <div className="mb-4">
+          <div className="mb-4">
             <label className="label">
               <span className="label-text">Description (optional)</span>
             </label>
@@ -120,7 +116,7 @@ const CreateTodoListModal = () => {
               onChange={(e) => setDescription(e.target.value)}
               maxLength={200}
             ></textarea>
-          </div> */}
+          </div>
           {/* Icon Picker */}
           <div className="mb-4">
             <label className="label">
@@ -190,4 +186,4 @@ const CreateTodoListModal = () => {
   )
 }
 
-export default CreateTodoListModal
+export default CreateTodoListPage

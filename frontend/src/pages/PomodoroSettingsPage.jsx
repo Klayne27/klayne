@@ -8,7 +8,7 @@ function PomodoroSettingsPage() {
   const navigate = useNavigate()
 
   // Fetch initial settings
-  const { data: initialSettings, isLoading } = useGetPomodoroSettings()
+  const { settings: initialSettings, isSettingsLoading: isLoading } = useGetPomodoroSettings()
 
   // State to manage form inputs
   const [settings, setSettings] = useState(null)
