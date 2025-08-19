@@ -1,9 +1,26 @@
 // components/modals/CreateTodoModal.jsx
-import React, { useState } from "react"
+import React, { forwardRef, useEffect, useRef, useState } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useCreateTodo } from "../../hooks/todoHooks/useTodoQueries"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
+import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
+import { IoClose } from "react-icons/io5"
+import { FaFlag } from "react-icons/fa6"
+import { FaCalendar } from "react-icons/fa"
+import { showAppToast } from "../../utils/showAppToast"
+
+const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
+  <button
+    type="button"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
+    onClick={onClick}
+    ref={ref}
+  >
+    <FaCalendar />
+    <span>{"Due date"}</span>
+  </button>
+))
 
 const CreateTodoModal = () => {
   const {
@@ -17,10 +34,18 @@ const CreateTodoModal = () => {
   const [isPublic, setIsPublic] = useState(false)
   const [priority, setPriority] = useState("low") // New state for priority
   const [dueDate, setDueDate] = useState(null) // New state for due date
+
+  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
+  const titleInputRef = useRef(null)
+
   const { createTodo, isCreatingTodo } = useCreateTodo()
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!title) {
+      showAppToast("Title can't be empty")
+      return
+    }
     createTodo({
       title,
       description,
@@ -29,7 +54,7 @@ const CreateTodoModal = () => {
       priority, // Include priority
       dueDate, // Include dueDate
     })
-    
+
     setTitle("")
     setDescription("")
     setIsPublic(false)
@@ -38,6 +63,21 @@ const CreateTodoModal = () => {
     setShowCreateTodoModal(false)
     setCurrentListIdForTodoCreation(null)
   }
+
+  const handleClearDate = (e) => {
+    e.stopPropagation()
+    setDueDate(null)
+  }
+
+  const handlePrioritySelect = (priority) => {
+    setPriority(priority)
+    setIsPriorityMenuOpen(false)
+  }
+
+  useEffect(() => {
+
+    titleInputRef.current.focus()
+  }, [])
 
   if (!showCreateTodoModal) return null
 
@@ -51,50 +91,95 @@ const CreateTodoModal = () => {
     >
       <div
         onClick={(e) => e.stopPropagation()}
-        className="relative mx-2 w-full max-w-lg rounded-2xl bg-base-100 p-6"
+        className="relative mx-2 w-full max-w-md rounded-2xl bg-base-100 p-6"
       >
-        <h3 className="text-xl font-bold">Create a new Todo</h3>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Todo name"
-            className="my-2 w-full rounded-md border border-gray-300 bg-transparent px-4 py-2 transition-colors duration-200 focus:border-primary focus:outline-none"
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            required
-          />
-          {/* Priority Dropdown */}
-          <div className="my-2 flex items-center gap-2">
-            <label className="text-sm font-medium">Priority:</label>
-            <select
-              className="rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm focus:border-primary focus:outline-none"
-              value={priority}
-              onChange={(e) => setPriority(e.target.value)}
-            >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
-          </div>
-
-          {/* Due Date Picker */}
-          <div className="my-2 flex items-center gap-2">
-            <label className="text-sm font-medium">Due Date:</label>
-            <DatePicker
-              className="rounded-md border border-gray-300 bg-transparent px-2 py-1 text-sm focus:border-primary focus:outline-none"
-              selected={dueDate}
-              onChange={(date) => setDueDate(date)}
-              dateFormat="MMMM d, yyyy"
-              isClearable
-              placeholderText="Select a date"
+        <h3 className="mb-2 text-xl font-bold">Add Task</h3>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+            <input
+              ref={titleInputRef}
+              type="text"
+              value={title}
+              placeholder="e.g., Study Math"
+              onChange={(e) => setTitle(e.target.value)}
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
             />
+            {dueDate && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span className="font-semibold">Due:</span>
+                <span>
+                  {new Date(dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearDate}
+                  className="text-gray-400 hover:text-red-500"
+                  aria-label="Clear due date"
+                >
+                  <IoClose size={16} />
+                </button>
+              </div>
+            )}
           </div>
-
-          <div className="mt-6 flex justify-end space-x-2">
+          <div className="relative mt-2 flex gap-2">
             <button
               type="button"
-              className="rounded-md border border-gray-300 bg-white px-4 py-2 text-gray-700 transition-colors hover:bg-gray-100 dark:border-gray-600 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600"
+              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPriorityMenuOpen(!isPriorityMenuOpen)
+              }}
+            >
+              <FaFlag className={getTextColor(priority)} />{" "}
+              <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
+            </button>
+            <div>
+              <DatePicker
+                selected={dueDate}
+                onChange={(date) => setDueDate(date)}
+                dateFormat="MMM d, yyyy"
+                customInput={<CustomDatePickerInput />}
+              />
+            </div>
+            {isPriorityMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsPriorityMenuOpen(false)
+                  }}
+                ></div>
+                <ul
+                  // ref={priorityMenuRef}
+                  className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
+                >
+                  {["urgent", "high", "medium", "low"].map((priority) => (
+                    <li key={priority}>
+                      <button
+                        type="button"
+                        onClick={() => handlePrioritySelect(priority)}
+                        className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                      >
+                        <FaFlag className={getTextColor(priority)} />
+                        {priority}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
+          </div>
+
+          <div className="flex gap-2 pt-4">
+            <button
+              type="button"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50 dark:border-gray-600 dark:hover:bg-gray-700"
               onClick={(e) => {
                 e.stopPropagation()
                 setShowCreateTodoModal(false)
@@ -105,7 +190,7 @@ const CreateTodoModal = () => {
             </button>
             <button
               type="submit"
-              className="rounded-md bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-blue-400"
+              className="flex-1 rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={isCreatingTodo}
             >
               Create

@@ -1,4 +1,21 @@
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef, forwardRef } from "react"
+import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
+import { IoClose } from "react-icons/io5"
+import DatePicker from "react-datepicker"
+import { FaCalendar, FaFlag } from "react-icons/fa6"
+import { showAppToast } from "../../utils/showAppToast"
+
+const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
+  <button
+    type="button"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
+    onClick={onClick}
+    ref={ref}
+  >
+    <FaCalendar />
+    <span>{"Due date"}</span>
+  </button>
+))
 
 const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
   const [formData, setFormData] = useState({
@@ -6,6 +23,9 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     dueDate: "",
     priority: "medium",
   })
+
+  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
+  const titleInputRef = useRef(null)
 
   useEffect(() => {
     if (todo) {
@@ -19,92 +39,157 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!formData.title) {
+      showAppToast("Title can't be empty")
+      return
+    }
+
     const updateData = {
-      // Pass the todo ID to the parent on save
       id: todo._id,
       todoData: {
         title: formData.title,
-        dueDate: formData.dueDate || null,
+        dueDate: formData.dueDate,
         priority: formData.priority,
       },
     }
+
     onSave(updateData)
-    onClose() // Add this to close the modal after saving
+
+    setFormData({
+      title:"",
+      dueDate: null,
+      priority: "low",
+    })
+    onClose()
   }
-  const handleInputChange = (field) => (e) => {
-    setFormData((prev) => ({
-      ...prev,
-      [field]: e.target.value,
+
+  const handlePrioritySelect = (priority) => {
+    setFormData((prev) => ({ ...prev, priority }))
+    setIsPriorityMenuOpen(false)
+  }
+
+  // Handle DatePicker change, it receives a Date object
+  const handleDateChange = (date) => {
+    setFormData((prev) => ({ ...prev, dueDate: date }))
+  }
+
+  const handleInputChange = (e) => {
+    const { name, value } = e.target
+
+    setFormData((data) => ({
+      ...data,
+      [name]: value,
     }))
   }
+
+  const handleClearDate = (e) => {
+    e.stopPropagation()
+    setFormData((data) => ({ ...data, dueDate: null }))
+  }
+
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
 
   if (!isOpen) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-700/70"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
       onClick={onClose}
     >
       <div
-        className="mx-4 w-full max-w-md rounded-3xl bg-base-100 shadow-xl"
+        className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-6 shadow-xl"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-slate-600 p-4">
-          <h2 className="text-lg font-semibold">Edit Todo</h2>
+        <div className="flex items-center justify-between border-slate-600">
+          <h2 className="mb-2 text-xl font-semibold">Edit Task</h2>
           <button
             onClick={onClose}
             className="rounded p-1 hover:bg-gray-100 dark:hover:bg-gray-700"
-          >
-            {/* <X size={20} /> */}
-          </button>
+          ></button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4 p-4">
-          {/* Title Field */}
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-              {/* <Type size={16} /> */}
-              Title
-            </label>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
             <input
+              ref={titleInputRef}
               type="text"
+              name="title"
               value={formData.title}
-              onChange={handleInputChange("title")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-              required
+              onChange={handleInputChange}
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
             />
+            {formData.dueDate && (
+              <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+                <span className="font-semibold">Due:</span>
+                <span>
+                  {new Date(formData.dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })}
+                </span>
+                <button
+                  type="button"
+                  onClick={handleClearDate}
+                  className="text-gray-400 hover:text-red-500"
+                  aria-label="Clear due date"
+                >
+                  <IoClose size={16} />
+                </button>
+              </div>
+            )}
           </div>
-
-          {/* Due Date Field */}
-          <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-              {/* <Calendar size={16} /> */}
-              Due Date
-            </label>
-            <input
-              type="date"
-              value={formData.dueDate}
-              onChange={handleInputChange("dueDate")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
-            />
-          </div>
-
-          {/* Priority Field */}
-          <div>
-            <label className="mb-2 flex items-center gap-2 text-sm font-medium">
-              {/* <Flag size={16} /> */}
-              Priority
-            </label>
-            <select
-              value={formData.priority}
-              onChange={handleInputChange("priority")}
-              className="w-full rounded-lg border border-gray-300 bg-white px-3 py-2 focus:border-transparent focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700"
+          <div className="relative mt-2 flex gap-2">
+            <button
+              type="button"
+              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(formData.priority)}`}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPriorityMenuOpen(!isPriorityMenuOpen)
+              }}
             >
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="urgent">Urgent</option>
-            </select>
+              <FaFlag className={getTextColor(formData.priority)} />{" "}
+              <span className={`${getTextColor(formData.priority)} text-sm`}>Priority</span>
+            </button>
+            <div>
+              <DatePicker
+                selected={formData.dueDate}
+                onChange={handleDateChange}
+                dateFormat="MMM d, yyyy"
+                customInput={<CustomDatePickerInput />}
+              />
+            </div>
+            {isPriorityMenuOpen && (
+              <>
+                <div
+                  className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setIsPriorityMenuOpen(false)
+                  }}
+                ></div>
+                <ul
+                  // ref={priorityMenuRef}
+                  className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
+                >
+                  {["urgent", "high", "medium", "low"].map((priority) => (
+                    <li key={priority}>
+                      <button
+                        type="button"
+                        onClick={() => handlePrioritySelect(priority)}
+                        className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                      >
+                        <FaFlag className={getTextColor(priority)} />
+                        {priority}
+                      </button>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            )}
           </div>
 
           {/* Action Buttons */}

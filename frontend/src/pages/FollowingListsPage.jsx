@@ -1,4 +1,4 @@
-import TodoListList from "../components/common/TodoListList"
+import TodoSectionList from "../components/common/TodoSectionList"
 import { useGetFollowingTodoLists } from "../hooks/todoListHooks/useTodoListQueries"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
 
@@ -15,7 +15,7 @@ const FollowingListsPage = () => {
     <>
       <TodoPagesHeader pageTitle={"Following Lists"} />
 
-      <TodoListList
+      <TodoSectionList
         todoLists={followingLists}
         isLoading={followingLoading}
         isError={followingError}

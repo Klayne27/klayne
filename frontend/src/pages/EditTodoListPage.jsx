@@ -13,32 +13,32 @@ import {
 } from "react-icons/fa"
 import { useNavigate, useLocation, useParams } from "react-router-dom"
 import { useUpdateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
-
+import { ImBlocked } from "react-icons/im"
 
 const EditTodoListPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { id } = useParams()
   const { list } = location.state || {} // Get list data passed from the previous page
 
   const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList() // Initialize state
 
   const [name, setName] = useState("")
   const [isPublic, setIsPublic] = useState(false)
-  const [icon, setIcon] = useState("FaPen")
+  const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red") // Populate form with existing data when the component loads
 
   useEffect(() => {
     if (list) {
       setName(list.name || "")
       setIsPublic(list.isPublic || false)
-      setIcon(list.icon || "FaPen")
+      setIcon(list.icon || "None")
       setColor(list.color || "red")
     } // In a real-world app, if `list` is undefined (e.g., page refresh),
     // you would fetch the data using the `id` from `useParams`.
   }, [list])
 
   const iconOptions = [
+    { name: "None", icon: <ImBlocked /> },
     { name: "FaPen", icon: <FaPen /> },
     { name: "FaCheckCircle", icon: <FaCheckCircle /> },
     { name: "FaStar", icon: <FaStar /> },

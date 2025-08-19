@@ -2,7 +2,7 @@ import React from "react"
 import { FaPlus } from "react-icons/fa6"
 import { useTodoStore } from "../store/useTodoStore"
 import CreateTodoModal from "../components/common/CreateTodoModal"
-import TodoListList from "../components/common/TodoListList"
+import TodoSectionList from "../components/common/TodoSectionList"
 import CreateTodoListModal from "../components/common/CreateTodoListModal"
 import {
   useGetUserTodoLists,
@@ -121,7 +121,7 @@ const TodoPage = () => {
       </div>
       {/* Main Content Area */}
       <div className="flex flex-1 flex-col overflow-y-auto pb-36 md:pb-4">
-        <TodoListList
+        <TodoSectionList
           todoLists={lists}
           isLoading={isLoading}
           isError={isError}
@@ -150,9 +150,9 @@ const TodoPage = () => {
         ))}
       </nav>
 
-      {showCreateTodoListModal && (
+      {/* {showCreateTodoListModal && (
         <CreateTodoListModal onClose={() => setShowCreateTodoListModal(false)} />
-      )}
+      )} */}
       <CreateTodoModal />
     </div>
   )

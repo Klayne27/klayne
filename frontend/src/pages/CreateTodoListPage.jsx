@@ -12,6 +12,7 @@ import {
 import { useNavigate } from "react-router-dom"
 import { useTodoStore } from "../store/useTodoStore"
 import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
+import { ImBlocked } from "react-icons/im"
 
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
@@ -20,10 +21,11 @@ const CreateTodoListPage = () => {
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
-  const [icon, setIcon] = useState("FaPen")
+  const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red")
 
   const iconOptions = [
+    { name: "None", icon: <ImBlocked />},
     { name: "FaPen", icon: <FaPen /> },
     { name: "FaCheckCircle", icon: <FaCheckCircle /> },
     { name: "FaStar", icon: <FaStar /> },
@@ -75,7 +77,7 @@ const CreateTodoListPage = () => {
           setName("")
           setDescription("")
           setIsPublic(false)
-          setIcon("FaPen")
+          setIcon("None")
           setColor("red")
         },
       },

@@ -36,20 +36,21 @@ const TodoActivityLogPage = () => {
       <ul className="space-y-2">
         {todoActivities.map((activity) => (
           <li key={activity._id} className="border-b border-slate-600 pb-2 text-sm last:border-b-0">
-            <div className="grid grid-cols-[1fr_6fr] items-center px-3 py-1">
+            <div className="flex items-center gap-3 px-3 py-1">
               <div className="relative">
                 <img
                   src={activity.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                  className="col-span-1 size-9 rounded-full"
+                  className="size-9 rounded-full"
                 />
                 <div
-                  className={`absolute bottom-0 right-[10px] z-10 flex size-4 items-center justify-center rounded-full ${getBadgeColor(activity.action)} text-center text-white`}
+                  className={`absolute bottom-2 ${getBadgeColor(activity.action)} right-2 z-10 flex size-4 translate-x-1/2 translate-y-1/2 items-center justify-center rounded-full bg-green-500 text-center text-white`}
                 >
                   {getActionIcon(activity.action)}
                 </div>
               </div>
-              <div className="">
-                <p>
+
+              <div className="min-w-0 flex-1">
+                <p className="truncate">
                   You {activity.action.split("_")[0]} a task:{" "}
                   <strong className={getTextColor(activity.todoPriority)}>
                     {activity.todoTitle}

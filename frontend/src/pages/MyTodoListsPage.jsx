@@ -1,12 +1,16 @@
 import { useTodoStore } from "../store/useTodoStore"
 import { useGetUserTodoLists } from "../hooks/todoListHooks/useTodoListQueries"
 import CreateTodoListModal from "../components/common/CreateTodoListModal"
-import TodoListList from "../components/common/TodoListList"
-import { useNavigate } from "react-router-dom"
+import TodoSectionList from "../components/common/TodoSectionList"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
+import EditTodoListModal from "../components/common/EditTodoListModal"
 
 const MyTodoListsPage = () => {
-  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
+  const {
+    showCreateTodoListModal,
+    setShowCreateTodoListModal,
+  } = useTodoStore()
+
   const {
     data: myTodoLists,
     isLoading: myListsLoading,
@@ -19,7 +23,7 @@ const MyTodoListsPage = () => {
     <>
       <TodoPagesHeader pageTitle={"My Lists"} />
 
-      <TodoListList
+      <TodoSectionList
         todoLists={myTodoLists}
         isLoading={myListsLoading}
         isError={myListsError}

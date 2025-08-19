@@ -1,5 +1,4 @@
-import React, { useState } from "react"
-import { useCreateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
+import React, { useEffect, useState } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import {
   FaBook,
@@ -11,21 +10,21 @@ import {
   FaPen,
   FaUserFriends,
 } from "react-icons/fa"
+import { useUpdateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
-import { showAppToast } from "../../utils/showAppToast"
 
-const CreateTodoListModal = () => {
-  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
-  const createTodoListMutation = useCreateTodoList()
+function EditTodoListModal() {
+  const { showEditTodoListModal, setShowEditTodoListModal, todoListToEdit } = useTodoStore()
+
+  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList()
 
   const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
-  const [color, setColor] = useState("red")
+  const [color, setColor] = useState("red") // Populate form with existing data when the component loads
 
   const iconOptions = [
-    { name: "None", icon: <ImBlocked /> },
+    { name: "None", icon: <ImBlocked />},
     { name: "FaPen", icon: <FaPen /> },
     { name: "FaCheckCircle", icon: <FaCheckCircle /> },
     { name: "FaStar", icon: <FaStar /> },
@@ -35,7 +34,6 @@ const CreateTodoListModal = () => {
     { name: "FaPaintBrush", icon: <FaPaintBrush /> },
     { name: "FaUserFriends", icon: <FaUserFriends /> },
   ]
-
   const colorOptions = [
     "red",
     "orange",
@@ -69,51 +67,49 @@ const CreateTodoListModal = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    if (!name) {
-      showAppToast("List name can't be empty")
-      return
-    }
-    createTodoListMutation.mutate(
-      { name, description, isPublic, icon, color },
-      {
-        onSuccess: () => {
-          setShowCreateTodoListModal(false)
-          setName("")
-          setDescription("")
-          setIsPublic(false)
-          setIcon("None")
-          setColor("red")
-        },
-      },
-    )
-  }
+    const listData = { name, isPublic, icon, color }
 
-  if (!showCreateTodoListModal) return null
+    updateTodoList({ id: todoListToEdit._id, listData })
+    setShowEditTodoListModal(false)
+  } // Fallback UI for when list data is not available (e.g., direct navigation/refresh)
+
+  useEffect(() => {
+    // Populate the form using data from the store
+    if (todoListToEdit) {
+      setName(todoListToEdit.name || "")
+      setIsPublic(todoListToEdit.isPublic || false)
+      setIcon(todoListToEdit.icon || "None")
+      setColor(todoListToEdit.color || "red")
+    }
+  }, [todoListToEdit]) 
+
+  if (!showEditTodoListModal) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
-      onClick={() => setShowCreateTodoListModal(false)}
+      onClick={() => setShowEditTodoListModal(false)}
     >
       <div
         className="w-full max-w-lg rounded-3xl bg-base-100 p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold">Create a Todo Section</h3>
+        <h3 className="text-lg font-bold">Edit Todo Section</h3>
         <form onSubmit={handleSubmit}>
           {/* Name Input */}
           <div className="mb-4 mt-2">
-            <label className="">
-              <span className="text-xs text-slate-600">List Name</span>
+            <label className="label">
+              <span className="label-text">List Name</span>
             </label>
 
             <input
               type="text"
               placeholder="e.g., Study Tasks"
-              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+              className="input input-bordered w-full"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
+              required
             />
           </div>
           {/* Description Input */}
@@ -181,16 +177,12 @@ const CreateTodoListModal = () => {
           </div>
           {/* Action Buttons */}
           <div className="modal-action">
-            <button type="button" className="btn" onClick={() => setShowCreateTodoListModal(false)}>
+            <button type="button" className="btn" onClick={() => setShowEditTodoListModal(false)}>
               Cancel
             </button>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createTodoListMutation.isPending}
-            >
-              {createTodoListMutation.isPending ? "Creating..." : "Create"}
+            <button type="submit" className="btn btn-primary" disabled={isUpdatingTodoList}>
+              {"Create"}
             </button>
           </div>
         </form>
@@ -199,4 +191,4 @@ const CreateTodoListModal = () => {
   )
 }
 
-export default CreateTodoListModal
+export default EditTodoListModal

@@ -41,7 +41,7 @@ const todoListSchema = new mongoose.Schema(
     },
     icon: {
       type: String,
-      default: "FaPen",
+      default: "None",
     },
     totalTodos: {
       type: Number,

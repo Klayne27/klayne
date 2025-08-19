@@ -86,12 +86,13 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
   const isVisuallyCompleted = visuallyCompleted[todo._id] || todo.completed
   const formattedDueDate = todo.dueDate ? new Date(todo.dueDate).toLocaleDateString() : null
+  const isTodoOwner = todo.user === currentUser._id
 
   return (
     <>
       <li
         onClick={isMobile ? handleMenuToggle : null}
-        className={`relative flex items-center justify-between border-b border-slate-600 bg-base-100 py-[6px] shadow-sm transition-all duration-500 ease-in-out ${
+        className={`relative flex items-center justify-between border-b border-slate-600 bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${
           completingTodoId === todo._id
             ? "-translate-x-full opacity-0"
             : "translate-x-0 opacity-100"
@@ -113,15 +114,14 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </div>
         </div>
 
-        {currentUser && todo.user === currentUser._id && (
+        {(
           <div className="flex items-center gap-2">
             {!isMobile && (
               <button
                 ref={ellipsisRef}
                 onClick={handleToggleDropdownMenu}
-                className={`rounded-full p-1 ${
-                  openTodoDropdownId === todo._id ? "bg-gray-100 dark:bg-gray-700" : ""
-                } transition-colors`}
+                className={`rounded-full p-[7px] transition duration-200 md:hover:bg-secondary ${!isTodoOwner && "cursor-not-allowed"}`}
+                disabled={!isTodoOwner}
               >
                 <FaEllipsisVertical />
               </button>

@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import TodoListList from "../components/common/TodoListList"
+import TodoSectionList from "../components/common/TodoSectionList"
 import { useGetPublicTodoLists } from "../hooks/todoListHooks/useTodoListQueries"
 import { FaArrowLeft } from "react-icons/fa6"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
@@ -18,7 +18,7 @@ const PublicListsPage = () => {
     <>
       <TodoPagesHeader pageTitle={"Public Lists"} />
 
-      <TodoListList
+      <TodoSectionList
         todoLists={publicLists}
         isLoading={publicLoading}
         isError={publicError}

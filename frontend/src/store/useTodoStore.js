@@ -4,9 +4,11 @@ export const useTodoStore = create((set) => ({
   activeTab: "myLists",
   selectedTodoListIds: [],
   showCreateTodoListModal: false,
+  showEditTodoListModal: false,
   showCreateTodoModal: false,
   showEditTodoModal: false,
   selectedTodo: null,
+  todoListToEdit: null,
   currentListIdForTodoCreation: null, // New state for creating todos
 
   setActiveTab: (tab) => set({ activeTab: tab, selectedTodoListIds: [] }),
@@ -20,9 +22,10 @@ export const useTodoStore = create((set) => ({
       }
     }),
   setShowCreateTodoListModal: (show) => set({ showCreateTodoListModal: show }),
+  setShowEditTodoListModal: (show) => set({ showEditTodoListModal: show }),
   setShowCreateTodoModal: (show) => set({ showCreateTodoModal: show }),
   setShowEditTodoModal: (show) => set({ showEditTodoModal: show }),
   setSelectedTodo: (todo) => set({ selectedTodo: todo }),
-  // New action to set the list ID for todo creation
+  setTodoListToEdit: (list) => set({todoListToEdit: list}),
   setCurrentListIdForTodoCreation: (id) => set({ currentListIdForTodoCreation: id }),
 }))
