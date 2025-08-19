@@ -1,4 +1,6 @@
-import React, { useState } from "react"
+// src/pages/EditTodoListPage.jsx
+
+import React, { useState, useEffect } from "react"
 import {
   FaBook,
   FaDumbbell,
@@ -9,19 +11,32 @@ import {
   FaPen,
   FaUserFriends,
 } from "react-icons/fa"
-import { useNavigate } from "react-router-dom"
-import { useTodoStore } from "../store/useTodoStore"
-import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
+import { useNavigate, useLocation, useParams } from "react-router-dom"
+import { useUpdateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 
-const CreateTodoListPage = () => {
+
+const EditTodoListPage = () => {
   const navigate = useNavigate()
-  const createTodoListMutation = useCreateTodoList()
+  const location = useLocation()
+  const { id } = useParams()
+  const { list } = location.state || {} // Get list data passed from the previous page
+
+  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList() // Initialize state
 
   const [name, setName] = useState("")
-  const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("FaPen")
-  const [color, setColor] = useState("red")
+  const [color, setColor] = useState("red") // Populate form with existing data when the component loads
+
+  useEffect(() => {
+    if (list) {
+      setName(list.name || "")
+      setIsPublic(list.isPublic || false)
+      setIcon(list.icon || "FaPen")
+      setColor(list.color || "red")
+    } // In a real-world app, if `list` is undefined (e.g., page refresh),
+    // you would fetch the data using the `id` from `useParams`.
+  }, [list])
 
   const iconOptions = [
     { name: "FaPen", icon: <FaPen /> },
@@ -66,34 +81,36 @@ const CreateTodoListPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    createTodoListMutation.mutate(
-      { name, description, isPublic, icon, color },
+    const listData = { name, isPublic, icon, color }
+
+    updateTodoList(
+      { id: list._id, listData },
       {
         onSuccess: () => {
-          // Navigate back to the previous page or a specific page after success
-          navigate(-1)
-          setName("")
-          setDescription("")
-          setIsPublic(false)
-          setIcon("FaPen")
-          setColor("red")
+          navigate(-1) // Go back to the previous page on success
         },
       },
     )
+  } // Fallback UI for when list data is not available (e.g., direct navigation/refresh)
+
+  if (!list) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-base-100 p-4">
+        <p>List data not found. Please navigate from the main page.</p>
+      </div>
+    )
   }
 
-  // To match the modal's UI, the page has a card-like appearance on a light background.
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
-        <h3 className="mb-6 text-2xl font-bold text-white">Create a Todo Section</h3>
+        <h3 className="mb-6 text-2xl font-bold text-white">Edit Todo Section</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
             <label className="label">
               <span className="label-text">List Name</span>
             </label>
-
             <input
               type="text"
               placeholder="e.g., Study Tasks"
@@ -104,12 +121,11 @@ const CreateTodoListPage = () => {
               required
             />
           </div>
-
+          {/* Icon Picker */}
           <div className="mb-4">
             <label className="label">
               <span className="label-text">Icon</span>
             </label>
-
             <div className="flex flex-wrap gap-2">
               {iconOptions.map((opt) => (
                 <button
@@ -128,14 +144,11 @@ const CreateTodoListPage = () => {
             <label className="label">
               <span className="label-text">Color</span>
             </label>
-
             <div className="flex flex-wrap gap-2">
               {colorOptions.map((opt) => (
                 <div
                   key={opt}
-                  className={`h-8 w-8 rounded-full border-2 ${
-                    color === opt ? "border-current" : "border-transparent"
-                  } ${colorMap[opt]} cursor-pointer`}
+                  className={`h-8 w-8 rounded-full border-2 ${color === opt ? "border-current" : "border-transparent"} ${colorMap[opt]} cursor-pointer`}
                   onClick={() => setColor(opt)}
                 ></div>
               ))}
@@ -158,13 +171,8 @@ const CreateTodoListPage = () => {
             <button type="button" className="btn" onClick={() => navigate(-1)}>
               Cancel
             </button>
-
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createTodoListMutation.isPending}
-            >
-              {createTodoListMutation.isPending ? "Creating..." : "Create"}
+            <button type="submit" className="btn btn-primary" disabled={isUpdatingTodoList}>
+              {isUpdatingTodoList ? "Updating..." : "Update"}
             </button>
           </div>
         </form>
@@ -173,4 +181,4 @@ const CreateTodoListPage = () => {
   )
 }
 
-export default CreateTodoListPage
+export default EditTodoListPage

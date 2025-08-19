@@ -15,7 +15,7 @@ import {
   FaUserFriends,
 } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
-import { useLocation } from "react-router-dom"
+import { useLocation, useNavigate, useParams } from "react-router-dom"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import { BsThreeDotsVertical } from "react-icons/bs"
 import { FaTrashCan } from "react-icons/fa6"
@@ -44,6 +44,8 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
     setShowCreateTodoModal,
     activeTab,
   } = useTodoStore()
+  const navigate = useNavigate()
+  const { id } = useParams()
   const deleteTodoListMutation = useDeleteTodoList()
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
@@ -55,8 +57,6 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
   const lastItemRef = useRef()
 
   const isMobile = useIsMobile()
-
-  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList()
 
   const colorMap = {
     red: "text-red-400",
@@ -182,7 +182,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                     </button>
                   )}
 
-                  {list.owner._id === authUser._id && (
+                  {list?.owner?._id === authUser._id && (
                     <button
                       className="rounded-full p-[7px] transition duration-200 md:hover:bg-secondary"
                       onClick={(e) => handleToggleListDropdown(e, list._id)}
@@ -216,7 +216,8 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                         <li>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation()
+                              e.stopPropagation() // Navigate to edit page with list data
+                              navigate(`/todos/edit-todo-section/${list._id}`, { state: { list } })
                               setOpenListDropdownId(null)
                             }}
                             className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
@@ -257,7 +258,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
           </li>
         )
       })}
-      {isMobile && isMenuOpen &&  (
+      {isMobile && isMenuOpen && (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
           <div className="z-50 flex h-[35vh] w-full flex-col gap-5 px-4">
             <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsMenuOpen} />

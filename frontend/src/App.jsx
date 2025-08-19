@@ -15,6 +15,7 @@ import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlo
 import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
 import TodoPageLayout from "./components/common/TodoPageLayout"
 import CreateTodoListPage from "./pages/CreateTodoListPage"
+import EditTodoListPage from "./pages/EditTodoListPage"
 // import TodoActivityLogPage from "./pages/TodoActivityLogPage"
 
 const TodoActivityLogPage = lazy(() => import("./pages/TodoActivityLogPage"))
@@ -185,6 +186,7 @@ function App() {
                       <Route path="completed" element={<CompletedTodosPage />} />
                       <Route path="activity-log" element={<TodoActivityLogPage />} />
                       <Route path="create-todo-section" element={<CreateTodoListPage />} />
+                      <Route path="edit-todo-section/:id" element={<EditTodoListPage />} />
                     </Route>
                   </Routes>
                 </MainLayout>

@@ -83,31 +83,42 @@ export const useCreateTodoList = () => {
 
   return useMutation({
     mutationFn: createTodoListApi,
-    // The onMutate function is called before the mutation function
     onMutate: async (newTodoList) => {
-      // 1. Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
-
-      // 2. Snapshot the previous value
       const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
 
-      // 3. Optimistically update to the new value
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) => [
-        ...(old || []),
-        // Add a temporary ID and default values for instant UI feedback
-        { ...newTodoList, _id: `temp-${Date.now()}`, todos: [] },
-      ])
+      // Optimistically update the INFINITE query cache
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (oldData) => {
+        // If there's no old data, return it.
+        if (!oldData || !oldData.pages) {
+          return oldData
+        }
 
-      // 4. Return a context object with the snapshotted value
+        // Create a new pages array with the new todo list added to the FIRST page
+        const newPages = oldData.pages.map((page, index) => {
+          if (index === 0) {
+            // IMPORTANT: Your API response for a page might put the array in a property like 'data', 'docs', 'lists', etc.
+            // Adjust `page.data` to match your actual API response structure.
+            // If the page itself is the array, you would use `[newItem, ...page]`.
+            return {
+              ...page,
+              data: [{ ...newTodoList, _id: `temp-${Date.now()}`, todos: [] }, ...page.data],
+            }
+          }
+          return page
+        })
+
+        return { ...oldData, pages: newPages }
+      })
+
       return { previousTodoLists }
     },
-    // If the mutation fails, use the context returned from onMutate to roll back
     onError: (err, newTodoList, context) => {
       queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.previousTodoLists)
       showAppToast(err.message, "error")
     },
-    // Always refetch after error or success to ensure server state
     onSettled: () => {
+      // Refetch to get the real data from the server
       queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
     },
     onSuccess: () => {
@@ -115,6 +126,8 @@ export const useCreateTodoList = () => {
     },
   })
 }
+
+// ----------------------------------------------------
 
 export const useUpdateTodoList = () => {
   const queryClient = useQueryClient()
@@ -125,10 +138,17 @@ export const useUpdateTodoList = () => {
       await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
       const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
 
-      // Find the specific list and update it in the cache
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) =>
-        old.map((list) => (list._id === id ? { ...list, ...listData } : list)),
-      )
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (oldData) => {
+        if (!oldData) return oldData
+
+        const newPages = oldData.pages.map((page) => ({
+          ...page,
+          // Again, ensure `page.data` matches your API response structure
+          data: page.data.map((list) => (list._id === id ? { ...list, ...listData } : list)),
+        }))
+
+        return { ...oldData, pages: newPages }
+      })
 
       return { previousTodoLists }
     },
@@ -147,6 +167,8 @@ export const useUpdateTodoList = () => {
   return { updateTodoList, isUpdatingTodoList }
 }
 
+// ----------------------------------------------------
+
 export const useDeleteTodoList = () => {
   const queryClient = useQueryClient()
 
@@ -156,10 +178,17 @@ export const useDeleteTodoList = () => {
       await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
       const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
 
-      // Filter out the deleted list from the cache
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (old) =>
-        old.filter((list) => list._id !== listId),
-      )
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (oldData) => {
+        if (!oldData) return oldData
+
+        const newPages = oldData.pages.map((page) => ({
+          ...page,
+          // Again, ensure `page.data` matches your API response structure
+          data: page.data.filter((list) => list._id !== listId),
+        }))
+
+        return { ...oldData, pages: newPages }
+      })
 
       return { previousTodoLists }
     },
