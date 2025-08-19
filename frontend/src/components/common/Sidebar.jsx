@@ -8,7 +8,7 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
-import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
+import { LuListTodo, LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
 import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5" // Import a close icon
 import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
@@ -440,443 +440,471 @@ const Sidebar = ({
   return (
     <>
       {/* Main Sidebar */}
-      {<div
-        className={`fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
-      >
+      {
         <div
-          className={
-            `block md:hidden ${
-              pathname.includes("/messages") ? "hidden" : ""
-            } white-shadow fixed bottom-[73px] right-5 z-[50] size-[56px] transform cursor-pointer rounded-full bg-primary p-4 text-white transition-all duration-300 ease-in-out hover:bg-opacity-85 ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
-          }
-          onClick={onOpenCreatePostModal}
+          className={`fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
         >
-          <FeatherIcon />
-        </div>
-        {/* X-SVG button, apply hover & active */}
-        <div
-          to="/"
-          onClick={handleHomeClick}
-          className={`hidden size-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
-            isTouchDevice && activeButtonId === "x-logo"
-              ? "bg-secondary bg-opacity-50 transition duration-150"
-              : ""
-          }`}
-          onTouchStart={() => handleTouchStart("x-logo")}
-          onTouchEnd={handleTouchEnd}
-          onTouchCancel={handleTouchCancel}
-        >
-          <XSvg className="fill-primary" />
-        </div>
-
-        <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
-          {/* Home */}
-          <li
-            onClick={() => {
-              // if (pathname === "/") return
-              // navigate("/");
-              handleHomeClick()
-            }}
-            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[115px] md:justify-start md:p-0 md:hover:bg-secondary"
+          <div
+            className={
+              `block md:hidden ${
+                pathname.includes("/messages") ? "hidden" : ""
+              } white-shadow fixed bottom-[73px] right-5 z-[50] size-[56px] transform cursor-pointer rounded-full bg-primary p-4 text-white transition-all duration-300 ease-in-out hover:bg-opacity-85 ${isFeatherIconVisible ? "scale-100 opacity-100" : "scale-0 opacity-0"}` // <-- ADD THESE CLASSES
+            }
+            onClick={onOpenCreatePostModal}
           >
-            <button
-              className={`relative flex max-w-fit cursor-pointer items-center rounded-full px-2 py-2 pl-[9px] pr-[7px] transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "home" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("home")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
+            <FeatherIcon />
+          </div>
+          {/* X-SVG button, apply hover & active */}
+          <div
+            to="/"
+            onClick={handleHomeClick}
+            className={`hidden size-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
+              isTouchDevice && activeButtonId === "x-logo"
+                ? "bg-secondary bg-opacity-50 transition duration-150"
+                : ""
+            }`}
+            onTouchStart={() => handleTouchStart("x-logo")}
+            onTouchEnd={handleTouchEnd}
+            onTouchCancel={handleTouchCancel}
+          >
+            <XSvg className="fill-primary" />
+          </div>
+
+          <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
+            {/* Home */}
+            <li
+              onClick={() => {
+                // if (pathname === "/") return
+                // navigate("/");
+                handleHomeClick()
+              }}
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[115px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
-              <PiHouseThin
-                className={`size-[30px] ${
+              <button
+                className={`relative flex max-w-fit cursor-pointer items-center rounded-full px-2 py-2 pl-[9px] pr-[7px] transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "home" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("home")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <PiHouseThin
+                  className={`size-[30px] ${
+                    pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+                  }`}
+                  strokeWidth={pathname === "/" ? 10 : 8}
+                />
+                {newPostCount > 0 && (
+                  <div
+                    className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
+                    style={{ transform: "translate(50%, -50%)" }}
+                  ></div>
+                )}
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
                   pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
-                strokeWidth={pathname === "/" ? 10 : 8}
-              />
-              {newPostCount > 0 && (
-                <div
-                  className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
-                  style={{ transform: "translate(50%, -50%)" }}
-                ></div>
-              )}
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Home
-            </span>
-          </li>
+              >
+                Home
+              </span>
+            </li>
 
-          <li
-            onClick={() => {
-              if (pathname === "/messages") return
-              navigate("/messages")
-              // queryClient.invalidateQueries({ queryKey: ["conversations"] })
-            }}
-            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[150px] md:justify-start md:p-0 md:hover:bg-secondary"
-          >
-            <button
-              className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "messages" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("messages")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
+            <li
+              onClick={() => {
+                if (pathname === "/messages") return
+                navigate("/messages")
+                // queryClient.invalidateQueries({ queryKey: ["conversations"] })
+              }}
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[150px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
-              <CiMail
-                className={`size-7 ${
+              <button
+                className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "messages" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("messages")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <CiMail
+                  className={`size-7 ${
+                    pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
+                  }`}
+                  strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
+                />
+                {unreadMessageCount > 0 && (
+                  <div
+                    className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
+                    style={{ transform: "translate(50%, -50%)" }}
+                  >
+                    {formatCount(unreadMessageCount)}
+                  </div>
+                )}
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
                   pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
-                strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
-              />
-              {unreadMessageCount > 0 && (
-                <div
-                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
-                  style={{ transform: "translate(50%, -50%)" }}
-                >
-                  {formatCount(unreadMessageCount)}
-                </div>
-              )}
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Messages
-            </span>
-          </li>
+              >
+                Messages
+              </span>
+            </li>
 
-          <li
-            onClick={() => {
-              if (pathname === "/notifications") return
-              navigate("/notifications")
-            }}
-            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[180px] md:justify-start md:p-0 md:hover:bg-secondary"
-          >
-            <button
-              className={`relative flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "notifications"
-                  ? "bg-secondary bg-opacity-80"
-                  : ""
-              }`}
-              onTouchStart={() => handleTouchStart("notifications")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
+            <li
+              onClick={() => {
+                if (pathname === "/notifications") return
+                navigate("/notifications")
+              }}
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[180px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
-              <PiBellThin
-                className={`size-7 ${
+              <button
+                className={`relative flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "notifications"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+                onTouchStart={() => handleTouchStart("notifications")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <PiBellThin
+                  className={`size-7 ${
+                    pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
+                  }`}
+                  strokeWidth={pathname === "/notifications" ? 14 : 10}
+                />
+                {unreadNotificationsCount > 0 && (
+                  <div
+                    className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    style={{ transform: "translate(50%, -50%)" }}
+                  >
+                    {formatCount(unreadNotificationsCount)}
+                  </div>
+                )}
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
                   pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
                 }`}
-                strokeWidth={pathname === "/notifications" ? 14 : 10}
-              />
-              {unreadNotificationsCount > 0 && (
-                <div
-                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
-                  style={{ transform: "translate(50%, -50%)" }}
-                >
-                  {formatCount(unreadNotificationsCount)}
-                </div>
-              )}
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Notifications
-            </span>
-          </li>
+              >
+                Notifications
+              </span>
+            </li>
 
-          <li
-            onClick={handlePublicChatClick}
-            className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[170px] md:justify-start md:p-0 md:hover:bg-secondary"
-          >
-            <button
-              className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "public-chat"
-                  ? "bg-secondary bg-opacity-80"
-                  : ""
-              }`}
-              onTouchStart={() => handleTouchStart("public-chat")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
+            <li
+              onClick={handlePublicChatClick}
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[170px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
-              <IoChatbubbleEllipsesOutline
-                className={`size-7 ${
-                  pathname === "/public-chat" // Adjust based on your actual public chat route
+              <button
+                className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "public-chat"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+                onTouchStart={() => handleTouchStart("public-chat")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <IoChatbubbleEllipsesOutline
+                  className={`size-7 ${
+                    pathname === "/public-chat" // Adjust based on your actual public chat route
+                      ? "font-bold text-opacity-100"
+                      : "opacity-80"
+                  }`}
+                  strokeWidth={pathname === "/public-chat" ? 2 : 1}
+                />
+                {/* Red dot for new public chat messages */}
+                {unreadPublicChatCount > 0 && (
+                  <div
+                    className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
+                    style={{ transform: "translate(50%, -50%)" }}
+                  >
+                    {formatCount(unreadPublicChatCount)}
+                  </div>
+                )}
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
+                  pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Public Chat
+              </span>
+            </li>
+
+            {/* Search (Mobile Only) */}
+            <li
+              className="flex cursor-pointer items-center justify-start lg:hidden"
+              onClick={handleMobileSearchClick}
+            >
+              <button
+                className={` ${
+                  pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+                } flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-[1px] py-2 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "search" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("search")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <CiSearch className="size-7 w-11" strokeWidth={pathname === "/search" ? 1 : 0.5} />
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
+                  pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Search
+              </span>
+            </li>
+
+            {/* Bookmarks - Hidden on mobile, visible on desktop */}
+            <li
+              className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[165px] md:p-0 md:hover:bg-secondary"
+              onClick={handleBookmarksClick}
+            >
+              <button
+                className={`${
+                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+                } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "bookmarks"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+                onTouchStart={() => handleTouchStart("bookmarks")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <CiBookmark className="size-7" strokeWidth={pathname === "/bookmarks" ? 2 : 1} />
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
+                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Bookmarks
+              </span>
+            </li>
+            <li
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
+              onClick={() => navigate("/pomodoro")}
+            >
+              <button
+                className={`${
+                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+                } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "pomodoro" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("pomodoro")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
+              </button>
+              <span
+                className={`text-lg ${
+                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Pomodoro
+              </span>
+            </li>
+            <li
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[110px] md:p-0 md:hover:bg-secondary"
+              onClick={() => navigate("/todos")}
+            >
+              <button
+                className={`${
+                  pathname === "/todos" ? "font-bold text-opacity-100" : "opacity-80"
+                } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "todos" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("todos")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <LuListTodo className="size-7" strokeWidth={pathname === "/todos" ? 2.5 : 2} />
+              </button>
+              <span
+                className={`text-lg ${
+                  pathname === "/todos" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Todos
+              </span>
+            </li>
+            {/* Themes */}
+            <li
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
+              onClick={() => navigate("/themes")}
+            >
+              <button
+                className={`${
+                  pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+                } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("themes")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <LuPalette className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
+              </button>
+              <span
+                className={`text-lg ${
+                  pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+                }`}
+              >
+                Themes
+              </span>
+            </li>
+
+            {/* Mobile Profile Image (to open side modal) */}
+            <li className="flex cursor-pointer items-center justify-center px-[7px] py-1 md:hidden">
+              <button
+                id="mobile-profile-img-button" // Add an ID for click outside logic
+                onClick={toggleSideModal}
+                className={`rounded-full p-1 transition duration-200 hover:bg-secondary ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "mobile-profile-img"
+                    ? "bg-secondary bg-opacity-80"
+                    : ""
+                }`}
+                onTouchStart={() => handleTouchStart("mobile-profile-img")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <img
+                  src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                  className="size-7 rounded-full"
+                  alt="User Profile"
+                />
+              </button>
+            </li>
+
+            {/* Profile (Desktop Only) */}
+            <li
+              onClick={() => {
+                if (pathname === `/profile/${authUser?.username}`) return
+                navigate(`/profile/${authUser?.username}`)
+              }}
+              className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
+            >
+              <button
+                className={`hidden md:block ${
+                  pathname === `/profile/${authUser?.username}`
+                    ? "font-bold text-opacity-100"
+                    : "opacity-80"
+                } flex max-w-fit cursor-pointer items-center gap-[10px] rounded-full px-2 py-2 pl-2 hover:bg-secondary md:hover:bg-transparent ${
+                  isTouchDevice && activeButtonId === "desktop-profile"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+                onTouchStart={() => handleTouchStart("desktop-profile")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <LuUserRound
+                  className="size-8"
+                  strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
+                />
+              </button>
+              <span
+                className={`hidden text-xl md:block ${
+                  pathname === `/profile/${authUser?.username}`
                     ? "font-bold text-opacity-100"
                     : "opacity-80"
                 }`}
-                strokeWidth={pathname === "/public-chat" ? 2 : 1}
-              />
-              {/* Red dot for new public chat messages */}
-              {unreadPublicChatCount > 0 && (
+              >
+                Profile
+              </span>
+            </li>
+
+            <div className="mr-7 hidden md:block">
+              <button
+                className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
+                onClick={onOpenCreatePostModal}
+              >
+                Post
+              </button>
+            </div>
+          </ul>
+
+          {/* User Profile and Popover (Desktop only) */}
+          {authUser && (
+            <div className="relative mb-3 mt-auto hidden w-full justify-start md:flex">
+              <button
+                ref={profileButtonRef}
+                onClick={togglePopover}
+                className={`flex w-full max-w-[220px] items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "user-profile-button"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+                onTouchStart={() => handleTouchStart("user-profile-button")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                <div className="avatar">
+                  <div className="w-8 rounded-full">
+                    <img
+                      src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                      alt="User Profile"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-1 items-center justify-between">
+                  <div>
+                    <p className="w-20 truncate text-sm font-bold">{authUser?.fullName}</p>
+                    <p className="text-sm text-slate-500">@{authUser?.username}</p>
+                  </div>
+                  <BsThreeDots className="h-5 w-5 cursor-pointer" />
+                </div>
+              </button>
+
+              {showPopover && (
                 <div
-                  className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
-                  style={{ transform: "translate(50%, -50%)" }}
+                  ref={popoverRef}
+                  className="z-1000 white-shadow absolute bottom-full left-1/2 mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 py-3"
                 >
-                  {formatCount(unreadPublicChatCount)}
+                  {/* Popover buttons also need the touch effect */}
+                  <button
+                    onClick={handleConfirmDeleteClick}
+                    className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
+                      isTouchDevice && activeButtonId === "delete-account-popover"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                    onTouchStart={() => handleTouchStart("delete-account-popover")}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchCancel}
+                  >
+                    <span>
+                      <LuUserRoundX className="mr-3 size-6" />
+                    </span>
+                    Delete Account
+                  </button>
+                  <button
+                    onClick={handleLogout}
+                    className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
+                      isTouchDevice && activeButtonId === "logout-popover"
+                        ? "bg-secondary bg-opacity-50 transition duration-150"
+                        : "transition duration-150"
+                    }`}
+                    onTouchStart={() => handleTouchStart("logout-popover")}
+                    onTouchEnd={handleTouchEnd}
+                    onTouchCancel={handleTouchCancel}
+                  >
+                    <span>
+                      <BiLogOut className="mr-4 size-6" />
+                    </span>
+                    Logout @{authUser?.username}
+                  </button>
                 </div>
               )}
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Public Chat
-            </span>
-          </li>
-
-          {/* Search (Mobile Only) */}
-          <li
-            className="flex cursor-pointer items-center justify-start lg:hidden"
-            onClick={handleMobileSearchClick}
-          >
-            <button
-              className={` ${
-                pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-[1px] py-2 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "search" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("search")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <CiSearch className="size-7 w-11" strokeWidth={pathname === "/search" ? 1 : 0.5} />
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Search
-            </span>
-          </li>
-
-          {/* Bookmarks - Hidden on mobile, visible on desktop */}
-          <li
-            className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[165px] md:p-0 md:hover:bg-secondary"
-            onClick={handleBookmarksClick}
-          >
-            <button
-              className={`${
-                pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "bookmarks" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("bookmarks")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <CiBookmark className="size-7" strokeWidth={pathname === "/bookmarks" ? 2 : 1} />
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Bookmarks
-            </span>
-          </li>
-          <li
-            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
-            onClick={() => navigate("/pomodoro")}
-          >
-            <button
-              className={`${
-                pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "pomodoro" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("pomodoro")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
-            </button>
-            <span
-              className={`text-lg ${
-                pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Pomodoro
-            </span>
-          </li>
-          {/* Themes */}
-          <li
-            className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
-            onClick={() => navigate("/themes")}
-          >
-            <button
-              className={`${
-                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
-              }`}
-              onTouchStart={() => handleTouchStart("themes")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <LuPalette className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
-            </button>
-            <span
-              className={`text-lg ${
-                pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-              }`}
-            >
-              Themes
-            </span>
-          </li>
-
-          {/* Mobile Profile Image (to open side modal) */}
-          <li className="flex cursor-pointer items-center justify-center px-[7px] py-1 md:hidden">
-            <button
-              id="mobile-profile-img-button" // Add an ID for click outside logic
-              onClick={toggleSideModal}
-              className={`rounded-full p-1 transition duration-200 hover:bg-secondary ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
-                isTouchDevice && activeButtonId === "mobile-profile-img"
-                  ? "bg-secondary bg-opacity-80"
-                  : ""
-              }`}
-              onTouchStart={() => handleTouchStart("mobile-profile-img")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <img
-                src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                className="size-7 rounded-full"
-                alt="User Profile"
-              />
-            </button>
-          </li>
-
-          {/* Profile (Desktop Only) */}
-          <li
-            onClick={() => {
-              if (pathname === `/profile/${authUser?.username}`) return
-              navigate(`/profile/${authUser?.username}`)
-            }}
-            className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
-          >
-            <button
-              className={`hidden md:block ${
-                pathname === `/profile/${authUser?.username}`
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
-              } flex max-w-fit cursor-pointer items-center gap-[10px] rounded-full px-2 py-2 pl-2 hover:bg-secondary md:hover:bg-transparent ${
-                isTouchDevice && activeButtonId === "desktop-profile"
-                  ? "bg-secondary bg-opacity-50 transition duration-150"
-                  : "transition duration-150"
-              }`}
-              onTouchStart={() => handleTouchStart("desktop-profile")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <LuUserRound
-                className="size-8"
-                strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
-              />
-            </button>
-            <span
-              className={`hidden text-xl md:block ${
-                pathname === `/profile/${authUser?.username}`
-                  ? "font-bold text-opacity-100"
-                  : "opacity-80"
-              }`}
-            >
-              Profile
-            </span>
-          </li>
-
-          <div className="mr-7 hidden md:block">
-            <button
-              className="w-full cursor-pointer rounded-full bg-primary px-4 py-3 font-semibold text-white transition duration-200 hover:bg-primary/85"
-              onClick={onOpenCreatePostModal}
-            >
-              Post
-            </button>
-          </div>
-        </ul>
-
-        {/* User Profile and Popover (Desktop only) */}
-        {authUser && (
-          <div className="relative mb-3 mt-auto hidden w-full justify-start md:flex">
-            <button
-              ref={profileButtonRef}
-              onClick={togglePopover}
-              className={`flex w-full max-w-[220px] items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
-                isTouchDevice && activeButtonId === "user-profile-button"
-                  ? "bg-secondary bg-opacity-50 transition duration-150"
-                  : "transition duration-150"
-              }`}
-              onTouchStart={() => handleTouchStart("user-profile-button")}
-              onTouchEnd={handleTouchEnd}
-              onTouchCancel={handleTouchCancel}
-            >
-              <div className="avatar">
-                <div className="w-8 rounded-full">
-                  <img
-                    src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                    alt="User Profile"
-                  />
-                </div>
-              </div>
-              <div className="flex flex-1 items-center justify-between">
-                <div>
-                  <p className="w-20 truncate text-sm font-bold">{authUser?.fullName}</p>
-                  <p className="text-sm text-slate-500">@{authUser?.username}</p>
-                </div>
-                <BsThreeDots className="h-5 w-5 cursor-pointer" />
-              </div>
-            </button>
-
-            {showPopover && (
-              <div
-                ref={popoverRef}
-                className="z-1000 white-shadow absolute bottom-full left-1/2 mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 py-3"
-              >
-                {/* Popover buttons also need the touch effect */}
-                <button
-                  onClick={handleConfirmDeleteClick}
-                  className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
-                    isTouchDevice && activeButtonId === "delete-account-popover"
-                      ? "bg-secondary bg-opacity-50 transition duration-150"
-                      : "transition duration-150"
-                  }`}
-                  onTouchStart={() => handleTouchStart("delete-account-popover")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
-                >
-                  <span>
-                    <LuUserRoundX className="mr-3 size-6" />
-                  </span>
-                  Delete Account
-                </button>
-                <button
-                  onClick={handleLogout}
-                  className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
-                    isTouchDevice && activeButtonId === "logout-popover"
-                      ? "bg-secondary bg-opacity-50 transition duration-150"
-                      : "transition duration-150"
-                  }`}
-                  onTouchStart={() => handleTouchStart("logout-popover")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
-                >
-                  <span>
-                    <BiLogOut className="mr-4 size-6" />
-                  </span>
-                  Logout @{authUser?.username}
-                </button>
-              </div>
-            )}
-          </div>
-        )}
-      </div>}
+            </div>
+          )}
+        </div>
+      }
 
       <MobileSideModal
         showSideModal={showSideModal}

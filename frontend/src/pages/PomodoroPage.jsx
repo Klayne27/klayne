@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
 import { useEndStudySession, useGetPomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
 import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
-import { CiTrophy } from "react-icons/ci"
+import { CiMail, CiTrophy } from "react-icons/ci"
 import { MdLibraryBooks } from "react-icons/md"
 import { PiHouseThin } from "react-icons/pi"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
@@ -12,9 +12,12 @@ import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../components/common/MilestoneModal"
-import { FaForward, FaListCheck } from "react-icons/fa6"
+import { FaEllipsisVertical, FaForward, FaListCheck } from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
 import ConfirmationModal from "../components/ui/ConfirmationModal"
+import { LuListTodo } from "react-icons/lu"
+import { IoChatbubbleEllipsesOutline } from "react-icons/io5"
+import { formatCount } from "../utils/textUtils"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -26,7 +29,7 @@ const GOAL_REACHED_KEY = "pomodoro_goal_reached"
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
-  const { newPostCount } = useSocket()
+  const { newPostCount, unreadMessageCount, unreadPublicChatCount } = useSocket()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
   const isMobile = useIsMobile()
@@ -44,6 +47,8 @@ const PomodoroPage = () => {
   const [milestoneLevel, setMilestoneLevel] = useState(null)
 
   const [showInfoModal, setShowInfoModal] = useState(false)
+  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(false)
+  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(false)
 
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
 
@@ -85,7 +90,7 @@ const PomodoroPage = () => {
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("pomodoro_")) localStorage.removeItem(key)
     })
-  showAppToast("Timer reset")
+    showAppToast("Timer reset")
   }, [settings])
 
   const startNextTimer = useCallback(
@@ -350,6 +355,15 @@ const PomodoroPage = () => {
     setShowResetTimerModal(true)
   }
 
+  const toggleRightDropdown = (e) => {
+    e.stopPropagation()
+    setIsRightDropdownOpen(!isRightDropdownOpen)
+  }
+  const toggleLeftDropdown = (e) => {
+    e.stopPropagation()
+    setIsLeftDropdownOpen(!isLeftDropdownOpen)
+  }
+
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
   let totalDuration = 25 * 60
@@ -383,6 +397,95 @@ const PomodoroPage = () => {
           xpGainedAmount={xpGainedAmount}
           setShowInfoModal={setShowInfoModal}
         />
+        {/* LEFT DROPDOWN */}
+        <div className="absolute left-0 top-24 flex flex-col items-center justify-center gap-1 md:left-1 md:top-28">
+          <button
+            onClick={toggleLeftDropdown}
+            className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
+            aria-label="Toggle navigation"
+          >
+            <FaEllipsisVertical size={25} />
+          </button>
+          {/* The dropdown content is now always rendered */}
+          <div
+            className={`flex origin-top transform flex-col items-center justify-center gap-1 transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "visible scale-y-100 opacity-100" : "invisible scale-y-0 opacity-0"} `}
+          >
+            <button
+              onClick={() => navigate("/")}
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <PiHouseThin size={25} strokeWidth={15} />
+              {newPostCount > 0 && (
+                <div
+                  className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
+                  style={{ transform: "translate(50%, -50%)" }}
+                ></div>
+              )}
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <CiMail size={25} strokeWidth={1} />
+              {unreadMessageCount > 0 && (
+                <div
+                  className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                  style={{ transform: "translate(50%, -50%)" }}
+                >
+                  {formatCount(unreadMessageCount)}
+                </div>
+              )}
+            </button>
+            <button
+              onClick={() => navigate("/")}
+              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <IoChatbubbleEllipsesOutline size={25} />
+              {unreadPublicChatCount > 0 && (
+                <div
+                  className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                  style={{ transform: "translate(50%, -50%)" }}
+                >
+                  {formatCount(unreadPublicChatCount)}
+                </div>
+              )}
+            </button>
+          </div>
+        </div>
+
+        {/* RIGHT DROPDOWN */}
+        <div className="absolute right-0 top-24 flex flex-col items-center justify-center gap-1 md:right-1 md:top-28">
+          <button
+            onClick={toggleRightDropdown}
+            className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
+            aria-label="Toggle navigation"
+          >
+            <FaEllipsisVertical size={25} />
+          </button>
+          {/* The dropdown content is now always rendered */}
+          <div
+            className={`flex origin-top transform flex-col items-center justify-center gap-1 transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "visible scale-y-100 opacity-100" : "invisible scale-y-0 opacity-0"} `}
+          >
+            <button
+              onClick={() => navigate("/study-leaderboard")}
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <CiTrophy size={25} strokeWidth={1} />
+            </button>
+            <button
+              onClick={() => navigate("/study-activity")}
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <MdLibraryBooks size={25} />
+            </button>
+            <button
+              onClick={() => navigate("/todos")}
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+            >
+              <LuListTodo size={25} strokeWidth={2} />
+            </button>
+          </div>
+        </div>
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
           <h1
             key={isBreak ? "break" : "study"}
@@ -444,48 +547,53 @@ const PomodoroPage = () => {
             {isBreak && !isGoalReached && (
               <button
                 onClick={handleSkipBreak}
-                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Skip break"
               >
                 <FaForward size={20} />
               </button>
             )}
-            {!isBreak && !isGoalReached && (minutes <= 0 && seconds <= 0) && (
+            {!isBreak && !isGoalReached && minutes <= 0 && seconds <= 0 && (
               <button
                 onClick={handleSessionEnd}
-                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <FaForward size={20} />
               </button>
             )}
           </div>
-          <div className="flex w-full items-center justify-center gap-6">
+          <div className="flex w-full items-center justify-center gap-8">
+            {/* Settings Button */}
             <button
               onClick={handleOpenSettingsPage}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="p-2 text-slate-500 transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
               aria-label="Open settings"
               disabled={isActive || isGoalReached}
             >
-              <FaCog size={20} />
+              <FaCog size={30} />
             </button>
+
+            {/* Play/Pause Button */}
             <button
               onClick={isActive ? handlePause : handleStart}
-              className={`flex h-[72px] w-[72px] items-center justify-center rounded-full text-white shadow-lg transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 ${isActive ? "bg-teal-500 shadow-teal-500/50" : "bg-primary shadow-primary/50"}`}
+              className={`text-6xl transition-colors duration-300 hover:text-primary active:scale-95 disabled:opacity-50 ${isActive ? "text-teal-500" : "text-primary"}`}
               aria-label={isActive ? "Pause timer" : "Start timer"}
               disabled={timer <= 0 || isGoalReached}
             >
-              {isActive ? <FaPause size={28} /> : <FaPlay size={28} className="ml-1" />}
+              {isActive ? <FaPause size={50} /> : <FaPlay size={50} />}
             </button>
+
+            {/* Reset Button */}
             <button
               onClick={handleResetTimerClick}
-              className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
+              className="p-2 text-slate-500 transition-colors hover:text-primary"
               aria-label="Reset timer"
             >
-              <FaRedo size={18} />
+              <FaRedo size={28} />
             </button>
           </div>
-          <footer className="w-full">
-            <div className="flex items-center justify-center gap-4">
+          {/* <footer className="w-full">
+            <div className="flex items-center absolute justify-center gap-4">
               <button
                 onClick={() => navigate("/study-activity")}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
@@ -511,14 +619,14 @@ const PomodoroPage = () => {
               >
                 <CiTrophy size={25} strokeWidth={1} />
               </button>
-              {/* <button
+              <button
                 onClick={() => navigate("/todos")}
                 className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
               >
-                <FaListCheck size={25} strokeWidth={1} />
-              </button> */}
+                <LuListTodo size={25} strokeWidth={2} />
+              </button>
             </div>
-          </footer>
+          </footer> */}
         </div>
       </main>
       {settings && (

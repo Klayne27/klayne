@@ -3,7 +3,7 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
 import { IoClose } from "react-icons/io5"
-import { LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
+import { LuListTodo, LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
 import { CiBookmark } from "react-icons/ci"
 import { IoIosTimer } from "react-icons/io"
 import { BiLogOut } from "react-icons/bi"
@@ -245,6 +245,26 @@ function MobileSideModal({
                   Pomodoro
                 </span>
               </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/todos") return
+                  navigate("/todos")
+                  setShowSideModal(false) // Close modal on navigation
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-todos"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                <LuListTodo 
+                  className="mr-4 size-7"
+                  strokeWidth={pathname === "/todos" ? 2 : 2}
+                />
+                <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>
+                  Todos
+                </span>
+              </li>
 
               {/* Separator if needed */}
               <div className="my-2 border-t border-accent"></div>
@@ -298,7 +318,7 @@ function MobileSideModal({
             </div>
           )}
 
-          {isInstalled && !isCheckingSubscription && !isPushSubscribed &&  (
+          {isInstalled && !isCheckingSubscription && !isPushSubscribed && (
             <div className="mt-4 rounded-2xl border border-accent p-4">
               <p className="mb-2 text-xl font-bold">Stay Updated</p>
               <p className="mb-4 text-sm text-gray-500">

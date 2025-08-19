@@ -47,13 +47,13 @@ export const createTodoList = async (req, res) => {
     });
     await newTodoList.save(); // Log the activity
 
-    const activity = new TodoActivity({
-      user: req.user._id,
-      action: "created_list",
-      listId: newTodoList._id,
-      listName: newTodoList.name,
-    });
-    await activity.save();
+    // const activity = new TodoActivity({
+    //   user: req.user._id,
+    //   action: "created_list",
+    //   listId: newTodoList._id,
+    //   listName: newTodoList.name,
+    // });
+    // await activity.save();
     res.status(201).json(newTodoList);
   } catch (error) {
     console.error("Error creating todo list:", error);
@@ -209,21 +209,22 @@ export const updateTodoList = async (req, res) => {
     if (todoList.owner.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: "Access denied" });
     }
-    todoList.name = name ?? todoList.name;
-    todoList.description = description ?? todoList.description;
-    todoList.isPublic = isPublic ?? todoList.isPublic;
-    todoList.color = color ?? todoList.color;
-    todoList.icon = icon ?? todoList.icon;
-    todoList.settings = settings ?? todoList.settings;
+    todoList.name = name !== undefined ? name : todoList.name;
+    todoList.description = description !== undefined ? description : todoList.description;
+    todoList.isPublic = isPublic !== undefined ? isPublic : todoList.isPublic;
+    todoList.color = color !== undefined ? color : todoList.color;
+    todoList.icon = icon !== undefined ? icon : todoList.icon;
+    todoList.settings = settings !== undefined ? settings : todoList.settings;
+
     await todoList.save();
 
-    const activity = new TodoActivity({
-      user: req.user._id,
-      action: "updated_list",
-      listId: todoList._id,
-      listName: todoList.name,
-    });
-    await activity.save();
+    // const activity = new TodoActivity({
+    //   user: req.user._id,
+    //   action: "updated_list",
+    //   listId: todoList._id,
+    //   listName: todoList.name,
+    // });
+    // await activity.save();
 
     res.status(200).json(todoList);
   } catch (error) {
@@ -245,13 +246,13 @@ export const deleteTodoList = async (req, res) => {
 
     await todoList.deleteOne();
 
-    const activity = new TodoActivity({
-      user: req.user._id,
-      action: "deleted_list",
-      listId: todoList._id,
-      listName: todoList.name,
-    });
-    await activity.save(); // Delete the associated todos first
+    // const activity = new TodoActivity({
+    //   user: req.user._id,
+    //   action: "deleted_list",
+    //   listId: todoList._id,
+    //   listName: todoList.name,
+    // });
+    // await activity.save(); // Delete the associated todos first
 
     res.status(200).json({ message: "Todo list and its todos deleted successfully" });
   } catch (error) {

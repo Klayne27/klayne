@@ -48,7 +48,7 @@ const TodoPageLayout = () => {
     },
   ]
 
-  const activeTab = navItems.find((item) => pathname === item.path)?.tab || "myLists"
+  const activeTab = navItems.find((item) => pathname === item.path)?.tab || ""
   const isCreateSectionPage = pathname.includes("/create-todo-section")
 
   return (

@@ -29,8 +29,6 @@ const TodoActivityLogPage = () => {
       </div>
     )
 
-  console.log(todoActivities)
-
   return (
     <>
       <TodoPagesHeader pageTitle={"Activiy Log"} />

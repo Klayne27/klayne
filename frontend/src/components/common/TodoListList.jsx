@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from "react"
 import { FaTrash, FaEdit, FaCaretDown, FaCaretUp, FaEllipsisV, FaPlus } from "react-icons/fa"
 import { useTodoStore } from "../../store/useTodoStore"
-import { useDeleteTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
+import { useDeleteTodoList, useUpdateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import TodoList from "./TodoList"
 import {
   FaBook,
@@ -55,6 +55,8 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
   const lastItemRef = useRef()
 
   const isMobile = useIsMobile()
+
+  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList()
 
   const colorMap = {
     red: "text-red-400",
@@ -220,7 +222,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                             className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
                           >
                             <FaEdit />
-                            <span>Rename Section</span>
+                            <span>Edit Section</span>
                           </button>
                         </li>
 

@@ -19,7 +19,7 @@ export const useCreateTodoList = () => {
     mutationFn: createTodoListApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      showAppToast("Todo list created!", "success")
+      showAppToast("Todo section created!", "success")
     },
     onError: (error) => {
       showAppToast(error.message, "error")
@@ -92,18 +92,20 @@ export const useGetPublicTodoLists = () => {
 
 export const useUpdateTodoList = () => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: updateTodoList, isPending: isUpdatingTodoList } = useMutation({
     mutationFn: (data) => updateTodoListApi(data.id, data.listData),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodoLists"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
-      showAppToast("Todo list updated!", "success")
+      showAppToast("Todo section updated!", "success")
     },
     onError: (error) => {
       showAppToast(error.message, "error")
     },
   })
+
+  return { updateTodoList, isUpdatingTodoList }
 }
 
 export const useDeleteTodoList = () => {
@@ -112,11 +114,10 @@ export const useDeleteTodoList = () => {
     mutationFn: deleteTodoListApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      showAppToast("Todo list deleted!", "success")
+      showAppToast("Todo section deleted!", "success")
     },
     onError: (error) => {
-    showAppToast(error.message, "error")
+      showAppToast(error.message, "error")
     },
   })
 }
-
