@@ -11,10 +11,12 @@ import {
 import { showAppToast } from "../../utils/showAppToast"
 
 export const useGetPomodoroSettings = () => {
-  return useQuery({
+  const {data: settings, isLoading: isSettingsLoading} = useQuery({
     queryKey: ["pomodoroSettings"],
     queryFn: getPomodoroSettings,
   })
+
+  return {settings, isSettingsLoading }
 }
 
 export const useUpdatePomodoroSettings = () => {

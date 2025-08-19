@@ -1,7 +1,7 @@
 import { FaHeart, FaRegComment } from "react-icons/fa6"
 import { FaRetweet } from "react-icons/fa6"
 import { FaRegHeart } from "react-icons/fa6"
-import { FiTrash } from "react-icons/fi"
+import { FaTrashCan } from "react-icons/fa6"
 
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
 import LoadingSpinner from "../../ui/LoadingSpinner"
@@ -402,7 +402,7 @@ const Post = ({
                         onClick={handleDeletePostClick}
                         disabled={isDeleting}
                       >
-                        {isDeleting ? <LoadingSpinner size="xs" /> : <FiTrash />}
+                        {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
                         Delete Post
                       </button>
                     ) : (

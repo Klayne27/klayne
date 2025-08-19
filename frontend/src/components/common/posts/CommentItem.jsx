@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { formatPostDate } from "../../../utils/date"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
-import { FiTrash } from "react-icons/fi"
+import { FaTrashCan } from "react-icons/fa6"
 import LoadingSpinner from "../../ui/LoadingSpinner"
 import { useLikeComment } from "../../../hooks/commentHooks/useLikeComment"
 import { useDeleteComment } from "../../../hooks/commentHooks/useDeleteComment"
@@ -461,7 +461,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                       disabled={isDeletingComment}
                     >
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <FiTrash /> Delete Reply
+                        <FaTrashCan /> Delete Reply
                       </span>
                     </button>
                   ) : (
@@ -472,7 +472,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                       disabled={isDeletingComment}
                     >
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <FiTrash /> Delete Reply
+                        <FaTrashCan /> Delete Reply
                       </span>
                     </button>
                   )}
@@ -522,7 +522,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                       disabled={isDeletingComment}
                     >
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <FiTrash /> Delete Reply
+                        <FaTrashCan /> Delete Reply
                       </span>
                     </button>
                   )}

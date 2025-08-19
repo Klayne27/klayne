@@ -17,8 +17,11 @@ import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useLocation } from "react-router-dom"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import { BsThreeDotsVertical } from "react-icons/bs"
-import { FiTrash } from "react-icons/fi"
-import { FaEllipsisVertical } from "react-icons/fa6"
+import { FaTrashCan } from "react-icons/fa6"
+import { FaCheck, FaEllipsisVertical } from "react-icons/fa6"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import SlideUpMenu from "./SlideUpMenu"
+import TodoAddForm from "./TodoAddForm"
 
 const iconMap = {
   FaPen: FaPen,
@@ -41,11 +44,14 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
   const deleteTodoListMutation = useDeleteTodoList()
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const { authUser } = useAuthUser()
   const { pathname } = useLocation()
 
   const observerRef = useRef()
   const lastItemRef = useRef()
+
+  const isMobile = useIsMobile()
 
   const colorMap = {
     red: "text-red-400",
@@ -98,6 +104,25 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
     toggleTodoList(listId)
     setOpenListDropdownId(null) // Close list dropdown when a list is opened/closed
     setOpenTodoDropdownId(null) // Close todo dropdown when a list is opened/closed
+  }
+
+  const handleOpenMobileForm = (e, listId) => {
+    e.stopPropagation()
+    setCurrentListIdForTodoCreation(listId)
+    setIsMenuOpen(true)
+    setOpenListDropdownId(null)
+  }
+
+  const handleOpenDesktopForm = (e, listId) => {
+    e.stopPropagation()
+    e.stopPropagation()
+    setCurrentListIdForTodoCreation(listId)
+    setShowCreateTodoModal(true)
+    setOpenListDropdownId(null)
+  }
+
+  const handleCloseMenu = () => {
+    setIsMenuOpen(false)
   }
 
   const isListOpen = (id) => selectedTodoListIds.includes(id)
@@ -166,10 +191,9 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                         <li>
                           <button
                             onClick={(e) => {
-                              e.stopPropagation()
-                              setCurrentListIdForTodoCreation(list._id)
-                              setShowCreateTodoModal(true)
-                              setOpenListDropdownId(null)
+                              isMobile
+                                ? handleOpenMobileForm(e, list._id)
+                                : handleOpenDesktopForm(e, list._id)
                             }}
                             className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
                           >
@@ -199,7 +223,7 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
                             }}
                             className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"
                           >
-                            <FiTrash />
+                            <FaTrashCan />
                             <span>Delete Section</span>
                           </button>
                         </li>
@@ -221,6 +245,13 @@ const TodoListList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPag
           </li>
         )
       })}
+      {isMobile && (
+        <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+          <div className="z-50 flex h-[30vh] w-full flex-col gap-5 px-4">
+            <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsMenuOpen} />
+          </div>
+        </SlideUpMenu>
+      )}
       {isLoading && allLists.length > 0 && <div>Loading more...</div>}
     </ul>
   )

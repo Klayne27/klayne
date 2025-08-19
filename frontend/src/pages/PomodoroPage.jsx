@@ -11,7 +11,6 @@ import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
-import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import MilestoneModal from "../components/common/MilestoneModal"
 import { FaForward, FaListCheck } from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
@@ -28,7 +27,7 @@ const GOAL_REACHED_KEY = "pomodoro_goal_reached"
 const PomodoroPage = () => {
   const navigate = useNavigate()
   const { newPostCount } = useSocket()
-  const { data: settings, isLoading: isSettingsLoading } = useGetPomodoroSettings()
+  const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
   const isMobile = useIsMobile()
 
@@ -448,7 +447,15 @@ const PomodoroPage = () => {
                 className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
                 aria-label="Skip break"
               >
-                <FaForward size={20} />{" "}
+                <FaForward size={20} />
+              </button>
+            )}
+            {!isBreak && !isGoalReached && (minutes <= 0 && seconds <= 0) && (
+              <button
+                onClick={handleSessionEnd}
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                <FaForward size={20} />
               </button>
             )}
           </div>

@@ -59,7 +59,7 @@ const TodoPageLayout = () => {
       {/* Floating "Create List" button */}
       <button
         onClick={() => setShowCreateTodoListModal(true)}
-        className="white-shadow absolute bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg transition-transform duration-300 hover:scale-110 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+        className="white-shadow absolute bottom-20 right-4 z-50 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary text-white shadow-lg transition-transform duration-300 hover:scale-110 focus:outline-none"
       >
         <FaPlus className="h-6 w-6" />
       </button>

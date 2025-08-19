@@ -4,16 +4,15 @@ import { useCompleteTodo, useDeleteTodo, useUpdateTodo } from "../../hooks/todoH
 import { useTodoStore } from "../../store/useTodoStore"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { FaCheckCircle } from "react-icons/fa"
-import { FaEllipsisVertical } from "react-icons/fa6"
+import { FaEllipsisVertical, FaPen } from "react-icons/fa6"
 import SlideUpMenu from "./SlideUpMenu"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import Portal from "./Portal"
 
 // Assuming TodoEditForm is a new component you'll create
-import TodoEditForm from "./TodoEditForm"
 import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils"
-
-
+import TodoEditForm from "./TodoEditForm"
+import { FaTrashCan } from "react-icons/fa6"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
@@ -162,7 +161,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
                 onClick={handleDelete}
                 className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"
               >
-                <FiTrash />
+                <FaTrashCan />
                 <span>Delete Task</span>
               </button>
             </li>
@@ -173,13 +172,13 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       {/* Mobile Slide Up Menu with Edit Form */}
       {isMobile && (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          <div className="z-50 flex w-full flex-col gap-5 px-4">
+          <div className="z-50 flex h-[70vh] w-full flex-col gap-5 px-4">
             <TodoEditForm
               todo={todo}
               onClose={handleCloseMenu}
               onDelete={handleDelete}
               onSave={(updateData) => {
-                updateTodo({ id: todo._id, todoData: updateData })
+                updateTodo(updateData)
                 handleCloseMenu()
               }}
               isLoading={isUpdatingTodo || isDeletingTodo}

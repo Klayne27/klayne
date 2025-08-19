@@ -1,5 +1,5 @@
 import { HiOutlineReply } from "react-icons/hi"
-import { FiTrash } from "react-icons/fi"
+import { FaTrashCan } from "react-icons/fa6"
 import { MdDeleteForever, MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
@@ -103,7 +103,7 @@ function MoreMessageActionsModal({
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
             Delete Message
-            <FiTrash size={18} />
+            <FaTrashCan size={18} />
           </button>
         )}
 

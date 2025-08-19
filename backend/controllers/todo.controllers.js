@@ -30,6 +30,7 @@ export const createTodo = async (req, res) => {
       action: "created_todo",
       todoId: newTodo._id,
       todoTitle: newTodo.title,
+      todoPriority: newTodo.priority
     });
     await activity.save();
 
@@ -109,12 +110,13 @@ export const updateTodo = async (req, res) => {
     if (todo.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: "Access denied" });
     }
-    todo.title = title ?? todo.title;
-    todo.description = description ?? todo.description;
-    todo.priority = priority ?? todo.priority;
-    todo.category = category ?? todo.category;
-    todo.dueDate = dueDate ?? todo.dueDate;
-    todo.isPublic = isPublic ?? todo.isPublic;
+    
+    todo.title = title !== undefined ? title : todo.title;
+    todo.description = description !== undefined ? description : todo.description;
+    todo.priority = priority !== undefined ? priority : todo.priority;
+    todo.category = category !== undefined ? category : todo.category;
+    todo.dueDate = dueDate !== undefined ? dueDate : todo.dueDate;
+    todo.isPublic = isPublic !== undefined ? isPublic : todo.isPublic;
 
     await todo.save();
 
@@ -123,6 +125,7 @@ export const updateTodo = async (req, res) => {
       action: "updated_todo",
       todoId: todo._id,
       todoTitle: todo.title,
+      todoPriority: todo.priority,
     });
     await activity.save();
 
@@ -153,6 +156,7 @@ export const completeTodo = async (req, res) => {
       action: "completed_todo",
       todoId: todo._id,
       todoTitle: todo.title,
+      todoPriority: todo.priority,
     });
     await activity.save();
 
@@ -191,6 +195,7 @@ export const deleteTodo = async (req, res) => {
       action: "deleted_todo",
       todoId: todo._id,
       todoTitle: todo.title,
+      todoPriority: todo.priority,
     });
     await activity.save();
 

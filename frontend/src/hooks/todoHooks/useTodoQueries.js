@@ -16,7 +16,7 @@ import { showAppToast } from "../../utils/showAppToast"
 export const useCreateTodo = () => {
   const queryClient = useQueryClient()
 
-  return useMutation({
+  const { mutate: createTodo, isPending: isCreatingTodo } = useMutation({
     mutationFn: createTodoApi,
     onMutate: async (newTodo) => {
       // Cancel any outgoing queries to prevent them from overwriting our optimistic update
@@ -87,9 +87,13 @@ export const useCreateTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
+    },
+    onSuccess: () => {
       showAppToast("Todo created successfully!", "success")
     },
   })
+
+  return { createTodo, isCreatingTodo }
 }
 
 export const useGetUserTodos = () => {

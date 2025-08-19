@@ -6,7 +6,7 @@ import React, { useState } from "react"
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility"
 import { CiCircleMinus } from "react-icons/ci"
 import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConversation"
-import { FiTrash } from "react-icons/fi"
+import { FaTrashCan } from "react-icons/fa6"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
@@ -220,7 +220,7 @@ function ConversationItem({ conv }) {
               setShowDeleteModal(true)
             }}
           >
-            <FiTrash />
+            <FaTrashCan />
             Delete conversation
           </button>
         </DropdownMenu>
@@ -284,7 +284,7 @@ function ConversationItem({ conv }) {
                 setShowDeleteModal(true)
               }}
             >
-              <FiTrash />
+              <FaTrashCan />
               Delete conversation
             </button>
           </div>

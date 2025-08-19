@@ -9,7 +9,7 @@ export const getMyActivities = async (req, res) => {
         path: "user",
         select: "username",
         populate: { path: "profileImg", model: "Image", select: "imageUrl" },
-      });
+      })
 
     res.status(200).json(activities);
   } catch (error) {

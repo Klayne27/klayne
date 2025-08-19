@@ -23,6 +23,8 @@ const TodoActivityLogPage = () => {
   const { todoActivities, todoActivitiesLoading } = useGetTodoActivities()
   if (todoActivitiesLoading) return <div>Loading activity log...</div>
 
+  console.log(todoActivities);
+
   return (
     <>
       <TodoPagesHeader pageTitle={"Activiy Log"} />
@@ -45,7 +47,7 @@ const TodoActivityLogPage = () => {
               <div className="">
                 <p>
                   You {activity.action.split("_")[0]} a task:{" "}
-                  <strong className={getTextColor(activity.priority)}>{activity.todoTitle}</strong>
+                  <strong className={getTextColor(activity.todoPriority)}>{activity.todoTitle}</strong>
                 </p>
                 <p className="text-slate-400">{formatTime(activity.createdAt)}</p>
               </div>

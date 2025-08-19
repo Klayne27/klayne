@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom"
 import { IoSettingsOutline } from "react-icons/io5"
 import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6"
-import { FiTrash } from "react-icons/fi"
+import { FaTrashCan } from "react-icons/fa6"
 import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNotifications"
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification"
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications"
@@ -254,7 +254,7 @@ const NotificationPage = () => {
                   className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
                   onClick={() => deleteNotification(notification._id)}
                 >
-                  <FiTrash
+                  <FaTrashCan
                     className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
                     size={20}
                   />

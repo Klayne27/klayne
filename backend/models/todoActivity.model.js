@@ -27,6 +27,10 @@ const TodoActivitySchema = new mongoose.Schema(
     todoTitle: {
       type: String,
     },
+    todoPriority:{
+      type: String,
+      ref: "Todo",
+    },
     listId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "TodoList",

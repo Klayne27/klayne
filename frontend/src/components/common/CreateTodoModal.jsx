@@ -17,31 +17,26 @@ const CreateTodoModal = () => {
   const [isPublic, setIsPublic] = useState(false)
   const [priority, setPriority] = useState("low") // New state for priority
   const [dueDate, setDueDate] = useState(null) // New state for due date
-  const createTodoMutation = useCreateTodo()
+  const { createTodo, isCreatingTodo } = useCreateTodo()
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    createTodoMutation.mutate(
-      {
-        title,
-        description,
-        isPublic,
-        todoListId: currentListIdForTodoCreation,
-        priority, // Include priority
-        dueDate, // Include dueDate
-      },
-      {
-        onSuccess: () => {
-          setTitle("")
-          setDescription("")
-          setIsPublic(false)
-          setPriority("medium") // Reset priority
-          setDueDate(null) // Reset due date
-          setShowCreateTodoModal(false)
-          setCurrentListIdForTodoCreation(null)
-        },
-      },
-    )
+    createTodo({
+      title,
+      description,
+      isPublic,
+      todoListId: currentListIdForTodoCreation,
+      priority, // Include priority
+      dueDate, // Include dueDate
+    })
+    
+    setTitle("")
+    setDescription("")
+    setIsPublic(false)
+    setPriority("medium") // Reset priority
+    setDueDate(null) // Reset due date
+    setShowCreateTodoModal(false)
+    setCurrentListIdForTodoCreation(null)
   }
 
   if (!showCreateTodoModal) return null
@@ -111,7 +106,7 @@ const CreateTodoModal = () => {
             <button
               type="submit"
               className="rounded-md bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:bg-blue-400"
-              disabled={createTodoMutation.isPending}
+              disabled={isCreatingTodo}
             >
               Create
             </button>
