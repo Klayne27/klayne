@@ -12,7 +12,7 @@ import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../components/common/MilestoneModal"
-import { FaEllipsisVertical, FaForward, FaListCheck } from "react-icons/fa6"
+import { FaEllipsis, FaEllipsisVertical, FaForward, FaListCheck } from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
 import ConfirmationModal from "../components/ui/ConfirmationModal"
 import { LuListTodo } from "react-icons/lu"
@@ -404,7 +404,16 @@ const PomodoroPage = () => {
             className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             aria-label="Toggle navigation"
           >
-            <FaEllipsisVertical size={25} />
+            {/* Vertical Ellipsis */}
+            <FaEllipsisVertical
+              size={25}
+              className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"} `}
+            />
+            {/* Horizontal Ellipsis */}
+            <FaEllipsis
+              size={25}
+              className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"} `}
+            />{" "}
           </button>
           {/* The dropdown content is now always rendered */}
           <div
@@ -460,7 +469,16 @@ const PomodoroPage = () => {
             className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             aria-label="Toggle navigation"
           >
-            <FaEllipsisVertical size={25} />
+            {/* Vertical Ellipsis */}
+            <FaEllipsisVertical
+              size={25}
+              className={`absolute transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "rotate-0 opacity-100" : "rotate-90 opacity-0"} `}
+            />
+            {/* Horizontal Ellipsis */}
+            <FaEllipsis
+              size={25}
+              className={`absolute transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "-rotate-90 opacity-0" : "rotate-0 opacity-100"} `}
+            />
           </button>
           {/* The dropdown content is now always rendered */}
           <div
