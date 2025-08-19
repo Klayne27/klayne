@@ -412,7 +412,7 @@ const PomodoroPage = () => {
           >
             <button
               onClick={() => navigate("/")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <PiHouseThin size={25} strokeWidth={15} />
               {newPostCount > 0 && (
@@ -424,7 +424,7 @@ const PomodoroPage = () => {
             </button>
             <button
               onClick={() => navigate("/")}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <CiMail size={25} strokeWidth={1} />
               {unreadMessageCount > 0 && (
@@ -438,7 +438,7 @@ const PomodoroPage = () => {
             </button>
             <button
               onClick={() => navigate("/")}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <IoChatbubbleEllipsesOutline size={25} />
               {unreadPublicChatCount > 0 && (
@@ -468,22 +468,22 @@ const PomodoroPage = () => {
           >
             <button
               onClick={() => navigate("/study-leaderboard")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <CiTrophy size={25} strokeWidth={1} />
             </button>
             <button
               onClick={() => navigate("/study-activity")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <MdLibraryBooks size={25} />
             </button>
-            <button
+            {/* <button
               onClick={() => navigate("/todos")}
               className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
             >
               <LuListTodo size={25} strokeWidth={2} />
-            </button>
+            </button> */}
           </div>
         </div>
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
@@ -547,7 +547,7 @@ const PomodoroPage = () => {
             {isBreak && !isGoalReached && (
               <button
                 onClick={handleSkipBreak}
-                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
                 aria-label="Skip break"
               >
                 <FaForward size={20} />
@@ -556,7 +556,7 @@ const PomodoroPage = () => {
             {!isBreak && !isGoalReached && minutes <= 0 && seconds <= 0 && (
               <button
                 onClick={handleSessionEnd}
-                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:bg-slate-700 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+                className="absolute -right-[76px] flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
               >
                 <FaForward size={20} />
               </button>
