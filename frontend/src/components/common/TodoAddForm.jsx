@@ -7,7 +7,6 @@ import { showAppToast } from "../../utils/showAppToast"
 import DatePicker from "react-datepicker"
 import { forwardRef } from "react"
 import { IoClose } from "react-icons/io5"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 // A custom button component for the date picker.
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
@@ -15,6 +14,7 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
     type="button"
     className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
     onClick={onClick}
+    onMouseDown={(e) => e.preventDefault()} // Add this line
     ref={ref}
   >
     <FaCalendar />
@@ -22,9 +22,8 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   </button>
 ))
 
-function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
+function TodoAddForm({ isLoading, setIsMenuOpen }) {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
-
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -33,6 +32,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
   const [dueDate, setDueDate] = useState(null)
 
   const titleInputRef = useRef(null)
+  const descriptionInputRef = useRef(null)
 
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
 
@@ -59,8 +59,9 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
     setIsPublic(false)
     setPriority("low")
     setDueDate(null)
-    setIsMenuOpen(false)
-    setCurrentListIdForTodoCreation(null)
+    // setIsMenuOpen(false)
+    // setCurrentListIdForTodoCreation(null)
+    titleInputRef.current.focus()
   }
 
   const handlePrioritySelect = (priority) => {
@@ -81,6 +82,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
 
   useEffect(() => {
     titleInputRef.current.focus()
+
   }, [])
 
   return (
@@ -125,6 +127,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
             Description
           </label>
           <input
+            ref={descriptionInputRef}
             type="text"
             value={description}
             placeholder="e.g., Finish Chapter 1"
@@ -143,6 +146,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
               </span>
               <button
                 type="button"
+                onMouseDown={(e) => e.preventDefault()}
                 onClick={handleClearDate}
                 className="text-gray-400 hover:text-red-500"
                 aria-label="Clear due date"
@@ -155,6 +159,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
         <div className="relative mt-2 flex gap-2">
           <button
             type="button"
+            onMouseDown={(e) => e.preventDefault()}
             className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
             onClick={(e) => {
               e.stopPropagation()
@@ -164,12 +169,11 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
             <FaFlag className={getTextColor(priority)} />{" "}
             <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
           </button>
-          <div className="z-[1001]">
+          <div>
             <DatePicker
               selected={dueDate}
               onChange={(date) => setDueDate(date)}
               dateFormat="MMM d, yyyy"
-              portalId="datepicker-root-portal" // This prop makes it a portal
               customInput={<CustomDatePickerInput />}
               popperProps={{
                 strategy: "fixed",
@@ -177,35 +181,37 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
               popperClassName="react-datepicker-popper-custom"
             />
           </div>
-          {isPriorityMenuOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsPriorityMenuOpen(false)
-                }}
-              ></div>
-              <ul
-                // ref={priorityMenuRef}
-                className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
-              >
-                {["urgent", "high", "medium", "low"].map((priority) => (
-                  <li key={priority}>
-                    <button
-                      type="button"
-                      onClick={() => handlePrioritySelect(priority)}
-                      className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
-                    >
-                      <FaFlag className={getTextColor(priority)} />
-                      {priority}
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
-          )}
         </div>
+        {isPriorityMenuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPriorityMenuOpen(false)
+              }}
+            ></div>
+            <ul
+              onMouseDown={(e) => e.preventDefault()}
+              className="white-shadow absolute left-4 -top-20 z-10 mt-1 w-[200px] rounded-2xl bg-base-100 p-1"
+            >
+              {["urgent", "high", "medium", "low"].map((priority) => (
+                <li key={priority}>
+                  <button
+                    type="button"
+                    onMouseDown={(e) => e.preventDefault()}
+                    onClick={() => handlePrioritySelect(priority)}
+                    className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                  >
+                    <FaFlag className={getTextColor(priority)} />
+                    {priority}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
       </form>
     </>
   )

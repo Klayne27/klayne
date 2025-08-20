@@ -58,10 +58,10 @@ const CreateTodoModal = () => {
     setTitle("")
     setDescription("")
     setIsPublic(false)
-    setPriority("medium") // Reset priority
+    setPriority("low") // Reset priority
     setDueDate(null) // Reset due date
-    setShowCreateTodoModal(false)
-    setCurrentListIdForTodoCreation(null)
+    // setShowCreateTodoModal(false)
+    // setCurrentListIdForTodoCreation(null)
   }
 
   const handleClearDate = (e) => {

@@ -27,6 +27,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
 
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
   const titleInputRef = useRef(null)
+  const lastFocusedElementRef = useRef(null)
 
   useEffect(() => {
     if (todo) {
@@ -59,7 +60,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     onSave(updateData)
 
     setFormData({
-      title:"",
+      title: "",
       description: "",
       dueDate: null,
       priority: "low",
@@ -67,9 +68,17 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     onClose()
   }
 
+  const handleCloseMenu = (e) => {
+    e.stopPropagation()
+
+    setIsPriorityMenuOpen(false)
+    lastFocusedElementRef.current?.focus()
+  }
+
   const handlePrioritySelect = (priority) => {
     setFormData((prev) => ({ ...prev, priority }))
     setIsPriorityMenuOpen(false)
+    lastFocusedElementRef.current?.focus()
   }
 
   // Handle DatePicker change, it receives a Date object
@@ -93,6 +102,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
 
   useEffect(() => {
     titleInputRef.current.focus()
+    lastFocusedElementRef.current = titleInputRef.current
   }, [])
 
   if (!isOpen) return null
@@ -119,13 +129,16 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
             <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
             <input
               ref={titleInputRef}
+              onFocus={() => (lastFocusedElementRef.current = titleInputRef.current)}
               type="text"
               name="title"
               value={formData.title}
               onChange={handleInputChange}
               className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
             />
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Description
+            </label>
             <input
               type="text"
               name="description"
@@ -158,6 +171,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
             <button
               type="button"
               className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(formData.priority)}`}
+              onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => {
                 e.stopPropagation()
                 setIsPriorityMenuOpen(!isPriorityMenuOpen)
@@ -172,16 +186,18 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
                 onChange={handleDateChange}
                 dateFormat="MMM d, yyyy"
                 customInput={<CustomDatePickerInput />}
+                onCalendarClose={() => {
+                  if (lastFocusedElementRef.current) {
+                    lastFocusedElementRef.current.focus()
+                  }
+                }}
               />
             </div>
             {isPriorityMenuOpen && (
               <>
                 <div
                   className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    setIsPriorityMenuOpen(false)
-                  }}
+                  // onClick={handleCloseMenu}
                 ></div>
                 <ul
                   // ref={priorityMenuRef}
