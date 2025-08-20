@@ -245,7 +245,7 @@ function MobileSideModal({
                   Pomodoro
                 </span>
               </li>
-              {/* <li
+              {authUser.isAdmin && <li
                 onClick={() => {
                   if (pathname === "/todos") return
                   navigate("/todos")
@@ -264,7 +264,7 @@ function MobileSideModal({
                 <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>
                   Todos
                 </span>
-              </li> */}
+              </li>}
 
               {/* Separator if needed */}
               <div className="my-2 border-t border-accent"></div>
