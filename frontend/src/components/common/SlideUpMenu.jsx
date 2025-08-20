@@ -1,5 +1,6 @@
 // src/components/todos/SlideUpMenu.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
@@ -8,7 +9,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const menuRef = useRef(null)
   const contentRef = useRef(null)
 
-  // ... (keep the existing useEffect for body overflow) ...
+  useLockBodyScroll(isOpen)
+
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -23,7 +25,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isOpen])
 
-  // NEW HOOK: To handle the virtual keyboard
   useEffect(() => {
     const visualViewport = window.visualViewport
     if (!visualViewport) return
@@ -43,7 +44,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [])
 
-  // ... (keep the rest of your handlers: handleTouchStart, handleTouchMove, etc.) ...
   useEffect(() => {
     if (!isOpen && menuRef.current) {
       menuRef.current.style.transform = ""
