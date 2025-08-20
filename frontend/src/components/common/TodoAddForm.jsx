@@ -7,20 +7,7 @@ import { showAppToast } from "../../utils/showAppToast"
 import DatePicker from "react-datepicker"
 import { forwardRef } from "react"
 import { IoClose } from "react-icons/io5"
-
-// A custom button component for the date picker.
-const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
-  <button
-    type="button"
-    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
-    onClick={onClick}
-    onMouseDown={(e) => e.preventDefault()} // Add this line
-    ref={ref}
-  >
-    <FaCalendar />
-    <span>{"Due date"}</span>
-  </button>
-))
+import CustomDatePicker from "./CustomDatePicker"
 
 function TodoAddForm({ isLoading, setIsMenuOpen }) {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
@@ -30,6 +17,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
   const [isPublic, setIsPublic] = useState(false)
   const [priority, setPriority] = useState("low")
   const [dueDate, setDueDate] = useState(null)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
 
   const titleInputRef = useRef(null)
   const descriptionInputRef = useRef(null)
@@ -82,7 +70,6 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
 
   useEffect(() => {
     titleInputRef.current.focus()
-
   }, [])
 
   return (
@@ -160,7 +147,9 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
           <button
             type="button"
             onMouseDown={(e) => e.preventDefault()}
-            className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
+            className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(
+              priority,
+            )}`}
             onClick={(e) => {
               e.stopPropagation()
               setIsPriorityMenuOpen(!isPriorityMenuOpen)
@@ -169,18 +158,14 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             <FaFlag className={getTextColor(priority)} />{" "}
             <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
           </button>
-          <div>
-            <DatePicker
-              selected={dueDate}
-              onChange={(date) => setDueDate(date)}
-              dateFormat="MMM d, yyyy"
-              customInput={<CustomDatePickerInput />}
-              popperProps={{
-                strategy: "fixed",
-              }}
-              popperClassName="react-datepicker-popper-custom"
-            />
-          </div>
+
+          <CustomDatePicker
+            selectedDate={dueDate}
+            onDateChange={setDueDate}
+            isOpen={isDatePickerOpen}
+            onToggle={setIsDatePickerOpen}
+            placeholder="Select due date"
+          />
         </div>
         {isPriorityMenuOpen && (
           <>
@@ -194,7 +179,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             ></div>
             <ul
               onMouseDown={(e) => e.preventDefault()}
-              className="white-shadow absolute left-4 -top-20 z-10 mt-1 w-[200px] rounded-2xl bg-base-100 p-1"
+              className="white-shadow absolute -top-20 left-4 z-10 mt-1 w-[200px] rounded-2xl bg-base-100 p-1"
             >
               {["urgent", "high", "medium", "low"].map((priority) => (
                 <li key={priority}>

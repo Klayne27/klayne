@@ -299,7 +299,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             )}
           </div>
         </MessageContentLayout>
-        {isMobile ? (
+        {isMobile && showViewReactionsModal ? (
           <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
             <SlideUpMenuContent className="flex h-[50vh] w-full flex-col overflow-y-auto">
               <ReactionsSlideUpMenuContent
@@ -309,11 +309,13 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             </SlideUpMenuContent>
           </SlideUpMenu>
         ) : (
-          <ViewReactionsModal
-            isOpen={showViewReactionsModal}
-            onClose={handleCloseViewReactionsModal}
-            reactions={message.reactions ? message.reactions : []}
-          />
+          showViewReactionsModal && (
+            <ViewReactionsModal
+              isOpen={showViewReactionsModal}
+              onClose={handleCloseViewReactionsModal}
+              reactions={message.reactions ? message.reactions : []}
+            />
+          )
         )}
 
         {modalConfig && (
