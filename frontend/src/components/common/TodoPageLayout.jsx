@@ -7,6 +7,7 @@ import CreateTodoModal from "./CreateTodoModal"
 import { RxActivityLog } from "react-icons/rx"
 import { IoIosTimer } from "react-icons/io"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { PiHouseThin } from "react-icons/pi"
 
 const TodoPageLayout = () => {
   const {
@@ -23,6 +24,18 @@ const TodoPageLayout = () => {
   const navItems = [
     { tab: "myLists", label: "My Lists", icon: <FaListUl className="size-5" />, path: "/todos" },
     {
+      tab: "pomodoro",
+      label: "Pomodoro",
+      icon: <IoIosTimer className="size-5" />,
+      path: "/pomodoro",
+    },
+    {
+      tab: "home",
+      label: "Home",
+      icon: <PiHouseThin className="size-5" strokeWidth={6} />,
+      path: "/",
+    },
+    {
       tab: "followingLists",
       label: "Following",
       icon: <FaUserGroup className="size-5" />,
@@ -34,24 +47,6 @@ const TodoPageLayout = () => {
       icon: <FaGlobe className="size-5" />,
       path: "/todos/public",
     },
-    // {
-    //   tab: "completedTodos",
-    //   label: "Completed",
-    //   icon: <FaCheckSquare className="size-5" />,
-    //   path: "/todos/completed",
-    // },
-    // {
-    //   tab: "activityLog",
-    //   label: "Activity Log",
-    //   icon: <RxActivityLog className="size-5" />,
-    //   path: "/todos/activity-log",
-    // },
-    {
-      tab: "pomodoro",
-      label: "Pomodoro",
-      icon: <IoIosTimer className="size-5" />,
-      path: "/pomodoro",
-    },
   ]
 
   const activeTab = navItems.find((item) => pathname === item.path)?.tab || ""
@@ -62,9 +57,7 @@ const TodoPageLayout = () => {
 
   return (
     <div className="container relative mx-auto flex h-screen min-h-screen max-w-2xl flex-col border-slate-600 bg-base-100 md:border-x">
-      <div
-        className={`flex flex-1 flex-col overflow-y-auto ${shouldHideNavbar ? "" : "pb-36"}`}
-      >
+      <div className={`flex flex-1 flex-col overflow-y-auto ${shouldHideNavbar ? "" : "pb-36"}`}>
         <Outlet />
       </div>
       {/* Floating "Create List" button */}
