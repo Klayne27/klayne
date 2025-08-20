@@ -1,12 +1,14 @@
+// src/components/todos/SlideUpMenu.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0) // <-- Add state for keyboard height
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
   const contentRef = useRef(null)
 
-
+  // ... (keep the existing useEffect for body overflow) ...
   useEffect(() => {
     if (isOpen) {
       document.body.style.overflow = "hidden"
@@ -15,14 +17,33 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       document.body.style.overflow = ""
       document.body.style.overscrollBehavior = ""
     }
-
     return () => {
       document.body.style.overflow = ""
       document.body.style.overscrollBehavior = ""
     }
   }, [isOpen])
 
-  // Reset styles when closing
+  // NEW HOOK: To handle the virtual keyboard
+  useEffect(() => {
+    const visualViewport = window.visualViewport
+    if (!visualViewport) return
+
+    const handleResize = () => {
+      // Calculate the keyboard height
+      const newKeyboardHeight = window.innerHeight - visualViewport.height
+      // We only care about positive values (when keyboard is open)
+      setKeyboardHeight(Math.max(0, newKeyboardHeight))
+    }
+
+    visualViewport.addEventListener("resize", handleResize)
+    handleResize() // Initial check
+
+    return () => {
+      visualViewport.removeEventListener("resize", handleResize)
+    }
+  }, [])
+
+  // ... (keep the rest of your handlers: handleTouchStart, handleTouchMove, etc.) ...
   useEffect(() => {
     if (!isOpen && menuRef.current) {
       menuRef.current.style.transform = ""
@@ -30,7 +51,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   }, [isOpen])
 
   const handleTouchStart = useCallback((e) => {
-    // Only start dragging if the content is scrolled to the top
     if (contentRef.current && contentRef.current.scrollTop !== 0) {
       return
     }
@@ -45,12 +65,9 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     (e) => {
       e.preventDefault()
       if (!isDragging) return
-
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
-
       if (deltaY < 0) return
-
       if (menuRef.current) {
         menuRef.current.style.transform = `translateY(${deltaY}px)`
       }
@@ -61,15 +78,11 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return
     setIsDragging(false)
-
     const menu = menuRef.current
     if (!menu) return
-
     const menuHeight = menu.clientHeight
     const currentTransform = new DOMMatrix(getComputedStyle(menu).transform).m42
-
     menu.style.transition = "transform 300ms ease-out"
-
     if (currentTransform > menuHeight * 0.4) {
       menu.style.transform = "translateY(100%)"
       setTimeout(onClose, 300)
@@ -95,9 +108,9 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       <div
         onClick={(e) => e.stopPropagation()}
         ref={menuRef}
-        className={`fixed bottom-0 left-0 right-0 z-[1000] transform transition-transform duration-300 ease-out ${
-          isOpen ? "translate-y-0" : "translate-y-full"
-        }`}
+        // Apply the keyboard height as a bottom offset
+        style={{ bottom: `${keyboardHeight}px` }}
+        className={`fixed left-0 right-0 z-[1000] transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
         <div
           className="flex flex-col items-center rounded-t-3xl bg-base-200"
@@ -115,6 +128,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   )
 }
 
+// ... (keep SlideUpMenuContent export) ...
 export const SlideUpMenuContent = React.forwardRef(
   ({ children, className, disablePullToRefresh }, ref) => {
     return (
@@ -128,5 +142,6 @@ export const SlideUpMenuContent = React.forwardRef(
     )
   },
 )
+SlideUpMenuContent.displayName = "SlideUpMenuContent"
 
 export default SlideUpMenu

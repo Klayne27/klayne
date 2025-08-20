@@ -496,12 +496,12 @@ const PomodoroPage = () => {
             >
               <MdLibraryBooks size={25} />
             </button>
-            <button
+            {/* <button
               onClick={() => navigate("/todos")}
               className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
             >
               <LuListTodo size={25} strokeWidth={2} />
-            </button>
+            </button> */}
           </div>
         </div>
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
