@@ -13,6 +13,7 @@ import Portal from "./Portal"
 import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
+import { LuNotepadText } from "react-icons/lu"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
@@ -67,11 +68,27 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setOpenTodoDropdownId(null)
   }
 
+  // const handleComplete = (todoId, e) => {
+  //   if (todo.user !== currentUser._id) return
+  //   e.stopPropagation()
+
+  //   setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
+  //   setCompletingTodoId(todoId)
+
+  //   setTimeout(() => {
+  //     completeTodo(todoId)
+  //   }, 500)
+  // }
+
   const handleComplete = (todoId, e) => {
-    if (todo.user !== currentUser._id) return
+    if (todo.user !== currentUser._id || isVisuallyCompleted) {
+      return
+    }
     e.stopPropagation()
+
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     setCompletingTodoId(todoId)
+
     setTimeout(() => {
       completeTodo(todoId)
     }, 500)
@@ -100,7 +117,9 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       >
         <div className="flex items-center gap-2 py-1">
           <button
-            onClick={(e) => handleComplete(todo._id, e)}
+            onClick={(e) => {
+              handleComplete(todo._id, e)
+            }}
             className={`flex-shrink-0 ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
             disabled={completingTodoId === todo._id}
           >
@@ -108,7 +127,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </button>
           <div className="flex flex-col gap-[2px]">
             <span className="text-base leading-[16px]">{todo.title}</span>
-            <span className=" text-xs text-slate-500 break-words min-w-0">{todo.description}</span>
+            <span className="min-w-0 break-words text-xs text-slate-500">{todo.description}</span>
             {formattedDueDate && (
               <span className="flex items-center gap-1 text-xs text-slate-500">
                 <span className="text-[12px]">

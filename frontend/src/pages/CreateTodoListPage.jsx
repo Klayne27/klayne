@@ -77,13 +77,12 @@ const CreateTodoListPage = () => {
       showAppToast("List name can't be empty")
       return
     }
-    
+
     createTodoListMutation.mutate(
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
           // Navigate back to the previous page or a specific page after success
-          navigate(-1)
           setName("")
           setDescription("")
           setIsPublic(false)
@@ -92,6 +91,7 @@ const CreateTodoListPage = () => {
         },
       },
     )
+    navigate(-1)
   }
 
   useEffect(() => {

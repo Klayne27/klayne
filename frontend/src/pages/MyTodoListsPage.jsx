@@ -3,7 +3,8 @@ import { useGetUserTodoLists } from "../hooks/todoListHooks/useTodoListQueries"
 import CreateTodoListModal from "../components/common/CreateTodoListModal"
 import TodoSectionList from "../components/common/TodoSectionList"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
-import EditTodoListModal from "../components/common/EditTodoListModal"
+
+import { useState } from "react"
 
 const MyTodoListsPage = () => {
   const {
@@ -19,9 +20,17 @@ const MyTodoListsPage = () => {
     fetchNextPage: myListsFetchNextPage,
   } = useGetUserTodoLists()
 
+   const [showXpGain, setShowXpGain] = useState(false)
+   const [xpGainedAmount, setXpGainedAmount] = useState(0)
+
+
   return (
     <>
-      <TodoPagesHeader pageTitle={"My Lists"} />
+      <TodoPagesHeader
+        pageTitle={"My Lists"}
+        showXpGain={showXpGain}
+        xpGainedAmount={xpGainedAmount}
+      />
 
       <TodoSectionList
         todoLists={myTodoLists}

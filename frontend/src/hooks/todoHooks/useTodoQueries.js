@@ -12,6 +12,8 @@ import {
   updateTodoApi,
 } from "../../api/todoApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import useXpStore from "../../store/useXpStore"
 
 export const useGetUserTodos = () => {
   return useQuery({
@@ -59,25 +61,21 @@ export const useGetCompletedTodos = () => {
 
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()
+  const { authUser: currentUser, setAuthUser } = useAuthUser()
+  const { setShowXpGain, setXpGainedAmount } = useXpStore() // ⭐ Get the Zustand setters ⭐
 
   const { mutate: completeTodo, isPending: isCompletingTodo } = useMutation({
     mutationFn: completeTodoApi,
-    // Optimistic Update: Remove the todo from the UI immediately
     onMutate: async (todoId) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["todos"] })
-      await queryClient.cancelQueries({ queryKey: ["todoLists"] }) // Invalidate lists as well
+      await queryClient.cancelQueries({ queryKey: ["todoLists"] })
 
-      // Snapshot the previous value
       const previousTodos = queryClient.getQueryData(["todos"])
       const previousTodoLists = queryClient.getQueryData(["todoLists"])
+      const previousUser = currentUser
 
-      // Optimistically update to the new value
-      // This logic assumes your todos are fetched under the "todoLists" query key
-      // and nested within each list object.
       queryClient.setQueryData(["todoLists"], (oldData) => {
         if (!oldData) return oldData
-
         const newPages = oldData.pages.map((page) => ({
           ...page,
           data: page.data.map((list) => ({
@@ -85,28 +83,47 @@ export const useCompleteTodo = () => {
             todos: list.todos.filter((todo) => todo._id !== todoId),
           })),
         }))
-
         return { ...oldData, pages: newPages }
       })
 
-      // Return a context object with the snapshotted value
-      return { previousTodos, previousTodoLists }
+      return { previousTodos, previousTodoLists, previousUser }
     },
-    // If the mutation fails, use the context returned from onMutate to roll back
     onError: (err, todoId, context) => {
       queryClient.setQueryData(["todoLists"], context.previousTodoLists)
+      if (context.previousUser) {
+        setAuthUser(context.previousUser)
+      }
       showAppToast(err.message || "Failed to complete todo", "error")
     },
-    // Finally, always refetch after the mutation is settled (success or error)
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["completedTodos"] }) // Invalidate the new query
-      queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
-      queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
-    },
-    onSuccess: () => {
+    onSuccess: (data) => {
       showAppToast("Todo completed! ✨", "success")
+
+      if (data?.xpResult) {
+        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult
+
+        setXpGainedAmount(xpGained)
+        setShowXpGain(true)
+        setTimeout(() => setShowXpGain(false), 2000)
+
+        // Update authUser state with new XP and level
+        const updatedUser = {
+          ...currentUser,
+          pomodoroXP: finalXP,
+          pomodoroLevel: finalLevel,
+        }
+        setAuthUser(updatedUser)
+
+        if (levelsGained?.length > 0) {
+          showAppToast(`You leveled up to Level ${finalLevel}! 🎉`, "success")
+        }
+      }
+    },
+    onSettled: () => {
+      // Invalidate queries as a fallback to ensure consistency
+      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
+      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
+      queryClient.invalidateQueries({ queryKey: ["authUser"] })
     },
   })
 
@@ -188,9 +205,9 @@ export const useCreateTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
     },
-    onSuccess: () => {
-      showAppToast("Todo created successfully!", "success")
-    },
+    // onSuccess: () => {
+    //   showAppToast("Todo created successfully!", "success")
+    // },
   })
 
   return { createTodo, isCreatingTodo }
@@ -257,9 +274,9 @@ export const useUpdateTodo = () => {
       queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
     },
-    onSuccess: () => {
-      showAppToast("Todo updated successfully!", "success")
-    },
+    // onSuccess: () => {
+    //   showAppToast("Todo updated successfully!", "success")
+    // },
   })
 
   return { updateTodo, isUpdatingTodo }

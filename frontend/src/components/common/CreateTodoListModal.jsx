@@ -81,7 +81,6 @@ const CreateTodoListModal = () => {
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
-          setShowCreateTodoListModal(false)
           setName("")
           setDescription("")
           setIsPublic(false)
@@ -90,6 +89,7 @@ const CreateTodoListModal = () => {
         },
       },
     )
+    setShowCreateTodoListModal(false)
   }
 
   useEffect(() => {

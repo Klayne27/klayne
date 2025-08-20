@@ -117,9 +117,9 @@ export const useCreateTodoList = () => {
       // Refetch to get the real data from the server
       queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
     },
-    onSuccess: () => {
-      showAppToast("Todo section created!", "success")
-    },
+    // onSuccess: () => {
+    //   showAppToast("Todo section created!", "success")
+    // },
   })
 }
 
@@ -155,9 +155,9 @@ export const useUpdateTodoList = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
     },
-    onSuccess: () => {
-      showAppToast("Todo section updated!", "success")
-    },
+    // onSuccess: () => {
+    //   showAppToast("Todo section updated!", "success")
+    // },
   })
 
   return { updateTodoList, isUpdatingTodoList }
@@ -195,9 +195,9 @@ export const useDeleteTodoList = () => {
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
     },
-    onSuccess: () => {
-      showAppToast("Todo section deleted!", "success")
-    },
+    // onSuccess: () => {
+    //   showAppToast("Todo section deleted!", "success")
+    // },
   })
 }
 

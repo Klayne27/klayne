@@ -14,11 +14,7 @@ const xpForLevel = (level) => {
 }
 
 const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
-  const { authUser: currentUser, isLoading } = useAuthUser()
-
-  if (isLoading) {
-    return <LoadingSpinner />
-  }
+  const { authUser: currentUser } = useAuthUser()
 
   if (!currentUser) {
     return null
@@ -29,17 +25,6 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
-  // const getFireColor = (level) => {
-  //   if (level <= 10) {
-  //     return ""
-  //   } else if (level <= 25) {
-  //     return "text-yellow-700"
-  //   } else if (level <= 50) {
-  //     return "text-slate-400"
-  //   } else if (level >= 51) {
-  //     return "text-amber-400"
-  //   }
-  // }
 
   return (
     <header className="w-full">

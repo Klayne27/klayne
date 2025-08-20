@@ -1,8 +1,8 @@
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authUserApi } from "../../api/authApi";
 
 export const useAuthUser = () => {
-
+  const queryClient = useQueryClient()
   const {
     data: authUser,
     isLoading,
@@ -20,5 +20,9 @@ export const useAuthUser = () => {
     refetchOnMount: true,
   });
 
-  return { authUser, isLoading, refetchAuthUser };
+   const setAuthUser = (userData) => {
+     queryClient.setQueryData(["authUser"], userData)
+   }
+
+  return { authUser, isLoading, refetchAuthUser, setAuthUser }
 };

@@ -1,7 +1,15 @@
+import LevelUp from "../models/levelup.model.js";
 import Todo from "../models/todo.model.js";
 import TodoActivity from "../models/todoActivity.model.js";
 import TodoList from "../models/todoList.model.js";
 import User from "../models/user.model.js";
+
+const xpForLevel = (level) => {
+  if (level <= 1) {
+    return 500;
+  }
+  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100);
+};
 
 // A new function you must create or update in your Todo controller
 export const createTodo = async (req, res) => {
@@ -176,7 +184,6 @@ export const completeTodo = async (req, res) => {
     });
     await activity.save();
 
-    // Increment completedTodos count for the associated list
     if (todo.todoList) {
       await TodoList.findByIdAndUpdate(todo.todoList, {
         $inc: {
@@ -186,8 +193,52 @@ export const completeTodo = async (req, res) => {
       });
     }
 
-    res.status(200).json(todo);
+    const user = await User.findById(req.user._id);
+    if (user) {
+      const xpRewards = {
+        low: 25,
+        medium: 50,
+        high: 100,
+        urgent: 200,
+      };
+
+      const xpToAdd = xpRewards[todo.priority] || 25;
+      user.pomodoroXP += xpToAdd;
+
+      let levelsGained = [];
+      let xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
+
+      while (user.pomodoroXP >= xpNeededForCurrentLevel) {
+        user.pomodoroXP -= xpNeededForCurrentLevel;
+        user.pomodoroLevel += 1;
+        levelsGained.push(user.pomodoroLevel);
+
+        await LevelUp.create({
+          user: user._id,
+          newLevel: user.pomodoroLevel,
+        });
+
+        xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
+      }
+
+      await user.save();
+
+      // ⭐ Corrected response payload ⭐
+      return res.status(200).json({
+        todo,
+        xpResult: {
+          xpGained: xpToAdd, // The amount of XP gained
+          finalXP: user.pomodoroXP, // The user's new total XP
+          finalLevel: user.pomodoroLevel, // The user's new level
+          levelsGained, // An array of levels gained, if any
+        },
+      });
+    }
+
+    // Fallback response if user is not found
+    return res.status(200).json({ todo });
   } catch (error) {
+    console.error("Error in completeTodo:", error);
     res.status(500).json({ error: "Failed to complete todo" });
   }
 };

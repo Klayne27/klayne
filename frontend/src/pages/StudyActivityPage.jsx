@@ -22,6 +22,8 @@ const StudyActivityPage = () => {
   const [page, setPage] = useState(1)
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
 
+  console.log(activityFeed);
+
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage)
