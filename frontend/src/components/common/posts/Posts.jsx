@@ -112,7 +112,6 @@ const Posts = ({
   // Combine pinned posts with filtered posts for the 'posts' feed type
   const combinedPosts = feedType === "posts" ? [...pinnedPosts, ...filteredPosts] : posts;
 
-  console.log(combinedPosts);
   if (combinedPosts?.length === 0) {
     return <p className="text-center my-4">No posts in this tab. Switch 👻</p>;
   }

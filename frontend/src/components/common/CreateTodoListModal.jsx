@@ -13,6 +13,8 @@ import {
 } from "react-icons/fa"
 import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../../utils/showAppToast"
+import { useRef } from "react"
+import { useEffect } from "react"
 
 const CreateTodoListModal = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
@@ -23,6 +25,8 @@ const CreateTodoListModal = () => {
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red")
+
+  const titleInputRef = useRef(null)
 
   const iconOptions = [
     { name: "None", icon: <ImBlocked /> },
@@ -88,6 +92,10 @@ const CreateTodoListModal = () => {
     )
   }
 
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
+
   if (!showCreateTodoListModal) return null
 
   return (
@@ -108,6 +116,7 @@ const CreateTodoListModal = () => {
             </label>
 
             <input
+              ref={titleInputRef}
               type="text"
               placeholder="e.g., Study Tasks"
               className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"

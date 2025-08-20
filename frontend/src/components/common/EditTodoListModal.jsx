@@ -12,6 +12,7 @@ import {
 } from "react-icons/fa"
 import { useUpdateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
+import { useRef } from "react"
 
 function EditTodoListModal() {
   const { showEditTodoListModal, setShowEditTodoListModal, todoListToEdit } = useTodoStore()
@@ -23,8 +24,10 @@ function EditTodoListModal() {
   const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red") // Populate form with existing data when the component loads
 
+  const titleInputRef = useRef(null)
+
   const iconOptions = [
-    { name: "None", icon: <ImBlocked />},
+    { name: "None", icon: <ImBlocked /> },
     { name: "FaPen", icon: <FaPen /> },
     { name: "FaCheckCircle", icon: <FaCheckCircle /> },
     { name: "FaStar", icon: <FaStar /> },
@@ -81,7 +84,11 @@ function EditTodoListModal() {
       setIcon(todoListToEdit.icon || "None")
       setColor(todoListToEdit.color || "red")
     }
-  }, [todoListToEdit]) 
+  }, [todoListToEdit])
+
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
 
   if (!showEditTodoListModal) return null
 
@@ -98,18 +105,17 @@ function EditTodoListModal() {
         <form onSubmit={handleSubmit}>
           {/* Name Input */}
           <div className="mb-4 mt-2">
-            <label className="label">
-              <span className="label-text">List Name</span>
+            <label className="">
+              <span className="text-xs text-slate-500">List Name</span>
             </label>
 
             <input
+              ref={titleInputRef}
               type="text"
-              placeholder="e.g., Study Tasks"
-              className="input input-bordered w-full"
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              required
             />
           </div>
           {/* Description Input */}

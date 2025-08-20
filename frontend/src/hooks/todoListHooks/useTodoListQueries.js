@@ -210,38 +210,58 @@ export const useLikeUnlikeTodoList = () => {
   const queryClient = useQueryClient()
 
   const { mutate: likeUnlikeTodoList, isPending: isLiking } = useMutation({
-    mutationFn: (listId) => likeUnlikeTodoListApi(listId), // Optimistically update the UI before the API call returns
-    onMutate: async (listId) => {
-      // Cancel any outgoing refetches so they don't overwrite our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["publicTodoLists"] }) // Snapshot the previous value
+    mutationFn: ({ listId }) => likeUnlikeTodoListApi(listId),
 
-      const previousTodoLists = queryClient.getQueryData(["publicTodoLists"]) // Optimistically update the public todo lists
+    onMutate: async ({ listId, authUserId }) => {
+      // 1. Cancel ongoing refetches
+      await queryClient.cancelQueries({ queryKey: ["publicTodoLists"] }) // 2. Snapshot the previous value
+
+      const previousTodoLists = queryClient.getQueryData(["publicTodoLists"]) // 3. Optimistically update the cache
 
       queryClient.setQueryData(["publicTodoLists"], (old) => {
-        return old.data?.map((list) => {
-          if (list.id === listId) {
-            // Check if the current user has already liked this list
-            const isLiked = list.likes.includes(list.owner._id)
-            return {
-              ...list,
-              likes: isLiked
-                ? list.likes.filter((id) => id !== list.owner._id)
-                : [...list.likes, list.owner._id],
-            }
+        if (!old || !old.pages) {
+          return old
+        }
+
+        const updatedPages = old.pages.map((page) => {
+          // Check if the page has data before mapping
+          if (!page || !page.data) {
+            return page
           }
-          return list
+
+          const updatedLists = page.data.map((list) => {
+            if (list._id === listId) {
+              const isLiked = list.likes.includes(authUserId)
+              return {
+                ...list,
+                likes: isLiked
+                  ? list.likes.filter((id) => id !== authUserId)
+                  : [...list.likes, authUserId],
+              }
+            }
+            return list
+          })
+
+          return {
+            ...page,
+            data: updatedLists,
+          }
         })
-      }) // Return a context object with the snapshot value
+
+        return {
+          ...old,
+          pages: updatedPages,
+        }
+      }) // 4. Return the snapshot
 
       return { previousTodoLists }
-    }, // If the mutation fails, roll back the UI
+    },
 
-    onError: (err, listId, context) => {
-      queryClient.setQueryData(["publicTodoLists"], context.previousTodoLists)
-    }, // After the mutation is successful, refetch to ensure the UI is in sync with the server
-
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
+    onError: (err, variables, context) => {
+      // Roll back on failure
+      if (context.previousTodoLists) {
+        queryClient.setQueryData(["publicTodoLists"], context.previousTodoLists)
+      }
     },
   })
 

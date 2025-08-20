@@ -39,9 +39,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   }, [isLoading, hasNextPage, fetchNextPage])
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
-
-  console.log(allLists);
-
   if (isLoading && allLists?.length === 0)
     return (
       <div className="flex h-screen items-center justify-center text-primary">

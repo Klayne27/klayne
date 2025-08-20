@@ -17,9 +17,22 @@ import {
 } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useTodoStore } from "../../store/useTodoStore"
-import { FaEllipsisVertical, FaPlus, FaTrashCan } from "react-icons/fa6"
+import {
+  FaEllipsisVertical,
+  FaPlus,
+  FaTrashCan,
+  FaHeart,
+  FaRegHeart,
+  FaRegEye,
+  FaEye,
+} from "react-icons/fa6"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import TodoList from "./TodoList"
+import AnimatedCount from "../ui/AnimatedCount"
+import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
+import { useState } from "react"
+import { useEffect } from "react"
+import { AiFillLike, AiOutlineLike } from "react-icons/ai"
 
 const iconMap = {
   FaPen: FaPen,
@@ -69,6 +82,9 @@ const TodoSectionItem = ({
   } = useTodoStore()
   const { authUser } = useAuthUser()
   const { pathname } = useLocation()
+
+  const [isAnimatingLike, setIsAnimatingLike] = useState(false)
+
   const navigate = useNavigate()
   const deleteTodoListMutation = useDeleteTodoList()
   const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()
@@ -76,6 +92,11 @@ const TodoSectionItem = ({
 
   const IconComponent = iconMap[list.icon]
   const isListOpen = selectedTodoListIds.includes(list._id)
+
+  const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
+    useTouchHoverEffect()
+
+  const isLiked = list?.likes?.includes(authUser?._id)
 
   const handleToggleListDropdown = (e) => {
     e.stopPropagation()
@@ -113,10 +134,25 @@ const TodoSectionItem = ({
 
   const handleLikeList = (e) => {
     e.stopPropagation()
-    if (isLiking) return
+    setIsAnimatingLike(true)
 
-    likeUnlikeTodoList(list._id)
+    if (isLiking) return
+    likeUnlikeTodoList({ listId: list._id, authUserId: authUser._id })
   }
+
+  useEffect(() => {
+    let timerLike
+
+    if (isAnimatingLike) {
+      timerLike = setTimeout(() => {
+        setIsAnimatingLike(false)
+      }, 400)
+    }
+
+    return () => {
+      clearTimeout(timerLike)
+    }
+  }, [isAnimatingLike])
 
   const isListOwner = list?.owner?._id === authUser?._id
 
@@ -134,15 +170,6 @@ const TodoSectionItem = ({
               <p className="text-sm font-bold">{list.owner.fullName}</p>
               <p className="text-xs text-gray-500">@{list.owner.username}</p>
             </div>
-            <div
-              className="group flex cursor-pointer items-center rounded-full"
-              onClick={handleLikeList}
-              // onTouchStart={() => handleTouchStart("like")}
-              // onTouchEnd={handleTouchEnd}
-              // onTouchCancel={handleTouchCancel}
-            >
-              <div>like {list.likes.length}</div>
-            </div>
           </div>
         )}
         <div className="border-b border-slate-600 px-3 py-1">
@@ -154,6 +181,7 @@ const TodoSectionItem = ({
               </span>
               <span className="text-xs">{list.totalTodos || ""}</span>
             </div>
+
             <div className="relative flex gap-1">
               {list?.todos?.length > 0 && (
                 <button
@@ -176,13 +204,13 @@ const TodoSectionItem = ({
               {openListDropdownId === list._id && (
                 <>
                   <div
-                    className="fixed inset-0 z-10 cursor-default bg-transparent"
+                    className="fixed inset-0 z-50 cursor-default bg-transparent"
                     onClick={(e) => {
                       e.stopPropagation()
                       setOpenListDropdownId(null)
                     }}
                   ></div>
-                  <ul className="white-shadow absolute right-2 top-3 z-10 w-44 rounded-xl bg-base-100 p-2">
+                  <ul className="white-shadow absolute right-2 top-3 z-50 w-44 rounded-xl bg-base-100 p-2">
                     <li>
                       <button
                         onClick={(e) =>
