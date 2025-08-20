@@ -10,8 +10,6 @@ const getPaginationParams = (req) => {
   return { page, limit, skip };
 };
 
-
-
 export const getUserTodoLists = async (req, res) => {
   try {
     const { page, limit, skip } = getPaginationParams(req);
@@ -235,5 +233,39 @@ export const deleteTodoList = async (req, res) => {
     res.status(200).json({ message: "Todo list and its todos deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: "Failed to delete todo list" });
+  }
+};
+
+export const likeUnlikeTodoList = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id: listId } = req.params;
+
+    const list = await TodoList.findById(listId);
+
+    if (!list) {
+      return res.status(404).json({ error: "List not found" });
+    }
+
+    const userLikedList = list.likes.includes(userId);
+
+    if (userLikedList) {
+      await Promise.all([
+        TodoList.updateOne({ _id: listId }, { $pull: { likes: userId } }),
+        User.updateOne({ _id: userId }, { $pull: { likedTodoLists: listId } }),
+      ]);
+
+      const updatedLikes = list.likes.filter((id) => id.toString() !== userId.toString());
+      res.status(200).json(updatedLikes);
+    } else {
+      list.likes.push(userId);
+      await User.updateOne({ _id: userId }, { $push: { likedTodoLists: listId } });
+      await list.save();
+
+      res.status(200).json(list.likes);
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error in likeUnlikeTodoList controller: ", error);
   }
 };

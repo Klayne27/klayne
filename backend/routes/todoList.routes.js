@@ -9,6 +9,7 @@ import {
   getFollowingTodoLists,
   getPublicTodoLists,
   getTodosInList,
+  likeUnlikeTodoList,
 } from "../controllers/todoList.controllers.js";
 
 const router = express.Router();
@@ -21,5 +22,7 @@ router.get("/:id", protectRoute, getTodoListById);
 router.get("/:id/todos", protectRoute, getTodosInList);
 router.put("/:id", protectRoute, updateTodoList);
 router.delete("/:id", protectRoute, deleteTodoList);
+router.post("/like/:id", protectRoute, likeUnlikeTodoList)
+
 
 export default router;

@@ -100,6 +100,22 @@ export const getPublicTodos = async (req, res) => {
   }
 };
 
+// export const getPublicCompletedTodos = async (req, res) => {
+//   try {
+//     const todos = await Todo.find({ isPublic: true, completed: true })
+//       .populate({
+//         path: "user",
+//         select: "username",
+//         populate: { path: "profileImg", select: "imageUrl" },
+//       })
+//       .sort({ completedAt: -1 })
+
+//     res.status(200).json(todos);
+//   } catch (error) {
+//     res.status(500).json({ error: "Failed to fetch public todos" });
+//   }
+// };
+
 export const updateTodo = async (req, res) => {
   try {
     const { title, description, priority, category, dueDate, isPublic } = req.body;

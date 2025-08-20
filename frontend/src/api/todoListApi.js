@@ -1,7 +1,5 @@
 const API_URL = "/api/todolists"
 
-
-
 export const getUserTodoListsApi = async ({ pageParam = 1 }) => {
   const res = await fetch(`${API_URL}?page=${pageParam}`)
   const data = await res.json()
@@ -68,3 +66,15 @@ export const deleteTodoListApi = async (listId) => {
   return data
 }
 
+export const likeUnlikeTodoListApi = async (listId) => {
+  const res = await fetch(`${API_URL}/like/${listId}`, {
+    method: "POST",
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to like/unlike todo list: Something went wrong")
+  }
+  return data
+}

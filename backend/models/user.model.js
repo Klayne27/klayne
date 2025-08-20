@@ -92,6 +92,13 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    likedTodoLists: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TodoList",
+        default: [],
+      },
+    ],
     pinnedPosts: [
       {
         type: mongoose.Schema.Types.ObjectId,

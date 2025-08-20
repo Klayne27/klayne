@@ -15,6 +15,8 @@ const CompletedTodosPage = () => {
     )
   if (completedError) return <div>Error fetching completed todos.</div>
 
+  console.log(completedTodos);
+
   return (
     <>
       <TodoPagesHeader pageTitle={"Completed Tasks"} />

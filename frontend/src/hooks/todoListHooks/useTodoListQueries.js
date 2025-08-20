@@ -9,6 +9,7 @@ import {
   getTodoListByIdApi,
   getTodosInListApi,
   getUserTodoListsApi,
+  likeUnlikeTodoListApi,
   updateTodoListApi,
 } from "../../api/todoListApi"
 import { showAppToast } from "../../utils/showAppToast"
@@ -203,4 +204,46 @@ export const useDeleteTodoList = () => {
       showAppToast("Todo section deleted!", "success")
     },
   })
+}
+
+export const useLikeUnlikeTodoList = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: likeUnlikeTodoList, isPending: isLiking } = useMutation({
+    mutationFn: (listId) => likeUnlikeTodoListApi(listId), // Optimistically update the UI before the API call returns
+    onMutate: async (listId) => {
+      // Cancel any outgoing refetches so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: ["publicTodoLists"] }) // Snapshot the previous value
+
+      const previousTodoLists = queryClient.getQueryData(["publicTodoLists"]) // Optimistically update the public todo lists
+
+      queryClient.setQueryData(["publicTodoLists"], (old) => {
+        return old.data?.map((list) => {
+          if (list.id === listId) {
+            // Check if the current user has already liked this list
+            const isLiked = list.likes.includes(list.owner._id)
+            return {
+              ...list,
+              likes: isLiked
+                ? list.likes.filter((id) => id !== list.owner._id)
+                : [...list.likes, list.owner._id],
+            }
+          }
+          return list
+        })
+      }) // Return a context object with the snapshot value
+
+      return { previousTodoLists }
+    }, // If the mutation fails, roll back the UI
+
+    onError: (err, listId, context) => {
+      queryClient.setQueryData(["publicTodoLists"], context.previousTodoLists)
+    }, // After the mutation is successful, refetch to ensure the UI is in sync with the server
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
+    },
+  })
+
+  return { likeUnlikeTodoList, isLiking }
 }

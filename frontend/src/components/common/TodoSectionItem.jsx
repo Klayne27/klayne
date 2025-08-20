@@ -11,7 +11,10 @@ import {
 } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useDeleteTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
+import {
+  useDeleteTodoList,
+  useLikeUnlikeTodoList,
+} from "../../hooks/todoListHooks/useTodoListQueries"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useTodoStore } from "../../store/useTodoStore"
 import { FaEllipsisVertical, FaPlus, FaTrashCan } from "react-icons/fa6"
@@ -68,6 +71,7 @@ const TodoSectionItem = ({
   const { pathname } = useLocation()
   const navigate = useNavigate()
   const deleteTodoListMutation = useDeleteTodoList()
+  const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()
   const isMobile = useIsMobile()
 
   const IconComponent = iconMap[list.icon]
@@ -107,6 +111,13 @@ const TodoSectionItem = ({
     setOpenListDropdownId(null)
   }
 
+  const handleLikeList = (e) => {
+    e.stopPropagation()
+    if (isLiking) return
+
+    likeUnlikeTodoList(list._id)
+  }
+
   const isListOwner = list?.owner?._id === authUser?._id
 
   return (
@@ -122,6 +133,15 @@ const TodoSectionItem = ({
             <div className="flex flex-col">
               <p className="text-sm font-bold">{list.owner.fullName}</p>
               <p className="text-xs text-gray-500">@{list.owner.username}</p>
+            </div>
+            <div
+              className="group flex cursor-pointer items-center rounded-full"
+              onClick={handleLikeList}
+              // onTouchStart={() => handleTouchStart("like")}
+              // onTouchEnd={handleTouchEnd}
+              // onTouchCancel={handleTouchCancel}
+            >
+              <div>like {list.likes.length}</div>
             </div>
           </div>
         )}
