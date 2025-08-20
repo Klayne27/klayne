@@ -7,7 +7,6 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 
-
 function StudyLeaderboard() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)

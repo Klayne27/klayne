@@ -1,5 +1,5 @@
-export const getTodoActivityApi = async () => {
-  const res = await fetch("/api/activities")
+export const getTodoActivityApi = async ({ pageParam = 0 }) => {
+  const res = await fetch(`/api/activities?page=${pageParam}`)
 
   const data = await res.json()
 

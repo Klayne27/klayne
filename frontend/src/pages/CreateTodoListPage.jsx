@@ -14,6 +14,8 @@ import { useTodoStore } from "../store/useTodoStore"
 import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../utils/showAppToast"
+import { useRef } from "react"
+import { useEffect } from "react"
 
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
@@ -24,6 +26,8 @@ const CreateTodoListPage = () => {
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red")
+
+  const nameInputRef = useRef(null)
 
   const iconOptions = [
     { name: "None", icon: <ImBlocked /> },
@@ -90,6 +94,10 @@ const CreateTodoListPage = () => {
     )
   }
 
+  useEffect(() => {
+    nameInputRef.current.focus()
+  }, [])
+
   // To match the modal's UI, the page has a card-like appearance on a light background.
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
@@ -99,10 +107,11 @@ const CreateTodoListPage = () => {
           {/* Name Input */}
           <div className="mb-4 mt-2">
             <label className="">
-              <span className="text-xs text-slate-500">List Name</span>
+              <span className="text-xs text-slate-500">Section Name</span>
             </label>
 
             <input
+              ref={nameInputRef}
               type="text"
               placeholder="e.g., Study Tasks"
               className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"

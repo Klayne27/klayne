@@ -1,10 +1,11 @@
 const API_URL = "/api/todolists"
 
-export const getUserTodoListsApi = async ({ pageParam = 1 }) => {
-  const res = await fetch(`${API_URL}?page=${pageParam}`)
+export const getUserTodoListsApi = async ({ pageParam = 0 }) => {
+  const limit = 10
+  const res = await fetch(`${API_URL}?page=${pageParam}&limit=${limit}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch todo lists")
-  return data // The backend now returns a structured object
+  return data
 }
 
 export const getTodoListByIdApi = async (id) => {
@@ -14,15 +15,17 @@ export const getTodoListByIdApi = async (id) => {
   return data
 }
 
-export const getFollowingTodoListsApi = async ({ pageParam = 1 }) => {
-  const res = await fetch(`${API_URL}/following?page=${pageParam}`)
+export const getFollowingTodoListsApi = async ({ pageParam = 0 }) => {
+  const limit = 10
+  const res = await fetch(`${API_URL}/following?page=${pageParam}&limit=${limit}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch following's lists")
   return data
 }
 
-export const getPublicTodoListsApi = async ({ pageParam = 1 }) => {
-  const res = await fetch(`${API_URL}/public?page=${pageParam}`)
+export const getPublicTodoListsApi = async ({ pageParam = 0 }) => {
+  const limit = 10
+  const res = await fetch(`${API_URL}/public?page=${pageParam}&limit=${limit}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch public lists")
   return data

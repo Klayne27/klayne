@@ -47,8 +47,8 @@ const PomodoroPage = () => {
   const [milestoneLevel, setMilestoneLevel] = useState(null)
 
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(false)
-  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(false)
+  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(true)
+  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(true)
 
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
 

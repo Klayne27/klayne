@@ -35,15 +35,12 @@ export const useGetUserTodoLists = () => {
     queryKey: ["todoLists"],
     queryFn: getUserTodoListsApi,
     getNextPageParam: (lastPage) => {
-      // Check if the backend response has a next page
-      // If it does, return the current page plus one
       if (lastPage.hasNextPage) {
         return lastPage.currentPage + 1
       }
-      // Otherwise, return undefined to signal no more pages
       return undefined
     },
-    initialPageParam: 1, // Start with the first page
+    initialPageParam: 0, 
   })
 }
 
@@ -57,8 +54,7 @@ export const useGetFollowingTodoLists = () => {
       }
       return undefined
     },
-    initialPageParam: 1,
-    retry: false,
+    initialPageParam: 0,
   })
 }
 
@@ -72,8 +68,7 @@ export const useGetPublicTodoLists = () => {
       }
       return undefined
     },
-    initialPageParam: 1,
-    retry: false,
+    initialPageParam: 0,
   })
 }
 

@@ -6,6 +6,7 @@ import SlideUpMenu from "./SlideUpMenu"
 import TodoAddForm from "./TodoAddForm"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import EditTodoListModal from "./EditTodoListModal"
+import { useInView } from "react-intersection-observer"
 
 const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPage }) => {
   const {
@@ -14,6 +15,8 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
     setShowEditTodoListModal,
     todoListToEdit,
   } = useTodoStore()
+  const { ref, inView } = useInView()
+
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
@@ -21,22 +24,28 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const observerRef = useRef()
   const lastItemRef = useRef()
 
+  // useEffect(() => {
+  //   if (isLoading) return
+  //   if (observerRef.current) observerRef.current.disconnect()
+
+  //   const observer = new IntersectionObserver((entries) => {
+  //     if (entries[0].isIntersecting && hasNextPage) {
+  //       fetchNextPage()
+  //     }
+  //   })
+
+  //   if (lastItemRef.current) {
+  //     observer.observe(lastItemRef.current)
+  //   }
+
+  //   observerRef.current = observer
+  // }, [isLoading, hasNextPage, fetchNextPage])
+
   useEffect(() => {
-    if (isLoading) return
-    if (observerRef.current) observerRef.current.disconnect()
-
-    const observer = new IntersectionObserver((entries) => {
-      if (entries[0].isIntersecting && hasNextPage) {
-        fetchNextPage()
-      }
-    })
-
-    if (lastItemRef.current) {
-      observer.observe(lastItemRef.current)
+    if (inView && hasNextPage) {
+      fetchNextPage()
     }
-
-    observerRef.current = observer
-  }, [isLoading, hasNextPage, fetchNextPage])
+  }, [inView, hasNextPage, fetchNextPage])
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
   if (isLoading && allLists?.length === 0)
@@ -59,20 +68,23 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   return (
     <>
       <ul className="flex flex-col gap-5">
-        {allLists?.map((list, index) => (
-          <TodoSectionItem
-            key={list._id}
-            list={list}
-            isLastItem={index === allLists.length - 1}
-            lastItemRef={lastItemRef}
-            openListDropdownId={openListDropdownId}
-            setOpenListDropdownId={setOpenListDropdownId}
-            openTodoDropdownId={openTodoDropdownId}
-            setOpenTodoDropdownId={setOpenTodoDropdownId}
-            setIsMenuOpen={setIsMenuOpen}
-            setShowCreateTodoModal={setShowCreateTodoModal}
-          />
-        ))}
+        {allLists?.map((list, index) => {
+          const isLastItem = index === allLists.length - 1
+
+          return (
+            <TodoSectionItem
+              key={list._id}
+              list={list}
+              ref={isLastItem ? ref : null}
+              openListDropdownId={openListDropdownId}
+              setOpenListDropdownId={setOpenListDropdownId}
+              openTodoDropdownId={openTodoDropdownId}
+              setOpenTodoDropdownId={setOpenTodoDropdownId}
+              setIsMenuOpen={setIsMenuOpen}
+              setShowCreateTodoModal={setShowCreateTodoModal}
+            />
+          )
+        })}
         {isMenuOpen && (
           <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
             <div className="z-50 flex h-[40vh] w-full flex-col gap-5 px-4">
@@ -80,7 +92,11 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
             </div>
           </SlideUpMenu>
         )}
-        {isLoading && allLists?.length > 0 && <div>Loading more...</div>}
+        {hasNextPage && (
+          <div className="flex justify-center p-4">
+            <LoadingSpinner />
+          </div>
+        )}
       </ul>
       {showEditTodoListModal && <EditTodoListModal />}
     </>

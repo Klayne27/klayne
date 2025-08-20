@@ -14,6 +14,8 @@ import {
 import { useNavigate, useLocation, useParams } from "react-router-dom"
 import { useUpdateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
+import { useRef } from "react"
+import { showAppToast } from "../utils/showAppToast"
 
 const EditTodoListPage = () => {
   const navigate = useNavigate()
@@ -26,6 +28,8 @@ const EditTodoListPage = () => {
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red") // Populate form with existing data when the component loads
+
+  const nameInputRef = useRef(null)
 
   useEffect(() => {
     if (list) {
@@ -81,6 +85,11 @@ const EditTodoListPage = () => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    if (!name) {
+      showAppToast("Section name can't be empty")
+      return
+    }
     const listData = { name, isPublic, icon, color }
 
     updateTodoList(
@@ -92,6 +101,10 @@ const EditTodoListPage = () => {
       },
     )
   } // Fallback UI for when list data is not available (e.g., direct navigation/refresh)
+
+  useEffect(() => {
+    nameInputRef.current.focus()
+  }, [])
 
   if (!list) {
     return (
@@ -108,17 +121,18 @@ const EditTodoListPage = () => {
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
-            <label className="label">
-              <span className="label-text">List Name</span>
+            <label className="">
+              <span className="text-xs text-slate-500">Section Name</span>
             </label>
+
             <input
+              ref={nameInputRef}
               type="text"
               placeholder="e.g., Study Tasks"
-              className="input input-bordered w-full"
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}
-              required
             />
           </div>
           {/* Icon Picker */}
