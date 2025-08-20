@@ -24,6 +24,7 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
 const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
   const [formData, setFormData] = useState({
     title: "",
+    description : "",
     dueDate: null, // Change initial state to null for Date object
     priority: "low",
   })
@@ -33,24 +34,17 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
   const priorityMenuRef = useRef(null)
   const titleInputRef = useRef(null)
 
-  // Create a ref to store the initial state for comparison
-  const initialData = useRef(null)
-
   useEffect(() => {
     if (todo) {
       // Create a Date object from the due date string
       const formattedDueDate = todo.dueDate ? new Date(todo.dueDate) : null
       const newFormData = {
         title: todo.title || "",
+        description: todo.description || "",
         dueDate: formattedDueDate,
         priority: todo.priority || "low",
       }
       setFormData(newFormData)
-      // Store the initial data for comparison
-      initialData.current = {
-        ...newFormData,
-        dueDate: formattedDueDate ? formattedDueDate.toISOString().split("T")[0] : "",
-      }
     }
   }, [todo])
 
@@ -74,6 +68,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
       id: todo._id,
       todoData: {
         title: formData.title,
+        description: formData.description,
         dueDate: formData.dueDate ? formData.dueDate.toISOString() : null,
         priority: formData.priority,
       },
@@ -155,6 +150,14 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
           type="text"
           name="title"
           value={formData.title}
+          onChange={handleInputChange}
+          className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+        />
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+        <input
+          type="text"
+          name="description"
+          value={formData.description}
           onChange={handleInputChange}
           className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
         />

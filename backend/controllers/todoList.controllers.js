@@ -1,7 +1,6 @@
 import TodoList from "../models/todoList.model.js";
 import Todo from "../models/todo.model.js";
 import User from "../models/user.model.js";
-import TodoActivity from "../models/todoActivity.model.js";
 // import mongoose from "mongoose";
 
 const getPaginationParams = (req) => {
@@ -10,29 +9,6 @@ const getPaginationParams = (req) => {
   const skip = (page - 1) * limit;
   return { page, limit, skip };
 };
-
-// const getTodosForListPipeline = [
-//   {
-//     // The $lookup stage to "join" with the 'todos' collection
-//     $lookup: {
-//       from: "todos", // The name of the collection to join with
-//       localField: "_id", // Field from the input documents (TodoList)
-//       foreignField: "todoList", // Field from the documents of the "from" collection (Todo)
-//       as: "todos", // The name of the new array field to add to the TodoList documents
-//     },
-//   },
-//   {
-//     // Optional: You might want to sort the todos within each list
-//     $addFields: {
-//       todos: {
-//         $sortArray: {
-//           input: "$todos",
-//           sortBy: { createdAt: -1 }, // Sort todos by newest first
-//         },
-//       },
-//     },
-//   },
-// ];
 
 
 

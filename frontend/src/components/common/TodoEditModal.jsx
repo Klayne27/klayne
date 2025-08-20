@@ -20,6 +20,7 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
 const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
   const [formData, setFormData] = useState({
     title: "",
+    description: "",
     dueDate: "",
     priority: "medium",
   })
@@ -31,6 +32,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
     if (todo) {
       setFormData({
         title: todo.title || "",
+        description: todo.description || "",
         dueDate: todo.dueDate ? new Date(todo.dueDate).toISOString().split("T")[0] : "",
         priority: todo.priority || "medium",
       })
@@ -48,6 +50,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
       id: todo._id,
       todoData: {
         title: formData.title,
+        description: formData.description,
         dueDate: formData.dueDate,
         priority: formData.priority,
       },
@@ -57,6 +60,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
 
     setFormData({
       title:"",
+      description: "",
       dueDate: null,
       priority: "low",
     })
@@ -118,6 +122,14 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
               type="text"
               name="title"
               value={formData.title}
+              onChange={handleInputChange}
+              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+            />
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+            <input
+              type="text"
+              name="description"
+              value={formData.description}
               onChange={handleInputChange}
               className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
             />

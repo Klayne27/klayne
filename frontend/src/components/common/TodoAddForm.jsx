@@ -119,6 +119,14 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             onChange={(e) => setTitle(e.target.value)}
             className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
           />
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+          <input
+            type="text"
+            value={description}
+            placeholder="e.g., Finish Chapter 1"
+            onChange={(e) => setDescription(e.target.value)}
+            className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+          />
           {dueDate && (
             <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
               <span className="font-semibold">Due:</span>

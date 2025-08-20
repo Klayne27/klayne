@@ -98,16 +98,17 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
             : "translate-x-0 opacity-100"
         } ${isMobile ? "cursor-pointer" : ""} `}
       >
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 py-1">
           <button
             onClick={(e) => handleComplete(todo._id, e)}
-            className={`${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
+            className={`flex-shrink-0 ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
             disabled={completingTodoId === todo._id}
           >
             {isVisuallyCompleted && <FaCheckCircle className="size-5" />}
           </button>
-          <div className="flex flex-col">
-            <span className="text-base">{todo.title}</span>
+          <div className="flex flex-col gap-[2px]">
+            <span className="text-base leading-[16px]">{todo.title}</span>
+            <span className=" text-xs text-slate-500 break-words min-w-0">{todo.description}</span>
             {formattedDueDate && (
               <span className="flex items-center gap-1 text-xs text-slate-500">
                 <span className="text-[12px]">
@@ -177,7 +178,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       {/* Mobile Slide Up Menu with Edit Form */}
       {isMobile && isMenuOpen && (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          <div className="z-50 flex h-[35vh] w-full flex-col gap-5 px-4">
+          <div className="z-50 flex h-[40vh] w-full flex-col gap-5 px-4">
             <TodoEditForm
               todo={todo}
               onClose={handleCloseMenu}

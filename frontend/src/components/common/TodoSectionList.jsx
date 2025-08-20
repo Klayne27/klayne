@@ -40,6 +40,8 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
 
+  console.log(allLists);
+
   if (isLoading && allLists?.length === 0)
     return (
       <div className="flex h-screen items-center justify-center text-primary">
@@ -76,7 +78,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
         ))}
         {isMenuOpen && (
           <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-            <div className="z-50 flex h-[35vh] w-full flex-col gap-5 px-4">
+            <div className="z-50 flex h-[40vh] w-full flex-col gap-5 px-4">
               <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsMenuOpen} />
             </div>
           </SlideUpMenu>
