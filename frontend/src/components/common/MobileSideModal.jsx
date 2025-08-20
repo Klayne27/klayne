@@ -249,7 +249,7 @@ function MobileSideModal({
                 onClick={() => {
                   if (pathname === "/todos") return
                   navigate("/todos")
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-todos"

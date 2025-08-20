@@ -23,12 +23,7 @@ const TodoPageLayout = () => {
 
   const navItems = [
     { tab: "myLists", label: "My Lists", icon: <FaListUl className="size-5" />, path: "/todos" },
-    {
-      tab: "pomodoro",
-      label: "Pomodoro",
-      icon: <IoIosTimer className="size-5" />,
-      path: "/pomodoro",
-    },
+
     {
       tab: "followingLists",
       label: "Following",
@@ -40,6 +35,12 @@ const TodoPageLayout = () => {
       label: "Public",
       icon: <FaGlobe className="size-5" />,
       path: "/todos/public",
+    },
+    {
+      tab: "pomodoro",
+      label: "Pomodoro",
+      icon: <IoIosTimer className="size-5" />,
+      path: "/pomodoro",
     },
   ]
 

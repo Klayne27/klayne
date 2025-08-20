@@ -16,8 +16,8 @@ const PublicListsPage = () => {
 
   return (
     <>
-      <TodoPagesHeader pageTitle={"Public Lists"} />
-
+        <TodoPagesHeader pageTitle={"Public Lists"} />
+        
       <TodoSectionList
         todoLists={publicLists}
         isLoading={publicLoading}

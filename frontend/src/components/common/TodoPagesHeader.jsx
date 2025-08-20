@@ -52,7 +52,7 @@ function TodoPagesHeader({ pageTitle }) {
   }
 
   return (
-    <>
+    <div className="sticky top-0 z-50 bg-base-100">
       <div className="flex items-center justify-between gap-4 px-1 py-1 pb-2">
         <div className="flex items-center gap-4">
           <button
@@ -101,30 +101,32 @@ function TodoPagesHeader({ pageTitle }) {
           )}
         </div>
       </div>
-{!pathname.startsWith("/todos/") && (
-  <div className="flex w-full items-center gap-4 px-4 pb-6">
-    <p className="flex items-center text-sm font-semibold">
-      Level {pomodoroLevel}
-    </p>
-    <div className="relative w-full">
-      <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
-        <div
-          className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
-          style={{ width: `${Math.min(xpProgress, 100)}%` }}
-        ></div>
-      </div>
-      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-white/90">
-        {pomodoroXP} / {xpNeededForNextLevel} XP
-      </span>
-      {showXpGain && (
-        <div className="absolute right-0 top-1/2 -translate-y-1/2 animate-fade-out text-sm font-bold text-primary">
-          +{xpGainedAmount} XP
+      {!pathname.startsWith("/todos/") && (
+        <div className="flex w-full items-center gap-2 pb-6 pl-2 pr-4">
+          <span className="inline-flex items-center rounded-md bg-secondary px-2 py-[1px]">
+            <p className="flex items-center gap-1 text-xs font-semibold">
+              Level <span>{pomodoroLevel}</span>
+            </p>
+          </span>
+          <div className="relative w-full">
+            <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
+                style={{ width: `${Math.min(xpProgress, 100)}%` }}
+              ></div>
+            </div>
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-white/90">
+              {pomodoroXP} / {xpNeededForNextLevel} XP
+            </span>
+            {showXpGain && (
+              <div className="absolute right-3 -top-5  animate-fade-out text-sm font-bold text-primary">
+                +{xpGainedAmount} XP
+              </div>
+            )}
+          </div>
         </div>
       )}
     </div>
-  </div>
-)}
-    </>
   )
 }
 
