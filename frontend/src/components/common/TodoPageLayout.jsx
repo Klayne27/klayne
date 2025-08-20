@@ -30,12 +30,6 @@ const TodoPageLayout = () => {
       path: "/pomodoro",
     },
     {
-      tab: "home",
-      label: "Home",
-      icon: <PiHouseThin className="size-5" strokeWidth={6} />,
-      path: "/",
-    },
-    {
       tab: "followingLists",
       label: "Following",
       icon: <FaUserGroup className="size-5" />,
