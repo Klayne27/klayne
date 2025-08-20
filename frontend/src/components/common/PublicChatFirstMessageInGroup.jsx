@@ -8,6 +8,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
   const isSenderAdmin = message.sender.isAdmin
   const isSenderVerified = message.sender.isVerified
   const isSenderGoldVerified = message.sender.isGoldVerified
+  
   return (
     <>
       {message.isFirstInGroup && (
@@ -45,9 +46,9 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
                 <FaBan size={15} className="mr-1 fill-red-500" />
               </span>
             )}
-            {renderHourBadge(message.sender.badges)}
-            {renderSessionBadge(message.sender.badges)}
-            {renderStreakBadge(message.sender.badges)}
+            {!isSentByCurrentUser && renderHourBadge(message.sender.badges)}
+            {!isSentByCurrentUser && renderSessionBadge(message.sender.badges)}
+            {!isSentByCurrentUser && renderStreakBadge(message.sender.badges)}
           </span>
           <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>
         </div>

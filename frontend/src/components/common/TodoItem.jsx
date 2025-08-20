@@ -101,7 +101,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
         <div className="flex items-center gap-2">
           <button
             onClick={(e) => handleComplete(todo._id, e)}
-            className={`${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} size-5`}
+            className={`${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
             disabled={completingTodoId === todo._id}
           >
             {isVisuallyCompleted && <FaCheckCircle className="size-5" />}
@@ -109,12 +109,17 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           <div className="flex flex-col">
             <span className="text-base">{todo.title}</span>
             {formattedDueDate && (
-              <span className="text-xs flex gap-1 items-center text-slate-500"><span className="text-[16px]"><FaCalendar /> </span> {formattedDueDate}</span>
+              <span className="flex items-center gap-1 text-xs text-slate-500">
+                <span className="text-[12px]">
+                  <FaCalendar />{" "}
+                </span>{" "}
+                {formattedDueDate}
+              </span>
             )}
           </div>
         </div>
 
-        {(
+        {
           <div className="flex items-center gap-2">
             {!isMobile && (
               <button
@@ -127,7 +132,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
               </button>
             )}
           </div>
-        )}
+        }
       </li>
 
       {/* Desktop Dropdown Menu - Rendered via Portal */}

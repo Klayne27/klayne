@@ -1,4 +1,3 @@
-
 export const getPriorityColor = (priority) => {
   switch (priority) {
     case "urgent":
@@ -9,7 +8,7 @@ export const getPriorityColor = (priority) => {
       return "border-yellow-400 bg-yellow-500/30 rounded-full border"
     case "low":
     default:
-      return "border-slate-400 rounded-full border"
+      return "rounded-full border border-slate-400"
   }
 }
 
@@ -55,4 +54,3 @@ export const getTextColor = (priority) => {
       return "text-slate-400"
   }
 }
-
