@@ -7,6 +7,7 @@ import { showAppToast } from "../../utils/showAppToast"
 import DatePicker from "react-datepicker"
 import { forwardRef } from "react"
 import { IoClose } from "react-icons/io5"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 // A custom button component for the date picker.
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
@@ -21,8 +22,11 @@ const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   </button>
 ))
 
-function TodoAddForm({ isLoading, setIsMenuOpen }) {
+function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
+
+
+  useLockBodyScroll(isMenuOpen)
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")

@@ -88,7 +88,11 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
         {isMenuOpen && (
           <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
             <div className="z-50 flex h-auto max-h-[60vh] w-full flex-col gap-5 overflow-y-auto px-4">
-              <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsMenuOpen} />
+              <TodoAddForm
+                isLoading={isLoading}
+                setIsMenuOpen={setIsMenuOpen}
+                isOpen={isMenuOpen}
+              />
             </div>
           </SlideUpMenu>
         )}
