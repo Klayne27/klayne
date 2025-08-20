@@ -218,17 +218,9 @@ export const deleteTodoList = async (req, res) => {
       return res.status(403).json({ error: "Access denied" });
     } // Log the activity before deletion
 
-    await Todo.deleteMany({ todoList: req.params.id }); // Then delete the list itself
+    await Todo.deleteMany({ todoList: req.params.id, completed: false });
 
     await todoList.deleteOne();
-
-    // const activity = new TodoActivity({
-    //   user: req.user._id,
-    //   action: "deleted_list",
-    //   listId: todoList._id,
-    //   listName: todoList.name,
-    // });
-    // await activity.save(); // Delete the associated todos first
 
     res.status(200).json({ message: "Todo list and its todos deleted successfully" });
   } catch (error) {
@@ -269,4 +261,3 @@ export const likeUnlikeTodoList = async (req, res) => {
     console.log("Error in likeUnlikeTodoList controller: ", error);
   }
 };
-

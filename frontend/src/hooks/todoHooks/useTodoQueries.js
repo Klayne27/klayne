@@ -1,4 +1,4 @@
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useQuery, useMutation, useQueryClient, useInfiniteQuery } from "@tanstack/react-query"
 
 import toast from "react-hot-toast"
 import {
@@ -20,17 +20,41 @@ export const useGetUserTodos = () => {
   })
 }
 
+export const useGetPublicTodos = () => {
+  return useQuery({
+    queryKey: ["publicTodos"],
+    queryFn: getPublicTodosApi,
+    retry: false,
+  })
+}
+
 export const useGetCompletedTodos = () => {
   const {
     data: completedTodos,
     isLoading: completedLoading,
     isError: completedError,
-  } = useQuery({
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
     queryKey: ["completedTodos"],
     queryFn: getCompletedTodosApi,
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.hasNextPage) {
+        return allPages.length
+      }
+      return undefined
+    },
   })
 
-  return { completedTodos, completedLoading, completedError }
+  return {
+    completedTodos,
+    completedLoading,
+    completedError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  }
 }
 
 export const useCompleteTodo = () => {
@@ -254,7 +278,6 @@ export const useDeleteTodo = () => {
       const previousTodos = queryClient.getQueryData(["todos"])
       const previousTodoLists = queryClient.getQueryData(["todoLists"])
 
-
       queryClient.setQueryData(["todos"], (oldData) => {
         const pages = oldData?.pages || []
         return {
@@ -282,7 +305,6 @@ export const useDeleteTodo = () => {
       })
 
       // Update the 'completedTodos' query if it exists
-
 
       // Return a context object with the snapshots for potential rollback.
       return { previousTodos, previousTodoLists }
@@ -313,14 +335,6 @@ export const useGetFollowingTodos = () => {
   return useQuery({
     queryKey: ["followingTodos"],
     queryFn: getFollowingTodosApi,
-    retry: false,
-  })
-}
-
-export const useGetPublicTodos = () => {
-  return useQuery({
-    queryKey: ["publicTodos"],
-    queryFn: getPublicTodosApi,
     retry: false,
   })
 }

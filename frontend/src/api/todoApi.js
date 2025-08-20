@@ -68,8 +68,8 @@ export const deleteTodoApi = async (todoId) => {
   return data
 }
 
-export const getCompletedTodosApi = async () => {
-  const res = await fetch(`${API_URL}/completed`)
+export const getCompletedTodosApi = async ({ pageParam = 0 }) => {
+  const res = await fetch(`${API_URL}/completed?page=${pageParam}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch completed todos")
   return data

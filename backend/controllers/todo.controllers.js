@@ -30,7 +30,7 @@ export const createTodo = async (req, res) => {
       action: "created_todo",
       todoId: newTodo._id,
       todoTitle: newTodo.title,
-      todoPriority: newTodo.priority
+      todoPriority: newTodo.priority,
     });
     await activity.save();
 
@@ -126,7 +126,7 @@ export const updateTodo = async (req, res) => {
     if (todo.user.toString() !== req.user._id.toString()) {
       return res.status(403).json({ error: "Access denied" });
     }
-    
+
     todo.title = title !== undefined ? title : todo.title;
     todo.description = description !== undefined ? description : todo.description;
     todo.priority = priority !== undefined ? priority : todo.priority;
@@ -232,6 +232,10 @@ export const deleteTodo = async (req, res) => {
 
 export const getCompletedTodos = async (req, res) => {
   try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 30;
+    const skip = page * limit;
+
     const completedTodos = await Todo.find({
       user: req.user._id,
       completed: true,
@@ -241,9 +245,13 @@ export const getCompletedTodos = async (req, res) => {
         select: "username",
         populate: { path: "profileImg", select: "imageUrl" },
       })
+      .skip(skip)
+      .limit(limit)
       .sort({ completedAt: -1 });
 
-    res.status(200).json(completedTodos);
+    const hasNextPage = skip + completedTodos.length === limit;
+
+    res.status(200).json({ completedTodos, hasNextPage });
   } catch (error) {
     console.error("Error in getCompletedTodos:", error); // Log the full error
     res.status(500).json({ error: "Failed to fetch completed todos" });
