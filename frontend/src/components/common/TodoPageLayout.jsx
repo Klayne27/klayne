@@ -51,7 +51,7 @@ const TodoPageLayout = () => {
   const shouldHideNavbar = isCreateSectionPage || isEditSectionPage
 
   return (
-    <div className="container relative mx-auto flex h-screen min-h-screen max-w-2xl flex-col border-slate-600 bg-base-100 md:border-x">
+    <div className="container relative mx-auto flex h-screen min-h-screen max-w-2xl flex-col border-accent bg-base-100 md:border-x">
       <div className={`flex flex-1 flex-col overflow-y-auto ${shouldHideNavbar ? "" : "pb-36"}`}>
         <Outlet />
       </div>

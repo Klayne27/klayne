@@ -209,7 +209,7 @@ const TodoSectionItem = forwardRef(
             </div>
           )}
 
-          <div className="border-b border-slate-600 px-3 py-1">
+          <div className="border-b border-accent px-3 py-1">
             <div className="flex justify-between">
               <div className="flex w-full items-center gap-2" onClick={handleToggleTodoList}>
                 <span className="flex items-center gap-2 font-bold">

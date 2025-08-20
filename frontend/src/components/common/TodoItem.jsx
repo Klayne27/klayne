@@ -109,7 +109,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     <>
       <li
         onClick={isMobile ? handleMenuToggle : null}
-        className={`relative flex items-center justify-between border-b border-slate-600 bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${
+        className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${
           completingTodoId === todo._id
             ? "-translate-x-full opacity-0"
             : "translate-x-0 opacity-100"
