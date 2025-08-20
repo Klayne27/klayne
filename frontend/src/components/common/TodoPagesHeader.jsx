@@ -101,25 +101,29 @@ function TodoPagesHeader({ pageTitle }) {
           )}
         </div>
       </div>
-      {!pathname.startsWith("/todos/") && (
-        <div className="w-full px-4 pb-6">
-          <div className="relative h-4 overflow-hidden rounded-full bg-gray-700">
-            <div
-              className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
-              style={{ width: `${Math.min(xpProgress, 100)}%` }}
-            >
-              <span className="absolute inset-0 flex items-center justify-center font-mono text-xs font-semibold text-white/90">
-                {pomodoroXP} / {xpNeededForNextLevel} XP
-              </span>
-            </div>
-          </div>
-          {showXpGain && (
-            <div className="absolute right-6 top-6 animate-fade-out text-sm font-bold text-primary">
-              +{xpGainedAmount} XP
-            </div>
-          )}
+{!pathname.startsWith("/todos/") && (
+  <div className="flex w-full items-center gap-4 px-4 pb-6">
+    <p className="flex items-center text-sm font-semibold">
+      Level {pomodoroLevel}
+    </p>
+    <div className="relative w-full">
+      <div className="h-4 w-full overflow-hidden rounded-full bg-gray-700">
+        <div
+          className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
+          style={{ width: `${Math.min(xpProgress, 100)}%` }}
+        ></div>
+      </div>
+      <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-white/90">
+        {pomodoroXP} / {xpNeededForNextLevel} XP
+      </span>
+      {showXpGain && (
+        <div className="absolute right-0 top-1/2 -translate-y-1/2 animate-fade-out text-sm font-bold text-primary">
+          +{xpGainedAmount} XP
         </div>
       )}
+    </div>
+  </div>
+)}
     </>
   )
 }

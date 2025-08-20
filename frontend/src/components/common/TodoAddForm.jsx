@@ -26,8 +26,6 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
 
 
-  useLockBodyScroll(isMenuOpen)
-
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
