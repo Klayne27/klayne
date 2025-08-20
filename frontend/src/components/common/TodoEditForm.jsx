@@ -200,6 +200,10 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
             onChange={handleDateChange}
             dateFormat="MMM d, yyyy"
             customInput={<CustomDatePickerInput />}
+            popperProps={{
+              strategy: "fixed",
+            }}
+            popperClassName="react-datepicker-popper-custom"
           />
         </div>
         {isPriorityMenuOpen && (

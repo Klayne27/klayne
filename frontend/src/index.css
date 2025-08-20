@@ -162,3 +162,9 @@ body {
   z-index: 40;
   background-color: rgba(0, 0, 0, 0.5);
 }
+
+.react-datepicker-popper-custom {
+  /* Use a z-index that is guaranteed to be on top.
+     The SlideUpMenu is z-[1000], so anything higher will work. */
+  z-index: 10000 !important;
+}

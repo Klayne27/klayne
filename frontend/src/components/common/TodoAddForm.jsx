@@ -121,7 +121,9 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
             onChange={(e) => setTitle(e.target.value)}
             className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
           />
-          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+          <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+            Description
+          </label>
           <input
             type="text"
             value={description}
@@ -162,12 +164,17 @@ function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
             <FaFlag className={getTextColor(priority)} />{" "}
             <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
           </button>
-          <div>
+          <div className="z-[1001]">
             <DatePicker
               selected={dueDate}
               onChange={(date) => setDueDate(date)}
               dateFormat="MMM d, yyyy"
+              portalId="datepicker-root-portal" // This prop makes it a portal
               customInput={<CustomDatePickerInput />}
+              popperProps={{
+                strategy: "fixed",
+              }}
+              popperClassName="react-datepicker-popper-custom"
             />
           </div>
           {isPriorityMenuOpen && (

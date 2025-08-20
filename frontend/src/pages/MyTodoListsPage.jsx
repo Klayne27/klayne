@@ -20,16 +20,11 @@ const MyTodoListsPage = () => {
     fetchNextPage: myListsFetchNextPage,
   } = useGetUserTodoLists()
 
-   const [showXpGain, setShowXpGain] = useState(false)
-   const [xpGainedAmount, setXpGainedAmount] = useState(0)
-
-
   return (
     <>
       <TodoPagesHeader
         pageTitle={"My Lists"}
-        showXpGain={showXpGain}
-        xpGainedAmount={xpGainedAmount}
+
       />
 
       <TodoSectionList
