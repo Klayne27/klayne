@@ -13,6 +13,7 @@ import { FaFire, FaInfoCircle } from "react-icons/fa"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
+import { IoClose } from "react-icons/io5"
 
 function StudyLeaderboard() {
   const navigate = useNavigate()
@@ -201,10 +202,15 @@ function StudyLeaderboard() {
                 onClick={() => setIsInfoDropdownOpen(false)}
               >
                 <div
-                  className="w-72 rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
+                  className="w-96 rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the dropdown
                 >
-                  <h4 className="mb-2 text-lg font-bold">How the Monthly Leaderboard Works</h4>
+                  <div className="mb-4 flex w-full items-center justify-between border-b">
+                    <h4 className="text-lg font-bold">Monthly Leaderboard</h4>
+                    <span onClick={() => setIsInfoDropdownOpen(false)}>
+                      <IoClose size={20} className="cursor-pointer" />
+                    </span>
+                  </div>
                   <ul className="list-inside list-disc space-y-2">
                     <li>At the start of every month, all users' monthly stats will reset to 0.</li>
                     <li>
