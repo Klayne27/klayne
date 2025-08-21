@@ -1,7 +1,11 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
-import { useEndStudySession, useGetPomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
+import {
+  useEndStudySession,
+  useGetPomodoroSettings,
+  useUpdatePomodoroSettings,
+} from "../hooks/pomodoroHooks/usePomodo"
 import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
 import { CiMail, CiTrophy } from "react-icons/ci"
 import { MdLibraryBooks } from "react-icons/md"
@@ -12,7 +16,14 @@ import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../components/common/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../components/common/MilestoneModal"
-import { FaEllipsis, FaEllipsisVertical, FaForward, FaListCheck } from "react-icons/fa6"
+import {
+  FaBell,
+  FaBellSlash,
+  FaEllipsis,
+  FaEllipsisVertical,
+  FaForward,
+  FaListCheck,
+} from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
 import ConfirmationModal from "../components/ui/ConfirmationModal"
 import { LuListTodo } from "react-icons/lu"
@@ -32,6 +43,7 @@ const PomodoroPage = () => {
   const { newPostCount, unreadMessageCount, unreadPublicChatCount } = useSocket()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
+  const updateSettingsMutation = useUpdatePomodoroSettings()
   const isMobile = useIsMobile()
 
   const [timer, setTimer] = useState(0)
@@ -364,6 +376,12 @@ const PomodoroPage = () => {
     setIsLeftDropdownOpen(!isLeftDropdownOpen)
   }
 
+  const toggleMute = () => {
+    const newSettings = { ...settings, isMuted: !settings.isMuted }
+    updateSettingsMutation.mutate(newSettings)
+    showAppToast(settings.isMuted ? "Alarm unmuted" : "Alarm muted")
+  }
+
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
   let totalDuration = 25 * 60
@@ -380,6 +398,17 @@ const PomodoroPage = () => {
   const progress = totalDuration ? Math.max(timer / totalDuration, 0) : 0
   const radius = 45
   const circumference = 2 * Math.PI * radius
+
+  const now = new Date()
+  const finishTime = new Date(now.getTime() + timer * 1000) // Add remaining seconds to current time
+  // Format the finish time
+
+  const finishTimeOptions = {
+    hour: "numeric",
+    minute: "2-digit",
+    // hour12: false
+  }
+  const formattedFinishTime = finishTime.toLocaleTimeString([], finishTimeOptions)
 
   if (isSettingsLoading) {
     return (
@@ -498,13 +527,13 @@ const PomodoroPage = () => {
             </button>
             <button
               onClick={() => navigate("/todos")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:text-white md:hover:bg-slate-700/50"
+              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
             >
               <LuListTodo size={25} strokeWidth={2} />
             </button>
           </div>
         </div>
-        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 sm:p-10">
+        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
           <h1
             key={isBreak ? "break" : "study"}
             className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
@@ -513,7 +542,7 @@ const PomodoroPage = () => {
           </h1>
 
           <div
-            className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 sm:h-72 sm:w-72`}
+            className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 md:h-72 md:w-72`}
           >
             <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
               <circle
@@ -539,10 +568,18 @@ const PomodoroPage = () => {
               />
             </svg>
             <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-mono text-6xl tracking-tighter sm:text-7xl">
+              <span className="font-mono text-6xl tracking-tighter md:text-7xl">
                 {isGoalReached
                   ? "00:00"
                   : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
+              </span>
+            </div>
+            <div className="absolute inset-0 bottom-[62px] flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-[70px]">
+              <span
+                className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1"
+                onClick={toggleMute}
+              >
+                <span>{!settings.isMuted ? <FaBell /> : <FaBellSlash />}</span> {formattedFinishTime}
               </span>
             </div>
           </div>

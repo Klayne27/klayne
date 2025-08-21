@@ -6,6 +6,8 @@ import { LuSquareActivity } from "react-icons/lu"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import useXpStore from "../../store/useXpStore"
+import { RiCheckboxMultipleFill } from "react-icons/ri"
+
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -38,6 +40,12 @@ function TodoPagesHeader({ pageTitle }) {
   const handleActivityLogPageClick = (e) => {
     e.stopPropagation()
     navigate("/todos/activity-log")
+    setShowDropdown(false)
+  }
+
+  const handlePublicCompletedPageClick = e => {
+    e.stopPropagation()
+    navigate("/todos/public-completed")
     setShowDropdown(false)
   }
 
@@ -77,7 +85,16 @@ function TodoPagesHeader({ pageTitle }) {
                 className="fixed inset-0 z-10 cursor-default bg-transparent"
                 onClick={handleCloseDropdown}
               ></div>
-              <ul className="white-shadow absolute right-2 top-3 z-20 w-40 rounded-xl bg-base-100 p-2">
+              <ul className="white-shadow absolute right-2 top-3 z-20 w-48 rounded-xl bg-base-100 p-2">
+                <li>
+                  <button
+                    onClick={handlePublicCompletedPageClick}
+                    className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
+                  >
+                    <RiCheckboxMultipleFill />
+                    <span>Public Completed</span>
+                  </button>
+                </li>
                 <li>
                   <button
                     onClick={handleCompletedPageClick}
@@ -119,7 +136,7 @@ function TodoPagesHeader({ pageTitle }) {
               {pomodoroXP} / {xpNeededForNextLevel} XP
             </span>
             {showXpGain && (
-              <div className="absolute right-3 -top-5  animate-fade-out text-sm font-bold text-primary">
+              <div className="absolute -top-5 right-3 animate-fade-out text-sm font-bold text-primary">
                 +{xpGainedAmount} XP
               </div>
             )}

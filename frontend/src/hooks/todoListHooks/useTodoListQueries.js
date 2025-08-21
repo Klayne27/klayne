@@ -194,6 +194,7 @@ export const useDeleteTodoList = () => {
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
+      queryClient.invalidateQueries({queryKey: ["publicTodoLists"]})
     },
     // onSuccess: () => {
     //   showAppToast("Todo section deleted!", "success")

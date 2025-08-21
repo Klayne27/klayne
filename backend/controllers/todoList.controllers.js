@@ -63,7 +63,7 @@ export const getFollowingTodoLists = async (req, res) => {
         path: "todos",
         match: { completed: false }, // Filter for uncompleted todos
       })
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -98,7 +98,7 @@ export const getPublicTodoLists = async (req, res) => {
         path: "todos",
         match: { completed: false }, // Filter for uncompleted todos
       })
-      .sort({ createdAt: -1 })
+      .sort({ updatedAt: -1 })
       .skip(skip)
       .limit(limit);
 
@@ -219,7 +219,7 @@ export const deleteTodoList = async (req, res) => {
     } // Log the activity before deletion
 
     await Todo.deleteMany({ todoList: req.params.id, completed: false });
-
+    
     await todoList.deleteOne();
 
     res.status(200).json({ message: "Todo list and its todos deleted successfully" });

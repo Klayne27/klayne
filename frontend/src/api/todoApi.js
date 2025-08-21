@@ -74,3 +74,11 @@ export const getCompletedTodosApi = async ({ pageParam = 0 }) => {
   if (!res.ok) throw new Error(data.error || "Failed to fetch completed todos")
   return data
 }
+
+export const getPublicCompletedTodosApi = async ({ pageParam = 0 }) => {
+  const res = await fetch(`${API_URL}/public-completed?page=${pageParam}`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch public completed todos")
+
+  return data
+}

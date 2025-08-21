@@ -48,6 +48,13 @@ const todoSchema = new mongoose.Schema(
       ref: "TodoList",
       default: null,
     },
+    completedFromList: {
+      name: { type: String },
+      color: { type: String },
+      icon: { type: String },
+      category: { type: String },
+      _id: { type: mongoose.Schema.Types.ObjectId, ref: "TodoList" }, // Reference to the original list's ID
+    },
   },
   { timestamps: true }
 );

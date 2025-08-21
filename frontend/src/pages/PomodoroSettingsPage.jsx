@@ -2,6 +2,7 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom" // For the "Go Back" button
 import { useGetPomodoroSettings, useUpdatePomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
+import { showAppToast } from "../utils/showAppToast"
 
 function PomodoroSettingsPage() {
   // Hook to navigate back after saving or canceling
@@ -35,12 +36,9 @@ function PomodoroSettingsPage() {
   // Handler for form submission
   const handleSubmit = (e) => {
     e.preventDefault()
-    updateSettings(settings, {
-      onSuccess: () => {
-        // Navigate back to the previous page on successful update
-        navigate(-1)
-      },
-    })
+    updateSettings(settings)
+    navigate(-1)
+    showAppToast("Settings updated!", "success")
   }
 
   // Show a loading spinner while fetching settings

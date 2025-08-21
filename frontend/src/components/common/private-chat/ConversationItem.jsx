@@ -68,6 +68,16 @@ function ConversationItem({ conv }) {
     lastMessageContent = conv.lastMessage.text
   }
 
+    const userSelectStyle = isMobile
+      ? {
+          userSelect: "none",
+          WebkitUserSelect: "none",
+          MozUserSelect: "none",
+          msUserSelect: "none",
+          touchAction: "manipulation",
+        }
+      : {}
+
   const truncatedLastMessage =
     typeof lastMessageContent === "string" && lastMessageContent.length > 35
       ? lastMessageContent.slice(0, 35) + "..."
@@ -147,9 +157,9 @@ function ConversationItem({ conv }) {
         )}
       </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden">
+      <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 truncate">
+          <div className="flex items-center gap-1 truncate" style={userSelectStyle}>
             <span className="font-bold">{otherUser.fullName}</span>
             {otherUser.isVerified && (
               <img src="/verified2.png" className="size-[17px]" alt="Verified" />
@@ -162,7 +172,7 @@ function ConversationItem({ conv }) {
             <span className="shrink-0 text-xs text-gray-400">{formatPostDate(conv.updatedAt)}</span>
           </div>
         </div>
-        <div className="flex items-center justify-start">
+        <div className="flex items-center justify-start" style={userSelectStyle}>
           <p
             className={`truncate text-sm ${
               isLastMessageUnread ? "font-semibold" : "text-gray-400"
@@ -173,7 +183,9 @@ function ConversationItem({ conv }) {
             {lastMessageContent === "No messages yet..." ? (
               <span className="italic">{lastMessageContent}</span>
             ) : (
-              <span>{isLastMessageByOtherUser ? otherUser?.fullName : "You"}: {truncatedLastMessage}</span>
+              <span>
+                {isLastMessageByOtherUser ? otherUser?.fullName : "You"}: {truncatedLastMessage}
+              </span>
             )}
           </p>
         </div>

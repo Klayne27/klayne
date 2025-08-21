@@ -7,6 +7,7 @@ import {
   deleteTodoApi,
   getCompletedTodosApi,
   getFollowingTodosApi,
+  getPublicCompletedTodosApi,
   getPublicTodosApi,
   getUserTodosApi,
   updateTodoApi,
@@ -58,6 +59,36 @@ export const useGetCompletedTodos = () => {
     fetchNextPage,
   }
 }
+
+export const useGetPublicCompletedTodos = () => {
+  const {
+    data: publicCompletedTodos,
+    isLoading: isLoadingPublicCompletedTodos,
+    isError: publicCompletedTodosError,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+  } = useInfiniteQuery({
+    queryKey: ["publicCompletedTodos"],
+    queryFn: getPublicCompletedTodosApi,
+    getNextPageParam: (lastPage, allPages) => {
+      const hasNextPage = lastPage.hasNextPage
+      if (hasNextPage) {
+        return allPages.length
+      }
+      return undefined
+    },
+  })
+  return {
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    publicCompletedTodos,
+    isLoadingPublicCompletedTodos,
+    publicCompletedTodosError,
+  }
+}
+
 
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()
@@ -355,3 +386,4 @@ export const useGetFollowingTodos = () => {
     retry: false,
   })
 }
+

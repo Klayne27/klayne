@@ -12,12 +12,17 @@ import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
 import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
-import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
+// import PomodoroSettingsPage from "./pages/PomodoroSettingsPage"
 import TodoPageLayout from "./components/common/TodoPageLayout"
-import CreateTodoListPage from "./pages/CreateTodoListPage"
-import EditTodoListPage from "./pages/EditTodoListPage"
+// import CreateTodoListPage from "./pages/CreateTodoListPage"
+// import EditTodoListPage from "./pages/EditTodoListPage"
+// import PublicCompletedTodosPage from "./pages/PublicCompletedTodosPage"
 // import TodoActivityLogPage from "./pages/TodoActivityLogPage"
 
+const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
+const EditTodoListPage =  lazy(() => import("./pages/EditTodoListPage"))
+const CreateTodoListPage = lazy(() => import("./pages/CreateTodoListPage"))
+const PomodoroSettingsPage = lazy(() => import("./pages/PomodoroSettingsPage"))
 const TodoActivityLogPage = lazy(() => import("./pages/TodoActivityLogPage"))
 const MyTodoListsPage = lazy(() => import("./pages/MyTodoListsPage"))
 const FollowingListsPage = lazy(() => import("./pages/FollowingListsPage"))
@@ -184,6 +189,7 @@ function App() {
                       <Route path="following" element={<FollowingListsPage />} />
                       <Route path="public" element={<PublicListsPage />} />
                       <Route path="completed" element={<CompletedTodosPage />} />
+                      <Route path="public-completed" element={<PublicCompletedTodosPage />} />
                       <Route path="activity-log" element={<TodoActivityLogPage />} />
                       <Route path="create-todo-section" element={<CreateTodoListPage />} />
                       <Route path="edit-todo-section/:id" element={<EditTodoListPage />} />

@@ -4,6 +4,22 @@ import TodoActivity from "../models/todoActivity.model.js";
 import TodoList from "../models/todoList.model.js";
 import User from "../models/user.model.js";
 
+// utils/activity.utils.js
+const buildListMeta = (listDoc) => {
+  if (!listDoc) return { listId: null, todoList: null, listSnapshot: null };
+
+  return {
+    listId: listDoc._id,
+    todoList: listDoc._id,
+    listSnapshot: {
+      _id: listDoc._id,
+      name: listDoc.name,
+      color: listDoc.color,
+      icon: listDoc.icon,
+    },
+  };
+};
+
 const xpForLevel = (level) => {
   if (level <= 1) {
     return 500;
@@ -39,6 +55,16 @@ export const createTodo = async (req, res) => {
       todoId: newTodo._id,
       todoTitle: newTodo.title,
       todoPriority: newTodo.priority,
+
+      listId: parentList._id,
+      todoList: parentList._id,
+
+      listSnapshot: {
+        _id: parentList._id,
+        name: parentList.name,
+        color: parentList.color,
+        icon: parentList.icon,
+      },
     });
     await activity.save();
 
@@ -127,7 +153,7 @@ export const getPublicTodos = async (req, res) => {
 export const updateTodo = async (req, res) => {
   try {
     const { title, description, priority, category, dueDate, isPublic } = req.body;
-    const todo = await Todo.findById(req.params.id);
+    const todo = await Todo.findById(req.params.id).populate("todoList");
     if (!todo) {
       return res.status(404).json({ error: "Todo not found" });
     }
@@ -150,6 +176,7 @@ export const updateTodo = async (req, res) => {
       todoId: todo._id,
       todoTitle: todo.title,
       todoPriority: todo.priority,
+      ...buildListMeta(todo.todoList),
     });
     await activity.save();
 
@@ -173,6 +200,20 @@ export const completeTodo = async (req, res) => {
     }
     todo.completed = true;
     todo.completedAt = new Date();
+
+    if (todo.todoList && todo.todoList.isPublic) {
+      todo.isPublic = true;
+    }
+
+    if (todo.todoList) {
+      todo.completedFromList = {
+        _id: todo.todoList._id,
+        name: todo.todoList.name,
+        color: todo.todoList.color,
+        icon: todo.todoList.icon,
+      };
+    }
+
     await todo.save();
 
     const activity = new TodoActivity({
@@ -181,6 +222,7 @@ export const completeTodo = async (req, res) => {
       todoId: todo._id,
       todoTitle: todo.title,
       todoPriority: todo.priority,
+      ...buildListMeta(todo.todoList),
     });
     await activity.save();
 
@@ -202,14 +244,13 @@ export const completeTodo = async (req, res) => {
         urgent: 200,
       };
 
-      let xpToAdd = xpRewards[todo.priority] || 25
+      let xpToAdd = xpRewards[todo.priority] || 25;
 
-      const parentTodoList = await TodoList.findById(todo.todoList)
+      const parentTodoList = await TodoList.findById(todo.todoList);
       if (parentTodoList && parentTodoList.isPublic) {
-        xpToAdd *= 2
+        xpToAdd *= 2;
       }
 
-      
       user.pomodoroXP += xpToAdd;
 
       let levelsGained = [];
@@ -252,7 +293,7 @@ export const completeTodo = async (req, res) => {
 
 export const deleteTodo = async (req, res) => {
   try {
-    const todo = await Todo.findById(req.params.id);
+    const todo = await Todo.findById(req.params.id).populate("todoList");
     if (!todo) {
       return res.status(404).json({ error: "Todo not found" });
     }
@@ -270,6 +311,7 @@ export const deleteTodo = async (req, res) => {
       todoId: todo._id,
       todoTitle: todo.title,
       todoPriority: todo.priority,
+      ...buildListMeta(todo.todoList),
     });
     await activity.save();
 
@@ -294,7 +336,7 @@ export const getCompletedTodos = async (req, res) => {
     const limit = 30;
     const skip = page * limit;
 
-    const completedTodos = await Todo.find({
+    const completedTodosDocs = await Todo.find({
       user: req.user._id,
       completed: true,
     })
@@ -303,9 +345,16 @@ export const getCompletedTodos = async (req, res) => {
         select: "username",
         populate: { path: "profileImg", select: "imageUrl" },
       })
+      .populate({ path: "todoList", select: "name color icon" })
       .skip(skip)
       .limit(limit)
-      .sort({ completedAt: -1 });
+      .sort({ completedAt: -1 })
+      .lean();
+
+    const completedTodos = completedTodosDocs.map((todo) => ({
+      ...todo,
+      listMeta: todo.todoList || todo.completedFromList || null,
+    }));
 
     const hasNextPage = skip + completedTodos.length === limit;
 
@@ -313,5 +362,45 @@ export const getCompletedTodos = async (req, res) => {
   } catch (error) {
     console.error("Error in getCompletedTodos:", error); // Log the full error
     res.status(500).json({ error: "Failed to fetch completed todos" });
+  }
+};
+
+export const getPublicCompletedTodos = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 30;
+    const skip = page * limit;
+
+    const publicCompletedTodosDocs = await Todo.find({
+      isPublic: true,
+      completed: true,
+    })
+      .populate({
+        path: "user",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({ path: "todoList", select: "name icon color" })
+      .sort({ compeletedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .lean(); // so we can mutate results
+
+    const publicCompletedTodos = publicCompletedTodosDocs.map((todo) => ({
+      ...todo,
+      listMeta: todo.todoList || todo.completedFromList || null,
+    }));
+
+    const totalCount = await Todo.countDocuments({ isPublic: true, completed: true });
+    const hasNextPage = skip + publicCompletedTodos.length < totalCount;
+
+    res.status(200).json({
+      publicCompletedTodos,
+      hasNextPage,
+      totalCount: totalCount,
+    });
+  } catch (error) {
+    console.error("Error in getPublicCompletedTodos:", error);
+    res.status(500).json({ error: "Failed to fetch public completed todos" });
   }
 };

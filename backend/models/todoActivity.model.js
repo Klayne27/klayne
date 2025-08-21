@@ -27,20 +27,22 @@ const TodoActivitySchema = new mongoose.Schema(
     todoTitle: {
       type: String,
     },
-    todoPriority:{
+    todoPriority: {
       type: String,
-      ref: "Todo",
     },
     listId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "TodoList",
     },
-    listName: {
-      type: String,
+    todoList: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "TodoList",
+      default: null,
     },
-    timestamp: {
-      type: Date,
-      default: Date.now,
+    listSnapshot: {
+      name: String,
+      color: String,
+      icon: String,
     },
   },
   { timestamps: true }

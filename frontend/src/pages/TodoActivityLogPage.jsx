@@ -31,7 +31,7 @@ const TodoActivityLogPage = () => {
 
   return (
     <>
-      <TodoPagesHeader pageTitle={"Activiy Log"} />
+      <TodoPagesHeader pageTitle={"Activity Log"} />
 
       <ActivityLogList
         todoActivities={todoActivities}

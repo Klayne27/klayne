@@ -29,7 +29,7 @@ export const useUpdatePomodoroSettings = () => {
   return useMutation({
     mutationFn: updatePomodoroSettings,
     onSuccess: () => {
-      showAppToast("Settings updated!", "success")
+      // showAppToast("Settings updated!", "success")
       queryClient.invalidateQueries({ queryKey: ["pomodoroSettings"] })
     },
     onError: (error) => {

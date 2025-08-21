@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { useUpdatePomodoroSettings } from "../../hooks/pomodoroHooks/usePomodo"
+import { showAppToast } from "../../utils/showAppToast"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   const [settings, setSettings] = useState(initialSettings)
@@ -19,9 +20,9 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    updateSettingsMutation.mutate(settings, {
-      onSuccess: () => onClose(),
-    })
+    updateSettingsMutation.mutate(settings)
+    onClose()
+    showAppToast("Settings updated!", "success")
   }
 
   if (!isOpen) return null
