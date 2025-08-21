@@ -1,3 +1,4 @@
+import MonthlyWinners from "../models/monthlyWinners.model.js";
 import User from "../models/user.model.js";
 
 // Helper function to reset monthly stats if needed

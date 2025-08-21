@@ -1,6 +1,8 @@
 import { Link, useNavigate } from "react-router-dom"
 import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/usePomodo"
-import { FaArrowLeft, FaClock, FaFire } from "react-icons/fa6"
+import { FaArrowLeft, FaClock } from "react-icons/fa6"
+import { FaFire } from "react-icons/fa"
+
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
@@ -22,96 +24,93 @@ const StudyActivityPage = () => {
   const [page, setPage] = useState(1)
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
 
-  console.log(activityFeed);
-
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage)
     }
   }
 
-const renderPaginationButtons = () => {
-  const buttons = []
-  const maxButtons = 5
+  const renderPaginationButtons = () => {
+    const buttons = []
+    const maxButtons = 5
 
-  // Show the first page button if totalPages > 1
-  if (totalPages > 1) {
-    buttons.push(
-      <button
-        key={1}
-        className={`btn join-item ${page === 1 ? "btn-active" : ""}`}
-        onClick={() => handlePageChange(1)}
-      >
-        1
-      </button>,
-    )
-  }
-
-  // Add "..." if we're not near the beginning
-  if (page > 3 && totalPages > maxButtons) {
-    buttons.push(
-      <button key="dots-start" className="btn join-item pointer-events-none">
-        ...
-      </button>,
-    )
-  }
-
-
-  // Determine the range of pages to show
-  let startPage = Math.max(2, page - 1)
-  let endPage = Math.min(totalPages - 1, page + 1)
-
-  // If we have less than maxButtons, expand the range
-  const visibleButtons = endPage - startPage + 1
-  if (visibleButtons < maxButtons - 2) {
-    if (startPage === 2) {
-      endPage = Math.min(totalPages - 1, endPage + (maxButtons - 2 - visibleButtons))
-    } else if (endPage === totalPages - 1) {
-      startPage = Math.max(2, startPage - (maxButtons - 2 - visibleButtons))
+    // Show the first page button if totalPages > 1
+    if (totalPages > 1) {
+      buttons.push(
+        <button
+          key={1}
+          className={`btn join-item ${page === 1 ? "btn-active" : ""}`}
+          onClick={() => handlePageChange(1)}
+        >
+          1
+        </button>,
+      )
     }
-  }
 
-  for (let i = startPage; i <= endPage; i++) {
-    buttons.push(
-      <button
-        key={i}
-        className={`btn join-item ${page === i ? "btn-active" : ""}`}
-        onClick={() => handlePageChange(i)}
-      >
-        {i}
-      </button>,
-    )
-  }
+    // Add "..." if we're not near the beginning
+    if (page > 3 && totalPages > maxButtons) {
+      buttons.push(
+        <button key="dots-start" className="btn join-item pointer-events-none">
+          ...
+        </button>,
+      )
+    }
 
-  // Add "..." if we're not near the end
-  if (page < totalPages - 2 && totalPages > maxButtons) {
-    buttons.push(
-      <button key="dots-end" className="btn join-item pointer-events-none">
-        ...
-      </button>,
-    )
-  }
+    // Determine the range of pages to show
+    let startPage = Math.max(2, page - 1)
+    let endPage = Math.min(totalPages - 1, page + 1)
 
-  // Show the last page button if there are more than `maxButtons`
-  if (
-    totalPages > 1 &&
-    totalPages !== 1 &&
-    totalPages > maxButtons - 2 &&
-    page < totalPages - Math.floor(maxButtons / 2)
-  ) {
-    buttons.push(
-      <button
-        key={totalPages}
-        className={`btn join-item ${page === totalPages ? "btn-active" : ""}`}
-        onClick={() => handlePageChange(totalPages)}
-      >
-        {totalPages}
-      </button>,
-    )
-  }
+    // If we have less than maxButtons, expand the range
+    const visibleButtons = endPage - startPage + 1
+    if (visibleButtons < maxButtons - 2) {
+      if (startPage === 2) {
+        endPage = Math.min(totalPages - 1, endPage + (maxButtons - 2 - visibleButtons))
+      } else if (endPage === totalPages - 1) {
+        startPage = Math.max(2, startPage - (maxButtons - 2 - visibleButtons))
+      }
+    }
 
-  return buttons
-}
+    for (let i = startPage; i <= endPage; i++) {
+      buttons.push(
+        <button
+          key={i}
+          className={`btn join-item ${page === i ? "btn-active" : ""}`}
+          onClick={() => handlePageChange(i)}
+        >
+          {i}
+        </button>,
+      )
+    }
+
+    // Add "..." if we're not near the end
+    if (page < totalPages - 2 && totalPages > maxButtons) {
+      buttons.push(
+        <button key="dots-end" className="btn join-item pointer-events-none">
+          ...
+        </button>,
+      )
+    }
+
+    // Show the last page button if there are more than `maxButtons`
+    if (
+      totalPages > 1 &&
+      totalPages !== 1 &&
+      totalPages > maxButtons - 2 &&
+      page < totalPages - Math.floor(maxButtons / 2)
+    ) {
+      buttons.push(
+        <button
+          key={totalPages}
+          className={`btn join-item ${page === totalPages ? "btn-active" : ""}`}
+          onClick={() => handlePageChange(totalPages)}
+        >
+          {totalPages}
+        </button>,
+      )
+    }
+
+    return buttons
+  }
 
   if (isLoading) {
     return (
@@ -183,7 +182,11 @@ const renderPaginationButtons = () => {
                   <div className="mt-1 flex items-center gap-1 text-slate-500">
                     {
                       <>
-                        <p>{activity.duration >= 60 && <FaFire className="text-orange-400" />}</p>
+                        <p>
+                          {activity.duration >= 60 && (
+                            <FaFire className={`text-orange-500`} />
+                          )}
+                        </p>
                         <FaClock /> <span>{activity.duration} min</span>
                       </>
                     }

@@ -7,11 +7,12 @@ import {
   useGetPreviousWinners,
 } from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaClock, FaFire, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
+import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
+import { FaFire } from "react-icons/fa"
+
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
-
 
 function StudyLeaderboard() {
   const navigate = useNavigate()
@@ -30,7 +31,6 @@ function StudyLeaderboard() {
 
   // Logic to determine if monthly leaderboard should be active
   // const isMonthlyLeaderboardActive = new Date().getMonth() >= 8 // September is month 8 (0-indexed)
-
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -124,6 +124,24 @@ function StudyLeaderboard() {
     }
   }
 
+  const getFireColor = (streak) => {
+    if (streak < 7) {
+      return "text-yellow-500"
+    }
+
+    if (streak < 15) {
+      return "text-orange-500"
+    }
+
+    if (streak < 30) {
+      return "text-red-500"
+    }
+
+    if (streak >= 30) {
+      return "text-blue-500"
+    }
+  }
+
   const date = new Date()
 
   const currentMonthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(date)
@@ -194,7 +212,7 @@ function StudyLeaderboard() {
       {leaderboardType === "monthly" && (
         <button
           onClick={() => setShowPreviousWinners((show) => !show)}
-          className="rounded-lg bg-secondary px-3 py-2 mb-2 items-center flex justify-center text-primary"
+          className="mb-2 flex items-center justify-center rounded-lg bg-secondary px-3 py-2 text-primary"
         >
           {showPreviousWinners ? "Hide Winners" : "Show Previous Winners"}
         </button>
@@ -321,13 +339,17 @@ function StudyLeaderboard() {
                     </span>
 
                     {leaderboardType === "total" && entry.studyStreak >= 3 && (
-                      <div className="order-1 flex items-center gap-1 text-sm font-semibold text-orange-400 md:order-none md:ml-auto">
+                      <div
+                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.studyStreak)} md:order-none md:ml-auto`}
+                      >
                         <FaFire className="text-xl" />
                         <span>{entry.studyStreak}</span>
                       </div>
                     )}
                     {leaderboardType === "monthly" && entry.monthlyStats.studyStreak >= 3 && (
-                      <div className="order-1 flex items-center gap-1 text-sm font-semibold text-orange-400 md:order-none md:ml-auto">
+                      <div
+                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.monthlyStats.studyStreak)} md:order-none md:ml-auto`}
+                      >
                         <FaFire className="text-xl" />
                         <span>{entry.monthlyStats.studyStreak}</span>
                       </div>
