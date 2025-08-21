@@ -74,7 +74,7 @@ export const ActivityLogList = forwardRef(
                     ref={isLastElement ? ref : null} // Apply ref only to the very last todo
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
-                    <div className="flex items-center gap-3 px-3 py-1">
+                    <div className="flex items-center relative gap-3 px-3 py-1">
                       <div className="relative">
                         <img
                           src={activity.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
