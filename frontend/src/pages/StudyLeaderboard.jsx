@@ -8,7 +8,7 @@ import {
 } from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
-import { FaFire } from "react-icons/fa"
+import { FaFire, FaInfoCircle } from "react-icons/fa"
 
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
@@ -20,11 +20,13 @@ function StudyLeaderboard() {
   const [leaderboardType, setLeaderboardType] = useState("total") // "total" or "monthly"
   const [showPreviousWinners, setShowPreviousWinners] = useState(false)
 
+  const [isInfoDropdownOpen, setIsInfoDropdownOpen] = useState(false)
+
   const { authUser: currentUser } = useAuthUser()
 
   const totalLeaderboard = useGetTotalLeaderboard(leaderboardType === "total" ? page : 1)
   const monthlyLeaderboard = useGetMonthlyLeaderboard(leaderboardType === "monthly" ? page : 1)
-  const { previousWinners, isLoadingPreviousWinners } = useGetPreviousWinners()
+  const { previousWinners } = useGetPreviousWinners()
 
   const currentLeaderboard = leaderboardType === "total" ? totalLeaderboard : monthlyLeaderboard
   const { leaderboard, totalPages, isLoading } = currentLeaderboard
@@ -183,6 +185,40 @@ function StudyLeaderboard() {
           <FaArrowLeft className="text-xl" />
         </button>
         <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
+        {leaderboardType === "monthly" ? (
+          <div className="relative">
+            <button
+              onClick={() => setIsInfoDropdownOpen(!isInfoDropdownOpen)}
+              className="rounded-full p-2 text-white transition-colors hover:bg-gray-700 focus:outline-none"
+              aria-label="How it works info"
+            >
+              <FaInfoCircle className="h-5 w-5" />
+            </button>
+
+            {isInfoDropdownOpen && (
+              <div
+                className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
+                onClick={() => setIsInfoDropdownOpen(false)}
+              >
+                <div
+                  className="w-72 rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
+                  onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the dropdown
+                >
+                  <h4 className="mb-2 text-lg font-bold">How the Monthly Leaderboard Works</h4>
+                  <ul className="list-inside list-disc space-y-2">
+                    <li>At the start of every month, all users' monthly stats will reset to 0.</li>
+                    <li>
+                      At the end of each month, the top 3 users will earn special badges as a reward
+                      for their hard work.
+                    </li>
+                  </ul>
+                </div>
+              </div>
+            )}
+          </div>
+        ) : (
+          <div className="w-9"></div>
+        )}
       </div>
 
       {/* Toggle Buttons */}
