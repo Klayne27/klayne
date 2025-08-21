@@ -99,19 +99,19 @@ const NotificationPage = () => {
   const getNotificationMessage = (notification) => {
     switch (notification.type) {
       case "follow":
-        return `${notification.from?.username} followed you.`
+        return `@${notification.from?.username} followed you.`
       case "like":
-        return `${notification.from?.username} liked your post.`
+        return `@${notification.from?.username} liked your post.`
       case "comment":
-        return `${notification.from?.username} commented on your post.`
+        return `@${notification.from?.username} commented on your post.`
       case "commentLike":
-        return `${notification.from?.username} liked your comment on ${notification?.postId?.user.username}'s post.`
+        return `@${notification.from?.username} liked your comment on ${notification?.postId?.user.username}'s post.`
       case "commentReply":
-        return `${notification.from?.username} replied to your comment on ${notification?.postId?.user.username}'s post.`
+        return `@${notification.from?.username} replied to your comment on ${notification?.postId?.user.username}'s post.`
       case "repost":
-        return `${notification.from?.username} reposted your post.`
+        return `@${notification.from?.username} reposted your post.`
       case "mention":
-        return `${notification.from?.username} mentioned you in a post.`
+        return `@${notification.from?.username} mentioned you in a post.`
       default:
         return ""
     }
@@ -208,7 +208,7 @@ const NotificationPage = () => {
                         className="cursor-pointer font-bold hover:underline"
                         onClick={(e) => handleProfileClick(e, notification.from?.username)}
                       >
-                        @{notification.from?.username}
+                        {notification.from?.fullName}
                       </span>
 
                       {isVerified && (
