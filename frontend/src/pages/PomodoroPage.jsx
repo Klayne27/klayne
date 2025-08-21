@@ -90,7 +90,7 @@ const PomodoroPage = () => {
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("pomodoro_")) localStorage.removeItem(key)
     })
-    showAppToast("Timer reset")
+    // showAppToast("Timer reset")
   }, [settings])
 
   const startNextTimer = useCallback(

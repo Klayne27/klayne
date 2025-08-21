@@ -61,11 +61,3 @@ export const getLeaderboard = async (page = 1) => {
   }
   return res.json()
 }
-
-export const getSessionCountLeaderboard = async (page = 1) => {
-  const res = await fetch(`${BASE_URL}/hours-leaderboard?page=${page}&limit=10`)
-  if (!res.ok) {
-    throw new Error("Failed to fetch leaderboard")
-  }
-  return res.json()
-}

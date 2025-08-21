@@ -129,8 +129,26 @@ export const endStudySession = async (req, res) => {
 
     // Update user stats
     const user = await User.findById(userId);
+
+    // Helper function to reset monthly stats if needed
+    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+    if (
+      !user.monthlyStats.lastResetMonth ||
+      user.monthlyStats.lastResetMonth !== currentMonth
+    ) {
+      user.monthlyStats.studyDuration = 0;
+      user.monthlyStats.sessionsCompleted = 0;
+      user.monthlyStats.xpEarned = 0;
+      user.monthlyStats.lastResetMonth = currentMonth;
+    }
+
+    // Update total stats (all-time)
     user.totalStudyDuration += duration;
     user.totalSessionsCompleted += 1;
+
+    // Update monthly stats
+    user.monthlyStats.studyDuration += duration;
+    user.monthlyStats.sessionsCompleted += 1;
 
     const getDateString = (date) => {
       return date.toISOString().split("T")[0];
@@ -166,10 +184,40 @@ export const endStudySession = async (req, res) => {
     // Always update lastStudyDate to today
     user.lastStudyDate = today;
 
+     const lastMonthlyStudyDate = user.monthlyStats.lastMonthlyStudyDate
+       ? new Date(user.monthlyStats.lastMonthlyStudyDate)
+       : null;
+     const lastMonthlyStudyString = lastMonthlyStudyDate
+       ? getDateString(lastMonthlyStudyDate)
+       : null;
+
+     if (!lastMonthlyStudyDate) {
+       user.monthlyStats.monthlyStudyStreak = 1;
+     } else if (lastMonthlyStudyString === todayString) {
+       // Don't change streak
+     } else {
+       const yesterday = new Date(today);
+       yesterday.setDate(yesterday.getDate() - 1);
+       const yesterdayString = getDateString(yesterday);
+
+       if (lastMonthlyStudyString === yesterdayString) {
+         user.monthlyStats.monthlyStudyStreak += 1;
+       } else {
+         user.monthlyStats.monthlyStudyStreak = 1;
+       }
+     }
+     user.monthlyStats.lastMonthlyStudyDate = today;
+
     await user.save();
 
     // Process XP and leveling
     const xpResult = await handleXPAndLeveling(user, duration);
+
+    // Update monthly XP
+    if (xpResult && xpResult.xpEarned) {
+      user.monthlyStats.xpEarned += xpResult.xpEarned;
+      await user.save();
+    }
 
     // Award badges
     await checkAndAwardBadges(user);
@@ -263,32 +311,32 @@ export const getStudyActivityFeed = async (req, res) => {
   }
 };
 
-export const getLeaderboard = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 10;
-    const skipIndex = (page - 1) * limit;
-    const totalCount = await User.countDocuments();
-    const leaderboard = await User.find()
-      .sort({ totalStudyDuration: -1 })
-      .skip(skipIndex)
-      .limit(limit)
-      .select(
-        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges studyStreak"
-      )
-      .populate({
-        path: "profileImg",
-        select: "imageUrl",
-      });
-    res.status(200).json({
-      leaderboard,
-      totalPages: Math.ceil(totalCount / limit),
-      currentPage: page,
-    });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+// export const getLeaderboard = async (req, res) => {
+//   try {
+//     const page = parseInt(req.query.page) || 1;
+//     const limit = parseInt(req.query.limit) || 10;
+//     const skipIndex = (page - 1) * limit;
+//     const totalCount = await User.countDocuments();
+//     const leaderboard = await User.find()
+//       .sort({ totalStudyDuration: -1 })
+//       .skip(skipIndex)
+//       .limit(limit)
+//       .select(
+//         "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges studyStreak"
+//       )
+//       .populate({
+//         path: "profileImg",
+//         select: "imageUrl",
+//       });
+//     res.status(200).json({
+//       leaderboard,
+//       totalPages: Math.ceil(totalCount / limit),
+//       currentPage: page,
+//     });
+//   } catch (error) {
+//     res.status(500).json({ error: "Internal server error" });
+//   }
+// };
 
 export const updatePomodoroSettings = async (req, res) => {
   try {

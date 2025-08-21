@@ -134,6 +134,32 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    monthlyStudyStreak: {
+      type:Number,
+      default: 0,
+    },
+    lastMonthlyStudyDate: {
+      type: Date,
+      default: null
+    },
+    monthlyStats: {
+      studyDuration: {
+        type: Number,
+        default: 0,
+      },
+      sessionsCompleted: {
+        type: Number,
+        default: 0,
+      },
+      xpEarned: {
+        type: Number,
+        default: 0,
+      },
+      lastResetMonth: {
+        type: String, 
+        default: null,
+      },
+    },
     badges: [
       {
         type: String,
