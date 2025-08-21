@@ -161,7 +161,7 @@ export const updateTodo = async (req, res) => {
 
 export const completeTodo = async (req, res) => {
   try {
-    const todo = await Todo.findById(req.params.id);
+    const todo = await Todo.findById(req.params.id).populate("todoList");
     if (!todo) {
       return res.status(404).json({ error: "Todo not found" });
     }
@@ -202,7 +202,14 @@ export const completeTodo = async (req, res) => {
         urgent: 200,
       };
 
-      const xpToAdd = xpRewards[todo.priority] || 25;
+      let xpToAdd = xpRewards[todo.priority] || 25
+
+      const parentTodoList = await TodoList.findById(todo.todoList)
+      if (parentTodoList && parentTodoList.isPublic) {
+        xpToAdd *= 2
+      }
+
+      
       user.pomodoroXP += xpToAdd;
 
       let levelsGained = [];
