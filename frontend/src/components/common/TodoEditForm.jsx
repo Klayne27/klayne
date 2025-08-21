@@ -9,6 +9,7 @@ import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { IoClose } from "react-icons/io5"
 import CustomDatePicker from "./CustomDatePicker"
+import { showAppToast } from "../../utils/showAppToast"
 
 const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
   // const [formData, setFormData] = useState({
@@ -62,6 +63,10 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+    if (!title) {
+      showAppToast("Title can't be empty")
+      return
+    }
 
     const updateData = {
       id: todo._id,
@@ -151,7 +156,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
           type="text"
           name="title"
           value={title}
-          onChange={e => setTitle(e.target.value)}
+          onChange={(e) => setTitle(e.target.value)}
           className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
         />
         <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
@@ -159,7 +164,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
           type="text"
           name="description"
           value={description}
-          onChange={e => setDescription(e.target.value)}
+          onChange={(e) => setDescription(e.target.value)}
           className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
         />
         {dueDate && (
@@ -174,6 +179,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
             </span>
             <button
               type="button"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={handleClearDate}
               className="text-gray-400 hover:text-red-500"
               aria-label="Clear due date"
@@ -186,6 +192,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
       <div className="relative mt-2 flex gap-2">
         <button
           type="button"
+          onMouseDown={(e) => e.preventDefault()}
           className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
           onClick={(e) => {
             e.stopPropagation()
@@ -206,6 +213,7 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
           <>
             <div
               className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
+              onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => {
                 e.stopPropagation()
                 setIsPriorityMenuOpen(false)
@@ -213,12 +221,14 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
             ></div>
             <ul
               // ref={priorityMenuRef}
+              onMouseDown={(e) => e.preventDefault()}
               className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
             >
               {["urgent", "high", "medium", "low"].map((priority) => (
                 <li key={priority}>
                   <button
                     type="button"
+                    onMouseDown={(e) => e.preventDefault()}
                     onClick={() => handlePrioritySelect(priority)}
                     className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
                   >
