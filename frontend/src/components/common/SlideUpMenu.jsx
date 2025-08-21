@@ -3,39 +3,57 @@ import React, { useState, useRef, useEffect, useCallback } from "react"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0) // <-- Add state for keyboard height
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
   const contentRef = useRef(null)
+  const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
 
-
+  // ✅ MODIFIED: Robust scroll lock useEffect
   useEffect(() => {
+    const body = document.body
+
     if (isOpen) {
-      document.body.style.overflow = "hidden"
-      document.body.style.overscrollBehavior = "none"
-    } else {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehavior = ""
+      // 1. Store the current scroll position
+      scrollPositionRef.current = window.scrollY
+
+      // 2. Apply robust scroll-locking styles to the body
+      body.style.overflow = "hidden"
+      body.style.position = "fixed"
+      // Use the stored scroll position to prevent the page from jumping to the top
+      body.style.top = `-${scrollPositionRef.current}px`
+      // Ensure the body takes up the full width
+      body.style.width = "100%"
+      body.style.overscrollBehavior = "none"
     }
+
+    // 3. Cleanup function to run when the menu closes
     return () => {
-      document.body.style.overflow = ""
-      document.body.style.overscrollBehavior = ""
+      // Remove the locking styles
+      body.style.overflow = ""
+      body.style.position = ""
+      body.style.top = ""
+      body.style.width = ""
+      body.style.overscrollBehavior = ""
+
+      // 4. Restore the original scroll position
+      window.scrollTo(0, scrollPositionRef.current)
     }
-  }, [isOpen])
+  }, [isOpen]) // This effect depends only on the isOpen state
+
+  // --- No changes to the rest of your component ---
 
   useEffect(() => {
     const visualViewport = window.visualViewport
     if (!visualViewport) return
 
     const handleResize = () => {
-      // Calculate the keyboard height
       const newKeyboardHeight = window.innerHeight - visualViewport.height
-      // We only care about positive values (when keyboard is open)
       setKeyboardHeight(Math.max(0, newKeyboardHeight))
     }
 
     visualViewport.addEventListener("resize", handleResize)
-    handleResize() // Initial check
+    handleResize()
 
     return () => {
       visualViewport.removeEventListener("resize", handleResize)
@@ -61,6 +79,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchMove = useCallback(
     (e) => {
+      // Prevent the background from scrolling on touch devices
       e.preventDefault()
       if (!isDragging) return
       const currentY = e.touches[0].clientY
@@ -106,7 +125,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       <div
         onClick={(e) => e.stopPropagation()}
         ref={menuRef}
-        // Apply the keyboard height as a bottom offset
         style={{ bottom: `${keyboardHeight}px` }}
         className={`fixed left-0 right-0 z-[1000] transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
@@ -126,7 +144,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   )
 }
 
-// ... (keep SlideUpMenuContent export) ...
 export const SlideUpMenuContent = React.forwardRef(
   ({ children, className, disablePullToRefresh }, ref) => {
     return (

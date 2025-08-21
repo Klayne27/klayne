@@ -1,162 +1,238 @@
-// src/components/todos/SlideUpMenu.jsx
-import React, { useState, useRef, useEffect, useCallback } from "react"
+// src/components/todos/TodoEditForm.jsx
+import { useState, useEffect, useRef, forwardRef } from "react"
+import { FaTrash, FaCheck, FaFlag, FaCalendar, FaTrashCan } from "react-icons/fa6"
+import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
+import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 
-const SlideUpMenu = ({ isOpen, onClose, children }) => {
-  const [isDragging, setIsDragging] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
-  const initialYRef = useRef(0)
-  const menuRef = useRef(null)
-  const contentRef = useRef(null)
-  const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
+// Import React Datepicker
+import DatePicker from "react-datepicker"
+import "react-datepicker/dist/react-datepicker.css"
+import { IoClose } from "react-icons/io5"
+import CustomDatePicker from "./CustomDatePicker"
 
-  // ✅ MODIFIED: Robust scroll lock useEffect
-  useEffect(() => {
-    const body = document.body
+const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
+  // const [formData, setFormData] = useState({
+  //   title: "",
+  //   description: "",
+  //   dueDate: null, // Change initial state to null for Date object
+  //   priority: "low",
+  // })
 
-    if (isOpen) {
-      // 1. Store the current scroll position
-      scrollPositionRef.current = window.scrollY
+  const [title, setTitle] = useState("")
+  const [description, setDescription] = useState("")
+  const [priority, setPriority] = useState("low")
+  const [dueDate, setDueDate] = useState(null)
 
-      // 2. Apply robust scroll-locking styles to the body
-      body.style.overflow = "hidden"
-      body.style.position = "fixed"
-      // Use the stored scroll position to prevent the page from jumping to the top
-      body.style.top = `-${scrollPositionRef.current}px`
-      // Ensure the body takes up the full width
-      body.style.width = "100%"
-      body.style.overscrollBehavior = "none"
-    }
-
-    // 3. Cleanup function to run when the menu closes
-    return () => {
-      // Remove the locking styles
-      body.style.overflow = ""
-      body.style.position = ""
-      body.style.top = ""
-      body.style.width = ""
-      body.style.overscrollBehavior = ""
-
-      // 4. Restore the original scroll position
-      window.scrollTo(0, scrollPositionRef.current)
-    }
-  }, [isOpen]) // This effect depends only on the isOpen state
-
-  // --- No changes to the rest of your component ---
+  // State for the priority dropdown menu
+  const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
+  const priorityMenuRef = useRef(null)
+  const titleInputRef = useRef(null)
 
   useEffect(() => {
-    const visualViewport = window.visualViewport
-    if (!visualViewport) return
-
-    const handleResize = () => {
-      const newKeyboardHeight = window.innerHeight - visualViewport.height
-      setKeyboardHeight(Math.max(0, newKeyboardHeight))
+    if (todo) {
+      // Create a Date object from the due date string
+      const formattedDueDate = todo.dueDate ? new Date(todo.dueDate) : null
+      // const newFormData = {
+      //   title: todo.title || "",
+      //   description: todo.description || "",
+      //   dueDate: formattedDueDate,
+      //   priority: todo.priority || "low",
+      // }
+      setTitle(todo.title)
+      setDescription(todo.description)
+      setPriority(todo.priority)
+      setDueDate(formattedDueDate)
+      // setFormData(newFormData)
     }
+  }, [todo])
 
-    visualViewport.addEventListener("resize", handleResize)
-    handleResize()
-
-    return () => {
-      visualViewport.removeEventListener("resize", handleResize)
-    }
-  }, [])
-
+  // Close priority menu when clicking outside
   useEffect(() => {
-    if (!isOpen && menuRef.current) {
-      menuRef.current.style.transform = ""
-    }
-  }, [isOpen])
-
-  const handleTouchStart = useCallback((e) => {
-    if (contentRef.current && contentRef.current.scrollTop !== 0) {
-      return
-    }
-    setIsDragging(true)
-    initialYRef.current = e.touches[0].clientY
-    if (menuRef.current) {
-      menuRef.current.style.transition = "none"
-    }
-  }, [])
-
-  const handleTouchMove = useCallback(
-    (e) => {
-      // Prevent the background from scrolling on touch devices
-      e.preventDefault()
-      if (!isDragging) return
-      const currentY = e.touches[0].clientY
-      const deltaY = currentY - initialYRef.current
-      if (deltaY < 0) return
-      if (menuRef.current) {
-        menuRef.current.style.transform = `translateY(${deltaY}px)`
+    function handleClickOutside(event) {
+      if (priorityMenuRef.current && !priorityMenuRef.current.contains(event.target)) {
+        setIsPriorityMenuOpen(false)
       }
-    },
-    [isDragging],
-  )
-
-  const handleTouchEnd = useCallback(() => {
-    if (!isDragging) return
-    setIsDragging(false)
-    const menu = menuRef.current
-    if (!menu) return
-    const menuHeight = menu.clientHeight
-    const currentTransform = new DOMMatrix(getComputedStyle(menu).transform).m42
-    menu.style.transition = "transform 300ms ease-out"
-    if (currentTransform > menuHeight * 0.4) {
-      menu.style.transform = "translateY(100%)"
-      setTimeout(onClose, 300)
-    } else {
-      menu.style.transform = "translateY(0)"
     }
-  }, [isDragging, onClose])
-
-  const handleBackdropClick = (e) => {
-    e.stopPropagation()
-    if (menuRef.current) {
-      menuRef.current.style.transition = "transform 300ms ease-out"
-      menuRef.current.style.transform = "translateY(100%)"
+    document.addEventListener("mousedown", handleClickOutside)
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside)
     }
-    setTimeout(() => {
-      onClose()
-    }, 0)
+  }, [priorityMenuRef])
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+
+    const updateData = {
+      id: todo._id,
+      todoData: {
+        title: title,
+        description: description,
+        dueDate: dueDate ? dueDate.toISOString() : null,
+        priority: priority,
+      },
+    }
+
+    onSave(updateData)
   }
 
+  const handlePrioritySelect = (priority) => {
+    // setFormData((prev) => ({ ...prev, priority }))
+    setPriority(priority)
+    setIsPriorityMenuOpen(false)
+  }
+
+  // Handle DatePicker change, it receives a Date object
+  // const handleDateChange = (date) => {
+  //   setFormData((prev) => ({ ...prev, dueDate: date }))
+  // }
+
+  // const handleInputChange = (e) => {
+  //   const { name, value } = e.target
+
+  //   setFormData((data) => ({
+  //     ...data,
+  //     [name]: value,
+  //   }))
+  // }
+
+  // Prevents form submission on Enter key press for a better UX in single-line inputs
+  const handleKeyDown = (e) => {
+    if (e.key === "Enter" && e.target.type !== "textarea") {
+      e.preventDefault()
+    }
+  }
+
+  const handleClearDate = (e) => {
+    e.stopPropagation()
+    // setFormData((data) => ({ ...data, dueDate: null }))
+    setDueDate(null)
+  }
+
+  useEffect(() => {
+    titleInputRef.current.focus()
+  }, [])
+
   return (
-    <>
-      {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
-      <div
-        onClick={(e) => e.stopPropagation()}
-        ref={menuRef}
-        style={{ bottom: `${keyboardHeight}px` }}
-        className={`fixed left-0 right-0 z-[1000] transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
-      >
-        <div
-          className="flex flex-col items-center rounded-t-3xl bg-base-200"
-          onTouchStart={handleTouchStart}
-          onTouchMove={handleTouchMove}
-          onTouchEnd={handleTouchEnd}
+    <form
+      onSubmit={handleSubmit}
+      onKeyDown={handleKeyDown}
+      className="flex h-full w-full flex-col p-1"
+    >
+      {/* Header with Actions */}
+      <div className="flex items-center justify-between pb-6">
+        <button
+          type="button"
+          onClick={onDelete}
+          className="rounded-full p-2 text-gray-500 transition-colors hover:bg-red-100"
+          disabled={isLoading}
+          aria-label="Delete Todo"
         >
-          <div className="flex w-full items-center justify-center">
-            <div className="my-1.5 h-1 w-10 rounded-full bg-accent" />
-          </div>
-          {React.cloneElement(React.Children.only(children), { ref: contentRef })}
-        </div>
+          <FaTrashCan size={16} />
+        </button>
+        <h2 className="text-lg font-semibold text-gray-800 dark:text-gray-200">Edit Todo</h2>
+        <button
+          type="submit"
+          disabled={isLoading}
+          className="rounded-full p-2 text-gray-500 transition-colors hover:bg-blue-100 disabled:cursor-not-allowed"
+          aria-label="Save Changes"
+        >
+          {isLoading ? (
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-blue-500 border-t-transparent" />
+          ) : (
+            <FaCheck size={18} />
+          )}
+        </button>
       </div>
-    </>
+      <div>
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Title</label>
+        <input
+          ref={titleInputRef}
+          type="text"
+          name="title"
+          value={title}
+          onChange={e => setTitle(e.target.value)}
+          className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+        />
+        <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+        <input
+          type="text"
+          name="description"
+          value={description}
+          onChange={e => setDescription(e.target.value)}
+          className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+        />
+        {dueDate && (
+          <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
+            <span className="font-semibold">Due:</span>
+            <span>
+              {new Date(dueDate).toLocaleDateString("en-US", {
+                month: "short",
+                day: "numeric",
+                year: "numeric",
+              })}
+            </span>
+            <button
+              type="button"
+              onClick={handleClearDate}
+              className="text-gray-400 hover:text-red-500"
+              aria-label="Clear due date"
+            >
+              <IoClose size={16} />
+            </button>
+          </div>
+        )}
+      </div>
+      <div className="relative mt-2 flex gap-2">
+        <button
+          type="button"
+          className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
+          onClick={(e) => {
+            e.stopPropagation()
+            setIsPriorityMenuOpen(!isPriorityMenuOpen)
+          }}
+        >
+          <FaFlag className={getTextColor(priority)} />{" "}
+          <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
+        </button>
+        <CustomDatePicker
+          selectedDate={dueDate}
+          onDateChange={setDueDate}
+          isOpen={isDatePickerOpen}
+          onToggle={setIsDatePickerOpen}
+          placeholder="Select due date"
+        />
+        {isPriorityMenuOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-10 h-screen cursor-default bg-transparent"
+              onClick={(e) => {
+                e.stopPropagation()
+                setIsPriorityMenuOpen(false)
+              }}
+            ></div>
+            <ul
+              // ref={priorityMenuRef}
+              className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
+            >
+              {["urgent", "high", "medium", "low"].map((priority) => (
+                <li key={priority}>
+                  <button
+                    type="button"
+                    onClick={() => handlePrioritySelect(priority)}
+                    className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                  >
+                    <FaFlag className={getTextColor(priority)} />
+                    {priority}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </>
+        )}
+      </div>
+    </form>
   )
 }
 
-export const SlideUpMenuContent = React.forwardRef(
-  ({ children, className, disablePullToRefresh }, ref) => {
-    return (
-      <div
-        ref={ref}
-        className={className}
-        style={disablePullToRefresh ? { overscrollBehaviorY: "contain" } : undefined}
-      >
-        {children}
-      </div>
-    )
-  },
-)
-SlideUpMenuContent.displayName = "SlideUpMenuContent"
-
-export default SlideUpMenu
+export default TodoEditForm
