@@ -5,6 +5,7 @@ import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
 import jwt from "jsonwebtoken"
+import { generateRandomString } from "../lib/utils/helpers.js";
 
 export const signup = async (req, res) => {
   try {
@@ -147,9 +148,9 @@ export const googleAuth = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
+      // Existing user logic remains the same
       if (!user.googleId) {
         user.googleId = uid;
-
         if (!user.profileImg && picture) {
           const newProfileImage = new Image({
             imageUrl: picture,
@@ -167,27 +168,36 @@ export const googleAuth = async (req, res) => {
         return res
           .status(400)
           .json({ error: "Email is already associated with another account." });
+      } // If the user already has a googleId, they are simply logging in.
+    } else {
+      // This is a completely new user. Create a new user document.
+      const baseUsername = "user-";
+      let username;
+      let userExists = true;
+      let attemptCount = 0;
+      const MAX_ATTEMPTS = 5; // Loop until a unique username is found or max attempts are reached
+
+      while (userExists && attemptCount < MAX_ATTEMPTS) {
+        username = baseUsername + generateRandomString(8); // Generates a random 8-character string
+        const existingUser = await User.findOne({ username });
+        if (!existingUser) {
+          userExists = false;
+        }
+        attemptCount++;
       }
 
-      // If the user already has a googleId, they are simply logging in.
-    } else {
-      // 2. This is a completely new user. Create a new user document.
-      let baseUsername = email.split("@")[0].replace(/[^a-zA-Z0-9]/g, "");
-      let username = baseUsername;
-      let userExists = await User.findOne({ username });
-      let count = 1;
-      while (userExists) {
-        username = `${baseUsername}${count}`;
-        userExists = await User.findOne({ username });
-        count++;
+      if (userExists) {
+        // This case is highly unlikely but a good fallback
+        console.error("Could not generate a unique username after multiple attempts.");
+        return res.status(500).json({ error: "Failed to create a unique username." });
       }
 
       user = new User({
         fullName: name,
         username: username,
         email: email,
-        password: null, // As per our previous discussion
-        googleId: uid, // Set the googleId for the new user
+        password: null,
+        googleId: uid,
       });
 
       if (picture) {
@@ -202,10 +212,9 @@ export const googleAuth = async (req, res) => {
       }
 
       await user.save();
-      console.log("New Google user created successfully.");
-    }
+      console.log("New Google user created with a random username.");
+    } // Now, generate a token and send back the populated user.
 
-    // Now, generate a token and send back the populated user.
     generateTokenAndSetCookie(user._id, res);
 
     const populatedUser = await User.findById(user._id)

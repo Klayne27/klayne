@@ -205,3 +205,13 @@ export const transformCloudinaryUrl = (url, width, height) => {
   if (parts.length !== 2) return url;
   return `${parts[0]}/upload/w_${width},h_${height},c_fill,g_face,f_png/${parts[1]}`;
 };
+
+export const generateRandomString = (length) => {
+  const characters = "abcdefghijklmnopqrstuvwxyz0123456789";
+  let result = "";
+  const charactersLength = characters.length;
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * charactersLength));
+  }
+  return result;
+};
