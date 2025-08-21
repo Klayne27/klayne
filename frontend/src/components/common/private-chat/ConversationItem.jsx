@@ -35,6 +35,7 @@ function ConversationItem({ conv }) {
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
+  
   const isOnline = onlineUsers.includes(otherUser?._id)
 
   const {

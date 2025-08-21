@@ -64,6 +64,12 @@ export const SocketContextProvider = ({ children }) => {
       //   queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
       // })
 
+      const heartbeatInterval = setInterval(() => {
+        if (newSocket.connected) {
+          newSocket.emit("heartbeat")
+        }
+      }, 60 * 1000) // Send heartbeat every 1 minute
+
       newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
         queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
       })
@@ -176,6 +182,7 @@ export const SocketContextProvider = ({ children }) => {
           newSocket.disconnect()
           socketRef.current = null
           setSocket(null)
+          clearInterval(heartbeatInterval)
         }
       }
     } else if (!isLoadingAuthUser && !user) {
