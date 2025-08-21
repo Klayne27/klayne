@@ -14,14 +14,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     const body = document.body
 
     if (isOpen) {
-      // 1. Store the current scroll position
-      scrollPositionRef.current = window.scrollY
-
       // 2. Apply robust scroll-locking styles to the body
       body.style.overflow = "hidden"
       body.style.position = "fixed"
       // Use the stored scroll position to prevent the page from jumping to the top
-      body.style.top = `-${scrollPositionRef.current}px`
       // Ensure the body takes up the full width
       body.style.width = "100%"
       body.style.overscrollBehavior = "none"
@@ -32,33 +28,29 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       // Remove the locking styles
       body.style.overflow = ""
       body.style.position = ""
-      body.style.top = ""
-      body.style.width = ""
-      body.style.overscrollBehavior = ""
 
       // 4. Restore the original scroll position
-      window.scrollTo(0, scrollPositionRef.current)
     }
   }, [isOpen]) // This effect depends only on the isOpen state
 
   // --- No changes to the rest of your component ---
 
-  useEffect(() => {
-    const visualViewport = window.visualViewport
-    if (!visualViewport) return
+  // useEffect(() => {
+  //   const visualViewport = window.visualViewport
+  //   if (!visualViewport) return
 
-    const handleResize = () => {
-      const newKeyboardHeight = window.innerHeight - visualViewport.height
-      setKeyboardHeight(Math.max(0, newKeyboardHeight))
-    }
+  //   const handleResize = () => {
+  //     const newKeyboardHeight = window.innerHeight - visualViewport.height
+  //     setKeyboardHeight(Math.max(0, newKeyboardHeight))
+  //   }
 
-    visualViewport.addEventListener("resize", handleResize)
-    handleResize()
+  //   visualViewport.addEventListener("resize", handleResize)
+  //   handleResize()
 
-    return () => {
-      visualViewport.removeEventListener("resize", handleResize)
-    }
-  }, [])
+  //   return () => {
+  //     visualViewport.removeEventListener("resize", handleResize)
+  //   }
+  // }, [])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {
