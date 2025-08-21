@@ -48,9 +48,9 @@ const resetMonthlyStats = cron.schedule(
             "monthlyStats.studyDuration": 0,
             "monthlyStats.sessionsCompleted": 0,
             "monthlyStats.xpEarned": 0,
-            "monthlyStats.monthlyStudyStreak": 0,
             "monthlyStats.lastResetMonth": currentMonth,
-            "monthlyStats.lastMonthlyStudyDate": null,
+            "monthlyStudyStreak": 0,
+            "lastMonthlyStudyDate": null,
           },
         }
       );

@@ -184,15 +184,15 @@ export const endStudySession = async (req, res) => {
     // Always update lastStudyDate to today
     user.lastStudyDate = today;
 
-     const lastMonthlyStudyDate = user.monthlyStats.lastMonthlyStudyDate
-       ? new Date(user.monthlyStats.lastMonthlyStudyDate)
+     const lastMonthlyStudyDate = user.lastMonthlyStudyDate
+       ? new Date(user.lastMonthlyStudyDate)
        : null;
      const lastMonthlyStudyString = lastMonthlyStudyDate
        ? getDateString(lastMonthlyStudyDate)
        : null;
 
      if (!lastMonthlyStudyDate) {
-       user.monthlyStats.monthlyStudyStreak = 1;
+       user.monthlyStudyStreak = 1;
      } else if (lastMonthlyStudyString === todayString) {
        // Don't change streak
      } else {
@@ -201,12 +201,12 @@ export const endStudySession = async (req, res) => {
        const yesterdayString = getDateString(yesterday);
 
        if (lastMonthlyStudyString === yesterdayString) {
-         user.monthlyStats.monthlyStudyStreak += 1;
+         user.monthlyStudyStreak += 1;
        } else {
-         user.monthlyStats.monthlyStudyStreak = 1;
+         user.monthlyStudyStreak = 1;
        }
      }
-     user.monthlyStats.lastMonthlyStudyDate = today;
+     user.lastMonthlyStudyDate = today;
 
     await user.save();
 
