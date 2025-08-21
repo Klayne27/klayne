@@ -43,7 +43,6 @@ const colorMap = {
 const CompletedTodoList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
     const allCompletedTodos = todos?.pages?.flatMap((page) => page.completedTodos) || []
-    console.log(allCompletedTodos);
     const groupedTodos = groupTodosByDate(allCompletedTodos)
 
     if (isLoading)

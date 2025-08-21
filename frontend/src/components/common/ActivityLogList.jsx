@@ -63,7 +63,6 @@ export const ActivityLogList = forwardRef(
 
             <ul className="space-y-2">
               {group?.todos.map((activity, todoIndex) => {
-                console.log(activity);
                 const isLastGroup = groupIndex === groupedTodos.length - 1
                 const isLastItemInGroup = todoIndex === group.todos.length - 1
                 const isLastElement = isLastGroup && isLastItemInGroup

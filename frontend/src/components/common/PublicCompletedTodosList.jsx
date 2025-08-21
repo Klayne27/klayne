@@ -45,7 +45,6 @@ const PublicCompletedTodosList = forwardRef(
     const allPublicTodos = todos?.pages?.flatMap((page) => page.publicCompletedTodos) || []
     const groupedTodos = groupTodosByDate(allPublicTodos)
 
-    console.log(groupedTodos);
     if (isLoading)
       return (
         <div className="flex h-screen items-center justify-center text-primary">
