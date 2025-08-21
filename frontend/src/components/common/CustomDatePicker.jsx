@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from "react"
 import ReactDOM from "react-dom"
+import { FaCalendar } from "react-icons/fa6"
 
 const CustomDatePicker = ({
   selectedDate,
@@ -109,11 +110,10 @@ const CustomDatePicker = ({
     )
   }
 
-
-
   // Handle click outside and recalculate position on resize/scroll
   useEffect(() => {
     const handleClickOutside = (event) => {
+      event.stopPropagation()
       if (
         datePickerRef.current &&
         !datePickerRef.current.contains(event.target) &&
@@ -126,7 +126,6 @@ const CustomDatePicker = ({
 
     if (isOpen) {
       document.addEventListener("mousedown", handleClickOutside)
-
     }
 
     return () => {
@@ -161,21 +160,9 @@ const CustomDatePicker = ({
         type="button"
         onClick={() => onToggle(!isOpen)}
         onMouseDown={(e) => e.preventDefault()}
-        className={`flex items-center gap-2 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-700 transition-colors hover:border-blue-500 hover:bg-gray-50 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-700 ${className}`}
+        className={`flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition duration-200 focus:outline-none md:hover:bg-slate-700/50  ${className}`}
       >
-        <svg
-          className="h-4 w-4 text-gray-500"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            strokeWidth={2}
-            d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"
-          />
-        </svg>
+        <FaCalendar />
         <span>
           {selectedDate
             ? new Date(selectedDate).toLocaleDateString("en-US", {
@@ -192,13 +179,7 @@ const CustomDatePicker = ({
         ReactDOM.createPortal(
           <div
             ref={calendarRef}
-            // Positioning and size adjusted for better UI.
-            // `w-80` is a good width for a calendar.
-            // `h-auto` allows height to adjust automatically based on content.
-            // The `top-full` and `mt-2` positions it below the input field it's attached to.
-            // Removed fixed `left-2` to allow for better horizontal centering or positioning.
-            // Added `relative` to allow for absolute positioning of its children if needed.
-            className="white-shadow absolute top-28 left-2 z-[1001] mt-2 h-auto w-80 rounded-xl bg-base-100 p-4"
+            className="white-shadow absolute left-2 top-0 z-[1001] mt-2 h-auto w-72 rounded-xl bg-base-100 p-4"
           >
             {/* Header */}
             <div className="mb-4 flex items-center justify-between">
@@ -270,10 +251,10 @@ const CustomDatePicker = ({
                     !day
                       ? "cursor-default text-gray-400 dark:text-gray-600" // Faded out text for empty days.
                       : isSelected(day)
-                        ? "bg-blue-500 text-white hover:bg-blue-600 focus:bg-blue-600"
+                        ? "bg-primary text-white hover:bg-blue-600"
                         : isToday(day)
-                          ? "bg-blue-100 text-blue-600 hover:bg-blue-200 focus:bg-blue-200 dark:bg-blue-900/50 dark:text-blue-400"
-                          : "text-gray-700 hover:bg-gray-100 focus:bg-gray-100 dark:text-gray-300 dark:hover:bg-gray-700 dark:focus:bg-gray-700"
+                          ? "bg-primary/20 text-primary hover:bg-blue-200 focus:bg-blue-200"
+                          : "text-slate-600 hover:bg-gray-300"
                   }`}
                 >
                   {day}
@@ -283,8 +264,6 @@ const CustomDatePicker = ({
 
             {/* Footer Buttons */}
             <div className="mt-4 flex justify-end gap-2">
-              {" "}
-              {/* `justify-end` aligns buttons to the right, `gap-2` adds space between them. */}
               <button
                 type="button"
                 onClick={() => {
@@ -308,7 +287,7 @@ const CustomDatePicker = ({
                 }}
                 onMouseDown={(e) => e.preventDefault()}
                 // The `Today` button is now an accent color to stand out.
-                className="rounded-lg px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/50"
+                className="rounded-lg px-3 py-2 text-sm text-primary hover:bg-primary/20"
               >
                 Today
               </button>

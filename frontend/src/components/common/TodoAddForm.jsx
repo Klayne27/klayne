@@ -47,7 +47,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
     setIsPublic(false)
     setPriority("low")
     setDueDate(null)
-    // setIsMenuOpen(false)
+    setIsMenuOpen(true)
     // setCurrentListIdForTodoCreation(null)
     titleInputRef.current.focus()
   }
@@ -90,7 +90,7 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
           <button
             type="submit"
             disabled={isLoading}
-            className="rounded-full p-2 text-gray-500 transition-colors hover:bg-blue-100 hover:bg-green-900/50 hover:text-green-600 disabled:cursor-not-allowed"
+            className="rounded-full p-2 text-gray-500 transition-colors disabled:cursor-not-allowed"
             aria-label="Save Changes"
           >
             {isLoading ? (
@@ -158,6 +158,24 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             <FaFlag className={getTextColor(priority)} />{" "}
             <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
           </button>
+          {/* <button
+            // ref={datePickerRef}
+            type="button"
+            onClick={() => setIsDatePickerOpen((open) => !open)}
+            onMouseDown={(e) => e.preventDefault()}
+            className={`flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition duration-200 focus:outline-none md:hover:bg-slate-700/50`}
+          >
+            <FaCalendar />
+            <span>
+              {dueDate
+                ? new Date(dueDate).toLocaleDateString("en-US", {
+                    month: "short",
+                    day: "numeric",
+                    year: "numeric",
+                  })
+                : "Select due date"}
+            </span>
+          </button> */}
 
           <CustomDatePicker
             selectedDate={dueDate}
