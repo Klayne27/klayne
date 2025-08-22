@@ -62,6 +62,7 @@ const CreateTodoModal = () => {
     setDueDate(null) // Reset due date
     // setShowCreateTodoModal(false)
     // setCurrentListIdForTodoCreation(null)
+    titleInputRef.current.focus()
   }
 
   const handleClearDate = (e) => {

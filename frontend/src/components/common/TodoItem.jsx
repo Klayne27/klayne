@@ -89,7 +89,9 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     setCompletingTodoId(todoId)
 
-    completeTodo(todoId)
+      // setTimeout(() => {
+        completeTodo(todoId)
+      // }, 500)
   }
 
   const handleDelete = (e) => {

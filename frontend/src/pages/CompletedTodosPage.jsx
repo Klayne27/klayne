@@ -1,4 +1,3 @@
-import { useNavigate } from "react-router-dom"
 import CompletedTodoList from "../components/common/CompletedTodoList"
 import { useGetCompletedTodos } from "../hooks/todoHooks/useTodoQueries"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
