@@ -121,9 +121,9 @@ export const useCompleteTodo = () => {
     onSettled: () => {
       // Invalidate queries as a fallback to ensure consistency
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
-      queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      // queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
+      // queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
+      // queryClient.invalidateQueries({ queryKey: ["authUser"] })
     },
     onError: (err, variables, context) => {
       // Rollback the UI if the mutation fails.
@@ -145,32 +145,32 @@ export const useCreateTodo = () => {
     mutationFn: createTodoApi,
     onMutate: async (newTodo) => {
       // Cancel any outgoing queries to prevent them from overwriting our optimistic update
-      await queryClient.cancelQueries({ queryKey: ["todos"] })
+      // await queryClient.cancelQueries({ queryKey: ["todos"] })
       await queryClient.cancelQueries({ queryKey: ["todoLists"] })
 
       // Safely get the previous data and provide a default empty object/array
-      const previousTodos = queryClient.getQueryData(["todos"])
+      // const previousTodos = queryClient.getQueryData(["todos"])
       const previousTodoLists = queryClient.getQueryData(["todoLists"])
 
       const tempId = "temp-" + Date.now()
       const optimisticTodo = { ...newTodo, _id: tempId, completed: false }
 
       // Update the 'todos' query data
-      queryClient.setQueryData(["todos"], (oldData) => {
-        const pages = oldData?.pages || [] // Safely access pages or default to an empty array
-        return {
-          ...oldData,
-          pages: pages.map((page, index) => {
-            if (index === 0) {
-              return {
-                ...page,
-                data: [optimisticTodo, ...page.data],
-              }
-            }
-            return page
-          }),
-        }
-      })
+      // queryClient.setQueryData(["todos"], (oldData) => {
+      //   const pages = oldData?.pages || [] // Safely access pages or default to an empty array
+      //   return {
+      //     ...oldData,
+      //     pages: pages.map((page, index) => {
+      //       if (index === 0) {
+      //         return {
+      //           ...page,
+      //           data: [optimisticTodo, ...page.data],
+      //         }
+      //       }
+      //       return page
+      //     }),
+      //   }
+      // })
 
       // Update the 'todoLists' query data
       queryClient.setQueryData(["todoLists"], (oldData) => {
@@ -193,13 +193,13 @@ export const useCreateTodo = () => {
       })
 
       // Return a context object with the snapshot
-      return { previousTodos, previousTodoLists }
+      return {  previousTodoLists }
     },
     onError: (error, newTodo, context) => {
       // Rollback the cache to the previous data
-      if (context?.previousTodos) {
-        queryClient.setQueryData(["todos"], context.previousTodos)
-      }
+      // if (context?.previousTodos) {
+      //   queryClient.setQueryData(["todos"], context.previousTodos)
+      // }
       if (context?.previousTodoLists) {
         queryClient.setQueryData(["todoLists"], context.previousTodoLists)
       }
@@ -207,7 +207,7 @@ export const useCreateTodo = () => {
     },
     onSettled: () => {
       // Invalidate all relevant queries to refetch fresh data
-      queryClient.invalidateQueries({ queryKey: ["todos"] })
+      // queryClient.invalidateQueries({ queryKey: ["todos"] })
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
       queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
