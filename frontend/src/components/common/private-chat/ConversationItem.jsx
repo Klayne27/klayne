@@ -25,6 +25,7 @@ function ConversationItem({ conv }) {
   const { onlineUsers } = useSocket()
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
+  const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
@@ -35,7 +36,7 @@ function ConversationItem({ conv }) {
   const { deleteConversation } = useDeleteConversation()
   const { deleteAllMessages } = useDeleteAllMessagesOnMySide() // Use the new hook
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
-  
+
   const isOnline = onlineUsers.includes(otherUser?._id)
 
   const {
@@ -68,15 +69,15 @@ function ConversationItem({ conv }) {
     lastMessageContent = conv.lastMessage.text
   }
 
-    const userSelectStyle = isMobile
-      ? {
-          userSelect: "none",
-          WebkitUserSelect: "none",
-          MozUserSelect: "none",
-          msUserSelect: "none",
-          touchAction: "manipulation",
-        }
-      : {}
+  const userSelectStyle = isMobile
+    ? {
+        userSelect: "none",
+        WebkitUserSelect: "none",
+        MozUserSelect: "none",
+        msUserSelect: "none",
+        touchAction: "manipulation",
+      }
+    : {}
 
   const truncatedLastMessage =
     typeof lastMessageContent === "string" && lastMessageContent.length > 35
@@ -108,6 +109,7 @@ function ConversationItem({ conv }) {
 
   const handleSelectConversation = () => {
     navigate(`/messages/${conv._id}`)
+    setReplyingToMessage(null)
   }
 
   // Prevent navigation if a long press is active
