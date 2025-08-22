@@ -381,7 +381,7 @@ export const getPublicCompletedTodos = async (req, res) => {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "todoList", select: "name icon color" })
-      .sort({ compeletedAt: -1 })
+      .sort({ completedAt: -1 })
       .skip(skip)
       .limit(limit)
       .lean(); // so we can mutate results
