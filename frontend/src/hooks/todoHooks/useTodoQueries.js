@@ -203,7 +203,9 @@ export const useCreateTodo = () => {
           pages: pages.map((page) => ({
             ...page,
             data: page.data.map((todoList) => {
+               console.log(todoList)
               if (todoList._id === newTodo.todoListId) {
+               
                 return {
                   ...todoList,
                   todos: [...todoList.todos, optimisticTodo],
@@ -305,12 +307,6 @@ export const useUpdateTodo = () => {
       queryClient.setQueryData(["publicTodoLists"], context.oldPublicTodoLists)
 
       showAppToast(error.message || "Failed to update todo. Please try again.", "error")
-    },
-    onSettled: () => {
-      // After the mutation is complete, invalidate all relevant queries
-      // to ensure the cache is synchronized with the server.
-      // queryClient.invalidateQueries({ queryKey: ["todos"] })
-      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
     },
   })
 

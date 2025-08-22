@@ -51,8 +51,8 @@ const CreateTodoModal = () => {
       description,
       isPublic,
       todoListId: currentListIdForTodoCreation,
-      priority, // Include priority
-      dueDate, // Include dueDate
+      priority,
+      dueDate,
     })
 
     setTitle("")
