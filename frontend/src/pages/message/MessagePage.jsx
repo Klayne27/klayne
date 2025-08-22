@@ -58,7 +58,7 @@ const MessagePage = () => {
 
   return (
     <>
-      <div className="flex min-h-screen w-full overflow-hidden">
+      <div className="flex min-h-screen w-full overflow-y-auto">
         {showConversationList && (
           <div className="flex h-screen w-full flex-col md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent">
             {isLoadingConversations ? (

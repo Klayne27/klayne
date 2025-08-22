@@ -70,7 +70,7 @@ const MainLayout = ({ children, deferredPrompt, isInstalled, installApp, isPushS
       )}
       <main
         className={`${
-          isPublicChatPage ? "flex h-screen max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
+          isPublicChatPage ? "flex h-screen overflow-y-auto max-h-screen flex-col md:flex-1" : "flex-1 md:pb-0"
         }`}
       >
         {children}

@@ -256,7 +256,7 @@ const NotificationPage = () => {
                 >
                   <FaTrashCan
                     className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
-                    size={20}
+                    size={15}
                   />
                 </button>
               </div>
