@@ -1,18 +1,14 @@
-import React, { useState } from "react"
+import { useState } from "react"
 import { useCreateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useTodoStore } from "../../store/useTodoStore"
-import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
-import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
-
-import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../../utils/showAppToast"
 import { useRef } from "react"
 import { useEffect } from "react"
-import { bgColorMap, colorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
+import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
 
 const CreateTodoListModal = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
-  const createTodoListMutation = useCreateTodoList()
+  const { createTodoList, creatingTodoList } = useCreateTodoList()
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -28,7 +24,7 @@ const CreateTodoListModal = () => {
       showAppToast("List name can't be empty")
       return
     }
-    createTodoListMutation.mutate(
+    createTodoList(
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
@@ -76,20 +72,6 @@ const CreateTodoListModal = () => {
               maxLength={50}
             />
           </div>
-          {/* Description Input */}
-          {/* <div className="mb-4">
-            <label className="label">
-              <span className="label-text">Description (optional)</span>
-            </label>
-
-            <textarea
-              placeholder="What's this list for?"
-              className="textarea textarea-bordered w-full"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={200}
-            ></textarea>
-          </div> */}
           {/* Icon Picker */}
           <div className="mb-4">
             <label className="label">
@@ -145,12 +127,8 @@ const CreateTodoListModal = () => {
               Cancel
             </button>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createTodoListMutation.isPending}
-            >
-              {createTodoListMutation.isPending ? "Creating..." : "Create"}
+            <button type="submit" className="btn btn-primary" disabled={creatingTodoList}>
+              {creatingTodoList ? "Creating..." : "Create"}
             </button>
           </div>
         </form>

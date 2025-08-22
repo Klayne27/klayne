@@ -13,7 +13,7 @@ import { bgColorMap, colorMap, colorOptions, iconOptions } from "../utils/todoUt
 
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
-  const createTodoListMutation = useCreateTodoList()
+  const { createTodoList, creatingTodoList } = useCreateTodoList()
 
   const [name, setName] = useState("")
   const [description, setDescription] = useState("")
@@ -30,7 +30,7 @@ const CreateTodoListPage = () => {
       return
     }
 
-    createTodoListMutation.mutate(
+    createTodoList(
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
@@ -127,12 +127,8 @@ const CreateTodoListPage = () => {
               Cancel
             </button>
 
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={createTodoListMutation.isPending}
-            >
-              {createTodoListMutation.isPending ? "Creating..." : "Create"}
+            <button type="submit" className="btn btn-primary" disabled={creatingTodoList}>
+              {creatingTodoList ? "Creating..." : "Create"}
             </button>
           </div>
         </form>

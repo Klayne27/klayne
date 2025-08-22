@@ -1,11 +1,8 @@
-import React, { useEffect, useState } from "react"
+import { useEffect, useState } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
-import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
-import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
-
 import { useUpdateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useRef } from "react"
-import { bgColorMap, colorMap, colorOptions, iconOptions } from "../../utils/todoUtils.jsx"
+import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils.jsx"
 
 function EditTodoListModal() {
   const { showEditTodoListModal, setShowEditTodoListModal, todoListToEdit } = useTodoStore()
@@ -15,7 +12,7 @@ function EditTodoListModal() {
   const [name, setName] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
-  const [color, setColor] = useState("red") // Populate form with existing data when the component loads
+  const [color, setColor] = useState("red")
 
   const titleInputRef = useRef(null)
 
@@ -26,10 +23,9 @@ function EditTodoListModal() {
 
     updateTodoList({ id: todoListToEdit._id, listData })
     setShowEditTodoListModal(false)
-  } // Fallback UI for when list data is not available (e.g., direct navigation/refresh)
+  } 
 
   useEffect(() => {
-    // Populate the form using data from the store
     if (todoListToEdit) {
       setName(todoListToEdit.name || "")
       setIsPublic(todoListToEdit.isPublic || false)
@@ -70,20 +66,6 @@ function EditTodoListModal() {
               maxLength={50}
             />
           </div>
-          {/* Description Input */}
-          {/* <div className="mb-4">
-            <label className="label">
-              <span className="label-text">Description (optional)</span>
-            </label>
-
-            <textarea
-              placeholder="What's this list for?"
-              className="textarea textarea-bordered w-full"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              maxLength={200}
-            ></textarea>
-          </div> */}
           {/* Icon Picker */}
           <div className="mb-4">
             <label className="label">

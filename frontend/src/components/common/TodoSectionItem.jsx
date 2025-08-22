@@ -1,14 +1,4 @@
-import {
-  FaBook,
-  FaDumbbell,
-  FaLightbulb,
-  FaPaintBrush,
-  FaCheckCircle,
-  FaStar,
-  FaPen,
-  FaUserFriends,
-  FaEdit,
-} from "react-icons/fa"
+import { FaEdit } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useLocation, useNavigate } from "react-router-dom"
 import {
@@ -17,22 +7,13 @@ import {
 } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useTodoStore } from "../../store/useTodoStore"
-import {
-  FaEllipsisVertical,
-  FaPlus,
-  FaTrashCan,
-  FaHeart,
-  FaRegHeart,
-  FaRegEye,
-  FaEye,
-} from "react-icons/fa6"
+import { FaEllipsisVertical, FaPlus, FaTrashCan, FaHeart, FaRegHeart } from "react-icons/fa6"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import TodoList from "./TodoList"
 import AnimatedCount from "../ui/AnimatedCount"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { useState } from "react"
 import { useEffect } from "react"
-import { AiFillLike, AiOutlineLike } from "react-icons/ai"
 import { forwardRef } from "react"
 import { colorMap, iconMap } from "../../utils/todoUtils"
 
@@ -64,7 +45,7 @@ const TodoSectionItem = forwardRef(
     const [isAnimatingLike, setIsAnimatingLike] = useState(false)
 
     const navigate = useNavigate()
-    const deleteTodoListMutation = useDeleteTodoList()
+    const { deleteTodoList, deletingTodoList } = useDeleteTodoList()
     const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()
     const isMobile = useIsMobile()
 
@@ -253,7 +234,7 @@ const TodoSectionItem = forwardRef(
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            deleteTodoListMutation.mutate(list._id)
+                            deleteTodoList(list._id)
                             setOpenListDropdownId(null)
                           }}
                           className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"

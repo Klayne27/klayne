@@ -4,11 +4,11 @@ import TodoPagesHeader from "../components/common/TodoPagesHeader"
 
 const FollowingListsPage = () => {
   const {
-    data: followingLists,
-    isLoading: followingLoading,
-    isError: followingError,
-    hasNextPage: followingHasNextPage,
-    fetchNextPage: followingFetchNextPage,
+   followingLists,
+    followingLoading,
+    followingError,
+    followingHasNextPage,
+    followingFetchNextPage,
   } = useGetFollowingTodoLists()
 
   return (

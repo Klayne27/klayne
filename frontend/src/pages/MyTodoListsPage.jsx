@@ -4,28 +4,15 @@ import CreateTodoListModal from "../components/common/CreateTodoListModal"
 import TodoSectionList from "../components/common/TodoSectionList"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
 
-import { useState } from "react"
-
 const MyTodoListsPage = () => {
-  const {
-    showCreateTodoListModal,
-    setShowCreateTodoListModal,
-  } = useTodoStore()
+  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
 
-  const {
-    data: myTodoLists,
-    isLoading: myListsLoading,
-    isError: myListsError,
-    hasNextPage: myListsHasNextPage,
-    fetchNextPage: myListsFetchNextPage,
-  } = useGetUserTodoLists()
+  const { myTodoLists, myListsLoading, myListsError, myListsHasNextPage, myListsFetchNextPage } =
+    useGetUserTodoLists()
 
   return (
     <>
-      <TodoPagesHeader
-        pageTitle={"My Lists"}
-
-      />
+      <TodoPagesHeader pageTitle={"My Lists"} />
 
       <TodoSectionList
         todoLists={myTodoLists}

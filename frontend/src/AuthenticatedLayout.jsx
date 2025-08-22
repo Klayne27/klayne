@@ -69,7 +69,6 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
             }
           >
             <Routes>
-              {/* Note: The image viewer path is now handled within the authenticated layout */}
               <Route path="/images/:imageId" element={<ImageViewerPage />} />
               <Route path="/" element={<HomePage />} />
               <Route
