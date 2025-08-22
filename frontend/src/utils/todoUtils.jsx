@@ -1,3 +1,17 @@
+import { FaCheckCircle, FaUserFriends } from "react-icons/fa"
+import {
+  FaBook,
+  FaDna,
+  FaDumbbell,
+  FaHammer,
+  FaLightbulb,
+  FaPaintbrush,
+  FaPen,
+  FaStar,
+} from "react-icons/fa6"
+import { ImBlocked } from "react-icons/im"
+import { PiMathOperationsFill } from "react-icons/pi"
+
 export const getPriorityColor = (priority) => {
   switch (priority) {
     case "urgent":
@@ -55,6 +69,92 @@ export const getTextColor = (priority) => {
   }
 }
 
+export const iconOptions = [
+  { name: "None", icon: <ImBlocked /> },
+  { name: "FaPen", icon: <FaPen /> },
+  { name: "FaCheckCircle", icon: <FaCheckCircle /> },
+  { name: "FaStar", icon: <FaStar /> },
+  { name: "FaBook", icon: <FaBook /> },
+  { name: "FaDumbbell", icon: <FaDumbbell /> },
+  { name: "FaLightbulb", icon: <FaLightbulb /> },
+  { name: "FaPaintBrush", icon: <FaPaintbrush /> },
+  { name: "FaUserFriends", icon: <FaUserFriends /> },
+  { name: "FaHammer", icon: <FaHammer /> },
+  { name: "FaDna", icon: <FaDna /> },
+  { name: "PiMathOperationsFill", icon: <PiMathOperationsFill /> },
+]
+
+export const colorOptions = [
+  "red",
+  "orange",
+  "amber",
+  "lime",
+  "emerald",
+  "teal",
+  "cyan",
+  "blue",
+  "indigo",
+  "violet",
+  "fuchsia",
+  "pink",
+  "rose",
+  "yellow",
+  "stone",
+  "slate",
+]
+
+export const colorMap = {
+  red: "text-red-400",
+  orange: "text-orange-400",
+  amber: "text-amber-400",
+  lime: "text-lime-400",
+  emerald: "text-emerald-400",
+  teal: "text-teal-400",
+  cyan: "text-cyan-400",
+  blue: "text-blue-400",
+  indigo: "text-indigo-500",
+  violet: "text-violet-400",
+  fuchsia: "text-fuchsia-400",
+  pink: "text-pink-400",
+  rose: "text-rose-500",
+  yellow: "text-yellow-800",
+  stone: "text-stone-400",
+  slate: "text-slate-400",
+}
+
+export const bgColorMap = {
+  red: "bg-red-400",
+  orange: "bg-orange-400",
+  amber: "bg-amber-400",
+  lime: "bg-lime-400",
+  emerald: "bg-emerald-400",
+  teal: "bg-teal-400",
+  cyan: "bg-cyan-400",
+  blue: "bg-blue-400",
+  indigo: "bg-indigo-500",
+  violet: "bg-violet-400",
+  fuchsia: "bg-fuchsia-400",
+  pink: "bg-pink-400",
+  rose: "bg-rose-500",
+  yellow: "bg-yellow-800",
+  stone: "bg-stone-400",
+  slate: "bg-slate-400",
+}
+
+export const iconMap = {
+  FaPen: FaPen,
+  FaCheckCircle: FaCheckCircle,
+  FaStar: FaStar,
+  FaBook: FaBook,
+  FaDumbbell: FaDumbbell,
+  FaLightbulb: FaLightbulb,
+  FaPaintBrush: FaPaintbrush,
+  FaUserFriends: FaUserFriends,
+  FaHammer: FaHammer,
+  FaDna: FaDna,
+  PiMathOperationsFill: PiMathOperationsFill,
+}
+
 // Add this new function inside CompletedTodoList.jsx before the component
 export const groupTodosByDate = (todos) => {
   const groups = {}
@@ -100,6 +200,8 @@ export const groupTodosByDate = (todos) => {
 
   // Convert object to array and sort by date descending
   return Object.values(groups).sort(
-    (a, b) => new Date(b.todos[0].completedAt || b.todos[0].createdAt) - new Date(a.todos[0].completedAt || a.todos[0].createdAt),
+    (a, b) =>
+      new Date(b.todos[0].completedAt || b.todos[0].createdAt) -
+      new Date(a.todos[0].completedAt || a.todos[0].createdAt),
   )
 }

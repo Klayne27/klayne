@@ -1,21 +1,15 @@
 // src/pages/EditTodoListPage.jsx
 
 import React, { useState, useEffect } from "react"
-import {
-  FaBook,
-  FaDumbbell,
-  FaLightbulb,
-  FaPaintBrush,
-  FaCheckCircle,
-  FaStar,
-  FaPen,
-  FaUserFriends,
-} from "react-icons/fa"
+
 import { useNavigate, useLocation, useParams } from "react-router-dom"
 import { useUpdateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
 import { ImBlocked } from "react-icons/im"
 import { useRef } from "react"
 import { showAppToast } from "../utils/showAppToast"
+import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
+import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
+import { bgColorMap, colorMap, colorOptions, iconOptions } from "../utils/todoUtils"
 
 const EditTodoListPage = () => {
   const navigate = useNavigate()
@@ -40,48 +34,6 @@ const EditTodoListPage = () => {
     } // In a real-world app, if `list` is undefined (e.g., page refresh),
     // you would fetch the data using the `id` from `useParams`.
   }, [list])
-
-  const iconOptions = [
-    { name: "None", icon: <ImBlocked /> },
-    { name: "FaPen", icon: <FaPen /> },
-    { name: "FaCheckCircle", icon: <FaCheckCircle /> },
-    { name: "FaStar", icon: <FaStar /> },
-    { name: "FaBook", icon: <FaBook /> },
-    { name: "FaDumbbell", icon: <FaDumbbell /> },
-    { name: "FaLightbulb", icon: <FaLightbulb /> },
-    { name: "FaPaintBrush", icon: <FaPaintBrush /> },
-    { name: "FaUserFriends", icon: <FaUserFriends /> },
-  ]
-
-  const colorOptions = [
-    "red",
-    "orange",
-    "yellow",
-    "emerald",
-    "teal",
-    "cyan",
-    "blue",
-    "violet",
-    "fuchsia",
-    "pink",
-    "slate",
-    "stone",
-  ]
-
-  const colorMap = {
-    red: "bg-red-400",
-    orange: "bg-orange-400",
-    yellow: "bg-yellow-400",
-    emerald: "bg-emerald-400",
-    teal: "bg-teal-400",
-    cyan: "bg-cyan-400",
-    blue: "bg-blue-400",
-    violet: "bg-violet-400",
-    fuchsia: "bg-fuchsia-400",
-    pink: "bg-pink-400",
-    slate: "bg-slate-400",
-    stone: "bg-stone-400",
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -145,7 +97,7 @@ const EditTodoListPage = () => {
                 <button
                   type="button"
                   key={opt.name}
-                  className={`btn btn-sm text-lg ${icon === opt.name ? "btn-active" : ""}`}
+                  className={`btn btn-sm text-lg ${opt.name === "None" ? "bg-base-100 px-[13px] border-none" : ""} ${icon === opt.name ? "btn-active" : ""}`}
                   onClick={() => setIcon(opt.name)}
                 >
                   {opt.icon}
@@ -162,7 +114,7 @@ const EditTodoListPage = () => {
               {colorOptions.map((opt) => (
                 <div
                   key={opt}
-                  className={`h-8 w-8 rounded-full border-2 ${color === opt ? "border-current" : "border-transparent"} ${colorMap[opt]} cursor-pointer`}
+                  className={`h-8 w-8 rounded-full border-2 ${color === opt ? "border-current" : "border-transparent"} ${bgColorMap[opt]} cursor-pointer`}
                   onClick={() => setColor(opt)}
                 ></div>
               ))}

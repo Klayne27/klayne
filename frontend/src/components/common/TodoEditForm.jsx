@@ -1,7 +1,7 @@
 // src/components/todos/TodoEditForm.jsx
 import { useState, useEffect, useRef, forwardRef } from "react"
 import { FaTrash, FaCheck, FaFlag, FaCalendar, FaTrashCan } from "react-icons/fa6"
-import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
+import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 
 // Import React Datepicker

@@ -1,20 +1,14 @@
 import React, { useState } from "react"
 import { useCreateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useTodoStore } from "../../store/useTodoStore"
-import {
-  FaBook,
-  FaDumbbell,
-  FaLightbulb,
-  FaPaintBrush,
-  FaCheckCircle,
-  FaStar,
-  FaPen,
-  FaUserFriends,
-} from "react-icons/fa"
+import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
+import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
+
 import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../../utils/showAppToast"
 import { useRef } from "react"
 import { useEffect } from "react"
+import { bgColorMap, colorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
 
 const CreateTodoListModal = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
@@ -27,49 +21,6 @@ const CreateTodoListModal = () => {
   const [color, setColor] = useState("red")
 
   const titleInputRef = useRef(null)
-
-  const iconOptions = [
-    { name: "None", icon: <ImBlocked /> },
-    { name: "FaPen", icon: <FaPen /> },
-    { name: "FaCheckCircle", icon: <FaCheckCircle /> },
-    { name: "FaStar", icon: <FaStar /> },
-    { name: "FaBook", icon: <FaBook /> },
-    { name: "FaDumbbell", icon: <FaDumbbell /> },
-    { name: "FaLightbulb", icon: <FaLightbulb /> },
-    { name: "FaPaintBrush", icon: <FaPaintBrush /> },
-    { name: "FaUserFriends", icon: <FaUserFriends /> },
-  ]
-
-  const colorOptions = [
-    "red",
-    "orange",
-    "yellow",
-    "emerald",
-    "teal",
-    "cyan",
-    "blue",
-    "violet",
-    "fuchsia",
-    "pink",
-    "slate",
-    "stone",
-  ]
-
-  // Create a map to hold the full Tailwind CSS class strings
-  const colorMap = {
-    red: "bg-red-400",
-    orange: "bg-orange-400",
-    yellow: "bg-yellow-400",
-    emerald: "bg-emerald-400",
-    teal: "bg-teal-400",
-    cyan: "bg-cyan-400",
-    blue: "bg-blue-400",
-    violet: "bg-violet-400",
-    fuchsia: "bg-fuchsia-400",
-    pink: "bg-pink-400",
-    slate: "bg-slate-400",
-    stone: "bg-stone-400",
-  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -150,7 +101,7 @@ const CreateTodoListModal = () => {
                 <button
                   type="button"
                   key={opt.name}
-                  className={`btn btn-sm text-lg ${icon === opt.name ? "btn-active" : ""}`}
+                  className={`btn btn-sm text-lg ${opt.name === "None" ? "border-none bg-base-100 px-[13px]" : ""} ${icon === opt.name ? "btn-active" : ""}`}
                   onClick={() => setIcon(opt.name)}
                 >
                   {opt.icon}
@@ -170,7 +121,7 @@ const CreateTodoListModal = () => {
                   key={opt}
                   className={`h-8 w-8 rounded-full border-2 ${
                     color === opt ? "border-current" : "border-transparent"
-                  } ${colorMap[opt]} cursor-pointer`}
+                  } ${bgColorMap[opt]} cursor-pointer`}
                   onClick={() => setColor(opt)}
                 ></div>
               ))}

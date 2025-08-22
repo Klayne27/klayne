@@ -10,7 +10,7 @@ import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import Portal from "./Portal"
 
 // Assuming TodoEditForm is a new component you'll create
-import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils"
+import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
 import { LuNotepadText } from "react-icons/lu"

@@ -34,32 +34,7 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { AiFillLike, AiOutlineLike } from "react-icons/ai"
 import { forwardRef } from "react"
-
-const iconMap = {
-  FaPen: FaPen,
-  FaCheckCircle: FaCheckCircle,
-  FaStar: FaStar,
-  FaBook: FaBook,
-  FaDumbbell: FaDumbbell,
-  FaLightbulb: FaLightbulb,
-  FaPaintBrush: FaPaintBrush,
-  FaUserFriends: FaUserFriends,
-}
-
-const colorMap = {
-  red: "text-red-400",
-  orange: "text-orange-400",
-  yellow: "text-yellow-400",
-  emerald: "text-emerald-400",
-  teal: "text-teal-400",
-  cyan: "text-cyan-400",
-  blue: "text-blue-400",
-  violet: "text-violet-400",
-  fuchsia: "text-fuchsia-400",
-  pink: "text-pink-400",
-  slate: "text-slate-400",
-  stone: "text-stone-400",
-}
+import { colorMap, iconMap } from "../../utils/todoUtils"
 
 const TodoSectionItem = forwardRef(
   (

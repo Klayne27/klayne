@@ -2,7 +2,7 @@ import { useGetTodoActivities } from "../hooks/todoActivitiesHooks/useGetTodoAct
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
 import { formatTime } from "../utils/date"
 import { FaCheck, FaMinus, FaPen, FaPlus } from "react-icons/fa6"
-import { getBadgeColor, getTextColor } from "../utils/todoUtils"
+import { getBadgeColor, getTextColor } from "../utils/todoUtils.jsx"
 import { useInView } from "react-intersection-observer" // Import the hook
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useEffect } from "react"

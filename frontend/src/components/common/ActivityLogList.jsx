@@ -1,6 +1,6 @@
 import { forwardRef } from "react"
 import { formatTime } from "../../utils/date"
-import { getBadgeColor, getTextColor, groupTodosByDate } from "../../utils/todoUtils"
+import { colorMap, getBadgeColor, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import { FaBook, FaCheck, FaCheckCircle, FaDumbbell, FaLightbulb, FaMinus, FaPaintBrush, FaPen, FaPlus, FaStar, FaUserFriends } from "react-icons/fa"
 
@@ -19,31 +19,7 @@ const getActionIcon = (action) => {
   }
 }
 
-const iconMap = {
-  FaPen: FaPen,
-  FaCheckCircle: FaCheckCircle,
-  FaStar: FaStar,
-  FaBook: FaBook,
-  FaDumbbell: FaDumbbell,
-  FaLightbulb: FaLightbulb,
-  FaPaintBrush: FaPaintBrush,
-  FaUserFriends: FaUserFriends,
-}
 
-const colorMap = {
-  red: "text-red-400",
-  orange: "text-orange-400",
-  yellow: "text-yellow-400",
-  emerald: "text-emerald-400",
-  teal: "text-teal-400",
-  cyan: "text-cyan-400",
-  blue: "text-blue-400",
-  violet: "text-violet-400",
-  fuchsia: "text-fuchsia-400",
-  pink: "text-pink-400",
-  slate: "text-slate-400",
-  stone: "text-stone-400",
-}
 
 export const ActivityLogList = forwardRef(
   ({ todoActivities, hasNextPage, isFetchingNextPage }, ref) => {
