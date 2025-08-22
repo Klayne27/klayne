@@ -229,10 +229,8 @@ export const useCreateTodo = () => {
     onSettled: () => {
       // Invalidate all relevant queries to refetch fresh data
       // queryClient.invalidateQueries({ queryKey: ["todos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["followingTodos"] })
-      queryClient.invalidateQueries({ queryKey: ["publicTodos"] })
     },
     // onSuccess: () => {
     //   showAppToast("Todo created successfully!", "success")
@@ -300,8 +298,8 @@ export const useUpdateTodo = () => {
     onSettled: () => {
       // After the mutation is complete, invalidate all relevant queries
       // to ensure the cache is synchronized with the server.
-      queryClient.invalidateQueries({ queryKey: ["todos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      // queryClient.invalidateQueries({ queryKey: ["todos"] })
+      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
     },
     // onSuccess: () => {
     //   showAppToast("Todo updated successfully!", "success")
@@ -368,9 +366,9 @@ export const useDeleteTodo = () => {
     onSettled: () => {
       // After the mutation is complete, invalidate all relevant queries
       // to ensure the cache is synchronized with the server.
-      queryClient.invalidateQueries({ queryKey: ["todos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      showAppToast("Todo deleted successfully!", "success")
+      // queryClient.invalidateQueries({ queryKey: ["todos"] })
+      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      // showAppToast("Todo deleted successfully!", "success")
     },
   })
 
