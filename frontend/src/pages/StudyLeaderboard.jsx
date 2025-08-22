@@ -117,11 +117,11 @@ function StudyLeaderboard() {
   const getRankColor = (rank) => {
     switch (rank) {
       case 1:
-        return "ring-amber-400 bg-amber-300/30"
+        return "ring-amber-400 bg-amber-300/40 border-amber-400"
       case 2:
-        return "ring-slate-400 bg-slate-300/30"
+        return "ring-slate-400 bg-slate-300/40 border-slate-400"
       case 3:
-        return "ring-yellow-800 bg-yellow-700/30"
+        return "ring-yellow-800 bg-yellow-700/40 border-yellow-800"
       default:
         return "ring-base-300 bg-base-200"
     }
@@ -142,6 +142,19 @@ function StudyLeaderboard() {
 
     if (streak >= 30) {
       return "text-blue-500"
+    }
+  }
+
+  const getRankIndexColor = (rank) => {
+    switch (rank) {
+      case 1:
+        return "text-amber-400"
+      case 2:
+        return "text-slate-400"
+      case 3:
+        return "text-yellow-800"
+      default:
+        break
     }
   }
 
@@ -340,7 +353,11 @@ function StudyLeaderboard() {
               } `}
             >
               <div className="flex w-full items-center md:w-auto">
-                <span className={`mr-4 text-center text-lg font-bold md:w-10`}>{globalRank}.</span>
+                <span
+                  className={`mr-4 text-center text-lg font-bold md:w-10 ${getRankIndexColor(globalRank)}`}
+                >
+                  {globalRank}.
+                </span>
                 <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
                   <div className="avatar">
                     <div
@@ -359,7 +376,7 @@ function StudyLeaderboard() {
                     </div>
                     {globalRank === 1 && (
                       <FaCrown
-                        className="absolute -top-[26px] z-50 translate-x-1/2 rotate-[20deg] text-amber-400 md:translate-x-2/3"
+                        className="absolute -top-[27px] z-50 translate-x-1/2 rotate-[19deg] text-amber-400 md:translate-x-2/3"
                         size={30}
                       />
                     )}
@@ -397,14 +414,17 @@ function StudyLeaderboard() {
                       </div>
                     )}
                   </div>
-                  <p className={`truncate text-sm text-slate-500`}>Level {entry.pomodoroLevel}</p>
-                  <span className="flex"></span>
+                  <div className="flex">
+                    <p className={`truncate rounded-lg bg-slate-700/70 px-2 text-sm text-slate-400`}>
+                      Level {entry.pomodoroLevel}
+                    </p>{" "}
+                  </div>
                 </div>
               </div>
 
               <div className="flex w-full flex-wrap items-center justify-between md:ml-auto md:w-auto md:flex-col md:flex-nowrap md:justify-end">
                 <div
-                  className={`order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold text-slate-300 md:order-none md:ml-4 md:mt-0`}
+                  className={`order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold md:order-none md:ml-4 md:mt-0`}
                 >
                   <FaClock className="text-sm" />
                   <span>
