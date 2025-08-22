@@ -22,8 +22,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const ellipsisRef = useRef(null)
 
 
-  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
-  const [completingTodoId, setCompletingTodoId] = useState(null)
+  // const [isAnimatingOut, setIsAnimatingOut] = useState(false)
+  // const [completingTodoId, setCompletingTodoId] = useState(null)
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -92,7 +92,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     // setCompletingTodoId(todoId)
-    setIsAnimatingOut(true)
+    // setIsAnimatingOut(true)
 
       // setTimeout(() => {
         completeTodo(todoId)
@@ -114,9 +114,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     <>
       <li
         onClick={isMobile ? handleMenuToggle : null}
-        className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${
-          isAnimatingOut ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100"
-        } ${isMobile ? "cursor-pointer" : ""} `}
+        className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${isMobile ? "cursor-pointer" : ""} `}
       >
         <div className="flex items-center gap-2 py-1">
           <button

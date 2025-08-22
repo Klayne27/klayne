@@ -116,6 +116,7 @@ export const useCompleteTodo = () => {
         })
       })
 
+
       if (todoToComplete && parentList) {
         const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
         setXpGainedAmount(optimisticXpGain)
@@ -160,7 +161,7 @@ export const useCompleteTodo = () => {
 
     onSuccess: (data) => {
       // Now, invalidate the queries to trigger a refetch and remove the item from the list.
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
       queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
     },
@@ -191,26 +192,10 @@ export const useCreateTodo = () => {
       const tempId = "temp-" + Date.now()
       const optimisticTodo = { ...newTodo, _id: tempId, completed: false }
 
-      // Update the 'todos' query data
-      // queryClient.setQueryData(["todos"], (oldData) => {
-      //   const pages = oldData?.pages || [] // Safely access pages or default to an empty array
-      //   return {
-      //     ...oldData,
-      //     pages: pages.map((page, index) => {
-      //       if (index === 0) {
-      //         return {
-      //           ...page,
-      //           data: [optimisticTodo, ...page.data],
-      //         }
-      //       }
-      //       return page
-      //     }),
-      //   }
-      // })
-
       // Update the 'todoLists' query data
       queryClient.setQueryData(["todoLists"], (oldData) => {
         const pages = oldData?.pages || [] // Safely access pages or default to an empty array
+
         return {
           ...oldData,
           pages: pages.map((page) => ({

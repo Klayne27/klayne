@@ -44,9 +44,6 @@ const TodoSectionItem = forwardRef(
 
     const [isAnimatingLike, setIsAnimatingLike] = useState(false)
 
-
-    console.log(list);
-
     const navigate = useNavigate()
     const { deleteTodoList, deletingTodoList } = useDeleteTodoList()
     const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()
@@ -175,7 +172,7 @@ const TodoSectionItem = forwardRef(
                   {IconComponent ? <IconComponent className={`${colorMap[list.color]}`} /> : ""}
                   {list.name}
                 </span>
-                <span className="text-xs">{list.totalTodos || ""}</span>
+                <span className="text-xs">{list.todos.length || ""}</span>
               </div>
 
               <div className="relative flex gap-1">
