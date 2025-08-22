@@ -15,28 +15,30 @@ import { PiMathOperationsFill } from "react-icons/pi"
 export const getPriorityColor = (priority) => {
   switch (priority) {
     case "urgent":
-      return "border-red-400 bg-red-500/30 rounded-full border"
+      return "border-red-400 bg-red-500/30 rounded-full"
     case "high":
-      return "border-orange-400 bg-orange-500/30 rounded-full border"
+      return "border-orange-400 bg-orange-500/30 rounded-full"
     case "medium":
-      return "border-yellow-400 bg-yellow-500/30 rounded-full border"
+      return "border-yellow-400 bg-yellow-500/30 rounded-full"
     case "low":
+      return "rounded-full border-slate-400"
     default:
-      return "rounded-full border border-slate-400"
+      return
   }
 }
 
 export const getCompletedColor = (priority) => {
   switch (priority) {
     case "urgent":
-      return "text-red-400"
+      return "text-red-400 border-red-500 border"
     case "high":
       return "text-orange-400"
     case "medium":
       return "text-yellow-400"
     case "low":
+      return "text-slate-400 border-2"
     default:
-      return "text-slate-400"
+      return
   }
 }
 
@@ -64,8 +66,9 @@ export const getTextColor = (priority) => {
     case "medium":
       return "text-yellow-400"
     case "low":
-    default:
       return "text-slate-400"
+    default:
+      return
   }
 }
 

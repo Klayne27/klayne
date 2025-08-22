@@ -229,7 +229,7 @@ export const useCreateTodo = () => {
     onSettled: () => {
       // Invalidate all relevant queries to refetch fresh data
       // queryClient.invalidateQueries({ queryKey: ["todos"] })
-      // queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["publicTodoLists"] })
     },
     // onSuccess: () => {

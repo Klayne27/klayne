@@ -21,7 +21,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
   const ellipsisRef = useRef(null)
 
-
   // const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   // const [completingTodoId, setCompletingTodoId] = useState(null)
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
@@ -88,15 +87,15 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       return
     }
     e.stopPropagation()
-          showAppToast("Todo completed! ✨", "success")
+    showAppToast("Todo completed! ✨", "success")
 
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     // setCompletingTodoId(todoId)
     // setIsAnimatingOut(true)
 
-      // setTimeout(() => {
-        completeTodo(todoId)
-      // }, 500)
+    // setTimeout(() => {
+    completeTodo(todoId)
+    // }, 500)
   }
 
   const handleDelete = (e) => {
@@ -121,10 +120,10 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
             onClick={(e) => {
               handleComplete(todo._id, e)
             }}
-            className={`flex-shrink-0 ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
+            className={`flex-shrink-0  rounded-full ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
             disabled={isCompletingTodo}
           >
-            {isVisuallyCompleted && <FaCheckCircle className="size-5" />}
+            {isVisuallyCompleted && <FaCheckCircle className="size-4" />}
           </button>
           <div className="flex flex-col gap-[2px]">
             <span className="text-base leading-[16px]">{todo.title}</span>
