@@ -102,7 +102,7 @@ const CreateTodoListPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
-        <h3 className="mb-6 text-2xl font-bold text-white">Create a Todo Section</h3>
+        <h3 className="mb-6 text-2xl font-bold">Create a Todo Section</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Name Input */}
           <div className="mb-4 mt-2">
@@ -114,7 +114,7 @@ const CreateTodoListPage = () => {
               ref={nameInputRef}
               type="text"
               placeholder="e.g., Study Tasks"
-              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+              className="w-full border-b border-gray-300 bg-transparent py-2 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}

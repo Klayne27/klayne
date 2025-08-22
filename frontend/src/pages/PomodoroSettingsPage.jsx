@@ -53,7 +53,7 @@ function PomodoroSettingsPage() {
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
-        <h3 className="mb-6 text-2xl font-bold text-white">Pomodoro Settings</h3>
+        <h3 className="mb-6 text-2xl font-bold">Pomodoro Settings</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">
           {/* Session Duration Range Input */}
           <div className="form-control">

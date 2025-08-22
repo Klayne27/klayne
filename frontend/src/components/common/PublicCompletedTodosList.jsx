@@ -91,7 +91,7 @@ const PublicCompletedTodosList = forwardRef(
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate">
-                          <strong className="text-white">{todo.user.fullName}</strong> completed a
+                          <strong>{todo.user.fullName}</strong> completed a
                           task:{" "}
                           <strong className={getTextColor(todo.priority)}>{todo?.title}</strong>
                         </p>

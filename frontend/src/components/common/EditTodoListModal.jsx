@@ -112,7 +112,7 @@ function EditTodoListModal() {
             <input
               ref={titleInputRef}
               type="text"
-              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+              className="w-full border-b border-gray-300 bg-transparent py-2 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={50}

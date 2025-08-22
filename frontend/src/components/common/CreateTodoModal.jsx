@@ -13,7 +13,7 @@ import { showAppToast } from "../../utils/showAppToast"
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
     type="button"
-    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors hover:bg-gray-700/70"
     onClick={onClick}
     ref={ref}
   >
@@ -75,7 +75,6 @@ const CreateTodoModal = () => {
   }
 
   useEffect(() => {
-
     titleInputRef.current.focus()
   }, [])
 
@@ -103,15 +102,17 @@ const CreateTodoModal = () => {
               value={title}
               placeholder="e.g., Study Math"
               onChange={(e) => setTitle(e.target.value)}
-              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+              className="w-full border-b border-gray-300 bg-transparent py-2 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
             />
-            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">Description</label>
+            <label className="text-xs font-medium text-gray-500 dark:text-gray-400">
+              Description
+            </label>
             <input
               type="text"
               value={description}
               placeholder="e.g., Finish Chapter 1"
               onChange={(e) => setDescription(e.target.value)}
-              className="w-full border-b border-gray-300 bg-transparent py-2 text-gray-900 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none dark:border-gray-600 dark:text-white"
+              className="w-full border-b border-gray-300 bg-transparent py-2 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
             />
             {dueDate && (
               <div className="mt-2 flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
@@ -137,7 +138,7 @@ const CreateTodoModal = () => {
           <div className="relative mt-2 flex gap-2">
             <button
               type="button"
-              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(priority)}`}
+              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm hover:bg-gray-700/70 ${getPriorityColor(priority)}`}
               onClick={(e) => {
                 e.stopPropagation()
                 setIsPriorityMenuOpen(!isPriorityMenuOpen)
@@ -165,14 +166,14 @@ const CreateTodoModal = () => {
                 ></div>
                 <ul
                   // ref={priorityMenuRef}
-                  className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-1"
+                  className="white-shadow absolute -top-40 z-10 mt-1 w-full rounded-2xl bg-base-100 p-2"
                 >
                   {["urgent", "high", "medium", "low"].map((priority) => (
                     <li key={priority}>
                       <button
                         type="button"
                         onClick={() => handlePrioritySelect(priority)}
-                        className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize text-gray-800 transition-colors hover:bg-gray-100 dark:text-white dark:hover:bg-gray-600"
+                        className="flex w-full items-center gap-2 rounded-md p-2 text-sm capitalize transition-colors hover:bg-secondary"
                       >
                         <FaFlag className={getTextColor(priority)} />
                         {priority}
