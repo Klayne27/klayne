@@ -15,7 +15,6 @@ import { showAppToast } from "../../utils/showAppToast"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import useXpStore from "../../store/useXpStore"
 
-
 export const useGetCompletedTodos = () => {
   const {
     data: completedTodos,
@@ -92,8 +91,8 @@ const calculateXpGainForTodo = (todo, todoList) => {
 }
 
 export const useCompleteTodo = () => {
-  const queryClient = useQueryClient();
-  const { setShowXpGain, setXpGainedAmount } = useXpStore();
+  const queryClient = useQueryClient()
+  const { setShowXpGain, setXpGainedAmount } = useXpStore()
 
   const { mutate: completeTodo } = useMutation({
     mutationFn: completeTodoApi,
@@ -102,7 +101,7 @@ export const useCompleteTodo = () => {
     onMutate: async (todoId) => {
       // 1. Optimistically update the authUser XP
       const oldAuthData = queryClient.getQueryData(["authUser"])
-            const oldTodoLists = queryClient.getQueryData(["todoLists"])
+      const oldTodoLists = queryClient.getQueryData(["todoLists"])
 
       let todoToComplete = null
       let parentList = null
@@ -156,36 +155,19 @@ export const useCompleteTodo = () => {
       })
 
       // 3. Return a context object to be used in onSuccess and onError
-      return { oldTodoLists }
+      return { oldTodoLists, oldAuthData }
     },
 
     onSuccess: (data) => {
-      showAppToast("Todo completed! ✨", "success")
-
-      if (data?.xpResult) {
-        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult
-
-        queryClient.setQueryData(["authUser"], (oldData) => {
-          if (!oldData) return oldData
-          return {
-            ...oldData,
-            pomodoroXP: finalXP,
-            pomodoroLevel: finalLevel,
-          }
-        })
-
-        if (levelsGained?.length > 0) {
-          showAppToast(`You leveled up to Level ${finalLevel}! 🎉`, "success")
-        }
-      }
-
       // Now, invalidate the queries to trigger a refetch and remove the item from the list.
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
       queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
       queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
     },
-    onError: (err) => {
+    onError: (err, variables, context) => {
       showAppToast(err.message || "Failed to complete todo", "error")
+      queryClient.setQueryData(["todoLists"], context.oldTodoLists)
+      queryClient.setQueryData(["authUser"], context.oldAuthData)
     },
   })
 
@@ -247,7 +229,7 @@ export const useCreateTodo = () => {
       })
 
       // Return a context object with the snapshot
-      return {  previousTodoLists }
+      return { previousTodoLists }
     },
     onError: (error, newTodo, context) => {
       // Rollback the cache to the previous data
