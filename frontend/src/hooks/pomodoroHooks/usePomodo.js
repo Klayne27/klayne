@@ -26,16 +26,36 @@ export const useGetPomodoroSettings = () => {
 
 export const useUpdatePomodoroSettings = () => {
   const queryClient = useQueryClient()
-  return useMutation({
+
+  const { mutate: updateSettings, isPending: isUpdatingSettings } = useMutation({
     mutationFn: updatePomodoroSettings,
+    onMutate: async (newSettings) => {
+      await queryClient.cancelQueries({ queryKey: ["pomodoroSettings"] })
+
+      const previousSettings = queryClient.getQueryData(["pomodoroSettings"])
+
+      queryClient.setQueryData(["pomodoroSettings"], (oldSettings) => ({
+        ...oldSettings,
+        ...newSettings,
+      }))
+
+      return { previousSettings }
+    },
     onSuccess: () => {
-      // showAppToast("Settings updated!", "success")
       queryClient.invalidateQueries({ queryKey: ["pomodoroSettings"] })
     },
-    onError: (error) => {
-      showAppToast(error.message, "error")
+    onError: (err, newSettings, context) => {
+      if (context?.previousSettings) {
+        queryClient.setQueryData(["pomodoroSettings"], context.previousSettings)
+      } 
+      console.error("Failed to update settings. Rolling back.", err)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ["pomodoroSettings"] })
     },
   })
+
+  return { updateSettings, isUpdatingSettings }
 }
 
 export const useStartStudySession = () => {
@@ -52,14 +72,48 @@ export const useStartStudySession = () => {
 
 export const useEndStudySession = () => {
   const queryClient = useQueryClient()
+
   return useMutation({
-    mutationFn: endStudySession,
+    mutationFn: endStudySession, // Let's make this optimistic!
+    onMutate: async ({ duration }) => {
+      // First, we'll cancel any ongoing queries to prevent them from overwriting our optimistic update.
+      await queryClient.cancelQueries({ queryKey: ["authUser"] })
+      await queryClient.cancelQueries({ queryKey: ["leaderboard"] }) // Get the current user data from the cache. We'll save this to roll back if the mutation fails.
+
+      const previousAuthUser = queryClient.getQueryData(["authUser"]) // Now, we'll optimistically update the user data in our local cache.
+      // This makes the UI feel instant to the user.
+
+      queryClient.setQueryData(["authUser"], (oldUser) => {
+        if (!oldUser) return oldUser
+
+        const newTotalStudyDuration = oldUser.totalStudyDuration + duration
+        const newTotalSessionsCompleted = oldUser.totalSessionsCompleted + 1
+        const newMonthlyStats = { ...oldUser.monthlyStats } // We can also optimistically calculate and update XP, streaks, and other stats!
+
+        newMonthlyStats.studyDuration += duration
+        newMonthlyStats.sessionsCompleted += 1 // For XP, you'd need to replicate the client-side calculation from your handleSessionEnd logic.
+        // const calculatedXpGained = settings.sessionDuration * xpMultiplier;
+        // newMonthlyStats.xpEarned += calculatedXpGained;
+        return {
+          ...oldUser,
+          totalStudyDuration: newTotalStudyDuration,
+          totalSessionsCompleted: newTotalSessionsCompleted,
+          monthlyStats: newMonthlyStats, // ... other stats like studyStreak, levels, etc.
+        }
+      }) // We return the previous data so the `onError` function can use it to roll back.
+
+      return { previousAuthUser }
+    }, // If the server request is successful, we'll refetch the data to be sure it's in sync.
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["studyActivity"] })
-      queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
       queryClient.invalidateQueries({ queryKey: ["authUser"] })
-    },
-    onError: (error) => {
+      queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
+    }, // If the request fails, we'll use the `context` to roll back to the old data.
+
+    onError: (error, variables, context) => {
+      if (context?.previousAuthUser) {
+        queryClient.setQueryData(["authUser"], context.previousAuthUser)
+      }
       showAppToast(error.message, "error")
     },
   })

@@ -89,9 +89,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
     setCompletingTodoId(todoId)
 
-    setTimeout(() => {
-      completeTodo(todoId)
-    }, 500)
+    completeTodo(todoId)
   }
 
   const handleDelete = (e) => {
@@ -197,7 +195,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       {/* Mobile Slide Up Menu with Edit Form */}
       {isMobile && isMenuOpen && (
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          <div className="z-50 flex h-auto  w-full flex-col gap-5 overflow-y-auto px-4">
+          <div className="z-50 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
             <TodoEditForm
               todo={todo}
               onClose={handleCloseMenu}

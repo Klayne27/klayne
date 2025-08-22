@@ -15,7 +15,7 @@ function PomodoroSettingsPage() {
   const [settings, setSettings] = useState(null)
 
   // Mutation hook for updating settings
-  const { mutate: updateSettings, isPending: isUpdating } = useUpdatePomodoroSettings()
+  const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
 
   // When initialSettings are fetched, update the local state
   useEffect(() => {
@@ -185,8 +185,8 @@ function PomodoroSettingsPage() {
             <button type="button" className="btn" onClick={() => navigate(-1)}>
               Go Back
             </button>
-            <button type="submit" className="btn btn-primary" disabled={isUpdating}>
-              {isUpdating ? "Saving..." : "Save"}
+            <button type="submit" className="btn btn-primary" disabled={isUpdatingSettings}>
+              {isUpdatingSettings ? "Saving..." : "Save"}
             </button>
           </div>
         </form>

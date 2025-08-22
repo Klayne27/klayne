@@ -14,6 +14,11 @@ import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 import { admin } from "../config/firebaseAdmin.js";
+import LevelUp from "../models/levelup.model.js";
+import StudySession from "../models/studySession.js";
+import Todo from "../models/todo.model.js";
+import TodoActivity from "../models/todoActivity.model.js";
+import TodoList from "../models/todoList.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -202,7 +207,7 @@ export const getSuggestedUsers = async (req, res) => {
           _id: 1,
           isVerified: 1,
           isGoldVerified: 1,
-          badges: 1
+          badges: 1,
         },
       },
     ]);
@@ -396,34 +401,26 @@ export const getFollowers = async (req, res) => {
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
-
     if (id !== req.user._id.toString()) {
       return res
         .status(401)
         .json({ error: "You are not authorized to delete this account." });
     }
-
     const userToDelete = await User.findById(id);
     if (!userToDelete) {
       return res.status(404).json({ error: "User not found." });
     }
-
     if (userToDelete.firebaseUid) {
       await admin.auth().deleteUser(userToDelete.firebaseUid);
-    }
+    } // 1. Find all images uploaded by the user to delete from Cloudinary and the database
 
-    // 1. Find all images uploaded by the user to delete from Cloudinary and the database
     const userImages = await Image.find({ uploadedBy: userToDelete._id });
-
-    // Delete all images from Cloudinary
     for (const image of userImages) {
       const publicId = image.imageUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
-    // Delete all image documents from the database
-    await Image.deleteMany({ uploadedBy: userToDelete._id });
+    await Image.deleteMany({ uploadedBy: userToDelete._id }); // 2. Find and delete user's posts, including any associated videos
 
-    // 2. Find and delete user's posts, including any associated videos
     const userPosts = await Post.find({ user: userToDelete._id });
     for (const post of userPosts) {
       if (post.video) {
@@ -431,9 +428,15 @@ export const deleteUserAccount = async (req, res) => {
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
       await Post.findByIdAndDelete(post._id);
-    }
+    } // ⭐ NEW STEP: 3. Delete all data from new schemas associated with the user ⭐
 
-    // 3. Update all other related documents
+    await LevelUp.deleteMany({ user: id });
+    await PushSubscription.deleteMany({ userId: id });
+    await StudySession.deleteMany({ user: id });
+    await Todo.deleteMany({ user: id });
+    await TodoActivity.deleteMany({ user: id });
+    await TodoList.deleteMany({ owner: id });
+
     await User.updateMany(
       { $or: [{ blockedUsers: id }, { blockedBy: id }] },
       { $pull: { blockedUsers: id, blockedBy: id } }
@@ -445,15 +448,14 @@ export const deleteUserAccount = async (req, res) => {
       { $pull: { following: id, followers: id } }
     );
     await Notification.deleteMany({ $or: [{ from: id }, { to: id }] });
-    await PublicChatMessage.deleteMany({ sender: id });
+    await PublicChatMessage.deleteMany({ sender: id }); // 5. Delete messages and conversations
+    await PublicChatMessage.updateMany({}, { $pull: { reactions: { userId: id } } });
 
-    // 4. Delete messages and conversations
     const conversationsToDelete = await Conversation.find({ participants: id });
     const conversationIds = conversationsToDelete.map((conv) => conv._id);
     await Message.deleteMany({ conversationId: { $in: conversationIds } });
-    await Conversation.deleteMany({ _id: { $in: conversationIds } });
+    await Conversation.deleteMany({ _id: { $in: conversationIds } }); // 6. Finally, delete the user document
 
-    // 5. Finally, delete the user document
     await User.findByIdAndDelete(id);
 
     res.status(200).json({
@@ -587,17 +589,15 @@ export const adminDeleteUserAccount = async (req, res) => {
 
     if (userToDelete.firebaseUid) {
       await admin.auth().deleteUser(userToDelete.firebaseUid);
-    }
+    } // 2. Delete all images associated with the user from Cloudinary and the database
 
-    // 2. Delete all images associated with the user from Cloudinary and the database
     const userImages = await Image.find({ uploadedBy: userIdToDelete });
     for (const image of userImages) {
       const publicId = image.imageUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
-    await Image.deleteMany({ uploadedBy: userIdToDelete });
+    await Image.deleteMany({ uploadedBy: userIdToDelete }); // 3. Find and delete user's posts and their videos
 
-    // 3. Find and delete user's posts and their videos
     const userPosts = await Post.find({ user: userIdToDelete });
     for (const post of userPosts) {
       if (post.video) {
@@ -605,9 +605,15 @@ export const adminDeleteUserAccount = async (req, res) => {
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
       await Post.findByIdAndDelete(post._id);
-    }
+    } // ⭐ NEW STEP: 4. Delete all data from new schemas associated with the user ⭐
 
-    // 4. Update all other related documents to remove references to the deleted user
+    await LevelUp.deleteMany({ user: userIdToDelete });
+    await PushSubscription.deleteMany({ userId: userIdToDelete });
+    await StudySession.deleteMany({ user: userIdToDelete });
+    await Todo.deleteMany({ user: userIdToDelete });
+    await TodoActivity.deleteMany({ user: userIdToDelete });
+    await TodoList.deleteMany({ owner: userIdToDelete }); // ⭐ Crucial step to remove user's reactions from all public chat messages. ⭐
+
     await User.updateMany(
       { $or: [{ blockedUsers: userIdToDelete }, { blockedBy: userIdToDelete }] },
       { $pull: { blockedUsers: userIdToDelete, blockedBy: userIdToDelete } }
@@ -627,17 +633,19 @@ export const adminDeleteUserAccount = async (req, res) => {
     await Notification.deleteMany({
       $or: [{ from: userIdToDelete }, { to: userIdToDelete }],
     });
-    await PublicChatMessage.deleteMany({ sender: userIdToDelete });
-
-    // 5. Delete messages and conversations
+    await PublicChatMessage.deleteMany({ sender: userIdToDelete }); // 6. Delete messages and conversations
+    await PublicChatMessage.updateMany(
+      {},
+      { $pull: { reactions: { userId: userIdToDelete } } }
+    );
+    
     const conversationsToDelete = await Conversation.find({
       participants: userIdToDelete,
     });
     const conversationIds = conversationsToDelete.map((conv) => conv._id);
     await Message.deleteMany({ conversationId: { $in: conversationIds } });
-    await Conversation.deleteMany({ _id: { $in: conversationIds } });
+    await Conversation.deleteMany({ _id: { $in: conversationIds } }); // 7. Finally, delete the user document
 
-    // 6. Finally, delete the user document
     await User.findByIdAndDelete(userIdToDelete);
 
     res.status(200).json({

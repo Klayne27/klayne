@@ -15,6 +15,14 @@ import {
 import { showAppToast } from "../../utils/showAppToast"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import useXpStore from "../../store/useXpStore"
+import { useGetPomodoroSettings } from "../pomodoroHooks/usePomodo"
+
+const xpForLevel = (level) => {
+  if (level <= 1) {
+    return 500
+  }
+  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100)
+}
 
 export const useGetUserTodos = () => {
   return useQuery({
@@ -89,54 +97,30 @@ export const useGetPublicCompletedTodos = () => {
   }
 }
 
-
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()
   const { authUser: currentUser, setAuthUser } = useAuthUser()
-  const { setShowXpGain, setXpGainedAmount } = useXpStore() // ⭐ Get the Zustand setters ⭐
+  const { setShowXpGain, setXpGainedAmount } = useXpStore()
 
   const { mutate: completeTodo, isPending: isCompletingTodo } = useMutation({
     mutationFn: completeTodoApi,
     onMutate: async (todoId) => {
-      await queryClient.cancelQueries({ queryKey: ["todos"] })
+      // Cancel any ongoing queries to avoid conflicts with our UI changes.
       await queryClient.cancelQueries({ queryKey: ["todoLists"] })
-
-      const previousTodos = queryClient.getQueryData(["todos"])
+      await queryClient.cancelQueries({ queryKey: ["authUser"] }) // Store previous data for a potential rollback on error.
       const previousTodoLists = queryClient.getQueryData(["todoLists"])
       const previousUser = currentUser
-
-      queryClient.setQueryData(["todoLists"], (oldData) => {
-        if (!oldData) return oldData
-        const newPages = oldData.pages.map((page) => ({
-          ...page,
-          data: page.data.map((list) => ({
-            ...list,
-            todos: list.todos.filter((todo) => todo._id !== todoId),
-          })),
-        }))
-        return { ...oldData, pages: newPages }
-      })
-
-      return { previousTodos, previousTodoLists, previousUser }
-    },
-    onError: (err, todoId, context) => {
-      queryClient.setQueryData(["todoLists"], context.previousTodoLists)
-      if (context.previousUser) {
-        setAuthUser(context.previousUser)
-      }
-      showAppToast(err.message || "Failed to complete todo", "error")
+      return { previousTodoLists, previousUser }
     },
     onSuccess: (data) => {
-      showAppToast("Todo completed! ✨", "success")
+      showAppToast("Todo completed! ✨", "success") // ⭐ STEP 1: Use the actual XP data from the server response.
 
       if (data?.xpResult) {
-        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult
-
+        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult // Set the XP gain amount for the header animation.
         setXpGainedAmount(xpGained)
-        setShowXpGain(true)
-        setTimeout(() => setShowXpGain(false), 2000)
+        setShowXpGain(true) // Hide the animation after 2 seconds.
+        setTimeout(() => setShowXpGain(false), 2000) // Update the authUser state with the final, correct values from the server.
 
-        // Update authUser state with new XP and level
         const updatedUser = {
           ...currentUser,
           pomodoroXP: finalXP,
@@ -147,15 +131,25 @@ export const useCompleteTodo = () => {
         if (levelsGained?.length > 0) {
           showAppToast(`You leveled up to Level ${finalLevel}! 🎉`, "success")
         }
+      } // ⭐ STEP 2: Use a timeout to invalidate the query and visually remove the todo.
+      // The duration should match the CSS animation duration.
+
+      setTimeout(() => {
+        queryClient.invalidateQueries({ queryKey: ["todoLists"] })
+        queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
+        queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] }) // Note: Invalidate the authUser query as a final check, but the
+        // optimistic update in onSuccess already updated the local state.
+        queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      }, 500)
+    },
+    onError: (err, variables, context) => {
+      // Rollback the UI if the mutation fails.
+      queryClient.setQueryData(["todoLists"], context.previousTodoLists)
+      if (context.previousUser) {
+        setAuthUser(context.previousUser)
       }
-    },
-    onSettled: () => {
-      // Invalidate queries as a fallback to ensure consistency
-      queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
-      queryClient.invalidateQueries({ queryKey: ["authUser"] })
-    },
+      showAppToast(err.message || "Failed to complete todo", "error")
+    }, // The onSettled callback is no longer needed since onSuccess handles invalidation.
   })
 
   return { completeTodo, isCompletingTodo }
@@ -386,4 +380,3 @@ export const useGetFollowingTodos = () => {
     retry: false,
   })
 }
-

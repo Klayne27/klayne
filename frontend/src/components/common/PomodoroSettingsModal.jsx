@@ -4,7 +4,7 @@ import { showAppToast } from "../../utils/showAppToast"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   const [settings, setSettings] = useState(initialSettings)
-  const updateSettingsMutation = useUpdatePomodoroSettings()
+  const {updateSettings, isUpdatingSettings} = useUpdatePomodoroSettings()
 
   useEffect(() => {
     setSettings(initialSettings)
@@ -20,7 +20,7 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
 
   const handleSubmit = (e) => {
     e.preventDefault()
-    updateSettingsMutation.mutate(settings)
+    updateSettings(settings)
     onClose()
     showAppToast("Settings updated!", "success")
   }
@@ -168,7 +168,7 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
             <button
               type="submit"
               className="btn btn-primary"
-              disabled={updateSettingsMutation.isPending}
+              disabled={isUpdatingSettings}
             >
               Save
             </button>

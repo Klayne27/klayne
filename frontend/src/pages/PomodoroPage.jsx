@@ -43,7 +43,7 @@ const PomodoroPage = () => {
   const { newPostCount, unreadMessageCount, unreadPublicChatCount } = useSocket()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const endSessionMutation = useEndStudySession()
-  const updateSettingsMutation = useUpdatePomodoroSettings()
+  const { updateSettings } = useUpdatePomodoroSettings()
   const isMobile = useIsMobile()
 
   const [timer, setTimer] = useState(0)
@@ -196,6 +196,8 @@ const PomodoroPage = () => {
                 if (milestoneLevelReached > 0) {
                   setMilestoneLevel(milestoneLevelReached)
                   setShowShareModal(true)
+                } else {
+                  showAppToast(`You leveled up to Level ${data.xpResult.finalLevel}! 🎉`, "success")
                 }
               }
 
@@ -378,7 +380,7 @@ const PomodoroPage = () => {
 
   const toggleMute = () => {
     const newSettings = { ...settings, isMuted: !settings.isMuted }
-    updateSettingsMutation.mutate(newSettings)
+    updateSettings(newSettings)
     showAppToast(settings.isMuted ? "Alarm unmuted" : "Alarm muted")
   }
 
@@ -579,7 +581,8 @@ const PomodoroPage = () => {
                 className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1"
                 onClick={toggleMute}
               >
-                <span>{!settings.isMuted ? <FaBell /> : <FaBellSlash />}</span> {formattedFinishTime}
+                <span>{!settings.isMuted ? <FaBell /> : <FaBellSlash />}</span>{" "}
+                {formattedFinishTime}
               </span>
             </div>
           </div>

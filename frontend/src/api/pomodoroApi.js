@@ -32,13 +32,13 @@ export const startStudySession = async () => {
   return res.json()
 }
 
-export const endStudySession = async ({ duration, postId }) => {
+export const endStudySession = async ({ duration }) => {
   const res = await fetch(`${BASE_URL}/session/end`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ duration, postId }),
+    body: JSON.stringify({ duration }),
   })
   if (!res.ok) {
     throw new Error("Failed to end study session")
