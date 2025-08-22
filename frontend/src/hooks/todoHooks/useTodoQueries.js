@@ -74,68 +74,98 @@ export const useGetPublicCompletedTodos = () => {
   }
 }
 
+const calculateXpGainForTodo = (todo, todoList) => {
+  const xpRewards = {
+    low: 25,
+    medium: 50,
+    high: 100,
+    urgent: 200,
+  }
+
+  let xpToAdd = xpRewards[todo.priority] || 25
+
+  if (todoList && todoList.isPublic) {
+    xpToAdd *= 2
+  }
+
+  return xpToAdd
+}
+
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()
-  const { authUser: currentUser, setAuthUser } = useAuthUser()
   const { setShowXpGain, setXpGainedAmount } = useXpStore()
 
-  const { mutate: completeTodo, isPending: isCompletingTodo } = useMutation({
+  const { mutate: completeTodo } = useMutation({
     mutationFn: completeTodoApi,
-    // onMutate: async (todoId) => {
-    //   await queryClient.cancelQueries({ queryKey: ["todoLists"] })
-    //   await queryClient.cancelQueries({ queryKey: ["authUser"] })
-    //   const previousTodoLists = queryClient.getQueryData(["todoLists"])
-    //   const previousUser = currentUser
-    //   return { previousTodoLists, previousUser }
-    // },
+
+    onMutate: async (todoId) => {
+      // Get the existing data from the cache
+      const oldTodoLists = queryClient.getQueryData(["todoLists"])
+
+      let todoToComplete = null
+      let parentList = null
+      oldTodoLists?.pages?.forEach((page) => {
+        page.data.forEach((todoList) => {
+          const todo = todoList.todos.find((t) => t._id === todoId)
+          if (todo) {
+            todoToComplete = todo
+            parentList = todoList
+          }
+        })
+      })
+
+      if (todoToComplete && parentList) {
+        const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
+
+        // Immediately trigger the XP gain animation
+        setXpGainedAmount(optimisticXpGain)
+        setShowXpGain(true)
+        setTimeout(() => setShowXpGain(false), 2000)
+
+        // Optimistically update the authUser cache with the calculated XP
+        queryClient.setQueryData(["authUser"], (oldData) => {
+          if (!oldData) return oldData
+          return {
+            ...oldData,
+            pomodoroXP: oldData.pomodoroXP + optimisticXpGain,
+          }
+        })
+      }
+
+      // We will no longer filter the list here to allow the animation to play.
+    },
+
     onSuccess: (data) => {
       showAppToast("Todo completed! ✨", "success")
 
       if (data?.xpResult) {
-        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult // Set the XP gain amount for the header animation.
-        setXpGainedAmount(xpGained)
-        setShowXpGain(true)
-        setTimeout(() => setShowXpGain(false), 2000) // Update the authUser state with the final, correct values from the server.
+        const { xpGained, finalXP, finalLevel, levelsGained } = data.xpResult
 
-        const updatedUser = {
-          ...currentUser,
-          pomodoroXP: finalXP,
-          pomodoroLevel: finalLevel,
-        }
-        setAuthUser(updatedUser)
+        queryClient.setQueryData(["authUser"], (oldData) => {
+          if (!oldData) return oldData
+          return {
+            ...oldData,
+            pomodoroXP: finalXP,
+            pomodoroLevel: finalLevel,
+          }
+        })
 
         if (levelsGained?.length > 0) {
           showAppToast(`You leveled up to Level ${finalLevel}! 🎉`, "success")
         }
-      } // ⭐ STEP 2: Use a timeout to invalidate the query and visually remove the todo.
-      // The duration should match the CSS animation duration.
+      }
 
-      // setTimeout(() => {
-      //   queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      //   queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-      //   queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] }) // Note: Invalidate the authUser query as a final check, but the
-      //   // optimistic update in onSuccess already updated the local state.
-      //   queryClient.invalidateQueries({ queryKey: ["authUser"] })
-      // }, 500)
-    },
-    onSettled: () => {
-      // Invalidate queries as a fallback to ensure consistency
+      // Now, invalidate the queries to trigger a refetch and remove the item from the list.
       queryClient.invalidateQueries({ queryKey: ["todoLists"] })
-      // queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-      // queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
-      // queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
+      queryClient.invalidateQueries({ queryKey: ["todoActivityLog"] })
     },
-    onError: (err, variables, context) => {
-      // Rollback the UI if the mutation fails.
-      // queryClient.setQueryData(["todoLists"], context.previousTodoLists)
-      // if (context.previousUser) {
-      //   setAuthUser(context.previousUser)
-      // }
+    onError: (err) => {
       showAppToast(err.message || "Failed to complete todo", "error")
-    }, // The onSettled callback is no longer needed since onSuccess handles invalidation.
+    },
   })
 
-  return { completeTodo, isCompletingTodo }
+  return { completeTodo }
 }
 
 export const useCreateTodo = () => {

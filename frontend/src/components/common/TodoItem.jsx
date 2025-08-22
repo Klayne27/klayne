@@ -14,19 +14,21 @@ import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
 import { LuNotepadText } from "react-icons/lu"
+import { showAppToast } from "../../utils/showAppToast.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
   const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
   const ellipsisRef = useRef(null)
 
+  const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [completingTodoId, setCompletingTodoId] = useState(null)
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const isMobile = useIsMobile()
 
-  const { completeTodo } = useCompleteTodo()
+  const { completeTodo, isCompletingTodo } = useCompleteTodo()
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
 
@@ -85,9 +87,11 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       return
     }
     e.stopPropagation()
+          showAppToast("Todo completed! ✨", "success")
 
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
-    setCompletingTodoId(todoId)
+    // setCompletingTodoId(todoId)
+    setIsAnimatingOut(true)
 
       // setTimeout(() => {
         completeTodo(todoId)
@@ -110,9 +114,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       <li
         onClick={isMobile ? handleMenuToggle : null}
         className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${
-          completingTodoId === todo._id
-            ? "-translate-x-full opacity-0"
-            : "translate-x-0 opacity-100"
+          isAnimatingOut ? "-translate-x-full opacity-0" : "translate-x-0 opacity-100"
         } ${isMobile ? "cursor-pointer" : ""} `}
       >
         <div className="flex items-center gap-2 py-1">
@@ -121,7 +123,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
               handleComplete(todo._id, e)
             }}
             className={`flex-shrink-0 ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border border-slate-400" ? "" : "border-2"} size-5`}
-            disabled={completingTodoId === todo._id}
+            disabled={isCompletingTodo}
           >
             {isVisuallyCompleted && <FaCheckCircle className="size-5" />}
           </button>
