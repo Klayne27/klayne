@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   endStudySession,
-  getLeaderboard,
   getPomodoroSettings,
   getStudyActivityFeed,
   startStudySession,
@@ -9,7 +8,6 @@ import {
 } from "../../api/pomodoroApi"
 import { showAppToast } from "../../utils/showAppToast"
 import {
-  getLeaderboardStats,
   getMonthlyLeaderboard,
   getPreviousWinnersApi,
   getTotalLeaderboard,
@@ -132,32 +130,6 @@ export const useGetStudyActivityFeed = (page) => {
   }
 }
 
-// export const useGetLeaderboard = (page) => {
-//   const { data, isLoading } = useQuery({
-//     queryKey: ["leaderboard", page], // queryKey must include page to re-fetch when it changes
-//     queryFn: () => getLeaderboard(page),
-//   })
-
-//   return {
-//     leaderboard: data?.leaderboard,
-//     totalPages: data?.totalPages,
-//     isLoading,
-//   }
-// }
-
-// export const useGetSessionCountLeaderboard = (page) => {
-//   const { data, isLoading: isLoadingSessionCountLeaderboard } = useQuery({
-//     queryKey: ["leaderboard", page], // queryKey must include page to re-fetch when it changes
-//     queryFn: () => getSessionCountLeaderboard(page),
-//   })
-
-//   return {
-//     sessionCountleaderboard: data?.leaderboard,
-//     sessionCounttotalPages: data?.totalPages,
-//     isLoadingSessionCountLeaderboard,
-//   }
-// }
-
 // Hook for total (all-time) leaderboard
 export const useGetTotalLeaderboard = (page) => {
   const { data, isLoading, error } = useQuery({
@@ -190,21 +162,6 @@ export const useGetMonthlyLeaderboard = (page) => {
     currentPage: data?.currentPage,
     type: data?.type,
     currentMonth: data?.currentMonth,
-    isLoading,
-    error,
-  }
-}
-
-// Hook for leaderboard statistics
-export const useGetLeaderboardStats = () => {
-  const { data, isLoading, error } = useQuery({
-    queryKey: ["leaderboard", "stats"],
-    queryFn: getLeaderboardStats,
-    staleTime: 10 * 60 * 1000, // 10 minutes
-  })
-
-  return {
-    stats: data,
     isLoading,
     error,
   }

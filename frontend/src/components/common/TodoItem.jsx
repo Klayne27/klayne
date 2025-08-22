@@ -1,4 +1,3 @@
-// src/components/todos/TodoItem.jsx
 import { useState, useRef, useEffect } from "react"
 import { useCompleteTodo, useDeleteTodo, useUpdateTodo } from "../../hooks/todoHooks/useTodoQueries"
 import { useTodoStore } from "../../store/useTodoStore"
@@ -9,11 +8,9 @@ import SlideUpMenu from "./SlideUpMenu"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import Portal from "./Portal"
 
-// Assuming TodoEditForm is a new component you'll create
 import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
-import { LuNotepadText } from "react-icons/lu"
 import { showAppToast } from "../../utils/showAppToast.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
@@ -21,8 +18,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
   const ellipsisRef = useRef(null)
 
-  // const [isAnimatingOut, setIsAnimatingOut] = useState(false)
-  // const [completingTodoId, setCompletingTodoId] = useState(null)
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
@@ -42,9 +37,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     }
   }, [openTodoDropdownId, todo._id])
 
-  // Handler for mobile menu toggle
   const handleMenuToggle = (e) => {
-    // Only allow edit for the user's own todos
     if (todo.user !== currentUser._id) return
 
     e.stopPropagation()
@@ -70,17 +63,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setOpenTodoDropdownId(null)
   }
 
-  // const handleComplete = (todoId, e) => {
-  //   if (todo.user !== currentUser._id) return
-  //   e.stopPropagation()
-
-  //   setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
-  //   setCompletingTodoId(todoId)
-
-  //   setTimeout(() => {
-  //     completeTodo(todoId)
-  //   }, 500)
-  // }
 
   const handleComplete = (todoId, e) => {
     if (todo.user !== currentUser._id || isVisuallyCompleted) {
@@ -90,12 +72,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     showAppToast("Todo completed! ✨", "success")
 
     setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
-    // setCompletingTodoId(todoId)
-    // setIsAnimatingOut(true)
 
-    // setTimeout(() => {
     completeTodo(todoId)
-    // }, 500)
   }
 
   const handleDelete = (e) => {

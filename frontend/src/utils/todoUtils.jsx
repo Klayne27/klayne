@@ -27,6 +27,23 @@ export const getPriorityColor = (priority) => {
   }
 }
 
+export const calculateXpGainForTodo = (todo, todoList) => {
+  const xpRewards = {
+    low: 25,
+    medium: 50,
+    high: 100,
+    urgent: 200,
+  }
+
+  let xpToAdd = xpRewards[todo.priority] || 25
+
+  if (todoList && todoList.isPublic) {
+    xpToAdd *= 2
+  }
+
+  return xpToAdd
+}
+
 export const getCompletedColor = (priority) => {
   switch (priority) {
     case "urgent":
