@@ -44,6 +44,9 @@ const TodoSectionItem = forwardRef(
 
     const [isAnimatingLike, setIsAnimatingLike] = useState(false)
 
+
+    console.log(list);
+
     const navigate = useNavigate()
     const { deleteTodoList, deletingTodoList } = useDeleteTodoList()
     const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()

@@ -21,6 +21,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
   const ellipsisRef = useRef(null)
 
+
   const [isAnimatingOut, setIsAnimatingOut] = useState(false)
   const [completingTodoId, setCompletingTodoId] = useState(null)
   const [visuallyCompleted, setVisuallyCompleted] = useState({})

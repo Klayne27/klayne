@@ -92,18 +92,21 @@ const calculateXpGainForTodo = (todo, todoList) => {
 }
 
 export const useCompleteTodo = () => {
-  const queryClient = useQueryClient()
-  const { setShowXpGain, setXpGainedAmount } = useXpStore()
+  const queryClient = useQueryClient();
+  const { setShowXpGain, setXpGainedAmount } = useXpStore();
 
   const { mutate: completeTodo } = useMutation({
     mutationFn: completeTodoApi,
 
+    // This callback is the most critical part of the solution
     onMutate: async (todoId) => {
-      // Get the existing data from the cache
-      const oldTodoLists = queryClient.getQueryData(["todoLists"])
+      // 1. Optimistically update the authUser XP
+      const oldAuthData = queryClient.getQueryData(["authUser"])
+            const oldTodoLists = queryClient.getQueryData(["todoLists"])
 
       let todoToComplete = null
       let parentList = null
+
       oldTodoLists?.pages?.forEach((page) => {
         page.data.forEach((todoList) => {
           const todo = todoList.todos.find((t) => t._id === todoId)
@@ -116,13 +119,10 @@ export const useCompleteTodo = () => {
 
       if (todoToComplete && parentList) {
         const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
-
-        // Immediately trigger the XP gain animation
         setXpGainedAmount(optimisticXpGain)
         setShowXpGain(true)
         setTimeout(() => setShowXpGain(false), 2000)
 
-        // Optimistically update the authUser cache with the calculated XP
         queryClient.setQueryData(["authUser"], (oldData) => {
           if (!oldData) return oldData
           return {
@@ -132,7 +132,31 @@ export const useCompleteTodo = () => {
         })
       }
 
-      // We will no longer filter the list here to allow the animation to play.
+      // 2. Optimistically update the todoLists cache to remove the item
+      //    and update the count. This is what makes the UI feel fast.
+
+      queryClient.setQueryData(["todoLists"], (oldData) => {
+        if (!oldData) return { pages: [] }
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            data: page.data.map((todoList) => {
+              if (todoList._id === parentList._id) {
+                return {
+                  ...todoList,
+                  todos: todoList.todos.filter((todo) => todo._id !== todoId),
+                  totalTodos: todoList.totalTodos - 1,
+                }
+              }
+              return todoList
+            }),
+          })),
+        }
+      })
+
+      // 3. Return a context object to be used in onSuccess and onError
+      return { oldTodoLists }
     },
 
     onSuccess: (data) => {
