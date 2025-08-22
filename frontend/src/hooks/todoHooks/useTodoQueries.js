@@ -10,7 +10,7 @@ import {
 } from "../../api/todoApi"
 import { showAppToast } from "../../utils/showAppToast"
 import useXpStore from "../../store/useXpStore"
-import { calculateXpGainForTodo } from "../../utils/todoUtils"
+import { calculateXpGainForTodo, findTodoAndParent } from "../../utils/todoUtils"
 
 export const useGetCompletedTodos = () => {
   const {
@@ -82,30 +82,14 @@ export const useCompleteTodo = () => {
       const oldTodoLists = queryClient.getQueryData(["todoLists"])
       const oldPublicTodoLists = queryClient.getQueryData(["publicTodoLists"])
 
-      let todoToComplete = null
-      let parentList = null
+      let found = findTodoAndParent(oldTodoLists, todoId)
+      if (!found) {
+        found = findTodoAndParent(oldPublicTodoLists, todoId)
+      }
 
-      oldTodoLists?.pages?.forEach((page) => {
-        page.data.forEach((todoList) => {
-          const todo = todoList.todos.find((t) => t._id === todoId)
-          if (todo) {
-            todoToComplete = todo
-            parentList = todoList
-          }
-        })
-      })
+      if (found) {
+        const { todoToComplete, parentList } = found
 
-      oldPublicTodoLists?.pages?.forEach((page) => {
-        page.data.forEach((todoList) => {
-          const todo = todoList.todos.find((t) => t._id === todoId)
-          if (todo) {
-            todoToComplete = todo
-            parentList = todoList
-          }
-        })
-      })
-
-      if (todoToComplete && parentList) {
         const optimisticXpGain = calculateXpGainForTodo(todoToComplete, parentList)
         setXpGainedAmount(optimisticXpGain)
         setShowXpGain(true)
@@ -120,17 +104,15 @@ export const useCompleteTodo = () => {
         })
       }
 
-      queryClient.setQueryData(["publicTodoLists"], (oldData) => {
-        if (!oldData) return { pages: [] }
+      const updateCache = (oldData) => {
+        const pages = oldData?.pages || []
 
-        console.log(oldData)
         return {
           ...oldData,
-          pages: oldData.pages.map((page) => ({
+          pages: pages.map((page) => ({
             ...page,
             data: page.data.map((todoList) => {
-              console.log(todoList._id)
-              if (todoList._id === parentList._id) {
+              if (todoList._id === found.parentList._id) {
                 return {
                   ...todoList,
                   todos: todoList.todos.filter((todo) => todo._id !== todoId),
@@ -141,39 +123,18 @@ export const useCompleteTodo = () => {
             }),
           })),
         }
-      })
+      }
 
-      queryClient.setQueryData(["todoLists"], (oldData) => {
-        if (!oldData) return { pages: [] }
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            data: page.data.map((todoList) => {
-              if (todoList._id === parentList._id) {
-                return {
-                  ...todoList,
-                  todos: todoList.todos.filter((todo) => todo._id !== todoId),
-                  totalTodos: todoList.totalTodos - 1,
-                }
-              }
-              return todoList
-            }),
-          })),
-        }
-      })
+      queryClient.setQueryData(["publicTodoLists"], updateCache)
+      queryClient.setQueryData(["todoLists"], updateCache)
 
       return { oldTodoLists, oldAuthData, oldPublicTodoLists }
     },
-
-    onSuccess: (data) => {
-      queryClient.invalidateQueries({ queryKey: ["completedTodos"] })
-    },
     onError: (err, variables, context) => {
-      showAppToast(err.message || "Failed to complete todo", "error")
       queryClient.setQueryData(["todoLists"], context.oldTodoLists)
       queryClient.setQueryData(["authUser"], context.oldAuthData)
       queryClient.setQueryData(["publicTodoLists"], context.oldPublicTodoLists)
+      showAppToast(err.message || "Failed to complete todo", "error")
     },
   })
 
@@ -195,31 +156,8 @@ export const useCreateTodo = () => {
       const tempId = "temp-" + Date.now()
       const optimisticTodo = { ...newTodo, _id: tempId, completed: false }
 
-      queryClient.setQueryData(["todoLists"], (oldData) => {
+      const updateCache = (oldData) => {
         const pages = oldData?.pages || []
-
-        return {
-          ...oldData,
-          pages: pages.map((page) => ({
-            ...page,
-            data: page.data.map((todoList) => {
-               console.log(todoList)
-              if (todoList._id === newTodo.todoListId) {
-               
-                return {
-                  ...todoList,
-                  todos: [...todoList.todos, optimisticTodo],
-                }
-              }
-              return todoList
-            }),
-          })),
-        }
-      })
-
-      queryClient.setQueryData(["publicTodoLists"], (oldData) => {
-        const pages = oldData?.pages || []
-
         return {
           ...oldData,
           pages: pages.map((page) => ({
@@ -235,7 +173,10 @@ export const useCreateTodo = () => {
             }),
           })),
         }
-      })
+      }
+
+      queryClient.setQueryData(["todoLists"], updateCache)
+      queryClient.setQueryData(["publicTodoLists"], updateCache)
 
       return { oldTodoLists, oldPublicTodoLists }
     },
@@ -265,9 +206,8 @@ export const useUpdateTodo = () => {
       const oldTodoLists = queryClient.getQueryData(["todoLists"])
       const oldPublicTodoLists = queryClient.getQueryData(["publicTodoLists"])
 
-      queryClient.setQueryData(["todoLists"], (oldData) => {
+      const updateCache = (oldData) => {
         const pages = oldData?.pages || []
-        console.log(oldData)
         return {
           ...oldData,
           pages: pages.map((page) => ({
@@ -280,25 +220,10 @@ export const useUpdateTodo = () => {
             })),
           })),
         }
-      })
+      }
 
-      queryClient.setQueryData(["publicTodoLists"], (oldData) => {
-        const pages = oldData?.pages || []
-        console.log(oldData)
-        console.log(updatedTodo)
-        return {
-          ...oldData,
-          pages: pages.map((page) => ({
-            ...page,
-            data: page.data.map((todoList) => ({
-              ...todoList,
-              todos: todoList.todos.map((todo) =>
-                todo._id === updatedTodo.id ? { ...todo, ...updatedTodo.todoData } : todo,
-              ),
-            })),
-          })),
-        }
-      })
+      queryClient.setQueryData(["todoLists"], updateCache)
+      queryClient.setQueryData(["publicTodoLists"], updateCache)
 
       return { oldTodoLists, oldPublicTodoLists }
     },
@@ -324,7 +249,7 @@ export const useDeleteTodo = () => {
       const oldTodoLists = queryClient.getQueryData(["todoLists"])
       const oldPublicTodoLists = queryClient.getQueryData(["publicTodoLists"])
 
-      queryClient.setQueryData(["todoLists"], (oldData) => {
+      const updateCache = (oldData) => {
         const pages = oldData?.pages || []
 
         return {
@@ -337,22 +262,10 @@ export const useDeleteTodo = () => {
             })),
           })),
         }
-      })
+      }
 
-      queryClient.setQueryData(["publicTodoLists"], (oldData) => {
-        const pages = oldData?.pages || []
-
-        return {
-          ...oldData,
-          pages: pages.map((page) => ({
-            ...page,
-            data: page.data.map((todoList) => ({
-              ...todoList,
-              todos: todoList.todos.filter((todo) => todo._id !== todoIdToDelete),
-            })),
-          })),
-        }
-      })
+      queryClient.setQueryData(["todoLists"], updateCache)
+      queryClient.setQueryData(["publicTodoLists"], updateCache)
 
       return { oldTodoLists, oldPublicTodoLists }
     },

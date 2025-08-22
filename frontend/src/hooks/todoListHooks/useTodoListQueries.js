@@ -142,7 +142,7 @@ export const useUpdateTodoList = () => {
       const oldTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
       const oldPublicTodoLists = queryClient.getQueryData(PUBLIC_TODO_LISTS_QUERY_KEY)
 
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (oldData) => {
+      const updateCache = (oldData) => {
         const pages = oldData?.pages || []
 
         const newPages = pages.map((page) => ({
@@ -153,19 +153,10 @@ export const useUpdateTodoList = () => {
         }))
 
         return { ...oldData, pages: newPages }
-      })
+      }
 
-      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, (oldData) => {
-        const pages = oldData?.pages || []
-
-        const newPages = pages.map((page) => ({
-          ...page,
-          data: page.data.map((todoList) =>
-            todoList._id === id ? { ...todoList, ...listData } : todoList,
-          ),
-        }))
-        return { ...oldData, pages: newPages }
-      })
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, updateCache)
+      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, updateCache)
 
       return { oldTodoLists, oldPublicTodoLists }
     },
@@ -190,28 +181,31 @@ export const useDeleteTodoList = () => {
     mutationFn: deleteTodoListApi,
     onMutate: async (listId) => {
       await queryClient.cancelQueries({ queryKey: TODO_LISTS_QUERY_KEY })
-      const previousTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
+      await queryClient.cancelQueries({ queryKey: PUBLIC_TODO_LISTS_QUERY_KEY })
 
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, (oldData) => {
-        if (!oldData) return oldData
+      const oldTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
+      const oldPublicTodoLists = queryClient.getQueryData(PUBLIC_TODO_LISTS_QUERY_KEY)
 
-        const newPages = oldData.pages.map((page) => ({
+      const updateCache = (oldData) => {
+        const pages = oldData?.pages || []
+
+        const newPages = pages.map((page) => ({
           ...page,
-          data: page.data.filter((list) => list._id !== listId),
+          data: page.data.filter((todoList) => todoList._id !== listId),
         }))
 
         return { ...oldData, pages: newPages }
-      })
+      }
 
-      return { previousTodoLists }
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, updateCache)
+      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, updateCache)
+
+      return { oldTodoLists, oldPublicTodoLists }
     },
     onError: (err, listId, context) => {
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.previousTodoLists)
+      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.oldTodoLists)
+      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, context.oldPublicTodoLists)
       showAppToast(err.message, "error")
-    },
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: TODO_LISTS_QUERY_KEY })
-      queryClient.invalidateQueries({ queryKey: PUBLIC_TODO_LISTS_QUERY_KEY })
     },
   })
 

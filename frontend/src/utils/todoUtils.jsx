@@ -175,6 +175,22 @@ export const iconMap = {
   PiMathOperationsFill: PiMathOperationsFill,
 }
 
+export const findTodoAndParent = (todoLists, todoId) => {
+  if (!todoLists?.pages) return null
+
+  for (const page of todoLists.pages) {
+    if (!page.data) continue
+
+    for (const todoList of page.data) {
+      const todo = todoList.todos.find((t) => t._id === todoId)
+      if (todo) {
+        return { todoToComplete: todo, parentList: todoList }
+      }
+    }
+  }
+  return null
+}
+
 // Add this new function inside CompletedTodoList.jsx before the component
 export const groupTodosByDate = (todos) => {
   const groups = {}
