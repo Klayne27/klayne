@@ -12,6 +12,7 @@ import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGl
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
 import { useState } from "react"
+import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
 
 // Public-facing pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/auth/login/LoginPage"))
@@ -33,6 +34,7 @@ function App() {
   // Socket event hooks for authenticated users
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
+  useGlobalNotificationSocketEvent()
 
   useEffect(() => {
     // Check subscription status on component mount

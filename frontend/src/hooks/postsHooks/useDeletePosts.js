@@ -3,6 +3,7 @@ import { deletePostApi } from "../../api/postsApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useLocation, useNavigate } from "react-router-dom";
 import { showAppToast } from "../../utils/showAppToast";
+import { POSTS_QUERY_KEY } from "../../constants/queryKeys";
 
 export const useDeletePosts = () => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useDeletePosts = () => {
     mutationFn: (postId) => deletePostApi(postId),
     onSuccess: () => {
       showAppToast("Post deleted successfully", "success");
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["post"] });
       pathname.includes("/post/") ? navigate(-1) : "";
     },

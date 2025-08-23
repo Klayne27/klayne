@@ -1,9 +1,10 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteMultipleScheduledPostsApi } from "../../api/postsApi";
-import { showAppToast } from "../../utils/showAppToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { deleteMultipleScheduledPostsApi } from "../../api/postsApi"
+import { showAppToast } from "../../utils/showAppToast"
+import { SCHEDULED_POSTS_QUERY_KEY } from "../../constants/queryKeys"
 
 export const useDeleteMultipleScheduledPosts = () => {
-  const queryClient = useQueryClient();
+  const queryClient = useQueryClient()
 
   const {
     mutate: deleteMultipleScheduledPosts,
@@ -14,48 +15,33 @@ export const useDeleteMultipleScheduledPosts = () => {
     mutationFn: (postIds) => deleteMultipleScheduledPostsApi(postIds),
 
     onMutate: async (postIdsToDelete) => {
-      await queryClient.cancelQueries({ queryKey: ["scheduledPosts"] });
+      await queryClient.cancelQueries({ queryKey: SCHEDULED_POSTS_QUERY_KEY })
 
-      const previousScheduledPosts = queryClient.getQueryData(["scheduledPosts"]);
+      const previousScheduledPosts = queryClient.getQueryData(SCHEDULED_POSTS_QUERY_KEY)
 
-      queryClient.setQueryData(["scheduledPosts"], (oldPosts) =>
-        oldPosts?.filter((post) => !postIdsToDelete.includes(post._id))
-      );
+      queryClient.setQueryData(SCHEDULED_POSTS_QUERY_KEY, (oldPosts) =>
+        oldPosts?.filter((post) => !postIdsToDelete.includes(post._id)),
+      )
 
-      return { previousScheduledPosts };
+      return { previousScheduledPosts }
     },
 
     onSuccess: (data) => {
       if (data.successfulDeletions > 0) {
         showAppToast(
           `${data.successfulDeletions} scheduled post(s) successfully removed!`,
-          "success"
-        );
-      }
-      if (data.failedDeletions > 0) {
-        showAppToast(
-          `${data.failedDeletions} scheduled post(s) could not be deleted.`,
-          "error"
-        );
+          "success",
+        )
       }
     },
 
     onError: (error, postIdsToDelete, context) => {
-      showAppToast(
-        error.message || "Failed to remove scheduled posts. Please try again.",
-        "error"
-      );
+      showAppToast(error.message || "Failed to remove scheduled posts. Please try again.", "error")
 
-      if (context?.previousScheduledPosts) {
-        queryClient.setQueryData(["scheduledPosts"], context.previousScheduledPosts);
-      }
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
+      queryClient.setQueryData(SCHEDULED_POSTS_QUERY_KEY, context.previousScheduledPosts)
+      queryClient.invalidateQueries({ queryKey: SCHEDULED_POSTS_QUERY_KEY })
     },
+  })
 
-    onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
-    },
-  });
-
-  return { deleteMultipleScheduledPosts, isPending, isError, error };
-};
+  return { deleteMultipleScheduledPosts, isPending, isError, error }
+}
