@@ -2,29 +2,19 @@
 import { useState, useEffect, useRef, forwardRef } from "react"
 import { FaTrash, FaCheck, FaFlag, FaCalendar, FaTrashCan } from "react-icons/fa6"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
-import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 
-// Import React Datepicker
-import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { IoClose } from "react-icons/io5"
 import CustomDatePicker from "./CustomDatePicker"
 import { showAppToast } from "../../utils/showAppToast"
 
 const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
-  // const [formData, setFormData] = useState({
-  //   title: "",
-  //   description: "",
-  //   dueDate: null, // Change initial state to null for Date object
-  //   priority: "low",
-  // })
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [priority, setPriority] = useState("low")
   const [dueDate, setDueDate] = useState(null)
 
-  // State for the priority dropdown menu
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false)
   const priorityMenuRef = useRef(null)
@@ -32,19 +22,11 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
 
   useEffect(() => {
     if (todo) {
-      // Create a Date object from the due date string
       const formattedDueDate = todo.dueDate ? new Date(todo.dueDate) : null
-      // const newFormData = {
-      //   title: todo.title || "",
-      //   description: todo.description || "",
-      //   dueDate: formattedDueDate,
-      //   priority: todo.priority || "low",
-      // }
       setTitle(todo.title)
       setDescription(todo.description)
       setPriority(todo.priority)
       setDueDate(formattedDueDate)
-      // setFormData(newFormData)
     }
   }, [todo])
 
@@ -82,26 +64,10 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
   }
 
   const handlePrioritySelect = (priority) => {
-    // setFormData((prev) => ({ ...prev, priority }))
     setPriority(priority)
     setIsPriorityMenuOpen(false)
   }
 
-  // Handle DatePicker change, it receives a Date object
-  // const handleDateChange = (date) => {
-  //   setFormData((prev) => ({ ...prev, dueDate: date }))
-  // }
-
-  // const handleInputChange = (e) => {
-  //   const { name, value } = e.target
-
-  //   setFormData((data) => ({
-  //     ...data,
-  //     [name]: value,
-  //   }))
-  // }
-
-  // Prevents form submission on Enter key press for a better UX in single-line inputs
   const handleKeyDown = (e) => {
     if (e.key === "Enter" && e.target.type !== "textarea") {
       e.preventDefault()
@@ -110,7 +76,6 @@ const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
 
   const handleClearDate = (e) => {
     e.stopPropagation()
-    // setFormData((data) => ({ ...data, dueDate: null }))
     setDueDate(null)
   }
 
