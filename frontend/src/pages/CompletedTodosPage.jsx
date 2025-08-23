@@ -1,9 +1,9 @@
 import CompletedTodoList from "../components/common/CompletedTodoList"
-import { useGetCompletedTodos } from "../hooks/todoHooks/useTodoQueries"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
+import { useGetCompletedTodos } from "../hooks/todoHooks/useGetCompletedTodos"
 
 const CompletedTodosPage = () => {
   const {

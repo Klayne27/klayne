@@ -10,10 +10,8 @@ import {
   updateTodoListApi,
 } from "../../api/todoListApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { FOLLOWING_TODO_LISTS_QUERY_KEY, PUBLIC_TODO_LISTS_QUERY_KEY, TODO_LISTS_QUERY_KEY } from "../../constants/queryKeys"
 
-const TODO_LISTS_QUERY_KEY = ["todoLists"]
-const PUBLIC_TODO_LISTS_QUERY_KEY = ["publicTodoLists"]
-const FOLLOWING_TODO_LISTS_QUERY_KEY = ["followingTodoLists"]
 
 export const useGetUserTodoLists = () => {
   const {

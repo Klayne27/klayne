@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect } from "react"
-import { useCompleteTodo, useDeleteTodo, useUpdateTodo } from "../../hooks/todoHooks/useTodoQueries"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { FaCheckCircle } from "react-icons/fa"
@@ -12,6 +11,9 @@ import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
 import { showAppToast } from "../../utils/showAppToast.js"
+import { useGetCompletedTodos } from "../../hooks/todoHooks/useGetCompletedTodos.js"
+import {useDeleteTodo } from "../../hooks/todoHooks/useDeleteTodo.js"
+import { useUpdateTodo } from "../../hooks/todoHooks/useUpdateTodo.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
@@ -23,7 +25,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const isMobile = useIsMobile()
 
-  const { completeTodo, isCompletingTodo } = useCompleteTodo()
+  const { completeTodo, isCompletingTodo } = useGetCompletedTodos()
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
 

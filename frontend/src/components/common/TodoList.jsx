@@ -1,5 +1,5 @@
 // src/components/todos/TodoList.jsx
-import { useUpdateTodo } from "../../hooks/todoHooks/useTodoQueries"
+import { useUpdateTodo } from "../../hooks/todoHooks/useUpdateTodo"
 import { useTodoStore } from "../../store/useTodoStore"
 import TodoEditModal from "./TodoEditModal"
 import TodoItem from "./TodoItem"

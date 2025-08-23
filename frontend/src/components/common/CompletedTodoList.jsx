@@ -3,17 +3,6 @@ import { FaCheck } from "react-icons/fa6"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
-import {
-  FaBook,
-  FaDumbbell,
-  FaLightbulb,
-  FaPaintBrush,
-  FaCheckCircle,
-  FaStar,
-  FaPen,
-  FaUserFriends,
-} from "react-icons/fa"
-
 
 const CompletedTodoList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
