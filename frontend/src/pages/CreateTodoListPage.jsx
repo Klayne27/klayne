@@ -4,7 +4,7 @@ import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
 
 import { useNavigate } from "react-router-dom"
 import { useTodoStore } from "../store/useTodoStore"
-import { useCreateTodoList } from "../hooks/todoListHooks/useTodoListQueries"
+import { useCreateTodoList } from "../hooks/todoListHooks/useCreateTodoList.js"
 import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../utils/showAppToast"
 import { useRef } from "react"

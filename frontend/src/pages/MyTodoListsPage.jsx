@@ -1,5 +1,5 @@
 import { useTodoStore } from "../store/useTodoStore"
-import { useGetUserTodoLists } from "../hooks/todoListHooks/useTodoListQueries"
+import { useGetUserTodoLists } from "../hooks/todoListHooks/useGetUserTodoLists"
 import CreateTodoListModal from "../components/common/CreateTodoListModal"
 import TodoSectionList from "../components/common/TodoSectionList"
 import TodoPagesHeader from "../components/common/TodoPagesHeader"

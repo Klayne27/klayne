@@ -11,8 +11,8 @@ import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
 import { showAppToast } from "../../utils/showAppToast.js"
-import { useGetCompletedTodos } from "../../hooks/todoHooks/useGetCompletedTodos.js"
-import {useDeleteTodo } from "../../hooks/todoHooks/useDeleteTodo.js"
+import { useDeleteTodo } from "../../hooks/todoHooks/useDeleteTodo.js"
+import { useCompleteTodo } from "../../hooks/todoHooks/useCompleteTodo.js"
 import { useUpdateTodo } from "../../hooks/todoHooks/useUpdateTodo.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
@@ -25,7 +25,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const isMobile = useIsMobile()
 
-  const { completeTodo, isCompletingTodo } = useGetCompletedTodos()
+  const { completeTodo, isCompletingTodo } = useCompleteTodo()
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
 
@@ -65,7 +65,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     setOpenTodoDropdownId(null)
   }
 
-
   const handleComplete = (todoId, e) => {
     if (todo.user !== currentUser._id || isVisuallyCompleted) {
       return
@@ -100,7 +99,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
             onClick={(e) => {
               handleComplete(todo._id, e)
             }}
-            className={`flex-shrink-0  rounded-full ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
+            className={`flex-shrink-0 rounded-full ${isVisuallyCompleted ? getCompletedColor(todo.priority) : getPriorityColor(todo.priority)} ${getPriorityColor(todo.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
             disabled={isCompletingTodo}
           >
             {isVisuallyCompleted && <FaCheckCircle className="size-4" />}

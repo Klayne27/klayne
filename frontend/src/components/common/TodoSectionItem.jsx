@@ -1,10 +1,8 @@
 import { FaEdit } from "react-icons/fa"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { useLocation, useNavigate } from "react-router-dom"
-import {
-  useDeleteTodoList,
-  useLikeUnlikeTodoList,
-} from "../../hooks/todoListHooks/useTodoListQueries"
+import { useDeleteTodoList } from "../../hooks/todoListHooks/useDeleteTodoList"
+import { useLikeUnlikeTodoList } from "../../hooks/todoListHooks/useLikeUnlikeTodoList"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useTodoStore } from "../../store/useTodoStore"
 import { FaEllipsisVertical, FaPlus, FaTrashCan, FaHeart, FaRegHeart } from "react-icons/fa6"

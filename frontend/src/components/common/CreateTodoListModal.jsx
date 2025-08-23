@@ -1,10 +1,10 @@
 import { useState } from "react"
-import { useCreateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
 import { useTodoStore } from "../../store/useTodoStore"
 import { showAppToast } from "../../utils/showAppToast"
 import { useRef } from "react"
 import { useEffect } from "react"
 import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
+import { useCreateTodoList } from "../../hooks/todoListHooks/useCreateTodoList"
 
 const CreateTodoListModal = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()

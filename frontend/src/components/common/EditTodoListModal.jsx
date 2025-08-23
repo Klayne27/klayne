@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
-import { useUpdateTodoList } from "../../hooks/todoListHooks/useTodoListQueries"
+import { useUpdateTodoList } from "../../hooks/todoListHooks/useUpdateTodoList.js"
 import { useRef } from "react"
 import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils.jsx"
 
