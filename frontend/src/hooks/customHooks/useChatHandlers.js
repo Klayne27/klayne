@@ -1,5 +1,4 @@
 import { useCallback, useEffect } from "react"
-import { useAppStore } from "../../store/useAppStore"
 import { useNavigate } from "react-router-dom"
 import { showAppToast } from "../../utils/showAppToast"
 
@@ -16,7 +15,6 @@ export const useChatHandlers = ({
   const { setReplyingToMessage, setEditingMessage, activeMessageModalId, setActiveMessageModalId } =
     chatStore()
   const navigate = useNavigate()
-  const openImageModal = useAppStore((state) => state.openImageModal)
 
   const handleJumpToOriginalMessage = (messageId) => {
     const messageElement = document.getElementById(`message-${messageId}`)

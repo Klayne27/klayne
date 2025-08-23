@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { loginApi } from "../../api/authApi";
 import { showAppToast } from "../../utils/showAppToast";
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys";
 
 export const useLogin = () => {
   const queryClient = useQueryClient();
@@ -13,7 +14,7 @@ export const useLogin = () => {
   } = useMutation({
     mutationFn: (formData) => loginApi(formData),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY });
     },
     onError: (error) => {
       showAppToast(error.message || "Login failed", "error");

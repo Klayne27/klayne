@@ -40,20 +40,6 @@ export const useMessagingMetaData = (message, currentUser) => {
     }, {})
   }, [message.reactions])
 
-  // acc[reaction.emoji] = acc[reaction.emoji] || {
-  //     count: 0,
-  //     users: [],
-  //     userIds: [],
-  //   }
-  //   acc[reaction.emoji].count++
-
-  //   const reactorId = reaction.user?._id?.toString() || reaction.user?.toString()
-  //   if (reactorId) {
-  //     acc[reaction.emoji].userIds.push(reactorId)
-  //   }
-  //   return acc
-  // }, {})
-
   const hasAnyReactions = Object.keys(groupedReactions || {}).length > 0
 
   return {

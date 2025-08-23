@@ -35,22 +35,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   // --- No changes to the rest of your component ---
 
-  // useEffect(() => {
-  //   const visualViewport = window.visualViewport
-  //   if (!visualViewport) return
+  useEffect(() => {
+    const visualViewport = window.visualViewport
+    if (!visualViewport) return
 
-  //   const handleResize = () => {
-  //     const newKeyboardHeight = window.innerHeight - visualViewport.height
-  //     setKeyboardHeight(Math.max(0, newKeyboardHeight))
-  //   }
+    const handleResize = () => {
+      const newKeyboardHeight = window.innerHeight - visualViewport.height
+      setKeyboardHeight(Math.max(0, newKeyboardHeight))
+    }
 
-  //   visualViewport.addEventListener("resize", handleResize)
-  //   handleResize()
+    visualViewport.addEventListener("resize", handleResize)
+    handleResize()
 
-  //   return () => {
-  //     visualViewport.removeEventListener("resize", handleResize)
-  //   }
-  // }, [])
+    return () => {
+      visualViewport.removeEventListener("resize", handleResize)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {
@@ -118,7 +118,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
         onClick={(e) => e.stopPropagation()}
         ref={menuRef}
         style={{ bottom: `${keyboardHeight}px` }}
-        className={`fixed left-0 right-0 z-[1000] transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
       >
         <div
           className="flex flex-col items-center rounded-t-3xl bg-base-200"

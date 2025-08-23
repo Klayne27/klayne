@@ -1,7 +1,6 @@
-// hooks/customHooks/useMessageModalInteractions.js
-import { useState, useCallback, useEffect } from "react"
+import { useState, useCallback } from "react"
 import { useIsMobile } from "./useIsMobile"
-import { useLongPress } from "./useLongPress" // Assuming this is your hook
+import { useLongPress } from "./useLongPress" 
 
 export const useMessageModalInteractions = (
   messageId,
@@ -20,7 +19,7 @@ export const useMessageModalInteractions = (
   const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
     handleLongPress,
     500,
-    isMobile, // Enable long press only if it's a mobile device
+    isMobile,
   )
 
   const handleMouseEnter = useCallback(() => {
@@ -37,31 +36,11 @@ export const useMessageModalInteractions = (
     }
   }, [isMobile, setActiveMessageModalId])
 
-  // Close actions modal on outside click for mobile
-  // useEffect(() => {
-  //   const handleClickOutsideMessage = (e) => {
-  //     if (activeMessageModalId && isMobile) {
-  //       const messageModalElement = document.getElementById(`message-reaction-modal-${messageId}`)
-  //       if (messageModalElement && !messageModalElement.contains(e.target)) {
-  //         setActiveMessageModalId(null)
-  //       }
-  //     }
-  //   }
-
-  //   if (activeMessageModalId) {
-  //     document.addEventListener("click", handleClickOutsideMessage)
-  //   }
-
-  //   return () => {
-  //     document.removeEventListener("click", handleClickOutsideMessage)
-  //   }
-  // }, [activeMessageModalId, isMobile, setActiveMessageModalId, messageId])
-
   const showModal = activeMessageModalId === messageId
   const isMessageHighlighted = isHovered || showModal
 
   return {
-    isHovered, // Still expose if needed for other visual cues
+    isHovered,
     handleMouseEnter,
     handleMouseLeave,
     handleTouchStart,

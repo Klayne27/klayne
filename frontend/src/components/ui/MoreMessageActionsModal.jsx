@@ -6,6 +6,7 @@ import { FaUserCheck, FaUserSlash } from "react-icons/fa"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 import { useReactToMessage } from "../../hooks/messagesHooks/useReactToMessage"
 import { PiSmiley, PiSmileyFill } from "react-icons/pi"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 
 function MoreMessageActionsModal({
   onCloseMoreActionsModal,
@@ -25,12 +26,15 @@ function MoreMessageActionsModal({
   handleUnbanUserClick,
   onOpenConfirmationModal,
   onOpenViewReactionsModal,
+  onOpenSlideUpReactionsMenu,
   onReactionAdded,
   reactToMessage,
 }) {
 
   const hasReactions = message.reactions.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"] // Your desired default emojis
+
+  const isMobile = useIsMobile()
 
   const handleQuickReaction = (messageId, emoji) => {
     reactToMessage({ messageId: messageId, emoji })
@@ -62,7 +66,7 @@ function MoreMessageActionsModal({
 
         {hasReactions && (
           <button
-            onClick={onOpenViewReactionsModal}
+            onClick={isMobile ? onOpenSlideUpReactionsMenu : onOpenViewReactionsModal}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
             View Reactions

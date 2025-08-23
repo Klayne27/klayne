@@ -2,6 +2,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addCommentApi, replyToCommentApi } from "../../api/commentsApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
+import {
+  BOOKMARKED_POSTS_QUERY_KEYS,
+  PINNED_POSTS_QUERY_KEYS,
+  POSTS_QUERY_KEYS,
+} from "../../constants/queryKeys"
 
 export const useCreateComment = (postId, parentCommentId = null) => {
   const queryClient = useQueryClient()
@@ -20,22 +25,18 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
     onMutate: async ({ text, img }) => {
-      if (!currentUser?._id) {
-        console.warn("No authenticated user ID for optimistic comment update.")
-        return
-      }
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
       await queryClient.cancelQueries({ queryKey: ["post", postId] })
-      await queryClient.cancelQueries({ queryKey: ["posts"] })
-      await queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] })
+      await queryClient.cancelQueries({ queryKey: POSTS_QUERY_KEYS })
+      await queryClient.cancelQueries({ queryKey: BOOKMARKED_POSTS_QUERY_KEYS })
       await queryClient.cancelQueries({
         queryKey: ["pinnedPosts", currentUser.username],
       })
 
       const previousComments = queryClient.getQueryData(commentsQueryKey)
       const previousPostData = queryClient.getQueryData(["post", postId])
-      const previousPostsData = queryClient.getQueryData(["posts"])
-      const previousBookmarkedPostsData = queryClient.getQueryData(["bookmarkedPosts"])
+      const previousPostsData = queryClient.getQueryData(POSTS_QUERY_KEYS)
+      const previousBookmarkedPostsData = queryClient.getQueryData(BOOKMARKED_POSTS_QUERY_KEYS)
       const previousPinnedPostsData = queryClient.getQueryData([
         "pinnedPosts",
         currentUser.username,
@@ -59,7 +60,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
           profileImg: currentUser.profileImg,
           isVerified: currentUser.isVerified,
           isGoldVerified: currentUser.isGoldVerified,
-          badges: currentUser.badges
+          badges: currentUser.badges,
         },
         post: postId,
         text: text,
@@ -109,7 +110,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         })
       }
 
-      queryClient.setQueryData(["posts"], (oldData) => {
+      queryClient.setQueryData(POSTS_QUERY_KEYS, (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData
         const newPages = oldData.pages.map((page) => ({
           ...page,
@@ -123,7 +124,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages }
       })
 
-      queryClient.setQueryData(["bookmarkedPosts"], (oldData) => {
+      queryClient.setQueryData(BOOKMARKED_POSTS_QUERY_KEYS, (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData
         const newPages = oldData.pages.map((page) => ({
           ...page,
@@ -204,36 +205,24 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       })
 
       queryClient.invalidateQueries({ queryKey: ["post", postId] })
-      queryClient.invalidateQueries({ queryKey: ["posts"] })
-      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] })
-      queryClient.invalidateQueries({ queryKey: ["pinnedPosts"] })
+      queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEYS })
+      queryClient.invalidateQueries({ queryKey: BOOKMARKED_POSTS_QUERY_KEYS })
+      queryClient.invalidateQueries({ queryKey: PINNED_POSTS_QUERY_KEYS })
       if (parentCommentId) {
         queryClient.invalidateQueries({ queryKey: ["comments", postId] })
       }
     },
     onError: (error, variables, context) => {
       showAppToast(error.message || "Failed to add comment.", "error")
-      if (context.previousComments) {
-        queryClient.setQueryData(commentsQueryKey, context.previousComments)
-      }
-      if (context.previousPostData) {
-        queryClient.setQueryData(["post", postId], context.previousPostData)
-      }
-      if (context.previousPostsData) {
-        queryClient.setQueryData(["posts"], context.previousPostsData)
-      }
-      if (context.previousBookmarkedPostsData) {
-        queryClient.setQueryData(["bookmarkedPosts"], context.previousBookmarkedPostsData)
-      }
-      if (context.previousPinnedPostsData && currentUser?.username) {
-        queryClient.setQueryData(
-          ["pinnedPosts", currentUser.username],
-          context.previousPinnedPostsData,
-        )
-      }
-      if (parentCommentId && context.previousParentCommentsData) {
-        queryClient.setQueryData(["comments", postId], context.previousParentCommentsData)
-      }
+      queryClient.setQueryData(commentsQueryKey, context.previousComments)
+      queryClient.setQueryData(["post", postId], context.previousPostData)
+      queryClient.setQueryData(POSTS_QUERY_KEYS, context.previousPostsData)
+      queryClient.setQueryData(BOOKMARKED_POSTS_QUERY_KEYS, context.previousBookmarkedPostsData)
+      queryClient.setQueryData(
+        ["pinnedPosts", currentUser.username],
+        context.previousPinnedPostsData,
+      )
+      queryClient.setQueryData(["comments", postId], context.previousParentCommentsData)
     },
   })
 

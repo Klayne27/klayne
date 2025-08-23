@@ -38,6 +38,7 @@ const PrivateChatMessageItem = ({
     usePrivateChatStore()
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
+  const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
@@ -116,9 +117,18 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
     setShowViewReactionsModal(true)
   }
+  const handleOpenSlideUpReactionsMenu = (e) => {
+    e.stopPropagation()
+    setShowMoreActionsModal(false)
+    setShowSlideUpReactionsMenu(true)
+  }
 
   const handleCloseViewReactionsModal = () => {
     setShowViewReactionsModal(false)
+  }
+
+  const handleCloseSlideUpReactionsMenu = () => {
+    setShowSlideUpReactionsMenu(false)
   }
 
   const handleDeleteOwnMessage = () => {
@@ -190,6 +200,7 @@ const PrivateChatMessageItem = ({
             isEditable={isEditable}
             isSentByCurrentUser={isSentByCurrentUser}
             onOpenViewReactionsModal={handleOpenViewReactionsModal}
+            onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
             onReactionAdded={onReactionAdded}
             reactToMessage={reactToMessage}
           />
@@ -261,26 +272,25 @@ const PrivateChatMessageItem = ({
             )}
           </div>
         </MessageContentLayout>
-        {isMobile && showViewReactionsModal ? (
-          <SlideUpMenu isOpen={showViewReactionsModal} onClose={handleCloseViewReactionsModal}>
-            <SlideUpMenuContent
-              className="flex h-[50vh] w-full flex-col overflow-y-auto"
-              disablePullToRefresh={true} // <-- Add this prop
-            >
-              <ReactionsSlideUpMenuContent
-                reactions={message.reactions ? message.reactions : []}
-                onClose={handleCloseViewReactionsModal}
-              />
-            </SlideUpMenuContent>
-          </SlideUpMenu>
-        ) : (
-          showViewReactionsModal && (
-            <ViewReactionsModal
-              isOpen={showViewReactionsModal}
-              onClose={handleCloseViewReactionsModal}
+
+        <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+          <SlideUpMenuContent
+            className="flex h-[50vh] w-full flex-col overflow-y-auto"
+            disablePullToRefresh={true} // <-- Add this prop
+          >
+            <ReactionsSlideUpMenuContent
               reactions={message.reactions ? message.reactions : []}
+              onClose={handleCloseViewReactionsModal}
             />
-          )
+          </SlideUpMenuContent>
+        </SlideUpMenu>
+
+        {showViewReactionsModal && (
+          <ViewReactionsModal
+            isOpen={showViewReactionsModal}
+            onClose={handleCloseViewReactionsModal}
+            reactions={message.reactions ? message.reactions : []}
+          />
         )}
 
         {/* Emoji Picker Popover */}

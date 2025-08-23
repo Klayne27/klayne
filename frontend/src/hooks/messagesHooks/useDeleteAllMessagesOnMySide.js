@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { deleteAllMessagesOnMySide } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys"
 
 const useDeleteAllMessagesOnMySide = () => {
   const queryClient = useQueryClient()
@@ -8,7 +9,6 @@ const useDeleteAllMessagesOnMySide = () => {
   const { mutateAsync: deleteAllMessages } = useMutation({
     mutationFn: (conversationId) => deleteAllMessagesOnMySide(conversationId),
     onMutate: async (conversationId) => {
-      // Cancel any ongoing refetches so they don't overwrite our optimistic update
       await queryClient.cancelQueries({ queryKey: ["messages", conversationId] }) // Snapshot the previous value
 
       const previousMessages = queryClient.getQueryData(["messages", conversationId]) // Optimistically update to a new value (empty pages array)
@@ -18,9 +18,7 @@ const useDeleteAllMessagesOnMySide = () => {
         pageParams: [undefined],
       })
 
-      // We also optimistically update the conversation list to remove the message preview
-      // (This part is optional but a good practice for a full optimistic update)
-      queryClient.setQueryData(["conversations"], (oldData) => {
+      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, (oldData) => {
         if (!oldData) return oldData
 
         return oldData.map((conversation) => {
@@ -34,15 +32,14 @@ const useDeleteAllMessagesOnMySide = () => {
       return { previousMessages, conversationId }
     },
     onSuccess: (data) => {
-      showAppToast(data.message, "success") // Invalidate conversations to get the latest list from the server
-
-      queryClient.invalidateQueries({ queryKey: ["conversations"] })
+      showAppToast(data.message, "success")
+      // queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
     },
     onError: (error, variables, context) => {
       showAppToast(error.message, "error") // If the mutation fails, use the context to roll back
 
       queryClient.setQueryData(["messages", context.conversationId], context.previousMessages) // Also roll back the conversations list
-      queryClient.setQueryData(["conversations"], (oldData) => {
+      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, (oldData) => {
         if (!oldData) return oldData
 
         return oldData.map((conversation) => {

@@ -1,4 +1,3 @@
-// src/hooks/usePWAInstall.js
 import { useState, useEffect } from "react"
 
 export const usePWAInstall = () => {
@@ -13,8 +12,6 @@ export const usePWAInstall = () => {
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
-
-      // setIsInstalled(false)
     }
 
     const handleAppInstalled = () => {

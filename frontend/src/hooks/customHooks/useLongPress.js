@@ -2,7 +2,7 @@ import { useRef, useCallback, useEffect } from "react"
 
 export const useLongPress = (callback, duration = 500, isEnabled = true) => {
   const pressTimer = useRef(null)
-  const isLongPressTriggered = useRef(false) // New ref to track if long press fired
+  const isLongPressTriggered = useRef(false)
   
 
   const handleTouchStart = useCallback(
@@ -32,13 +32,11 @@ export const useLongPress = (callback, duration = 500, isEnabled = true) => {
   }, [])
 
   const handleTouchMove = useCallback((e) => {
-    // If there's significant movement, cancel the long press
-    // You might want to add a threshold here if needed
     if (pressTimer.current) {
       clearTimeout(pressTimer.current)
       pressTimer.current = null
     }
-    isLongPressTriggered.current = false // Reset if movement cancels it
+    isLongPressTriggered.current = false 
   }, [])
 
   const handleTouchCancel = useCallback(() => {
@@ -46,7 +44,7 @@ export const useLongPress = (callback, duration = 500, isEnabled = true) => {
       clearTimeout(pressTimer.current)
       pressTimer.current = null
     }
-    isLongPressTriggered.current = false // Reset
+    isLongPressTriggered.current = false
   }, [])
 
   useEffect(() => {

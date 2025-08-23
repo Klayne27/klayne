@@ -20,8 +20,6 @@ export const useMessageScroll = ({
 
   const hasRestoredScroll = useRef(false)
 
-  // const shouldScrollOnSenderMessage = useRef(false)
-
   const [shouldScrollOnSenderMessage, setShouldScrollOnSenderMessage] = useState(false)
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
   const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
@@ -114,7 +112,6 @@ export const useMessageScroll = ({
       !isUserScrollingUp.current &&
       !scrollStateBeforeFetch.current.scrollHeight
     ) {
-      // Wait for all images to load before scrolling
       waitForImagesToLoad().then(() => {
         scrollToBottom()
         setShouldScrollOnSenderMessage(false)
@@ -170,7 +167,6 @@ export const useMessageScroll = ({
         listEl.scrollTop = parseInt(savedPosition, 10)
         sessionStorage.removeItem("chatScrollPosition")
 
-        // STEP 2: Set the flag to true after restoring.
         hasRestoredScroll.current = true
       } else {
         scrollToBottom()
@@ -191,24 +187,6 @@ export const useMessageScroll = ({
     }
   }, [isFetchingNextPage, messages])
 
-  // useEffect(() => {
-  //   if (messages.length === 0) return
-
-  //   // If scroll was just restored in this render cycle,
-  //   // reset the flag and skip this effect.
-  //   if (hasRestoredScroll.current === true) {
-  //     hasRestoredScroll.current = false
-  //     return
-  //   }
-
-  //   const lastMessage = messages[messages.length - 1]
-
-  //   if (lastMessage.sender?._id === currentUser?._id) {
-  //     scrollToBottom()
-  //   }
-  // }, [messages, currentUser, scrollToBottom])
-
-  // Modified useEffect for handling new messages from other users
   useEffect(() => {
     if (messages.length === 0) {
       prevLastMessageId.current = null
@@ -219,7 +197,6 @@ export const useMessageScroll = ({
     const isNewMessageAdded = newLastMessage._id !== prevLastMessageId.current
 
     if (isNewMessageAdded) {
-      // Only show the "New Message" button if another user sent it and the current user is scrolled up
       if (isUserScrollingUp.current && newLastMessage.sender?._id !== currentUser?._id) {
         setShowNewMessageButton(true)
       }
@@ -230,14 +207,11 @@ export const useMessageScroll = ({
 
   useEffect(() => {
     if (!isLoadingMessages) {
-      // Data is loaded, now start waiting for images.
       waitForImagesToLoad().then(() => {
-        // All images are loaded, now we can render the chat window and scroll.
         setIsInitialLoadComplete(true)
         setShouldPerformInitialScroll(true)
       })
     } else {
-      // While data is loading, reset the states.
       setIsInitialLoadComplete(false)
       setShouldPerformInitialScroll(false)
     }

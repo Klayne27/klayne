@@ -221,6 +221,7 @@ function ConversationItem({ conv }) {
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-400 transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
+              handleCloseMenu()
               e.stopPropagation()
               setShowOneSidedDeleteModal(true)
             }}
