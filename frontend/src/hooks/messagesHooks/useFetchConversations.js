@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchConversationsApi } from "../../api/messagesApi";
+import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys";
 
 export const useFetchConversations = () => {
   const {
@@ -8,7 +9,7 @@ export const useFetchConversations = () => {
     error: errorConversations,
     refetch: refetchConversations
   } = useQuery({
-    queryKey: ["conversations"],
+    queryKey: CONVERSATIONS_QUERY_KEY,
     queryFn: fetchConversationsApi,
     // staleTime: Infinity
   });

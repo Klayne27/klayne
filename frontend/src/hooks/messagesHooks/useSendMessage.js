@@ -3,6 +3,7 @@ import { sendMessageApi } from "../../api/messagesApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
+import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys"
 
 export const useSendMessage = (onSenderMessageSent ) => {
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)
@@ -14,14 +15,13 @@ export const useSendMessage = (onSenderMessageSent ) => {
     onMutate: async (newMessageData) => {
       const { conversationId } = newMessageData
       const messagesQueryKey = ["messages", conversationId]
-      const conversationsQueryKey = ["conversations"]
 
       // 1. Cancel ongoing queries for both messages and conversations to prevent race conditions
       await queryClient.cancelQueries({ queryKey: messagesQueryKey })
-      await queryClient.cancelQueries({ queryKey: conversationsQueryKey })
+      await queryClient.cancelQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
 
       const previousMessages = queryClient.getQueryData(messagesQueryKey)
-      const previousConversations = queryClient.getQueryData(conversationsQueryKey)
+      const previousConversations = queryClient.getQueryData(CONVERSATIONS_QUERY_KEY)
 
       // 2. Create the optimistic message
       const optimisticMessage = {
@@ -67,7 +67,6 @@ export const useSendMessage = (onSenderMessageSent ) => {
         previousMessages,
         previousConversations,
         messagesQueryKey,
-        conversationsQueryKey,
         optimisticId: optimisticMessage._id,
       }
     },
@@ -87,13 +86,13 @@ export const useSendMessage = (onSenderMessageSent ) => {
 
       // We already updated the conversation list optimistically, so we just need to ensure it's still fresh
       // Invalidate the conversations query to re-fetch the accurate data from the server, including the real `seen` status
-      queryClient.invalidateQueries({ queryKey: context.conversationsQueryKey })
+      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
     },
     onError: (err, variables, context) => {
       showAppToast(err.message, "error")
       // 6. On error, revert the optimistic updates
       queryClient.setQueryData(context.messagesQueryKey, context.previousMessages)
-      queryClient.setQueryData(context.conversationsQueryKey, context.previousConversations)
+      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, context.previousConversations)
     },
   })
 

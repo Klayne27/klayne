@@ -22,7 +22,6 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
           page.map((message) => {
             if (message._id === messageId) {
               const newReactions = [...message.reactions]
-              // 👈 Change `r.user` to `r.userId` to match the backend
               const existingReactionIndex = newReactions.findIndex(
                 (r) =>
                   (r.userId?._id || r.userId)?.toString() === userId.toString() &&
@@ -50,6 +49,7 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
         )
         return { ...oldData, pages: updatedPages }
       })
+
       if (onReactionAdded) {
         onReactionAdded(messageId)
       }
@@ -57,7 +57,6 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
       return { previousMessages }
     },
     onSuccess: (updatedMessage) => {
-      // The onSuccess handler is mostly fine, as it replaces the data with the correct server response
       queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
         if (!oldData) return oldData
         const updatedPages = oldData.pages.map((page) =>
@@ -67,10 +66,8 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
       })
     },
     onError: (err, variables, context) => {
+      queryClient.setQueryData(["messages", selectedConversationId], context.previousMessages)
       showAppToast(err.message || "Failed to react.", "error")
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["messages", selectedConversationId], context.previousMessages)
-      }
     },
   })
 

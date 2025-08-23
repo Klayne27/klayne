@@ -24,8 +24,6 @@ export const useEditMessage = (conversationId) => {
                   ...msg,
                   text: newText,
                   isEdited: true,
-                  // IMPORTANT: Preserve repliedTo here in optimistic update if it exists
-                  // repliedTo: msg.repliedTo,
                 }
               : msg,
           ),
@@ -38,9 +36,7 @@ export const useEditMessage = (conversationId) => {
     },
     onError: (error, variables, context) => {
       showAppToast("Failed to update message: " + error.message, "error")
-      if (context?.previousMessagesData) {
-        queryClient.setQueryData(context.queryKey, context.previousMessagesData)
-      }
+      queryClient.setQueryData(context.queryKey, context.previousMessagesData)
     },
   })
 

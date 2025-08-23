@@ -24,7 +24,6 @@ export const useFetchMessages = (conversationId) => {
       return allPages.length + 1
     },
     enabled: !!conversationId,
-    // staleTime: Infinity,
     gcTime: 10 * 60 * 1000,
     refetchOnMount: false,
     refetchOnWindowFocus: true,

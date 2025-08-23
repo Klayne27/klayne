@@ -36,9 +36,9 @@ const useDeleteAllMessagesOnMySide = () => {
       // queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
     },
     onError: (error, variables, context) => {
-      showAppToast(error.message, "error") // If the mutation fails, use the context to roll back
+      showAppToast(error.message, "error") 
 
-      queryClient.setQueryData(["messages", context.conversationId], context.previousMessages) // Also roll back the conversations list
+      queryClient.setQueryData(["messages", context.conversationId], context.previousMessages)
       queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, (oldData) => {
         if (!oldData) return oldData
 
@@ -51,7 +51,6 @@ const useDeleteAllMessagesOnMySide = () => {
       })
     },
     onSettled: (data, error, variables) => {
-      // On both success and failure, invalidate to ensure a fresh state
       queryClient.invalidateQueries({ queryKey: ["messages", variables] })
     },
   })
