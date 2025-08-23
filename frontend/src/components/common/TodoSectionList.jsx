@@ -24,23 +24,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const observerRef = useRef()
   const lastItemRef = useRef()
 
-  // useEffect(() => {
-  //   if (isLoading) return
-  //   if (observerRef.current) observerRef.current.disconnect()
-
-  //   const observer = new IntersectionObserver((entries) => {
-  //     if (entries[0].isIntersecting && hasNextPage) {
-  //       fetchNextPage()
-  //     }
-  //   })
-
-  //   if (lastItemRef.current) {
-  //     observer.observe(lastItemRef.current)
-  //   }
-
-  //   observerRef.current = observer
-  // }, [isLoading, hasNextPage, fetchNextPage])
-
   useEffect(() => {
     if (inView && hasNextPage) {
       fetchNextPage()
@@ -92,7 +75,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
               <TodoAddForm
                 isLoading={isLoading}
                 setIsMenuOpen={setIsMenuOpen}
-                isOpen={isMenuOpen}
+                isMenuOpen={isMenuOpen}
               />
             </div>
           </SlideUpMenu>

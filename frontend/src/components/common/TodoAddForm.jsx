@@ -7,7 +7,7 @@ import { IoClose } from "react-icons/io5"
 import CustomDatePicker from "./CustomDatePicker"
 import { useCreateTodo } from "../../hooks/todoHooks/useCreateTodo.js"
 
-function TodoAddForm({ isLoading, setIsMenuOpen }) {
+function TodoAddForm({ isLoading, setIsMenuOpen, isMenuOpen }) {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
 
   const [title, setTitle] = useState("")
@@ -24,6 +24,14 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
 
   const { createTodo } = useCreateTodo()
 
+  const resetFormState = () => {
+    setTitle("")
+    setDescription("")
+    setIsPublic(false)
+    setPriority("low")
+    setDueDate(null)
+  }
+
   const handleSubmit = (e) => {
     e.preventDefault()
     if (!title) {
@@ -31,23 +39,24 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
       return
     }
 
-    createTodo({
-      title,
-      description,
-      isPublic,
-      todoListId: currentListIdForTodoCreation,
-      priority,
-      dueDate,
-    })
-
-    setTitle("")
-    setDescription("")
-    setIsPublic(false)
-    setPriority("low")
-    setDueDate(null)
-    setIsMenuOpen(true)
-    // setCurrentListIdForTodoCreation(null)
-    titleInputRef.current.focus()
+    createTodo(
+      {
+        title,
+        description,
+        isPublic,
+        todoListId: currentListIdForTodoCreation,
+        priority,
+        dueDate,
+      },
+      {
+        onSuccess: () => {
+          resetFormState()
+          setTimeout(() => {
+            titleInputRef.current.focus()
+          }, 0)
+        },
+      },
+    )
   }
 
   const handlePrioritySelect = (priority) => {
@@ -67,8 +76,10 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
   }
 
   useEffect(() => {
-    titleInputRef.current.focus()
-  }, [])
+    if (isMenuOpen && titleInputRef.current) {
+      titleInputRef.current.focus()
+    }
+  }, [isMenuOpen])
 
   return (
     <>
