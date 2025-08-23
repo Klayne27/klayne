@@ -1,5 +1,6 @@
 // src/components/todos/SlideUpMenu.jsx
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
@@ -8,6 +9,8 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const menuRef = useRef(null)
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
+
+  // useLockBodyScroll()
 
   // ✅ MODIFIED: Robust scroll lock useEffect
   useEffect(() => {
@@ -33,24 +36,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isOpen]) // This effect depends only on the isOpen state
 
-  // --- No changes to the rest of your component ---
+  // useEffect(() => {
+  //   const visualViewport = window.visualViewport
+  //   if (!visualViewport) return
 
-  useEffect(() => {
-    const visualViewport = window.visualViewport
-    if (!visualViewport) return
+  //   const handleResize = () => {
+  //     const newKeyboardHeight = window.innerHeight - visualViewport.height
+  //     setKeyboardHeight(Math.max(0, newKeyboardHeight))
+  //   }
 
-    const handleResize = () => {
-      const newKeyboardHeight = window.innerHeight - visualViewport.height
-      setKeyboardHeight(Math.max(0, newKeyboardHeight))
-    }
+  //   visualViewport.addEventListener("resize", handleResize)
+  //   handleResize()
 
-    visualViewport.addEventListener("resize", handleResize)
-    handleResize()
-
-    return () => {
-      visualViewport.removeEventListener("resize", handleResize)
-    }
-  }, [])
+  //   return () => {
+  //     visualViewport.removeEventListener("resize", handleResize)
+  //   }
+  // }, [])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {
