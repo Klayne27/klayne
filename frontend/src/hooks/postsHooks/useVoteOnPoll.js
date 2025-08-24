@@ -10,7 +10,6 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
   if (!oldData || !userId) return oldData
 
   const handlePost = (post) => {
-    // Check if the current post is the target for the vote
     const isTarget = post._id === postId || post.repostedFrom?._id === postId
     if (!isTarget) return post
 
@@ -20,21 +19,10 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
     const existingVotedOption = targetPost.pollOptions.find((option) =>
       option.voters.includes(userId),
     )
-    const newVotedForOption = existingVotedOption && existingVotedOption._id === optionId
 
     let newPollTotalVotes = targetPost.pollTotalVotes || 0
 
     const newPollOptions = targetPost.pollOptions.map((option) => {
-      // If the user is un-voting their previous choice
-      if (existingVotedOption && option._id === existingVotedOption._id) {
-        newPollTotalVotes--
-        return {
-          ...option,
-          voters: option.voters.filter((voterId) => voterId !== userId),
-        }
-      }
-
-      // If the user is voting for this option
       if (option._id === optionId) {
         newPollTotalVotes++
         return {
@@ -45,7 +33,6 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
       return option
     })
 
-    // Return the updated post object
     if (post.repostedFrom?._id === postId) {
       return {
         ...post,
@@ -121,7 +108,6 @@ export const useVoteOnPoll = () => {
     },
 
     onSuccess: () => {
-      // Invalidate all related post keys to ensure data consistency
       queryClient.invalidateQueries({ queryKey: postKeys.all })
     },
 

@@ -3,12 +3,10 @@ import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
 
-// Centralized function to handle optimistic repost updates across different data structures.
 const updatePostRepostStatus = (oldData, postId, userId) => {
   if (!oldData) return oldData
 
   const handlePost = (post) => {
-    // Determine the post to update (could be the original or a repost)
     const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
     const isTarget = targetPost._id === postId
 
@@ -20,7 +18,6 @@ const updatePostRepostStatus = (oldData, postId, userId) => {
 
       const newRepostCount = newRepostedBy.length
 
-      // Return a new post object with the updated repost status
       if (post.repostedFrom?._id === postId) {
         return {
           ...post,
@@ -33,7 +30,6 @@ const updatePostRepostStatus = (oldData, postId, userId) => {
     return post
   }
 
-  // Handle paginated list data
   if (oldData.pages) {
     const newPages = oldData.pages.map((page) => ({
       ...page,
@@ -42,7 +38,6 @@ const updatePostRepostStatus = (oldData, postId, userId) => {
     return { ...oldData, pages: newPages }
   }
 
-  // Handle a single post object
   if (oldData._id) {
     return handlePost(oldData)
   }
@@ -68,7 +63,6 @@ export const useRepostPost = (username) => {
     },
 
     onMutate: async (postId) => {
-      // Define all relevant keys using the factory
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
         postKeys.list("/api/posts/following"),
@@ -85,7 +79,6 @@ export const useRepostPost = (username) => {
         return acc
       }, {})
 
-      // Perform the optimistic update on all relevant caches
       keysToUpdate.forEach((key) => {
         queryClient.setQueryData(key, (oldData) =>
           updatePostRepostStatus(oldData, postId, authUser._id),
@@ -96,9 +89,7 @@ export const useRepostPost = (username) => {
     },
 
     onSuccess: (data) => {
-      showAppToast(data.message || "Success!", "success")
-      // Invalidate broader post feeds to refresh from the server.
-    
+      showAppToast(data.message || "Success!", "success")    
     },
 
     onError: (err, postId, context) => {

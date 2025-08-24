@@ -78,30 +78,24 @@ export const usePinPost = () => {
 
       const optimisticPin = action === "unpin" ? postKeys.pinned(authUser.username) : ""
 
-      // Define all relevant keys using the factory
       const keysToUpdate = [
         optimisticPin,
         postKeys.details(postId),
-        // postKeys.user(authUser.username),
         postKeys.all,
         postKeys.bookmarked(),
       ].filter((key) => queryClient.getQueryData(key) !== undefined)
 
-      // Cancel all relevant queries to prevent them from refetching
       await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
 
-      // Take a single snapshot of all the relevant data before the update
       const previousData = keysToUpdate.reduce((acc, key) => {
         acc[JSON.stringify(key)] = queryClient.getQueryData(key)
         return acc
       }, {})
 
-      // Optimistically update the cache for each relevant key
       keysToUpdate.forEach((key) => {
         queryClient.setQueryData(key, (oldData) => updatePostPinStatus(oldData, postId, action))
       })
 
-      // Update the pinnedPosts array in the authUser data
       const authUserKey = ["authUser"]
       queryClient.setQueryData(authUserKey, (oldData) => {
         if (!oldData) return oldData
