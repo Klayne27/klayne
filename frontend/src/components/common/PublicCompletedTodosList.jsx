@@ -1,18 +1,9 @@
-// ... existing imports (React, formatTime, FaCheck, etc.)
-import {
-  FaBook,
-  FaDumbbell,
-  FaLightbulb,
-  FaPaintBrush,
-  FaCheckCircle,
-  FaStar,
-  FaPen,
-  FaUserFriends,
-} from "react-icons/fa"
+
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
 import { formatTime } from "../../utils/date"
 import { FaCheck } from "react-icons/fa6"
+import LoadingSpinner from "../ui/LoadingSpinner.jsx"
 
 
 const PublicCompletedTodosList = forwardRef(
