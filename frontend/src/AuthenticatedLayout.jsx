@@ -43,6 +43,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const shouldHideSidePanels =
     pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos")
 
+    console.log('stash this 2');
   return (
     <>
       <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
