@@ -19,6 +19,7 @@ import StudySession from "../models/studySession.js";
 import Todo from "../models/todo.model.js";
 import TodoActivity from "../models/todoActivity.model.js";
 import TodoList from "../models/todoList.model.js";
+import PushSubscription from "../models/pushSubscription.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;

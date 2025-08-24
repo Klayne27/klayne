@@ -59,26 +59,6 @@ export const getMonthlyLeaderboard = async (req, res) => {
 
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
-    // Reset monthly stats for all users if needed (this could be optimized with a cron job)
-    // await User.updateMany(
-    //   {
-    //     $or: [
-    //       { "monthlyStats.lastResetMonth": { $ne: currentMonth } },
-    //       { "monthlyStats.lastResetMonth": null },
-    //     ],
-    //   },
-    //   {
-    //     $set: {
-    //       "monthlyStats.studyDuration": 0,
-    //       "monthlyStats.sessionsCompleted": 0,
-    //       "monthlyStats.xpEarned": 0,
-    //       "monthlyStats.monthlyStudyStreak": 0, // Add monthly streak reset
-    //       "monthlyStats.lastMonthlyStudyDate": null, // Add monthly study date reset
-    //       "monthlyStats.lastResetMonth": currentMonth,
-    //     },
-    //   }
-    // );
-
     const totalCount = await User.countDocuments();
 
     const leaderboard = await User.find()
@@ -86,7 +66,7 @@ export const getMonthlyLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges studyStreak"
+        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges monthlyStudyStreak"
       )
       .populate({
         path: "profileImg",
@@ -98,7 +78,7 @@ export const getMonthlyLeaderboard = async (req, res) => {
       ...user.toObject(),
       totalStudyDuration: user.monthlyStats.studyDuration,
       totalSessionsCompleted: user.monthlyStats.sessionsCompleted,
-      monthlyStudyStreak: user.monthlyStats.monthlyStudyStreak, // Add monthly streak to the response
+      // monthlyStudyStreak: user.monthlyStats.monthlyStudyStreak, // Add monthly streak to the response
     }));
 
     res.status(200).json({

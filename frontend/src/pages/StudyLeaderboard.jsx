@@ -404,12 +404,12 @@ function StudyLeaderboard() {
                         <span>{entry.studyStreak}</span>
                       </div>
                     )}
-                    {leaderboardType === "monthly" && entry.monthlyStats.studyStreak >= 3 && (
+                    {leaderboardType === "monthly" && entry.monthlyStudyStreak >= 3 && (
                       <div
-                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.monthlyStats.studyStreak)} md:order-none md:ml-auto`}
+                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.monthlyStudyStreak)} md:order-none md:ml-auto`}
                       >
                         <FaFire className="text-xl" />
-                        <span>{entry.monthlyStats.studyStreak}</span>
+                        <span>{entry.monthlyStudyStreak}</span>
                       </div>
                     )}
                   </div>
