@@ -2,7 +2,7 @@ export const renderHourBadge = (badges) => {
   if (badges?.includes("three-hundred-hour-master")) {
     return <img src="/badge-hrs-300.png" className="size-4" />
   }
-  if (badges?.includes("centurion-scholar")) {
+  if (badges?.includes("onehundred-hour-scholar")) {
     return <img src="/badge-hrs-100.png" className="size-4" />
   }
   if (badges?.includes("twentyfive-hour-scholar")) {
