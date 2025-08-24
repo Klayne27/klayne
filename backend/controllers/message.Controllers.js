@@ -75,8 +75,8 @@ export const sendMessage = async (req, res) => {
 
     const recipientId = conversation.participants.find((p) => !p.equals(senderId));
 
+    // ✅ FIX: Move the blocking check to the very top, before any DB writes.
     const senderIsBlocked = await isBlockedOrBlockedBy(senderId, recipientId);
-
     if (senderIsBlocked) {
       return res.status(403).json({ error: "You cannot send messages to this user." });
     }
@@ -99,14 +99,14 @@ export const sendMessage = async (req, res) => {
       uploadedImgUrl = uploadedResponse.secure_url;
     }
 
-    // ✅ FIX 2: Use the `isSeen` variable when creating the new message
+    // Now, with the blocking check in place, it's safe to create and save the message.
     const newMessage = new Message({
       conversationId: conversation._id,
       sender: senderId,
       text: message || "",
       img: uploadedImgUrl,
       repliedTo: repliedTo || null,
-      seen: isSeen, // Correctly set `seen` status
+      seen: isSeen,
     });
 
     await newMessage.save();
@@ -114,7 +114,7 @@ export const sendMessage = async (req, res) => {
     if (img) {
       newImage = new Image({
         imageUrl: uploadedImgUrl,
-        parentDocument: newMessage._id, // Set the parentDocument here
+        parentDocument: newMessage._id,
         parentModel: "Message",
         uploadedBy: senderId,
       });
@@ -124,18 +124,16 @@ export const sendMessage = async (req, res) => {
       await newMessage.save();
     }
 
-    // ✅ FIX 3: Use the `isSeen` variable when updating the lastMessage
+    // Now, update the lastMessage in the conversation. This is now safe.
     conversation.lastMessage = {
       text: newMessage.text,
       img: newMessage.img,
       sender: senderId,
-      seen: isSeen, // Correctly set `seen` status
+      seen: isSeen,
       messageId: newMessage._id,
     };
     await conversation.save();
 
-    // newImage.parentDocument = newMessage._id;
-    // await newImage.save();
     await newMessage.populate([
       {
         path: "sender",
@@ -159,11 +157,10 @@ export const sendMessage = async (req, res) => {
       },
     ]);
 
-    // Then, if a new image exists, populate the image field
     if (newImage) {
       await newMessage.populate({
         path: "image",
-        select: "imageUrl", // Select only the fields you need
+        select: "imageUrl",
       });
     }
 
@@ -186,7 +183,6 @@ export const sendMessage = async (req, res) => {
     if (recipientSocketIds.length > 0) {
       io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
     } else {
-      // ------------------ FIX: Add push notification logic here ------------------
       const senderUser = await User.findById(senderId)
         .select("username")
         .populate("profileImg", "imageUrl")
@@ -201,17 +197,13 @@ export const sendMessage = async (req, res) => {
 
       const payload = {
         title: `New Message from @${senderUsername}`,
-        body: message || "Image Message", // Show message text or "Image Message"
-        url: `/messages/${conversationId.toString()}`, // URL to open the specific chat
+        body: message || "Image Message",
+        url: `/messages/${conversationId.toString()}`,
         icon: resizedProfileImg || `${BASE_URL}/avatar-placeholder.png`,
       };
 
       await sendPushNotification(recipientId.toString(), payload);
-      // ---------------------------------------------------------------------------
     }
-
-    // const senderSocketIds = getReceiverSocketIds(senderId.toString());
-    // io.to(senderSocketIds).emit("newMessage", newMessage.toObject());
 
     if (isSeen) {
       const senderSocketIds = getReceiverSocketIds(senderId.toString());
@@ -222,7 +214,6 @@ export const sendMessage = async (req, res) => {
     }
 
     await emitUnreadMessageStatus(recipientId.toString());
-    // await emitUnreadMessageStatus(senderId.toString());
 
     res.status(201).json(newMessage.toObject());
   } catch (error) {
@@ -312,14 +303,24 @@ export const getConversations = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Step 1: Get all users blocked by the current user.
     const blockedByMe = user.blockedUsers || [];
 
-    const usersBlockingMe = await User.find({ blockedUsers: userId }).select("_id");
+    // Step 2: Find all users who have blocked the current user.
+    const usersBlockingMe = await User.find({ blockedUsers: userId })
+      .select("_id")
+      .lean();
     const blockedMe = usersBlockingMe.map((u) => u._id);
 
+    // Step 3: Combine both lists into a single, comprehensive set of blocked IDs.
     const allBlockedIds = [...new Set([...blockedByMe, ...blockedMe])];
 
+    // Step 4: Fetch conversations for the current user.
     const conversations = await Conversation.find({
       participants: userId,
       hiddenFor: { $ne: userId },
@@ -335,11 +336,14 @@ export const getConversations = async (req, res) => {
       .sort({ updatedAt: -1 })
       .lean();
 
+    // Step 5: Filter out conversations where the other participant is in the comprehensive block list.
     const filteredConversations = conversations.filter((conv) => {
       const otherParticipant = conv.participants.find(
-        (p) => p._id.toString() !== userId.toString()
+        (p) => p && p._id.toString() !== userId.toString()
       );
       if (!otherParticipant) return false;
+
+      // Use the comprehensive list to check if the other participant's ID exists.
       return !allBlockedIds.some((blockedId) => blockedId.equals(otherParticipant._id));
     });
 
