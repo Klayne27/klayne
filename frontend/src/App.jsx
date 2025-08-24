@@ -20,6 +20,7 @@ const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 
+
 // Authenticated layout component (lazy loaded)
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
@@ -27,6 +28,8 @@ function App() {
   const { authUser, isLoading } = useAuthUser()
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
+
+  console.log('mergeconflict');
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)

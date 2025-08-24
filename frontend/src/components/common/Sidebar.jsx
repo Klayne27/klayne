@@ -23,6 +23,7 @@ import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect
 import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
+import { postKeys } from "../../hooks/postsHooks/postKeys"
 
 // import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
@@ -227,7 +228,7 @@ const Sidebar = ({
 
   const handleBookmarksClick = () => {
     if (pathname === "/bookmarks") return
-    queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] })
+    queryClient.invalidateQueries({ queryKey: postKeys.bookmarked() })
     navigate("/bookmarks")
   }
 

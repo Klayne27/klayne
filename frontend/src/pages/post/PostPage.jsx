@@ -466,7 +466,7 @@ const PostPage = () => {
                       (!commentInput.trim() && !commentPreviewImage)
                     }
                   >
-                    {isCreatingComment ? <LoadingSpinner size="sm" /> : "Reply"}
+                    Reply
                   </button>
                 </div>
               )}

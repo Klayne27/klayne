@@ -22,7 +22,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     },
     onMutate: async ({ text, img }) => {
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
-      await queryClient.cancelQueries({ queryKey: ["post", postId] })
+      await queryClient.cancelQueries({ queryKey: postKeys.details(postId) })
       await queryClient.cancelQueries({ queryKey: postKeys.all })
       await queryClient.cancelQueries({ queryKey: postKeys.bookmarked() })
       await queryClient.cancelQueries({
@@ -30,7 +30,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       })
 
       const previousComments = queryClient.getQueryData(commentsQueryKey)
-      const previousPostData = queryClient.getQueryData(["post", postId])
+      const previousPostData = queryClient.getQueryData(postKeys.details(postId))
       const previousPostsData = queryClient.getQueryData(postKeys.all)
       const previousBookmarkedPostsData = queryClient.getQueryData(postKeys.bookmarked())
       const previousPinnedPostsData = queryClient.getQueryData([
@@ -100,7 +100,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
 
       if (previousPostData) {
-        queryClient.setQueryData(["post", postId], (oldPostData) => {
+        queryClient.setQueryData(postKeys.details(postId), (oldPostData) => {
           if (!oldPostData) return oldPostData
           return updatePostCommentsCount(oldPostData)
         })
@@ -200,7 +200,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages }
       })
 
-      queryClient.invalidateQueries({ queryKey: ["post", postId] })
+      queryClient.invalidateQueries({ queryKey: postKeys.details(postId) })
       queryClient.invalidateQueries({ queryKey: postKeys.all })
       queryClient.invalidateQueries({ queryKey: postKeys.bookmarked() })
       // queryClient.invalidateQueries({ queryKey: postKeys.o })
@@ -211,7 +211,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     onError: (error, variables, context) => {
       showAppToast(error.message || "Failed to add comment.", "error")
       queryClient.setQueryData(commentsQueryKey, context.previousComments)
-      queryClient.setQueryData(["post", postId], context.previousPostData)
+      queryClient.setQueryData(postKeys.details(postId), context.previousPostData)
       queryClient.setQueryData(postKeys.all, context.previousPostsData)
       queryClient.setQueryData(postKeys.bookmarked(), context.previousBookmarkedPostsData)
       queryClient.setQueryData(
