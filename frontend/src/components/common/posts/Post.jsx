@@ -31,8 +31,6 @@ const Post = ({
   post,
   profilePinnedPosts = [],
   currentProfileUsername,
-  profileOwnerId,
-  postEndpoint,
 }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
@@ -77,10 +75,7 @@ const Post = ({
 
   // const { userProfile } = useFetchUserProfile(username)
 
-  const { toggleBookmark, isBookmarking } = useToggleBookmarks(
-    currentProfileUsername,
-    profileOwnerId,
-  )
+  const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
   const { repostPost, isReposting } = useRepostPost(username)
   const { likePost, isLiking } = useLikePost(username)

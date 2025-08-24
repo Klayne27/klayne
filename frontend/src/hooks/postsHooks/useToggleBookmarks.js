@@ -1,196 +1,116 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { toggleBookmarkApi } from "../../api/postsApi";
-import { useAuthUser } from "../authHooks/useAuthUser";
-import { showAppToast } from "../../utils/showAppToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { toggleBookmarkApi } from "../../api/postsApi"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import { showAppToast } from "../../utils/showAppToast"
+import { postKeys } from "./postKeys"
 
-export const useToggleBookmarks = (
-  currentProfileUsername = null,
-  profileOwnerId = null
-) => {
-  const queryClient = useQueryClient();
-  const { authUser } = useAuthUser();
+const updatePostBookmarkStatus = (data, postId, userId) => {
+  if (!data) return data
+
+  const handlePost = (post) => {
+    const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
+    const isTarget = targetPost._id === postId
+
+    if (isTarget) {
+      const isAlreadyBookmarked = targetPost.bookmarkedBy?.includes(userId)
+      const newBookmarkedBy = isAlreadyBookmarked
+        ? (targetPost.bookmarkedBy || []).filter((id) => id !== userId)
+        : [...(targetPost.bookmarkedBy || []), userId]
+
+      if (post.repostedFrom?._id === postId) {
+        return {
+          ...post,
+          repostedFrom: { ...targetPost, bookmarkedBy: newBookmarkedBy },
+        }
+      }
+      return { ...post, bookmarkedBy: newBookmarkedBy }
+    }
+    return post
+  }
+
+  if (data._id) {
+    return handlePost(data)
+  }
+
+  if (Array.isArray(data)) {
+    return data.map(handlePost)
+  }
+
+  if (data.pages) {
+    const newPages = data.pages.map((page) => ({
+      ...page,
+      posts: (page.posts || []).map(handlePost),
+    }))
+
+    if (JSON.stringify(data.queryKey) === JSON.stringify(postKeys.bookmarked())) {
+      const newFilteredPages = newPages.map((page) => ({
+        ...page,
+        posts: page.posts.filter((p) => p.bookmarkedBy?.includes(userId)),
+      }))
+      return { ...data, pages: newFilteredPages }
+    }
+
+    return { ...data, pages: newPages }
+  }
+
+  return data
+}
+
+export const useToggleBookmarks = (currentProfileUsername = null) => {
+  const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
 
   const { mutate: toggleBookmark, isPending: isBookmarking } = useMutation({
     mutationFn: toggleBookmarkApi,
 
     onMutate: async (postId) => {
       if (!authUser?._id) {
-        console.warn("No authenticated user ID for optimistic bookmark update.");
-        return;
+        console.warn("No authenticated user ID for optimistic bookmark update.")
+        return
       }
 
-      const dynamicUserPostsKey = currentProfileUsername
-        ? ["posts", `/api/posts/user/${currentProfileUsername}`]
-        : null;
+      const keysToUpdate = [
+        postKeys.list("/api/posts/all"),
+        postKeys.list("/api/posts/following"),
+        postKeys.bookmarked(),
+        postKeys.details(postId),
+        postKeys.user(currentProfileUsername),
+        postKeys.likes(currentProfileUsername),
+        postKeys.pinned(currentProfileUsername),
+      ].filter((key) => queryClient.getQueryData(key) !== undefined)
 
-      const dynamicUserLikedPostsKey = profileOwnerId
-        ? ["posts", `/api/posts/likes/${profileOwnerId}`]
-        : null;
+      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
 
-      const pinnedPostsQueryKey = currentProfileUsername
-        ? ["pinnedPosts", currentProfileUsername]
-        : null;
+      const previousDataSnapshots = keysToUpdate.reduce((acc, key) => {
+        const snapshotKey = JSON.stringify(key)
+        acc[snapshotKey] = queryClient.getQueryData(key)
+        return acc
+      }, {})
 
-      const queryKeysToUpdate = [
-        ["posts", "/api/posts/all"],
-        ["posts", "/api/posts/following"],
-        ["bookmarkedPosts"],
-        ["post", postId],
-        ...(dynamicUserPostsKey ? [dynamicUserPostsKey] : []),
-        ...(dynamicUserLikedPostsKey ? [dynamicUserLikedPostsKey] : []),
-        ...(pinnedPostsQueryKey ? [pinnedPostsQueryKey] : []),
-      ].filter(Boolean);
+      keysToUpdate.forEach((key) => {
+        queryClient.setQueryData(key, (oldData) =>
+          updatePostBookmarkStatus(oldData, postId, authUser._id),
+        )
+      })
 
-      await Promise.all(
-        queryKeysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key }))
-      );
-
-      const previousDataSnapshots = {};
-      queryKeysToUpdate.forEach((key) => {
-        const snapshotKey = JSON.stringify(key);
-        previousDataSnapshots[snapshotKey] = queryClient.getQueryData(key);
-      });
-
-      const updatePostBookmarkStatus = (post, userId) => {
-        if (!post) return post;
-        const targetPost =
-          post.repostedFrom && post.repostedFrom._id === postId
-            ? post.repostedFrom
-            : post._id === postId
-            ? post
-            : null;
-
-        if (!targetPost) return post;
-
-        const isAlreadyBookmarked = targetPost.bookmarkedBy?.includes(userId);
-
-        const newBookmarkedBy = isAlreadyBookmarked
-          ? (targetPost.bookmarkedBy || []).filter((id) => id !== userId)
-          : [...(targetPost.bookmarkedBy || []), userId];
-
-        if (post.repostedFrom && post.repostedFrom._id === postId) {
-          return {
-            ...post,
-            repostedFrom: {
-              ...targetPost,
-              bookmarkedBy: newBookmarkedBy,
-            },
-          };
-        } else if (post._id === postId) {
-          return {
-            ...post,
-            bookmarkedBy: newBookmarkedBy,
-          };
-        }
-        return post;
-      };
-
-      const updatePaginatedList = (oldData) => {
-        if (!oldData || !Array.isArray(oldData.pages)) return oldData;
-        const newPages = oldData.pages.map((page) => ({
-          ...page,
-          posts: page.posts.map((post) => updatePostBookmarkStatus(post, authUser._id)),
-        }));
-        return { ...oldData, pages: newPages };
-      };
-
-      const updateSinglePostObject = (oldData) => {
-        return updatePostBookmarkStatus(oldData, authUser._id);
-      };
-
-      const updatePostArray = (oldData) => {
-        if (!oldData || !Array.isArray(oldData)) return oldData;
-        return oldData.map((post) => updatePostBookmarkStatus(post, authUser._id));
-      };
-
-      queryClient.setQueryData(["posts", "/api/posts/all"], updatePaginatedList);
-      queryClient.setQueryData(["posts", "/api/posts/following"], updatePaginatedList);
-
-      queryClient.setQueryData(["bookmarkedPosts"], (oldData) => {
-        const updatedData = updatePaginatedList(oldData);
-        if (!updatedData || !Array.isArray(updatedData.pages)) return oldData;
-
-        const newPages = updatedData.pages.map((page) => ({
-          ...page,
-          posts: page.posts.filter((p) => {
-            const actualPost =
-              p.repostedFrom && p.repostedFrom._id === postId ? p.repostedFrom : p;
-            return !(
-              actualPost._id === postId &&
-              !actualPost.bookmarkedBy?.includes(authUser._id)
-            );
-          }),
-        }));
-        return { ...updatedData, pages: newPages };
-      });
-
-      queryClient.setQueryData(["post", postId], updateSinglePostObject);
-
-      if (dynamicUserPostsKey) {
-        queryClient.setQueryData(dynamicUserPostsKey, updatePaginatedList);
-      }
-      if (dynamicUserLikedPostsKey) {
-        queryClient.setQueryData(dynamicUserLikedPostsKey, updatePaginatedList);
-      }
-
-      if (pinnedPostsQueryKey) {
-        queryClient.setQueryData(pinnedPostsQueryKey, updatePostArray);
-      }
-
-      return previousDataSnapshots;
+      return previousDataSnapshots
     },
 
-    onSuccess: (data, postId) => {
-      showAppToast(data.message, "success");
-      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-      // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] });
-      // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/following"] });
-      // queryClient.invalidateQueries({ queryKey: ["post", postId] });
-
-      // if (currentProfileUsername) {
-      //   queryClient.invalidateQueries({
-      //     queryKey: ["posts", `/api/posts/user/${currentProfileUsername}`],
-      //   });
-      // }
-
-      // if (profileOwnerId) {
-      //   queryClient.invalidateQueries({
-      //     queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
-      //   });
-      // }
+    onSuccess: (data) => {
+      showAppToast(data.message, "success")
     },
 
     onError: (error, postId, context) => {
-      console.error("Error toggling bookmark: ", error);
-      showAppToast(error.message || "Failed to toggle bookmark", "error");
+      console.error("Error toggling bookmark:", error)
+      showAppToast(error.message || "Failed to toggle bookmark", "error")
 
-      if (context?.previousDataSnapshots) {
-        for (const snapshotKey in context.previousDataSnapshots) {
-          const queryKey = JSON.parse(snapshotKey);
-          queryClient.setQueryData(queryKey, context.previousDataSnapshots[snapshotKey]);
-        }
-      } else {
-        queryClient.invalidateQueries({ queryKey: ["posts"] });
-        queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
-        queryClient.invalidateQueries({ queryKey: ["post", postId] });
-        if (currentProfileUsername) {
-          queryClient.invalidateQueries({
-            queryKey: ["posts", `/api/posts/user/${currentProfileUsername}`],
-          });
-        }
-        if (profileOwnerId) {
-          queryClient.invalidateQueries({
-            queryKey: ["posts", `/api/posts/likes/${profileOwnerId}`],
-          });
-        }
-        if (currentProfileUsername) {
-          queryClient.invalidateQueries({
-            queryKey: ["pinnedPosts", currentProfileUsername],
-          });
+      if (context) {
+        for (const snapshotKey in context) {
+          queryClient.setQueryData(JSON.parse(snapshotKey), context[snapshotKey])
         }
       }
     },
-  });
+  })
 
-  return { toggleBookmark, isBookmarking };
-};
+  return { toggleBookmark, isBookmarking }
+}

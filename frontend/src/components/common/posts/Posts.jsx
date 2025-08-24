@@ -109,13 +109,10 @@ const Posts = ({
               <div>
                 {pinnedPosts.map((post) => (
                   <Post
-                    postEndpoint={getPostEndpoint()} // This is still a bit messy
                     key={post._id}
                     post={post}
                     profilePinnedPosts={pinnedPosts}
-                    currentFeedType={feedType}
                     currentProfileUsername={username}
-                    profileOwnerId={profileOwnerId}
                   />
                 ))}
               </div>
@@ -129,11 +126,9 @@ const Posts = ({
         return (
           <div ref={elementRef} key={post._id}>
             <Post
-              postEndpoint={getPostEndpoint()}
               post={post}
               profilePinnedPosts={pinnedPosts}
               currentProfileUsername={username}
-              profileOwnerId={profileOwnerId}
             />
           </div>
         )
