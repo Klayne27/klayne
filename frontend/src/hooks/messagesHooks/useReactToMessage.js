@@ -57,13 +57,13 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
       return { previousMessages }
     },
     onSuccess: (updatedMessage) => {
-      queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
-        if (!oldData) return oldData
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
-        )
-        return { ...oldData, pages: updatedPages }
-      })
+      // queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
+      //   if (!oldData) return oldData
+      //   const updatedPages = oldData.pages.map((page) =>
+      //     page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
+      //   )
+      //   return { ...oldData, pages: updatedPages }
+      // })
     },
     onError: (err, variables, context) => {
       queryClient.setQueryData(["messages", selectedConversationId], context.previousMessages)
