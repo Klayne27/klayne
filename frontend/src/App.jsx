@@ -29,7 +29,7 @@ function App() {
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
 
-  console.log('change from main');
+  console.log('merge from branch2');
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
