@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { PUBLIC_COMPLETED_TODO_QUERY_KEY } from "../../constants/queryKeys"
 import { getPublicCompletedTodosApi } from "../../api/todoApi"
+import { todoKeys } from "./todoKeys"
 
 export const useGetPublicCompletedTodos = () => {
   const {
@@ -11,7 +11,7 @@ export const useGetPublicCompletedTodos = () => {
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: PUBLIC_COMPLETED_TODO_QUERY_KEY,
+    queryKey: todoKeys.list("public"),
     queryFn: getPublicCompletedTodosApi,
     getNextPageParam: (lastPage, allPages) => {
       const hasNextPage = lastPage.hasNextPage

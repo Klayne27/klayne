@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { AUTH_USER_QUERY_KEY, PUBLIC_TODO_LISTS_QUERY_KEY, TODO_LISTS_QUERY_KEY } from "../../constants/queryKeys"
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
 import { showAppToast } from "../../utils/showAppToast"
 import { calculateXpGainForTodo, findTodoAndParent } from "../../utils/todoUtils"
 import { completeTodoApi } from "../../api/todoApi"
 import useXpStore from "../../store/useXpStore"
+import { todoKeys } from "./todoKeys"
 
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()
@@ -14,8 +15,8 @@ export const useCompleteTodo = () => {
 
     onMutate: async (todoId) => {
       const oldAuthData = queryClient.getQueryData(AUTH_USER_QUERY_KEY)
-      const oldTodoLists = queryClient.getQueryData(TODO_LISTS_QUERY_KEY)
-      const oldPublicTodoLists = queryClient.getQueryData(PUBLIC_TODO_LISTS_QUERY_KEY)
+      const oldTodoLists = queryClient.getQueryData(todoKeys.list("user"))
+      const oldPublicTodoLists = queryClient.getQueryData(todoKeys.list("public"))
 
       let found = findTodoAndParent(oldTodoLists, todoId)
       if (!found) {
@@ -60,15 +61,15 @@ export const useCompleteTodo = () => {
         }
       }
 
-      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, updateCache)
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, updateCache)
+      queryClient.setQueryData(todoKeys.list("public"), updateCache)
+      queryClient.setQueryData(todoKeys.list("user"), updateCache)
 
       return { oldTodoLists, oldAuthData, oldPublicTodoLists }
     },
     onError: (err, variables, context) => {
-      queryClient.setQueryData(TODO_LISTS_QUERY_KEY, context.oldTodoLists)
+      queryClient.setQueryData(todoKeys.list("public"), context.oldPublicTodoLists)
+      queryClient.setQueryData(todoKeys.list("user"), context.oldTodoLists)
       queryClient.setQueryData(AUTH_USER_QUERY_KEY, context.oldAuthData)
-      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, context.oldPublicTodoLists)
       showAppToast(err.message || "Failed to complete todo", "error")
     },
   })

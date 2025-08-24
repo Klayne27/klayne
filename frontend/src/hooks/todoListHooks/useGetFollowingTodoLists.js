@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getFollowingTodoListsApi } from "../../api/todoListApi"
-import { FOLLOWING_TODO_LISTS_QUERY_KEY } from "../../constants/queryKeys"
+import { todoKeys } from "../todoHooks/todoKeys"
 
 export const useGetFollowingTodoLists = () => {
   const {
@@ -10,7 +10,7 @@ export const useGetFollowingTodoLists = () => {
     hasNextPage: followingHasNextPage,
     fetchNextPage: followingFetchNextPage,
   } = useInfiniteQuery({
-    queryKey: FOLLOWING_TODO_LISTS_QUERY_KEY,
+    queryKey: todoKeys.list("following"),
     queryFn: getFollowingTodoListsApi,
     getNextPageParam: (lastPage) => {
       if (lastPage.hasNextPage) {

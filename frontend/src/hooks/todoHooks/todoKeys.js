@@ -1,4 +1,6 @@
 export const todoKeys = {
-    all: ["todos"],
-    
+  all: ["todos"],
+  lists: () => [...todoKeys.all, "lists"],
+  list: (type) => [...todoKeys.lists(), type],
+  completed: (type) => [...todoKeys.all, "completed", type],
 }

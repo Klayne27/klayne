@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { likeUnlikeTodoListApi } from "../../api/todoListApi"
-import { FOLLOWING_TODO_LISTS_QUERY_KEY, PUBLIC_TODO_LISTS_QUERY_KEY } from "../../constants/queryKeys"
+import { todoKeys } from "../todoHooks/todoKeys"
 
 export const useLikeUnlikeTodoList = () => {
   const queryClient = useQueryClient()
@@ -9,13 +9,13 @@ export const useLikeUnlikeTodoList = () => {
     mutationFn: ({ listId }) => likeUnlikeTodoListApi(listId),
 
     onMutate: async ({ listId, authUserId }) => {
-      await queryClient.cancelQueries({ queryKey: PUBLIC_TODO_LISTS_QUERY_KEY })
-      await queryClient.cancelQueries({ queryKey: FOLLOWING_TODO_LISTS_QUERY_KEY })
+      await queryClient.cancelQueries({ queryKey: todoKeys.list("public") })
+      await queryClient.cancelQueries({ queryKey: todoKeys.list("following") })
 
-      const oldPublicTodoLists = queryClient.getQueryData(PUBLIC_TODO_LISTS_QUERY_KEY)
-      const oldFollowingTodoLists = queryClient.getQueryData(FOLLOWING_TODO_LISTS_QUERY_KEY)
+      const oldPublicTodoLists = queryClient.getQueryData(todoKeys.list("public"))
+      const oldFollowingTodoLists = queryClient.getQueryData(todoKeys.list("following"))
 
-      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, (oldData) => {
+      queryClient.setQueryData(todoKeys.list("public"), (oldData) => {
         return {
           ...oldData,
           pages: oldData?.pages?.map((page) => ({
@@ -36,7 +36,7 @@ export const useLikeUnlikeTodoList = () => {
         }
       })
 
-      queryClient.setQueryData(FOLLOWING_TODO_LISTS_QUERY_KEY, (oldData) => {
+      queryClient.setQueryData(todoKeys.list("following"), (oldData) => {
         return {
           ...oldData,
           pages: oldData?.pages?.map((page) => ({
@@ -61,8 +61,8 @@ export const useLikeUnlikeTodoList = () => {
     },
 
     onError: (err, variables, context) => {
-      queryClient.setQueryData(PUBLIC_TODO_LISTS_QUERY_KEY, context.oldPublicTodoLists)
-      queryClient.setQueryData(FOLLOWING_TODO_LISTS_QUERY_KEY, context.oldFollowingTodoLists)
+      queryClient.setQueryData(todoKeys.list("public"), context.oldPublicTodoLists)
+      queryClient.setQueryData(todoKeys.list("following"), context.oldFollowingTodoLists)
     },
   })
 
