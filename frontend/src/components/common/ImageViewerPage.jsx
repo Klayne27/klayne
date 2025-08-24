@@ -7,11 +7,11 @@ const ImageViewerPage = () => {
   const { imageId } = useParams()
   const navigate = useNavigate()
 
-  const { image, isLoading, isError, error } = useImage(imageId)
+  const { image, isLoadingImage, isError, error } = useImage(imageId)
 
-  if (isLoading) {
+  if (isLoadingImage) {
     return (
-      <div className="flex h-screen items-center justify-center text-white">
+      <div className="flex h-screen items-center justify-center">
         <LoadingSpinner />
       </div>
     )
@@ -35,7 +35,7 @@ const ImageViewerPage = () => {
     <div className="fixed inset-0 z-50 flex h-screen flex-col items-center justify-center bg-black">
       <button
         onClick={() => navigate(-1)}
-        className="absolute left-4 top-3.5 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 bg-gray-800/50"
+        className="absolute left-4 top-3.5 flex-shrink-0 rounded-full bg-gray-800/50 p-2.5 transition duration-200 hover:bg-gray-800"
         aria-label="Go back"
       >
         <FaArrowLeft />

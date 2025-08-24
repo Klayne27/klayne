@@ -4,7 +4,7 @@ import { fetchImageByIdApi } from "../../api/imageApi"
 export const useImage = (imageId) => {
   const {
     data: image,
-    isLoading,
+    isLoading: isLoadingImage,
     isError,
     error,
   } = useQuery({
@@ -12,5 +12,5 @@ export const useImage = (imageId) => {
     queryFn: () => fetchImageByIdApi(imageId),
     enabled: !!imageId,
   })
-  return { image, isLoading, isError, error }
+  return { image, isLoadingImage, isError, error }
 }

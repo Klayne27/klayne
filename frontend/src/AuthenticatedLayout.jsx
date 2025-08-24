@@ -1,4 +1,4 @@
-import { Outlet, useLocation, Route, Routes } from "react-router-dom"
+import { Outlet, useLocation, Route, Routes, useParams } from "react-router-dom"
 import { lazy, useState, Suspense } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
@@ -6,6 +6,7 @@ import { useAppStore } from "./store/useAppStore"
 import ImageViewerPage from "./components/common/ImageViewerPage"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
 import CreatePostModal from "./components/common/posts/CreatePostModal"
+import { useImage } from "./hooks/imageHooks/useImage"
 
 // All authenticated pages are now lazy loaded here
 const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
