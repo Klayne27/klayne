@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateScheduledPostApi } from "../../api/postsApi";
 import { showAppToast } from "../../utils/showAppToast";
+import { postKeys } from "./postKeys";
 
 export const useUpdateScheduledPost = () => {
   const queryClient = useQueryClient();
@@ -14,7 +15,7 @@ export const useUpdateScheduledPost = () => {
     mutationFn: ({ postId, postData }) => updateScheduledPostApi({ postId, postData }),
     onSuccess: () => {
       showAppToast("Scheduled post updated successfully", "success");
-      queryClient.invalidateQueries({ queryKey: ["scheduledPosts"] });
+      queryClient.invalidateQueries({ queryKey: postKeys.list("scheduled") });
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to update scheduled post", "error");

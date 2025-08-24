@@ -1421,9 +1421,12 @@ export const getBookmarkedPosts = async (req, res) => {
 
 export const voteOnPoll = async (req, res) => {
   try {
-    const { postId } = req.params;
-    const { optionId } = req.body;
+    const { postId, optionId } = req.body; // <-- Fix: Access postId from req.body
     const userId = req.user._id;
+
+    if (!postId || !optionId) {
+      return res.status(400).json({ error: "Post ID and option ID are required." });
+    }
 
     const post = await Post.findById(postId);
 
@@ -1440,17 +1443,29 @@ export const voteOnPoll = async (req, res) => {
     if (!selectedOption) {
       return res.status(404).json({ error: "Poll option not found." });
     }
+
+    // Check if the user has already voted on any option
     const hasUserAlreadyVoted = post.pollOptions.some((option) =>
       option.voters.includes(userId)
     );
 
-    if (hasUserAlreadyVoted) {
-      return res.status(400).json({ error: "You have already voted on this poll." });
+    // Check if the user is changing their vote
+    const userCurrentVoteOption = post.pollOptions.find((option) =>
+      option.voters.includes(userId)
+    );
+
+    if (hasUserAlreadyVoted && userCurrentVoteOption._id.toString() !== optionId) {
+      // User is changing their vote, remove from old option and add to new
+      userCurrentVoteOption.voters.pull(userId); // Remove user from the old option
+      selectedOption.voters.push(userId); // Add user to the new option
+    } else if (!hasUserAlreadyVoted) {
+      // User is voting for the first time
+      selectedOption.voters.push(userId);
+      post.pollTotalVotes += 1; // Increment total votes only on the first vote
+    } else {
+      // The user is trying to vote on the same option again, do nothing
+      return res.status(400).json({ error: "You have already voted on this option." });
     }
-
-    selectedOption.voters.push(userId);
-
-    post.pollTotalVotes += 1;
 
     await post.save();
 

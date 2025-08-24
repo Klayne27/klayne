@@ -112,7 +112,7 @@ export const voteOnPollApi = async ({ postId, optionId }) => {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ optionId }),
+    body: JSON.stringify({ postId, optionId }),
   })
 
   const data = await res.json()

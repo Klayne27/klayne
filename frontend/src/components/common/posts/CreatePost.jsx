@@ -24,6 +24,7 @@ import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../EmojiPickerPopover"
 import { MAX_FILE_SIZE_MB, MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../../constants/numberConstants"
+import { postKeys } from "../../../hooks/postsHooks/postKeys"
 
 
 const CreatePost = () => {
@@ -155,7 +156,7 @@ const CreatePost = () => {
       behavior: "smooth",
     })
 
-    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
+    queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
 
     setShowNewFeedPostsButton(false)
     markFeedAsRead()

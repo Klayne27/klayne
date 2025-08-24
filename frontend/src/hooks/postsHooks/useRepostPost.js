@@ -1,93 +1,115 @@
-import { useQueryClient, useMutation } from "@tanstack/react-query";
-import { useAuthUser } from "../authHooks/useAuthUser";
-import { showAppToast } from "../../utils/showAppToast";
+import { useQueryClient, useMutation } from "@tanstack/react-query"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import { showAppToast } from "../../utils/showAppToast"
+import { postKeys } from "./postKeys"
 
-export const useRepostPost = (POST_ENDPOINT) => {
-  const queryClient = useQueryClient();
-  const { authUser } = useAuthUser();
+// Centralized function to handle optimistic repost updates across different data structures.
+const updatePostRepostStatus = (oldData, postId, userId) => {
+  if (!oldData) return oldData
 
-  const queryKey = ["posts", POST_ENDPOINT];
+  const handlePost = (post) => {
+    // Determine the post to update (could be the original or a repost)
+    const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
+    const isTarget = targetPost._id === postId
+
+    if (isTarget) {
+      const isReposted = targetPost.repostedBy?.includes(userId)
+      const newRepostedBy = isReposted
+        ? (targetPost.repostedBy || []).filter((id) => id !== userId)
+        : [...(targetPost.repostedBy || []), userId]
+
+      const newRepostCount = newRepostedBy.length
+
+      // Return a new post object with the updated repost status
+      if (post.repostedFrom?._id === postId) {
+        return {
+          ...post,
+          repostedFrom: { ...targetPost, repostedBy: newRepostedBy, repostsCount: newRepostCount },
+        }
+      }
+      return { ...post, repostedBy: newRepostedBy, repostsCount: newRepostCount }
+    }
+
+    return post
+  }
+
+  // Handle paginated list data
+  if (oldData.pages) {
+    const newPages = oldData.pages.map((page) => ({
+      ...page,
+      posts: (page.posts || []).map(handlePost),
+    }))
+    return { ...oldData, pages: newPages }
+  }
+
+  // Handle a single post object
+  if (oldData._id) {
+    return handlePost(oldData)
+  }
+
+  return oldData
+}
+
+export const useRepostPost = (username) => {
+  const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
 
   const { mutate: repostPost, isPending: isReposting } = useMutation({
     mutationFn: async (postId) => {
-      try {
-        const response = await fetch(`/api/posts/repost/${postId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        });
-
-        const data = await response.json();
-        if (!response.ok) {
-          throw new Error(data.error || "Failed to toggle repost status");
-        }
-        return data;
-      } catch (error) {
-        throw new Error(error.message || "An unknown error occurred");
+      const response = await fetch(`/api/posts/repost/${postId}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+      })
+      const data = await response.json()
+      if (!response.ok) {
+        throw new Error(data.error || "Failed to toggle repost status")
       }
+      return data
     },
 
     onMutate: async (postId) => {
-      await queryClient.cancelQueries({ queryKey });
+      // Define all relevant keys using the factory
+      const keysToUpdate = [
+        postKeys.list("/api/posts/all"),
+        postKeys.list("/api/posts/following"),
+        postKeys.bookmarked(),
+        postKeys.details(postId),
+        postKeys.user(username),
+        postKeys.likes(username),
+      ].filter((key) => queryClient.getQueryData(key) !== undefined)
 
-      const previousPostsData = queryClient.getQueryData(queryKey);
+      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
 
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData || !oldData.pages) return oldData;
+      const previousData = keysToUpdate.reduce((acc, key) => {
+        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
+        return acc
+      }, {})
 
-        const updatePost = (postToUpdate) => {
-          const isReposted = postToUpdate.repostedBy.includes(authUser._id);
-          if (isReposted) {
-            postToUpdate.repostedBy = postToUpdate.repostedBy.filter(
-              (id) => id !== authUser._id
-            );
-            postToUpdate.repostsCount -= 1;
-          } else {
-            postToUpdate.repostedBy.push(authUser._id);
-            postToUpdate.repostsCount += 1;
-          }
-        };
+      // Perform the optimistic update on all relevant caches
+      keysToUpdate.forEach((key) => {
+        queryClient.setQueryData(key, (oldData) =>
+          updatePostRepostStatus(oldData, postId, authUser._id),
+        )
+      })
 
-        const newData = {
-          ...oldData,
-          pages: oldData.pages.map((page) => ({
-            ...page,
-            posts: page.posts.map((post) => {
-              if (post.repostedFrom && post.repostedFrom._id === postId) {
-                const newPost = { ...post, repostedFrom: { ...post.repostedFrom } };
-                updatePost(newPost.repostedFrom);
-                return newPost;
-              }
-
-              if (post._id === postId) {
-                const newPost = { ...post };
-                updatePost(newPost);
-                return newPost;
-              }
-              return post;
-            }),
-          })),
-        };
-
-        return newData;
-      });
-
-      return { previousPostsData };
-    },
-
-    onError: (err, postId, context) => {
-      showAppToast(err.message || "Could not update repost.", "error");
-      if (context?.previousPostsData) {
-        queryClient.setQueryData(queryKey, context.previousPostsData);
-      }
+      return { previousData }
     },
 
     onSuccess: (data) => {
-      showAppToast(data.message || "Success!", "success");
+      showAppToast(data.message || "Success!", "success")
+      // Invalidate broader post feeds to refresh from the server.
+    
     },
-  });
 
-  return { repostPost, isReposting };
-};
+    onError: (err, postId, context) => {
+      showAppToast(err.message || "Could not update repost.", "error")
+      if (context?.previousData) {
+        Object.entries(context.previousData).forEach(([key, value]) => {
+          queryClient.setQueryData(JSON.parse(key), value)
+        })
+      }
+    },
+  })
 
+  return { repostPost, isReposting }
+}

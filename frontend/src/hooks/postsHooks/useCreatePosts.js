@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createPostApi } from "../../api/postsApi"
 import { showAppToast } from "../../utils/showAppToast"
-import { POSTS_QUERY_KEY, SCHEDULED_POSTS_QUERY_KEY } from "../../constants/queryKeys"
+import { postKeys } from "./postKeys"
 
 export const useCreatePosts = () => {
   const queryClient = useQueryClient()
@@ -16,10 +16,10 @@ export const useCreatePosts = () => {
     onSuccess: (data) => {
       if (data.isScheduled) {
         showAppToast(`Post scheduled for ${new Date(data.scheduledAt).toLocaleString()}`, "success")
-        queryClient.invalidateQueries({ queryKey: SCHEDULED_POSTS_QUERY_KEY })
+        queryClient.invalidateQueries({ queryKey: postKeys.list("scheduled") })
       } else {
         showAppToast("Post created successfully", "success")
-        queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEY })
+        queryClient.invalidateQueries({ queryKey: postKeys.all })
       }
     },
     onError: (error) => {

@@ -2,11 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addCommentApi, replyToCommentApi } from "../../api/commentsApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
-import {
-  BOOKMARKED_POSTS_QUERY_KEY,
-  PINNED_POSTS_QUERY_KEY,
-  POSTS_QUERY_KEY,
-} from "../../constants/queryKeys"
+import { postKeys } from "../postsHooks/postKeys"
 
 export const useCreateComment = (postId, parentCommentId = null) => {
   const queryClient = useQueryClient()
@@ -27,16 +23,16 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     onMutate: async ({ text, img }) => {
       await queryClient.cancelQueries({ queryKey: commentsQueryKey })
       await queryClient.cancelQueries({ queryKey: ["post", postId] })
-      await queryClient.cancelQueries({ queryKey: POSTS_QUERY_KEY })
-      await queryClient.cancelQueries({ queryKey: BOOKMARKED_POSTS_QUERY_KEY })
+      await queryClient.cancelQueries({ queryKey: postKeys.all })
+      await queryClient.cancelQueries({ queryKey: postKeys.bookmarked() })
       await queryClient.cancelQueries({
         queryKey: ["pinnedPosts", currentUser.username],
       })
 
       const previousComments = queryClient.getQueryData(commentsQueryKey)
       const previousPostData = queryClient.getQueryData(["post", postId])
-      const previousPostsData = queryClient.getQueryData(POSTS_QUERY_KEY)
-      const previousBookmarkedPostsData = queryClient.getQueryData(BOOKMARKED_POSTS_QUERY_KEY)
+      const previousPostsData = queryClient.getQueryData(postKeys.all)
+      const previousBookmarkedPostsData = queryClient.getQueryData(postKeys.bookmarked())
       const previousPinnedPostsData = queryClient.getQueryData([
         "pinnedPosts",
         currentUser.username,
@@ -110,7 +106,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         })
       }
 
-      queryClient.setQueryData(POSTS_QUERY_KEY, (oldData) => {
+      queryClient.setQueryData(postKeys.all, (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData
         const newPages = oldData.pages.map((page) => ({
           ...page,
@@ -124,7 +120,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages }
       })
 
-      queryClient.setQueryData(BOOKMARKED_POSTS_QUERY_KEY, (oldData) => {
+      queryClient.setQueryData(postKeys.bookmarked(), (oldData) => {
         if (!oldData || !Array.isArray(oldData.pages)) return oldData
         const newPages = oldData.pages.map((page) => ({
           ...page,
@@ -205,9 +201,9 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       })
 
       queryClient.invalidateQueries({ queryKey: ["post", postId] })
-      queryClient.invalidateQueries({ queryKey: POSTS_QUERY_KEY })
-      queryClient.invalidateQueries({ queryKey: BOOKMARKED_POSTS_QUERY_KEY })
-      queryClient.invalidateQueries({ queryKey: PINNED_POSTS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: postKeys.all })
+      queryClient.invalidateQueries({ queryKey: postKeys.bookmarked() })
+      // queryClient.invalidateQueries({ queryKey: postKeys.o })
       if (parentCommentId) {
         queryClient.invalidateQueries({ queryKey: ["comments", postId] })
       }
@@ -216,8 +212,8 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       showAppToast(error.message || "Failed to add comment.", "error")
       queryClient.setQueryData(commentsQueryKey, context.previousComments)
       queryClient.setQueryData(["post", postId], context.previousPostData)
-      queryClient.setQueryData(POSTS_QUERY_KEY, context.previousPostsData)
-      queryClient.setQueryData(BOOKMARKED_POSTS_QUERY_KEY, context.previousBookmarkedPostsData)
+      queryClient.setQueryData(postKeys.all, context.previousPostsData)
+      queryClient.setQueryData(postKeys.bookmarked(), context.previousBookmarkedPostsData)
       queryClient.setQueryData(
         ["pinnedPosts", currentUser.username],
         context.previousPinnedPostsData,

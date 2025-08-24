@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchPostApi } from "../../api/postsApi";
+import { postKeys } from "./postKeys";
 
 export const useFetchPost = (pid) => {
   const {
@@ -9,7 +10,7 @@ export const useFetchPost = (pid) => {
     error,
     refetch
   } = useQuery({
-    queryKey: ["post", pid],
+    queryKey: postKeys.details(pid),
     queryFn: () => fetchPostApi(pid),
     enabled: !!pid,
     staleTime: 15 * 60 * 1000, 

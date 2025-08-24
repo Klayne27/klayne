@@ -1,11 +1,58 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi";
-import { useAuthUser } from "../authHooks/useAuthUser";
-import { showAppToast } from "../../utils/showAppToast";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import { showAppToast } from "../../utils/showAppToast"
+import { postKeys } from "./postKeys"
+
+// Centralized function to update a post's pin status optimistically.
+// This function handles single posts, arrays, and paginated data structures.
+const updatePostPinStatus = (oldData, postId, action) => {
+  if (!oldData) return oldData
+
+  const handleSinglePost = (post) => {
+    const isTarget = post._id === postId || post.repostedFrom?._id === postId
+    if (!isTarget) return post
+
+    const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
+    const newPinStatus = action === "pin"
+
+    if (post.repostedFrom?._id === postId) {
+      return { ...post, repostedFrom: { ...targetPost, isPinned: newPinStatus } }
+    }
+    return { ...post, isPinned: newPinStatus }
+  }
+
+  // Handle paginated list data (e.g., all posts, user posts, bookmarked posts)
+  if (oldData.pages) {
+    const newPages = oldData.pages.map((page) => ({
+      ...page,
+      posts: (page.posts || []).map(handleSinglePost),
+    }))
+    return { ...oldData, pages: newPages }
+  }
+
+  // Handle single post object data
+  if (oldData._id) {
+    return handleSinglePost(oldData)
+  }
+
+  // Handle simple array data (e.g., pinned posts)
+  if (Array.isArray(oldData)) {
+    const targetPost = oldData.find((p) => p._id === postId)
+    if (action === "pin") {
+      return targetPost ? oldData : [handleSinglePost({ _id: postId }), ...oldData]
+    }
+    if (action === "unpin") {
+      return oldData.filter((p) => p._id !== postId)
+    }
+  }
+
+  return oldData
+}
 
 export const usePinPost = () => {
-  const queryClient = useQueryClient();
-  const { authUser } = useAuthUser();
+  const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
 
   const {
     mutate: pinUnpinPost,
@@ -13,207 +60,85 @@ export const usePinPost = () => {
     isError,
     error,
   } = useMutation({
-    mutationFn: async ({ postId, action }) => {
+    mutationFn: ({ postId, action }) => {
       if (action === "pin") {
-        return pinUnpinPostApi(postId);
-      } else if (action === "unpin") {
-        return unpinPostApi(postId);
+        return pinUnpinPostApi(postId)
       }
-      throw new Error("Invalid action for pinUnpinPost");
+      if (action === "unpin") {
+        return unpinPostApi(postId)
+      }
+      throw new Error("Invalid action for pinUnpinPost")
     },
 
     onMutate: async ({ postId, action, post }) => {
-      if (!authUser?._id || !authUser?.username) {
-        console.warn("No authenticated user or username for optimistic pin update.");
-        return;
+      if (!authUser?.username) {
+        console.warn("No authenticated user or username for optimistic pin update.")
+        return
       }
 
-      const pinnedPostsQueryKey = ["pinnedPosts", authUser.username];
-      const authUserQueryKey = ["authUser"];
-      const postDetailQueryKey = ["post", postId];
+      const optimisticPin = action === "unpin" ? postKeys.pinned(authUser.username) : ""
 
-      await Promise.all([
-        queryClient.cancelQueries({ queryKey: pinnedPostsQueryKey }),
-        queryClient.cancelQueries({ queryKey: authUserQueryKey }),
-        queryClient.cancelQueries({ queryKey: postDetailQueryKey }),
-        queryClient.cancelQueries({ queryKey: ["posts"] }),
-        queryClient.cancelQueries({ queryKey: ["bookmarkedPosts"] }),
-        queryClient.cancelQueries({
-          queryKey: ["posts", `/api/posts/user/${authUser.username}`],
-        }),
-      ]);
+      // Define all relevant keys using the factory
+      const keysToUpdate = [
+        optimisticPin,
+        postKeys.details(postId),
+        // postKeys.user(authUser.username),
+        postKeys.all,
+        postKeys.bookmarked(),
+      ].filter((key) => queryClient.getQueryData(key) !== undefined)
 
-      const previousPinnedPostsData = queryClient.getQueryData(pinnedPostsQueryKey);
-      const previousAuthUserData = queryClient.getQueryData(authUserQueryKey);
-      const previousPostDetailData = queryClient.getQueryData(postDetailQueryKey);
-      const previousGeneralPostsData = queryClient.getQueryData(["posts"]); 
-      const previousBookmarkedPostsData = queryClient.getQueryData(["bookmarkedPosts"]); 
-      const previousUserPostsData = queryClient.getQueryData([
-        "posts",
-        `/api/posts/user/${authUser.username}`,
-      ]);
+      // Cancel all relevant queries to prevent them from refetching
+      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
 
-      const updatePostPinStatus = (p, actionType) => {
-        if (!p) return p;
-        const targetPost = p.repostedFrom ? p.repostedFrom : p;
-        const newIsPinnedValue = actionType === "pin";
+      // Take a single snapshot of all the relevant data before the update
+      const previousData = keysToUpdate.reduce((acc, key) => {
+        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
+        return acc
+      }, {})
 
-        if (p.repostedFrom) {
-          return {
-            ...p,
-            repostedFrom: {
-              ...targetPost,
-              isPinned: newIsPinnedValue,
-            },
-          };
-        } else {
-          return {
-            ...p,
-            isPinned: newIsPinnedValue,
-          };
-        }
-      };
+      // Optimistically update the cache for each relevant key
+      keysToUpdate.forEach((key) => {
+        queryClient.setQueryData(key, (oldData) => updatePostPinStatus(oldData, postId, action))
+      })
 
-      const updatePaginatedList = (oldData, targetPostId, actionType) => {
-        if (!oldData || !Array.isArray(oldData.pages)) return oldData;
-        const newPages = oldData.pages.map((page) => ({
-          ...page,
-          posts: page.posts.map((p) => {
-            if (p._id === targetPostId || p.repostedFrom?._id === targetPostId) {
-              return updatePostPinStatus(p, actionType);
-            }
-            return p;
-          }),
-        }));
-        return { ...oldData, pages: newPages };
-      };
-
-      queryClient.setQueryData(["posts", "/api/posts/all"], (oldData) =>
-        updatePaginatedList(oldData, postId, action)
-      );
-      // queryClient.setQueryData(["posts", "/api/posts/following"], (oldData) =>
-      //   updatePaginatedList(oldData, postId, action)
-      // );
-      queryClient.setQueryData(["bookmarkedPosts"], (oldData) =>
-        updatePaginatedList(oldData, postId, action)
-      );
-
-      queryClient.setQueryData(postDetailQueryKey, (oldData) => {
-        if (!oldData || typeof oldData !== "object") return oldData;
-        return updatePostPinStatus(oldData, action);
-      });
-
-      queryClient.setQueryData(pinnedPostsQueryKey, (oldData) => {
-        if (!oldData)
-          return action === "pin" && post ? [updatePostPinStatus(post, action)] : [];
-        if (!Array.isArray(oldData)) return oldData;
-
-        const targetPostToManipulate = updatePostPinStatus(post, action);
-
-        if (!targetPostToManipulate) {
-          console.warn(
-            "Could not find post data to optimistically update pinnedPosts list."
-          );
-          return oldData;
-        }
-
+      // Update the pinnedPosts array in the authUser data
+      const authUserKey = ["authUser"]
+      queryClient.setQueryData(authUserKey, (oldData) => {
+        if (!oldData) return oldData
+        const newPinnedPostsIds = oldData.pinnedPosts || []
         if (action === "pin") {
-          if (!oldData.some((p) => p._id === postId)) {
-            return [targetPostToManipulate, ...oldData];
-          }
-        } else if (action === "unpin") {
-          return oldData.filter((p) => p._id !== postId);
+          return { ...oldData, pinnedPosts: [postId, ...newPinnedPostsIds] }
         }
-        return oldData;
-      });
+        return { ...oldData, pinnedPosts: newPinnedPostsIds.filter((id) => id !== postId) }
+      })
+      previousData[JSON.stringify(authUserKey)] = queryClient.getQueryData(authUserKey)
 
-      queryClient.setQueryData(authUserQueryKey, (oldData) => {
-        if (!oldData) return oldData;
-        const newPinnedPostsIds = oldData.pinnedPosts || [];
-        if (action === "pin") {
-          if (!newPinnedPostsIds.includes(postId)) {
-            return { ...oldData, pinnedPosts: [postId, ...newPinnedPostsIds] }; // Add ID
-          }
-        } else if (action === "unpin") {
-          return {
-            ...oldData,
-            pinnedPosts: newPinnedPostsIds.filter((id) => id !== postId), // Remove ID
-          };
-        }
-        return oldData;
-      });
-
-      queryClient.setQueryData(
-        ["posts", `/api/posts/user/${authUser.username}`],
-        (oldData) => updatePaginatedList(oldData, postId, action)
-      );
-
-      return {
-        previousPinnedPostsData,
-        previousAuthUserData,
-        previousPostDetailData,
-        previousGeneralPostsData,
-        previousBookmarkedPostsData,
-        previousUserPostsData,
-      };
+      // Return the snapshot for rollback in case of an error
+      return { previousData }
     },
 
-    onSuccess: (data, variables) => {
-      showAppToast(data.message, "success");
-      const { postId } = variables; 
+    onSuccess: (data) => {
+      showAppToast(data.message, "success")
+      // Invalidate all related post keys to ensure data consistency
+      queryClient.invalidateQueries({ queryKey: postKeys.list() })
+      queryClient.invalidateQueries({ queryKey: postKeys.details() })
+      queryClient.invalidateQueries({ queryKey: postKeys.bookmarked() })
+      queryClient.invalidateQueries({ queryKey: postKeys.likes() })
 
-      if (authUser?.username) {
-        queryClient.invalidateQueries({ queryKey: ["pinnedPosts", authUser.username] });
-        queryClient.invalidateQueries({
-          queryKey: ["posts", `/api/posts/user/${authUser.username}`],
-        });
-      }
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
-      queryClient.invalidateQueries({ queryKey: ["post", postId] });
-      queryClient.invalidateQueries({ queryKey: ["bookmarkedPosts"] });
+      // Invalidate the user's pinned posts and the auth user data
+      // queryClient.invalidateQueries({ queryKey: postKeys.pinned(authUser.username) })
     },
 
     onError: (error, variables, context) => {
-      showAppToast(error.message || "Failed to update pin status", "error");
-      if (context) {
-        if (context.previousGeneralPostsData) {
-          queryClient.setQueryData(
-            ["posts", "/api/posts/all"],
-            context.previousGeneralPostsData
-          );
-        }
-        if (context.previousBookmarkedPostsData) {
-          queryClient.setQueryData(
-            ["bookmarkedPosts"],
-            context.previousBookmarkedPostsData
-          );
-        }
-        if (context.previousUserPostsData && authUser?.username) {
-          queryClient.setQueryData(
-            ["posts", `/api/posts/user/${authUser.username}`],
-            context.previousUserPostsData
-          );
-        }
-
-        if (authUser?.username && context.previousPinnedPostsData) {
-          queryClient.setQueryData(
-            ["pinnedPosts", authUser.username],
-            context.previousPinnedPostsData
-          );
-        }
-        if (context.previousPostDetailData) {
-          queryClient.setQueryData(
-            ["post", variables.postId],
-            context.previousPostDetailData
-          );
-        }
-        if (context.previousAuthUserData) {
-          queryClient.setQueryData(["authUser"], context.previousAuthUserData);
-        }
+      showAppToast(error.message || "Failed to update pin status", "error")
+      // Rollback all changes using the single snapshot
+      if (context?.previousData) {
+        Object.entries(context.previousData).forEach(([key, value]) => {
+          queryClient.setQueryData(JSON.parse(key), value)
+        })
       }
     },
-  });
+  })
 
-  return { pinUnpinPost, isPinning, isError, error };
-};
+  return { pinUnpinPost, isPinning, isError, error }
+}
