@@ -20,8 +20,8 @@ export const useFetchPosts = (POST_ENDPOINT) => {
       return lastPage?.hasNextPage ? allPages.length + 1 : undefined;
     },
     enabled: !!POST_ENDPOINT,
-    // staleTime: 10 * 60 * 1000,
-    staleTime: Infinity,
+    staleTime: 10 * 60 * 1000,
+    // staleTime: Infinity,
     gcTime: 1000 * 60 * 5,
   });
 
