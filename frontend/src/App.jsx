@@ -29,7 +29,7 @@ function App() {
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
 
-  console.log('merge conflict here');
+  console.log('merge2');
 
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
