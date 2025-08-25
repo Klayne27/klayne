@@ -1,6 +1,6 @@
 const BASE_URL = "/api/study"
 
-export const getPomodoroSettings = async () => {
+export const getPomodoroSettingsApi = async () => {
   const res = await fetch(`${BASE_URL}/users/settings/pomodoro`)
   if (!res.ok) {
     throw new Error("Failed to fetch Pomodoro settings")
@@ -8,7 +8,7 @@ export const getPomodoroSettings = async () => {
   return res.json()
 }
 
-export const updatePomodoroSettings = async (settings) => {
+export const updatePomodoroSettingsApi = async (settings) => {
   const res = await fetch(`${BASE_URL}/settings`, {
     method: "POST",
     headers: {
@@ -22,17 +22,8 @@ export const updatePomodoroSettings = async (settings) => {
   return res.json()
 }
 
-export const startStudySession = async () => {
-  const res = await fetch(`${BASE_URL}/session/start`, {
-    method: "POST",
-  })
-  if (!res.ok) {
-    throw new Error("Failed to start study session")
-  }
-  return res.json()
-}
 
-export const endStudySession = async ({ duration }) => {
+export const endStudySessionApi = async ({ duration }) => {
   const res = await fetch(`${BASE_URL}/session/end`, {
     method: "POST",
     headers: {
@@ -46,18 +37,10 @@ export const endStudySession = async ({ duration }) => {
   return res.json()
 }
 
-export const getStudyActivityFeed = async (page = 1) => {
+export const getStudyActivityFeedApi = async (page = 1) => {
   const res = await fetch(`${BASE_URL}/activity?page=${page}&limit=10`)
   if (!res.ok) {
     throw new Error("Failed to fetch study activity feed")
-  }
-  return res.json()
-}
-
-export const getLeaderboard = async (page = 1) => {
-  const res = await fetch(`${BASE_URL}/hours-leaderboard?page=${page}&limit=10`)
-  if (!res.ok) {
-    throw new Error("Failed to fetch leaderboard")
   }
   return res.json()
 }

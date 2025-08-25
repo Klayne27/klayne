@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react"
-import { useUpdatePomodoroSettings } from "../../hooks/pomodoroHooks/usePomodo"
 import { showAppToast } from "../../utils/showAppToast"
+import { useUpdatePomodoroSettings } from "../../hooks/pomodoroHooks/useUpdatePomodoroSettings"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   const [settings, setSettings] = useState(initialSettings)
-  const {updateSettings, isUpdatingSettings} = useUpdatePomodoroSettings()
+  const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
 
   useEffect(() => {
     setSettings(initialSettings)
@@ -165,11 +165,7 @@ const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
             <button type="button" className="btn" onClick={onClose}>
               Cancel
             </button>
-            <button
-              type="submit"
-              className="btn btn-primary"
-              disabled={isUpdatingSettings}
-            >
+            <button type="submit" className="btn btn-primary" disabled={isUpdatingSettings}>
               Save
             </button>
           </div>

@@ -102,15 +102,6 @@ const handleXPAndLeveling = async (user, duration) => {
   };
 };
 
-export const startStudySession = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    res.status(200).json({ message: "Study session started" });
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
 export const endStudySession = async (req, res) => {
   try {
     const userId = req.user._id;

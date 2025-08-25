@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom" // For the "Go Back" button
-import { useGetPomodoroSettings, useUpdatePomodoroSettings } from "../hooks/pomodoroHooks/usePomodo"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
+import { useGetPomodoroSettings } from "../hooks/pomodoroHooks/useGetPomodoroSettings"
+import { useUpdatePomodoroSettings } from "../hooks/pomodoroHooks/useUpdatePomodoroSettings"
 
 function PomodoroSettingsPage() {
   // Hook to navigate back after saving or canceling

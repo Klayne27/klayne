@@ -1,11 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
-import {
-  useEndStudySession,
-  useGetPomodoroSettings,
-  useUpdatePomodoroSettings,
-} from "../hooks/pomodoroHooks/usePomodo"
+
 import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
 import { CiMail, CiTrophy } from "react-icons/ci"
 import { MdLibraryBooks } from "react-icons/md"
@@ -22,13 +18,15 @@ import {
   FaEllipsis,
   FaEllipsisVertical,
   FaForward,
-  FaListCheck,
 } from "react-icons/fa6"
 import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
 import ConfirmationModal from "../components/ui/ConfirmationModal"
 import { LuListTodo } from "react-icons/lu"
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5"
 import { formatCount } from "../utils/textUtils"
+import { useEndStudySession } from "../hooks/pomodoroHooks/useEndStudySession"
+import { useGetPomodoroSettings } from "../hooks/pomodoroHooks/useGetPomodoroSettings"
+import { useUpdatePomodoroSettings } from "../hooks/pomodoroHooks/useUpdatePomodoroSettings"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -42,7 +40,7 @@ const PomodoroPage = () => {
   const navigate = useNavigate()
   const { newPostCount, unreadMessageCount, unreadPublicChatCount } = useSocket()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
-  const endSessionMutation = useEndStudySession()
+  const { endStudySession } = useEndStudySession()
   const { updateSettings } = useUpdatePomodoroSettings()
   const isMobile = useIsMobile()
 
@@ -209,7 +207,7 @@ const PomodoroPage = () => {
         const calculatedXpGained = settings.sessionDuration * xpMultiplier
         // --- End of dynamic XP calculation ---
 
-        endSessionMutation.mutate(
+        endStudySession(
           { duration: settings.sessionDuration },
           {
             onSuccess: (data) => {
@@ -258,7 +256,7 @@ const PomodoroPage = () => {
       }
     }
     setTimeout(setupNextPhase, 1)
-  }, [settings, isBreak, sessionCount, playAlarm, endSessionMutation, startNextTimer])
+  }, [settings, isBreak, sessionCount, playAlarm, endStudySession, startNextTimer])
 
   const startAnimation = useCallback(() => {
     const tick = () => {

@@ -1,10 +1,5 @@
 import { useState } from "react"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
-import {
-  useGetTotalLeaderboard,
-  useGetMonthlyLeaderboard,
-  useGetPreviousWinners,
-} from "../hooks/pomodoroHooks/usePomodo"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
 import { FaFire, FaInfoCircle } from "react-icons/fa"
@@ -13,6 +8,9 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 import { IoClose } from "react-icons/io5"
+import { useGetTotalLeaderboard } from "../hooks/pomodoroHooks/useGetTotalLeaderboard"
+import { useGetMonthlyLeaderboard } from "../hooks/pomodoroHooks/useGetMonthlyLeaderboard"
+import { useGetPreviousWinners } from "../hooks/pomodoroHooks/useGetPreviousWinners"
 
 function StudyLeaderboard() {
   const navigate = useNavigate()
@@ -24,15 +22,18 @@ function StudyLeaderboard() {
 
   const { authUser: currentUser } = useAuthUser()
 
-  const totalLeaderboard = useGetTotalLeaderboard(leaderboardType === "total" ? page : 1)
-  const monthlyLeaderboard = useGetMonthlyLeaderboard(leaderboardType === "monthly" ? page : 1)
+const totalLeaderboard = useGetTotalLeaderboard(page, {
+  enabled: leaderboardType === "total",
+})
+
+const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
+  enabled: leaderboardType === "monthly",
+})
   const { previousWinners } = useGetPreviousWinners()
 
   const currentLeaderboard = leaderboardType === "total" ? totalLeaderboard : monthlyLeaderboard
   const { leaderboard, totalPages, isLoading } = currentLeaderboard
 
-  // Logic to determine if monthly leaderboard should be active
-  // const isMonthlyLeaderboardActive = new Date().getMonth() >= 8 // September is month 8 (0-indexed)
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {

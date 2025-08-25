@@ -1,5 +1,4 @@
 import { Link, useNavigate } from "react-router-dom"
-import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/usePomodo"
 import { FaArrowLeft, FaClock } from "react-icons/fa6"
 import { FaFire } from "react-icons/fa"
 
@@ -8,6 +7,7 @@ import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
+import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/useGetStudyActivityFeed"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)

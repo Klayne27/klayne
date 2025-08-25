@@ -24,9 +24,9 @@ export const getTotalLeaderboard = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skipIndex = (page - 1) * limit;
 
-    const totalCount = await User.countDocuments();
+    const totalCount = await User.countDocuments({ totalStudyDuration: { $gt: 0 } });
 
-    const leaderboard = await User.find()
+    const leaderboard = await User.find({ totalStudyDuration: { $gt: 0 } })
       .sort({ totalStudyDuration: -1 })
       .skip(skipIndex)
       .limit(limit)
@@ -59,9 +59,10 @@ export const getMonthlyLeaderboard = async (req, res) => {
 
     const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
 
-    const totalCount = await User.countDocuments();
-
-    const leaderboard = await User.find()
+    const totalCount = await User.countDocuments({
+      "monthlyStats.studyDuration": { $gt: 0 },
+    });
+    const leaderboard = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
       .sort({ "monthlyStats.studyDuration": -1 })
       .skip(skipIndex)
       .limit(limit)
@@ -93,55 +94,6 @@ export const getMonthlyLeaderboard = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// Get leaderboard stats (for displaying current month info)
-export const getLeaderboardStats = async (req, res) => {
-  try {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-    const monthName = new Date().toLocaleString("default", {
-      month: "long",
-      year: "numeric",
-    });
-
-    // Get total users with study time this month
-    const monthlyActiveUsers = await User.countDocuments({
-      "monthlyStats.studyDuration": { $gt: 0 },
-      "monthlyStats.lastResetMonth": currentMonth,
-    });
-
-    // Get total users with all-time study time
-    const totalActiveUsers = await User.countDocuments({
-      totalStudyDuration: { $gt: 0 },
-    });
-
-    // Get top monthly performer
-    const topMonthlyUser = await User.findOne({
-      "monthlyStats.studyDuration": { $gt: 0 },
-    })
-      .sort({ "monthlyStats.studyDuration": -1 })
-      .select("username fullName monthlyStats.studyDuration")
-      .populate({
-        path: "profileImg",
-        select: "imageUrl",
-      });
-
-    res.status(200).json({
-      monthlyActiveUsers,
-      totalActiveUsers,
-      currentMonth: monthName,
-      topMonthlyUser: topMonthlyUser
-        ? {
-            ...topMonthlyUser.toObject(),
-            studyDuration: topMonthlyUser.monthlyStats.studyDuration,
-          }
-        : null,
-    });
-  } catch (error) {
-    console.error("Error in getLeaderboardStats:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
 
 export const getPreviousWinners = async (req, res) => {
   try {
