@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { searchUsersApi } from "../../api/usersApi";
+import { userKeys } from "./userKeys";
 
 export const useSearchUsers = (query) => {
   const {
@@ -9,7 +10,7 @@ export const useSearchUsers = (query) => {
     error,
     isFetching,
   } = useQuery({
-    queryKey: ["searchUsers", query],
+    queryKey: userKeys.search(query),
     queryFn: () => searchUsersApi(query),
     enabled: !!query,
   });

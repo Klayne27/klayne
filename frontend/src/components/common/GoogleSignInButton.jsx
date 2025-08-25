@@ -5,7 +5,7 @@ import { auth, googleProvider } from "../../firebase" // Adjust path
 import { useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query" // Import useQueryClient
 import { FaGoogle } from "react-icons/fa6"
-import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
+import { userKeys } from "../../hooks/usersHooks/userKeys"
 
 const GoogleSignInButton = () => {
   const navigate = useNavigate()
@@ -26,7 +26,7 @@ const GoogleSignInButton = () => {
 
       if (response.ok) {
         const userData = await response.json()
-        await queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY })
+        await queryClient.invalidateQueries({ queryKey: userKeys.auth() })
 
         navigate("/") // Navigate to the homepage
       } else {

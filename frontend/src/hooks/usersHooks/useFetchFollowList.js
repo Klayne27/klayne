@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchUsersApi } from "../../api/usersApi";
+import { userKeys } from "./userKeys";
 
 export const useFetchFollowList = (userId, type) => {
   const endpoint = userId
@@ -7,8 +8,6 @@ export const useFetchFollowList = (userId, type) => {
       ? `/api/users/following/${userId}`
       : `/api/users/followers/${userId}`
     : null;
-
-  const queryKey = [`${type}List`, userId];
 
   const enabled = !!userId && !!endpoint;
 
@@ -20,7 +19,7 @@ export const useFetchFollowList = (userId, type) => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: queryKey,
+    queryKey: userKeys.followList(type, userId),
     queryFn: async () => fetchUsersApi(endpoint, type),
     enabled: enabled,
     staleTime: 5 * 60 * 1000,

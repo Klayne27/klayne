@@ -5,7 +5,7 @@ import { messageKeys } from "../messagesHooks/messageKeys"
 import { conversationKeys } from "../messagesHooks/conversationKeys"
 import { postKeys } from "../postsHooks/postKeys"
 import { notificationKeys } from "../notificationsHooks/notificationKeys"
-import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
+import { userKeys } from "./userKeys"
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient()
@@ -17,7 +17,7 @@ export const useBlockUnblockUser = () => {
 
       const targetUserId = variables
 
-      queryClient.setQueryData(AUTH_USER_QUERY_KEY, (oldAuthUser) => {
+      queryClient.setQueryData(userKeys.auth(), (oldAuthUser) => {
         if (!oldAuthUser) return oldAuthUser
 
         const isCurrentlyBlockedByAuthUser = oldAuthUser.blockedUsers?.includes(targetUserId)
@@ -36,7 +36,7 @@ export const useBlockUnblockUser = () => {
       })
 
       if (data.username) {
-        queryClient.setQueryData(["userProfile", data.username], (oldData) => {
+        queryClient.setQueryData(userKeys.profile(data.username), (oldData) => {
           return {
             ...oldData,
             user: oldData?.user,
@@ -49,19 +49,19 @@ export const useBlockUnblockUser = () => {
       }
 
       if (data.username) {
-        queryClient.invalidateQueries({ queryKey: ["userProfile", data.username] })
+        queryClient.invalidateQueries({ queryKey: userKeys.profile(data.username) })
       } else {
         console.warn(
           "API response for block/unblock did not contain the affected username for userProfile invalidation.",
         )
       }
 
-      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
       queryClient.invalidateQueries({ queryKey: postKeys.all })
       queryClient.invalidateQueries({ queryKey: ["comments"] })
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
       queryClient.invalidateQueries({ queryKey: notificationKeys.list() })
-      queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] })
+      queryClient.invalidateQueries({ queryKey: userKeys.suggestedList() })
       queryClient.invalidateQueries({ queryKey: ["followers"] })
       queryClient.invalidateQueries({ queryKey: ["following"] })
       queryClient.invalidateQueries({ queryKey: messageKeys.private() })

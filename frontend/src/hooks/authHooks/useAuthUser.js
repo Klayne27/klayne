@@ -1,6 +1,6 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { authUserApi } from "../../api/authApi";
-import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys";
+import { userKeys } from "../usersHooks/userKeys";
 
 export const useAuthUser = () => {
   const queryClient = useQueryClient()
@@ -9,7 +9,7 @@ export const useAuthUser = () => {
     isLoading,
     refetch: refetchAuthUser,
   } = useQuery({
-    queryKey: AUTH_USER_QUERY_KEY,
+    queryKey: userKeys.auth(),
     queryFn: async () => {
       const data = await authUserApi();
       return data;
@@ -22,7 +22,7 @@ export const useAuthUser = () => {
   });
 
    const setAuthUser = (userData) => {
-     queryClient.setQueryData(AUTH_USER_QUERY_KEY, userData)
+     queryClient.setQueryData(userKeys.auth(), userData)
    }
 
   return { authUser, isLoading, refetchAuthUser, setAuthUser }

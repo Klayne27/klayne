@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchSuggestedUsersApi } from "../../api/usersApi";
+import { userKeys } from "./userKeys";
 
 export const useSuggestedUsers = () => {
   const {
@@ -8,7 +9,7 @@ export const useSuggestedUsers = () => {
     refetch,
     isRefetching,
   } = useQuery({
-    queryKey: ["suggestedUsers"],
+    queryKey: userKeys.suggestedList(),
     queryFn: fetchSuggestedUsersApi,
     staleTime: 1000 * 60 * 30,
     refetchOnWindowFocus: false,

@@ -1,9 +1,10 @@
 import { useQuery } from "@tanstack/react-query";
 import { fetchUserProfileApi } from "../../api/usersApi";
+import { userKeys } from "./userKeys";
 
 export const useFetchUserProfile = (username) => {
   const { data, isLoading, isRefetching, error, isError, refetch } = useQuery({
-    queryKey: ["userProfile", username],
+    queryKey: userKeys.profile(username),
     queryFn: async () => {
       const result = await fetchUserProfileApi(username);
       return result;
