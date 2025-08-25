@@ -1,5 +1,4 @@
-// components/modals/CreateTodoModal.jsx
-import React, { forwardRef, useEffect, useRef, useState } from "react"
+import { forwardRef, useEffect, useRef, useState } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
@@ -32,13 +31,13 @@ const CreateTodoModal = () => {
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
-  const [priority, setPriority] = useState("low") // New state for priority
-  const [dueDate, setDueDate] = useState(null) // New state for due date
+  const [priority, setPriority] = useState("low")
+  const [dueDate, setDueDate] = useState(null)
 
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
   const titleInputRef = useRef(null)
 
-  const { createTodo, isCreatingTodo } = useCreateTodo()
+  const { createTodo } = useCreateTodo()
 
   const handleSubmit = (e) => {
     e.preventDefault()

@@ -62,8 +62,8 @@ export const useBlockUnblockUser = () => {
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
       queryClient.invalidateQueries({ queryKey: notificationKeys.list() })
       queryClient.invalidateQueries({ queryKey: userKeys.suggestedList() })
-      queryClient.invalidateQueries({ queryKey: ["followers"] })
-      queryClient.invalidateQueries({ queryKey: ["following"] })
+      // queryClient.invalidateQueries({ queryKey: ["followers"] })
+      // queryClient.invalidateQueries({ queryKey: ["following"] })
       queryClient.invalidateQueries({ queryKey: messageKeys.private() })
     },
     onError: (error) => {

@@ -34,7 +34,9 @@ const ResetPasswordPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
-        <XSvg className="h-10 w-10 fill-white" />
+        {/* <XSvg className="h-10 w-10 fill-white" /> */}
+        <img src="klaynelogo2.png" className="h-12 w-auto rounded-lg bg-gray-950" loading="lazy" />
+
         <h1 className="text-3xl font-bold">Set a new password</h1>
 
         <form onSubmit={handleSubmit} className="flex w-full flex-col gap-4">

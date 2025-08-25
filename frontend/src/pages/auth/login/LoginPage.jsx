@@ -30,12 +30,12 @@ const LoginPage = () => {
   return (
     <div className="mx-auto flex h-screen max-w-screen-xl">
       <div className="hidden flex-1 items-center justify-center lg:flex">
-        <img src="klaynelogo2.png" className="rounded-3xl" />
+        <img src="klaynelogo2.png" className="rounded-3xl" loading="lazy" />
       </div>
       <div className="flex flex-1 flex-col items-center justify-center">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
           {/* <XSvg className="w-24 fill-primary lg:hidden" /> */}
-          <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" />
+          <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" loading="lazy" />
 
           <h1 className="text-4xl font-extrabold">Let's go.</h1>
           <label className="input input-bordered flex items-center gap-2 rounded">

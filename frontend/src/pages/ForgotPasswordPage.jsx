@@ -22,7 +22,11 @@ const ForgotPasswordPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 text-white">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
-        <FaXTwitter className="h-10 w-10 text-primary" />
+        {/* <FaXTwitter className="h-10 w-10 text-primary" /> */}
+        
+        <img src="klaynelogo2.png" className="rounded-lg bg-gray-950 w-auto h-12" loading="lazy" />
+       
+
         <h1 className="text-3xl font-bold">Forgot password?</h1>
         <p className="text-center text-sm text-gray-500">
           Enter your email and we'll send you a link to reset your password.

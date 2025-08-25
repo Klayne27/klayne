@@ -24,6 +24,7 @@ import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../hooks/postsHooks/postKeys"
+import KSvg from "../svgs/K"
 
 // import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
@@ -468,7 +469,8 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <img src="klaynelogo2.png" className=" rounded-lg bg-gray-950" />
+            {/* <KSvg className="h-10 w-10 fill-white" /> */}
+            <img src="klaynelogo2.png" className=" rounded-lg bg-gray-950" loading="lazy" />
           </div>
 
           <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">

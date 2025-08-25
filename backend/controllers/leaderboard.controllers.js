@@ -1,23 +1,6 @@
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 import User from "../models/user.model.js";
 
-// Helper function to reset monthly stats if needed
-const resetMonthlyStatsIfNeeded = async (user) => {
-  const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-
-  if (
-    !user.monthlyStats.lastResetMonth ||
-    user.monthlyStats.lastResetMonth !== currentMonth
-  ) {
-    user.monthlyStats.studyDuration = 0;
-    user.monthlyStats.sessionsCompleted = 0;
-    user.monthlyStats.xpEarned = 0;
-    user.monthlyStats.lastResetMonth = currentMonth;
-    await user.save();
-  }
-};
-
-// Get total (all-time) leaderboard
 export const getTotalLeaderboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -50,14 +33,13 @@ export const getTotalLeaderboard = async (req, res) => {
   }
 };
 
-// Get monthly leaderboard
 export const getMonthlyLeaderboard = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
     const skipIndex = (page - 1) * limit;
 
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
+    const currentMonth = new Date().toISOString().slice(0, 7);
 
     const totalCount = await User.countDocuments({
       "monthlyStats.studyDuration": { $gt: 0 },
@@ -74,12 +56,10 @@ export const getMonthlyLeaderboard = async (req, res) => {
         select: "imageUrl",
       });
 
-    // Transform the data to include the new monthly streak field
     const transformedLeaderboard = leaderboard.map((user) => ({
       ...user.toObject(),
       totalStudyDuration: user.monthlyStats.studyDuration,
       totalSessionsCompleted: user.monthlyStats.sessionsCompleted,
-      // monthlyStudyStreak: user.monthlyStats.monthlyStudyStreak, // Add monthly streak to the response
     }));
 
     res.status(200).json({

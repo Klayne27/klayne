@@ -1,13 +1,13 @@
-import { Link } from "react-router-dom";
-import { useState } from "react";
-import XSvg from "../../../components/svgs/X";
-import { MdOutlineMail } from "react-icons/md";
-import { FaUser } from "react-icons/fa";
-import { MdPassword } from "react-icons/md";
-import { MdDriveFileRenameOutline } from "react-icons/md";
-import { FaEye, FaEyeSlash } from "react-icons/fa6";
+import { Link } from "react-router-dom"
+import { useState } from "react"
+import XSvg from "../../../components/svgs/X"
+import { MdOutlineMail } from "react-icons/md"
+import { FaUser } from "react-icons/fa"
+import { MdPassword } from "react-icons/md"
+import { MdDriveFileRenameOutline } from "react-icons/md"
+import { FaEye, FaEyeSlash } from "react-icons/fa6"
 
-import { useSignup } from "../../../hooks/authHooks/useSignup";
+import { useSignup } from "../../../hooks/authHooks/useSignup"
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -15,26 +15,26 @@ const SignUpPage = () => {
     username: "",
     fullName: "",
     password: "",
-  });
+  })
 
-  const [showPassword, setShowPassword] = useState(false);
+  const [showPassword, setShowPassword] = useState(false)
 
-  const { signup, isPending, isError, error } = useSignup(formData);
+  const { signup, isPending, isError, error } = useSignup(formData)
 
   const handleSubmit = (e) => {
-    e.preventDefault();
-    signup(formData);
-  };
+    e.preventDefault()
+    signup(formData)
+  }
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target;
-    setFormData({ ...formData, [name]: value });
-  };
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
+  }
 
   return (
     <div className="mx-auto flex h-screen max-w-screen-xl px-10">
       <div className="hidden flex-1 items-center justify-center lg:flex">
-        <img src="klaynelogo2.png" className="rounded-3xl" />
+        <img src="klaynelogo2.png" className="rounded-3xl" loading="lazy" />
       </div>
       <div className="flex flex-1 flex-col items-center pt-8 md:justify-center">
         {/* Warning/Reminder Section */}
@@ -52,7 +52,7 @@ const SignUpPage = () => {
         {/* End Warning/Reminder Section */}
         <form className="mx-auto flex flex-col gap-4 md:mx-20 lg:w-2/3" onSubmit={handleSubmit}>
           {/* <XSvg className="w-24 fill-primary lg:hidden" /> */}
-          <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" />
+          <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" loading="lazy" />
           <h1 className="text-4xl font-extrabold">Join today.</h1>
           <label className="input input-bordered flex items-center gap-2 rounded">
             <MdOutlineMail />
@@ -120,5 +120,5 @@ const SignUpPage = () => {
       </div>
     </div>
   )
-};
-export default SignUpPage;
+}
+export default SignUpPage
