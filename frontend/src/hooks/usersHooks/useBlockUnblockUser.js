@@ -5,6 +5,7 @@ import { messageKeys } from "../messagesHooks/messageKeys"
 import { conversationKeys } from "../messagesHooks/conversationKeys"
 import { postKeys } from "../postsHooks/postKeys"
 import { notificationKeys } from "../notificationsHooks/notificationKeys"
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient()
@@ -16,7 +17,7 @@ export const useBlockUnblockUser = () => {
 
       const targetUserId = variables
 
-      queryClient.setQueryData(["authUser"], (oldAuthUser) => {
+      queryClient.setQueryData(AUTH_USER_QUERY_KEY, (oldAuthUser) => {
         if (!oldAuthUser) return oldAuthUser
 
         const isCurrentlyBlockedByAuthUser = oldAuthUser.blockedUsers?.includes(targetUserId)
@@ -55,7 +56,7 @@ export const useBlockUnblockUser = () => {
         )
       }
 
-      queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: postKeys.all })
       queryClient.invalidateQueries({ queryKey: ["comments"] })
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() })

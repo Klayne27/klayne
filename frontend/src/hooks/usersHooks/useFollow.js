@@ -3,6 +3,7 @@ import { followApi } from "../../api/usersApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
 import { conversationKeys } from "../messagesHooks/conversationKeys";
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys";
 
 const useFollow = () => {
   const queryClient = useQueryClient();
@@ -14,15 +15,15 @@ const useFollow = () => {
   } = useMutation({
     mutationFn: (userIdToFollow) => followApi(userIdToFollow),
     onMutate: async (userIdToFollow) => {
-      await queryClient.cancelQueries({ queryKey: ["authUser"] });
+      await queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY });
       await queryClient.cancelQueries({ queryKey: ["userProfile", userIdToFollow] });
-      const previousAuthUser = queryClient.getQueryData(["authUser"]);
+      const previousAuthUser = queryClient.getQueryData(AUTH_USER_QUERY_KEY);
       const previousUserProfile = queryClient.getQueryData([
         "userProfile",
         userIdToFollow,
       ]);
       if (previousAuthUser) {
-        queryClient.setQueryData(["authUser"], (oldData) => {
+        queryClient.setQueryData(AUTH_USER_QUERY_KEY, (oldData) => {
           if (!oldData) return oldData;
           const isCurrentlyFollowing = oldData.following.includes(userIdToFollow);
           let newFollowing;
@@ -51,7 +52,7 @@ const useFollow = () => {
     },
     onError: (error, userIdToFollow, context) => {
       if (context?.previousAuthUser) {
-        queryClient.setQueryData(["authUser"], context.previousAuthUser);
+        queryClient.setQueryData(AUTH_USER_QUERY_KEY, context.previousAuthUser);
       }
       if (context?.previousUserProfile) {
         queryClient.setQueryData(
@@ -62,7 +63,7 @@ const useFollow = () => {
       showAppToast(error.message || "Failed to perform action", "error");
     },
     onSettled: (data, error, userIdToFollow) => {
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY });
       queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: ["followingList", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
@@ -73,7 +74,7 @@ const useFollow = () => {
       // queryClient.invalidateQueries({ queryKey: ["userProfile", usernameToFolow] });
     },
     onSuccess: (data, userIdToFollow) => {
-      queryClient.invalidateQueries({ queryKey: ["authUser"] });
+      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY });
     },
   });
 

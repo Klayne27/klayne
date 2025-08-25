@@ -12,6 +12,7 @@ import {
   getPreviousWinnersApi,
   getTotalLeaderboard,
 } from "../../api/leaderboardApi"
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
 
 export const useGetPomodoroSettings = () => {
   const { data: settings, isLoading: isSettingsLoading } = useQuery({
@@ -75,13 +76,13 @@ export const useEndStudySession = () => {
     mutationFn: endStudySession, // Let's make this optimistic!
     onMutate: async ({ duration }) => {
       // First, we'll cancel any ongoing queries to prevent them from overwriting our optimistic update.
-      await queryClient.cancelQueries({ queryKey: ["authUser"] })
+      await queryClient.cancelQueries({ queryKey: AUTH_USER_QUERY_KEY })
       await queryClient.cancelQueries({ queryKey: ["leaderboard"] }) // Get the current user data from the cache. We'll save this to roll back if the mutation fails.
 
-      const previousAuthUser = queryClient.getQueryData(["authUser"]) // Now, we'll optimistically update the user data in our local cache.
+      const previousAuthUser = queryClient.getQueryData(AUTH_USER_QUERY_KEY) // Now, we'll optimistically update the user data in our local cache.
       // This makes the UI feel instant to the user.
 
-      queryClient.setQueryData(["authUser"], (oldUser) => {
+      queryClient.setQueryData(AUTH_USER_QUERY_KEY, (oldUser) => {
         if (!oldUser) return oldUser
 
         const newTotalStudyDuration = oldUser.totalStudyDuration + duration
@@ -104,13 +105,13 @@ export const useEndStudySession = () => {
     }, // If the server request is successful, we'll refetch the data to be sure it's in sync.
 
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY })
       queryClient.invalidateQueries({ queryKey: ["leaderboard"] })
     }, // If the request fails, we'll use the `context` to roll back to the old data.
 
     onError: (error, variables, context) => {
       if (context?.previousAuthUser) {
-        queryClient.setQueryData(["authUser"], context.previousAuthUser)
+        queryClient.setQueryData(AUTH_USER_QUERY_KEY, context.previousAuthUser)
       }
       showAppToast(error.message, "error")
     },

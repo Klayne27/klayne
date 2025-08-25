@@ -3,6 +3,7 @@ import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
 
 const updatePostPinStatus = (oldData, postId, action) => {
   if (!oldData) return oldData
@@ -91,7 +92,7 @@ export const usePinPost = () => {
         queryClient.setQueryData(key, (oldData) => updatePostPinStatus(oldData, postId, action))
       })
 
-      const authUserKey = ["authUser"]
+      const authUserKey = AUTH_USER_QUERY_KEY
       queryClient.setQueryData(authUserKey, (oldData) => {
         if (!oldData) return oldData
         const newPinnedPostsIds = oldData.pinnedPosts || []

@@ -5,6 +5,7 @@ import { auth, googleProvider } from "../../firebase" // Adjust path
 import { useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query" // Import useQueryClient
 import { FaGoogle } from "react-icons/fa6"
+import { AUTH_USER_QUERY_KEY } from "../../constants/queryKeys"
 
 const GoogleSignInButton = () => {
   const navigate = useNavigate()
@@ -25,17 +26,15 @@ const GoogleSignInButton = () => {
 
       if (response.ok) {
         const userData = await response.json()
-        await queryClient.invalidateQueries({ queryKey: ["authUser"] })
+        await queryClient.invalidateQueries({ queryKey: AUTH_USER_QUERY_KEY })
 
         navigate("/") // Navigate to the homepage
       } else {
         const errorData = await response.json()
         console.error("Backend error:", errorData)
-        // Handle backend errors
       }
     } catch (error) {
       console.error("Google Sign-In error:", error.message)
-      // Handle Firebase/Google sign-in errors
     }
   }
 
