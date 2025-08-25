@@ -32,11 +32,11 @@ const SignUpPage = () => {
   };
 
   return (
-    <div className="max-w-screen-xl mx-auto flex h-screen px-10">
-      <div className="flex-1 hidden lg:flex items-center justify-center">
-        <XSvg className=" lg:w-2/3 fill-primary" />
+    <div className="mx-auto flex h-screen max-w-screen-xl px-10">
+      <div className="hidden flex-1 items-center justify-center lg:flex">
+        <img src="klaynelogo2.png" className="rounded-3xl" />
       </div>
-      <div className="flex-1 flex flex-col items-center pt-8 md:justify-center">
+      <div className="flex flex-1 flex-col items-center pt-8 md:justify-center">
         {/* Warning/Reminder Section */}
         {/* <div className="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-6 max-w-md text-center text-sm shadow-lg border border-yellow-700">
           <p className="font-semibold mb-1">Important Account Note:</p>
@@ -50,13 +50,11 @@ const SignUpPage = () => {
           </p>
         </div> */}
         {/* End Warning/Reminder Section */}
-        <form
-          className="lg:w-2/3  mx-auto md:mx-20 flex gap-4 flex-col"
-          onSubmit={handleSubmit}
-        >
-          <XSvg className="w-24 lg:hidden fill-primary" />
-          <h1 className="text-4xl font-extrabold ">Join today.</h1>
-          <label className="input input-bordered rounded flex items-center gap-2">
+        <form className="mx-auto flex flex-col gap-4 md:mx-20 lg:w-2/3" onSubmit={handleSubmit}>
+          {/* <XSvg className="w-24 fill-primary lg:hidden" /> */}
+          <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" />
+          <h1 className="text-4xl font-extrabold">Join today.</h1>
+          <label className="input input-bordered flex items-center gap-2 rounded">
             <MdOutlineMail />
             <input
               type="email"
@@ -67,19 +65,19 @@ const SignUpPage = () => {
               value={formData.email}
             />
           </label>
-          <div className="flex gap-4 flex-wrap">
-            <label className="input input-bordered rounded flex items-center gap-2 flex-1">
+          <div className="flex flex-wrap gap-4">
+            <label className="input input-bordered flex flex-1 items-center gap-2 rounded">
               <FaUser />
               <input
                 type="text"
-                className="grow "
+                className="grow"
                 placeholder="Username"
                 name="username"
                 onChange={handleInputChange}
                 value={formData.username}
               />
             </label>
-            <label className="input input-bordered rounded flex items-center gap-2 flex-1">
+            <label className="input input-bordered flex flex-1 items-center gap-2 rounded">
               <MdDriveFileRenameOutline />
               <input
                 type="text"
@@ -91,38 +89,36 @@ const SignUpPage = () => {
               />
             </label>
           </div>
-          <label className="input input-bordered rounded flex items-center gap-2 relative">
+          <label className="input input-bordered relative flex items-center gap-2 rounded">
             <MdPassword />
             <input
               type={showPassword ? "text" : "password"}
-              className="grow mr-6"
+              className="mr-6 grow"
               placeholder="Password"
               name="password"
               onChange={handleInputChange}
               value={formData.password}
             />
             <span
-              className="absolute text-slate-500 right-4 cursor-pointer"
+              className="absolute right-4 cursor-pointer text-slate-500"
               onClick={() => setShowPassword(!showPassword)}
             >
               {!showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </label>
-          <button className="py-3 text-sm font-semibold rounded-full bg-primary text-white hover:bg-primary/80 transition duration-200">
+          <button className="rounded-full bg-primary py-3 text-sm font-semibold text-white transition duration-200 hover:bg-primary/80">
             {isPending ? "Loading..." : "Sign up"}
           </button>
           {isError && <p className="text-red-500">{error.message}</p>}
         </form>
-        <div className="flex flex-col lg:w-2/3 gap-2 mt-4">
-          <p className=" text-lg text-center">Already have an account?</p>
+        <div className="mt-4 flex flex-col gap-2 lg:w-2/3">
+          <p className="text-center text-lg">Already have an account?</p>
           <Link to="/login">
-            <button className="btn rounded-full btn-primary  btn-outline w-full">
-              Sign in
-            </button>
+            <button className="btn btn-outline btn-primary w-full rounded-full">Sign in</button>
           </Link>
         </div>
       </div>
     </div>
-  );
+  )
 };
 export default SignUpPage;

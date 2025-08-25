@@ -340,7 +340,7 @@ export const createAndSendNotification = async ({
         title: dynamicTitle,
         body: dynamicBody,
         url: dynamicUrl,
-        icon: `${BASE_URL}/x-logo2.png`,
+        icon: `${BASE_URL}/klaynelogo.png`,
       };
       await sendPushNotification(to.toString(), payload);
     }

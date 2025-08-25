@@ -459,7 +459,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden size-12 cursor-pointer justify-start rounded-full fill-primary px-2 duration-200 hover:bg-secondary md:flex ${
+            className={`hidden w-auto h-12 cursor-pointer justify-start rounded-full fill-primary p-2 duration-200 hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "x-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -468,7 +468,7 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <XSvg className="fill-primary" />
+            <img src="klaynelogo2.png" className=" rounded-lg bg-gray-950" />
           </div>
 
           <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
