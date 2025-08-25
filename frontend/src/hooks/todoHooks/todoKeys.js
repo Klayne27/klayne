@@ -3,4 +3,5 @@ export const todoKeys = {
   lists: () => [...todoKeys.all, "lists"],
   list: (type) => [...todoKeys.lists(), type],
   completed: (type) => [...todoKeys.all, "completed", type],
+  activityLog: () => [...todoKeys.all, "activityLog"]
 }

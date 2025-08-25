@@ -1,5 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getTodoActivityApi } from "../../api/todoActivityApi"
+import { todoKeys } from "../todoHooks/todoKeys"
 
 export const useGetTodoActivities = () => {
   const {
@@ -9,7 +10,7 @@ export const useGetTodoActivities = () => {
     hasNextPage,
     isFetchingNextPage,
   } = useInfiniteQuery({
-    queryKey: ["todoActivityLog"],
+    queryKey: todoKeys.activityLog(),
     queryFn: getTodoActivityApi,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.hasNextPage) {
