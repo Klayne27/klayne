@@ -75,7 +75,6 @@ export const sendMessage = async (req, res) => {
 
     const recipientId = conversation.participants.find((p) => !p.equals(senderId));
 
-    // ✅ FIX: Move the blocking check to the very top, before any DB writes.
     const senderIsBlocked = await isBlockedOrBlockedBy(senderId, recipientId);
     if (senderIsBlocked) {
       return res.status(403).json({ error: "You cannot send messages to this user." });
@@ -194,7 +193,7 @@ export const sendMessage = async (req, res) => {
         128,
         128
       );
-
+      
       const payload = {
         title: `New Message from @${senderUsername}`,
         body: message || "Image Message",

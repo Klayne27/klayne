@@ -12,7 +12,6 @@ export const useGlobalPrivateChatSocketEvents = () => {
 
   const handleNewMessage = useCallback(
     (newMessage) => {
-      console.log(newMessage);
       const messagesQueryKey = messageKeys.privateMessages(newMessage.conversationId)
 
       const messagesCache = queryClient.getQueryData(messagesQueryKey)

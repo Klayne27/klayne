@@ -469,7 +469,6 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            {/* <KSvg className="h-10 w-10 fill-white" /> */}
             <img src="klaynelogo2.png" className=" rounded-lg bg-gray-950" loading="lazy" />
           </div>
 
