@@ -6,6 +6,7 @@ import {
   deleteTodo,
   getCompletedTodos,
   getFollowingTodos,
+  getMyActivities,
   getPublicCompletedTodos,
   getPublicTodos,
   getTodoById,
@@ -20,6 +21,7 @@ router.get("/", protectRoute, getUserTodos);
 router.get("/public", getPublicTodos);
 router.get("/completed", protectRoute, getCompletedTodos);
 router.get("/following", protectRoute, getFollowingTodos);
+router.get("/activities", protectRoute, getMyActivities);
 router.get("/public-completed", protectRoute, getPublicCompletedTodos);
 
 router.get("/:id", protectRoute, getTodoById);

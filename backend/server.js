@@ -7,7 +7,6 @@ import { v2 as cloudinary } from "cloudinary";
 import { app, io, onlineUsersMap, server } from "./lib/socket.js";
 
 import leaderboardRoutes from "./routes/leaderboard.routes.js";
-import todoActivityRoutes from "./routes/todoActivities.routes.js";
 import todoListRoutes from "./routes/todoList.routes.js";
 import todoRoutes from "./routes/todo.routes.js";
 import studyRoutes from "./routes/study.routes.js";
@@ -59,7 +58,6 @@ app.use("/api/push", pushRoutes);
 app.use("/api/study", studyRoutes);
 app.use("/api/todos", todoRoutes);
 app.use("/api/todolists", todoListRoutes);
-app.use("/api/activities", todoActivityRoutes);
 
 if (process.env.NODE_ENV === "production") {
   app.use(express.static(path.join(__dirname, "/frontend/dist")));

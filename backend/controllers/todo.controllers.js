@@ -404,3 +404,34 @@ export const getPublicCompletedTodos = async (req, res) => {
     res.status(500).json({ error: "Failed to fetch public completed todos" });
   }
 };
+
+export const getMyActivities = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 0;
+    const limit = 30;
+    const skip = page * limit;
+
+    const activitiesDocs = await TodoActivity.find({ user: req.user._id })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate({
+        path: "user",
+        select: "username",
+        populate: { path: "profileImg", model: "Image", select: "imageUrl" },
+      })
+      .populate({ path: "todoList", select: "name icon color" })
+      .lean();
+
+    const activities = activitiesDocs.map((act) => ({
+      ...act,
+      listMeta: act.todoList || act.listSnapshot || null,
+    }));
+
+    const hasNextPage = activities.length === limit;
+
+    res.status(200).json({ activities, hasNextPage });
+  } catch (error) {
+    res.status(500).json({ message: "Failed to fetch activities" });
+  }
+};
