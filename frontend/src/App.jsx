@@ -1,6 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom"
 import { Suspense, lazy } from "react"
-import { useAuthUser } from "./hooks/authHooks/useAuthUser"
+import { useAuthUser } from "./features/auth/authHooks/useAuthUser"
 import { Toaster } from "react-hot-toast"
 import ImageModal from "./components/ui/ImageModal"
 import ProfileImageModal from "./components/ui/ProfileImageModal"

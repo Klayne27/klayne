@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser.js"
 import { FaCheckCircle } from "react-icons/fa"
 import { FaCalendar, FaEllipsisVertical, FaPen } from "react-icons/fa6"
 import SlideUpMenu from "./SlideUpMenu"

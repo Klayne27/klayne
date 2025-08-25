@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useRef } from "react"
-import { useAuthUser } from "../authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { useIsMobile } from "./useIsMobile"
 

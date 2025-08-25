@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from "react"
 import SearchPanel from "./SearchPanel"
 import SuggestedUsersPanel from "./SuggestedUsersPanel"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
 
 const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {

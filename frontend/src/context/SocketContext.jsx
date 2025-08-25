@@ -1,9 +1,9 @@
 import { createContext, useState, useEffect, useContext, useRef } from "react"
 import io from "socket.io-client"
-import { useAuthUser } from "../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useQueryClient } from "@tanstack/react-query"
 import { useLocation } from "react-router-dom"
-import { messageKeys } from "../hooks/messagesHooks/messageKeys"
+import { messageKeys } from "../features/chat/private/privateChatHooks/messageKeys"
 
 const SocketContext = createContext()
 

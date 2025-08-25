@@ -6,7 +6,7 @@ import { useFetchNotifications } from "../../hooks/notificationsHooks/useFetchNo
 import { useDeleteNotification } from "../../hooks/notificationsHooks/useDeleteNotification"
 import { useDeleteNotifications } from "../../hooks/notificationsHooks/useDeleteNotifications"
 import { formatPostDate } from "../../utils/date"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import NotificationsSkeleton from "../../components/skeletons/NotificationsSkeleton"
 import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"

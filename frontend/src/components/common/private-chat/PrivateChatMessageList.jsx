@@ -1,5 +1,5 @@
 import React, { forwardRef } from "react"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../../ui/LoadingSpinner"
 
 import PrivateChatMessageItem from "./PrivateChatMessageItem"

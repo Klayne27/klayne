@@ -1,5 +1,5 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query"
-import { useAuthUser } from "../authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
 

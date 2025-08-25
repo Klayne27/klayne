@@ -4,7 +4,7 @@ import { MdDeleteForever, MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
-import { useReactToMessage } from "../../hooks/messagesHooks/useReactToMessage"
+import { useReactToMessage } from "../../features/chat/private/privateChatHooks/useReactToMessage"
 import { PiSmiley, PiSmileyFill } from "react-icons/pi"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 

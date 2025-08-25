@@ -1,5 +1,5 @@
 import { useRef, useEffect, useCallback } from "react"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import PublicChatHeader from "./PublicChatHeader"
 import LoadingSpinner from "../../ui/LoadingSpinner"
@@ -7,13 +7,13 @@ import PublicChatMessageList from "./PublicChatMessageList"
 import PublicChatMessageInput from "./PublicChatMessageInput"
 
 import { FaCaretDown } from "react-icons/fa"
-import { usePublicMessages } from "../../../hooks/publicChatHooks/usePublicMessages"
+import { usePublicMessages } from "../../../features/chat/public/publicChatHooks/usePublicMessages"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
 import { usePublicChatSocketEvents } from "../../../hooks/socketEventHooks/usePublicChatSocketEvents"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 import { useQueryClient } from "@tanstack/react-query"
-import { messageKeys } from "../../../hooks/messagesHooks/messageKeys"
+import { messageKeys } from "../../../features/chat/private/privateChatHooks/messageKeys"
 import { userKeys } from "../../../hooks/usersHooks/userKeys"
 
 const PublicChatWindow = () => {

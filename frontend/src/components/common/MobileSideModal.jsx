@@ -1,5 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
 import { IoClose } from "react-icons/io5"

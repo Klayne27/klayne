@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../ui/LoadingSpinner"
 import { FaFire } from "react-icons/fa6"
 import { FaInfoCircle } from "react-icons/fa"

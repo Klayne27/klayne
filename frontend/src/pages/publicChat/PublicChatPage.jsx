@@ -1,4 +1,4 @@
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser";
 import LoadingSpinner from "../../components/ui/LoadingSpinner";
 import PublicChatWindow from "../../components/common/public-chat/PublicChatWindow";
 

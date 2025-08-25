@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useForgotPasswordRequest } from "../hooks/authHooks/useForgotPasswordRequest"
+import { useForgotPasswordRequest } from "../features/auth/authHooks/useForgotPasswordRequest"
 import { FaXTwitter } from "react-icons/fa6"
 import { Link } from "react-router-dom"
 import { MdOutlineMail } from "react-icons/md"

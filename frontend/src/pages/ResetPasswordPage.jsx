@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom"
 import { showAppToast } from "../utils/showAppToast"
 import { MdPassword } from "react-icons/md" // Password icon
 import { FaEye, FaEyeSlash } from "react-icons/fa6" // Eye icons for password visibility
-import { useResetPasswordRequest } from "../hooks/authHooks/useResetPasswordRequest"
+import { useResetPasswordRequest } from "../features/auth/authHooks/useResetPasswordRequest"
 import XSvg from "../components/svgs/X"
 
 const ResetPasswordPage = () => {

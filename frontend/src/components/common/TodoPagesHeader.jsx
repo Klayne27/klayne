@@ -4,7 +4,7 @@ import { FaCheckSquare } from "react-icons/fa"
 import { FaArrowLeft, FaEllipsisVertical } from "react-icons/fa6"
 import { LuSquareActivity } from "react-icons/lu"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import useXpStore from "../../store/useXpStore"
 import { RiCheckboxMultipleFill } from "react-icons/ri"
 

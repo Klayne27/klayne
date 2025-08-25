@@ -2,7 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { IoClose } from "react-icons/io5"
 
 import { useUpdateScheduledPost } from "../../../hooks/postsHooks/useUpdateScheduledPost"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
 import { PiSmiley } from "react-icons/pi"
 import EmojiPicker from "emoji-picker-react"
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"

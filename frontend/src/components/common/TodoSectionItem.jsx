@@ -1,5 +1,5 @@
 import { FaEdit } from "react-icons/fa"
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useDeleteTodoList } from "../../hooks/todoListHooks/useDeleteTodoList"
 import { useLikeUnlikeTodoList } from "../../hooks/todoListHooks/useLikeUnlikeTodoList"

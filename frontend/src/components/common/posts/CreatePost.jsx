@@ -1,7 +1,7 @@
 import { useRef, useState, useEffect, useCallback } from "react"
 import { IoClose, IoCloseSharp } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
-import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
 import { useCreatePosts } from "../../../hooks/postsHooks/useCreatePosts"
 import { Link } from "react-router-dom"
 import { BiImageAdd, BiPoll } from "react-icons/bi"

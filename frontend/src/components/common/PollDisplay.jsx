@@ -1,5 +1,5 @@
 // src/components/common/posts/PollDisplay.jsx
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { useVoteOnPoll } from "../../hooks/postsHooks/useVoteOnPoll"
 

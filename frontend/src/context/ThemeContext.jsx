@@ -1,5 +1,5 @@
 import { createContext, useState, useEffect, useContext } from "react";
-import { useAuthUser } from "../hooks/authHooks/useAuthUser";
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
 
 export const ThemeContext = createContext();
 

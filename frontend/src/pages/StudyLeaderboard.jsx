@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useAuthUser } from "../hooks/authHooks/useAuthUser"
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
 import { FaFire, FaInfoCircle } from "react-icons/fa"

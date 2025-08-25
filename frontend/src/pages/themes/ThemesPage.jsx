@@ -3,7 +3,7 @@ import { AVAILABLE_THEMES } from "../../constants/themes";
 import { useTheme } from "../../context/ThemeContext";
 import { PiSmiley } from "react-icons/pi";
 import { IoImageOutline } from "react-icons/io5";
-import { useAuthUser } from "../../hooks/authHooks/useAuthUser";
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
 

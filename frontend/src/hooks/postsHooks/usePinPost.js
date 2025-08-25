@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi"
-import { useAuthUser } from "../authHooks/useAuthUser"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
 import { userKeys } from "../usersHooks/userKeys"
