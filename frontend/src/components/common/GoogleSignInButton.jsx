@@ -1,11 +1,9 @@
-// In components/auth/GoogleSignInButton.jsx
 
 import { signInWithPopup } from "firebase/auth"
-import { auth, googleProvider } from "../../firebase" // Adjust path
 import { useNavigate } from "react-router-dom"
-import { useQueryClient } from "@tanstack/react-query" // Import useQueryClient
-import { FaGoogle } from "react-icons/fa6"
+import { useQueryClient } from "@tanstack/react-query" 
 import { userKeys } from "../../hooks/usersHooks/userKeys"
+import { auth, googleProvider } from "../../services/firebase"
 
 const GoogleSignInButton = () => {
   const navigate = useNavigate()

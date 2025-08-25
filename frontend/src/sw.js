@@ -2,20 +2,16 @@ import { precacheAndRoute } from "workbox-precaching"
 
 precacheAndRoute(self.__WB_MANIFEST)
 
-// Your push notification handler
 self.addEventListener("push", (event) => {
   let payload
 
   try {
     if (event.data) {
-      // Try to get the text first
       const data = event.data.text()
 
-      // Try to parse as JSON
       try {
         payload = JSON.parse(data)
       } catch (jsonError) {
-        // If it's not JSON (like DevTools test), create a payload from the text
         payload = {
           title: "Test Notification",
           body: data,
@@ -23,7 +19,6 @@ self.addEventListener("push", (event) => {
         }
       }
     } else {
-      // No data received
       payload = {
         title: "Default Title",
         body: "Default body message.",

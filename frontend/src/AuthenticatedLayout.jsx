@@ -29,7 +29,7 @@ const NotificationPage = lazy(() => import("./pages/NotifcationPage"))
 const MessagesPage = lazy(() => import("./pages/MessagePage"))
 const PostPage = lazy(() => import("./pages/PostPage"))
 const SearchPage = lazy(() => import("./pages/SearchPage"))
-const TodoPageLayout = lazy(() => import("./components/common/TodoPageLayout"))
+const TodoPageLayout = lazy(() => import("./components/layout/TodoPageLayout"))
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()

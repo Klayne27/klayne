@@ -1,21 +1,15 @@
-import { FaPlus, FaArrowLeft, FaListUl, FaUserGroup, FaGlobe } from "react-icons/fa6"
-import { FaCheckSquare } from "react-icons/fa"
+import { FaPlus, FaListUl, FaUserGroup, FaGlobe } from "react-icons/fa6"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
-import { useTodoStore } from "../../store/useTodoStore"
-import CreateTodoListModal from "../../features/todos/CreateTodoListModal"
-import CreateTodoModal from "../../features/todos/CreateTodoModal"
-import { RxActivityLog } from "react-icons/rx"
 import { IoIosTimer } from "react-icons/io"
+import { useTodoStore } from "../../store/useTodoStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { PiHouseThin } from "react-icons/pi"
+import CreateTodoModal from "../../features/todos/CreateTodoModal"
+
 
 const TodoPageLayout = () => {
   const {
     showCreateTodoModal,
-    showCreateTodoListModal,
     setShowCreateTodoListModal,
-    showEditTodoListModal,
-    setShowEditTodoListModal,
   } = useTodoStore()
   const navigate = useNavigate()
   const { pathname } = useLocation()
