@@ -8,9 +8,9 @@ import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 import { IoClose } from "react-icons/io5"
-import { useGetTotalLeaderboard } from "../hooks/pomodoroHooks/useGetTotalLeaderboard"
-import { useGetMonthlyLeaderboard } from "../hooks/pomodoroHooks/useGetMonthlyLeaderboard"
-import { useGetPreviousWinners } from "../hooks/pomodoroHooks/useGetPreviousWinners"
+import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
+import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
+import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
 
 function StudyLeaderboard() {
   const navigate = useNavigate()

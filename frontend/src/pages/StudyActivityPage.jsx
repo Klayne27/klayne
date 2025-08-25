@@ -7,7 +7,7 @@ import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
-import { useGetStudyActivityFeed } from "../hooks/pomodoroHooks/useGetStudyActivityFeed"
+import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/useGetStudyActivityFeed"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)

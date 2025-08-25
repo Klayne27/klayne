@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { pomodoroKeys } from "./pomodoroKeys"
-import { getMonthlyLeaderboardApi } from "../../api/leaderboardApi"
+import { getMonthlyLeaderboardApi } from "../../../api/leaderboardApi"
 
 export const useGetMonthlyLeaderboard = (page, options) => {
   const { data, isLoading, error } = useQuery({

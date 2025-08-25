@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { updatePomodoroSettingsApi } from "../../api/pomodoroApi"
+import { updatePomodoroSettingsApi } from "../../../api/pomodoroApi"
 import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useUpdatePomodoroSettings = () => {

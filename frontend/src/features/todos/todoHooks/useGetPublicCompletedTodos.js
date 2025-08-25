@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { getPublicCompletedTodosApi } from "../../api/todoApi"
+import { getPublicCompletedTodosApi } from "../../../api/todoApi"
 import { todoKeys } from "./todoKeys"
 
 export const useGetPublicCompletedTodos = () => {

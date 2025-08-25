@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { deleteTodoApi } from "../../api/todoApi"
-import { showAppToast } from "../../utils/showAppToast"
+import { deleteTodoApi } from "../../../api/todoApi"
+import { showAppToast } from "../../../utils/showAppToast"
 import { todoKeys } from "./todoKeys"
 
 export const useDeleteTodo = () => {

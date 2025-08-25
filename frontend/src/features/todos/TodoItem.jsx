@@ -10,9 +10,9 @@ import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
 import { FaTrashCan } from "react-icons/fa6"
 import { showAppToast } from "../../utils/showAppToast.js"
-import { useDeleteTodo } from "../../hooks/todoHooks/useDeleteTodo.js"
-import { useCompleteTodo } from "../../hooks/todoHooks/useCompleteTodo.js"
-import { useUpdateTodo } from "../../hooks/todoHooks/useUpdateTodo.js"
+import { useDeleteTodo } from "./todoHooks/useDeleteTodo.js"
+import { useCompleteTodo } from "./todoHooks/useCompleteTodo.js"
+import { useUpdateTodo } from "./todoHooks/useUpdateTodo.js"
 import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {

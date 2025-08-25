@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getStudyActivityFeedApi } from "../../api/pomodoroApi"
+import { getStudyActivityFeedApi } from "../../../api/pomodoroApi"
 import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useGetStudyActivityFeed = (page) => {

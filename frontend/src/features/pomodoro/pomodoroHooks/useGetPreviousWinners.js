@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getPreviousWinnersApi } from "../../api/leaderboardApi"
+import { getPreviousWinnersApi } from "../../../api/leaderboardApi"
 import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useGetPreviousWinners = () => {

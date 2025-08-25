@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getUserTodoListsApi } from "../../api/todoListApi"
-import { todoKeys } from "../todoHooks/todoKeys"
+import { todoKeys } from "../../features/todos/todoHooks/todoKeys"
 
 export const useGetUserTodoLists = () => {
   const {

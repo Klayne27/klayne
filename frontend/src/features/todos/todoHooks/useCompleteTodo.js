@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { showAppToast } from "../../utils/showAppToast"
-import { calculateXpGainForTodo, findTodoAndParent } from "../../utils/todoUtils"
-import { completeTodoApi } from "../../api/todoApi"
-import useXpStore from "../../store/useXpStore"
+import { showAppToast } from "../../../utils/showAppToast"
+import { calculateXpGainForTodo, findTodoAndParent } from "../../../utils/todoUtils"
+import { completeTodoApi } from "../../../api/todoApi"
+import useXpStore from "../../../store/useXpStore"
 import { todoKeys } from "./todoKeys"
-import { userKeys } from "../usersHooks/userKeys"
+import { userKeys } from "../../../hooks/usersHooks/userKeys"
 
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()

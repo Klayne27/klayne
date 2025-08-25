@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { getTodoActivityApi } from "../../api/todoActivityApi"
-import { todoKeys } from "../todoHooks/todoKeys"
+import { todoKeys } from "../../features/todos/todoHooks/todoKeys"
 
 export const useGetTodoActivities = () => {
   const {

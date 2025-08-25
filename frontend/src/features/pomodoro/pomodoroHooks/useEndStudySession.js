@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { endStudySessionApi } from "../../api/pomodoroApi"
-import { showAppToast } from "../../utils/showAppToast"
-import { userKeys } from "../usersHooks/userKeys"
+import { endStudySessionApi } from "../../../api/pomodoroApi"
+import { showAppToast } from "../../../utils/showAppToast"
+import { userKeys } from "../../../hooks/usersHooks/userKeys"
 import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useEndStudySession = () => {

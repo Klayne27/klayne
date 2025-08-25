@@ -3,7 +3,7 @@ import { useEffect } from "react"
 import PublicCompletedTodosList from "../features/todos/PublicCompletedTodosList"
 import TodoPagesHeader from "../features/todos/TodoPagesHeader"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
-import { useGetPublicCompletedTodos } from "../hooks/todoHooks/useGetPublicCompletedTodos"
+import { useGetPublicCompletedTodos } from "../features/todos/todoHooks/useGetPublicCompletedTodos"
 
 const PublicCompletedTodosPage = () => {
   const {
