@@ -85,7 +85,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const isMyProfile = authUser?._id === userProfile?._id
   const amIFollowing = authUser?.following?.includes(userProfile?._id)
 
-  const isAdminUser = authUser?.isAdmin // Assuming `isAdmin` field on authUser
+  const isAdminUser = authUser?.isAdmin
   const blockModalTitle = isBlockedByYou ? `Unblock @${username}?` : `Block @${username}?`
   const confirmButtonText = isBlockedByYou ? "Unblock" : "Block"
 

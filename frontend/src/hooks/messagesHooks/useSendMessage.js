@@ -101,8 +101,6 @@ export const useSendMessage = (onSenderMessageSent) => {
           ),
         }
       })
-
-      // queryClient.invalidateQueries({ queryKey: conversationQueryKey })
     },
     onError: (err, variables, context) => {
       showAppToast(err.message, "error")

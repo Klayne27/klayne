@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { editMessageApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
 import { messageKeys } from "./messageKeys"
+import { conversationKeys } from "./conversationKeys"
 
 export const useEditMessage = (conversationId) => {
   const queryClient = useQueryClient()
@@ -9,13 +10,14 @@ export const useEditMessage = (conversationId) => {
   const { mutate: editPrivateMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newText }) => editMessageApi(messageId, newText),
     onMutate: async ({ messageId, newText }) => {
-      const queryKey = messageKeys.privateMessages(conversationId)
+      const messagesQueryKey = messageKeys.privateMessages(conversationId)
+      const conversationQueryKey = conversationKeys.list()
 
-      await queryClient.cancelQueries({ queryKey: queryKey })
+      await queryClient.cancelQueries({ queryKey: messagesQueryKey })
 
-      const previousMessagesData = queryClient.getQueryData(queryKey)
+      const previousMessagesData = queryClient.getQueryData(messagesQueryKey)
 
-      queryClient.setQueryData(queryKey, (oldData) => {
+      queryClient.setQueryData(messagesQueryKey, (oldData) => {
         if (!oldData || !oldData.pages) return oldData
 
         const updatedPages = oldData.pages.map((page) =>
@@ -33,11 +35,19 @@ export const useEditMessage = (conversationId) => {
         return { ...oldData, pages: updatedPages }
       })
 
-      return { previousMessagesData, queryKey }
+      queryClient.setQueryData(conversationQueryKey, oldData => {
+        if(!oldData) return oldData
+
+        return oldData
+      })
+
+
+
+      return { previousMessagesData, messagesQueryKey }
     },
     onError: (error, variables, context) => {
       showAppToast("Failed to update message: " + error.message, "error")
-      queryClient.setQueryData(context.queryKey, context.previousMessagesData)
+      queryClient.setQueryData(context.messagesQueryKey, context.previousMessagesData)
     },
   })
 

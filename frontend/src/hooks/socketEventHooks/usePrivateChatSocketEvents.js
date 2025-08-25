@@ -87,7 +87,7 @@ export const usePrivateChatSocketEvents = (
           return { ...oldData, pages: updatedPages }
         })
       }
-      // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
+      queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
     },
     [conversationId, queryClient],
   )
@@ -163,7 +163,6 @@ export const usePrivateChatSocketEvents = (
   }, [
     socket,
     conversationId,
-    // handleNewMessage,
     handleMessageDeleted,
     handleMessagesSeen,
     handleTyping,
