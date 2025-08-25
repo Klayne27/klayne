@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { deleteNotificationApi } from "../../api/notificationsApi";
-import { NOTIFICATIONS_QUERY_KEY } from "../../constants/queryKeys";
+import { notificationKeys } from "./notificationKeys";
 
 export const useDeleteNotification = () => {
   const queryClient = useQueryClient();
@@ -8,11 +8,11 @@ export const useDeleteNotification = () => {
   const { mutate: deleteNotification, isPending: isDeleting } = useMutation({
     mutationFn: (notificationId) => deleteNotificationApi(notificationId),
     onMutate: async (notificationIdToDelete) => {
-      await queryClient.cancelQueries({ queryKey: NOTIFICATIONS_QUERY_KEY });
+      await queryClient.cancelQueries({ queryKey: notificationKeys.list() });
 
-      const previousNotifications = queryClient.getQueryData(NOTIFICATIONS_QUERY_KEY);
+      const previousNotifications = queryClient.getQueryData(notificationKeys.list());
 
-      queryClient.setQueryData(NOTIFICATIONS_QUERY_KEY, (oldNotifications) =>
+      queryClient.setQueryData(notificationKeys.list(), (oldNotifications) =>
         oldNotifications
           ? oldNotifications.filter(
               (notification) => notification._id !== notificationIdToDelete
@@ -24,7 +24,7 @@ export const useDeleteNotification = () => {
     },
     onError: (error, notificationIdToDelete, context) => {
       console.error("Delete notification error:", error);
-        queryClient.setQueryData(NOTIFICATIONS_QUERY_KEY, context.previousNotifications);
+        queryClient.setQueryData(notificationKeys.list(), context.previousNotifications);
     },
 
   });

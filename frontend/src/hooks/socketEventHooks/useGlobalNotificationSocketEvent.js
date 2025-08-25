@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { useSocket } from "../../context/SocketContext"
-import { NOTIFICATIONS_QUERY_KEY } from "../../constants/queryKeys"
+import { notificationKeys } from "../notificationsHooks/notificationKeys"
 
 export const useGlobalNotificationSocketEvent = () => {
   const { socket, setHasUnreadNotifications } = useSocket()
@@ -10,7 +10,7 @@ export const useGlobalNotificationSocketEvent = () => {
   useEffect(() => {
     if (socket) {
       const handleNewNotification = (newNotification) => {
-        queryClient.setQueryData(NOTIFICATIONS_QUERY_KEY, (oldNotifications) => {
+        queryClient.setQueryData(notificationKeys.list(), (oldNotifications) => {
           const currentNotifications = oldNotifications || []
           const isDuplicate = currentNotifications.some(
             (notif) => notif._id === newNotification._id,
