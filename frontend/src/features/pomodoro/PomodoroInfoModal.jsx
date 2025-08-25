@@ -1,5 +1,3 @@
-import React from "react"
-
 const PomodoroInfoModal = ({ onClose }) => {
   const badges = [
     {
@@ -117,15 +115,12 @@ const PomodoroInfoModal = ({ onClose }) => {
             </p>
           </div>
 
-          {/* Badge Showcase Section */}
           <div className="pt-4">
             <h4 className="font-semibold text-white">Badge Showcase</h4>
             <p className="mt-1">These are all the badges you can earn by hitting key milestones.</p>
-            {/* The grid layout is the main change here */}
             <div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-3">
               {badges.map((badge, index) => (
                 <div key={index} className="flex flex-col items-center text-center">
-                  {/* Adjusted size to be smaller and added a consistent aspect ratio */}
                   <div className="size-16 md:size-20">
                     <img
                       src={badge.src}
@@ -133,11 +128,9 @@ const PomodoroInfoModal = ({ onClose }) => {
                       className="h-full w-full object-contain"
                     />
                   </div>
-                  {/* Reduced top margin for better spacing */}
                   <span className="mt-2 text-[10px] font-medium text-gray-100 sm:text-xs">
                     {badge.name}
                   </span>
-                  {/* Made description text smaller */}
                   <p className="mt-1 text-[8px] text-gray-400 sm:text-[10px]">
                     {badge.description}
                   </p>
@@ -145,7 +138,6 @@ const PomodoroInfoModal = ({ onClose }) => {
               ))}
             </div>
           </div>
-          {/* End of Badge Showcase Section */}
         </div>
       </div>
     </div>

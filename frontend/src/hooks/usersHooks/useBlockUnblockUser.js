@@ -4,7 +4,7 @@ import { showAppToast } from "../../utils/showAppToast"
 import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
 import { conversationKeys } from "../../features/chat/private/privateChatHooks/conversationKeys"
 import { postKeys } from "../postsHooks/postKeys"
-import { notificationKeys } from "../notificationsHooks/notificationKeys"
+import { notificationKeys } from "../../features/notifications/notificationsHooks/notificationKeys"
 import { userKeys } from "./userKeys"
 
 export const useBlockUnblockUser = () => {

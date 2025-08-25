@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query"
 import { useEffect } from "react"
 import { useSocket } from "../../context/SocketContext"
-import { notificationKeys } from "../notificationsHooks/notificationKeys"
+import { notificationKeys } from "../../features/notifications/notificationsHooks/notificationKeys"
 
 export const useGlobalNotificationSocketEvent = () => {
   const { socket, setHasUnreadNotifications } = useSocket()

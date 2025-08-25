@@ -1,10 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { FaCalendar, FaFlag, FaPlus } from "react-icons/fa6"
-import { useTodoStore } from "../../store/useTodoStore"
+import { FaFlag, FaPlus } from "react-icons/fa6"
+import { useTodoStore } from "../../store/useTodoStore.js"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
-import { showAppToast } from "../../utils/showAppToast"
+import { showAppToast } from "../../utils/showAppToast.js"
 import { IoClose } from "react-icons/io5"
-import CustomDatePicker from "./CustomDatePicker"
+import CustomDatePicker from "../../components/common/CustomDatePicker.jsx"
 import { useCreateTodo } from "../../hooks/todoHooks/useCreateTodo.js"
 
 function TodoAddForm({ isLoading, setIsMenuOpen }) {
@@ -156,24 +156,6 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
             <FaFlag className={getTextColor(priority)} />{" "}
             <span className={`${getTextColor(priority)} text-sm`}>Priority</span>
           </button>
-          {/* <button
-            // ref={datePickerRef}
-            type="button"
-            onClick={() => setIsDatePickerOpen((open) => !open)}
-            onMouseDown={(e) => e.preventDefault()}
-            className={`flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition duration-200 focus:outline-none md:hover:bg-slate-700/50`}
-          >
-            <FaCalendar />
-            <span>
-              {dueDate
-                ? new Date(dueDate).toLocaleDateString("en-US", {
-                    month: "short",
-                    day: "numeric",
-                    year: "numeric",
-                  })
-                : "Select due date"}
-            </span>
-          </button> */}
 
           <CustomDatePicker
             selectedDate={dueDate}

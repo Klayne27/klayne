@@ -1,9 +1,9 @@
 import { useGetTodoActivities } from "../hooks/todoActivitiesHooks/useGetTodoActivities"
-import TodoPagesHeader from "../components/common/TodoPagesHeader"
+import TodoPagesHeader from "../features/todos/TodoPagesHeader"
 import { useInView } from "react-intersection-observer" // Import the hook
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useEffect } from "react"
-import ActivityLogList from "../components/common/ActivityLogList"
+import ActivityLogList from "../features/todos/ActivityLogList"
 
 
 

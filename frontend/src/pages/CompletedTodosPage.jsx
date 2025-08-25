@@ -1,5 +1,5 @@
-import CompletedTodoList from "../components/common/CompletedTodoList"
-import TodoPagesHeader from "../components/common/TodoPagesHeader"
+import CompletedTodoList from "../features/todos/CompletedTodoList"
+import TodoPagesHeader from "../features/todos/TodoPagesHeader"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"

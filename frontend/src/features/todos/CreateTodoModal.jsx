@@ -1,12 +1,12 @@
 import { forwardRef, useEffect, useRef, useState } from "react"
-import { useTodoStore } from "../../store/useTodoStore"
+import { useTodoStore } from "../../store/useTodoStore.js"
 import DatePicker from "react-datepicker"
 import "react-datepicker/dist/react-datepicker.css"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
 import { IoClose } from "react-icons/io5"
 import { FaFlag } from "react-icons/fa6"
 import { FaCalendar } from "react-icons/fa"
-import { showAppToast } from "../../utils/showAppToast"
+import { showAppToast } from "../../utils/showAppToast.js"
 import { useCreateTodo } from "../../hooks/todoHooks/useCreateTodo.js"
 
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (

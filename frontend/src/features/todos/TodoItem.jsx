@@ -1,11 +1,10 @@
 import { useState, useRef, useEffect } from "react"
-import { useTodoStore } from "../../store/useTodoStore"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser.js"
+import { useTodoStore } from "../../store/useTodoStore.js"
 import { FaCheckCircle } from "react-icons/fa"
 import { FaCalendar, FaEllipsisVertical, FaPen } from "react-icons/fa6"
-import SlideUpMenu from "./SlideUpMenu"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import Portal from "./Portal"
+import SlideUpMenu from "../../components/common/SlideUpMenu.jsx"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile.js"
+import Portal from "../../components/common/Portal.jsx"
 
 import { getCompletedColor, getPriorityColor } from "../../utils/todoUtils.jsx"
 import TodoEditForm from "./TodoEditForm"
@@ -14,6 +13,7 @@ import { showAppToast } from "../../utils/showAppToast.js"
 import { useDeleteTodo } from "../../hooks/todoHooks/useDeleteTodo.js"
 import { useCompleteTodo } from "../../hooks/todoHooks/useCompleteTodo.js"
 import { useUpdateTodo } from "../../hooks/todoHooks/useUpdateTodo.js"
+import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()

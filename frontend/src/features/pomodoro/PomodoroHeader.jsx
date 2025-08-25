@@ -1,10 +1,7 @@
-import { useState } from "react"
 import { Link } from "react-router-dom"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import LoadingSpinner from "../ui/LoadingSpinner"
-import { FaFire } from "react-icons/fa6"
 import { FaInfoCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import { useAuthUser } from "../auth/authHooks/useAuthUser"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -56,9 +53,6 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
 
                 <span className="inline-flex items-center gap-1 rounded-md bg-secondary py-[1px] px-2">
                   <span className="text-xs font-semibold text-slate-500">Level {pomodoroLevel}</span>
-                  {/* {pomodoroLevel >= 0 && (
-                    <FaFire className={`text-sm ${getFireColor(pomodoroLevel)}`} />
-                  )} */}
                 </span>
               </div>
             </div>

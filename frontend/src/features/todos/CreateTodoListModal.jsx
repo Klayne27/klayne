@@ -1,55 +1,61 @@
-import { useEffect, useState } from "react"
-import { useTodoStore } from "../../store/useTodoStore"
-import { useUpdateTodoList } from "../../hooks/todoListHooks/useUpdateTodoList.js"
+import { useState } from "react"
+
 import { useRef } from "react"
-import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils.jsx"
+import { useEffect } from "react"
+import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
+import { useCreateTodoList } from "../../hooks/todoListHooks/useCreateTodoList"
+import { useTodoStore } from "../../store/useTodoStore"
+import { showAppToast } from "../../utils/showAppToast"
 
-function EditTodoListModal() {
-  const { showEditTodoListModal, setShowEditTodoListModal, todoListToEdit } = useTodoStore()
-
-  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList()
+const CreateTodoListModal = () => {
+  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
+  const { createTodoList, creatingTodoList } = useCreateTodoList()
 
   const [name, setName] = useState("")
+  const [description, setDescription] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
   const [color, setColor] = useState("red")
 
   const titleInputRef = useRef(null)
 
-
   const handleSubmit = (e) => {
     e.preventDefault()
-    const listData = { name, isPublic, icon, color }
-
-    updateTodoList({ id: todoListToEdit._id, listData })
-    setShowEditTodoListModal(false)
-  } 
-
-  useEffect(() => {
-    if (todoListToEdit) {
-      setName(todoListToEdit.name || "")
-      setIsPublic(todoListToEdit.isPublic || false)
-      setIcon(todoListToEdit.icon || "None")
-      setColor(todoListToEdit.color || "red")
+    if (!name) {
+      showAppToast("List name can't be empty")
+      return
     }
-  }, [todoListToEdit])
+    createTodoList(
+      { name, description, isPublic, icon, color },
+      {
+        onSuccess: () => {
+          setName("")
+          setDescription("")
+          setIsPublic(false)
+          setIcon("None")
+          setColor("red")
+        },
+      },
+    )
+    setShowCreateTodoListModal(false)
+  }
 
   useEffect(() => {
     titleInputRef.current.focus()
   }, [])
 
-  if (!showEditTodoListModal) return null
+  if (!showCreateTodoListModal) return null
 
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
-      onClick={() => setShowEditTodoListModal(false)}
+      onClick={() => setShowCreateTodoListModal(false)}
     >
       <div
         className="w-full max-w-lg rounded-3xl bg-base-100 p-8"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="text-lg font-bold">Edit Todo Section</h3>
+        <h3 className="text-lg font-bold">Create a Todo Section</h3>
         <form onSubmit={handleSubmit}>
           {/* Name Input */}
           <div className="mb-4 mt-2">
@@ -60,6 +66,7 @@ function EditTodoListModal() {
             <input
               ref={titleInputRef}
               type="text"
+              placeholder="e.g., Study Tasks"
               className="w-full border-b border-gray-300 bg-transparent py-2 transition-colors placeholder:text-gray-400 focus:border-blue-500 focus:outline-none"
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -117,12 +124,12 @@ function EditTodoListModal() {
           </div>
           {/* Action Buttons */}
           <div className="modal-action">
-            <button type="button" className="btn" onClick={() => setShowEditTodoListModal(false)}>
+            <button type="button" className="btn" onClick={() => setShowCreateTodoListModal(false)}>
               Cancel
             </button>
 
-            <button type="submit" className="btn btn-primary" disabled={isUpdatingTodoList}>
-              {"Create"}
+            <button type="submit" className="btn btn-primary" disabled={creatingTodoList}>
+              {creatingTodoList ? "Creating..." : "Create"}
             </button>
           </div>
         </form>
@@ -131,4 +138,4 @@ function EditTodoListModal() {
   )
 }
 
-export default EditTodoListModal
+export default CreateTodoListModal

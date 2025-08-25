@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteNotificationsApi } from "../../api/notificationsApi";
 import { notificationKeys } from "./notificationKeys";
+import { deleteNotificationsApi } from "../../../api/notificationsApi";
 
 export const useDeleteNotifications = () => {
   const queryClient = useQueryClient();

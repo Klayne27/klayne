@@ -2,14 +2,14 @@ import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
 import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
 
-import PomodoroSettingsModal from "../components/common/PomodoroSettingsModal"
+import PomodoroSettingsModal from "../features/pomodoro/PomodoroSettingsModal"
 import { CiMail, CiTrophy } from "react-icons/ci"
 import { MdLibraryBooks } from "react-icons/md"
 import { PiHouseThin } from "react-icons/pi"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useSocket } from "../context/SocketContext"
-import PomodoroHeader from "../components/common/PomodoroHeader"
+import PomodoroHeader from "../features/pomodoro/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../components/common/MilestoneModal"
 import {
@@ -19,7 +19,7 @@ import {
   FaEllipsisVertical,
   FaForward,
 } from "react-icons/fa6"
-import PomodoroInfoModal from "../components/common/PomodoroInfoModal"
+import PomodoroInfoModal from "../features/pomodoro/PomodoroInfoModal"
 import ConfirmationModal from "../components/ui/ConfirmationModal"
 import { LuListTodo } from "react-icons/lu"
 import { IoChatbubbleEllipsesOutline } from "react-icons/io5"

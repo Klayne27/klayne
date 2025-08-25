@@ -3,7 +3,7 @@ import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
 import { IoClose } from "react-icons/io5"
 import DatePicker from "react-datepicker"
 import { FaCalendar, FaFlag } from "react-icons/fa6"
-import { showAppToast } from "../../utils/showAppToast"
+import { showAppToast } from "../../utils/showAppToast.js"
 
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button

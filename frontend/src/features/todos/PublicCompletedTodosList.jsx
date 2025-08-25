@@ -1,13 +1,15 @@
-import { formatTime } from "../../utils/date"
-import { FaCheck } from "react-icons/fa6"
-import LoadingSpinner from "../ui/LoadingSpinner"
+
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
+import { formatTime } from "../../utils/date/index.js"
+import { FaCheck } from "react-icons/fa6"
+import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx"
 
-const CompletedTodoList = forwardRef(
+
+const PublicCompletedTodosList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
-    const allCompletedTodos = todos?.pages?.flatMap((page) => page.completedTodos) || []
-    const groupedTodos = groupTodosByDate(allCompletedTodos)
+    const allPublicTodos = todos?.pages?.flatMap((page) => page.publicCompletedTodos) || []
+    const groupedTodos = groupTodosByDate(allPublicTodos)
 
     if (isLoading)
       return (
@@ -15,9 +17,9 @@ const CompletedTodoList = forwardRef(
           <LoadingSpinner />
         </div>
       )
-    if (isError) return <div className="p-4 text-error">Error fetching completed tasks.</div>
-    if (!todos || todos.length === 0) {
-      return <div className="p-4 text-center text-gray-500">No completed tasks yet.</div>
+    if (isError) return <div className="p-4 text-error">Error fetching public completed tasks.</div>
+    if (!allPublicTodos || allPublicTodos.length === 0) {
+      return <div className="p-4 text-center text-gray-500">No public completed tasks yet.</div>
     }
 
     return (
@@ -39,10 +41,10 @@ const CompletedTodoList = forwardRef(
                 return (
                   <li
                     key={todo?._id}
-                    ref={isLastElement ? ref : null} // Apply ref only to the very last todo
+                    ref={isLastElement ? ref : null}
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
-                    <div className="flex items-center gap-3 px-3 py-1 relative">
+                    <div className="relative flex items-center gap-3 px-3 py-1">
                       <div className="relative flex-shrink-0">
                         <img
                           src={todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
@@ -53,16 +55,22 @@ const CompletedTodoList = forwardRef(
                           <FaCheck className="size-2" />
                         </div>
                       </div>
-
                       <div className="min-w-0 flex-1">
                         <p className="truncate">
-                          You completed a task:{" "}
+                          <strong>{todo.user.fullName}</strong> completed a
+                          task:{" "}
                           <strong className={getTextColor(todo.priority)}>{todo?.title}</strong>
                         </p>
                         <p className="text-slate-400">{formatTime(todo?.completedAt)}</p>
                       </div>
-                      <div className="mt-5 absolute right-3 flex text-xs text-slate-400 items-center gap-1">
-                        <span>{IconComponent ? <IconComponent className={`${colorMap[todo?.listMeta?.color]}`} /> : ""}</span>
+                      <div className="absolute right-3 mt-5 flex items-center gap-1 text-xs text-slate-400">
+                        <span>
+                          {IconComponent ? (
+                            <IconComponent className={`${colorMap[todo?.listMeta?.color]}`} />
+                          ) : (
+                            ""
+                          )}
+                        </span>
                         {todo?.listMeta?.name}
                       </div>
                     </div>
@@ -72,7 +80,6 @@ const CompletedTodoList = forwardRef(
             </ul>
           </div>
         ))}
-        {/* 4. Show a loading spinner at the bottom while fetching the next page */}
         {hasNextPage && isFetchingNextPage && (
           <div className="flex justify-center p-4">
             <LoadingSpinner />
@@ -83,4 +90,4 @@ const CompletedTodoList = forwardRef(
   },
 )
 
-export default CompletedTodoList
+export default PublicCompletedTodosList

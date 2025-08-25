@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchNotificationsApi } from "../../api/notificationsApi";
 import { notificationKeys } from "./notificationKeys";
+import { fetchNotificationsApi } from "../../../api/notificationsApi";
 
 export const useFetchNotifications = () => {
 
@@ -11,8 +11,6 @@ export const useFetchNotifications = () => {
     refetchOnWindowFocus: true,
     refetchOnMount: true,
   });
-
-
 
   return { notifications, isLoading };
 };

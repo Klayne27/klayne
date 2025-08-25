@@ -1,14 +1,13 @@
-// src/components/todos/TodoEditForm.jsx
-import { useState, useEffect, useRef, forwardRef } from "react"
-import { FaTrash, FaCheck, FaFlag, FaCalendar, FaTrashCan } from "react-icons/fa6"
+import { useState, useEffect, useRef } from "react"
+import { FaCheck, FaFlag, FaTrashCan } from "react-icons/fa6"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
 
 import "react-datepicker/dist/react-datepicker.css"
 import { IoClose } from "react-icons/io5"
-import CustomDatePicker from "./CustomDatePicker"
-import { showAppToast } from "../../utils/showAppToast"
+import CustomDatePicker from "../../components/common/CustomDatePicker.jsx"
+import { showAppToast } from "../../utils/showAppToast.js"
 
-const TodoEditForm = ({ todo, onClose, onSave, onDelete, isLoading }) => {
+const TodoEditForm = ({ todo, onSave, onDelete, isLoading }) => {
 
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")

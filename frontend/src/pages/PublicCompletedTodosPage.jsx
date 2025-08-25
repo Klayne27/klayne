@@ -1,7 +1,7 @@
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
-import PublicCompletedTodosList from "../components/common/PublicCompletedTodosList"
-import TodoPagesHeader from "../components/common/TodoPagesHeader"
+import PublicCompletedTodosList from "../features/todos/PublicCompletedTodosList"
+import TodoPagesHeader from "../features/todos/TodoPagesHeader"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useGetPublicCompletedTodos } from "../hooks/todoHooks/useGetPublicCompletedTodos"
 

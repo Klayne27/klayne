@@ -2,9 +2,9 @@
 import React, { useState, useRef, useEffect } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import TodoSectionItem from "./TodoSectionItem" // Import the new component
-import SlideUpMenu from "./SlideUpMenu"
+import SlideUpMenu from "../../components/common/SlideUpMenu"
 import TodoAddForm from "./TodoAddForm"
-import LoadingSpinner from "../ui/LoadingSpinner"
+import LoadingSpinner from "../../components/ui/LoadingSpinner"
 import EditTodoListModal from "./EditTodoListModal"
 import { useInView } from "react-intersection-observer"
 
