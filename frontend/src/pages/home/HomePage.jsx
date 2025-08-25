@@ -9,6 +9,7 @@ import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile" // Import your useIsMobile hook
+import { postKeys } from "../../hooks/postsHooks/postKeys"
 
 const HomePage = () => {
   const { showNewFeedPostsButton, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =
@@ -37,7 +38,7 @@ const HomePage = () => {
       behavior: "smooth",
     })
 
-    queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
+    queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
 
     markFeedAsRead()
     setShowNewFeedPostsButton(false)
