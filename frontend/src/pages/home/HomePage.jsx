@@ -8,7 +8,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile" // Import your useIsMobile hook
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { postKeys } from "../../hooks/postsHooks/postKeys"
 
 const HomePage = () => {
@@ -26,12 +26,10 @@ const HomePage = () => {
   const { isTouchDevice, activeButtonId, handleTouchEnd, handleTouchStart, handleTouchCancel } =
     useTouchHoverEffect()
 
-  // New state and ref for header animation
-  const isMobile = useIsMobile() // Use your custom hook
-  const [showHeader, setShowHeader] = useState(true) // State to control header visibility
-  const lastScrollY = useRef(0) // Ref to store the last scroll position
+  const isMobile = useIsMobile()
+  const [showHeader, setShowHeader] = useState(true) 
+  const lastScrollY = useRef(0) 
 
-  // Function to scroll to the top and refetch posts
   const handleNewPostsButtonClick = useCallback(() => {
     window.scrollTo({
       top: 0,

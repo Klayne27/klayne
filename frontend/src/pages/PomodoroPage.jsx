@@ -63,6 +63,7 @@ const PomodoroPage = () => {
   const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(true)
 
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
+  const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
 
   const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
@@ -104,6 +105,35 @@ const PomodoroPage = () => {
     })
     // showAppToast("Timer reset")
   }, [settings])
+
+  const handleResetCurrent = () => {
+    if (!settings) return
+
+    setIsActive(false)
+
+    let resetDuration
+    if (isBreak) {
+      const isLongBreak =
+        sessionCount > 0 &&
+        settings.sessionsBeforeLongBreak > 0 &&
+        sessionCount % settings.sessionsBeforeLongBreak === 0
+      resetDuration = isLongBreak
+        ? settings.longBreakDuration * 60
+        : settings.shortBreakDuration * 60
+    } else {
+      resetDuration = settings.sessionDuration * 60
+    }
+
+    setTimer(resetDuration)
+
+    localStorage.setItem(PAUSED_TIME_KEY, resetDuration)
+    localStorage.setItem(ACTIVE_KEY, "false")
+    localStorage.removeItem(START_TIMESTAMP_KEY)
+    localStorage.removeItem(DURATION_AT_START_KEY)
+
+    showAppToast("Current timer reset!")
+    setShowResetCurrentSessionModal(false)
+  }
 
   const startNextTimer = useCallback(
     (autoplay, nextSessionCount, nextIsBreak) => {
@@ -214,6 +244,7 @@ const PomodoroPage = () => {
               }
               const shouldStartBreak = !settings.skipBreaks
               startNextTimer(settings.autoplay, newSessionCount, shouldStartBreak)
+              isEndingSessionRef.current = false
             },
             onError: (error) => {
               showAppToast(error.message || "Failed to log session.", "error")
@@ -369,6 +400,10 @@ const PomodoroPage = () => {
     setShowResetTimerModal(true)
   }
 
+  const handleResetCurrentSessionClick = () => {
+    setShowResetCurrentSessionModal(true)
+  }
+
   const toggleRightDropdown = (e) => {
     e.stopPropagation()
     setIsRightDropdownOpen(!isRightDropdownOpen)
@@ -422,7 +457,7 @@ const PomodoroPage = () => {
 
   return (
     <>
-      <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between border-accent bg-base-100 font-sans md:border-x overflow-y-auto">
+      <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
         <PomodoroHeader
           showXpGain={showXpGain}
           xpGainedAmount={xpGainedAmount}
@@ -546,6 +581,16 @@ const PomodoroPage = () => {
           <div
             className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 md:h-72 md:w-72`}
           >
+            <div className="absolute inset-0 bottom-[150px] z-50 flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-44">
+              <span
+                className="flex cursor-pointer items-center gap-1 rounded-full p-2"
+                onClick={handleResetCurrentSessionClick}
+              >
+                <span>
+                  <FaRedo />
+                </span>
+              </span>
+            </div>
             <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
               <circle
                 cx="50"
@@ -650,41 +695,6 @@ const PomodoroPage = () => {
               <FaRedo size={28} />
             </button>
           </div>
-          {/* <footer className="w-full">
-            <div className="flex items-center absolute justify-center gap-4">
-              <button
-                onClick={() => navigate("/study-activity")}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
-              >
-                <MdLibraryBooks size={25} />
-              </button>
-              <button
-                onClick={() => navigate("/")}
-                className="relative flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
-              >
-                <PiHouseThin size={25} strokeWidth={15} />
-                {newPostCount > 0 && (
-                  <div
-                    className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
-                    style={{ transform: "translate(50%, -50%)" }}
-                  ></div>
-                )}
-              </button>
-
-              <button
-                onClick={() => navigate("/study-leaderboard")}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
-              >
-                <CiTrophy size={25} strokeWidth={1} />
-              </button>
-              <button
-                onClick={() => navigate("/todos")}
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-slate-700/50 text-slate-500 transition-all hover:bg-slate-700 hover:text-white"
-              >
-                <LuListTodo size={25} strokeWidth={2} />
-              </button>
-            </div>
-          </footer> */}
         </div>
       </main>
       {settings && (
@@ -703,6 +713,19 @@ const PomodoroPage = () => {
           onClose={() => setShowShareModal(false)}
           isOpen={showShareModal}
         />
+      )}
+
+      {showResetCurrentSessionModal && (
+        <ConfirmationModal 
+        isOpen={showResetCurrentSessionModal}
+        onClose={() => setShowResetCurrentSessionModal(false)}
+        onConfirm={handleResetCurrent}
+        danger={false}
+        message="Are you sure you want to reset the current session's timer?"
+        confirmButtonText={"Reset"}
+        modalTitle={"Reset current session"}
+        />
+
       )}
 
       {showResetTimerModal && (
