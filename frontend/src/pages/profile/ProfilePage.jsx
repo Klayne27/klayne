@@ -60,7 +60,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const {
     userProfile,
     isLoading,
-    refetch,
     isRefetching,
     isError,
     error,
@@ -72,19 +71,16 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     conversationStatus,
     isLoadingConversationStatus,
     isErrorConversationStatus,
-    conversationStatusError,
   } = useFetchConversationBetweenUsers(userProfile?._id)
 
   const {
     pinnedPosts,
     isLoading: isLoadingPinnedPosts,
     isRefetching: isRefetchingPinnedPosts,
-    error: pinnedPostsError,
   } = useFetchPinnedPosts(username)
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
-  const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
-    useGetOrCreateConversation()
+  const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
 
   const isMyProfile = authUser?._id === userProfile?._id
   const amIFollowing = authUser?.following?.includes(userProfile?._id)

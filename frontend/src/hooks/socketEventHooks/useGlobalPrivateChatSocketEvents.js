@@ -2,7 +2,8 @@ import { useEffect, useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../context/SocketContext"
 import { useAuthUser } from "../authHooks/useAuthUser"
-import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys"
+import { messageKeys } from "../messagesHooks/messageKeys"
+import { conversationKeys } from "../messagesHooks/conversationKeys"
 
 export const useGlobalPrivateChatSocketEvents = () => {
   const queryClient = useQueryClient()
@@ -11,7 +12,7 @@ export const useGlobalPrivateChatSocketEvents = () => {
 
   const handleNewMessage = useCallback(
     (newMessage) => {
-      const messagesQueryKey = ["messages", newMessage.conversationId]
+      const messagesQueryKey = messageKeys.privateMessages(newMessage.conversationId)
 
       const messagesCache = queryClient.getQueryData(messagesQueryKey)
       if (messagesCache) {
@@ -24,7 +25,7 @@ export const useGlobalPrivateChatSocketEvents = () => {
         })
       }
 
-      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
+      queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
     },
     [queryClient],
   )

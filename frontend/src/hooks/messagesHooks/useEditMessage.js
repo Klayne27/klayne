@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { editMessageApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { messageKeys } from "./messageKeys"
 
 export const useEditMessage = (conversationId) => {
   const queryClient = useQueryClient()
@@ -8,7 +9,7 @@ export const useEditMessage = (conversationId) => {
   const { mutate: editPrivateMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newText }) => editMessageApi(messageId, newText),
     onMutate: async ({ messageId, newText }) => {
-      const queryKey = ["messages", conversationId]
+      const queryKey = messageKeys.privateMessages(conversationId)
 
       await queryClient.cancelQueries({ queryKey: queryKey })
 

@@ -3,6 +3,7 @@ import io from "socket.io-client"
 import { useAuthUser } from "../hooks/authHooks/useAuthUser"
 import { useQueryClient } from "@tanstack/react-query"
 import { useLocation } from "react-router-dom"
+import { messageKeys } from "../hooks/messagesHooks/messageKeys"
 
 const SocketContext = createContext()
 
@@ -61,7 +62,7 @@ export const SocketContextProvider = ({ children }) => {
 
       // In SocketContextProvider.jsx
       // newSocket.on("newPublicMessage", (newMessage) => {
-      //   queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
+      //   queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
       // })
 
       const heartbeatInterval = setInterval(() => {
@@ -71,11 +72,11 @@ export const SocketContextProvider = ({ children }) => {
       }, 60 * 1000) // Send heartbeat every 1 minute
 
       newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
-        queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
+        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
       })
 
       newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, text, img }) => {
-        queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
+        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
       })
 
       newSocket.on("getOnlineUsers", (users) => {
@@ -126,7 +127,7 @@ export const SocketContextProvider = ({ children }) => {
         }
 
         // Apply the update for reactions from other users, or if actorId is not provided
-        queryClient.setQueryData(["publicMessages"], (oldData) => {
+        queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
           if (!oldData) return oldData
 
           const updatedPages = oldData.pages.map((page) =>
@@ -143,7 +144,7 @@ export const SocketContextProvider = ({ children }) => {
       })
 
       newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
-        queryClient.setQueryData(["messages", conversationId], (oldData) => {
+        queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
           if (!oldData) return oldData
           const updatedPages = oldData.pages.map((page) =>
             page.filter((message) => message._id !== messageId),

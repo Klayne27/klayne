@@ -1,12 +1,27 @@
-import { useQuery } from "@tanstack/react-query";
-import { fetchFollowedUsersForMessagingApi } from "../../api/messagesApi";
+import { useQuery } from "@tanstack/react-query"
+import { fetchFollowedUsersForMessagingApi } from "../../api/messagesApi"
+import { conversationKeys } from "./conversationKeys"
 
 export const useGetFollowedUsersForMessaging = (searchQuery) => {
-  return useQuery({
-    queryKey: ["followedUsersForMessaging", searchQuery],
+  const {
+    data: searchedFollowedUsers,
+    isLoading: isLoadingFollowedUsers,
+    isError: isErrorFollowedUsers,
+    error: followedUsersError,
+    isFetching: isFetchingFollowedUsers,
+  } = useQuery({
+    queryKey: conversationKeys.followedUsers(searchQuery),
     queryFn: () => fetchFollowedUsersForMessagingApi(searchQuery),
     enabled: !!searchQuery,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
-  });
-};
+  })
+
+  return {
+    searchedFollowedUsers,
+    isLoadingFollowedUsers,
+    isErrorFollowedUsers,
+    followedUsersError,
+    isFetchingFollowedUsers,
+  }
+}

@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { useMemo } from "react";
 import { getPublicMessagesApi } from "../../api/publicChatApi";
+import { messageKeys } from "../messagesHooks/messageKeys";
 
 export const usePublicMessages = () => {
   const MESSAGE_LIMIT = 40;
@@ -15,7 +16,7 @@ export const usePublicMessages = () => {
     error: messagesError,
     refetch,
   } = useInfiniteQuery({
-    queryKey: ["publicMessages"],
+    queryKey: messageKeys.publicMessages(),
     queryFn: getPublicMessagesApi,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < MESSAGE_LIMIT) {

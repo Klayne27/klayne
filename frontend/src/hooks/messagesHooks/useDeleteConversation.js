@@ -1,19 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { deleteConversationApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
-import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys"
+import { conversationKeys } from "./conversationKeys"
 
 const useDeleteConversation = () => {
   const queryClient = useQueryClient()
+  const queryKey = conversationKeys.list()
 
   const { mutate: deleteConversation, isPending } = useMutation({
     mutationFn: (conversationId) => deleteConversationApi(conversationId),
     onMutate: async (conversationIdToDelete) => {
-      await queryClient.cancelQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
+      await queryClient.cancelQueries({ queryKey: queryKey })
 
-      const previousConversations = queryClient.getQueryData(CONVERSATIONS_QUERY_KEY)
+      const previousConversations = queryClient.getQueryData(queryKey)
 
-      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, (oldConversations) =>
+      queryClient.setQueryData(queryKey, (oldConversations) =>
         oldConversations?.filter((conversation) => conversation._id !== conversationIdToDelete),
       )
 
@@ -24,8 +25,7 @@ const useDeleteConversation = () => {
     },
     onError: (error, conversationIdToDelete, context) => {
       showAppToast(`Failed to delete conversation: ${error.message}`, "error")
-      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, context.previousConversations)
-      queryClient.invalidateQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
+      queryClient.setQueryData(queryKey, context.previousConversations)
     },
   })
 

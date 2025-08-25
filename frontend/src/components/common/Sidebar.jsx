@@ -515,7 +515,7 @@ const Sidebar = ({
               onClick={() => {
                 if (pathname === "/messages") return
                 navigate("/messages")
-                // queryClient.invalidateQueries({ queryKey: ["conversations"] })
+                // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
               }}
               className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[150px] md:justify-start md:p-0 md:hover:bg-secondary"
             >

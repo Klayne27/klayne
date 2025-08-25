@@ -1,6 +1,8 @@
 import { blockUnblockUserApi } from "../../api/usersApi";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";
+import { messageKeys } from "../messagesHooks/messageKeys";
+import { conversationKeys } from "../messagesHooks/conversationKeys";
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient();
@@ -56,12 +58,12 @@ export const useBlockUnblockUser = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       queryClient.invalidateQueries({ queryKey: ["posts"] });
       queryClient.invalidateQueries({ queryKey: ["comments"] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
+      queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });
       queryClient.invalidateQueries({ queryKey: ["suggestedUsers"] });
       queryClient.invalidateQueries({ queryKey: ["followers"] });
       queryClient.invalidateQueries({ queryKey: ["following"] });
-      queryClient.invalidateQueries({ queryKey: ["messages"]})
+      queryClient.invalidateQueries({ queryKey: messageKeys.private()})
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to update user block status.", "error");

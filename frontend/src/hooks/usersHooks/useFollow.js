@@ -2,6 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { followApi } from "../../api/usersApi";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { showAppToast } from "../../utils/showAppToast";
+import { conversationKeys } from "../messagesHooks/conversationKeys";
 
 const useFollow = () => {
   const queryClient = useQueryClient();
@@ -64,10 +65,10 @@ const useFollow = () => {
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
       queryClient.invalidateQueries({ queryKey: ["followersList", userIdToFollow] });
       queryClient.invalidateQueries({ queryKey: ["followingList", userIdToFollow] });
-      queryClient.invalidateQueries({ queryKey: ["conversations"] });
-      queryClient.invalidateQueries({ queryKey: ["followedUsersForMessaging"] });
+      queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
+      // queryClient.invalidateQueries({ queryKey: ["followedUsersForMessaging"] });
       queryClient.invalidateQueries({
-        queryKey: ["conversationBetweenUsers", userIdToFollow],
+        queryKey: conversationKeys.betweenUsers(userIdToFollow),
       });
       // queryClient.invalidateQueries({ queryKey: ["userProfile", usernameToFolow] });
     },
