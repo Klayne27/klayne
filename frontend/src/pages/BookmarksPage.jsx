@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetBookmarkedPosts } from "../../features/posts/postsHooks/useGetBookmarkedPosts";
 import { CiSearch } from "react-icons/ci";
-import Post from "../../features/posts/Post";
 import { FaArrowLeft } from "react-icons/fa6";
-import PostSkeleton from "../../components/skeletons/PostSkeleton";
+import { useGetBookmarkedPosts } from "../features/posts/postsHooks/useGetBookmarkedPosts";
+import PostSkeleton from "../components/skeletons/PostSkeleton";
+import Post from "../features/posts/Post";
 
 const BookmarksPage = () => {
   const navigate = useNavigate();

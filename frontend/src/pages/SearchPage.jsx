@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
-import SearchPanel from "../../components/common/SearchPanel";
-import SuggestedUsersPanel from "../../components/common/SuggestedUsersPanel";
 import { FaArrowLeft } from "react-icons/fa6";
+import SearchPanel from "../components/common/SearchPanel";
+import SuggestedUsersPanel from "../components/common/SuggestedUsersPanel";
 
 const SearchPage = () => {
   const navigate = useNavigate();

@@ -1,17 +1,18 @@
-import { useEffect, useRef, useCallback, useState } from "react"
+import { useEffect, useRef, useCallback } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../../context/SocketContext"
-import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
-import { useFetchMessages } from "../../../features/chat/private/privateChatHooks/useFetchMessages"
-import PrivateChatInput from "./PrivateChatInput"
-import PrivateChatMessageList from "./PrivateChatMessageList"
-import { IoChatbubblesOutline } from "react-icons/io5"
-import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
+import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
+import { useFetchMessages } from "./privateChatHooks/useFetchMessages"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
-import { FaCaretDown } from "react-icons/fa"
-import LoadingSpinner from "../../ui/LoadingSpinner"
+import PrivateChatMessageList from "./PrivateChatMessageList"
+import LoadingSpinner from "../../../components/ui/LoadingSpinner"
+import { IoChatbubblesOutline } from "react-icons/io5"
 import PrivateChatHeader from "./PrivateChatHeader"
+import PrivateChatInput from "./PrivateChatInput"
+import { FaCaretDown } from "react-icons/fa6"
+
 
 const PrivateChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()

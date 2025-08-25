@@ -1,33 +1,33 @@
 import React, { useRef, useState } from "react"
-
-import EmojiPickerPopover from "../EmojiPickerPopover"
-import { useDeleteOwnPublicMessage } from "../../../features/chat/public/publicChatHooks/useDeleteOwnPublicMessage"
-import { useDeletePublicMessage } from "../../../features/chat/public/publicChatHooks/useDeletePublicMessage"
-import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
-import { useBanUserFromPublicChat } from "../../../features/chat/public/publicChatHooks/useBanUserFromPublicChat"
-import { useUnbanUserFromPublicChat } from "../../../features/chat/public/publicChatHooks/useUnbanUserFromPublicChat"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
-import { useAddPublicMessageReaction } from "../../../features/chat/public/publicChatHooks/useAddPublicMessageReaction"
-import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses"
+import { useBanUserFromPublicChat } from "./publicChatHooks/useBanUserFromPublicChat"
+import { useDeletePublicMessage } from "./publicChatHooks/useDeletePublicMessage"
+import { useDeleteOwnPublicMessage } from "./publicChatHooks/useDeleteOwnPublicMessage"
+import { useAddPublicMessageReaction } from "./publicChatHooks/useAddPublicMessageReaction"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
-import DateSeparator from "../../ui/DateSeperator"
-import MessageReactions from "../../ui/MessageReactions"
-import MessageBubble from "../../ui/MessageBubble"
-import MessageContentLayout from "../../ui/MessageContentLayout"
-import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
-import MoreMessageActionsModal from "../../ui/MoreMessageActionsModal"
-import MessageActionsModal from "../../ui/MessageActionsModal"
-import PublicChatFirstMessageInGroup from "../PublicChatFirstMessageInGroup"
+import { useUnbanUserFromPublicChat} from "./publicChatHooks/useUnbanUserFromPublicChat"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
-import ShowMessageTimeOnHover from "../../ui/ShowMessageTimeOnHover"
+import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
+import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
+import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses"
 import { usePublicChatAdminHandlers } from "../../../hooks/customHooks/usePublicChatAdminHandlers"
-import ConfirmationModal from "../../ui/ConfirmationModal"
 import { PUBLIC_CHAT_MODAL_CONFIGS } from "../../../constants/publicChatModalConfigs"
-import ViewReactionsModal from "../ViewReactionsModal"
-import SlideUpMenu, { SlideUpMenuContent } from "../SlideUpMenu"
-import ReactionsSlideUpMenuContent from "../ReactionsSlideUpMenuContent"
+import DateSeparator from "../../../components/ui/DateSeperator"
+import MessageActionsModal from "../../../components/ui/MessageActionsModal"
+import MoreMessageActionsModal from "../../../components/ui/MoreMessageActionsModal"
+import MessageContentLayout from "../../../components/ui/MessageContentLayout"
+import ShowMessageTimeOnHover from "../../../components/ui/ShowMessageTimeOnHover"
+import MessageBubble from "../../../components/ui/MessageBubble"
+import MessageReactions from "../../../components/ui/MessageReactions"
+import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
+import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
+import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
+import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
+import ConfirmationModal from "../../../components/ui/ConfirmationModal"
+import PublicChatFirstMessageInGroup from "./PublicChatFirstMessageInGroup"
+
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
@@ -338,7 +338,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             modalTitle={modalConfig.modalTitle}
             confirmButtonText={modalConfig.confirmButtonText}
             onClose={() => setModalConfig(null)}
-            danger={!isSenderBanned} // Or other logic
+            danger={!isSenderBanned}
           />
         )}
       </div>

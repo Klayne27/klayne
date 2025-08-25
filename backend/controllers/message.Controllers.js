@@ -821,10 +821,14 @@ export const getOrCreateConversation = async (req, res) => {
   }
 };
 
+const getPublicIdFromUrl = (url) => {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)\.(?:jpe?g|png|gif|webp|mp4)/);
+  return match && match[1] ? match[1] : null;
+};
+
 export const deleteConversation = async (req, res) => {
   const { id: conversationId } = req.params;
   const { _id: currentUserId } = req.user;
-
   const session = await mongoose.startSession();
 
   try {
@@ -842,25 +846,34 @@ export const deleteConversation = async (req, res) => {
       return res
         .status(403)
         .json({ error: "Unauthorized: You are not a participant of this conversation" });
-    } // 1. Find all messages in the conversation that have an image URL.
+    }
 
     const messagesWithImages = await Message.find({
       conversationId: conversationId,
       img: { $exists: true, $ne: "" },
-    }).session(session); // 2. Extract the public IDs from the image URLs.
+    }).session(session);
 
-    const publicIdsToDelete = messagesWithImages.map((message) => {
-      const urlParts = message.img.split("/");
-      const filename = urlParts[urlParts.length - 1];
-      return filename.split(".")[0];
-    }); // 3. Delete the images from Cloudinary.
+    const publicIdsToDelete = messagesWithImages
+      .map((message) => getPublicIdFromUrl(message.img))
+      .filter(Boolean); // Filter out any null values
 
     if (publicIdsToDelete.length > 0) {
-      await cloudinary.uploader.destroy(publicIdsToDelete);
-    } // 4. Delete all messages associated with the conversation.
+      // You must use a promise.all here for multiple deletions
+      const deletionPromises = publicIdsToDelete.map((publicId) =>
+        cloudinary.uploader.destroy(publicId)
+      );
+      await Promise.all(deletionPromises);
+    }
 
-    await Message.deleteMany({ conversationId: conversationId }).session(session); // 5. Delete the conversation document itself.
+    // Now, delete the associated Mongoose Image documents
+    const imageIdsToDelete = messagesWithImages
+      .map((message) => message.image)
+      .filter(Boolean);
+    if (imageIdsToDelete.length > 0) {
+      await Image.deleteMany({ _id: { $in: imageIdsToDelete } }).session(session);
+    }
 
+    await Message.deleteMany({ conversationId: conversationId }).session(session);
     await Conversation.findByIdAndDelete(conversationId).session(session);
 
     await session.commitTransaction();
@@ -875,6 +888,7 @@ export const deleteConversation = async (req, res) => {
     session.endSession();
   }
 };
+
 
 export const deleteAllMessagesOnMySide = async (req, res) => {
   const { conversationId } = req.params;

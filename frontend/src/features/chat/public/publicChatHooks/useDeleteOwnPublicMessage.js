@@ -23,7 +23,6 @@ export const useDeleteOwnPublicMessage = () => {
                 isDeletedByUser: true,
                 text: "[Message Deleted]",
                 img: null,
-                reactions: [],
                 repliedTo: message.repliedTo
                   ? {
                       ...message.repliedTo,

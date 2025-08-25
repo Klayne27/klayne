@@ -2,8 +2,8 @@ import { useEffect, useRef, useState } from "react"
 import { IoSearch, IoSettingsOutline } from "react-icons/io5"
 import ConversationItem from "./ConversationItem"
 import React from "react"
-import { useGetOrCreateConversation } from "../../../features/chat/private/privateChatHooks/useGetOrCreateConversation"
-import { useGetFollowedUsersForMessaging } from "../../../features/chat/private/privateChatHooks/useGetFollowedUsersForMessaging" // Updated hook import
+import { useGetOrCreateConversation } from "./privateChatHooks/useGetOrCreateConversation"
+import { useGetFollowedUsersForMessaging } from "./privateChatHooks/useGetFollowedUsersForMessaging" // Updated hook import
 
 const ConversationsList = ({ conversations }) => {
   const [followedSearchQuery, setFollowedSearchQuery] = useState("")

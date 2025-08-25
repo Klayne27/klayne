@@ -1,5 +1,5 @@
 import { useMutation } from "@tanstack/react-query"
-import { forgotPasswordRequestApi } from "../../api/authApi"
+import { forgotPasswordRequestApi } from "../../../api/authApi"
 
 export const useForgotPasswordRequest = () => {
   const {

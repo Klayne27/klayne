@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { formatTime } from "../../utils/date"
+import { formatTime } from "../../../utils/date"
 
 function PrivateChatFirstMessageInGroup({ message, isSentByCurrentUser }) {
   return (

@@ -12,7 +12,7 @@ import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGe
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
 import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
 
-function StudyLeaderboard() {
+function StudyLeaderboardPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [leaderboardType, setLeaderboardType] = useState("total") // "total" or "monthly"
@@ -466,4 +466,4 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
   )
 }
 
-export default StudyLeaderboard
+export default StudyLeaderboardPage

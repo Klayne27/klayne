@@ -15,8 +15,8 @@ import { useState } from "react"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
 
 // Public-facing pages (lazy loaded)
-const LoginPage = lazy(() => import("./pages/auth/login/LoginPage"))
-const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"))
+const LoginPage = lazy(() => import("./pages/LoginPage"))
+const SignupPage = lazy(() => import("./pages/SignupPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 

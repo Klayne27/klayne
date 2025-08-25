@@ -1,4 +1,4 @@
-import { Outlet, useLocation, Route, Routes, useParams } from "react-router-dom"
+import {  useLocation, Route, Routes } from "react-router-dom"
 import { lazy, useState, Suspense } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
@@ -6,7 +6,6 @@ import { useAppStore } from "./store/useAppStore"
 import ImageViewerPage from "./components/common/ImageViewerPage"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
 import CreatePostModal from "./features/posts/CreatePostModal"
-import { useImage } from "./hooks/imageHooks/useImage"
 
 // All authenticated pages are now lazy loaded here
 const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
@@ -19,17 +18,17 @@ const FollowingListsPage = lazy(() => import("./pages/FollowingListsPage"))
 const PublicListsPage = lazy(() => import("./pages/PublicListsPage"))
 const CompletedTodosPage = lazy(() => import("./pages/CompletedTodosPage"))
 const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
-const StudyLeaderboard = lazy(() => import("./pages/StudyLeaderboard"))
+const StudyLeaderboardPage = lazy(() => import("./pages/StudyLeaderboardPage"))
 const PomodoroPage = lazy(() => import("./pages/PomodoroPage"))
-const PublicChatPage = lazy(() => import("./pages/publicChat/PublicChatPage"))
-const BookmarksPage = lazy(() => import("./pages/bookmarks/BookmarksPage"))
-const ThemesPage = lazy(() => import("./pages/themes/ThemesPage"))
-const HomePage = lazy(() => import("./pages/home/HomePage"))
-const ProfilePage = lazy(() => import("./pages/profile/ProfilePage"))
-const NotificationPage = lazy(() => import("./pages/notification/NotifcationPage"))
-const MessagesPage = lazy(() => import("./pages/message/MessagePage"))
-const PostPage = lazy(() => import("./pages/post/PostPage"))
-const SearchPage = lazy(() => import("./pages/search/SearchPage"))
+const PublicChatPage = lazy(() => import("./pages/PublicChatPage"))
+const BookmarksPage = lazy(() => import("./pages/BookmarksPage"))
+const ThemesPage = lazy(() => import("./pages/ThemesPage"))
+const HomePage = lazy(() => import("./pages/HomePage"))
+const ProfilePage = lazy(() => import("./pages/ProfilePage"))
+const NotificationPage = lazy(() => import("./pages/NotifcationPage"))
+const MessagesPage = lazy(() => import("./pages/MessagePage"))
+const PostPage = lazy(() => import("./pages/PostPage"))
+const SearchPage = lazy(() => import("./pages/SearchPage"))
 const TodoPageLayout = lazy(() => import("./components/common/TodoPageLayout"))
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
@@ -86,7 +85,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/search" element={<SearchPage />} />
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-activity" element={<StudyActivityPage />} />
-              <Route path="/study-leaderboard" element={<StudyLeaderboard />} />
+              <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/study-settings" element={<PomodoroSettingsPage />} />
               <Route path="/todos" element={<TodoPageLayout />}>
                 <Route index element={<MyTodoListsPage />} />

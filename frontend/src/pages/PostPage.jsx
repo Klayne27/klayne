@@ -1,22 +1,21 @@
 import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
-import LoadingSpinner from "../../components/ui/LoadingSpinner";
-import Post from "../../features/posts/Post";
-import CommentItem from "../../features/comments/CommentItem";
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser";
-import { useFetchPost } from "../../features/posts/postsHooks/useFetchPost";
-import { useCreateComment } from "../../features/comments/commentHooks/useCreateComment";
-import { useFetchComments } from "../../features/comments/commentHooks/useFetchComments";
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
+import { useDebounce } from "../hooks/customHooks/useDebounce";
+import { useSearchUsers } from "../hooks/usersHooks/userSearchUsers";
+import { useIsMobile } from "../hooks/customHooks/useIsMobile";
+import { useFetchPost } from "../features/posts/postsHooks/useFetchPost";
+import { useFetchComments } from "../features/comments/commentHooks/useFetchComments";
+import { useCreateComment } from "../features/comments/commentHooks/useCreateComment";
+import { usePasteHandler } from "../hooks/customHooks/usePasteHandler";
+import { showAppToast } from "../utils/showAppToast";
+import LoadingSpinner from "../components/ui/LoadingSpinner";
+import CommentItem from "../features/comments/CommentItem";
+import CommentsSkeleton from "../components/skeletons/CommentsSkeleton";
+import Post from "../features/posts/Post";
 import { BiImageAdd } from "react-icons/bi";
-import { IoClose } from "react-icons/io5";
-import { useDebounce } from "../../hooks/customHooks/useDebounce";
-import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
-import CommentsSkeleton from "../../components/skeletons/CommentsSkeleton";
-import { showAppToast } from "../../utils/showAppToast";
-import { useAppStore } from "../../store/useAppStore";
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile";
-import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler";
+
 
 const PostPage = () => {
   const { pid } = useParams();
@@ -550,10 +549,8 @@ const PostPage = () => {
             {comments.map((comment) => (
               <div key={comment._id} id={`comment-${comment._id}`}>
                 <CommentItem
-                  // openImageModal={openImageModal}
                   comment={comment}
                   postId={displayPost._id}
-                  // onReplyClick={handleSetReplyingToComment}
                   isPostOwner={authUser?._id === displayPost.user?._id}
                 />
               </div>

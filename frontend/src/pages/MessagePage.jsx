@@ -1,12 +1,13 @@
 import { useEffect } from "react"
 import { useParams } from "react-router-dom"
-import ConversationsList from "../../components/common/private-chat/ConversationsList"
-import PrivateChatWindow from "../../components/common/private-chat/PrivateChatWindow"
-import { useFetchConversations } from "../../features/chat/private/privateChatHooks/useFetchConversations"
-import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
-import { useAppStore } from "../../store/useAppStore"
-import { usePrivateChatStore } from "../../store/usePrivateChatStore"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { useAppStore } from "../store/useAppStore"
+import { usePrivateChatStore } from "../store/usePrivateChatStore"
+import { useIsMobile } from "../hooks/customHooks/useIsMobile"
+import { useFetchConversations } from "../features/chat/private/privateChatHooks/useFetchConversations"
+import ConversationsList from "../features/chat/private/ConversationsList"
+import ConversationListSkeleton from "../components/skeletons/ConversationListSkeleton"
+import PrivateChatWindow from "../features/chat/private/PrivateChatWindow"
+
 
 const MessagePage = () => {
   const setIsChatWindowOpen = useAppStore((state) => state.setIsChatWindowOpen)
