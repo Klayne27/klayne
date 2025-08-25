@@ -34,7 +34,6 @@ const StudyActivityPage = () => {
     const buttons = []
     const maxButtons = 5
 
-    // Show the first page button if totalPages > 1
     if (totalPages > 1) {
       buttons.push(
         <button
@@ -47,7 +46,6 @@ const StudyActivityPage = () => {
       )
     }
 
-    // Add "..." if we're not near the beginning
     if (page > 3 && totalPages > maxButtons) {
       buttons.push(
         <button key="dots-start" className="btn join-item pointer-events-none">
@@ -56,11 +54,9 @@ const StudyActivityPage = () => {
       )
     }
 
-    // Determine the range of pages to show
     let startPage = Math.max(2, page - 1)
     let endPage = Math.min(totalPages - 1, page + 1)
 
-    // If we have less than maxButtons, expand the range
     const visibleButtons = endPage - startPage + 1
     if (visibleButtons < maxButtons - 2) {
       if (startPage === 2) {
@@ -82,7 +78,6 @@ const StudyActivityPage = () => {
       )
     }
 
-    // Add "..." if we're not near the end
     if (page < totalPages - 2 && totalPages > maxButtons) {
       buttons.push(
         <button key="dots-end" className="btn join-item pointer-events-none">
@@ -91,7 +86,6 @@ const StudyActivityPage = () => {
       )
     }
 
-    // Show the last page button if there are more than `maxButtons`
     if (
       totalPages > 1 &&
       totalPages !== 1 &&

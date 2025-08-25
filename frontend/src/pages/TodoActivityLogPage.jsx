@@ -1,17 +1,15 @@
 import { useGetTodoActivities } from "../hooks/todoActivitiesHooks/useGetTodoActivities"
 import TodoPagesHeader from "../features/todos/TodoPagesHeader"
-import { useInView } from "react-intersection-observer" // Import the hook
+import { useInView } from "react-intersection-observer"
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { useEffect } from "react"
 import ActivityLogList from "../features/todos/ActivityLogList"
-
-
 
 const TodoActivityLogPage = () => {
   const { todoActivities, todoActivitiesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetTodoActivities()
 
-  const { ref, inView } = useInView() // Initialize the observer hook
+  const { ref, inView } = useInView()
 
   useEffect(() => {
     if (inView && hasNextPage) {

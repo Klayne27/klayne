@@ -34,7 +34,6 @@ const LoginPage = () => {
       </div>
       <div className="flex flex-1 flex-col items-center justify-center">
         <form className="flex flex-col gap-4" onSubmit={handleSubmit}>
-          {/* <XSvg className="w-24 fill-primary lg:hidden" /> */}
           <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" loading="lazy" />
 
           <h1 className="text-4xl font-extrabold">Let's go.</h1>

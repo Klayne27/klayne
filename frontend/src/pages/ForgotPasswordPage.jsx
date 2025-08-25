@@ -21,8 +21,7 @@ const ForgotPasswordPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 text-white">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
-        {/* <FaXTwitter className="h-10 w-10 text-primary" /> */}
-        
+                
         <img src="klaynelogo2.png" className="rounded-lg bg-gray-950 w-auto h-12" loading="lazy" />
        
 

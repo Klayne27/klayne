@@ -235,14 +235,6 @@ const NotificationPage = () => {
                         />
                       </div>
                     )}
-
-                    {/* {contentToDisplay?.video && (
-                      <video
-                        src={contentToDisplay.video}
-                        controls
-                        className="mt-2 max-h-72 w-full rounded-xl object-contain"
-                      />
-                    )} */}
                   </div>
                 )}
                 <span className="text-sm text-slate-500">

@@ -1,31 +1,23 @@
 import { useState, useEffect } from "react"
-import { useNavigate } from "react-router-dom" // For the "Go Back" button
+import { useNavigate } from "react-router-dom" 
 import LoadingSpinner from "../components/ui/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useGetPomodoroSettings } from "../features/pomodoro/pomodoroHooks/useGetPomodoroSettings"
 import { useUpdatePomodoroSettings } from "../features/pomodoro/pomodoroHooks/useUpdatePomodoroSettings"
 
 function PomodoroSettingsPage() {
-  // Hook to navigate back after saving or canceling
   const navigate = useNavigate()
-
-  // Fetch initial settings
-  const { settings: initialSettings, isSettingsLoading: isLoading } = useGetPomodoroSettings()
-
-  // State to manage form inputs
   const [settings, setSettings] = useState(null)
 
-  // Mutation hook for updating settings
+  const { settings: initialSettings, isSettingsLoading: isLoading } = useGetPomodoroSettings()
   const { updateSettings, isUpdatingSettings } = useUpdatePomodoroSettings()
 
-  // When initialSettings are fetched, update the local state
   useEffect(() => {
     if (initialSettings) {
       setSettings(initialSettings)
     }
   }, [initialSettings])
 
-  // Handler for form input changes
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target
     setSettings((prev) => ({
@@ -34,7 +26,6 @@ function PomodoroSettingsPage() {
     }))
   }
 
-  // Handler for form submission
   const handleSubmit = (e) => {
     e.preventDefault()
     updateSettings(settings)
@@ -42,7 +33,6 @@ function PomodoroSettingsPage() {
     showAppToast("Settings updated!", "success")
   }
 
-  // Show a loading spinner while fetching settings
   if (isLoading || !settings) {
     return (
       <div className="flex h-screen items-center justify-center">

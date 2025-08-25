@@ -1,27 +1,21 @@
-// src/pages/EditTodoListPage.jsx
-
-import React, { useState, useEffect } from "react"
-
-import { useNavigate, useLocation, useParams } from "react-router-dom"
+import { useState, useEffect } from "react"
+import { useNavigate, useLocation } from "react-router-dom"
 import { useUpdateTodoList } from "../features/todos/todoListHooks/useUpdateTodoList"
-import { ImBlocked } from "react-icons/im"
 import { useRef } from "react"
 import { showAppToast } from "../utils/showAppToast"
-import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
-import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
-import { bgColorMap, colorMap, colorOptions, iconOptions } from "../utils/todoUtils"
+import { bgColorMap, colorOptions, iconOptions } from "../utils/todoUtils"
 
 const EditTodoListPage = () => {
   const navigate = useNavigate()
   const location = useLocation()
-  const { list } = location.state || {} // Get list data passed from the previous page
+  const { list } = location.state || {}
 
-  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList() // Initialize state
+  const { updateTodoList, isUpdatingTodoList } = useUpdateTodoList()
 
   const [name, setName] = useState("")
   const [isPublic, setIsPublic] = useState(false)
   const [icon, setIcon] = useState("None")
-  const [color, setColor] = useState("red") // Populate form with existing data when the component loads
+  const [color, setColor] = useState("red")
 
   const nameInputRef = useRef(null)
 
@@ -31,8 +25,7 @@ const EditTodoListPage = () => {
       setIsPublic(list.isPublic || false)
       setIcon(list.icon || "None")
       setColor(list.color || "red")
-    } // In a real-world app, if `list` is undefined (e.g., page refresh),
-    // you would fetch the data using the `id` from `useParams`.
+    }
   }, [list])
 
   const handleSubmit = (e) => {
@@ -48,11 +41,11 @@ const EditTodoListPage = () => {
       { id: list._id, listData },
       {
         onSuccess: () => {
-          navigate(-1) // Go back to the previous page on success
+          navigate(-1)
         },
       },
     )
-  } // Fallback UI for when list data is not available (e.g., direct navigation/refresh)
+  }
 
   useEffect(() => {
     nameInputRef.current.focus()

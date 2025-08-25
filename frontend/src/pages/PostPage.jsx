@@ -16,12 +16,10 @@ import CommentsSkeleton from "../components/skeletons/CommentsSkeleton";
 import Post from "../features/posts/Post";
 import { BiImageAdd } from "react-icons/bi";
 
-
 const PostPage = () => {
   const { pid } = useParams();
   const navigate = useNavigate();
   const { authUser } = useAuthUser();
-  // const openImageModal = useAppStore((state) => state.openImageModal);
 
   const [replyingToComment, setReplyingToComment] = useState(null);
   
@@ -141,8 +139,6 @@ const PostPage = () => {
         // Get the part of the string from the '@' sign onwards
         const textFromAt = currentText.substring(lastAtIndex);
 
-        // Find the length of the *partial* username that was typed after '@'
-        // This regex now explicitly matches characters after '@'
         const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/); // Match starts with '@' followed by word chars
 
         let partialMentionLength = 0;
@@ -244,30 +240,14 @@ const PostPage = () => {
     ]
   );
 
-  //  ????
-
-  // const handleSetReplyingToComment = useCallback((comment) => {
-  //   setReplyingToComment(comment);
-  //   setCommentInput("");
-  //   setCommentPreviewImage(null);
-  //   setCommentSelectedFile(null);
-  //   if (commentFileInputRef.current) {
-  //     commentFileInputRef.current.value = "";
-  //   }
-  //   // Reset mention states when starting a new reply
-  //   setMentionSearchTerm("");
-  //   setShowMentionSuggestions(false);
-  // }, []);
-
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter") {
         if (showMentionSuggestions && suggestedUsers.length > 0) {
           e.preventDefault();
-          // Automatically select the first suggestion on Enter
           handleSelectMention(suggestedUsers[0].username);
         } else if (isMobile) {
-          e.preventDefault(); // Prevent default form submission
+          e.preventDefault();
           const { current: input } = commentInputRef;
           if (input) {
             const start = input.selectionStart;
@@ -280,9 +260,8 @@ const PostPage = () => {
             }, 0);
           }
         } else {
-          // Desktop logic
           if (e.shiftKey) {
-            e.preventDefault(); // Prevent default form submission
+            e.preventDefault();
             const { current: input } = commentInputRef;
             if (input) {
               const start = input.selectionStart;
@@ -295,9 +274,8 @@ const PostPage = () => {
               }, 0);
             }
           } else {
-            // On desktop, Enter sends the message (and not pending)
             if (!isCreatingComment) {
-              e.preventDefault(); // Prevent default new line behavior for Enter
+              e.preventDefault(); 
               handleAddOrReplyComment(e);
             }
           }

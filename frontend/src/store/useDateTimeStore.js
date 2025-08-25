@@ -1,4 +1,3 @@
-// store/useDateTimeStore.jsx
 import { create } from "zustand"
 
 const getDaysInMonth = (year, month) => {
@@ -6,18 +5,17 @@ const getDaysInMonth = (year, month) => {
 }
 
 const useDateTimeStore = create((set, get) => ({
-  // Date/Time States
   selectedMonth: 0,
   selectedDay: 1,
   selectedYear: new Date().getFullYear(),
-  selectedHour: 12, // 1-12 format
+  selectedHour: 12,
   selectedMinute: 0,
   selectedAmPm: "AM",
-  currentTimezone: "", // Validation States
+  currentTimezone: "",
 
   isPastDate: false,
   isPastTimeOfDay: false,
-  isOverallPast: false, // Actions to update date/time components
+  isOverallPast: false,
 
   setSelectedMonth: (month) =>
     set((state) => {
@@ -25,12 +23,12 @@ const useDateTimeStore = create((set, get) => ({
       const newDay = state.selectedDay > maxDaysInNewMonth ? maxDaysInNewMonth : state.selectedDay // Update state and then immediately call validateDateTime
       const newState = { selectedMonth: month, selectedDay: newDay }
       set(newState)
-      get().validateDateTime() // Trigger validation
-      return newState // Return the new state
+      get().validateDateTime()
+      return newState
     }),
   setSelectedDay: (day) => {
     set({ selectedDay: day })
-    get().validateDateTime() // Trigger validation
+    get().validateDateTime()
   },
   setSelectedYear: (year) => {
     set((state) => {
@@ -38,26 +36,26 @@ const useDateTimeStore = create((set, get) => ({
       const newDay = state.selectedDay > maxDaysInNewMonth ? maxDaysInNewMonth : state.selectedDay
       const newState = { selectedYear: year, selectedDay: newDay }
       set(newState)
-      get().validateDateTime() // Trigger validation
-      return newState // Return the new state
+      get().validateDateTime()
+      return newState
     })
   },
   setSelectedHour: (hour) => {
     set({ selectedHour: hour })
-    get().validateDateTime() // Trigger validation
+    get().validateDateTime()
   },
   setSelectedMinute: (minute) => {
     set({ selectedMinute: minute })
-    get().validateDateTime() // Trigger validation
+    get().validateDateTime()
   },
   setSelectedAmPm: (ampm) => {
     set({ selectedAmPm: ampm })
-    get().validateDateTime() // Trigger validation
+    get().validateDateTime()
   },
-  setCurrentTimezone: (timezone) => set({ currentTimezone: timezone }), // Derived state (helper for internal use or external consumption)
+  setCurrentTimezone: (timezone) => set({ currentTimezone: timezone }),
 
   getScheduledDateTime: () => {
-    const state = get() // Get current state
+    const state = get()
     let hour24 = state.selectedHour
     if (state.selectedAmPm === "PM" && state.selectedHour !== 12) {
       hour24 = state.selectedHour + 12
@@ -70,22 +68,22 @@ const useDateTimeStore = create((set, get) => ({
       state.selectedDay,
       hour24,
       state.selectedMinute,
-      0, // Seconds
-      0, // Milliseconds
+      0,
+      0,
     )
-  }, // Action to initialize or reset the date/time
+  },
 
   initializeDateTime: (initialDate = null) => {
     const now = new Date()
     const initialSchedule = initialDate
       ? new Date(initialDate)
-      : new Date(now.getTime() + 10 * 60 * 1000) // 10 minutes from now
+      : new Date(now.getTime() + 10 * 60 * 1000)
 
     set({
       selectedMonth: initialSchedule.getMonth(),
       selectedDay: initialSchedule.getDate(),
       selectedYear: initialSchedule.getFullYear(),
-      selectedHour: initialSchedule.getHours() % 12 || 12, // 1-12 format
+      selectedHour: initialSchedule.getHours() % 12 || 12,
       selectedMinute: initialSchedule.getMinutes(),
       selectedAmPm: initialSchedule.getHours() >= 12 ? "PM" : "AM",
     })
@@ -97,9 +95,9 @@ const useDateTimeStore = create((set, get) => ({
     } catch (error) {
       console.error("Could not determine timezone:", error)
       set({ currentTimezone: "Local Time" })
-    } // After initializing, run validation to set initial state correctly
+    }
     get().validateDateTime()
-  }, // Action to perform validation logic and update validation states
+  },
 
   validateDateTime: () => {
     const state = get()

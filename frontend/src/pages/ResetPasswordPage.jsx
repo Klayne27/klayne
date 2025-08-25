@@ -1,10 +1,9 @@
-import { useRef, useState } from "react"
+import { useState } from "react"
 import { useParams } from "react-router-dom"
 import { showAppToast } from "../utils/showAppToast"
-import { MdPassword } from "react-icons/md" // Password icon
-import { FaEye, FaEyeSlash } from "react-icons/fa6" // Eye icons for password visibility
+import { MdPassword } from "react-icons/md"
+import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useResetPasswordRequest } from "../features/auth/authHooks/useResetPasswordRequest"
-import XSvg from "../components/svgs/X"
 
 const ResetPasswordPage = () => {
   const { token } = useParams()
@@ -34,7 +33,6 @@ const ResetPasswordPage = () => {
   return (
     <div className="flex min-h-screen items-center justify-center bg-black text-white">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
-        {/* <XSvg className="h-10 w-10 fill-white" /> */}
         <img src="klaynelogo2.png" className="h-12 w-auto rounded-lg bg-gray-950" loading="lazy" />
 
         <h1 className="text-3xl font-bold">Set a new password</h1>

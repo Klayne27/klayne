@@ -7,7 +7,6 @@ import ImageViewerPage from "./components/common/ImageViewerPage"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
 import CreatePostModal from "./features/posts/CreatePostModal"
 
-// All authenticated pages are now lazy loaded here
 const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
 const EditTodoListPage = lazy(() => import("./pages/EditTodoListPage"))
 const CreateTodoListPage = lazy(() => import("./pages/CreateTodoListPage"))

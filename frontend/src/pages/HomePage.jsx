@@ -1,7 +1,5 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { FaArrowUp } from "react-icons/fa6"
-
-
 import Posts from "../features/posts/Posts"
 import { useSocket } from "../context/SocketContext"
 import { useAppStore } from "../store/useAppStore"
@@ -41,10 +39,8 @@ const HomePage = () => {
 
     markFeedAsRead()
     setShowNewFeedPostsButton(false)
-    // setNewPostCount(0); // Uncomment if you want to reset post count
   }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead])
 
-  // Effect for the "New Posts" scroll button visibility
   useEffect(() => {
     const handleScrollButtonVisibility = () => {
       if (window.scrollY > 1000) {
@@ -61,23 +57,19 @@ const HomePage = () => {
     }
   }, [])
 
-  // Effect for header hide/show animation on mobile
   useEffect(() => {
-    // Only apply this logic on mobile devices
     if (!isMobile) {
-      setShowHeader(true) // Always show header on desktop
+      setShowHeader(true)
       return
     }
 
     const handleHeaderScroll = () => {
       const currentScrollY = window.scrollY
 
-      // Only hide if scrolling down AND current scroll position is past a small threshold
-      // to prevent hiding immediately after a small scroll
       if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
-        setShowHeader(false) // Scroll down, hide header
+        setShowHeader(false)
       } else if (currentScrollY < lastScrollY.current) {
-        setShowHeader(true) // Scroll up, show header
+        setShowHeader(true) 
       }
       lastScrollY.current = currentScrollY
     }
@@ -86,7 +78,7 @@ const HomePage = () => {
     return () => {
       window.removeEventListener("scroll", handleHeaderScroll)
     }
-  }, [isMobile]) // Re-run effect if isMobile changes
+  }, [isMobile]) 
 
   const handleTabClick = (type) => {
     setFeedType(type)
@@ -95,17 +87,14 @@ const HomePage = () => {
       left: 0,
       behavior: "smooth",
     })
-    // When changing tabs, hide the new posts button immediately
     setShowNewFeedPostsButton(false)
-    setShowHeader(true) // Always show header when changing tabs
+    setShowHeader(true) 
   }
 
   return (
     <>
       <div ref={mainFeedRef} className="mr-auto min-h-screen flex-[4_4_0] border-accent">
         <div
-          // Added 'transform', 'transition-transform', 'duration-300'
-          // Conditional 'translate-y-[-100%]' for hiding
           className={`sticky top-0 w-full ${
             showUnfollowModal ? "z-0" : "z-10"
           } border-b border-accent bg-opacity-20 backdrop-blur-md transition-transform duration-300 ease-in-out ${isMobile && !showHeader ? "-translate-y-full" : "translate-y-0"}`}
@@ -158,13 +147,9 @@ const HomePage = () => {
           </div>
         </div>
 
-        {/* NEW POSTS BUTTON */}
         {showNewFeedPostsButton && showScrollButton && newPostCount && feedType === "forYou" && (
           <button
             onClick={handleNewPostsButtonClick}
-            // Adjusted z-index to be higher than header when hidden,
-            // also consider if the button should be affected by header's slide out
-            // For now, let's keep it separate.
             className="white-shadow fixed left-1/2 top-[60px] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary/90 md:top-[53px] md:-translate-x-[110%] md:text-sm"
           >
             <FaArrowUp className="size-4" />

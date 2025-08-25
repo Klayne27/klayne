@@ -15,7 +15,7 @@ import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGet
 function StudyLeaderboardPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
-  const [leaderboardType, setLeaderboardType] = useState("total") // "total" or "monthly"
+  const [leaderboardType, setLeaderboardType] = useState("total")
   const [showPreviousWinners, setShowPreviousWinners] = useState(false)
 
   const [isInfoDropdownOpen, setIsInfoDropdownOpen] = useState(false)
@@ -43,12 +43,12 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
 
   const handleLeaderboardTypeChange = (type) => {
     setLeaderboardType(type)
-    setPage(1) // Reset to first page when switching types
+    setPage(1)
   }
 
   const renderPaginationButtons = () => {
     const buttons = []
-    const maxButtons = 5 // Maximum number of page buttons to show
+    const maxButtons = 5
 
     buttons.push(
       <button
@@ -240,7 +240,6 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
         )}
       </div>
 
-      {/* Toggle Buttons */}
       <div className="mb-6 flex justify-center">
         <div className="join">
           <button
@@ -328,7 +327,6 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
           </div>
         )}
 
-      {/* Leaderboard Type Indicator */}
       {
         <div className="mb-4 text-center">
           {leaderboardType === "monthly" && (

@@ -22,7 +22,6 @@ import ConfirmationModal from "../components/ui/ConfirmationModal"
 import { useFetchPinnedPosts } from "../features/posts/postsHooks/useFetchPinnedPosts"
 import FollowButton from "../components/ui/FollowButton"
 import { useAdminDeleteUser } from "../hooks/usersHooks/useAdminDeleteUser"
-import { useToggleConversationVisibility } from "../features/chat/private/privateChatHooks/useToggleConversationVisibility"
 import { useFetchConversationBetweenUsers } from "../features/chat/private/privateChatHooks/useFetchConversationBetweenUsers"
 import { showAppToast } from "../utils/showAppToast"
 import { useAppStore } from "../store/useAppStore"
@@ -32,12 +31,10 @@ import { useGetOrCreateConversation } from "../features/chat/private/privateChat
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
-  const openImageModal = useAppStore((state) => state.openImageModal)
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
 
   const [coverImg, setCoverImg] = useState(null)
   const [profileImg, setProfileImg] = useState(null)
-  const [modalType, setModalType] = useState(null)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
   const [showUnfollowModal, setShowUnfollowModal] = useState(false) // New state for unfollow modal
   const [showDeleteUserModal, setShowDeleteUserModal] = useState(false) // NEW STATE for delete modal
@@ -235,21 +232,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
-  // const handleImageClick = (imageUrl, event) => {
-  //   event.stopPropagation()
-  //   if (openImageModal) {
-  //     openImageModal(imageUrl)
-  //   }
-  // }
-
   const openFollowListModal = (type) => {
-    setModalType(type)
     document.getElementById(`follow_list_modal_${type}`).showModal()
   }
 
   const closeFollowListModal = (type) => {
     document.getElementById(`follow_list_modal_${type}`).close()
-    setModalType(null)
   }
 
   const handlePostsFetched = (count) => {
@@ -316,7 +304,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   src={coverImg || userProfile?.coverImg?.imageUrl || "/cover.png"}
                   className={`h-52 w-full cursor-pointer object-cover`}
                   alt="cover image"
-                  // onClick={(e) => handleImageClick(userProfile?.coverImg, e)}
                   loading="lazy"
                 />
               </Link>

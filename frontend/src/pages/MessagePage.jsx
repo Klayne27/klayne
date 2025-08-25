@@ -37,7 +37,7 @@ const MessagePage = () => {
 
     return () => {
       setIsChatWindowOpen(false)
-      setSelectedConversation(null) // Reset selectedConversation when MessagePage unmounts
+      setSelectedConversation(null) 
     }
   }, [
     urlConversationId,
@@ -47,7 +47,6 @@ const MessagePage = () => {
     setSelectedConversation,
   ])
 
-  // const isMobile = window.innerWidth < 768
   const showConversationList = !isMobile || !urlConversationId
   const showChatWindow = !isMobile || !!urlConversationId
 

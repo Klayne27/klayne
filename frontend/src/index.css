@@ -38,41 +38,6 @@ body {
   }
 }
 
-/* @keyframes discord-pulse {
-  0% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-  20% {
-    transform: translateY(-4px);
-    opacity: 1;
-  }
-  40% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-  100% {
-    transform: translateY(0);
-    opacity: 0.5;
-  }
-}
-
-.pulsing-dot {
-  animation: discord-pulse 1.4s infinite;
-}
-
-.pulsing-dot-1 {
-  animation-delay: 0s;
-}
-
-.pulsing-dot-2 {
-  animation-delay: 0.2s;
-}
-
-.pulsing-dot-3 {
-  animation-delay: 0.4s;
-} */
-
 @keyframes discord-pulse {
   0%,
   80%,
@@ -87,7 +52,6 @@ body {
 }
 
 .pulsing-dot {
-  /* You can adjust these base styles */
   background-color: currentColor;
   border-radius: 50%;
   width: 8px;
@@ -102,7 +66,7 @@ body {
 }
 
 .pulsing-dot-2 {
-  animation-delay: 0.2s; /* This creates the staggered effect */
+  animation-delay: 0.2s;
 }
 
 .pulsing-dot-3 {
@@ -111,7 +75,6 @@ body {
 
 .highlight-message {
   background-color: rgba(59, 130, 246, 0.5);
-  /* box-shadow: 0 0 10px 3px rgba(59, 130, 246, 0.5); */
   transition: box-shadow 0.3s ease-in-out;
 }
 

@@ -1,6 +1,5 @@
 import { Link } from "react-router-dom"
 import { useState } from "react"
-import XSvg from "../components/svgs/X"
 import { MdOutlineMail } from "react-icons/md"
 import { FaUser } from "react-icons/fa"
 import { MdPassword } from "react-icons/md"
@@ -37,21 +36,8 @@ const SignUpPage = () => {
         <img src="klaynelogo2.png" className="rounded-3xl" loading="lazy" />
       </div>
       <div className="flex flex-1 flex-col items-center pt-8 md:justify-center">
-        {/* Warning/Reminder Section */}
-        {/* <div className="bg-yellow-800 text-yellow-100 p-4 rounded-lg mb-6 max-w-md text-center text-sm shadow-lg border border-yellow-700">
-          <p className="font-semibold mb-1">Important Account Note:</p>
-          <p>
-            You <strong>don't have to use a real email address</strong> here. Just enter
-            something that looks like an email (e.g., `yourusername@example.com`).
-          </p>
-          <p className="mt-2">
-            <strong>Please write down your password!</strong> If you lose it, there's
-            currently <strong>no way to recover your account</strong>.
-          </p>
-        </div> */}
         {/* End Warning/Reminder Section */}
         <form className="mx-auto flex flex-col gap-4 md:mx-20 lg:w-2/3" onSubmit={handleSubmit}>
-          {/* <XSvg className="w-24 fill-primary lg:hidden" /> */}
           <img src="klaynelogo2.png" className="w-24 rounded-2xl lg:hidden" loading="lazy" />
           <h1 className="text-4xl font-extrabold">Join today.</h1>
           <label className="input input-bordered flex items-center gap-2 rounded">

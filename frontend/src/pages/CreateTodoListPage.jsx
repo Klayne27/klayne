@@ -1,15 +1,10 @@
-import React, { useState } from "react"
-import { FaBook, FaDumbbell, FaLightbulb, FaPen, FaStar } from "react-icons/fa6"
-import { FaCheckCircle, FaPaintBrush, FaUserFriends } from "react-icons/fa"
-
+import { useState } from "react"
 import { useNavigate } from "react-router-dom"
-import { useTodoStore } from "../store/useTodoStore"
 import { useCreateTodoList } from "../features/todos/todoListHooks/useCreateTodoList.js"
-import { ImBlocked } from "react-icons/im"
 import { showAppToast } from "../utils/showAppToast"
 import { useRef } from "react"
 import { useEffect } from "react"
-import { bgColorMap, colorMap, colorOptions, iconOptions } from "../utils/todoUtils.jsx"
+import { bgColorMap, colorOptions, iconOptions } from "../utils/todoUtils.jsx"
 
 const CreateTodoListPage = () => {
   const navigate = useNavigate()
@@ -34,7 +29,6 @@ const CreateTodoListPage = () => {
       { name, description, isPublic, icon, color },
       {
         onSuccess: () => {
-          // Navigate back to the previous page or a specific page after success
           setName("")
           setDescription("")
           setIsPublic(false)
@@ -50,7 +44,6 @@ const CreateTodoListPage = () => {
     nameInputRef.current.focus()
   }, [])
 
-  // To match the modal's UI, the page has a card-like appearance on a light background.
   return (
     <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6">
       <div className="mx-auto w-full max-w-lg">
