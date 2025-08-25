@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { likeUnlikeTodoListApi } from "../../api/todoListApi"
-import { todoKeys } from "../../features/todos/todoHooks/todoKeys"
+import { likeUnlikeTodoListApi } from "../../../api/todoListApi"
+import { todoKeys } from "../todoHooks/todoKeys"
 
 export const useLikeUnlikeTodoList = () => {
   const queryClient = useQueryClient()

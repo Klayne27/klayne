@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { getPublicTodoListsApi } from "../../api/todoListApi"
-import { todoKeys } from "../../features/todos/todoHooks/todoKeys"
+import { getPublicTodoListsApi } from "../../../api/todoListApi"
+import { todoKeys } from "../todoHooks/todoKeys"
 
 export const useGetPublicTodoLists = () => {
   const {

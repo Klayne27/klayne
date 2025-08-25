@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react"
 
 import { useNavigate, useLocation, useParams } from "react-router-dom"
-import { useUpdateTodoList } from "../hooks/todoListHooks/useUpdateTodoList"
+import { useUpdateTodoList } from "../features/todos/todoListHooks/useUpdateTodoList"
 import { ImBlocked } from "react-icons/im"
 import { useRef } from "react"
 import { showAppToast } from "../utils/showAppToast"

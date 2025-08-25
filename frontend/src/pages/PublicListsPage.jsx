@@ -1,5 +1,5 @@
 import TodoSectionList from "../features/todos/TodoSectionList"
-import { useGetPublicTodoLists } from "../hooks/todoListHooks/useGetPublicTodoLists"
+import { useGetPublicTodoLists } from "../features/todos/todoListHooks/useGetPublicTodoLists"
 import TodoPagesHeader from "../features/todos/TodoPagesHeader"
 
 const PublicListsPage = () => {

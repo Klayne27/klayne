@@ -1,14 +1,15 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { deleteTodoListApi } from "../../api/todoListApi"
-import { showAppToast } from "../../utils/showAppToast"
-import { todoKeys } from "../../features/todos/todoHooks/todoKeys"
+import { updateTodoListApi } from "../../../api/todoListApi"
+import { todoKeys } from "../todoHooks/todoKeys"
+import { showAppToast } from "../../../utils/showAppToast"
 
-export const useDeleteTodoList = () => {
+
+export const useUpdateTodoList = () => {
   const queryClient = useQueryClient()
 
-  const { mutate: deleteTodoList, isPending: deletingTodoList } = useMutation({
-    mutationFn: deleteTodoListApi,
-    onMutate: async (listId) => {
+  const { mutate: updateTodoList, isPending: isUpdatingTodoList } = useMutation({
+    mutationFn: (data) => updateTodoListApi(data.id, data.listData),
+    onMutate: async ({ id, listData }) => {
       await queryClient.cancelQueries({ queryKey: todoKeys.list("user") })
       await queryClient.cancelQueries({ queryKey: todoKeys.list("public") })
 
@@ -20,7 +21,9 @@ export const useDeleteTodoList = () => {
 
         const newPages = pages.map((page) => ({
           ...page,
-          data: page.data.filter((todoList) => todoList._id !== listId),
+          data: page.data.map((todoList) =>
+            todoList._id === id ? { ...todoList, ...listData } : todoList,
+          ),
         }))
 
         return { ...oldData, pages: newPages }
@@ -31,12 +34,16 @@ export const useDeleteTodoList = () => {
 
       return { oldTodoLists, oldPublicTodoLists }
     },
-    onError: (err, listId, context) => {
+    onError: (err, variables, context) => {
       queryClient.setQueryData(todoKeys.list("user"), context.oldTodoLists)
       queryClient.setQueryData(todoKeys.list("public"), context.oldPublicTodoLists)
       showAppToast(err.message, "error")
     },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: todoKeys.list("user") })
+      queryClient.invalidateQueries({ queryKey: todoKeys.list("public") })
+    },
   })
 
-  return { deleteTodoList, deletingTodoList }
+  return { updateTodoList, isUpdatingTodoList }
 }
