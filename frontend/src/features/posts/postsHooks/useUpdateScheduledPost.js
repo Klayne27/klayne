@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { updateScheduledPostApi } from "../../api/postsApi";
-import { showAppToast } from "../../utils/showAppToast";
+
 import { postKeys } from "./postKeys";
+import { updateScheduledPostApi } from "../../../api/postsApi";
+import { showAppToast } from "../../../utils/showAppToast";
 
 export const useUpdateScheduledPost = () => {
   const queryClient = useQueryClient();

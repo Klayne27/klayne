@@ -1,8 +1,8 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { useGetBookmarkedPosts } from "../../hooks/postsHooks/useGetBookmarkedPosts";
+import { useGetBookmarkedPosts } from "../../features/posts/postsHooks/useGetBookmarkedPosts";
 import { CiSearch } from "react-icons/ci";
-import Post from "../../components/common/posts/Post";
+import Post from "../../features/posts/Post";
 import { FaArrowLeft } from "react-icons/fa6";
 import PostSkeleton from "../../components/skeletons/PostSkeleton";
 

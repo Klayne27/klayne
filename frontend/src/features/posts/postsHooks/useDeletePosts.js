@@ -1,9 +1,8 @@
-import toast from "react-hot-toast"
-import { deletePostApi } from "../../api/postsApi"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useLocation, useNavigate } from "react-router-dom"
-import { showAppToast } from "../../utils/showAppToast"
+import { deletePostApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
+import { showAppToast } from "../../../utils/showAppToast"
 
 export const useDeletePosts = () => {
   const queryClient = useQueryClient()

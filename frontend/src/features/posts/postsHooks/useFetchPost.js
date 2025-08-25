@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchPostApi } from "../../api/postsApi";
 import { postKeys } from "./postKeys";
+import { fetchPostApi } from "../../../api/postsApi";
 
 export const useFetchPost = (pid) => {
   const {

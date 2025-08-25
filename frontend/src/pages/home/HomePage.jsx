@@ -1,15 +1,15 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { FaArrowUp } from "react-icons/fa6"
 
-import Posts from "../../components/common/posts/Posts"
-import CreatePost from "../../components/common/posts/CreatePost"
+import Posts from "../../features/posts/Posts"
+import CreatePost from "../../features/posts/CreatePost"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
-import { useMarkPostsAsRead } from "../../hooks/postsHooks/useMarkPostsAsRead"
+import { useMarkPostsAsRead } from "../../features/posts/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { postKeys } from "../../hooks/postsHooks/postKeys"
+import { postKeys } from "../../features/posts/postsHooks/postKeys"
 
 const HomePage = () => {
   const { showNewFeedPostsButton, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =

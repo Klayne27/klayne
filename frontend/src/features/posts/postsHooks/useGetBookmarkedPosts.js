@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchBookmarkedPostsApi } from "../../api/postsApi";
+import { fetchBookmarkedPostsApi } from "../../../api/postsApi";
 import { postKeys } from "./postKeys";
 
 export const useGetBookmarkedPosts = (searchQuery = "") => {

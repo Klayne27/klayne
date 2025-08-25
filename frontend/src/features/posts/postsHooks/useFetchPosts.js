@@ -1,6 +1,6 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { fetchPostsApi } from "../../api/postsApi"
 import { postKeys } from "./postKeys"
+import { fetchPostsApi } from "../../../api/postsApi"
 
 export const useFetchPosts = ({ feedType, username = null }) => {
   const getPostEndpoint = () => {

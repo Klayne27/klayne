@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { showAppToast } from "../../utils/showAppToast"
 import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
 import { conversationKeys } from "../../features/chat/private/privateChatHooks/conversationKeys"
-import { postKeys } from "../postsHooks/postKeys"
+import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import { notificationKeys } from "../../features/notifications/notificationsHooks/notificationKeys"
 import { userKeys } from "./userKeys"
 

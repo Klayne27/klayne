@@ -1,9 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { pinUnpinPostApi, unpinPostApi } from "../../api/postsApi"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { showAppToast } from "../../utils/showAppToast"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { pinUnpinPostApi, unpinPostApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
-import { userKeys } from "../usersHooks/userKeys"
+import { userKeys } from "../../../hooks/usersHooks/userKeys"
+import { showAppToast } from "../../../utils/showAppToast"
+
 
 const updatePostPinStatus = (oldData, postId, action) => {
   if (!oldData) return oldData

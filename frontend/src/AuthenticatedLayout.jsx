@@ -5,7 +5,7 @@ import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
 import ImageViewerPage from "./components/common/ImageViewerPage"
 import LoadingSpinner from "./components/ui/LoadingSpinner"
-import CreatePostModal from "./components/common/posts/CreatePostModal"
+import CreatePostModal from "./features/posts/CreatePostModal"
 import { useImage } from "./hooks/imageHooks/useImage"
 
 // All authenticated pages are now lazy loaded here

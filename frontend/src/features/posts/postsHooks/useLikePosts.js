@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { likePostApi } from "../../api/postsApi"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { showAppToast } from "../../utils/showAppToast"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { likePostApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
+import { showAppToast } from "../../../utils/showAppToast"
 
 const updatePostLikes = (oldData, postId, userId) => {
   if (!oldData) return oldData

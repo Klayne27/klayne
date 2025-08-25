@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { createPostApi } from "../../api/postsApi"
-import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
+import { createPostApi } from "../../../api/postsApi"
+import { showAppToast } from "../../../utils/showAppToast"
 
 export const useCreatePosts = () => {
   const queryClient = useQueryClient()

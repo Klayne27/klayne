@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateUserProfileApi } from "../../api/usersApi";
 import { useState } from "react";
 import { showAppToast } from "../../utils/showAppToast";
-import { postKeys } from "../postsHooks/postKeys";
+import { postKeys } from "../../features/posts/postsHooks/postKeys";
 import { userKeys } from "./userKeys";
 
 export const useUpdateUserProfile = () => {

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchPinnedPostsApi } from "../../api/postsApi";
 import { postKeys } from "./postKeys";
+import { fetchPinnedPostsApi } from "../../../api/postsApi";
 
 export const useFetchPinnedPosts = (username) => {
   const {

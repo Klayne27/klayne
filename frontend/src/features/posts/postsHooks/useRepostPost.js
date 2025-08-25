@@ -1,7 +1,8 @@
 import { useQueryClient, useMutation } from "@tanstack/react-query"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { showAppToast } from "../../utils/showAppToast"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { postKeys } from "./postKeys"
+import { showAppToast } from "../../../utils/showAppToast"
+
 
 const updatePostRepostStatus = (oldData, postId, userId) => {
   if (!oldData) return oldData

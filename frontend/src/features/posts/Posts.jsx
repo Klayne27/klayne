@@ -1,9 +1,9 @@
 // src/components/common/posts/Posts.jsx
 import Post from "./Post"
-import PostSkeleton from "../../skeletons/PostSkeleton"
+import PostSkeleton from "../../components/skeletons/PostSkeleton"
 import { useEffect, useRef, useCallback } from "react"
-import { useFetchPosts } from "../../../hooks/postsHooks/useFetchPosts"
-import { useCombinedPosts } from "../../../hooks/customHooks/useCombinedPosts"
+import { useFetchPosts } from "./postsHooks/useFetchPosts"
+import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 
 const Posts = ({
   feedType,

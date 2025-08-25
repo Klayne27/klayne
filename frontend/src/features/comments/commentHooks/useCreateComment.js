@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addCommentApi, replyToCommentApi } from "../../../api/commentsApi"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { showAppToast } from "../../../utils/showAppToast"
-import { postKeys } from "../../../hooks/postsHooks/postKeys"
+import { postKeys } from "../../posts/postsHooks/postKeys"
 
 export const useCreateComment = (postId, parentCommentId = null) => {
   const queryClient = useQueryClient()

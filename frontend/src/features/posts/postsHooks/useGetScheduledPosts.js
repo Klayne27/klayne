@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { fetchScheduledPostsApi } from "../../api/postsApi";
 import { postKeys } from "./postKeys";
+import { fetchScheduledPostsApi } from "../../../api/postsApi";
 
 export const useGetScheduledPosts = () => {
   const {

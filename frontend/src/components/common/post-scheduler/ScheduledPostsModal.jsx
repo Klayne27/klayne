@@ -1,10 +1,10 @@
 import { useRef, useState } from "react";
-import { useGetScheduledPosts } from "../../../hooks/postsHooks/useGetScheduledPosts";
+import { useGetScheduledPosts } from "../../../features/posts/postsHooks/useGetScheduledPosts";
 import LoadingSpinner from "../../ui/LoadingSpinner";
 import { TbCalendarClock } from "react-icons/tb";
 import { format } from "date-fns";
 import { IoClose } from "react-icons/io5";
-import { useDeleteMultipleScheduledPosts } from "../../../hooks/postsHooks/useDeleteMultipleScheduledPosts";
+import { useDeleteMultipleScheduledPosts } from "../../../features/posts/postsHooks/useDeleteMultipleScheduledPosts";
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll";
 import { showAppToast } from "../../../utils/showAppToast";
 import ConfirmationModal from "../../ui/ConfirmationModal";

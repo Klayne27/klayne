@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { deleteMultipleScheduledPostsApi } from "../../api/postsApi"
-import { showAppToast } from "../../utils/showAppToast"
+import { deleteMultipleScheduledPostsApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
+import { showAppToast } from "../../../utils/showAppToast"
 
 export const useDeleteMultipleScheduledPosts = () => {
   const queryClient = useQueryClient()

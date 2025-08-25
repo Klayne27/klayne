@@ -1,8 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { voteOnPollApi } from "../../api/postsApi"
-import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { showAppToast } from "../../utils/showAppToast"
+
 import { postKeys } from "./postKeys"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { voteOnPollApi } from "../../../api/postsApi"
+import { showAppToast } from "../../../utils/showAppToast"
 
 const updatePollOptimistically = (oldData, postId, optionId, userId) => {
   if (!oldData || !userId) return oldData
