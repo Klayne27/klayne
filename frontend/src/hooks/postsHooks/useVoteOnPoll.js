@@ -1,11 +1,9 @@
-// src/hooks/postsHooks/useVoteOnPoll.js
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { voteOnPollApi } from "../../api/postsApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { postKeys } from "./postKeys"
 
-// Centralized function to handle optimistic poll updates
 const updatePollOptimistically = (oldData, postId, optionId, userId) => {
   if (!oldData || !userId) return oldData
 
@@ -15,7 +13,6 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
 
     const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
 
-    // Find the currently voted option by the user, if any
     const existingVotedOption = targetPost.pollOptions.find((option) =>
       option.voters.includes(userId),
     )
@@ -51,7 +48,6 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
     }
   }
 
-  // Handle paginated list data
   if (oldData.pages) {
     const newPages = oldData.pages.map((page) => ({
       ...page,
@@ -60,7 +56,6 @@ const updatePollOptimistically = (oldData, postId, optionId, userId) => {
     return { ...oldData, pages: newPages }
   }
 
-  // Handle a single post object
   if (oldData._id) {
     return handlePost(oldData)
   }
@@ -85,7 +80,6 @@ export const useVoteOnPoll = () => {
         return
       }
 
-      // Snapshot all relevant caches before the update
       const keysToUpdate = [postKeys.all, postKeys.details(postId)].filter(
         (key) => queryClient.getQueryData(key) !== undefined,
       )
@@ -97,7 +91,6 @@ export const useVoteOnPoll = () => {
         return acc
       }, {})
 
-      // Perform the optimistic update on all relevant caches
       keysToUpdate.forEach((key) => {
         queryClient.setQueryData(key, (oldData) =>
           updatePollOptimistically(oldData, postId, optionId, authUser._id),
@@ -114,7 +107,6 @@ export const useVoteOnPoll = () => {
     onError: (err, variables, context) => {
       showAppToast(err.message || "Failed to cast vote.", "error")
 
-      // Rollback all changes using the single snapshot
       if (context?.previousData) {
         Object.entries(context.previousData).forEach(([key, value]) => {
           queryClient.setQueryData(JSON.parse(key), value)

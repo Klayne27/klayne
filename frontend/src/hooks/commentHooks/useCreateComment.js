@@ -21,22 +21,11 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
     onMutate: async ({ text, img }) => {
-      await queryClient.cancelQueries({ queryKey: commentsQueryKey })
       await queryClient.cancelQueries({ queryKey: postKeys.details(postId) })
       await queryClient.cancelQueries({ queryKey: postKeys.all })
-      await queryClient.cancelQueries({ queryKey: postKeys.bookmarked() })
-      await queryClient.cancelQueries({
-        queryKey: ["pinnedPosts", currentUser.username],
-      })
 
-      const previousComments = queryClient.getQueryData(commentsQueryKey)
       const previousPostData = queryClient.getQueryData(postKeys.details(postId))
       const previousPostsData = queryClient.getQueryData(postKeys.all)
-      const previousBookmarkedPostsData = queryClient.getQueryData(postKeys.bookmarked())
-      const previousPinnedPostsData = queryClient.getQueryData([
-        "pinnedPosts",
-        currentUser.username,
-      ])
 
       const tempId = `optimistic-${Date.now()}-${Math.random()}`
 
@@ -120,30 +109,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages }
       })
 
-      queryClient.setQueryData(postKeys.bookmarked(), (oldData) => {
-        if (!oldData || !Array.isArray(oldData.pages)) return oldData
-        const newPages = oldData.pages.map((page) => ({
-          ...page,
-          posts: page.posts.map((post) => {
-            if (post._id === postId || post.repostedFrom?._id === postId) {
-              return updatePostCommentsCount(post)
-            }
-            return post
-          }),
-        }))
-        return { ...oldData, pages: newPages }
-      })
-
-      queryClient.setQueryData(["pinnedPosts", currentUser.username], (oldData) => {
-        if (!oldData || !Array.isArray(oldData)) return oldData
-        return oldData.map((post) => {
-          if (post._id === postId || post.repostedFrom?._id === postId) {
-            return updatePostCommentsCount(post)
-          }
-          return post
-        })
-      })
-
       if (parentCommentId) {
         const parentCommentsListQueryKey = ["comments", postId]
         await queryClient.cancelQueries({ queryKey: parentCommentsListQueryKey })
@@ -166,11 +131,8 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
 
       return {
-        previousComments,
         previousPostData,
         previousPostsData,
-        previousBookmarkedPostsData,
-        previousPinnedPostsData,
         previousParentCommentsData: parentCommentId
           ? queryClient.getQueryData(["comments", postId])
           : undefined,
@@ -180,7 +142,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     onSuccess: (newRealComment, variables, context) => {
       showAppToast(parentCommentId ? "Reply added!" : "Comment added!", "success")
 
-      // Update the optimistic comment with real data
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
         const newPages = oldData?.pages ? [...oldData.pages] : []
         if (newPages.length === 0) {
@@ -200,10 +161,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         return { ...oldData, pages: newPages }
       })
 
-      queryClient.invalidateQueries({ queryKey: postKeys.details(postId) })
       queryClient.invalidateQueries({ queryKey: postKeys.all })
-      queryClient.invalidateQueries({ queryKey: postKeys.bookmarked() })
-      // queryClient.invalidateQueries({ queryKey: postKeys.o })
       if (parentCommentId) {
         queryClient.invalidateQueries({ queryKey: ["comments", postId] })
       }
@@ -213,11 +171,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       queryClient.setQueryData(commentsQueryKey, context.previousComments)
       queryClient.setQueryData(postKeys.details(postId), context.previousPostData)
       queryClient.setQueryData(postKeys.all, context.previousPostsData)
-      queryClient.setQueryData(postKeys.bookmarked(), context.previousBookmarkedPostsData)
-      queryClient.setQueryData(
-        ["pinnedPosts", currentUser.username],
-        context.previousPinnedPostsData,
-      )
       queryClient.setQueryData(["comments", postId], context.previousParentCommentsData)
     },
   })

@@ -3,6 +3,7 @@ import toast from "react-hot-toast";
 import { updateUserProfileApi } from "../../api/usersApi";
 import { useState } from "react";
 import { showAppToast } from "../../utils/showAppToast";
+import { postKeys } from "../postsHooks/postKeys";
 
 export const useUpdateUserProfile = () => {
   const queryClient = useQueryClient();
@@ -22,7 +23,7 @@ export const useUpdateUserProfile = () => {
       showAppToast("Profile updated successfully", "success");
       Promise.all([
         queryClient.invalidateQueries({ queryKey: ["authUser"] }),
-        queryClient.invalidateQueries({ queryKey: ["posts"] }),
+        queryClient.invalidateQueries({ queryKey: postKeys.all }),
         queryClient.invalidateQueries({ queryKey: ["userProfile", data.username] }),
       ]);
     },

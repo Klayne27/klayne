@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { showAppToast } from "../../utils/showAppToast";
 import { messageKeys } from "../messagesHooks/messageKeys";
 import { conversationKeys } from "../messagesHooks/conversationKeys";
+import { postKeys } from "../postsHooks/postKeys";
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient();
@@ -56,7 +57,7 @@ export const useBlockUnblockUser = () => {
 
 
       queryClient.invalidateQueries({ queryKey: ["authUser"] });
-      queryClient.invalidateQueries({ queryKey: ["posts"] });
+      queryClient.invalidateQueries({ queryKey: postKeys.all });
       queryClient.invalidateQueries({ queryKey: ["comments"] });
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() });
       queryClient.invalidateQueries({ queryKey: ["notifications"] });

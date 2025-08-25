@@ -5,16 +5,16 @@ export const useFetchComments = (postId, parentCommentId = null, enabled = true)
   const isOptimisticId =
     parentCommentId &&
     typeof parentCommentId === "string" &&
-    (parentCommentId.startsWith("optimistic-") || parentCommentId.startsWith("temp-"));
+    (parentCommentId.startsWith("optimistic-") || parentCommentId.startsWith("temp-"))
 
   const effectiveParentCommentId =
     parentCommentId === "null" || parentCommentId === undefined || isOptimisticId
       ? null
-      : parentCommentId;
+      : parentCommentId
 
   const queryKey = effectiveParentCommentId
     ? ["comments", postId, effectiveParentCommentId]
-    : ["comments", postId];
+    : ["comments", postId]
 
   const {
     data,

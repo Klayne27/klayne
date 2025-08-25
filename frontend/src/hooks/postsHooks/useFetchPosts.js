@@ -1,9 +1,7 @@
-// src/hooks/postsHooks/useFetchPosts.js
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchPostsApi } from "../../api/postsApi"
 import { postKeys } from "./postKeys"
 
-// This hook now takes explicit parameters instead of a raw endpoint
 export const useFetchPosts = ({ feedType, username = null }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
