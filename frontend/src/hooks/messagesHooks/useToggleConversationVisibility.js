@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { toggleConversationVisibilityApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
-import { CONVERSATIONS_QUERY_KEY } from "../../constants/queryKeys"
+import { conversationKeys } from "./conversationKeys"
 
 export const useToggleConversationVisibility = () => {
   const queryClient = useQueryClient()
@@ -10,15 +10,15 @@ export const useToggleConversationVisibility = () => {
     mutationFn: ({ conversationId }) => toggleConversationVisibilityApi(conversationId),
 
     onMutate: async ({ conversationId }) => {
-      await queryClient.cancelQueries({ queryKey: CONVERSATIONS_QUERY_KEY })
+      await queryClient.cancelQueries({ queryKey: conversationKeys.list() })
 
-      const previousConversations = queryClient.getQueryData(CONVERSATIONS_QUERY_KEY)
+      const previousConversations = queryClient.getQueryData(conversationKeys.list())
 
       if (!previousConversations) {
         return
       }
 
-      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, (oldData) => {
+      queryClient.setQueryData(conversationKeys.list(), (oldData) => {
         if (!Array.isArray(oldData)) {
           return oldData
         }
@@ -29,7 +29,7 @@ export const useToggleConversationVisibility = () => {
     },
 
     onError: (err, variables, context) => {
-      queryClient.setQueryData(CONVERSATIONS_QUERY_KEY, context.previousConversations)
+      queryClient.setQueryData(conversationKeys.list(), context.previousConversations)
       showAppToast(err.message || "Failed to hide conversation.", "error")
     },
   })

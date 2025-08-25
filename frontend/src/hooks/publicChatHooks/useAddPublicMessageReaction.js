@@ -1,21 +1,19 @@
-import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { useAuthUser } from "../authHooks/useAuthUser";
-import { addPublicMessageReactionApi } from "../../api/publicChatApi";
+import { useMutation, useQueryClient } from "@tanstack/react-query"
+import { useAuthUser } from "../authHooks/useAuthUser"
+import { addPublicMessageReactionApi } from "../../api/publicChatApi"
+import { messageKeys } from "../messagesHooks/messageKeys"
 
 export const useAddPublicMessageReaction = ({ onReactionAdded }) => {
   const queryClient = useQueryClient()
   const { authUser: currentUser } = useAuthUser()
+  const queryKey = messageKeys.publicMessages()
 
   const { mutate: addReaction, isPending: isReacting } = useMutation({
     mutationFn: ({ messageId, emoji }) => addPublicMessageReactionApi(messageId, emoji),
     onMutate: async ({ messageId, emoji }) => {
-      // Optimistic update: Show the reaction immediately
-      // No need to cancel queries unless a re-render from fetching would immediately overwrite.
-      // queryClient.cancelQueries({ queryKey: ["publicMessages"] }); // Keep commented or remove
+      const previousMessages = queryClient.getQueryData(queryKey)
 
-      const previousMessages = queryClient.getQueryData(["publicMessages"])
-
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData || !currentUser) return oldData
 
         const newPages = oldData.pages.map((page) =>
@@ -28,12 +26,9 @@ export const useAddPublicMessageReaction = ({ onReactionAdded }) => {
                   r.emoji === emoji,
               )
 
-              // Create an optimistic reaction object that mimics the populated structure
               const optimisticReaction = {
                 emoji,
-                // Ensure the user object matches what your backend populates
                 userId: {
-                  // Matches PublicChatMessage.reactions.userId
                   _id: currentUser._id,
                   username: currentUser.username,
                   fullName: currentUser.fullName,
@@ -58,26 +53,10 @@ export const useAddPublicMessageReaction = ({ onReactionAdded }) => {
         onReactionAdded(messageId)
       }
 
-      return { previousMessages } // Context for onError
-    },
-    onSuccess: (updatedMessageFromServer) => {
-      // No explicit cache update here, as the Socket.IO event will handle it.
-      // We rely on the `publicMessageReactionUpdated` socket event for the ultimate truth.
-      // However, it's good practice to invalidate here too, as a fallback in case a socket event is missed.
-      // queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // If you are relying solely on Socket.IO, this onSuccess can remain empty.
+      return { previousMessages }
     },
     onError: (err, variables, context) => {
-      // showAppToast((err.message || "Failed to add reaction.");
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["publicMessages"], context.previousMessages)
-      }
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] }) // Invalidate on error to refetch correct state
-    },
-    onSettled: () => {
-      // This will refetch in the background, ensuring consistency even if a socket event is missed.
-      // It's a safety net.
-      //  queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      queryClient.setQueryData(queryKey, context.previousMessages)
     },
   })
 

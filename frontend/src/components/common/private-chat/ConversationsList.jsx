@@ -6,7 +6,6 @@ import { useGetOrCreateConversation } from "../../../hooks/messagesHooks/useGetO
 import { useGetFollowedUsersForMessaging } from "../../../hooks/messagesHooks/useGetFollowedUsersForMessaging" // Updated hook import
 
 const ConversationsList = ({ conversations }) => {
-
   const [followedSearchQuery, setFollowedSearchQuery] = useState("")
   const [debouncedFollowedQuery, setDebouncedFollowedQuery] = useState("")
   const [showFollowedDropdown, setShowFollowedDropdown] = useState(false) // Controls dropdown visibility
@@ -14,7 +13,6 @@ const ConversationsList = ({ conversations }) => {
   const searchInputWrapperRef = useRef(null)
 
   const [userIsOnline, setUserIsOnline] = useState(true)
-
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -27,16 +25,15 @@ const ConversationsList = ({ conversations }) => {
   }, [followedSearchQuery])
 
   const {
-    data: searchedFollowedUsers, // Renamed to clarify these are search results
-    isLoading: isLoadingFollowedUsers,
-    isError: isErrorFollowedUsers,
-    error: followedUsersError,
-    isFetching: isFetchingFollowedUsers,
+    searchedFollowedUsers,
+    isLoadingFollowedUsers,
+    isErrorFollowedUsers,
+    followedUsersError,
+    isFetchingFollowedUsers,
   } = useGetFollowedUsersForMessaging(debouncedFollowedQuery) // Pass debounced query here
 
   // Mutation hook to get or create a conversation
-  const { mutate: getOrCreateConversation, isPending: isCreatingConversation } =
-    useGetOrCreateConversation()
+  const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
 
   // Handler for when a followed user is selected from the dropdown
   const handleSelectFollowedUserForMessage = (selectedUser) => {
@@ -66,7 +63,6 @@ const ConversationsList = ({ conversations }) => {
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between bg-black/0 p-4 backdrop-blur-sm">
         <h1 className="text-xl font-bold">Messages</h1>
-
       </div>
 
       {/* Search Bar for followed users */}

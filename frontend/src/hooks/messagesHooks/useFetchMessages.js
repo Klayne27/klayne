@@ -1,6 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { fetchMessagesApi } from "../../api/messagesApi"
 import { useMemo } from "react"
+import { messageKeys } from "./messageKeys"
 
 export const useFetchMessages = (conversationId) => {
   const {
@@ -13,7 +14,7 @@ export const useFetchMessages = (conversationId) => {
     refetch: refetchMessages,
     isFetching,
   } = useInfiniteQuery({
-    queryKey: ["messages", conversationId],
+    queryKey: messageKeys.privateMessages(conversationId),
     queryFn: ({ pageParam = 1 }) => fetchMessagesApi(conversationId, pageParam),
 
     getNextPageParam: (lastPage, allPages) => {

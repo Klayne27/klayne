@@ -1,5 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getConversationBetweenUsersApi } from "../../api/messagesApi";
+import { conversationKeys } from "./conversationKeys";
 
 export const useFetchConversationBetweenUsers = (otherUserId) => {
   const {
@@ -8,7 +9,7 @@ export const useFetchConversationBetweenUsers = (otherUserId) => {
     isError: isErrorConversationStatus,
     error: conversationStatusError,
   } = useQuery({
-    queryKey: ["conversationBetweenUsers", otherUserId],
+    queryKey: conversationKeys.betweenUsers(otherUserId),
     queryFn: () => getConversationBetweenUsersApi(otherUserId),
     enabled: !!otherUserId,
     staleTime: 5 * 60 * 1000,

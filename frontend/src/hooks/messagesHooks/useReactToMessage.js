@@ -3,6 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { useAuthUser } from "../../hooks/authHooks/useAuthUser"
 import { reactToMessageApi } from "../../api/messagesApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { messageKeys } from "./messageKeys"
 
 export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) => {
   const queryClient = useQueryClient()
@@ -12,10 +13,10 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
     mutationFn: ({ messageId, emoji }) => reactToMessageApi(messageId, emoji),
 
     onMutate: async ({ messageId, emoji }) => {
-      await queryClient.cancelQueries({ queryKey: ["messages", selectedConversationId] })
-      const previousMessages = queryClient.getQueryData(["messages", selectedConversationId])
+      await queryClient.cancelQueries({ queryKey: messageKeys.privateMessages(selectedConversationId) })
+      const previousMessages = queryClient.getQueryData(messageKeys.privateMessages(selectedConversationId))
 
-      queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
+      queryClient.setQueryData(messageKeys.privateMessages(selectedConversationId), (oldData) => {
         if (!oldData || !currentUser) return oldData
         const userId = currentUser._id
         const updatedPages = oldData.pages.map((page) =>
@@ -56,17 +57,8 @@ export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) =
 
       return { previousMessages }
     },
-    onSuccess: (updatedMessage) => {
-      // queryClient.setQueryData(["messages", selectedConversationId], (oldData) => {
-      //   if (!oldData) return oldData
-      //   const updatedPages = oldData.pages.map((page) =>
-      //     page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
-      //   )
-      //   return { ...oldData, pages: updatedPages }
-      // })
-    },
     onError: (err, variables, context) => {
-      queryClient.setQueryData(["messages", selectedConversationId], context.previousMessages)
+      queryClient.setQueryData(messageKeys.privateMessages(selectedConversationId), context.previousMessages)
       showAppToast(err.message || "Failed to react.", "error")
     },
   })

@@ -1,17 +1,15 @@
-import { Link, useNavigate } from "react-router-dom"
+import { useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../../hooks/authHooks/useAuthUser"
 import { formatPostDate } from "../../../utils/date"
 import { MdBlock, MdImage } from "react-icons/md"
 import React, { useState } from "react"
 import { useToggleConversationVisibility } from "../../../hooks/messagesHooks/useToggleConversationVisibility"
-import { CiCircleMinus } from "react-icons/ci"
 import useDeleteConversation from "../../../hooks/messagesHooks/useDeleteConversation"
 import { FaTrashCan } from "react-icons/fa6"
 import ConfirmationModal from "../../ui/ConfirmationModal"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import DropdownMenu from "../../ui/DropdownMenu"
 import { FaBroom } from "react-icons/fa6"
-import { FaUser } from "react-icons/fa"
 import useDeleteAllMessagesOnMySide from "../../../hooks/messagesHooks/useDeleteAllMessagesOnMySide" // Import the new hook
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../SlideUpMenu"
@@ -59,6 +57,7 @@ function ConversationItem({ conv }) {
     conv.lastMessage?.sender?.toString() === otherUser?._id.toString() && !conv.lastMessage?.seen
 
   let lastMessageContent = "No messages yet..."
+
   if (conv.lastMessage?.img) {
     lastMessageContent = (
       <span className="gap-1">

@@ -10,8 +10,6 @@ export const useDeletePublicMessage = () => {
     error,
   } = useMutation({
     mutationFn: adminDeletePublicMessageApi,
-
-    onSuccess: (data, messageId) => {},
     onError: (error) => {
       showAppToast(error.message || "Failed to delete message", "error");
     },

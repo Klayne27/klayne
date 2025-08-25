@@ -1,6 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { unbanUserFromPublicChatApi } from "../../api/publicChatApi";
 import { showAppToast } from "../../utils/showAppToast";
+import { messageKeys } from "../messagesHooks/messageKeys";
 
 export const useUnbanUserFromPublicChat = () => {
   const queryClient = useQueryClient();
@@ -12,11 +13,6 @@ export const useUnbanUserFromPublicChat = () => {
     error,
   } = useMutation({
     mutationFn: unbanUserFromPublicChatApi,
-    onSuccess: (data) => {
-      // Invalidate relevant queries or show success
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
-      // showAppToast("User unbanned from public chat.");
-    },
     onError: (error) => {
       showAppToast(error.message || "Failed to unban user.", "error");
     },

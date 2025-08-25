@@ -1,20 +1,20 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { editPublicMessageApi } from "../../api/publicChatApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { messageKeys } from "../messagesHooks/messageKeys"
 
 export const useEditPublicMessage = () => {
   const queryClient = useQueryClient()
+  const queryKey = messageKeys.publicMessages()
 
-  // The 'mutate' function is returned from useMutation, let's capture it.
   const { mutate: editPublicMessage, isPending: isEditing } = useMutation({
     mutationFn: ({ messageId, newText }) => editPublicMessageApi(messageId, newText),
 
     onMutate: async ({ messageId, newText }) => {
-      // Your onMutate logic is correct for the optimistic update.
-      await queryClient.cancelQueries({ queryKey: ["publicMessages"] })
-      const previousMessages = queryClient.getQueryData(["publicMessages"])
+      await queryClient.cancelQueries({ queryKey: queryKey })
+      const previousMessages = queryClient.getQueryData(queryKey)
 
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData || !oldData.pages) return oldData
 
         const updatedPages = oldData.pages.map((page) =>
@@ -24,7 +24,6 @@ export const useEditPublicMessage = () => {
                 ...message,
                 text: newText,
                 isEdited: true,
-                // editedAt: new Date().toISOString(),
               }
             }
             return message
@@ -36,11 +35,10 @@ export const useEditPublicMessage = () => {
       return { previousMessages, messageId }
     },
 
-    // ✅ ADDED: A proper onSuccess handler
     onSuccess: (serverMessage, variables, context) => {
       const { messageId } = context
 
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData || !oldData.pages) return oldData
         const updatedPages = oldData.pages.map((page) =>
           page.map((message) =>
@@ -53,11 +51,8 @@ export const useEditPublicMessage = () => {
     },
 
     onError: (error, variables, context) => {
-      console.error("Mutation failed:", error) // Log the actual error to the console
       showAppToast(error.message || "Failed to edit message.", "error")
-      if (context?.previousMessages) {
-        queryClient.setQueryData(["publicMessages"], context.previousMessages)
-      }
+      queryClient.setQueryData(queryKey, context.previousMessages)
     },
   })
 

@@ -13,6 +13,7 @@ import { usePublicChatSocketEvents } from "../../../hooks/socketEventHooks/usePu
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 import { useQueryClient } from "@tanstack/react-query"
+import { messageKeys } from "../../../hooks/messagesHooks/messageKeys"
 
 const PublicChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -71,12 +72,12 @@ const PublicChatWindow = () => {
       socket.on("bannedFromPublicChat", ({ isBanned }) => {
         queryClient.invalidateQueries({ queryKey: ["authUser"] })
         if (isBanned) {
-          queryClient.setQueryData(["publicMessages"], (oldData) => ({
+          queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => ({
             pages: [[]],
             pageParams: [undefined],
           }))
         } else {
-          queryClient.invalidateQueries({ queryKey: ["publicMessages"] })
+          queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
         }
       })
 

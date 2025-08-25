@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useAuthUser } from "../authHooks/useAuthUser";
 import { useSocket } from "../../context/SocketContext";
+import { messageKeys } from "../messagesHooks/messageKeys";
 
 export const usePublicChatSocketEvents = () => {
   const queryClient = useQueryClient();
@@ -16,7 +17,7 @@ export const usePublicChatSocketEvents = () => {
     socket.emit("public_chat_room");
 
     // const handleNewPublicMessage = (newMessage) => {
-    //   queryClient.setQueryData(["publicMessages"], (oldData) => {
+    //   queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
     //     if (!oldData || !oldData.pages || oldData.pages.length === 0) {
     //       return { pages: [[newMessage]], pageParams: [1] };
     //     }
@@ -43,7 +44,7 @@ export const usePublicChatSocketEvents = () => {
     // };
 
     const handleMessageDeleted = ({ messageId }) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) =>
           page.map((message) => {
@@ -73,7 +74,7 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlepublicOwnMessageDeleted = ({ messageId }) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
         if (!oldData) return oldData;
         const updatedPages = oldData.pages.map((page) => {
           return page.map((message) => {
@@ -103,7 +104,7 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlePublicMessageEdited = (updatedMessage) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
         if (!oldData || !oldData.pages) {
           return oldData;
         }
@@ -126,7 +127,7 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handlePublicMessageReactionUpdated = ({ messageId, reactions }) => {
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
         if (!oldData) return oldData;
 
         const updatedPages = oldData.pages.map((page) =>
@@ -142,11 +143,11 @@ export const usePublicChatSocketEvents = () => {
     };
 
     const handleUserBannedGlobal = ({ userId, username }) => {
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() });
     };
 
     const handleUserUnbannedGlobal = ({ userId, username }) => {
-      queryClient.invalidateQueries({ queryKey: ["publicMessages"] });
+      queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() });
     };
 
     const handlePublicTypingUpdate = ({ typingUsers: serverTypingUsers }) => {

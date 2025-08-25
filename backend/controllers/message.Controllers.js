@@ -897,6 +897,12 @@ export const deleteAllMessagesOnMySide = async (req, res) => {
       { $addToSet: { deletedFor: userId } }
     );
 
+    await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $unset: { lastMessage: "" } }, // Use $unset to remove the field
+      { new: true } // Return the updated document
+    );
+
     res.status(200).json({
       message: "All messages in conversation deleted on your side successfully.",
       conversationId: conversationId,

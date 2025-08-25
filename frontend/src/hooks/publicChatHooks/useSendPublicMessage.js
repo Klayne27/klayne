@@ -2,10 +2,12 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { showAppToast } from "../../utils/showAppToast"
 import { sendPublicMessageApi } from "../../api/publicChatApi"
 import { useAuthUser } from "../authHooks/useAuthUser"
+import { messageKeys } from "../messagesHooks/messageKeys"
 
 export const useSendPublicMessage = ({ onSenderMessageSent }) => {
   const queryClient = useQueryClient()
-  const { authUser } = useAuthUser() // Get authUser here too for sender details
+  const queryKey = messageKeys.publicMessages()
+  const { authUser } = useAuthUser()
 
   const {
     mutate: sendPublicMessage,
@@ -19,13 +21,12 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
     onMutate: async (messageData) => {
       const tempId = `temp-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
 
-      await queryClient.cancelQueries({ queryKey: ["publicMessages"] })
+      await queryClient.cancelQueries({ queryKey: queryKey })
 
-      const previousMessages = queryClient.getQueryData(["publicMessages"])
+      const previousMessages = queryClient.getQueryData(queryKey)
 
       let populatedRepliedTo = null
       if (messageData.repliedTo) {
-        // Use previousMessages if it exists, otherwise flatMap an empty array
         const allMessages = previousMessages?.pages.flat() || []
         const repliedMessageInCache = allMessages.find((msg) => msg._id === messageData.repliedTo)
 
@@ -67,20 +68,14 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
         reactions: [],
       }
 
-      // ✅ THE FIX: Update the cache correctly
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData || !oldData.pages || oldData.pages.length === 0) {
           return { pages: [[optimisticMessage]], pageParams: [undefined] }
         }
-
-        // 1. Create a deep copy of the pages to avoid direct mutation.
         const newPages = oldData.pages.map((page) => [...page])
 
-        // 2. Add the new optimistic message to the end of the first page.
-        //    This assumes pages[0] holds the newest messages.
         newPages[0].push(optimisticMessage)
 
-        // 3. Return the data with its pagination structure preserved.
         return {
           ...oldData,
           pages: newPages,
@@ -96,25 +91,21 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
     onSuccess: (serverMessage, variables, context) => {
       const { tempId } = context
 
-      // ✅ FIX 3: Replace the optimistic message with the server message
-      queryClient.setQueryData(["publicMessages"], (oldData) => {
+      queryClient.setQueryData(queryKey, (oldData) => {
         if (!oldData) return oldData
         const updatedPages = oldData.pages.map((page) =>
           page.map((msg) => (msg._id === tempId ? serverMessage : msg)),
         )
         return { ...oldData, pages: updatedPages }
       })
-      // ✅ FIX 4: You can now remove the Socket.IO listener from the responsibility
-      // of updating the cache for your own messages, as this is more reliable.
     },
 
     onError: (error, variables, context) => {
       showAppToast(error.message || "Failed to send message", "error")
-      // Rollback logic remains mostly the same, ensuring the optimistic message is removed
       if (context?.previousMessages) {
-        queryClient.setQueryData(["publicMessages"], context.previousMessages)
+        queryClient.setQueryData(queryKey, context.previousMessages)
       } else {
-        queryClient.setQueryData(["publicMessages"], (oldData) => {
+        queryClient.setQueryData(queryKey, (oldData) => {
           if (!oldData) return oldData
           const updatedPages = oldData.pages.map((page) =>
             page.filter((msg) => msg._id !== context.tempId),
@@ -123,9 +114,7 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
         })
       }
     },
-    onSettled: (data, error, variables, context) => {
-      // No explicit invalidation needed.
-    },
+
   })
 
   return { sendPublicMessage, isSendingPublicMessage, isError, error, reset }

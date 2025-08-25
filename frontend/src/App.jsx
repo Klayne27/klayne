@@ -20,7 +20,6 @@ const SignupPage = lazy(() => import("./pages/auth/signup/SignupPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 
-
 // Authenticated layout component (lazy loaded)
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 

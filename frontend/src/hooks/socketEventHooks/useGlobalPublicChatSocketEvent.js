@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../context/SocketContext"
 import { useAuthUser } from "../authHooks/useAuthUser"
 import { useEffect, useCallback } from "react"
+import { messageKeys } from "../messagesHooks/messageKeys"
 
 export const useGlobalPublicChatSocketEvents = () => {
   const queryClient = useQueryClient()
@@ -10,20 +11,16 @@ export const useGlobalPublicChatSocketEvents = () => {
 
   const handleNewPublicMessage = useCallback(
     (newMessage) => {
-      const queryKey = ["publicMessages"]
+      const queryKey = messageKeys.publicMessages()
 
       if (newMessage.sender._id === currentUser._id) {
         return
       }
-
-      // --- START FIX ---
-      // First, check if the public messages cache has any data yet.
       const publicMessagesCache = queryClient.getQueryData(queryKey)
 
-      // Only update the cache if it's already populated.
       if (publicMessagesCache) {
         queryClient.setQueryData(queryKey, (oldData) => {
-          if (!oldData || !oldData.pages) return oldData // Should not happen if cache exists, but safe
+          if (!oldData || !oldData.pages) return oldData 
 
           const newPages = oldData.pages.map((page) => [...page])
           const mostRecentPage = newPages[0] // Newest messages are on the first page
