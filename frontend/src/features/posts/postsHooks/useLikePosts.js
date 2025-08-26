@@ -51,10 +51,6 @@ export const useLikePost = (username = null) => {
     mutationFn: (postId) => likePostApi(postId),
 
     onMutate: async (postId) => {
-      if (!authUser?._id) {
-        console.warn("No authenticated user ID for optimistic post like update.")
-        return
-      }
 
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),

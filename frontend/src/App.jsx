@@ -25,7 +25,6 @@ function App() {
   const { authUser, isLoading } = useAuthUser()
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
-
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
 
@@ -60,6 +59,7 @@ function App() {
       </div>
     )
   }
+
 
   return (
     <>

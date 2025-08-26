@@ -3,10 +3,12 @@ import { postKeys } from "./postKeys"
 import { voteOnPollApi } from "../../../api/postsApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { useParams } from "react-router-dom"
 
 export const useVoteOnPoll = () => {
   const queryClient = useQueryClient()
-  const { authUser: currentUser } = useAuthUser() // Correctly get the current user
+  const { authUser: currentUser } = useAuthUser()
+  const { username } = useParams()
 
   const {
     mutate: voteOnPoll,
@@ -17,91 +19,89 @@ export const useVoteOnPoll = () => {
     mutationFn: (variables) => voteOnPollApi(variables),
 
     onMutate: async ({ postId, optionId }) => {
-      // Cancel any ongoing refetches to avoid conflicts with the optimistic update
-      await queryClient.cancelQueries({ queryKey: postKeys.all })
+      // Step 1: Define all possible query keys that might contain the post.
+      const keysToUpdate = [
+        postKeys.list("/api/posts/all"),
+        postKeys.list("/api/posts/following"),
+        postKeys.bookmarked(),
+        postKeys.pinned(username),
+        postKeys.details(postId),
+        postKeys.user(username),
+        postKeys.likes(username),
+      ].filter((key) => queryClient.getQueryData(key)) // Filter out keys that don't have cached data.
 
-      // Get a snapshot of the current query data to enable rollback on error
-      const previousQueries = queryClient.getQueriesData({ queryKey: postKeys.all })
+      // Step 2: Cancel ongoing queries and capture the previous state for rollback.
+      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
+      const previousData = keysToUpdate.reduce((acc, key) => {
+        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
+        return acc
+      }, {})
 
-      // Optimistically update the single post details query cache
-      const singlePostQueryKey = postKeys.details(postId)
-      queryClient.setQueryData(singlePostQueryKey, (oldPost) => {
-        if (!oldPost) return oldPost
+      // Step 3: Loop through all relevant caches and perform the optimistic update.
+      keysToUpdate.forEach((key) => {
+        queryClient.setQueryData(key, (oldData) => {
+          console.log(key);
+          // Handle the case where the data is a single post object (details query).
+          if (key[1] === "details") {
+            const hasVoted = oldData.pollOptions.some((option) =>
+              option.voters.includes(currentUser._id),
+            )
+            if (hasVoted) return oldData // User has already voted, no update needed.
 
-        const hasVoted = oldPost.pollOptions.some(
-          (option) => option.voters.includes(currentUser._id), // <-- FIX: Use currentUser._id
-        )
-
-        if (hasVoted) {
-          return oldPost // The user has already voted, so no optimistic update is needed
-        }
-
-        const newPollOptions = oldPost.pollOptions.map((option) =>
-          option._id === optionId
-            ? { ...option, voters: [...option.voters, currentUser._id] } // <-- FIX: Use currentUser._id
-            : option,
-        )
-
-        return {
-          ...oldPost,
-          pollOptions: newPollOptions,
-          pollTotalVotes: oldPost.pollTotalVotes + 1,
-        }
-      })
-
-      // Optimistically update all relevant infinite list queries
-      queryClient.setQueriesData({ queryKey: postKeys.all }, (oldData) => {
-        if (!oldData || !oldData.pages) return oldData
-        console.log("oldData all posts", oldData)
-
-        const newPages = oldData.pages.map((page) => {
-          const updatedPosts = page.posts?.map((post) => {
-            if (post._id === postId) {
-              // Note: The `post.user._id` here is for the post author.
-              // We need to check if the currentUser has voted.
-              const hasVoted = post.pollOptions.some(
-                (option) => option.voters.includes(currentUser._id), // <-- FIX: Use currentUser._id
-              )
-
-              if (hasVoted) return post
-
-              const newPollOptions = post.pollOptions.map((option) =>
-                option._id === optionId
-                  ? { ...option, voters: [...option.voters, currentUser._id] } // <-- FIX: Use currentUser._id
-                  : option,
-              )
-
-              return {
-                ...post,
-                pollOptions: newPollOptions,
-                pollTotalVotes: post.pollTotalVotes + 1,
-              }
+            const newPollOptions = oldData.pollOptions.map((option) =>
+              option._id === optionId
+                ? { ...option, voters: [...option.voters, currentUser._id] }
+                : option,
+            )
+            return {
+              ...oldData,
+              pollOptions: newPollOptions,
+              pollTotalVotes: oldData.pollTotalVotes + 1,
             }
-            return post
-          })
-          return { ...page, posts: updatedPosts }
-        })
+          }
 
-        return { ...oldData, pages: newPages }
+          // Handle the case where the data is an infinite list (e.g., feed, user posts).
+          if (!oldData || !oldData.pages) return oldData
+console.log('oldData', oldData);
+          const newPages = oldData.pages.map((page) => {
+            const updatedPosts = page.posts?.map((post) => {
+              if (post._id === postId) {
+                const hasVoted = post.pollOptions.some((option) =>
+                  option.voters.includes(currentUser._id),
+                )
+                if (hasVoted) return post // User has already voted, no update needed.
+
+                const newPollOptions = post.pollOptions.map((option) =>
+                  option._id === optionId
+                    ? { ...option, voters: [...option.voters, currentUser._id] }
+                    : option,
+                )
+                
+                return {
+                  ...post,
+                  pollOptions: newPollOptions,
+                  pollTotalVotes: post.pollTotalVotes + 1,
+                }
+              }
+              return post
+            })
+            return { ...page, posts: updatedPosts }
+          })
+          return { ...oldData, pages: newPages }
+        })
       })
 
-      return { previousQueries }
+      return { previousData }
     },
 
     onError: (err, variables, context) => {
       showAppToast(err.message || "Failed to cast vote.", "error")
-      // Rollback the cache to its previous state on error
-      if (context?.previousQueries) {
-        context.previousQueries.forEach(([key, value]) => {
-          queryClient.setQueryData(key, value)
+      // Rollback the cache on error.
+      if (context?.previousData) {
+        Object.entries(context.previousData).forEach(([key, value]) => {
+          queryClient.setQueryData(JSON.parse(key), value)
         })
       }
-    },
-
-    onSettled: (data, error, variables) => {
-      // Invalidate queries to re-fetch the correct data from the server
-      queryClient.invalidateQueries({ queryKey: postKeys.details(variables.postId) })
-      queryClient.invalidateQueries({ queryKey: postKeys.all })
     },
   })
 
