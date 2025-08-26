@@ -1,11 +1,11 @@
 import { FaPlus, FaListUl, FaUserGroup, FaGlobe } from "react-icons/fa6"
 import { useNavigate, Outlet, useLocation } from "react-router-dom"
 import { IoIosTimer } from "react-icons/io"
-import { useTodoStore } from "../store/useTodoStore"
-import { useIsMobile } from "../hooks/customHooks/useIsMobile"
-import CreateTodoModal from "../features/todos/CreateTodoModal"
+import { useTodoStore } from "../../store/useTodoStore"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import CreateTodoModal from "../../features/todos/CreateTodoModal"
 
-const TodoPage = () => {
+const TodoPageLayout = () => {
   const {
     showCreateTodoModal,
     setShowCreateTodoListModal,
@@ -82,4 +82,4 @@ const TodoPage = () => {
   )
 }
 
-export default TodoPage
+export default TodoPageLayout

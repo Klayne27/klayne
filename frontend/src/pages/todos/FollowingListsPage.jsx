@@ -1,6 +1,6 @@
-import TodoSectionList from "../features/todos/TodoSectionList"
-import { useGetFollowingTodoLists } from "../features/todos/todoListHooks/useGetFollowingTodoLists"
-import TodoPagesHeader from "../features/todos/TodoPagesHeader"
+import TodoSectionList from "../../features/todos/TodoSectionList"
+import { useGetFollowingTodoLists } from "../../features/todos/todoListHooks/useGetFollowingTodoLists"
+import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
 
 const FollowingListsPage = () => {
   const {

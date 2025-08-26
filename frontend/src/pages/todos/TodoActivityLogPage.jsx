@@ -1,9 +1,9 @@
-import TodoPagesHeader from "../features/todos/TodoPagesHeader"
+import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
 import { useInView } from "react-intersection-observer"
-import LoadingSpinner from "../components/common/LoadingSpinner"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useEffect } from "react"
-import { useGetTodoActivities } from "../features/todos/todoHooks/useGetTodoActivities"
-import ActivityLogList from "../features/todos/ActivityLogList"
+import { useGetTodoActivities } from "../../features/todos/todoHooks/useGetTodoActivities"
+import ActivityLogList from "../../features/todos/ActivityLogList"
 
 const TodoActivityLogPage = () => {
   const { todoActivities, todoActivitiesLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =

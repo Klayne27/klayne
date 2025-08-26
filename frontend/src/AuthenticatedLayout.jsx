@@ -7,28 +7,28 @@ import ImageViewerPage from "./components/common/ImageViewerPage"
 import CreatePostModal from "./features/posts/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 
-const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
-const EditTodoListPage = lazy(() => import("./pages/EditTodoListPage"))
-const CreateTodoListPage = lazy(() => import("./pages/CreateTodoListPage"))
-const PomodoroSettingsPage = lazy(() => import("./pages/PomodoroSettingsPage"))
-const TodoActivityLogPage = lazy(() => import("./pages/TodoActivityLogPage"))
-const MyTodoListsPage = lazy(() => import("./pages/MyTodoListsPage"))
-const FollowingListsPage = lazy(() => import("./pages/FollowingListsPage"))
-const PublicListsPage = lazy(() => import("./pages/PublicListsPage"))
-const CompletedTodosPage = lazy(() => import("./pages/CompletedTodosPage"))
+const PublicCompletedTodosPage = lazy(() => import("./pages/todos/PublicCompletedTodosPage"))
+const EditTodoListPage = lazy(() => import("./pages/todos/EditTodoListPage"))
+const CreateTodoListPage = lazy(() => import("./pages/todos/CreateTodoListPage"))
+const PomodoroSettingsPage = lazy(() => import("./pages/pomodoro/PomodoroSettingsPage"))
+const TodoActivityLogPage = lazy(() => import("./pages/todos/TodoActivityLogPage"))
+const MyTodoListsPage = lazy(() => import("./pages/todos/MyTodoListsPage"))
+const FollowingListsPage = lazy(() => import("./pages/todos/FollowingListsPage"))
+const PublicListsPage = lazy(() => import("./pages/todos/PublicListsPage"))
+const CompletedTodosPage = lazy(() => import("./pages/todos/CompletedTodosPage"))
 const StudyActivityPage = lazy(() => import("./pages/StudyActivityPage"))
 const StudyLeaderboardPage = lazy(() => import("./pages/StudyLeaderboardPage"))
-const PomodoroPage = lazy(() => import("./pages/PomodoroPage"))
-const PublicChatPage = lazy(() => import("./pages/PublicChatPage"))
+const PomodoroPage = lazy(() => import("./pages/pomodoro/PomodoroPage"))
+const PublicChatPage = lazy(() => import("./pages/chat/PublicChatPage"))
 const BookmarksPage = lazy(() => import("./pages/BookmarksPage"))
 const ThemesPage = lazy(() => import("./pages/ThemesPage"))
 const HomePage = lazy(() => import("./pages/HomePage"))
 const ProfilePage = lazy(() => import("./pages/ProfilePage"))
 const NotificationPage = lazy(() => import("./pages/NotifcationPage"))
-const MessagesPage = lazy(() => import("./pages/MessagePage"))
+const PrivateChatPage = lazy(() => import("./pages/chat/PrivateChatPage"))
 const PostPage = lazy(() => import("./pages/PostPage"))
 const SearchPage = lazy(() => import("./pages/SearchPage"))
-const TodoPage = lazy(() => import("./pages/TodoPage"))
+const TodoPageLayout = lazy(() => import("./pages/todos/TodoPageLayout"))
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
@@ -75,8 +75,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
                 element={<ProfilePage feedType={feedType} setFeedType={setFeedType} />}
               />
               <Route path="/notifications" element={<NotificationPage />} />
-              <Route path="/messages" element={<MessagesPage />} />
-              <Route path="/messages/:conversationId" element={<MessagesPage />} />
+              <Route path="/messages" element={<PrivateChatPage />} />
+              <Route path="/messages/:conversationId" element={<PrivateChatPage />} />
               <Route path="/public-chat" element={<PublicChatPage />} />
               <Route path="/bookmarks" element={<BookmarksPage />} />
               <Route path="/themes" element={<ThemesPage />} />
@@ -86,7 +86,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />
-              <Route path="/todos" element={<TodoPage />}>
+              <Route path="/todos" element={<TodoPageLayout />}>
                 <Route index element={<MyTodoListsPage />} />
                 <Route path="following" element={<FollowingListsPage />} />
                 <Route path="public" element={<PublicListsPage />} />

@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { useNavigate, useLocation } from "react-router-dom"
-import { useUpdateTodoList } from "../features/todos/todoListHooks/useUpdateTodoList"
+import { useUpdateTodoList } from "../../features/todos/todoListHooks/useUpdateTodoList"
 import { useRef } from "react"
-import { showAppToast } from "../utils/showAppToast"
-import { bgColorMap, colorOptions, iconOptions } from "../utils/todoUtils"
+import { showAppToast } from "../../utils/showAppToast"
+import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
 
 const EditTodoListPage = () => {
   const navigate = useNavigate()

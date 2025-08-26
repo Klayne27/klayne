@@ -1,9 +1,9 @@
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
-import PublicCompletedTodosList from "../features/todos/PublicCompletedTodosList"
-import TodoPagesHeader from "../features/todos/TodoPagesHeader"
-import LoadingSpinner from "../components/common/LoadingSpinner"
-import { useGetPublicCompletedTodos } from "../features/todos/todoHooks/useGetPublicCompletedTodos"
+import PublicCompletedTodosList from "../../features/todos/PublicCompletedTodosList"
+import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { useGetPublicCompletedTodos } from "../../features/todos/todoHooks/useGetPublicCompletedTodos"
 
 const PublicCompletedTodosPage = () => {
   const {

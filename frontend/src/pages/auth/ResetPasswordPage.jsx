@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { useParams } from "react-router-dom"
-import { showAppToast } from "../utils/showAppToast"
+import { showAppToast } from "../../utils/showAppToast"
 import { MdPassword } from "react-icons/md"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
-import { useResetPasswordRequest } from "../features/auth/authHooks/useResetPasswordRequest"
+import { useResetPasswordRequest } from "../../features/auth/authHooks/useResetPasswordRequest"
 
 const ResetPasswordPage = () => {
   const { token } = useParams()

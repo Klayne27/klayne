@@ -1,7 +1,7 @@
 import { useState } from "react"
 import { Link } from "react-router-dom"
 import { MdOutlineMail } from "react-icons/md"
-import { useForgotPasswordRequest } from "../features/auth/authHooks/useForgotPasswordRequest"
+import { useForgotPasswordRequest } from "../../features/auth/authHooks/useForgotPasswordRequest"
 
 const ForgotPasswordPage = () => {
   const [email, setEmail] = useState("")

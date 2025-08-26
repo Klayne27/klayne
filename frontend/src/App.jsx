@@ -14,10 +14,10 @@ import LoadingSpinner from "./components/common/LoadingSpinner"
 import { useState } from "react"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
 
-const LoginPage = lazy(() => import("./pages/LoginPage"))
-const SignupPage = lazy(() => import("./pages/SignupPage"))
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
-const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
+const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
+const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
+const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"))
+const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
 
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
