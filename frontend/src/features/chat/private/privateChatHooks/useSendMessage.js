@@ -101,7 +101,27 @@ export const useSendMessage = (onSenderMessageSent) => {
           ),
         }
       })
+      queryClient.setQueryData(conversationKeys.list(), (oldData) => {
+        if (!oldData) return oldData
+        return oldData.map((conversation) => {
+          if (conversation._id === newMessage.conversationId) {
+            return {
+              ...conversation,
+              lastMessage: {
+                text: newMessage.text,
+                sender: newMessage.sender,
+                img: newMessage.img,
+                seen: newMessage.seen,
+                messageId: newMessage._id,
+              },
+              updatedAt: newMessage.createdAt,
+            }
+          }
+          return conversation
+        })
+      })
     },
+
     onError: (err, variables, context) => {
       showAppToast(err.message, "error")
       // 6. On error, revert the optimistic updates

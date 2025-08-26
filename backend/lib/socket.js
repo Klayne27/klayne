@@ -86,7 +86,6 @@ export async function emitUnreadMessageStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
 
-    // Fetch user's block list first
     const user = await User.findById(userIdObj).select("blockedUsers blockedBy").lean();
     const blockedUserIds = [
       ...(user?.blockedUsers?.map((id) => id.toString()) || []),
@@ -96,17 +95,14 @@ export async function emitUnreadMessageStatus(userId) {
       (id) => new mongoose.Types.ObjectId(id)
     );
 
-    // Find conversations where the user is a participant BUT the other participants are NOT blocked
     const conversations = await Conversation.find({
       participants: userIdObj,
       hiddenFor: { $ne: userIdObj },
     }).select("participants");
 
-    // Filter out conversations with blocked users in code for clarity
     const eligibleConversationIds = conversations
       .filter((conv) => {
         const otherParticipant = conv.participants.find((p) => p && !p.equals(userIdObj));
-        // If there's no other participant or the other is blocked, exclude it
         return (
           otherParticipant &&
           !blockedUserObjectIds.some((blockedId) => blockedId.equals(otherParticipant))
@@ -114,7 +110,6 @@ export async function emitUnreadMessageStatus(userId) {
       })
       .map((conv) => conv._id);
 
-    // Exclude the currently active chat from the count
     const activeConversationId = userActiveChats.get(userId.toString());
     if (activeConversationId) {
       const index = eligibleConversationIds.findIndex(
@@ -125,20 +120,15 @@ export async function emitUnreadMessageStatus(userId) {
       }
     }
 
-    // Count unread messages in the final list of eligible conversations
     const unreadMessageCount = await Message.countDocuments({
       conversationId: { $in: eligibleConversationIds },
       sender: { $ne: userIdObj },
       seen: false,
     });
 
-    // --- DEBUG LOG 2 ---
-
-    // This part relies on a CORRECT getReceiverSocketIds implementation
     const recipientSocketIds = getReceiverSocketIds(userId);
 
     if (recipientSocketIds.length > 0) {
-      // We emit to the room created by the array of socket IDs
       io.to(recipientSocketIds).emit("unreadMessageStatus", { unreadMessageCount });
     }
   } catch (error) {
@@ -388,7 +378,7 @@ io.on("connection", async (socket) => {
       }
       onlineUsersMap.get(userId).add(socket.id);
 
-      console.log(`User connected: ${username}`);
+      console.log(`User connected: ${username} - ${userId}`);
 
       if (user && user.isBannedInPublicChat) {
         socket.isBannedInPublicChat = true; // Attach flag to socket for easier checks
@@ -530,80 +520,102 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("markMessagesAsSeen", async ({ conversationId }) => {
-    try {
-      const readerId = socket.userId;
-      const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
-      const readerObjectId = new mongoose.Types.ObjectId(readerId);
+socket.on("markMessagesAsSeen", async ({ conversationId }) => {
+  try {
+    const readerId = socket.userId;
+    const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
+    const readerObjectId = new mongoose.Types.ObjectId(readerId);
 
-      // Update the last message in the conversation if it was sent by the other user and is currently unseen
-      const conversationUpdateResult = await Conversation.updateOne(
-        {
-          _id: conversationObjectId,
-          "lastMessage.sender": { $ne: readerObjectId },
-          "lastMessage.seen": false,
-        },
-        { $set: { "lastMessage.seen": true } },
-        { timestamps: false } // Don't bump the `updatedAt` timestamp just for a 'seen' update
-      );
+    // First, check if there are actually unseen messages to avoid unnecessary updates
+    const unseenMessagesCount = await Message.countDocuments({
+      conversationId: conversationObjectId,
+      sender: { $ne: readerObjectId },
+      seen: false,
+    });
 
-      // Also mark all individual messages as seen
-      await Message.updateMany(
-        {
-          conversationId: conversationObjectId,
-          sender: { $ne: readerObjectId },
-          seen: false,
-        },
-        { $set: { seen: true } }
-      );
-
-      // --- CORE FIX: If the conversation's lastMessage was updated, fetch and emit it ---
-      if (conversationUpdateResult.modifiedCount > 0) {
-        // Fetch the now-updated conversation with populated details
-        const updatedConversation = await Conversation.findById(conversationObjectId)
-          .populate({
-            path: "participants",
-            select: "username fullName isVerified isGoldVerified badges",
-            populate: {
-              path: "profileImg",
-              select: "imageUrl",
-            },
-          })
-          .populate({
-            path: "lastMessage.sender",
-            select: "username  fullName isVerified isGoldVerified badges",
-            populate: {
-              path: "profileImg",
-              select: "imageUrl",
-            },
-          });
-
-        if (updatedConversation) {
-          // Emit the full conversation object to all participants so their UI (sidebar) updates
-          updatedConversation.participants.forEach((participant) => {
-            const participantSocketIds = getReceiverSocketIds(participant._id.toString());
-            io.to(participantSocketIds).emit("conversationUpdated", updatedConversation);
-          });
-        }
-      }
-
-      // You can still emit messagesSeen for the sender of the original message
-      const initialConversation = await Conversation.findById(
-        conversationObjectId
-      ).select("participants");
-      if (initialConversation) {
-        const otherParticipantId = initialConversation.participants.find(
-          (pId) => pId.toString() !== readerId.toString()
-        );
-        if (otherParticipantId) {
-          const senderSocketIds = getReceiverSocketIds(otherParticipantId.toString());
-          io.to(senderSocketIds).emit("messagesSeen", { conversationId, readerId });
-        }
-      }
-    } catch (error) {
-      console.error("Error marking messages as seen (socket):", error);
+    if (unseenMessagesCount === 0) {
+      return; // No unseen messages, no need to proceed
     }
-  });
+
+    // Use a transaction to ensure consistency
+    const session = await mongoose.startSession();
+
+    try {
+      await session.withTransaction(async () => {
+        // Update all individual messages as seen
+        await Message.updateMany(
+          {
+            conversationId: conversationObjectId,
+            sender: { $ne: readerObjectId },
+            seen: false,
+          },
+          { $set: { seen: true } },
+          { session }
+        );
+
+        // Update the conversation's lastMessage.seen only if it was sent by the other user
+        await Conversation.updateOne(
+          {
+            _id: conversationObjectId,
+            "lastMessage.sender": { $ne: readerObjectId },
+            "lastMessage.seen": false,
+          },
+          { $set: { "lastMessage.seen": true } },
+          { timestamps: false, session }
+        );
+      });
+    } finally {
+      await session.endSession();
+    }
+
+    // Fetch the updated conversation once after the transaction
+    const updatedConversation = await Conversation.findById(conversationObjectId)
+      .populate({
+        path: "participants",
+        select: "username fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate({
+        path: "lastMessage.sender",
+        select: "username fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      });
+
+    if (updatedConversation) {
+      // Emit to all participants
+      updatedConversation.participants.forEach((participant) => {
+        const participantSocketIds = getReceiverSocketIds(participant._id.toString());
+        if (participantSocketIds.length > 0) {
+          io.to(participantSocketIds).emit("conversationUpdated", updatedConversation);
+        }
+      });
+
+      // Emit messagesSeen event to the sender only
+      const otherParticipantId = updatedConversation.participants.find(
+        (pId) => pId._id.toString() !== readerId.toString()
+      );
+
+      if (otherParticipantId) {
+        const senderSocketIds = getReceiverSocketIds(otherParticipantId._id.toString());
+        if (senderSocketIds.length > 0) {
+          io.to(senderSocketIds).emit("messagesSeen", {
+            conversationId,
+            readerId,
+            messageCount: unseenMessagesCount,
+          });
+        }
+      }
+    }
+  } catch (error) {
+    console.error("Error marking messages as seen (socket):", error);
+  }
+});
 
   socket.on("userActiveInChat", ({ conversationId }) => {
     userActiveChats.set(userId, conversationId ? conversationId.toString() : null);
@@ -736,46 +748,57 @@ io.on("connection", async (socket) => {
     }
   });
 
-  socket.on("disconnect", () => {
-    const disconnectedUserId = socket.userId;
+socket.on("disconnect", () => {
+  const disconnectedUserId = socket.userId;
 
-    const userInfo = socketUserMap.get(socket.id);
-    const username = userInfo?.username || "Unknown User";
+  const userInfo = socketUserMap.get(socket.id);
+  const username = userInfo?.username || "Unknown User";
+  const userId = userInfo?.userId
 
-    console.log(`User disconnected: ${username}`);
+  console.log(`User disconnected: ${username} - ${userId}`);
 
-    if (!disconnectedUserId) {
-      return;
-    }
+  if (!disconnectedUserId) {
+    return;
+  }
 
-    activePublicChatUsers.delete(disconnectedUserId);
-    userActiveChats.delete(disconnectedUserId.toString()); // Use the correct variable
+  // Check if user was active in any chat before cleaning up
+  const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
+  const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
 
-    // Clean up from public chat typing list
-    if (publicChatTypingUsers.has(disconnectedUserId)) {
-      publicChatTypingUsers.delete(disconnectedUserId);
-      // Notify others in the room that this user stopped typing
-      io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
-        typingUsers: Array.from(publicChatTypingUsers.values()),
+  activePublicChatUsers.delete(disconnectedUserId);
+  userActiveChats.delete(disconnectedUserId.toString());
+
+  // Clean up from public chat typing list
+  if (publicChatTypingUsers.has(disconnectedUserId)) {
+    publicChatTypingUsers.delete(disconnectedUserId);
+    io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
+      typingUsers: Array.from(publicChatTypingUsers.values()),
+    });
+  }
+
+  const userSockets = onlineUsersMap.get(disconnectedUserId);
+  if (userSockets) {
+    userSockets.delete(socket.id);
+    if (userSockets.size === 0) {
+      // User is completely offline now
+      onlineUsersMap.delete(disconnectedUserId);
+
+      // Clean up typing status
+      typingUsersInConversation.forEach((typingUsers, convId) => {
+        if (typingUsers.has(disconnectedUserId)) {
+          typingUsers.delete(disconnectedUserId);
+        }
       });
-    }
 
-    const userSockets = onlineUsersMap.get(disconnectedUserId);
-    if (userSockets) {
-      userSockets.delete(socket.id);
-      if (userSockets.size === 0) {
-        onlineUsersMap.delete(disconnectedUserId);
-
-        typingUsersInConversation.forEach((typingUsers, convId) => {
-          if (typingUsers.has(disconnectedUserId)) {
-            typingUsers.delete(disconnectedUserId);
-          }
-        });
+      // If user was active in a chat, update unread status for that conversation
+      if (wasActiveInChat && activeConversationId) {
+        emitUnreadMessageStatus(disconnectedUserId);
       }
     }
+  }
 
-    io.emit("getOnlineUsers", getOnlineUserIds());
-  });
+  io.emit("getOnlineUsers", getOnlineUserIds());
+});
 });
 
 const CHECK_INTERVAL = 60 * 1000; // Check every 1 minute

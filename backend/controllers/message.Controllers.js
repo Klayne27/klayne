@@ -88,7 +88,12 @@ export const sendMessage = async (req, res) => {
       conversation.hiddenFor = [];
     }
 
-    const isSeen = false;
+    const recipientActiveChat = userActiveChats.get(recipientId.toString());
+    const isRecipientInChat = recipientActiveChat === conversationId.toString();
+    const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
+    const isRecipientOnline = recipientSocketIds.length > 0;
+
+    const isSeen = isRecipientOnline && isRecipientInChat;
 
     let newImage = null;
     let uploadedImgUrl = "";
@@ -97,7 +102,6 @@ export const sendMessage = async (req, res) => {
       uploadedImgUrl = uploadedResponse.secure_url;
     }
 
-    // Now, with the blocking check in place, it's safe to create and save the message.
     const newMessage = new Message({
       conversationId: conversation._id,
       sender: senderId,
@@ -122,7 +126,7 @@ export const sendMessage = async (req, res) => {
       await newMessage.save();
     }
 
-    // Now, update the lastMessage in the conversation. This is now safe.
+    // Update the lastMessage in the conversation
     conversation.lastMessage = {
       text: newMessage.text,
       img: newMessage.img,
@@ -162,25 +166,11 @@ export const sendMessage = async (req, res) => {
       });
     }
 
-    if (newMessage.repliedTo) {
-      await newMessage.populate({
-        path: "repliedTo",
-        select: "text img sender createdAt",
-        populate: {
-          path: "sender",
-          select: "username",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
-        },
-      });
-    }
-
-    const recipientSocketIds = getReceiverSocketIds(recipientId.toString());
+    // Emit to recipient if they're online
     if (recipientSocketIds.length > 0) {
       io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
     } else {
+      // Send push notification only if recipient is offline
       const senderUser = await User.findById(senderId)
         .select("username")
         .populate("profileImg", "imageUrl")
@@ -192,7 +182,7 @@ export const sendMessage = async (req, res) => {
         128,
         128
       );
-      
+
       const payload = {
         title: `New Message from @${senderUsername}`,
         body: message || "Image Message",

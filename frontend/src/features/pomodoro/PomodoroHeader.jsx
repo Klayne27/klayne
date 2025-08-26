@@ -17,7 +17,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     return null
   }
 
-  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel, badges } = currentUser
+  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel, badges, isVerified, isGoldVerified } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
@@ -45,14 +45,17 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-1">
                   <h2 className="text-base font-bold sm:text-lg">{fullName}</h2>
-                  <img src={"/verified2.png"} className="size-[17px]" />
+                  {isVerified && <img src="/verified2.png" className="size-[17px]" />}
+                  {isGoldVerified && <img src="/gold-verified2.png" className="size-[17px]" />}
                   {renderHourBadge(badges)}
                   {renderSessionBadge(badges)}
                   {renderStreakBadge(badges)}
                 </div>
 
-                <span className="inline-flex items-center gap-1 rounded-md bg-secondary py-[1px] px-2">
-                  <span className="text-xs font-semibold text-slate-500">Level {pomodoroLevel}</span>
+                <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-[1px]">
+                  <span className="text-xs font-semibold text-slate-500">
+                    Level {pomodoroLevel}
+                  </span>
                 </span>
               </div>
             </div>

@@ -16,25 +16,38 @@ export const usePrivateChatSocketEvents = (
   const { authUser: currentUser } = useAuthUser()
   const currentUserId = currentUser?._id
 
-  const handleMessagesSeen = useCallback(
-    ({ conversationId: seenConversationId, readerId }) => {
-      if (seenConversationId.toString() === conversationId?.toString()) {
-        queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
-          if (!oldData) return oldData
-          const updatedPages = oldData.pages.map((page) =>
-            page.map((msg) =>
-              msg.sender && msg.sender._id.toString() === currentUserId.toString() && !msg.seen
-                ? { ...msg, seen: true }
-                : msg,
-            ),
-          )
+const handleMessagesSeen = useCallback(
+  ({ conversationId: seenConversationId, readerId, messageCount }) => {
+    if (seenConversationId.toString() === conversationId?.toString()) {
+      queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
+        if (!oldData) return oldData
+
+        let updatedCount = 0
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((msg) => {
+            if (
+              msg.sender &&
+              msg.sender._id.toString() === currentUserId.toString() &&
+              !msg.seen &&
+              !msg.isOptimistic
+            ) {
+              updatedCount++
+              return { ...msg, seen: true }
+            }
+            return msg
+          }),
+        )
+
+        // Only update if we actually changed some messages
+        if (updatedCount > 0) {
           return { ...oldData, pages: updatedPages }
-        })
-        // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
-      }
-    },
-    [conversationId, queryClient, currentUserId],
-  )
+        }
+        return oldData
+      })
+    }
+  },
+  [conversationId, queryClient, currentUserId],
+)
 
   const handleMessageDeleted = useCallback(
     ({ messageId, conversationId: deletedConversationId }) => {
