@@ -28,7 +28,7 @@ const NotificationPage = lazy(() => import("./pages/NotifcationPage"))
 const MessagesPage = lazy(() => import("./pages/MessagePage"))
 const PostPage = lazy(() => import("./pages/PostPage"))
 const SearchPage = lazy(() => import("./pages/SearchPage"))
-const TodoPageLayout = lazy(() => import("./components/layout/TodoPageLayout"))
+const TodoPage = lazy(() => import("./pages/TodoPage"))
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
@@ -85,8 +85,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
-              <Route path="/study-settings" element={<PomodoroSettingsPage />} />
-              <Route path="/todos" element={<TodoPageLayout />}>
+              <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />
+              <Route path="/todos" element={<TodoPage />}>
                 <Route index element={<MyTodoListsPage />} />
                 <Route path="following" element={<FollowingListsPage />} />
                 <Route path="public" element={<PublicListsPage />} />

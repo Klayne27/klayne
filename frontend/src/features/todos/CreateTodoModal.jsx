@@ -12,7 +12,7 @@ import { useCreateTodo } from "./todoHooks/useCreateTodo.js"
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
     type="button"
-    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors hover:bg-gray-700/70"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors hover:opacity-90"
     onClick={onClick}
     ref={ref}
   >
@@ -82,7 +82,7 @@ const CreateTodoModal = () => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-gray-700/70"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
       onClick={() => {
         setShowCreateTodoModal(false)
         setCurrentListIdForTodoCreation(null)
@@ -138,7 +138,7 @@ const CreateTodoModal = () => {
           <div className="relative mt-2 flex gap-2">
             <button
               type="button"
-              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm hover:bg-gray-700/70 ${getPriorityColor(priority)}`}
+              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm hover:opacity-90 ${getPriorityColor(priority)}`}
               onClick={(e) => {
                 e.stopPropagation()
                 setIsPriorityMenuOpen(!isPriorityMenuOpen)

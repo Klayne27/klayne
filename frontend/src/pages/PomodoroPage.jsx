@@ -374,7 +374,7 @@ const PomodoroPage = () => {
 
   const handleOpenSettingsPage = () => {
     if (isMobile) {
-      navigate("/study-settings")
+      navigate("/pomodoro-settings")
     } else {
       setIsSettingsOpen(true)
     }

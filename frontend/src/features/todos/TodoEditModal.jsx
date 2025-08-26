@@ -8,7 +8,7 @@ import { showAppToast } from "../../utils/showAppToast.js"
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
     type="button"
-    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors"
+    className="flex items-center gap-2 rounded-lg border border-slate-400 px-2 py-1 text-sm text-slate-400 transition-colors hover:opacity-90"
     onClick={onClick}
     ref={ref}
   >
@@ -170,7 +170,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
           <div className="relative mt-2 flex gap-2">
             <button
               type="button"
-              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm ${getPriorityColor(formData.priority)}`}
+              className={`flex items-center gap-2 rounded-lg border px-2 py-1 text-sm hover:opacity-90 ${getPriorityColor(formData.priority)}`}
               onMouseDown={(e) => e.preventDefault()}
               onClick={(e) => {
                 e.stopPropagation()
