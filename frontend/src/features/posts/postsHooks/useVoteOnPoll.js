@@ -28,66 +28,62 @@ export const useVoteOnPoll = () => {
         postKeys.details(postId),
         postKeys.user(username),
         postKeys.likes(username),
-      ].filter((key) => queryClient.getQueryData(key)) // Filter out keys that don't have cached data.
+      ].filter((key) => queryClient.getQueryData(key))
 
-      // Step 2: Cancel ongoing queries and capture the previous state for rollback.
+      // Step 2: Cancel ongoing queries and capture previous state.
       await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
       const previousData = keysToUpdate.reduce((acc, key) => {
         acc[JSON.stringify(key)] = queryClient.getQueryData(key)
         return acc
       }, {})
 
-      // Step 3: Loop through all relevant caches and perform the optimistic update.
-      keysToUpdate.forEach((key) => {
-        queryClient.setQueryData(key, (oldData) => {
-          console.log(key);
-          // Handle the case where the data is a single post object (details query).
-          if (key[1] === "details") {
-            const hasVoted = oldData.pollOptions.some((option) =>
-              option.voters.includes(currentUser._id),
-            )
-            if (hasVoted) return oldData // User has already voted, no update needed.
-
-            const newPollOptions = oldData.pollOptions.map((option) =>
+      // Helper function for the update logic to avoid repetition
+      const updatePostInList = (posts) =>
+        posts?.map((post) => {
+          if (post._id === postId) {
+            const newPollOptions = post.pollOptions.map((option) =>
               option._id === optionId
                 ? { ...option, voters: [...option.voters, currentUser._id] }
                 : option,
             )
             return {
-              ...oldData,
+              ...post,
               pollOptions: newPollOptions,
-              pollTotalVotes: oldData.pollTotalVotes + 1,
+              pollTotalVotes: post.pollTotalVotes + 1,
+            }
+          }
+          return post
+        })
+
+      // Step 3: Loop through all relevant caches and perform the optimistic update.
+      keysToUpdate.forEach((key) => {
+        queryClient.setQueryData(key, (oldData) => {
+          if (!oldData) return oldData
+
+          // Case 1: Handle infinite query data structure { pages: [...] }
+          if (oldData.pages) {
+            return {
+              ...oldData,
+              pages: oldData.pages.map((page) => ({
+                ...page,
+                posts: updatePostInList(page.posts),
+              })),
             }
           }
 
-          // Handle the case where the data is an infinite list (e.g., feed, user posts).
-          if (!oldData || !oldData.pages) return oldData
-console.log('oldData', oldData);
-          const newPages = oldData.pages.map((page) => {
-            const updatedPosts = page.posts?.map((post) => {
-              if (post._id === postId) {
-                const hasVoted = post.pollOptions.some((option) =>
-                  option.voters.includes(currentUser._id),
-                )
-                if (hasVoted) return post // User has already voted, no update needed.
+          // Case 2: Handle simple array of posts [post1, post2, ...]
+          if (Array.isArray(oldData)) {
+            return updatePostInList(oldData)
+          }
 
-                const newPollOptions = post.pollOptions.map((option) =>
-                  option._id === optionId
-                    ? { ...option, voters: [...option.voters, currentUser._id] }
-                    : option,
-                )
-                
-                return {
-                  ...post,
-                  pollOptions: newPollOptions,
-                  pollTotalVotes: post.pollTotalVotes + 1,
-                }
-              }
-              return post
-            })
-            return { ...page, posts: updatedPosts }
-          })
-          return { ...oldData, pages: newPages }
+          // Case 3: Handle a single post object { _id: ..., ... }
+          // This will cover the post details page
+          if (oldData._id === postId) {
+            return updatePostInList([oldData])[0] // Reuse the helper
+          }
+
+          // If the data structure is unrecognized, return it unchanged.
+          return oldData
         })
       })
 
