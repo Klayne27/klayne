@@ -1,10 +1,8 @@
-import { useInfiniteQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery } from "@tanstack/react-query"
 import { getPublicCompletedTodosApi } from "../../../api/todoApi"
 import { todoKeys } from "./todoKeys"
-import { useEffect } from "react"
 
 export const useGetPublicCompletedTodos = () => {
-  const queryClient = useQueryClient()
   const {
     data: publicCompletedTodos,
     isLoading: isLoadingPublicCompletedTodos,
@@ -13,7 +11,7 @@ export const useGetPublicCompletedTodos = () => {
     isFetchingNextPage,
     fetchNextPage,
   } = useInfiniteQuery({
-    queryKey: todoKeys.list("public"),
+    queryKey: todoKeys.completed("public"),
     queryFn: getPublicCompletedTodosApi,
     getNextPageParam: (lastPage, allPages) => {
       const hasNextPage = lastPage.hasNextPage
@@ -24,11 +22,6 @@ export const useGetPublicCompletedTodos = () => {
     },
   })
 
-  useEffect(() => {
-    return () => {
-      queryClient.removeQueries({ queryKey: todoKeys.list("public") })
-    }
-  }, [queryClient])
 
   return {
     hasNextPage,
