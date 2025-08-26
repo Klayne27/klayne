@@ -4,7 +4,6 @@ import { toggleBookmarkApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
 import { showAppToast } from "../../../utils/showAppToast"
 
-
 const updatePostBookmarkStatus = (data, postId, userId) => {
   if (!data) return data
 
@@ -69,6 +68,7 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
         console.warn("No authenticated user ID for optimistic bookmark update.")
         return
       }
+
 
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
