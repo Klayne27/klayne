@@ -69,11 +69,7 @@ const Post = ({
     (pinnedPost) => pinnedPost._id === sourcePost._id,
   )
 
-  // const isPostOwner = authUser && authUser._id === post.user._id
-
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
-
-  // const { userProfile } = useFetchUserProfile(username)
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 

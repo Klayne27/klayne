@@ -6,7 +6,7 @@ import { useDebounce } from "../hooks/customHooks/useDebounce";
 import { useSearchUsers } from "../hooks/usersHooks/userSearchUsers";
 import { useIsMobile } from "../hooks/customHooks/useIsMobile";
 import { useGetPost } from "../features/posts/postsHooks/useGetPost";
-import { useFetchComments } from "../features/comments/commentHooks/useFetchComments";
+import { useGetComments } from "../features/comments/commentHooks/useGetComments";
 import { useCreateComment } from "../features/comments/commentHooks/useCreateComment";
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler";
 import { showAppToast } from "../utils/showAppToast";
@@ -69,7 +69,7 @@ const PostPage = () => {
     hasNextPage: hasNextCommentsPage,
     fetchNextPage: fetchNextCommentsPage,
     refetch: refetchComments,
-  } = useFetchComments(pid, null);
+  } = useGetComments(pid, null);
 
   const { createComment, isCreatingComment } = useCreateComment(pid, null);
 

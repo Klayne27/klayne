@@ -7,7 +7,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useLikeComment } from "./commentHooks/useLikeComment"
 import { useDeleteComment } from "./commentHooks/useDeleteComment"
 import { useCreateComment } from "./commentHooks/useCreateComment"
-import { useFetchComments } from "./commentHooks/useFetchComments"
+import { useGetComments } from "./commentHooks/useGetComments"
 import { renderClickableText } from "../../utils/textUtils"
 import { BiImageAdd } from "react-icons/bi"
 import { IoClose } from "react-icons/io5"
@@ -61,7 +61,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     isFetchingNextPage: isFetchingNextRepliesPage,
     hasNextPage: hasNextRepliesPage,
     fetchNextPage: fetchNextRepliesPage,
-  } = useFetchComments(postId, comment._id, showRepliesSection) // Pass showRepliesSection to enable fetching
+  } = useGetComments(postId, comment._id, showRepliesSection) // Pass showRepliesSection to enable fetching
 
   const observerTarget = useRef(null)
 
