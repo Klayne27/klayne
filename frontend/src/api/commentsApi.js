@@ -1,6 +1,6 @@
 const BASE_URL = "/api/comments";
 
-export const fetchCommentsApi = async ({
+export const getCommentsApi = async ({
   postId,
   parentCommentId = null,
   page = 1,

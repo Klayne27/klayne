@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { fetchCommentsApi } from "../../../api/commentsApi";
+import { getCommentsApi } from "../../../api/commentsApi";
 
-export const useFetchComments = (postId, parentCommentId = null, enabled = true) => {
+export const useGetComments = (postId, parentCommentId = null, enabled = true) => {
   const isOptimisticId =
     parentCommentId &&
     typeof parentCommentId === "string" &&
@@ -28,7 +28,7 @@ export const useFetchComments = (postId, parentCommentId = null, enabled = true)
   } = useInfiniteQuery({
     queryKey: queryKey,
     queryFn: async ({ pageParam = 1 }) =>
-      fetchCommentsApi({
+      getCommentsApi({
         postId,
         parentCommentId: effectiveParentCommentId,
         page: pageParam,
