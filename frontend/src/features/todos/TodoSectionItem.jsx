@@ -8,7 +8,7 @@ import { useTodoStore } from "../../store/useTodoStore"
 import { FaEllipsisVertical, FaPlus, FaTrashCan, FaHeart, FaRegHeart } from "react-icons/fa6"
 import { RxCaretDown, RxCaretUp } from "react-icons/rx"
 import TodoList from "./TodoList"
-import AnimatedCount from "../../components/ui/AnimatedCount"
+import AnimatedCount from "../../components/common/AnimatedCount"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { useState } from "react"
 import { useEffect } from "react"
@@ -47,8 +47,8 @@ const TodoSectionItem = forwardRef(
     const { likeUnlikeTodoList, isLiking } = useLikeUnlikeTodoList()
     const isMobile = useIsMobile()
 
-    const IconComponent = iconMap[list.icon]
-    const isListOpen = selectedTodoListIds.includes(list._id)
+    const IconComponent = iconMap[list?.icon]
+    const isListOpen = selectedTodoListIds.includes(list?._id)
 
     const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
       useTouchHoverEffect()
@@ -57,27 +57,27 @@ const TodoSectionItem = forwardRef(
 
     const handleToggleListDropdown = (e) => {
       e.stopPropagation()
-      setOpenListDropdownId(openListDropdownId === list._id ? null : list._id)
+      setOpenListDropdownId(openListDropdownId === list?._id ? null : list?._id)
       setOpenTodoDropdownId(null)
     }
 
     const handleToggleTodoList = (e) => {
       e.stopPropagation()
-      toggleTodoList(list._id)
+      toggleTodoList(list?._id)
       setOpenListDropdownId(null)
       setOpenTodoDropdownId(null)
     }
 
     const handleOpenMobileForm = (e) => {
       e.stopPropagation()
-      setCurrentListIdForTodoCreation(list._id)
+      setCurrentListIdForTodoCreation(list?._id)
       setIsMenuOpen(true)
       setOpenListDropdownId(null)
     }
 
     const handleOpenDesktopForm = (e) => {
       e.stopPropagation()
-      setCurrentListIdForTodoCreation(list._id)
+      setCurrentListIdForTodoCreation(list?._id)
       setShowCreateTodoModal(true)
       setOpenListDropdownId(null)
     }
@@ -94,7 +94,7 @@ const TodoSectionItem = forwardRef(
       setIsAnimatingLike(true)
 
       if (isLiking) return
-      likeUnlikeTodoList({ listId: list._id, authUserId: authUser._id })
+      likeUnlikeTodoList({ listId: list?._id, authUserId: authUser._id })
     }
 
     useEffect(() => {
@@ -119,13 +119,13 @@ const TodoSectionItem = forwardRef(
           {pathname.startsWith("/todos/") && (
             <div className="flex items-center gap-3 p-2">
               <img
-                src={list.owner.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                src={list?.owner.profileImg?.imageUrl || "/avatar-placeholder.png"}
                 className="size-8 rounded-full object-cover"
-                alt={`${list.owner.username}'s profile`}
+                alt={`${list?.owner.username}'s profile`}
               />
               <div className="flex flex-col">
-                <p className="text-sm font-bold">{list.owner.fullName}</p>
-                <p className="text-xs text-gray-500">@{list.owner.username}</p>
+                <p className="text-sm font-bold">{list?.owner.fullName}</p>
+                <p className="text-xs text-gray-500">@{list?.owner.username}</p>
               </div>
               <div
                 className="group flex cursor-pointer items-center rounded-full"
@@ -154,7 +154,7 @@ const TodoSectionItem = forwardRef(
                   )}
                 </div>
                 <AnimatedCount
-                  count={list.likes?.length || 0}
+                  count={list?.likes?.length || 0}
                   className={`absolute text-sm transition duration-200 group-hover:text-pink-600 ${
                     isLiked ? "text-pink-600" : "text-slate-500"
                   }`}
@@ -167,10 +167,10 @@ const TodoSectionItem = forwardRef(
             <div className="flex justify-between">
               <div className="flex w-full items-center gap-2" onClick={handleToggleTodoList}>
                 <span className="flex items-center gap-2 font-bold">
-                  {IconComponent ? <IconComponent className={`${colorMap[list.color]}`} /> : ""}
-                  {list.name}
+                  {IconComponent ? <IconComponent className={`${colorMap[list?.color]}`} /> : ""}
+                  {list?.name}
                 </span>
-                <span className="text-xs">{list.todos.length || ""}</span>
+                <span className="text-xs">{list?.todos.length || ""}</span>
               </div>
 
               <div className="relative flex gap-1">
@@ -192,7 +192,7 @@ const TodoSectionItem = forwardRef(
                     <FaEllipsisVertical size={16} />
                   </button>
                 }
-                {openListDropdownId === list._id && (
+                {openListDropdownId === list?._id && (
                   <>
                     <div
                       className="fixed inset-0 z-50 cursor-default bg-transparent"
@@ -217,7 +217,7 @@ const TodoSectionItem = forwardRef(
                         <button
                           onClick={(e) => {
                             isMobile
-                              ? navigate(`/todos/edit-todo-section/${list._id}`, {
+                              ? navigate(`/todos/edit-todo-section/${list?._id}`, {
                                   state: { list },
                                 })
                               : handleEditClick(e)
@@ -232,7 +232,7 @@ const TodoSectionItem = forwardRef(
                         <button
                           onClick={(e) => {
                             e.stopPropagation()
-                            deleteTodoList(list._id)
+                            deleteTodoList(list?._id)
                             setOpenListDropdownId(null)
                           }}
                           className="flex w-full items-center gap-2 rounded-md p-2 text-red-400 transition-colors hover:bg-secondary"
@@ -250,7 +250,7 @@ const TodoSectionItem = forwardRef(
           {isListOpen && (
             <div className="pl-5">
               <TodoList
-                todos={list.todos}
+                todos={list?.todos}
                 openTodoDropdownId={openTodoDropdownId}
                 setOpenTodoDropdownId={setOpenTodoDropdownId}
               />

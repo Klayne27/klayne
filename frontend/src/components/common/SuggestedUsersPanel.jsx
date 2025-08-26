@@ -5,8 +5,8 @@ import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { BiRefresh } from "react-icons/bi"
 import React, { useState } from "react"
-import FollowButton from "../ui/FollowButton"
-import ConfirmationModal from "../ui/ConfirmationModal"
+import FollowButton from "./FollowButton"
+import ConfirmationModal from "./ConfirmationModal"
 import { useAppStore } from "../../store/useAppStore"
 
 const SuggestedUsersPanel = () => {

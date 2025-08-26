@@ -1,7 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
 import { useImage } from "../../hooks/imageHooks/useImage"
-import LoadingSpinner from "../ui/LoadingSpinner"
+import LoadingSpinner from "./LoadingSpinner"
 
 const ImageViewerPage = () => {
   const { imageId } = useParams()

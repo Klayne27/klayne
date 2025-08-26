@@ -1,10 +1,8 @@
-
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
 import { formatTime } from "../../utils/date/index.js"
 import { FaCheck } from "react-icons/fa6"
-import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx"
-
+import LoadingSpinner from "../../components/common/LoadingSpinner.jsx"
 
 const PublicCompletedTodosList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
@@ -57,9 +55,8 @@ const PublicCompletedTodosList = forwardRef(
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate">
-                          <strong>{todo.user.fullName}</strong> completed a
-                          task:{" "}
-                          <strong className={getTextColor(todo.priority)}>{todo?.title}</strong>
+                          <strong>{todo?.user?.fullName}</strong> completed a task:{" "}
+                          <strong className={getTextColor(todo?.priority)}>{todo?.title}</strong>
                         </p>
                         <p className="text-slate-400">{formatTime(todo?.completedAt)}</p>
                       </div>
@@ -77,14 +74,17 @@ const PublicCompletedTodosList = forwardRef(
                   </li>
                 )
               })}
+              {/* This is the key change: wrap the LoadingSpinner in a list item with a unique key. */}
+              {hasNextPage && isFetchingNextPage && (
+                <li key="loading-spinner-item">
+                  <div className="flex justify-center p-4">
+                    <LoadingSpinner />
+                  </div>
+                </li>
+              )}
             </ul>
           </div>
         ))}
-        {hasNextPage && isFetchingNextPage && (
-          <div className="flex justify-center p-4">
-            <LoadingSpinner />
-          </div>
-        )}
       </>
     )
   },

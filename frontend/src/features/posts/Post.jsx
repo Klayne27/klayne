@@ -4,7 +4,7 @@ import { FaRegHeart } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
 
 import { Link, useLocation, useNavigate, useParams } from "react-router-dom"
-import LoadingSpinner from "../../components/ui/LoadingSpinner"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { formatPostDate } from "../../utils/date"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { useDeletePosts } from "./postsHooks/useDeletePosts"
@@ -24,7 +24,7 @@ import { MdBlock } from "react-icons/md"
 import { useAppStore } from "../../store/useAppStore"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
-import AnimatedCount from "../../components/ui/AnimatedCount"
+import AnimatedCount from "../../components/common/AnimatedCount"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 
 const Post = ({

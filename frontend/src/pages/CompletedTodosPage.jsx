@@ -1,6 +1,6 @@
 import CompletedTodoList from "../features/todos/CompletedTodoList"
 import TodoPagesHeader from "../features/todos/TodoPagesHeader"
-import LoadingSpinner from "../components/ui/LoadingSpinner"
+import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useInView } from "react-intersection-observer"
 import { useEffect } from "react"
 import { useGetCompletedTodos } from "../features/todos/todoHooks/useGetCompletedTodos"

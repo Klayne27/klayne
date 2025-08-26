@@ -4,7 +4,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
 import { FaFire, FaInfoCircle } from "react-icons/fa"
 
-import LoadingSpinner from "../components/ui/LoadingSpinner"
+import LoadingSpinner from "../components/common/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 import { IoClose } from "react-icons/io5"

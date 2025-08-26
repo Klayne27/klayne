@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock } from "react-icons/fa6"
 import { FaFire } from "react-icons/fa"
 
-import LoadingSpinner from "../components/ui/LoadingSpinner"
+import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"

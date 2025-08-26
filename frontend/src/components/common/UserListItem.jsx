@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser";
-import FollowButton from "../ui/FollowButton";
+import FollowButton from "./FollowButton";
 
 const UserListItem = ({ user: listUser }) => {
   const { authUser } = useAuthUser();

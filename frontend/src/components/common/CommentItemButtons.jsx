@@ -1,4 +1,3 @@
-import { useCallback, useEffect, useState } from "react"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { FaHeart, FaRegHeart, FaReply } from "react-icons/fa6"
 import { FaChevronDown, FaChevronUp } from "react-icons/fa6"

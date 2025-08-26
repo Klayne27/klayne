@@ -10,7 +10,7 @@ import { useFetchComments } from "../features/comments/commentHooks/useFetchComm
 import { useCreateComment } from "../features/comments/commentHooks/useCreateComment";
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler";
 import { showAppToast } from "../utils/showAppToast";
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import CommentItem from "../features/comments/CommentItem";
 import CommentsSkeleton from "../components/skeletons/CommentsSkeleton";
 import Post from "../features/posts/Post";

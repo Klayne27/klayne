@@ -1,12 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { IoClose } from "react-icons/io5"
 
-import { useUpdateScheduledPost } from "../../../features/posts/postsHooks/useUpdateScheduledPost"
-import { useAuthUser } from "../../../features/auth/authHooks/useAuthUser"
+import { useUpdateScheduledPost } from "../postsHooks/useUpdateScheduledPost"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { PiSmiley } from "react-icons/pi"
 import EmojiPicker from "emoji-picker-react"
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
-import DateTimeSelector from "../../ui/DateTimeSelector"
+import DateTimeSelector from "../../../components/common/DateTimeSelector"
 import useDateTimeStore from "../../../store/useDateTimeStore"
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
@@ -116,7 +116,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
         {/* Post Text Editing */}
         <div className="flex gap-3 border-b border-slate-500 p-4">
-          <img src={authUser?.profileImg} className="size-8 rounded-full object-cover md:size-10" />
+          <img src={authUser?.profileImg?.imageUrl} className="size-8 rounded-full object-cover md:size-10" />
           <div className="flex flex-1 flex-col">
             <textarea
               className="flex-1 resize-none rounded-lg bg-base-100 text-xl focus:outline-none"

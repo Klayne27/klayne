@@ -5,7 +5,7 @@ import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
 import ImageViewerPage from "./components/common/ImageViewerPage"
 import CreatePostModal from "./features/posts/CreatePostModal"
-import LoadingSpinner from "./components/ui/LoadingSpinner"
+import LoadingSpinner from "./components/common/LoadingSpinner"
 
 const PublicCompletedTodosPage = lazy(() => import("./pages/PublicCompletedTodosPage"))
 const EditTodoListPage = lazy(() => import("./pages/EditTodoListPage"))

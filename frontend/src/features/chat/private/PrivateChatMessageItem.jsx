@@ -12,7 +12,7 @@ import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreA
 import { useChatHandlers } from "../../../hooks/customHooks/useChatHandlers"
 import { getMessageBubbleClasses } from "../../../utils/getMessageBubbleClasses"
 import MessageActionsModal from "../components/MessageActionsModal"
-import DateSeparator from "../../../components/ui/DateSeperator"
+import DateSeparator from "../../../components/common/DateSeperator"
 import MoreMessageActionsModal from "../components/MoreMessageActionsModal"
 import MessageContentLayout from "../components/MessageContentLayout"
 import ShowMessageTimeOnHover from "../components/ShowMessageTimeOnHover"

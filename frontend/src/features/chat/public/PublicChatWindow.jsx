@@ -2,7 +2,7 @@ import { useRef, useEffect, useCallback } from "react"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import PublicChatHeader from "./PublicChatHeader"
-import LoadingSpinner from "../../../components/ui/LoadingSpinner"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import PublicChatMessageList from "./PublicChatMessageList"
 import PublicChatMessageInput from "./PublicChatMessageInput"
 

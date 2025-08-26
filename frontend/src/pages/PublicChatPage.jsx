@@ -1,4 +1,4 @@
-import LoadingSpinner from "../components/ui/LoadingSpinner";
+import LoadingSpinner from "../components/common/LoadingSpinner";
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
 import PublicChatWindow from "../features/chat/public/PublicChatWindow";
 

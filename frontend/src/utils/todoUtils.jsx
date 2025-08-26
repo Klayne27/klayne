@@ -221,7 +221,7 @@ export const groupTodosByDate = (todos) => {
   }
 
   todos.forEach((todo) => {
-    const completedAtDate = new Date(todo.completedAt || todo.createdAt)
+    const completedAtDate = new Date(todo?.completedAt || todo?.createdAt)
     const dateKey = completedAtDate.toDateString() // e.g., "Wed Aug 20 2025"
     const displayLabel = getDayLabel(completedAtDate)
 
@@ -237,7 +237,7 @@ export const groupTodosByDate = (todos) => {
   // Convert object to array and sort by date descending
   return Object.values(groups).sort(
     (a, b) =>
-      new Date(b.todos[0].completedAt || b.todos[0].createdAt) -
-      new Date(a.todos[0].completedAt || a.todos[0].createdAt),
+      new Date(b?.todos[0]?.completedAt || b?.todos[0]?.createdAt) -
+      new Date(a?.todos[0]?.completedAt || a?.todos[0]?.createdAt),
   )
 }

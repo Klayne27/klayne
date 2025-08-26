@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom" 
-import LoadingSpinner from "../components/ui/LoadingSpinner"
+import LoadingSpinner from "../components/common/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
 import { useGetPomodoroSettings } from "../features/pomodoro/pomodoroHooks/useGetPomodoroSettings"
 import { useUpdatePomodoroSettings } from "../features/pomodoro/pomodoroHooks/useUpdatePomodoroSettings"

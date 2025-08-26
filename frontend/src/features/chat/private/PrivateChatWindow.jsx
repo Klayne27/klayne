@@ -7,12 +7,11 @@ import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { useFetchMessages } from "./privateChatHooks/useFetchMessages"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import PrivateChatMessageList from "./PrivateChatMessageList"
-import LoadingSpinner from "../../../components/ui/LoadingSpinner"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { IoChatbubblesOutline } from "react-icons/io5"
 import PrivateChatHeader from "./PrivateChatHeader"
 import PrivateChatInput from "./PrivateChatInput"
 import { FaCaretDown } from "react-icons/fa6"
-
 
 const PrivateChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -35,7 +34,6 @@ const PrivateChatWindow = () => {
     messageListRef,
     handleNewMessageButtonClick,
     triggerScrollOnSenderMessage,
-    isReadyToRenderMessages
   } = useMessageScroll({
     setShowNewMessageButton,
     messages,
@@ -45,7 +43,7 @@ const PrivateChatWindow = () => {
     isLoadingMessages,
     isTypingOtherUser,
   })
-  
+
   usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser, handleReactionAdded)
 
   const privateChatInputRef = useRef(null)
@@ -57,17 +55,17 @@ const PrivateChatWindow = () => {
     }
   }, [triggerScrollOnSenderMessage])
 
-  useEffect(() => {
-    setActiveConversationId(conversationId)
-
-    if (socket && conversationId && currentUser?._id) {
+  const markMessagesAsSeen = useCallback(() => {
+    if (socket && conversationId && currentUser?._id && messages?.length) {
       socket.emit("markMessagesAsSeen", { conversationId: conversationId })
     }
+  }, [socket, conversationId, currentUser?._id, messages])
 
-    return () => {
-      setActiveConversationId(null)
+  useEffect(() => {
+    if (!isLoadingMessages && messages?.length > 0) {
+      markMessagesAsSeen()
     }
-  }, [conversationId, setActiveConversationId, socket, currentUser?._id, queryClient])
+  }, [isLoadingMessages, messages, markMessagesAsSeen])
 
   const isChatEmpty = !messages?.length
 
@@ -103,7 +101,7 @@ const PrivateChatWindow = () => {
             isTypingOtherUser={isTypingOtherUser}
             handleLoadImage={handleLoadImage}
             onReactionAdded={handleReactionAdded}
-            messageListRef={messageListRef} 
+            messageListRef={messageListRef}
           />
         )}
         {showNewMessageButton && (

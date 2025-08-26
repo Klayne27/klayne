@@ -1,6 +1,6 @@
 import { formatTime } from "../../utils/date/index.js"
 import { FaCheck } from "react-icons/fa6"
-import LoadingSpinner from "../../components/ui/LoadingSpinner.jsx"
+import LoadingSpinner from "../../components/common/LoadingSpinner.jsx"
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
 

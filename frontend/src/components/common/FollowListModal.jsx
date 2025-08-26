@@ -1,7 +1,7 @@
 // components/common/FollowListModal.jsx
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
-import LoadingSpinner from "../ui/LoadingSpinner";
+import LoadingSpinner from "./LoadingSpinner";
 import { useFetchFollowList } from "../../hooks/usersHooks/useFetchFollowList";
 import { IoClose } from "react-icons/io5";
 

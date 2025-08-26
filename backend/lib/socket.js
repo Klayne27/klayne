@@ -29,8 +29,10 @@ const allowedOrigins = [
 export const userLastActive = new Map();
 export const userActiveChats = new Map();
 const typingUsersInConversation = new Map();
-export const activePublicChatUsers = new Set(); // userId
-const publicChatTypingUsers = new Map(); // To track who is typing in public chat
+export const activePublicChatUsers = new Set();
+const publicChatTypingUsers = new Map();
+export const onlineUsersMap = new Map();
+const socketUserMap = new Map();
 
 const io = new Server(server, {
   cors: {
@@ -46,9 +48,6 @@ const io = new Server(server, {
     transports: ["websocket", "polling"],
   },
 });
-
-export const onlineUsersMap = new Map();
-const socketUserMap = new Map();
 
 export function getReceiverSocketIds(userId) {
   return onlineUsersMap.has(userId) ? Array.from(onlineUsersMap.get(userId)) : [];
@@ -737,97 +736,6 @@ io.on("connection", async (socket) => {
     }
   });
 
-  // socket.on("disconnect", () => {
-  //   console.log(`Socket disconnected: ${socket.id}`);
-
-  //   socket.leave(PUBLIC_CHAT_ROOM);
-
-  //   const disconnectedUserId = socket.userId;
-
-  //   // --- FIX START: Handle public chat typing on disconnect ---
-  //   if (disconnectedUserId) {
-  //     // --- Crucial: Notify public chat users that this user has stopped typing ---
-  //     if (publicChatTypingUsers.has(disconnectedUserId)) {
-  //       publicChatTypingUsers.delete(disconnectedUserId); // Remove from server-side tracking
-  //       io.to(PUBLIC_CHAT_ROOM).emit("public_stop_typing", {
-  //         userId: disconnectedUserId,
-  //       });
-  //     }
-  //     activePublicChatUsers.delete(disconnectedUserId); // This is separate for presence, keep it.
-
-  //     // ... rest of existing disconnect logic for onlineUsersMap and private chat typing
-  //     if (onlineUsersMap.has(disconnectedUserId)) {
-  //       const userSockets = onlineUsersMap.get(disconnectedUserId);
-  //       userSockets.delete(socket.id);
-
-  //       if (userSockets.size === 0) {
-  //         onlineUsersMap.delete(disconnectedUserId);
-  //         // ... (your existing private chat typing cleanup on disconnect) ...
-  //       }
-  //     }
-  //   }
-
-  //   if (disconnectedUserId && onlineUsersMap.has(disconnectedUserId)) {
-  //     const userSockets = onlineUsersMap.get(disconnectedUserId);
-  //     userSockets.delete(socket.id);
-  //     activePublicChatUsers.delete(disconnectedUserId);
-
-  //     if (userSockets.size === 0) {
-  //       onlineUsersMap.delete(disconnectedUserId);
-
-  //       typingUsersInConversation.forEach(async (typingUsers, convId) => {
-  //         if (typingUsers.has(disconnectedUserId)) {
-  //           typingUsers.delete(disconnectedUserId);
-  //           if (typingUsers.size === 0) {
-  //             typingUsersInConversation.delete(convId);
-  //           }
-  //           try {
-  //             const conversation = await Conversation.findById(convId).select(
-  //               "participants"
-  //             );
-  //             if (conversation) {
-  //               const participantIds = conversation.participants.map((p) => p.toString());
-  //               for (const participantId of participantIds) {
-  //                 if (participantId.toString() === disconnectedUserId.toString())
-  //                   continue;
-
-  //                 const blocked = await isBlockedOrBlockedBy(
-  //                   disconnectedUserId,
-  //                   participantId
-  //                 );
-  //                 if (!blocked) {
-  //                   const receiverSocketIds = getReceiverSocketIds(
-  //                     participantId.toString()
-  //                   );
-  //                   receiverSocketIds.forEach((sockId) => {
-  //                     io.to(sockId).emit("stopTyping", {
-  //                       conversationId: convId,
-  //                       userId: disconnectedUserId,
-  //                     });
-  //                   });
-  //                 }
-  //               }
-  //             }
-  //           } catch (err) {
-  //             console.error(
-  //               "Error fetching conversation for disconnect stop typing:",
-  //               err
-  //             );
-  //           }
-  //         }
-  //       });
-  //     }
-  //   } else {
-  //     console.warn(
-  //       `Disconnected socket ${socket.id} had no associated valid userId in map or was already removed.`
-  //     );
-  //   }
-
-  //   io.emit("getOnlineUsers", getOnlineUserIds());
-  // });
-
-  // better disconnect handler i think
-
   socket.on("disconnect", () => {
     const disconnectedUserId = socket.userId;
 
@@ -840,8 +748,8 @@ io.on("connection", async (socket) => {
       return;
     }
 
-    // Clean up from public chat presence
     activePublicChatUsers.delete(disconnectedUserId);
+    userActiveChats.delete(userId.toString());
 
     // Clean up from public chat typing list
     if (publicChatTypingUsers.has(disconnectedUserId)) {

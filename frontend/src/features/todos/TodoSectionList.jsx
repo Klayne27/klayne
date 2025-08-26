@@ -1,10 +1,10 @@
 // src/components/todos/TodoSectionList.jsx
 import React, { useState, useRef, useEffect } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
-import TodoSectionItem from "./TodoSectionItem" // Import the new component
+import TodoSectionItem from "./TodoSectionItem"
 import SlideUpMenu from "../../components/common/SlideUpMenu"
 import TodoAddForm from "./TodoAddForm"
-import LoadingSpinner from "../../components/ui/LoadingSpinner"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 import EditTodoListModal from "./EditTodoListModal"
 import { useInView } from "react-intersection-observer"
 
@@ -12,8 +12,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const {
     setShowCreateTodoModal,
     showEditTodoListModal,
-    setShowEditTodoListModal,
-    todoListToEdit,
+
   } = useTodoStore()
   const { ref, inView } = useInView()
 
@@ -21,8 +20,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
-  const observerRef = useRef()
-  const lastItemRef = useRef()
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -48,7 +45,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
     setIsMenuOpen(false)
   }
 
-
   return (
     <>
       <ul className="flex flex-col gap-5">
@@ -57,7 +53,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
 
           return (
             <TodoSectionItem
-              key={list._id}
+              key={list?._id}
               list={list}
               ref={isLastItem ? ref : null}
               openListDropdownId={openListDropdownId}
@@ -70,20 +66,24 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
           )
         })}
         {isMenuOpen && (
-          <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-            <div className="z-40 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4 ">
-              <TodoAddForm
-                isLoading={isLoading}
-                setIsMenuOpen={setIsMenuOpen}
-                isMenuOpen={isMenuOpen}
-              />
-            </div>
-          </SlideUpMenu>
+          <li key="slide-up-menu-item">
+            <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+              <div className="z-40 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
+                <TodoAddForm
+                  isLoading={isLoading}
+                  setIsMenuOpen={setIsMenuOpen}
+                  isMenuOpen={isMenuOpen}
+                />
+              </div>
+            </SlideUpMenu>
+          </li>
         )}
         {hasNextPage && (
-          <div className="flex justify-center p-4">
-            <LoadingSpinner />
-          </div>
+          <li key="loading-spinner-item">
+            <div className="flex justify-center p-4">
+              <LoadingSpinner />
+            </div>
+          </li>
         )}
       </ul>
       {showEditTodoListModal && <EditTodoListModal />}
