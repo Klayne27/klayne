@@ -2,7 +2,7 @@ import { useNavigate } from "react-router-dom"
 import { IoSettingsOutline } from "react-icons/io5"
 import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
-import { useFetchNotifications } from "../features/notifications/notificationsHooks/useFetchNotifications"
+import { useGetNotifications } from "../features/notifications/notificationsHooks/useGetNotifications"
 import { useDeleteNotification } from "../features/notifications/notificationsHooks/useDeleteNotification"
 import { useDeleteNotifications } from "../features/notifications/notificationsHooks/useDeleteNotifications"
 import { formatPostDate } from "../utils/date"
@@ -13,7 +13,7 @@ import { FaAt } from "react-icons/fa"
 import { useRef } from "react"
 
 const NotificationPage = () => {
-  const { notifications, isLoading } = useFetchNotifications()
+  const { notifications, isLoading } = useGetNotifications()
   const { deleteNotification } = useDeleteNotification()
   const { deleteNotifications } = useDeleteNotifications()
   const { authUser } = useAuthUser()

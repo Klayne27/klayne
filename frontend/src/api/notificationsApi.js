@@ -1,6 +1,6 @@
 const BASE_URL = "/api/notifications";
 
-export const fetchNotificationsApi = async () => {
+export const getNotificationsApi = async () => {
   const res = await fetch(`${BASE_URL}`, { credentials: "include" });
 
   const data = await res.json();
