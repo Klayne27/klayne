@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { getSuggestedUsersApi } from "../../api/usersApi";
+import { getSuggestedUsersApi } from "../../../api/usersApi";
 import { userKeys } from "./userKeys";
 
 export const useGetSuggestedUsers = () => {

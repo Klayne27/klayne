@@ -1,11 +1,11 @@
-import { blockUnblockUserApi } from "../../api/usersApi"
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { showAppToast } from "../../utils/showAppToast"
-import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
-import { conversationKeys } from "../../features/chat/private/privateChatHooks/conversationKeys"
-import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import { notificationKeys } from "../../features/notifications/notificationsHooks/notificationKeys"
 import { userKeys } from "./userKeys"
+import { blockUnblockUserApi } from "../../../api/usersApi"
+import { showAppToast } from "../../../utils/showAppToast"
+import { postKeys } from "../../posts/postsHooks/postKeys"
+import { conversationKeys } from "../../chat/private/privateChatHooks/conversationKeys"
+import { messageKeys } from "../../chat/private/privateChatHooks/messageKeys"
+import { notificationKeys } from "../../notifications/notificationsHooks/notificationKeys"
 
 export const useBlockUnblockUser = () => {
   const queryClient = useQueryClient()

@@ -1,8 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { deleteUserAccountAdmin } from "../../api/usersApi";
 import { useNavigate } from "react-router-dom";
-import { showAppToast } from "../../utils/showAppToast";
 import { userKeys } from "./userKeys";
+import { showAppToast } from "../../../utils/showAppToast";
+import { deleteUserAccountAdminApi } from "../../../api/usersApi";
 
 export const useAdminDeleteUser = () => {
   const queryClient = useQueryClient();
@@ -15,7 +15,7 @@ export const useAdminDeleteUser = () => {
     isError,
     error,
   } = useMutation({
-    mutationFn: deleteUserAccountAdmin,
+    mutationFn: deleteUserAccountAdminApi,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: userKeys.profiles() });
       showAppToast(data.message || "User account deleted successfully!", "success");

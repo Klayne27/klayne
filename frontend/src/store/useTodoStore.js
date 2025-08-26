@@ -9,7 +9,7 @@ export const useTodoStore = create((set) => ({
   showEditTodoModal: false,
   selectedTodo: null,
   todoListToEdit: null,
-  currentListIdForTodoCreation: null, // New state for creating todos
+  currentListIdForTodoCreation: null,
 
   setActiveTab: (tab) => set({ activeTab: tab, selectedTodoListIds: [] }),
   toggleTodoList: (id) =>

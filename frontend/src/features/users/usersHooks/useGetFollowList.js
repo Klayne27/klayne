@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
-import { getUsersApi } from "../../api/usersApi";
 import { userKeys } from "./userKeys";
+import { getUsersApi } from "../../../api/usersApi";
 
 export const useGetFollowList = (userId, type) => {
   const endpoint = userId

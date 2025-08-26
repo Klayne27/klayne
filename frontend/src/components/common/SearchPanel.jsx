@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { CiSearch } from "react-icons/ci";
-import { useSearchUsers } from "../../hooks/usersHooks/userSearchUsers";
+import { useSearchUsers } from "../../features/users/usersHooks/userSearchUsers";
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser";
 
 const SearchPanel = () => {

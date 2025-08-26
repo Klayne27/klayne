@@ -1,4 +1,3 @@
-// store/xpStore.js
 import { create } from "zustand"
 
 const useXpStore = create((set) => ({

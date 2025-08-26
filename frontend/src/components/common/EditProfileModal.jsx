@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { useUpdateUserProfile } from "../../hooks/usersHooks/useUpdateUserProfile"
+import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateUserProfile"
 import { useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 

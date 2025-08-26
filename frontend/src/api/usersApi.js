@@ -115,7 +115,7 @@ export const deleteUserAccountApi = async (userId) => {
   return data;
 };
 
-export const deleteUserAccountAdmin = async (userId) => {
+export const deleteUserAccountAdminApi = async (userId) => {
   const res = await fetch(`${BASE_URL}/admin/delete/${userId}`, {
     method: "DELETE",
     headers: {

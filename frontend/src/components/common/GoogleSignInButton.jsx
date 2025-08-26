@@ -2,7 +2,7 @@
 import { signInWithPopup } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
 import { useQueryClient } from "@tanstack/react-query" 
-import { userKeys } from "../../hooks/usersHooks/userKeys"
+import { userKeys } from "../../features/users/usersHooks/userKeys"
 import { auth, googleProvider } from "../../services/firebase"
 
 const GoogleSignInButton = () => {

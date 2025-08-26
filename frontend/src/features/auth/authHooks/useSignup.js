@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { signupApi } from "../../../api/authApi";
 import { showAppToast } from "../../../utils/showAppToast";
-import { userKeys } from "../../../hooks/usersHooks/userKeys";
+import { userKeys } from "../../users/usersHooks/userKeys";
 
 export const useSignup = (formData) => {
   const queryClient = useQueryClient();

@@ -9,7 +9,6 @@ export const usePublicChatStore = create(
     isCurrentlyTouchDevice: false,
     showNewMessageButton: false,
 
-    // Actions
     setReplyingToMessage: (message) =>
       set((state) => {
         state.replyingToMessage = message

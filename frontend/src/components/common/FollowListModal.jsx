@@ -2,7 +2,7 @@
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
 import LoadingSpinner from "./LoadingSpinner";
-import { useGetFollowList } from "../../hooks/usersHooks/useGetFollowList";
+import { useGetFollowList } from "../../features/users/usersHooks/useGetFollowList";
 import { IoClose } from "react-icons/io5";
 
 const FollowListModal = ({ userId, type, onClose, page }) => {

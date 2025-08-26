@@ -133,7 +133,7 @@ const useDateTimeStore = create((set, get) => ({
       }
       tempIsPastTimeOfDay =
         hour24 < currentHour || (hour24 === currentHour && state.selectedMinute <= currentMinute)
-    } // 3. Overall validation
+    }
 
     const combinedScheduledDateTime = get().getScheduledDateTime()
     const tempIsOverallPast = combinedScheduledDateTime <= nowLocal
@@ -145,7 +145,7 @@ const useDateTimeStore = create((set, get) => ({
     })
 
     return tempIsOverallPast
-  }, // Memoized lists for select options (These could also be static outside the store if preferred)
+  },
 
   getMonths: () => [
     { value: 0, name: "January" },
@@ -179,7 +179,7 @@ const useDateTimeStore = create((set, get) => ({
     return daysArray
   },
   getHours: () => Array.from({ length: 12 }, (_, i) => i + 1),
-  getMinutes: () => Array.from({ length: 60 }, (_, i) => i), // Formatted string for display
+  getMinutes: () => Array.from({ length: 60 }, (_, i) => i),
 
   getFormattedScheduledTime: () => {
     const state = get()

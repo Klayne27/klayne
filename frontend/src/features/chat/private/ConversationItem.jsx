@@ -14,7 +14,7 @@ import useDeleteAllMessagesOnMySide from "./privateChatHooks/useDeleteAllMessage
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import { LuUserRound, LuUserRoundMinus } from "react-icons/lu"
-import { useBlockUnblockUser } from "../../../hooks/usersHooks/useBlockUnblockUser"
+import { useBlockUnblockUser } from "../../users/usersHooks/useBlockUnblockUser"
 import { useSocket } from "../../../context/SocketContext"
 
 function ConversationItem({ conv }) {

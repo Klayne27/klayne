@@ -69,7 +69,7 @@ export const SocketContextProvider = ({ children }) => {
         if (newSocket.connected) {
           newSocket.emit("heartbeat")
         }
-      }, 60 * 1000) // Send heartbeat every 1 minute
+      }, 60 * 1000)
 
       newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
         queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
@@ -104,18 +104,16 @@ export const SocketContextProvider = ({ children }) => {
 
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
         if (actorId === user._id) {
-          return // Ignore updates from self for reactions to prevent flicker
+          return 
         }
 
-        // Apply the update for reactions from other users, or if actorId is not provided
         queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
           if (!oldData) return oldData
 
           const updatedPages = oldData.pages.map((page) =>
             page.map((message) => {
               if (message._id === updatedMessage._id) {
-                // Use updatedMessage._id
-                return { ...message, reactions: updatedMessage.reactions } // Use reactions from updatedMessage
+                return { ...message, reactions: updatedMessage.reactions }
               }
               return message
             }),

@@ -14,7 +14,7 @@ import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 import { useQueryClient } from "@tanstack/react-query"
 import { messageKeys } from "../private/privateChatHooks/messageKeys"
-import { userKeys } from "../../../hooks/usersHooks/userKeys"
+import { userKeys } from "../../users/usersHooks/userKeys"
 
 const PublicChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()

@@ -4,7 +4,7 @@ import { calculateXpGainForTodo, findTodoAndParent } from "../../../utils/todoUt
 import { completeTodoApi } from "../../../api/todoApi"
 import useXpStore from "../../../store/useXpStore"
 import { todoKeys } from "./todoKeys"
-import { userKeys } from "../../../hooks/usersHooks/userKeys"
+import { userKeys } from "../../users/usersHooks/userKeys"
 
 export const useCompleteTodo = () => {
   const queryClient = useQueryClient()

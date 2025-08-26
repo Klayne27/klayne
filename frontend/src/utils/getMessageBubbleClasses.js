@@ -13,15 +13,15 @@ export const getMessageBubbleClasses = (msg, isSentByCurrentUser) => {
       bubbleClasses += " rounded-tl-3xl rounded-bl-3xl rounded-tr-[4px] rounded-br-[4px]";
     }
   } else {
-    bubbleClasses += " bg-[#2F3336] text-white"; // Base classes for other users
+    bubbleClasses += " bg-[#2F3336] text-white";
     if (msg.isFirstInGroup && msg.isLastInGroup) {
       bubbleClasses += " rounded-3xl"; 
     } else if (msg.isFirstInGroup) {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]"; // First message in a group
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-3xl rounded-bl-[4px]";
     } else if (msg.isLastInGroup) {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl"; // Last message in a group
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-3xl";
     } else {
-      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]"; // Middle message in a group
+      bubbleClasses += " rounded-tr-3xl rounded-br-3xl rounded-tl-[4px] rounded-bl-[4px]";
     }
   }
 
