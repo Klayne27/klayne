@@ -1,6 +1,4 @@
-// src/components/common/posts/PollDisplay.jsx
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { showAppToast } from "../../utils/showAppToast"
 import { useVoteOnPoll } from "../../features/posts/postsHooks/useVoteOnPoll"
 
 const PollDisplay = ({ post }) => {
