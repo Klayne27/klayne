@@ -36,8 +36,6 @@ const PrivateChatMessageItem = ({
   const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
     usePrivateChatStore()
 
-  console.log("3. Message component rendering with:", message) // Check the value of message.seen here
-
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
 
