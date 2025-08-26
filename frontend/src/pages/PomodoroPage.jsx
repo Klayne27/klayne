@@ -1,32 +1,23 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { useNavigate } from "react-router-dom"
-import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
 
 import PomodoroSettingsModal from "../features/pomodoro/PomodoroSettingsModal"
-import { CiMail, CiTrophy } from "react-icons/ci"
-import { MdLibraryBooks } from "react-icons/md"
-import { PiHouseThin } from "react-icons/pi"
+
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { showAppToast } from "../utils/showAppToast"
-import { useSocket } from "../context/SocketContext"
 import PomodoroHeader from "../features/pomodoro/PomodoroHeader"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../components/common/MilestoneModal"
-import {
-  FaBell,
-  FaBellSlash,
-  FaEllipsis,
-  FaEllipsisVertical,
-  FaForward,
-} from "react-icons/fa6"
 import PomodoroInfoModal from "../features/pomodoro/PomodoroInfoModal"
 import ConfirmationModal from "../components/common/ConfirmationModal"
-import { LuListTodo } from "react-icons/lu"
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5"
-import { formatCount } from "../utils/textUtils"
+
 import { useEndStudySession } from "../features/pomodoro/pomodoroHooks/useEndStudySession"
 import { useGetPomodoroSettings } from "../features/pomodoro/pomodoroHooks/useGetPomodoroSettings"
-import { useUpdatePomodoroSettings } from "../features/pomodoro/pomodoroHooks/useUpdatePomodoroSettings"
+import useXpStore from "../store/useXpStore"
+import LeftDropdown from "../features/pomodoro/LeftDropdown"
+import RightDropdown from "../features/pomodoro/RightDropdown"
+import PomodoroTimerDisplay from "../features/pomodoro/PomodoroTimerDisplay"
+import PomodoroTimerControls from "../features/pomodoro/PomodoroTimerControls"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -38,11 +29,10 @@ const GOAL_REACHED_KEY = "pomodoro_goal_reached"
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
-  const { newPostCount, unreadMessageCount, unreadPublicChatCount } = useSocket()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { endStudySession } = useEndStudySession()
-  const { updateSettings } = useUpdatePomodoroSettings()
   const isMobile = useIsMobile()
+  const { xpGainedAmount, setXpGainedAmount, showXpGain, setShowXpGain } = useXpStore()
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
@@ -50,8 +40,6 @@ const PomodoroPage = () => {
   const [sessionCount, setSessionCount] = useState(0)
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [isGoalReached, setIsGoalReached] = useState(false)
-  const [xpGainedAmount, setXpGainedAmount] = useState(0)
-  const [showXpGain, setShowXpGain] = useState(false)
 
   const [showShareModal, setShowShareModal] = useState(false)
   const [milestoneLevel, setMilestoneLevel] = useState(null)
@@ -101,7 +89,6 @@ const PomodoroPage = () => {
     Object.keys(localStorage).forEach((key) => {
       if (key.startsWith("pomodoro_")) localStorage.removeItem(key)
     })
-    // showAppToast("Timer reset")
   }, [settings])
 
   const handleResetCurrent = () => {
@@ -256,7 +243,16 @@ const PomodoroPage = () => {
       }
     }
     setTimeout(setupNextPhase, 1)
-  }, [settings, isBreak, sessionCount, playAlarm, endStudySession, startNextTimer])
+  }, [
+    settings,
+    isBreak,
+    sessionCount,
+    playAlarm,
+    endStudySession,
+    startNextTimer,
+    setShowXpGain,
+    setXpGainedAmount,
+  ])
 
   const startAnimation = useCallback(() => {
     const tick = () => {
@@ -384,22 +380,8 @@ const PomodoroPage = () => {
     }
   }
 
-  const handleSkipBreak = useCallback(() => {
-    if (isBreak) {
-      // Stop the current timer
-      setIsActive(false)
-      // Directly start the next study session
-      startNextTimer(true, sessionCount, false)
-      showAppToast("Break skipped!", "info")
-    }
-  }, [isBreak, startNextTimer, sessionCount])
-
   const handleResetTimerClick = () => {
     setShowResetTimerModal(true)
-  }
-
-  const handleResetCurrentSessionClick = () => {
-    setShowResetCurrentSessionModal(true)
   }
 
   const toggleRightDropdown = (e) => {
@@ -410,40 +392,6 @@ const PomodoroPage = () => {
     e.stopPropagation()
     setIsLeftDropdownOpen(!isLeftDropdownOpen)
   }
-
-  const toggleMute = () => {
-    const newSettings = { ...settings, isMuted: !settings.isMuted }
-    updateSettings(newSettings)
-    showAppToast(settings.isMuted ? "Alarm unmuted" : "Alarm muted")
-  }
-
-  const minutes = Math.floor(timer / 60)
-  const seconds = Math.floor(timer % 60)
-  let totalDuration = 25 * 60
-  if (settings) {
-    const isCurrentBreakLong =
-      isBreak &&
-      sessionCount > 0 &&
-      settings.sessionsBeforeLongBreak > 0 &&
-      sessionCount % settings.sessionsBeforeLongBreak === 0
-    totalDuration = isBreak
-      ? (isCurrentBreakLong ? settings.longBreakDuration : settings.shortBreakDuration) * 60
-      : settings.sessionDuration * 60
-  }
-  const progress = totalDuration ? Math.max(timer / totalDuration, 0) : 0
-  const radius = 45
-  const circumference = 2 * Math.PI * radius
-
-  const now = new Date()
-  const finishTime = new Date(now.getTime() + timer * 1000) // Add remaining seconds to current time
-  // Format the finish time
-
-  const finishTimeOptions = {
-    hour: "numeric",
-    minute: "2-digit",
-    // hour12: false
-  }
-  const formattedFinishTime = finishTime.toLocaleTimeString([], finishTimeOptions)
 
   if (isSettingsLoading) {
     return (
@@ -461,113 +409,17 @@ const PomodoroPage = () => {
           xpGainedAmount={xpGainedAmount}
           setShowInfoModal={setShowInfoModal}
         />
-        {/* LEFT DROPDOWN */}
-        <div className="absolute left-0 top-24 flex flex-col items-center justify-center gap-1 md:left-1 md:top-28">
-          <button
-            onClick={toggleLeftDropdown}
-            className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            aria-label="Toggle navigation"
-          >
-            {/* Vertical Ellipsis */}
-            <FaEllipsisVertical
-              size={25}
-              className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"} `}
-            />
-            {/* Horizontal Ellipsis */}
-            <FaEllipsis
-              size={25}
-              className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"} `}
-            />{" "}
-          </button>
-          {/* The dropdown content is now always rendered */}
-          <div
-            className={`flex origin-top transform flex-col items-center justify-center gap-1 transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "visible scale-y-100 opacity-100" : "invisible scale-y-0 opacity-0"} `}
-          >
-            <button
-              onClick={() => navigate("/")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <PiHouseThin size={25} strokeWidth={15} />
-              {newPostCount > 0 && (
-                <div
-                  className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
-                  style={{ transform: "translate(50%, -50%)" }}
-                ></div>
-              )}
-            </button>
-            <button
-              onClick={() => navigate("/messages")}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <CiMail size={25} strokeWidth={1} />
-              {unreadMessageCount > 0 && (
-                <div
-                  className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
-                  style={{ transform: "translate(50%, -50%)" }}
-                >
-                  {formatCount(unreadMessageCount)}
-                </div>
-              )}
-            </button>
-            <button
-              onClick={() => navigate("/public-chat")}
-              className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <IoChatbubbleEllipsesOutline size={25} />
-              {unreadPublicChatCount > 0 && (
-                <div
-                  className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
-                  style={{ transform: "translate(50%, -50%)" }}
-                >
-                  {formatCount(unreadPublicChatCount)}
-                </div>
-              )}
-            </button>
-          </div>
-        </div>
 
-        {/* RIGHT DROPDOWN */}
-        <div className="absolute right-0 top-24 flex flex-col items-center justify-center gap-1 md:right-1 md:top-28">
-          <button
-            onClick={toggleRightDropdown}
-            className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            aria-label="Toggle navigation"
-          >
-            {/* Vertical Ellipsis */}
-            <FaEllipsisVertical
-              size={25}
-              className={`absolute transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "rotate-0 opacity-100" : "rotate-90 opacity-0"} `}
-            />
-            {/* Horizontal Ellipsis */}
-            <FaEllipsis
-              size={25}
-              className={`absolute transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "-rotate-90 opacity-0" : "rotate-0 opacity-100"} `}
-            />
-          </button>
-          {/* The dropdown content is now always rendered */}
-          <div
-            className={`flex origin-top transform flex-col items-center justify-center gap-1 transition-all duration-300 ease-in-out ${isRightDropdownOpen ? "visible scale-y-100 opacity-100" : "invisible scale-y-0 opacity-0"} `}
-          >
-            <button
-              onClick={() => navigate("/study-leaderboard")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <CiTrophy size={25} strokeWidth={1} />
-            </button>
-            <button
-              onClick={() => navigate("/study-activity")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <MdLibraryBooks size={25} />
-            </button>
-            <button
-              onClick={() => navigate("/todos")}
-              className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-            >
-              <LuListTodo size={25} strokeWidth={2} />
-            </button>
-          </div>
-        </div>
+        <LeftDropdown
+          onToggleLeftDropdown={toggleLeftDropdown}
+          isLeftDropdownOpen={isLeftDropdownOpen}
+        />
+
+        <RightDropdown
+          onToggleRightDropdown={toggleRightDropdown}
+          isRightDropdownOpen={isRightDropdownOpen}
+        />
+
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
           <h1
             key={isBreak ? "break" : "study"}
@@ -576,126 +428,29 @@ const PomodoroPage = () => {
             {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
           </h1>
 
-          <div
-            className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 md:h-72 md:w-72`}
-          >
-            <div className="absolute inset-0 bottom-[150px] z-50 flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-44">
-              <span
-                className="flex cursor-pointer items-center gap-1 rounded-full p-2"
-                onClick={handleResetCurrentSessionClick}
-              >
-                <span>
-                  <FaRedo />
-                </span>
-              </span>
-            </div>
-            <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                fill="none"
-                strokeWidth="8"
-                className="stroke-slate-700"
-              />
-              <circle
-                cx="50"
-                cy="50"
-                r={radius}
-                fill="none"
-                strokeWidth="8"
-                strokeLinecap="round"
-                className={`transition-colors duration-500 ease-linear ${isBreak ? "stroke-teal-400" : "stroke-primary"}`}
-                style={{
-                  strokeDasharray: circumference,
-                  strokeDashoffset: circumference * (1 - progress),
-                }}
-              />
-            </svg>
-            <div className="absolute inset-0 flex items-center justify-center">
-              <span className="font-mono text-6xl tracking-tighter md:text-7xl">
-                {isGoalReached
-                  ? "00:00"
-                  : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
-              </span>
-            </div>
-            <div className="absolute inset-0 bottom-[62px] flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-[70px]">
-              <span
-                className="flex items-center gap-1 rounded-full bg-secondary px-3 py-1"
-                onClick={toggleMute}
-              >
-                <span>{!settings.isMuted ? <FaBell /> : <FaBellSlash />}</span>{" "}
-                {formattedFinishTime}
-              </span>
-            </div>
-          </div>
+          <PomodoroTimerDisplay
+            isBreak={isBreak}
+            timer={timer}
+            setIsActive={setIsActive}
+            startNextTimer={startNextTimer}
+            sessionCount={sessionCount}
+            setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
+            isGoalReached={isGoalReached}
+            onSessionEnd={handleSessionEnd}
+          />
 
-          <div className="relative flex flex-col items-center gap-2">
-            <p className="text-sm uppercase tracking-widest text-slate-400">
-              Session {isGoalReached ? settings.sessionGoalCount : sessionCount} /{" "}
-              {settings?.sessionGoalCount || " ∞"}
-            </p>
-            {settings?.sessionGoalCount > 0 && (
-              <div className="flex gap-2">
-                {Array.from({ length: settings.sessionGoalCount }).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-2 w-2 rounded-full transition-colors ${i < sessionCount ? (isBreak ? "bg-teal-400" : "bg-primary") : "bg-slate-600"}`}
-                  />
-                ))}
-              </div>
-            )}
-            {isBreak && !isGoalReached && (
-              <button
-                onClick={handleSkipBreak}
-                className="absolute -top-10 right-0 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
-                aria-label="Skip break"
-              >
-                <FaForward size={20} />
-              </button>
-            )}
-            {!isBreak && !isGoalReached && minutes <= 0 && seconds <= 0 && (
-              <button
-                onClick={handleSessionEnd}
-                className="absolute -top-10 right-0 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
-              >
-                <FaForward size={20} />
-              </button>
-            )}
-          </div>
-          <div className="flex w-full items-center justify-center gap-8">
-            {/* Settings Button */}
-            <button
-              onClick={handleOpenSettingsPage}
-              className="p-2 text-slate-500 transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-              aria-label="Open settings"
-              disabled={isActive || isGoalReached}
-            >
-              <FaCog size={30} />
-            </button>
-
-            {/* Play/Pause Button */}
-            <button
-              onClick={isActive ? handlePause : handleStart}
-              className={`text-6xl transition-colors duration-300 hover:text-primary active:scale-95 disabled:opacity-50 ${isActive ? "text-teal-500" : "text-primary"}`}
-              aria-label={isActive ? "Pause timer" : "Start timer"}
-              disabled={timer <= 0 || isGoalReached}
-            >
-              {isActive ? <FaPause size={50} /> : <FaPlay size={50} />}
-            </button>
-
-            {/* Reset Button */}
-            <button
-              onClick={handleResetTimerClick}
-              className="p-2 text-slate-500 transition-colors hover:text-primary"
-              aria-label="Reset timer"
-            >
-              <FaRedo size={28} />
-            </button>
-          </div>
+          <PomodoroTimerControls
+            onOpenSettingsPage={handleOpenSettingsPage}
+            isGoalReached={isGoalReached}
+            isActive={isActive}
+            onPause={handlePause}
+            onStart={handleStart}
+            timer={timer}
+            onResetTimerClick={handleResetTimerClick}
+          />
         </div>
       </main>
-      {settings && (
+      {settings && isSettingsOpen && (
         <PomodoroSettingsModal
           isOpen={isSettingsOpen}
           onClose={() => setIsSettingsOpen(false)}
