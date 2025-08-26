@@ -46,6 +46,8 @@ export const useSendMessage = (onSenderMessageSent) => {
           : null,
       }
 
+      console.log("1. Optimistic message created:", optimisticMessage) // Should show seen: false
+
       queryClient.setQueryData(messagesQueryKey, (oldData) => {
         if (!oldData?.pages) {
           return { pages: [[optimisticMessage]], pageParams: [1] }
@@ -90,6 +92,8 @@ export const useSendMessage = (onSenderMessageSent) => {
       }
     },
     onSuccess: (newMessage, variables, context) => {
+      console.log("2. Server response received:", newMessage) // Should show seen: false from the server
+
       queryClient.setQueryData(context.messagesQueryKey, (oldData) => {
         if (!oldData) return oldData
         return {

@@ -88,8 +88,7 @@ export const sendMessage = async (req, res) => {
       conversation.hiddenFor = [];
     }
 
-    const recipientActiveConversation = userActiveChats.get(recipientId.toString());
-    const isSeen = recipientActiveConversation === conversationId.toString();
+    const isSeen = false;
 
     let newImage = null;
     let uploadedImgUrl = "";
@@ -202,14 +201,6 @@ export const sendMessage = async (req, res) => {
       };
 
       await sendPushNotification(recipientId.toString(), payload);
-    }
-
-    if (isSeen) {
-      const senderSocketIds = getReceiverSocketIds(senderId.toString());
-      io.to(senderSocketIds).emit("messagesSeen", {
-        conversationId: conversationId,
-        readerId: recipientId,
-      });
     }
 
     await emitUnreadMessageStatus(recipientId.toString());

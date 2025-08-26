@@ -102,25 +102,6 @@ export const SocketContextProvider = ({ children }) => {
         setNewPostCount(data.newPostCount)
       })
 
-      // newSocket.on("messageReacted", ({ actorId, updatedMessage }) => {
-      //   if (actorId === user._id) {
-      //     return;
-      //   }
-
-      //   queryClient.setQueryData(
-      //     ["messages", updatedMessage.conversationId],
-      //     (oldData) => {
-      //       if (!oldData) return oldData;
-      //       const updatedPages = oldData.pages.map((page) =>
-      //         page.map((message) =>
-      //           message._id === updatedMessage._id ? updatedMessage : message
-      //         )
-      //       );
-      //       return { ...oldData, pages: updatedPages };
-      //     }
-      //   );
-      // });
-
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
         if (actorId === user._id) {
           return // Ignore updates from self for reactions to prevent flicker
@@ -151,17 +132,6 @@ export const SocketContextProvider = ({ children }) => {
           )
           return { ...oldData, pages: updatedPages }
         })
-
-        // queryClient.setQueryData(["conversations"], (oldConversationsData) => {
-        //   if (!oldConversationsData) return undefined;
-        //   const updatedConversations = oldConversationsData.map((conv) => {
-        //     if (conv._id === conversationId) {
-        //       return conv;
-        //     }
-        //     return conv;
-        //   });
-        //   return updatedConversations;
-        // });
       })
 
       newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat, unreadPublicChatCount }) => {

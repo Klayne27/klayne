@@ -24,7 +24,6 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 
-
 const PrivateChatMessageItem = ({
   message,
   privateChatInputRef,
@@ -36,6 +35,8 @@ const PrivateChatMessageItem = ({
 }) => {
   const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
     usePrivateChatStore()
+
+  console.log("3. Message component rendering with:", message) // Check the value of message.seen here
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)

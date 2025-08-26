@@ -55,17 +55,15 @@ const PrivateChatWindow = () => {
     }
   }, [triggerScrollOnSenderMessage])
 
-  const markMessagesAsSeen = useCallback(() => {
-    if (socket && conversationId && currentUser?._id && messages?.length) {
-      socket.emit("markMessagesAsSeen", { conversationId: conversationId })
-    }
-  }, [socket, conversationId, currentUser?._id, messages])
-
   useEffect(() => {
-    if (!isLoadingMessages && messages?.length > 0) {
-      markMessagesAsSeen()
+    const hasUnreadMessages = messages?.some(
+      (msg) => msg.sender?._id !== currentUser?._id && !msg.seen,
+    )
+
+    if (socket && conversationId && !isLoadingMessages && hasUnreadMessages) {
+      socket.emit("markMessagesAsSeen", { conversationId })
     }
-  }, [isLoadingMessages, messages, markMessagesAsSeen])
+  }, [messages, conversationId, isLoadingMessages, socket, currentUser?._id]) // Dependencies for the effect
 
   const isChatEmpty = !messages?.length
 

@@ -749,7 +749,7 @@ io.on("connection", async (socket) => {
     }
 
     activePublicChatUsers.delete(disconnectedUserId);
-    userActiveChats.delete(userId.toString());
+    userActiveChats.delete(disconnectedUserId.toString()); // Use the correct variable
 
     // Clean up from public chat typing list
     if (publicChatTypingUsers.has(disconnectedUserId)) {
