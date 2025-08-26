@@ -99,6 +99,7 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
 
     onSuccess: (data) => {
       showAppToast(data.message, "success")
+      queryClient.invalidateQueries(postKeys.bookmarked())
     },
 
     onError: (error, postId, context) => {
