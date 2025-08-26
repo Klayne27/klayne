@@ -3,7 +3,7 @@ import { useMemo } from "react";
 import { getPublicMessagesApi } from "../../../../api/publicChatApi";
 import { messageKeys } from "../../private/privateChatHooks/messageKeys";
 
-export const usePublicMessages = () => {
+export const useGetPublicMessages = () => {
   const MESSAGE_LIMIT = 40;
 
   const {

@@ -4,14 +4,12 @@ import {
   getReceiverSocketIds,
   io,
   emitUnreadMessageStatus,
-  userActiveChats,
 } from "../lib/socket.js";
 import { v2 as cloudinary } from "cloudinary";
 import User from "../models/user.model.js";
 import mongoose from "mongoose";
 import Image from "../models/image.model.js";
-import { sendPushNotification } from "../lib/utils/sendPush.js";
-import { transformCloudinaryUrl } from "../lib/utils/helpers.js";
+import { getPublicIdFromUrl } from "../lib/utils/helpers.js";
 
 const BASE_URL = process.env.RENDER_EXTERNAL_URL;
 
@@ -55,6 +53,265 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   }
 
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
+};
+
+export const getMessagesByConversationId = async (req, res) => {
+  const { conversationId } = req.params;
+  const { page = 1, limit = 40 } = req.query;
+  const userId = req.user._id;
+
+  try {
+    const conversation = await Conversation.findById(conversationId);
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found." });
+    }
+
+    if (!conversation.participants.includes(userId)) {
+      return res.status(403).json({ error: "Unauthorized access to conversation." });
+    }
+
+    const otherParticipantId = conversation.participants.find(
+      (participantId) => participantId.toString() !== userId.toString()
+    );
+
+    if (otherParticipantId) {
+      const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
+
+      if (isBlocked) {
+        return res.status(403).json({
+          error: "You cannot view this conversation due to blocking restrictions.",
+        });
+      }
+    }
+
+    const skip = (parseInt(page) - 1) * parseInt(limit);
+
+    const messages = await Message.find({
+      conversationId: conversationId,
+      deletedFor: { $nin: [userId] },
+    })
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(parseInt(limit))
+      .populate({
+        path: "sender",
+        select: "username fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate({
+        path: "repliedTo",
+        select: "sender text img",
+        populate: {
+          path: "sender",
+          select: "username fullName isVerified isGoldVerified badges",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
+        },
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username fullName",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate("image", "imageUrl")
+      .lean();
+
+    res.status(200).json(messages.reverse());
+  } catch (error) {
+    console.error("Error in getMessagesByConversationId controller:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const getConversations = async (req, res) => {
+  const userId = req.user._id;
+
+  try {
+    const user = await User.findById(userId).lean();
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    // Step 1: Get all users blocked by the current user.
+    const blockedByMe = user.blockedUsers || [];
+
+    // Step 2: Find all users who have blocked the current user.
+    const usersBlockingMe = await User.find({ blockedUsers: userId })
+      .select("_id")
+      .lean();
+    const blockedMe = usersBlockingMe.map((u) => u._id);
+
+    // Step 3: Combine both lists into a single, comprehensive set of blocked IDs.
+    const allBlockedIds = [...new Set([...blockedByMe, ...blockedMe])];
+
+    // Step 4: Fetch conversations for the current user.
+    const conversations = await Conversation.find({
+      participants: userId,
+      hiddenFor: { $ne: userId },
+    })
+      .populate({
+        path: "participants",
+        select: "username profileImg fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .sort({ updatedAt: -1 })
+      .lean();
+
+    // Step 5: Filter out conversations where the other participant is in the comprehensive block list.
+    const filteredConversations = conversations.filter((conv) => {
+      const otherParticipant = conv.participants.find(
+        (p) => p && p._id.toString() !== userId.toString()
+      );
+      if (!otherParticipant) return false;
+
+      // Use the comprehensive list to check if the other participant's ID exists.
+      return !allBlockedIds.some((blockedId) => blockedId.equals(otherParticipant._id));
+    });
+
+    res.status(200).json(filteredConversations);
+  } catch (error) {
+    console.error("Error in getConversations controller:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const getConversationBetweenUsers = async (req, res) => {
+  try {
+    const { otherUserId } = req.params;
+    const currentUserId = req.user._id;
+
+    const conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, otherUserId] },
+    }).lean();
+
+    if (!conversation) {
+      return res
+        .status(200)
+        .json({ conversationId: null, isHiddenForCurrentUser: false });
+    }
+
+    const isHiddenForCurrentUser = conversation.hiddenFor.some((id) =>
+      id.equals(currentUserId)
+    );
+
+    res.status(200).json({
+      conversationId: conversation._id,
+      isHiddenForCurrentUser: isHiddenForCurrentUser,
+    });
+  } catch (error) {
+    console.error("Error in getConversationBetweenusers controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error " + error.message });
+  }
+};
+
+export const getFollowedUsersForMessaging = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { q } = req.query;
+
+    const currentUser = await User.findById(userId).select("following");
+
+    if (!currentUser) {
+      return res.status(404).json({ error: "Current user not found." });
+    }
+
+    const followedUserIds = currentUser.following;
+
+    let query = {
+      _id: { $in: followedUserIds },
+    };
+
+    if (q) {
+      query.$or = [
+        { username: { $regex: `^${q}`, $options: "i" } },
+        { fullName: { $regex: `^${q}`, $options: "i" } },
+      ];
+    }
+
+    const followedUsers = await User.find(query)
+      .select("-password -email -blockedUsers -followers -following")
+      .populate("profileImg", "imageUrl")
+      .limit(10);
+
+    res.status(200).json(followedUsers);
+  } catch (error) {
+    console.error("Error in getFollowedUsersForMessaging controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getOrCreateConversation = async (req, res) => {
+  try {
+    const { targetUserId } = req.body;
+    const currentUserId = req.user._id;
+
+    if (currentUserId.toString() === targetUserId.toString()) {
+      return res.status(400).json({ error: "Cannot create conversation with yourself." });
+    }
+
+    // Find an existing conversation.
+    let conversation = await Conversation.findOne({
+      participants: { $all: [currentUserId, targetUserId] },
+    });
+
+    // If no conversation is found, check if the users are following each other
+    // and create a new conversation.
+    if (!conversation) {
+      const currentUser = await User.findById(currentUserId);
+      if (!currentUser || !currentUser.following.includes(targetUserId)) {
+        return res.status(404).json({
+          error: "Conversation not found. You can only message users you follow.",
+        });
+      }
+
+      // Create a new conversation since it doesn't exist and the users follow each other.
+      conversation = new Conversation({
+        participants: [currentUserId, targetUserId],
+        messages: [],
+      });
+      await conversation.save();
+    } else {
+      // New logic: Check if the conversation was hidden for the current user.
+      const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
+      if (isHiddenForCurrentUser) {
+        await Conversation.updateOne(
+          { _id: conversation._id },
+          { $pull: { hiddenFor: currentUserId } },
+          { timestamps: false }
+        );
+
+        // Re-fetch the conversation to get the updated document
+        conversation = await Conversation.findById(conversation._id);
+      }
+    }
+
+    // If the conversation exists (or was just created), populate the participants.
+    conversation = await conversation.populate({
+      path: "participants",
+      select: "-password -email -blockedUsers -blockedBy -following -followers",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
+
+    return res.status(200).json(conversation);
+  } catch (error) {
+    console.error("Error in getOrCreateConversation controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
 };
 
 export const sendMessage = async (req, res) => {
@@ -198,138 +455,6 @@ export const sendMessage = async (req, res) => {
     res.status(201).json(newMessage.toObject());
   } catch (error) {
     console.error("Error in sendMessage controller:", error.message);
-    res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
-
-export const getMessagesByConversationId = async (req, res) => {
-  const { conversationId } = req.params;
-  const { page = 1, limit = 40 } = req.query;
-  const userId = req.user._id;
-
-  try {
-    const conversation = await Conversation.findById(conversationId);
-
-    if (!conversation) {
-      return res.status(404).json({ error: "Conversation not found." });
-    }
-
-    if (!conversation.participants.includes(userId)) {
-      return res.status(403).json({ error: "Unauthorized access to conversation." });
-    }
-
-    const otherParticipantId = conversation.participants.find(
-      (participantId) => participantId.toString() !== userId.toString()
-    );
-
-    if (otherParticipantId) {
-      const isBlocked = await isBlockedOrBlockedBy(userId, otherParticipantId);
-
-      if (isBlocked) {
-        return res.status(403).json({
-          error: "You cannot view this conversation due to blocking restrictions.",
-        });
-      }
-    }
-
-    const skip = (parseInt(page) - 1) * parseInt(limit);
-
-    const messages = await Message.find({
-      conversationId: conversationId,
-      deletedFor: { $nin: [userId] },
-    })
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(parseInt(limit))
-      .populate({
-        path: "sender",
-        select: "username fullName isVerified isGoldVerified badges",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
-      })
-      .populate({
-        path: "repliedTo",
-        select: "sender text img",
-        populate: {
-          path: "sender",
-          select: "username fullName isVerified isGoldVerified badges",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
-        },
-      })
-      .populate({
-        path: "reactions.userId",
-        select: "username fullName",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
-      })
-      .populate("image", "imageUrl")
-      .lean();
-
-    res.status(200).json(messages.reverse());
-  } catch (error) {
-    console.error("Error in getMessagesByConversationId controller:", error.message);
-    res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
-
-export const getConversations = async (req, res) => {
-  const userId = req.user._id;
-
-  try {
-    const user = await User.findById(userId).lean();
-    if (!user) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    // Step 1: Get all users blocked by the current user.
-    const blockedByMe = user.blockedUsers || [];
-
-    // Step 2: Find all users who have blocked the current user.
-    const usersBlockingMe = await User.find({ blockedUsers: userId })
-      .select("_id")
-      .lean();
-    const blockedMe = usersBlockingMe.map((u) => u._id);
-
-    // Step 3: Combine both lists into a single, comprehensive set of blocked IDs.
-    const allBlockedIds = [...new Set([...blockedByMe, ...blockedMe])];
-
-    // Step 4: Fetch conversations for the current user.
-    const conversations = await Conversation.find({
-      participants: userId,
-      hiddenFor: { $ne: userId },
-    })
-      .populate({
-        path: "participants",
-        select: "username profileImg fullName isVerified isGoldVerified badges",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
-      })
-      .sort({ updatedAt: -1 })
-      .lean();
-
-    // Step 5: Filter out conversations where the other participant is in the comprehensive block list.
-    const filteredConversations = conversations.filter((conv) => {
-      const otherParticipant = conv.participants.find(
-        (p) => p && p._id.toString() !== userId.toString()
-      );
-      if (!otherParticipant) return false;
-
-      // Use the comprehensive list to check if the other participant's ID exists.
-      return !allBlockedIds.some((blockedId) => blockedId.equals(otherParticipant._id));
-    });
-
-    res.status(200).json(filteredConversations);
-  } catch (error) {
-    console.error("Error in getConversations controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
@@ -675,138 +800,6 @@ export const toggleConversationVisibility = async (req, res) => {
   }
 };
 
-export const getConversationBetweenUsers = async (req, res) => {
-  try {
-    const { otherUserId } = req.params;
-    const currentUserId = req.user._id;
-
-    const conversation = await Conversation.findOne({
-      participants: { $all: [currentUserId, otherUserId] },
-    }).lean();
-
-    if (!conversation) {
-      return res
-        .status(200)
-        .json({ conversationId: null, isHiddenForCurrentUser: false });
-    }
-
-    const isHiddenForCurrentUser = conversation.hiddenFor.some((id) =>
-      id.equals(currentUserId)
-    );
-
-    res.status(200).json({
-      conversationId: conversation._id,
-      isHiddenForCurrentUser: isHiddenForCurrentUser,
-    });
-  } catch (error) {
-    console.error("Error in getConversationBetweenusers controller:", error.message);
-    res.status(500).json({ error: "Internal Server Error " + error.message });
-  }
-};
-
-export const getFollowedUsersForMessaging = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { q } = req.query;
-
-    const currentUser = await User.findById(userId).select("following");
-
-    if (!currentUser) {
-      return res.status(404).json({ error: "Current user not found." });
-    }
-
-    const followedUserIds = currentUser.following;
-
-    let query = {
-      _id: { $in: followedUserIds },
-    };
-
-    if (q) {
-      query.$or = [
-        { username: { $regex: `^${q}`, $options: "i" } },
-        { fullName: { $regex: `^${q}`, $options: "i" } },
-      ];
-    }
-
-    const followedUsers = await User.find(query)
-      .select("-password -email -blockedUsers -followers -following")
-      .populate("profileImg", "imageUrl")
-      .limit(10);
-
-    res.status(200).json(followedUsers);
-  } catch (error) {
-    console.error("Error in getFollowedUsersForMessaging controller:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getOrCreateConversation = async (req, res) => {
-  try {
-    const { targetUserId } = req.body;
-    const currentUserId = req.user._id;
-
-    if (currentUserId.toString() === targetUserId.toString()) {
-      return res.status(400).json({ error: "Cannot create conversation with yourself." });
-    }
-
-    // Find an existing conversation.
-    let conversation = await Conversation.findOne({
-      participants: { $all: [currentUserId, targetUserId] },
-    });
-
-    // If no conversation is found, check if the users are following each other
-    // and create a new conversation.
-    if (!conversation) {
-      const currentUser = await User.findById(currentUserId);
-      if (!currentUser || !currentUser.following.includes(targetUserId)) {
-        return res.status(404).json({
-          error: "Conversation not found. You can only message users you follow.",
-        });
-      }
-
-      // Create a new conversation since it doesn't exist and the users follow each other.
-      conversation = new Conversation({
-        participants: [currentUserId, targetUserId],
-        messages: [],
-      });
-      await conversation.save();
-    } else {
-      // New logic: Check if the conversation was hidden for the current user.
-      const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
-      if (isHiddenForCurrentUser) {
-        await Conversation.updateOne(
-          { _id: conversation._id },
-          { $pull: { hiddenFor: currentUserId } },
-          { timestamps: false }
-        );
-
-        // Re-fetch the conversation to get the updated document
-        conversation = await Conversation.findById(conversation._id);
-      }
-    }
-
-    // If the conversation exists (or was just created), populate the participants.
-    conversation = await conversation.populate({
-      path: "participants",
-      select: "-password -email -blockedUsers -blockedBy -following -followers",
-      populate: {
-        path: "profileImg",
-        select: "imageUrl",
-      },
-    });
-
-    return res.status(200).json(conversation);
-  } catch (error) {
-    console.error("Error in getOrCreateConversation controller:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-const getPublicIdFromUrl = (url) => {
-  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)\.(?:jpe?g|png|gif|webp|mp4)/);
-  return match && match[1] ? match[1] : null;
-};
-
 export const deleteConversation = async (req, res) => {
   const { id: conversationId } = req.params;
   const { _id: currentUserId } = req.user;
@@ -869,7 +862,6 @@ export const deleteConversation = async (req, res) => {
     session.endSession();
   }
 };
-
 
 export const deleteAllMessagesOnMySide = async (req, res) => {
   const { conversationId } = req.params;

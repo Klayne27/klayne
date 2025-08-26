@@ -3,7 +3,7 @@ import { useParams } from "react-router-dom"
 import { useAppStore } from "../store/useAppStore"
 import { usePrivateChatStore } from "../store/usePrivateChatStore"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
-import { useFetchConversations } from "../features/chat/private/privateChatHooks/useFetchConversations"
+import { useGetConversations } from "../features/chat/private/privateChatHooks/useGetConversations"
 import ConversationsList from "../features/chat/private/ConversationsList"
 import ConversationListSkeleton from "../components/skeletons/ConversationListSkeleton"
 import PrivateChatWindow from "../features/chat/private/PrivateChatWindow"
@@ -21,7 +21,7 @@ const MessagePage = () => {
 
   usePrivateChatStore()
 
-  const { conversations, isLoadingConversations, errorConversations } = useFetchConversations()
+  const { conversations, isLoadingConversations, errorConversations } = useGetConversations()
 
   useEffect(() => {
     if (isLoadingConversations) return

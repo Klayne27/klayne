@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { fetchFollowedUsersForMessagingApi } from "../../../../api/messagesApi"
+import { getFollowedUsersForMessagingApi } from "../../../../api/messagesApi"
 import { conversationKeys } from "./conversationKeys"
 
 export const useGetFollowedUsersForMessaging = (searchQuery) => {
@@ -11,7 +11,7 @@ export const useGetFollowedUsersForMessaging = (searchQuery) => {
     isFetching: isFetchingFollowedUsers,
   } = useQuery({
     queryKey: conversationKeys.followedUsers(searchQuery),
-    queryFn: () => fetchFollowedUsersForMessagingApi(searchQuery),
+    queryFn: () => getFollowedUsersForMessagingApi(searchQuery),
     enabled: !!searchQuery,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,

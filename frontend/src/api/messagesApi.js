@@ -1,49 +1,54 @@
-const BASE_URL = "/api/messages";
+const BASE_URL = "/api/messages"
 
-export const fetchConversationsApi = async () => {
-  const res = await fetch(`${BASE_URL}/conversations`);
+export const getConversationsApi = async () => {
+  const res = await fetch(`${BASE_URL}/conversations`)
   if (!res.ok) {
-    throw new Error("Failed to fetch conversations");
+    throw new Error("Failed to fetch conversations")
   }
-  return res.json();
-};
+  return res.json()
+}
 
-export const deleteConversationApi = async (conversationId) => {
-  try {
-    const res = await fetch(`${BASE_URL}/conversations/${conversationId}`, {
-      method: "DELETE",
-    });
+export const getConversationBetweenUsersApi = async (otherUserId) => {
+  const res = await fetch(`${BASE_URL}/conversations/between/${otherUserId}`)
 
-    const data = await res.json();
-
-    if (!res.ok) {
-      throw new Error(data.error || "Failed to delete conversation");
-    }
-
-    return data;
-  } catch (error) {
-    throw new Error(error.message);
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch conversation between users")
   }
-};
 
-export const fetchFollowedUsersForMessagingApi = async (searchQuery = "") => {
+  return data
+}
+
+export const getMessagesApi = async (conversationId, page = 1, limit = 40) => {
+  if (!conversationId) return []
+
+  const res = await fetch(`${BASE_URL}/conversations/${conversationId}?page=${page}&limit=${limit}`)
+
+  const data = await res.json()
+
+  if (!res.ok) throw new Error(data.error || "Failed to fetch messages")
+
+  return data
+}
+
+export const getFollowedUsersForMessagingApi = async (searchQuery = "") => {
   const url = searchQuery
     ? `${BASE_URL}/followed-for-messaging?q=${encodeURIComponent(searchQuery)}`
-    : `${BASE_URL}/followed-for-messaging`;
+    : `${BASE_URL}/followed-for-messaging`
 
   const res = await fetch(url, {
     method: "GET",
     headers: {
       "Content-Type": "application/json",
     },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to fetch followed users.");
+    throw new Error(data.error || "Failed to fetch followed users.")
   }
-  return data;
-};
+  return data
+}
 
 export const getOrCreateConversationApi = async (targetUserId) => {
   const res = await fetch(`${BASE_URL}/conversations/get-or-create`, {
@@ -52,109 +57,101 @@ export const getOrCreateConversationApi = async (targetUserId) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ targetUserId }),
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to get or create conversation.");
+    throw new Error(data.error || "Failed to get or create conversation.")
   }
-  return data;
-};
+  return data
+}
+
+export const deleteConversationApi = async (conversationId) => {
+  try {
+    const res = await fetch(`${BASE_URL}/conversations/${conversationId}`, {
+      method: "DELETE",
+    })
+
+    const data = await res.json()
+
+    if (!res.ok) {
+      throw new Error(data.error || "Failed to delete conversation")
+    }
+
+    return data
+  } catch (error) {
+    throw new Error(error.message)
+  }
+}
 
 export const toggleConversationVisibilityApi = async (conversationId) => {
   const res = await fetch(`${BASE_URL}/conversations/visibility/${conversationId}`, {
     method: "PUT",
     headers: { "Content-type": "application/json" },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to toggle conversation hide");
+    throw new Error(data.error || "Failed to toggle conversation hide")
   }
 
-  return data;
-};
-
-export const getConversationBetweenUsersApi = async (otherUserId) => {
-  const res = await fetch(`${BASE_URL}/conversations/between/${otherUserId}`);
-
-  const data = await res.json();
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to fetch conversation between users");
-  }
-
-  return data;
-};
-
-export const fetchMessagesApi = async (conversationId, page = 1, limit = 40) => {
-  if (!conversationId) return [];
-
-  const res = await fetch(
-    `${BASE_URL}/conversations/${conversationId}?page=${page}&limit=${limit}`
-  );
-
-  const data = await res.json();
-
-  if (!res.ok) throw new Error(data.error || "Failed to fetch messages");
-
-  return data;
-};
+  return data
+}
 
 export const sendMessageApi = async ({ conversationId, message, img, repliedTo }) => {
   const res = await fetch(`${BASE_URL}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ conversationId, message, img, repliedTo }),
-  });
+  })
 
   if (!res.ok) {
-    const errorData = await res.json();
-    throw new Error(errorData.error || "Failed to send message");
+    const errorData = await res.json()
+    throw new Error(errorData.error || "Failed to send message")
   }
-  return res.json();
-};
+  return res.json()
+}
 
 export const deleteMessageApi = async ({ messageId, conversationId }) => {
   const res = await fetch(`${BASE_URL}/${messageId}`, {
     method: "DELETE",
     headers: { "Content-Type": "application/json" },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
   if (!res.ok) {
-    throw new Error(data.error || "Failed to delete message.");
+    throw new Error(data.error || "Failed to delete message.")
   }
-  return data;
-};
+  return data
+}
 
 export const editMessageApi = async (messageId, newText) => {
   const res = await fetch(`${BASE_URL}/edit/${messageId}`, {
     method: "PUT",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ newText }),
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to edit message");
+  if (!res.ok) throw new Error(data.error || "Failed to edit message")
 
-  return data;
-};
+  return data
+}
 
 export const reactToMessageApi = async (messageId, emoji) => {
   const res = await fetch(`${BASE_URL}/react/${messageId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ emoji }),
-  });
+  })
 
-  const data = await res.json();
-  if (!res.ok) throw new Error(data.error || "Failed to react to message");
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to react to message")
 
-  return data;
-};
-
+  return data
+}
 
 export const deleteAllMessagesOnMySide = async (conversationId) => {
   const res = await fetch(`${BASE_URL}/all/${conversationId}`, {
@@ -164,15 +161,10 @@ export const deleteAllMessagesOnMySide = async (conversationId) => {
     },
   })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to delete messages on your side");
+    throw new Error(data.error || "Failed to delete messages on your side")
   }
 
-  return data;
-};
-
-
-
-
-
+  return data
+}

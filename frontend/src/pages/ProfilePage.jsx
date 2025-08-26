@@ -22,7 +22,7 @@ import ConfirmationModal from "../components/common/ConfirmationModal"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/useGetPinnedPosts"
 import FollowButton from "../components/common/FollowButton"
 import { useAdminDeleteUser } from "../hooks/usersHooks/useAdminDeleteUser"
-import { useFetchConversationBetweenUsers } from "../features/chat/private/privateChatHooks/useFetchConversationBetweenUsers"
+import { useGetConversationBetweenUsers } from "../features/chat/private/privateChatHooks/useGetConversationBetweenUsers"
 import { showAppToast } from "../utils/showAppToast"
 import { useAppStore } from "../store/useAppStore"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
@@ -68,7 +68,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     conversationStatus,
     isLoadingConversationStatus,
     isErrorConversationStatus,
-  } = useFetchConversationBetweenUsers(userProfile?._id)
+  } = useGetConversationBetweenUsers(userProfile?._id)
 
   const {
     pinnedPosts,

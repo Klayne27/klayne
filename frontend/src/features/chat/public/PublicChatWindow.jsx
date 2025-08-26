@@ -7,7 +7,7 @@ import PublicChatMessageList from "./PublicChatMessageList"
 import PublicChatMessageInput from "./PublicChatMessageInput"
 
 import { FaCaretDown } from "react-icons/fa"
-import { usePublicMessages } from "./publicChatHooks/usePublicMessages"
+import { useGetPublicMessages } from "./publicChatHooks/useGetPublicMessages"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
 import { usePublicChatSocketEvents } from "../../../hooks/socketEventHooks/usePublicChatSocketEvents"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
@@ -32,7 +32,7 @@ const PublicChatWindow = () => {
     isLoadingMessages,
     isMessagesError,
     messagesError,
-  } = usePublicMessages()
+  } = useGetPublicMessages()
 
   const {
     handleLoadImage,

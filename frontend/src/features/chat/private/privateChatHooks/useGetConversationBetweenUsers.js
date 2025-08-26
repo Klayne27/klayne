@@ -2,7 +2,7 @@ import { useQuery } from "@tanstack/react-query";
 import { conversationKeys } from "./conversationKeys";
 import { getConversationBetweenUsersApi } from "../../../../api/messagesApi";
 
-export const useFetchConversationBetweenUsers = (otherUserId) => {
+export const useGetConversationBetweenUsers = (otherUserId) => {
   const {
     data: conversationStatus,
     isLoading: isLoadingConversationStatus,

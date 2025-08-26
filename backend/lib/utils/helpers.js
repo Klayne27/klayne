@@ -158,6 +158,12 @@ export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
   return { initialMatch, userLookup, repostLookup, finalMatch };
 };
 
+export const getPublicIdFromUrl = (url) => {
+  const match = url.match(/\/upload\/(?:v\d+\/)?(.+?)\.(?:jpe?g|png|gif|webp|mp4)/);
+  return match && match[1] ? match[1] : null;
+};
+
+
 export const getDynamicPushBody = (type, username) => {
   switch (type) {
     case "follow":

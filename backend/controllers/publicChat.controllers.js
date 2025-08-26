@@ -21,6 +21,56 @@ const isBanned = async (userId) => {
   return user ? user.isBannedInPublicChat : false;
 };
 
+export const getPublicMessages = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 40;
+    const skip = (page - 1) * limit;
+
+    const messages = await PublicChatMessage.find()
+      .sort({ createdAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate([
+        {
+          path: "sender",
+          select:
+            "username fullName  isAdmin isVerified isGoldVerified badges isBannedInPublicChat",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
+        },
+        {
+          path: "repliedTo",
+          select: "sender text img isDeletedByAdmin isDeletedByUser",
+          populate: {
+            path: "sender",
+            select: "username isBannedInPublicChat",
+          },
+        },
+        {
+          path: "reactions.userId",
+          select: "username fullName",
+          populate: {
+            path: "profileImg coverImg",
+            select: "imageUrl publicId",
+          },
+        },
+        {
+          path: "image",
+          select: "imageUrl publicId",
+        },
+      ])
+      .lean();
+
+    res.status(200).json(messages.reverse());
+  } catch (error) {
+    console.error("Error in getPublicMessages controller: ", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const sendPublicMessage = async (req, res) => {
   try {
     const { text, imgBase64, repliedTo } = req.body;
@@ -120,56 +170,6 @@ export const sendPublicMessage = async (req, res) => {
     res.status(201).json(newPublicMessage);
   } catch (error) {
     console.error("Error in sendPublicMessage controller: ", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getPublicMessages = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 40;
-    const skip = (page - 1) * limit;
-
-    const messages = await PublicChatMessage.find()
-      .sort({ createdAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate([
-        {
-          path: "sender",
-          select:
-            "username fullName  isAdmin isVerified isGoldVerified badges isBannedInPublicChat",
-          populate: {
-            path: "profileImg coverImg",
-            select: "imageUrl publicId",
-          },
-        },
-        {
-          path: "repliedTo",
-          select: "sender text img isDeletedByAdmin isDeletedByUser",
-          populate: {
-            path: "sender",
-            select: "username isBannedInPublicChat",
-          },
-        },
-        {
-          path: "reactions.userId",
-          select: "username fullName",
-          populate: {
-            path: "profileImg coverImg",
-            select: "imageUrl publicId",
-          },
-        },
-        {
-          path: "image",
-          select: "imageUrl publicId",
-        },
-      ])
-      .lean();
-
-    res.status(200).json(messages.reverse());
-  } catch (error) {
-    console.error("Error in getPublicMessages controller: ", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

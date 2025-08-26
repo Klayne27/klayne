@@ -4,7 +4,7 @@ import { useSocket } from "../../../context/SocketContext"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
-import { useFetchMessages } from "./privateChatHooks/useFetchMessages"
+import { useGetMessages } from "./privateChatHooks/useGetMessages"
 import { usePrivateChatSocketEvents } from "../../../hooks/socketEventHooks/usePrivateChatSocketEvents"
 import PrivateChatMessageList from "./PrivateChatMessageList"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
@@ -26,7 +26,7 @@ const PrivateChatWindow = () => {
     usePrivateChatStore()
 
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
-    useFetchMessages(conversationId)
+    useGetMessages(conversationId)
 
   const {
     handleLoadImage,
