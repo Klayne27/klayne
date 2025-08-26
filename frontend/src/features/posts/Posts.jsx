@@ -1,7 +1,7 @@
 import Post from "./Post"
 import PostSkeleton from "../../components/skeletons/PostSkeleton"
 import { useEffect, useRef, useCallback } from "react"
-import { useFetchPosts } from "./postsHooks/useFetchPosts"
+import { useGetPosts } from "./postsHooks/useGetPosts"
 import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 
 const Posts = ({
@@ -22,7 +22,7 @@ const Posts = ({
     error,
     totalPostsCount,
     totalLikedPostsCount,
-  } = useFetchPosts({ feedType, username })
+  } = useGetPosts({ feedType, username })
 
   const { combinedPosts, filteredPostsForRender } = useCombinedPosts({
     posts,

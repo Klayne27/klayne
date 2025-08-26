@@ -1,5 +1,4 @@
 import Post from "../models/post.model.js";
-import Notification from "../models/notification.model.js";
 import User from "../models/user.model.js";
 import { v2 as cloudinary } from "cloudinary";
 import mongoose from "mongoose";
@@ -7,7 +6,6 @@ import mongoose from "mongoose";
 import {
   createAndSendNotification,
   emitNewPostCount,
-  emitUnreadNotificationStatus,
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
@@ -27,289 +25,6 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
     currentUser.blockedUsers.includes(targetUserId) ||
     targetUser.blockedUsers.includes(currentUserId)
   );
-};
-
-export const createPost = async (req, res) => {
-  try {
-    const { text, pollOptions, scheduledAt } = req.body;
-    let { img, video } = req.body;
-
-    const userId = req.user._id.toString();
-
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
-
-    if (video) {
-      if (!user.isVerified && !user.isGoldVerified) {
-        return res.status(403).json({
-          error: "Only verified users can post videos.",
-        });
-      }
-    }
-
-    try {
-      if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
-        return res
-          .status(400)
-          .json({ error: "Post must have text, image, video, or poll options." });
-      }
-
-      if ((img || video) && pollOptions && pollOptions.length > 0) {
-        return res
-          .status(400)
-          .json({ error: "You cannot post a poll with an image or video." });
-      }
-    } catch (uploadError) {
-      return res.status(500).json({
-        error: "Failed to upload media. Please try again.",
-        details: uploadError.message,
-      });
-    }
-
-    let uploadedImgUrl = null;
-    let uploadedVideoUrl = null;
-    let imgPublicId = null;
-    let videoPublicId = null;
-    let mediaType = "none";
-
-    if (img) {
-      const uploadedResponse = await cloudinary.uploader.upload(img);
-      uploadedImgUrl = uploadedResponse.secure_url;
-      imgPublicId = uploadedResponse.public_id;
-      mediaType = "image";
-    } else if (video) {
-      const uploadedResponse = await cloudinary.uploader.upload(video, {
-        resource_type: "video",
-      });
-      uploadedVideoUrl = uploadedResponse.secure_url;
-      videoPublicId = uploadedResponse.public_id;
-      mediaType = "video";
-    }
-
-    const mentionedUsersIds = await extractAndValidateMentions(text);
-
-    const isScheduled = !!scheduledAt;
-    const newPostData = {
-      user: userId,
-      text,
-      commentsCount: 0,
-      mentionedUsers: mentionedUsersIds,
-      isScheduled,
-      scheduledAt: isScheduled ? new Date(scheduledAt) : null,
-      publishedAt: new Date(),
-    };
-
-    if (pollOptions && pollOptions.length > 0) {
-      if (pollOptions.length < 2) {
-        return res.status(400).json({ error: "A poll must have at least two options." });
-      }
-      const validPollOptions = pollOptions.map((option) => {
-        if (!option.text || option.text.trim() === "") {
-          throw new Error("Poll options cannot be empty.");
-        }
-        return { text: option.text.trim(), voters: [] };
-      });
-
-      newPostData.pollOptions = validPollOptions;
-      newPostData.pollTotalVotes = 0;
-      newPostData.img = null;
-      newPostData.video = null;
-      newPostData.imgPublicId = null;
-      newPostData.videoPublicId = null;
-      newPostData.mediaType = "none";
-    } else {
-      newPostData.img = uploadedImgUrl;
-      newPostData.video = uploadedVideoUrl;
-      newPostData.imgPublicId = imgPublicId;
-      newPostData.videoPublicId = videoPublicId;
-      newPostData.mediaType = mediaType;
-    }
-
-    const newPost = new Post(newPostData);
-    await newPost.save();
-
-    // ✅ FIX 1: Create Image document and link it to the Post
-    let newImage = null;
-    let newVideo = null;
-
-    if (img) {
-      newImage = new Image({
-        imageUrl: uploadedImgUrl,
-        parentDocument: newPost._id,
-        parentModel: "Post",
-        uploadedBy: userId,
-        publicId: imgPublicId,
-      });
-      await newImage.save();
-
-      newPost.image = newImage._id;
-      await newPost.save(); // Save again to update the post with the new image ID
-    }
-
-    if (!newPost.isScheduled) {
-      await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
-
-      const notificationPromises = mentionedUsersIds.map((mentionedUserId) =>
-        createAndSendNotification({
-          from: userId,
-          to: mentionedUserId,
-          type: "mention",
-          postId: newPost._id,
-        })
-      );
-
-      await Promise.all(notificationPromises);
-
-      if (onlineUsersMap && io) {
-        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
-          if (onlineUserId.toString() !== userId.toString()) {
-            await emitNewPostCount(onlineUserId);
-          }
-        }
-      }
-    } else {
-      console.log(`Post scheduled for ${newPost.scheduledAt}`);
-    }
-
-    // ✅ FIX 2: Populate the user and media fields before sending the response
-    const populatedPost = await Post.findById(newPost._id)
-      .populate({
-        path: "user",
-        select: "username fullName isVerified isGoldVerified badges",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
-      })
-      .populate({
-        path: "image",
-        select: "imageUrl",
-      })
-      .populate({
-        path: "video",
-      })
-      .exec();
-
-    res.status(201).json(populatedPost);
-  } catch (error) {
-    if (error.message.includes("Poll options cannot be empty.")) {
-      return res.status(400).json({ error: error.message });
-    }
-    res.status(500).json({ error: "Internal server error" });
-    console.log("Error in createPost controller: ", error);
-  }
-};
-
-export const deletePost = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user._id;
-
-    const postToDelete = await Post.findById(id);
-
-    if (!postToDelete) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    if (!postToDelete.user.equals(userId)) {
-      return res
-        .status(401)
-        .json({ error: "You are not authorized to delete this post" });
-    }
-
-    if (!postToDelete.repostedFrom) {
-      if (postToDelete.imgPublicId) {
-        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
-      }
-      if (postToDelete.videoPublicId) {
-        await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
-          resource_type: "video",
-        });
-      }
-      await Post.deleteMany({ repostedFrom: postToDelete._id });
-      await Post.deleteOne({ _id: id });
-    } else {
-      await Post.updateOne(
-        { _id: postToDelete.repostedFrom },
-        {
-          $inc: { repostsCount: -1 },
-          $pull: { repostedBy: userId },
-        }
-      );
-      await Post.deleteOne({ _id: id });
-    }
-
-    res.status(200).json({ message: "Post deleted successfully" });
-  } catch (error) {
-    console.error("Error in deletePost controller:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const likeUnlikePost = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { id: postId } = req.params;
-
-    const post = await Post.findById(postId);
-
-    if (!post) {
-      return res.status(404).json({ error: "Post not found" });
-    }
-
-    const postOwnerId = post.user.toString();
-    if (await isBlockedOrBlockedBy(userId, postOwnerId)) {
-      return res.status(403).json({
-        error: "You cannot like/unlike this post due to blocking restrictions.",
-      });
-    }
-
-    const userLikedPost = post.likes.includes(userId);
-
-    if (userLikedPost) {
-      await Promise.all([
-        Post.updateOne({ _id: postId }, { $pull: { likes: userId } }),
-        User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } }),
-      ]);
-
-      const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
-      res.status(200).json(updatedLikes);
-    } else {
-      // Like post
-      post.likes.push(userId);
-      await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
-      await post.save();
-
-      // if (post.user.toString() !== userId.toString()) {
-      //   const notification = new Notification({
-      //     from: userId,
-      //     to: post.user,
-      //     type: "like",
-      //     postId: postId,
-      //     read: false,
-      //   });
-
-      //   await notification.save();
-
-      //   await emitUnreadNotificationStatus(post.user.toString());
-      // }
-      if (post.user.toString() !== userId.toString()) {
-        // ------------------ FIX: Call the unified function ------------------
-        await createAndSendNotification({
-          from: userId,
-          to: post.user,
-          type: "like",
-          postId: postId,
-        });
-        // --------------------------------------------------------------------
-      }
-
-      res.status(200).json(post.likes);
-    }
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-    console.log("Error in likeUnlikePost controller: ", error);
-  }
 };
 
 export const getAllPosts = async (req, res) => {
@@ -354,7 +69,7 @@ export const getAllPosts = async (req, res) => {
       profileImg: 1,
       isVerified: 1,
       isGoldVerified: 1,
-      badges: 1
+      badges: 1,
     };
 
     const repostedPostProjection = {
@@ -641,7 +356,7 @@ export const getLikedPosts = async (req, res) => {
       fullName: 1,
       isVerified: 1,
       isGoldVerified: 1,
-      badges: 1
+      badges: 1,
     };
 
     const repostedPostProjection = {
@@ -1202,6 +917,453 @@ export const getPost = async (req, res) => {
   }
 };
 
+export const getBookmarkedPosts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { query, page = 1, limit = 10 } = req.query;
+
+    const parsedPage = parseInt(page);
+    const parsedLimit = parseInt(limit);
+
+    let filter = { bookmarkedBy: userId };
+
+    if (query) {
+      filter.text = { $regex: query, $options: "i" };
+    }
+
+    const totalPostsCount = await Post.countDocuments(filter);
+
+    const bookmarkedPosts = await Post.find(filter)
+      .sort({ publishedAt: -1, createdAt: -1 })
+      .skip((parsedPage - 1) * parsedLimit)
+      .limit(parsedLimit)
+      .populate({
+        path: "user",
+        select: "-password",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate({
+        path: "repostedFrom",
+        populate: {
+          path: "user",
+          select: "-password",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
+        },
+        select:
+          "text img video mediaType likes commentsCount repostsCount createdAt user repostedBy",
+      })
+      .populate({
+        path: "comments",
+        populate: {
+          path: "user",
+          select: "-password",
+          populate: {
+            path: "profileImg",
+            select: "imageUrl",
+          },
+        },
+      })
+      .populate("image", "imageUrl")
+      .lean();
+
+    const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
+
+    res.status(200).json({
+      posts: bookmarkedPosts,
+      currentPage: parsedPage,
+      totalPages: Math.ceil(totalPostsCount / parsedLimit),
+      hasNextPage: hasNextPage,
+      totalPosts: totalPostsCount,
+    });
+  } catch (error) {
+    console.error("Error in getBookmarkedPosts controller:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const getPinnedPosts = async (req, res) => {
+  const { username } = req.params;
+  const currentUserId = req.user?._id;
+
+  try {
+    const user = await User.findOne({ username });
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
+      return res.status(403).json({
+        error: "You cannot view posts from this user due to blocking restrictions.",
+      });
+    }
+
+    const userWithPinnedPosts = await User.findById(user._id)
+      .select("pinnedPosts")
+      .populate({
+        path: "pinnedPosts",
+        populate: [
+          {
+            path: "user",
+            select: "-password",
+            populate: {
+              path: "profileImg",
+              select: "imageUrl",
+            },
+          },
+
+          {
+            path: "repostedFrom",
+            populate: {
+              path: "user",
+              select: "-password",
+            },
+            select:
+              "text img video mediaType likes commentsCount bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy",
+          },
+        ],
+      })
+      .lean();
+
+    if (!userWithPinnedPosts || !userWithPinnedPosts.pinnedPosts) {
+      return res.status(200).json([]);
+    }
+
+    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
+    const blockedIds = new Set([...blockedByMe, ...blockedMe]);
+
+    const finalPinnedPosts = userWithPinnedPosts.pinnedPosts.filter((post) => {
+      const postOwnerId = post.user?._id?.toString();
+      const repostedFromOwnerId = post.repostedFrom?.user?._id?.toString();
+
+      if (
+        blockedIds.has(postOwnerId) ||
+        (repostedFromOwnerId && blockedIds.has(repostedFromOwnerId))
+      ) {
+        return false;
+      }
+
+      if (post.deletedFor?.some((entry) => entry.user.equals(currentUserId))) {
+        return false;
+      }
+
+      return true;
+    });
+
+    res.status(200).json(finalPinnedPosts);
+  } catch (error) {
+    console.log("Error in getPinnedPosts: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getScheduledPosts = async (req, res) => {
+  try {
+    const userId = req.user._id;
+
+    const scheduledPosts = await Post.find({
+      user: userId,
+      isScheduled: true,
+      scheduledAt: { $gt: new Date() },
+    })
+      .sort({ scheduledAt: 1 })
+      .populate("user", "-password");
+
+    res.status(200).json(scheduledPosts);
+  } catch (error) {
+    console.log("Error in getScheduledPosts controller: ", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const createPost = async (req, res) => {
+  try {
+    const { text, pollOptions, scheduledAt } = req.body;
+    let { img, video } = req.body;
+
+    const userId = req.user._id.toString();
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ error: "User not found" });
+
+    if (video) {
+      if (!user.isVerified && !user.isGoldVerified) {
+        return res.status(403).json({
+          error: "Only verified users can post videos.",
+        });
+      }
+    }
+
+    try {
+      if (!text && !img && !video && (!pollOptions || pollOptions.length === 0)) {
+        return res
+          .status(400)
+          .json({ error: "Post must have text, image, video, or poll options." });
+      }
+
+      if ((img || video) && pollOptions && pollOptions.length > 0) {
+        return res
+          .status(400)
+          .json({ error: "You cannot post a poll with an image or video." });
+      }
+    } catch (uploadError) {
+      return res.status(500).json({
+        error: "Failed to upload media. Please try again.",
+        details: uploadError.message,
+      });
+    }
+
+    let uploadedImgUrl = null;
+    let uploadedVideoUrl = null;
+    let imgPublicId = null;
+    let videoPublicId = null;
+    let mediaType = "none";
+
+    if (img) {
+      const uploadedResponse = await cloudinary.uploader.upload(img);
+      uploadedImgUrl = uploadedResponse.secure_url;
+      imgPublicId = uploadedResponse.public_id;
+      mediaType = "image";
+    } else if (video) {
+      const uploadedResponse = await cloudinary.uploader.upload(video, {
+        resource_type: "video",
+      });
+      uploadedVideoUrl = uploadedResponse.secure_url;
+      videoPublicId = uploadedResponse.public_id;
+      mediaType = "video";
+    }
+
+    const mentionedUsersIds = await extractAndValidateMentions(text);
+
+    const isScheduled = !!scheduledAt;
+    const newPostData = {
+      user: userId,
+      text,
+      commentsCount: 0,
+      mentionedUsers: mentionedUsersIds,
+      isScheduled,
+      scheduledAt: isScheduled ? new Date(scheduledAt) : null,
+      publishedAt: new Date(),
+    };
+
+    if (pollOptions && pollOptions.length > 0) {
+      if (pollOptions.length < 2) {
+        return res.status(400).json({ error: "A poll must have at least two options." });
+      }
+      const validPollOptions = pollOptions.map((option) => {
+        if (!option.text || option.text.trim() === "") {
+          throw new Error("Poll options cannot be empty.");
+        }
+        return { text: option.text.trim(), voters: [] };
+      });
+
+      newPostData.pollOptions = validPollOptions;
+      newPostData.pollTotalVotes = 0;
+      newPostData.img = null;
+      newPostData.video = null;
+      newPostData.imgPublicId = null;
+      newPostData.videoPublicId = null;
+      newPostData.mediaType = "none";
+    } else {
+      newPostData.img = uploadedImgUrl;
+      newPostData.video = uploadedVideoUrl;
+      newPostData.imgPublicId = imgPublicId;
+      newPostData.videoPublicId = videoPublicId;
+      newPostData.mediaType = mediaType;
+    }
+
+    const newPost = new Post(newPostData);
+    await newPost.save();
+
+    // ✅ FIX 1: Create Image document and link it to the Post
+    let newImage = null;
+    let newVideo = null;
+
+    if (img) {
+      newImage = new Image({
+        imageUrl: uploadedImgUrl,
+        parentDocument: newPost._id,
+        parentModel: "Post",
+        uploadedBy: userId,
+        publicId: imgPublicId,
+      });
+      await newImage.save();
+
+      newPost.image = newImage._id;
+      await newPost.save(); // Save again to update the post with the new image ID
+    }
+
+    if (!newPost.isScheduled) {
+      await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
+
+      const notificationPromises = mentionedUsersIds.map((mentionedUserId) =>
+        createAndSendNotification({
+          from: userId,
+          to: mentionedUserId,
+          type: "mention",
+          postId: newPost._id,
+        })
+      );
+
+      await Promise.all(notificationPromises);
+
+      if (onlineUsersMap && io) {
+        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+          if (onlineUserId.toString() !== userId.toString()) {
+            await emitNewPostCount(onlineUserId);
+          }
+        }
+      }
+    } else {
+      console.log(`Post scheduled for ${newPost.scheduledAt}`);
+    }
+
+    // ✅ FIX 2: Populate the user and media fields before sending the response
+    const populatedPost = await Post.findById(newPost._id)
+      .populate({
+        path: "user",
+        select: "username fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate({
+        path: "image",
+        select: "imageUrl",
+      })
+      .populate({
+        path: "video",
+      })
+      .exec();
+
+    res.status(201).json(populatedPost);
+  } catch (error) {
+    if (error.message.includes("Poll options cannot be empty.")) {
+      return res.status(400).json({ error: error.message });
+    }
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error in createPost controller: ", error);
+  }
+};
+
+export const deletePost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const userId = req.user._id;
+
+    const postToDelete = await Post.findById(id);
+
+    if (!postToDelete) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    if (!postToDelete.user.equals(userId)) {
+      return res
+        .status(401)
+        .json({ error: "You are not authorized to delete this post" });
+    }
+
+    if (!postToDelete.repostedFrom) {
+      if (postToDelete.imgPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.imgPublicId);
+      }
+      if (postToDelete.videoPublicId) {
+        await cloudinary.uploader.destroy(postToDelete.videoPublicId, {
+          resource_type: "video",
+        });
+      }
+      await Post.deleteMany({ repostedFrom: postToDelete._id });
+      await Post.deleteOne({ _id: id });
+    } else {
+      await Post.updateOne(
+        { _id: postToDelete.repostedFrom },
+        {
+          $inc: { repostsCount: -1 },
+          $pull: { repostedBy: userId },
+        }
+      );
+      await Post.deleteOne({ _id: id });
+    }
+
+    res.status(200).json({ message: "Post deleted successfully" });
+  } catch (error) {
+    console.error("Error in deletePost controller:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const likeUnlikePost = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { id: postId } = req.params;
+
+    const post = await Post.findById(postId);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    const postOwnerId = post.user.toString();
+    if (await isBlockedOrBlockedBy(userId, postOwnerId)) {
+      return res.status(403).json({
+        error: "You cannot like/unlike this post due to blocking restrictions.",
+      });
+    }
+
+    const userLikedPost = post.likes.includes(userId);
+
+    if (userLikedPost) {
+      await Promise.all([
+        Post.updateOne({ _id: postId }, { $pull: { likes: userId } }),
+        User.updateOne({ _id: userId }, { $pull: { likedPosts: postId } }),
+      ]);
+
+      const updatedLikes = post.likes.filter((id) => id.toString() !== userId.toString());
+      res.status(200).json(updatedLikes);
+    } else {
+      // Like post
+      post.likes.push(userId);
+      await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
+      await post.save();
+
+      // if (post.user.toString() !== userId.toString()) {
+      //   const notification = new Notification({
+      //     from: userId,
+      //     to: post.user,
+      //     type: "like",
+      //     postId: postId,
+      //     read: false,
+      //   });
+
+      //   await notification.save();
+
+      //   await emitUnreadNotificationStatus(post.user.toString());
+      // }
+      if (post.user.toString() !== userId.toString()) {
+        // ------------------ FIX: Call the unified function ------------------
+        await createAndSendNotification({
+          from: userId,
+          to: post.user,
+          type: "like",
+          postId: postId,
+        });
+        // --------------------------------------------------------------------
+      }
+
+      res.status(200).json(post.likes);
+    }
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+    console.log("Error in likeUnlikePost controller: ", error);
+  }
+};
+
 export const repostPost = async (req, res) => {
   try {
     const { postId } = req.params;
@@ -1349,76 +1511,6 @@ export const toggleBookmark = async (req, res) => {
   }
 };
 
-export const getBookmarkedPosts = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { query, page = 1, limit = 10 } = req.query;
-
-    const parsedPage = parseInt(page);
-    const parsedLimit = parseInt(limit);
-
-    let filter = { bookmarkedBy: userId };
-
-    if (query) {
-      filter.text = { $regex: query, $options: "i" };
-    }
-
-    const totalPostsCount = await Post.countDocuments(filter);
-
-    const bookmarkedPosts = await Post.find(filter)
-      .sort({ publishedAt: -1, createdAt: -1 })
-      .skip((parsedPage - 1) * parsedLimit)
-      .limit(parsedLimit)
-      .populate({
-        path: "user",
-        select: "-password",
-        populate: {
-          path: "profileImg",
-          select: "imageUrl",
-        },
-      })
-      .populate({
-        path: "repostedFrom",
-        populate: {
-          path: "user",
-          select: "-password",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
-        },
-        select:
-          "text img video mediaType likes commentsCount repostsCount createdAt user repostedBy",
-      })
-      .populate({
-        path: "comments",
-        populate: {
-          path: "user",
-          select: "-password",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
-        },
-      })
-      .populate("image", "imageUrl")
-      .lean();
-
-    const hasNextPage = totalPostsCount > parsedPage * parsedLimit;
-
-    res.status(200).json({
-      posts: bookmarkedPosts,
-      currentPage: parsedPage,
-      totalPages: Math.ceil(totalPostsCount / parsedLimit),
-      hasNextPage: hasNextPage,
-      totalPosts: totalPostsCount,
-    });
-  } catch (error) {
-    console.error("Error in getBookmarkedPosts controller:", error.message);
-    res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
-
 export const voteOnPoll = async (req, res) => {
   try {
     const { postId, optionId } = req.body; // <-- Fix: Access postId from req.body
@@ -1516,100 +1608,6 @@ export const pinUnpinPost = async (req, res) => {
     }
   } catch (error) {
     console.error("Error in pinUnpinPost controller:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getPinnedPosts = async (req, res) => {
-  const { username } = req.params;
-  const currentUserId = req.user?._id;
-
-  try {
-    const user = await User.findOne({ username });
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
-      return res.status(403).json({
-        error: "You cannot view posts from this user due to blocking restrictions.",
-      });
-    }
-
-    const userWithPinnedPosts = await User.findById(user._id)
-      .select("pinnedPosts")
-      .populate({
-        path: "pinnedPosts",
-        populate: [
-          {
-            path: "user",
-            select: "-password",
-            populate: {
-              path: "profileImg",
-              select: "imageUrl",
-            },
-          },
-
-          {
-            path: "repostedFrom",
-            populate: {
-              path: "user",
-              select: "-password",
-            },
-            select:
-              "text img video mediaType likes commentsCount bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy",
-          },
-        ],
-      })
-      .lean();
-
-    if (!userWithPinnedPosts || !userWithPinnedPosts.pinnedPosts) {
-      return res.status(200).json([]);
-    }
-
-    const { blockedByMe, blockedMe } = await getBlockingUsers(currentUserId);
-    const blockedIds = new Set([...blockedByMe, ...blockedMe]);
-
-    const finalPinnedPosts = userWithPinnedPosts.pinnedPosts.filter((post) => {
-      const postOwnerId = post.user?._id?.toString();
-      const repostedFromOwnerId = post.repostedFrom?.user?._id?.toString();
-
-      if (
-        blockedIds.has(postOwnerId) ||
-        (repostedFromOwnerId && blockedIds.has(repostedFromOwnerId))
-      ) {
-        return false;
-      }
-
-      if (post.deletedFor?.some((entry) => entry.user.equals(currentUserId))) {
-        return false;
-      }
-
-      return true;
-    });
-
-    res.status(200).json(finalPinnedPosts);
-  } catch (error) {
-    console.log("Error in getPinnedPosts: ", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getScheduledPosts = async (req, res) => {
-  try {
-    const userId = req.user._id;
-
-    const scheduledPosts = await Post.find({
-      user: userId,
-      isScheduled: true,
-      scheduledAt: { $gt: new Date() },
-    })
-      .sort({ scheduledAt: 1 })
-      .populate("user", "-password");
-
-    res.status(200).json(scheduledPosts);
-  } catch (error) {
-    console.log("Error in getScheduledPosts controller: ", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

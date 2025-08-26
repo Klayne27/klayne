@@ -5,7 +5,7 @@ import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
 import { useDebounce } from "../hooks/customHooks/useDebounce";
 import { useSearchUsers } from "../hooks/usersHooks/userSearchUsers";
 import { useIsMobile } from "../hooks/customHooks/useIsMobile";
-import { useFetchPost } from "../features/posts/postsHooks/useFetchPost";
+import { useGetPost } from "../features/posts/postsHooks/useGetPost";
 import { useFetchComments } from "../features/comments/commentHooks/useFetchComments";
 import { useCreateComment } from "../features/comments/commentHooks/useCreateComment";
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler";
@@ -61,7 +61,7 @@ const PostPage = () => {
   }, [commentInput, adjustTextareaHeight]); // Trigger on commentInput change
   // --- END TEXTAREA HEIGHT ADJUSTMENT ---
 
-  const { post, isLoading, isError, error, refetch: refetchPost } = useFetchPost(pid);
+  const { post, isLoading, isError, error, refetch: refetchPost } = useGetPost(pid);
   const {
     comments,
     isLoading: isLoadingComments,

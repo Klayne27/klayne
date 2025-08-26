@@ -1,8 +1,8 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { postKeys } from "./postKeys"
-import { fetchPostsApi } from "../../../api/postsApi"
+import { getPostsApi } from "../../../api/postsApi"
 
-export const useFetchPosts = ({ feedType, username = null }) => {
+export const useGetPosts = ({ feedType, username = null }) => {
   const getPostEndpoint = () => {
     switch (feedType) {
       case "forYou":
@@ -37,7 +37,7 @@ export const useFetchPosts = ({ feedType, username = null }) => {
         : feedType === "likes"
           ? postKeys.likes(username)
           : postKeys.list(POST_ENDPOINT),
-    queryFn: ({ pageParam }) => fetchPostsApi(POST_ENDPOINT, pageParam),
+    queryFn: ({ pageParam }) => getPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
       return lastPage?.hasNextPage ? allPages.length + 1 : undefined

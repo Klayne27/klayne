@@ -1,6 +1,6 @@
 const BASE_URL = "/api/posts"
 
-export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
+export const getPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`
   const res = await fetch(url)
 
@@ -10,7 +10,7 @@ export const fetchPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) =>
   return data
 }
 
-export const fetchPostApi = async (postId) => {
+export const getPostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/${postId}`)
   if (!res.ok) {
     const errorData = await res.json()
@@ -19,7 +19,7 @@ export const fetchPostApi = async (postId) => {
   return res.json()
 }
 
-export const fetchBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
+export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
   const url = new URL(`${BASE_URL}/bookmarked`, window.location.origin)
   url.searchParams.append("page", pageParam)
   url.searchParams.append("limit", 10)
@@ -39,7 +39,7 @@ export const fetchBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" 
   return data
 }
 
-export const fetchPinnedPostsApi = async (username) => {
+export const getPinnedPostsApi = async (username) => {
   const res = await fetch(`${BASE_URL}/profile/${username}/pinned-posts`)
 
   const data = await res.json()
@@ -49,7 +49,7 @@ export const fetchPinnedPostsApi = async (username) => {
   return data
 }
 
-export const fetchScheduledPostsApi = async () => {
+export const getScheduledPostsApi = async () => {
   const res = await fetch(`${BASE_URL}/scheduled`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch scheduled posts")

@@ -19,7 +19,7 @@ import { CiMail } from "react-icons/ci"
 import ScrollToTop from "../utils/ScrollToTop"
 import { useBlockUnblockUser } from "../hooks/usersHooks/useBlockUnblockUser"
 import ConfirmationModal from "../components/common/ConfirmationModal"
-import { useFetchPinnedPosts } from "../features/posts/postsHooks/useFetchPinnedPosts"
+import { useGetPinnedPosts } from "../features/posts/postsHooks/useGetPinnedPosts"
 import FollowButton from "../components/common/FollowButton"
 import { useAdminDeleteUser } from "../hooks/usersHooks/useAdminDeleteUser"
 import { useFetchConversationBetweenUsers } from "../features/chat/private/privateChatHooks/useFetchConversationBetweenUsers"
@@ -74,7 +74,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     pinnedPosts,
     isLoading: isLoadingPinnedPosts,
     isRefetching: isRefetchingPinnedPosts,
-  } = useFetchPinnedPosts(username)
+  } = useGetPinnedPosts(username)
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
