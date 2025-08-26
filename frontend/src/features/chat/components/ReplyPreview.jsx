@@ -1,5 +1,5 @@
-import { renderClickableText } from "../../utils/textUtils";
-import { truncateText } from "../../utils/truncateText";
+import { renderClickableText } from "../../../utils/textUtils";
+import { truncateText } from "../../../utils/truncateText";
 
 const ReplyPreview = ({
   repliedTo,

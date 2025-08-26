@@ -4,7 +4,6 @@ import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 const DropdownMenu = ({ children }) => {
   const { showMenu, toggleMenu, menuRef } = useDropdownMenu()
 
-
   return (
     <span
       className="group relative right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"

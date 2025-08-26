@@ -31,7 +31,6 @@ export const useFetchPosts = ({ feedType, username = null }) => {
     isError,
     error,
   } = useInfiniteQuery({
-    // Use the new, explicit query key factory
     queryKey:
       feedType === "posts"
         ? postKeys.user(username)

@@ -14,13 +14,11 @@ import LoadingSpinner from "./components/ui/LoadingSpinner"
 import { useState } from "react"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
 
-// Public-facing pages (lazy loaded)
 const LoginPage = lazy(() => import("./pages/LoginPage"))
 const SignupPage = lazy(() => import("./pages/SignupPage"))
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"))
 const ForgotPasswordPage = lazy(() => import("./pages/ForgotPasswordPage"))
 
-// Authenticated layout component (lazy loaded)
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
 function App() {
@@ -31,13 +29,11 @@ function App() {
   const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
 
-  // Socket event hooks for authenticated users
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
   useGlobalNotificationSocketEvent()
 
   useEffect(() => {
-    // Check subscription status on component mount
     const checkSubscription = async () => {
       if ("serviceWorker" in navigator && "PushManager" in window) {
         const registration = await navigator.serviceWorker.ready

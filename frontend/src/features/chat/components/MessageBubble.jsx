@@ -1,5 +1,5 @@
-import { renderClickableText } from "../../utils/textUtils"
-import { truncateText } from "../../utils/truncateText"
+import { renderClickableText } from "../../../utils/textUtils"
+import { truncateText } from "../../../utils/truncateText"
 
 const MessageBubble = ({
   message,
@@ -23,7 +23,6 @@ const MessageBubble = ({
         className={`flex w-full flex-col overflow-hidden p-3 py-2 ${bubbleClasses}`}
         style={messageContentStyle}
       >
-        {/* Reply Block */}
         {message.repliedTo && (
           <div
             className={`mb-2 rounded-md border p-2 text-xs ${
@@ -85,7 +84,6 @@ const MessageBubble = ({
                 className="whitespace-pre-wrap break-words text-sm"
                 style={{
                   wordBreak: "break-word",
-                  // overflowWrap: "break-word",
                 }}
               >
                 {renderClickableText(message.text)}

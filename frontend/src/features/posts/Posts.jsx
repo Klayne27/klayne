@@ -1,4 +1,3 @@
-// src/components/common/posts/Posts.jsx
 import Post from "./Post"
 import PostSkeleton from "../../components/skeletons/PostSkeleton"
 import { useEffect, useRef, useCallback } from "react"
@@ -8,7 +7,6 @@ import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 const Posts = ({
   feedType,
   username,
-  userId: profileOwnerId,
   onPostsFetched,
   pinnedPosts = [],
   isLoadingPinnedPosts,
@@ -16,7 +14,6 @@ const Posts = ({
   const {
     posts,
     isLoading,
-    refetch,
     isRefetching,
     fetchNextPage,
     hasNextPage,
@@ -25,7 +22,6 @@ const Posts = ({
     error,
     totalPostsCount,
     totalLikedPostsCount,
-    getPostEndpoint,
   } = useFetchPosts({ feedType, username })
 
   const { combinedPosts, filteredPostsForRender } = useCombinedPosts({

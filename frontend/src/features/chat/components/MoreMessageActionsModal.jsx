@@ -3,10 +3,8 @@ import { FaTrashCan } from "react-icons/fa6"
 import { MdDeleteForever, MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
-import { usePrivateChatStore } from "../../store/usePrivateChatStore"
-import { useReactToMessage } from "../../features/chat/private/privateChatHooks/useReactToMessage"
-import { PiSmiley, PiSmileyFill } from "react-icons/pi"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import {  PiSmileyFill } from "react-icons/pi"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 
 function MoreMessageActionsModal({
   onCloseMoreActionsModal,
@@ -21,18 +19,14 @@ function MoreMessageActionsModal({
   isAuthUserAdmin = false,
   isMessageDeleted = false,
   isSenderBanned,
-  handleAdminDeleteMessageClick,
-  handleBanUserClick,
-  handleUnbanUserClick,
   onOpenConfirmationModal,
   onOpenViewReactionsModal,
   onOpenSlideUpReactionsMenu,
-  onReactionAdded,
   reactToMessage,
 }) {
 
   const hasReactions = message.reactions.length > 0
-  const topReactions = ["😭", "😆", "🫂", "😡"] // Your desired default emojis
+  const topReactions = ["😭", "😆", "🫂", "😡"]
 
   const isMobile = useIsMobile()
 
@@ -50,7 +44,7 @@ function MoreMessageActionsModal({
           left: moreActionsModalPosition.left,
           minWidth: "180px",
         }}
-        onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside
+        onClick={(e) => e.stopPropagation()}
       >
         <div className="flex cursor-pointer items-center justify-around gap-1">
           {topReactions.map((emoji) => (
@@ -116,7 +110,6 @@ function MoreMessageActionsModal({
             {!isMessageDeleted && (
               <button
                 onClick={() => onOpenConfirmationModal("delete")}
-                // disabled={isAdminDeleting}
                 className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
               >
                 Delete (Admin)

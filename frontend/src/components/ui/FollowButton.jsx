@@ -4,15 +4,12 @@ import useFollow from "../../hooks/usersHooks/useFollow"
 const FollowButton = ({
   user,
   isFollowing: initialIsFollowing,
-  currentUserId,
-  openUnfollowModal, // This prop is now optional
+  openUnfollowModal, 
 }) => {
   const [isHoveringUnfollow, setIsHoveringUnfollow] = useState(false)
   const [isTouchDevice, setIsTouchDevice] = useState(false)
   const { follow, isPending } = useFollow()
 
-  // Use a local state for `isFollowing` to allow immediate UI update
-  // while `useFollow` hook potentially updates `currentUser` context
   const [isCurrentlyFollowing, setIsCurrentlyFollowing] =
     useState(initialIsFollowing)
 
@@ -20,7 +17,6 @@ const FollowButton = ({
     setIsCurrentlyFollowing(initialIsFollowing)
   }, [initialIsFollowing])
 
-  // Effect to detect touch devices (same as before)
   useEffect(() => {
     const checkTouch = () => {
       return (
@@ -33,7 +29,7 @@ const FollowButton = ({
   }, [])
 
   const handleFollowClick = (e) => {
-    e.preventDefault() // Prevent default link behavior
+    e.preventDefault()
     if (isCurrentlyFollowing) {
       if (openUnfollowModal) {
         openUnfollowModal(user)

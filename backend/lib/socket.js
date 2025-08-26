@@ -48,6 +48,7 @@ const io = new Server(server, {
 });
 
 export const onlineUsersMap = new Map();
+const socketUserMap = new Map();
 
 export function getReceiverSocketIds(userId) {
   return onlineUsersMap.has(userId) ? Array.from(onlineUsersMap.get(userId)) : [];
@@ -358,7 +359,6 @@ export const createAndSendNotification = async ({
 export const PUBLIC_CHAT_ROOM = "public_chat_room";
 
 io.on("connection", async (socket) => {
-  // console.log(`Socket connected: ${socket.id}`);
   const userId = socket.handshake.query.userId;
 
   if (
@@ -375,11 +375,22 @@ io.on("connection", async (socket) => {
 
     userLastActive.set(userId, Date.now());
 
-    // --- MODIFICATION START ---
-
-    // Check ban status on connection for public chat
     try {
-      const user = await User.findById(userId).select("isBannedInPublicChat").lean();
+      const user = await User.findById(userId)
+        .select("isBannedInPublicChat username")
+        .lean();
+
+      const username = user ? user.username : "Unknown User";
+
+      socketUserMap.set(socket.id, { userId, username });
+
+      if (!onlineUsersMap.has(userId)) {
+        onlineUsersMap.set(userId, new Set());
+      }
+      onlineUsersMap.get(userId).add(socket.id);
+
+      console.log(`User connected: ${username}`);
+
       if (user && user.isBannedInPublicChat) {
         socket.isBannedInPublicChat = true; // Attach flag to socket for easier checks
         // Do NOT join PUBLIC_CHAT_ROOM if banned
@@ -819,7 +830,11 @@ io.on("connection", async (socket) => {
 
   socket.on("disconnect", () => {
     const disconnectedUserId = socket.userId;
-    console.log(`Socket disconnected: ${socket.id} for user: ${disconnectedUserId}`);
+
+    const userInfo = socketUserMap.get(socket.id);
+    const username = userInfo?.username || "Unknown User";
+
+    console.log(`User disconnected: ${username}`);
 
     if (!disconnectedUserId) {
       return;
@@ -837,25 +852,20 @@ io.on("connection", async (socket) => {
       });
     }
 
-    // Clean up from the main online users map
     const userSockets = onlineUsersMap.get(disconnectedUserId);
     if (userSockets) {
       userSockets.delete(socket.id);
       if (userSockets.size === 0) {
         onlineUsersMap.delete(disconnectedUserId);
-        console.log(`User ${disconnectedUserId} is now fully offline.`);
 
-        // Clean up from private chat typing (since user is completely offline)
         typingUsersInConversation.forEach((typingUsers, convId) => {
           if (typingUsers.has(disconnectedUserId)) {
             typingUsers.delete(disconnectedUserId);
-            // You can optionally emit a "stopTyping" event here to all other participants
           }
         });
       }
     }
 
-    // Finally, update the global online user list for all clients
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
 });

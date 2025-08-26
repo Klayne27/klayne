@@ -1,4 +1,3 @@
-// components/AnimatedCount.jsx
 import { useState, useEffect } from "react"
 
 const AnimatedCount = ({ count, className }) => {
@@ -25,7 +24,6 @@ const AnimatedCount = ({ count, className }) => {
     digitCount === 1 ? "w-2" : digitCount === 2 ? "w-4" : digitCount === 3 ? "w-6" : "w-8" // For 4+ digits
 
   return (
-    // The container now has a dynamic width
     <div className={`relative h-5 overflow-hidden text-left tabular-nums ${widthClass}`}>
       {direction && (
         <>

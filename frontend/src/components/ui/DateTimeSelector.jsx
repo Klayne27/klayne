@@ -1,5 +1,4 @@
-// components/ui/DateTimeSelector.jsx (Assuming this is the structure based on your comments)
-import React, { useEffect } from "react"
+import { useEffect } from "react"
 import { TbCalendarClock } from "react-icons/tb"
 import { RxCaretDown } from "react-icons/rx"
 import useDateTimeStore from "../../store/useDateTimeStore"
@@ -15,7 +14,6 @@ const DateTimeSelector = () => {
     currentTimezone,
     isPastDate,
     isPastTimeOfDay,
-    isOverallPast, // Use this for the main error message and button disable
     setSelectedMonth,
     setSelectedDay,
     setSelectedYear,
@@ -28,12 +26,8 @@ const DateTimeSelector = () => {
     getHours,
     getMinutes,
     getFormattedScheduledTime,
-    validateDateTime, // Import validateDateTime
-    initializeDateTime, // Import initializeDateTime if needed for internal resets
-  } = useDateTimeStore() // This useEffect will ensure validation runs when the component mounts
-  // and also if internal state changes in ways not covered by direct setters
-  // (though direct setters should be calling validateDateTime now).
-  // It's good practice to have this as a fallback.
+    validateDateTime,
+  } = useDateTimeStore() 
 
   useEffect(() => {
     validateDateTime()

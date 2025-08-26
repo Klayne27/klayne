@@ -1,4 +1,3 @@
-import XSvg from "../svgs/X"
 import { PiBellThin, PiHouseThin } from "react-icons/pi"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
@@ -9,7 +8,7 @@ import { useDeleteAccount } from "../../hooks/usersHooks/useDeleteAccount"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
 import { LuListTodo, LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
-import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5" // Import a close icon
+import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"
 import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
 import React from "react"
@@ -17,20 +16,16 @@ import { showAppToast } from "../../utils/showAppToast"
 import { BsThreeDots } from "react-icons/bs"
 import ConfirmationModal from "../ui/ConfirmationModal"
 import FeatherIcon from "../svgs/FeatherIcon"
-import { useMarkPostsAsRead } from "../../features/posts/postsHooks/useMarkPostsAsRead"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import KSvg from "../svgs/K"
 
-// import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 
 const Sidebar = ({
   onOpenCreatePostModal,
-  isPushSubscribed,
   installApp,
   isInstalled,
   deferredPrompt,
@@ -52,7 +47,6 @@ const Sidebar = ({
     newPostCount,
   } = useSocket()
   const queryClient = useQueryClient()
-  // usePrivateChatStore()
 
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -69,7 +63,6 @@ const Sidebar = ({
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
 
-  const [showTodoPageNavbar, setShowTodoPageNavbar] = useState(false)
 
   const lastScrollY = useRef(0)
   const profileButtonRef = useRef(null) // Used for desktop popover

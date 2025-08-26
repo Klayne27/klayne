@@ -14,7 +14,6 @@ const MessageReactions = ({
     className={`flex flex-wrap items-center gap-1 rounded-full pt-0.5 text-xs font-semibold ${isSentByCurrentUser ? "justify-end" : "justify-start"} relative`}
     style={messageContentStyle}
   >
-    {/* Render "Add Reaction" button BEFORE reactions if sent by current user */}
     {isSentByCurrentUser && (
       <button
         ref={addReactionButtonRef}
@@ -55,7 +54,6 @@ const MessageReactions = ({
       )
     })}
 
-    {/* Render "Add Reaction" button AFTER reactions if sent by other user */}
     {!isSentByCurrentUser && (
       <button
         ref={addReactionButtonRef}
