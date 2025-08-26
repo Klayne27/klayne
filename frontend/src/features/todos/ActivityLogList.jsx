@@ -47,7 +47,6 @@ export const ActivityLogList = forwardRef(
                 return (
                   <li
                     key={activity._id}
-                    ref={isLastElement ? ref : null} // Apply ref only to the very last todo
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
                     <div className="flex items-center relative gap-3 px-3 py-1">

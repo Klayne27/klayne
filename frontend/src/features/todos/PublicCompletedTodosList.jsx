@@ -39,7 +39,6 @@ const PublicCompletedTodosList = forwardRef(
                 return (
                   <li
                     key={todo?._id}
-                    ref={isLastElement ? ref : null}
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
                     <div className="relative flex items-center gap-3 px-3 py-1">
@@ -74,13 +73,10 @@ const PublicCompletedTodosList = forwardRef(
                   </li>
                 )
               })}
-              {/* This is the key change: wrap the LoadingSpinner in a list item with a unique key. */}
               {hasNextPage && isFetchingNextPage && (
-                <li key="loading-spinner-item">
-                  <div className="flex justify-center p-4">
-                    <LoadingSpinner />
-                  </div>
-                </li>
+                <div className="flex justify-center p-4" ref={ref}>
+                  <LoadingSpinner />
+                </div>
               )}
             </ul>
           </div>

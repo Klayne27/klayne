@@ -191,53 +191,63 @@ export const findTodoAndParent = (todoLists, todoId) => {
   return null
 }
 
-// Add this new function inside CompletedTodoList.jsx before the component
+// src/utils/todoUtils.jsx
 export const groupTodosByDate = (todos) => {
-  const groups = {}
-  const today = new Date()
+  const groups = {};
+  const today = new Date();
 
   // Set the time to midnight for accurate day comparison
-  today.setHours(0, 0, 0, 0)
+  today.setHours(0, 0, 0, 0);
 
   const formatDate = (date) => {
-    const options = { month: "short", day: "numeric" }
-    return date.toLocaleDateString("en-US", options)
-  }
+    const options = { month: "short", day: "numeric" };
+    return date.toLocaleDateString("en-US", options);
+  };
 
   const getDayLabel = (date) => {
     // Also set the completed date to midnight for comparison
-    const completedDate = new Date(date)
-    completedDate.setHours(0, 0, 0, 0)
+    const completedDate = new Date(date);
+    completedDate.setHours(0, 0, 0, 0);
 
-    const diffInMilliseconds = today.getTime() - completedDate.getTime()
-    const diffInDays = diffInMilliseconds / (1000 * 60 * 60 * 24)
+    const diffInMilliseconds = today.getTime() - completedDate.getTime();
+    const diffInDays = diffInMilliseconds / (1000 * 60 * 60 * 24);
 
     // Round to the nearest integer to handle minor time differences
-    if (Math.round(diffInDays) === 0) return "Today"
-    if (Math.round(diffInDays) === 1) return "Yesterday"
+    if (Math.round(diffInDays) === 0) return "Today";
+    if (Math.round(diffInDays) === 1) return "Yesterday";
 
-    const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "long" })
-    return `${formatDate(date)} • ${dayOfWeek}`
+    const dayOfWeek = date.toLocaleDateString("en-US", { weekday: "long" });
+    return `${formatDate(date)} • ${dayOfWeek}`;
+  };
+
+  // Add a defensive check here to ensure todos is an array
+  if (!Array.isArray(todos)) {
+    console.error("groupTodosByDate received a non-array input:", todos);
+    return [];
   }
 
   todos.forEach((todo) => {
-    const completedAtDate = new Date(todo?.completedAt || todo?.createdAt)
-    const dateKey = completedAtDate.toDateString() // e.g., "Wed Aug 20 2025"
-    const displayLabel = getDayLabel(completedAtDate)
+    if (!todo?.completedAt && !todo?.createdAt) {
+      return; 
+    }
+
+    const completedAtDate = new Date(todo?.completedAt || todo?.createdAt);
+    const dateKey = completedAtDate.toDateString(); // e.g., "Wed Aug 20 2025"
+    const displayLabel = getDayLabel(completedAtDate);
 
     if (!groups[dateKey]) {
       groups[dateKey] = {
         label: displayLabel,
         todos: [],
-      }
+      };
     }
-    groups[dateKey].todos.push(todo)
-  })
+    groups[dateKey].todos.push(todo);
+  });
 
   // Convert object to array and sort by date descending
   return Object.values(groups).sort(
     (a, b) =>
       new Date(b?.todos[0]?.completedAt || b?.todos[0]?.createdAt) -
       new Date(a?.todos[0]?.completedAt || a?.todos[0]?.createdAt),
-  )
-}
+  );
+};

@@ -1,5 +1,4 @@
-// src/components/todos/TodoSectionList.jsx
-import React, { useState, useRef, useEffect } from "react"
+import { useState, useEffect } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import TodoSectionItem from "./TodoSectionItem"
 import SlideUpMenu from "../../components/common/SlideUpMenu"
@@ -19,7 +18,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
   const [isMenuOpen, setIsMenuOpen] = useState(false)
-
 
   useEffect(() => {
     if (inView && hasNextPage) {

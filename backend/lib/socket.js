@@ -761,14 +761,12 @@ socket.on("disconnect", () => {
     return;
   }
 
-  // Check if user was active in any chat before cleaning up
   const wasActiveInChat = userActiveChats.has(disconnectedUserId.toString());
   const activeConversationId = userActiveChats.get(disconnectedUserId.toString());
 
   activePublicChatUsers.delete(disconnectedUserId);
   userActiveChats.delete(disconnectedUserId.toString());
 
-  // Clean up from public chat typing list
   if (publicChatTypingUsers.has(disconnectedUserId)) {
     publicChatTypingUsers.delete(disconnectedUserId);
     io.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
@@ -780,17 +778,14 @@ socket.on("disconnect", () => {
   if (userSockets) {
     userSockets.delete(socket.id);
     if (userSockets.size === 0) {
-      // User is completely offline now
       onlineUsersMap.delete(disconnectedUserId);
 
-      // Clean up typing status
       typingUsersInConversation.forEach((typingUsers, convId) => {
         if (typingUsers.has(disconnectedUserId)) {
           typingUsers.delete(disconnectedUserId);
         }
       });
 
-      // If user was active in a chat, update unread status for that conversation
       if (wasActiveInChat && activeConversationId) {
         emitUnreadMessageStatus(disconnectedUserId);
       }

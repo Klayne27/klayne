@@ -139,9 +139,9 @@ export const SocketContextProvider = ({ children }) => {
         setUnreadPublicChatCount(unreadPublicChatCount)
       })
 
-      newSocket.on("disconnect", (reason) => {
-        console.warn(`Socket disconnected: ${reason}`)
-      })
+      // newSocket.on("disconnect", (reason) => {
+      //   console.warn(`Socket disconnected: ${reason}`)
+      // })
 
       newSocket.on("connect_error", (error) => {
         console.error("Socket connection error:", error.message)

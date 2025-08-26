@@ -39,7 +39,6 @@ const CompletedTodoList = forwardRef(
                 return (
                   <li
                     key={todo?._id}
-                    ref={isLastElement ? ref : null} // Apply ref only to the very last todo
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
                     <div className="flex items-center gap-3 px-3 py-1 relative">
@@ -72,9 +71,8 @@ const CompletedTodoList = forwardRef(
             </ul>
           </div>
         ))}
-        {/* 4. Show a loading spinner at the bottom while fetching the next page */}
         {hasNextPage && isFetchingNextPage && (
-          <div className="flex justify-center p-4">
+          <div className="flex justify-center p-4" ref={ref}>
             <LoadingSpinner />
           </div>
         )}
