@@ -2,14 +2,14 @@
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
 import LoadingSpinner from "./LoadingSpinner";
-import { useFetchFollowList } from "../../hooks/usersHooks/useFetchFollowList";
+import { useGetFollowList } from "../../hooks/usersHooks/useGetFollowList";
 import { IoClose } from "react-icons/io5";
 
 const FollowListModal = ({ userId, type, onClose, page }) => {
   const modalTitle = type === "following" ? "Following" : "Followers";
   const dialogRef = useRef(null); // Rename to dialogRef for clarity
 
-  const { users, isLoading, error } = useFetchFollowList(userId, type);
+  const { users, isLoading, error } = useGetFollowList(userId, type);
 
   useEffect(() => {
     const dialogElement = dialogRef.current;

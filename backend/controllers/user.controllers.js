@@ -5,10 +5,7 @@ import bcrypt from "bcryptjs";
 import Post from "../models/post.model.js";
 import Conversation from "../models/conversation.model.js";
 import Message from "../models/message.model.js";
-import {
-  createAndSendNotification,
-  emitUnreadNotificationStatus,
-} from "../lib/socket.js";
+import { createAndSendNotification } from "../lib/socket.js";
 import mongoose from "mongoose";
 import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
@@ -79,6 +76,52 @@ export const getUserProfile = async (req, res) => {
     res.status(200).json(profileData);
   } catch (error) {
     console.log("Error in getUserProfile: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getFollowingUsers = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).populate({
+      path: "following",
+      select: "username fullName isVerified isGoldVerified badges",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.following);
+  } catch (error) {
+    console.log("Error in getFollowingUsers: ", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getFollowers = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findById(id).populate({
+      path: "followers",
+      select: "username fullName isVerified isGoldVerified badges",
+      populate: {
+        path: "profileImg",
+        select: "imageUrl",
+      },
+    });
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+
+    res.status(200).json(user.followers);
+  } catch (error) {
+    console.log("Error in getFollowers: ", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -353,52 +396,6 @@ export const updateUser = async (req, res) => {
   }
 };
 
-export const getFollowingUsers = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).populate({
-      path: "following",
-      select: "username fullName isVerified isGoldVerified badges",
-      populate: {
-        path: "profileImg",
-        select: "imageUrl",
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.status(200).json(user.following); // <--- CHANGE HERE
-  } catch (error) {
-    console.log("Error in getFollowingUsers: ", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getFollowers = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const user = await User.findById(id).populate({
-      path: "followers",
-      select: "username fullName isVerified isGoldVerified badges",
-      populate: {
-        path: "profileImg",
-        select: "imageUrl",
-      },
-    });
-
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-
-    res.status(200).json(user.followers);
-  } catch (error) {
-    console.log("Error in getFollowers: ", error.message);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
@@ -639,7 +636,7 @@ export const adminDeleteUserAccount = async (req, res) => {
       {},
       { $pull: { reactions: { userId: userIdToDelete } } }
     );
-    
+
     const conversationsToDelete = await Conversation.find({
       participants: userIdToDelete,
     });

@@ -1,13 +1,13 @@
 const BASE_URL = "/api/users";
 
-export const fetchUsersApi = async (endpoint, type) => {
+export const getUsersApi = async (endpoint, type) => {
   const res = await fetch(endpoint);
   const data = await res.json();
   if (!res.ok) throw new Error(data.error || `Failed to fetch ${type} list`);
   return data;
 };
 
-export const fetchSuggestedUsersApi = async () => {
+export const getSuggestedUsersApi = async () => {
   const res = await fetch(`${BASE_URL}/suggested`);
 
   const data = res.json();
@@ -17,7 +17,7 @@ export const fetchSuggestedUsersApi = async () => {
   return data;
 };
 
-export const fetchUserProfileApi = async (username) => {
+export const getUserProfileApi = async (username) => {
   try {
     const res = await fetch(`${BASE_URL}/profile/${username}`);
 

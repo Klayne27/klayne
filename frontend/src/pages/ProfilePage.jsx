@@ -14,7 +14,7 @@ import { MdBlock, MdDeleteForever, MdEdit } from "react-icons/md"
 import { formatMemberSinceDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useUpdateUserProfile } from "../hooks/usersHooks/useUpdateUserProfile"
-import { useFetchUserProfile } from "../hooks/usersHooks/useFetchUserProfile"
+import { useGetUserProfile } from "../hooks/usersHooks/useGetUserProfile"
 import { CiMail } from "react-icons/ci"
 import ScrollToTop from "../utils/ScrollToTop"
 import { useBlockUnblockUser } from "../hooks/usersHooks/useBlockUnblockUser"
@@ -62,7 +62,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     error,
     isBlockedByYou,
     hasBlockedYou,
-  } = useFetchUserProfile(username)
+  } = useGetUserProfile(username)
 
   const {
     conversationStatus,

@@ -1,7 +1,7 @@
 import { Link } from "react-router-dom"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
 import useFollow from "../../hooks/usersHooks/useFollow"
-import { useSuggestedUsers } from "../../hooks/usersHooks/useSuggestedUsers"
+import { useGetSuggestedUsers } from "../../hooks/usersHooks/useGetSuggestedUsers"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { BiRefresh } from "react-icons/bi"
 import React, { useState } from "react"
@@ -12,7 +12,7 @@ import { useAppStore } from "../../store/useAppStore"
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal)
-  const { suggestedUsers, isLoading, refetch, isRefetching } = useSuggestedUsers()
+  const { suggestedUsers, isLoading, refetch, isRefetching } = useGetSuggestedUsers()
   const { follow } = useFollow()
   const { authUser: currentUser } = useAuthUser()
   const [userToUnfollow, setUserToUnfollow] = useState(null)
