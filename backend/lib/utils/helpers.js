@@ -1,4 +1,5 @@
 import Comment from "../../models/comment.model.js";
+import LevelUp from "../../models/levelup.model.js";
 import Notification from "../../models/notification.model.js";
 import User from "../../models/user.model.js";
 
@@ -220,4 +221,103 @@ export const generateRandomString = (length) => {
     result += characters.charAt(Math.floor(Math.random() * charactersLength));
   }
   return result;
+};
+
+export const checkAndAwardBadges = async (user) => {
+  const newBadges = [];
+  const existingBadges = new Set(user.badges);
+
+  // Study Duration Badges
+  if (user.totalStudyDuration >= 1500 && !existingBadges.has("twentyfive-hour-scholar")) {
+    newBadges.push("twentyfive-hour-scholar");
+  }
+  if (user.totalStudyDuration >= 6000 && !existingBadges.has("onehundred-hour-scholar")) {
+    newBadges.push("onehundred-hour-scholar");
+  }
+  if (
+    user.totalStudyDuration >= 18000 &&
+    !existingBadges.has("three-hundred-hour-master")
+  ) {
+    newBadges.push("three-hundred-hour-master");
+  }
+
+  // Session Completion Badges
+  if (user.totalSessionsCompleted >= 10 && !existingBadges.has("ten-sessions-achiever")) {
+    newBadges.push("ten-sessions-achiever");
+  }
+  if (user.totalSessionsCompleted >= 50 && !existingBadges.has("fifty-sessions-pro")) {
+    newBadges.push("fifty-sessions-pro");
+  }
+  if (user.totalSessionsCompleted >= 150 && !existingBadges.has("session-master")) {
+    newBadges.push("session-master");
+  }
+
+  // Study Streak Badges
+  if (user.studyStreak >= 7 && !existingBadges.has("seven-day-streak")) {
+    newBadges.push("seven-day-streak");
+  }
+  if (user.studyStreak >= 14 && !existingBadges.has("fourteen-day-streak")) {
+    newBadges.push("fourteen-day-streak");
+  }
+  if (user.studyStreak >= 30 && !existingBadges.has("thirty-day-streak")) {
+    newBadges.push("thirty-day-streak");
+  }
+
+  if (newBadges.length > 0) {
+    user.badges = [...new Set([...user.badges, ...newBadges])];
+    await user.save();
+  }
+};
+
+export const xpForLevel = (level) => {
+  if (level <= 1) {
+    return 500;
+  }
+  return Math.floor(300 + level * 200 + Math.pow(level - 1, 1.3) * 100);
+};
+
+export const handleXPAndLeveling = async (user, duration) => {
+  let xpGained;
+  if (duration >= 120) {
+    xpGained = duration * 20; // 20 XP for sessions 2 hours (120 duration) or more
+  } else if (duration >= 60) {
+    xpGained = duration * 15; // 15 XP for sessions over 60 duration
+  } else {
+    xpGained = duration * 10; // 10 XP for all other sessions
+  }
+  const initialLevel = user.pomodoroLevel;
+
+  user.pomodoroXP += xpGained;
+  let levelsGained = [];
+
+  // Check for level up. Loop in case of multiple level ups from one session.
+  let xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1); // XP needed for NEXT level
+
+  while (user.pomodoroXP >= xpNeededForCurrentLevel) {
+    // Subtract the XP needed for this level up
+    user.pomodoroXP -= xpNeededForCurrentLevel;
+
+    // Increment the user's level
+    user.pomodoroLevel += 1;
+    levelsGained.push(user.pomodoroLevel);
+
+    // Create a record of the level up event for the activity feed
+    await LevelUp.create({
+      user: user._id,
+      newLevel: user.pomodoroLevel,
+    });
+
+    // Get the XP needed for the next level
+    xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
+  }
+
+  await user.save();
+
+  return {
+    xpGained,
+    levelsGained,
+    finalLevel: user.pomodoroLevel,
+    finalXP: user.pomodoroXP,
+    xpNeededForNext: xpNeededForCurrentLevel,
+  };
 };
