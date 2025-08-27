@@ -381,7 +381,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               {!isMyProfile && amIFollowing && !isBlockingRelationship && (
                 <button
                   onClick={handleMessageClick}
-                  className="z-1 rounded-full border border-accent px-1 transition duration-200 hover:bg-secondary"
+                  className="z-1 rounded-full border border-accent px-2 transition duration-200 hover:bg-secondary"
                   disabled={
                     isLoadingConversationStatus ||
                     isCreatingConversation ||

@@ -21,18 +21,11 @@ import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import klayneLogo from "/klaynelogo2.png"
-import {
-  TbBookmark,
-  TbBookmarkFilled,
-  TbHome,
-  TbHomeFilled,
-  TbMailFilled,
-  TbUser,
-  TbUserFilled,
-  TbUserX,
-} from "react-icons/tb"
-import { GoBell, GoBellFill } from "react-icons/go"
-import { MdOutlinePalette, MdPalette } from "react-icons/md"
+import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
+import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
+import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
+import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+
 
 const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
   const { authUser } = useAuthUser()
@@ -441,7 +434,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
       {/* Main Sidebar */}
       {
         <div
-          className={`fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
+          className={`text-base-content-inverse fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
         >
           <div
             className={
@@ -477,7 +470,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 // navigate("/");
                 handleHomeClick()
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[115px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[120px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center rounded-full px-2 py-2 pl-[9px] pr-[7px] transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -488,17 +481,9 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/" ? (
-                  <TbHomeFilled
-                    className={`size-[30px] ${
-                      pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <GoHomeFill className={`size-[30px]`} />
                 ) : (
-                  <TbHome
-                    className={`size-[30px] ${
-                      pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <GoHome className={`size-[30px]`} />
                 )}
                 {newPostCount > 0 && (
                   <div
@@ -508,8 +493,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === "/" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Home
@@ -522,7 +507,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 navigate("/messages")
                 // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[150px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[155px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -533,18 +518,9 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname.startsWith("/messages") ? (
-                  <TbMailFilled
-                    className={`size-7 ${
-                      pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <TbMailFilled className={`size-7`} />
                 ) : (
-                  <CiMail
-                    className={`size-7 ${
-                      pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                    strokeWidth={1}
-                  />
+                  <CiMail className={`size-7`} strokeWidth={0.5} />
                 )}
                 {unreadMessageCount > 0 && (
                   <div
@@ -556,8 +532,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname.startsWith("/messages") ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Messages
@@ -569,7 +545,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 if (pathname === "/notifications") return
                 navigate("/notifications")
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[180px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[185px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -582,17 +558,9 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/notifications" ? (
-                  <GoBellFill
-                    className={`size-7 ${
-                      pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <GoBellFill className={`size-7`} />
                 ) : (
-                  <GoBell
-                    className={`size-7 ${
-                      pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <GoBell className={`size-7`} />
                 )}
                 {unreadNotificationsCount > 0 && (
                   <div
@@ -604,8 +572,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === "/notifications" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Notifications
@@ -617,7 +585,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[170px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
-                className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2.5 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "public-chat"
                     ? "bg-secondary bg-opacity-80"
                     : ""
@@ -627,17 +595,9 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/public-chat" ? (
-                  <BsChatDotsFill
-                    className={`ml-0.5 mr-0.5 size-6 ${
-                      pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <BsChatDotsFill className={`ml-0.5 mr-0.5 size-6`} />
                 ) : (
-                  <BsChatDots
-                    className={`ml-0.5 mr-0.5 size-6 ${
-                      pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
-                    }`}
-                  />
+                  <BsChatDots className={`ml-0.5 mr-0.5 size-6`} />
                 )}
                 {/* Red dot for new public chat messages */}
                 {unreadPublicChatCount > 0 && (
@@ -650,8 +610,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === "/public-chat" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Public Chat
@@ -665,7 +625,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
             >
               <button
                 className={` ${
-                  pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+                  pathname === "/search" ? "font-bold text-opacity-100" : ""
                 } flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-[1px] py-2 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "search" ? "bg-secondary bg-opacity-80" : ""
                 }`}
@@ -679,8 +639,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 />
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === "/search" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === "/search" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Search
@@ -689,12 +649,12 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
 
             {/* Bookmarks - Hidden on mobile, visible on desktop */}
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[165px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[170px] md:p-0 md:hover:bg-secondary"
               onClick={handleBookmarksClick}
             >
               <button
                 className={`${
-                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : ""
                 } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "bookmarks"
                     ? "bg-secondary bg-opacity-80"
@@ -705,14 +665,14 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/bookmarks" ? (
-                  <TbBookmarkFilled className="size-7" />
+                  <IoBookmark className="size-7" />
                 ) : (
-                  <TbBookmark className="size-7" />
+                  <IoBookmarkOutline className="size-7" strokeWidth={0.5} />
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === "/bookmarks" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Bookmarks
@@ -724,7 +684,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
             >
               <button
                 className={`${
-                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : ""
                 } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "pomodoro" ? "bg-secondary bg-opacity-80" : ""
                 }`}
@@ -735,8 +695,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-lg ${
-                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : "opacity-80"
+                className={`text-lg ml-2${
+                  pathname === "/pomodoro" ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Pomodoro
@@ -748,7 +708,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
             >
               <button
                 className={`${
-                  pathname === "/todos" ? "font-bold text-opacity-100" : "opacity-80"
+                  pathname === "/todos" ? "font-bold text-opacity-100" : ""
                 } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "todos" ? "bg-secondary bg-opacity-80" : ""
                 }`}
@@ -759,21 +719,19 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 <LuListTodo className="size-7" strokeWidth={pathname === "/todos" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-lg ${
-                  pathname === "/todos" ? "font-bold text-opacity-100" : "opacity-80"
-                }`}
+                className={`text-lg ml-2${pathname === "/todos" ? "font-bold text-opacity-100" : ""}`}
               >
                 Todos
               </span>
             </li>
             {/* Themes */}
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[130px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/themes")}
             >
               <button
                 className={`${
-                  pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
+                  pathname === "/themes" ? "font-bold text-opacity-100" : ""
                 } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
                   isTouchDevice && activeButtonId === "themes" ? "bg-secondary bg-opacity-80" : ""
                 }`}
@@ -782,15 +740,13 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/themes" ? (
-                  <MdPalette className="size-7" />
+                  <HiPaintBrush className="size-7" />
                 ) : (
-                  <MdOutlinePalette className="size-7" />
+                  <HiOutlinePaintBrush className="size-7" />
                 )}
               </button>
               <span
-                className={`text-lg ${
-                  pathname === "/themes" ? "font-bold text-opacity-100" : "opacity-80"
-                }`}
+                className={`ml-2 text-lg ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
               >
                 Themes
               </span>
@@ -824,13 +780,11 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 if (pathname === `/profile/${authUser?.username}`) return
                 navigate(`/profile/${authUser?.username}`)
               }}
-              className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[130px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`hidden md:block ${
-                  pathname === `/profile/${authUser?.username}`
-                    ? "font-bold text-opacity-100"
-                    : "opacity-80"
+                  pathname === `/profile/${authUser?.username}` ? "font-bold text-opacity-100" : ""
                 } flex max-w-fit cursor-pointer items-center gap-[10px] rounded-full px-2 py-2 pl-2 hover:bg-secondary md:hover:bg-transparent ${
                   isTouchDevice && activeButtonId === "desktop-profile"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
@@ -847,10 +801,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`hidden text-xl md:block ${
-                  pathname === `/profile/${authUser?.username}`
-                    ? "font-bold text-opacity-100"
-                    : "opacity-80"
+                className={`ml-2 hidden text-xl md:block ${
+                  pathname === `/profile/${authUser?.username}` ? "font-bold text-opacity-100" : ""
                 }`}
               >
                 Profile
@@ -944,17 +896,19 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
         </div>
       }
 
-      <MobileSideModal
-        showSideModal={showSideModal}
-        sideModalRef={sideModalRef}
-        openFollowListModal={openFollowListModal}
-        setShowSideModal={setShowSideModal}
-        installApp={installApp}
-        isInstalled={isInstalled}
-        deferredPrompt={deferredPrompt}
-        handleLogout={handleLogout}
-        handleConfirmDeleteClick={handleConfirmDeleteClick}
-      />
+      { (
+        <MobileSideModal
+          showSideModal={showSideModal}
+          sideModalRef={sideModalRef}
+          openFollowListModal={openFollowListModal}
+          setShowSideModal={setShowSideModal}
+          installApp={installApp}
+          isInstalled={isInstalled}
+          deferredPrompt={deferredPrompt}
+          handleLogout={handleLogout}
+          handleConfirmDeleteClick={handleConfirmDeleteClick}
+        />
+      )}
 
       {authUser && (
         <FollowListModal

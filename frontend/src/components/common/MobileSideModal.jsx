@@ -2,15 +2,15 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
-import { IoClose } from "react-icons/io5"
-import { LuListTodo, LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
-import { CiBookmark } from "react-icons/ci"
+import { IoBookmark, IoBookmarkOutline, IoClose } from "react-icons/io5"
+import { LuListTodo } from "react-icons/lu"
 import { IoIosTimer } from "react-icons/io"
 import { BiLogOut } from "react-icons/bi"
 import { useEffect } from "react"
 import { useState } from "react"
-import { TbBookmark, TbBookmarkFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
+import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { MdOutlinePalette, MdPalette } from "react-icons/md"
+import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 
 function MobileSideModal({
   showSideModal,
@@ -203,9 +203,9 @@ function MobileSideModal({
                 onTouchCancel={handleTouchCancel}
               >
                 {pathname === "/bookmarks" ? (
-                  <TbBookmarkFilled className="mr-4 size-7" />
+                  <IoBookmark className="mr-4 size-7" />
                 ) : (
-                  <TbBookmark className="mr-4 size-7" />
+                  <IoBookmarkOutline className="mr-4 size-7" strokeWidth={0.5} />
                 )}
                 <span className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}>
                   Bookmarks
@@ -225,9 +225,9 @@ function MobileSideModal({
                 }`}
               >
                 {pathname === "/themes" ? (
-                  <MdPalette className="mr-4 size-7" />
+                  <HiPaintBrush className="mr-4 size-7" />
                 ) : (
-                  <MdOutlinePalette className="mr-4 size-7" />
+                  <HiOutlinePaintBrush className="mr-4 size-7" />
                 )}{" "}
                 <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
                   Themes
