@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react"
+import { useState, useEffect } from "react"
 import { useTodoStore } from "../../store/useTodoStore"
 import TodoSectionItem from "./TodoSectionItem"
 import SlideUpMenu from "../../components/common/SlideUpMenu"
@@ -18,8 +18,6 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
   const {isAddTodoMenuOpen, setIsAddTodoMenuOpen} = useTodoStore()
-
-  const todoAddFormRef = useRef(null)
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -70,11 +68,11 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
           <li key="slide-up-menu-item">
             <SlideUpMenu isOpen={isAddTodoMenuOpen} onClose={handleCloseMenu}>
               <div className="z-40 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
-                {/* Use React.cloneElement to pass the ref to the child */}
-                {React.cloneElement(
-                  <TodoAddForm isLoading={isLoading} setIsMenuOpen={setIsAddTodoMenuOpen} />,
-                  { ref: todoAddFormRef }, // Pass the ref here
-                )}
+                <TodoAddForm
+                  isLoading={isLoading}
+                  setIsMenuOpen={setIsAddTodoMenuOpen}
+                  isMenuOpen={isAddTodoMenuOpen}
+                />
               </div>
             </SlideUpMenu>
           </li>
