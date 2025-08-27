@@ -64,7 +64,7 @@ const ConfirmationModal = ({
             {isLoading ? "Loading..." : confirmButtonText} {/* Show loading text */}
           </button>
           <button
-            className="w-full py-2.5 rounded-full font-bold border border-accent hover:bg-gray-900 transition duration-200 disabled:opacity-50"
+            className="w-full py-2.5 rounded-full font-bold border border-accent hover:bg-gray-900 transition duration-200 disabled:opacity-50 hover:text-white"
             onClick={onClose}
             disabled={isLoading} // Disable cancel button during loading
           >
