@@ -6,6 +6,7 @@ import TodoAddForm from "./TodoAddForm"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import EditTodoListModal from "./EditTodoListModal"
 import { useInView } from "react-intersection-observer"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNextPage }) => {
   const {
@@ -26,6 +27,15 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   }, [inView, hasNextPage, fetchNextPage])
 
   const allLists = todoLists?.pages?.flatMap((page) => page.data) || []
+
+
+
+  // const isAddTodoMenuOpen = useTodoStore((state) => state.isAddTodoMenuOpen)
+  // const isEditTodoMenuOpen = useTodoStore((state) => state.isEditTodoMenuOpen)
+  // const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
+
+  useLockBodyScroll(isAddTodoMenuOpen)
+
   if (isLoading && allLists?.length === 0)
     return (
       <div className="flex h-screen items-center justify-center text-primary">
@@ -76,7 +86,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
             </SlideUpMenu>
           </li>
         )}
-        
+
         {hasNextPage && (
           <li key="loading-spinner-item">
             <div className="flex justify-center p-4">

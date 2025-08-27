@@ -14,6 +14,7 @@ import { useDeleteTodo } from "./todoHooks/useDeleteTodo.js"
 import { useCompleteTodo } from "./todoHooks/useCompleteTodo.js"
 import { useUpdateTodo } from "./todoHooks/useUpdateTodo.js"
 import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
@@ -27,6 +28,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { completeTodo, isCompletingTodo } = useCompleteTodo()
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
+
+  useLockBodyScroll(isEditTodoMenuOpen)
 
   useEffect(() => {
     if (openTodoDropdownId === todo._id && ellipsisRef.current) {
@@ -174,6 +177,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
       {/* Mobile Slide Up Menu with Edit Form */}
       {isEditTodoMenuOpen && (
+
         <SlideUpMenu isOpen={isEditTodoMenuOpen} onClose={handleCloseMenu}>
           <div className="z-20 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
             <TodoEditForm
@@ -185,7 +189,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
                 handleCloseMenu()
               }}
               isLoading={isUpdatingTodo || isDeletingTodo}
-            />
+              />
           </div>
         </SlideUpMenu>
       )}

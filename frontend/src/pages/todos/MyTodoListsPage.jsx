@@ -11,12 +11,6 @@ const MyTodoListsPage = () => {
   const { myTodoLists, myListsLoading, myListsError, myListsHasNextPage, myListsFetchNextPage } =
     useGetUserTodoLists()
 
-  const isAddTodoMenuOpen = useTodoStore((state) => state.isAddTodoMenuOpen)
-  const isEditTodoMenuOpen = useTodoStore((state) => state.isEditTodoMenuOpen)
-  const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
-
-  useLockBodyScroll(isMenuOpen)
-
   return (
     <>
       <TodoPagesHeader pageTitle={"My Lists"} />
