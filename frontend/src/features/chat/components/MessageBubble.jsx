@@ -1,5 +1,7 @@
+import { FaReply } from "react-icons/fa6"
 import { renderClickableText } from "../../../utils/textUtils"
 import { truncateText } from "../../../utils/truncateText"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 
 const MessageBubble = ({
   message,
@@ -14,6 +16,7 @@ const MessageBubble = ({
   onImageClick,
 }) => {
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
+  const { authUser } = useAuthUser()
 
   return (
     <div
@@ -36,22 +39,24 @@ const MessageBubble = ({
             }}
           >
             <span
-              className={`font-bold ${isSentByCurrentUser ? "text-gray-600" : "text-gray-300"}`}
+              className={`flex items-center gap-1 ${isSentByCurrentUser ? "text-gray-600" : "text-gray-300"}`}
             >
-              Replying to:{" "}
+              <FaReply /> {isSentByCurrentUser ? "You" : message.sender?.username} replied to
               <span className="font-normal">
-                @{message.repliedTo.sender?.username || "Unknown User"}
+                {message.repliedTo.sender?.username === authUser.username
+                  ? "you"
+                  : message.repliedTo.sender?.username}
               </span>
             </span>
             {isReplyToMessageDeleted
               ? messageDeleted
               : message.repliedTo.text && (
                   <span
-                    className={`truncate font-bold ${
+                    className={` ${
                       isSentByCurrentUser ? "text-gray-600" : "text-gray-300"
                     } mt-1 italic`}
                   >
-                    {renderClickableText(truncateText(message.repliedTo.text, 20))}
+                    {renderClickableText(truncateText(message.repliedTo.text, 70))}
                   </span>
                 )}
             {message.repliedTo.img && (

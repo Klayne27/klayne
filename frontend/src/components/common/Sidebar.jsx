@@ -22,6 +22,7 @@ import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
+import klayneLogo from "/klaynelogo2.png" 
 
 
 const Sidebar = ({
@@ -453,7 +454,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden w-auto h-12 cursor-pointer justify-start rounded-full fill-primary p-2 duration-200 hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 duration-200 hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "x-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -462,7 +463,7 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <img src="klaynelogo2.png" className=" rounded-lg bg-gray-950" loading="lazy" />
+            <img src={klayneLogo} className="rounded-lg bg-gray-950" loading="lazy" />
           </div>
 
           <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
