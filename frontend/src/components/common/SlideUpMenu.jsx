@@ -36,22 +36,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isOpen]) // This effect depends only on the isOpen state
 
-  // useEffect(() => {
-  //   const visualViewport = window.visualViewport
-  //   if (!visualViewport) return
+  useEffect(() => {
+    const visualViewport = window.visualViewport
+    if (!visualViewport) return
 
-  //   const handleResize = () => {
-  //     const newKeyboardHeight = window.innerHeight - visualViewport.height
-  //     setKeyboardHeight(Math.max(0, newKeyboardHeight))
-  //   }
+    const handleResize = () => {
+      const newKeyboardHeight = window.innerHeight - visualViewport.height
+      setKeyboardHeight(Math.max(0, newKeyboardHeight))
+    }
 
-  //   visualViewport.addEventListener("resize", handleResize)
-  //   handleResize()
+    visualViewport.addEventListener("resize", handleResize)
+    handleResize()
 
-  //   return () => {
-  //     visualViewport.removeEventListener("resize", handleResize)
-  //   }
-  // }, [])
+    return () => {
+      visualViewport.removeEventListener("resize", handleResize)
+    }
+  }, [])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {
