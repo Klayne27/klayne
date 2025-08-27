@@ -434,7 +434,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
       {/* Main Sidebar */}
       {
         <div
-          className={`text-base-content-inverse fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-56 md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
+          className={`text-base-content-inverse pt-1 fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-[264px] md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
         >
           <div
             className={
@@ -695,7 +695,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-lg ml-2${
+                className={`text-xl ml-2${
                   pathname === "/pomodoro" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -719,7 +719,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 <LuListTodo className="size-7" strokeWidth={pathname === "/todos" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-lg ml-2${pathname === "/todos" ? "font-bold text-opacity-100" : ""}`}
+                className={`text-xl ml-2${pathname === "/todos" ? "font-bold text-opacity-100" : ""}`}
               >
                 Todos
               </span>
@@ -746,7 +746,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 )}
               </button>
               <span
-                className={`ml-2 text-lg ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
+                className={`ml-2 text-xl ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
               >
                 Themes
               </span>
@@ -825,7 +825,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`flex w-full max-w-[220px] items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={`flex mr-2 w-full items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"

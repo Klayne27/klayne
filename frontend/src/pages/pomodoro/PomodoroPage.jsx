@@ -403,7 +403,7 @@ const PomodoroPage = () => {
 
   return (
     <>
-      <main className="container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
+      <main className="container text-base-content-inverse mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
         <PomodoroHeader
           showXpGain={showXpGain}
           xpGainedAmount={xpGainedAmount}

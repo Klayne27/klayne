@@ -43,7 +43,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
   return (
     <>
-      <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1240px] md:flex-row">
+      <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1242px] md:flex-row">
         {!shouldHideSidePanels && (
           <Sidebar
             onOpenCreatePostModal={() => setShowCreatePostModal(true)}

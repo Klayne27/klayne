@@ -119,7 +119,7 @@ const PublicChatWindow = () => {
         </div>
       ) : (
         <>
-          <div className="min-h-0 flex-grow overflow-y-auto p-4 pb-7" ref={messageListRef}>
+          <div className="min-h-0 flex-grow overflow-y-auto p-4 pb-7 text-base-content-inverse" ref={messageListRef}>
             {isFetchingNextPage && (
               <div className="absolute left-1/2 top-24 -translate-x-1/2 -translate-y-1/2">
                 <LoadingSpinner size="sm" />

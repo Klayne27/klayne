@@ -279,7 +279,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   return (
     <>
       <ScrollToTop />
-      <div className="min-h-screen flex-[4_4_0] border-accent">
+      <div className="min-h-screen flex-[4_4_0] border-accent text-base-content-inverse">
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
 
         {showFullProfileHeader && userProfile && (

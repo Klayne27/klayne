@@ -9,7 +9,7 @@ function PrivateChatHeader({ otherUser }) {
   };
 
   return (
-    <div className="fixed top-0 w-full md:w-[585px] border-accent z-10 px-4 py-3 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md bg-black">
+    <div className="fixed top-0 w-full md:w-[547px] border-accent z-10 px-4 py-3 shadow-lg flex items-center bg-opacity-20 backdrop-blur-md bg-black">
       <button
         onClick={handleBackToConversations}
         className="md:hidden mr-2 hover:bg-gray-800 rounded-full p-2.5 transition duration-200 flex-shrink-0"

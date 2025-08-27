@@ -9,7 +9,6 @@ import { BiLogOut } from "react-icons/bi"
 import { useEffect } from "react"
 import { useState } from "react"
 import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
-import { MdOutlinePalette, MdPalette } from "react-icons/md"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 
 function MobileSideModal({
@@ -69,7 +68,7 @@ function MobileSideModal({
   return (
     <div
       ref={sideModalRef}
-      className={`fixed left-0 top-0 z-[1000] h-full w-[80vw] max-w-[300px] transform border-r border-accent bg-base-100 transition-transform duration-300 ease-out ${showSideModal ? "translate-x-0" : "-translate-x-full"} md:hidden`} // Only show on mobile
+      className={`fixed left-0 top-0 z-[1000] h-full text-base-content-inverse w-[80vw] max-w-[300px] transform border-r border-accent bg-base-100 transition-transform duration-300 ease-out ${showSideModal ? "translate-x-0" : "-translate-x-full"} md:hidden`} // Only show on mobile
     >
       {authUser && (
         <div className="flex h-full flex-col">

@@ -59,7 +59,7 @@ const ConversationsList = ({ conversations }) => {
   }, [])
 
   return (
-    <div className="flex h-full flex-col border-accent">
+    <div className="flex h-full flex-col border-accent text-base-content-inverse">
       {/* Header */}
       <div className="sticky top-0 z-10 flex items-center justify-between bg-black/0 p-4 backdrop-blur-sm">
         <h1 className="text-xl font-bold">Messages</h1>

@@ -190,7 +190,7 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl p-4">
+    <div className="container mx-auto max-w-2xl p-4 text-base-content-inverse">
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
