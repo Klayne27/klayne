@@ -4,6 +4,7 @@ import { IoIosTimer } from "react-icons/io"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import CreateTodoModal from "../../features/todos/CreateTodoModal"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const TodoPageLayout = () => {
   const {
@@ -36,6 +37,12 @@ const TodoPageLayout = () => {
       path: "/pomodoro",
     },
   ]
+
+  const isAddTodoMenuOpen = useTodoStore(state=> state.isAddTodoMenuOpen)
+  const isEditTodoMenuOpen = useTodoStore(state=> state.isEditTodoMenuOpen)
+  const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
+
+  useLockBodyScroll(isMenuOpen)
 
   const activeTab = navItems.find((item) => pathname === item.path)?.tab || ""
   const isCreateSectionPage = pathname.includes("/create-todo-section")

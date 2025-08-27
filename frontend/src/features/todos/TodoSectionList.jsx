@@ -17,7 +17,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
 
   const [openListDropdownId, setOpenListDropdownId] = useState(null)
   const [openTodoDropdownId, setOpenTodoDropdownId] = useState(null)
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
+  const {isAddTodoMenuOpen, setIsAddTodoMenuOpen} = useTodoStore()
 
   useEffect(() => {
     if (inView && hasNextPage) {
@@ -40,7 +40,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
   }
 
   const handleCloseMenu = () => {
-    setIsMenuOpen(false)
+    setIsAddTodoMenuOpen(false)
   }
 
   return (
@@ -58,19 +58,19 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
               setOpenListDropdownId={setOpenListDropdownId}
               openTodoDropdownId={openTodoDropdownId}
               setOpenTodoDropdownId={setOpenTodoDropdownId}
-              setIsMenuOpen={setIsMenuOpen}
+              setIsMenuOpen={setIsAddTodoMenuOpen}
               setShowCreateTodoModal={setShowCreateTodoModal}
             />
           )
         })}
-        {isMenuOpen && (
+        {isAddTodoMenuOpen && (
           <li key="slide-up-menu-item">
-            <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+            <SlideUpMenu isOpen={isAddTodoMenuOpen} onClose={handleCloseMenu}>
               <div className="z-40 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
                 <TodoAddForm
                   isLoading={isLoading}
-                  setIsMenuOpen={setIsMenuOpen}
-                  isMenuOpen={isMenuOpen}
+                  setIsMenuOpen={setIsAddTodoMenuOpen}
+                  isMenuOpen={isAddTodoMenuOpen}
                 />
               </div>
             </SlideUpMenu>

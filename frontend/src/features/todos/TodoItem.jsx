@@ -17,11 +17,10 @@ import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
-  const { setSelectedTodo, setShowEditTodoModal } = useTodoStore()
+  const { setSelectedTodo, setShowEditTodoModal, isEditTodoMenuOpen, setIsEditTodoMenuOpen } = useTodoStore()
   const ellipsisRef = useRef(null)
 
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [dropdownPosition, setDropdownPosition] = useState({ top: 0, left: 0 })
   const isMobile = useIsMobile()
 
@@ -43,11 +42,11 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     if (todo.user !== currentUser._id) return
 
     e.stopPropagation()
-    setIsMenuOpen(!isMenuOpen)
+    setIsEditTodoMenuOpen(!isEditTodoMenuOpen)
   }
 
   const handleCloseMenu = () => {
-    setIsMenuOpen(false)
+    setIsEditTodoMenuOpen(false)
   }
 
   const handleToggleDropdownMenu = (e) => {
@@ -174,8 +173,8 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       )}
 
       {/* Mobile Slide Up Menu with Edit Form */}
-      {isMenuOpen && (
-        <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+      {isEditTodoMenuOpen && (
+        <SlideUpMenu isOpen={isEditTodoMenuOpen} onClose={handleCloseMenu}>
           <div className="z-50 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
             <TodoEditForm
               todo={todo}
