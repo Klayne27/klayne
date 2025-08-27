@@ -130,17 +130,21 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    longestStudyStreak: {
+      type: Number,
+      default: 0,
+    },
     lastStudyDate: {
       type: Date,
       default: null,
     },
     monthlyStudyStreak: {
-      type:Number,
+      type: Number,
       default: 0,
     },
     lastMonthlyStudyDate: {
       type: Date,
-      default: null
+      default: null,
     },
     monthlyStats: {
       studyDuration: {
@@ -156,7 +160,7 @@ const userSchema = new mongoose.Schema(
         default: 0,
       },
       lastResetMonth: {
-        type: String, 
+        type: String,
         default: null,
       },
     },

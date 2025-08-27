@@ -435,3 +435,31 @@ export const getMyActivities = async (req, res) => {
     res.status(500).json({ message: "Failed to fetch activities" });
   }
 };
+
+export const getCompletedTodosCount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const completedTasksCount = await Todo.countDocuments({
+      user: userId,
+      completed: true,
+    });
+    res.status(200).json({ count: completedTasksCount });
+  } catch (error) {
+    console.error("Error fetching completed tasks count", error);
+    res.status(500).json({ error: "Failed to fetch completed tasks count" });
+  }
+};
+
+export const getActiveTodosCount = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const activeTodosCount = await Todo.countDocuments({
+      user: userId,
+      completed: false,
+    });
+    res.status(200).json({ count: activeTodosCount });
+  } catch (error) {
+    console.error("Error fetching active todos count", error);
+    res.status(500).json({ error: "Failed to fetch active todos count" });
+  }
+};

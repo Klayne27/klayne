@@ -4,7 +4,9 @@ import {
   completeTodo,
   createTodo,
   deleteTodo,
+  getActiveTodosCount,
   getCompletedTodos,
+  getCompletedTodosCount,
   getFollowingTodos,
   getMyActivities,
   getPublicCompletedTodos,
@@ -23,11 +25,16 @@ router.get("/completed", protectRoute, getCompletedTodos);
 router.get("/following", protectRoute, getFollowingTodos);
 router.get("/activities", protectRoute, getMyActivities);
 router.get("/public-completed", protectRoute, getPublicCompletedTodos);
+router.get("/completed-count", protectRoute, getCompletedTodosCount);
+router.get("/active-count", protectRoute, getActiveTodosCount);
+
 
 router.get("/:id", protectRoute, getTodoById);
 router.put("/:id", protectRoute, updateTodo);
 router.put("/:id/complete", protectRoute, completeTodo);
 router.delete("/:id", protectRoute, deleteTodo);
 router.put("/:id", protectRoute, updateTodo);
+
+
 
 export default router;

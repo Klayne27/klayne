@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react"
-import { useNavigate } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 
 import PomodoroSettingsModal from "../../features/pomodoro/PomodoroSettingsModal"
 
@@ -18,6 +18,25 @@ import LeftDropdown from "../../features/pomodoro/LeftDropdown"
 import RightDropdown from "../../features/pomodoro/RightDropdown"
 import PomodoroTimerDisplay from "../../features/pomodoro/PomodoroTimerDisplay"
 import PomodoroTimerControls from "../../features/pomodoro/PomodoroTimerControls"
+import { useQuery } from "@tanstack/react-query"
+
+const fetchStudyTasks = async () => {
+  const res = await fetch("/api/study/tasks")
+  if (!res.ok) throw new Error("Failed to fetch tasks")
+  return res.json()
+}
+
+const logTimeMutationFn = async ({ taskId, secondsToAdd }) => {
+  const res = await fetch("/api/study/tasks/log-time", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ taskId, secondsToAdd }),
+  })
+  if (!res.ok) {
+    console.error("Failed to log time")
+  }
+  return res.json()
+}
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -26,6 +45,7 @@ const PAUSED_TIME_KEY = "pomodoro_paused_time"
 const BREAK_KEY = "pomodoro_is_break"
 const SESSION_COUNT_KEY = "pomodoro_session_count"
 const GOAL_REACHED_KEY = "pomodoro_goal_reached"
+const SELECTED_TASK_KEY = "pomodoro_selected_task"
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
@@ -33,6 +53,13 @@ const PomodoroPage = () => {
   const { endStudySession } = useEndStudySession()
   const isMobile = useIsMobile()
   const { xpGainedAmount, setXpGainedAmount, showXpGain, setShowXpGain } = useXpStore()
+
+  const [selectedTaskId, setSelectedTaskId] = useState("")
+
+  const { data: tasks, isLoading: isLoadingTasks } = useQuery({
+    queryKey: ["studyTasks"],
+    queryFn: fetchStudyTasks,
+  })
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
@@ -57,6 +84,7 @@ const PomodoroPage = () => {
   const handleSessionEndRef = useRef(() => {})
   const alarmAudioRef = useRef(null)
   const isEndingSessionRef = useRef(false)
+
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
@@ -195,7 +223,7 @@ const PomodoroPage = () => {
         // --- End of dynamic XP calculation ---
 
         endStudySession(
-          { duration: settings.sessionDuration },
+          { duration: settings.sessionDuration, taskId: selectedTaskId },
           {
             onSuccess: (data) => {
               // This is the data returned from the backend's endStudySession controller
@@ -252,6 +280,7 @@ const PomodoroPage = () => {
     startNextTimer,
     setShowXpGain,
     setXpGainedAmount,
+    selectedTaskId,
   ])
 
   const startAnimation = useCallback(() => {
@@ -292,6 +321,12 @@ const PomodoroPage = () => {
     const savedIsBreak = localStorage.getItem(BREAK_KEY) === "true"
     const savedSessionCount = parseInt(localStorage.getItem(SESSION_COUNT_KEY), 10) || 0
     const savedGoalReached = localStorage.getItem(GOAL_REACHED_KEY) === "true"
+    const savedSelectedTask = localStorage.getItem(SELECTED_TASK_KEY) // NEW
+
+    // --- NEW: Restore selected task ---
+    if (savedSelectedTask) {
+      setSelectedTaskId(savedSelectedTask)
+    }
 
     setIsBreak(savedIsBreak)
     setSessionCount(savedSessionCount)
@@ -351,6 +386,11 @@ const PomodoroPage = () => {
   }, [])
 
   const handleStart = async () => {
+    // if (!selectedTaskId) {
+    //   showAppToast("Please select a task to begin your study session.", "error")
+    //   return
+    // }
+
     if (isActive || !settings || timer <= 0 || isGoalReached) return
     const now = Date.now()
     startTimestampRef.current = now
@@ -362,6 +402,7 @@ const PomodoroPage = () => {
     localStorage.setItem(SESSION_COUNT_KEY, sessionCount)
     localStorage.removeItem(PAUSED_TIME_KEY)
     localStorage.setItem(GOAL_REACHED_KEY, "false")
+    localStorage.setItem(SELECTED_TASK_KEY, selectedTaskId) // NEW
     setIsActive(true)
   }
 
@@ -403,7 +444,7 @@ const PomodoroPage = () => {
 
   return (
     <>
-      <main className="container text-base-content-inverse mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
+      <main className="text-base-content-inverse container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
         <PomodoroHeader
           showXpGain={showXpGain}
           xpGainedAmount={xpGainedAmount}
@@ -421,13 +462,41 @@ const PomodoroPage = () => {
         />
 
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
+          {/* { (
+            <div className="w-full max-w-52 ">
+              <select
+                className="select select-primary w-full"
+                value={selectedTaskId}
+                onChange={(e) => {
+                  const newTaskId = e.target.value
+                  setSelectedTaskId(newTaskId)
+                  localStorage.setItem(SELECTED_TASK_KEY, newTaskId)
+                }}
+                disabled={isActive || isLoadingTasks}
+              >
+                <option value="" disabled>
+                  {isLoadingTasks ? "Loading tasks..." : "Select a task"}
+                </option>
+                {tasks?.map((task) => (
+                  <option key={task._id} value={task._id}>
+                    {task.name}
+                  </option>
+                ))}
+              </select>
+
+            </div>
+          )} */}
+          <label className="label">
+            <Link to="/study-dashboard" className="link-hover link label-text-alt">
+              Manage tasks
+            </Link>
+          </label>
           <h1
             key={isBreak ? "break" : "study"}
             className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
           >
             {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
           </h1>
-
           <PomodoroTimerDisplay
             isBreak={isBreak}
             timer={timer}

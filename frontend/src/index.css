@@ -129,3 +129,11 @@ body {
 .react-datepicker-popper-custom {
   z-index: 10000 !important;
 }
+
+.recharts-surface:focus {
+  outline: none;
+}
+
+.recharts-bar-rectangle:focus {
+  outline: none;
+}

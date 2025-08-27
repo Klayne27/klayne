@@ -92,3 +92,15 @@ export const getTodoActivityApi = async ({ pageParam = 0 }) => {
 
   return data
 }
+
+export const getCompletedTodosCountApi = async () => {
+  const res = await fetch(`${API_URL}/completed-count`)
+  if (!res.ok) throw new Error("Failed to fetch completed tasks count")
+  return res.json()
+}
+
+export const getActiveTodosCountApi = async () => {
+  const res = await fetch(`${API_URL}/active-count`)
+  if (!res.ok) throw new Error("Failed to fetch active todos count")
+  return res.json()
+}

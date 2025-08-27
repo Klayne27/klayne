@@ -7,6 +7,7 @@ const studySessionSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+
     duration: {
       type: Number,
       required: true,
@@ -15,11 +16,7 @@ const studySessionSchema = new mongoose.Schema(
       type: Date,
       required: true,
     },
-    post: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Post",
-      default: null,
-    },
+
   },
   { timestamps: true }
 );

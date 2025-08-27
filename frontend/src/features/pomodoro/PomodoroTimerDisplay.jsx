@@ -137,7 +137,7 @@ function PomodoroTimerDisplay({
         {isBreak && !isGoalReached && (
           <button
             onClick={handleSkipBreak}
-            className="absolute -top-10 right-0 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
+            className="absolute -top-10 -right-20  flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
             aria-label="Skip break"
           >
             <FaForward size={20} />
@@ -146,7 +146,7 @@ function PomodoroTimerDisplay({
         {!isBreak && !isGoalReached && minutes <= 0 && seconds <= 0 && (
           <button
             onClick={onSessionEnd}
-            className="absolute -top-10 right-0 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
+            className="absolute -top-10 -right-20 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
           >
             <FaForward size={20} />
           </button>
