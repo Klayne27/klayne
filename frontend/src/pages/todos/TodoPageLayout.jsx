@@ -4,7 +4,6 @@ import { IoIosTimer } from "react-icons/io"
 import { useTodoStore } from "../../store/useTodoStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import CreateTodoModal from "../../features/todos/CreateTodoModal"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const TodoPageLayout = () => {
   const {

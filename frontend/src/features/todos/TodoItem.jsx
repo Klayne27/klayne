@@ -14,7 +14,6 @@ import { useDeleteTodo } from "./todoHooks/useDeleteTodo.js"
 import { useCompleteTodo } from "./todoHooks/useCompleteTodo.js"
 import { useUpdateTodo } from "./todoHooks/useUpdateTodo.js"
 import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
@@ -29,7 +28,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
 
-  useLockBodyScroll(isEditTodoMenuOpen)
 
   useEffect(() => {
     if (openTodoDropdownId === todo._id && ellipsisRef.current) {
@@ -41,15 +39,25 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
     }
   }, [openTodoDropdownId, todo._id])
 
+  const shouldShowMobileMenu = isEditTodoMenuOpen === todo._id
+
   const handleMenuToggle = (e) => {
     if (todo.user !== currentUser._id) return
-
     e.stopPropagation()
-    setIsEditTodoMenuOpen(!isEditTodoMenuOpen)
+    // Set the global state to the current todo's ID, or null if it's already open
+    setIsEditTodoMenuOpen(shouldShowMobileMenu ? null : todo._id)
   }
 
   const handleCloseMenu = () => {
-    setIsEditTodoMenuOpen(false)
+    setIsEditTodoMenuOpen(null)
+  }
+
+  const handleEdit = (e) => {
+    if (e) e.stopPropagation()
+    setSelectedTodo(todo)
+    setShowEditTodoModal(true)
+    handleCloseMenu() // This will set the state back to null
+    setOpenTodoDropdownId(null)
   }
 
   const handleToggleDropdownMenu = (e) => {
@@ -57,14 +65,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
     e.stopPropagation()
     setOpenTodoDropdownId(openTodoDropdownId === todo._id ? null : todo._id)
-  }
-
-  const handleEdit = (e) => {
-    if (e) e.stopPropagation()
-    setSelectedTodo(todo)
-    setShowEditTodoModal(true)
-    handleCloseMenu()
-    setOpenTodoDropdownId(null)
   }
 
   const handleComplete = (todoId, e) => {
@@ -176,13 +176,11 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
       )}
 
       {/* Mobile Slide Up Menu with Edit Form */}
-      {isEditTodoMenuOpen && (
-
+      {shouldShowMobileMenu && (
         <SlideUpMenu isOpen={isEditTodoMenuOpen} onClose={handleCloseMenu}>
           <div className="z-20 flex h-auto w-full flex-col gap-5 overflow-y-auto px-4">
             <TodoEditForm
               todo={todo}
-              onClose={handleCloseMenu}
               onDelete={handleDelete}
               onSave={(updateData) => {
                 updateTodo(updateData)

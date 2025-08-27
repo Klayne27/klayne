@@ -3,7 +3,6 @@ import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUs
 import CreateTodoListModal from "../../features/todos/CreateTodoListModal"
 import TodoSectionList from "../../features/todos/TodoSectionList"
 import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const MyTodoListsPage = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()

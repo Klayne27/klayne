@@ -4,7 +4,7 @@ import { useSocket } from "../../../context/SocketContext"
 import PublicChatHeader from "./PublicChatHeader"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import PublicChatMessageList from "./PublicChatMessageList"
-import PublicChatMessageInput from "./PublicChatMessageInput"
+import PublicChatInput from "./PublicChatInput"
 
 import { FaCaretDown } from "react-icons/fa"
 import { useGetPublicMessages } from "./publicChatHooks/useGetPublicMessages"
@@ -161,7 +161,7 @@ const PublicChatWindow = () => {
             )}
           </div>
 
-          <PublicChatMessageInput
+          <PublicChatInput
             publicChatInputRef={publicChatInputRef}
             socket={socket}
             typingUsers={typingUsers}

@@ -11,7 +11,7 @@ export const useTodoStore = create((set) => ({
   todoListToEdit: null,
   currentListIdForTodoCreation: null,
   isAddTodoMenuOpen: false,
-  isEditTodoMenuOpen: false,
+  isEditTodoMenuOpen: null,
 
   setActiveTab: (tab) => set({ activeTab: tab, selectedTodoListIds: [] }),
   toggleTodoList: (id) =>
@@ -28,8 +28,8 @@ export const useTodoStore = create((set) => ({
   setShowCreateTodoModal: (show) => set({ showCreateTodoModal: show }),
   setShowEditTodoModal: (show) => set({ showEditTodoModal: show }),
   setSelectedTodo: (todo) => set({ selectedTodo: todo }),
-  setTodoListToEdit: (list) => set({todoListToEdit: list}),
+  setTodoListToEdit: (list) => set({ todoListToEdit: list }),
   setCurrentListIdForTodoCreation: (id) => set({ currentListIdForTodoCreation: id }),
-  setIsAddTodoMenuOpen: (isOpen) => set({isAddTodoMenuOpen: isOpen}),
-  setIsEditTodoMenuOpen: (isOpen) => set({isEditTodoMenuOpen: isOpen})
+  setIsAddTodoMenuOpen: (isOpen) => set({ isAddTodoMenuOpen: isOpen }),
+  setIsEditTodoMenuOpen: (id) => set({ isEditTodoMenuOpen: id }), // <-- Accepts the ID
 }))

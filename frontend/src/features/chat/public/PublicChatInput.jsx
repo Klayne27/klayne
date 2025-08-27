@@ -14,7 +14,7 @@ import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPicker
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
 
-const PublicChatMessageInput = ({
+const PublicChatInput = ({
   publicChatInputRef,
   socket,
   onSenderMessageSent,
@@ -287,4 +287,4 @@ const PublicChatMessageInput = ({
   )
 }
 
-export default PublicChatMessageInput
+export default PublicChatInput
