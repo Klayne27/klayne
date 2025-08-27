@@ -195,7 +195,7 @@ function ConversationItem({ conv }) {
       {!isMobile && (
         <DropdownMenu>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full text-base-content-inverse items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/profile/${otherUser?.username}`)
@@ -219,7 +219,7 @@ function ConversationItem({ conv }) {
             Block
           </button>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-400 transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
               handleCloseMenu()
               e.stopPropagation()
@@ -230,7 +230,7 @@ function ConversationItem({ conv }) {
             Delete all messages
           </button>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-400 transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteModal(true)
@@ -283,7 +283,7 @@ function ConversationItem({ conv }) {
           </div>
           <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
             <button
-              className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+              className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
               onClick={(e) => {
                 e.stopPropagation()
                 setShowOneSidedDeleteModal(true)
@@ -294,7 +294,7 @@ function ConversationItem({ conv }) {
             </button>
             <div className="h-[1px] bg-accent"></div>
             <button
-              className="flex w-full items-center gap-2 text-left font-semibold text-red-400 transition duration-200"
+              className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
               onClick={(e) => {
                 e.stopPropagation()
                 setShowDeleteModal(true)

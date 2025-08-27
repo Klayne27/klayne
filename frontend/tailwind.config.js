@@ -9,7 +9,6 @@ export default {
         "primary-glow": "var(--p)",
         "secondary-glow": "var(--s)",
         "base-content-inverse": "var(--text-on-base-color)",
-        "base-content": "var(--text-on-base-color2)",
       },
       height: {
         dvh: "100dvh",
@@ -99,7 +98,6 @@ export default {
           primary: "rgb(29, 155, 240)",
           secondary: "rgb(24, 24, 24)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
-          "--text-on-base-color2": "hsl(0, 0%, 0%)",
         },
       },
       // {
@@ -141,13 +139,12 @@ export default {
           ...daisyUIThemes["wireframe"],
           secondary: "hsl(0, 0%, 92%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
-          "--text-on-base-color2": "hsl(0, 0%, 100%)",
         },
       },
       {
         dim: {
           ...daisyUIThemes["dim"],
-          secondary: "hsl(12, 100%, 68%)",
+          secondary: "hsl(12, 100%, 75%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
       },

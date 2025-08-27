@@ -679,7 +679,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               </span>
             </li>
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[150px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[160px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/pomodoro")}
             >
               <button
@@ -703,7 +703,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               </span>
             </li>
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[110px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[120px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/todos")}
             >
               <button
@@ -726,7 +726,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
             </li>
             {/* Themes */}
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[130px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[135px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/themes")}
             >
               <button
