@@ -8,31 +8,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
 
-  // useLockBodyScroll()
-
-  // ✅ MODIFIED: Robust scroll lock useEffect
   useEffect(() => {
     const body = document.body
 
     if (isOpen) {
-      // 2. Apply robust scroll-locking styles to the body
       body.style.overflow = "hidden"
       body.style.position = "fixed"
-      // Use the stored scroll position to prevent the page from jumping to the top
-      // Ensure the body takes up the full width
       body.style.width = "100%"
       body.style.overscrollBehavior = "none"
     }
 
-    // 3. Cleanup function to run when the menu closes
     return () => {
-      // Remove the locking styles
       body.style.overflow = ""
       body.style.position = ""
 
-      // 4. Restore the original scroll position
     }
-  }, [isOpen]) // This effect depends only on the isOpen state
+  }, [isOpen]) 
 
   useEffect(() => {
     const visualViewport = window.visualViewport

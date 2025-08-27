@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { forwardRef, useEffect, useRef, useState } from "react"
 import { FaFlag, FaPlus } from "react-icons/fa6"
 import { useTodoStore } from "../../store/useTodoStore.js"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils.jsx"
@@ -7,7 +7,7 @@ import { IoClose } from "react-icons/io5"
 import CustomDatePicker from "../../components/common/CustomDatePicker.jsx"
 import { useCreateTodo } from "./todoHooks/useCreateTodo.js"
 
-function TodoAddForm({ isLoading, setIsMenuOpen }) {
+const TodoAddForm = forwardRef(({ isLoading, setIsMenuOpen }, ref) => {
   const { currentListIdForTodoCreation, setCurrentListIdForTodoCreation } = useTodoStore()
 
   const [title, setTitle] = useState("")
@@ -46,8 +46,12 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
     setPriority("low")
     setDueDate(null)
     setIsMenuOpen(true)
-    // setCurrentListIdForTodoCreation(null)
-    titleInputRef.current.focus()
+
+    setTimeout(() => {
+      if (titleInputRef.current) {
+        titleInputRef.current.focus()
+      }
+    }, 0)
   }
 
   const handlePrioritySelect = (priority) => {
@@ -67,12 +71,15 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
   }
 
   useEffect(() => {
-    titleInputRef.current.focus()
+    if (titleInputRef.current) {
+      titleInputRef.current.focus()
+    }
   }, [])
 
   return (
     <>
       <form
+        ref={ref} // Attach the ref to the form element
         onSubmit={handleSubmit}
         onKeyDown={handleKeyDown}
         className="flex h-full w-full flex-col p-1"
@@ -198,6 +205,6 @@ function TodoAddForm({ isLoading, setIsMenuOpen }) {
       </form>
     </>
   )
-}
+})
 
 export default TodoAddForm
