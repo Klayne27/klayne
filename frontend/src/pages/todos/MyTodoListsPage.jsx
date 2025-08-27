@@ -3,12 +3,19 @@ import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUs
 import CreateTodoListModal from "../../features/todos/CreateTodoListModal"
 import TodoSectionList from "../../features/todos/TodoSectionList"
 import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const MyTodoListsPage = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
 
   const { myTodoLists, myListsLoading, myListsError, myListsHasNextPage, myListsFetchNextPage } =
     useGetUserTodoLists()
+
+  const isAddTodoMenuOpen = useTodoStore((state) => state.isAddTodoMenuOpen)
+  const isEditTodoMenuOpen = useTodoStore((state) => state.isEditTodoMenuOpen)
+  const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
+
+  useLockBodyScroll(isMenuOpen)
 
   return (
     <>

@@ -13,6 +13,8 @@ import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlo
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { useState } from "react"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
+import { useTodoStore } from "./store/useTodoStore"
+import useLockBodyScroll from "./hooks/customHooks/useLockBodyScroll"
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
@@ -51,6 +53,12 @@ function App() {
     })
     updateSW()
   }, [])
+
+    const isAddTodoMenuOpen = useTodoStore((state) => state.isAddTodoMenuOpen)
+    const isEditTodoMenuOpen = useTodoStore((state) => state.isEditTodoMenuOpen)
+    const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
+
+    useLockBodyScroll(isMenuOpen)
 
   if (isLoading) {
     return (

@@ -38,12 +38,6 @@ const TodoPageLayout = () => {
     },
   ]
 
-  const isAddTodoMenuOpen = useTodoStore(state=> state.isAddTodoMenuOpen)
-  const isEditTodoMenuOpen = useTodoStore(state=> state.isEditTodoMenuOpen)
-  const isMenuOpen = isAddTodoMenuOpen || isEditTodoMenuOpen
-
-  useLockBodyScroll(isMenuOpen)
-
   const activeTab = navItems.find((item) => pathname === item.path)?.tab || ""
   const isCreateSectionPage = pathname.includes("/create-todo-section")
   const isEditSectionPage = pathname.includes("/edit-todo-section")

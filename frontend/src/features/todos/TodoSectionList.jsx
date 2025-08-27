@@ -76,6 +76,7 @@ const TodoSectionList = ({ todoLists, isLoading, isError, hasNextPage, fetchNext
             </SlideUpMenu>
           </li>
         )}
+        
         {hasNextPage && (
           <li key="loading-spinner-item">
             <div className="flex justify-center p-4">
