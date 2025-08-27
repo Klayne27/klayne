@@ -9,6 +9,8 @@ import { IoIosTimer } from "react-icons/io"
 import { BiLogOut } from "react-icons/bi"
 import { useEffect } from "react"
 import { useState } from "react"
+import { TbBookmark, TbBookmarkFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
+import { MdOutlinePalette, MdPalette } from "react-icons/md"
 
 function MobileSideModal({
   showSideModal,
@@ -171,10 +173,11 @@ function MobileSideModal({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <LuUserRound
-                  className="mr-4 size-7"
-                  strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 2}
-                />
+                {pathname === `/profile/${authUser?.username}` ? (
+                  <TbUserFilled className="mr-4 size-7" />
+                ) : (
+                  <TbUser className="mr-4 size-7" />
+                )}
                 <span
                   className={`text-xl ${
                     pathname === `/profile/${authUser?.username}` ? "font-bold" : ""
@@ -199,10 +202,11 @@ function MobileSideModal({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <CiBookmark
-                  className="mr-4 size-7"
-                  strokeWidth={pathname === "/bookmarks" ? 2 : 1}
-                />
+                {pathname === "/bookmarks" ? (
+                  <TbBookmarkFilled className="mr-4 size-7" />
+                ) : (
+                  <TbBookmark className="mr-4 size-7" />
+                )}
                 <span className={`text-xl ${pathname === "/bookmarks" ? "font-bold" : ""}`}>
                   Bookmarks
                 </span>
@@ -220,7 +224,11 @@ function MobileSideModal({
                     : "transition duration-150"
                 }`}
               >
-                <LuPalette className="mr-4 size-7" strokeWidth={pathname === "/themes" ? 2 : 2} />
+                {pathname === "/themes" ? (
+                  <MdPalette className="mr-4 size-7" />
+                ) : (
+                  <MdOutlinePalette className="mr-4 size-7" />
+                )}{" "}
                 <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
                   Themes
                 </span>
@@ -257,13 +265,8 @@ function MobileSideModal({
                     : "transition duration-150"
                 }`}
               >
-                <LuListTodo 
-                  className="mr-4 size-7"
-                  strokeWidth={pathname === "/todos" ? 2 : 2}
-                />
-                <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>
-                  Todos
-                </span>
+                <LuListTodo className="mr-4 size-7" strokeWidth={pathname === "/todos" ? 2 : 2} />
+                <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>Todos</span>
               </li>
 
               {/* Separator if needed */}
@@ -282,7 +285,7 @@ function MobileSideModal({
                 onTouchCancel={handleTouchCancel}
               >
                 <span>
-                  <LuUserRoundX className="mr-3 size-6" />
+                  <TbUserX className="mr-3 size-6" />
                 </span>
                 Delete Account
               </li>

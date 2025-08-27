@@ -26,6 +26,7 @@ import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../components/common/AnimatedCount"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 
 const Post = ({
   post,
@@ -405,11 +406,11 @@ const Post = ({
                         >
                           {isFollowingOriginalPostOwner ? (
                             <span className="flex items-center justify-center gap-3 font-semibold">
-                              <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                              <TbUserMinus strokeWidth={2} /> Unfollow
                             </span>
                           ) : (
                             <span className="flex items-center justify-center gap-3 font-semibold">
-                              <LuUserRoundPlus strokeWidth={2} /> Follow @
+                              <TbUserPlus strokeWidth={2} /> Follow @
                               {originalPostOwner.username}
                             </span>
                           )}

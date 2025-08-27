@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa6";
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineInformationCircle } from "react-icons/hi"; // Import a new icon for info/rules
+import { BsChatDots } from "react-icons/bs";
 
 const PublicChatHeader = () => {
   const navigate = useNavigate();
@@ -23,7 +23,7 @@ const PublicChatHeader = () => {
             <FaArrowLeft className="w-4 h-4" />
           </button>
           <div className="flex items-center">
-            <IoChatbubbleEllipsesOutline size={30} />
+            <BsChatDots size={30} />
           </div>
         </div>
         <div>

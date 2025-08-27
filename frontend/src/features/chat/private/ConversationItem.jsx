@@ -16,6 +16,7 @@ import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import { LuUserRound, LuUserRoundMinus } from "react-icons/lu"
 import { useBlockUnblockUser } from "../../users/usersHooks/useBlockUnblockUser"
 import { useSocket } from "../../../context/SocketContext"
+import { TbUser, TbUserMinus } from "react-icons/tb"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -200,14 +201,14 @@ function ConversationItem({ conv }) {
               navigate(`/profile/${otherUser?.username}`)
             }}
           >
-            <LuUserRound />
+            <TbUser />
             View profile
           </button>
           <button
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={handleToggleHide}
           >
-            <LuUserRoundMinus />
+            <TbUserMinus />
             Hide conversation
           </button>
           <button
@@ -259,7 +260,7 @@ function ConversationItem({ conv }) {
                 navigate(`/profile/${otherUser?.username}`)
               }}
             >
-              <LuUserRound />
+              <TbUser />
               View profile
             </button>
             <div className="h-[1px] bg-accent"></div>
@@ -267,7 +268,7 @@ function ConversationItem({ conv }) {
               className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
               onClick={handleToggleHide}
             >
-              <LuUserRoundMinus />
+              <TbUserMinus />
               Hide conversation
             </button>
           </div>

@@ -1,10 +1,10 @@
 import { CiMail } from "react-icons/ci"
 import { FaEllipsis, FaEllipsisVertical } from "react-icons/fa6"
-import { IoChatbubbleEllipsesOutline } from "react-icons/io5"
 import { PiHouseThin } from "react-icons/pi"
 import { useNavigate } from "react-router-dom"
 import { formatCount } from "../../utils/textUtils"
 import { useSocket } from "../../context/SocketContext"
+import { BsChatDots } from "react-icons/bs"
 
 function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
   const navigate = useNavigate()
@@ -62,7 +62,7 @@ function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
           onClick={() => navigate("/public-chat")}
           className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
         >
-          <IoChatbubbleEllipsesOutline size={25} />
+          <BsChatDots size={25} />
           {unreadPublicChatCount > 0 && (
             <div
               className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"

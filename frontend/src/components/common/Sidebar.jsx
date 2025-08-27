@@ -1,19 +1,17 @@
-import { PiBellThin, PiHouseThin } from "react-icons/pi"
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useLogout } from "../../features/auth/authHooks/useLogout"
-import { CiBookmark, CiMail, CiSearch, CiUser } from "react-icons/ci"
+import { CiMail, CiSearch } from "react-icons/ci"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useDeleteAccount } from "../../features/users/usersHooks/useDeleteAccount"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
-import { LuListTodo, LuPalette, LuUserRound, LuUserRoundX } from "react-icons/lu"
-import { IoChatbubbleEllipsesOutline, IoClose } from "react-icons/io5"
+import { LuListTodo } from "react-icons/lu"
 import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
 import React from "react"
 import { showAppToast } from "../../utils/showAppToast"
-import { BsThreeDots } from "react-icons/bs"
+import { BsChatDots, BsChatDotsFill, BsThreeDots } from "react-icons/bs"
 import ConfirmationModal from "./ConfirmationModal"
 import FeatherIcon from "../svgs/FeatherIcon"
 import { useAppStore } from "../../store/useAppStore"
@@ -22,15 +20,21 @@ import { formatCount } from "../../utils/textUtils"
 import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import klayneLogo from "/klaynelogo2.png" 
+import klayneLogo from "/klaynelogo2.png"
+import {
+  TbBookmark,
+  TbBookmarkFilled,
+  TbHome,
+  TbHomeFilled,
+  TbMailFilled,
+  TbUser,
+  TbUserFilled,
+  TbUserX,
+} from "react-icons/tb"
+import { GoBell, GoBellFill } from "react-icons/go"
+import { MdOutlinePalette, MdPalette } from "react-icons/md"
 
-
-const Sidebar = ({
-  onOpenCreatePostModal,
-  installApp,
-  isInstalled,
-  deferredPrompt,
-}) => {
+const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
 
@@ -63,7 +67,6 @@ const Sidebar = ({
   // NEW STATE: To track if FollowListModals are open
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
-
 
   const lastScrollY = useRef(0)
   const profileButtonRef = useRef(null) // Used for desktop popover
@@ -402,7 +405,7 @@ const Sidebar = ({
       if (shouldAlwaysHide) {
         setIsMobileBarVisible(false)
         setIsFeatherIconVisible(false)
-      }  else {
+      } else {
         setIsMobileBarVisible(true) // Default to visible for other paths
         setIsFeatherIconVisible(true) // Default to visible for other paths on mobile initially
       }
@@ -484,12 +487,19 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <PiHouseThin
-                  className={`size-[30px] ${
-                    pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
-                  }`}
-                  strokeWidth={pathname === "/" ? 10 : 8}
-                />
+                {pathname === "/" ? (
+                  <TbHomeFilled
+                    className={`size-[30px] ${
+                      pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                ) : (
+                  <TbHome
+                    className={`size-[30px] ${
+                      pathname === "/" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                )}
                 {newPostCount > 0 && (
                   <div
                     className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
@@ -522,12 +532,20 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <CiMail
-                  className={`size-7 ${
-                    pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
-                  }`}
-                  strokeWidth={pathname.startsWith("/messages") ? 1 : 0.5}
-                />
+                {pathname.startsWith("/messages") ? (
+                  <TbMailFilled
+                    className={`size-7 ${
+                      pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                ) : (
+                  <CiMail
+                    className={`size-7 ${
+                      pathname.startsWith("/messages") ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                    strokeWidth={1}
+                  />
+                )}
                 {unreadMessageCount > 0 && (
                   <div
                     className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white" // Adjusted for Tailwind's direct utility classes
@@ -563,12 +581,19 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <PiBellThin
-                  className={`size-7 ${
-                    pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
-                  }`}
-                  strokeWidth={pathname === "/notifications" ? 14 : 10}
-                />
+                {pathname === "/notifications" ? (
+                  <GoBellFill
+                    className={`size-7 ${
+                      pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                ) : (
+                  <GoBell
+                    className={`size-7 ${
+                      pathname === "/notifications" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                )}
                 {unreadNotificationsCount > 0 && (
                   <div
                     className="absolute right-2.5 top-3 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
@@ -601,14 +626,19 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <IoChatbubbleEllipsesOutline
-                  className={`size-7 ${
-                    pathname === "/public-chat" // Adjust based on your actual public chat route
-                      ? "font-bold text-opacity-100"
-                      : "opacity-80"
-                  }`}
-                  strokeWidth={pathname === "/public-chat" ? 2 : 1}
-                />
+                {pathname === "/public-chat" ? (
+                  <BsChatDotsFill
+                    className={`ml-0.5 mr-0.5 size-6 ${
+                      pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                ) : (
+                  <BsChatDots
+                    className={`ml-0.5 mr-0.5 size-6 ${
+                      pathname === "/public-chat" ? "font-bold text-opacity-100" : "opacity-80"
+                    }`}
+                  />
+                )}
                 {/* Red dot for new public chat messages */}
                 {unreadPublicChatCount > 0 && (
                   <div
@@ -643,7 +673,10 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <CiSearch className="size-7 w-11" strokeWidth={pathname === "/search" ? 1 : 0.5} />
+                <CiSearch
+                  className="size-7 w-11"
+                  strokeWidth={pathname === "/search" ? 1.5 : 0.5}
+                />
               </button>
               <span
                 className={`hidden text-xl md:block ${
@@ -671,7 +704,11 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <CiBookmark className="size-7" strokeWidth={pathname === "/bookmarks" ? 2 : 1} />
+                {pathname === "/bookmarks" ? (
+                  <TbBookmarkFilled className="size-7" />
+                ) : (
+                  <TbBookmark className="size-7" />
+                )}
               </button>
               <span
                 className={`hidden text-xl md:block ${
@@ -744,7 +781,11 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <LuPalette className="size-7" strokeWidth={pathname === "/themes" ? 2.5 : 2} />
+                {pathname === "/themes" ? (
+                  <MdPalette className="size-7" />
+                ) : (
+                  <MdOutlinePalette className="size-7" />
+                )}
               </button>
               <span
                 className={`text-lg ${
@@ -799,10 +840,11 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <LuUserRound
-                  className="size-8"
-                  strokeWidth={pathname === `/profile/${authUser?.username}` ? 2 : 1.5}
-                />
+                {pathname === `/profile/${authUser?.username}` ? (
+                  <TbUserFilled className="size-8" />
+                ) : (
+                  <TbUser className="size-8" />
+                )}
               </button>
               <span
                 className={`hidden text-xl md:block ${
@@ -875,7 +917,7 @@ const Sidebar = ({
                     onTouchCancel={handleTouchCancel}
                   >
                     <span>
-                      <LuUserRoundX className="mr-3 size-6" />
+                      <TbUserX className="mr-3 size-6" />
                     </span>
                     Delete Account
                   </button>

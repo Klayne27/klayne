@@ -24,6 +24,7 @@ import CommentItemButtons from "../../components/common/CommentItemButtons"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../components/common/DropdownMenu"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser()
@@ -490,11 +491,11 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   >
                     {isFollowingCommentOwner ? ( // Assuming this variable tracks if current user follows the comment owner
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <LuUserRoundMinus strokeWidth={2} /> Unfollow
+                        <TbUserMinus strokeWidth={2} /> Unfollow
                       </span>
                     ) : (
                       <span className="flex items-center justify-center gap-3 font-semibold">
-                        <LuUserRoundPlus strokeWidth={2} /> Follow @{comment.user.username}
+                        <TbUserPlus strokeWidth={2} /> Follow @{comment.user.username}
                       </span>
                     )}
                   </button>
