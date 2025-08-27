@@ -5,6 +5,7 @@ import { useNavigate } from "react-router-dom"
 import { formatCount } from "../../utils/textUtils"
 import { useSocket } from "../../context/SocketContext"
 import { BsChatDots } from "react-icons/bs"
+import { GoHome } from "react-icons/go"
 
 function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
   const navigate = useNavigate()
@@ -36,7 +37,7 @@ function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
           onClick={() => navigate("/")}
           className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
         >
-          <PiHouseThin size={25} strokeWidth={15} />
+          <GoHome size={25} />
           {newPostCount > 0 && (
             <div
               className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
@@ -48,7 +49,7 @@ function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
           onClick={() => navigate("/messages")}
           className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
         >
-          <CiMail size={25} strokeWidth={1} />
+          <CiMail size={25} strokeWidth={0.5} />
           {unreadMessageCount > 0 && (
             <div
               className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
@@ -62,7 +63,7 @@ function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
           onClick={() => navigate("/public-chat")}
           className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
         >
-          <BsChatDots size={25} />
+          <BsChatDots size={24} />
           {unreadPublicChatCount > 0 && (
             <div
               className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"

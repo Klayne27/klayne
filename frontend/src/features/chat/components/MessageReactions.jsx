@@ -49,7 +49,7 @@ const MessageReactions = ({
           }}
         >
           <span className="text-[16px]">{emoji}</span>
-          <span className="ml-1 font-bold">{data.count}</span>
+          <span className="ml-1 font-bold text-white">{data.count}</span>
         </div>
       )
     })}
