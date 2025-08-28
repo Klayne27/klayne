@@ -100,12 +100,13 @@ export default {
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
       },
-      // {
-      //   light: {
-      //     ...daisyUIThemes["light"],
-      //     secondary: "#d6d6d6",
-      //   },
-      // },
+      {
+        light: {
+          ...daisyUIThemes["light"],
+          secondary: "#d6d6d6",
+          "--text-on-base-color": "hsl(0, 0%, 0%)",
+        },
+      },
       {
         forest: {
           ...daisyUIThemes["forest"],

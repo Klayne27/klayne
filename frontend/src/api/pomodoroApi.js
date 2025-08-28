@@ -22,7 +22,6 @@ export const updatePomodoroSettingsApi = async (settings) => {
   return res.json()
 }
 
-
 export const endStudySessionApi = async ({ duration }) => {
   const res = await fetch(`${BASE_URL}/session/end`, {
     method: "POST",
@@ -43,4 +42,13 @@ export const getStudyActivityFeedApi = async (page = 1) => {
     throw new Error("Failed to fetch study activity feed")
   }
   return res.json()
+}
+
+export const getAllSessionsApi = async () => {
+  const res = await fetch(`${BASE_URL}/history`)
+  const data = await res.json()
+
+  if (!res.ok) throw new Error("Failed to fetch all sessions")
+
+  return data
 }

@@ -11,16 +11,13 @@ const GoalsPage = () => {
   const [currentGoal, setCurrentGoal] = useState("")
   const navigate = useNavigate()
 
-  // ⭐ Use the custom hook to manage vacation mode state
-  const { vacationModeStatus, isLoading, isToggling, isSuccess, isToggleError, toggleVacationMode } =
+  const { vacationModeStatus, isLoading, isToggling, toggleVacationMode } =
     useVacationMode()
 
-  // Get the update function from the store
   const { updateGoal, dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } =
     useGoalStore()
 
   const handleToggle = () => {
-    // ⭐ Use the mutation function from the hook
     toggleVacationMode(!vacationModeStatus)
   }
 
@@ -30,7 +27,6 @@ const GoalsPage = () => {
   }
 
   const handleSave = (goalType, newValue) => {
-    // Call the Zustand action to update the goal
     updateGoal(goalType, newValue)
     setModalOpen(false)
   }

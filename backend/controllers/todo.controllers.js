@@ -464,33 +464,6 @@ export const getActiveTodosCount = async (req, res) => {
   }
 };
 
-// export const getCompletedTodosWithDates = async (req, res) => {
-//   try {
-//     const completedTodos = await Todo.find(
-//       { user: req.user._id, completed: true },
-//       "completedAt"
-//     ).sort({ completedAt: -1 });
-
-//     res.status(200).json(completedTodos);
-//   } catch (error) {
-//     console.error("Error fetching completed todos:", error);
-//     res.status(500).json({ error: "Failed to fetch completed todos" });
-//   }
-// };
-
-// export const getCompletedTodosHistory = async (req, res) => {
-//   try {
-//     const completedTodos = await Todo.find({
-//       user: req.user._id,
-//       completed: true,
-//     }).select("completedAt");
-//     res.status(200).json(completedTodos);
-//   } catch (error) {
-//     console.error("Error fetching completed todos history:", error);
-//     res.status(500).json({ error: "Failed to fetch todo history" });
-//   }
-// };
-
 export const getCompletedTodosWithDates = async (req, res) => {
   try {
     const completedTodos = await Todo.find({
