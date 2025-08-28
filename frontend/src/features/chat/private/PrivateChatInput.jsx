@@ -13,12 +13,7 @@ import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPicker
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
 
-function PrivateChatInput({
-  actualConversationId,
-  privateChatInputRef,
-  socket,
-  onSenderMessageSent,
-}) {
+function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, onSenderMessageSent }) {
   const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
@@ -119,12 +114,11 @@ function PrivateChatInput({
         className="hidden"
       />
 
-      {/* REMOVED `focus-within` from this div to prevent unintended event bubbling */}
-      <div className="relative mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary">
+      <div className="focus-within:border-accent/99 relative mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary">
         <div className="flex pl-1">
           <button
             type="button"
-            onClick={handleImageButtonClick}
+            onClick={handleImageButtonClick} // Use the new handler
             className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
           >
             <IoImageOutline className="h-5 w-5" />
@@ -162,6 +156,7 @@ function PrivateChatInput({
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
+          onFocus={e => e.stopPropagation()}
           placeholder={
             isEditingMode
               ? "Editing message..."
@@ -255,14 +250,21 @@ function PrivateChatInput({
           </div>
 
           {/* The form, now nested inside the edit mode container */}
-          <form onSubmit={handleSubmit} className="relative flex items-center bg-black/0 px-2">
-            {renderFormContent(true)}
+          <form
+            onSubmit={handleSubmit}
+            className="relative flex items-center bg-black/0 px-2" // change back to p-2 if new typing indicator is ugly
+          >
+            {renderFormContent(true)}{" "}
+            {/* Pass true to indicate editing mode for placeholders/icons */}
           </form>
         </div>
       ) : (
         // NORMAL MODE (not editing)
-        <form onSubmit={handleSubmit} className="relative flex items-center bg-black/0 px-2">
-          {renderFormContent(false)}
+        <form
+          onSubmit={handleSubmit}
+          className="relative flex items-center bg-black/0 px-2" // change back to p-2
+        >
+          {renderFormContent(false)} {/* Pass false for normal mode */}
         </form>
       )}
     </>

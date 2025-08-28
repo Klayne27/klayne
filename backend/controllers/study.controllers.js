@@ -171,11 +171,13 @@ export const endStudySession = async (req, res) => {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayString = getDateString(yesterday);
 
-      if (lastStudyString === yesterdayString) {
-        // Studied yesterday, increment streak
+      const isDayMissed = lastStudyString !== yesterdayString;
+      if (isDayMissed && user.isVacationMode) {
+        // Do nothing, streak is preserved
+      } else if (lastStudyString === yesterdayString) {
         user.studyStreak += 1;
       } else {
-        // Gap in studying - reset streak to 1 (today's session)
+        // Gap in studying - reset streak to 1
         user.studyStreak = 1;
       }
     }
@@ -199,7 +201,10 @@ export const endStudySession = async (req, res) => {
       yesterday.setDate(yesterday.getDate() - 1);
       const yesterdayString = getDateString(yesterday);
 
-      if (lastMonthlyStudyString === yesterdayString) {
+      const isDayMissed = lastMonthlyStudyString !== yesterdayString;
+      if (isDayMissed && user.isVacationMode) {
+        // Do nothing, streak is preserved
+      } else if (lastMonthlyStudyString === yesterdayString) {
         user.monthlyStudyStreak += 1;
       } else {
         user.monthlyStudyStreak = 1;
@@ -364,7 +369,7 @@ export const getStudyHistory = async (req, res) => {
     const userId = req.user._id;
     const allSessions = await StudySession.find({ user: userId })
       .sort({ date: 1 })
-      .select("duration date"); 
+      .select("duration date");
 
     res.status(200).json(allSessions);
   } catch (error) {
