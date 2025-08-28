@@ -32,7 +32,7 @@ const GoalsPage = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl border-x border-accent bg-base-100 py-4 font-sans template">
+    <div className="template mx-auto min-h-screen max-w-2xl border-x border-accent bg-base-100 py-4 font-sans">
       <div className="">
         <div className="mb-8 flex items-center space-x-4 px-4">
           <button onClick={() => navigate(-1)} className="template">
@@ -74,9 +74,8 @@ const GoalsPage = () => {
         </div>
 
         {/* ⭐ New section for vacation mode toggle */}
-        <div className="space-y-4 border-b border-accent py-2">
-          <h2 className="px-4 font-bold text-primary">General</h2>
-          <div className="flex items-center justify-between px-4 py-3 shadow-md">
+        <div className="px-4 py-3 shadow-md">
+          <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold">Vacation Mode</h2>
             {isLoading ? (
               <LoadingSpinner size="sm" />
@@ -97,6 +96,12 @@ const GoalsPage = () => {
               </label>
             )}
           </div>
+
+          {/* Brief message explaining the feature */}
+          <p className="mt-2 text-sm text-gray-500">
+            Enabling this mode will <strong>freeze your study streak</strong>, ensuring it doesn't
+            break even if you don't study for more than 24 hours.
+          </p>
         </div>
       </div>
       <GoalModal
