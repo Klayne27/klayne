@@ -149,5 +149,5 @@ body {
 }
 
 .no-css-vars .text-base-content-inverse {
-    color: var(--fallback-base-content) !important;
+    color: #000000 !important;
 }
