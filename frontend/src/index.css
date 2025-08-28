@@ -147,3 +147,7 @@ body {
 .no-spinners {
   -moz-appearance: textfield;
 }
+
+.no-css-vars .text-base-content-inverse {
+    color: var(--fallback-base-content) !important;
+}

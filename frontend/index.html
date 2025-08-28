@@ -14,5 +14,11 @@
     <div id="todo-dropdown-root"></div>
   </body>
     <script type="module" src="/src/main.jsx"></script>
+    <script>
+  if (!window.CSS || !CSS.supports('color', 'var(--x)')) {
+    document.documentElement.classList.add('no-css-vars');
+    document.documentElement.setAttribute('data-theme', 'light');
+  }
+</script>
   </body>
 </html>
