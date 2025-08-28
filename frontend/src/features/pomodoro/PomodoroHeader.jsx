@@ -2,6 +2,8 @@ import { Link } from "react-router-dom"
 import { FaInfoCircle } from "react-icons/fa"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
+import { LuUserRound } from "react-icons/lu"
+import { IoIosStats } from "react-icons/io"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -17,11 +19,19 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     return null
   }
 
-  const { username, fullName, profileImg, pomodoroXP, pomodoroLevel, badges, isVerified, isGoldVerified } = currentUser
+  const {
+    username,
+    fullName,
+    profileImg,
+    pomodoroXP,
+    pomodoroLevel,
+    badges,
+    isVerified,
+    isGoldVerified,
+  } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
-
 
   return (
     <header className="w-full">
@@ -60,13 +70,22 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
               </div>
             </div>
 
-            <button
-              onClick={() => setShowInfoModal(true)}
-              className="rounded-full p-2 text-white transition-colors hover:bg-gray-700 focus:outline-none"
-              aria-label="How it works info"
-            >
-              <FaInfoCircle className="h-5 w-5" />
-            </button>
+            <div className="flex gap-1">
+              <Link
+                to="/study-dashboard"
+                className="rounded-full p-2 text-white transition-colors hover:bg-gray-700 focus:outline-none"
+              >
+                <IoIosStats className="h-5 w-5" />
+              </Link>
+
+              <button
+                onClick={() => setShowInfoModal(true)}
+                className="rounded-full p-2 text-white transition-colors hover:bg-gray-700 focus:outline-none"
+                aria-label="How it works info"
+              >
+                <FaInfoCircle className="h-5 w-5" />
+              </button>
+            </div>
           </div>
 
           <div className="mt-2 w-full">

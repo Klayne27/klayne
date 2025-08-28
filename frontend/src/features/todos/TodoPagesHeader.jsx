@@ -3,11 +3,11 @@ import { BsThreeDotsVertical } from "react-icons/bs"
 import { FaCheckSquare } from "react-icons/fa"
 import { FaArrowLeft, FaEllipsisVertical } from "react-icons/fa6"
 import { LuSquareActivity } from "react-icons/lu"
-import { useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import useXpStore from "../../store/useXpStore"
 import { RiCheckboxMultipleFill } from "react-icons/ri"
-
+import { IoIosStats } from "react-icons/io"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -43,9 +43,15 @@ function TodoPagesHeader({ pageTitle }) {
     setShowDropdown(false)
   }
 
-  const handlePublicCompletedPageClick = e => {
+  const handlePublicCompletedPageClick = (e) => {
     e.stopPropagation()
     navigate("/todos/public-completed")
+    setShowDropdown(false)
+  }
+
+  const handleStatsPageClick = e => {
+    e.stopPropagation()
+    navigate("/study-dashboard")
     setShowDropdown(false)
   }
 
@@ -86,6 +92,15 @@ function TodoPagesHeader({ pageTitle }) {
                 onClick={handleCloseDropdown}
               ></div>
               <ul className="white-shadow absolute right-2 top-3 z-20 w-48 rounded-xl bg-base-100 p-2">
+                <li>
+                  <button
+                    onClick={handleStatsPageClick}
+                    className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
+                  >
+                    <IoIosStats />
+                    <span>My Stats</span>
+                  </button>
+                </li>
                 <li>
                   <button
                     onClick={handlePublicCompletedPageClick}
