@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from "react"
 import { useGoalStore } from "../../store/useGoalStore"
 import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 
 const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
   const [inputValue, setInputValue] = useState("")
@@ -9,6 +10,8 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
   const modalRef = useRef(null)
 
   const { dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } = useGoalStore()
+
+  const isMobile = useIsMobile()
 
   useLockBodyScroll(isOpen)
 
@@ -58,9 +61,9 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70 p-4 transition-transform duration-300"
+      className="fixed inset-0 z-50 flex items-center justify-center  bg-slate-700/70 p-4 transition-transform duration-300"
       onClick={onClose}
-      style={{ transform: isKeyboardOpen ? "translateY(-20%)" : "translateY(0)" }}
+      style={{ transform: isKeyboardOpen && isMobile ? "translateY(-20%)" : "translateY(0)" }}
     >
       <div
         ref={modalRef}
