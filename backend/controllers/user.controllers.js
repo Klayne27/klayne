@@ -490,6 +490,44 @@ export const searchUsers = async (req, res) => {
   }
 };
 
+export const getVacationModeStatus = async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).select("isVacationMode");
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.json({ isVacationMode: user.isVacationMode });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
+export const toggleVacationMode = async (req, res) => {
+  try {
+    const { isVacationMode } = req.body;
+    if (typeof isVacationMode !== "boolean") {
+      return res.status(400).json({ message: "Invalid value for isVacationMode" });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      req.user.id,
+      { isVacationMode },
+      { new: true, runValidators: true }
+    ).select("isVacationMode");
+
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    res.json({
+      message: "Vacation mode updated successfully",
+      isVacationMode: user.isVacationMode,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const blockUnblockUser = async (req, res) => {
   try {
     const { id: userToBlockId } = req.params;

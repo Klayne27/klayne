@@ -122,112 +122,100 @@ export const endStudySession = async (req, res) => {
     await StudySession.create({
       user: userId,
       duration,
-      task: taskId, // Save the task reference
+      task: taskId,
       date: new Date(),
     });
 
-    // Update user stats
     const user = await User.findById(userId);
+    const today = new Date();
 
-    // Helper function to reset monthly stats if needed
-    const currentMonth = new Date().toISOString().slice(0, 7); // YYYY-MM format
-    if (
-      !user.monthlyStats.lastResetMonth ||
-      user.monthlyStats.lastResetMonth !== currentMonth
-    ) {
-      user.monthlyStats.studyDuration = 0;
-      user.monthlyStats.sessionsCompleted = 0;
-      user.monthlyStats.xpEarned = 0;
-      user.monthlyStats.lastResetMonth = currentMonth;
+    // Helper function to get YYYY-MM-DD string from a Date object
+    const getDateString = (date) => date.toISOString().split("T")[0];
+
+    // --- Monthly Stats Reset Logic ---
+    const currentMonth = today.toISOString().slice(0, 7); // YYYY-MM
+    if (user.monthlyStats.lastResetMonth !== currentMonth) {
+      user.monthlyStats = {
+        studyDuration: 0,
+        sessionsCompleted: 0,
+        xpEarned: 0,
+        lastResetMonth: currentMonth,
+      };
+      // Also reset monthly streak if the month has changed
+      user.monthlyStudyStreak = 0;
+      user.lastMonthlyStudyDate = null;
     }
 
-    // Update total stats (all-time)
+    // --- Update Total and Monthly Stats ---
     user.totalStudyDuration += duration;
     user.totalSessionsCompleted += 1;
-
-    // Update monthly stats
     user.monthlyStats.studyDuration += duration;
     user.monthlyStats.sessionsCompleted += 1;
 
-    const getDateString = (date) => {
-      return date.toISOString().split("T")[0];
+    // --- Refactored Streak Calculation Logic ---
+    const todayString = getDateString(today);
+
+    const updateStreak = (lastStudyDate, currentStreak) => {
+      const lastStudyString = lastStudyDate
+        ? getDateString(new Date(lastStudyDate))
+        : null;
+
+      // If already studied today, streak doesn't change
+      if (lastStudyString === todayString) {
+        return { streak: currentStreak, turnOffVacation: false };
+      }
+
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const yesterdayString = getDateString(yesterday);
+
+      let newStreak = currentStreak;
+      let turnOffVacation = false;
+
+      if (lastStudyString === yesterdayString || !lastStudyString) {
+        newStreak += 1;
+      } else {
+        if (user.isVacationMode) {
+          newStreak += 1;
+          turnOffVacation = true;
+        } else {
+          newStreak = 1;
+        }
+      }
+      return { streak: newStreak, turnOffVacation };
     };
 
-    // Updated streak logic in endStudySession
-    const today = new Date();
-    const todayString = getDateString(today);
-    const lastStudyDate = user.lastStudyDate ? new Date(user.lastStudyDate) : null;
-    const lastStudyString = lastStudyDate ? getDateString(lastStudyDate) : null;
+    // --- Apply Streak Logic ---
+    const totalStreakResult = updateStreak(user.lastStudyDate, user.studyStreak);
+    user.studyStreak = totalStreakResult.streak;
 
-    if (!lastStudyDate) {
-      // First time studying - start streak at 1
-      user.studyStreak = 1;
-    } else if (lastStudyString === todayString) {
-      // Already studied today - don't change streak
-      // (Multiple sessions in same day don't affect streak)
-    } else {
-      // Calculate yesterday's date string
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayString = getDateString(yesterday);
+    const monthlyStreakResult = updateStreak(
+      user.lastMonthlyStudyDate,
+      user.monthlyStudyStreak
+    );
+    user.monthlyStudyStreak = monthlyStreakResult.streak;
 
-      const isDayMissed = lastStudyString !== yesterdayString;
-      if (isDayMissed && user.isVacationMode) {
-        // Do nothing, streak is preserved
-      } else if (lastStudyString === yesterdayString) {
-        user.studyStreak += 1;
-      } else {
-        // Gap in studying - reset streak to 1
-        user.studyStreak = 1;
-      }
+    if (totalStreakResult.turnOffVacation || monthlyStreakResult.turnOffVacation) {
+      user.isVacationMode = false;
     }
 
-    // Always update lastStudyDate to today
+    // Update last study dates
     user.lastStudyDate = today;
-
-    const lastMonthlyStudyDate = user.lastMonthlyStudyDate
-      ? new Date(user.lastMonthlyStudyDate)
-      : null;
-    const lastMonthlyStudyString = lastMonthlyStudyDate
-      ? getDateString(lastMonthlyStudyDate)
-      : null;
-
-    if (!lastMonthlyStudyDate) {
-      user.monthlyStudyStreak = 1;
-    } else if (lastMonthlyStudyString === todayString) {
-      // Don't change streak
-    } else {
-      const yesterday = new Date(today);
-      yesterday.setDate(yesterday.getDate() - 1);
-      const yesterdayString = getDateString(yesterday);
-
-      const isDayMissed = lastMonthlyStudyString !== yesterdayString;
-      if (isDayMissed && user.isVacationMode) {
-        // Do nothing, streak is preserved
-      } else if (lastMonthlyStudyString === yesterdayString) {
-        user.monthlyStudyStreak += 1;
-      } else {
-        user.monthlyStudyStreak = 1;
-      }
-    }
     user.lastMonthlyStudyDate = today;
 
+    // --- Update Longest Streak ---
     if (user.studyStreak > user.longestStudyStreak) {
       user.longestStudyStreak = user.studyStreak;
     }
 
     await user.save();
 
-    // Process XP and leveling
+    // --- Handle XP, Badges, and Response ---
     const xpResult = await handleXPAndLeveling(user, duration);
-
-    // Update monthly XP
     if (xpResult && xpResult.xpEarned) {
       user.monthlyStats.xpEarned += xpResult.xpEarned;
       await user.save();
     }
-
-    // Award badges
     await checkAndAwardBadges(user);
 
     res.status(200).json({
