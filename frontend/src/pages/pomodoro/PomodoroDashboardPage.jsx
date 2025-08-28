@@ -40,12 +40,22 @@ import { Link, useNavigate } from "react-router-dom"
 import { useGetCompletedTodosCount } from "../../features/todos/todoHooks/useGetCompletedTodosCount"
 import { useGetActiveTodosCount } from "../../features/todos/todoHooks/useGetActiveTodosCount"
 import BadgeDisplay from "../../components/common/BadgeDisplay"
-import { FaArrowLeft, FaPen } from "react-icons/fa6"
+import { FaArrowLeft, FaEllipsis, FaPen } from "react-icons/fa6"
 import { BsListTask } from "react-icons/bs"
 import { GrTask } from "react-icons/gr"
 import { TbList, TbListCheck } from "react-icons/tb"
 import { useGetCompletedTodosHistory } from "../../features/todos/todoHooks/useGetCompletedTodosHistory"
 import { useGoalStore } from "../../store/useGoalStore"
+import { LuList, LuListTodo } from "react-icons/lu"
+import { IoIosTimer } from "react-icons/io"
+import { GoHome } from "react-icons/go"
+
+const getGreeting = () => {
+  const hour = new Date().getHours()
+  if (hour < 12) return "Good morning"
+  if (hour < 18) return "Good afternoon"
+  return "Good evening"
+}
 
 // Function to get the value of a CSS variable
 const getCssVar = (variable) => {
@@ -59,9 +69,13 @@ const formatShortDuration = (minutes) => {
   if (isNaN(minutes) || minutes < 0) return "0m"
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60
-  if (hours > 0) {
+  if(hours >= 1000) {
+    return `${hours}h`
+  }
+  if (hours < 1000) {
     return `${hours}h ${remainingMinutes}m`
   }
+
   return `${remainingMinutes}m`
 }
 
@@ -107,6 +121,7 @@ const StudyDashboardPage = () => {
   const [todoView, setTodoView] = useState("weekly")
   const [todoGoalView, setTodoGoalView] = useState("daily")
   const [studyGoalView, setStudyGoalView] = useState("daily")
+  const [openProfileDropdown, setOpenProfileDropdown] = useState(false)
 
   const baseContentInverseColor = getCssVar("--text-on-base-color")
 
@@ -340,19 +355,80 @@ const StudyDashboardPage = () => {
   return (
     <div className="min-h-screen bg-base-100 p-4 font-sans text-base-content-inverse">
       <div className="mx-auto max-w-7xl space-y-5">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <div>
-            <span className="flex items-center gap-2">
-              <button
-                onClick={() => navigate(-1)}
-                className="rounded-full p-2 transition duration-200 hover:bg-secondary"
-              >
-                <FaArrowLeft className="size-5" />
-              </button>
+        {/* Responsive Header */}
+        <div className="flex flex-row items-center justify-between gap-4">
+          <div className="flex items-center gap-4">
+            <button
+              onClick={() => navigate(-1)}
+              className="rounded-full p-2 transition duration-200 hover:bg-secondary"
+            >
+              <FaArrowLeft className="size-5" />
+            </button>
+            <div>
               <h1 className="text-2xl font-bold text-base-content-inverse">Study Dashboard</h1>
-            </span>
-            <p className="text-neutral-400">Track your progress and stay focused</p>
+            </div>
+          </div>
+          <div className="relative">
+            <button onClick={() => setOpenProfileDropdown(!openProfileDropdown)}>
+              <FaEllipsis />
+            </button>
+            {openProfileDropdown && (
+              <>
+                <div
+                  className="fixed inset-0 z-10 cursor-default bg-transparent"
+                  onClick={() => setOpenProfileDropdown(false)}
+                ></div>
+                <ul className="white-shadow absolute left-4 top-4 z-20 w-48 rounded-xl bg-base-100 p-2 md:-left-48">
+                  <li>
+                    <button
+                      onClick={() => navigate("/")}
+                      className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
+                    >
+                      <GoHome />
+                      <span>Home</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => navigate("/pomodoro")}
+                      className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
+                    >
+                      <IoIosTimer />
+                      <span>Pomodoro</span>
+                    </button>
+                  </li>
+                  <li>
+                    <button
+                      onClick={() => navigate("/todos")}
+                      className="flex w-full items-center gap-2 rounded-md p-2 transition-colors hover:bg-secondary"
+                    >
+                      <LuList />
+                      <span>Todos</span>
+                    </button>
+                  </li>
+                </ul>
+              </>
+            )}
+          </div>
+        </div>
+
+        <div className="flex w-full flex-col justify-between md:flex-row-reverse">
+          <div className="relative flex items-center self-center ring-4 ring-primary ring-offset-2 ring-offset-base-100 rounded-full">
+            <Link to={`/profile/${authUser?.username}`} className="cursor-pointer">
+              {authUser.profileImg?.imageUrl && (
+                <img
+                  src={authUser.profileImg.imageUrl}
+                  alt="User profile"
+                  className="size-24 rounded-full object-cover md:size-12"
+                />
+              )}
+            </Link>
+          </div>
+          <div>
+            <h2 className="text-3xl font-bold text-base-content-inverse">
+              {getGreeting()}, {authUser.fullName.split(" ")[0]}.
+            </h2>
+            <p className="text-lg text-neutral-400">Let's get some work done today!</p>
           </div>
         </div>
 
@@ -360,7 +436,6 @@ const StudyDashboardPage = () => {
         <div className="grid gap-5 md:grid-cols-2">
           {/* Quick Stats Card */}
           <BentoCard className="md:col-span-2">
-            {/* <h3 className="mb-4 text-lg font-bold">Quick Stats</h3> */}
             <div className="grid grid-cols-2 gap-y-4 md:grid-cols-6">
               <StatItem
                 label="Total Sessions"
