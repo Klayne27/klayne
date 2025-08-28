@@ -31,6 +31,8 @@ import {
   startOfWeek,
   startOfMonth,
   endOfMonth,
+  eachMonthOfInterval,
+  startOfYear,
   eachDayOfInterval,
 } from "date-fns"
 
@@ -141,155 +143,135 @@ const StudyDashboardPage = () => {
 
   const longestStudyStreak = authUser?.longestStudyStreak || 0
 
-  const chartData = useMemo(() => {
-    if (!allSessions) return []
-    const groupedData = {}
-    allSessions.forEach((session) => {
-      const sessionDate = new Date(session.date)
-      let key
-      let shouldInclude = false
-      if (studyView === "weekly" && isThisWeek(sessionDate, { weekStartsOn: 1 })) {
-        key = format(sessionDate, "EEE")
-        shouldInclude = true
-      } else if (studyView === "monthly" && isThisMonth(sessionDate)) {
-        key = format(sessionDate, "MMM d")
-        shouldInclude = true
-      } else if (studyView === "yearly" && isThisYear(sessionDate)) {
-        key = format(sessionDate, "MMMM")
-        shouldInclude = true
+const chartData = useMemo(() => {
+  if (!allSessions) return []
+  const groupedData = {}
+  allSessions.forEach((session) => {
+    const sessionDate = new Date(session.date)
+    let key
+    let shouldInclude = false
+    if (studyView === "weekly" && isThisWeek(sessionDate, { weekStartsOn: 1 })) {
+      key = format(sessionDate, "EEE")
+      shouldInclude = true
+    } else if (studyView === "monthly" && isThisMonth(sessionDate)) {
+      key = format(sessionDate, "MMM d")
+      shouldInclude = true
+    } else if (studyView === "yearly" && isThisYear(sessionDate)) {
+      key = format(sessionDate, "MMMM")
+      shouldInclude = true
+    }
+    if (shouldInclude) {
+      if (!groupedData[key]) {
+        groupedData[key] = { name: key, time: 0 }
       }
-      if (shouldInclude) {
-        if (!groupedData[key]) {
-          groupedData[key] = { name: key, time: 0 }
-        }
-        groupedData[key].time += session.duration
-      }
+      groupedData[key].time += session.duration
+    }
+  })
+
+  let dataArray = []
+  if (studyView === "weekly") {
+    const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    dataArray = daysOfWeek.map((day) => ({
+      name: day,
+      time: groupedData[day]?.time || 0,
+    }))
+  } else if (studyView === "monthly") {
+    const today = new Date()
+    const startOfMonthDate = startOfMonth(today)
+    const allDaysInMonth = eachDayOfInterval({
+      start: startOfMonthDate,
+      end: today, // Filter by today's date
     })
 
-    let dataArray = []
-    if (studyView === "weekly") {
-      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      dataArray = daysOfWeek.map((day) => ({
-        name: day,
-        time: groupedData[day]?.time || 0,
-      }))
-    } else if (studyView === "monthly") {
-      const today = new Date()
-      const startOfMonthDate = startOfMonth(today)
-      const endOfMonthDate = endOfMonth(today)
-      const allDaysInMonth = eachDayOfInterval({
-        start: startOfMonthDate,
-        end: endOfMonthDate,
-      })
-
-      // Map over the ordered array of all days in the month
-      dataArray = allDaysInMonth.map((date) => {
-        const formattedDate = format(date, "MMM d")
-        return {
-          name: formattedDate,
-          time: groupedData[formattedDate]?.time || 0,
-        }
-      })
-    } else if (studyView === "yearly") {
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ]
-      dataArray = monthNames.map((month) => ({
-        name: month,
-        time: groupedData[month]?.time || 0,
-      }))
-    }
-    return dataArray
-  }, [allSessions, studyView])
-
-  const todoChartData = useMemo(() => {
-    if (!completedTodos) return []
-    const groupedData = {}
-
-    completedTodos.forEach((todo) => {
-      const todoDate = new Date(todo.completedAt)
-      let key
-      let shouldInclude = false
-
-      if (todoView === "weekly" && isThisWeek(todoDate, { weekStartsOn: 1 })) {
-        key = format(todoDate, "EEE")
-        shouldInclude = true
-      } else if (todoView === "monthly" && isThisMonth(todoDate)) {
-        // Use "MMM d" for a short, readable month/day format
-        key = format(todoDate, "MMM d")
-        shouldInclude = true
-      } else if (todoView === "yearly" && isThisYear(todoDate)) {
-        key = format(todoDate, "MMMM")
-        shouldInclude = true
-      }
-
-      if (shouldInclude) {
-        if (!groupedData[key]) {
-          groupedData[key] = { name: key, count: 0 }
-        }
-        groupedData[key].count += 1
+    dataArray = allDaysInMonth.map((date) => {
+      const formattedDate = format(date, "MMM d")
+      return {
+        name: formattedDate,
+        time: groupedData[formattedDate]?.time || 0,
       }
     })
+  } else if (studyView === "yearly") {
+    const allMonths = eachMonthOfInterval({
+      start: startOfYear(new Date()),
+      end: new Date(), // Filter by current month
+    })
+    dataArray = allMonths.map((monthDate) => {
+      const monthName = format(monthDate, "MMMM")
+      return {
+        name: monthName,
+        time: groupedData[monthName]?.time || 0,
+      }
+    })
+  }
+  return dataArray
+}, [allSessions, studyView])
 
-    let dataArray = []
+const todoChartData = useMemo(() => {
+  if (!completedTodos) return []
+  const groupedData = {}
 
-    if (todoView === "weekly") {
-      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
-      dataArray = daysOfWeek.map((day) => ({
-        name: day,
-        count: groupedData[day]?.count || 0,
-      }))
-    } else if (todoView === "monthly") {
-      const today = new Date()
-      const startOfMonthDate = startOfMonth(today)
-      const endOfMonthDate = endOfMonth(today)
-      const allDaysInMonth = eachDayOfInterval({
-        start: startOfMonthDate,
-        end: endOfMonthDate,
-      })
+  completedTodos.forEach((todo) => {
+    const todoDate = new Date(todo.completedAt)
+    let key
+    let shouldInclude = false
 
-      // Map over the ordered array of all days in the month
-      dataArray = allDaysInMonth.map((date) => {
-        const formattedDate = format(date, "MMM d")
-        return {
-          name: formattedDate,
-          count: groupedData[formattedDate]?.count || 0,
-        }
-      })
-    } else if (todoView === "yearly") {
-      const monthNames = [
-        "January",
-        "February",
-        "March",
-        "April",
-        "May",
-        "June",
-        "July",
-        "August",
-        "September",
-        "October",
-        "November",
-        "December",
-      ]
-      dataArray = monthNames.map((month) => ({
-        name: month,
-        count: groupedData[month]?.count || 0,
-      }))
+    if (todoView === "weekly" && isThisWeek(todoDate, { weekStartsOn: 1 })) {
+      key = format(todoDate, "EEE")
+      shouldInclude = true
+    } else if (todoView === "monthly" && isThisMonth(todoDate)) {
+      key = format(todoDate, "MMM d")
+      shouldInclude = true
+    } else if (todoView === "yearly" && isThisYear(todoDate)) {
+      key = format(todoDate, "MMMM")
+      shouldInclude = true
     }
 
-    return dataArray
-  }, [completedTodos, todoView])
+    if (shouldInclude) {
+      if (!groupedData[key]) {
+        groupedData[key] = { name: key, count: 0 }
+      }
+      groupedData[key].count += 1
+    }
+  })
+
+  let dataArray = []
+
+  if (todoView === "weekly") {
+    const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+    dataArray = daysOfWeek.map((day) => ({
+      name: day,
+      count: groupedData[day]?.count || 0,
+    }))
+  } else if (todoView === "monthly") {
+    const today = new Date()
+    const startOfMonthDate = startOfMonth(today)
+    const allDaysInMonth = eachDayOfInterval({
+      start: startOfMonthDate,
+      end: today, // Filter by today's date
+    })
+    dataArray = allDaysInMonth.map((date) => {
+      const formattedDate = format(date, "MMM d")
+      return {
+        name: formattedDate,
+        count: groupedData[formattedDate]?.count || 0,
+      }
+    })
+  } else if (todoView === "yearly") {
+    const allMonths = eachMonthOfInterval({
+      start: startOfYear(new Date()),
+      end: new Date(), // Filter by current month
+    })
+    dataArray = allMonths.map((monthDate) => {
+      const monthName = format(monthDate, "MMMM")
+      return {
+        name: monthName,
+        count: groupedData[monthName]?.count || 0,
+      }
+    })
+  }
+  return dataArray
+}, [completedTodos, todoView])
+
   const studyDurationToday = useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd")
     const totalToday = allSessions

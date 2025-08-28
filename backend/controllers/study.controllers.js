@@ -180,7 +180,7 @@ export const endStudySession = async (req, res) => {
           vacationStarted &&
           lastStudyDay &&
           vacationStarted.getTime() <= dayAfterLastStudy.getTime();
-          
+
         if (isGapExcusedByVacation) {
           newStreak += 1;
           resetVacation = true;
@@ -318,7 +318,6 @@ export const deleteStudyTask = async (req, res) => {
   }
 };
 
-// --- REAL-TIME DURATION UPDATE ---
 export const logStudyTime = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -328,7 +327,6 @@ export const logStudyTime = async (req, res) => {
       return res.status(400).json({ error: "taskId and secondsToAdd are required" });
     }
 
-    // Use Promise.all to run database updates concurrently for better performance
     const [taskUpdateResult, userUpdateResult] = await Promise.all([
       StudyTask.updateOne(
         { _id: taskId, user: userId },
