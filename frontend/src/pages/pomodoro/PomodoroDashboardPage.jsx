@@ -480,7 +480,7 @@ const StudyDashboardPage = () => {
           <BentoCard className="md:col-span-1">
             <div className="flex h-full flex-col">
               <div className="flex flex-col items-center justify-between md:flex-row">
-                <h2 className="text-md font-semibold md:text-xl">
+                <h2 className="text-md font-semibold md:text-xl mb-1">
                   {studyView === "weekly"
                     ? "Weekly Study Progress"
                     : studyView === "monthly"
@@ -573,7 +573,7 @@ const StudyDashboardPage = () => {
           <BentoCard className="md:col-span-1">
             <div className="flex h-full flex-col">
               <div className="flex flex-col items-center justify-between md:flex-row">
-                <h2 className="text-md font-semibold md:text-xl">
+                <h2 className="text-md font-semibold md:text-xl mb-1">
                   {todoView === "weekly"
                     ? "Weekly Task Progress"
                     : todoView === "monthly"
@@ -670,8 +670,8 @@ const StudyDashboardPage = () => {
         <div className="grid gap-5 md:grid-cols-3">
           {/* Study Goal Card */}
           <BentoCard className="md:col-span-1">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">
+            <div className="mb-4 flex flex-col md:flex-row items-center justify-between">
+              <h3 className="text-md font-semibold mb-1">
                 {studyGoalView === "daily" ? "Daily Study Goal" : "Weekly Study Goal"}
               </h3>
               <div className="flex">
@@ -725,8 +725,8 @@ const StudyDashboardPage = () => {
 
           {/* Todo Goal Card */}
           <BentoCard className="md:col-span-1">
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">
+            <div className="mb-4 flex flex-col md:flex-row items-center justify-between">
+              <h3 className="text-md font-semibold mb-1">
                 {todoGoalView === "daily" ? "Daily Task Goal" : "Weekly Task Goal"}
               </h3>
               <div className="flex">
@@ -779,7 +779,7 @@ const StudyDashboardPage = () => {
 
           {/* My Badges Card */}
           <BentoCard className="md:col-span-1">
-            <h3 className="text-lg font-bold">My Badges</h3>
+            <h3 className="text-md font-semibold">My Badges</h3>
             {authUser?.badges && <BadgeDisplay badges={authUser.badges} />}
           </BentoCard>
         </div>
