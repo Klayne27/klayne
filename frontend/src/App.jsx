@@ -33,6 +33,18 @@ function App() {
   useGlobalNotificationSocketEvent()
 
   useEffect(() => {
+    const supportsCssVars = window.CSS && window.CSS.supports("color", "var(--x)")
+
+    if (!supportsCssVars) {
+      document.documentElement.classList.add("no-css-vars")
+      document.documentElement.setAttribute("data-theme", "light")
+    } else {
+      const savedTheme = localStorage.getItem("theme") || "black"
+      document.documentElement.setAttribute("data-theme", savedTheme)
+    }
+  }, [])
+
+  useEffect(() => {
     const checkSubscription = async () => {
       if ("serviceWorker" in navigator && "PushManager" in window) {
         const registration = await navigator.serviceWorker.ready
@@ -59,7 +71,6 @@ function App() {
       </div>
     )
   }
-
 
   return (
     <>
