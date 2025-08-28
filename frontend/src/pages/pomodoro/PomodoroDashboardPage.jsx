@@ -21,8 +21,19 @@ import {
   YAxis,
   LineChart,
   Line,
+  LabelList,
 } from "recharts"
-import { format, isThisWeek, isThisMonth, isThisYear } from "date-fns"
+import {
+  isThisWeek,
+  isThisMonth,
+  isThisYear,
+  format,
+  startOfWeek,
+  startOfMonth,
+  endOfMonth,
+  eachDayOfInterval,
+} from "date-fns"
+
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { Link, useNavigate } from "react-router-dom"
@@ -33,20 +44,30 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { BsListTask } from "react-icons/bs"
 import { GrTask } from "react-icons/gr"
 import { TbList, TbListCheck } from "react-icons/tb"
+import { useGetCompletedTodosHistory } from "../../features/todos/todoHooks/useGetCompletedTodosHistory"
+import { useGoalStore } from "../../store/useGoalStore"
+
+// Function to get the value of a CSS variable
+const getCssVar = (variable) => {
+  if (typeof document !== 'undefined') {
+    return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+  }
+  return null;
+};
 
 const formatShortDuration = (minutes) => {
   if (isNaN(minutes) || minutes < 0) return "0m"
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60
   if (hours > 0) {
-    return `${hours}h`
+    return `${hours}h ${remainingMinutes}m`
   }
   return `${remainingMinutes}m`
 }
 
 const BentoCard = ({ children, className }) => (
   <div
-    className={`rounded-xl border border-accent bg-base-300 p-5 shadow-inner backdrop-blur-sm ${className}`}
+    className={`rounded-xl border border-accent bg-base-200 p-5 shadow-inner backdrop-blur-sm ${className}`}
   >
     {children}
   </div>
@@ -68,11 +89,30 @@ const fetchAllSessions = async () => {
   return res.json()
 }
 
+// Hook to fetch completed todos with their completion dates
+const useGetCompletedTodosWithDates = () => {
+  return useQuery({
+    queryKey: ["completedTodosWithDates"],
+    queryFn: async () => {
+      const res = await fetch("/api/todos/completed-goal")
+      if (!res.ok) throw new Error("Failed to fetch completed todos")
+      return res.json()
+    },
+  })
+}
+
 const StudyDashboardPage = () => {
   const { authUser } = useAuthUser()
-  const [view, setView] = useState("weekly")
-  // New state for the user's custom daily goal in hours
-  const [dailyGoalHours, setDailyGoalHours] = useState(4)
+  const [studyView, setStudyView] = useState("weekly")
+  const [todoView, setTodoView] = useState("weekly")
+  const [todoGoalView, setTodoGoalView] = useState("daily")
+  const [studyGoalView, setStudyGoalView] = useState("daily")
+
+  const baseContentInverseColor = getCssVar("--text-on-base-color")
+
+
+  const { dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } = useGoalStore()
+
   const navigate = useNavigate()
 
   const { data: allSessions, isLoading: allSessionsLoading } = useQuery({
@@ -80,8 +120,11 @@ const StudyDashboardPage = () => {
     queryFn: fetchAllSessions,
   })
 
-  const { completedTodosCount, loadingCompletedTodosCount } = useGetCompletedTodosCount()
-  const { activeTodosCount, loadingActiveTodosCount } = useGetActiveTodosCount()
+  const { data: completedTodos, isLoading: completedTodosLoading } = useGetCompletedTodosWithDates()
+
+  const { completedTodosCount } = useGetCompletedTodosCount()
+  const { activeTodosCount } = useGetActiveTodosCount()
+
   const longestStudyStreak = authUser?.longestStudyStreak || 0
 
   const chartData = useMemo(() => {
@@ -91,13 +134,13 @@ const StudyDashboardPage = () => {
       const sessionDate = new Date(session.date)
       let key
       let shouldInclude = false
-      if (view === "weekly" && isThisWeek(sessionDate, { weekStartsOn: 1 })) {
-        key = format(sessionDate, "EEEE")
+      if (studyView === "weekly" && isThisWeek(sessionDate, { weekStartsOn: 1 })) {
+        key = format(sessionDate, "EEE")
         shouldInclude = true
-      } else if (view === "monthly" && isThisMonth(sessionDate)) {
+      } else if (studyView === "monthly" && isThisMonth(sessionDate)) {
         key = format(sessionDate, "MMM d")
         shouldInclude = true
-      } else if (view === "yearly" && isThisYear(sessionDate)) {
+      } else if (studyView === "yearly" && isThisYear(sessionDate)) {
         key = format(sessionDate, "MMMM")
         shouldInclude = true
       }
@@ -108,13 +151,131 @@ const StudyDashboardPage = () => {
         groupedData[key].time += session.duration
       }
     })
-    const dataArray = Object.values(groupedData)
-    if (view === "monthly") {
-      dataArray.sort((a, b) => new Date(a.name) - new Date(b.name))
+
+    let dataArray = []
+    if (studyView === "weekly") {
+      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      dataArray = daysOfWeek.map((day) => ({
+        name: day,
+        time: groupedData[day]?.time || 0,
+      }))
+    } else if (studyView === "monthly") {
+      const today = new Date()
+      const startOfMonthDate = startOfMonth(today)
+      const endOfMonthDate = endOfMonth(today)
+      const allDaysInMonth = eachDayOfInterval({
+        start: startOfMonthDate,
+        end: endOfMonthDate,
+      })
+
+      // Map over the ordered array of all days in the month
+      dataArray = allDaysInMonth.map((date) => {
+        const formattedDate = format(date, "MMM d")
+        return {
+          name: formattedDate,
+          time: groupedData[formattedDate]?.time || 0,
+        }
+      })
+    } else if (studyView === "yearly") {
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ]
+      dataArray = monthNames.map((month) => ({
+        name: month,
+        time: groupedData[month]?.time || 0,
+      }))
     }
     return dataArray
-  }, [allSessions, view])
+  }, [allSessions, studyView])
 
+  const todoChartData = useMemo(() => {
+    if (!completedTodos) return []
+    const groupedData = {}
+
+    completedTodos.forEach((todo) => {
+      const todoDate = new Date(todo.completedAt)
+      let key
+      let shouldInclude = false
+
+      if (todoView === "weekly" && isThisWeek(todoDate, { weekStartsOn: 1 })) {
+        key = format(todoDate, "EEE")
+        shouldInclude = true
+      } else if (todoView === "monthly" && isThisMonth(todoDate)) {
+        // Use "MMM d" for a short, readable month/day format
+        key = format(todoDate, "MMM d")
+        shouldInclude = true
+      } else if (todoView === "yearly" && isThisYear(todoDate)) {
+        key = format(todoDate, "MMMM")
+        shouldInclude = true
+      }
+
+      if (shouldInclude) {
+        if (!groupedData[key]) {
+          groupedData[key] = { name: key, count: 0 }
+        }
+        groupedData[key].count += 1
+      }
+    })
+
+    let dataArray = []
+
+    if (todoView === "weekly") {
+      const daysOfWeek = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"]
+      dataArray = daysOfWeek.map((day) => ({
+        name: day,
+        count: groupedData[day]?.count || 0,
+      }))
+    } else if (todoView === "monthly") {
+      const today = new Date()
+      const startOfMonthDate = startOfMonth(today)
+      const endOfMonthDate = endOfMonth(today)
+      const allDaysInMonth = eachDayOfInterval({
+        start: startOfMonthDate,
+        end: endOfMonthDate,
+      })
+
+      // Map over the ordered array of all days in the month
+      dataArray = allDaysInMonth.map((date) => {
+        const formattedDate = format(date, "MMM d")
+        return {
+          name: formattedDate,
+          count: groupedData[formattedDate]?.count || 0,
+        }
+      })
+    } else if (todoView === "yearly") {
+      const monthNames = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+      ]
+      dataArray = monthNames.map((month) => ({
+        name: month,
+        count: groupedData[month]?.count || 0,
+      }))
+    }
+
+    return dataArray
+  }, [completedTodos, todoView])
   const studyDurationToday = useMemo(() => {
     const today = format(new Date(), "yyyy-MM-dd")
     const totalToday = allSessions
@@ -123,19 +284,55 @@ const StudyDashboardPage = () => {
     return totalToday || 0
   }, [allSessions])
 
-  const dailyGoalProgress = useMemo(() => {
-    const dailyGoalMinutes = dailyGoalHours * 60
-    if (dailyGoalMinutes <= 0) return 0
-    return Math.min((studyDurationToday / dailyGoalMinutes) * 100, 100)
-  }, [studyDurationToday, dailyGoalHours])
+  const studyDurationWeekly = useMemo(() => {
+    if (!allSessions) return 0
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 }) // Assuming Monday is the start of the week
+    const totalWeekly = allSessions
+      ?.filter((session) => new Date(session.date) >= weekStart)
+      .reduce((sum, session) => sum + session.duration, 0)
+    return totalWeekly || 0
+  }, [allSessions])
+
+  const currentStudyDuration = studyGoalView === "daily" ? studyDurationToday : studyDurationWeekly
+  const currentStudyGoal = studyGoalView === "daily" ? dailyGoalHours : weeklyGoalHours
+
+  const studyGoalProgress = useMemo(() => {
+    if (currentStudyGoal <= 0) return 0
+    const goalInMinutes = currentStudyGoal * 60
+    return Math.min((currentStudyDuration / goalInMinutes) * 100, 100)
+  }, [currentStudyDuration, currentStudyGoal])
+
+  const todoCounts = useMemo(() => {
+    if (!completedTodos) return { daily: 0, weekly: 0 }
+    const today = format(new Date(), "yyyy-MM-dd")
+    const weekStart = startOfWeek(new Date(), { weekStartsOn: 1 })
+
+    const completedDaily = completedTodos.filter(
+      (todo) => format(new Date(todo.completedAt), "yyyy-MM-dd") === today,
+    ).length
+
+    const completedWeekly = completedTodos.filter(
+      (todo) => new Date(todo.completedAt) >= weekStart,
+    ).length
+
+    return { daily: completedDaily, weekly: completedWeekly }
+  }, [completedTodos])
+
+  const currentTodoCount = todoGoalView === "daily" ? todoCounts.daily : todoCounts.weekly
+  const currentTodoGoal = todoGoalView === "daily" ? dailyTodoGoal : weeklyTodoGoal
+
+  const todoGoalProgress = useMemo(() => {
+    if (currentTodoGoal <= 0) return 0
+    return Math.min((currentTodoCount / currentTodoGoal) * 100, 100)
+  }, [currentTodoCount, currentTodoGoal])
 
   const totalFocusTime = authUser?.totalStudyDuration || 0
   const totalSessions = authUser?.totalSessionsCompleted || 0
   const studyStreak = authUser?.studyStreak || 0
 
-  if (allSessionsLoading || loadingCompletedTodosCount || loadingActiveTodosCount) {
+  if (allSessionsLoading || completedTodosLoading) {
     return (
-      <div className="flex h-screen items-center justify-center bg-base-100">
+      <div className="flex h-screen items-center justify-center bg-black">
         <LoadingSpinner />
       </div>
     )
@@ -158,98 +355,11 @@ const StudyDashboardPage = () => {
         </div>
 
         {/* New Grid Layout */}
-        <div className="grid gap-5 md:grid-cols-2 lg:grid-cols-3">
-          {/* Main Chart Card */}
-          <BentoCard className="lg:col-span-2">
-            <div className="flex h-full flex-col">
-              <div className="flex flex-col items-center justify-between md:flex-row">
-                <h2 className="text-md font-semibold md:text-xl">
-                  {view === "weekly"
-                    ? "Weekly Progress"
-                    : view === "monthly"
-                      ? "Monthly Progress"
-                      : "Yearly Progress"}
-                </h2>
-                <div className="flex">
-                  <button
-                    onClick={() => setView("weekly")}
-                    className={`rounded-l-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
-                      view === "weekly"
-                        ? "bg-purple-600 text-white"
-                        : "bg-neutral-700 text-neutral-400"
-                    }`}
-                  >
-                    Weekly
-                  </button>
-                  <button
-                    onClick={() => setView("monthly")}
-                    className={`px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
-                      view === "monthly"
-                        ? "bg-purple-600 text-white"
-                        : "bg-neutral-700 text-neutral-400"
-                    }`}
-                  >
-                    Monthly
-                  </button>
-                  <button
-                    onClick={() => setView("yearly")}
-                    className={`rounded-r-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
-                      view === "yearly"
-                        ? "bg-purple-600 text-white"
-                        : "bg-neutral-700 text-neutral-400"
-                    }`}
-                  >
-                    Yearly
-                  </button>
-                </div>
-              </div>
-              <div className="relative h-48">
-                <ResponsiveContainer width="100%" height="100%">
-                  {view === "weekly" ? (
-                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1c1917",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                        }}
-                        itemStyle={{ color: "#e5e7eb" }}
-                        formatter={(value) => formatShortDuration(value)}
-                      />
-                      <Bar dataKey="time" fill="#a855f7" radius={[4, 4, 0, 0]} />
-                    </BarChart>
-                  ) : (
-                    <LineChart
-                      data={chartData}
-                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
-                    >
-                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
-                      <YAxis hide />
-                      <Tooltip
-                        contentStyle={{
-                          backgroundColor: "#1c1917",
-                          border: "none",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                        }}
-                        itemStyle={{ color: "#e5e7eb" }}
-                        formatter={(value) => formatShortDuration(value)}
-                      />
-                      <Line type="monotone" dataKey="time" stroke="#a855f7" />
-                    </LineChart>
-                  )}
-                </ResponsiveContainer>
-              </div>
-            </div>
-          </BentoCard>
-
+        <div className="grid gap-5 md:grid-cols-2">
           {/* Quick Stats Card */}
-          <BentoCard>
-            <h3 className="mb-4 text-lg font-bold">Quick Stats</h3>
-            <div className="grid grid-cols-2 gap-y-4">
+          <BentoCard className="md:col-span-2">
+            {/* <h3 className="mb-4 text-lg font-bold">Quick Stats</h3> */}
+            <div className="grid grid-cols-2 gap-y-4 md:grid-cols-6">
               <StatItem
                 label="Total Sessions"
                 value={totalSessions}
@@ -289,54 +399,311 @@ const StudyDashboardPage = () => {
             </div>
           </BentoCard>
 
-          {/* Daily Goal Card */}
-          <BentoCard className="md:col-span-2 lg:col-span-1">
-            <h3 className="mb-4 text-lg font-bold">Daily Goal</h3>
+          {/* Study Chart Card */}
+          <BentoCard className="md:col-span-1">
+            <div className="flex h-full flex-col">
+              <div className="flex flex-col items-center justify-between md:flex-row">
+                <h2 className="text-md font-semibold md:text-xl">
+                  {studyView === "weekly"
+                    ? "Weekly Study Progress"
+                    : studyView === "monthly"
+                      ? "Monthly Study Progress"
+                      : "Yearly Study Progress"}
+                </h2>
+                <div className="flex">
+                  <button
+                    onClick={() => setStudyView("weekly")}
+                    className={`rounded-l-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      studyView === "weekly"
+                        ? "bg-purple-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                  <button
+                    onClick={() => setStudyView("monthly")}
+                    className={`px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      studyView === "monthly"
+                        ? "bg-purple-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setStudyView("yearly")}
+                    className={`rounded-r-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      studyView === "yearly"
+                        ? "bg-purple-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+              <div className="relative h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  {studyView === "weekly" ? (
+                    <BarChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                      <XAxis
+                        dataKey="name"
+                        interval={0}
+                        stroke="#525252"
+                        axisLine={false}
+                        tickLine={false}
+                      />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1c1917",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        itemStyle={{ color: "#e5e7eb" }}
+                        formatter={(value) => formatShortDuration(value)}
+                      />
+                      <Bar dataKey="time" fill="#a855f7" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  ) : (
+                    <LineChart
+                      data={chartData}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                    >
+                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1c1917",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        itemStyle={{ color: "#e5e7eb" }}
+                        formatter={(value) => formatShortDuration(value)}
+                      />
+                      <Line type="monotone" dataKey="time" stroke="#a855f7" />
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </BentoCard>
+
+          {/* Todo Chart Card */}
+          <BentoCard className="md:col-span-1">
+            <div className="flex h-full flex-col">
+              <div className="flex flex-col items-center justify-between md:flex-row">
+                <h2 className="text-md font-semibold md:text-xl">
+                  {todoView === "weekly"
+                    ? "Weekly Todo Progress"
+                    : todoView === "monthly"
+                      ? "Monthly Todo Progress"
+                      : "Yearly Todo Progress"}
+                </h2>
+                <div className="flex">
+                  {/* Toggle buttons for weekly/monthly/yearly todoViews */}
+                  <button
+                    onClick={() => setTodoView("weekly")}
+                    className={`rounded-l-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      todoView === "weekly"
+                        ? "bg-green-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Weekly
+                  </button>
+                  <button
+                    onClick={() => setTodoView("monthly")}
+                    className={`px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      todoView === "monthly"
+                        ? "bg-green-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Monthly
+                  </button>
+                  <button
+                    onClick={() => setTodoView("yearly")}
+                    className={`rounded-r-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                      todoView === "yearly"
+                        ? "bg-green-600 text-white"
+                        : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                    }`}
+                  >
+                    Yearly
+                  </button>
+                </div>
+              </div>
+              <div className="relative h-48">
+                <ResponsiveContainer width="100%" height="100%">
+                  {todoView === "weekly" ? (
+                    <BarChart
+                      data={todoChartData}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                    >
+                      <XAxis
+                        dataKey="name"
+                        stroke="#525252"
+                        axisLine={false}
+                        tickLine={false}
+                        interval={0}
+                      />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1c1917",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        itemStyle={{ color: "#e5e7eb" }}
+                        formatter={(value) => `${value} todos`}
+                      />
+                      <Bar dataKey="count" fill="#22c55e" radius={[4, 4, 0, 0]} />{" "}
+                      {/* Green color */}
+                    </BarChart>
+                  ) : (
+                    <LineChart
+                      data={todoChartData}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                    >
+                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
+                      <YAxis hide />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "#1c1917",
+                          border: "none",
+                          borderRadius: "8px",
+                          fontSize: "12px",
+                        }}
+                        itemStyle={{ color: "#e5e7eb" }}
+                        formatter={(value) => `${value} todos`}
+                      />
+                      <Line type="monotone" dataKey="count" stroke="#22c55e" /> {/* Green color */}
+                    </LineChart>
+                  )}
+                </ResponsiveContainer>
+              </div>
+            </div>
+          </BentoCard>
+        </div>
+        <div className="grid gap-5 md:grid-cols-3">
+          {/* Study Goal Card */}
+          <BentoCard className="md:col-span-1">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">Daily Study Goal</h3>
+              <div className="flex">
+                <button
+                  onClick={() => setStudyGoalView("daily")}
+                  className={`rounded-l-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                    studyGoalView === "daily"
+                      ? "bg-purple-600 text-white"
+                      : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                  }`}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setStudyGoalView("weekly")}
+                  className={`rounded-r-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                    studyGoalView === "weekly"
+                      ? "bg-purple-600 text-white"
+                      : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                  }`}
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={() => navigate("/study-dashboard/goals")}
+                  className="ml-2 rounded-md bg-purple-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-purple-700"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
             <div className="flex flex-col items-center justify-center space-y-4">
               <div className="h-32 w-32">
                 <CircularProgressbar
-                  value={dailyGoalProgress}
-                  text={`${Math.round(dailyGoalProgress)}%`}
+                  value={studyGoalProgress}
+                  text={`${studyGoalProgress.toFixed(1)}%`}
                   styles={buildStyles({
-                    pathColor: `rgba(168, 85, 247, ${Math.max(dailyGoalProgress / 100, 0.3)})`,
+                    pathColor: `rgba(168, 85, 247, ${Math.max(studyGoalProgress / 100, 0.3)})`,
                     trailColor: "#262626",
-                    textColor: "#e5e7eb",
+                    textColor: baseContentInverseColor || "white", // ⭐ Use the dynamic color here
                     strokeLinecap: "round",
                   })}
                 />
               </div>
               <p className="text-sm font-medium text-neutral-400">
-                {formatShortDuration(studyDurationToday)} of {dailyGoalHours} hours today
+                {formatShortDuration(currentStudyDuration)} of {currentStudyGoal} {studyGoalView}{" "}
+                hours
               </p>
-              <div className="flex w-full items-center justify-center space-x-2">
-                <input
-                  type="number"
-                  min="0"
-                  value={dailyGoalHours}
-                  onChange={(e) => setDailyGoalHours(e.target.value)}
-                  className="w-20 rounded-md bg-neutral-700 p-2 text-center text-sm text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-purple-500"
-                />
-                <span className="text-neutral-400">hours</span>
+            </div>
+          </BentoCard>
+
+          {/* Todo Goal Card */}
+          <BentoCard className="md:col-span-1">
+            <div className="mb-4 flex items-center justify-between">
+              <h3 className="text-lg font-bold">
+                {todoGoalView === "daily" ? "Daily Todo Goal" : "Weekly Todo Goal"}
+              </h3>
+              <div className="flex">
+                <button
+                  onClick={() => setTodoGoalView("daily")}
+                  className={`rounded-l-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                    todoGoalView === "daily"
+                      ? "bg-green-600 text-white"
+                      : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                  }`}
+                >
+                  Daily
+                </button>
+                <button
+                  onClick={() => setTodoGoalView("weekly")}
+                  className={`rounded-r-md px-3 py-1 text-xs font-bold transition-colors md:text-sm ${
+                    todoGoalView === "weekly"
+                      ? "bg-green-600 text-white"
+                      : "bg-base-300 text-neutral-400 hover:bg-secondary"
+                  }`}
+                >
+                  Weekly
+                </button>
+                <button
+                  onClick={() => navigate("/study-dashboard/goals")}
+                  className="ml-2 rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-green-700"
+                >
+                  Edit
+                </button>
               </div>
+            </div>
+            <div className="flex flex-col items-center justify-center space-y-4">
+              <div className="h-32 w-32">
+                <CircularProgressbar
+                  value={todoGoalProgress}
+                  text={`${Math.round(todoGoalProgress)}%`}
+                  styles={buildStyles({
+                    pathColor: `rgba(34, 197, 94, ${Math.max(todoGoalProgress / 100, 0.3)})`,
+                    trailColor: "#262626",
+                    textColor: baseContentInverseColor || "#e5e7eb", // ⭐ Use the dynamic color here
+                    strokeLinecap: "round",
+                  })}
+                />
+              </div>
+              <p className="text-sm font-medium text-neutral-400">
+                {currentTodoCount} of {currentTodoGoal} {todoGoalView} todos
+              </p>
             </div>
           </BentoCard>
 
           {/* My Badges Card */}
-          <BentoCard className="md:col-span-2 lg:col-span-1">
+          <BentoCard className="md:col-span-1">
             <h3 className="text-lg font-bold">My Badges</h3>
             {authUser?.badges && <BadgeDisplay badges={authUser.badges} />}
           </BentoCard>
-
-          {/* Add Task Button Card */}
-          {/* <button className="flex items-center justify-center gap-2 rounded-2xl bg-[#FFC000] py-4 text-lg font-bold text-black shadow-xl transition-colors hover:bg-[#E5B000] md:col-span-2 lg:col-span-1">
-            <FaPlus /> Add Task
-          </button> */}
         </div>
-
-        {/* The link remains at the bottom */}
-        {/* <div className="mt-5">
-          <Link to="/pomodoro">go to pomodoro</Link>
-        </div> */}
       </div>
     </div>
   )

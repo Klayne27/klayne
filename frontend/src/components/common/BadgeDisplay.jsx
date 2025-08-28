@@ -44,9 +44,9 @@ const getBadgeIcon = (badgeName) => {
 const Badge = ({ badge, onOpenModal }) => (
   <button
     onClick={() => onOpenModal(badge)}
-    className="flex flex-col items-center rounded-lg bg-neutral-700 p-2 transition-colors hover:bg-neutral-600"
+    className="flex flex-col items-center rounded-lg bg-base-300 p-1 md:p-2 transition-colors hover:bg-secondary"
   >
-    <div className="flex size-10 items-center justify-center">{getBadgeIcon(badge.name)}</div>
+    <div className="flex size-8 items-center justify-center">{getBadgeIcon(badge.name)}</div>
   </button>
 )
 
@@ -79,7 +79,9 @@ const BadgeDisplay = ({ badges }) => {
 
   return (
     <>
-      <div className="grid grid-cols-3 gap-2 overflow-auto p-2">
+      <div
+        className="grid grid-cols-6 gap-2 overflow-auto p-2"
+      >
         {validBadges.map((badge) => (
           <Badge key={badge.name} badge={badge} onOpenModal={setSelectedBadge} />
         ))}

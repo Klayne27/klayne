@@ -7,6 +7,7 @@ import ImageViewerPage from "./components/common/ImageViewerPage"
 import CreatePostModal from "./features/posts/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import PomodoroDashboardPage from "./pages/pomodoro/PomodoroDashboardPage"
+import GoalsPage from "./pages/pomodoro/GoalsPage"
 
 const PublicCompletedTodosPage = lazy(() => import("./pages/todos/PublicCompletedTodosPage"))
 const EditTodoListPage = lazy(() => import("./pages/todos/EditTodoListPage"))
@@ -88,7 +89,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />
-              <Route path="/todos" element={<TodoPageLayout />}>
+              <Route path="/study-dashboard/goals" element={<GoalsPage /> } />
+               <Route path="/todos" element={<TodoPageLayout />}>
                 <Route index element={<MyTodoListsPage />} />
                 <Route path="following" element={<FollowingListsPage />} />
                 <Route path="public" element={<PublicListsPage />} />

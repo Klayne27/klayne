@@ -7,6 +7,8 @@ import {
   getActiveTodosCount,
   getCompletedTodos,
   getCompletedTodosCount,
+  // getCompletedTodosHistory,
+  getCompletedTodosWithDates,
   getFollowingTodos,
   getMyActivities,
   getPublicCompletedTodos,
@@ -27,7 +29,8 @@ router.get("/activities", protectRoute, getMyActivities);
 router.get("/public-completed", protectRoute, getPublicCompletedTodos);
 router.get("/completed-count", protectRoute, getCompletedTodosCount);
 router.get("/active-count", protectRoute, getActiveTodosCount);
-
+router.get("/completed-goal", protectRoute, getCompletedTodosWithDates);
+// router.get("/history", protectRoute, getCompletedTodosHistory);
 
 router.get("/:id", protectRoute, getTodoById);
 router.put("/:id", protectRoute, updateTodo);

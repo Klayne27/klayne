@@ -363,8 +363,8 @@ export const getStudyHistory = async (req, res) => {
   try {
     const userId = req.user._id;
     const allSessions = await StudySession.find({ user: userId })
-      .sort({ date: 1 }) // Sort by date to make processing easier
-      .select("duration date"); // Only retrieve necessary fields
+      .sort({ date: 1 })
+      .select("duration date"); 
 
     res.status(200).json(allSessions);
   } catch (error) {

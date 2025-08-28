@@ -104,3 +104,12 @@ export const getActiveTodosCountApi = async () => {
   if (!res.ok) throw new Error("Failed to fetch active todos count")
   return res.json()
 }
+
+export const getCompletedTodosHistoryApi = async () => {
+  const res = await fetch(`{${API_URL}/history`);
+  if (!res.ok) {
+    const error = await res.json();
+    throw new Error(error.error || "Failed to fetch completed todos");
+  }
+  return res.json();
+};

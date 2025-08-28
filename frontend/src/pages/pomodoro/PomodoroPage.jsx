@@ -486,11 +486,11 @@ const PomodoroPage = () => {
 
             </div>
           )} */}
-          <label className="label">
+          {/* <label className="label">
             <Link to="/study-dashboard" className="link-hover link label-text-alt">
               Manage tasks
             </Link>
-          </label>
+          </label> */}
           <h1
             key={isBreak ? "break" : "study"}
             className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}

@@ -26,11 +26,6 @@ const todoSchema = new mongoose.Schema(
       enum: ["low", "medium", "high", "urgent"],
       default: "low",
     },
-    category: {
-      type: String,
-      enum: ["personal", "work", "study", "health", "social", "other"],
-      default: "personal",
-    },
     dueDate: {
       type: Date,
       default: null,
