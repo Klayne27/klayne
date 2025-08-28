@@ -15,8 +15,6 @@ const GoalsPage = () => {
   const { vacationModeStatus, isLoading, isToggling, isSuccess, isToggleError, toggleVacationMode } =
     useVacationMode()
 
-    console.log(vacationModeStatus);
-
   // Get the update function from the store
   const { updateGoal, dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } =
     useGoalStore()

@@ -89,7 +89,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />
-              <Route path="/study-dashboard/goals" element={<GoalsPage /> } />
+              <Route path="/study-dashboard/settings" element={<GoalsPage /> } />
                <Route path="/todos" element={<TodoPageLayout />}>
                 <Route index element={<MyTodoListsPage />} />
                 <Route path="following" element={<FollowingListsPage />} />

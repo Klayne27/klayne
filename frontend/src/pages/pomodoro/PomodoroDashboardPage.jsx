@@ -347,11 +347,20 @@ const todoChartData = useMemo(() => {
               <FaArrowLeft className="size-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-base-content-inverse">Study Dashboard</h1>
+              <h1 className="text-2xl font-bold text-base-content-inverse">Dashboard</h1>
             </div>
           </div>
-          <div className="relative">
-            <button onClick={() => setOpenProfileDropdown(!openProfileDropdown)}>
+          <div className="relative flex items-center gap-1">
+            <button
+              onClick={() => navigate("/study-dashboard/settings")}
+              className="rounded-full p-2 hover:bg-secondary"
+            >
+              <FaCog />
+            </button>
+            <button
+              onClick={() => setOpenProfileDropdown(!openProfileDropdown)}
+              className="rounded-full p-2 hover:bg-secondary"
+            >
               <FaEllipsis />
             </button>
             {openProfileDropdown && (
@@ -677,12 +686,6 @@ const todoChartData = useMemo(() => {
                 >
                   Weekly
                 </button>
-                <button
-                  onClick={() => navigate("/study-dashboard/goals")}
-                  className="ml-2 rounded-md bg-purple-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-purple-700"
-                >
-                  <FaPen />
-                </button>
               </div>
             </div>
             <div className="flex flex-col items-center justify-center space-y-4">
@@ -731,12 +734,6 @@ const todoChartData = useMemo(() => {
                   }`}
                 >
                   Weekly
-                </button>
-                <button
-                  onClick={() => navigate("/study-dashboard/goals")}
-                  className="ml-2 rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-green-700"
-                >
-                  <FaPen />
                 </button>
               </div>
             </div>
