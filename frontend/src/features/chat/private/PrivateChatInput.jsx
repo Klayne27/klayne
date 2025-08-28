@@ -156,7 +156,6 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          onFocus={e => e.stopPropagation()}
           placeholder={
             isEditingMode
               ? "Editing message..."

@@ -5,7 +5,7 @@ import { useDeletePublicMessage } from "./publicChatHooks/useDeletePublicMessage
 import { useDeleteOwnPublicMessage } from "./publicChatHooks/useDeleteOwnPublicMessage"
 import { useAddPublicMessageReaction } from "./publicChatHooks/useAddPublicMessageReaction"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
-import { useUnbanUserFromPublicChat} from "./publicChatHooks/useUnbanUserFromPublicChat"
+import { useUnbanUserFromPublicChat } from "./publicChatHooks/useUnbanUserFromPublicChat"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
@@ -27,7 +27,6 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
 import PublicChatFirstMessageInGroup from "./PublicChatFirstMessageInGroup"
-
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
@@ -313,14 +312,16 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
           </div>
         </MessageContentLayout>
 
-        <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
-          <SlideUpMenuContent className="flex h-[50vh] w-full flex-col overflow-y-auto">
-            <ReactionsSlideUpMenuContent
-              reactions={message.reactions ? message.reactions : []}
-              onClose={handleCloseViewReactionsModal}
-            />
-          </SlideUpMenuContent>
-        </SlideUpMenu>
+        {showSlideUpReactionsMenu && (
+          <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+            <SlideUpMenuContent className="flex h-[50vh] w-full flex-col overflow-y-auto">
+              <ReactionsSlideUpMenuContent
+                reactions={message.reactions ? message.reactions : []}
+                onClose={handleCloseViewReactionsModal}
+              />
+            </SlideUpMenuContent>
+          </SlideUpMenu>
+        )}
 
         {showViewReactionsModal && (
           <ViewReactionsModal

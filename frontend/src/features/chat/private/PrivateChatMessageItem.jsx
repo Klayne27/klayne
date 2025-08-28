@@ -272,7 +272,7 @@ const PrivateChatMessageItem = ({
           </div>
         </MessageContentLayout>
 
-        <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+        {showSlideUpReactionsMenu && <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
           <SlideUpMenuContent
             className="flex h-[50vh] w-full flex-col overflow-y-auto"
             disablePullToRefresh={true} 
@@ -282,7 +282,7 @@ const PrivateChatMessageItem = ({
               onClose={handleCloseViewReactionsModal}
             />
           </SlideUpMenuContent>
-        </SlideUpMenu>
+        </SlideUpMenu>}
 
         {showViewReactionsModal && (
           <ViewReactionsModal
