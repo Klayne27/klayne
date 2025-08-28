@@ -492,11 +492,18 @@ export const searchUsers = async (req, res) => {
 
 export const getVacationModeStatus = async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select("isVacationMode");
+    // Select both fields
+    const user = await User.findById(req.user.id).select(
+      "isVacationMode vacationModeStartDate"
+    );
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
-    res.json({ isVacationMode: user.isVacationMode });
+    // Return both fields in the response
+    res.json({
+      isVacationMode: user.isVacationMode,
+      vacationModeStartDate: user.vacationModeStartDate,
+    });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
   }
@@ -509,15 +516,21 @@ export const toggleVacationMode = async (req, res) => {
       return res.status(400).json({ message: "Invalid value for isVacationMode" });
     }
 
-    const user = await User.findByIdAndUpdate(
-      req.user.id,
-      { isVacationMode },
-      { new: true, runValidators: true }
-    ).select("isVacationMode");
-
+    const user = await User.findById(req.user.id);
     if (!user) {
       return res.status(404).json({ message: "User not found" });
     }
+
+    user.isVacationMode = isVacationMode;
+
+    // If turning vacation mode ON, set the start date.
+    if (isVacationMode) {
+      user.vacationModeStartDate = new Date();
+    }
+    // IMPORTANT: Do not set it to null when turning it OFF here.
+    // The endStudySession controller will handle that when the vacation is "used".
+
+    await user.save();
 
     res.json({
       message: "Vacation mode updated successfully",

@@ -128,7 +128,11 @@ const userSchema = new mongoose.Schema(
     },
     isVacationMode: {
       type: Boolean,
-      default: false
+      default: false,
+    },
+    vacationModeStartDate: {
+      type: Date,
+      default: null,
     },
     studyStreak: {
       type: Number,

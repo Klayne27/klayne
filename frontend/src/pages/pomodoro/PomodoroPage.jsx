@@ -285,7 +285,7 @@ const PomodoroPage = () => {
 
   const startAnimation = useCallback(() => {
     const tick = () => {
-      const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
+      const elapsedSec = (Date.now() - startTimestampRef.current) / 10
       const remaining = durationAtStartRef.current - elapsedSec
       if (remaining <= 0) {
         setTimer(0)
@@ -338,7 +338,7 @@ const PomodoroPage = () => {
       return
     }
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsedTime = (Date.now() - savedStartTime) / 1000
+      const elapsedTime = (Date.now() - savedStartTime) / 10
       const newTimer = savedDurationAtStart - elapsedTime
       setTimer(newTimer > 0 ? newTimer : 0)
       setIsActive(newTimer > 0)
@@ -366,7 +366,7 @@ const PomodoroPage = () => {
         const startTime = parseInt(localStorage.getItem(START_TIMESTAMP_KEY), 10)
         const durationAtStart = parseInt(localStorage.getItem(DURATION_AT_START_KEY), 10)
         if (startTime && durationAtStart) {
-          const elapsedTime = (Date.now() - startTime) / 1000
+          const elapsedTime = (Date.now() - startTime) / 10
           const newTimer = durationAtStart - elapsedTime
           if (newTimer <= 0) {
             setTimer(0)
