@@ -312,7 +312,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
           </div>
         </MessageContentLayout>
 
-        {showSlideUpReactionsMenu && (
+        {(
           <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
             <SlideUpMenuContent className="flex h-[50vh] w-full flex-col overflow-y-auto">
               <ReactionsSlideUpMenuContent
