@@ -413,7 +413,7 @@ const StudyDashboardPage = () => {
         </div>
 
         <div className="flex w-full flex-col justify-between md:flex-row-reverse">
-          <div className="relative flex items-center self-center ring-4 ring-primary ring-offset-2 ring-offset-base-100 rounded-full">
+          <div className="relative flex items-center self-center rounded-full ring-4 ring-primary ring-offset-2 ring-offset-base-100 md:ring-2">
             <Link to={`/profile/${authUser?.username}`} className="cursor-pointer">
               {authUser.profileImg?.imageUrl && (
                 <img
@@ -428,7 +428,7 @@ const StudyDashboardPage = () => {
             <h2 className="text-3xl font-bold text-base-content-inverse">
               {getGreeting()}, {authUser.fullName.split(" ")[0]}.
             </h2>
-            <p className="text-lg text-neutral-400">Let's get some work done today!</p>
+            <p className="text-neutral-400">Track your progress and stay focused</p>
           </div>
         </div>
 
