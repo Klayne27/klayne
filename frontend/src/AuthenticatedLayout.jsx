@@ -6,9 +6,9 @@ import { useAppStore } from "./store/useAppStore"
 import ImageViewerPage from "./components/common/ImageViewerPage"
 import CreatePostModal from "./features/posts/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
-import PomodoroDashboardPage from "./pages/pomodoro/PomodoroDashboardPage"
-import GoalsPage from "./pages/pomodoro/GoalsPage"
 
+const PomodoroDashboardPage = lazy(() => import("./pages/pomodoro/PomodoroDashboardPage"))
+const GoalsPage = lazy(() => import("./pages/pomodoro/GoalsPage"))
 const PublicCompletedTodosPage = lazy(() => import("./pages/todos/PublicCompletedTodosPage"))
 const EditTodoListPage = lazy(() => import("./pages/todos/EditTodoListPage"))
 const CreateTodoListPage = lazy(() => import("./pages/todos/CreateTodoListPage"))
