@@ -25,8 +25,8 @@ const GoalsPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 py-4 font-sans text-base-content-inverse">
-      <div className="mx-auto max-w-xl">
+    <div className="mx-auto min-h-screen max-w-2xl bg-base-100 py-4 font-sans text-base-content-inverse border-x border-accent">
+      <div className="">
         <div className="mb-8 flex items-center space-x-4 px-4">
           <button onClick={() => navigate(-1)} className="text-base-content-inverse">
             <FaArrowLeft size={16} />
@@ -35,7 +35,7 @@ const GoalsPage = () => {
         </div>
 
         <div className="space-y-4 border-b border-accent py-2">
-          <h2 className="px-4 text-primary font-bold">Set Goals</h2>
+          <h2 className="px-4 font-bold text-primary">Set Goals</h2>
           <div
             className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("study")}
@@ -51,7 +51,7 @@ const GoalsPage = () => {
             <p className="text-neutral-400">{weeklyGoalHours} hours</p>
           </div>
           <div
-            className="px-4 shadow-md cursor-pointer py-3 transition-colors hover:bg-secondary"
+            className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("daily_todo")}
           >
             <h2 className="text-xl font-semibold">Daily Task Goal</h2>

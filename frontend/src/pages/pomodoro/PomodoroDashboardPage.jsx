@@ -40,7 +40,7 @@ import { Link, useNavigate } from "react-router-dom"
 import { useGetCompletedTodosCount } from "../../features/todos/todoHooks/useGetCompletedTodosCount"
 import { useGetActiveTodosCount } from "../../features/todos/todoHooks/useGetActiveTodosCount"
 import BadgeDisplay from "../../components/common/BadgeDisplay"
-import { FaArrowLeft } from "react-icons/fa6"
+import { FaArrowLeft, FaPen } from "react-icons/fa6"
 import { BsListTask } from "react-icons/bs"
 import { GrTask } from "react-icons/gr"
 import { TbList, TbListCheck } from "react-icons/tb"
@@ -49,11 +49,11 @@ import { useGoalStore } from "../../store/useGoalStore"
 
 // Function to get the value of a CSS variable
 const getCssVar = (variable) => {
-  if (typeof document !== 'undefined') {
-    return getComputedStyle(document.documentElement).getPropertyValue(variable).trim();
+  if (typeof document !== "undefined") {
+    return getComputedStyle(document.documentElement).getPropertyValue(variable).trim()
   }
-  return null;
-};
+  return null
+}
 
 const formatShortDuration = (minutes) => {
   if (isNaN(minutes) || minutes < 0) return "0m"
@@ -109,7 +109,6 @@ const StudyDashboardPage = () => {
   const [studyGoalView, setStudyGoalView] = useState("daily")
 
   const baseContentInverseColor = getCssVar("--text-on-base-color")
-
 
   const { dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } = useGoalStore()
 
@@ -345,8 +344,11 @@ const StudyDashboardPage = () => {
         <div className="flex items-center justify-between">
           <div>
             <span className="flex items-center gap-2">
-              <button onClick={() => navigate(-1)}>
-                <FaArrowLeft />
+              <button
+                onClick={() => navigate(-1)}
+                className="rounded-full p-2 transition duration-200 hover:bg-secondary"
+              >
+                <FaArrowLeft className="size-5" />
               </button>
               <h1 className="text-2xl font-bold text-base-content-inverse">Study Dashboard</h1>
             </span>
@@ -498,10 +500,10 @@ const StudyDashboardPage = () => {
               <div className="flex flex-col items-center justify-between md:flex-row">
                 <h2 className="text-md font-semibold md:text-xl">
                   {todoView === "weekly"
-                    ? "Weekly Todo Progress"
+                    ? "Weekly Task Progress"
                     : todoView === "monthly"
-                      ? "Monthly Todo Progress"
-                      : "Yearly Todo Progress"}
+                      ? "Monthly Task Progress"
+                      : "Yearly Task Progress"}
                 </h2>
                 <div className="flex">
                   {/* Toggle buttons for weekly/monthly/yearly todoViews */}
@@ -594,7 +596,9 @@ const StudyDashboardPage = () => {
           {/* Study Goal Card */}
           <BentoCard className="md:col-span-1">
             <div className="mb-4 flex items-center justify-between">
-              <h3 className="text-lg font-bold">Daily Study Goal</h3>
+              <h3 className="text-lg font-bold">
+                {studyGoalView === "daily" ? "Daily Study Goal" : "Weekly Study Goal"}
+              </h3>
               <div className="flex">
                 <button
                   onClick={() => setStudyGoalView("daily")}
@@ -620,7 +624,7 @@ const StudyDashboardPage = () => {
                   onClick={() => navigate("/study-dashboard/goals")}
                   className="ml-2 rounded-md bg-purple-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-purple-700"
                 >
-                  Edit
+                  <FaPen />
                 </button>
               </div>
             </div>
@@ -632,7 +636,7 @@ const StudyDashboardPage = () => {
                   styles={buildStyles({
                     pathColor: `rgba(168, 85, 247, ${Math.max(studyGoalProgress / 100, 0.3)})`,
                     trailColor: "#262626",
-                    textColor: baseContentInverseColor || "white", // ⭐ Use the dynamic color here
+                    textColor: baseContentInverseColor || "white",
                     strokeLinecap: "round",
                   })}
                 />
@@ -648,7 +652,7 @@ const StudyDashboardPage = () => {
           <BentoCard className="md:col-span-1">
             <div className="mb-4 flex items-center justify-between">
               <h3 className="text-lg font-bold">
-                {todoGoalView === "daily" ? "Daily Todo Goal" : "Weekly Todo Goal"}
+                {todoGoalView === "daily" ? "Daily Task Goal" : "Weekly Task Goal"}
               </h3>
               <div className="flex">
                 <button
@@ -675,7 +679,7 @@ const StudyDashboardPage = () => {
                   onClick={() => navigate("/study-dashboard/goals")}
                   className="ml-2 rounded-md bg-green-600 px-3 py-1 text-xs font-semibold text-white transition-colors hover:bg-green-700"
                 >
-                  Edit
+                  <FaPen />
                 </button>
               </div>
             </div>
@@ -693,7 +697,7 @@ const StudyDashboardPage = () => {
                 />
               </div>
               <p className="text-sm font-medium text-neutral-400">
-                {currentTodoCount} of {currentTodoGoal} {todoGoalView} todos
+                {currentTodoCount} of {currentTodoGoal} {todoGoalView} tasks
               </p>
             </div>
           </BentoCard>

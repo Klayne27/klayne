@@ -54,7 +54,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
 
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-1">
-                  <h2 className="text-base font-bold sm:text-lg">{fullName}</h2>
+                  <h2 className="text-base font-bold sm:text-lg ml-1">{fullName}</h2>
                   {isVerified && <img src="/verified2.png" className="size-[17px]" />}
                   {isGoldVerified && <img src="/gold-verified2.png" className="size-[17px]" />}
                   {renderHourBadge(badges)}
