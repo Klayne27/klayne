@@ -3,6 +3,7 @@ import { showAppToast } from "../../utils/showAppToast"
 import { useGetPomodoroSettings } from "./pomodoroHooks/useGetPomodoroSettings"
 import { useUpdatePomodoroSettings } from "./pomodoroHooks/useUpdatePomodoroSettings"
 import { FaBell, FaBellSlash, FaForward } from "react-icons/fa6"
+import { RxReset } from "react-icons/rx"
 
 function PomodoroTimerDisplay({
   isBreak,
@@ -70,13 +71,13 @@ function PomodoroTimerDisplay({
       <div
         className={`${minutes === 0 && seconds < 10 && !isGoalReached && "animate-pulse"} relative h-64 w-64 md:h-72 md:w-72`}
       >
-        <div className="absolute inset-0 bottom-[150px] z-50 flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-44">
+        <div className="absolute inset-0 bottom-[28px] z-50 flex flex-col items-center justify-end font-mono tracking-tighter md:bottom-8">
           <span
-            className="flex cursor-pointer items-center gap-1 rounded-full p-2"
+            className="flex cursor-pointer items-center gap-1 rounded-full p-2 text-slate-500"
             onClick={handleResetCurrentSessionClick}
           >
             <span>
-              <FaRedo />
+              <RxReset size={20} strokeWidth={0.5} />
             </span>
           </span>
         </div>
@@ -137,7 +138,7 @@ function PomodoroTimerDisplay({
         {isBreak && !isGoalReached && (
           <button
             onClick={handleSkipBreak}
-            className="absolute -top-10 -right-20  flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
+            className="absolute -right-20 -top-10 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
             aria-label="Skip break"
           >
             <FaForward size={20} />
@@ -146,7 +147,7 @@ function PomodoroTimerDisplay({
         {!isBreak && !isGoalReached && minutes <= 0 && seconds <= 0 && (
           <button
             onClick={onSessionEnd}
-            className="absolute -top-10 -right-20 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
+            className="absolute -right-20 -top-10 flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all hover:text-white disabled:cursor-not-allowed disabled:opacity-50 md:hover:bg-slate-700/50"
           >
             <FaForward size={20} />
           </button>
