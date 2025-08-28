@@ -40,28 +40,28 @@ const GoalsPage = () => {
             className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("study")}
           >
-            <h2 className="text-xl font-semibold">Daily Study Goal</h2>
+            <h2 className="text-lg font-semibold">Daily Study Goal</h2>
             <p className="text-neutral-400">{dailyGoalHours} hours</p>
           </div>
           <div
             className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("weekly_study")} // ⭐ New goal type
           >
-            <h2 className="text-xl font-semibold">Weekly Study Goal</h2>
+            <h2 className="text-lg font-semibold">Weekly Study Goal</h2>
             <p className="text-neutral-400">{weeklyGoalHours} hours</p>
           </div>
           <div
             className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("daily_todo")}
           >
-            <h2 className="text-xl font-semibold">Daily Task Goal</h2>
+            <h2 className="text-lg font-semibold">Daily Task Goal</h2>
             <p className="text-neutral-400">{dailyTodoGoal} tasks</p>
           </div>
           <div
             className="cursor-pointer px-4 py-3 shadow-md transition-colors hover:bg-secondary"
             onClick={() => handleDivClick("weekly_todo")}
           >
-            <h2 className="text-xl font-semibold">Weekly Task Goal</h2>
+            <h2 className="text-lg font-semibold">Weekly Task Goal</h2>
             <p className="text-neutral-400">{weeklyTodoGoal} tasks</p>
           </div>
         </div>

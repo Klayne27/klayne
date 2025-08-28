@@ -1,22 +1,45 @@
 import { useState, useEffect, useRef } from "react"
 import { useGoalStore } from "../../store/useGoalStore"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
   const [inputValue, setInputValue] = useState("")
+  const [isKeyboardOpen, setIsKeyboardOpen] = useState(false)
   const inputRef = useRef(null)
-  // Get the goal values from the store
+  const modalRef = useRef(null)
+
   const { dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours } = useGoalStore()
 
+  useLockBodyScroll(isOpen)
+
   useEffect(() => {
-    // Set the initial value from the store based on goalType
     if (goalType === "study") setInputValue(dailyGoalHours.toString())
     if (goalType === "weekly_study") setInputValue(weeklyGoalHours.toString())
-
     if (goalType === "daily_todo") setInputValue(dailyTodoGoal.toString())
     if (goalType === "weekly_todo") setInputValue(weeklyTodoGoal.toString())
-
-    inputRef.current?.focus()
   }, [goalType, dailyGoalHours, dailyTodoGoal, weeklyTodoGoal, weeklyGoalHours])
+
+  useEffect(() => {
+    if (isOpen) {
+      inputRef.current?.focus()
+    }
+
+    const handleFocus = () => setIsKeyboardOpen(true)
+    const handleBlur = () => setIsKeyboardOpen(false)
+
+    const inputElement = inputRef.current
+    if (inputElement) {
+      inputElement.addEventListener("focusin", handleFocus)
+      inputElement.addEventListener("focusout", handleBlur)
+    }
+
+    return () => {
+      if (inputElement) {
+        inputElement.removeEventListener("focusin", handleFocus)
+        inputElement.removeEventListener("focusout", handleBlur)
+      }
+    }
+  }, [isOpen])
 
   if (!isOpen) return null
 
@@ -34,8 +57,16 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70 p-4" onClick={onClose}>
-      <div className="w-full max-w-sm rounded-2xl bg-base-200 p-6 shadow-xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70 p-4 transition-transform duration-300"
+      onClick={onClose}
+      style={{ transform: isKeyboardOpen ? "translateY(-20%)" : "translateY(0)" }}
+    >
+      <div
+        ref={modalRef}
+        className="w-full max-w-sm rounded-2xl bg-base-200 p-6 shadow-xl"
+        onClick={(e) => e.stopPropagation()}
+      >
         <h3 className="mb-4 text-xl font-bold text-base-content-inverse">{getTitle()}</h3>
         <div className="mb-6 flex items-center space-x-2">
           <input
@@ -44,7 +75,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
             min="0"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="w-full rounded-md bg-base-300 p-2 text-center text-lg text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+            className="no-spinners w-full rounded-md bg-base-300 p-2 text-center text-lg text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <span className="text-neutral-400">{getLabel()}</span>
         </div>
