@@ -63,7 +63,7 @@ const BadgeModal = ({ badge, onClose }) => {
       onClick={onClose}
     >
       <div
-        className="relative md:w-full md:h-full rounded-xl bg-slate-800 p-6 text-center shadow-2xl"
+        className="absolute bottom-0 md:relative md:w-full md:h-full rounded-xl bg-slate-800 p-6 text-center shadow-2xl"
         onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking inside
       >
         <button

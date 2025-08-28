@@ -378,7 +378,7 @@ const StudyDashboardPage = () => {
                   className="fixed inset-0 z-10 cursor-default bg-transparent"
                   onClick={() => setOpenProfileDropdown(false)}
                 ></div>
-                <ul className="white-shadow absolute left-4 top-4 z-20 w-48 rounded-xl bg-base-100 p-2 md:-left-48">
+                <ul className="white-shadow absolute right-4 top-4 z-20 w-48 rounded-xl bg-base-100 p-2 md:-left-48">
                   <li>
                     <button
                       onClick={() => navigate("/")}
@@ -413,7 +413,7 @@ const StudyDashboardPage = () => {
         </div>
 
         <div className="flex w-full flex-col justify-between md:flex-row-reverse">
-          <div className="relative flex items-center self-center rounded-full ring-4 ring-primary ring-offset-2 ring-offset-base-100 md:ring-2">
+          <div className="relative flex items-center self-center rounded-full my-4 ring-4 ring-primary ring-offset-2 ring-offset-base-100 md:ring-2">
             <Link to={`/profile/${authUser?.username}`} className="cursor-pointer">
               {authUser.profileImg?.imageUrl && (
                 <img
