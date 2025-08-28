@@ -58,7 +58,7 @@ const PrivateChatPage = () => {
 
   return (
     <>
-      <div className="flex min-h-screen w-full overflow-y-auto text-base-content-inverse">
+      <div className="flex min-h-screen w-full overflow-y-auto template">
         {showConversationList && (
           <div className="flex h-screen w-full flex-col md:w-[430px] md:flex-shrink-0 md:border-r md:border-accent">
             {isLoadingConversations ? (

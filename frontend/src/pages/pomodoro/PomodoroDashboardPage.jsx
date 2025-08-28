@@ -72,31 +72,31 @@ const StudyDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 p-4 font-sans text-base-content-inverse">
+    <div className="min-h-screen bg-base-100 p-4 font-sans template">
       <div className="mx-auto max-w-7xl space-y-5">
         {/* Header */}
         <div className="flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-full p-2 text-base-content-inverse transition-colors hover:bg-gray-700 hover:text-white"
+              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaArrowLeft className="size-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold text-base-content-inverse">Dashboard</h1>
+              <h1 className="text-2xl font-bold template">Dashboard</h1>
             </div>
           </div>
           <div className="relative flex items-center gap-1">
             <button
               onClick={() => navigate("/study-dashboard/settings")}
-              className="rounded-full p-2 text-base-content-inverse transition-colors hover:bg-gray-700 hover:text-white"
+              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaCog />
             </button>
             <button
               onClick={() => setOpenProfileDropdown(!openProfileDropdown)}
-              className="rounded-full p-2 text-base-content-inverse transition-colors hover:bg-gray-700 hover:text-white"
+              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaEllipsis />
             </button>
@@ -154,7 +154,7 @@ const StudyDashboardPage = () => {
             </Link>
           </div>
           <div>
-            <h2 className="text-3xl font-bold text-base-content-inverse">
+            <h2 className="text-3xl font-bold template">
               {getGreeting()}, {authUser.fullName.split(" ")[0]}.
             </h2>
             <p className="text-neutral-400">Track your progress and stay focused</p>

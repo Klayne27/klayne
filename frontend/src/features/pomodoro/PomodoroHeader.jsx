@@ -73,14 +73,14 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
             <div className="flex gap-1">
               <Link
                 to="/study-dashboard"
-                className="rounded-full p-2 text-base-content-inverse transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
+                className="rounded-full p-2 template transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
               >
                 <IoIosStats className="h-5 w-5" />
               </Link>
 
               <button
                 onClick={() => setShowInfoModal(true)}
-                className="rounded-full p-2 text-base-content-inverse transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
+                className="rounded-full p-2 template transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
                 aria-label="How it works info"
               >
                 <FaInfoCircle className="h-5 w-5" />

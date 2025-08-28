@@ -38,7 +38,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
         className="max-w-sm md:w-full rounded-2xl bg-base-100 p-6 shadow-xl absolute top-40"
         onClick={(e) => e.stopPropagation()}
       >
-        <h3 className="mb-4 text-xl font-bold text-base-content-inverse">{getTitle(goalType)}</h3>
+        <h3 className="mb-4 text-xl font-bold template">{getTitle(goalType)}</h3>
         <div className="mb-6 flex items-center space-x-2">
           <input
             ref={inputRef}
@@ -46,7 +46,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
             min="0"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="no-spinners w-full rounded-md bg-base-200 p-2 text-center text-lg text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+            className="no-spinners w-full rounded-md bg-base-200 p-2 text-center text-lg template focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <span className="text-neutral-400">{getLabel(goalType)}</span>
         </div>

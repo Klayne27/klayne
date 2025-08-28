@@ -195,7 +195,7 @@ function ConversationItem({ conv }) {
       {!isMobile && (
         <DropdownMenu>
           <button
-            className="flex w-full text-base-content-inverse items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full template items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/profile/${otherUser?.username}`)

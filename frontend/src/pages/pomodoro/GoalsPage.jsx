@@ -32,10 +32,10 @@ const GoalsPage = () => {
   }
 
   return (
-    <div className="mx-auto min-h-screen max-w-2xl border-x border-accent bg-base-100 py-4 font-sans text-base-content-inverse">
+    <div className="mx-auto min-h-screen max-w-2xl border-x border-accent bg-base-100 py-4 font-sans template">
       <div className="">
         <div className="mb-8 flex items-center space-x-4 px-4">
-          <button onClick={() => navigate(-1)} className="text-base-content-inverse">
+          <button onClick={() => navigate(-1)} className="template">
             <FaArrowLeft size={16} />
           </button>
           <h1 className="text-xl font-bold">Settings</h1>

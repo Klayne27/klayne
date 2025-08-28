@@ -42,7 +42,7 @@ function PomodoroSettingsPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6 text-base-content-inverse">
+    <div className="flex min-h-screen items-center justify-center bg-base-100 p-4 sm:p-6 template">
       <div className="mx-auto w-full max-w-lg">
         <h3 className="mb-6 text-2xl font-bold">Pomodoro Settings</h3>
         <form onSubmit={handleSubmit} className="flex flex-col gap-3 py-4">

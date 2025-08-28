@@ -20,7 +20,7 @@ const ThemesPage = () => {
   const isThemeLocked = authUser && authUser.forceBlackTheme;
 
   return (
-    <main className="min-h-screen text-base-content-inverse flex-[4_4_0] border-accent">
+    <main className="min-h-screen template flex-[4_4_0] border-accent">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
