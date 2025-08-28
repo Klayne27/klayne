@@ -27,21 +27,6 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
       inputRef.current?.focus()
     }
 
-    const handleFocus = () => setIsKeyboardOpen(true)
-    const handleBlur = () => setIsKeyboardOpen(false)
-
-    const inputElement = inputRef.current
-    if (inputElement) {
-      inputElement.addEventListener("focusin", handleFocus)
-      inputElement.addEventListener("focusout", handleBlur)
-    }
-
-    return () => {
-      if (inputElement) {
-        inputElement.removeEventListener("focusin", handleFocus)
-        inputElement.removeEventListener("focusout", handleBlur)
-      }
-    }
   }, [isOpen])
 
   if (!isOpen) return null
@@ -63,11 +48,10 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
     <div
       className="fixed inset-0 z-50 flex items-center justify-center  bg-slate-700/70 p-4 transition-transform duration-300"
       onClick={onClose}
-      style={{ transform: isKeyboardOpen && isMobile ? "translateY(-20%)" : "translateY(0)" }}
     >
       <div
         ref={modalRef}
-        className="w-full max-w-sm rounded-2xl bg-base-200 p-6 shadow-xl"
+        className="max-w-sm md:w-full rounded-2xl bg-base-100 p-6 shadow-xl absolute top-40"
         onClick={(e) => e.stopPropagation()}
       >
         <h3 className="mb-4 text-xl font-bold text-base-content-inverse">{getTitle()}</h3>
@@ -78,7 +62,7 @@ const GoalModal = ({ isOpen, onClose, onSave, goalType }) => {
             min="0"
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            className="no-spinners w-full rounded-md bg-base-300 p-2 text-center text-lg text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-primary"
+            className="no-spinners w-full rounded-md bg-base-200 p-2 text-center text-lg text-base-content-inverse focus:outline-none focus:ring-2 focus:ring-primary"
           />
           <span className="text-neutral-400">{getLabel()}</span>
         </div>
