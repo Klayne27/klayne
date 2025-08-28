@@ -69,7 +69,7 @@ const formatShortDuration = (minutes) => {
   if (isNaN(minutes) || minutes < 0) return "0m"
   const hours = Math.floor(minutes / 60)
   const remainingMinutes = minutes % 60
-  if(hours >= 1000) {
+  if (hours >= 1000) {
     return `${hours}h`
   }
   if (hours < 1000) {
@@ -413,7 +413,7 @@ const StudyDashboardPage = () => {
         </div>
 
         <div className="flex w-full flex-col justify-between md:flex-row-reverse">
-          <div className="relative flex items-center self-center rounded-full my-4 ring-4 ring-primary ring-offset-2 ring-offset-base-100 md:ring-2">
+          <div className="relative my-4 flex items-center self-center rounded-full ring-4 ring-primary ring-offset-2 ring-offset-base-100 md:ring-2">
             <Link to={`/profile/${authUser?.username}`} className="cursor-pointer">
               {authUser.profileImg?.imageUrl && (
                 <img
@@ -480,7 +480,7 @@ const StudyDashboardPage = () => {
           <BentoCard className="md:col-span-1">
             <div className="flex h-full flex-col">
               <div className="flex flex-col items-center justify-between md:flex-row">
-                <h2 className="text-md font-semibold md:text-xl mb-1">
+                <h2 className="text-md mb-1 font-semibold md:text-xl">
                   {studyView === "weekly"
                     ? "Weekly Study Progress"
                     : studyView === "monthly"
@@ -547,9 +547,9 @@ const StudyDashboardPage = () => {
                   ) : (
                     <LineChart
                       data={chartData}
-                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
                     >
-                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
+                      <XAxis dataKey="name" hide />
                       <YAxis hide />
                       <Tooltip
                         contentStyle={{
@@ -573,7 +573,7 @@ const StudyDashboardPage = () => {
           <BentoCard className="md:col-span-1">
             <div className="flex h-full flex-col">
               <div className="flex flex-col items-center justify-between md:flex-row">
-                <h2 className="text-md font-semibold md:text-xl mb-1">
+                <h2 className="text-md mb-1 font-semibold md:text-xl">
                   {todoView === "weekly"
                     ? "Weekly Task Progress"
                     : todoView === "monthly"
@@ -645,9 +645,9 @@ const StudyDashboardPage = () => {
                   ) : (
                     <LineChart
                       data={todoChartData}
-                      margin={{ top: 10, right: 10, left: 10, bottom: 0 }}
+                      margin={{ top: 10, right: 10, left: 10, bottom: 5 }}
                     >
-                      <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} />
+                      <XAxis hide dataKey="name" />
                       <YAxis hide />
                       <Tooltip
                         contentStyle={{
@@ -670,8 +670,8 @@ const StudyDashboardPage = () => {
         <div className="grid gap-5 md:grid-cols-3">
           {/* Study Goal Card */}
           <BentoCard className="md:col-span-1">
-            <div className="mb-4 flex flex-col md:flex-row items-center justify-between">
-              <h3 className="text-md font-semibold mb-1">
+            <div className="mb-4 flex flex-col items-center justify-between md:flex-row">
+              <h3 className="text-md mb-1 font-semibold">
                 {studyGoalView === "daily" ? "Daily Study Goal" : "Weekly Study Goal"}
               </h3>
               <div className="flex">
@@ -725,8 +725,8 @@ const StudyDashboardPage = () => {
 
           {/* Todo Goal Card */}
           <BentoCard className="md:col-span-1">
-            <div className="mb-4 flex flex-col md:flex-row items-center justify-between">
-              <h3 className="text-md font-semibold mb-1">
+            <div className="mb-4 flex flex-col items-center justify-between md:flex-row">
+              <h3 className="text-md mb-1 font-semibold">
                 {todoGoalView === "daily" ? "Daily Task Goal" : "Weekly Task Goal"}
               </h3>
               <div className="flex">

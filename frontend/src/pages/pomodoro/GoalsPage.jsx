@@ -31,7 +31,7 @@ const GoalsPage = () => {
           <button onClick={() => navigate(-1)} className="text-base-content-inverse">
             <FaArrowLeft size={16} />
           </button>
-          <h1 className="text-xl font-bold">Edit Goals</h1>
+          <h1 className="text-xl font-bold">Settings</h1>
         </div>
 
         <div className="space-y-4 border-b border-accent py-2">

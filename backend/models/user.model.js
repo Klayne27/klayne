@@ -126,6 +126,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isVacationMode: {
+      type: Boolean,
+      default: false
+    },
     studyStreak: {
       type: Number,
       default: 0,

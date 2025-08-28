@@ -8,22 +8,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
 
-  useEffect(() => {
-    const body = document.body
+  // useEffect(() => {
+  //   const body = document.body
 
-    if (isOpen) {
-      body.style.overflow = "hidden"
-      body.style.position = "fixed"
-      body.style.width = "100%"
-      body.style.overscrollBehavior = "none"
-    }
+  //   if (isOpen) {
+  //     body.style.overflow = "hidden"
+  //     body.style.position = "fixed"
+  //     body.style.width = "100%"
+  //     body.style.overscrollBehavior = "none"
+  //   }
 
-    return () => {
-      body.style.overflow = ""
-      body.style.position = ""
+  //   return () => {
+  //     body.style.overflow = ""
+  //     body.style.position = ""
 
-    }
-  }, [isOpen]) 
+  //   }
+  // }, [isOpen]) 
 
   useEffect(() => {
     const visualViewport = window.visualViewport

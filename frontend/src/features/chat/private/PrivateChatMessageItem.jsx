@@ -275,7 +275,7 @@ const PrivateChatMessageItem = ({
         <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
           <SlideUpMenuContent
             className="flex h-[50vh] w-full flex-col overflow-y-auto"
-            disablePullToRefresh={true} // <-- Add this prop
+            disablePullToRefresh={true} 
           >
             <ReactionsSlideUpMenuContent
               reactions={message.reactions ? message.reactions : []}
