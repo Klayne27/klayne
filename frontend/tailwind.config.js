@@ -95,21 +95,23 @@ export default {
       {
         black: {
           ...daisyUIThemes["black"],
+          "base-content": "hsl(0, 0%, 100%)",
           primary: "rgb(29, 155, 240)",
           secondary: "rgb(24, 24, 24)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
       },
-      {
-        light: {
-          ...daisyUIThemes["light"],
-          secondary: "#d6d6d6",
-          "--text-on-base-color": "hsl(0, 0%, 0%)",
-        },
-      },
+      // {
+      //   light: {
+      //     ...daisyUIThemes["light"],
+      //     secondary: "#d6d6d6",
+      //     "--text-on-base-color": "hsl(0, 0%, 0%)",
+      //   },
+      // },
       {
         forest: {
           ...daisyUIThemes["forest"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(141, 69%, 10%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -117,6 +119,7 @@ export default {
       {
         synthwave: {
           ...daisyUIThemes["synthwave"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(197, 87%, 20%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -124,6 +127,7 @@ export default {
       {
         valentine: {
           ...daisyUIThemes["valentine"],
+          "base-content": "hsl(0, 0%, 0%)",
           secondary: "hsl(254, 86%, 90%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
@@ -131,6 +135,7 @@ export default {
       {
         night: {
           ...daisyUIThemes["night"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(234, 89%, 24%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -138,6 +143,7 @@ export default {
       {
         wireframe: {
           ...daisyUIThemes["wireframe"],
+          "base-content": "hsl(0, 0%, 0%)",
           secondary: "hsl(0, 0%, 92%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
@@ -145,6 +151,7 @@ export default {
       {
         dim: {
           ...daisyUIThemes["dim"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(12, 100%, 75%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -152,6 +159,7 @@ export default {
       {
         halloween: {
           ...daisyUIThemes["halloween"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(278, 100%, 20%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -159,6 +167,7 @@ export default {
       {
         business: {
           ...daisyUIThemes["business"],
+          "base-content": "hsl(0, 0%, 100%)",
           secondary: "hsl(200, 13%, 30%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
@@ -166,6 +175,7 @@ export default {
       {
         lemonade: {
           ...daisyUIThemes["lemonade"],
+          "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
@@ -173,30 +183,35 @@ export default {
         dracula: {
           ...daisyUIThemes["dracula"],
           secondary: "hsl(265, 89%, 20%)",
+          "base-content": "hsl(0, 0%, 100%)",
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
       },
       {
         pastel: {
           ...daisyUIThemes["pastel"],
+          "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
       {
         cyberpunk: {
           ...daisyUIThemes["cyberpunk"],
+          "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
       {
         retro: {
           ...daisyUIThemes["retro"],
+          "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
       {
         cupcake: {
           ...daisyUIThemes["cupcake"],
+          "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
