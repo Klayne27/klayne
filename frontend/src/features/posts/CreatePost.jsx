@@ -76,7 +76,7 @@ const CreatePost = ({ feedType }) => {
   const { authUser } = useAuthUser()
   const { createPost, isPending, isError, error } = useCreatePosts()
   const { createVentPost, isCreatingVentPost } = useCreateVentPost() // 👈 ADD THE NEW HOOK
-  const [isAnonymous, setIsAnonymous] = useState(true) // Default to true for venting
+  const [isAnonymous, setIsAnonymous] = useState(false) // Default to true for venting
 
   const isMobile = useIsMobile()
 

@@ -70,7 +70,7 @@ function CreatePostModal({ onClose }) {
   const { authUser } = useAuthUser()
   const { createPost, isPending, isError, error } = useCreatePosts()
   const { createVentPost, isCreatingVentPost } = useCreateVentPost() // 👈 ADD THE NEW HOOK
-  const [isAnonymous, setIsAnonymous] = useState(true)
+  const [isAnonymous, setIsAnonymous] = useState(false)
 
   const isMobile = useIsMobile()
 
