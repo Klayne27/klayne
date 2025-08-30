@@ -27,6 +27,8 @@ export const useEditMessage = (conversationId) => {
                   ...msg,
                   text: newText,
                   isEdited: true,
+                  img: msg.img, 
+                  image: msg.image,
                 }
               : msg,
           ),
@@ -35,13 +37,11 @@ export const useEditMessage = (conversationId) => {
         return { ...oldData, pages: updatedPages }
       })
 
-      queryClient.setQueryData(conversationQueryKey, oldData => {
-        if(!oldData) return oldData
+      queryClient.setQueryData(conversationQueryKey, (oldData) => {
+        if (!oldData) return oldData
 
         return oldData
       })
-
-
 
       return { previousMessagesData, messagesQueryKey }
     },

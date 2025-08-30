@@ -66,6 +66,7 @@ const PrivateChatWindow = () => {
   }, [messages, conversationId, isLoadingMessages, socket, currentUser?._id]) // Dependencies for the effect
 
   const isChatEmpty = !messages?.length
+  console.log(messages);
 
   return (
     <div className="relative flex h-full flex-col border-accent md:border-r">

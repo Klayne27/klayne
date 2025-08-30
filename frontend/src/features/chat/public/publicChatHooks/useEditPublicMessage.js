@@ -38,16 +38,17 @@ export const useEditPublicMessage = () => {
     onSuccess: (serverMessage, variables, context) => {
       const { messageId } = context
 
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData || !oldData.pages) return oldData
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((message) =>
-            // The messageId in this comparison is the correct, permanent ID.
-            message._id === messageId ? serverMessage : message,
-          ),
-        )
-        return { ...oldData, pages: updatedPages }
-      })
+      // queryClient.setQueryData(queryKey, (oldData) => {
+      //   if (!oldData || !oldData.pages) return oldData
+      //   const updatedPages = oldData.pages.map((page) =>
+      //     page.map((message) =>
+      //       // The messageId in this comparison is the correct, permanent ID.
+      //       message._id === messageId ? serverMessage : message,
+      //     ),
+      //   )
+      //   return { ...oldData, pages: updatedPages }
+      // })
+      queryClient.invalidateQueries({})
     },
 
     onError: (error, variables, context) => {

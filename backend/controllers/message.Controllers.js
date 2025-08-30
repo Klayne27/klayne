@@ -685,6 +685,7 @@ export const editMessage = async (req, res) => {
     message.isEdited = true;
     await message.save();
 
+    // FIX: Add the .populate('image') call here
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
@@ -703,6 +704,11 @@ export const editMessage = async (req, res) => {
         path: "reactions.userId",
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        // This is the new part you need to add
+        path: "image",
+        select: "imageUrl",
       });
 
     const conversation = await Conversation.findById(message.conversationId);
