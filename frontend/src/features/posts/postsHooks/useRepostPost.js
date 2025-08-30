@@ -67,6 +67,7 @@ export const useRepostPost = (username) => {
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
         postKeys.list("/api/posts/following"),
+        postKeys.list("/api/posts/vent"),
         postKeys.bookmarked(),
         postKeys.details(postId),
         postKeys.user(username),

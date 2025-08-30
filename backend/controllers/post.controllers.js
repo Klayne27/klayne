@@ -98,6 +98,29 @@ export const getAllPosts = async (req, res) => {
     };
 
     const totalPostsResult = await Post.aggregate([
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFromPostData",
+          pipeline: [{ $project: { isVent: 1 } }],
+        },
+      },
+      { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
+
+      // Step 2: Add the new match condition before the other lookups
+      {
+        $match: {
+          // Keep existing conditions
+          isVent: { $ne: true },
+          "deletedFor.user": { $ne: userId },
+          ...scheduledPostConditions,
+          user: { $nin: blockedAndBlockingObjectIds },
+          // New condition to filter out reposts of vent posts
+          "repostedFromPostData.isVent": { $ne: true },
+        },
+      },
       { $match: initialMatchConditions },
       {
         $lookup: {
@@ -152,6 +175,25 @@ export const getAllPosts = async (req, res) => {
     const totalCount = totalPostsResult.length > 0 ? totalPostsResult[0].count : 0;
 
     const posts = await Post.aggregate([
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFromPostData",
+          pipeline: [{ $project: { isVent: 1 } }],
+        },
+      },
+      { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
+      {
+        $match: {
+          isVent: { $ne: true },
+          "deletedFor.user": { $ne: userId },
+          ...scheduledPostConditions,
+          user: { $nin: blockedAndBlockingObjectIds },
+          "repostedFromPostData.isVent": { $ne: true },
+        },
+      },
       { $match: initialMatchConditions },
       { $sort: { publishedAt: -1, createdAt: -1 } },
       { $skip: skip },
@@ -1384,17 +1426,16 @@ export const repostPost = async (req, res) => {
       return res.status(404).json({ error: "Original post not found." });
     }
 
+    const isOriginalVent = originalPost.isVent;
+    const isOriginalAnonymous = originalPost.isAnonymous;
+
     const originalPostOwnerId = originalPost.user.toString();
     if (await isBlockedOrBlockedBy(userId, originalPostOwnerId)) {
       return res.status(403).json({
         error: "You cannot interact with this content due to blocking restrictions.",
       });
     }
-
-    if (originalPost.user.equals(userId)) {
-      return res.status(400).json({ error: "You cannot repost your own post." });
-    }
-
+    
     const existingRepost = await Post.findOne({
       user: userId,
       repostedFrom: originalPostId,
@@ -1415,6 +1456,8 @@ export const repostPost = async (req, res) => {
         user: userId,
         repostedFrom: originalPostId,
         publishedAt: new Date(),
+        isVent: isOriginalVent,
+        isAnonymous: isOriginalAnonymous,
       });
       await newRepost.save();
       await Post.updateOne(
@@ -1429,6 +1472,14 @@ export const repostPost = async (req, res) => {
           type: "repost",
           postId: originalPostId,
         });
+      }
+
+      if (onlineUsersMap && io) {
+        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+          if (onlineUserId.toString() !== userId.toString()) {
+            await emitNewPostCount(onlineUserId);
+          }
+        }
       }
 
       res.status(201).json({ message: "Post reposted successfully." });
@@ -1872,30 +1923,102 @@ export const getVentPosts = async (req, res) => {
       { $unwind: "$author" },
       {
         $lookup: {
-          from: "images", // The name of your image collection
-          localField: "image", // or "image", depending on your schema
+          from: "images",
+          localField: "image",
           foreignField: "_id",
-          as: "image", // or "image"
+          as: "image",
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+      // 👇 Add this new $lookup stage to handle repostedFrom
+      {
+        $lookup: {
+          from: "posts",
+          localField: "repostedFrom",
+          foreignField: "_id",
+          as: "repostedFrom",
+          pipeline: [
+            {
+              $lookup: {
+                from: "users",
+                localField: "user",
+                foreignField: "_id",
+                as: "user",
+                pipeline: [
+                  {
+                    $lookup: {
+                      from: "images",
+                      localField: "profileImg",
+                      foreignField: "_id",
+                      as: "profileImg",
+                    },
+                  },
+                  { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+                  {
+                    $project: {
+                      _id: 1,
+                      username: 1,
+                      fullName: 1,
+                      profileImg: 1,
+                      isVerified: 1,
+                      isGoldVerified: 1,
+                      badges: 1,
+                    },
+                  },
+                ],
+              },
+            },
+            { $unwind: { path: "$user", preserveNullAndEmptyArrays: true } },
+            {
+              $lookup: {
+                from: "images",
+                localField: "image",
+                foreignField: "_id",
+                as: "image",
+              },
+            },
+            { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+            {
+              $project: {
+                text: 1,
+                img: 1,
+                image: 1,
+                video: 1,
+                mediaType: 1,
+                likes: 1,
+                commentsCount: 1,
+                repostsCount: 1,
+                repostedBy: 1,
+                bookmarkedBy: 1,
+                createdAt: 1,
+                user: 1,
+                isVent: 1,
+                isAnonymous: 1,
+              },
+            },
+          ],
+        },
+      },
+      { $unwind: { path: "$repostedFrom", preserveNullAndEmptyArrays: true } },
+      // 👆 End of new $lookup stage
       {
         $project: {
           text: 1,
           likes: 1,
           isVent: 1,
+          isAnonymous: 1,
           img: 1,
           image: 1,
           video: 1,
           mediaType: 1,
-          isAnonymous: 1,
           commentsCount: 1,
           createdAt: 1,
+          repostedFrom: 1, // Add this field to the projection
+          repostedBy: 1,
           user: {
             $cond: {
               if: { $eq: ["$isAnonymous", true] },
               then: {
-                // If anonymous, send placeholder data
                 _id: "$author._id",
                 username: "Anonymous",
                 fullName: "Anonymous",
@@ -1904,8 +2027,15 @@ export const getVentPosts = async (req, res) => {
                 isGoldVerified: false,
                 badges: [],
               },
-              // Otherwise, send the real author's data
-              else: "$author",
+              else: {
+                _id: "$author._id",
+                username: "$author.username",
+                fullName: "$author.fullName",
+                profileImg: "$author.profileImg",
+                isVerified: "$author.isVerified",
+                isGoldVerified: "$author.isGoldVerified",
+                badges: "$author.badges",
+              },
             },
           },
         },

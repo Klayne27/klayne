@@ -4,14 +4,13 @@ import { useImage } from "../../hooks/imageHooks/useImage"
 import LoadingSpinner from "./LoadingSpinner"
 
 const ImageViewerPage = () => {
-  const { imageId } = useParams()
   const navigate = useNavigate()
 
-  const { image, isLoadingImage, isError, error } = useImage(imageId)
+  const { image, isLoadingImage, isError, error } = useImage()
 
   if (isLoadingImage) {
     return (
-      <div className="flex h-screen items-center justify-center">
+      <div className="flex h-screen items-center justify-center w-full ">
         <LoadingSpinner />
       </div>
     )

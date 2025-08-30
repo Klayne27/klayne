@@ -1,7 +1,10 @@
 import { useQuery } from "@tanstack/react-query"
 import { fetchImageByIdApi } from "../../api/imageApi"
+import { useParams } from "react-router-dom"
 
-export const useImage = (imageId) => {
+export const useImage = () => {
+  const {imageId} = useParams()
+
   const {
     data: image,
     isLoading: isLoadingImage,
