@@ -3,6 +3,7 @@ import PostSkeleton from "../../components/skeletons/PostSkeleton"
 import { useEffect, useRef, useCallback } from "react"
 import { useGetPosts } from "./postsHooks/useGetPosts"
 import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
+import { TbGhost2 } from "react-icons/tb"
 
 const Posts = ({
   feedType,
@@ -91,7 +92,11 @@ const Posts = ({
   }
 
   if (combinedPosts?.length === 0) {
-    return <p className="my-4 text-center">No posts in this tab. Switch 👻</p>
+    return (
+      <p className="my-4 text-center flex items-center justify-center gap-1">
+        No posts in this tab. Switch <TbGhost2 />
+      </p>
+    )
   }
 
   return (
