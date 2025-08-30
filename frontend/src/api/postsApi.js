@@ -184,3 +184,20 @@ export const markPostsAsReadApi = async () => {
 
   return data
 }
+
+// NEW: Function to create a vent post
+export const createVentPostApi = async ({ text, img, video, isAnonymous }) => {
+  const response = await fetch("/api/posts/vent", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ text, img, video, isAnonymous }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.error || "Failed to create vent post")
+  }
+  return response.json()
+}

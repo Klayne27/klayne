@@ -122,6 +122,15 @@ const postSchema = new mongoose.Schema(
       type: Date,
       default: null, // Initially null for all posts
     },
+    isVent: {
+      type: Boolean,
+      default: false,
+      index: true, // Add an index for faster querying of vent posts
+    },
+    isAnonymous: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

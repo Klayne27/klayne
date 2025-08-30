@@ -5,11 +5,9 @@ import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { useCreatePosts } from "./postsHooks/useCreatePosts"
 import { Link } from "react-router-dom"
 import { BiImageAdd, BiPoll } from "react-icons/bi"
-import EmojiPicker from "emoji-picker-react"
 import { FaPlus } from "react-icons/fa6"
 import { TbCalendarClock } from "react-icons/tb"
 
-// IMPORTS FOR MENTION FEATURE
 import SchedulePostModal from "./post-scheduler/SchedulePostModal"
 import ScheduledPostsModal from "./post-scheduler/ScheduledPostsModal"
 import EditScheduledPostModal from "./post-scheduler/EditSchedulePostModal"
@@ -23,11 +21,16 @@ import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../components/common/EmojiPickerPopover"
-import { MAX_FILE_SIZE_MB, MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../constants/numberConstants"
+import {
+  MAX_FILE_SIZE_MB,
+  MAX_POLL_CHOICES,
+  POLL_CHOICE_MAX_LENGTH,
+} from "../../constants/numberConstants"
 import { postKeys } from "./postsHooks/postKeys"
+import { useCreateVentPost } from "./postsHooks/useCreateVentPost"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
 
-
-const CreatePost = () => {
+const CreatePost = ({ feedType }) => {
   const { setShowNewFeedPostsButton, newPostCount } = useSocket()
   const queryClient = useQueryClient()
 
@@ -72,6 +75,8 @@ const CreatePost = () => {
   // Hooks
   const { authUser } = useAuthUser()
   const { createPost, isPending, isError, error } = useCreatePosts()
+  const { createVentPost, isCreatingVentPost } = useCreateVentPost() // 👈 ADD THE NEW HOOK
+  const [isAnonymous, setIsAnonymous] = useState(true) // Default to true for venting
 
   const isMobile = useIsMobile()
 
@@ -249,155 +254,101 @@ const CreatePost = () => {
     [postInput, mentionStartIndex],
   )
 
-  const handleSubmit = useCallback(
-    async (e) => {
-      e.preventDefault()
+const handleSubmit = useCallback(
+  async (e) => {
+    e.preventDefault()
 
-      if (isPending) {
-        return // Do nothing if a post is already being created
+    // 1. Check for valid input
+    if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) {
+      return
+    }
+
+    if (isCreatingVentPost || isPending) {
+      return // Prevent duplicate submissions
+    }
+
+    // 2. Handle Poll Posts
+    if (showPollInputs) {
+      const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "")
+      if (postInput.trim() === "" || filledPollChoices.length < 2) {
+        showAppToast("Polls must have a question and at least two options.", "error")
+        return
       }
+      if (filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)) {
+        showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error")
+        return
+      }
+      const postData = {
+        text: postInput,
+        pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
+      }
+      createPost(postData, {
+        onSuccess: resetForm,
+        onError: (err) => showAppToast(err?.message || "Failed to create post with poll.", "error"),
+      })
+      return
+    }
 
-      if (showPollInputs) {
-        const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "")
+    // 3. Handle Media Posts (Venting and Regular)
+    let postData = { text: postInput }
 
-        if (postInput.trim() === "") {
-          showAppToast("Polls should have a question/text.", "error")
-          return
-        }
-
-        if (pollChoices[0].text.trim() === "" || pollChoices[1].text.trim() === "") {
-          showAppToast("At least the first two poll options must be filled.", "error")
-          return
-        }
-
-        if (filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)) {
-          showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error")
-          return
-        }
-
-        if (postSelectedFile) {
-          showAppToast("You cannot post a poll with an image or video.", "error")
-          return
-        }
-        if (scheduledAt) {
-          showAppToast("You cannot schedule a poll.", "error")
-          return
-        }
-
-        let postData = {
-          text: postInput,
-          pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
-        }
-
-        createPost(postData, {
-          onSuccess: resetForm,
-          onError: (err) => {
-            showAppToast(err?.message || "Failed to create post with poll.", "error")
-          },
+    if (postSelectedFile) {
+      try {
+        // Use a Promise to await the FileReader's result
+        const base64File = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(postSelectedFile)
         })
-        return
-      }
 
-      // Regular post (text or media)
-      if (postInput.trim() === "" && !postSelectedFile) {
-        // showAppToastt(("Post must have text, an image, or a video.");
-        return
-      }
-
-      if (postSelectedFile && scheduledAt) {
-        showAppToast("You cannot schedule a post with media.", "error")
-        return
-      }
-
-      let postData = { text: postInput }
-
-      if (postSelectedFile) {
-        const reader = new FileReader()
-        reader.onloadend = () => {
-          if (postSelectedFile.type.startsWith("image/")) {
-            postData.img = reader.result
-          } else if (postSelectedFile.type.startsWith("video/")) {
-            postData.video = reader.result
-          }
-
-          createPost(postData, {
-            onSuccess: resetForm,
-            onError: (err) => {
-              showAppToast(err?.message || "Failed to create post with media.", "error")
-            },
-          })
+        if (postSelectedFile.type.startsWith("image/")) {
+          postData.img = base64File
+        } else if (postSelectedFile.type.startsWith("video/")) {
+          postData.video = base64File
         }
-        reader.readAsDataURL(postSelectedFile)
-      } else {
-        if (scheduledAt) {
-          postData.scheduledAt = scheduledAt
-        }
-
-        createPost(postData, {
-          onSuccess: resetForm,
-          onError: (err) => {
-            showAppToast(err?.message || "Failed to create post.", "error")
-          },
-        })
+      } catch (err) {
+        showAppToast("Failed to read file. Please try again.", "error")
+        return
       }
-    },
+    }
 
-    // fix for palmer video post error maybe
-
-  //    if (postSelectedFile) {
-  //     // Create a promise to handle file reading
-  //     const readFileAsDataURL = (file) => {
-  //       return new Promise((resolve, reject) => {
-  //         const reader = new FileReader();
-  //         reader.onloadend = () => resolve(reader.result);
-  //         reader.onerror = reject;
-  //         reader.readAsDataURL(file);
-  //       });
-  //     };
-
-  //     try {
-  //       const fileData = await readFileAsDataURL(postSelectedFile);
-  //       let postData = { text: postInput };
-
-  //       if (postSelectedFile.type.startsWith("image/")) {
-  //         postData.img = fileData;
-  //       } else if (postSelectedFile.type.startsWith("video/")) {
-  //         postData.video = fileData;
-  //       }
-
-  //       createPost(postData, {
-  //         onSuccess: resetForm,
-  //         onError: (err) => {
-  //           showAppToast(err?.message || "Failed to create post with media.", "error");
-  //         },
-  //       });
-  //     } catch (err) {
-  //       showAppToast("Failed to read the selected file.", "error");
-  //     }
-  //   } else {
-  //     let postData = { text: postInput };
-  //     if (scheduledAt) {
-  //       postData.scheduledAt = scheduledAt;
-  //     }
-  //     createPost(postData, {
-  //       onSuccess: resetForm,
-  //       onError: (err) => {
-  //         showAppToast(err?.message || "Failed to create post.", "error");
-  //       },
-  //     });
-  //   }
-  // },
-    [
-      postInput,
-      postSelectedFile,
-      showPollInputs,
-      pollChoices,
-      scheduledAt,
-      createPost,
-      resetForm,
-      isPending,
-    ],
-  )
+    // 4. Send the data based on feed type
+    if (feedType === "venting") {
+      postData.isAnonymous = isAnonymous // Add isAnonymous for vent posts
+      await createVentPost(postData, {
+        onSuccess: () => {
+          resetForm()
+          setIsAnonymous(true)
+        },
+        onError: (err) => showAppToast(err?.message || "Failed to create vent post.", "error"),
+      })
+    } else {
+      // Regular post
+      if (scheduledAt) {
+        postData.scheduledAt = scheduledAt
+      }
+      createPost(postData, {
+        onSuccess: resetForm,
+        onError: (err) => showAppToast(err?.message || "Failed to create post.", "error"),
+      })
+    }
+  },
+  [
+    feedType,
+    createVentPost,
+    isCreatingVentPost,
+    isAnonymous,
+    postInput,
+    postSelectedFile,
+    showPollInputs,
+    pollChoices,
+    scheduledAt,
+    createPost,
+    resetForm,
+    isPending,
+  ],
+)
 
   const handleFileChange = useCallback((e) => {
     const file = e.target.files[0]
@@ -610,13 +561,21 @@ const CreatePost = () => {
             </p>
           </div>
         )}
-        <Link to={`/profile/${authUser.username}`}>
-          <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
+        {isAnonymous && feedType === "venting" ? (
+          <div className="avatar">
             <div className="w-10 rounded-full">
-              <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+              <img src="/avatar-placeholder.png" alt="Anonymous Avatar" />
             </div>
           </div>
-        </Link>
+        ) : (
+          <Link to={`/profile/${authUser.username}`}>
+            <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
+              <div className="w-10 rounded-full">
+                <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+              </div>
+            </div>
+          </Link>
+        )}
         <form
           className={`relative flex w-full flex-col ${scheduledAt ? "mt-1" : ""}`}
           onSubmit={handleSubmit}
@@ -625,11 +584,13 @@ const CreatePost = () => {
             <textarea
               className="relative max-h-[270px] w-full resize-none overflow-y-auto border-none border-gray-800 bg-inherit p-0 pb-4 text-xl focus:outline-none"
               placeholder={
-                scheduledAt
-                  ? "What is happening?"
-                  : showPollInputs
-                    ? "Ask a question"
-                    : "What is happening?"
+                feedType === "venting"
+                  ? "What's on your mind?"
+                  : scheduledAt
+                    ? "What is happening?"
+                    : showPollInputs
+                      ? "Ask a question"
+                      : "What is happening?"
               }
               value={postInput}
               onChange={handleTextChange}
@@ -659,7 +620,10 @@ const CreatePost = () => {
                     >
                       <div className="avatar">
                         <div className="w-8 rounded-full">
-                          <img src={user.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="profile" />
+                          <img
+                            src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                            alt="profile"
+                          />
                         </div>
                       </div>
                       <div>
@@ -763,80 +727,123 @@ const CreatePost = () => {
           {/* --- POLL INPUTS SECTION END --- */}
 
           <div className="flex justify-between pt-3">
-            <div className="flex items-center gap-1">
-              {/* Image/Video input - hidden if poll or schedule is active */}
-              {!showPollInputs && !scheduledAt && (
-                <BiImageAdd
-                  className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
-                  onClick={() => postFileInputRef.current.click()}
-                  title="Add image or video"
-                  aria-label="Add image or video"
+            {feedType !== "venting" && (
+              <div className="flex items-center gap-1">
+                {/* Image/Video input - hidden if poll or schedule is active */}
+                {!showPollInputs && !scheduledAt && (
+                  <BiImageAdd
+                    className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
+                    onClick={() => postFileInputRef.current.click()}
+                    title="Add image or video"
+                    aria-label="Add image or video"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  hidden
+                  ref={postFileInputRef}
+                  onChange={handleFileChange}
                 />
-              )}
-              <input
-                type="file"
-                accept="image/*,video/*"
-                hidden
-                ref={postFileInputRef}
-                onChange={handleFileChange}
-              />
 
-              {/* Poll icon - hidden if media or schedule is selected/previewed */}
-              {!postSelectedFile && !scheduledAt && (
-                <BiPoll
-                  className="size-6 cursor-pointer text-primary hover:text-primary/80"
-                  onClick={handlePollIconClick}
-                  title="Add a poll"
-                  aria-label="Add a poll"
-                />
-              )}
+                {/* Poll icon - hidden if media or schedule is selected/previewed */}
+                {!postSelectedFile && !scheduledAt && (
+                  <BiPoll
+                    className="size-6 cursor-pointer text-primary hover:text-primary/80"
+                    onClick={handlePollIconClick}
+                    title="Add a poll"
+                    aria-label="Add a poll"
+                  />
+                )}
 
-              {/* Emoji picker */}
-              <div className="relative">
-                <PiSmiley
-                  ref={emojiButtonRef}
-                  className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
-                  size={22}
-                  onClick={(e) => handleOpenEmojiPickerPopover(e)}
-                  strokeWidth={10}
-                  title="Choose an emoji"
-                  aria-label="Choose an emoji"
-                />
-                {showEmojiPickerPopover && (
-                  <>
-                    <div
-                      className="fixed inset-0 z-10 cursor-default bg-transparent"
-                      onClick={handleCloseEmojiPickerPopover}
-                    ></div>
-                    <div className="absolute -left-40 bottom-full z-10">
-                      <EmojiPickerPopover
-                        position={popoverPosition}
-                        onClose={handleCloseEmojiPickerPopover}
-                        onEmojiClick={onEmojiClick}
-                        triggerRef={emojiButtonRef}
-                      />
-                    </div>
-                  </>
+                {/* Emoji picker */}
+                <div className="relative">
+                  <PiSmiley
+                    ref={emojiButtonRef}
+                    className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
+                    size={22}
+                    onClick={(e) => handleOpenEmojiPickerPopover(e)}
+                    strokeWidth={10}
+                    title="Choose an emoji"
+                    aria-label="Choose an emoji"
+                  />
+                  {showEmojiPickerPopover && (
+                    <>
+                      <div
+                        className="fixed inset-0 z-10 cursor-default bg-transparent"
+                        onClick={handleCloseEmojiPickerPopover}
+                      ></div>
+                      <div className="absolute -left-40 bottom-full z-10">
+                        <EmojiPickerPopover
+                          position={popoverPosition}
+                          onClose={handleCloseEmojiPickerPopover}
+                          onEmojiClick={onEmojiClick}
+                          triggerRef={emojiButtonRef}
+                        />
+                      </div>
+                    </>
+                  )}
+                </div>
+
+                {/* Schedule NEW Post icon - hidden if media or poll is active */}
+                {!postSelectedFile && !showPollInputs && (
+                  <TbCalendarClock
+                    size={22}
+                    className="cursor-pointer text-primary hover:text-primary/80"
+                    onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
+                    title="Schedule post"
+                    aria-label="Schedule new post"
+                  />
                 )}
               </div>
-
-              {/* Schedule NEW Post icon - hidden if media or poll is active */}
-              {!postSelectedFile && !showPollInputs && (
-                <TbCalendarClock
-                  size={22}
-                  className="cursor-pointer text-primary hover:text-primary/80"
-                  onClick={handleOpenSchedulePostModal} // Changed to open SchedulePostModal
-                  title="Schedule post"
-                  aria-label="Schedule new post"
+            )}
+            {feedType === "venting" && (
+              <div className="flex w-full items-center justify-between gap-1 pr-2">
+                {!showPollInputs && !scheduledAt && (
+                  <BiImageAdd
+                    className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
+                    onClick={() => postFileInputRef.current.click()}
+                    title="Add image or video"
+                    aria-label="Add image or video"
+                  />
+                )}
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  hidden
+                  ref={postFileInputRef}
+                  onChange={handleFileChange}
                 />
-              )}
-            </div>
+
+                <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 md:text-sm">
+                  <input
+                    type="checkbox"
+                    className="checkbox-primary checkbox checkbox-xs"
+                    checked={isAnonymous}
+                    onChange={(e) => setIsAnonymous(e.target.checked)}
+                  />
+                  Post Anonymously
+                </label>
+              </div>
+            )}
             <button
               type="submit"
               className="rounded-full bg-primary px-4 py-2 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black"
-              disabled={isButtonDisabled}
+              // --- MODIFIED: Update disabled logic ---
+              disabled={
+                (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled
+              }
             >
-              {isPending ? "Posting..." : scheduledAt ? "Schedule" : "Post"}
+              {/* --- MODIFIED: Update button text logic --- */}
+              {feedType === "venting"
+                ? isCreatingVentPost
+                  ? <LoadingSpinner size="xs" />
+                  : "Post"
+                : isPending
+                  ? <LoadingSpinner size="xs" />
+                  : scheduledAt
+                    ? "Schedule"
+                    : "Post"}
             </button>
           </div>
           {isError && <div className="mt-2 text-red-500">{error.message}</div>}

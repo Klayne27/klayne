@@ -20,6 +20,8 @@ import {
   getScheduledPosts,
   deleteMultipleScheduledPosts,
   markFeedPostsAsRead,
+  createVentPost,
+  getVentPosts,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -43,6 +45,8 @@ router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts);
 
 router.get("/scheduled", protectRoute, getScheduledPosts);
 router.get("/user/:username", protectRoute, getUserPosts);
+router.post("/vent", protectRoute, createVentPost);
+router.get("/vent", protectRoute, getVentPosts);
 
 router.get("/:id", protectRoute, getPost);
 

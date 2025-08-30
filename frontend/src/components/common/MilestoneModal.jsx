@@ -5,39 +5,39 @@ import { FaTrophy } from "react-icons/fa6"
 const MILESTONE_MESSAGES = new Map([
   [
     10,
-    `🎉 I just hit Level 10 in my study journey! The momentum is building! Start your own session: https://x-ayne.onrender.com/pomodoro`,
+    `🎉 I just hit Level 10 in my study journey! The momentum is building!`,
   ],
   [
     20,
-    `🚀 Unlocked Level 20! Feeling a new surge of focus and determination. Let's go! https://x-ayne.onrender.com/pomodoro`,
+    `🚀 Unlocked Level 20! Feeling a new surge of focus and determination.`,
   ],
   [
     30,
-    `✨ Reached Level 30! It's amazing to see how much progress I've made. Join me: https://x-ayne.onrender.com/pomodoro`,
+    `✨ Reached Level 30! It's amazing to see how much progress I've made.`,
   ],
   [
     40,
-    `Level 40 achieved! 🥳 This journey is getting more rewarding every day. Study with me: https://x-ayne.onrender.com/pomodoro`,
+    `Level 40 achieved! 🥳 This journey is getting more rewarding every day.`,
   ],
   [
     50,
-    `🔥 Halfway to the century mark! Just hit Level 50 and I'm not slowing down. Get focused: https://x-ayne.onrender.com/pomodoro`,
+    `🔥 Halfway to the century mark! Just hit Level 50 and I'm not slowing down.`,
   ],
   [
     60,
-    `💡 Pushing through to Level 60! Finding my stride and loving the process. Let's study: https://x-ayne.onrender.com/pomodoro`,
+    `💡 Pushing through to Level 60! Finding my stride and loving the process.`,
   ],
   [
     70,
-    `🌟 A new personal best at Level 70! Keep going, keep growing. Join the challenge: https://x-ayne.onrender.com/pomodoro`,
+    `🌟 A new personal best at Level 70! Keep going, keep growing.`,
   ],
   [
     80,
-    `✅ On my way to greatness! Proud to have reached Level 80. Start your timer: https://x-ayne.onrender.com/pomodoro`,
+    `✅ On my way to greatness! Proud to have reached Level 80.`,
   ],
   [
     90,
-    `Almost there! 💯 Just hit Level 90, the final push is on! One more step: https://x-ayne.onrender.com/pomodoro`,
+    `Almost there! 💯 Just hit Level 90, the final push is on!`,
   ],
 ])
 
@@ -48,7 +48,7 @@ const getPostContent = (level) => {
     return MILESTONE_MESSAGES.get(level)
   } else {
     // This is the dynamic default message for all other milestones
-    return `🏆 Another milestone achieved! Just hit Level ${level} in my study journey. Onwards and upwards: https://x-ayne.onrender.com/pomodoro`
+    return `🏆 Another milestone achieved! Just hit Level ${level} in my study journey.`
   }
 }
 

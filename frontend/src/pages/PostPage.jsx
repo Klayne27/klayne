@@ -15,6 +15,8 @@ import CommentItem from "../features/comments/CommentItem"
 import CommentsSkeleton from "../components/skeletons/CommentsSkeleton"
 import Post from "../features/posts/Post"
 import { BiImageAdd } from "react-icons/bi"
+import { useAppStore } from "../store/useAppStore"
+import { IoClose } from "react-icons/io5"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -28,6 +30,7 @@ const PostPage = () => {
   const [commentSelectedFile, setCommentSelectedFile] = useState(null)
   const commentFileInputRef = useRef(null)
   const commentInputRef = useRef(null)
+  const feedType = useAppStore((state) => state.feedType)
 
   const [showButton, setShowButton] = useState(false)
 
@@ -71,7 +74,7 @@ const PostPage = () => {
   const { createComment, isCreatingComment } = useCreateComment(pid, null)
 
   const displayPost = post?.repostedFrom || post
-
+  
   // Add this new function
   const handlePaste = usePasteHandler({
     inputRef: commentInputRef,
@@ -350,7 +353,7 @@ const PostPage = () => {
   }
 
   return (
-    <div className="mx-auto template min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
+    <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
       <div className="flex items-center gap-2 border-b border-accent px-3 py-2 md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}

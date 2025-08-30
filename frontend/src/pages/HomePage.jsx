@@ -14,7 +14,10 @@ const HomePage = () => {
   const { showNewFeedPostsButton, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =
     useSocket()
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
-  const [feedType, setFeedType] = useState("forYou")
+  const feedType = useAppStore((state) => state.feedType)
+  const setFeedType = useAppStore((state) => state.setFeedType)
+
+  // const [feedType, setFeedType] = useState("forYou")
   const mainFeedRef = useRef(null)
   const scrollableContentRef = useRef(null)
   const [showScrollButton, setShowScrollButton] = useState(false)
@@ -26,8 +29,8 @@ const HomePage = () => {
     useTouchHoverEffect()
 
   const isMobile = useIsMobile()
-  const [showHeader, setShowHeader] = useState(true) 
-  const lastScrollY = useRef(0) 
+  const [showHeader, setShowHeader] = useState(true)
+  const lastScrollY = useRef(0)
 
   const handleNewPostsButtonClick = useCallback(() => {
     window.scrollTo({
@@ -69,7 +72,7 @@ const HomePage = () => {
       if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
         setShowHeader(false)
       } else if (currentScrollY < lastScrollY.current) {
-        setShowHeader(true) 
+        setShowHeader(true)
       }
       lastScrollY.current = currentScrollY
     }
@@ -78,7 +81,7 @@ const HomePage = () => {
     return () => {
       window.removeEventListener("scroll", handleHeaderScroll)
     }
-  }, [isMobile]) 
+  }, [isMobile])
 
   const handleTabClick = (type) => {
     setFeedType(type)
@@ -88,12 +91,12 @@ const HomePage = () => {
       behavior: "smooth",
     })
     setShowNewFeedPostsButton(false)
-    setShowHeader(true) 
+    setShowHeader(true)
   }
 
   return (
     <>
-      <div ref={mainFeedRef} className="mr-auto min-h-screen flex-[4_4_0] border-accent template">
+      <div ref={mainFeedRef} className="template mr-auto min-h-screen flex-[4_4_0] border-accent">
         <div
           className={`sticky top-0 w-full ${
             showUnfollowModal ? "z-0" : "z-10"
@@ -144,6 +147,28 @@ const HomePage = () => {
                 <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
               )}
             </div>
+            <div
+              className={`flex flex-1 cursor-pointer justify-center p-3 ${
+                !isTouchDevice
+                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
+                  : ""
+              } ${
+                activeButtonId === "venting"
+                  ? "bg-secondary bg-opacity-50 transition duration-300"
+                  : ""
+              } ${
+                isTouchDevice && activeButtonId !== "venting" ? "transition duration-300" : ""
+              } ${feedType === "venting" ? "font-bold" : "opacity-50"} `}
+              onClick={() => handleTabClick("venting")}
+              onTouchStart={() => handleTouchStart("venting")}
+              onTouchEnd={handleTouchEnd}
+              onTouchCancel={handleTouchCancel}
+            >
+              Venting
+              {feedType === "venting" && (
+                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
+              )}
+            </div>
           </div>
         </div>
 
@@ -158,7 +183,7 @@ const HomePage = () => {
         )}
 
         <div ref={scrollableContentRef}>
-          <CreatePost />
+          <CreatePost feedType={feedType} />
           <Posts feedType={feedType} />
         </div>
       </div>

@@ -28,11 +28,7 @@ import AnimatedCount from "../../components/common/AnimatedCount"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 
-const Post = ({
-  post,
-  profilePinnedPosts = [],
-  currentProfileUsername,
-}) => {
+const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
@@ -45,6 +41,8 @@ const Post = ({
   const [isAnimatingComment, setIsAnimatingComment] = useState(false)
 
   const { pathname } = useLocation()
+
+  const feedType = useAppStore((state) => state.feedType)
 
   const isDraggingRef = useRef(0)
   const initialClientY = useRef(0)
@@ -59,6 +57,7 @@ const Post = ({
   const originalPostOwner = sourcePost?.user
   const repostingUser = isRepost ? post.user : null
   const isLiked = sourcePost?.likes?.includes(authUser?._id)
+
   const isBookmarked = sourcePost?.bookmarkedBy?.includes(authUser?._id)
   const repostedByCurrentUser = sourcePost?.repostedBy?.includes(authUser?._id)
   const hasAuthUserPinnedOriginal = authUser?.pinnedPosts?.includes(sourcePost._id)
@@ -71,6 +70,8 @@ const Post = ({
   )
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
+
+  console.log('orig',originalPostOwner);
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
@@ -88,7 +89,6 @@ const Post = ({
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
-
   const navigateToPostPage = (e) => {
     if (isDraggingRef.current) {
       isDraggingRef.current = false
@@ -111,6 +111,7 @@ const Post = ({
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
   }
 
+  console.log(post);
   const handleMouseDown = (e) => {
     initialClientX.current = e.clientX
     initialClientY.current = e.clientY
@@ -226,8 +227,8 @@ const Post = ({
   }, [])
 
   const getDisplayUsername = (username) => {
-    if (isSmallScreen && username.length > 5) {
-      return username.slice(0, 5) + "..."
+    if (isSmallScreen && username.length > 4) {
+      return username.slice(0, 4) + "..."
     }
     return username
   }
@@ -309,131 +310,181 @@ const Post = ({
 
       <div className="relative flex items-start gap-2">
         <div className="avatar mt-1">
-          <Link
-            to={`/profile/${originalPostOwner.username}`}
-            className="size-10 overflow-hidden rounded-full"
-            onClick={(e) => handleInteractiveClick(e)}
-          >
-            <img
-              src={originalPostOwner.profileImg?.imageUrl || "/avatar-placeholder.png"}
-              alt={`${originalPostOwner.username}'s profile`}
-              loading="lazy"
-            />
-          </Link>
+          {post.isAnonymous ? (
+            <div className="size-10 overflow-hidden rounded-full">
+              <img
+                src={"/avatar-placeholder.png"}
+                alt={`${originalPostOwner.username}'s profile`}
+                loading="lazy"
+              />
+            </div>
+          ) : (
+            <Link
+              to={`/profile/${originalPostOwner.username}`}
+              className="size-10 overflow-hidden rounded-full"
+              onClick={(e) => handleInteractiveClick(e)}
+            >
+              <img
+                src={originalPostOwner.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                alt={`${originalPostOwner.username}'s profile`}
+                loading="lazy"
+              />
+            </Link>
+          )}
         </div>
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-1">
             <div className="flex min-w-0 items-center gap-1 overflow-hidden">
-              <Link
-                to={`/profile/${originalPostOwner.username}`}
-                className="flex items-center gap-1 truncate font-bold hover:underline"
-                onClick={handleInteractiveClick}
-              >
-                {originalPostOwner.fullName}
-
-                <span className="flex items-center">
-                  {originalPostOwner.isVerified && (
-                    <img
-                      src="/verified2.png"
-                      className="size-[17px]"
-                      alt="Verified"
-                      loading="lazy"
-                    />
-                  )}
-                  {originalPostOwner.isGoldVerified && (
-                    <img
-                      src="/gold-verified2.png"
-                      className="size-[17px]"
-                      alt="Verified"
-                      loading="lazy"
-                    />
-                  )}
-                  {renderHourBadge(originalPostOwner.badges)}
-                  {renderSessionBadge(originalPostOwner.badges)}
-                  {renderStreakBadge(originalPostOwner.badges)}
-                </span>
-                {/* {originalPostOwner?.badges?.includes("hour-study") && <div>B</div>} */}
-              </Link>
-              <span className="flex min-w-0 gap-1 text-sm text-slate-500">
-                {" "}
-                <Link
-                  to={`/profile/${originalPostOwner.username}`}
-                  className="truncate"
+              {post.isAnonymous ? (
+                <div
+                  className="flex items-center gap-1 truncate font-bold"
                   onClick={handleInteractiveClick}
                 >
-                  @{getDisplayUsername(originalPostOwner.username)}
+                  {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
+
+                  {post.isAnonymous && originalPostOwner ? (
+                    <span></span>
+                  ) : (
+                    <span className="flex items-center">
+                      {originalPostOwner.isVerified && (
+                        <img
+                          src="/verified2.png"
+                          className="size-[17px]"
+                          alt="Verified"
+                          loading="lazy"
+                        />
+                      )}
+                      {originalPostOwner.isGoldVerified && (
+                        <img
+                          src="/gold-verified2.png"
+                          className="size-[17px]"
+                          alt="Verified"
+                          loading="lazy"
+                        />
+                      )}
+                      {renderHourBadge(originalPostOwner.badges)}
+                      {renderSessionBadge(originalPostOwner.badges)}
+                      {renderStreakBadge(originalPostOwner.badges)}
+                    </span>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  to={`/profile/${originalPostOwner.username}`}
+                  className="flex items-center gap-1 truncate font-bold hover:underline"
+                  onClick={handleInteractiveClick}
+                >
+                  {originalPostOwner.fullName}
+
+                  {
+                    <span className="flex items-center">
+                      {originalPostOwner.isVerified && (
+                        <img
+                          src="/verified2.png"
+                          className="size-[17px]"
+                          alt="Verified"
+                          loading="lazy"
+                        />
+                      )}
+                      {originalPostOwner.isGoldVerified && (
+                        <img
+                          src="/gold-verified2.png"
+                          className="size-[17px]"
+                          alt="Verified"
+                          loading="lazy"
+                        />
+                      )}
+                      {renderHourBadge(originalPostOwner.badges)}
+                      {renderSessionBadge(originalPostOwner.badges)}
+                      {renderStreakBadge(originalPostOwner.badges)}
+                    </span>
+                  }
                 </Link>
+              )}
+              <span className="flex min-w-0 gap-1 text-sm text-slate-500">
+                {post.isAnonymous ? (
+                  <span>@{getDisplayUsername("Anonymous")}</span>
+                ) : (
+                  <Link
+                    to={`/profile/${originalPostOwner.username}`}
+                    className="truncate"
+                    onClick={handleInteractiveClick}
+                  >
+                    @{getDisplayUsername(originalPostOwner.username)}
+                  </Link>
+                )}
                 <span>·</span>
                 <span className="shrink-0">{formattedDate}</span>{" "}
               </span>
             </div>
 
             {/* BsThreeDots Icon and Conditional Menu */}
-            <span
-              className="group absolute right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"
-              onClick={toggleMenu}
-            >
-              <div className="group rounded-full transition duration-200 hover:text-primary">
-                <BsThreeDots className="cursor-pointer text-slate-500 group-hover:text-primary" />
-              </div>
+            {isMyOriginalPost && (
+              <span
+                className="group absolute right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"
+                onClick={toggleMenu}
+              >
+                <div className="group rounded-full transition duration-200 hover:text-primary">
+                  <BsThreeDots className="cursor-pointer text-slate-500 group-hover:text-primary" />
+                </div>
 
-              {showMenu && (
-                <>
-                  <div
-                    className="fixed inset-0 z-10 cursor-default bg-transparent"
-                    onClick={toggleMenu}
-                  ></div>
-                  <div
-                    ref={menuRef}
-                    className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
-                    onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
-                  >
-                    {isMyOriginalPost ? (
-                      <button
-                        className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-                        onClick={handleDeletePostClick}
-                        disabled={isDeleting}
-                      >
-                        {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
-                        Delete Post
-                      </button>
-                    ) : (
-                      <>
+                {showMenu && (
+                  <>
+                    <div
+                      className="fixed inset-0 z-10 cursor-default bg-transparent"
+                      onClick={toggleMenu}
+                    ></div>
+                    <div
+                      ref={menuRef}
+                      className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
+                      onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
+                    >
+                      {isMyOriginalPost ? (
                         <button
-                          className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
-                          onClick={handleFollowClick}
-                          disabled={isFollowingOrUnfollowing}
+                          className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                          onClick={handleDeletePostClick}
+                          disabled={isDeleting}
                         >
-                          {isFollowingOriginalPostOwner ? (
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <TbUserMinus strokeWidth={2} /> Unfollow
-                            </span>
-                          ) : (
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <TbUserPlus strokeWidth={2} /> Follow @
-                              {originalPostOwner.username}
-                            </span>
-                          )}
+                          {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
+                          Delete Post
                         </button>
-                        <button
-                          className="transtion flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 duration-200 hover:bg-gray-700/30"
-                          onClick={handleBlockClick}
-                          disabled={isBlocking}
-                        >
-                          {isBlockedByAuthUser ? (
-                            "Unblock"
-                          ) : (
-                            <span className="flex items-center justify-center gap-3 font-semibold">
-                              <MdBlock /> Block @{originalPostOwner.username}
-                            </span>
-                          )}
-                        </button>
-                      </>
-                    )}
-                  </div>
-                </>
-              )}
-            </span>
+                      ) : (
+                        <>
+                          <button
+                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
+                            onClick={handleFollowClick}
+                            disabled={isFollowingOrUnfollowing}
+                          >
+                            {isFollowingOriginalPostOwner ? (
+                              <span className="flex items-center justify-center gap-3 font-semibold">
+                                <TbUserMinus strokeWidth={2} /> Unfollow
+                              </span>
+                            ) : (
+                              <span className="flex items-center justify-center gap-3 font-semibold">
+                                <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
+                              </span>
+                            )}
+                          </button>
+                          <button
+                            className="transtion flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 duration-200 hover:bg-gray-700/30"
+                            onClick={handleBlockClick}
+                            disabled={isBlocking}
+                          >
+                            {isBlockedByAuthUser ? (
+                              "Unblock"
+                            ) : (
+                              <span className="flex items-center justify-center gap-3 font-semibold">
+                                <MdBlock /> Block @{originalPostOwner.username}
+                              </span>
+                            )}
+                          </button>
+                        </>
+                      )}
+                    </div>
+                  </>
+                )}
+              </span>
+            )}
           </div>
           <div className="flex flex-col gap-3 overflow-hidden">
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
@@ -498,39 +549,41 @@ const Post = ({
                 </span>
               </div>
 
-              <div
-                className="group flex cursor-pointer items-center"
-                onClick={handleRepostClick}
-                onTouchStart={() => handleTouchStart("repost")}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchCancel}
-              >
+              {
                 <div
-                  className={`duration-2000 rounded-full p-2 transition ${
-                    !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
-                  } ${
-                    isTouchDevice && activeButtonId === "repost"
-                      ? "bg-emerald-600 bg-opacity-15"
-                      : ""
-                  }`}
+                  className="group flex cursor-pointer items-center"
+                  onClick={handleRepostClick}
+                  onTouchStart={() => handleTouchStart("repost")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
                 >
-                  <FaRetweet
-                    className={`size-[18px] transition duration-200 ${
+                  <div
+                    className={`duration-2000 rounded-full p-2 transition ${
+                      !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
+                    } ${
+                      isTouchDevice && activeButtonId === "repost"
+                        ? "bg-emerald-600 bg-opacity-15"
+                        : ""
+                    }`}
+                  >
+                    <FaRetweet
+                      className={`size-[18px] transition duration-200 ${
+                        repostedByCurrentUser
+                          ? "text-emerald-500"
+                          : "text-slate-500 group-hover:text-emerald-500"
+                      } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
+                    />
+                  </div>
+                  <AnimatedCount
+                    count={sourcePost.repostsCount || 0}
+                    className={`absolute text-sm transition duration-200 ${
                       repostedByCurrentUser
                         ? "text-emerald-500"
                         : "text-slate-500 group-hover:text-emerald-500"
-                    } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
+                    }`}
                   />
                 </div>
-                <AnimatedCount
-                  count={sourcePost.repostsCount || 0}
-                  className={`absolute text-sm transition duration-200 ${
-                    repostedByCurrentUser
-                      ? "text-emerald-500"
-                      : "text-slate-500 group-hover:text-emerald-500"
-                  }`}
-                />
-              </div>
+              }
 
               <div
                 className="group flex cursor-pointer items-center rounded-full"
@@ -566,58 +619,64 @@ const Post = ({
                 />
               </div>
 
-              <div className="absolute right-0.5 flex">
-                {isMyOriginalPost && (
+              {post.isVent ? (
+                <div className="absolute right-0.5 flex"></div>
+              ) : (
+                <div className="absolute right-0.5 flex">
+                  {isMyOriginalPost && (
+                    <div
+                      className={`group right-0.5 flex cursor-pointer items-center gap-1 rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
+                        isTouchDevice && activeButtonId === "pin" ? "bg-primary bg-opacity-15" : ""
+                      } `}
+                      onClick={handlePinPost}
+                      onTouchStart={() => handleTouchStart("pin")}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchCancel={handleTouchCancel}
+                    >
+                      {isPinnedOnThisProfile || isPinnedForUI ? (
+                        <BsPinFill
+                          className={`size-4.5 text-primary ${
+                            isAnimatingPin ? "animate-pin-down" : ""
+                          }`}
+                          strokeWidth={0.5}
+                        />
+                      ) : (
+                        <BsPin
+                          strokeWidth={0.5}
+                          className={`size-4.5 text-slate-500 transition duration-200 group-hover:text-primary ${
+                            isAnimatingPin ? "animate-pin-down" : ""
+                          }`}
+                        />
+                      )}
+                    </div>
+                  )}
                   <div
-                    className={`group right-0.5 flex cursor-pointer items-center gap-1 rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
-                      isTouchDevice && activeButtonId === "pin" ? "bg-primary bg-opacity-15" : ""
+                    className={`group right-0.5 flex cursor-pointer items-center rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
+                      isTouchDevice && activeButtonId === "bookmark"
+                        ? "bg-primary bg-opacity-15"
+                        : ""
                     } `}
-                    onClick={handlePinPost}
-                    onTouchStart={() => handleTouchStart("pin")}
+                    onClick={handleBookmarkPost}
+                    onTouchStart={() => handleTouchStart("bookmark")}
                     onTouchEnd={handleTouchEnd}
                     onTouchCancel={handleTouchCancel}
                   >
-                    {isPinnedOnThisProfile || isPinnedForUI ? (
-                      <BsPinFill
-                        className={`size-4.5 text-primary ${
-                          isAnimatingPin ? "animate-pin-down" : ""
+                    {isBookmarked ? (
+                      <FaBookmark
+                        className={`size-4 text-primary ${
+                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
                         }`}
-                        strokeWidth={0.5}
                       />
                     ) : (
-                      <BsPin
-                        strokeWidth={0.5}
-                        className={`size-4.5 text-slate-500 transition duration-200 group-hover:text-primary ${
-                          isAnimatingPin ? "animate-pin-down" : ""
+                      <FaRegBookmark
+                        className={`size-4 text-slate-500 transition duration-200 group-hover:text-primary ${
+                          isAnimatingBookmark ? "animate-bookmark-pop" : ""
                         }`}
                       />
                     )}
                   </div>
-                )}
-                <div
-                  className={`group right-0.5 flex cursor-pointer items-center rounded-full p-2 transition duration-200 ${!isTouchDevice ? "hover:bg-primary hover:bg-opacity-15" : ""} ${
-                    isTouchDevice && activeButtonId === "bookmark" ? "bg-primary bg-opacity-15" : ""
-                  } `}
-                  onClick={handleBookmarkPost}
-                  onTouchStart={() => handleTouchStart("bookmark")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
-                >
-                  {isBookmarked ? (
-                    <FaBookmark
-                      className={`size-4 text-primary ${
-                        isAnimatingBookmark ? "animate-bookmark-pop" : ""
-                      }`}
-                    />
-                  ) : (
-                    <FaRegBookmark
-                      className={`size-4 text-slate-500 transition duration-200 group-hover:text-primary ${
-                        isAnimatingBookmark ? "animate-bookmark-pop" : ""
-                      }`}
-                    />
-                  )}
                 </div>
-              </div>
+              )}
             </div>
           </div>
         </div>

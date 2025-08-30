@@ -9,6 +9,8 @@ export const useGetPosts = ({ feedType, username = null }) => {
         return "/api/posts/all"
       case "following":
         return "/api/posts/following"
+      case "venting":
+        return "/api/posts/vent"
       case "posts":
         return `/api/posts/user/${username}`
       case "likes":
@@ -31,12 +33,13 @@ export const useGetPosts = ({ feedType, username = null }) => {
     isError,
     error,
   } = useInfiniteQuery({
+    // Update queryKey to handle the new feedType
     queryKey:
       feedType === "posts"
         ? postKeys.user(username)
         : feedType === "likes"
           ? postKeys.likes(username)
-          : postKeys.list(POST_ENDPOINT),
+          : postKeys.list(POST_ENDPOINT), // This pattern correctly handles 'venting'
     queryFn: ({ pageParam }) => getPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

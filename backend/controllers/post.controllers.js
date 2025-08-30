@@ -91,6 +91,7 @@ export const getAllPosts = async (req, res) => {
     };
 
     const initialMatchConditions = {
+      isVent: { $ne: true },
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
       user: { $nin: blockedAndBlockingObjectIds },
@@ -334,6 +335,7 @@ export const getLikedPosts = async (req, res) => {
     const now = new Date();
 
     const baseMatchConditions = {
+      isVent: { $ne: true },
       _id: { $in: user.likedPosts },
       "deletedFor.user": {
         $ne: currentUserId ? new mongoose.Types.ObjectId(currentUserId) : null,
@@ -559,6 +561,7 @@ export const getFollowingPosts = async (req, res) => {
     const now = new Date();
 
     const queryConditions = {
+      isVent: { $ne: true },
       $and: [
         { "deletedFor.user": { $ne: userId } },
         {
@@ -704,6 +707,7 @@ export const getUserPosts = async (req, res) => {
     const now = new Date();
 
     const queryConditions = {
+      isVent: { $ne: true },
       $and: [
         { "deletedFor.user": { $ne: currentUserId } },
         {
@@ -854,7 +858,7 @@ export const getPost = async (req, res) => {
           },
         ],
         select:
-          "text img video mediaType likes commentsCount repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
+          "text img video mediaType isVent likes commentsCount repostsCount bookmarkedBy createdAt user isScheduled scheduledAt repostedBy", // Ensure these are selected
       })
       .populate("image", "imageUrl")
       .lean();
@@ -1526,11 +1530,9 @@ export const voteOnPoll = async (req, res) => {
     });
 
     if (hasUserVoted) {
-      return res
-        .status(400)
-        .json({
-          error: "You have already voted on this poll and cannot change your vote.",
-        });
+      return res.status(400).json({
+        error: "You have already voted on this poll and cannot change your vote.",
+      });
     }
 
     const post = await Post.findOneAndUpdate(
@@ -1542,7 +1544,7 @@ export const voteOnPoll = async (req, res) => {
         $push: { "pollOptions.$.voters": userId },
         $inc: { pollTotalVotes: 1 },
       },
-      { new: true } 
+      { new: true }
     ).lean();
 
     if (!post) {
@@ -1712,5 +1714,209 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
   } catch (error) {
     console.log("Error in deleteMultipleScheduledPosts controller: ", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const createVentPost = async (req, res) => {
+  try {
+    const { text, isAnonymous } = req.body;
+    let { img, video } = req.body;
+
+    const userId = req.user._id;
+
+    const user = await User.findById(userId);
+    if (video) {
+      if (!user.isVerified && !user.isGoldVerified) {
+        return res.status(403).json({
+          error: "Only verified users can post videos.",
+        });
+      }
+    }
+
+    if (!text?.trim() && !img && !video) {
+      return res
+        .status(400)
+        .json({ error: "Vent post must have text, an image, or a video." });
+    }
+
+    let uploadedImgUrl = null;
+    let uploadedVideoUrl = null;
+    let imgPublicId = null;
+    let videoPublicId = null;
+    let mediaType = "none";
+
+    // --- FIX: Handle image and video uploads independently ---
+    if (img) {
+      const uploadedResponse = await cloudinary.uploader.upload(img);
+      uploadedImgUrl = uploadedResponse.secure_url;
+      imgPublicId = uploadedResponse.public_id;
+      mediaType = "image";
+    } else if (video) {
+      const uploadedResponse = await cloudinary.uploader.upload(video, {
+        resource_type: "video",
+      });
+      uploadedVideoUrl = uploadedResponse.secure_url;
+      videoPublicId = uploadedResponse.public_id;
+      mediaType = "video";
+    }
+
+    const newPostData = {
+      user: userId,
+      text,
+      isVent: true,
+      isAnonymous: isAnonymous === true,
+      publishedAt: new Date(),
+      img: uploadedImgUrl, // Keep raw URL for direct access if needed
+      video: uploadedVideoUrl, // Keep raw URL for direct access if needed
+      imgPublicId: imgPublicId,
+      videoPublicId: videoPublicId,
+      mediaType: mediaType,
+    };
+
+    const newPost = new Post(newPostData);
+    await newPost.save();
+
+    let newImage = null;
+
+    if (img) {
+      newImage = new Image({
+        imageUrl: uploadedImgUrl,
+        parentDocument: newPost._id,
+        parentModel: "Post",
+        uploadedBy: userId,
+        publicId: imgPublicId,
+      });
+      await newImage.save();
+
+      newPost.image = newImage._id;
+      await newPost.save(); // Save again to update the post with the new image ID
+    }
+
+    // ✅ FIX 2: Populate the user and media fields before sending the response
+    const populatedPost = await Post.findById(newPost._id)
+      .populate({
+        path: "user",
+        select: "username fullName isVerified isGoldVerified badges",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      })
+      .populate({
+        path: "image",
+        select: "imageUrl",
+      })
+      .populate({
+        path: "video",
+      })
+      .exec();
+
+    res.status(201).json(populatedPost);
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+    console.error("Error in createVentPost controller: ", error);
+  }
+};
+
+export const getVentPosts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+    const userId = req.user?._id;
+
+    if (!userId) {
+      return res.status(401).json({ error: "Unauthorized: User ID not found" });
+    }
+
+    const { blockedByMe, blockedMe } = await getBlockingUsers(userId);
+    const blockedAndBlockingObjectIds = [
+      ...new Set([
+        ...blockedByMe.map((id) => new mongoose.Types.ObjectId(id)),
+        ...blockedMe.map((id) => new mongoose.Types.ObjectId(id)),
+      ]),
+    ];
+
+    const matchConditions = {
+      isVent: true,
+      "deletedFor.user": { $ne: userId },
+      user: { $nin: blockedAndBlockingObjectIds },
+    };
+
+    const totalCount = await Post.countDocuments(matchConditions);
+
+    const posts = await Post.aggregate([
+      { $match: matchConditions },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "author",
+          pipeline: [
+            {
+              $lookup: {
+                from: "images",
+                localField: "profileImg",
+                foreignField: "_id",
+                as: "profileImg",
+              },
+            },
+            { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+          ],
+        },
+      },
+      { $unwind: "$author" },
+      {
+        $lookup: {
+          from: "images", // The name of your image collection
+          localField: "image", // or "image", depending on your schema
+          foreignField: "_id",
+          as: "image", // or "image"
+        },
+      },
+      { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+      {
+        $project: {
+          text: 1,
+          likes: 1,
+          isVent: 1,
+          img: 1,
+          image: 1,
+          video: 1,
+          mediaType: 1,
+          isAnonymous: 1,
+          commentsCount: 1,
+          createdAt: 1,
+          user: {
+            $cond: {
+              if: { $eq: ["$isAnonymous", true] },
+              then: {
+                // If anonymous, send placeholder data
+                _id: userId,
+                username: "Anonymous",
+                fullName: "Anonymous",
+                profileImg: { imageUrl: "/avatar-placeholder.png" },
+                isVerified: false,
+                isGoldVerified: false,
+                badges: [],
+              },
+              // Otherwise, send the real author's data
+              else: "$author",
+            },
+          },
+        },
+      },
+    ]);
+
+    const hasNextPage = page * limit < totalCount;
+
+    res.status(200).json({ posts, hasNextPage, totalPosts: totalCount });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+    console.error("Error in getVentPosts controller: ", error);
   }
 };
