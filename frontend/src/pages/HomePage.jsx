@@ -85,6 +85,7 @@ const HomePage = () => {
 
   const handleTabClick = (type) => {
     setFeedType(type)
+    sessionStorage.setItem("lastFeedType", type)
     window.scrollTo({
       top: 0,
       left: 0,
@@ -93,6 +94,13 @@ const HomePage = () => {
     setShowNewFeedPostsButton(false)
     setShowHeader(true)
   }
+
+  useEffect(() => {
+    const storedFeedType = sessionStorage.getItem("lastFeedType")
+    if (storedFeedType) {
+      setFeedType(storedFeedType)
+    }
+  }, [setFeedType])
 
   return (
     <>
