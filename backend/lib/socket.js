@@ -151,16 +151,11 @@ export async function emitNewPostCount(userId) {
     // Use epoch if lastReadFeedTimestamp is null or undefined
     const lastReadTimestamp = user.lastReadFeedTimestamp || new Date(0);
 
-    // Count posts published *after* the user's lastReadFeedTimestamp,
-    // and not sent by the user themselves.
-    // Ensure we only count non-scheduled posts that are actually published.
     const newPostCount = await Post.countDocuments({
-      user: { $ne: userIdObj }, // Exclude posts made by the user themselves
-      isScheduled: false, // Only count immediately published posts
-      publishedAt: { $gt: lastReadTimestamp }, // Posts published after user's last read
-      // Add conditions to filter out posts from blocked users, etc., if your feed is filtered.
-      // This is crucial for accuracy. Example:
-      // "user": { $nin: blockedAndBlockingUsersIds } (if you fetch them here too)
+      user: { $ne: userIdObj },
+      isScheduled: false,
+      publishedAt: { $gt: lastReadTimestamp },
+      isVent: { $ne: true }, 
     });
 
     recipientSocketIds.forEach((socketId) => {

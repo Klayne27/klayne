@@ -25,6 +25,7 @@ import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../components/common/DropdownMenu"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
+import { getDisplayUsername } from "../../utils/truncateText"
 
 const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
   const { authUser } = useAuthUser()
@@ -440,7 +441,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                 className="min-w-0 flex-grow truncate text-sm text-gray-500"
                 onClick={(e) => e.stopPropagation()}
               >
-                @{comment.user.username}
+                @{getDisplayUsername(comment.user.username, isMobile)}
               </Link>
               {comment.createdAt && (
                 <span className="ml-auto flex flex-shrink-0 items-center justify-center gap-1 text-center text-xs text-gray-500">

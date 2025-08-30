@@ -27,12 +27,13 @@ import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect
 import AnimatedCount from "../../components/common/AnimatedCount"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { getDisplayUsername } from "../../utils/truncateText"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
-  const [isSmallScreen, setIsSmallScreen] = useState(false)
   const { username } = useParams()
   const [isAnimatingRepost, setIsAnimatingRepost] = useState(false)
   const [isAnimatingLike, setIsAnimatingLike] = useState(false)
@@ -43,6 +44,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const { pathname } = useLocation()
 
   const feedType = useAppStore((state) => state.feedType)
+  const isMobile = useIsMobile()
 
   const isDraggingRef = useRef(0)
   const initialClientY = useRef(0)
@@ -71,7 +73,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
 
-  console.log(originalPostOwner);
+  console.log(originalPostOwner)
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
@@ -212,24 +214,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     if (repostingUser) {
       navigate(`/profile/${repostingUser.username}`)
     }
-  }
-
-  useEffect(() => {
-    const checkScreenSize = () => {
-      setIsSmallScreen(window.innerWidth < 640)
-    }
-
-    checkScreenSize()
-    window.addEventListener("resize", checkScreenSize)
-
-    return () => window.removeEventListener("resize", checkScreenSize)
-  }, [])
-
-  const getDisplayUsername = (username) => {
-    if (isSmallScreen && username.length > 4) {
-      return username.slice(0, 4) + "..."
-    }
-    return username
   }
 
   const handleImageClick = (imageUrl) => {
@@ -402,14 +386,14 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
               )}
               <span className="flex min-w-0 gap-1 text-sm text-slate-500">
                 {post.isAnonymous ? (
-                  <span>@{getDisplayUsername("Anonymous")}</span>
+                  <span>@{getDisplayUsername("Anonymous", isMobile)}</span>
                 ) : (
                   <Link
                     to={`/profile/${originalPostOwner.username}`}
                     className="truncate"
                     onClick={handleInteractiveClick}
                   >
-                    @{getDisplayUsername(originalPostOwner.username)}
+                    @{getDisplayUsername(originalPostOwner.username, isMobile)}
                   </Link>
                 )}
                 <span>·</span>
@@ -417,7 +401,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
               </span>
             </div>
 
-            {/* BsThreeDots Icon and Conditional Menu */}
             {isMyOriginalPost && (
               <span
                 className="group absolute right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"
@@ -548,41 +531,39 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 </span>
               </div>
 
-              {
+              <div
+                className="group flex cursor-pointer items-center"
+                onClick={handleRepostClick}
+                onTouchStart={() => handleTouchStart("repost")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
                 <div
-                  className="group flex cursor-pointer items-center"
-                  onClick={handleRepostClick}
-                  onTouchStart={() => handleTouchStart("repost")}
-                  onTouchEnd={handleTouchEnd}
-                  onTouchCancel={handleTouchCancel}
+                  className={`duration-2000 rounded-full p-2 transition ${
+                    !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
+                  } ${
+                    isTouchDevice && activeButtonId === "repost"
+                      ? "bg-emerald-600 bg-opacity-15"
+                      : ""
+                  }`}
                 >
-                  <div
-                    className={`duration-2000 rounded-full p-2 transition ${
-                      !isTouchDevice ? "group-hover:bg-emerald-600 group-hover:bg-opacity-15" : ""
-                    } ${
-                      isTouchDevice && activeButtonId === "repost"
-                        ? "bg-emerald-600 bg-opacity-15"
-                        : ""
-                    }`}
-                  >
-                    <FaRetweet
-                      className={`size-[18px] transition duration-200 ${
-                        repostedByCurrentUser
-                          ? "text-emerald-500"
-                          : "text-slate-500 group-hover:text-emerald-500"
-                      } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
-                    />
-                  </div>
-                  <AnimatedCount
-                    count={sourcePost.repostsCount || 0}
-                    className={`absolute text-sm transition duration-200 ${
+                  <FaRetweet
+                    className={`size-[18px] transition duration-200 ${
                       repostedByCurrentUser
                         ? "text-emerald-500"
                         : "text-slate-500 group-hover:text-emerald-500"
-                    }`}
+                    } ${isAnimatingRepost ? "animate-repost-spin" : ""}`}
                   />
                 </div>
-              }
+                <AnimatedCount
+                  count={sourcePost.repostsCount || 0}
+                  className={`absolute text-sm transition duration-200 ${
+                    repostedByCurrentUser
+                      ? "text-emerald-500"
+                      : "text-slate-500 group-hover:text-emerald-500"
+                  }`}
+                />
+              </div>
 
               <div
                 className="group flex cursor-pointer items-center rounded-full"

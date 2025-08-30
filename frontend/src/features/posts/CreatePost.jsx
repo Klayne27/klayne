@@ -598,7 +598,7 @@ const handleSubmit = useCallback(
               onPaste={handlePaste}
               ref={postInputRef}
               rows={2}
-              style={{ minHeight: "28px" }}
+              style={{minHeight: "28px"}}
             />
             {/* Mention Suggestions Popover */}
             {showMentionSuggestions && suggestedUsers?.length > 0 && !showPollInputs && (
@@ -909,7 +909,7 @@ const handleSubmit = useCallback(
           />
         )}
       </div>
-      {newPostCount > 0 && (
+      {feedType === "forYou" && newPostCount > 0 && (
         <div
           onClick={handleNewPostsButtonClick}
           className="cursor-pointer border-b border-accent py-3 text-center text-primary transition duration-500 hover:bg-gray-700/30"
