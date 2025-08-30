@@ -271,7 +271,6 @@ function CreatePostModal({ onClose }) {
         return
       }
 
-      // 3. Handle Media Posts (Venting and Regular)
       let postData = { text: postModalInput }
 
       if (postModalSelectedFile) {

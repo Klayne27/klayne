@@ -289,7 +289,6 @@ const handleSubmit = useCallback(
       return
     }
 
-    // 3. Handle Media Posts (Venting and Regular)
     let postData = { text: postInput }
 
     if (postSelectedFile) {

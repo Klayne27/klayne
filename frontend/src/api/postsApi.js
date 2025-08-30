@@ -185,7 +185,6 @@ export const markPostsAsReadApi = async () => {
   return data
 }
 
-// NEW: Function to create a vent post
 export const createVentPostApi = async ({ text, img, video, isAnonymous }) => {
   const response = await fetch("/api/posts/vent", {
     method: "POST",

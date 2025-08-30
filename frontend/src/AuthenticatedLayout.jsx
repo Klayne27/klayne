@@ -39,6 +39,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const isMessagePage = pathname.includes("/messages")
   const isPublicChatPage = pathname.includes("/public-chat")
   const { showCreatePostModal, setShowCreatePostModal } = useAppStore()
+
   
   const [feedType, setFeedType] = useState("posts")
 

@@ -39,7 +39,7 @@ export const useGetPosts = ({ feedType, username = null }) => {
         ? postKeys.user(username)
         : feedType === "likes"
           ? postKeys.likes(username)
-          : postKeys.list(POST_ENDPOINT), // This pattern correctly handles 'venting'
+          : postKeys.list(POST_ENDPOINT),
     queryFn: ({ pageParam }) => getPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

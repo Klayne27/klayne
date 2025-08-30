@@ -106,7 +106,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       e.target.closest("button") ||
       e.target.closest("img") ||
       e.target.closest("video") ||
-      e.target.closest(".menu-popover") // Prevent navigation if clicking inside the menu
+      e.target.closest(".menu-popover") 
     ) {
       return
     }
