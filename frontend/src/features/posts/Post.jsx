@@ -73,8 +73,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
 
-  console.log(post)
-
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
   const { repostPost, isReposting } = useRepostPost(username)
