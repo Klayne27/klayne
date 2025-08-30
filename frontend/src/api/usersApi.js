@@ -136,7 +136,7 @@ export const deleteUserAccountAdminApi = async (userId) => {
 export const getVacationModeStatusApi = async () => {
   const res = await fetch(`${BASE_URL}/vacation-mode`)
   const data = await res.json()
-  
+
   if (!res.ok) {
     throw new Error("Failed to get vacation mode status")
   }
@@ -159,5 +159,19 @@ export const toggleVacationModeApi = async (isVacationMode) => {
   }
 
   const data = await res.json()
+  return data
+}
+
+export const toggleLikedFeedPrivacyApi = async (isPrivate) => {
+  const res = await fetch(`${BASE_URL}/toggle-liked-feed-privacy`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isPrivate }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) throw new Error("Failed to toggle liked feed privacy")
+
   return data
 }

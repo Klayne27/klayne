@@ -357,6 +357,18 @@ export const getLikedPosts = async (req, res) => {
     const user = await User.findOne({ username });
     if (!user) return res.status(404).json({ error: "User not found" });
 
+    const isCurrentUser =
+      currentUserId && user._id.toString() === currentUserId.toString();
+
+    if (user.isLikedFeedPrivate && !isCurrentUser) {
+      return res.status(200).json({
+        message: "This user's liked posts are private.",
+        posts: [], // Return an empty array
+        hasNextPage: false,
+        totalLikedPosts: 0,
+      });
+    }
+
     if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, user._id))) {
       return res.status(403).json({
         error: "You cannot view liked posts of this user due to blocking restrictions.",

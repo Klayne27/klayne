@@ -5,13 +5,7 @@ import { useGetPosts } from "./postsHooks/useGetPosts"
 import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 import { TbGhost2 } from "react-icons/tb"
 
-const Posts = ({
-  feedType,
-  username,
-  onPostsFetched,
-  pinnedPosts = [],
-  isLoadingPinnedPosts,
-}) => {
+const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoadingPinnedPosts }) => {
   const {
     posts,
     isLoading,
@@ -23,6 +17,7 @@ const Posts = ({
     error,
     totalPostsCount,
     totalLikedPostsCount,
+    message,
   } = useGetPosts({ feedType, username })
 
   const { combinedPosts, filteredPostsForRender } = useCombinedPosts({
@@ -73,6 +68,11 @@ const Posts = ({
     pinnedPosts?.length,
   ])
 
+  // Display the specific message if it exists
+  if (message && combinedPosts?.length === 0) {
+    return <p className="my-4 text-center text-gray-500">{message}</p>
+  }
+
   if (isLoading) {
     return (
       <div className="flex flex-col justify-center">
@@ -93,7 +93,7 @@ const Posts = ({
 
   if (combinedPosts?.length === 0) {
     return (
-      <p className="my-4 text-center flex items-center justify-center gap-1">
+      <p className="my-4 flex items-center justify-center gap-1 text-center">
         No posts in this tab. Switch <TbGhost2 />
       </p>
     )
@@ -126,11 +126,7 @@ const Posts = ({
         const elementRef = filteredPostsForRender.length === index + 1 ? lastPostElementRef : null
         return (
           <div ref={elementRef} key={post._id}>
-            <Post
-              post={post}
-              profilePinnedPosts={pinnedPosts}
-              currentProfileUsername={username}
-            />
+            <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
           </div>
         )
       })}

@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react"
 import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateUserProfile"
 import { useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
+import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -21,6 +22,7 @@ const EditProfileModal = ({ authUser }) => {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const [focusedInput, setFocusedInput] = useState(null)
+  const [isLikedFeedPrivate, setIsLikedFeedPrivate] = useState(false) // 👈 New state for the toggle
 
   const curPasswordRef = useRef(null)
   const newPasswordRef = useRef(null)
@@ -28,6 +30,7 @@ const EditProfileModal = ({ authUser }) => {
 
   const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
     useUpdateUserProfile(formData)
+  const { toggleLikedFeedPrivacy, isTogglingPrivacy } = useToggleLikedFeedPrivacy()
 
   const handleInputChange = (e) => {
     const { name, value } = e.target
@@ -66,6 +69,7 @@ const EditProfileModal = ({ authUser }) => {
         currentPassword: "",
         confirmNewPassword: "",
       })
+      setIsLikedFeedPrivate(authUser?.isLikedFeedPrivate || false) // 👈 Set initial state
     }
   }, [authUser])
 
@@ -75,6 +79,12 @@ const EditProfileModal = ({ authUser }) => {
       document.getElementById("edit_profile_modal").close()
     }
   }, [isSuccess, newUsername, navigate])
+
+  // New handler for the toggle button
+  const handleTogglePrivacy = () => {
+    toggleLikedFeedPrivacy(!isLikedFeedPrivate)
+    setIsLikedFeedPrivate(!isLikedFeedPrivate)
+  }
 
   return (
     <>
@@ -227,7 +237,7 @@ const EditProfileModal = ({ authUser }) => {
                     onClick={() => setShowNewPassword(!showNewPassword)}
                     title={showNewPassword ? "Hide password" : "Show password"}
                   >
-                    {!showNewPassword ? <FaEyeSlash size={15} /> : <Fa size={15} />}
+                    {!showNewPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
                   </span>
                 </div>
 
@@ -251,15 +261,41 @@ const EditProfileModal = ({ authUser }) => {
                     onClick={() => setShowConfirmNewPassword(!showConfirmNewPassword)}
                     title={showConfirmNewPassword ? "Hide password" : "Show password"}
                   >
-                    {!showConfirmNewPassword ? <FaEyeSlash size={15} /> : <Fa size={15} />}
+                    {!showConfirmNewPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
                   </span>
                 </div>
               </>
             )}
+
+            {/* New Section for Liked Feed Privacy */}
+            <h1 className="text-xl font-bold">Privacy</h1>
+            <div className="flex items-center justify-between">
+              <h3 className="text-md">Liked Posts</h3>
+              {isTogglingPrivacy ? (
+                <LoadingSpinner size="sm" />
+              ) : (
+                <label className="relative inline-flex cursor-pointer items-center">
+                  <input
+                    type="checkbox"
+                    className="peer sr-only"
+                    checked={isLikedFeedPrivate}
+                    onChange={handleTogglePrivacy}
+                    disabled={isTogglingPrivacy}
+                  />
+                  <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
+
+                  {/* FIXED: Add a fixed width to the span to prevent shifting */}
+                  <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
+                    {isLikedFeedPrivate ? "Private" : "Public"}
+                  </span>
+                </label>
+              )}
+            </div>
+            {/* End of New Section */}
+
             <button className="btn btn-primary btn-sm rounded-full text-white">
               {isUpdatingProfile ? "Updating..." : "Update"}
             </button>
-
           </form>
         </div>
         <form method="dialog" className="modal-backdrop">

@@ -51,7 +51,7 @@ export const useGetPosts = ({ feedType, username = null }) => {
   })
 
   const posts = data?.pages.flatMap((page) => page?.posts || []) || []
-
+  const message = data?.pages?.[0]?.message // 👈 Corrected: get message from the first page object
   const totalPostsCount = data?.pages[0]?.totalPosts || 0
   const totalLikedPostsCount = data?.pages[0]?.totalLikedPosts || 0
 
@@ -68,5 +68,6 @@ export const useGetPosts = ({ feedType, username = null }) => {
     totalPostsCount,
     totalLikedPostsCount,
     getPostEndpoint,
+    message,
   }
 }

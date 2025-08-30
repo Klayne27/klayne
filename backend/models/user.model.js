@@ -208,6 +208,10 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    isLikedFeedPrivate: {
+      type: Boolean,
+      default: true,
+    },
   },
   { timestamps: true }
 );

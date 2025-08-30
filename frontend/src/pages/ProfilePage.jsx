@@ -29,6 +29,7 @@ import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
+import { useToggleLikedFeedPrivacy } from "../features/users/usersHooks/useToggleLikedFeed"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -42,6 +43,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const navigate = useNavigate()
 
   const [userPostsCount, setUserPostsCount] = useState(0)
+  const { toggleLikedFeedPrivacy, isTogglingPrivacy } = useToggleLikedFeedPrivacy()
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
@@ -54,21 +56,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser() // USE NEW HOOK
 
-  const {
-    userProfile,
-    isLoading,
-    isRefetching,
-    isError,
-    error,
-    isBlockedByYou,
-    hasBlockedYou,
-  } = useGetUserProfile(username)
+  const { userProfile, isLoading, isRefetching, isError, error, isBlockedByYou, hasBlockedYou } =
+    useGetUserProfile(username)
 
-  const {
-    conversationStatus,
-    isLoadingConversationStatus,
-    isErrorConversationStatus,
-  } = useGetConversationBetweenUsers(userProfile?._id)
+  const { conversationStatus, isLoadingConversationStatus, isErrorConversationStatus } =
+    useGetConversationBetweenUsers(userProfile?._id)
 
   const {
     pinnedPosts,
@@ -140,6 +132,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
+  const handleToggle = (e) => {
+    const isPrivate = e.target.checked
+    // Call the mutation function with the new value
+    toggleLikedFeedPrivacy(isPrivate)
+  }
+
   const handleImgChange = (e, state) => {
     const file = e.target.files[0]
     if (file) {
@@ -151,50 +149,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       reader.readAsDataURL(file)
     }
   }
-
-  // const handleMessageClick = () => {
-  //   if (isBlockingRelationship) return
-
-  //   if (!authUser || !userProfile?._id) {
-  //     showAppToast("Authentication or profile data is missing.", "error")
-  //     return
-  //   }
-
-  //   if (isLoadingConversationStatus || isTogglingVisibility) {
-  //     return
-  //   }
-
-  //   if (isErrorConversationStatus) {
-  //     showAppToast("Failed to get conversation status.", "error") // Inform the user
-  //     return
-  //   }
-
-  //   if (conversationStatus && conversationStatus.conversationId) {
-  //     const existingConversationId = conversationStatus.conversationId
-  //     const isHiddenForCurrentUser = conversationStatus.isHiddenForCurrentUser
-
-  //     if (isHiddenForCurrentUser) {
-  //       toggleVisibility(
-  //         { conversationId: existingConversationId, isHiding: false },
-  //         {
-  //           onSuccess: () => {
-  //             // Navigate only after the unhide operation is successful
-  //             navigate(`/messages/${existingConversationId}`)
-  //           },
-  //           onError: (err) => {
-  //             showAppToast(
-  //               "Failed to unhide conversation: " + (err.message || "Unknown error", "error"),
-  //             )
-  //           },
-  //         },
-  //       )
-  //     } else {
-  //       // Case 2: Conversation exists and is NOT hidden for the current user.
-  //       // Just navigate to it directly. No API call to toggle visibility needed.
-  //       navigate(`/messages/${existingConversationId}`)
-  //     }
-  //   }
-  // }
 
   const handleMessageClick = () => {
     if (isBlockingRelationship) return
@@ -279,7 +233,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   return (
     <>
       <ScrollToTop />
-      <div className="min-h-screen flex-[4_4_0] border-accent template">
+      <div className="template min-h-screen flex-[4_4_0] border-accent">
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
 
         {showFullProfileHeader && userProfile && (
@@ -509,6 +463,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   <span className="text-sm font-bold">{userProfile?.followers?.length}</span>{" "}
                   <span className="text-sm text-slate-500">Followers</span>{" "}
                 </div>
+
               </div>
             </div>
             <div className="mt-4 flex w-full border-b border-accent">
@@ -540,8 +495,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 } {/* Existing text styling */} active`}
                 onClick={() => {
                   setFeedType("likes")
-                  // Optional: if you want immediate touch feedback, you can add setActiveTab here
-                  // but onClick handles the primary navigation which is often enough.
+
                 }}
                 onTouchStart={() => handleTouchStart("likes")}
                 onTouchEnd={handleTouchEnd}
