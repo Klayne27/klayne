@@ -26,7 +26,6 @@ import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 
-
 const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
@@ -43,6 +42,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
     unreadMessageCount,
     unreadPublicChatCount,
     newPostCount,
+    newVentPostCount,
   } = useSocket()
   const queryClient = useQueryClient()
 
@@ -70,6 +70,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   const originalFaviconHref = useRef(null)
 
   // const { markFeedAsRead } = useMarkPostsAsRead()
+  const feedType = useAppStore((state) => state.feedType)
+
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -103,14 +105,19 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   }, [])
 
   const totalNotifications =
-    unreadMessageCount + unreadNotificationsCount + unreadPublicChatCount + newPostCount
+    unreadMessageCount +
+    unreadNotificationsCount +
+    unreadPublicChatCount +
+    newPostCount +
+    newVentPostCount
 
   useEffect(() => {
     const hasAnyNewNotification =
       unreadMessageCount > 0 ||
       unreadNotificationsCount > 0 ||
       unreadPublicChatCount > 0 ||
-      newPostCount > 0
+      newPostCount > 0 ||
+      newVentPostCount > 0
 
     if (hasAnyNewNotification) {
       document.title = `(${totalNotifications}) ${originalTitle.current}`
@@ -191,6 +198,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
     hasNewFeedPosts,
     hasUnreadPublicChat,
     newPostCount,
+    newVentPostCount,
     totalNotifications,
     unreadMessageCount,
     unreadNotificationsCount,
@@ -434,7 +442,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
       {/* Main Sidebar */}
       {
         <div
-          className={`template pt-1 fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-[264px] md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
+          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-1 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-[264px] md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
         >
           <div
             className={
@@ -485,7 +493,13 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 ) : (
                   <GoHome className={`size-[30px]`} />
                 )}
-                {newPostCount > 0 && (
+                {feedType === "forYou" && newPostCount > 0 && (
+                  <div
+                    className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
+                    style={{ transform: "translate(50%, -50%)" }}
+                  ></div>
+                )}
+                {feedType === "venting" && newVentPostCount > 0 && (
                   <div
                     className="absolute right-2.5 top-3 h-3 w-3 rounded-full border-2 border-black bg-primary"
                     style={{ transform: "translate(50%, -50%)" }}
@@ -825,7 +839,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`flex mr-2 w-full items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={`mr-2 flex w-full items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
@@ -896,7 +910,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
         </div>
       }
 
-      { (
+      {
         <MobileSideModal
           showSideModal={showSideModal}
           sideModalRef={sideModalRef}
@@ -908,7 +922,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
           handleLogout={handleLogout}
           handleConfirmDeleteClick={handleConfirmDeleteClick}
         />
-      )}
+      }
 
       {authUser && (
         <FollowListModal
