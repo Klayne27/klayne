@@ -503,11 +503,11 @@ const PomodoroPage = () => {
         />
 
         <div className="relative flex w-[70%] flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
-          <div className="absolute top-[88px] flex w-full justify-center">
+          <div className="absolute top-[88px] flex w-full cursor-pointer justify-center">
             {selectedTask ? (
               <div
                 onClick={() => setShowTodoDropdown(true)}
-                className="gray-shadow absolute -top-20 flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 py-2"
+                className="gray-shadow absolute -top-20 flex w-full items-center justify-between rounded-lg border-l-4 border-primary bg-base-100 p-4 py-2"
               >
                 <div className="flex flex-grow items-center gap-2">
                   <button
@@ -548,7 +548,7 @@ const PomodoroPage = () => {
             ) : (
               <button
                 onClick={() => setShowTodoDropdown(true)}
-                className="font-semibold text-primary hover:underline absolute -top-16"
+                className="absolute -top-16 font-semibold text-primary hover:underline"
               >
                 <span className="flex items-center gap-1 text-center">
                   <FaPlus size={14} />
@@ -639,9 +639,9 @@ const PomodoroPage = () => {
             className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-4 shadow-xl"
             onClick={(e) => e.stopPropagation()}
           >
-            <div className="flex items-center mb-4 justify-between">
+            <div className="mb-4 flex items-center justify-between">
               <h3 className="ml-1 text-xl font-bold">Choose a Task</h3>
-              <div className="flex gap-4 ">
+              <div className="flex gap-4">
                 <button
                   onClick={() => {
                     setSelectedTaskId(null)
