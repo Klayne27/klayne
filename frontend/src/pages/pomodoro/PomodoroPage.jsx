@@ -501,12 +501,12 @@ const PomodoroPage = () => {
           isRightDropdownOpen={isRightDropdownOpen}
         />
 
-        <div className="flex flex-grow w-[80%] flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
-          <div className="relative flex w-full justify-center shadow-xl">
+        <div className="flex flex-grow w-[70%] flex-col items-center relative justify-center gap-8 rounded-3xl p-3 md:p-10">
+          <div className="absolute top-[88px] flex w-full justify-center shadow-xl">
             {selectedTask ? (
               <div
                 onClick={() => setShowTodoDropdown(true)}
-                className="flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 absolute -top-20"
+                className="flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 py-2 absolute -top-20"
               >
                 <div className="flex flex-grow items-center gap-2">
                   <button
@@ -633,6 +633,7 @@ const PomodoroPage = () => {
             <h3 className="mb-4 ml-1 text-xl font-bold">Choose a Task</h3>
             <div className="max-h-80 overflow-y-auto">
               <PomodoroTasksList
+                isOpen={showTodoDropdown}
                 tasks={allTodos}
                 isLoading={myListsLoading}
                 selectedTaskId={selectedTaskId}
