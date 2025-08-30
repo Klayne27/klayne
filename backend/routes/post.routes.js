@@ -22,6 +22,7 @@ import {
   markFeedPostsAsRead,
   createVentPost,
   getVentPosts,
+  markFeedVentPostsAsRead,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
@@ -54,6 +55,7 @@ router.put("/scheduled/:id", protectRoute, updateScheduledPost);
 router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
 
 router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);
+router.post("/mark-as-read/vent", protectRoute, markFeedVentPostsAsRead);
 
 
 export default router;

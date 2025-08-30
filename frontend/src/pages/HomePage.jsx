@@ -9,10 +9,17 @@ import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { postKeys } from "../features/posts/postsHooks/postKeys"
 import CreatePost from "../features/posts/CreatePost"
+import { useMarkVentPostsAsRead } from "../features/posts/postsHooks/useMarkVentPostsAsRead"
 
 const HomePage = () => {
-  const { showNewFeedPostsButton, setShowNewFeedPostsButton, setNewPostCount, newPostCount } =
-    useSocket()
+  const {
+    showNewFeedPostsButton,
+    setShowNewFeedPostsButton,
+    newPostCount,
+    showNewVentPostsButton,
+    setShowNewVentPostsButton,
+    newVentPostCount,
+  } = useSocket()
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const feedType = useAppStore((state) => state.feedType)
   const setFeedType = useAppStore((state) => state.setFeedType)
@@ -24,6 +31,7 @@ const HomePage = () => {
 
   const queryClient = useQueryClient()
   const { markFeedAsRead } = useMarkPostsAsRead()
+  const { markVentFeedAsRead } = useMarkVentPostsAsRead()
 
   const { isTouchDevice, activeButtonId, handleTouchEnd, handleTouchStart, handleTouchCancel } =
     useTouchHoverEffect()
@@ -38,11 +46,25 @@ const HomePage = () => {
       behavior: "smooth",
     })
 
-    queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
-
-    markFeedAsRead()
-    setShowNewFeedPostsButton(false)
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead])
+    if (feedType === "venting") {
+      // New check
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/vent") })
+      // TODO: Create and use a useMarkVentsAsRead hook
+      markVentFeedAsRead()
+      setShowNewVentPostsButton(false)
+    } else {
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
+      markFeedAsRead()
+      setShowNewFeedPostsButton(false)
+    }
+  }, [
+    queryClient,
+    setShowNewFeedPostsButton,
+    markFeedAsRead,
+    markVentFeedAsRead,
+    feedType,
+    setShowNewVentPostsButton,
+  ])
 
   useEffect(() => {
     const handleScrollButtonVisibility = () => {
@@ -92,6 +114,7 @@ const HomePage = () => {
       behavior: "smooth",
     })
     setShowNewFeedPostsButton(false)
+    setShowNewVentPostsButton(false) // This is for the vent feed
     setShowHeader(true)
   }
 
@@ -180,7 +203,21 @@ const HomePage = () => {
           </div>
         </div>
 
-        {showNewFeedPostsButton && showScrollButton && newPostCount && feedType === "forYou" && (
+        {/* Conditional rendering for the button based on feed type */}
+        {feedType === "venting" &&
+          showNewVentPostsButton &&
+          showScrollButton &&
+          newVentPostCount && (
+            <button
+              onClick={handleNewPostsButtonClick}
+              className="white-shadow fixed left-1/2 top-[60px] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary/90 md:top-[53px] md:-translate-x-[110%] md:text-sm"
+            >
+              <FaArrowUp className="size-4" />
+              <span>{newVentPostCount} new rant(s)</span>
+            </button>
+          )}
+
+        {feedType === "forYou" && showNewFeedPostsButton && showScrollButton && newPostCount && (
           <button
             onClick={handleNewPostsButtonClick}
             className="white-shadow fixed left-1/2 top-[60px] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary/90 md:top-[53px] md:-translate-x-[110%] md:text-sm"
@@ -189,7 +226,6 @@ const HomePage = () => {
             <span>{newPostCount} new post(s)</span>
           </button>
         )}
-
         <div ref={scrollableContentRef}>
           <CreatePost feedType={feedType} />
           <Posts feedType={feedType} />

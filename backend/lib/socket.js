@@ -166,6 +166,36 @@ export async function emitNewPostCount(userId) {
   }
 }
 
+
+export async function emitNewVentPostCount(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+
+    const user = await User.findById(userIdObj).select("lastReadVentFeedTimestamp").lean();
+
+    if (!user) {
+      console.warn(`User ${userId} not found for emitNewVentPostCount.`);
+      return;
+    }
+
+    const lastReadTimestamp = user.lastReadVentFeedTimestamp || new Date(0);
+
+    const newVentPostCount = await Post.countDocuments({
+      user: { $ne: userIdObj }, // Do not count the user's own posts
+      isScheduled: false,
+      publishedAt: { $gt: lastReadTimestamp },
+      isVent: true, // Only count vent posts
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newVentPostCount", { newVentPostCount });
+    });
+  } catch (error) {
+    console.error(`Unhandled error in emitNewVentPostCount for user ${userId}:`, error);
+  }
+}
+
 export async function emitUnreadPublicChatStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);

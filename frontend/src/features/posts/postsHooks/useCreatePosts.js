@@ -19,7 +19,8 @@ export const useCreatePosts = () => {
         queryClient.invalidateQueries({ queryKey: postKeys.list("scheduled") })
       } else {
         showAppToast("Post created successfully", "success")
-        queryClient.invalidateQueries({ queryKey: postKeys.all })
+        queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
+        queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
       }
     },
     onError: (error) => {

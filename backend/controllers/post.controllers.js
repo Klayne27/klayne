@@ -6,6 +6,7 @@ import mongoose from "mongoose";
 import {
   createAndSendNotification,
   emitNewPostCount,
+  emitNewVentPostCount,
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
@@ -1506,6 +1507,28 @@ export const markFeedPostsAsRead = async (req, res) => {
   }
 };
 
+export const markFeedVentPostsAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    const now = new Date();
+
+    await User.findByIdAndUpdate(
+      userIdObj,
+      { $set: { lastReadVentFeedTimestamp: now } },
+      { new: true }
+    );
+
+    await emitNewVentPostCount(userId.toString());
+
+    res.status(200).json({ message: "Feed vent posts marked as read." });
+  } catch (error) {
+    console.error("Error marking feed posts as read:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const checkIfUserReposted = async (req, res) => {
   try {
     const { originalPostId } = req.params;
@@ -1837,6 +1860,15 @@ export const createVentPost = async (req, res) => {
       await newPost.save(); // Save again to update the post with the new image ID
     }
 
+    // New logic to emit the vent post count
+    if (onlineUsersMap && io) {
+      for (const [onlineUserId] of onlineUsersMap.entries()) {
+        if (onlineUserId.toString() !== userId.toString()) {
+          await emitNewVentPostCount(onlineUserId);
+        }
+      }
+    }
+
     // ✅ FIX 2: Populate the user and media fields before sending the response
     const populatedPost = await Post.findById(newPost._id)
       .populate({
@@ -2036,6 +2068,9 @@ export const getVentPosts = async (req, res) => {
         },
       },
     ]);
+
+    await User.findByIdAndUpdate(userId, { lastReadVentFeedTimestamp: new Date() });
+    emitNewVentPostCount(userId.toString());
 
     const hasNextPage = page * limit < totalCount;
 

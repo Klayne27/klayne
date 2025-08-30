@@ -29,9 +29,11 @@ import {
 import { postKeys } from "./postsHooks/postKeys"
 import { useCreateVentPost } from "./postsHooks/useCreateVentPost"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
 
 const CreatePost = ({ feedType }) => {
-  const { setShowNewFeedPostsButton, newPostCount } = useSocket()
+  const { setShowNewFeedPostsButton, newPostCount, newVentPostCount, setShowNewVentPostsButton } =
+    useSocket()
   const queryClient = useQueryClient()
 
   // State for post content
@@ -85,6 +87,8 @@ const CreatePost = ({ feedType }) => {
   // Fetch mention suggestions using react-query
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
   const { markFeedAsRead } = useMarkPostsAsRead()
+  const { markVentFeedAsRead } = useMarkVentPostsAsRead()
+
 
   // Effect to close emoji picker on click outside
   useEffect(() => {
@@ -161,11 +165,25 @@ const CreatePost = ({ feedType }) => {
       behavior: "smooth",
     })
 
-    queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
-
-    setShowNewFeedPostsButton(false)
-    markFeedAsRead()
-  }, [queryClient, setShowNewFeedPostsButton, markFeedAsRead])
+    if (feedType === "venting") {
+      // New check
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/vent") })
+      // TODO: Create and use a useMarkVentsAsRead hook
+      markVentFeedAsRead()
+      setShowNewVentPostsButton(false)
+    } else {
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
+      markFeedAsRead()
+      setShowNewFeedPostsButton(false)
+    }
+  }, [
+    queryClient,
+    setShowNewFeedPostsButton,
+    markFeedAsRead,
+    markVentFeedAsRead,
+    feedType,
+    setShowNewVentPostsButton,
+  ])
 
   const handlePaste = usePasteHandler({
     inputRef: postInputRef,
@@ -254,100 +272,101 @@ const CreatePost = ({ feedType }) => {
     [postInput, mentionStartIndex],
   )
 
-const handleSubmit = useCallback(
-  async (e) => {
-    e.preventDefault()
+  const handleSubmit = useCallback(
+    async (e) => {
+      e.preventDefault()
 
-    // 1. Check for valid input
-    if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) {
-      return
-    }
-
-    if (isCreatingVentPost || isPending) {
-      return // Prevent duplicate submissions
-    }
-
-    // 2. Handle Poll Posts
-    if (showPollInputs) {
-      const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "")
-      if (postInput.trim() === "" || filledPollChoices.length < 2) {
-        showAppToast("Polls must have a question and at least two options.", "error")
+      // 1. Check for valid input
+      if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) {
         return
       }
-      if (filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)) {
-        showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error")
-        return
+
+      if (isCreatingVentPost || isPending) {
+        return // Prevent duplicate submissions
       }
-      const postData = {
-        text: postInput,
-        pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
-      }
-      createPost(postData, {
-        onSuccess: resetForm,
-        onError: (err) => showAppToast(err?.message || "Failed to create post with poll.", "error"),
-      })
-      return
-    }
 
-    let postData = { text: postInput }
-
-    if (postSelectedFile) {
-      try {
-        // Use a Promise to await the FileReader's result
-        const base64File = await new Promise((resolve, reject) => {
-          const reader = new FileReader()
-          reader.onloadend = () => resolve(reader.result)
-          reader.onerror = reject
-          reader.readAsDataURL(postSelectedFile)
-        })
-
-        if (postSelectedFile.type.startsWith("image/")) {
-          postData.img = base64File
-        } else if (postSelectedFile.type.startsWith("video/")) {
-          postData.video = base64File
+      // 2. Handle Poll Posts
+      if (showPollInputs) {
+        const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "")
+        if (postInput.trim() === "" || filledPollChoices.length < 2) {
+          showAppToast("Polls must have a question and at least two options.", "error")
+          return
         }
-      } catch (err) {
-        showAppToast("Failed to read file. Please try again.", "error")
+        if (filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)) {
+          showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error")
+          return
+        }
+        const postData = {
+          text: postInput,
+          pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
+        }
+        createPost(postData, {
+          onSuccess: resetForm,
+          onError: (err) =>
+            showAppToast(err?.message || "Failed to create post with poll.", "error"),
+        })
         return
       }
-    }
 
-    // 4. Send the data based on feed type
-    if (feedType === "venting") {
-      postData.isAnonymous = isAnonymous // Add isAnonymous for vent posts
-      await createVentPost(postData, {
-        onSuccess: () => {
-          resetForm()
-          setIsAnonymous(false)
-        },
-        onError: (err) => showAppToast(err?.message || "Failed to create vent post.", "error"),
-      })
-    } else {
-      // Regular post
-      if (scheduledAt) {
-        postData.scheduledAt = scheduledAt
+      let postData = { text: postInput }
+
+      if (postSelectedFile) {
+        try {
+          // Use a Promise to await the FileReader's result
+          const base64File = await new Promise((resolve, reject) => {
+            const reader = new FileReader()
+            reader.onloadend = () => resolve(reader.result)
+            reader.onerror = reject
+            reader.readAsDataURL(postSelectedFile)
+          })
+
+          if (postSelectedFile.type.startsWith("image/")) {
+            postData.img = base64File
+          } else if (postSelectedFile.type.startsWith("video/")) {
+            postData.video = base64File
+          }
+        } catch (err) {
+          showAppToast("Failed to read file. Please try again.", "error")
+          return
+        }
       }
-      createPost(postData, {
-        onSuccess: resetForm,
-        onError: (err) => showAppToast(err?.message || "Failed to create post.", "error"),
-      })
-    }
-  },
-  [
-    feedType,
-    createVentPost,
-    isCreatingVentPost,
-    isAnonymous,
-    postInput,
-    postSelectedFile,
-    showPollInputs,
-    pollChoices,
-    scheduledAt,
-    createPost,
-    resetForm,
-    isPending,
-  ],
-)
+
+      // 4. Send the data based on feed type
+      if (feedType === "venting") {
+        postData.isAnonymous = isAnonymous // Add isAnonymous for vent posts
+        await createVentPost(postData, {
+          onSuccess: () => {
+            resetForm()
+            setIsAnonymous(false)
+          },
+          onError: (err) => showAppToast(err?.message || "Failed to create vent post.", "error"),
+        })
+      } else {
+        // Regular post
+        if (scheduledAt) {
+          postData.scheduledAt = scheduledAt
+        }
+        createPost(postData, {
+          onSuccess: resetForm,
+          onError: (err) => showAppToast(err?.message || "Failed to create post.", "error"),
+        })
+      }
+    },
+    [
+      feedType,
+      createVentPost,
+      isCreatingVentPost,
+      isAnonymous,
+      postInput,
+      postSelectedFile,
+      showPollInputs,
+      pollChoices,
+      scheduledAt,
+      createPost,
+      resetForm,
+      isPending,
+    ],
+  )
 
   const handleFileChange = useCallback((e) => {
     const file = e.target.files[0]
@@ -597,7 +616,7 @@ const handleSubmit = useCallback(
               onPaste={handlePaste}
               ref={postInputRef}
               rows={2}
-              style={{minHeight: "28px"}}
+              style={{ minHeight: "28px" }}
             />
             {/* Mention Suggestions Popover */}
             {showMentionSuggestions && suggestedUsers?.length > 0 && !showPollInputs && (
@@ -856,7 +875,7 @@ const handleSubmit = useCallback(
             )}
             <button
               type="submit"
-              className="rounded-full bg-primary px-3 py-1 md:px-4 md:py-2 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black"
+              className="rounded-full bg-primary px-3 py-1 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
               // --- MODIFIED: Update disabled logic ---
               disabled={
                 (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled
@@ -908,6 +927,14 @@ const handleSubmit = useCallback(
           />
         )}
       </div>
+      {feedType === "venting" && newVentPostCount > 0 && (
+        <div
+          onClick={handleNewPostsButtonClick}
+          className="cursor-pointer border-b border-accent py-3 text-center text-primary transition duration-500 hover:bg-gray-700/30"
+        >
+          Show {newVentPostCount} rant{newVentPostCount > 1 ? "s" : ""}
+        </div>
+      )}
       {feedType === "forYou" && newPostCount > 0 && (
         <div
           onClick={handleNewPostsButtonClick}

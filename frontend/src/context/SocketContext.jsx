@@ -29,6 +29,8 @@ export const SocketContextProvider = ({ children }) => {
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [unreadPublicChatCount, setUnreadPublicChatCount] = useState(0)
   const [newPostCount, setNewPostCount] = useState(0)
+  const [newVentPostCount, setNewVentPostCount] = useState(0)
+  const [showNewVentPostsButton, setShowNewVentPostsButton] = useState(false)
 
   const socketRef = useRef(null)
   const queryClient = useQueryClient()
@@ -97,14 +99,18 @@ export const SocketContextProvider = ({ children }) => {
       )
 
       newSocket.on("newPostCount", (data) => {
-        // setHasNewFeedPosts(true);
         setShowNewFeedPostsButton(true)
         setNewPostCount(data.newPostCount)
       })
 
+      newSocket.on("newVentPostCount", (data) => {
+        setShowNewVentPostsButton(true)
+        setNewVentPostCount(data.newVentPostCount)
+      })
+
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
         if (actorId === user._id) {
-          return 
+          return
         }
 
         queryClient.setQueryData(messageKeys.publicMessages(), (oldData) => {
@@ -172,6 +178,7 @@ export const SocketContextProvider = ({ children }) => {
       setUnreadMessageCount(0)
       setNewPostCount(0)
       setUnreadPublicChatCount(0)
+      setNewVentPostCount(0)
     }
   }, [user, isLoadingAuthUser, queryClient])
 
@@ -219,6 +226,9 @@ export const SocketContextProvider = ({ children }) => {
         unreadPublicChatCount,
         newPostCount,
         setNewPostCount,
+        setShowNewVentPostsButton,
+        newVentPostCount,
+        showNewVentPostsButton,
       }}
     >
       {children}

@@ -118,6 +118,10 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastReadVentFeedTimestamp: {
+      type: Date,
+      default: null,
+    },
     lastReadFeedTimestamp: {
       type: Date,
       default: null,
