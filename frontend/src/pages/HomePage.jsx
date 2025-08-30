@@ -172,7 +172,7 @@ const HomePage = () => {
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              Venting
+              Rants
               {feedType === "venting" && (
                 <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
               )}

@@ -559,7 +559,7 @@ function CreatePostModal({ onClose }) {
               <IoClose strokeWidth={1} size={24} className="" />
             </button>
             <h2 className="text-xl font-bold">
-              {feedType === "venting" ? "Create Vent Post" : "Create Post"}
+              {feedType === "venting" ? "Create Rant Post" : "Create Post"}
             </h2>
           </div>
         </div>
