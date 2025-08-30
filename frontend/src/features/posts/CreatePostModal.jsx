@@ -300,7 +300,7 @@ function CreatePostModal({ onClose }) {
         await createVentPost(postData, {
           onSuccess: () => {
             resetForm()
-            setIsAnonymous(true)
+            setIsAnonymous(false)
             setShowCreatePostModal(false)
           },
           onError: (err) => showAppToast(err?.message || "Failed to create vent post.", "error"),

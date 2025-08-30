@@ -2015,6 +2015,7 @@ export const getVentPosts = async (req, res) => {
           createdAt: 1,
           repostedFrom: 1, // Add this field to the projection
           repostedBy: 1,
+          repostsCount: 1,
           user: {
             $cond: {
               if: { $eq: ["$isAnonymous", true] },
