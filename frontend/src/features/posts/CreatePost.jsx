@@ -799,22 +799,51 @@ const handleSubmit = useCallback(
             )}
             {feedType === "venting" && (
               <div className="flex w-full items-center justify-between gap-1 pr-2">
-                {!showPollInputs && !scheduledAt && (
-                  <BiImageAdd
-                    className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
-                    onClick={() => postFileInputRef.current.click()}
-                    title="Add image or video"
-                    aria-label="Add image or video"
+                <div className="flex gap-1">
+                  {!showPollInputs && !scheduledAt && (
+                    <BiImageAdd
+                      className="h-6 w-6 cursor-pointer text-primary hover:text-primary/80"
+                      onClick={() => postFileInputRef.current.click()}
+                      title="Add image or video"
+                      aria-label="Add image or video"
+                    />
+                  )}
+                  <input
+                    type="file"
+                    accept="image/*,video/*"
+                    hidden
+                    ref={postFileInputRef}
+                    onChange={handleFileChange}
                   />
-                )}
-                <input
-                  type="file"
-                  accept="image/*,video/*"
-                  hidden
-                  ref={postFileInputRef}
-                  onChange={handleFileChange}
-                />
 
+                  <div className="relative">
+                    <PiSmiley
+                      ref={emojiButtonRef}
+                      className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
+                      size={22}
+                      onClick={(e) => handleOpenEmojiPickerPopover(e)}
+                      strokeWidth={10}
+                      title="Choose an emoji"
+                      aria-label="Choose an emoji"
+                    />
+                    {showEmojiPickerPopover && (
+                      <>
+                        <div
+                          className="fixed inset-0 z-10 cursor-default bg-transparent"
+                          onClick={handleCloseEmojiPickerPopover}
+                        ></div>
+                        <div className="absolute -left-40 bottom-full z-10">
+                          <EmojiPickerPopover
+                            position={popoverPosition}
+                            onClose={handleCloseEmojiPickerPopover}
+                            onEmojiClick={onEmojiClick}
+                            triggerRef={emojiButtonRef}
+                          />
+                        </div>
+                      </>
+                    )}
+                  </div>
+                </div>
                 <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 md:text-sm">
                   <input
                     type="checkbox"
@@ -835,15 +864,19 @@ const handleSubmit = useCallback(
               }
             >
               {/* --- MODIFIED: Update button text logic --- */}
-              {feedType === "venting"
-                ? isCreatingVentPost
-                  ? <LoadingSpinner size="xs" />
-                  : "Post"
-                : isPending
-                  ? <LoadingSpinner size="xs" />
-                  : scheduledAt
-                    ? "Schedule"
-                    : "Post"}
+              {feedType === "venting" ? (
+                isCreatingVentPost ? (
+                  <LoadingSpinner size="xs" />
+                ) : (
+                  "Post"
+                )
+              ) : isPending ? (
+                <LoadingSpinner size="xs" />
+              ) : scheduledAt ? (
+                "Schedule"
+              ) : (
+                "Post"
+              )}
             </button>
           </div>
           {isError && <div className="mt-2 text-red-500">{error.message}</div>}

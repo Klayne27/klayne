@@ -1896,7 +1896,7 @@ export const getVentPosts = async (req, res) => {
               if: { $eq: ["$isAnonymous", true] },
               then: {
                 // If anonymous, send placeholder data
-                _id: userId,
+                _id: "$author._id",
                 username: "Anonymous",
                 fullName: "Anonymous",
                 profileImg: { imageUrl: "/avatar-placeholder.png" },

@@ -55,6 +55,7 @@ export const useLikePost = (username = null) => {
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
         postKeys.list("/api/posts/following"),
+        postKeys.list("/api/posts/vent"),
         postKeys.bookmarked(),
         postKeys.pinned(username),
         postKeys.details(postId),

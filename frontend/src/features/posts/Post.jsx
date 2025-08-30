@@ -71,7 +71,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
 
-  console.log('orig',originalPostOwner);
+  console.log(originalPostOwner);
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
@@ -111,7 +111,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
   }
 
-  console.log(post);
   const handleMouseDown = (e) => {
     initialClientX.current = e.clientX
     initialClientY.current = e.clientY
