@@ -30,6 +30,7 @@ import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
 import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
 import { useToggleLikedFeedPrivacy } from "../features/users/usersHooks/useToggleLikedFeed"
+import { RiLockFill } from "react-icons/ri"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -43,7 +44,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const navigate = useNavigate()
 
   const [userPostsCount, setUserPostsCount] = useState(0)
-  const { toggleLikedFeedPrivacy, isTogglingPrivacy } = useToggleLikedFeedPrivacy()
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
@@ -87,6 +87,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     if (!userProfile?._id) return
     setShowDeleteUserModal(true)
   }
+
+  console.log('userprofile', userProfile);
+  console.log('autuser', authUser);
 
   const closeDeleteUserModal = () => {
     setShowDeleteUserModal(false)
@@ -132,11 +135,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     }
   }
 
-  const handleToggle = (e) => {
-    const isPrivate = e.target.checked
-    // Call the mutation function with the new value
-    toggleLikedFeedPrivacy(isPrivate)
-  }
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0]
@@ -197,6 +195,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const handlePostsFetched = (count) => {
     setUserPostsCount(count)
   }
+
+  console.log(userProfile);
 
   let displayMessage = ""
   let showFullProfileHeader = false
@@ -463,7 +463,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   <span className="text-sm font-bold">{userProfile?.followers?.length}</span>{" "}
                   <span className="text-sm text-slate-500">Followers</span>{" "}
                 </div>
-
               </div>
             </div>
             <div className="mt-4 flex w-full border-b border-accent">
@@ -495,7 +494,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 } {/* Existing text styling */} active`}
                 onClick={() => {
                   setFeedType("likes")
-
                 }}
                 onTouchStart={() => handleTouchStart("likes")}
                 onTouchEnd={handleTouchEnd}
@@ -507,6 +505,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 )}
               </div>
             </div>
+            {isMyProfile && feedType === "likes" && authUser?.isLikedFeedPrivate && (
+              <div className="bg-[#02113D] m-1 flex flex-col items-start rounded-lg py-2.5 px-4">
+                <p className="flex items-center gap-3 text-[15px]">
+                  <RiLockFill />
+                  Your likes are private. Only you can see them.
+                </p>
+              </div>
+            )}
           </>
         )}
 
