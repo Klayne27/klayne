@@ -548,7 +548,7 @@ const PomodoroPage = () => {
             ) : (
               <button
                 onClick={() => setShowTodoDropdown(true)}
-                className="font-semibold text-primary hover:underline md:absolute md:-top-16"
+                className="font-semibold text-primary hover:underline absolute -top-16"
               >
                 <span className="flex items-center gap-1 text-center">
                   <FaPlus size={14} />
