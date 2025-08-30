@@ -856,7 +856,7 @@ const handleSubmit = useCallback(
             )}
             <button
               type="submit"
-              className="rounded-full bg-primary px-4 py-2 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black"
+              className="rounded-full bg-primary px-3 py-1 md:px-4 md:py-2 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black"
               // --- MODIFIED: Update disabled logic ---
               disabled={
                 (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled
