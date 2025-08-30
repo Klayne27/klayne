@@ -108,7 +108,8 @@ export const getComments = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "username fullName isVerified isGoldVerified blockedUsers blockedBy badges",
+        select:
+          "username fullName isVerified isGoldVerified blockedUsers blockedBy badges",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -256,6 +257,8 @@ export const createComment = async (req, res) => {
       },
     ]);
 
+    const isAnonymousInteraction = post.isVent && post.isAnonymous;
+
     if (post.user && post.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
@@ -263,6 +266,7 @@ export const createComment = async (req, res) => {
         type: "comment",
         postId: post._id,
         commentId: newComment._id,
+        isAnonymousInteraction,
       });
     }
 
@@ -276,6 +280,7 @@ export const createComment = async (req, res) => {
         type: "mention",
         postId: post._id,
         commentId: newComment._id,
+        isAnonymousInteraction,
       });
     }
 
@@ -384,6 +389,9 @@ export const replyToComment = async (req, res) => {
         select: "imageUrl",
       },
     });
+
+    const isAnonymousInteraction = post.isVent && post.isAnonymous;
+
     if (parentComment.user && parentComment.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
         from: userId,
@@ -392,6 +400,7 @@ export const replyToComment = async (req, res) => {
         postId: post._id,
         commentId: newReply._id,
         parentCommentId: parentCommentId,
+        isAnonymousInteraction, // Pass the flag
       });
     }
 
@@ -408,6 +417,7 @@ export const replyToComment = async (req, res) => {
         type: "mention",
         postId: post._id,
         commentId: newReply._id,
+        isAnonymousInteraction, // Pass the flag
       });
     }
 
@@ -455,6 +465,10 @@ export const likeUnlikeComment = async (req, res) => {
 
     const userLikedComment = comment.likes.includes(userId);
 
+    const originalPost = await Post.findById(comment.post);
+    const isAnonymousInteraction =
+      originalPost && originalPost.isVent && originalPost.isAnonymous;
+
     if (userLikedComment) {
       comment.likes.pull(userId);
       await comment.save();
@@ -471,6 +485,7 @@ export const likeUnlikeComment = async (req, res) => {
           type: "commentLike",
           postId: comment.post,
           commentId: comment._id,
+          isAnonymousInteraction,
         });
       }
 

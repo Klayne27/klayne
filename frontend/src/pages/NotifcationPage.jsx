@@ -97,21 +97,33 @@ const NotificationPage = () => {
   }
 
   const getNotificationMessage = (notification) => {
+    const displayUsername = notification.isAnonymousInteraction
+      ? "Anonymous"
+      : notification.from?.username
+    if (!displayUsername) {
+      return "A user"
+    }
+
+    const postOwnerDisplayName =
+      notification?.postId?.isVent && notification?.postId?.isAnonymous
+        ? "Anonymous"
+        : notification?.postId?.user?.username
+
     switch (notification.type) {
       case "follow":
-        return `@${notification.from?.username} followed you.`
+        return `@${displayUsername} followed you.`
       case "like":
-        return `@${notification.from?.username} liked your post.`
+        return `@${displayUsername} liked your post.`
       case "comment":
-        return `@${notification.from?.username} commented on your post.`
+        return `@${displayUsername} commented on your post.`
       case "commentLike":
-        return `@${notification.from?.username} liked your comment on ${notification?.postId?.user.username}'s post.`
+        return `@${displayUsername} liked your comment on ${postOwnerDisplayName}'s post.`
       case "commentReply":
-        return `@${notification.from?.username} replied to your comment on ${notification?.postId?.user.username}'s post.`
+        return `@${displayUsername} replied to your comment on ${postOwnerDisplayName}'s post.`
       case "repost":
-        return `@${notification.from?.username} reposted your post.`
+        return `@${displayUsername} reposted your post.`
       case "mention":
-        return `@${notification.from?.username} mentioned you in a post.`
+        return `@${displayUsername} mentioned you in a post.`
       default:
         return ""
     }
@@ -119,7 +131,7 @@ const NotificationPage = () => {
 
   return (
     <>
-      <div className="mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl template">
+      <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
         <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
           <button
             onClick={() => navigate(-1)}
@@ -216,7 +228,11 @@ const NotificationPage = () => {
                       )}
 
                       {isGoldVerified && (
-                        <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+                        <img
+                          src="/gold-verified2.png"
+                          className="size-[17px]"
+                          alt="Gold Verified"
+                        />
                       )}
                     </div>
                     <div className="text-sm">{getNotificationMessage(notification)}</div>

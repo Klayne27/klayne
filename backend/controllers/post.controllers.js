@@ -1244,6 +1244,8 @@ export const createPost = async (req, res) => {
       await newPost.save(); // Save again to update the post with the new image ID
     }
 
+    const isAnonymousInteraction = newPost.isVent && newPost.isAnonymous;
+
     if (!newPost.isScheduled) {
       await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
 
@@ -1253,6 +1255,7 @@ export const createPost = async (req, res) => {
           to: mentionedUserId,
           type: "mention",
           postId: newPost._id,
+          isAnonymousInteraction,
         })
       );
 
@@ -1378,19 +1381,8 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      // if (post.user.toString() !== userId.toString()) {
-      //   const notification = new Notification({
-      //     from: userId,
-      //     to: post.user,
-      //     type: "like",
-      //     postId: postId,
-      //     read: false,
-      //   });
+      const isAnonymousInteraction = post.isAnonymous;
 
-      //   await notification.save();
-
-      //   await emitUnreadNotificationStatus(post.user.toString());
-      // }
       if (post.user.toString() !== userId.toString()) {
         // ------------------ FIX: Call the unified function ------------------
         await createAndSendNotification({
@@ -1398,6 +1390,7 @@ export const likeUnlikePost = async (req, res) => {
           to: post.user,
           type: "like",
           postId: postId,
+          isAnonymousInteraction,
         });
         // --------------------------------------------------------------------
       }
@@ -1435,7 +1428,7 @@ export const repostPost = async (req, res) => {
         error: "You cannot interact with this content due to blocking restrictions.",
       });
     }
-    
+
     const existingRepost = await Post.findOne({
       user: userId,
       repostedFrom: originalPostId,
@@ -1471,6 +1464,7 @@ export const repostPost = async (req, res) => {
           to: originalPost.user,
           type: "repost",
           postId: originalPostId,
+          isAnonymousInteraction: isOriginalAnonymous,
         });
       }
 

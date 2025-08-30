@@ -10,6 +10,7 @@ export const getNotifications = async (req, res) => {
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
     const notifications = await Notification.find({ to: userId })
+      .select("-__v -updatedAt") // Add a select to get rid of extra fields
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
@@ -21,7 +22,7 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "postId",
-        select: "text img video mediaType",
+        select: "text img video mediaType user isVent isAnonymous", // Add isVent and isAnonymous
         populate: {
           path: "user",
           select: "username fullName",
@@ -56,7 +57,28 @@ export const getNotifications = async (req, res) => {
       return true;
     });
 
-    res.status(200).json(filteredNotifications);
+    const notificationsWithAnonymity = filteredNotifications.map((notif) => {
+      const populatedNotif = notif.toObject();
+      if (populatedNotif.isAnonymousInteraction) {
+        if (populatedNotif.from) {
+          // Ensure 'from' object exists
+          populatedNotif.from.username = "Anonymous";
+          populatedNotif.from.fullName = "Anonymous";
+          // Check if profileImg object exists before trying to access imageUrl
+          if (populatedNotif.from.profileImg) {
+            populatedNotif.from.profileImg.imageUrl = "/avatar-placeholder.png";
+          } else {
+            // If profileImg is null or undefined, create it
+            populatedNotif.from.profileImg = {
+              imageUrl: "/avatar-placeholder.png",
+            };
+          }
+        }
+      }
+      return populatedNotif;
+    });
+
+    res.status(200).json(notificationsWithAnonymity);
 
     await Notification.updateMany({ to: userId, read: false }, { read: true });
 

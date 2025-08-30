@@ -192,6 +192,7 @@ export const followUnfollowUser = async (req, res) => {
         type: "follow",
         from: req.user._id,
         to: userToModify._id,
+        isAnonymousInteraction,
       });
       // --------------------------------------------------------------------
 
