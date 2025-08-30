@@ -1,5 +1,5 @@
-import { useState, useEffect, useRef, useCallback } from "react"
-import { Link, useNavigate } from "react-router-dom"
+import { useState, useEffect, useRef, useCallback, useMemo } from "react"
+import { useNavigate } from "react-router-dom"
 
 import PomodoroSettingsModal from "../../features/pomodoro/PomodoroSettingsModal"
 
@@ -18,25 +18,14 @@ import LeftDropdown from "../../features/pomodoro/LeftDropdown"
 import RightDropdown from "../../features/pomodoro/RightDropdown"
 import PomodoroTimerDisplay from "../../features/pomodoro/PomodoroTimerDisplay"
 import PomodoroTimerControls from "../../features/pomodoro/PomodoroTimerControls"
-import { useQuery } from "@tanstack/react-query"
-
-const fetchStudyTasks = async () => {
-  const res = await fetch("/api/study/tasks")
-  if (!res.ok) throw new Error("Failed to fetch tasks")
-  return res.json()
-}
-
-const logTimeMutationFn = async ({ taskId, secondsToAdd }) => {
-  const res = await fetch("/api/study/tasks/log-time", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ taskId, secondsToAdd }),
-  })
-  if (!res.ok) {
-    console.error("Failed to log time")
-  }
-  return res.json()
-}
+import PomodoroTasksList from "../../features/pomodoro/PomodoroTaskList"
+import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUserTodoLists"
+import { useCompleteTodo } from "../../features/todos/todoHooks/useCompleteTodo"
+import { colorMap, getCompletedColor, getPriorityColor, iconMap } from "../../utils/todoUtils"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
+import { FaCheckCircle, FaTasks } from "react-icons/fa"
+import { truncateText } from "../../utils/truncateText"
+import { FaPlus } from "react-icons/fa6"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -49,17 +38,30 @@ const SELECTED_TASK_KEY = "pomodoro_selected_task"
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
+  const { authUser } = useAuthUser()
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { endStudySession } = useEndStudySession()
   const isMobile = useIsMobile()
   const { xpGainedAmount, setXpGainedAmount, showXpGain, setShowXpGain } = useXpStore()
 
-  const [selectedTaskId, setSelectedTaskId] = useState("")
-
-  const { data: tasks, isLoading: isLoadingTasks } = useQuery({
-    queryKey: ["studyTasks"],
-    queryFn: fetchStudyTasks,
+  const [selectedTaskId, setSelectedTaskId] = useState(() => {
+    return localStorage.getItem(SELECTED_TASK_KEY) || ""
   })
+  const [visuallyCompleted, setVisuallyCompleted] = useState({})
+
+  const { myTodoLists, myListsLoading } = useGetUserTodoLists()
+
+  const allTodos = useMemo(() => {
+    return (
+      myTodoLists?.pages?.flatMap((page) => page.data.flatMap((todoList) => todoList.todos)) || []
+    )
+  }, [myTodoLists])
+
+  const selectedTask = allTodos?.find((task) => task._id === selectedTaskId)
+
+  const { completeTodo, isCompletingTodo } = useCompleteTodo()
+
+  const [showTodoDropdown, setShowTodoDropdown] = useState(false)
 
   const [timer, setTimer] = useState(0)
   const [isActive, setIsActive] = useState(false)
@@ -84,7 +86,6 @@ const PomodoroPage = () => {
   const handleSessionEndRef = useRef(() => {})
   const alarmAudioRef = useRef(null)
   const isEndingSessionRef = useRef(false)
-
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
@@ -323,7 +324,6 @@ const PomodoroPage = () => {
     const savedGoalReached = localStorage.getItem(GOAL_REACHED_KEY) === "true"
     const savedSelectedTask = localStorage.getItem(SELECTED_TASK_KEY) // NEW
 
-    // --- NEW: Restore selected task ---
     if (savedSelectedTask) {
       setSelectedTaskId(savedSelectedTask)
     }
@@ -385,6 +385,14 @@ const PomodoroPage = () => {
     return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
   }, [])
 
+  useEffect(() => {
+    if (selectedTaskId) {
+      localStorage.setItem(SELECTED_TASK_KEY, selectedTaskId)
+    } else {
+      localStorage.removeItem(SELECTED_TASK_KEY)
+    }
+  }, [selectedTaskId])
+
   const handleStart = async () => {
     // if (!selectedTaskId) {
     //   showAppToast("Please select a task to begin your study session.", "error")
@@ -434,6 +442,38 @@ const PomodoroPage = () => {
     setIsLeftDropdownOpen(!isLeftDropdownOpen)
   }
 
+  const handleComplete = (todoId, e) => {
+    e.stopPropagation()
+
+    if (selectedTask.user !== authUser._id || isVisuallyCompleted) {
+      return
+    }
+
+    showAppToast("Todo completed! ✨", "success")
+    setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
+
+    completeTodo(todoId)
+
+    const completedTaskIndex = allTodos.findIndex((todo) => todo._id === todoId)
+
+    if (completedTaskIndex !== -1) {
+      const nextTaskIndex = completedTaskIndex + 1
+      if (nextTaskIndex < allTodos.length) {
+        const nextTaskId = allTodos[nextTaskIndex]._id
+        setSelectedTaskId(nextTaskId)
+      } else {
+        setSelectedTaskId(null)
+      }
+    }
+  }
+
+  const isVisuallyCompleted = visuallyCompleted[selectedTask?._id] || selectedTask?.completed
+  const formattedDueDate = selectedTask?.dueDate
+    ? new Date(selectedTask?.dueDate).toLocaleDateString()
+    : null
+
+  const IconComponent = iconMap[selectedTask?.icon]
+
   if (isSettingsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -461,13 +501,65 @@ const PomodoroPage = () => {
           isRightDropdownOpen={isRightDropdownOpen}
         />
 
-        <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
-          <h1
-            key={isBreak ? "break" : "study"}
-            className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
-          >
-            {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
-          </h1>
+        <div className="flex flex-grow w-[80%] flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
+          <div className="relative flex w-full justify-center shadow-xl">
+            {selectedTask ? (
+              <div
+                onClick={() => setShowTodoDropdown(true)}
+                className="flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 absolute -top-20"
+              >
+                <div className="flex flex-grow items-center gap-2">
+                  <button
+                    onClick={(e) => {
+                      handleComplete(selectedTask._id, e)
+                    }}
+                    className={`flex-shrink-0 rounded-full ${isVisuallyCompleted ? getCompletedColor(selectedTask.priority) : getPriorityColor(selectedTask.priority)} ${getPriorityColor(selectedTask.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
+                    disabled={isCompletingTodo}
+                  >
+                    {isVisuallyCompleted && <FaCheckCircle className="size-4" />}
+                  </button>
+                  <div className="min-w-0 flex-1">
+                    <p className="flex items-center gap-1 text-xs font-bold">
+                      {IconComponent && (
+                        <IconComponent className={`${colorMap[selectedTask?.color]}`} />
+                      )}
+                      {truncateText(selectedTask.listName, 20)}
+                    </p>
+                    <h2 className="text-sm font-semibold">
+                      {truncateText(selectedTask.title, 20)}
+                    </h2>
+                    {selectedTask.description && (
+                      <p className="text-xs text-slate-500">
+                        {truncateText(selectedTask.description, 30)}
+                      </p>
+                    )}
+                    {selectedTask.dueDate && (
+                      <p className="text-xs text-slate-500">{formattedDueDate}</p>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowTodoDropdown(true)}
+                className="font-semibold text-primary hover:underline md:absolute md:-top-16"
+              >
+                <span className="flex items-center gap-1 text-center">
+                  <FaPlus size={14} />
+                  Choose Task
+                </span>
+              </button>
+            )}
+          </div>
+          {!isMobile && (
+            <h1
+              key={isBreak ? "break" : "study"}
+              className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
+            >
+              {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
+            </h1>
+          )}
+
           <PomodoroTimerDisplay
             isBreak={isBreak}
             timer={timer}
@@ -530,6 +622,34 @@ const PomodoroPage = () => {
           confirmButtonText="Reset"
           modalTitle="Reset Timer"
         />
+      )}
+
+      {showTodoDropdown && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
+          onClick={() => setShowTodoDropdown(false)}
+        >
+          <div className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-4 shadow-xl">
+            <h3 className="mb-4 ml-1 text-xl font-bold">Choose a Task</h3>
+            <div className="max-h-80 overflow-y-auto">
+              <PomodoroTasksList
+                tasks={allTodos}
+                isLoading={myListsLoading}
+                selectedTaskId={selectedTaskId}
+                setSelectedTaskId={(taskId) => {
+                  setSelectedTaskId(taskId)
+                  setShowTodoDropdown(false)
+                }}
+              />
+            </div>
+            <button
+              onClick={() => setShowTodoDropdown(false)}
+              className="btn btn-ghost btn-sm mt-4 w-full"
+            >
+              Close
+            </button>
+          </div>
+        </div>
       )}
     </>
   )

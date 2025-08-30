@@ -28,18 +28,29 @@ export const getUserTodoLists = async (req, res) => {
         match: { completed: false }, // Filter for uncompleted todos
       });
 
-    // Pagination counting remains the same
+    // Transform data to include the todo list name for each todo
+    const transformedTodoLists = todoLists.map((list) => {
+      const listObject = list.toObject(); // Convert Mongoose document to a plain object
+      listObject.todos = listObject.todos.map((todo) => ({
+        ...todo,
+        listName: listObject.name, // Add the list name to each todo
+        color: listObject.color,
+        icon: listObject.icon
+      }));
+      return listObject;
+    });
+
     const totalCount = await TodoList.countDocuments({ owner: req.user._id });
     const hasNextPage = skip + todoLists.length < totalCount;
 
     res.status(200).json({
-      data: todoLists, // This data now includes a 'todos' array in each list object
+      data: transformedTodoLists, // Send the transformed data
       currentPage: page,
       totalPages: Math.ceil(totalCount / limit),
       hasNextPage: hasNextPage,
     });
   } catch (error) {
-    console.error("Failed to fetch todo lists:", error); // Log the actual error
+    console.error("Failed to fetch todo lists:", error);
     res.status(500).json({ error: "Failed to fetch todo lists" });
   }
 };

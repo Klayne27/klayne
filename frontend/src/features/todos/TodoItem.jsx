@@ -17,7 +17,8 @@ import { useAuthUser } from "../auth/authHooks/useAuthUser.js"
 
 function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { authUser: currentUser } = useAuthUser()
-  const { setSelectedTodo, setShowEditTodoModal, isEditTodoMenuOpen, setIsEditTodoMenuOpen } = useTodoStore()
+  const { setSelectedTodo, setShowEditTodoModal, isEditTodoMenuOpen, setIsEditTodoMenuOpen } =
+    useTodoStore()
   const ellipsisRef = useRef(null)
 
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
@@ -27,7 +28,6 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { completeTodo, isCompletingTodo } = useCompleteTodo()
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
-
 
   useEffect(() => {
     if (openTodoDropdownId === todo._id && ellipsisRef.current) {
