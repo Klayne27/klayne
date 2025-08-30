@@ -25,7 +25,8 @@ import { colorMap, getCompletedColor, getPriorityColor, iconMap } from "../../ut
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { FaCheckCircle, FaTasks } from "react-icons/fa"
 import { truncateText } from "../../utils/truncateText"
-import { FaPlus } from "react-icons/fa6"
+import { FaCalendar, FaPlus } from "react-icons/fa6"
+import { IoClose } from "react-icons/io5"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -501,12 +502,12 @@ const PomodoroPage = () => {
           isRightDropdownOpen={isRightDropdownOpen}
         />
 
-        <div className="flex flex-grow w-[70%] flex-col items-center relative justify-center gap-8 rounded-3xl p-3 md:p-10">
-          <div className="absolute top-[88px] flex w-full justify-center shadow-xl">
+        <div className="relative flex w-[70%] flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
+          <div className="absolute top-[88px] flex w-full justify-center">
             {selectedTask ? (
               <div
                 onClick={() => setShowTodoDropdown(true)}
-                className="flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 py-2 absolute -top-20"
+                className="gray-shadow absolute -top-20 flex w-full items-center justify-between rounded-lg border-l-2 border-primary bg-base-200 p-4 py-2"
               >
                 <div className="flex flex-grow items-center gap-2">
                   <button
@@ -534,7 +535,12 @@ const PomodoroPage = () => {
                       </p>
                     )}
                     {selectedTask.dueDate && (
-                      <p className="text-xs text-slate-500">{formattedDueDate}</p>
+                      <p className="text-xs text-slate-500">
+                        {" "}
+                        <p className="flex items-center gap-1 text-xs text-slate-500">
+                          <FaCalendar /> {formattedDueDate}
+                        </p>
+                      </p>
                     )}
                   </div>
                 </div>
@@ -629,8 +635,30 @@ const PomodoroPage = () => {
           className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
           onClick={() => setShowTodoDropdown(false)}
         >
-          <div className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-4 shadow-xl">
-            <h3 className="mb-4 ml-1 text-xl font-bold">Choose a Task</h3>
+          <div
+            className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-4 shadow-xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center mb-4 justify-between">
+              <h3 className="ml-1 text-xl font-bold">Choose a Task</h3>
+              <div className="flex gap-4 ">
+                <button
+                  onClick={() => {
+                    setSelectedTaskId(null)
+                    setShowTodoDropdown(false)
+                  }}
+                  className="rounded-full px-4 py-2 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary hover:text-white"
+                >
+                  Clear
+                </button>
+                <button
+                  onClick={() => setShowTodoDropdown(false)}
+                  className="rounded-full p-2 text-sm font-semibold text-slate-500 transition-colors duration-200 hover:bg-slate-700 hover:text-white"
+                >
+                  <IoClose size={20} />
+                </button>
+              </div>
+            </div>
             <div className="max-h-80 overflow-y-auto">
               <PomodoroTasksList
                 isOpen={showTodoDropdown}
@@ -643,12 +671,6 @@ const PomodoroPage = () => {
                 }}
               />
             </div>
-            <button
-              onClick={() => setShowTodoDropdown(false)}
-              className="btn btn-ghost btn-sm mt-4 w-full"
-            >
-              Close
-            </button>
           </div>
         </div>
       )}

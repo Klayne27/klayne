@@ -28,7 +28,7 @@ const PomodoroTasksList = ({isOpen, tasks, isLoading, selectedTaskId, setSelecte
             <li
               key={task._id}
               onClick={() => setSelectedTaskId(task._id)}
-              className={`flex cursor-pointer items-center gap-2 rounded-lg p-3 transition-colors duration-200 ${selectedTaskId === task._id ? "bg-primary/20 text-primary" : "hover:bg-gray-700/50"}`}
+              className={`flex cursor-pointer items-center gap-2 rounded-lg p-3 transition-colors duration-200 ${selectedTaskId === task._id ? "bg-primary/20 text-primary" : "hover:bg-secondary"}`}
             >
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-2">
