@@ -32,8 +32,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const isCommentOwner = authUser && authUser._id === comment.user._id
   const isFollowingCommentOwner = authUser?.following.includes(comment.user._id)
 
-  console.log(comment);
-
   const [showReplyInput, setShowReplyInput] = useState(false)
   const [replyInput, setReplyInput] = useState("")
   const [replyPreviewImage, setReplyPreviewImage] = useState(null)
