@@ -462,35 +462,6 @@ const PomodoroPage = () => {
         />
 
         <div className="flex flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
-          {/* { (
-            <div className="w-full max-w-52 ">
-              <select
-                className="select select-primary w-full"
-                value={selectedTaskId}
-                onChange={(e) => {
-                  const newTaskId = e.target.value
-                  setSelectedTaskId(newTaskId)
-                  localStorage.setItem(SELECTED_TASK_KEY, newTaskId)
-                }}
-                disabled={isActive || isLoadingTasks}
-              >
-                <option value="" disabled>
-                  {isLoadingTasks ? "Loading tasks..." : "Select a task"}
-                </option>
-                {tasks?.map((task) => (
-                  <option key={task._id} value={task._id}>
-                    {task.name}
-                  </option>
-                ))}
-              </select>
-
-            </div>
-          )} */}
-          {/* <label className="label">
-            <Link to="/study-dashboard" className="link-hover link label-text-alt">
-              Manage tasks
-            </Link>
-          </label> */}
           <h1
             key={isBreak ? "break" : "study"}
             className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}

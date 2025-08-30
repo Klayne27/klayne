@@ -187,7 +187,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
                 handleCloseMenu()
               }}
               isLoading={isUpdatingTodo || isDeletingTodo}
-              />
+            />
           </div>
         </SlideUpMenu>
       )}
