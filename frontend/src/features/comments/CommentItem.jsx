@@ -26,7 +26,7 @@ import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../ut
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
 
-const CommentItem = ({ comment, postId, isPostOwner }) => {
+const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) => {
   const { authUser } = useAuthUser()
   const isCommentOwner = authUser && authUser._id === comment.user._id
   const isFollowingCommentOwner = authUser?.following.includes(comment.user._id)
@@ -370,6 +370,8 @@ const CommentItem = ({ comment, postId, isPostOwner }) => {
     }
   }, [isAnimating])
 
+  console.log(comment)
+
   if (!comment || !comment.user) {
     console.warn("Comment or comment user not populated:", comment)
     return null
@@ -505,17 +507,18 @@ const CommentItem = ({ comment, postId, isPostOwner }) => {
                   </button>
 
                   {/* Scenario 3: Post owner interacting with another user's comment */}
-                  {isPostOwner || authUser.isAdmin && (
-                    <button
-                      className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
-                      onClick={handleDeleteCommentClick}
-                      disabled={isDeletingComment}
-                    >
-                      <span className="flex items-center justify-center gap-3 font-semibold">
-                        <FaTrashCan /> Delete Reply
-                      </span>
-                    </button>
-                  )}
+                  {isPostOwner ||
+                    (authUser.isAdmin && (
+                      <button
+                        className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
+                        onClick={handleDeleteCommentClick}
+                        disabled={isDeletingComment}
+                      >
+                        <span className="flex items-center justify-center gap-3 font-semibold">
+                          <FaTrashCan /> Delete Reply
+                        </span>
+                      </button>
+                    ))}
                 </>
               )}
             </DropdownMenu>
@@ -566,7 +569,11 @@ const CommentItem = ({ comment, postId, isPostOwner }) => {
                 <div className="avatar flex-shrink-0">
                   <div className="w-7 rounded-full">
                     <img
-                      src={authUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                      src={
+                        isProfileImgAnonymous
+                          ? "/avatar-placeholder.png"
+                          : authUser.profileImg?.imageUrl || "/avatar-placeholder.png"
+                      }
                       alt="Your profile"
                     />
                   </div>

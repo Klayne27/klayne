@@ -74,7 +74,7 @@ const PostPage = () => {
   const { createComment, isCreatingComment } = useCreateComment(pid, null)
 
   const displayPost = post?.repostedFrom || post
-  
+
   // Add this new function
   const handlePaste = usePasteHandler({
     inputRef: commentInputRef,
@@ -335,7 +335,7 @@ const PostPage = () => {
     )
   }
 
-  if (!post) {
+  if (!displayPost) {
     return (
       <div className="w-ful flex h-screen flex-1 flex-col items-center justify-center p-4">
         <h2 className="mb-4 text-center text-2xl font-bold">Post Not Found</h2>
@@ -377,7 +377,11 @@ const PostPage = () => {
             <div className="avatar flex-shrink-0">
               <div className={`w-8 rounded-full md:w-9`}>
                 <img
-                  src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                  src={
+                    displayPost.isAnonymous && authUser._id === displayPost.user._id
+                      ? "/avatar-placeholder.png"
+                      : authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                  }
                   alt="Your profile"
                 />
               </div>
@@ -512,6 +516,9 @@ const PostPage = () => {
                   comment={comment}
                   postId={displayPost._id}
                   isPostOwner={authUser?._id === displayPost.user?._id}
+                  isProfileImgAnonymous={
+                    displayPost.isAnonymous && authUser._id === displayPost.user._id
+                  }
                 />
               </div>
             ))}
