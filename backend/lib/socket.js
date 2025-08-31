@@ -166,13 +166,14 @@ export async function emitNewPostCount(userId) {
   }
 }
 
-
 export async function emitNewVentPostCount(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
     const recipientSocketIds = getReceiverSocketIds(userId);
 
-    const user = await User.findById(userIdObj).select("lastReadVentFeedTimestamp").lean();
+    const user = await User.findById(userIdObj)
+      .select("lastReadVentFeedTimestamp")
+      .lean();
 
     if (!user) {
       console.warn(`User ${userId} not found for emitNewVentPostCount.`);
@@ -319,7 +320,11 @@ export const createAndSendNotification = async ({
     if (postId) {
       await newNotification.populate({
         path: "postId",
-        select: "text img user",
+        select: "text img user isAnonymous", 
+        populate: {
+          path: "user",
+          select: "username fullName",
+        },
       });
     }
     if (commentId && type !== "commentReply") {

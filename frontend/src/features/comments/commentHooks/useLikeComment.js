@@ -62,35 +62,35 @@ export const useLikeComment = () => {
       return { previousTopLevelCommentsData, previousRepliesData }
     },
     onSuccess: (data, { postId, commentId, parentCommentId }) => {
-      // queryClient.setQueryData(["comments", postId], (oldData) => {
-      //   if (!oldData || !oldData.pages) return oldData
-      //   const newPages = oldData.pages.map((page) => ({
-      //     ...page,
-      //     comments: page.comments.map((comment) => {
-      //       if (comment._id === commentId) {
-      //         return { ...comment, likes: data.likes }
-      //       }
-      //       return comment
-      //     }),
-      //   }))
-      //   return { ...oldData, pages: newPages }
-      // })
+      queryClient.setQueryData(["comments", postId], (oldData) => {
+        if (!oldData || !oldData.pages) return oldData
+        const newPages = oldData.pages.map((page) => ({
+          ...page,
+          comments: page.comments.map((comment) => {
+            if (comment._id === commentId) {
+              return { ...comment, likes: data.likes }
+            }
+            return comment
+          }),
+        }))
+        return { ...oldData, pages: newPages }
+      })
 
-      // if (parentCommentId) {
-      //   queryClient.setQueryData(["comments", postId, parentCommentId], (oldData) => {
-      //     if (!oldData || !oldData.pages) return oldData
-      //     const newPages = oldData.pages.map((page) => ({
-      //       ...page,
-      //       comments: page.comments.map((reply) => {
-      //         if (reply._id === commentId) {
-      //           return { ...reply, likes: data.likes }
-      //         }
-      //         return reply
-      //       }),
-      //     }))
-      //     return { ...oldData, pages: newPages }
-      //   })
-      // }
+      if (parentCommentId) {
+        queryClient.setQueryData(["comments", postId, parentCommentId], (oldData) => {
+          if (!oldData || !oldData.pages) return oldData
+          const newPages = oldData.pages.map((page) => ({
+            ...page,
+            comments: page.comments.map((reply) => {
+              if (reply._id === commentId) {
+                return { ...reply, likes: data.likes }
+              }
+              return reply
+            }),
+          }))
+          return { ...oldData, pages: newPages }
+        })
+      }
     },
     onError: (error, { postId, parentCommentId }, context) => {
       showAppToast(error.message || "Failed to update comment like status.", "error")

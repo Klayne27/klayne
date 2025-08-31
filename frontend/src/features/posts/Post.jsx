@@ -55,6 +55,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const isRepost = !!post.repostedFrom
   const sourcePost = post.repostedFrom || post
 
+  const prevLikesCount = useRef(sourcePost.likes?.length)
+  const prevRepostsCount = useRef(sourcePost.repostsCount)
+
   // const sourcePost = isRepost ? post.repostedFrom : post;
   const originalPostOwner = sourcePost?.user
   const repostingUser = isRepost ? post.user : null
@@ -104,7 +107,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       e.target.closest("button") ||
       e.target.closest("img") ||
       e.target.closest("video") ||
-      e.target.closest(".menu-popover") 
+      e.target.closest(".menu-popover")
     ) {
       return
     }
@@ -144,9 +147,37 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     deletePost(sourcePost?._id)
   }
 
+  useEffect(() => {
+    // --- Like Animation Logic ---
+    const currentLikes = sourcePost.likes?.length || 0
+    // Check if the count has actually changed
+    if (prevLikesCount.current !== currentLikes) {
+      setIsAnimatingLike(true) // Trigger animation
+      const timer = setTimeout(() => setIsAnimatingLike(false), 400) // Reset after duration
+
+      // Update the ref to the new value for the next render
+      prevLikesCount.current = currentLikes
+
+      return () => clearTimeout(timer) // Cleanup timer
+    }
+  }, [sourcePost.likes?.length]) // Dependency: only run when likes count changes
+
+  useEffect(() => {
+    // --- Repost Animation Logic ---
+    const currentReposts = sourcePost.repostsCount || 0
+    if (prevRepostsCount.current !== currentReposts) {
+      setIsAnimatingRepost(true)
+      const timer = setTimeout(() => setIsAnimatingRepost(false), 400)
+
+      prevRepostsCount.current = currentReposts
+
+      return () => clearTimeout(timer)
+    }
+  }, [sourcePost.repostsCount]) // Dependency: only run when reposts count changes
+
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e)
-    setIsAnimatingLike(true)
+    // setIsAnimatingLike(true)
 
     if (isLiking) return
     likePost(sourcePost._id)
@@ -155,7 +186,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const handleRepostClick = (e) => {
     handleInteractiveClick(e)
     if (isReposting) return
-    setIsAnimatingRepost(true)
+    // setIsAnimatingRepost(true)
 
     repostPost(sourcePost._id)
   }

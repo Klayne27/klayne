@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { formatPostDate } from "../../utils/date"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { FaTrashCan } from "react-icons/fa6"
@@ -17,7 +17,6 @@ import RepliesSkeleton from "../../components/skeletons/RepliesSkeleton"
 import useFollow from "../users/usersHooks/useFollow"
 import { useBlockUnblockUser } from "../users/usersHooks/useBlockUnblockUser"
 import { MdBlock } from "react-icons/md"
-import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler"
 import CommentItemButtons from "../../components/common/CommentItemButtons"
@@ -27,10 +26,12 @@ import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../ut
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
 
-const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModal }) => {
+const CommentItem = ({ comment, postId, isPostOwner }) => {
   const { authUser } = useAuthUser()
   const isCommentOwner = authUser && authUser._id === comment.user._id
   const isFollowingCommentOwner = authUser?.following.includes(comment.user._id)
+
+  const navigate = useNavigate()
 
   const [showReplyInput, setShowReplyInput] = useState(false)
   const [replyInput, setReplyInput] = useState("")
@@ -40,7 +41,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const [isAnimating, setIsAnimating] = useState(false)
   const [showButton, setShowButton] = useState(false)
 
-  // --- STATES FOR MENTIONS IN REPLIES ---
   const [replyMentionSearchTerm, setReplyMentionSearchTerm] = useState("")
   const debouncedReplyMentionSearchTerm = useDebounce(replyMentionSearchTerm, 300)
   const [showReplyMentionSuggestions, setShowReplyMentionSuggestions] = useState(false)
@@ -48,13 +48,11 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(
     debouncedReplyMentionSearchTerm,
   )
-  // --- END MENTION STATES ---
 
   const { likeComment, isLikingComment } = useLikeComment()
   const { deleteComment, isDeletingComment } = useDeleteComment()
   const { createComment, isCreatingComment } = useCreateComment(postId, comment._id)
 
-  // --- NEW STATE TO CONTROL REPLIES FETCHING/DISPLAY ---
   const [showRepliesSection, setShowRepliesSection] = useState(false) // Controls rendering of the entire replies section
 
   const {
@@ -72,16 +70,10 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   const { setShowMenu } = useDropdownMenu()
 
-  // --- NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
-
-  // Determine if the current authUser is following the original post owner
-  const isFollowingOriginalPostOwner = authUser?.following?.includes(comment.user._id)
-  // Determine if the current authUser has blocked the original post owner
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(comment.user._id)
 
   const isMobile = useIsMobile()
 
-  // --- TEXTAREA HEIGHT ADJUSTMENT ---
   const adjustTextareaHeight = useCallback(() => {
     const textarea = replyInputRef.current // Use the new ref
     if (textarea) {
@@ -92,15 +84,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
 
   useEffect(() => {
     adjustTextareaHeight()
-  }, [replyInput, adjustTextareaHeight]) // Trigger on replyInput change
-  // --- END TEXTAREA HEIGHT ADJUSTMENT ---
+  }, [replyInput, adjustTextareaHeight])
 
   const handleFocus = () => {
     setShowButton(true)
   }
-  // --- END NEW STATE AND EFFECTS FOR TOUCH FEEDBACK ---
 
-  // Intersection Observer for infinite scrolling replies
   useEffect(() => {
     if (
       !observerTarget.current ||
@@ -299,13 +288,6 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
     [createComment, isCreatingComment, replyInput, replySelectedFile],
   )
 
-  // const handleImageClick = (imageUrl, event) => {
-  //   event.stopPropagation()
-  //   if (openImageModal) {
-  //     openImageModal(imageUrl)
-  //   }
-  // }
-
   const handleKeyDown = useCallback(
     (e) => {
       if (e.key === "Enter") {
@@ -396,10 +378,12 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
   return (
     <div className="relative flex flex-col gap-0 border-accent p-2 md:gap-2 md:p-4">
       <div className="flex items-start gap-1 md:gap-3">
-        <Link
+        <div
           to={`/profile/${comment.user.username}`}
-          className="flex-shrink-0"
-          onClick={(e) => e.stopPropagation()}
+          className={`flex-shrink-0 ${!comment.isAnonymous && "cursor-pointer"}`}
+          onClick={(e) => {
+            !comment.isAnonymous ? navigate(`/profile/${comment.user.username}`) : ""
+          }}
         >
           <div className="avatar">
             <div className="w-8 rounded-full md:w-9">
@@ -409,18 +393,20 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
               />
             </div>
           </div>
-        </Link>
+        </div>
 
         <div className="flex min-w-0 flex-grow flex-col">
           <div className="relative flex flex-wrap items-center gap-1">
             <div className="flex flex-wrap items-center gap-1">
-              <Link
+              <div
                 to={`/profile/${comment.user.username}`}
-                className="flex-shrink-0 text-sm font-semibold hover:underline"
-                onClick={(e) => e.stopPropagation()}
+                className={`flex-shrink-0 text-sm font-semibold ${!comment.isAnonymous && "cursor-pointer hover:underline"}`}
+                onClick={(e) => {
+                  !comment.isAnonymous ? navigate(`/profile/${comment.user.username}`) : ""
+                }}
               >
                 {comment.user.fullName}
-              </Link>
+              </div>
               <span className="flex items-center">
                 {comment.user.isVerified && (
                   <img src="/verified2.png" className="size-[17px] flex-shrink-0" alt="Verified" />
@@ -432,17 +418,19 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                     alt="Verified"
                   />
                 )}
-                  {renderHourBadge(comment.user.badges)}
-                  {renderSessionBadge(comment.user.badges)}
-                  {renderStreakBadge(comment.user.badges)}
+                {renderHourBadge(comment.user.badges)}
+                {renderSessionBadge(comment.user.badges)}
+                {renderStreakBadge(comment.user.badges)}
               </span>
-              <Link
+              <div
                 to={`/profile/${comment.user.username}`}
-                className="min-w-0 flex-grow truncate text-sm text-gray-500"
-                onClick={(e) => e.stopPropagation()}
+                className={`min-w-0 flex-grow truncate text-sm text-gray-500 ${!comment.isAnonymous && "cursor-pointer"}`}
+                onClick={(e) => {
+                  !comment.isAnonymous ? navigate(`/profile/${comment.user.username}`) : ""
+                }}
               >
                 @{getDisplayUsername(comment.user.username, isMobile)}
-              </Link>
+              </div>
               {comment.createdAt && (
                 <span className="ml-auto flex flex-shrink-0 items-center justify-center gap-1 text-center text-xs text-gray-500">
                   <span className="text-[7px]">●</span>
@@ -517,7 +505,7 @@ const CommentItem = ({ comment, postId, onReplyClick, isPostOwner, openImageModa
                   </button>
 
                   {/* Scenario 3: Post owner interacting with another user's comment */}
-                  {isPostOwner && (
+                  {isPostOwner || authUser.isAdmin && (
                     <button
                       className="duration transition-200 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 hover:bg-gray-700/30"
                       onClick={handleDeleteCommentClick}

@@ -38,7 +38,7 @@ self.addEventListener("push", (event) => {
   const options = {
     body: payload.body || "Default body message.",
     icon: "/klaynelogo.png",
-    badge: "/kbadge2.png",
+    badge: "/kbadge3.png",
     data: {
       url: payload.url || "/",
     },

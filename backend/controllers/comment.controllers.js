@@ -152,11 +152,29 @@ export const getComments = async (req, res) => {
       return true;
     });
 
+    const finalComments = filteredComments.map((comment) => {
+      if (comment && comment.user && comment.isAnonymous) {
+        const commentObj = comment.toObject();
+
+        commentObj.user = {
+          _id: comment.user._id, // Keep the ID for potential client-side logic
+          username: "Anonymous",
+          fullName: "Anonymous",
+          profileImg: { imageUrl: "/avatar-placeholder.png" }, // Use a placeholder avatar
+          isVerified: false,
+          isGoldVerified: false,
+          badges: [],
+        };
+        return commentObj;
+      }
+      return comment; // Return the original comment if not anonymous
+    });
+
     const totalComments = await Comment.countDocuments(query);
     const hasNextPage = page * limit < totalComments;
     res
       .status(200)
-      .json({ comments: filteredComments.reverse(), hasNextPage, totalComments });
+      .json({ comments: finalComments.reverse(), hasNextPage, totalComments });
   } catch (error) {
     console.error("Error in getComments controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -179,6 +197,15 @@ export const createComment = async (req, res) => {
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
+    }
+
+    let isOwnerCommentingAnonymously = false;
+    if (
+      post.isVent &&
+      post.isAnonymous &&
+      post.user._id.toString() === userId.toString()
+    ) {
+      isOwnerCommentingAnonymously = true;
     }
 
     if (!post.user) {
@@ -230,6 +257,7 @@ export const createComment = async (req, res) => {
       image: newImage?._id || null, // Store the image ID
       parentComment: null,
       mentionedUsers: mentionedUserIds,
+      isAnonymous: isOwnerCommentingAnonymously,
     });
 
     if (newImage) {
@@ -257,7 +285,26 @@ export const createComment = async (req, res) => {
       },
     ]);
 
-    const isAnonymousInteraction = post.isVent && post.isAnonymous;
+    let finalComment = populatedComment;
+    if (finalComment && finalComment.isAnonymous) {
+      const commentObj = finalComment.toObject();
+      commentObj.user = {
+        _id: finalComment.user._id,
+        username: "Anonymous",
+        fullName: "Anonymous",
+        profileImg: { imageUrl: "/avatar-placeholder.png" },
+        isVerified: false,
+        isGoldVerified: false,
+        badges: [],
+      };
+      finalComment = commentObj;
+    }
+
+    const isAnonymousInteraction =
+      post &&
+      post.isVent &&
+      post.isAnonymous &&
+      post.user._id.toString() === userId.toString();
 
     if (post.user && post.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
@@ -289,7 +336,7 @@ export const createComment = async (req, res) => {
     //   await emitUnreadNotificationStatus(mentionedUserId.toString());
     // }
 
-    res.status(201).json(populatedComment);
+    res.status(201).json(finalComment);
   } catch (error) {
     console.error("Error in createComment controller:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
@@ -318,6 +365,17 @@ export const replyToComment = async (req, res) => {
     const post = await Post.findById(postId).populate("user", "blockedUsers blockedBy");
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
+    }
+
+    // 👇 START: ADD THIS LOGIC
+    let isOwnerCommentingAnonymously = false;
+    // Check if the post is an anonymous vent and if the replier is the post owner
+    if (
+      post.isVent &&
+      post.isAnonymous &&
+      post.user._id.toString() === userId.toString()
+    ) {
+      isOwnerCommentingAnonymously = true;
     }
 
     const parentComment = await Comment.findById(parentCommentId).populate(
@@ -368,6 +426,7 @@ export const replyToComment = async (req, res) => {
       image: newImage?._id || null,
       parentComment: parentCommentId,
       mentionedUsers: mentionedUserIds,
+      isAnonymous: isOwnerCommentingAnonymously, // ✅ Use the new flag here
     });
     if (newImage) {
       newImage.parentDocument = newReply._id;
@@ -390,7 +449,11 @@ export const replyToComment = async (req, res) => {
       },
     });
 
-    const isAnonymousInteraction = post.isVent && post.isAnonymous;
+    const isAnonymousInteraction =
+      post &&
+      post.isVent &&
+      post.isAnonymous &&
+      post.user._id.toString() === userId.toString();
 
     if (parentComment.user && parentComment.user._id.toString() !== userId.toString()) {
       await createAndSendNotification({
@@ -467,7 +530,10 @@ export const likeUnlikeComment = async (req, res) => {
 
     const originalPost = await Post.findById(comment.post);
     const isAnonymousInteraction =
-      originalPost && originalPost.isVent && originalPost.isAnonymous;
+      originalPost &&
+      originalPost.isVent &&
+      originalPost.isAnonymous &&
+      originalPost.user.toString() === userId.toString();
 
     if (userLikedComment) {
       comment.likes.pull(userId);
@@ -529,6 +595,8 @@ export const deleteComment = async (req, res) => {
 
     const isCommentOwner = commentToDelete.user._id.toString() === userId.toString();
     const isPostOwner = post.user._id.toString() === userId.toString();
+
+    console.log(post);
 
     if (!isCommentOwner && !isPostOwner) {
       return res

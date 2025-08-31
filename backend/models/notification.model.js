@@ -58,6 +58,10 @@ const notificationSchema = new mongoose.Schema(
         return this.type === "commentReply" && this.commentId !== null;
       },
     },
+    isAnonymousInteraction: {
+      type: Boolean,
+      default: false,
+    },
   },
   { timestamps: true }
 );

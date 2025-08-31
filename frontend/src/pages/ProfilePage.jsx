@@ -88,9 +88,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     setShowDeleteUserModal(true)
   }
 
-  console.log('userprofile', userProfile);
-  console.log('autuser', authUser);
-
   const closeDeleteUserModal = () => {
     setShowDeleteUserModal(false)
   }
@@ -195,8 +192,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const handlePostsFetched = (count) => {
     setUserPostsCount(count)
   }
-
-  console.log(userProfile);
 
   let displayMessage = ""
   let showFullProfileHeader = false

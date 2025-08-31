@@ -21,32 +21,51 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
     onMutate: async ({ text, img }) => {
+      // ... (cancellations)
       await queryClient.cancelQueries({ queryKey: postKeys.details(postId) })
       await queryClient.cancelQueries({ queryKey: postKeys.all })
 
       const previousPostData = queryClient.getQueryData(postKeys.details(postId))
       const previousPostsData = queryClient.getQueryData(postKeys.all)
 
-      const tempId = `optimistic-${Date.now()}-${Math.random()}`
+      // 👇 START: ADD THIS LOGIC
+      // Determine if the optimistic comment should be anonymous
+      const isOwnerCommentingAnonymously =
+        previousPostData?.isAnonymous && previousPostData?.user?._id === currentUser._id
 
+      // Define the user object for the optimistic comment
+      const optimisticUser = isOwnerCommentingAnonymously
+        ? {
+            _id: currentUser._id,
+            username: "Anonymous",
+            fullName: "Anonymous",
+            profileImg: { imageUrl: "/avatar-placeholder.png" },
+            isVerified: false,
+            isGoldVerified: false,
+            badges: [],
+          }
+        : {
+            _id: currentUser._id,
+            username: currentUser.username,
+            fullName: currentUser.fullName,
+            profileImg: currentUser.profileImg,
+            isVerified: currentUser.isVerified,
+            isGoldVerified: currentUser.isGoldVerified,
+            badges: currentUser.badges,
+          }
+      // 👆 END: ADD THIS LOGIC
+
+      const tempId = `optimistic-${Date.now()}-${Math.random()}`
       const optimisticImage = img
         ? {
             _id: `optimistic-img-${Date.now()}-${Math.random()}`,
-            imageUrl: img, // Use the base64 data for the optimistic imageUrl
+            imageUrl: img,
           }
         : null
 
       const newOptimisticComment = {
         _id: tempId,
-        user: {
-          _id: currentUser._id,
-          username: currentUser.username,
-          fullName: currentUser.fullName,
-          profileImg: currentUser.profileImg,
-          isVerified: currentUser.isVerified,
-          isGoldVerified: currentUser.isGoldVerified,
-          badges: currentUser.badges,
-        },
+        user: optimisticUser, // ✅ Use the new optimisticUser object
         post: postId,
         text: text,
         img: img,
@@ -56,6 +75,7 @@ export const useCreateComment = (postId, parentCommentId = null) => {
         repliesCount: 0,
         createdAt: new Date().toISOString(),
         isOptimistic: true,
+        isAnonymous: isOwnerCommentingAnonymously, // ✅ Add the isAnonymous flag
       }
 
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
@@ -142,6 +162,8 @@ export const useCreateComment = (postId, parentCommentId = null) => {
     onSuccess: (newRealComment, variables, context) => {
       showAppToast(parentCommentId ? "Reply added!" : "Comment added!", "success")
 
+      // You can now safely replace the optimistic comment with the server's response.
+      // The server response will have the correct `isAnonymous` flag.
       queryClient.setQueryData(commentsQueryKey, (oldData) => {
         const newPages = oldData?.pages ? [...oldData.pages] : []
         if (newPages.length === 0) {

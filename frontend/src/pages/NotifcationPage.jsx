@@ -97,17 +97,17 @@ const NotificationPage = () => {
   }
 
   const getNotificationMessage = (notification) => {
-    const displayUsername = notification.isAnonymousInteraction
-      ? "Anonymous"
-      : notification.from?.username
+    const displayUsername =
+      notification.isAnonymousInteraction && notification.postId?.user._id === notification.from._id
+        ? "Anonymous"
+        : notification.from?.username
     if (!displayUsername) {
       return "A user"
     }
 
-    const postOwnerDisplayName =
-      notification?.postId?.isVent && notification?.postId?.isAnonymous
-        ? "Anonymous"
-        : notification?.postId?.user?.username
+    const postOwnerDisplayName = notification?.postId?.isAnonymous
+      ? "Anonymous"
+      : notification?.postId?.user?.username
 
     switch (notification.type) {
       case "follow":
@@ -117,9 +117,17 @@ const NotificationPage = () => {
       case "comment":
         return `@${displayUsername} commented on your post.`
       case "commentLike":
-        return `@${displayUsername} liked your comment on ${postOwnerDisplayName}'s post.`
+        if (notification?.postId?.user?.username === authUser.username) {
+          return `@${displayUsername} liked your comment on your post.`
+        } else {
+          return `@${displayUsername} liked your comment on ${postOwnerDisplayName}'s post.`
+        }
       case "commentReply":
-        return `@${displayUsername} replied to your comment on ${postOwnerDisplayName}'s post.`
+        if (notification?.postId?.user?.username === authUser.username) {
+          return `@${displayUsername} replied to your comment on your post.`
+        } else {
+          return `@${displayUsername} replied to your comment on ${postOwnerDisplayName}'s post.`
+        }
       case "repost":
         return `@${displayUsername} reposted your post.`
       case "mention":
@@ -193,6 +201,8 @@ const NotificationPage = () => {
             contentToDisplay = notification.postId
           }
 
+          console.log(notification);
+
           return (
             <div
               className="relative flex cursor-pointer gap-4 border-b border-accent p-4 transition-colors hover:bg-secondary"
@@ -204,7 +214,11 @@ const NotificationPage = () => {
                 <div className="flex items-start gap-2">
                   <div
                     className="avatar cursor-pointer"
-                    onClick={(e) => handleProfileClick(e, notification.from?.username)}
+                    onClick={(e) =>
+                      !notification.isAnonymousInteraction
+                        ? handleProfileClick(e, notification.from?.username)
+                        : ""
+                    }
                   >
                     <div className="w-10 rounded-full">
                       <img
@@ -217,8 +231,12 @@ const NotificationPage = () => {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-1">
                       <span
-                        className="cursor-pointer font-bold hover:underline"
-                        onClick={(e) => handleProfileClick(e, notification.from?.username)}
+                        className={`cursor-pointer font-bold ${!notification.isAnonymousInteraction && "hover:underline"}`}
+                        onClick={(e) =>
+                          !notification.isAnonymousInteraction
+                            ? handleProfileClick(e, notification.from?.username)
+                            : ""
+                        }
                       >
                         {notification.from?.fullName}
                       </span>

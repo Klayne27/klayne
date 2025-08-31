@@ -61,14 +61,16 @@ export const replyToCommentApi = async ({ postId, parentCommentId, text, img }) 
   return data;
 };
 
-export const likeUnlikeCommentApi = async ({ commentId }) => {
+export const likeUnlikeCommentApi = async ({ commentId, isAnonymousLike = false }) => {
   const res = await fetch(`${BASE_URL}/${commentId}/like`, {
     method: "POST",
-  });
-  const data = await res.json();
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ isAnonymousLike }), // <-- The new flag
+  })
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to like/unlike comment");
+    throw new Error(data.error || "Failed to like/unlike comment")
   }
-  return data;
-};
+  return data
+}
 

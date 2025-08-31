@@ -3,7 +3,6 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { postKeys } from "./postKeys"
 import { showAppToast } from "../../../utils/showAppToast"
 
-
 const updatePostRepostStatus = (oldData, postId, userId) => {
   if (!oldData) return oldData
 
@@ -64,15 +63,28 @@ export const useRepostPost = (username) => {
     },
 
     onMutate: async (postId) => {
+      const allActiveQueryKeys = queryClient
+        .getQueryCache()
+        .getAll()
+        .map((query) => query.queryKey)
+
+      // 2. Filter to find only the keys that match our bookmarks pattern.
+      //    This will find ['posts', 'bookmarked', ''] and ['posts', 'bookmarked', 'react'], etc.
+      const bookmarkedKeysToUpdate = allActiveQueryKeys.filter(
+        (key) => Array.isArray(key) && key[0] === "posts" && key[1] === "bookmarked",
+      )
+
+      // 3. Combine our dynamically found keys with the other static keys.
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
         postKeys.list("/api/posts/following"),
         postKeys.list("/api/posts/vent"),
-        postKeys.bookmarked(),
+        ...bookmarkedKeysToUpdate, // Add all found bookmark keys here
+        postKeys.pinned(username),
         postKeys.details(postId),
         postKeys.user(username),
         postKeys.likes(username),
-      ].filter((key) => queryClient.getQueryData(key) !== undefined)
+      ].filter((key) => queryClient.getQueryData(key))
 
       await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
 
@@ -91,7 +103,7 @@ export const useRepostPost = (username) => {
     },
 
     onSuccess: (data) => {
-      // showAppToast(data.message || "Success!", "success")    
+      // showAppToast(data.message || "Success!", "success")
     },
 
     onError: (err, postId, context) => {

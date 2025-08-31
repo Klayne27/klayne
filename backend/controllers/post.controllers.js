@@ -1257,7 +1257,8 @@ export const createPost = async (req, res) => {
       await newPost.save(); // Save again to update the post with the new image ID
     }
 
-    const isAnonymousInteraction = newPost.isVent && newPost.isAnonymous;
+    const isAnonymousInteraction =
+      newPost.isVent && newPost.isAnonymous && newPost.user._id === userId;
 
     if (!newPost.isScheduled) {
       await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
@@ -1394,7 +1395,6 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-      const isAnonymousInteraction = post.isAnonymous;
 
       if (post.user.toString() !== userId.toString()) {
         // ------------------ FIX: Call the unified function ------------------
@@ -1403,7 +1403,6 @@ export const likeUnlikePost = async (req, res) => {
           to: post.user,
           type: "like",
           postId: postId,
-          isAnonymousInteraction,
         });
         // --------------------------------------------------------------------
       }
@@ -1465,11 +1464,13 @@ export const repostPost = async (req, res) => {
         isVent: isOriginalVent,
         isAnonymous: isOriginalAnonymous,
       });
+
       await newRepost.save();
       await Post.updateOne(
         { _id: originalPostId },
         { $addToSet: { repostedBy: userId }, $inc: { repostsCount: 1 } }
       );
+
 
       if (!originalPost.user.equals(userId)) {
         await createAndSendNotification({
@@ -1477,7 +1478,6 @@ export const repostPost = async (req, res) => {
           to: originalPost.user,
           type: "repost",
           postId: originalPostId,
-          isAnonymousInteraction: isOriginalAnonymous,
         });
       }
 

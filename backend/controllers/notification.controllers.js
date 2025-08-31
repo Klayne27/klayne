@@ -56,19 +56,25 @@ export const getNotifications = async (req, res) => {
 
       return true;
     });
-
     const notificationsWithAnonymity = filteredNotifications.map((notif) => {
       const populatedNotif = notif.toObject();
-      if (populatedNotif.isAnonymousInteraction) {
+
+      const isPostOwner =
+        populatedNotif.from?._id?.toString() ===
+        populatedNotif.postId?.user?._id?.toString();
+
+      // You can now use the isPostOwner variable to apply conditional logic.
+      // For example, to decide if the notification should be anonymized.
+      if (isPostOwner && populatedNotif.postId.isAnonymous) {
+        // Only apply anonymity if the user is the post owner AND the post is anonymous
         if (populatedNotif.from) {
-          // Ensure 'from' object exists
           populatedNotif.from.username = "Anonymous";
           populatedNotif.from.fullName = "Anonymous";
-          // Check if profileImg object exists before trying to access imageUrl
+          populatedNotif.from.isGoldVerified = false;
+          populatedNotif.from.isVerified = false;
           if (populatedNotif.from.profileImg) {
             populatedNotif.from.profileImg.imageUrl = "/avatar-placeholder.png";
           } else {
-            // If profileImg is null or undefined, create it
             populatedNotif.from.profileImg = {
               imageUrl: "/avatar-placeholder.png",
             };
