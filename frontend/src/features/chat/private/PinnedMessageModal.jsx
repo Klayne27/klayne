@@ -42,7 +42,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
             <RiPushpinFill size={24} />
             <h2 className="text-xl font-bold">Pinned Messages</h2>
             {pinnedMessages?.length > 0 && (
-              <span className="rounded-full bg-primary px-2 py-1 text-xs text-white">
+              <span className="rounded-full bg-primary px-[9px] py-1 text-xs text-white">
                 {pinnedMessages.length}
               </span>
             )}
