@@ -11,6 +11,7 @@ import { IoClose } from "react-icons/io5"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
 import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
+import useLockBodyScroll from "../hooks/customHooks/useLockBodyScroll"
 
 function StudyLeaderboardPage() {
   const navigate = useNavigate()
@@ -19,6 +20,8 @@ function StudyLeaderboardPage() {
   const [showPreviousWinners, setShowPreviousWinners] = useState(true)
 
   const [isInfoDropdownOpen, setIsInfoDropdownOpen] = useState(false)
+
+  useLockBodyScroll(isInfoDropdownOpen)
 
   const { authUser: currentUser } = useAuthUser()
 
@@ -158,6 +161,26 @@ function StudyLeaderboardPage() {
   }
 
   const date = new Date()
+  const trophies = [
+    {
+      name: "1st - August 2025",
+      src: "/badge-august2025-1st.png",
+      description:
+        "The ultimate prize for a month of unmatched focus. Awarded to the #1 ranked scholar on the August 2025 monthly leaderboard.",
+    },
+    {
+      name: "2nd - August 2025",
+      src: "/badge-august2025-2nd.png",
+      description:
+        "A testament to outstanding effort. Awarded to the #2 ranked scholar on the August 2025 monthly leaderboard.",
+    },
+    {
+      name: "3rd - August 2025",
+      src: "/badge-august2025-3rd.png",
+      description:
+        "Proof of impressive discipline. Awarded to the #3 ranked scholar on the August 2025 monthly leaderboard.",
+    },
+  ]
 
   const currentMonthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(date)
   console.log(previousWinners)
@@ -215,10 +238,10 @@ function StudyLeaderboardPage() {
                 onClick={() => setIsInfoDropdownOpen(false)}
               >
                 <div
-                  className="w-96 rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
+                  className="max-h-[80vh] w-full max-w-lg rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
                   onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the dropdown
                 >
-                  <div className="mb-4 flex w-full items-center justify-between border-b">
+                  <div className="mb-4 flex w-full items-center justify-between border-b border-gray-600 pb-3">
                     <h4 className="text-lg font-bold">Monthly Leaderboard</h4>
                     <span onClick={() => setIsInfoDropdownOpen(false)}>
                       <IoClose size={20} className="cursor-pointer" />
@@ -231,6 +254,30 @@ function StudyLeaderboardPage() {
                       for their hard work.
                     </li>
                   </ul>
+                  <h4 className="mt-5 font-semibold text-white">August 2025 Trophies</h4>
+                  <p className="mt-1">
+                    These limited-edition trophies are awarded at the end of each month to the top
+                    three scholars on the monthly leaderboard.
+                  </p>{" "}
+                  <div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-3">
+                    {trophies.map((trophy, index) => (
+                      <div key={index} className="flex flex-col items-center text-center">
+                        <div className="size-16 md:size-20">
+                          <img
+                            src={trophy.src}
+                            alt={trophy.name}
+                            className="h-full w-full object-contain"
+                          />
+                        </div>
+                        <span className="mt-2 text-[10px] font-medium text-gray-100 sm:text-xs">
+                          {trophy.name}
+                        </span>
+                        <p className="mt-1 text-[8px] text-gray-400 sm:text-[10px]">
+                          {trophy.description}
+                        </p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
               </div>
             )}
