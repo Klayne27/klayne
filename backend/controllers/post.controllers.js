@@ -415,7 +415,7 @@ export const getLikedPosts = async (req, res) => {
       isVerified: 1,
       isGoldVerified: 1,
       badges: 1,
-      preferredBadge: 1
+      preferredBadge: 1,
     };
 
     const repostedPostProjection = {
@@ -1397,7 +1397,6 @@ export const likeUnlikePost = async (req, res) => {
       await User.updateOne({ _id: userId }, { $push: { likedPosts: postId } });
       await post.save();
 
-
       if (post.user.toString() !== userId.toString()) {
         // ------------------ FIX: Call the unified function ------------------
         await createAndSendNotification({
@@ -1472,7 +1471,6 @@ export const repostPost = async (req, res) => {
         { _id: originalPostId },
         { $addToSet: { repostedBy: userId }, $inc: { repostsCount: 1 } }
       );
-
 
       if (!originalPost.user.equals(userId)) {
         await createAndSendNotification({
@@ -2078,7 +2076,7 @@ export const getVentPosts = async (req, res) => {
                 isVerified: "$author.isVerified",
                 isGoldVerified: "$author.isGoldVerified",
                 badges: "$author.badges",
-                preferredBadge: "$author.preferredBadge"
+                preferredBadge: "$author.preferredBadge",
               },
             },
           },
@@ -2095,5 +2093,82 @@ export const getVentPosts = async (req, res) => {
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.error("Error in getVentPosts controller: ", error);
+  }
+};
+
+
+export const editPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { text } = req.body;
+    const userId = req.user._id;
+
+    if (!text || text.trim() === "") {
+      return res.status(400).json({ error: "Post cannot be empty." });
+    }
+
+    const post = await Post.findById(id);
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Authorization check: only the author can edit the post
+    if (post.user.toString() !== userId.toString()) {
+      return res.status(403).json({ error: "You are not authorized to edit this post." });
+    }
+
+    // Check if the new text is the same as the old text
+    if (post.text === text) {
+      // Re-populate and return the post if there are no changes
+      const populatedPost = await Post.findById(post._id)
+        .populate({
+          path: "user",
+          select: "username fullName isVerified isGoldVerified badges preferredBadge",
+          populate: { path: "profileImg", select: "imageUrl" },
+        })
+        .populate({
+          path: "repostedFrom",
+          populate: {
+            path: "user",
+            select: "username fullName isVerified isGoldVerified badges preferredBadge",
+            populate: { path: "profileImg", select: "imageUrl" },
+          },
+        });
+      return res.status(200).json(populatedPost);
+    }
+
+    // Save the old text to the edit history
+    post.editHistory.push({ text: post.text });
+
+    // Update the post with the new text and update the timestamp
+    post.text = text;
+    post.updatedAt = new Date();
+
+    // You may also want to update mentions
+    post.mentionedUsers = await extractAndValidateMentions(text);
+
+    await post.save();
+
+    // After saving, find the post again and populate it
+    const populatedPost = await Post.findById(post._id)
+      .populate({
+        path: "user",
+        select: "username fullName isVerified isGoldVerified badges preferredBadge",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "repostedFrom",
+        populate: {
+          path: "user",
+          select: "username fullName isVerified isGoldVerified badges preferredBadge",
+          populate: { path: "profileImg", select: "imageUrl" },
+        },
+      });
+
+    res.status(200).json(populatedPost);
+  } catch (error) {
+    console.error("Error in editPost controller:", error);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -213,3 +213,18 @@ export const createVentPostApi = async ({ text, img, video, isAnonymous }) => {
   }
   return response.json()
 }
+
+export const editPostApi = async ({ postId, postData }) => {
+  const res = await fetch(`/api/posts/edit/${postId}`, {
+    method: "PUT",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify(postData),
+  })
+  const data = await res.json()
+
+  if (!res.ok) throw new Error("Failed to edit post")
+
+  return data
+}

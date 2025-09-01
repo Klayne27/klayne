@@ -23,11 +23,13 @@ import {
   createVentPost,
   getVentPosts,
   markFeedVentPostsAsRead,
+  editPost
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
 
 router.post("/create", protectRoute, createPost);
+router.put("/edit/:id", protectRoute, editPost)
 router.delete("/:id", protectRoute, deletePost);
 
 router.post("/like/:id", protectRoute, likeUnlikePost);

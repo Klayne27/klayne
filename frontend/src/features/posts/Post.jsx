@@ -31,6 +31,7 @@ import { getDisplayUsername } from "../../utils/truncateText"
 import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
 import { useProfileCardHover } from "../../hooks/customHooks/useProfileCardHover.js"
 import ProfileInfoModal from "../../components/common/ProfileInfoModal.jsx"
+import EditPostModal from "./EditPostModal.jsx"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -42,6 +43,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const [isAnimatingPin, setIsAnimatingPin] = useState(false) // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false) // NEW
   const [isAnimatingComment, setIsAnimatingComment] = useState(false)
+  const [showEditPostModal, setShowEditPostModal] = useState(false)
 
   const { pathname } = useLocation()
 
@@ -294,7 +296,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const isFollowingOriginalPostOwner = authUser?.following?.includes(originalPostOwner._id)
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id)
 
-  
   return (
     <div
       className={`${
@@ -470,14 +471,23 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                       onClick={(e) => e.stopPropagation()} // Prevent closing when clicking inside the menu
                     >
                       {isMyOriginalPost ? (
-                        <button
-                          className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-                          onClick={handleDeletePostClick}
-                          disabled={isDeleting}
-                        >
-                          {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
-                          Delete Post
-                        </button>
+                        <>
+                          <button
+                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                            onClick={handleDeletePostClick}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
+                            Delete Post
+                          </button>
+
+                          <button
+                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                            onClick={() => setShowEditPostModal(true)}
+                          >
+                            Edit
+                          </button>
+                        </>
                       ) : (
                         <>
                           <button
@@ -733,6 +743,14 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
             />
           )}
         </div>
+      )}
+
+      {showEditPostModal && (
+        <EditPostModal
+          isOpen={showEditPostModal}
+          onClose={() => setShowEditPostModal(false)}
+          post={post}
+        />
       )}
     </div>
   )
