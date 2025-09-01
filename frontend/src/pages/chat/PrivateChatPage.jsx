@@ -19,8 +19,6 @@ const PrivateChatPage = () => {
 
   const isMobile = useIsMobile()
 
-  usePrivateChatStore()
-
   const { conversations, isLoadingConversations, errorConversations } = useGetConversations()
 
   useEffect(() => {

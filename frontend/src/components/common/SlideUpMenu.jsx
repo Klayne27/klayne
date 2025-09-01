@@ -1,12 +1,45 @@
 import React, { useState, useRef, useEffect, useCallback } from "react"
+import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
   const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const [isRendered, setIsRendered] = useState(false)
+  const [visualState, setVisualState] = useState("closed")
+
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
+
+  useLockBodyScroll(isRendered) // Lock scroll when rendered, not just open
+
+  useEffect(() => {
+    let mountTimer
+    let animationTimer
+
+    if (isOpen) {
+      // 1. Mount the component
+      setIsRendered(true)
+      // 2. After a tiny delay, trigger the animation
+      // This gives React time to render the component in its "closed" state first.
+      mountTimer = setTimeout(() => {
+        setVisualState("open")
+      }, 10) // 10ms is enough for the browser to catch up
+    } else {
+      // 1. Trigger the closing animation
+      setVisualState("closed")
+      // 2. After the animation duration, unmount the component
+      animationTimer = setTimeout(() => {
+        setIsRendered(false)
+      }, 300) // Must match your CSS transition duration
+    }
+
+    return () => {
+      clearTimeout(mountTimer)
+      clearTimeout(animationTimer)
+    }
+  }, [isOpen])
 
   useEffect(() => {
     const visualViewport = window.visualViewport
@@ -15,10 +48,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     const handleResize = () => {
       const newKeyboardHeight = window.innerHeight - visualViewport.height
       setKeyboardHeight(Math.max(0, newKeyboardHeight))
-
-      if (newKeyboardHeight > 50 && isOpen) {
-        onClose()
-      }
     }
 
     visualViewport.addEventListener("resize", handleResize)
@@ -27,7 +56,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     return () => {
       visualViewport.removeEventListener("resize", handleResize)
     }
-  }, [isOpen, onClose])
+  }, [])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {
@@ -88,6 +117,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }, 0)
   }
 
+  if (!isRendered) {
+    return null
+  }
+
   return (
     <>
       {isOpen && <div className="fixed inset-0 z-40 bg-black/50" onClick={handleBackdropClick} />}
@@ -95,7 +128,9 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
         onClick={(e) => e.stopPropagation()}
         ref={menuRef}
         style={{ bottom: `${keyboardHeight}px` }}
-        className={`fixed left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${isOpen ? "translate-y-0" : "translate-y-full"}`}
+        className={`fixed left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
+          visualState === "open" ? "translate-y-0" : "translate-y-full"
+        }`}
       >
         <div
           className="flex flex-col items-center rounded-t-3xl bg-base-200"
