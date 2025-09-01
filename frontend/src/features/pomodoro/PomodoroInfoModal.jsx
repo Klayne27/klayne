@@ -47,6 +47,27 @@ const PomodoroInfoModal = ({ onClose }) => {
     },
   ]
 
+  const trophies = [
+    {
+      name: "1st - August 2025",
+      src: "/badge-august2025-1st.png",
+      description:
+        "The ultimate prize for a month of unmatched focus. Awarded to the #1 ranked scholar on the August 2025 leaderboard.",
+    },
+    {
+      name: "2nd - August 2025",
+      src: "/badge-august2025-2nd.png",
+      description:
+        "A testament to outstanding effort. Awarded to the #2 ranked scholar on the August 2025 leaderboard.",
+    },
+    {
+      name: "3rd - August 2025",
+      src: "/badge-august2025-3rd.png",
+      description:
+        "Proof of impressive discipline. Awarded to the #3 ranked scholar on the August 2025 leaderboard.",
+    },
+  ]
+
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
@@ -133,6 +154,30 @@ const PomodoroInfoModal = ({ onClose }) => {
                   </span>
                   <p className="mt-1 text-[8px] text-gray-400 sm:text-[10px]">
                     {badge.description}
+                  </p>
+                </div>
+              ))}
+            </div>
+            <h4 className="mt-5 font-semibold text-white">August 2025 Trophies</h4>
+            <p className="mt-1">
+              These limited-edition trophies are awarded at the end of each month to the top three
+              scholars on the monthly leaderboard.
+            </p>{" "}
+            <div className="mt-4 grid grid-cols-3 gap-4 md:grid-cols-3">
+              {trophies.map((trophy, index) => (
+                <div key={index} className="flex flex-col items-center text-center">
+                  <div className="size-16 md:size-20">
+                    <img
+                      src={trophy.src}
+                      alt={trophy.name}
+                      className="h-full w-full object-contain"
+                    />
+                  </div>
+                  <span className="mt-2 text-[10px] font-medium text-gray-100 sm:text-xs">
+                    {trophy.name}
+                  </span>
+                  <p className="mt-1 text-[8px] text-gray-400 sm:text-[10px]">
+                    {trophy.description}
                   </p>
                 </div>
               ))}
