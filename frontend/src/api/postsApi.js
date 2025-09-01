@@ -228,3 +228,15 @@ export const editPostApi = async ({ postId, postData }) => {
 
   return data
 }
+
+export const getPostHistoryApi = async (postId) => {
+  const res = await fetch(`/api/posts/history/${postId}`)
+
+  const data = await res.json()
+
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch post history.")
+  }
+
+  return data
+}

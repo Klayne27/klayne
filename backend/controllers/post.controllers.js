@@ -323,6 +323,7 @@ export const getAllPosts = async (req, res) => {
           updatedAt: 1,
           user: 1,
           repostedFrom: 1,
+          editHistory: 1, // ADD THIS LINE
         },
       },
     ]);
@@ -2169,6 +2170,24 @@ export const editPost = async (req, res) => {
     res.status(200).json(populatedPost);
   } catch (error) {
     console.error("Error in editPost controller:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getPostHistory = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const post = await Post.findById(id).select("editHistory"); // Only fetch the editHistory field
+
+    if (!post) {
+      return res.status(404).json({ error: "Post not found" });
+    }
+
+    // Return only the edit history array
+    res.status(200).json(post.editHistory);
+  } catch (error) {
+    console.error("Error in getPostHistory controller:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

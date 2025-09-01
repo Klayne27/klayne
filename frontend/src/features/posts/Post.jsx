@@ -31,7 +31,9 @@ import { getDisplayUsername } from "../../utils/truncateText"
 import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
 import { useProfileCardHover } from "../../hooks/customHooks/useProfileCardHover.js"
 import ProfileInfoModal from "../../components/common/ProfileInfoModal.jsx"
-import EditPostModal from "./EditPostModal.jsx"
+import PostModal from "./PostModal.jsx"
+import { useGetPostHistory } from "./postsHooks/useGetPostHistory.js"
+import EditHistoryModal from "./EditHistoryModal.jsx"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -43,7 +45,10 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const [isAnimatingPin, setIsAnimatingPin] = useState(false) // NEW
   const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false) // NEW
   const [isAnimatingComment, setIsAnimatingComment] = useState(false)
-  const [showEditPostModal, setShowEditPostModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false) // Local state for the modal
+  const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+
+  const { setEditPostModalData } = useAppStore()
 
   const { pathname } = useLocation()
 
@@ -88,6 +93,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   )
 
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
+  const hasEditHistory = sourcePost.editHistory && sourcePost.editHistory.length > 0
+
+  console.log("sourcepost", post)
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
@@ -102,6 +110,12 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const displayTimestamp = sourcePost.publishedAt ? sourcePost.publishedAt : sourcePost.createdAt
 
   const formattedDate = formatPostDate(displayTimestamp)
+
+  const { history, isLoadingHistory, isHistoryError, historyError } = useGetPostHistory(
+    isHistoryModalOpen ? post._id : null,
+  ) // Only fetch if modal is open
+
+  console.log(history)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -127,6 +141,10 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       return
     }
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
+  }
+
+  const handleEditClick = () => {
+    setEditPostModalData(sourcePost)
   }
 
   const handleMouseDown = (e) => {
@@ -448,6 +466,11 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <span>·</span>
                 <span className="shrink-0">{formattedDate}</span>{" "}
               </span>
+              {/* {hasEditHistory && (
+                <div className="absolute right-2 top-2 text-xs text-slate-500">Edited</div>
+              )} */}
+
+              {/* Button to view history, visible to all users */}
             </div>
 
             {isMyOriginalPost && (
@@ -483,7 +506,11 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
                           <button
                             className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-                            onClick={() => setShowEditPostModal(true)}
+                            onClick={(e) => {
+                              handleInteractiveClick(e) // Keep your existing handler
+                              setShowEditModal(true) // Open the modal
+                              setShowMenu(false) // Close the dropdown menu
+                            }}
                           >
                             Edit
                           </button>
@@ -559,6 +586,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
             )}
             {post.pollOptions && post.pollOptions.length > 0 && <PollDisplay post={post} />}
           </div>
+
           <div className="mt-3 w-2/3">
             <div className="flex justify-between">
               <div
@@ -745,11 +773,20 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
         </div>
       )}
 
-      {showEditPostModal && (
-        <EditPostModal
-          isOpen={showEditPostModal}
-          onClose={() => setShowEditPostModal(false)}
-          post={post}
+      {isHistoryModalOpen && (
+        <EditHistoryModal
+          isOpen={isHistoryModalOpen}
+          onClose={() => setIsHistoryModalOpen(false)}
+          history={history}
+        />
+      )}
+
+      {showEditModal && (
+        <PostModal
+          mode="edit"
+          editPost={sourcePost} // Pass the correct post data
+          title="Edit Your Post"
+          onClose={() => setShowEditModal(false)} // Close the modal and reset state
         />
       )}
     </div>

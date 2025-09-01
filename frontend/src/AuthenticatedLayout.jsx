@@ -1,4 +1,4 @@
-import {  useLocation, Route, Routes } from "react-router-dom"
+import { useLocation, Route, Routes } from "react-router-dom"
 import { lazy, useState, Suspense } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
@@ -38,9 +38,9 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")
   const isPublicChatPage = pathname.includes("/public-chat")
-  const { showCreatePostModal, setShowCreatePostModal } = useAppStore()
+  const { showCreatePostModal, setShowCreatePostModal } =
+    useAppStore()
 
-  
   const [feedType, setFeedType] = useState("posts")
 
   const shouldHideSidePanels =
@@ -92,8 +92,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />
-              <Route path="/study-dashboard/settings" element={<GoalsPage /> } />
-               <Route path="/todos" element={<TodoPageLayout />}>
+              <Route path="/study-dashboard/settings" element={<GoalsPage />} />
+              <Route path="/todos" element={<TodoPageLayout />}>
                 <Route index element={<MyTodoListsPage />} />
                 <Route path="following" element={<FollowingListsPage />} />
                 <Route path="public" element={<PublicListsPage />} />

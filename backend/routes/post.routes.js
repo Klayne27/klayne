@@ -23,14 +23,16 @@ import {
   createVentPost,
   getVentPosts,
   markFeedVentPostsAsRead,
-  editPost
+  editPost,
+  getPostHistory,
 } from "../controllers/post.controllers.js";
 
 const router = express.Router();
 
 router.post("/create", protectRoute, createPost);
-router.put("/edit/:id", protectRoute, editPost)
+router.put("/edit/:id", protectRoute, editPost);
 router.delete("/:id", protectRoute, deletePost);
+router.get("/history/:id", protectRoute, getPostHistory); // NEW ROUTE for getting edit history
 
 router.post("/like/:id", protectRoute, likeUnlikePost);
 router.post("/repost/:postId", protectRoute, repostPost);
@@ -58,6 +60,5 @@ router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts
 
 router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);
 router.post("/mark-as-read/vent", protectRoute, markFeedVentPostsAsRead);
-
 
 export default router;

@@ -30,6 +30,7 @@ import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
 import { RiLockFill } from "react-icons/ri"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
+import PostModal from "../features/posts/PostModal.jsx"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -66,6 +67,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     isLoading: isLoadingPinnedPosts,
     isRefetching: isRefetchingPinnedPosts,
   } = useGetPinnedPosts(username)
+
+  const { editPostModalData, closeEditPostModal } = useAppStore()
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
@@ -581,6 +584,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             comments, likes, messages, and followers."
           confirmButtonText="Delete Permanently"
           danger={true}
+        />
+      )}
+
+      {editPostModalData && (
+        <PostModal
+          mode="edit"
+          editPost={editPostModalData}
+          title="Edit Your Post"
+          onClose={closeEditPostModal}
         />
       )}
     </>

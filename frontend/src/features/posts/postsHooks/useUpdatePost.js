@@ -3,14 +3,12 @@ import { editPostApi } from "../../../api/postsApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { postKeys } from "./postKeys"
 
-export const useEditPost = () => {
+export const useUpdatePost = () => {
   const queryClient = useQueryClient()
 
-  const { mutate: editPost, isPending: isEditingPost } = useMutation({
+  const { mutate: updatePost, isPending: isUpdatingPost } = useMutation({
     mutationFn: editPostApi,
     onSuccess: (data) => {
-        console.log(data);
-
       // Optionally, you can also update the specific post in the cache for a more performant update
       queryClient.invalidateQueries(postKeys.details(data._id))
 
@@ -21,5 +19,5 @@ export const useEditPost = () => {
     },
   })
 
-  return { editPost, isEditingPost }
+  return { updatePost, isUpdatingPost }
 }

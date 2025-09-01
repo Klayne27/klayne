@@ -4,6 +4,8 @@ import { useEffect, useRef, useCallback } from "react"
 import { useGetPosts } from "./postsHooks/useGetPosts"
 import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 import { TbGhost2 } from "react-icons/tb"
+import { useAppStore } from "../../store/useAppStore"
+import EditPostModal from "./EditPostModal"
 
 const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoadingPinnedPosts }) => {
   const {
@@ -19,6 +21,8 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
     totalLikedPostsCount,
     message,
   } = useGetPosts({ feedType, username })
+
+  const { setShowEditPostModal, showEditPostModal } = useAppStore()
 
   const { combinedPosts, filteredPostsForRender } = useCombinedPosts({
     posts,
@@ -124,6 +128,8 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
 
       {filteredPostsForRender.map((post, index) => {
         const elementRef = filteredPostsForRender.length === index + 1 ? lastPostElementRef : null
+
+
         return (
           <div ref={elementRef} key={post._id}>
             <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
