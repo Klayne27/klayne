@@ -20,7 +20,7 @@ const MobileMessageActionsSlideUp = ({
   handleOpenEmojiPickerPopover,
   onOpenSlideUpReactionsMenu,
 }) => {
-  const quickReactions = ["❤️", "👍", "😂", "😢", "😠"]
+  const quickReactions = ["❤️", "👍", "👎", "😂", "😭", "🫂"]
   const hasReactions = message.reactions.length > 0
 
   const handleAction = (action) => {
@@ -30,13 +30,14 @@ const MobileMessageActionsSlideUp = ({
 
   return (
     <SlideUpMenu isOpen={isOpen} onClose={onClose}>
-      <SlideUpMenuContent className="flex w-full flex-col gap-5 px-4">
-        <div className="flex items-center justify-around">
+      <SlideUpMenuContent className="mb-2 flex w-full flex-col gap-5 px-4">
+        <div className="flex items-center justify-between mt-4 ">
           {quickReactions.map((emoji) => (
-            <div className="rounded-full bg-secondary" key={emoji}>
+            <div key={emoji} className="rounded-full bg-secondary">
               <button
                 onClick={() => handleAction(() => onReactionClick(message._id, emoji))}
-                className="transform p-2 text-xl transition-transform hover:scale-110"
+                // Use a consistent size for the button and font
+                className="flex size-10 transform items-center justify-center text-xl transition-transform hover:scale-110"
               >
                 {emoji}
               </button>
@@ -46,9 +47,11 @@ const MobileMessageActionsSlideUp = ({
             <button
               ref={moreEmojisButtonRef}
               onClick={(e) => handleOpenEmojiPickerPopover(e)}
-              className="transform p-2 text-xl text-slate-500 transition-transform hover:scale-110"
+              // Use a consistent size and align the icon correctly
+              className="flex size-10 transform items-center justify-center text-slate-500 transition-transform hover:scale-110"
             >
-              <PiSmileyFill className="size-7" />
+              {/* Set the icon size directly */}
+              <PiSmileyFill className="size-6" />
             </button>
           </div>
         </div>
@@ -91,16 +94,16 @@ const MobileMessageActionsSlideUp = ({
             </>
           )}
         </div>
-        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
-          {isSentByCurrentUser && (
+        {isSentByCurrentUser && (
+          <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
             <button
               onClick={() => handleAction(onDeleteOwnMessage)}
               className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
             >
               <FaTrashCan /> <span>Delete Message</span>
             </button>
-          )}
-        </div>
+          </div>
+        )}
       </SlideUpMenuContent>
     </SlideUpMenu>
   )

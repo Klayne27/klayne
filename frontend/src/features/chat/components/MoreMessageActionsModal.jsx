@@ -89,7 +89,7 @@ function MoreMessageActionsModal({
             onClick={onCopyMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
-            Copy Text
+            Copy Message
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
