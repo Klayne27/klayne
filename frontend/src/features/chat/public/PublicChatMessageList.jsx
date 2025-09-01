@@ -172,6 +172,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     e.stopPropagation()
     setShowMoreActionsModal(false)
     setShowSlideUpReactionsMenu(true)
+    closeSlideMenu()
   }
 
   const handleCloseViewReactionsModal = () => {
