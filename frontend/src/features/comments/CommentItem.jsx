@@ -24,7 +24,7 @@ import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../components/common/DropdownMenu"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
-import { getBadgeIcon } from "../../utils/renderBadges"
+import { getBadgeIcon } from "../../utils/badgeUtils"
 
 const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) => {
   const { authUser } = useAuthUser()
@@ -369,8 +369,6 @@ const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) =>
       return () => clearTimeout(timer)
     }
   }, [isAnimating])
-
-  console.log(comment)
 
   if (!comment || !comment.user) {
     console.warn("Comment or comment user not populated:", comment)

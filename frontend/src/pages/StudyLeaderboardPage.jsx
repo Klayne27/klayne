@@ -183,7 +183,6 @@ function StudyLeaderboardPage() {
   ]
 
   const currentMonthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(date)
-  console.log(previousWinners)
 
   if (isLoading) {
     return (
