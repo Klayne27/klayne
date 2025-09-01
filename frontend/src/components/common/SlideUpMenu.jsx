@@ -8,7 +8,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
 
-
   useEffect(() => {
     const visualViewport = window.visualViewport
     if (!visualViewport) return
@@ -16,6 +15,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     const handleResize = () => {
       const newKeyboardHeight = window.innerHeight - visualViewport.height
       setKeyboardHeight(Math.max(0, newKeyboardHeight))
+
+      if (newKeyboardHeight > 50 && isOpen) {
+        onClose()
+      }
     }
 
     visualViewport.addEventListener("resize", handleResize)
@@ -24,7 +27,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     return () => {
       visualViewport.removeEventListener("resize", handleResize)
     }
-  }, [])
+  }, [isOpen, onClose])
 
   useEffect(() => {
     if (!isOpen && menuRef.current) {

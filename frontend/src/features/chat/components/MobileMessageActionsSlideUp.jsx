@@ -1,5 +1,5 @@
 import { HiOutlineReply } from "react-icons/hi"
-import SlideUpMenu from "../../../components/common/SlideUpMenu"
+import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
 import { MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaTrashCan } from "react-icons/fa6"
@@ -30,7 +30,7 @@ const MobileMessageActionsSlideUp = ({
 
   return (
     <SlideUpMenu isOpen={isOpen} onClose={onClose}>
-      <div className="flex w-full flex-col gap-5 px-4">
+      <SlideUpMenuContent className="flex w-full flex-col gap-5 px-4">
         <div className="flex items-center justify-around">
           {quickReactions.map((emoji) => (
             <div className="rounded-full bg-secondary" key={emoji}>
@@ -79,7 +79,6 @@ const MobileMessageActionsSlideUp = ({
           >
             <IoCopy /> <span>Copy Message</span>
           </button>
-
           {hasReactions && (
             <>
               <div className="h-[1px] bg-accent"></div>
@@ -87,8 +86,7 @@ const MobileMessageActionsSlideUp = ({
                 onClick={onOpenSlideUpReactionsMenu}
                 className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
               >
-                <PiSmileyFill size={20} />
-                View Reactions
+                <PiSmileyFill size={20} /> View Reactions
               </button>
             </>
           )}
@@ -103,7 +101,7 @@ const MobileMessageActionsSlideUp = ({
             </button>
           )}
         </div>
-      </div>
+      </SlideUpMenuContent>
     </SlideUpMenu>
   )
 }
