@@ -31,7 +31,7 @@ const MobileMessageActionsSlideUp = ({
   return (
     <SlideUpMenu isOpen={isOpen} onClose={onClose}>
       <SlideUpMenuContent className="mb-2 flex w-full flex-col gap-5 px-4">
-        <div className="flex items-center justify-between mt-4 ">
+        <div className="flex items-center justify-between mt-2">
           {quickReactions.map((emoji) => (
             <div key={emoji} className="rounded-full bg-secondary">
               <button
