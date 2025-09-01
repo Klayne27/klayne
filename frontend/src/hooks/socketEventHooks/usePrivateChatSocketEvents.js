@@ -4,6 +4,7 @@ import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useSocket } from "../../context/SocketContext"
 import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
 import { conversationKeys } from "../../features/chat/private/privateChatHooks/conversationKeys"
+import { showAppToast } from "../../utils/showAppToast"
 
 export const usePrivateChatSocketEvents = (
   conversationId,
@@ -16,38 +17,38 @@ export const usePrivateChatSocketEvents = (
   const { authUser: currentUser } = useAuthUser()
   const currentUserId = currentUser?._id
 
-const handleMessagesSeen = useCallback(
-  ({ conversationId: seenConversationId, readerId, messageCount }) => {
-    if (seenConversationId.toString() === conversationId?.toString()) {
-      queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
-        if (!oldData) return oldData
+  const handleMessagesSeen = useCallback(
+    ({ conversationId: seenConversationId, readerId, messageCount }) => {
+      if (seenConversationId.toString() === conversationId?.toString()) {
+        queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
+          if (!oldData) return oldData
 
-        let updatedCount = 0
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((msg) => {
-            if (
-              msg.sender &&
-              msg.sender._id.toString() === currentUserId.toString() &&
-              !msg.seen &&
-              !msg.isOptimistic
-            ) {
-              updatedCount++
-              return { ...msg, seen: true }
-            }
-            return msg
-          }),
-        )
+          let updatedCount = 0
+          const updatedPages = oldData.pages.map((page) =>
+            page.map((msg) => {
+              if (
+                msg.sender &&
+                msg.sender._id.toString() === currentUserId.toString() &&
+                !msg.seen &&
+                !msg.isOptimistic
+              ) {
+                updatedCount++
+                return { ...msg, seen: true }
+              }
+              return msg
+            }),
+          )
 
-        // Only update if we actually changed some messages
-        if (updatedCount > 0) {
-          return { ...oldData, pages: updatedPages }
-        }
-        return oldData
-      })
-    }
-  },
-  [conversationId, queryClient, currentUserId],
-)
+          // Only update if we actually changed some messages
+          if (updatedCount > 0) {
+            return { ...oldData, pages: updatedPages }
+          }
+          return oldData
+        })
+      }
+    },
+    [conversationId, queryClient, currentUserId],
+  )
 
   const handleMessageDeleted = useCallback(
     ({ messageId, conversationId: deletedConversationId }) => {
@@ -130,19 +131,85 @@ const handleMessagesSeen = useCallback(
         return
       }
 
-      queryClient.setQueryData(messageKeys.privateMessages(updatedMessage.conversationId), (oldData) => {
-        if (!oldData) return oldData
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
-        )
-        return { ...oldData, pages: updatedPages }
-      })
+      queryClient.setQueryData(
+        messageKeys.privateMessages(updatedMessage.conversationId),
+        (oldData) => {
+          if (!oldData) return oldData
+          const updatedPages = oldData.pages.map((page) =>
+            page.map((message) => (message._id === updatedMessage._id ? updatedMessage : message)),
+          )
+          return { ...oldData, pages: updatedPages }
+        },
+      )
 
       if (handleReactionAdded) {
         handleReactionAdded(updatedMessage._id)
       }
     },
     [queryClient, handleReactionAdded, currentUser?._id],
+  )
+
+  const handlePinnedMessage = useCallback(
+    (newPinData) => {
+
+      // Strict validation of the incoming data structure
+      if (
+        !newPinData ||
+        !newPinData.pinnedBy ||
+        !newPinData.message ||
+        !newPinData.pinnedAt ||
+        !newPinData.pinnedBy._id ||
+        !newPinData.pinnedBy.username
+      ) {
+        console.error("Invalid or incomplete pin data structure received:", newPinData)
+        return
+      }
+
+      // Validate ObjectId format
+      const isValidMessageId = /^[0-9a-fA-F]{24}$/.test(newPinData.message)
+      const isValidPinnedById = /^[0-9a-fA-F]{24}$/.test(newPinData.pinnedBy._id)
+
+      if (!isValidMessageId || !isValidPinnedById) {
+        console.error("Invalid ObjectId format in pin data:", {
+          messageId: newPinData.message,
+          pinnedById: newPinData.pinnedBy._id,
+        })
+        return
+      }
+
+      // Update the query cache for pinned messages
+      queryClient.setQueryData(messageKeys.pinned(conversationId), (oldData) => {
+        const existingPins = oldData || []
+
+        // Check for duplicates using string comparison
+        const isAlreadyPinned = existingPins.some(
+          (pin) => pin && pin.message && pin.message.toString() === newPinData.message.toString(),
+        )
+
+        if (isAlreadyPinned) {
+          console.log("Pin already exists, skipping duplicate")
+          return existingPins
+        }
+
+        // Create a properly structured pin object
+        const normalizedPinData = {
+          message: newPinData.message,
+          pinnedBy: {
+            _id: newPinData.pinnedBy._id,
+            username: newPinData.pinnedBy.username,
+            fullName: newPinData.pinnedBy.fullName || newPinData.pinnedBy.username,
+          },
+          pinnedAt: newPinData.pinnedAt,
+        }
+
+        console.log("Adding new pin to cache:", normalizedPinData)
+        return [...existingPins, normalizedPinData]
+      })
+
+      // Also show a success toast
+      showAppToast(`Message pinned by ${newPinData.pinnedBy.username}`, "success")
+    },
+    [queryClient, conversationId],
   )
 
   useEffect(() => {
@@ -161,6 +228,7 @@ const handleMessagesSeen = useCallback(
     socket.on("messageEdited", handleMessageEdited)
     socket.on("conversationUpdated", handleConversationUpdated)
     socket.on("messageReacted", handleMessageReacted)
+    socket.on("pinnedMessage", handlePinnedMessage)
 
     return () => {
       socket.emit("leaveConversation", conversationId)
@@ -172,6 +240,7 @@ const handleMessagesSeen = useCallback(
       socket.off("messageEdited", handleMessageEdited)
       socket.off("conversationUpdated", handleConversationUpdated)
       socket.off("messageReacted", handleMessageReacted)
+      socket.off("pinnedMessage", handlePinnedMessage)
     }
   }, [
     socket,
@@ -183,5 +252,6 @@ const handleMessagesSeen = useCallback(
     handleMessageEdited,
     handleConversationUpdated,
     handleMessageReacted,
+    handlePinnedMessage,
   ])
 }

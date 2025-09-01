@@ -98,9 +98,10 @@ export const getMessagesByConversationId = async (req, res) => {
       .limit(parseInt(limit))
       .populate({
         path: "sender",
-        select: "username fullName isVerified isGoldVerified badges preferredBadge",
+        select:
+          "username fullName isVerified isGoldVerified badges preferredBadge followers following createdAt",
         populate: {
-          path: "profileImg",
+          path: "profileImg coverImg",
           select: "imageUrl",
         },
       })
@@ -109,9 +110,10 @@ export const getMessagesByConversationId = async (req, res) => {
         select: "sender text img",
         populate: {
           path: "sender",
-          select: "username fullName isVerified isGoldVerified badges preferredBadge",
+          select:
+            "username fullName isVerified isGoldVerified badges preferredBadge followers following createdAt",
           populate: {
-            path: "profileImg",
+            path: "profileImg coverImg",
             select: "imageUrl",
           },
         },
@@ -168,6 +170,10 @@ export const getConversations = async (req, res) => {
           path: "profileImg",
           select: "imageUrl",
         },
+      })
+      .populate({
+        path: "pinnedMessages.pinnedBy",
+        select: "username fullName",
       })
       .sort({ updatedAt: -1 })
       .lean();
@@ -333,6 +339,34 @@ export const sendMessage = async (req, res) => {
       return res.status(403).json({ error: "Unauthorized or invalid conversation." });
     }
 
+    // CLEAN UP CORRUPTED PINNED MESSAGES BEFORE PROCEEDING
+    if (conversation.pinnedMessages && conversation.pinnedMessages.length > 0) {
+      // Filter out invalid pinned messages
+      const validPinnedMessages = conversation.pinnedMessages.filter((pin) => {
+        return (
+          pin &&
+          pin.message &&
+          pin.pinnedBy &&
+          pin.pinnedAt &&
+          // Ensure they're valid ObjectIds
+          mongoose.Types.ObjectId.isValid(pin.message) &&
+          mongoose.Types.ObjectId.isValid(pin.pinnedBy)
+        );
+      });
+
+      // Only update if we found invalid entries
+      if (validPinnedMessages.length !== conversation.pinnedMessages.length) {
+        console.log(
+          `Cleaned up ${
+            conversation.pinnedMessages.length - validPinnedMessages.length
+          } invalid pinned messages`
+        );
+        conversation.pinnedMessages = validPinnedMessages;
+        // Save the cleanup immediately to prevent validation errors
+        await conversation.save();
+      }
+    }
+
     const recipientId = conversation.participants.find((p) => !p.equals(senderId));
 
     const senderIsBlocked = await isBlockedOrBlockedBy(senderId, recipientId);
@@ -394,6 +428,8 @@ export const sendMessage = async (req, res) => {
       seen: isSeen,
       messageId: newMessage._id,
     };
+
+    // Save conversation with cleaned pinnedMessages
     await conversation.save();
 
     await newMessage.populate([
@@ -904,6 +940,186 @@ export const deleteAllMessagesOnMySide = async (req, res) => {
     });
   } catch (error) {
     console.error("Error in deleteAllMessagesOnMySide controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const pinMessage = async (req, res) => {
+  const { conversationId, messageId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+    if (!conversation.participants.includes(userId)) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized to pin messages in this conversation" });
+    }
+
+    const message = await Message.findOne({ _id: messageId, conversationId });
+    if (!message) {
+      return res.status(404).json({ error: "Message not found in this conversation" });
+    }
+
+    // Check if message is already pinned (fix the logic)
+    // 👇 FIX: Filter out any corrupted entries before checking the array
+    const validPinnedMessages = conversation.pinnedMessages.filter(
+      (pin) => pin && pin.message
+    );
+
+    // Now, check against the clean array
+    const isAlreadyPinned = validPinnedMessages.some(
+      (pin) => pin.message.toString() === messageId.toString()
+    );
+    if (isAlreadyPinned) {
+      return res.status(400).json({ error: "Message is already pinned" });
+    }
+
+    // Create the new pin information object
+    const pinInfo = {
+      message: messageId,
+      pinnedBy: userId,
+      pinnedAt: new Date(),
+    };
+
+    // Push the new object to the array
+    const updatedConversation = await Conversation.findByIdAndUpdate(
+      conversationId,
+      { $push: { pinnedMessages: pinInfo } },
+      { new: true }
+    );
+
+    const sender = await User.findById(userId).select("fullName username profileImg");
+
+    // Socket payload with correct structure
+    const socketPayload = {
+      conversationId,
+      message: messageId,
+      pinnedBy: {
+        _id: sender._id,
+        fullName: sender.fullName,
+        username: sender.username,
+      },
+      pinnedAt: pinInfo.pinnedAt.toISOString(),
+    };
+
+    io.to(conversationId).emit("pinnedMessage", socketPayload);
+
+    res.status(200).json({
+      message: "Message pinned successfully",
+      pinnedMessages: updatedConversation.pinnedMessages,
+    });
+  } catch (error) {
+    console.error("Error in pinMessage controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const unpinMessage = async (req, res) => {
+  const { conversationId, messageId } = req.body;
+  const userId = req.user._id;
+
+  try {
+    const conversation = await Conversation.findById(conversationId);
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    if (!conversation.participants.includes(userId)) {
+      return res
+        .status(403)
+        .json({ error: "Not authorized to unpin messages in this conversation" });
+    }
+
+    const validPinnedMessages = conversation.pinnedMessages.filter(
+      (pin) => pin && pin.message
+    );
+
+    // Find the index in the clean array
+    const pinIndex = validPinnedMessages.findIndex(
+      (pin) => pin.message.toString() === messageId.toString()
+    );
+
+    if (pinIndex === -1) {
+      return res.status(404).json({ error: "Message is not pinned" });
+    }
+
+    // Update the original conversation document's array
+    conversation.pinnedMessages = validPinnedMessages.filter(
+      (pin) => pin.message.toString() !== messageId.toString()
+    );
+    await conversation.save();
+
+    const sender = await User.findById(userId).select("fullName username profileImg");
+
+    // Emit socket event to notify other users
+    const socketPayload = {
+      conversationId,
+      messageId,
+      unpinnedBy: {
+        _id: sender._id,
+        fullName: sender.fullName,
+        username: sender.username,
+      },
+      unpinnedAt: new Date().toISOString(),
+    };
+
+    io.to(conversationId).emit("unpinnedMessage", socketPayload);
+
+    res.status(200).json({
+      message: "Message unpinned successfully",
+      pinnedMessages: conversation.pinnedMessages,
+    });
+  } catch (error) {
+    console.error("Error in unpinMessage controller:", error.message);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const getPinnedMessages = async (req, res) => {
+  const { conversationId } = req.params;
+  const userId = req.user._id;
+
+  try {
+    const conversation = await Conversation.findById(conversationId).lean(); // Use .lean() for performance
+
+    if (!conversation) {
+      return res.status(404).json({ error: "Conversation not found" });
+    }
+
+    if (!conversation.participants.some((p) => p.toString() === userId.toString())) {
+      return res.status(403).json({ error: "Not authorized to view pinned messages" });
+    }
+
+    // This is the main change: We populate the fields inside the pinnedMessages array
+    const populatedPins = await Conversation.findById(conversationId)
+      .select("pinnedMessages") // We only need the pinnedMessages field
+      .populate({
+        path: "pinnedMessages.pinnedBy", // Populate the 'pinnedBy' user in each object
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "pinnedMessages.message", // Populate the 'message' in each object
+        select: "text sender img createdAt", // Select the fields you need from the message
+        populate: {
+          path: "sender", // Also populate the original sender of the message itself
+          select: "username fullName",
+          populate: { path: "profileImg", select: "imageUrl" },
+        },
+      })
+      .lean();
+
+    if (!populatedPins) {
+      return res.status(200).json([]); // Return empty array if no conversation
+    }
+
+    res.status(200).json(populatedPins.pinnedMessages);
+  } catch (error) {
+    console.error("Error in getPinnedMessages controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };

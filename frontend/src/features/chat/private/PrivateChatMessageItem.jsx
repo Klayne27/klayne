@@ -24,6 +24,7 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
+import { usePinMessage } from "./privateChatHooks/usePinMessage"
 
 const PrivateChatMessageItem = ({
   message,
@@ -33,6 +34,7 @@ const PrivateChatMessageItem = ({
   handleLoadImage,
   onReactionAdded,
   messageListRef,
+  onUsernameClick,
 }) => {
   const {
     selectedConversation,
@@ -55,6 +57,7 @@ const PrivateChatMessageItem = ({
     selectedConversationId: selectedConversation._id,
     onReactionAdded,
   })
+  const { pinMessage } = usePinMessage()
 
   const isMobile = useIsMobile()
 
@@ -149,6 +152,15 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
   }
 
+  const handlePinMessage = () => {
+    pinMessage({
+      conversationId: selectedConversation._id,
+      messageId: message._id,
+    })
+    closeSlideMenu()
+    setShowMoreActionsModal(false)
+  }
+
   if (isTypingOtherUser) {
     return (
       <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
@@ -212,6 +224,7 @@ const PrivateChatMessageItem = ({
             onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
             onReactionAdded={onReactionAdded}
             reactToMessage={reactToMessage}
+            onPinMessage={handlePinMessage}
           />
         )}
         <MessageContentLayout
@@ -234,6 +247,7 @@ const PrivateChatMessageItem = ({
             <PrivateChatFirstMessageInGroup
               message={message}
               isSentByCurrentUser={isSentByCurrentUser}
+              onUsernameClick={onUsernameClick}
             />
 
             {/* Edited Status */}
@@ -334,6 +348,7 @@ const PrivateChatMessageItem = ({
             handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
             moreEmojisButtonRef={moreEmojisButtonRef}
             onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
+            onPinMessage={handlePinMessage}
           />
         )}
       </div>

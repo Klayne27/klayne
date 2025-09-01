@@ -4,6 +4,7 @@ import { MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaTrashCan } from "react-icons/fa6"
 import { PiSmileyFill } from "react-icons/pi"
+import { RiPushpinFill } from "react-icons/ri"
 
 const MobileMessageActionsSlideUp = ({
   isOpen,
@@ -15,13 +16,14 @@ const MobileMessageActionsSlideUp = ({
   onReplyClick,
   onEditClick,
   onCopyMessage,
+  onPinMessage,
   onDeleteOwnMessage,
   moreEmojisButtonRef,
   handleOpenEmojiPickerPopover,
   onOpenSlideUpReactionsMenu,
 }) => {
   const quickReactions = ["❤️", "👍", "👎", "😂", "😭", "🫂"]
-  const hasReactions = message.reactions.length > 0
+  const hasReactions = message.reactions?.length > 0
 
   const handleAction = (action) => {
     action()
@@ -31,7 +33,7 @@ const MobileMessageActionsSlideUp = ({
   return (
     <SlideUpMenu isOpen={isOpen} onClose={onClose}>
       <SlideUpMenuContent className="mb-2 flex w-full flex-col gap-5 px-4">
-        <div className="flex items-center justify-between mt-2">
+        <div className="mt-2 flex items-center justify-between">
           {quickReactions.map((emoji) => (
             <div key={emoji} className="rounded-full bg-secondary">
               <button
@@ -81,6 +83,13 @@ const MobileMessageActionsSlideUp = ({
             className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
           >
             <IoCopy /> <span>Copy Message</span>
+          </button>
+          <div className="h-[1px] bg-accent"></div>
+          <button
+            onClick={() => handleAction(onPinMessage)}
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+          >
+            <RiPushpinFill /> <span>Pin Message</span>
           </button>
           {hasReactions && (
             <>

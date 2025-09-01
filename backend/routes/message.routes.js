@@ -13,6 +13,9 @@ import {
   getOrCreateConversation,
   deleteConversation,
   deleteAllMessagesOnMySide,
+  pinMessage,
+  unpinMessage,
+  getPinnedMessages,
 } from "../controllers/message.Controllers.js";
 
 const router = express.Router();
@@ -41,5 +44,7 @@ router.post("/conversations/get-or-create", protectRoute, getOrCreateConversatio
 router.delete("/conversations/:id", protectRoute, deleteConversation);
 router.delete("/all/:conversationId", protectRoute, deleteAllMessagesOnMySide);
 
-
+router.get("/:conversationId/pinned", protectRoute, getPinnedMessages)
+router.post("/pin-message", protectRoute, pinMessage);
+router.post("/unpin-message", protectRoute, unpinMessage);
 export default router;

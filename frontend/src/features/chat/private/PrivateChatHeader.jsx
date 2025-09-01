@@ -1,8 +1,9 @@
 import { FaArrowLeft } from "react-icons/fa6"
 import { Link, useNavigate } from "react-router-dom"
 import { useSocket } from "../../../context/SocketContext"
+import { RiPushpinFill, RiPushpinLine } from "react-icons/ri"
 
-function PrivateChatHeader({ otherUser }) {
+function PrivateChatHeader({ otherUser, onOpenPinnedModal }) {
   const navigate = useNavigate()
   const { onlineUsers } = useSocket()
 
@@ -38,6 +39,14 @@ function PrivateChatHeader({ otherUser }) {
       {otherUser?.isGoldVerified && (
         <img src="/gold-verified2.png" className="ml-1 size-[17px]" alt="Verified badge" />
       )}
+
+      <button
+        onClick={onOpenPinnedModal}
+        className="ml-auto mr-2 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+        title="View Pinned Messages"
+      >
+        <RiPushpinFill size={20} />
+      </button>
     </div>
   )
 }

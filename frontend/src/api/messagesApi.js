@@ -168,3 +168,46 @@ export const deleteAllMessagesOnMySide = async (conversationId) => {
 
   return data
 }
+
+export const pinMessageApi = async ({ conversationId, messageId }) => {
+  const res = await fetch(`${BASE_URL}/pin-message`, {
+    // Change URL to a non-param route
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ conversationId, messageId }), // Send data in the request body
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to pin message")
+  }
+  return data
+}
+
+export const getPinnedMessagesApi = async (conversationId) => {
+  const res = await fetch(`${BASE_URL}/${conversationId}/pinned`, {
+    method: "GET",
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to fetch pinned messages")
+  }
+
+  return data
+}
+
+export const unpinMessageApi = async ({ conversationId, messageId }) => {
+  const res = await fetch(`${BASE_URL}/unpin-message`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ conversationId, messageId }),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to unpin message")
+  }
+  return data
+}

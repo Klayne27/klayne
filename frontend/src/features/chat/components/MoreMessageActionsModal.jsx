@@ -5,6 +5,7 @@ import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
 import {  PiSmileyFill } from "react-icons/pi"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { RiPushpinFill } from "react-icons/ri"
 
 function MoreMessageActionsModal({
   onCloseMoreActionsModal,
@@ -12,6 +13,7 @@ function MoreMessageActionsModal({
   onReplyClick,
   onEditClick,
   onCopyMessage,
+  onPinMessage,
   onDeleteOwnMessage,
   message,
   isEditable,
@@ -84,6 +86,8 @@ function MoreMessageActionsModal({
             <MdEdit size={16} className="text-slate-400" />
           </button>
         )}
+        {isSentByCurrentUser && <div className="my-1 h-[1px] bg-accent"></div>}
+
         {message.text && (
           <button
             onClick={onCopyMessage}
@@ -91,6 +95,15 @@ function MoreMessageActionsModal({
           >
             Copy Message
             <IoCopy size={18} className="text-slate-400" />
+          </button>
+        )}
+        {(
+          <button
+            onClick={onPinMessage}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
+          >
+            Pin Message
+            <RiPushpinFill size={18} className="text-slate-400" />
           </button>
         )}
 
