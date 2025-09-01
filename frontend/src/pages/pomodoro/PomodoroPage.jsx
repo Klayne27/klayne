@@ -23,7 +23,7 @@ import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUs
 import { useCompleteTodo } from "../../features/todos/todoHooks/useCompleteTodo"
 import { colorMap, getCompletedColor, getPriorityColor, iconMap } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { FaCheckCircle, FaTasks } from "react-icons/fa"
+import { FaCheckCircle } from "react-icons/fa"
 import { truncateText } from "../../utils/truncateText"
 import { FaCalendar, FaPlus } from "react-icons/fa6"
 import { IoClose } from "react-icons/io5"

@@ -30,6 +30,13 @@ import { postKeys } from "./postsHooks/postKeys"
 import { useCreateVentPost } from "./postsHooks/useCreateVentPost"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
+import CircularBarProgress from "../../components/common/CircularBarProgress"
+
+// At the top of the CreatePost component
+
+// Constants for character limits
+const CHARACTER_LIMIT_STANDARD = 400
+const CHARACTER_LIMIT_VERIFIED = 800
 
 const CreatePost = ({ feedType }) => {
   const { setShowNewFeedPostsButton, newPostCount, newVentPostCount, setShowNewVentPostsButton } =
@@ -89,6 +96,11 @@ const CreatePost = ({ feedType }) => {
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
 
+  // Determine character limit based on user status
+  const characterLimit =
+    authUser?.isVerified || authUser?.isGoldVerified
+      ? CHARACTER_LIMIT_VERIFIED
+      : CHARACTER_LIMIT_STANDARD
 
   // Effect to close emoji picker on click outside
   useEffect(() => {
@@ -532,8 +544,19 @@ const CreatePost = ({ feedType }) => {
     // setIsScheduledPostsModalOpen(false); // If you prefer this behavior
   }
 
+  const postLength = postInput.length
+  const progress = (postLength / characterLimit) * 100
+
+  const progressColor =
+    postLength > characterLimit
+      ? "text-red-500"
+      : progress >= 100
+        ? "text-green-500"
+        : "text-primary"
+
   // Determine if the post button should be disabled
   const isButtonDisabled =
+    postLength > characterLimit ||
     isPending ||
     (() => {
       if (scheduledAt) {
@@ -815,6 +838,7 @@ const CreatePost = ({ feedType }) => {
                 )}
               </div>
             )}
+
             {feedType === "venting" && (
               <div className="flex w-full items-center justify-between gap-1 pr-2">
                 <div className="flex gap-1">
@@ -873,29 +897,44 @@ const CreatePost = ({ feedType }) => {
                 </label>
               </div>
             )}
-            <button
-              type="submit"
-              className="rounded-full bg-primary px-3 py-1 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
-              // --- MODIFIED: Update disabled logic ---
-              disabled={
-                (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled
-              }
-            >
-              {/* --- MODIFIED: Update button text logic --- */}
-              {feedType === "venting" ? (
-                isCreatingVentPost ? (
+            <div className="flex gap-2">
+              {postLength > 0 && postSelectedFile === null && !showPollInputs && (
+                <>
+                  <div className="flex items-center gap-2">
+                    <CircularBarProgress
+                      progress={progress}
+                      size={20}
+                      strokeWidth={2}
+                      progressColor={progressColor}
+                    />
+                  </div>
+                  <div className="h-10  w-[1px] bg-gray-600" />
+                </>
+              )}
+              <button
+                type="submit"
+                className="rounded-full bg-primary px-3 py-1 font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
+                // --- MODIFIED: Update disabled logic ---
+                disabled={
+                  (feedType === "venting" ? isCreatingVentPost : isPending) || isButtonDisabled
+                }
+              >
+                {/* --- MODIFIED: Update button text logic --- */}
+                {feedType === "venting" ? (
+                  isCreatingVentPost ? (
+                    <LoadingSpinner size="xs" />
+                  ) : (
+                    "Post"
+                  )
+                ) : isPending ? (
                   <LoadingSpinner size="xs" />
+                ) : scheduledAt ? (
+                  "Schedule"
                 ) : (
                   "Post"
-                )
-              ) : isPending ? (
-                <LoadingSpinner size="xs" />
-              ) : scheduledAt ? (
-                "Schedule"
-              ) : (
-                "Post"
-              )}
-            </button>
+                )}
+              </button>
+            </div>
           </div>
           {isError && <div className="mt-2 text-red-500">{error.message}</div>}
         </form>

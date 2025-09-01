@@ -9,6 +9,8 @@ import FollowButton from "./FollowButton"
 import ConfirmationModal from "./ConfirmationModal"
 import { useAppStore } from "../../store/useAppStore"
 
+
+
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const setShowUnfollowModal = useAppStore((state) => state.setShowUnfollowModal)
