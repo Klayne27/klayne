@@ -8,7 +8,7 @@ export const usePrivateChatStore = create(
     isTypingOtherUser: false,
     showNewMessageButton: false,
     selectedConversation: null,
-    activeMessageModalId: null,
+    activeMessageModalId: null, // State for the mobile slide-up menu
 
     isSlideMenuOpen: false,
     messageForSlideMenu: null,
@@ -22,7 +22,7 @@ export const usePrivateChatStore = create(
     setActiveMessageModalId: (id) =>
       set((state) => {
         state.activeMessageModalId = id
-      }),
+      }), // Actions to control the mobile slide-up menu
     openSlideMenu: (message) =>
       set((state) => {
         state.isSlideMenuOpen = true

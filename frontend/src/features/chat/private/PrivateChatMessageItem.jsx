@@ -23,6 +23,7 @@ import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/Slid
 import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
+import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
 
 const PrivateChatMessageItem = ({
   message,
@@ -33,8 +34,15 @@ const PrivateChatMessageItem = ({
   onReactionAdded,
   messageListRef,
 }) => {
-  const { selectedConversation, setActiveMessageModalId, activeMessageModalId } =
-    usePrivateChatStore()
+  const {
+    selectedConversation,
+    setActiveMessageModalId,
+    activeMessageModalId,
+    isSlideMenuOpen,
+    messageForSlideMenu,
+    openSlideMenu,
+    closeSlideMenu,
+  } = usePrivateChatStore()
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
@@ -62,7 +70,12 @@ const PrivateChatMessageItem = ({
     handleTouchCancel,
     showModal,
     isMessageHighlighted,
-  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId)
+  } = useMessageModalInteractions(
+    message._id,
+    setActiveMessageModalId,
+    activeMessageModalId,
+    () => openSlideMenu(message),
+  )
 
   const {
     showEmojiPickerPopover,
@@ -186,7 +199,6 @@ const PrivateChatMessageItem = ({
           onReplyClick={handleReplyClick}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
-
         {showMoreActionsModal && (
           <MoreMessageActionsModal
             message={message}
@@ -204,7 +216,6 @@ const PrivateChatMessageItem = ({
             reactToMessage={reactToMessage}
           />
         )}
-
         <MessageContentLayout
           isSentByCurrentUser={isSentByCurrentUser}
           messageContentStyle={messageContentStyle}
@@ -271,19 +282,19 @@ const PrivateChatMessageItem = ({
             )}
           </div>
         </MessageContentLayout>
-
-        {showSlideUpReactionsMenu && <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
-          <SlideUpMenuContent
-            className="flex h-[50vh] w-full flex-col overflow-y-auto"
-            disablePullToRefresh={true} 
-          >
-            <ReactionsSlideUpMenuContent
-              reactions={message.reactions ? message.reactions : []}
-              onClose={handleCloseViewReactionsModal}
-            />
-          </SlideUpMenuContent>
-        </SlideUpMenu>}
-
+        {showSlideUpReactionsMenu && (
+          <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+            <SlideUpMenuContent
+              className="flex h-[50vh] w-full flex-col overflow-y-auto"
+              disablePullToRefresh={true}
+            >
+              <ReactionsSlideUpMenuContent
+                reactions={message.reactions ? message.reactions : []}
+                onClose={handleCloseViewReactionsModal}
+              />
+            </SlideUpMenuContent>
+          </SlideUpMenu>
+        )}
         {showViewReactionsModal && (
           <ViewReactionsModal
             isOpen={showViewReactionsModal}
@@ -291,7 +302,6 @@ const PrivateChatMessageItem = ({
             reactions={message.reactions ? message.reactions : []}
           />
         )}
-
         {/* Emoji Picker Popover */}
         {showEmojiPickerPopover && (
           <>
@@ -310,6 +320,22 @@ const PrivateChatMessageItem = ({
               }
             />
           </>
+        )}
+        {isMobile && (
+          <MobileMessageActionsSlideUp
+            isOpen={isSlideMenuOpen && messageForSlideMenu?._id === message._id}
+            onClose={closeSlideMenu}
+            message={message}
+            isEditable={isEditable}
+            isSentByCurrentUser={isSentByCurrentUser}
+            onReactionClick={handleReactionClick}
+            onReplyClick={handleReplyClick}
+            onEditClick={handleEditClick}
+            onCopyMessage={handleCopyMessage}
+            onDeleteOwnMessage={handleDeleteOwnMessage}
+            handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+            moreEmojisButtonRef={moreEmojisButtonRef}
+          />
         )}
       </div>
     </>

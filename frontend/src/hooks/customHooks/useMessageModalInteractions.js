@@ -1,20 +1,21 @@
 import { useState, useCallback } from "react"
 import { useIsMobile } from "./useIsMobile"
-import { useLongPress } from "./useLongPress" 
+import { useLongPress } from "./useLongPress"
 
 export const useMessageModalInteractions = (
   messageId,
   setActiveMessageModalId,
   activeMessageModalId,
+  onMobileLongPress,
 ) => {
   const [isHovered, setIsHovered] = useState(false)
   const isMobile = useIsMobile()
 
   const handleLongPress = useCallback(() => {
-    if (isMobile) {
-      setActiveMessageModalId(messageId)
+    if (isMobile && onMobileLongPress) {
+      onMobileLongPress()
     }
-  }, [isMobile, messageId, setActiveMessageModalId])
+  }, [isMobile, onMobileLongPress])
 
   const { handleTouchCancel, handleTouchEnd, handleTouchMove, handleTouchStart } = useLongPress(
     handleLongPress,
