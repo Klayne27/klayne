@@ -70,11 +70,8 @@ const PrivateChatMessageItem = ({
     handleTouchCancel,
     showModal,
     isMessageHighlighted,
-  } = useMessageModalInteractions(
-    message._id,
-    setActiveMessageModalId,
-    activeMessageModalId,
-    () => openSlideMenu(message),
+  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId, () =>
+    openSlideMenu(message),
   )
 
   const {
@@ -133,6 +130,7 @@ const PrivateChatMessageItem = ({
     e.stopPropagation()
     setShowMoreActionsModal(false)
     setShowSlideUpReactionsMenu(true)
+    closeSlideMenu()
   }
 
   const handleCloseViewReactionsModal = () => {
@@ -282,7 +280,7 @@ const PrivateChatMessageItem = ({
             )}
           </div>
         </MessageContentLayout>
-        {showSlideUpReactionsMenu && (
+        {
           <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
             <SlideUpMenuContent
               className="flex h-[50vh] w-full flex-col overflow-y-auto"
@@ -294,7 +292,7 @@ const PrivateChatMessageItem = ({
               />
             </SlideUpMenuContent>
           </SlideUpMenu>
-        )}
+        }
         {showViewReactionsModal && (
           <ViewReactionsModal
             isOpen={showViewReactionsModal}
@@ -335,6 +333,7 @@ const PrivateChatMessageItem = ({
             onDeleteOwnMessage={handleDeleteOwnMessage}
             handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
             moreEmojisButtonRef={moreEmojisButtonRef}
+            onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
           />
         )}
       </div>

@@ -27,6 +27,7 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
 import PublicChatFirstMessageInGroup from "./PublicChatFirstMessageInGroup"
+import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
@@ -36,7 +37,14 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
   messageListRef,
   onReactionAdded,
 }) {
-  const { activeMessageModalId, setActiveMessageModalId } = usePublicChatStore()
+  const {
+    activeMessageModalId,
+    setActiveMessageModalId,
+    isSlideMenuOpen,
+    closeSlideMenu,
+    openSlideMenu,
+    messageForSlideMenu,
+  } = usePublicChatStore()
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
@@ -75,7 +83,9 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     handleTouchCancel,
     showModal,
     isMessageHighlighted,
-  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId)
+  } = useMessageModalInteractions(message._id, setActiveMessageModalId, activeMessageModalId, () =>
+    openSlideMenu(message),
+  )
 
   const {
     showEmojiPickerPopover,
@@ -340,6 +350,24 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             confirmButtonText={modalConfig.confirmButtonText}
             onClose={() => setModalConfig(null)}
             danger={!isSenderBanned}
+          />
+        )}
+
+        {isMobile && (
+          <MobileMessageActionsSlideUp
+            isOpen={isSlideMenuOpen && messageForSlideMenu?._id === message._id}
+            onClose={closeSlideMenu}
+            message={message}
+            isEditable={isEditable}
+            isSentByCurrentUser={isSentByCurrentUser}
+            onReactionClick={handleReactionClick}
+            onReplyClick={handleReplyClick}
+            onEditClick={handleEditClick}
+            onCopyMessage={handleCopyMessage}
+            onDeleteOwnMessage={handleDeleteOwnMessage}
+            handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+            moreEmojisButtonRef={moreEmojisButtonRef}
+            onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
           />
         )}
       </div>

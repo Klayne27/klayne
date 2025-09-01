@@ -1,4 +1,3 @@
-import React from "react"
 import { HiOutlineReply } from "react-icons/hi"
 import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import { MdEdit } from "react-icons/md"
@@ -19,8 +18,10 @@ const MobileMessageActionsSlideUp = ({
   onDeleteOwnMessage,
   moreEmojisButtonRef,
   handleOpenEmojiPickerPopover,
+  onOpenSlideUpReactionsMenu,
 }) => {
   const quickReactions = ["❤️", "👍", "😂", "😢", "😠"]
+  const hasReactions = message.reactions.length > 0
 
   const handleAction = (action) => {
     action()
@@ -32,9 +33,8 @@ const MobileMessageActionsSlideUp = ({
       <div className="flex w-full flex-col gap-5 px-4">
         <div className="flex items-center justify-around">
           {quickReactions.map((emoji) => (
-            <div className="rounded-full bg-secondary">
+            <div className="rounded-full bg-secondary" key={emoji}>
               <button
-                key={emoji}
                 onClick={() => handleAction(() => onReactionClick(message._id, emoji))}
                 className="transform p-2 text-xl transition-transform hover:scale-110"
               >
@@ -46,7 +46,7 @@ const MobileMessageActionsSlideUp = ({
             <button
               ref={moreEmojisButtonRef}
               onClick={(e) => handleOpenEmojiPickerPopover(e)}
-              className="transform p-2 text-xl transition-transform hover:scale-110 text-slate-500"
+              className="transform p-2 text-xl text-slate-500 transition-transform hover:scale-110"
             >
               <PiSmileyFill className="size-7" />
             </button>
@@ -79,6 +79,19 @@ const MobileMessageActionsSlideUp = ({
           >
             <IoCopy /> <span>Copy Message</span>
           </button>
+
+          {hasReactions && (
+            <>
+              <div className="h-[1px] bg-accent"></div>
+              <button
+                onClick={onOpenSlideUpReactionsMenu}
+                className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              >
+                <PiSmileyFill size={20} />
+                View Reactions
+              </button>
+            </>
+          )}
         </div>
         <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
           {isSentByCurrentUser && (

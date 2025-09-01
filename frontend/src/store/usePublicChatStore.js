@@ -9,6 +9,9 @@ export const usePublicChatStore = create(
     isCurrentlyTouchDevice: false,
     showNewMessageButton: false,
 
+    isSlideMenuOpen: false,
+    messageForSlideMenu: null,
+
     setReplyingToMessage: (message) =>
       set((state) => {
         state.replyingToMessage = message
@@ -34,6 +37,17 @@ export const usePublicChatStore = create(
     setShowNewMessageButton: (show) =>
       set((state) => {
         state.showNewMessageButton = show
+      }),
+
+    openSlideMenu: (message) =>
+      set((state) => {
+        state.isSlideMenuOpen = true
+        state.messageForSlideMenu = message
+      }),
+    closeSlideMenu: () =>
+      set((state) => {
+        state.isSlideMenuOpen = false
+        state.messageForSlideMenu = null
       }),
   })),
 )
