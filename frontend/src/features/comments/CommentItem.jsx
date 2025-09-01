@@ -22,12 +22,9 @@ import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler"
 import CommentItemButtons from "../../components/common/CommentItemButtons"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../components/common/DropdownMenu"
-import {
-  getBadgeIcon,
-
-} from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
+import { getBadgeIcon } from "../../utils/renderBadges"
 
 const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) => {
   const { authUser } = useAuthUser()

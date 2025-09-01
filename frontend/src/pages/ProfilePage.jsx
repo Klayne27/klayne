@@ -28,8 +28,8 @@ import { useAppStore } from "../store/useAppStore"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
-import { getBadgeIcon } from "../utils/renderBadges"
 import { RiLockFill } from "react-icons/ri"
+import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)

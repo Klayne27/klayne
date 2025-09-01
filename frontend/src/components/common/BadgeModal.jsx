@@ -1,7 +1,6 @@
 import { FaTimes } from "react-icons/fa"
 import { useUpdatePreferredBadge } from "../../features/users/usersHooks/useUpdatePreferredBadge"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { badgeTiers } from "./BadgeDisplay"
 
 const BadgeModal = ({ badge, onClose }) => {
   const { authUser } = useAuthUser()

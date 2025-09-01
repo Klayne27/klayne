@@ -2,9 +2,8 @@ import { Link } from "react-router-dom"
 import { formatTime } from "../../../utils/date"
 import { MdAdminPanelSettings } from "react-icons/md"
 import { FaBan } from "react-icons/fa"
-import {
-  getBadgeIcon,
-} from "../../../utils/renderBadges"
+import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
+
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {
   const isSenderAdmin = message.sender.isAdmin

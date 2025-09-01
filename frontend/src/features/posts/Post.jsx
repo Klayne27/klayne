@@ -24,13 +24,11 @@ import { useAppStore } from "../../store/useAppStore"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../components/common/AnimatedCount"
-import {
-  getBadgeIcon,
 
-} from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { getDisplayUsername } from "../../utils/truncateText"
+import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)

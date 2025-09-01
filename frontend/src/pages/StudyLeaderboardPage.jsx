@@ -6,12 +6,12 @@ import { FaFire, FaInfoCircle } from "react-icons/fa"
 
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
-import { getBadgeIcon } from "../utils/renderBadges"
 import { IoClose } from "react-icons/io5"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
 import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
 import useLockBodyScroll from "../hooks/customHooks/useLockBodyScroll"
+import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 
 function StudyLeaderboardPage() {
   const navigate = useNavigate()

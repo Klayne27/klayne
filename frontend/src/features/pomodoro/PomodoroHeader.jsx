@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom"
 import { FaInfoCircle } from "react-icons/fa"
-import { getBadgeIcon } from "../../utils/renderBadges"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { IoIosStats } from "react-icons/io"
+import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
