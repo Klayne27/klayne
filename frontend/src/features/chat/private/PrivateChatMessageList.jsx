@@ -51,10 +51,23 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   const handleUsernameClick = (user, event) => {
     event.stopPropagation()
     const rect = event.currentTarget.getBoundingClientRect()
+    const modalHeight = 280 // Approximate modal height in pixels
+    const spaceBelow = window.innerHeight - rect.bottom
+
+    let newTop
+
+    if (spaceBelow > modalHeight) {
+      // If there is, open the modal at the bottom
+      newTop = rect.bottom + window.scrollY + 5
+    } else {
+      // If not, open the modal on top
+      newTop = rect.top + window.scrollY - modalHeight - 5
+    }
+
     setModalState({
       isOpen: true,
-      username: user.username, // Set the username from the socket data
-      position: { top: rect.bottom + window.scrollY + 5, left: rect.left + window.scrollX },
+      username: user.username,
+      position: { top: newTop, left: rect.left + window.scrollX },
     })
   }
 
@@ -104,7 +117,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
         processedMessages.map((message) => {
           if (message.isSystemMessage) {
             const userName = message.text.split(" pinned a message")[0]
-
+            console.log("message", message)
             return (
               <div key={message._id} className="flex items-center gap-2">
                 <div className="ml-2">
@@ -122,7 +135,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
                   </span>
                   <button
                     className="font-semibold text-base-content hover:underline"
-                    onClick={() => handleJumpToOriginalMessage(message.pinnedMessageId)}
+                    onClick={() => handleJumpToOriginalMessage(message.pinnedMessageId._id)}
                   >
                     message
                   </button>
@@ -177,11 +190,13 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
               <LoadingSpinner size="md" />
             </div>
           ) : (
-            <ProfileInfoModal
-              user={userProfile} // Pass the userProfile from the hook
-              onClose={handleCloseModal}
-              position={modalState.position}
-            />
+            <div className="fixed inset-0 z-50 bg-transparent" onClick={handleCloseModal}>
+              <ProfileInfoModal
+                user={userProfile} // Pass the userProfile from the hook
+                onClose={handleCloseModal}
+                position={modalState.position}
+              />
+            </div>
           )}
         </>
       )}

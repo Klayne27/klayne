@@ -3,21 +3,19 @@ import FollowButton from "../common/FollowButton" // Assuming this is your Follo
 import { formatMemberSinceDate } from "../../utils/date"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 
-const ProfileInfoModal = ({ user, onClose, position }) => {
+const ProfileInfoModal = ({ user, position }) => {
   const { authUser } = useAuthUser()
   const navigate = useNavigate()
 
    const isFollowing = authUser?.following?.includes(user?._id)
 
-  if (!user) return null // Don't render if there's no user data
+  if (!user) return null
 
   const isMyProfile = authUser?._id === user._id
   const handleModalClick = (e) => e.stopPropagation()
 
   return (
     <>
-      <div className="fixed inset-0 z-50 bg-transparent" onClick={onClose}>
-        {/* Positioned modal content */}
         <div
           className="absolute z-50 flex w-72 flex-col rounded-xl border border-accent bg-base-200 shadow-lg"
           style={{ top: `${position.top}px`, left: `${position.left}px` }}
@@ -77,7 +75,6 @@ const ProfileInfoModal = ({ user, onClose, position }) => {
             </div>
           </div>
         </div>
-      </div>
     </>
   )
 }

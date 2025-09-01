@@ -29,6 +29,8 @@ import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { getDisplayUsername } from "../../utils/truncateText"
 import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
+import { useProfileCardHover } from "../../hooks/customHooks/useProfileCardHover.js"
+import ProfileInfoModal from "../../components/common/ProfileInfoModal.jsx"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -43,7 +45,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const { pathname } = useLocation()
 
-  const feedType = useAppStore((state) => state.feedType)
   const isMobile = useIsMobile()
 
   const isDraggingRef = useRef(0)
@@ -52,13 +53,23 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const { toggleMenu, showMenu, setShowMenu, menuRef } = useDropdownMenu()
 
+  const {
+    modalState,
+    userProfile,
+    isUserLoading,
+    handleMouseEnter,
+    handleMouseLeave,
+    handleModalEnter,
+    handleModalLeave,
+    cleanup,
+  } = useProfileCardHover()
+
   const isRepost = !!post.repostedFrom
   const sourcePost = post.repostedFrom || post
 
   const prevLikesCount = useRef(sourcePost.likes?.length)
   const prevRepostsCount = useRef(sourcePost.repostsCount)
 
-  // const sourcePost = isRepost ? post.repostedFrom : post;
   const originalPostOwner = sourcePost?.user
   const repostingUser = isRepost ? post.user : null
   const isLiked = sourcePost?.likes?.includes(authUser?._id)
@@ -92,6 +103,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
+
   const navigateToPostPage = (e) => {
     if (isDraggingRef.current) {
       isDraggingRef.current = false
@@ -107,7 +119,8 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       e.target.closest("button") ||
       e.target.closest("img") ||
       e.target.closest("video") ||
-      e.target.closest(".menu-popover")
+      e.target.closest(".menu-popover") ||
+      e.target.closest(".profile-modal")
     ) {
       return
     }
@@ -148,22 +161,18 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   }
 
   useEffect(() => {
-    // --- Like Animation Logic ---
     const currentLikes = sourcePost.likes?.length || 0
-    // Check if the count has actually changed
     if (prevLikesCount.current !== currentLikes) {
-      setIsAnimatingLike(true) // Trigger animation
-      const timer = setTimeout(() => setIsAnimatingLike(false), 400) // Reset after duration
+      setIsAnimatingLike(true)
+      const timer = setTimeout(() => setIsAnimatingLike(false), 400)
 
-      // Update the ref to the new value for the next render
       prevLikesCount.current = currentLikes
 
-      return () => clearTimeout(timer) // Cleanup timer
+      return () => clearTimeout(timer)
     }
-  }, [sourcePost.likes?.length]) // Dependency: only run when likes count changes
+  }, [sourcePost.likes?.length])
 
   useEffect(() => {
-    // --- Repost Animation Logic ---
     const currentReposts = sourcePost.repostsCount || 0
     if (prevRepostsCount.current !== currentReposts) {
       setIsAnimatingRepost(true)
@@ -173,11 +182,10 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
       return () => clearTimeout(timer)
     }
-  }, [sourcePost.repostsCount]) // Dependency: only run when reposts count changes
+  }, [sourcePost.repostsCount])
 
   const handleLikePostClick = (e) => {
     handleInteractiveClick(e)
-    // setIsAnimatingLike(true)
 
     if (isLiking) return
     likePost(sourcePost._id)
@@ -186,7 +194,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const handleRepostClick = (e) => {
     handleInteractiveClick(e)
     if (isReposting) return
-    // setIsAnimatingRepost(true)
 
     repostPost(sourcePost._id)
   }
@@ -222,20 +229,18 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     }
   }
 
-  // New: Handle follow/unfollow
   const handleFollowClick = (e) => {
     e.stopPropagation()
     if (!authUser || isFollowingOrUnfollowing) return
     follow(originalPostOwner._id)
-    setShowMenu(false) // Close menu after clicking
+    setShowMenu(false)
   }
 
-  // New: Handle block/unblock
   const handleBlockClick = (e) => {
     e.stopPropagation()
     if (!authUser || isBlocking) return
     blockUnblockUser(originalPostOwner._id)
-    setShowMenu(false) // Close menu after clicking
+    setShowMenu(false)
   }
 
   const navigateToReposterProfile = (e) => {
@@ -246,7 +251,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   }
 
   const handleImageClick = (imageUrl) => {
-    // Navigate to a new route, passing the image URL as a state
     navigate("/image-view", { state: { src: imageUrl } })
   }
 
@@ -287,11 +291,10 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     return null
   }
 
-  // Determine if the current authUser is following the original post owner
   const isFollowingOriginalPostOwner = authUser?.following?.includes(originalPostOwner._id)
-  // Determine if the current authUser has blocked the original post owner
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id)
 
+  
   return (
     <div
       className={`${
@@ -303,7 +306,12 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       onMouseUp={handleMouseUp}
     >
       {isRepost && repostingUser && (
-        <div className="ml-6 flex items-center gap-1 text-sm font-semibold text-slate-500">
+        <div
+          className="ml-6 flex items-center gap-1 text-sm font-semibold text-slate-500"
+          data-profile-trigger="true"
+          onMouseEnter={(e) => handleMouseEnter(repostingUser, e)}
+          onMouseLeave={handleMouseLeave}
+        >
           <FaRetweet className="inline-block text-lg" size={16} />
           <span className="cursor-pointer hover:underline" onClick={navigateToReposterProfile}>
             {repostingUser.fullName.length > 15
@@ -321,7 +329,11 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       )}
 
       <div className="relative flex items-start gap-2">
-        <div className="avatar mt-1">
+        <div
+          className="avatar mt-1"
+          onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+          onMouseLeave={handleMouseLeave}
+        >
           {post.isAnonymous ? (
             <div className="size-10 overflow-hidden rounded-full">
               <img
@@ -344,6 +356,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
             </Link>
           )}
         </div>
+
         <div className="relative flex min-w-0 flex-1 flex-col">
           <div className="flex items-center gap-1">
             <div className="flex min-w-0 items-center gap-1 overflow-hidden">
@@ -351,6 +364,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <div
                   className="flex items-center gap-1 truncate font-bold"
                   onClick={handleInteractiveClick}
+                  data-profile-trigger="true"
                 >
                   {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
 
@@ -382,6 +396,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                   to={`/profile/${originalPostOwner.username}`}
                   className="flex items-center gap-1 truncate font-bold hover:underline"
                   onClick={handleInteractiveClick}
+                  data-profile-trigger="true"
+                  onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+                  onMouseLeave={handleMouseLeave}
                 >
                   {originalPostOwner.fullName}
 
@@ -420,6 +437,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                     to={`/profile/${originalPostOwner.username}`}
                     className="truncate"
                     onClick={handleInteractiveClick}
+                    data-profile-trigger="true"
+                    onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+                    onMouseLeave={handleMouseLeave}
                   >
                     @{getDisplayUsername(originalPostOwner.username, isMobile)}
                   </Link>
@@ -689,6 +709,31 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           </div>
         </div>
       </div>
+      {modalState.isOpen && (
+        <div
+          onMouseEnter={handleModalEnter}
+          onMouseLeave={handleModalLeave}
+          className="profile-modal"
+        >
+          {isUserLoading ? (
+            <div
+              className="absolute z-50 flex h-48 w-72 items-center justify-center rounded-xl border border-accent bg-base-200 shadow-lg"
+              style={{
+                top: modalState.position.top,
+                left: modalState.position.left,
+              }}
+            >
+              <LoadingSpinner size="md" />
+            </div>
+          ) : (
+            <ProfileInfoModal
+              user={userProfile}
+              onClose={handleModalLeave} // Use the specific leave handler for the modal
+              position={modalState.position}
+            />
+          )}
+        </div>
+      )}
     </div>
   )
 }
