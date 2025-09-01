@@ -175,3 +175,18 @@ export const toggleLikedFeedPrivacyApi = async (isPrivate) => {
 
   return data
 }
+
+export const updatePreferredBadgeApi = async (preferredBadge) => {
+  const res = await fetch(`${BASE_URL}/update-preferred-badge`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+    },
+    body: JSON.stringify({ preferredBadge }),
+  })
+  const data = await res.json()
+  if (!res.ok) {
+    throw new Error(data.error || "Failed to update preferred badge")
+  }
+  return data
+}

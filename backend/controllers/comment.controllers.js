@@ -109,7 +109,7 @@ export const getComments = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isVerified isGoldVerified blockedUsers blockedBy badges",
+          "username fullName isVerified isGoldVerified blockedUsers blockedBy badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -164,6 +164,7 @@ export const getComments = async (req, res) => {
           isVerified: false,
           isGoldVerified: false,
           badges: [],
+          preferredBadge: null,
         };
         return commentObj;
       }
@@ -273,7 +274,7 @@ export const createComment = async (req, res) => {
     const populatedComment = await newComment.populate([
       {
         path: "user",
-        select: "username fullName isVerified isGoldVerified badges",
+        select: "username fullName isVerified isGoldVerified badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -296,6 +297,7 @@ export const createComment = async (req, res) => {
         isVerified: false,
         isGoldVerified: false,
         badges: [],
+        preferredBadge: null,
       };
       finalComment = commentObj;
     }
@@ -442,7 +444,7 @@ export const replyToComment = async (req, res) => {
 
     await newReply.populate({
       path: "user",
-      select: "username fullName isVerified isGoldVerified badges",
+      select: "username fullName isVerified isGoldVerified badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",

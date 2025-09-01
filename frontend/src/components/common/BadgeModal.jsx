@@ -1,9 +1,22 @@
-// src/components/common/BadgeModal.jsx
-
 import { FaTimes } from "react-icons/fa"
+import { useUpdatePreferredBadge } from "../../features/users/usersHooks/useUpdatePreferredBadge"
+import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
+import { badgeTiers } from "./BadgeDisplay"
 
 const BadgeModal = ({ badge, onClose }) => {
-  if (!badge) return null
+  const { authUser } = useAuthUser()
+  const { updateBadge } = useUpdatePreferredBadge()
+
+  if (!badge || !authUser) return null // Check if the current badge is the one the user has chosen to display
+
+  const isCurrentlyDisplayed = authUser.preferredBadge === badge.name
+
+  const handleToggleDisplay = () => {
+    // If the badge is currently displayed, remove it. Otherwise, set it.
+    const newPreferredBadge = isCurrentlyDisplayed ? null : badge.name
+    updateBadge(newPreferredBadge)
+    onClose() // Optional: Close the modal after the action is taken
+  }
 
   const getBadgeIconLarge = (badgeName) => {
     // A larger version of your existing badge icon logic
@@ -26,12 +39,17 @@ const BadgeModal = ({ badge, onClose }) => {
         return <img src="/badge-streak-14.png" alt="14 Day Streak" className="size-24" />
       case "thirty-day-streak":
         return <img src="/badge-streak-30.png" alt="30 Day Streak" className="size-24" />
+      case "august-2025-1st":
+        return <img src="/badge-august2025-1st.png" alt="August 2025 1st" className="size-24" />
+      case "august-2025-2nd":
+        return <img src="/badge-august2025-2nd.png" alt="August 2025 2nd" className="size-24" />
+      case "august-2025-3rd":
+        return <img src="/badge-august2025-3rd.png" alt="August 2025 3rd" className="size-24" />
       default:
         return null
     }
-  }
+  } // Define a description for each badge
 
-  // Define a description for each badge
   const getBadgeDescription = (badgeName) => {
     switch (badgeName) {
       case "twentyfive-hour-scholar":
@@ -52,6 +70,12 @@ const BadgeModal = ({ badge, onClose }) => {
         return "Two weeks of consistent study. You're unstoppable."
       case "thirty-day-streak":
         return "Thirty days of dedication. A testament to your discipline."
+      case "august-2025-1st":
+        return "You've earned the August Gold Trophy! This badge is the ultimate recognition of your achievement this month. Your dedication is truly inspiring!"
+      case "august-2025-2nd":
+        return "You've earned the August Silver Trophy! Your commitment this month was exceptional. This badge is a symbol of your impressive hard work and discipline."
+      case "august-2025-3rd":
+        return "You've earned the August Bronze Trophy! This is a testament to your consistent effort and dedication throughout the month. Keep up the great work!"
       default:
         return "A well-deserved badge for your hard work."
     }
@@ -59,12 +83,12 @@ const BadgeModal = ({ badge, onClose }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex rounded-xl items-center justify-center bg-black bg-opacity-75 backdrop-blur-sm"
+      className="fixed inset-0 z-50 flex items-center justify-center rounded-xl bg-black bg-opacity-75 backdrop-blur-sm"
       onClick={onClose}
     >
       <div
-        className="absolute bottom-0 md:relative md:w-full md:h-full rounded-xl bg-slate-800 p-6 text-center shadow-2xl"
-        onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking inside
+        className="absolute bottom-0 rounded-xl bg-slate-800 p-6 text-center shadow-2xl md:relative md:h-full md:w-full"
+        onClick={(e) => e.stopPropagation()}
       >
         <button
           onClick={onClose}
@@ -75,6 +99,14 @@ const BadgeModal = ({ badge, onClose }) => {
         <div className="mb-4 flex justify-center">{getBadgeIconLarge(badge.name)}</div>
         <h3 className="mb-2 text-xl font-bold text-white">{badge.displayName}</h3>
         <p className="text-sm text-neutral-400">{getBadgeDescription(badge.name)}</p>
+        <button
+          onClick={handleToggleDisplay}
+          className={`mt-4 md:absolute md:top-0 md:left-4 rounded-lg px-4 py-2 font-semibold text-white transition-colors ${
+            isCurrentlyDisplayed ? "bg-red-600 hover:bg-red-700" : "bg-primary hover:bg-primary/85"
+          }`}
+        >
+          {isCurrentlyDisplayed ? "Remove" : "Display"}
+        </button>
       </div>
     </div>
   )

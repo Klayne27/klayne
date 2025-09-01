@@ -29,7 +29,8 @@ export const getUserProfile = async (req, res) => {
         path: "pinnedPosts",
         populate: {
           path: "user",
-          select: "username fullName profileImg isVerified isGoldVerified badges",
+          select:
+            "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
         },
       })
       .populate("profileImg", "imageUrl") // Populate the profile image
@@ -85,7 +86,7 @@ export const getFollowingUsers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "following",
-      select: "username fullName isVerified isGoldVerified badges",
+      select: "username fullName isVerified isGoldVerified badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -108,7 +109,7 @@ export const getFollowers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "followers",
-      select: "username fullName isVerified isGoldVerified badges",
+      select: "username fullName isVerified isGoldVerified badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -252,6 +253,7 @@ export const getSuggestedUsers = async (req, res) => {
           isVerified: 1,
           isGoldVerified: 1,
           badges: 1,
+          preferredBadge: 1,
         },
       },
     ]);
@@ -723,14 +725,44 @@ export const toggleLikedFeedPrivacy = async (req, res) => {
     user.isLikedFeedPrivate = isPrivate;
     await user.save();
 
-    res
-      .status(200)
-      .json({
-        message: "Liked feed privacy updated successfully",
-        isLikedFeedPrivate: user.isLikedFeedPrivate,
-      });
+    res.status(200).json({
+      message: "Liked feed privacy updated successfully",
+      isLikedFeedPrivate: user.isLikedFeedPrivate,
+    });
   } catch (error) {
     console.error("Error toggling liked feed privacy:", error);
     res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const updatePreferredBadge = async (req, res) => {
+  const { preferredBadge } = req.body;
+  const userId = req.user._id;
+
+  try {
+    // Find the user and check if the badge is valid
+    const user = await User.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({ error: "User not found." });
+    } // Validate that the preferredBadge is one of the user's earned badges or null
+
+    if (
+      preferredBadge !== null &&
+      preferredBadge !== "" &&
+      !user.badges.includes(preferredBadge)
+    ) {
+      return res
+        .status(400)
+        .json({ error: "You cannot select a badge you have not earned." });
+    } // Update the field
+
+    user.preferredBadge = preferredBadge;
+    await user.save();
+
+    res.status(200).json({ message: "Preferred badge updated successfully." });
+  } catch (error) {
+    console.error("Error updating preferred badge:", error.message);
+    res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };

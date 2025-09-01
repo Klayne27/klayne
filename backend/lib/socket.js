@@ -610,7 +610,7 @@ io.on("connection", async (socket) => {
       const updatedConversation = await Conversation.findById(conversationObjectId)
         .populate({
           path: "participants",
-          select: "username fullName isVerified isGoldVerified badges",
+          select: "username fullName isVerified isGoldVerified badges preferredBadge",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -618,7 +618,7 @@ io.on("connection", async (socket) => {
         })
         .populate({
           path: "lastMessage.sender",
-          select: "username fullName isVerified isGoldVerified badges",
+          select: "username fullName isVerified isGoldVerified badges preferredBadge",
           populate: {
             path: "profileImg",
             select: "imageUrl",

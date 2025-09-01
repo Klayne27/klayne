@@ -182,6 +182,10 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    preferredBadge: {
+      type: String,
+      default: null,
+    },
     pomodoroSettings: {
       sessionDuration: { type: Number, default: 25 },
       shortBreakDuration: { type: Number, default: 5 },

@@ -22,7 +22,10 @@ import { usePasteHandler } from "../../hooks/customHooks/usePasteHandler"
 import CommentItemButtons from "../../components/common/CommentItemButtons"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import DropdownMenu from "../../components/common/DropdownMenu"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import {
+  getBadgeIcon,
+
+} from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
 
@@ -420,9 +423,11 @@ const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) =>
                     alt="Verified"
                   />
                 )}
-                {renderHourBadge(comment.user.badges)}
-                {renderSessionBadge(comment.user.badges)}
-                {renderStreakBadge(comment.user.badges)}
+                {comment.user.preferredBadge && (
+                  <div className="ml-1 size-[17px] flex-shrink-0">
+                    {getBadgeIcon(comment.user.preferredBadge)}
+                  </div>
+                )}
               </span>
               <div
                 to={`/profile/${comment.user.username}`}

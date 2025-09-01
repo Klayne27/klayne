@@ -71,6 +71,7 @@ export const getAllPosts = async (req, res) => {
       isVerified: 1,
       isGoldVerified: 1,
       badges: 1,
+      preferredBadge: 1,
     };
 
     const repostedPostProjection = {
@@ -414,6 +415,7 @@ export const getLikedPosts = async (req, res) => {
       isVerified: 1,
       isGoldVerified: 1,
       badges: 1,
+      preferredBadge: 1
     };
 
     const repostedPostProjection = {
@@ -1290,7 +1292,7 @@ export const createPost = async (req, res) => {
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
-        select: "username fullName isVerified isGoldVerified badges",
+        select: "username fullName isVerified isGoldVerified badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -1885,7 +1887,7 @@ export const createVentPost = async (req, res) => {
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
-        select: "username fullName isVerified isGoldVerified badges",
+        select: "username fullName isVerified isGoldVerified badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -2001,6 +2003,7 @@ export const getVentPosts = async (req, res) => {
                       isVerified: 1,
                       isGoldVerified: 1,
                       badges: 1,
+                      preferredBadge: 1,
                     },
                   },
                 ],
@@ -2065,6 +2068,7 @@ export const getVentPosts = async (req, res) => {
                 isVerified: false,
                 isGoldVerified: false,
                 badges: [],
+                preferredBadge: null,
               },
               else: {
                 _id: "$author._id",
@@ -2074,6 +2078,7 @@ export const getVentPosts = async (req, res) => {
                 isVerified: "$author.isVerified",
                 isGoldVerified: "$author.isGoldVerified",
                 badges: "$author.badges",
+                preferredBadge: "$author.preferredBadge"
               },
             },
           },

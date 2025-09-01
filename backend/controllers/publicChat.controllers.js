@@ -35,7 +35,7 @@ export const getPublicMessages = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName  isAdmin isVerified isGoldVerified badges isBannedInPublicChat",
+            "username fullName  isAdmin isVerified isGoldVerified badges preferredBadge isBannedInPublicChat",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",
@@ -130,7 +130,8 @@ export const sendPublicMessage = async (req, res) => {
     await newPublicMessage.populate([
       {
         path: "sender",
-        select: "username fullName isAdmin isVerified isGoldVerified badges",
+        select:
+          "username fullName isAdmin isVerified isGoldVerified badges preferredBadge",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -509,7 +510,7 @@ export const editPublicMessage = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName isAdmin isVerified badges isGoldVerified isBannedInPublicChat",
+            "username fullName isAdmin isVerified badges preferredBadge isGoldVerified isBannedInPublicChat",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",

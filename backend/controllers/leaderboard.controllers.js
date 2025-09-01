@@ -14,7 +14,7 @@ export const getTotalLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges studyStreak"
+        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak"
       )
       .populate({
         path: "profileImg",
@@ -49,7 +49,7 @@ export const getMonthlyLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges monthlyStudyStreak"
+        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge monthlyStudyStreak"
       )
       .populate({
         path: "profileImg",
@@ -82,11 +82,15 @@ export const getPreviousWinners = async (req, res) => {
     const lastMonthISO = lastMonth.toISOString().slice(0, 7);
 
     const previousWinners = await MonthlyWinners.findOne({ month: lastMonthISO })
+      .select("winners month")
       .populate({
         path: "winners.user",
-        select: "username fullName profileImg",
-      })
-      .select("winners month");
+        select: "username fullName",
+        populate: {
+          path: "profileImg",
+          select: "imageUrl",
+        },
+      });
 
     if (!previousWinners) {
       return res.status(200).json({ winners: [], month: lastMonthISO });

@@ -19,13 +19,15 @@ import { usePinPost } from "./postsHooks/usePinPost"
 import { BsPin, BsPinFill, BsThreeDots } from "react-icons/bs"
 import { useBlockUnblockUser } from "../users/usersHooks/useBlockUnblockUser"
 import useFollow from "../users/usersHooks/useFollow"
-import { LuUserRoundMinus, LuUserRoundPlus } from "react-icons/lu"
 import { MdBlock } from "react-icons/md"
 import { useAppStore } from "../../store/useAppStore"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import AnimatedCount from "../../components/common/AnimatedCount"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import {
+  getBadgeIcon,
+
+} from "../../utils/renderBadges"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { getDisplayUsername } from "../../utils/truncateText"
@@ -374,9 +376,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                           loading="lazy"
                         />
                       )}
-                      {renderHourBadge(originalPostOwner.badges)}
-                      {renderSessionBadge(originalPostOwner.badges)}
-                      {renderStreakBadge(originalPostOwner.badges)}
                     </span>
                   )}
                 </div>
@@ -406,9 +405,11 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                           loading="lazy"
                         />
                       )}
-                      {renderHourBadge(originalPostOwner.badges)}
-                      {renderSessionBadge(originalPostOwner.badges)}
-                      {renderStreakBadge(originalPostOwner.badges)}
+                      {originalPostOwner.preferredBadge && (
+                        <div className="ml-1 size-[17px] flex-shrink-0">
+                          {getBadgeIcon(originalPostOwner.preferredBadge)}
+                        </div>
+                      )}
                     </span>
                   }
                 </Link>

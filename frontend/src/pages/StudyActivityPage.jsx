@@ -6,7 +6,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
+import { getBadgeIcon } from "../utils/renderBadges"
 import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/useGetStudyActivityFeed"
 
 const formatDate = (dateString) => {
@@ -133,7 +133,7 @@ const StudyActivityPage = () => {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl p-4 template">
+    <div className="template container mx-auto max-w-2xl p-4">
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
@@ -176,11 +176,7 @@ const StudyActivityPage = () => {
                   <div className="mt-1 flex items-center gap-1 text-slate-500">
                     {
                       <>
-                        <p>
-                          {activity.duration >= 60 && (
-                            <FaFire className={`text-orange-500`} />
-                          )}
-                        </p>
+                        <p>{activity.duration >= 60 && <FaFire className={`text-orange-500`} />}</p>
                         <FaClock /> <span>{activity.duration} min</span>
                       </>
                     }
@@ -202,9 +198,11 @@ const StudyActivityPage = () => {
             <div className="mt-4 border-t border-accent pt-3 text-xs text-gray-400">
               <span className="flex justify-between font-semibold">
                 <span className="flex">
-                  {renderHourBadge(activity.user.badges)}
-                  {renderSessionBadge(activity.user.badges)}
-                  {renderStreakBadge(activity.user.badges)}
+                  {activity.user.preferredBadge && (
+                    <div className="ml-1 size-[17px] flex-shrink-0">
+                      {getBadgeIcon(activity.user.preferredBadge)}
+                    </div>
+                  )}
                 </span>
                 {activity.duration ? "Session on: " : "Achieved on: "}
                 {formatTime(activity?.date || activity?.createdAt)} •{" "}

@@ -28,8 +28,7 @@ import { useAppStore } from "../store/useAppStore"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
-import { useToggleLikedFeedPrivacy } from "../features/users/usersHooks/useToggleLikedFeed"
+import { getBadgeIcon } from "../utils/renderBadges"
 import { RiLockFill } from "react-icons/ri"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
@@ -131,7 +130,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       closeUnfollowModal()
     }
   }
-
 
   const handleImgChange = (e, state) => {
     const file = e.target.files[0]
@@ -410,9 +408,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       <img src="/gold-verified2.png" className="size-[18px]" />
                     )}
 
-                    {renderHourBadge(userProfile.badges)}
-                    {renderSessionBadge(userProfile.badges)}
-                    {renderStreakBadge(userProfile.badges)}
+                    {userProfile.preferredBadge && (
+                      <div className="ml-1 size-[17px] flex-shrink-0">
+                        {getBadgeIcon(userProfile.preferredBadge)}
+                      </div>
+                    )}
                   </span>
                 </div>
                 <span className="text-sm text-slate-500">@{userProfile?.username}</span>
@@ -501,7 +501,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             {isMyProfile && feedType === "likes" && authUser?.isLikedFeedPrivate && (
-              <div className="bg-[#02113D] m-1 flex flex-col items-start rounded-lg py-2.5 px-4">
+              <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">
                 <p className="flex items-center gap-3 text-[15px]">
                   <RiLockFill />
                   Your likes are private. Only you can see them.

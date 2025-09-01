@@ -6,7 +6,7 @@ import { FaFire, FaInfoCircle } from "react-icons/fa"
 
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { FaCheckCircle } from "react-icons/fa"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../utils/renderBadges"
+import { getBadgeIcon } from "../utils/renderBadges"
 import { IoClose } from "react-icons/io5"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
@@ -16,24 +16,23 @@ function StudyLeaderboardPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
   const [leaderboardType, setLeaderboardType] = useState("total")
-  const [showPreviousWinners, setShowPreviousWinners] = useState(false)
+  const [showPreviousWinners, setShowPreviousWinners] = useState(true)
 
   const [isInfoDropdownOpen, setIsInfoDropdownOpen] = useState(false)
 
   const { authUser: currentUser } = useAuthUser()
 
-const totalLeaderboard = useGetTotalLeaderboard(page, {
-  enabled: leaderboardType === "total",
-})
+  const totalLeaderboard = useGetTotalLeaderboard(page, {
+    enabled: leaderboardType === "total",
+  })
 
-const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
-  enabled: leaderboardType === "monthly",
-})
+  const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
+    enabled: leaderboardType === "monthly",
+  })
   const { previousWinners } = useGetPreviousWinners()
 
   const currentLeaderboard = leaderboardType === "total" ? totalLeaderboard : monthlyLeaderboard
   const { leaderboard, totalPages, isLoading } = currentLeaderboard
-
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -161,6 +160,7 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
   const date = new Date()
 
   const currentMonthName = new Intl.DateTimeFormat("en-US", { month: "long" }).format(date)
+  console.log(previousWinners)
 
   if (isLoading) {
     return (
@@ -190,7 +190,7 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
   }
 
   return (
-    <div className="container mx-auto max-w-2xl p-4 template">
+    <div className="template container mx-auto max-w-2xl p-4">
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
@@ -390,9 +390,11 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
                     </Link>
 
                     <span className="flex items-center">
-                      {renderHourBadge(entry.badges)}
-                      {renderSessionBadge(entry.badges)}
-                      {renderStreakBadge(entry.badges)}
+                      {entry.preferredBadge && (
+                        <div className="ml-1 size-[17px] flex-shrink-0">
+                          {getBadgeIcon(entry.preferredBadge)}
+                        </div>
+                      )}
                     </span>
 
                     {leaderboardType === "total" && entry.studyStreak >= 3 && (
@@ -413,7 +415,9 @@ const monthlyLeaderboard = useGetMonthlyLeaderboard(page, {
                     )}
                   </div>
                   <div className="flex">
-                    <p className={`truncate rounded-lg bg-slate-700/70 px-2 text-sm text-slate-400`}>
+                    <p
+                      className={`truncate rounded-lg bg-slate-700/70 px-2 text-sm text-slate-400`}
+                    >
                       Level {entry.pomodoroLevel}
                     </p>{" "}
                   </div>

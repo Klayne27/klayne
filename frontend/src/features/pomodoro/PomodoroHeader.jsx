@@ -1,8 +1,7 @@
 import { Link } from "react-router-dom"
 import { FaInfoCircle } from "react-icons/fa"
-import { renderHourBadge, renderSessionBadge, renderStreakBadge } from "../../utils/renderBadges"
+import { getBadgeIcon } from "../../utils/renderBadges"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
-import { LuUserRound } from "react-icons/lu"
 import { IoIosStats } from "react-icons/io"
 
 const xpForLevel = (level) => {
@@ -28,6 +27,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     badges,
     isVerified,
     isGoldVerified,
+    preferredBadge
   } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
@@ -54,12 +54,14 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
 
               <div className="flex flex-col items-start">
                 <div className="flex items-center gap-1">
-                  <h2 className="text-base font-bold sm:text-lg ml-1">{fullName}</h2>
+                  <h2 className="ml-1 text-base font-bold sm:text-lg">{fullName}</h2>
                   {isVerified && <img src="/verified2.png" className="size-[17px]" />}
                   {isGoldVerified && <img src="/gold-verified2.png" className="size-[17px]" />}
-                  {renderHourBadge(badges)}
-                  {renderSessionBadge(badges)}
-                  {renderStreakBadge(badges)}
+                  {preferredBadge && (
+                    <div className="ml-1 size-[17px] flex-shrink-0">
+                      {getBadgeIcon(preferredBadge)}
+                    </div>
+                  )}
                 </div>
 
                 <span className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-[1px]">
@@ -73,14 +75,14 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
             <div className="flex gap-1">
               <Link
                 to="/study-dashboard"
-                className="rounded-full p-2 template transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
+                className="template rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white focus:outline-none"
               >
                 <IoIosStats className="h-5 w-5" />
               </Link>
 
               <button
                 onClick={() => setShowInfoModal(true)}
-                className="rounded-full p-2 template transition-colors hover:text-white hover:bg-gray-700 focus:outline-none"
+                className="template rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white focus:outline-none"
                 aria-label="How it works info"
               >
                 <FaInfoCircle className="h-5 w-5" />
