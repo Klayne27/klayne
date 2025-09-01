@@ -52,19 +52,19 @@ const PomodoroInfoModal = ({ onClose }) => {
       name: "1st - August 2025",
       src: "/badge-august2025-1st.png",
       description:
-        "The ultimate prize for a month of unmatched focus. Awarded to the #1 ranked scholar on the August 2025 leaderboard.",
+        "The ultimate prize for a month of unmatched focus. Awarded to the #1 ranked scholar on the August 2025 monthly leaderboard.",
     },
     {
       name: "2nd - August 2025",
       src: "/badge-august2025-2nd.png",
       description:
-        "A testament to outstanding effort. Awarded to the #2 ranked scholar on the August 2025 leaderboard.",
+        "A testament to outstanding effort. Awarded to the #2 ranked scholar on the August 2025 monthly leaderboard.",
     },
     {
       name: "3rd - August 2025",
       src: "/badge-august2025-3rd.png",
       description:
-        "Proof of impressive discipline. Awarded to the #3 ranked scholar on the August 2025 leaderboard.",
+        "Proof of impressive discipline. Awarded to the #3 ranked scholar on the August 2025 monthly leaderboard.",
     },
   ]
 
