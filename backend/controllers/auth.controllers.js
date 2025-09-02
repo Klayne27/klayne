@@ -170,15 +170,14 @@ export const googleAuth = async (req, res) => {
           .json({ error: "Email is already associated with another account." });
       } // If the user already has a googleId, they are simply logging in.
     } else {
-      // This is a completely new user. Create a new user document.
       const baseUsername = "user-";
       let username;
       let userExists = true;
       let attemptCount = 0;
-      const MAX_ATTEMPTS = 5; // Loop until a unique username is found or max attempts are reached
+      const MAX_ATTEMPTS = 5; 
 
       while (userExists && attemptCount < MAX_ATTEMPTS) {
-        username = baseUsername + generateRandomString(8); // Generates a random 8-character string
+        username = baseUsername + generateRandomString(8); 
         const existingUser = await User.findOne({ username });
         if (!existingUser) {
           userExists = false;

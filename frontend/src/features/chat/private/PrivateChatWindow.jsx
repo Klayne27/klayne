@@ -34,7 +34,7 @@ const PrivateChatWindow = () => {
   const { messages, isLoadingMessages, error, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetMessages(conversationId)
 
-  const { pinnedMessages, loadingPinnedMessages } = useGetPinnedMessages(conversationId)
+  const { pinnedMessages } = useGetPinnedMessages(conversationId)
 
   const {
     handleLoadImage,
