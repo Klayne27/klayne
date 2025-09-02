@@ -95,8 +95,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
   const hasEditHistory = sourcePost.editHistory && sourcePost.editHistory.length > 0
 
-  console.log("sourcepost", post)
-
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
 
   const { repostPost, isReposting } = useRepostPost(username)
@@ -115,12 +113,15 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     isHistoryModalOpen ? post._id : null,
   ) // Only fetch if modal is open
 
-  console.log(history)
-
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
 
   const navigateToPostPage = (e) => {
+    if (isHistoryModalOpen || showEditModal) {
+      e.stopPropagation()
+      return
+    }
+
     if (isDraggingRef.current) {
       isDraggingRef.current = false
       return
@@ -136,7 +137,8 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       e.target.closest("img") ||
       e.target.closest("video") ||
       e.target.closest(".menu-popover") ||
-      e.target.closest(".profile-modal")
+      e.target.closest(".profile-modal") ||
+      e.target.closest(".history-button")
     ) {
       return
     }
@@ -318,7 +320,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     <div
       className={`${
         showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
-      } flex cursor-pointer flex-col gap-0 border-b border-accent px-4 py-3 transition duration-500`}
+      } flex flex-col gap-0 border-b border-accent px-4 py-3 transition duration-500`}
       onClick={navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -347,12 +349,8 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
         </div>
       )}
 
-      <div className="relative flex items-start gap-2">
-        <div
-          className="avatar mt-1"
-          onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
-          onMouseLeave={handleMouseLeave}
-        >
+      <div className="relative flex items-start gap-2 cursor-pointer">
+        <div className="avatar mt-1">
           {post.isAnonymous ? (
             <div className="size-10 overflow-hidden rounded-full">
               <img
@@ -366,6 +364,8 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
               to={`/profile/${originalPostOwner.username}`}
               className="size-10 overflow-hidden rounded-full"
               onClick={(e) => handleInteractiveClick(e)}
+              onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+              onMouseLeave={handleMouseLeave}
             >
               <img
                 src={originalPostOwner.profileImg?.imageUrl || "/avatar-placeholder.png"}
@@ -383,7 +383,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <div
                   className="flex items-center gap-1 truncate font-bold"
                   onClick={handleInteractiveClick}
-                  data-profile-trigger="true"
                 >
                   {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
 
@@ -553,7 +552,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
               </span>
             )}
           </div>
-          <div className="flex flex-col gap-3 overflow-hidden">
+          <div className="flex cursor-pointer flex-col gap-3 overflow-hidden">
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
               {renderClickableText(sourcePost.text)}
             </span>
@@ -588,6 +587,18 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           </div>
 
           <div className="mt-3 w-2/3">
+            {hasEditHistory && (
+              <p
+                className="history-button text-xs text-blue-500 hover:underline cursor-pointer"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setIsHistoryModalOpen(true)
+                }}
+              >
+                View History
+              </p>
+            )}
+
             <div className="flex justify-between">
               <div
                 className="group flex cursor-pointer items-center"

@@ -117,7 +117,6 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
         processedMessages.map((message) => {
           if (message.isSystemMessage) {
             const userName = message.text.split(" pinned a message")[0]
-            console.log("message", message)
             return (
               <div key={message._id} className="flex items-center gap-2">
                 <div className="ml-2">

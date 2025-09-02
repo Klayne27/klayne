@@ -2054,6 +2054,7 @@ export const getVentPosts = async (req, res) => {
           commentsCount: 1,
           createdAt: 1,
           repostedFrom: 1, // Add this field to the projection
+          editHistory: 1,
           repostedBy: 1,
           repostsCount: 1,
           user: {
