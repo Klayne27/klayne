@@ -230,6 +230,7 @@ const PrivateChatMessageItem = ({
         <MessageContentLayout
           isSentByCurrentUser={isSentByCurrentUser}
           messageContentStyle={messageContentStyle}
+          onUsernameClick={onUsernameClick}
           message={message}
         >
           {/* Indent messages not first in group */}
