@@ -1117,7 +1117,9 @@ export const getPinnedMessages = async (req, res) => {
       return res.status(200).json([]); // Return empty array if no conversation
     }
 
-    res.status(200).json(populatedPins.pinnedMessages);
+    const pinnedMessages = populatedPins?.pinnedMessages || [];
+
+    res.status(200).json(pinnedMessages);
   } catch (error) {
     console.error("Error in getPinnedMessages controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });

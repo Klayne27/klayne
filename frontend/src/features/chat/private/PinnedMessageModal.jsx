@@ -13,6 +13,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
     selectedConversation?._id,
   )
 
+
   const { setMessageIdToJumpTo } = useChatViewStore() // 👈 Get the action from the store
 
   const { unpinMessage, isUnpinning } = useUnpinMessage()
