@@ -1,12 +1,11 @@
 import TodoList from "../models/todoList.model.js";
 import Todo from "../models/todo.model.js";
 import User from "../models/user.model.js";
-// import mongoose from "mongoose";
 
 const getPaginationParams = (req) => {
   const page = parseInt(req.query.page) || 0;
-  const limit = parseInt(req.query.limit) || 10; // default to 10 items per page
-  const skip = page * limit; // Correct logic for 0-based index
+  const limit = parseInt(req.query.limit) || 10; 
+  const skip = page * limit; 
   return { page, limit, skip };
 };
 

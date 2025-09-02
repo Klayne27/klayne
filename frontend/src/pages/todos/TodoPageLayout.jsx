@@ -61,7 +61,7 @@ const TodoPageLayout = () => {
               <FaPlus className="h-6 w-6" />
             </button>
           )}
-          <nav className="absolute inset-x-0 bottom-0 z-40 flex h-16 flex-none items-center justify-around border-t border-slate-600 bg-base-100 p-2 shadow-inner">
+          <nav className="absolute inset-x-0 bottom-0 z-40 flex h-16 flex-none items-center justify-around border-t border-accent bg-base-100 p-2 shadow-inner">
             {navItems.map((item) => (
               <button
                 key={item.tab}

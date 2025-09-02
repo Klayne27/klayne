@@ -1,4 +1,3 @@
-// models/LevelUp.js
 import mongoose from "mongoose";
 
 const levelUpSchema = new mongoose.Schema(

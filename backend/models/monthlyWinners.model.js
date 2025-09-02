@@ -1,4 +1,3 @@
-// models/monthlyWinners.model.js
 import mongoose from "mongoose";
 
 const monthlyWinnerSchema = new mongoose.Schema(
