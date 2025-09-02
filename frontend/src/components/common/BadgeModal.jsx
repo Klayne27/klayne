@@ -96,7 +96,7 @@ const BadgeModal = ({ badge, onClose }) => {
           <FaTimes size={20} />
         </button>
         <div className="mb-4 flex justify-center">{getBadgeIconLarge(badge.name)}</div>
-        <h3 className="mb-2 text-xl font-bold text-white">{badge.displayName}</h3>
+        <h3 className="mb-2 text-xl font-bold">{badge.displayName}</h3>
         <p className="text-sm text-neutral-400">{getBadgeDescription(badge.name)}</p>
         <button
           onClick={handleToggleDisplay}

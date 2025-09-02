@@ -61,9 +61,9 @@ const PostModal = ({
   // Mutations
   const { createPost, isPending: isCreatingPost, isError, error } = useCreatePosts()
   const { createVentPost, isCreatingVentPost } = useCreateVentPost()
-  const { updatePost, isUpdatingPost } = useUpdatePost()
+  const { updatePost } = useUpdatePost()
 
-  const isPending = isCreatingPost || isCreatingVentPost || isUpdatingPost
+  const isPending = isCreatingPost || isCreatingVentPost
 
   // Initialize for edit mode
   useEffect(() => {
@@ -165,39 +165,19 @@ const PostModal = ({
       }
 
       if (mode === "edit") {
-        // For edit mode, we only need to update the text. We don't handle media or polls for now.
-        // Your current logic already handles this, but let's make it cleaner.
-        // The old poll options or media can be removed on the backend.
-        if (!editPost) {
-          showAppToast("Error: Post data for editing is missing.", "error")
-          return
-        }
 
-        const editData = {
-          postId: editPost._id,
-          postData: { text: input.trim() }, // Ensure the text is trimmed
-        }
-
-        // Check if the input text is different from the original post text
         if (input.trim() === editPost.text.trim()) {
           showAppToast("No changes detected.", "info")
           onClose()
           return
         }
 
-        updatePost(
-          {
-            postId: editPost._id,
-            postData: { text: input }, // Correctly format the data for the API call
-          },
-          {
-            onSuccess: () => {
-              resetForm()
-              onClose()
-            },
-            onError: (err) => showAppToast(err?.message || "Failed to update post.", "error"),
-          },
-        )
+        updatePost({
+          postId: editPost._id,
+          postData: { text: input }, // Correctly format the data for the API call
+        })
+        resetForm()
+        onClose()
       } else if (feedType === "venting") {
         createVentPost(postData, {
           onSuccess: commonOnSuccess,
@@ -258,7 +238,7 @@ const PostModal = ({
   // Get button text
   const getButtonText = () => {
     if (isPending) {
-      return mode === "edit" ? "Updating..." : "Posting..."
+      return mode === "edit" ? "" : "Posting..."
     }
     if (mode === "edit") return "Update"
     if (scheduledAt) return "Schedule"

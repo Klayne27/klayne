@@ -1,8 +1,9 @@
 import { format } from "date-fns"
+import { FaArrowTurnUp } from "react-icons/fa6"
 import { RiUnpinFill } from "react-icons/ri"
 import { Link } from "react-router-dom"
 
-const PinnedMessageItem = ({ pinnedMessage, onUnpinMessage }) => {
+const PinnedMessageItem = ({ pinnedMessage, onUnpinMessage, onJumpToMessage }) => {
   // Extract the actual message from the pinned message structure
   const message = pinnedMessage.message
   const pinnedBy = pinnedMessage.pinnedBy
@@ -70,13 +71,15 @@ const PinnedMessageItem = ({ pinnedMessage, onUnpinMessage }) => {
           )}
         </div>
       </div>
+
       <button
         onClick={() => onUnpinMessage(message._id)}
         className="flex-shrink-0 text-red-500 hover:text-red-400"
         title="Unpin Message"
-      >
+        >
         <RiUnpinFill size={20} />
       </button>
+    
     </div>
   )
 }

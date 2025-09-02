@@ -10,6 +10,7 @@ import { useState } from "react"
 import ProfileInfoModal from "../../../components/common/ProfileInfoModal"
 import { useGetUserProfile } from "../../users/usersHooks/useGetUserProfile"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
+import { useChatViewStore } from "../../../store/useChatViewStore"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
@@ -32,6 +33,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   const { authUser: currentUser } = useAuthUser()
   const processedMessages = useProcessedMessage(messagesToRender, pinnedMessagesInfo)
   const { selectedConversation } = usePrivateChatStore()
+  const { setMessageIdToJumpTo } = useChatViewStore() // 👈 Get the action from the store
 
   const otherParticipant = selectedConversation.participants.find(
     (participant) => participant._id !== currentUser._id,
@@ -47,6 +49,10 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   })
 
   const { userProfile, isLoading } = useGetUserProfile(otherUsername)
+
+  const handleJumpToOriginalMessage = (messageId) => {
+    setMessageIdToJumpTo(messageId)
+  }
 
   const handleUsernameClick = (user, event) => {
     event.stopPropagation()
@@ -75,21 +81,21 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
     setModalState({ isOpen: false, username: null, position: { top: 0, left: 0 } })
   }
 
-  const handleJumpToOriginalMessage = (messageId) => {
-    const messageElement = document.getElementById(`message-${messageId}`)
-    if (messageElement) {
-      messageElement.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-      })
+  // const handleJumpToOriginalMessage = (messageId) => {
+  //   const messageElement = document.getElementById(`message-${messageId}`)
+  //   if (messageElement) {
+  //     messageElement.scrollIntoView({
+  //       behavior: "smooth",
+  //       block: "center",
+  //     })
 
-      messageElement.classList.add("highlight-message")
+  //     messageElement.classList.add("highlight-message")
 
-      setTimeout(() => {
-        messageElement.classList.remove("highlight-message")
-      }, 1500)
-    }
-  }
+  //     setTimeout(() => {
+  //       messageElement.classList.remove("highlight-message")
+  //     }, 1500)
+  //   }
+  // }
 
   return (
     <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">

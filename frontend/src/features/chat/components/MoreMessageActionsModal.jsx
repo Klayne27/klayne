@@ -27,7 +27,7 @@ function MoreMessageActionsModal({
   reactToMessage,
 }) {
 
-  const hasReactions = message.reactions.length > 0
+  const hasReactions = message?.reactions?.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"]
 
   const isMobile = useIsMobile()

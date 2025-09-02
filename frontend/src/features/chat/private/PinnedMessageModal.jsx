@@ -5,12 +5,16 @@ import { useGetPinnedMessages } from "./privateChatHooks/useGetPinnedMessages"
 import { useUnpinMessage } from "./privateChatHooks/useUnpinMessage"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { RiPushpinFill } from "react-icons/ri"
+import { useChatViewStore } from "../../../store/useChatViewStore"
 
 function PinnedMessagesModal({ isOpen, onClose }) {
   const { selectedConversation } = usePrivateChatStore()
   const { pinnedMessages, loadingPinnedMessages, isError, error } = useGetPinnedMessages(
     selectedConversation?._id,
   )
+
+  const { setMessageIdToJumpTo } = useChatViewStore() // 👈 Get the action from the store
+
   const { unpinMessage, isUnpinning } = useUnpinMessage()
 
   const handleUnpinClick = (messageId) => {
@@ -25,16 +29,25 @@ function PinnedMessagesModal({ isOpen, onClose }) {
     })
   }
 
-  if (!isOpen) return null
+  const handleJumpToMessage = (messageId) => {
+    if (!messageId) return
 
+    // 1. Set the target message ID in the global state
+    setMessageIdToJumpTo(messageId)
+
+    // 2. Close the modal
+    onClose()
+  }
+
+  if (!isOpen) return null
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70 p-4"
       onClick={onClose}
     >
       <div
-        className="flex h-full w-full max-w-lg flex-col rounded-lg bg-base-200 shadow-xl md:h-[80vh] md:w-[60vw]"
+        className="flex h-full w-full max-w-lg flex-col rounded-xl bg-base-100 shadow-xl md:h-[80vh] md:w-[60vw]"
         onClick={(e) => e.stopPropagation()}
       >
         <div className="flex items-center justify-between border-b border-accent p-4">
@@ -42,7 +55,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
             <RiPushpinFill size={24} />
             <h2 className="text-xl font-bold">Pinned Messages</h2>
             {pinnedMessages?.length > 0 && (
-              <span className="rounded-full bg-primary px-[9px] py-1 text-xs text-white">
+              <span className="rounded-full bg-primary px-[9px] py-1 text-xs">
                 {pinnedMessages.length}
               </span>
             )}
@@ -75,7 +88,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
               {pinnedMessages.map((pinnedMessage) => {
                 // Each pinnedMessage should have this structure:
                 // { message: {...}, pinnedBy: {...}, pinnedAt: "..." }
-                
+
                 if (!pinnedMessage || !pinnedMessage.message) {
                   console.warn("Invalid pinned message structure:", pinnedMessage)
                   return null
@@ -86,6 +99,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
                     key={`pinned-${pinnedMessage.message._id || pinnedMessage.message}`}
                     pinnedMessage={pinnedMessage}
                     onUnpinMessage={handleUnpinClick}
+                    onJumpToMessage={handleJumpToMessage} // 👈 Pass the new handler      onJumpToMessage={handleJumpToMessage} // 👈 Pass the new handler
                   />
                 )
               })}

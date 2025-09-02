@@ -225,7 +225,7 @@ function StudyLeaderboardPage() {
           <div className="relative">
             <button
               onClick={() => setIsInfoDropdownOpen(!isInfoDropdownOpen)}
-              className="rounded-full p-2 text-white transition-colors hover:bg-gray-700 focus:outline-none"
+              className="rounded-full p-2  transition-colors hover:bg-gray-700 focus:outline-none hover:text-white"
               aria-label="How it works info"
             >
               <FaInfoCircle className="h-5 w-5" />

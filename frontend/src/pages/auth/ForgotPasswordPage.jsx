@@ -19,7 +19,7 @@ const ForgotPasswordPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-base-100 text-white">
+    <div className="flex min-h-screen items-center justify-center bg-base-100 ">
       <div className="mx-auto flex w-full max-w-md flex-col items-center gap-6 p-8">
                 
         <img src="klaynelogo2.png" className="rounded-lg bg-gray-950 w-auto h-12" loading="lazy" />
@@ -43,7 +43,7 @@ const ForgotPasswordPage = () => {
           >
             <MdOutlineMail className="text-gray-500" />
             <input
-              className="grow bg-transparent pr-8 text-white placeholder-gray-500 focus:outline-none"
+              className="grow bg-transparent pr-8 placeholder-gray-500 focus:outline-none"
               placeholder="Email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}

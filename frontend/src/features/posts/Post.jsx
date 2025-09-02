@@ -1,4 +1,4 @@
-import { FaHeart, FaRegComment } from "react-icons/fa6"
+import { FaHeart, FaPen, FaRegComment } from "react-icons/fa6"
 import { FaRetweet } from "react-icons/fa6"
 import { FaRegHeart } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
@@ -34,6 +34,7 @@ import ProfileInfoModal from "../../components/common/ProfileInfoModal.jsx"
 import PostModal from "./PostModal.jsx"
 import { useGetPostHistory } from "./postsHooks/useGetPostHistory.js"
 import EditHistoryModal from "./EditHistoryModal.jsx"
+import { FaHistory } from "react-icons/fa"
 
 const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
@@ -349,7 +350,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
         </div>
       )}
 
-      <div className="relative flex items-start gap-2 cursor-pointer">
+      <div className="relative flex cursor-pointer items-start gap-2">
         <div className="avatar mt-1">
           {post.isAnonymous ? (
             <div className="size-10 overflow-hidden rounded-full">
@@ -465,14 +466,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <span>·</span>
                 <span className="shrink-0">{formattedDate}</span>{" "}
               </span>
-              {/* {hasEditHistory && (
-                <div className="absolute right-2 top-2 text-xs text-slate-500">Edited</div>
-              )} */}
-
-              {/* Button to view history, visible to all users */}
             </div>
 
-            {isMyOriginalPost && (
+            {(
               <span
                 className="group absolute right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"
                 onClick={toggleMenu}
@@ -495,23 +491,35 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                       {isMyOriginalPost ? (
                         <>
                           <button
-                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-                            onClick={handleDeletePostClick}
-                            disabled={isDeleting}
-                          >
-                            {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
-                            Delete Post
-                          </button>
-
-                          <button
-                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
                             onClick={(e) => {
                               handleInteractiveClick(e) // Keep your existing handler
                               setShowEditModal(true) // Open the modal
                               setShowMenu(false) // Close the dropdown menu
                             }}
                           >
+                            <FaPen />
                             Edit
+                          </button>
+                          {hasEditHistory && (
+                            <button
+                              className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsHistoryModalOpen(true)
+                                setShowMenu(false)
+                              }}
+                            >
+                              <FaHistory className="inline-block " /> View History
+                            </button>
+                          )}
+                          <button
+                            className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                            onClick={handleDeletePostClick}
+                            disabled={isDeleting}
+                          >
+                            {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
+                            Delete Post
                           </button>
                         </>
                       ) : (
@@ -531,6 +539,18 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                               </span>
                             )}
                           </button>
+                          {hasEditHistory && (
+                            <button
+                              className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsHistoryModalOpen(true)
+                                setShowMenu(false)
+                              }}
+                            >
+                              <FaHistory className="inline-block" /> View History
+                            </button>
+                          )}
                           <button
                             className="transtion flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 duration-200 hover:bg-gray-700/30"
                             onClick={handleBlockClick}
@@ -587,18 +607,6 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           </div>
 
           <div className="mt-3 w-2/3">
-            {hasEditHistory && (
-              <p
-                className="history-button text-xs text-blue-500 hover:underline cursor-pointer"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  setIsHistoryModalOpen(true)
-                }}
-              >
-                View History
-              </p>
-            )}
-
             <div className="flex justify-between">
               <div
                 className="group flex cursor-pointer items-center"

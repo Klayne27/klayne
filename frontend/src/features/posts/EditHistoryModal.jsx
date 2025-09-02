@@ -7,23 +7,23 @@ const EditHistoryModal = ({ isOpen, onClose, history }) => {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70 p-4"
       onClick={onClose}
     >
       <div
-        className="custom-scrollbar mx-auto flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl bg-base-100 p-4 shadow-lg"
+        className="custom-scrollbar mx-auto flex max-h-[90vh] w-full max-w-xl flex-col overflow-y-auto rounded-2xl bg-base-100  shadow-lg"
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between py-2">
+        <div className="flex items-center justify-between p-4 ">
           <h2 className="text-xl font-bold">Edit History</h2>
           <button onClick={onClose}>
             <IoClose size={24} />
           </button>
         </div>
-        <div className="pt-4">
+        <div className="">
           {history && history.length > 0 ? (
             history.map((edit, index) => (
-              <div key={index} className="mb-4 rounded-md border border-accent p-3">
+              <div key={index} className="border-t border-accent p-4 px-5">
                 <p className="text-xs text-slate-500">
                   Edited on: {formatDate(edit.editedAt)} at {formatTime(edit.editedAt)}
                 </p>

@@ -13,12 +13,12 @@ const PublicChatHeader = () => {
   };
 
   return (
-    <div className="text-white fixed w-full md:w-[977px] top-0 z-[40] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
-      <div className="flex items-center gap-3 text-white">
+    <div className="fixed w-full md:w-[977px] top-0 z-[40] bg-black px-4 py-2 flex items-center justify-between bg-opacity-20 backdrop-blur-md">
+      <div className="flex items-center gap-3 ">
         <div className="avatar">
           <button
             onClick={() => navigate(-1)}
-            className="hover:bg-gray-800 block md:hidden rounded-full mr-2 p-2.5 transition duration-200 flex-shrink-0"
+            className="hover:bg-gray-800 hover:text-white block md:hidden rounded-full mr-2 p-2.5 transition duration-200 flex-shrink-0"
           >
             <FaArrowLeft className="w-4 h-4" />
           </button>

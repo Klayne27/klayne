@@ -14,11 +14,14 @@ import { FaCaretDown } from "react-icons/fa6"
 import { useState } from "react"
 import PinnedMessagesModal from "./PinnedMessageModal"
 import { useGetPinnedMessages } from "./privateChatHooks/useGetPinnedMessages"
+import { useChatViewStore } from "../../../store/useChatViewStore"
+import { showAppToast } from "../../../utils/showAppToast"
 
 const PrivateChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
   const { socket } = useSocket()
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
+  const { messageIdToJumpTo, clearJumpRequest } = useChatViewStore()
 
   const [isPinnedModalOpen, setIsPinnedModalOpen] = useState(false)
 
@@ -72,6 +75,43 @@ const PrivateChatWindow = () => {
       socket.emit("markMessagesAsSeen", { conversationId })
     }
   }, [messages, conversationId, isLoadingMessages, socket, currentUser?._id]) // Dependencies for the effect
+
+  useEffect(() => {
+    if (!messageIdToJumpTo || isFetchingNextPage) return
+
+    const messageIsLoaded = messages?.some((msg) => msg._id === messageIdToJumpTo)
+
+    if (messageIsLoaded) {
+      // Use a timeout to ensure the DOM has updated before we try to scroll.
+      // A delay of 0 is enough to push this to the next event loop tick.
+      setTimeout(() => {
+        const element = document.getElementById(`message-${messageIdToJumpTo}`)
+        if (element) {
+          element.scrollIntoView({ behavior: "smooth", block: "center" })
+
+          element.classList.add("highlight-message")
+          setTimeout(() => element.classList.remove("highlight-message"), 2500)
+        }
+      }, 0)
+
+      clearJumpRequest()
+    } else if (hasNextPage) {
+      fetchNextPage()
+    } else {
+      // Only show the toast if the message is not found after checking all pages.
+      if (!messageIsLoaded) {
+        showAppToast("Could not find the message. It may have been deleted.", "error")
+      }
+      clearJumpRequest()
+    }
+  }, [
+    messageIdToJumpTo,
+    messages,
+    hasNextPage,
+    isFetchingNextPage,
+    fetchNextPage,
+    clearJumpRequest,
+  ])
 
   const isChatEmpty = !messages?.length
 
