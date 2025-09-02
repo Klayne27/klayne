@@ -3,7 +3,7 @@ import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
 
 const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const [isDragging, setIsDragging] = useState(false)
-  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const [keyboardHeight, setKeyboardHeight] = useState(false)
   const [isRendered, setIsRendered] = useState(false)
   const [visualState, setVisualState] = useState("closed")
 
@@ -11,6 +11,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const menuRef = useRef(null)
   const contentRef = useRef(null)
   const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
+  const touchStartTimeRef = useRef(0) // Track touch start time
 
   useLockBodyScroll(isRendered) // Lock scroll when rendered, not just open
 
@@ -64,25 +65,64 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isOpen])
 
+  // Prevent pull-to-refresh when the menu is open
+  useEffect(() => {
+    if (!isRendered) return
+
+    const preventPullToRefresh = (e) => {
+      // Only prevent if we're at the top of the page and pulling down
+      if (window.scrollY === 0 && e.touches && e.touches[0].clientY > e.touches[0].pageY) {
+        e.preventDefault()
+      }
+    }
+
+    const handleTouchMove = (e) => {
+      if (isDragging) {
+        e.preventDefault()
+      }
+    }
+
+    // Add passive: false to allow preventDefault to work
+    document.addEventListener("touchstart", preventPullToRefresh, { passive: false })
+    document.addEventListener("touchmove", handleTouchMove, { passive: false })
+
+    return () => {
+      document.removeEventListener("touchstart", preventPullToRefresh)
+      document.removeEventListener("touchmove", handleTouchMove)
+    }
+  }, [isRendered, isDragging])
+
   const handleTouchStart = useCallback((e) => {
     if (contentRef.current && contentRef.current.scrollTop !== 0) {
       return
     }
+
     setIsDragging(true)
     initialYRef.current = e.touches[0].clientY
+    touchStartTimeRef.current = Date.now()
+
     if (menuRef.current) {
       menuRef.current.style.transition = "none"
     }
+
+    // Prevent pull-to-refresh immediately on touch start
+    e.preventDefault()
   }, [])
 
   const handleTouchMove = useCallback(
     (e) => {
-      // Prevent the background from scrolling on touch devices
-      e.preventDefault()
       if (!isDragging) return
+
+      // Always prevent default during dragging to stop pull-to-refresh
+      e.preventDefault()
+      e.stopPropagation()
+
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
+
+      // Only allow dragging down
       if (deltaY < 0) return
+
       if (menuRef.current) {
         menuRef.current.style.transform = `translateY(${deltaY}px)`
       }
@@ -92,13 +132,22 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
   const handleTouchEnd = useCallback(() => {
     if (!isDragging) return
+
     setIsDragging(false)
     const menu = menuRef.current
     if (!menu) return
+
     const menuHeight = menu.clientHeight
     const currentTransform = new DOMMatrix(getComputedStyle(menu).transform).m42
+    const touchDuration = Date.now() - touchStartTimeRef.current
+
     menu.style.transition = "transform 300ms ease-out"
-    if (currentTransform > menuHeight * 0.4) {
+
+    // Close if dragged more than 40% down or if it was a quick swipe down
+    const shouldClose =
+      currentTransform > menuHeight * 0.4 || (currentTransform > 50 && touchDuration < 300)
+
+    if (shouldClose) {
       menu.style.transform = "translateY(100%)"
       setTimeout(onClose, 300)
     } else {
@@ -127,7 +176,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       <div
         onClick={(e) => e.stopPropagation()}
         ref={menuRef}
-        style={{ bottom: `${keyboardHeight}px` }}
+        style={{
+          bottom: `${keyboardHeight}px`,
+          touchAction: "none", // Disable default touch behaviors
+        }}
         className={`fixed left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           visualState === "open" ? "translate-y-0" : "translate-y-full"
         }`}
@@ -137,6 +189,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
+          style={{ touchAction: "none" }} // Also disable on the draggable area
         >
           <div className="flex w-full items-center justify-center">
             <div className="my-1.5 h-1 w-10 rounded-full bg-accent" />
