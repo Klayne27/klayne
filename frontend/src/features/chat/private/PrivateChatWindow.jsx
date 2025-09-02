@@ -119,7 +119,7 @@ const PrivateChatWindow = () => {
     <div className="relative flex h-full flex-col border-accent md:border-r">
       <PrivateChatHeader otherUser={otherUser} onOpenPinnedModal={handleOpenPinnedModal} />
       {isChatEmpty && !isLoadingMessages && (
-        <div className="flex h-full flex-col items-center justify-end p-4 text-center">
+        <div className="flex h-[60%] flex-col items-center justify-end p-4 text-center">
           <IoChatbubblesOutline className="mb-4 text-6xl text-gray-300" />
           <p className="mb-2 text-xl font-semibold">
             You're starting a new chat with @{otherUser?.username}!
