@@ -15,6 +15,7 @@ import {
   toggleVacationMode,
   toggleLikedFeedPrivacy,
   updatePreferredBadge,
+  updateStatusPreference,
 } from "../controllers/user.controller.js";
 import { isAdmin } from "../middleware/isAdmin.js";
 
@@ -33,7 +34,7 @@ router.get("/vacation-mode", protectRoute, getVacationModeStatus);
 router.put("/vacation-mode", protectRoute, toggleVacationMode);
 router.put("/toggle-liked-feed-privacy", protectRoute, toggleLikedFeedPrivacy);
 router.post("/update-preferred-badge", protectRoute, updatePreferredBadge);
-
+router.put("/update-status-preference", protectRoute, updateStatusPreference);
 
 router.delete("/admin/delete/:id", protectRoute, isAdmin, adminDeleteUserAccount);
 

@@ -17,6 +17,7 @@ import { useBlockUnblockUser } from "../../users/usersHooks/useBlockUnblockUser"
 import { useSocket } from "../../../context/SocketContext"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
+import { BsThreeDots } from "react-icons/bs"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -155,8 +156,10 @@ function ConversationItem({ conv }) {
           alt={otherUser.username}
           className="h-8 w-8 rounded-full object-cover"
         />
-        {isOnline && (
+        {isOnline ? (
           <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+        ) : (
+          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
         )}
       </div>
 
@@ -194,7 +197,7 @@ function ConversationItem({ conv }) {
         </div>
       </div>
       {!isMobile && (
-        <DropdownMenu>
+        <DropdownMenu icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}>
           <button
             className="template flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {

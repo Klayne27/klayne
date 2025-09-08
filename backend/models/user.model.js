@@ -216,6 +216,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    statusPreference: {
+      type: String,
+      enum: ["online", "offline"],
+      default: "online",
+    },
   },
   { timestamps: true }
 );

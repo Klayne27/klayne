@@ -25,10 +25,12 @@ import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
 
 const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
+  const { onlineUsers } = useSocket()
 
   const { logout } = useLogout()
   const { deleteAccount, isDeletingAccount } = useDeleteAccount()
@@ -72,7 +74,6 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   // const { markFeedAsRead } = useMarkPostsAsRead()
   const feedType = useAppStore((state) => state.feedType)
 
-
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
 
@@ -103,6 +104,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
       document.head.appendChild(faviconLink)
     }
   }, [])
+
+  const isOnline = authUser.statusPreference === "online"
 
   const totalNotifications =
     unreadMessageCount +
@@ -429,6 +432,16 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   const handlePublicChatClick = () => {
     if (pathname === "/public-chat") return
     navigate("/public-chat")
+  }
+
+  const { socket } = useSocket()
+  const { updateStatus } = useUpdateStatusPreference()
+
+  const handleStatusChange = (status) => {
+    updateStatus(status)
+    if (socket) {
+      socket.emit("changeOnlineStatus", { status })
+    }
   }
 
   const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount
@@ -848,17 +861,21 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <div className="avatar">
-                  <div className="w-8 rounded-full">
-                    <img
-                      src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                      alt="User Profile"
-                    />
-                  </div>
+                <div className="relative size-10">
+                  <img
+                    src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    alt="User Profile"
+                    className="rounded-full"
+                  />
+                  {isOnline ? (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+                  ) : (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                  )}
                 </div>
                 <div className="flex flex-1 items-center justify-between">
-                  <div>
-                    <p className="w-20 truncate text-sm font-bold">{authUser?.fullName}</p>
+                  <div className="flex flex-col">
+                    <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>
                     <p className="text-sm text-slate-500">@{authUser?.username}</p>
                   </div>
                   <BsThreeDots className="h-5 w-5 cursor-pointer" />
@@ -866,44 +883,113 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               </button>
 
               {showPopover && (
-                <div
-                  ref={popoverRef}
-                  className="z-1000 white-shadow absolute bottom-full left-1/2 mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 py-3"
-                >
-                  {/* Popover buttons also need the touch effect */}
-                  <button
-                    onClick={handleConfirmDeleteClick}
-                    className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
-                      isTouchDevice && activeButtonId === "delete-account-popover"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
-                    onTouchStart={() => handleTouchStart("delete-account-popover")}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchCancel={handleTouchCancel}
+                <>
+                  <div
+                    className="fixed inset-0 z-10 h-screen w-screen cursor-default bg-transparent"
+                    onClick={() => setShowPopover(false)}
+                  />
+                  <div
+                    ref={popoverRef}
+                    className="white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3"
                   >
-                    <span>
-                      <TbUserX className="mr-3 size-6" />
-                    </span>
-                    Delete Account
-                  </button>
-                  <button
-                    onClick={handleLogout}
-                    className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
-                      isTouchDevice && activeButtonId === "logout-popover"
-                        ? "bg-secondary bg-opacity-50 transition duration-150"
-                        : "transition duration-150"
-                    }`}
-                    onTouchStart={() => handleTouchStart("logout-popover")}
-                    onTouchEnd={handleTouchEnd}
-                    onTouchCancel={handleTouchCancel}
-                  >
-                    <span>
-                      <BiLogOut className="mr-4 size-6" />
-                    </span>
-                    Logout @{authUser?.username}
-                  </button>
-                </div>
+                    {/* Mini-Profile Section */}
+                    <div className="flex flex-col pb-2">
+                      <div className="relative mb-2">
+                        <img
+                          src={authUser?.coverImg?.imageUrl || "/cover-placeholder.png"}
+                          alt="User cover"
+                          className="h-16 w-full rounded-xl object-cover"
+                        />
+                        <img
+                          src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                          alt="User profile"
+                          className="absolute -bottom-6 left-2 size-12 rounded-full border-2 border-base-100 object-cover"
+                        />
+                        {/* The status badge */}
+                        <span
+                          className={`absolute -bottom-6 left-10 size-[14px] rounded-full border-2 border-base-100 ${
+                            isOnline ? "bg-green-500" : "bg-gray-500"
+                          }`}
+                        ></span>
+                      </div>
+                      <div className="mt-4 flex flex-col items-start px-3">
+                        <span className="text-sm font-bold">{authUser?.fullName}</span>
+                        <span className="mb-1 text-xs text-gray-500">@{authUser?.username}</span>
+                        <div className="flex gap-2 text-xs text-gray-400">
+                          <span>
+                            <span className="font-semibold text-white">
+                              {authUser?.following?.length}
+                            </span>{" "}
+                            Following
+                          </span>
+                          <span>
+                            <span className="font-semibold text-white">
+                              {authUser?.followers?.length}
+                            </span>{" "}
+                            Followers
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    <div className="h-[1px] w-full bg-accent"></div>
+
+                    {/* Status Options Section */}
+                    <div className="flex flex-col gap-1 px-3 py-2">
+                      <span className="px-1 text-xs font-bold text-gray-400">Set Status</span>
+                      <button
+                        onClick={() => handleStatusChange("online")}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+                      >
+                        <span className="size-3.5 rounded-full border-2 border-base-100 bg-green-500"></span>
+                        Appear Online
+                      </button>
+                      <button
+                        onClick={() => handleStatusChange("offline")}
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+                      >
+                        <span className="size-3.5 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                        Appear Offline
+                      </button>
+                    </div>
+
+                    <div className="h-[1px] w-full bg-accent"></div>
+
+                    {/* Existing Buttons */}
+                    <button
+                      onClick={handleConfirmDeleteClick}
+                      className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
+                        isTouchDevice && activeButtonId === "delete-account-popover"
+                          ? "bg-secondary bg-opacity-50 transition duration-150"
+                          : "transition duration-150"
+                      }`}
+                      onTouchStart={() => handleTouchStart("delete-account-popover")}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchCancel={handleTouchCancel}
+                    >
+                      <span>
+                        <TbUserX className="mr-3 size-6" />
+                      </span>
+                      Delete Account
+                    </button>
+                    <button
+                      onClick={handleLogout}
+                      className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
+                        isTouchDevice && activeButtonId === "logout-popover"
+                          ? "bg-secondary bg-opacity-50 transition duration-150"
+                          : "transition duration-150"
+                      }`}
+                      onTouchStart={() => handleTouchStart("logout-popover")}
+                      onTouchEnd={handleTouchEnd}
+                      onTouchCancel={handleTouchCancel}
+                    >
+                      <span>
+                        <BiLogOut className="mr-4 size-6" />
+                      </span>
+                      Logout @{authUser?.username}
+                    </button>
+                  </div>
+                </>
               )}
             </div>
           )}

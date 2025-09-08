@@ -25,6 +25,7 @@ import DropdownMenu from "../../components/common/DropdownMenu"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { getDisplayUsername } from "../../utils/truncateText"
 import { getBadgeIcon } from "../../utils/badgeUtils"
+import { BsThreeDots } from "react-icons/bs"
 
 const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) => {
   const { authUser } = useAuthUser()
@@ -441,7 +442,9 @@ const CommentItem = ({ comment, postId, isPostOwner, isProfileImgAnonymous }) =>
               )}
             </div>
 
-            <DropdownMenu>
+            <DropdownMenu
+              icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}
+            >
               {/* Scenario 1 & 4: Current user is the comment owner (and potentially also post owner) */}
               {isCommentOwner && (
                 <>

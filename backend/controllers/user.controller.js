@@ -766,3 +766,29 @@ export const updatePreferredBadge = async (req, res) => {
     res.status(500).json({ error: "Internal server error: " + error.message });
   }
 };
+
+export const updateStatusPreference = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const userId = req.user._id;
+
+    if (!["online", "offline"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status value." });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { statusPreference: status },
+      { new: true, select: "-password" } // new:true returns the updated doc, select excludes the password
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error updating status preference:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

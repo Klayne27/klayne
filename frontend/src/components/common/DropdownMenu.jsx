@@ -1,8 +1,7 @@
-import { BsThreeDots } from "react-icons/bs"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 
-const DropdownMenu = ({ children }) => {
-  const { showMenu, toggleMenu, menuRef } = useDropdownMenu()
+const DropdownMenu = ({ children, icon }) => {
+  const { showMenu, toggleMenu, menuRef, setShowMenu } = useDropdownMenu()
 
   return (
     <span
@@ -12,13 +11,13 @@ const DropdownMenu = ({ children }) => {
       <div
         className={`group cursor-pointer rounded-full transition duration-200 hover:text-primary`}
       >
-        <BsThreeDots className="text-slate-500 group-hover:text-primary" />
+        {icon}
       </div>
 
       {showMenu && (
         <>
           <div
-            className="fixed inset-0 z-10 cursor-default bg-transparent"
+            className="fixed inset-0 z-10 h-screen w-screen cursor-default bg-transparent"
             onClick={toggleMenu}
           ></div>
           <div

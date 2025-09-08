@@ -3,7 +3,7 @@ import FollowButton from "../common/FollowButton" // Assuming this is your Follo
 import { formatMemberSinceDate } from "../../utils/date"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 
-const ProfileInfoModal = ({ user, position }) => {
+const ProfileInfoModal = ({ user, position = 1 }) => {
   const { authUser } = useAuthUser()
   const navigate = useNavigate()
 

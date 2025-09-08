@@ -190,3 +190,17 @@ export const updatePreferredBadgeApi = async (preferredBadge) => {
   }
   return data
 }
+
+export const updateStatusPreferenceApi = async (status) => {
+  const res = await fetch(`${BASE_URL}/update-status-preference`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ status }),
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) throw new Error(data.error || "Failed to update status preference")
+
+  return data
+}

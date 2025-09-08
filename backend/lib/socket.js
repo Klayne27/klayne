@@ -33,6 +33,7 @@ export const activePublicChatUsers = new Set();
 const publicChatTypingUsers = new Map();
 export const onlineUsersMap = new Map();
 const socketUserMap = new Map();
+export const offlineStatusUsers = new Map(); // Key: userId, Value: true/false
 
 const io = new Server(server, {
   cors: {
@@ -56,7 +57,7 @@ export function getReceiverSocketIds(userId) {
 function getOnlineUserIds() {
   return Array.from(onlineUsersMap.keys()).filter((userId) => {
     const sockets = onlineUsersMap.get(userId);
-    return sockets && sockets.size > 0;
+    return sockets && sockets.size > 0 && !offlineStatusUsers.has(userId);
   });
 }
 
@@ -451,10 +452,17 @@ io.on("connection", async (socket) => {
 
   io.emit("getOnlineUsers", getOnlineUserIds());
 
-  socket.on("heartbeat", () => {
-    if (socket.userId) {
-      userLastActive.set(socket.userId, Date.now());
+  socket.on("changeOnlineStatus", ({ status }) => {
+    if (!socket.userId) return;
+
+    if (status === "offline") {
+      offlineStatusUsers.set(socket.userId, true);
+    } else if (status === "online") {
+      offlineStatusUsers.delete(socket.userId);
     }
+
+    // Broadcast the updated list of online users to all clients
+    io.emit("getOnlineUsers", getOnlineUserIds());
   });
 
   // --- END PUBLIC CHAT TYPING EVENTS --
@@ -832,6 +840,12 @@ io.on("connection", async (socket) => {
 
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
+
+  socket.on("heartbeat", () => {
+    if (socket.userId) {
+      userLastActive.set(socket.userId, Date.now());
+    }
+  });
 });
 
 const CHECK_INTERVAL = 60 * 1000; // Check every 1 minute
@@ -847,14 +861,13 @@ setInterval(() => {
       onlineUsersMap.delete(userId);
       userLastActive.delete(userId);
       activePublicChatUsers.delete(userId);
+      offlineStatusUsers.delete(userId); // Also remove from the offline status map
 
-      // Add them to a list for cleanup
       usersToRemove.push(userId);
     }
   }
 
   if (usersToRemove.length > 0) {
-    // Broadcast the updated online users list
     io.emit("getOnlineUsers", getOnlineUserIds());
   }
 }, CHECK_INTERVAL);
