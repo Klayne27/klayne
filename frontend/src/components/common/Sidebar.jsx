@@ -866,11 +866,11 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <div className="relative w-10 h-10">
+                <div className="relative">
                   <img
                     src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                     alt="User Profile"
-                    className="rounded-full"
+                    className="rounded-full size-10"
                   />
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
