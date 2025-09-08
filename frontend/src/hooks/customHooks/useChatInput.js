@@ -50,6 +50,8 @@ export const useChatInput = ({
     clearAudioBlob,
   } = chatStore
 
+  const [audioDuration, setAudioDuration] = useState(0)
+
   const [textInput, setTextInput] = useState("")
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
@@ -59,6 +61,8 @@ export const useChatInput = ({
 
   const typingTimeoutRef = useRef(null)
   const hasSentTypingEvent = useRef(false)
+  const startRecordingTimeRef = useRef(null)
+  const durationIntervalRef = useRef(null)
 
   const isMobile = useIsMobile()
 
@@ -117,6 +121,7 @@ export const useChatInput = ({
       }
     }
   }
+
   const handleFileChange = (e) => {
     const file = e.target.files?.[0]
     if (!file) return
@@ -141,24 +146,49 @@ export const useChatInput = ({
     inputRef.current?.focus()
   }
 
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }, [setIsRecording])
+
   const handleStartRecording = useCallback(async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
       mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: "audio/webm" })
       audioChunksRef.current = []
 
+      // Stop the recording automatically after 30 seconds
+      const DURATION_LIMIT = 30000 // 30 seconds in milliseconds
+      const timeoutId = setTimeout(() => {
+        handleStopRecording()
+        showAppToast("Voice message recording stopped due to time limit.", "info")
+      }, DURATION_LIMIT)
+
+      // Start tracking the duration
+      startRecordingTimeRef.current = Date.now()
+      durationIntervalRef.current = setInterval(() => {
+        const duration = (Date.now() - startRecordingTimeRef.current) / 1000
+        setAudioDuration(duration)
+      }, 100) // Update duration every 100ms
+
       mediaRecorderRef.current.ondataavailable = (event) => {
         audioChunksRef.current.push(event.data)
       }
 
       mediaRecorderRef.current.onstop = () => {
+        // Stop the timeout and interval
+        clearTimeout(timeoutId)
+        clearInterval(durationIntervalRef.current)
+
         const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
         setAudioBlob(audioBlob)
         audioChunksRef.current = []
       }
 
       mediaRecorderRef.current.start()
-      setIsRecording(true) // Reset other input states when recording starts
+      setIsRecording(true)
       setTextInput("")
       setSelectedFile(null)
       setPreviewImage(null)
@@ -167,17 +197,19 @@ export const useChatInput = ({
       showAppToast("Microphone access denied or an error occurred.", "error")
       setIsRecording(false)
     }
-  }, [setIsRecording, setAudioBlob, setTextInput, setSelectedFile, setPreviewImage])
-
-  const handleStopRecording = useCallback(() => {
-    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
-      mediaRecorderRef.current.stop()
-      setIsRecording(false)
-    }
-  }, [setIsRecording])
+  }, [
+    setIsRecording,
+    setAudioBlob,
+    setTextInput,
+    setSelectedFile,
+    setPreviewImage,
+    handleStopRecording,
+  ])
 
   const handleClearRecording = useCallback(() => {
+    // Clear audio data and duration
     clearAudioBlob()
+    setAudioDuration(0)
     inputRef.current?.focus()
   }, [clearAudioBlob, inputRef])
 
@@ -194,21 +226,20 @@ export const useChatInput = ({
 
     const content = textInput.trim()
 
-    if (!content && !selectedFile && !audioBlob) return // <-- Check for audioBlob
+    if (!content && !selectedFile && !audioBlob) return
 
     try {
       if (editingMessage) {
         await onEditMessage({ messageId: editingMessage._id, newText: content })
       } else {
-        // Check if an audio message is being sent
         if (audioBlob) {
           await onSendMessage({
             text: content,
-            file: audioBlob, // Change this from `voiceMessage: audioBlob` to `file: audioBlob`
+            file: audioBlob,
             repliedToId: replyingToMessage?._id || null,
+            duration: audioDuration, // Pass the duration
           })
         } else {
-          // Existing logic for text/image messages
           await onSendMessage({
             text: content,
             file: selectedFile,
@@ -216,7 +247,6 @@ export const useChatInput = ({
           })
         }
       }
-
       clearInputState()
     } catch (error) {
       console.error("Failed to process message:", error)
@@ -279,5 +309,6 @@ export const useChatInput = ({
     handleStopRecording,
     handleClearRecording,
     clearInputState,
+    audioDuration,
   }
 }

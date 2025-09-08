@@ -98,11 +98,25 @@ export const toggleConversationVisibilityApi = async (conversationId) => {
   return data
 }
 
-export const sendMessageApi = async ({ conversationId, message, img, repliedTo, voiceMessage }) => {
+export const sendMessageApi = async ({
+  conversationId,
+  message,
+  img,
+  repliedTo,
+  voiceMessage,
+  voiceMessageDuration,
+}) => {
   const res = await fetch(`${BASE_URL}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ conversationId, message, img, repliedTo, voiceMessage }),
+    body: JSON.stringify({
+      conversationId,
+      message,
+      img,
+      repliedTo,
+      voiceMessage,
+      voiceMessageDuration,
+    }), 
   })
 
   if (!res.ok) {

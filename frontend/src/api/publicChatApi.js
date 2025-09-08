@@ -23,7 +23,13 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   }
 }
 
-export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo, voiceMessageBase64 }) => {
+export const sendPublicMessageApi = async ({
+  text,
+  imgBase64,
+  repliedTo,
+  voiceMessageBase64,
+  voiceMessageDuration,
+}) => {
   try {
     const res = await fetch(`${BASE_URL}/send`, {
       method: "POST",
@@ -31,7 +37,13 @@ export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo, voiceMe
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ text, imgBase64, repliedTo, voiceMessageBase64 }), // 👈 Pass the new data
+      body: JSON.stringify({
+        text,
+        imgBase64,
+        repliedTo,
+        voiceMessageBase64,
+        voiceMessageDuration,
+      }), // 👈 Pass the new data
     })
 
     const data = await res.json()

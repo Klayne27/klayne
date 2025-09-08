@@ -28,6 +28,10 @@ const messageSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
+    voiceMessageDuration: {
+      type: Number,
+      default: null,
+    },
     isEdited: {
       type: Boolean,
       default: false,

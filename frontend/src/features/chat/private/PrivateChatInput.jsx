@@ -41,8 +41,8 @@ function PrivateChatInput({
   )
 
   const handleSendMessage = useCallback(
-    async ({ text, file, repliedToId }) => {
-      let base64Data = null // Use a single variable for base64 data
+    async ({ text, file, repliedToId, duration }) => {
+      let base64Data = null
 
       if (file) {
         base64Data = await new Promise((resolve, reject) => {
@@ -55,13 +55,14 @@ function PrivateChatInput({
 
       sendPrivateMessage({
         message: text,
-        repliedTo: repliedToId, 
+        repliedTo: repliedToId,
         conversationId: actualConversationId,
-        img: file && file.type.startsWith("image/") ? base64Data : null, // Check file type for images
-        voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null, // Check file type for audio
+        img: file && file.type.startsWith("image/") ? base64Data : null,
+        voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null,
+        voiceMessageDuration: duration, // Pass the duration here
       })
     },
-    [sendPrivateMessage, actualConversationId], // `audioBlob` is no longer needed in the dependency array
+    [sendPrivateMessage, actualConversationId],
   )
 
   const handleEditMessage = useCallback(
@@ -204,7 +205,7 @@ function PrivateChatInput({
           type="submit"
           disabled={isSendButtonDisabled}
           className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
-            textInput.trim() || selectedFile
+            textInput.trim() || selectedFile || audioBlob
               ? "bg-primary text-white"
               : "cursor-not-allowed bg-primary text-white opacity-50"
           } transition-colors duration-200`}

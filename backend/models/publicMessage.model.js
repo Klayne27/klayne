@@ -25,6 +25,10 @@ const publicChatMessageSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
+    voiceMessageDuration: {
+      type: Number,
+      default: null,
+    },
     // Add a field to mark messages as deleted by an admin
     isDeletedByAdmin: {
       type: Boolean,

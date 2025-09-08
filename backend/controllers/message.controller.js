@@ -327,8 +327,10 @@ export const getOrCreateConversation = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { message, conversationId, repliedTo } = req.body;
-    let { img, voiceMessage } = req.body; // <-- Add voiceMessage here
+    let { img, voiceMessage, voiceMessageDuration } = req.body;
+
     const senderId = req.user._id;
+    const DURATION_LIMIT = 30; // 30-second limit
 
     if (!conversationId) {
       return res.status(400).json({ error: "Conversation ID is required." });
@@ -381,6 +383,15 @@ export const sendMessage = async (req, res) => {
 
     if (conversation.hiddenFor && conversation.hiddenFor.length > 0) {
       conversation.hiddenFor = [];
+    }
+
+    if (voiceMessage) {
+      // It's crucial for the client to send this duration value
+      if (!voiceMessageDuration || voiceMessageDuration > DURATION_LIMIT) {
+        return res.status(400).json({
+          error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
+        });
+      }
     }
 
     const recipientActiveChat = userActiveChats.get(recipientId.toString());
@@ -440,6 +451,7 @@ export const sendMessage = async (req, res) => {
         uploadedBy: senderId,
       });
       await newVoiceMessage.save();
+      newMessage.voiceMessageDuration = voiceMessageDuration;
       newMessage.voiceMessageId = newVoiceMessage._id; // You need a new field in your Message schema for this
       await newMessage.save();
     }

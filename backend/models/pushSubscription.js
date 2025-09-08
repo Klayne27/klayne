@@ -21,7 +21,7 @@ const pushSubscriptionSchema = new mongoose.Schema(
     },
     deviceInfo: {
       userAgent: String,
-      deviceId: String, // You can generate this on frontend
+      deviceId: String,
     },
     isActive: {
       type: Boolean,

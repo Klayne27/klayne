@@ -28,7 +28,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
   const { editPublicMessage } = useEditPublicMessage()
 
   const handleSendMessage = useCallback(
-    async ({ text, file, repliedToId, voiceMessage }) => {
+    async ({ text, file, repliedToId, voiceMessage, duration }) => {
       let imgBase64 = null
       let voiceMessageBase64 = null
 
@@ -55,6 +55,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
         repliedTo: repliedToId,
         imgBase64,
         voiceMessageBase64,
+        voiceMessageDuration: duration,
       })
     },
     [sendPublicMessage],
@@ -233,7 +234,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
           type="submit"
           disabled={isSendButtonDisabled}
           className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
-            textInput.trim() || selectedFile
+            textInput.trim() || selectedFile || audioBlob
               ? "bg-primary text-white"
               : "cursor-not-allowed bg-primary text-white opacity-50"
           } transition-colors duration-200`}
