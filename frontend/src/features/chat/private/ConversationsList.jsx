@@ -10,6 +10,8 @@ import DropdownMenu from "../../../components/common/DropdownMenu"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { Link } from "react-router-dom"
 import { useUpdateStatusPreference } from "../../users/usersHooks/useUpdateStatusPreference"
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
+import ConversationsListHeader from "./ConversationsListHeader"
 
 const ConversationsList = ({ conversations }) => {
   const { authUser } = useAuthUser()
@@ -18,16 +20,6 @@ const ConversationsList = ({ conversations }) => {
   const [showFollowedDropdown, setShowFollowedDropdown] = useState(false) // Controls dropdown visibility
 
   const searchInputWrapperRef = useRef(null)
-  const { socket } = useSocket()
-
-  const { updateStatus } = useUpdateStatusPreference()
-
-  const handleStatusChange = (status) => {
-    updateStatus(status)
-    if (socket) {
-      socket.emit("changeOnlineStatus", { status })
-    }
-  }
 
   useEffect(() => {
     const timerId = setTimeout(() => {
@@ -78,56 +70,7 @@ const ConversationsList = ({ conversations }) => {
   return (
     <div className="template flex h-full flex-col border-accent">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center justify-between bg-black/0 p-4 backdrop-blur-sm">
-        <h1 className="text-xl font-bold">Messages</h1>
-        <DropdownMenu icon={<FaCog />}>
-          <div className="mt-1 flex w-full flex-col">
-            <span className="mb-2 px-4 text-xs text-gray-400">Set Status</span>
-            <div className="mb-2 flex items-center gap-2 px-3">
-              <Link to={`/profile/${authUser?.username}`} className="relative">
-                <img
-                  src={authUser.profileImg?.imageUrl || "avatar-placeholder.png"}
-                  className="size-10 rounded-full"
-                />
-                {isOnline ? (
-                  <span className="absolute -right-0.5 bottom-0 size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
-                ) : (
-                  <span className="absolute -right-0.5 bottom-0 size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
-                )}
-              </Link>
-              <div>
-                <Link
-                  to={`/profile/${authUser?.username}`}
-                  className="font-semibold hover:underline"
-                >
-                  {authUser.fullName}
-                </Link>
-                <p className="text-sm text-slate-500">@{authUser.username}</p>
-              </div>
-            </div>
-            <button
-              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
-              onClick={() => handleStatusChange("online")}
-            >
-              <span className="size-[14px] rounded-full border border-base-100 bg-green-500"></span>
-              <div className="flex flex-col">
-                <span className="text-sm">Online</span>
-                <span className="text-xs text-gray-500">You will appear online</span>
-              </div>
-            </button>
-            <button
-              className="mr-16 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
-              onClick={() => handleStatusChange("offline")}
-            >
-              <span className="size-[14px] rounded-full border border-base-100 bg-gray-500"></span>
-              <div className="flex flex-col">
-                <span className="text-sm">Offline</span>
-                <span className="text-xs text-gray-500">You will appear offline</span>
-              </div>
-            </button>
-          </div>
-        </DropdownMenu>
-      </div>
+      <ConversationsListHeader />
 
       {/* Search Bar for followed users */}
       <div className="px-3 py-2">

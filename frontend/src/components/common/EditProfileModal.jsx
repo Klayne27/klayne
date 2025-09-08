@@ -3,6 +3,8 @@ import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateU
 import { useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
+import { MdEdit } from "react-icons/md"
+import { TbCameraPlus } from "react-icons/tb"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -15,6 +17,14 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
     confirmNewPassword: "",
   })
+
+  // Add new state for image previews
+  const [profileImg, setProfileImg] = useState(null)
+  const [coverImg, setCoverImg] = useState(null)
+
+  // Add refs for file input elements
+  const coverImgRef = useRef(null)
+  const profileImgRef = useRef(null)
 
   const navigate = useNavigate()
 
@@ -48,6 +58,21 @@ const EditProfileModal = ({ authUser }) => {
     }
 
     setFormData({ ...formData, [name]: newValue })
+  }
+
+  const handleImgChange = (e, imgType) => {
+    const file = e.target.files[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onload = () => {
+        if (imgType === "profileImg") {
+          setProfileImg(reader.result)
+        } else if (imgType === "coverImg") {
+          setCoverImg(reader.result)
+        }
+      }
+      reader.readAsDataURL(file)
+    }
   }
 
   const charLimits = {
@@ -104,6 +129,59 @@ const EditProfileModal = ({ authUser }) => {
               updateProfile(formData)
             }}
           >
+            {/* New Section for Image Previews */}
+            <div className="relative">
+              {/* Cover Image Preview */}
+              <div
+                className="group/cover relative h-52 w-full cursor-pointer overflow-hidden rounded-t-lg transition duration-200"
+                onClick={() => coverImgRef.current.click()}
+              >
+                <img
+                  src={coverImg || authUser.coverImg?.imageUrl || "/cover.png"}
+                  className="h-full w-full object-cover transition opacity-75"
+                  alt="cover image preview"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <TbCameraPlus className="text-white" size={50} />
+                </div>
+              </div>
+
+              {/* Profile Image Preview */}
+              <div
+                className="group/profile absolute -bottom-16 left-4 cursor-pointer"
+                onClick={() => profileImgRef.current.click()}
+              >
+                <div className="avatar w-32 rounded-full border-4 border-base-100">
+                  <img
+                    src={profileImg || authUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    className="rounded-full transition opacity-75"
+                    alt="profile image preview"
+                  />
+                </div>
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <TbCameraPlus size={40} className="text-white" />
+                </div>
+              </div>
+              {/* Hidden File Inputs */}
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                ref={coverImgRef}
+                onChange={(e) => handleImgChange(e, "coverImg")}
+              />
+              <input
+                type="file"
+                hidden
+                accept="image/*"
+                ref={profileImgRef}
+                onChange={(e) => handleImgChange(e, "profileImg")}
+              />
+            </div>
+            {/* End of new section */}
+
+            {/* Spacer to push form elements down */}
+            <div className="h-16"></div>
             <div className="relative">
               <input
                 type="text"
