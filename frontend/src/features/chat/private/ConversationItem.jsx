@@ -19,6 +19,7 @@ import { TbUser, TbUserMinus } from "react-icons/tb"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { BsThreeDots } from "react-icons/bs"
 import { LuAudioLines } from "react-icons/lu"
+import { PiMicrophoneStageFill } from "react-icons/pi"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -71,8 +72,8 @@ function ConversationItem({ conv }) {
     )
   } else if (conv.lastMessage?.audio) {
     lastMessageContent = (
-      <span className="gap-1">
-        <LuAudioLines className="inline-block text-lg" /> Voice Message
+      <span className="gap-1 ">
+        <PiMicrophoneStageFill className="inline-block text-sm" /> Voice Message
       </span>
     )
   } else if (conv.lastMessage?.text) {

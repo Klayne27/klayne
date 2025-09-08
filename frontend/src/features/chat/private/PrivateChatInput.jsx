@@ -26,6 +26,7 @@ function PrivateChatInput({
   const { editPrivateMessage } = useEditMessage(actualConversationId)
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
 
+
   const { isRecording, audioBlob } = usePrivateChatStore()
 
   const typingConfig = useMemo(
@@ -235,8 +236,8 @@ function PrivateChatInput({
         </div>
       )}
       {audioBlob && !isRecording && (
-        <div className="flex border-t border-accent p-5 justify-end">
-          <div className="flex  items-center gap-2">
+        <div className="flex justify-end border-t border-accent p-5">
+          <div className="flex items-center gap-2">
             <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
             <button
               onClick={handleClearRecording}
@@ -259,6 +260,7 @@ function PrivateChatInput({
             <div className="mt-1 text-xs italic text-gray-400">
               {truncateText(replyingToMessage.text, 40)}
               {replyingToMessage.img && !replyingToMessage.text && " (Image)"}
+              {replyingToMessage.voiceMessageId && !replyingToMessage.text && " (Voice Message)"}
             </div>
           </div>
           <button

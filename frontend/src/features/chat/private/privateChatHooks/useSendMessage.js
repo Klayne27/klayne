@@ -104,6 +104,8 @@ export const useSendMessage = (onSenderMessageSent) => {
         }
       })
       queryClient.setQueryData(conversationKeys.list(), (oldData) => {
+
+        console.log(newMessage);
         if (!oldData) return oldData
         return oldData.map((conversation) => {
           if (conversation._id === newMessage.conversationId) {
@@ -115,7 +117,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 img: newMessage.img,
                 seen: newMessage.seen,
                 messageId: newMessage._id,
-                audio: newMessage.voiceMessageId.imageUrl
+                audio: newMessage.voiceMessageId?.imageUrl
               },
               updatedAt: newMessage.createdAt,
             }
