@@ -9,6 +9,8 @@ export const usePrivateChatStore = create(
     showNewMessageButton: false,
     selectedConversation: null,
     activeMessageModalId: null, // State for the mobile slide-up menu
+    isRecording: false, // <-- New state
+    audioBlob: null, // <-- New state
 
     isSlideMenuOpen: false,
     messageForSlideMenu: null,
@@ -33,5 +35,8 @@ export const usePrivateChatStore = create(
         state.isSlideMenuOpen = false
         state.messageForSlideMenu = null
       }),
+    setIsRecording: (isRecording) => set({ isRecording }),
+    setAudioBlob: (audioBlob) => set({ audioBlob }),
+    clearAudioBlob: () => set({ audioBlob: null }), // Utility to clear the recording
   })),
 )

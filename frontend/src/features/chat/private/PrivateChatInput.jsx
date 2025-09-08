@@ -1,6 +1,6 @@
-import { useRef, useCallback, useMemo } from "react"
+import { useRef, useCallback, useMemo, useState } from "react"
 import { truncateText } from "../../../utils/truncateText"
-import { IoClose, IoImageOutline } from "react-icons/io5"
+import { IoClose, IoImageOutline, IoMicOutline, IoStopCircleOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { useEditMessage } from "./privateChatHooks/useEditMessage"
@@ -12,14 +12,22 @@ import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
+import { showAppToast } from "../../../utils/showAppToast"
 
-function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, onSenderMessageSent }) {
+function PrivateChatInput({
+  actualConversationId,
+  privateChatInputRef,
+  socket,
+  onSenderMessageSent,
+}) {
   const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
   const emojiButtonRef = useRef(null)
 
   const { editPrivateMessage } = useEditMessage(actualConversationId)
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
+
+  const { isRecording, audioBlob } = usePrivateChatStore()
 
   const typingConfig = useMemo(
     () => ({
@@ -34,9 +42,10 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
 
   const handleSendMessage = useCallback(
     async ({ text, file, repliedToId }) => {
-      let imgBase64 = null
+      let base64Data = null // Use a single variable for base64 data
+
       if (file) {
-        imgBase64 = await new Promise((resolve, reject) => {
+        base64Data = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result)
           reader.onerror = reject
@@ -48,10 +57,11 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
         message: text,
         repliedTo: repliedToId,
         conversationId: actualConversationId,
-        img: imgBase64,
+        img: file && file.type.startsWith("image/") ? base64Data : null, // Check file type for images
+        voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null, // Check file type for audio
       })
     },
-    [sendPrivateMessage, actualConversationId],
+    [sendPrivateMessage, actualConversationId], // `audioBlob` is no longer needed in the dependency array
   )
 
   const handleEditMessage = useCallback(
@@ -77,6 +87,9 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
     handleCancelEdit,
     handleImageButtonClick,
     isSendButtonDisabled,
+    handleStartRecording, // <-- Add this
+    handleStopRecording, // <-- Add this
+    handleClearRecording, // <-- Add this
   } = useChatInput({
     inputRef: privateChatInputRef,
     fileInputRef: privateChatFileInputRef,
@@ -123,6 +136,7 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
           >
             <IoImageOutline className="h-5 w-5" />
           </button>
+
           <button
             type="button"
             className="relative hidden rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700 md:block"
@@ -149,6 +163,23 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
               </>
             )}
           </button>
+          {!isRecording ? (
+            <button
+              type="button"
+              onClick={handleStartRecording}
+              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
+            >
+              <IoMicOutline className="h-5 w-5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStopRecording}
+              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-red-700"
+            >
+              <IoStopCircleOutline className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <textarea
@@ -156,7 +187,7 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          onFocus={e => e.stopPropagation()}
+          onFocus={(e) => e.stopPropagation()}
           placeholder={
             isEditingMode
               ? "Editing message..."
@@ -197,6 +228,19 @@ function PrivateChatInput({ actualConversationId, privateChatInputRef, socket, o
             <button
               onClick={handleRemoveImage}
               className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
+            >
+              <IoClose size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+      {audioBlob && !isRecording && (
+        <div className="flex border-t border-accent p-5">
+          <div className="flex w-full items-center gap-2">
+            <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
+            <button
+              onClick={handleClearRecording}
+              className="rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
             </button>

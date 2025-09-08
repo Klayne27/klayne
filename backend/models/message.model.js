@@ -23,6 +23,11 @@ const messageSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
+    voiceMessageId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
+    },
     isEdited: {
       type: Boolean,
       default: false,

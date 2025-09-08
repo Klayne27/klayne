@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, useRef } from "react"
+import { useState, useCallback, useEffect, useRef, useMemo } from "react"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { showAppToast } from "../../utils/showAppToast"
 import { useIsMobile } from "./useIsMobile"
@@ -38,11 +38,24 @@ export const useChatInput = ({
   typingConfig,
 }) => {
   const { authUser: currentUser } = useAuthUser()
-  const { editingMessage, setEditingMessage, replyingToMessage, setReplyingToMessage } = chatStore
+  const {
+    editingMessage,
+    setEditingMessage,
+    replyingToMessage,
+    setReplyingToMessage,
+    isRecording,
+    setIsRecording,
+    audioBlob,
+    setAudioBlob,
+    clearAudioBlob,
+  } = chatStore
 
   const [textInput, setTextInput] = useState("")
   const [selectedFile, setSelectedFile] = useState(null)
   const [previewImage, setPreviewImage] = useState(null)
+
+  const mediaRecorderRef = useRef(null)
+  const audioChunksRef = useRef([])
 
   const typingTimeoutRef = useRef(null)
   const hasSentTypingEvent = useRef(false)
@@ -75,9 +88,10 @@ export const useChatInput = ({
     setPreviewImage(null)
     setReplyingToMessage(null)
     setEditingMessage(null)
+    clearAudioBlob()
     if (fileInputRef.current) fileInputRef.current.value = ""
     if (inputRef.current) inputRef.current.focus()
-  }, [setReplyingToMessage, setEditingMessage, fileInputRef, inputRef])
+  }, [setReplyingToMessage, setEditingMessage, fileInputRef, inputRef, clearAudioBlob])
 
   const handleTextInputChange = (e) => {
     const value = e.target.value
@@ -127,6 +141,51 @@ export const useChatInput = ({
     inputRef.current?.focus()
   }
 
+  const handleStartRecording = useCallback(async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true })
+      mediaRecorderRef.current = new MediaRecorder(stream, { mimeType: "audio/webm" })
+      audioChunksRef.current = []
+
+      mediaRecorderRef.current.ondataavailable = (event) => {
+        audioChunksRef.current.push(event.data)
+      }
+
+      mediaRecorderRef.current.onstop = () => {
+        const audioBlob = new Blob(audioChunksRef.current, { type: "audio/webm" })
+        setAudioBlob(audioBlob)
+        audioChunksRef.current = []
+      }
+
+      mediaRecorderRef.current.start()
+      setIsRecording(true) // Reset other input states when recording starts
+      setTextInput("")
+      setSelectedFile(null)
+      setPreviewImage(null)
+    } catch (err) {
+      console.error("Error accessing microphone:", err)
+      showAppToast("Microphone access denied or an error occurred.", "error")
+      setIsRecording(false)
+    }
+  }, [setIsRecording, setAudioBlob, setTextInput, setSelectedFile, setPreviewImage])
+
+  const handleStopRecording = useCallback(() => {
+    if (mediaRecorderRef.current && mediaRecorderRef.current.state === "recording") {
+      mediaRecorderRef.current.stop()
+      setIsRecording(false)
+    }
+  }, [setIsRecording])
+
+  const handleClearRecording = useCallback(() => {
+    clearAudioBlob()
+    inputRef.current?.focus()
+  }, [clearAudioBlob, inputRef])
+
+  const isSendButtonDisabled = useMemo(() => {
+    if (isRecording) return true
+    return !textInput.trim() && !selectedFile && !audioBlob
+  }, [textInput, selectedFile, audioBlob, isRecording])
+
   const handleSubmit = async (e) => {
     e.preventDefault()
     clearTimeout(typingTimeoutRef.current)
@@ -134,18 +193,30 @@ export const useChatInput = ({
     hasSentTypingEvent.current = false
 
     const content = textInput.trim()
-    if (!content && !selectedFile) return
+
+    if (!content && !selectedFile && !audioBlob) return // <-- Check for audioBlob
 
     try {
       if (editingMessage) {
         await onEditMessage({ messageId: editingMessage._id, newText: content })
       } else {
-        await onSendMessage({
-          text: content,
-          file: selectedFile,
-          repliedToId: replyingToMessage?._id || null,
-        })
+        // Check if an audio message is being sent
+        if (audioBlob) {
+          await onSendMessage({
+            text: content,
+            file: audioBlob, // Change this from `voiceMessage: audioBlob` to `file: audioBlob`
+            repliedToId: replyingToMessage?._id || null,
+          })
+        } else {
+          // Existing logic for text/image messages
+          await onSendMessage({
+            text: content,
+            file: selectedFile,
+            repliedToId: replyingToMessage?._id || null,
+          })
+        }
       }
+
       clearInputState()
     } catch (error) {
       console.error("Failed to process message:", error)
@@ -195,7 +266,7 @@ export const useChatInput = ({
     previewImage,
     setPreviewImage,
     setSelectedFile,
-    isSendButtonDisabled: !textInput.trim() && !selectedFile,
+    isSendButtonDisabled,
     handleTextInputChange,
     handleFileChange,
     handleSubmit,
@@ -204,5 +275,8 @@ export const useChatInput = ({
     handleRemoveImage,
     handleCancelEdit,
     handleImageButtonClick,
+    handleStartRecording,
+    handleStopRecording,
+    handleClearRecording,
   }
 }

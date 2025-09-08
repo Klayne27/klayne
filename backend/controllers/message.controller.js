@@ -127,6 +127,7 @@ export const getMessagesByConversationId = async (req, res) => {
         },
       })
       .populate("image", "imageUrl")
+      .populate("voiceMessageId", "imageUrl")
       .lean();
 
     res.status(200).json(messages.reverse());
@@ -326,7 +327,7 @@ export const getOrCreateConversation = async (req, res) => {
 export const sendMessage = async (req, res) => {
   try {
     const { message, conversationId, repliedTo } = req.body;
-    let { img } = req.body;
+    let { img, voiceMessage } = req.body; // <-- Add voiceMessage here
     const senderId = req.user._id;
 
     if (!conversationId) {
@@ -391,9 +392,20 @@ export const sendMessage = async (req, res) => {
 
     let newImage = null;
     let uploadedImgUrl = "";
+
+    let newVoiceMessage = null; // <-- New variable
+    let uploadedVoiceUrl = ""; // <-- New variable
+
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img);
       uploadedImgUrl = uploadedResponse.secure_url;
+    }
+
+    if (voiceMessage) {
+      const uploadedResponse = await cloudinary.uploader.upload(voiceMessage, {
+        resource_type: "video", // Cloudinary treats audio as a video resource
+      });
+      uploadedVoiceUrl = uploadedResponse.secure_url;
     }
 
     const newMessage = new Message({
@@ -417,6 +429,18 @@ export const sendMessage = async (req, res) => {
       await newImage.save();
 
       newMessage.image = newImage._id;
+      await newMessage.save();
+    }
+
+    if (voiceMessage) {
+      newVoiceMessage = new Image({
+        imageUrl: uploadedVoiceUrl,
+        parentDocument: newMessage._id,
+        parentModel: "Message",
+        uploadedBy: senderId,
+      });
+      await newVoiceMessage.save();
+      newMessage.voiceMessageId = newVoiceMessage._id; // You need a new field in your Message schema for this
       await newMessage.save();
     }
 
@@ -458,6 +482,13 @@ export const sendMessage = async (req, res) => {
     if (newImage) {
       await newMessage.populate({
         path: "image",
+        select: "imageUrl",
+      });
+    }
+
+    if (newVoiceMessage) {
+      await newMessage.populate({
+        path: "voiceMessageId", // Assuming you've added this new path
         select: "imageUrl",
       });
     }
