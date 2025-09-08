@@ -62,11 +62,6 @@ export const SocketContextProvider = ({ children }) => {
       socketRef.current = newSocket
       setSocket(newSocket)
 
-      // In SocketContextProvider.jsx
-      // newSocket.on("newPublicMessage", (newMessage) => {
-      //   queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
-      // })
-
       const heartbeatInterval = setInterval(() => {
         if (newSocket.connected) {
           newSocket.emit("heartbeat")
@@ -187,7 +182,6 @@ export const SocketContextProvider = ({ children }) => {
     // It's fine as is for private chats.
   }, [activeConversationId])
 
-  // ✅ This effect now correctly manages enter/leave events
   useEffect(() => {
     if (!socket || !user) return
 

@@ -32,7 +32,7 @@ const router = express.Router();
 router.post("/create", protectRoute, createPost);
 router.put("/edit/:id", protectRoute, editPost);
 router.delete("/:id", protectRoute, deletePost);
-router.get("/history/:id", protectRoute, getPostHistory); // NEW ROUTE for getting edit history
+router.get("/history/:id", protectRoute, getPostHistory);
 
 router.post("/like/:id", protectRoute, likeUnlikePost);
 router.post("/repost/:postId", protectRoute, repostPost);

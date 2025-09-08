@@ -3,11 +3,9 @@ import { lazy, useState, Suspense } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
-// import ImageViewerPage from "./components/common/ImageViewerPage"
 import CreatePostModal from "./features/posts/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 
-// const CreatePostModal = lazy(() => import("./features/posts/CreatePostModal"))
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const PomodoroDashboardPage = lazy(() => import("./pages/pomodoro/PomodoroDashboardPage"))
 const GoalsPage = lazy(() => import("./pages/pomodoro/GoalsPage"))

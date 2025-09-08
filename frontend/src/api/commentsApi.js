@@ -65,7 +65,7 @@ export const likeUnlikeCommentApi = async ({ commentId, isAnonymousLike = false 
   const res = await fetch(`${BASE_URL}/${commentId}/like`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ isAnonymousLike }), // <-- The new flag
+    body: JSON.stringify({ isAnonymousLike }),
   })
   const data = await res.json()
   if (!res.ok) {

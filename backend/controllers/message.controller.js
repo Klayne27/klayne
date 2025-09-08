@@ -386,7 +386,6 @@ export const sendMessage = async (req, res) => {
     }
 
     if (voiceMessage) {
-      // It's crucial for the client to send this duration value
       if (!voiceMessageDuration || voiceMessageDuration > DURATION_LIMIT) {
         return res.status(400).json({
           error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
@@ -404,8 +403,8 @@ export const sendMessage = async (req, res) => {
     let newImage = null;
     let uploadedImgUrl = "";
 
-    let newVoiceMessage = null; // <-- New variable
-    let uploadedVoiceUrl = ""; // <-- New variable
+    let newVoiceMessage = null;
+    let uploadedVoiceUrl = "";
 
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img);

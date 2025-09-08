@@ -28,6 +28,7 @@ function ConversationItem({ conv }) {
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
+  const setAudioBlob = usePrivateChatStore((state) => state.setAudioBlob)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
@@ -119,6 +120,7 @@ function ConversationItem({ conv }) {
   const handleSelectConversation = () => {
     navigate(`/messages/${conv._id}`)
     setReplyingToMessage(null)
+    setAudioBlob(null)
   }
 
   // Prevent navigation if a long press is active

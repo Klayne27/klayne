@@ -1,4 +1,4 @@
-import { useRef, useCallback, useMemo, useState } from "react"
+import { useRef, useCallback, useMemo } from "react"
 import { truncateText } from "../../../utils/truncateText"
 import { IoClose, IoImageOutline, IoMicOutline, IoStopCircleOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
@@ -12,7 +12,6 @@ import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
-import { showAppToast } from "../../../utils/showAppToast"
 
 function PrivateChatInput({
   actualConversationId,
@@ -236,8 +235,8 @@ function PrivateChatInput({
         </div>
       )}
       {audioBlob && !isRecording && (
-        <div className="flex border-t border-accent p-5">
-          <div className="flex w-full items-center gap-2">
+        <div className="flex border-t border-accent p-5 justify-end">
+          <div className="flex  items-center gap-2">
             <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
             <button
               onClick={handleClearRecording}

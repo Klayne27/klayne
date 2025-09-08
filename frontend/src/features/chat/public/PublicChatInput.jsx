@@ -269,8 +269,8 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
         </div>
       )}
       {audioBlob && !isRecording && (
-        <div className="flex border-t border-accent p-5">
-          <div className="flex w-full items-center gap-2">
+        <div className="flex justify-end border-t border-accent p-5">
+          <div className="flex items-center gap-2">
             <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
             <button
               onClick={handleClearRecording}
