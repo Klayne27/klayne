@@ -105,7 +105,6 @@ export const useSendMessage = (onSenderMessageSent) => {
       })
       queryClient.setQueryData(conversationKeys.list(), (oldData) => {
 
-        console.log(newMessage);
         if (!oldData) return oldData
         return oldData.map((conversation) => {
           if (conversation._id === newMessage.conversationId) {
