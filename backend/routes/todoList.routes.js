@@ -10,7 +10,7 @@ import {
   getPublicTodoLists,
   getTodosInList,
   likeUnlikeTodoList,
-} from "../controllers/todoList.controllers.js";
+} from "../controllers/todoList.controller.js";
 
 const router = express.Router();
 

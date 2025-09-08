@@ -15,7 +15,7 @@ import {
   toggleVacationMode,
   toggleLikedFeedPrivacy,
   updatePreferredBadge,
-} from "../controllers/user.controllers.js";
+} from "../controllers/user.controller.js";
 import { isAdmin } from "../middleware/isAdmin.js";
 
 const router = express.Router();

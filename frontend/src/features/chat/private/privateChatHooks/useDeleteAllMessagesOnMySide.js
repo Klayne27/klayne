@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 
 import { messageKeys } from "./messageKeys"
 import { conversationKeys } from "./conversationKeys"
-import { deleteAllMessagesOnMySide } from "../../../../api/messagesApi"
+import { deleteAllMessagesOnMySide } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 const useDeleteAllMessagesOnMySide = () => {

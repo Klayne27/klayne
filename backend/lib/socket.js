@@ -320,7 +320,7 @@ export const createAndSendNotification = async ({
     if (postId) {
       await newNotification.populate({
         path: "postId",
-        select: "text img user isAnonymous", 
+        select: "text img user isAnonymous",
         populate: {
           path: "user",
           select: "username fullName",
@@ -558,6 +558,11 @@ io.on("connection", async (socket) => {
     }
   });
 
+  socket.on("userActiveInChat", ({ conversationId }) => {
+    userActiveChats.set(userId, conversationId ? conversationId.toString() : null);
+    emitUnreadMessageStatus(userId);
+  });
+
   socket.on("markMessagesAsSeen", async ({ conversationId }) => {
     try {
       const readerId = socket.userId;
@@ -653,11 +658,6 @@ io.on("connection", async (socket) => {
     } catch (error) {
       console.error("Error marking messages as seen (socket):", error);
     }
-  });
-
-  socket.on("userActiveInChat", ({ conversationId }) => {
-    userActiveChats.set(userId, conversationId ? conversationId.toString() : null);
-    emitUnreadMessageStatus(userId);
   });
 
   socket.on("userEnteredPublicChat", async () => {

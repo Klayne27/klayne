@@ -35,7 +35,6 @@ const messageSchema = new mongoose.Schema(
       {
         emoji: {
           type: String,
-          // enum: ["❤️", "👍", "😂", "😭", "😡"],
           required: true,
         },
         userId: {
@@ -43,7 +42,7 @@ const messageSchema = new mongoose.Schema(
           ref: "User",
           required: true,
         },
-        _id: false, // Prevents Mongoose from creating _id for subdocuments if not needed
+        _id: false,
       },
     ],
     deletedFor: {

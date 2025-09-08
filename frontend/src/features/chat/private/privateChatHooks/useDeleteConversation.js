@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { conversationKeys } from "./conversationKeys"
-import { deleteConversationApi } from "../../../../api/messagesApi"
+import { deleteConversationApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 const useDeleteConversation = () => {

@@ -15,7 +15,7 @@ import {
   getTodoById,
   getUserTodos,
   updateTodo,
-} from "../controllers/todo.controllers.js";
+} from "../controllers/todo.controller.js";
 
 const router = express.Router();
 

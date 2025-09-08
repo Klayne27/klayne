@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query"
 import { messageKeys } from "./messageKeys"
-import { getPinnedMessagesApi } from "../../../../api/messagesApi"
+import { getPinnedMessagesApi } from "../../../../api/privateChatApi"
 
 export const useGetPinnedMessages = (conversationId) => {
   const {

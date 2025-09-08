@@ -13,15 +13,16 @@ import { FaBroom } from "react-icons/fa6"
 import useDeleteAllMessagesOnMySide from "./privateChatHooks/useDeleteAllMessagesOnMySide" // Import the new hook
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../../../components/common/SlideUpMenu"
-import { LuUserRound, LuUserRoundMinus } from "react-icons/lu"
 import { useBlockUnblockUser } from "../../users/usersHooks/useBlockUnblockUser"
 import { useSocket } from "../../../context/SocketContext"
 import { TbUser, TbUserMinus } from "react-icons/tb"
+import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
   const navigate = useNavigate()
   const { onlineUsers } = useSocket()
+  const { setShowMenu } = useDropdownMenu()
 
   const selectedConversation = usePrivateChatStore((state) => state.selectedConversation)
   const setReplyingToMessage = usePrivateChatStore((state) => state.setReplyingToMessage)
@@ -132,6 +133,7 @@ function ConversationItem({ conv }) {
     e.stopPropagation()
     if (!otherUser?._id) return
     setShowBlockConfirmationModal(true)
+    setShowMenu(false)
   }
 
   if (!otherUser) {
@@ -147,7 +149,6 @@ function ConversationItem({ conv }) {
       onTouchMove={handleTouchMove}
       onTouchCancel={handleTouchCancel}
     >
-      {/* ... (rest of the component's JSX remains the same) */}
       <div className="relative p-1">
         <img
           src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
@@ -195,7 +196,7 @@ function ConversationItem({ conv }) {
       {!isMobile && (
         <DropdownMenu>
           <button
-            className="flex w-full template items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="template flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/profile/${otherUser?.username}`)
@@ -224,6 +225,7 @@ function ConversationItem({ conv }) {
               handleCloseMenu()
               e.stopPropagation()
               setShowOneSidedDeleteModal(true)
+              setShowMenu(false)
             }}
           >
             <FaBroom />
@@ -234,6 +236,7 @@ function ConversationItem({ conv }) {
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteModal(true)
+              setShowMenu(false)
             }}
           >
             <FaTrashCan />
@@ -287,6 +290,7 @@ function ConversationItem({ conv }) {
               onClick={(e) => {
                 e.stopPropagation()
                 setShowOneSidedDeleteModal(true)
+                setShowMenu(false)
               }}
             >
               <FaBroom />
@@ -298,6 +302,7 @@ function ConversationItem({ conv }) {
               onClick={(e) => {
                 e.stopPropagation()
                 setShowDeleteModal(true)
+                setShowMenu(false)
               }}
             >
               <FaTrashCan />

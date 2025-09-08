@@ -13,6 +13,10 @@ const conversationSchema = new mongoose.Schema(
         type: String,
         default: "",
       },
+      deletedFor: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        default: [],
+      },
       sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
       seen: {
         type: Boolean,

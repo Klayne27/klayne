@@ -4,7 +4,7 @@ import {
   getNotifications,
   deleteNotifications,
   deleteNotification,
-} from "../controllers/notification.controllers.js";
+} from "../controllers/notification.controller.js";
 
 const router = express.Router();
 

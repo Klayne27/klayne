@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { conversationKeys } from "./conversationKeys";
-import { getConversationBetweenUsersApi } from "../../../../api/messagesApi";
+import { getConversationBetweenUsersApi } from "../../../../api/privateChatApi";
 
 export const useGetConversationBetweenUsers = (otherUserId) => {
   const {

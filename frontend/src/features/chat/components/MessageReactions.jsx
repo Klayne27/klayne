@@ -1,4 +1,5 @@
 import { PiSmileyFill } from "react-icons/pi"
+import AnimatedCount from "../../../components/common/AnimatedCount"
 
 const MessageReactions = ({
   groupedReactions,
@@ -48,8 +49,9 @@ const MessageReactions = ({
             onReactionClick(message._id, emoji)
           }}
         >
-          <span className="text-[16px]">{emoji}</span>
-          <span className="ml-1 font-bold text-white">{data.count}</span>
+          <span className="text-[16px] mr-0.5">{emoji}</span>
+          <AnimatedCount count={data.count} className="absolute font-bold text-white top-[1px]" />
+          {/* <span className="ml-1 font-bold text-white">{data.count}</span> */}
         </div>
       )
     })}

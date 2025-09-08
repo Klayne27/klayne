@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { getOrCreateConversationApi } from "../../../../api/messagesApi"
+import { getOrCreateConversationApi } from "../../../../api/privateChatApi"
 import { useNavigate } from "react-router-dom"
 import { conversationKeys } from "./conversationKeys"
 import { showAppToast } from "../../../../utils/showAppToast"

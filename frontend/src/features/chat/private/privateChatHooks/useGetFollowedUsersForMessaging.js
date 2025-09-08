@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getFollowedUsersForMessagingApi } from "../../../../api/messagesApi"
+import { getFollowedUsersForMessagingApi } from "../../../../api/privateChatApi"
 import { conversationKeys } from "./conversationKeys"
 
 export const useGetFollowedUsersForMessaging = (searchQuery) => {

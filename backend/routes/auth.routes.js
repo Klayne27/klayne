@@ -7,7 +7,7 @@ import {
   googleAuth,
   forgotPassword,
   resetPassword,
-} from "../controllers/auth.controllers.js";
+} from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/protectRoute.js";
 import rateLimit from "express-rate-limit";
 

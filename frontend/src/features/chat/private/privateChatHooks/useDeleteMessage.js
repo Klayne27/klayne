@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { messageKeys } from "./messageKeys";
-import { deleteMessageApi } from "../../../../api/messagesApi";
+import { deleteMessageApi } from "../../../../api/privateChatApi";
 import { showAppToast } from "../../../../utils/showAppToast";
 
 export const useDeleteMessage = () => {

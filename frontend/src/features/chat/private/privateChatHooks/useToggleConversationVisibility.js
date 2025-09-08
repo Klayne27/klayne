@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { conversationKeys } from "./conversationKeys"
-import { toggleConversationVisibilityApi } from "../../../../api/messagesApi"
+import { toggleConversationVisibilityApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 export const useToggleConversationVisibility = () => {

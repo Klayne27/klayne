@@ -1,5 +1,5 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { getMessagesApi } from "../../../../api/messagesApi"
+import { getMessagesApi } from "../../../../api/privateChatApi"
 import { useMemo } from "react"
 import { messageKeys } from "./messageKeys"
 

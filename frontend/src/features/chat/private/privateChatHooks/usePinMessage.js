@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { pinMessageApi } from "../../../../api/messagesApi"
+import { pinMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 import { messageKeys } from "./messageKeys"
 

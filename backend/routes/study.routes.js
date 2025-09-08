@@ -11,7 +11,7 @@ import {
   deleteStudyTask,
   logStudyTime,
   getStudyHistory
-} from "../controllers/study.controllers.js";
+} from "../controllers/study.controller.js";
 
 const router = express.Router();
 

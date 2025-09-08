@@ -3,7 +3,7 @@ import { messageKeys } from "./messageKeys"
 import { conversationKeys } from "./conversationKeys"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
-import { sendMessageApi } from "../../../../api/messagesApi"
+import { sendMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 export const useSendMessage = (onSenderMessageSent) => {

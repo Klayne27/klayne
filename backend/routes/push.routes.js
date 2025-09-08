@@ -5,7 +5,6 @@ import { sendPushNotification } from "../lib/utils/sendPush.js";
 
 const router = express.Router();
 
-// Subscribe to push notifications
 router.post("/subscribe", protectRoute, async (req, res) => {
   try {
     const { endpoint, keys, deviceId } = req.body;

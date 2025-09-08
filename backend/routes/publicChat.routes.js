@@ -9,7 +9,7 @@ import {
   addReactionToPublicMessage,
   deleteOwnPublicMessage,
   editPublicMessage,
-} from "../controllers/publicChat.controllers.js";
+} from "../controllers/publicChat.controller.js";
 
 const router = express.Router();
 

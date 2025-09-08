@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { messageKeys } from "./messageKeys"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
-import { reactToMessageApi } from "../../../../api/messagesApi"
+import { reactToMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 export const useReactToMessage = ({ selectedConversationId, onReactionAdded }) => {

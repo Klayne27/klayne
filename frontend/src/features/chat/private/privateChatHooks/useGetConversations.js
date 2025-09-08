@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { conversationKeys } from "./conversationKeys";
-import { getConversationsApi } from "../../../../api/messagesApi";
+import { getConversationsApi } from "../../../../api/privateChatApi";
 
 export const useGetConversations = () => {
   const {

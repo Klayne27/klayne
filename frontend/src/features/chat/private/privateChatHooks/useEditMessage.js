@@ -1,7 +1,7 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { messageKeys } from "./messageKeys"
 import { conversationKeys } from "./conversationKeys"
-import { editMessageApi } from "../../../../api/messagesApi"
+import { editMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
 
 export const useEditMessage = (conversationId) => {

@@ -5,17 +5,31 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
   const processedMessages = useMemo(() => {
     if (!messages && !pinnedMessagesInfo) return []
 
-    // 1. Create system message objects from the persistent pinned data
-    const systemMessages = (pinnedMessagesInfo || [])
-      .map((pin) => {
-        // Safety check for pin structure
-        if (!pin || !pin.pinnedBy || !pin.message) {
-          console.warn("Invalid pin data:", pin)
-          return null
-        }
+    // Handle case where messages might be undefined or not have pages
+    let flattenedMessages = []
+    if (messages) {
+      if (Array.isArray(messages)) {
+        flattenedMessages = messages
+      } else if (messages.pages && Array.isArray(messages.pages)) {
+        flattenedMessages = messages.pages.flat()
+      }
+    }
 
+    // Create a Set of message IDs for fast lookups.
+    // This is the core of the fix.
+    const messageIdSet = new Set(flattenedMessages.map((msg) => msg._id.toString()))
+
+    // 1. Create system message objects from the persistent pinned data.
+    //    We now FILTER this list to only include pins whose original message
+    //    is present in the current user's flattenedMessages list.
+    const systemMessages = (pinnedMessagesInfo || [])
+      .filter((pin) => {
+        // Safety check for pin structure and to see if the original message exists in the current view.
+        return pin && pin.pinnedBy && pin.message && messageIdSet.has(pin.message._id.toString())
+      })
+      .map((pin) => {
         return {
-          _id: `pinned-${pin.message}-${pin.pinnedAt}`, // Create a stable unique key
+          _id: `pinned-${pin.message._id}-${pin.pinnedAt}`, // Create a stable unique key
           isSystemMessage: true,
           text: `${pin.pinnedBy.username || "Unknown user"} pinned a message`,
           pinnedAt: pin.pinnedAt,
@@ -26,20 +40,9 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
           sender: pin.pinnedBy,
         }
       })
-      .filter(Boolean) // Remove any null entries
+      .filter(Boolean)
 
-    // Handle case where messages might be undefined or not have pages
-    let flattenedMessages = []
-    if (messages) {
-      if (Array.isArray(messages)) {
-        // If messages is already an array
-        flattenedMessages = messages
-      } else if (messages.pages && Array.isArray(messages.pages)) {
-        // If messages has pages (infinite query structure)
-        flattenedMessages = messages.pages.flat()
-      }
-    }
-
+    // Combine the existing messages and the now-filtered system messages.
     const allMessages = [...flattenedMessages, ...systemMessages]
 
     // Sort by createdAt date
@@ -133,7 +136,7 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
           senderUsername: currentSender.username,
         }
       })
-      .filter(Boolean) // Remove any null entries
+      .filter(Boolean)
 
     return enhanced
   }, [messages, pinnedMessagesInfo])

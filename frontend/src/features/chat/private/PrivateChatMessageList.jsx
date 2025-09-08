@@ -14,13 +14,8 @@ import { useChatViewStore } from "../../../store/useChatViewStore"
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
     isNewChat,
-    error,
     messagesToRender,
     privateChatInputRef,
-    isLoadingInitialMessages,
-    isFetchingOlderMessages,
-    hasNextPage,
-    isTypingOtherUser,
     handleLoadImage,
     onReactionAdded,
     messageListRef,

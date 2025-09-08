@@ -4,7 +4,7 @@ import {
   getMonthlyLeaderboard,
   getPreviousWinners,
   getTotalLeaderboard,
-} from "../controllers/leaderboard.controllers.js";
+} from "../controllers/leaderboard.controller.js";
 
 const router = express.Router();
 

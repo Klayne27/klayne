@@ -25,7 +25,7 @@ import {
   markFeedVentPostsAsRead,
   editPost,
   getPostHistory,
-} from "../controllers/post.controllers.js";
+} from "../controllers/post.controller.js";
 
 const router = express.Router();
 

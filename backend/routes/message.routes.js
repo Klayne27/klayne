@@ -16,7 +16,7 @@ import {
   pinMessage,
   unpinMessage,
   getPinnedMessages,
-} from "../controllers/message.Controllers.js";
+} from "../controllers/message.controller.js";
 
 const router = express.Router();
 
