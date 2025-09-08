@@ -17,7 +17,6 @@ const MessageBubble = ({
 }) => {
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
   const { authUser } = useAuthUser()
-  console.log(message.voiceMessageId?.imageUrl)
 
   return (
     <div
@@ -79,6 +78,7 @@ const MessageBubble = ({
               <audio
                 controls
                 src={message.voiceMessageId.imageUrl}
+                className="max-w-[100%] h-9"
                 onError={(e) => {
                   console.error("Error loading audio:", e)
                 }}

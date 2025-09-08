@@ -44,6 +44,7 @@ export const useSendMessage = (onSenderMessageSent) => {
               img: replyingToMessage.img,
             }
           : null,
+        audio: newMessageData.voiceMessage || null, // Add the audio property
       }
 
       queryClient.setQueryData(messagesQueryKey, (oldData) => {
@@ -68,6 +69,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 img: optimisticMessage.img,
                 seen: optimisticMessage.seen,
                 messageId: optimisticMessage._id,
+                audio: optimisticMessage.audio, // Add the audio property here
               },
               updatedAt: optimisticMessage.createdAt,
             }
@@ -113,6 +115,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 img: newMessage.img,
                 seen: newMessage.seen,
                 messageId: newMessage._id,
+                audio: newMessage.voiceMessageId.imageUrl
               },
               updatedAt: newMessage.createdAt,
             }

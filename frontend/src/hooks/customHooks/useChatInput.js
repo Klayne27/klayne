@@ -278,5 +278,6 @@ export const useChatInput = ({
     handleStartRecording,
     handleStopRecording,
     handleClearRecording,
+    clearInputState,
   }
 }

@@ -47,7 +47,7 @@ const PrivateChatPage = () => {
 
   const showConversationList = !isMobile || !urlConversationId
   const showChatWindow = !isMobile || !!urlConversationId
-
+  
   if (errorConversations) {
     return (
       <div className="flex-center h-screen text-red-500">Error: {errorConversations.message}</div>

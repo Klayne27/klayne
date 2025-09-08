@@ -1,5 +1,5 @@
 import { useRef, useCallback, useMemo } from "react"
-import { IoClose, IoImageOutline } from "react-icons/io5"
+import { IoClose, IoImageOutline, IoMicOutline, IoStopCircleOutline } from "react-icons/io5"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { truncateText } from "../../../utils/truncateText"
 import { FaReply } from "react-icons/fa6"
@@ -14,13 +14,9 @@ import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPicker
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
 
-const PublicChatInput = ({
-  publicChatInputRef,
-  socket,
-  onSenderMessageSent,
-  typingUsers,
-}) => {
-  const { replyingToMessage, setReplyingToMessage, editingMessage } = usePublicChatStore()
+const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
+  const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =
+    usePublicChatStore()
 
   const emojiButtonRef = useRef(null)
 
@@ -32,8 +28,10 @@ const PublicChatInput = ({
   const { editPublicMessage } = useEditPublicMessage()
 
   const handleSendMessage = useCallback(
-    async ({ text, file, repliedToId }) => {
+    async ({ text, file, repliedToId, voiceMessage }) => {
       let imgBase64 = null
+      let voiceMessageBase64 = null
+
       if (file) {
         imgBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader()
@@ -42,7 +40,22 @@ const PublicChatInput = ({
           reader.readAsDataURL(file)
         })
       }
-      sendPublicMessage({ text, repliedTo: repliedToId, imgBase64 })
+
+      if (voiceMessage) {
+        voiceMessageBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(voiceMessage)
+        })
+      }
+
+      sendPublicMessage({
+        text,
+        repliedTo: repliedToId,
+        imgBase64,
+        voiceMessageBase64,
+      })
     },
     [sendPublicMessage],
   )
@@ -74,12 +87,15 @@ const PublicChatInput = ({
     isSendButtonDisabled,
     handleTextInputChange,
     handleFileChange,
-    handleSubmit,
     handleKeyDown,
     handleEmojiClick,
     handleRemoveImage,
     handleCancelEdit,
     handleImageButtonClick,
+    handleStartRecording,
+    handleStopRecording,
+    handleClearRecording,
+    clearInputState,
   } = useChatInput({
     inputRef: publicChatInputRef,
     fileInputRef: publicChatFileInputRef,
@@ -89,6 +105,24 @@ const PublicChatInput = ({
     onEditMessage: handleEditMessage,
     typingConfig: typingConfig,
   })
+
+  const publicHandleSubmit = async (e) => {
+    e.preventDefault()
+    const content = textInput.trim()
+    const repliedToId = replyingToMessage?._id || null
+
+    if (editingMessage) {
+      await editPublicMessage({ messageId: editingMessage._id, newText: content })
+    } else {
+      await handleSendMessage({
+        text: content,
+        file: selectedFile,
+        repliedToId,
+        voiceMessage: audioBlob, // 👈 Pass the audioBlob here
+      })
+    }
+    clearInputState()
+  }
 
   const {
     showEmojiPickerPopover,
@@ -113,7 +147,7 @@ const PublicChatInput = ({
   const messageDeleted = <span className="mt-1 italic text-gray-600">[Message Deleted]</span>
 
   const renderInputForm = (isEditingMode, typingIndicator) => (
-    <form onSubmit={handleSubmit} className="relative flex items-center bg-black/0 px-2">
+    <form onSubmit={publicHandleSubmit} className="relative flex items-center bg-black/0 px-2">
       <input
         type="file"
         accept="image/*"
@@ -159,6 +193,23 @@ const PublicChatInput = ({
               </>
             )}
           </button>
+          {!isRecording ? (
+            <button
+              type="button"
+              onClick={handleStartRecording}
+              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
+            >
+              <IoMicOutline className="h-5 w-5" />
+            </button>
+          ) : (
+            <button
+              type="button"
+              onClick={handleStopRecording}
+              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-red-700"
+            >
+              <IoStopCircleOutline className="h-5 w-5" />
+            </button>
+          )}
         </div>
 
         <textarea
@@ -210,6 +261,19 @@ const PublicChatInput = ({
             <button
               onClick={handleRemoveImage}
               className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
+            >
+              <IoClose size={15} />
+            </button>
+          </div>
+        </div>
+      )}
+      {audioBlob && !isRecording && (
+        <div className="flex border-t border-accent p-5">
+          <div className="flex w-full items-center gap-2">
+            <audio controls src={URL.createObjectURL(audioBlob)} className="flex-1" />
+            <button
+              onClick={handleClearRecording}
+              className="rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
             >
               <IoClose size={15} />
             </button>

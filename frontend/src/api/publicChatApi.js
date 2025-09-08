@@ -1,4 +1,4 @@
-const BASE_URL = "/api/public-chat";
+const BASE_URL = "/api/public-chat"
 
 export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
   try {
@@ -8,22 +8,22 @@ export const getPublicMessagesApi = async ({ pageParam = 1 }) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error || "Failed to fetch public messages");
+      throw new Error(data.error || "Failed to fetch public messages")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error("Error fetching public messages:", error);
-    throw error;
+    console.error("Error fetching public messages:", error)
+    throw error
   }
-};
+}
 
-export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo }) => {
+export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo, voiceMessageBase64 }) => {
   try {
     const res = await fetch(`${BASE_URL}/send`, {
       method: "POST",
@@ -31,21 +31,21 @@ export const sendPublicMessageApi = async ({ text, imgBase64, repliedTo }) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-      body: JSON.stringify({ text, imgBase64, repliedTo }),
-    });
+      body: JSON.stringify({ text, imgBase64, repliedTo, voiceMessageBase64 }), // 👈 Pass the new data
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error || "Failed to send public message");
+      throw new Error(data.error || "Failed to send public message")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error("Error sending public message:", error);
-    throw error;
+    console.error("Error sending public message:", error)
+    throw error
   }
-};
+}
 
 export const adminDeletePublicMessageApi = async (messageId) => {
   try {
@@ -55,33 +55,33 @@ export const adminDeletePublicMessageApi = async (messageId) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error || "Failed to delete public message");
+      throw new Error(data.error || "Failed to delete public message")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error("Error deleting public message:", error);
-    throw error;
+    console.error("Error deleting public message:", error)
+    throw error
   }
-};
+}
 
 export const deleteOwnPublicMessageApi = async (messageId) => {
   const res = await fetch(`${BASE_URL}/${messageId}`, {
     method: "DELETE",
     headers: { "Content-type": "application/json" },
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to delete message");
+  if (!res.ok) throw new Error(data.error || "Failed to delete message")
 
-  return data;
-};
+  return data
+}
 
 export const editPublicMessageApi = async (messageId, newText) => {
   const res = await fetch(`${BASE_URL}/edit/${messageId}`, {
@@ -90,14 +90,14 @@ export const editPublicMessageApi = async (messageId, newText) => {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ newText }),
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
   if (!res.ok) {
-    throw new Error(data.error || "Failed to edit message.");
+    throw new Error(data.error || "Failed to edit message.")
   }
-  return data;
-};
+  return data
+}
 
 export const banUserFromPublicChatApi = async (userId) => {
   try {
@@ -107,20 +107,20 @@ export const banUserFromPublicChatApi = async (userId) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error || "Failed to ban user from public chat");
+      throw new Error(data.error || "Failed to ban user from public chat")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error("Error banning user:", error);
-    throw error;
+    console.error("Error banning user:", error)
+    throw error
   }
-};
+}
 
 export const unbanUserFromPublicChatApi = async (userId) => {
   try {
@@ -130,31 +130,31 @@ export const unbanUserFromPublicChatApi = async (userId) => {
         "Content-Type": "application/json",
       },
       credentials: "include",
-    });
+    })
 
-    const data = await res.json();
+    const data = await res.json()
 
     if (!res.ok) {
-      throw new Error(data.error || "Failed to unban user from public chat");
+      throw new Error(data.error || "Failed to unban user from public chat")
     }
 
-    return data;
+    return data
   } catch (error) {
-    console.error("Error unbanning user:", error);
-    throw error;
+    console.error("Error unbanning user:", error)
+    throw error
   }
-};
+}
 
 export const addPublicMessageReactionApi = async (messageId, emoji) => {
   const res = await fetch(`${BASE_URL}/${messageId}/react`, {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ emoji }),
-  });
+  })
 
-  const data = await res.json();
+  const data = await res.json()
 
-  if (!res.ok) throw new Error(data.error || "Failed to react to message");
+  if (!res.ok) throw new Error(data.error || "Failed to react to message")
 
-  return data;
-};
+  return data
+}

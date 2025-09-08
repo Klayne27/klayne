@@ -451,6 +451,7 @@ export const sendMessage = async (req, res) => {
       sender: senderId,
       seen: isSeen,
       messageId: newMessage._id,
+      audio: uploadedVoiceUrl,
     };
 
     // Save conversation with cleaned pinnedMessages
@@ -534,7 +535,10 @@ export const deleteMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    const messageToDelete = await Message.findById(messageId);
+    const messageToDelete = await Message.findById(messageId).populate(
+      "voiceMessageId",
+      "imageUrl"
+    );
 
     if (!messageToDelete) {
       return res.status(404).json({ error: "Message not found." });
@@ -565,6 +569,14 @@ export const deleteMessage = async (req, res) => {
     if (messageToDelete.img) {
       const imgId = messageToDelete.img.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
+    }
+
+    if (messageToDelete.voiceMessageId) {
+      const audioId = messageToDelete.voiceMessageId.imageUrl
+        .split("/")
+        .pop()
+        .split(".")[0];
+      await cloudinary.uploader.destroy(audioId, { resource_type: "video" }); // Cloudinary treats audio as a 'video' resource type
     }
 
     await Message.findByIdAndDelete(messageId);

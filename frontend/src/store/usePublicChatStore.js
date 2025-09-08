@@ -8,6 +8,8 @@ export const usePublicChatStore = create(
     activeMessageModalId: null,
     isCurrentlyTouchDevice: false,
     showNewMessageButton: false,
+    isRecording: false, // <-- New state
+    audioBlob: null, // <-- New state
 
     isSlideMenuOpen: false,
     messageForSlideMenu: null,
@@ -49,5 +51,8 @@ export const usePublicChatStore = create(
         state.isSlideMenuOpen = false
         state.messageForSlideMenu = null
       }),
+    setIsRecording: (isRecording) => set({ isRecording }),
+    setAudioBlob: (audioBlob) => set({ audioBlob }),
+    clearAudioBlob: () => set({ audioBlob: null }), // Utility to clear the recording
   })),
 )

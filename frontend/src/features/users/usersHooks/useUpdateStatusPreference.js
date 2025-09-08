@@ -6,7 +6,7 @@ import { userKeys } from "./userKeys"
 export const useUpdateStatusPreference = () => {
   const queryClient = useQueryClient()
 
-  const { mutate: updateStatus } = useMutation({
+  const { mutate: updateStatus, isPending: isUpdatingStatus } = useMutation({
     mutationFn: updateStatusPreferenceApi,
     onMutate: async (status) => {
       await queryClient.cancelQueries({ queryKey: userKeys.auth() })
@@ -23,12 +23,12 @@ export const useUpdateStatusPreference = () => {
     },
     onSuccess: () => {
       //   showAppToast("Status updated", "success")
-      //   queryClient.invalidateQueries(userKeys.auth())
+      // queryClient.invalidateQueries(userKeys.auth())
     },
     onError: (context) => {
       queryClient.setQueryData(userKeys.auth(), context.previousAuthUser)
     },
   })
 
-  return { updateStatus }
+  return { updateStatus, isUpdatingStatus }
 }

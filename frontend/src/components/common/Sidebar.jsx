@@ -435,7 +435,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   }
 
   const { socket } = useSocket()
-  const { updateStatus } = useUpdateStatusPreference()
+  const { updateStatus, isUpdatingStatus } = useUpdateStatusPreference()
 
   const handleStatusChange = (status) => {
     updateStatus(status)
@@ -944,7 +944,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                       <span className="px-1 text-xs font-bold text-gray-400">Set Status</span>
                       <button
                         onClick={() => handleStatusChange("online")}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                        disabled={isUpdatingStatus}
                       >
                         <span className="size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
                         <div className="flex flex-col">
@@ -954,7 +955,8 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                       </button>
                       <button
                         onClick={() => handleStatusChange("offline")}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                        disabled={isUpdatingStatus}
                       >
                         <span className="size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
                         <div className="flex flex-col">

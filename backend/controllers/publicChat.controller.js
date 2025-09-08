@@ -61,6 +61,10 @@ export const getPublicMessages = async (req, res) => {
           path: "image",
           select: "imageUrl publicId",
         },
+        {
+          path: "voiceMessageId",
+          select: "imageUrl",
+        },
       ])
       .lean();
 
@@ -73,10 +77,11 @@ export const getPublicMessages = async (req, res) => {
 
 export const sendPublicMessage = async (req, res) => {
   try {
-    const { text, imgBase64, repliedTo } = req.body;
+    const { text, imgBase64, repliedTo, voiceMessageBase64 } = req.body; // 👈 Add voiceMessageBase64
     const senderId = req.user._id;
     let img = null;
     let newImage = null;
+    let newVoiceMessage = null; // 👈 New variable for the voice message Image document
 
     if (await isBanned(senderId)) {
       return res.status(403).json({ error: "You are banned from the public chat." });
@@ -98,10 +103,27 @@ export const sendPublicMessage = async (req, res) => {
       await newImage.save();
     }
 
-    if (!text && !img) {
-      return res.status(400).json({ error: "Message text or image is required." });
+    // 👈 Add voice message handling logic
+    if (voiceMessageBase64) {
+      const uploadResponse = await cloudinary.uploader.upload(voiceMessageBase64, {
+        resource_type: "video", // Cloudinary treats audio files as video resources
+      });
+
+      newVoiceMessage = new Image({
+        imageUrl: uploadResponse.secure_url,
+        parentDocument: null,
+        parentModel: "PublicChatMessage",
+        uploadedBy: senderId,
+        publicId: uploadResponse.public_id,
+      });
+      await newVoiceMessage.save();
     }
 
+    if (!text && !imgBase64 && !voiceMessageBase64) {
+      return res
+        .status(400)
+        .json({ error: "Message text, image, or voice message is required." });
+    }
     let newMessageData = {
       sender: senderId,
       text: text || "",
@@ -123,6 +145,12 @@ export const sendPublicMessage = async (req, res) => {
       newPublicMessage.image = newImage._id;
       newImage.parentDocument = newPublicMessage._id;
       await newImage.save();
+    }
+
+    if (newVoiceMessage) {
+      newPublicMessage.voiceMessageId = newVoiceMessage._id;
+      newVoiceMessage.parentDocument = newPublicMessage._id;
+      await newVoiceMessage.save();
     }
 
     await newPublicMessage.save();
@@ -147,6 +175,10 @@ export const sendPublicMessage = async (req, res) => {
       },
       {
         path: "image",
+        select: "imageUrl publicId",
+      },
+      {
+        path: "voiceMessageId",
         select: "imageUrl publicId",
       },
     ]);
@@ -186,12 +218,16 @@ export const adminDeletePublicMessage = async (req, res) => {
         .json({ error: "Unauthorized: Only admins can delete messages." });
     }
 
-    const message = await PublicChatMessage.findById(messageId);
+    const message = await PublicChatMessage.findById(messageId).populate(
+      "voiceMessageId",
+      "imageUrl"
+    );
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
     }
     const imageUrlToDelete = message.img;
+    const audioUrlToDelete = message.voiceMessageId.imageUrl;
 
     message.isDeletedByAdmin = true;
     message.img = null;
@@ -200,6 +236,11 @@ export const adminDeletePublicMessage = async (req, res) => {
     if (imageUrlToDelete) {
       const imgId = imageUrlToDelete.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
+    }
+
+    if (audioUrlToDelete) {
+      const audioId = audioUrlToDelete.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(audioId, { resource_type: "video" });
     }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicMessageDeleted", { messageId: message._id });
@@ -385,7 +426,10 @@ export const deleteOwnPublicMessage = async (req, res) => {
     const { messageId } = req.params;
     const userId = req.user._id;
 
-    const message = await PublicChatMessage.findById(messageId);
+    const message = await PublicChatMessage.findById(messageId).populate(
+      "voiceMessageId",
+      "imageUrl"
+    );
     // const message = await PublicChatMessage.findByIdAndDelete(messageId);
 
     if (!message) {
@@ -399,66 +443,77 @@ export const deleteOwnPublicMessage = async (req, res) => {
     }
 
     const imageUrlToDelete = message.img;
+    const audioUrlToDelete = message.voiceMessageId.imageUrl;
 
     message.isDeletedByUser = true;
     message.img = null;
     await message.save();
 
+    // if (imageUrlToDelete) {
+    //   let imgId;
+    //   try {
+    //     const parts = imageUrlToDelete.split("/upload/");
+    //     if (parts.length > 1) {
+    //       const pathAfterUpload = parts[1];
+    //       const idWithExtension = pathAfterUpload.split("/").slice(1).join("/");
+    //       imgId = idWithExtension.split(".")[0];
+
+    //       const urlSegments = imageUrlToDelete.split("/");
+    //       const uploadIndex = urlSegments.indexOf("upload");
+    //       if (uploadIndex !== -1 && urlSegments.length > uploadIndex + 1) {
+    //         let startIndex = uploadIndex + 1;
+    //         if (
+    //           urlSegments[startIndex].startsWith("v") &&
+    //           urlSegments[startIndex].length === 11 &&
+    //           !isNaN(urlSegments[startIndex].substring(1))
+    //         ) {
+    //           startIndex++;
+    //         }
+
+    //         imgId = urlSegments.slice(startIndex).join("/").split(".")[0];
+    //       } else {
+    //         console.error(
+    //           "Cloudinary URL format unexpected. Could not extract public ID."
+    //         );
+    //         imgId = null;
+    //       }
+    //     } else {
+    //       console.error(
+    //         "Cloudinary URL does not contain '/upload/'. Could not extract public ID."
+    //       );
+    //       imgId = null;
+    //     }
+
+    //     if (!imgId) {
+    //       console.error(
+    //         "Cloudinary public ID is null or empty after extraction. Deletion skipped."
+    //       );
+    //     } else {
+    //       const result = await cloudinary.uploader.destroy(imgId);
+    //       if (result.result === "not found") {
+    //         console.warn(
+    //           `Cloudinary image with ID ${imgId} not found or already deleted.`
+    //         );
+    //       } else if (result.result !== "ok") {
+    //         console.error(`Cloudinary deletion failed for ID ${imgId}:`, result.result);
+    //       }
+    //     }
+    //   } catch (cloudinaryError) {
+    //     console.error(
+    //       "Error during Cloudinary deletion process:",
+    //       cloudinaryError.message
+    //     );
+    //   }
+    // }
+
     if (imageUrlToDelete) {
-      let imgId;
-      try {
-        const parts = imageUrlToDelete.split("/upload/");
-        if (parts.length > 1) {
-          const pathAfterUpload = parts[1];
-          const idWithExtension = pathAfterUpload.split("/").slice(1).join("/");
-          imgId = idWithExtension.split(".")[0];
+      const imgId = imageUrlToDelete.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(imgId);
+    }
 
-          const urlSegments = imageUrlToDelete.split("/");
-          const uploadIndex = urlSegments.indexOf("upload");
-          if (uploadIndex !== -1 && urlSegments.length > uploadIndex + 1) {
-            let startIndex = uploadIndex + 1;
-            if (
-              urlSegments[startIndex].startsWith("v") &&
-              urlSegments[startIndex].length === 11 &&
-              !isNaN(urlSegments[startIndex].substring(1))
-            ) {
-              startIndex++;
-            }
-
-            imgId = urlSegments.slice(startIndex).join("/").split(".")[0];
-          } else {
-            console.error(
-              "Cloudinary URL format unexpected. Could not extract public ID."
-            );
-            imgId = null;
-          }
-        } else {
-          console.error(
-            "Cloudinary URL does not contain '/upload/'. Could not extract public ID."
-          );
-          imgId = null;
-        }
-
-        if (!imgId) {
-          console.error(
-            "Cloudinary public ID is null or empty after extraction. Deletion skipped."
-          );
-        } else {
-          const result = await cloudinary.uploader.destroy(imgId);
-          if (result.result === "not found") {
-            console.warn(
-              `Cloudinary image with ID ${imgId} not found or already deleted.`
-            );
-          } else if (result.result !== "ok") {
-            console.error(`Cloudinary deletion failed for ID ${imgId}:`, result.result);
-          }
-        }
-      } catch (cloudinaryError) {
-        console.error(
-          "Error during Cloudinary deletion process:",
-          cloudinaryError.message
-        );
-      }
+    if (audioUrlToDelete) {
+      const audioId = audioUrlToDelete.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(audioId, { resource_type: "video" }); // Cloudinary treats audio as a 'video' resource type
     }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {

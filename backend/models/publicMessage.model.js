@@ -9,13 +9,18 @@ const publicChatMessageSchema = new mongoose.Schema(
     },
     text: {
       type: String,
-      default: "", 
+      default: "",
     },
     img: {
       type: String,
       default: "",
     },
     image: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Image",
+      default: null,
+    },
+    voiceMessageId: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Image",
       default: null,

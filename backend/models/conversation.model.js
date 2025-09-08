@@ -13,6 +13,10 @@ const conversationSchema = new mongoose.Schema(
         type: String,
         default: "",
       },
+      audio: {
+        type: String,
+        default: "",
+      },
       deletedFor: {
         type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
         default: [],

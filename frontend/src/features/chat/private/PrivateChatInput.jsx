@@ -55,7 +55,7 @@ function PrivateChatInput({
 
       sendPrivateMessage({
         message: text,
-        repliedTo: repliedToId,
+        repliedTo: repliedToId, 
         conversationId: actualConversationId,
         img: file && file.type.startsWith("image/") ? base64Data : null, // Check file type for images
         voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null, // Check file type for audio

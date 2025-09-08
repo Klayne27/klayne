@@ -18,6 +18,7 @@ import { useSocket } from "../../../context/SocketContext"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { BsThreeDots } from "react-icons/bs"
+import { LuAudioLines } from "react-icons/lu"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -65,6 +66,12 @@ function ConversationItem({ conv }) {
     lastMessageContent = (
       <span className="gap-1">
         <MdImage className="inline-block text-lg" /> Image
+      </span>
+    )
+  } else if (conv.lastMessage?.audio) {
+    lastMessageContent = (
+      <span className="gap-1">
+        <LuAudioLines className="inline-block text-lg" /> Voice Message
       </span>
     )
   } else if (conv.lastMessage?.text) {
