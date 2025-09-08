@@ -4,12 +4,12 @@ export const useMessagingMetaData = (message, currentUser) => {
   const isSentByCurrentUser = message.sender?._id === currentUser?._id
   const isEditable = isSentByCurrentUser && !message.isDeletedByAdmin && !message.isDeletedByUser
   const isAuthUserAdmin = currentUser.isAdmin
-  const isSenderBanned = message.sender.isBannedInPublicChat
+  const isSenderBanned = message.sender?.isBannedInPublicChat
   const isMessageDeleted = message.isDeletedByAdmin || message.isDeletedByUser
   const isReplyToMessageDeleted =
     message.repliedTo?.isDeletedByAdmin || message.repliedTo?.isDeletedByUser
   const isMessageEdited = message.isEdited
-  const senderUsername = message.sender.username
+  const senderUsername = message.sender?.username
 
   const groupedReactions = useMemo(() => {
     return message.reactions?.reduce((acc, reaction) => {

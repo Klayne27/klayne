@@ -866,7 +866,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <div className="relative size-10">
+                <div className="relative w-10 h-10">
                   <img
                     src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                     alt="User Profile"
