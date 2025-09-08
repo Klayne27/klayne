@@ -43,7 +43,7 @@ export const sendPublicMessageApi = async ({
         repliedTo,
         voiceMessageBase64,
         voiceMessageDuration,
-      }), // 👈 Pass the new data
+      }),
     })
 
     const data = await res.json()

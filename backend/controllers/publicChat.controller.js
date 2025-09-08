@@ -90,12 +90,10 @@ export const sendPublicMessage = async (req, res) => {
       return res.status(403).json({ error: "You are banned from the public chat." });
     }
 
-    if (voiceMessageBase64) {
-      if (!voiceMessageDuration || voiceMessageDuration > DURATION_LIMIT) {
-        return res.status(400).json({
-          error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
-        });
-      }
+    if (voiceMessageDuration > DURATION_LIMIT) {
+      return res.status(400).json({
+        error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
+      });
     }
 
     if (imgBase64) {
@@ -160,7 +158,7 @@ export const sendPublicMessage = async (req, res) => {
 
     if (newVoiceMessage) {
       newPublicMessage.voiceMessageId = newVoiceMessage._id;
-      newPublicMessage.voiceMessageDuration = voiceMessageDuration
+      newPublicMessage.voiceMessageDuration = voiceMessageDuration;
       newVoiceMessage.parentDocument = newPublicMessage._id;
       await newVoiceMessage.save();
     }
