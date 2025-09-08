@@ -1,3 +1,4 @@
+// src/components/common/EditProfileModal.jsx
 import { useEffect, useRef, useState } from "react"
 import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateUserProfile"
 import { useNavigate } from "react-router-dom"
@@ -5,6 +6,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
 import { MdEdit } from "react-icons/md"
 import { TbCameraPlus } from "react-icons/tb"
+import LoadingSpinner from "../common/LoadingSpinner" // Import LoadingSpinner
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -16,13 +18,11 @@ const EditProfileModal = ({ authUser }) => {
     newPassword: "",
     currentPassword: "",
     confirmNewPassword: "",
-  })
+  }) // Add new state for image previews
 
-  // Add new state for image previews
   const [profileImg, setProfileImg] = useState(null)
-  const [coverImg, setCoverImg] = useState(null)
+  const [coverImg, setCoverImg] = useState(null) // Add refs for file input elements
 
-  // Add refs for file input elements
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
 
@@ -32,7 +32,7 @@ const EditProfileModal = ({ authUser }) => {
   const [showNewPassword, setShowNewPassword] = useState(false)
   const [showConfirmNewPassword, setShowConfirmNewPassword] = useState(false)
   const [focusedInput, setFocusedInput] = useState(null)
-  const [isLikedFeedPrivate, setIsLikedFeedPrivate] = useState(false) // 👈 New state for the toggle
+  const [isLikedFeedPrivate, setIsLikedFeedPrivate] = useState(false)
 
   const curPasswordRef = useRef(null)
   const newPasswordRef = useRef(null)
@@ -94,7 +94,7 @@ const EditProfileModal = ({ authUser }) => {
         currentPassword: "",
         confirmNewPassword: "",
       })
-      setIsLikedFeedPrivate(authUser?.isLikedFeedPrivate || false) // 👈 Set initial state
+      setIsLikedFeedPrivate(authUser?.isLikedFeedPrivate || false)
     }
   }, [authUser])
 
@@ -105,10 +105,14 @@ const EditProfileModal = ({ authUser }) => {
     }
   }, [isSuccess, newUsername, navigate])
 
-  // New handler for the toggle button
   const handleTogglePrivacy = () => {
     toggleLikedFeedPrivacy(!isLikedFeedPrivate)
     setIsLikedFeedPrivate(!isLikedFeedPrivate)
+  } // Combine all form data, including images, for the update call
+
+  const handleUpdate = (e) => {
+    e.preventDefault() // Pass profileImg and coverImg along with other form data
+    updateProfile({ ...formData, profileImg, coverImg })
   }
 
   return (
@@ -124,12 +128,9 @@ const EditProfileModal = ({ authUser }) => {
           <h3 className="mb-4 text-lg font-bold">Update Profile</h3>
           <form
             className="flex flex-col gap-4"
-            onSubmit={(e) => {
-              e.preventDefault()
-              updateProfile(formData)
-            }}
+            onSubmit={handleUpdate} // Use the new handleUpdate function
           >
-            {/* New Section for Image Previews */}
+            {/* The image preview section is already correct */}
             <div className="relative">
               {/* Cover Image Preview */}
               <div
@@ -138,23 +139,22 @@ const EditProfileModal = ({ authUser }) => {
               >
                 <img
                   src={coverImg || authUser.coverImg?.imageUrl || "/cover.png"}
-                  className="h-full w-full object-cover transition opacity-75"
+                  className="h-full w-full object-cover opacity-75 transition"
                   alt="cover image preview"
                 />
                 <div className="absolute inset-0 flex items-center justify-center">
                   <TbCameraPlus className="text-white" size={50} />
                 </div>
               </div>
-
               {/* Profile Image Preview */}
               <div
                 className="group/profile absolute -bottom-16 left-4 cursor-pointer"
                 onClick={() => profileImgRef.current.click()}
               >
-                <div className="avatar w-32 rounded-full border-4 border-base-100">
+                <div className="avatar size-32 rounded-full border-4 border-base-100">
                   <img
                     src={profileImg || authUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                    className="rounded-full transition opacity-75"
+                    className="size-32 rounded-full opacity-75 transition"
                     alt="profile image preview"
                   />
                 </div>
@@ -178,10 +178,7 @@ const EditProfileModal = ({ authUser }) => {
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
             </div>
-            {/* End of new section */}
-
-            {/* Spacer to push form elements down */}
-            <div className="h-16"></div>
+            {/* Spacer to push form elements down */} <div className="h-16"></div>
             <div className="relative">
               <input
                 type="text"
@@ -271,7 +268,6 @@ const EditProfileModal = ({ authUser }) => {
             {!authUser?.googleId && (
               <>
                 <h3 className="text-lg font-bold">Change Password</h3>
-
                 <div className="relative">
                   <input
                     ref={curPasswordRef}
@@ -294,7 +290,6 @@ const EditProfileModal = ({ authUser }) => {
                     {!showCurrentPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
                   </span>
                 </div>
-
                 <div className="relative">
                   <input
                     ref={newPasswordRef}
@@ -318,7 +313,6 @@ const EditProfileModal = ({ authUser }) => {
                     {!showNewPassword ? <FaEyeSlash size={15} /> : <FaEye size={15} />}
                   </span>
                 </div>
-
                 <div className="relative">
                   <input
                     ref={confirmNewPasswordRef}
@@ -344,7 +338,6 @@ const EditProfileModal = ({ authUser }) => {
                 </div>
               </>
             )}
-
             {/* New Section for Liked Feed Privacy */}
             <h1 className="text-xl font-bold">Privacy</h1>
             <div className="flex items-center justify-between">
@@ -361,7 +354,6 @@ const EditProfileModal = ({ authUser }) => {
                     disabled={isTogglingPrivacy}
                   />
                   <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-
                   {/* FIXED: Add a fixed width to the span to prevent shifting */}
                   <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
                     {isLikedFeedPrivate ? "Private" : "Public"}
@@ -370,7 +362,6 @@ const EditProfileModal = ({ authUser }) => {
               )}
             </div>
             {/* End of New Section */}
-
             <button className="btn btn-primary btn-sm rounded-full text-white">
               {isUpdatingProfile ? "Updating..." : "Update"}
             </button>

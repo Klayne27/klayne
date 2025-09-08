@@ -866,18 +866,18 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <div className="relative">
-                  <img
-                    src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-                    alt="User Profile"
-                    className="rounded-full size-10"
-                  />
-                  {isOnline ? (
-                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
-                  ) : (
-                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
-                  )}
-                </div>
+                <Link to={`/profile/${authUser.username}`}>
+                  <div className={`avatar relative`}>
+                    <div className="w-10 rounded-full">
+                      <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                    </div>
+                    {isOnline ? (
+                      <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+                    ) : (
+                      <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                    )}
+                  </div>
+                </Link>
                 <div className="flex flex-1 items-center justify-between">
                   <div className="flex flex-col">
                     <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>
@@ -903,7 +903,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                         <img
                           src={authUser?.coverImg?.imageUrl || "/cover-placeholder.png"}
                           alt="User cover"
-                          className="h-16 w-full rounded-xl object-cover"
+                          className="h-16 w-full rounded-t-xl object-cover"
                         />
                         <img
                           src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}

@@ -21,7 +21,7 @@ function ConversationsListHeader() {
   const isOnline = authUser.statusPreference === "online"
 
   return (
-    <div className="flex items-center mr-2">
+    <div className="mr-2 flex items-center">
       <div className="sticky top-0 z-10 flex items-center justify-between bg-black/0 p-4 backdrop-blur-sm">
         <h1 className="text-xl font-bold">Messages</h1>
       </div>
@@ -29,16 +29,17 @@ function ConversationsListHeader() {
         <div className="mt-1 flex w-full flex-col">
           <span className="mb-2 px-4 text-xs text-gray-400">Set Status</span>
           <div className="mb-2 flex items-center gap-2 px-3">
-            <Link to={`/profile/${authUser?.username}`} className="relative">
-              <img
-                src={authUser.profileImg?.imageUrl || "avatar-placeholder.png"}
-                className="size-10 rounded-full"
-              />
-              {isOnline ? (
-                <span className="absolute -right-0.5 bottom-0 size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
-              ) : (
-                <span className="absolute -right-0.5 bottom-0 size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
-              )}
+            <Link to={`/profile/${authUser.username}`}>
+              <div className={`avatar relative`}>
+                <div className="w-10 rounded-full">
+                  <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                </div>
+                {isOnline ? (
+                  <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+                ) : (
+                  <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                )}
+              </div>
             </Link>
             <div>
               <Link to={`/profile/${authUser?.username}`} className="font-semibold hover:underline">

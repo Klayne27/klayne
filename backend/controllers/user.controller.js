@@ -281,7 +281,6 @@ export const updateUser = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    // Fetch the user and populate the image fields to handle both old and new data types
     let user = await User.findById(userId)
       .populate("profileImg", "imageUrl")
       .populate("coverImg", "imageUrl");
@@ -297,15 +296,13 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    // Check if the new username is already taken by another user
     if (username !== undefined && username !== user.username) {
       const existingUserWithUsername = await User.findOne({ username });
       if (existingUserWithUsername) {
         return res.status(409).json({ error: "Username is already taken." });
       }
-    }
+    } // --- Password and Validation Logic ---
 
-    // --- Password and Validation Logic ---
     if ((newPassword && !currentPassword) || (!newPassword && currentPassword)) {
       return res
         .status(400)
@@ -327,22 +324,19 @@ export const updateUser = async (req, res) => {
       }
       const salt = await bcrypt.genSalt(10);
       user.password = await bcrypt.hash(newPassword, salt);
-    }
+    } // --- Profile Image Logic --- // Check if profileImg is a non-empty string before processing
 
-    // --- Profile Image Logic ---
     if (profileImg !== undefined) {
       if (user.profileImg) {
-        // Delete existing image from Cloudinary and the database
         const publicId = user.profileImg.imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
         await Image.findByIdAndDelete(user.profileImg._id);
       }
 
       if (profileImg === "") {
-        // If the new image is an empty string, just set the user reference to null
         user.profileImg = null;
-      } else {
-        // Otherwise, upload the new image and create a new Image document
+      } else if (profileImg) {
+        // <-- Add this check here
         const uploadedResponse = await cloudinary.uploader.upload(profileImg);
         const newProfileImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -352,9 +346,8 @@ export const updateUser = async (req, res) => {
         });
         user.profileImg = newProfileImage._id;
       }
-    }
+    } // --- Cover Image Logic --- // Check if coverImg is a non-empty string before processing
 
-    // --- Cover Image Logic ---
     if (coverImg !== undefined) {
       if (user.coverImg) {
         const publicId = user.coverImg.imageUrl.split("/").pop().split(".")[0];
@@ -364,7 +357,8 @@ export const updateUser = async (req, res) => {
 
       if (coverImg === "") {
         user.coverImg = null;
-      } else {
+      } else if (coverImg) {
+        // <-- Add this check here
         const uploadedResponse = await cloudinary.uploader.upload(coverImg);
         const newCoverImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -374,18 +368,16 @@ export const updateUser = async (req, res) => {
         });
         user.coverImg = newCoverImage._id;
       }
-    }
+    } // Update other user fields
 
-    // Update other user fields
     if (fullName !== undefined) user.fullName = fullName;
     if (email !== undefined) user.email = email;
     if (username !== undefined) user.username = username;
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
 
-    await user.save();
+    await user.save(); // Re-fetch the user to ensure all fields, including the new images, are populated
 
-    // Re-fetch the user to ensure all fields, including the new images, are populated
     const updatedUser = await User.findById(userId)
       .populate("profileImg", "imageUrl")
       .populate("coverImg", "imageUrl")
@@ -397,7 +389,6 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
-
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
