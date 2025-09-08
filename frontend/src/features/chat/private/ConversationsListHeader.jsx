@@ -18,7 +18,7 @@ function ConversationsListHeader() {
     }
   }
 
-  const isOnline = authUser.statusPreferece === "online"
+  const isOnline = authUser.statusPreference === "online"
 
   return (
     <div className="flex items-center mr-2">
@@ -51,7 +51,7 @@ function ConversationsListHeader() {
             className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={() => handleStatusChange("online")}
           >
-            <span className="size-[14px] rounded-full border border-base-100 bg-green-500"></span>
+            <span className="size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
             <div className="flex flex-col">
               <span className="text-sm">Online</span>
               <span className="text-xs text-gray-500">You will appear online</span>
@@ -61,7 +61,7 @@ function ConversationsListHeader() {
             className="mr-16 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
             onClick={() => handleStatusChange("offline")}
           >
-            <span className="size-[14px] rounded-full border border-base-100 bg-gray-500"></span>
+            <span className="size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
             <div className="flex flex-col">
               <span className="text-sm">Offline</span>
               <span className="text-xs text-gray-500">You will appear offline</span>

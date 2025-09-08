@@ -363,7 +363,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="size-10 overflow-hidden rounded-full"
+              className="size-10 overflow-hidden rounded-full hover:opacity-80"
               onClick={(e) => handleInteractiveClick(e)}
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
@@ -468,7 +468,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
               </span>
             </div>
 
-            {(
+            {
               <span
                 className="group absolute right-0 ml-auto mr-0.5 flex rounded-full p-2 transition duration-200 hover:bg-primary/20"
                 onClick={toggleMenu}
@@ -510,7 +510,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                                 setShowMenu(false)
                               }}
                             >
-                              <FaHistory className="inline-block " /> View History
+                              <FaHistory className="inline-block" /> View History
                             </button>
                           )}
                           <button
@@ -570,7 +570,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                   </>
                 )}
               </span>
-            )}
+            }
           </div>
           <div className="flex cursor-pointer flex-col gap-3 overflow-hidden">
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">

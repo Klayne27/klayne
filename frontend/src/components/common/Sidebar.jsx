@@ -1,4 +1,4 @@
-import { useLocation, useNavigate } from "react-router-dom"
+import { Link, useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useLogout } from "../../features/auth/authHooks/useLogout"
 import { CiMail, CiSearch } from "react-icons/ci"
@@ -442,6 +442,11 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
     if (socket) {
       socket.emit("changeOnlineStatus", { status })
     }
+  }
+
+  const handleClickProfile = () => {
+    navigate(`/profile/${authUser.username}`)
+    setShowPopover(false)
   }
 
   const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount
@@ -894,7 +899,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                   >
                     {/* Mini-Profile Section */}
                     <div className="flex flex-col pb-2">
-                      <div className="relative mb-2">
+                      <div className="relative mb-2 cursor-pointer" onClick={handleClickProfile}>
                         <img
                           src={authUser?.coverImg?.imageUrl || "/cover-placeholder.png"}
                           alt="User cover"
@@ -941,15 +946,21 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                         onClick={() => handleStatusChange("online")}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
                       >
-                        <span className="size-3.5 rounded-full border-2 border-base-100 bg-green-500"></span>
-                        Appear Online
+                        <span className="size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
+                        <div className="flex flex-col">
+                          <span className="text-sm">Online</span>
+                          <span className="text-xs text-gray-500">You will appear online</span>
+                        </div>
                       </button>
                       <button
                         onClick={() => handleStatusChange("offline")}
                         className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
                       >
-                        <span className="size-3.5 rounded-full border-2 border-base-100 bg-gray-500"></span>
-                        Appear Offline
+                        <span className="size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
+                        <div className="flex flex-col">
+                          <span className="text-sm">Offline</span>
+                          <span className="text-xs text-gray-500">You will appear offline</span>
+                        </div>
                       </button>
                     </div>
 
