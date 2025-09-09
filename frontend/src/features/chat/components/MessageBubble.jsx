@@ -2,6 +2,7 @@ import { FaReply } from "react-icons/fa6"
 import { renderClickableText } from "../../../utils/textUtils"
 import { truncateText } from "../../../utils/truncateText"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { PiMicrophoneStageFill } from "react-icons/pi"
 
 const MessageBubble = ({
   message,
@@ -68,6 +69,12 @@ const MessageBubble = ({
                 className="mt-1 h-auto max-w-[100px] rounded-md object-cover"
               />
             )}
+            {message.repliedTo.voiceMessageId && (
+              <p className="flex items-center gap-1 text-xs italic text-gray-600">
+                Voice Message
+                <PiMicrophoneStageFill />
+              </p>
+            )}
           </div>
         )}
         {isMessageDeleted || isSenderBanned ? (
@@ -78,7 +85,7 @@ const MessageBubble = ({
               <audio
                 controls
                 src={message.voiceMessageId.imageUrl}
-                className="max-w-[100%] h-9"
+                className="h-9 max-w-[100%]"
                 onError={(e) => {
                   console.error("Error loading audio:", e)
                 }}

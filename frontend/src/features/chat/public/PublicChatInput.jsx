@@ -293,6 +293,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
             <div className="mt-1 text-xs italic text-gray-400">
               {isMessageDeleted ? messageDeleted : truncateText(replyingToMessage.text)}
               {replyingToMessage.img && !replyingToMessage.text && " (Image)"}
+              {replyingToMessage.voiceMessageId && !replyingToMessage.text && " (Voice Message)"}
             </div>
           </div>
           <button

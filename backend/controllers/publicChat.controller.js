@@ -43,7 +43,7 @@ export const getPublicMessages = async (req, res) => {
         },
         {
           path: "repliedTo",
-          select: "sender text img isDeletedByAdmin isDeletedByUser",
+          select: "sender text img isDeletedByAdmin isDeletedByUser voiceMessageId",
           populate: {
             path: "sender",
             select: "username isBannedInPublicChat",

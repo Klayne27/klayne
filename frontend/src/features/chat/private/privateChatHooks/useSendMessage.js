@@ -20,6 +20,7 @@ export const useSendMessage = (onSenderMessageSent) => {
 
       await queryClient.cancelQueries({ queryKey: messagesQueryKey })
       await queryClient.cancelQueries({ queryKey: conversationQueryKey })
+      console.log('replyingtom',replyingToMessage);
 
       const previousMessages = queryClient.getQueryData(messagesQueryKey)
       const previousConversations = queryClient.getQueryData(conversationQueryKey)
@@ -41,6 +42,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 _id: replyingToMessage.sender._id,
                 username: replyingToMessage.sender.username,
               },
+              voiceMessageId: replyingToMessage.voiceMessageId.imageUrl,
               img: replyingToMessage.img,
             }
           : null,
@@ -88,21 +90,24 @@ export const useSendMessage = (onSenderMessageSent) => {
         previousConversations,
         messagesQueryKey,
         conversationQueryKey,
+        conversationId,
         optimisticId: optimisticMessage._id,
       }
     },
     onSuccess: (newMessage, variables, context) => {
-      queryClient.setQueryData(context.messagesQueryKey, (oldData) => {
-        if (!oldData) return oldData
-        return {
-          ...oldData,
-          pages: oldData.pages.map((page) =>
-            page.map((msg) =>
-              msg._id === context.optimisticId ? { ...newMessage, isOptimistic: false } : msg,
-            ),
-          ),
-        }
-      })
+      // queryClient.setQueryData(context.messagesQueryKey, (oldData) => {
+      //   console.log('newmessage',newMessage);
+      //   if (!oldData) return oldData
+      //   return {
+      //     ...oldData,
+      //     pages: oldData.pages.map((page) =>
+      //       page.map((msg) =>
+      //         msg._id === context.optimisticId ? { ...newMessage, isOptimistic: false } : msg,
+      //       ),
+      //     ),
+      //   }
+      // })
+      queryClient.invalidateQueries(messageKeys.privateMessages(context.conversationId))
       queryClient.setQueryData(conversationKeys.list(), (oldData) => {
 
         if (!oldData) return oldData

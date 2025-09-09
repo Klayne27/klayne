@@ -35,6 +35,7 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
             _id: repliedMessageInCache._id,
             text: repliedMessageInCache.text,
             img: repliedMessageInCache.img,
+            voiceMessageId: repliedMessageInCache.voiceMessageId.imageUrl,
             isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
             isDeletedByUser: repliedMessageInCache.isDeletedByUser,
             sender: {
@@ -91,13 +92,14 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
     onSuccess: (serverMessage, variables, context) => {
       const { tempId } = context
 
-      queryClient.setQueryData(queryKey, (oldData) => {
-        if (!oldData) return oldData
-        const updatedPages = oldData.pages.map((page) =>
-          page.map((msg) => (msg._id === tempId ? serverMessage : msg)),
-        )
-        return { ...oldData, pages: updatedPages }
-      })
+      // queryClient.setQueryData(queryKey, (oldData) => {
+      //   if (!oldData) return oldData
+      //   const updatedPages = oldData.pages.map((page) =>
+      //     page.map((msg) => (msg._id === tempId ? serverMessage : msg)),
+      //   )
+      //   return { ...oldData, pages: updatedPages }
+      // })
+      queryClient.invalidateQueries(messageKeys.publicMessages())
     },
 
     onError: (error, variables, context) => {

@@ -107,7 +107,7 @@ export const getMessagesByConversationId = async (req, res) => {
       })
       .populate({
         path: "repliedTo",
-        select: "sender text img",
+        select: "sender text img voiceMessageId",
         populate: {
           path: "sender",
           select:
@@ -480,6 +480,10 @@ export const sendMessage = async (req, res) => {
       {
         path: "repliedTo",
         select: "text img sender createdAt",
+        populate: {
+          path: "voiceMessageId",
+          select: "imageUrl",
+        },
         populate: {
           path: "sender",
           select: "username",

@@ -59,7 +59,7 @@ function PrivateChatInput({
         conversationId: actualConversationId,
         img: file && file.type.startsWith("image/") ? base64Data : null,
         voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null,
-        voiceMessageDuration: duration, // Pass the duration here
+        voiceMessageDuration: duration, 
       })
     },
     [sendPrivateMessage, actualConversationId],
