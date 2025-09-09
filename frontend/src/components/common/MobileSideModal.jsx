@@ -10,6 +10,8 @@ import { useEffect } from "react"
 import { useState } from "react"
 import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+import { useSocket } from "../../context/SocketContext"
+import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
 
 function MobileSideModal({
   showSideModal,
@@ -25,6 +27,16 @@ function MobileSideModal({
   const { authUser } = useAuthUser()
   const { pathname } = useLocation()
   const navigate = useNavigate()
+
+  const { socket } = useSocket()
+  const { updateStatus, isUpdatingStatus } = useUpdateStatusPreference()
+
+  const handleStatusChange = (status) => {
+    updateStatus(status)
+    if (socket) {
+      socket.emit("changeOnlineStatus", { status })
+    }
+  }
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
@@ -65,10 +77,12 @@ function MobileSideModal({
     }
   }
 
+  const isOnline = authUser.statusPreference === "online"
+
   return (
     <div
       ref={sideModalRef}
-      className={`fixed left-0 top-0 z-[1000] h-full template w-[80vw] max-w-[300px] transform border-r border-accent bg-base-100 transition-transform duration-300 ease-out ${showSideModal ? "translate-x-0" : "-translate-x-full"} md:hidden`} // Only show on mobile
+      className={`template fixed left-0 top-0 z-[1000] h-full w-[80vw] max-w-[300px] transform border-r border-accent bg-base-100 transition-transform duration-300 ease-out ${showSideModal ? "translate-x-0" : "-translate-x-full"} md:hidden`} // Only show on mobile
     >
       {authUser && (
         <div className="flex h-full flex-col">
@@ -94,6 +108,11 @@ function MobileSideModal({
                     src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
                     alt="User Profile"
                   />
+                  {isOnline ? (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+                  ) : (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                  )}
                 </div>
               </div>
 
@@ -269,6 +288,32 @@ function MobileSideModal({
               </li>
 
               {/* Separator if needed */}
+              <div className="my-2 border-t border-accent"></div>
+              <div className="flex flex-col gap-1 px-3 py-2">
+                <span className="px-1 text-xs font-bold text-gray-400">Set Status</span>
+                <button
+                  onClick={() => handleStatusChange("online")}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                  disabled={isUpdatingStatus}
+                >
+                  <span className="size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
+                  <div className="flex flex-col">
+                    <span className="text-sm">Online</span>
+                    <span className="text-xs text-gray-500">You will appear online</span>
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleStatusChange("offline")}
+                  className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                  disabled={isUpdatingStatus}
+                >
+                  <span className="size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
+                  <div className="flex flex-col">
+                    <span className="text-sm">Offline</span>
+                    <span className="text-xs text-gray-500">You will appear offline</span>
+                  </div>
+                </button>
+              </div>
               <div className="my-2 border-t border-accent"></div>
 
               {/* Delete Account Button in Side Modal */}
