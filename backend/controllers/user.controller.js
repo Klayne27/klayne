@@ -326,7 +326,7 @@ export const updateUser = async (req, res) => {
       user.password = await bcrypt.hash(newPassword, salt);
     } // --- Profile Image Logic --- // Check if profileImg is a non-empty string before processing
 
-    if (profileImg !== undefined) {
+    if (profileImg || profileImg === "") {
       if (user.profileImg) {
         const publicId = user.profileImg.imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
@@ -335,8 +335,8 @@ export const updateUser = async (req, res) => {
 
       if (profileImg === "") {
         user.profileImg = null;
-      } else if (profileImg) {
-        // <-- Add this check here
+      } else {
+        // No need for 'else if (profileImg)' because the outer 'if' already guarantees it
         const uploadedResponse = await cloudinary.uploader.upload(profileImg);
         const newProfileImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -346,9 +346,11 @@ export const updateUser = async (req, res) => {
         });
         user.profileImg = newProfileImage._id;
       }
-    } // --- Cover Image Logic --- // Check if coverImg is a non-empty string before processing
+    }
 
-    if (coverImg !== undefined) {
+    // --- Cover Image Logic ---
+    // ✅ FIX: Apply the same logic for the cover image.
+    if (coverImg || coverImg === "") {
       if (user.coverImg) {
         const publicId = user.coverImg.imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
@@ -357,8 +359,7 @@ export const updateUser = async (req, res) => {
 
       if (coverImg === "") {
         user.coverImg = null;
-      } else if (coverImg) {
-        // <-- Add this check here
+      } else {
         const uploadedResponse = await cloudinary.uploader.upload(coverImg);
         const newCoverImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
@@ -368,7 +369,7 @@ export const updateUser = async (req, res) => {
         });
         user.coverImg = newCoverImage._id;
       }
-    } // Update other user fields
+    }
 
     if (fullName !== undefined) user.fullName = fullName;
     if (email !== undefined) user.email = email;
@@ -389,6 +390,7 @@ export const updateUser = async (req, res) => {
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
+
 export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
