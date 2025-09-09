@@ -145,7 +145,7 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "forYou" ? "transition duration-300" : ""
-              } ${feedType === "forYou" ? "font-bold" : "text-white/50"} `}
+              } ${feedType === "forYou" ? "font-bold" : "text-base-content/50"} `}
               onClick={() => handleTabClick("forYou")}
               onTouchStart={() => handleTouchStart("forYou")}
               onTouchEnd={handleTouchEnd}
@@ -167,7 +167,7 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "following" ? "transition duration-300" : ""
-              } ${feedType === "following" ? "font-bold" : "text-white/50"} `}
+              } ${feedType === "following" ? "font-bold" : "text-base-content/50"} `}
               onClick={() => handleTabClick("following")}
               onTouchStart={() => handleTouchStart("following")}
               onTouchEnd={handleTouchEnd}
@@ -189,7 +189,7 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "venting" ? "transition duration-300" : ""
-              } ${feedType === "venting" ? "font-bold" : "text-white/50"} `}
+              } ${feedType === "venting" ? "font-bold" : "text-base-content/50"} `}
               onClick={() => handleTabClick("venting")}
               onTouchStart={() => handleTouchStart("venting")}
               onTouchEnd={handleTouchEnd}
