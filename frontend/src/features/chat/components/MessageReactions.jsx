@@ -49,7 +49,7 @@ const MessageReactions = ({
             onReactionClick(message._id, emoji)
           }}
         >
-          <span className="text-[16px] mr-0.5">{emoji}</span>
+          <span className="text-[16px] mr-1 md:mr-0.5">{emoji}</span>
           <AnimatedCount count={data.count} className="absolute font-bold text-white top-[1px]" />
           {/* <span className="ml-1 font-bold text-white">{data.count}</span> */}
         </div>
@@ -60,7 +60,7 @@ const MessageReactions = ({
       <button
         ref={addReactionButtonRef}
         onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
-        className={`flex size-[30px] items-center justify-center rounded-lg border border-transparent bg-gray-800 text-gray-400 transition-colors duration-200 ease-in-out hover:bg-gray-700 hover:text-gray-200`}
+        className={`flex size-[34px] items-center justify-center rounded-lg border border-transparent bg-gray-800 text-gray-400 transition-colors duration-200 ease-in-out hover:bg-gray-700 hover:text-gray-200`}
         title="Add reaction"
       >
         <PiSmileyFill className="size-5" />

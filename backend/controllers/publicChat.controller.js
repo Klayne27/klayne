@@ -237,7 +237,7 @@ export const adminDeletePublicMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found." });
     }
     const imageUrlToDelete = message.img;
-    const audioUrlToDelete = message.voiceMessageId.imageUrl;
+    const audioUrlToDelete = message.voiceMessageId?.imageUrl;
 
     message.isDeletedByAdmin = true;
     message.img = null;
@@ -453,7 +453,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
     }
 
     const imageUrlToDelete = message.img;
-    const audioUrlToDelete = message.voiceMessageId.imageUrl;
+    const audioUrlToDelete = message.voiceMessageId?.imageUrl;
 
     message.isDeletedByUser = true;
     message.img = null;
