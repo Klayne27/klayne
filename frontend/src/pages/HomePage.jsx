@@ -145,7 +145,7 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "forYou" ? "transition duration-300" : ""
-              } ${feedType === "forYou" ? "font-bold" : "opacity-50"} `}
+              } ${feedType === "forYou" ? "font-bold" : "text-white/50"} `}
               onClick={() => handleTabClick("forYou")}
               onTouchStart={() => handleTouchStart("forYou")}
               onTouchEnd={handleTouchEnd}
@@ -167,7 +167,7 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "following" ? "transition duration-300" : ""
-              } ${feedType === "following" ? "font-bold" : "opacity-50"} `}
+              } ${feedType === "following" ? "font-bold" : "text-white/50"} `}
               onClick={() => handleTabClick("following")}
               onTouchStart={() => handleTouchStart("following")}
               onTouchEnd={handleTouchEnd}
@@ -189,13 +189,18 @@ const HomePage = () => {
                   : ""
               } ${
                 isTouchDevice && activeButtonId !== "venting" ? "transition duration-300" : ""
-              } ${feedType === "venting" ? "font-bold" : "opacity-50"} `}
+              } ${feedType === "venting" ? "font-bold" : "text-white/50"} `}
               onClick={() => handleTabClick("venting")}
               onTouchStart={() => handleTouchStart("venting")}
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              Rants
+              <span className="relative">
+                Rants
+                {newVentPostCount > 0 && (
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                )}
+              </span>
               {feedType === "venting" && (
                 <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
               )}
