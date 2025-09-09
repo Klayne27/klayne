@@ -206,7 +206,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
             <button
               type="button"
               onClick={handleStopRecording}
-              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-red-700"
+              className="rounded-full p-2 hover:bg-primary/70 transition-colors duration-200 text-red-700"
             >
               <IoStopCircleOutline className="h-5 w-5" />
             </button>
@@ -242,12 +242,10 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
           {isEditingMode ? <MdCheck className="h-5 w-5" /> : <MdSend className="h-5 w-5" />}
         </button>
       </div>
-      {/* Typing Indicator */}
       {typingIndicator}
     </form>
   )
 
-  // The new main component render function
   return (
     <>
       {/* Preview image (rendered conditionally) */}

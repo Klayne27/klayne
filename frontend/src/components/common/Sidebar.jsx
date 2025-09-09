@@ -30,7 +30,6 @@ import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUp
 const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
-  const { onlineUsers } = useSocket()
 
   const { logout } = useLogout()
   const { deleteAccount, isDeletingAccount } = useDeleteAccount()
@@ -56,8 +55,6 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true)
   const [showSideModal, setShowSideModal] = useState(false) // New state for side modal
   const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true)
-
-  const [passwordInput, setPasswordInput] = useState("")
 
   // NEW STATE: To track if FollowListModals are open
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
@@ -448,8 +445,6 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
     navigate(`/profile/${authUser.username}`)
     setShowPopover(false)
   }
-
-  const isConfirmButtonDisabled = passwordInput.length === 0 || isDeletingAccount
 
   if (!shouldRenderMobileSidebar) {
     return null

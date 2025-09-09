@@ -1,6 +1,5 @@
 import { CiMail } from "react-icons/ci"
 import { FaEllipsis, FaEllipsisVertical } from "react-icons/fa6"
-import { PiHouseThin } from "react-icons/pi"
 import { useNavigate } from "react-router-dom"
 import { formatCount } from "../../utils/textUtils"
 import { useSocket } from "../../context/SocketContext"
