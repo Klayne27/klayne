@@ -42,7 +42,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 _id: replyingToMessage.sender._id,
                 username: replyingToMessage.sender.username,
               },
-              voiceMessageId: replyingToMessage.voiceMessageId.imageUrl,
+              voiceMessageId: replyingToMessage.voiceMessageId?.imageUrl,
               img: replyingToMessage.img,
             }
           : null,

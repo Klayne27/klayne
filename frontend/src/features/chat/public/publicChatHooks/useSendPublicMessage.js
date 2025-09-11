@@ -35,7 +35,7 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
             _id: repliedMessageInCache._id,
             text: repliedMessageInCache.text,
             img: repliedMessageInCache.img,
-            voiceMessageId: repliedMessageInCache.voiceMessageId.imageUrl,
+            voiceMessageId: repliedMessageInCache.voiceMessageId?.imageUrl,
             isDeletedByAdmin: repliedMessageInCache.isDeletedByAdmin,
             isDeletedByUser: repliedMessageInCache.isDeletedByUser,
             sender: {

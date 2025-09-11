@@ -587,7 +587,7 @@ export const deleteMessage = async (req, res) => {
     }
 
     if (messageToDelete.voiceMessageId) {
-      const audioId = messageToDelete.voiceMessageId.imageUrl
+      const audioId = messageToDelete.voiceMessageId?.imageUrl
         .split("/")
         .pop()
         .split(".")[0];

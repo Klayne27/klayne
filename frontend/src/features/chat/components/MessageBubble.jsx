@@ -81,10 +81,10 @@ const MessageBubble = ({
           messageDeleted
         ) : (
           <>
-            {message.voiceMessageId && message.voiceMessageId.imageUrl && (
+            {message.voiceMessageId && message.voiceMessageId?.imageUrl && (
               <audio
                 controls
-                src={message.voiceMessageId.imageUrl}
+                src={message.voiceMessageId?.imageUrl}
                 className="h-9 max-w-[100%]"
                 onError={(e) => {
                   console.error("Error loading audio:", e)
