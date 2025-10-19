@@ -14,7 +14,7 @@ export const useSignup = (formData) => {
   } = useMutation({
     mutationFn: () => signupApi(formData),
     onSuccess: () => {
-      showAppToast("Signup successful! Welcome to X-ayne!", "success");
+      showAppToast("Signup successful! Welcome to Klayne!", "success");
       queryClient.invalidateQueries({ queryKey: userKeys.auth() });
     },
   });

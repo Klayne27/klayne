@@ -22,8 +22,8 @@ export default defineConfig({
         type: "module", 
       },
       manifest: {
-        name: "X-ayne",
-        short_name: "X-ayne",
+        name: "Klayne",
+        short_name: "Klayne",
         theme_color: "#000000",
         background_color: "#000000",
         display: "standalone",

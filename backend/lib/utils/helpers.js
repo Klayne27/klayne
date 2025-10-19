@@ -184,7 +184,7 @@ export const getDynamicPushBody = (type, username) => {
     case "mention":
       return `@${username} mentioned you in a post.`;
     default:
-      return "You have a new notification on X-ayne!";
+      return "You have a new notification on Klayne!";
   }
 };
 
