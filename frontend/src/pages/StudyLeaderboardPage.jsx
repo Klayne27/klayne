@@ -348,7 +348,7 @@ function StudyLeaderboardPage() {
                             : index === 1
                               ? "ring-4 ring-slate-400"
                               : "ring-4 ring-yellow-800"
-                        } w-12 rounded-full ring-offset-2 ring-offset-base-100`}
+                        } w-12 h-12 rounded-full ring-offset-2 ring-offset-base-100`}
                       >
                         <img
                           src={winner.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
