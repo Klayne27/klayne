@@ -26,6 +26,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
 ) {
   const { authUser: currentUser } = useAuthUser()
   const processedMessages = useProcessedMessage(messagesToRender, pinnedMessagesInfo)
+  console.log('processed msg', processedMessages);
   const { isTypingOtherUser } = usePrivateChatStore()
   const { setMessageIdToJumpTo } = useChatViewStore()
 

@@ -25,7 +25,7 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
     const systemMessages = (pinnedMessagesInfo || [])
       .filter((pin) => {
         // Safety check for pin structure and to see if the original message exists in the current view.
-        return pin && pin.pinnedBy && pin.message && messageIdSet.has(pin.message._id.toString())
+        return pin && pin.pinnedBy && pin.message
       })
       .map((pin) => {
         return {
