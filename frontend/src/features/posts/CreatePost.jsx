@@ -635,7 +635,7 @@ const CreatePost = ({ feedType }) => {
               className="relative max-h-[270px] w-full resize-none overflow-y-auto border-none border-gray-800 bg-inherit p-0 pb-4 text-xl focus:outline-none"
               placeholder={
                 feedType === "venting"
-                  ? "Spill the tea"
+                  ? "Let it out"
                   : scheduledAt
                     ? "What is happening?"
                     : showPollInputs
