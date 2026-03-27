@@ -7,6 +7,8 @@ export const useGetPosts = ({ feedType, username = null }) => {
     switch (feedType) {
       case "forYou":
         return "/api/posts/all"
+      case "ic":
+        return "/api/posts/ic"
       case "following":
         return "/api/posts/following"
       case "venting":
@@ -15,6 +17,8 @@ export const useGetPosts = ({ feedType, username = null }) => {
         return `/api/posts/user/${username}`
       case "likes":
         return `/api/posts/likes/${username}`
+      case "userReplies":
+        return `/api/posts/replies/${username}`
       default:
         return "/api/posts/all"
     }
@@ -39,7 +43,9 @@ export const useGetPosts = ({ feedType, username = null }) => {
         ? postKeys.user(username)
         : feedType === "likes"
           ? postKeys.likes(username)
-          : postKeys.list(POST_ENDPOINT),
+          : feedType === "userReplies"
+            ? postKeys.userReplies(username)
+            : postKeys.list(POST_ENDPOINT),
     queryFn: ({ pageParam }) => getPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {

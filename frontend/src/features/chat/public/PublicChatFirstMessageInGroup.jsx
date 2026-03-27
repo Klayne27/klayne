@@ -6,9 +6,9 @@ import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
 
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {
-  const isSenderAdmin = message.sender.isAdmin
-  const isSenderVerified = message.sender.isVerified
-  const isSenderGoldVerified = message.sender.isGoldVerified
+  const isSenderAdmin = message.sender?.isAdmin
+  const isSenderVerified = message.sender?.isVerified
+  const isSenderGoldVerified = message.sender?.isGoldVerified
 
   return (
     <>
@@ -16,7 +16,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
         <div className={`mb-0.5 flex items-center gap-1 text-sm`}>
           {!isSentByCurrentUser && (
             <Link
-              to={`/profile/${message.sender.username}`}
+              to={`/profile/${message.sender?.username}`}
               className={`font-semibold ${
                 isSenderVerified
                   ? "text-[#1D9BF0]"
@@ -25,7 +25,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
                     : "text-white"
               }`}
             >
-              {message.sender.username}
+              {message.sender?.username}
             </Link>
           )}
           <span className="flex items-center">
@@ -47,8 +47,8 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
                 <FaBan size={15} className="mr-1 fill-red-500" />
               </span>
             )}
-            {message.sender.preferredBadge && !isSentByCurrentUser && (
-              <div className="ml-1 size-[17px] flex-shrink-0">{getBadgeIcon(message.sender.preferredBadge)}</div>
+            {message.sender?.preferredBadge && !isSentByCurrentUser && (
+              <div className="ml-1 size-[17px] flex-shrink-0">{getBadgeIcon(message?.sender?.preferredBadge)}</div>
             )}
           </span>
           <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>

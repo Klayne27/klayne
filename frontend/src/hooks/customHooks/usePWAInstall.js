@@ -1,14 +1,35 @@
 import { useState, useEffect } from "react"
 
+export const isIOS = () => {
+  return (
+    /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1)
+  )
+}
+
 export const usePWAInstall = () => {
   const [deferredPrompt, setDeferredPrompt] = useState(null)
   const [isInstalled, setIsInstalled] = useState(false)
+  const [isIOSDevice, setIsIOSDevice] = useState(false)
 
   useEffect(() => {
-    if (window.matchMedia("(display-mode: standalone)").matches) {
+    // Check if already installed (works for both Android and iOS)
+    const standalone =
+      window.matchMedia("(display-mode: standalone)").matches ||
+      window.navigator.standalone === true
+
+    if (standalone) {
       setIsInstalled(true)
+      return
     }
 
+    // Detect iOS — we show manual instructions instead of a prompt
+    if (isIOS()) {
+      setIsIOSDevice(true)
+      return
+    }
+
+    // Android / Chrome — use the deferred prompt
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)
@@ -29,15 +50,14 @@ export const usePWAInstall = () => {
   }, [])
 
   const installApp = async () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      const { outcome } = await deferredPrompt.userChoice
-      setDeferredPrompt(null)
-      if (outcome === "accepted") {
-        setIsInstalled(true)
-      }
+    if (!deferredPrompt) return
+    deferredPrompt.prompt()
+    const { outcome } = await deferredPrompt.userChoice
+    setDeferredPrompt(null)
+    if (outcome === "accepted") {
+      setIsInstalled(true)
     }
   }
 
-  return { deferredPrompt, isInstalled, installApp }
+  return { deferredPrompt, isInstalled, installApp, isIOSDevice }
 }

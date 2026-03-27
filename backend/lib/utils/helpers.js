@@ -60,16 +60,10 @@ export async function deleteAllChildComments(commentId) {
 
 import mongoose from "mongoose";
 
-/**
- * Builds the common query stages for filtering posts.
- * @param {string} userId - The ID of the current user.
- * @param {Array<string>} blockedAndBlockingIds - An array of user IDs that have blocked or are blocked by the current user.
- * @returns {object} An object containing common aggregation stages.
- */
 export const buildCommonPostQueryStages = (userId, blockedAndBlockingIds) => {
   const now = new Date();
   const blockedObjectIds = blockedAndBlockingIds.map(
-    (id) => new mongoose.Types.ObjectId(id)
+    (id) => new mongoose.Types.ObjectId(id),
   );
 
   // Stage to filter out posts from blocked users and posts not yet published
@@ -166,25 +160,20 @@ export const getPublicIdFromUrl = (url) => {
   return match && match[1] ? match[1] : null;
 };
 
-
 export const getDynamicPushBody = (type, username) => {
   switch (type) {
     case "follow":
       return `@${username} is now following you.`;
     case "like":
       return `@${username} liked your post.`;
-    case "comment":
-      return `@${username} commented on your post.`;
     case "repost":
       return `@${username} reposted your post.`;
-    case "commentLike":
-      return `@${username} liked your comment.`;
-    case "commentReply":
-      return `@${username} replied to your comment.`;
     case "mention":
       return `@${username} mentioned you in a post.`;
+    case "reply":
+      return `@${username} replied to your post.`; // ADD
     default:
-      return "You have a new notification on Klayne!";
+      return "You have a new notification on Twatter!";
   }
 };
 
@@ -194,6 +183,12 @@ export const getDynamicPushTitle = (type) => {
       return `New Follower`;
     case "mention":
       return "New Mention";
+    case "reply":
+      return "New Reply";
+    case "like":
+      return "New Like";
+    case "repost":
+      return "New Repost";
     default:
       return "New Notification";
   }
@@ -203,6 +198,8 @@ export const getDynamicPushUrl = (type, postOwnerUsername, postId, username) => 
   switch (type) {
     case "follow":
       return `/profile/${username}`;
+    case "reply":
+      return `/${postOwnerUsername}/post/${postId}`;
     default:
       return `/${postOwnerUsername}/post/${postId}`;
   }

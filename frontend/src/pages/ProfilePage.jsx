@@ -1,4 +1,4 @@
-import { useRef, useState } from "react" // Import useCallback
+import { useRef, useState } from "react"
 import { Link, useNavigate, useParams } from "react-router-dom"
 import useFollow from "../features/users/usersHooks/useFollow"
 
@@ -7,10 +7,9 @@ import ProfileHeaderSkeleton from "../components/skeletons/ProfileHeaderSkeleton
 import EditProfileModal from "../components/common/EditProfileModal"
 import FollowListModal from "../components/common/FollowListModal"
 
-import { FaArrowLeft } from "react-icons/fa6"
+import { FaArrowLeft, FaWrench } from "react-icons/fa6"
 import { IoCalendarOutline } from "react-icons/io5"
-import { FaLink } from "react-icons/fa"
-import { MdBlock, MdDeleteForever, MdEdit } from "react-icons/md"
+import { MdBlock, MdDeleteForever, MdEdit, MdLocalPolice } from "react-icons/md"
 import { formatMemberSinceDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useUpdateUserProfile } from "../features/users/usersHooks/useUpdateUserProfile"
@@ -29,8 +28,10 @@ import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/useGetOrCreateConversation"
 import { RiLockFill } from "react-icons/ri"
-import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import PostModal from "../features/posts/PostModal.jsx"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
+import { BiHealth } from "react-icons/bi"
+import { PiChefHatFill, PiLinkSimpleBold } from "react-icons/pi"
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -164,13 +165,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       return
     }
 
-    // This is the key logic change:
-    // If no conversationId exists, call the mutation to create/get one.
     if (!conversationStatus.conversationId) {
       getOrCreateConversation(userProfile._id)
     } else {
-      // If a conversation already exists, simply navigate to it.
-      // The isHiddenForCurrentUser check is no longer needed with hard-delete logic.
       navigate(`/messages/${conversationStatus.conversationId}`)
     }
   }
@@ -244,14 +241,21 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               <div className="flex flex-col">
                 <p className="text-lg font-bold">{userProfile?.fullName}</p>
                 <span className="text-sm text-slate-500">
-                  {feedType === "posts" ? `${userPostsCount} posts` : `${userPostsCount} likes`}
+                  {feedType === "likes"
+                    ? `${userPostsCount} likes`
+                    : feedType === "posts"
+                      ? `${userPostsCount} posts`
+                      : `${userPostsCount} replies`}
                 </span>
               </div>
             </div>
             <div className="group/cover relative">
               <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}>
                 <img
-                  src={coverImg || userProfile?.coverImg?.imageUrl || "/cover.png"}
+                  src={getOptimizedImageUrl(
+                    coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
+                    "cover",
+                  )}
                   className={`h-52 w-full cursor-pointer object-cover`}
                   alt="cover image"
                   loading="lazy"
@@ -410,12 +414,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     {userProfile?.isGoldVerified && (
                       <img src="/gold-verified2.png" className="size-[18px]" />
                     )}
-
-                    {userProfile.preferredBadge && (
-                      <div className="ml-1 size-[17px] flex-shrink-0">
-                        {getBadgeIcon(userProfile.preferredBadge)}
-                      </div>
-                    )}
                   </span>
                 </div>
                 <span className="text-sm text-slate-500">@{userProfile?.username}</span>
@@ -426,7 +424,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 {userProfile?.link && (
                   <div className="flex items-center gap-1">
                     <>
-                      <FaLink className="h-3 w-3 text-slate-500" />
+                      <PiLinkSimpleBold className="size-4 text-slate-500" />
                       <a
                         href={getFullProfileLink(userProfile?.link)} // Use the new function for the href
                         target="_blank"
@@ -445,6 +443,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   </span>
                 </div>
               </div>
+              {userProfile?.relationshipStatus && (
+                <div className="flex flex-col">
+                  <p className="text-sm text-slate-500">Relationship Status</p>
+                  <span className="text-sm font-medium">
+                    <em>{userProfile.relationshipStatus}</em>
+                  </span>
+                </div>
+              )}
               <div className="flex gap-4">
                 {" "}
                 <div
@@ -471,8 +477,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 } ${feedType === "posts" ? "font-bold" : "opacity-50"} `}
                 onClick={() => {
                   setFeedType("posts")
-                  // Optional: if you want immediate touch feedback, you can add setActiveTab here
-                  // but onClick handles the primary navigation which is often enough.
                 }}
                 onTouchStart={() => handleTouchStart("posts")}
                 onTouchEnd={handleTouchEnd}
@@ -480,6 +484,27 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               >
                 Posts
                 {feedType === "posts" && (
+                  <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
+                )}
+              </div>
+              {/* Replies Tab */}
+              <div
+                className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
+                  isTouchDevice && activeButtonId === "userReplies"
+                    ? "bg-secondary bg-opacity-50"
+                    : ""
+                } {/* Active background for touch */} ${
+                  feedType === "userReplies" ? "font-bold" : "opacity-50"
+                } {/* Existing text styling */} active`}
+                onClick={() => {
+                  setFeedType("userReplies")
+                }}
+                onTouchStart={() => handleTouchStart("userReplies")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                Replies
+                {feedType === "userReplies" && (
                   <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
                 )}
               </div>
@@ -581,7 +606,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
           }
           // modalTitle="Delete User Account?"
           message="This action is irreversible and will permanently delete all of their posts,
-            comments, likes, messages, and followers."
+            replies, likes, messages, and followers."
           confirmButtonText="Delete Permanently"
           danger={true}
         />

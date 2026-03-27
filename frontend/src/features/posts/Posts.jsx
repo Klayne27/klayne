@@ -5,7 +5,6 @@ import { useGetPosts } from "./postsHooks/useGetPosts"
 import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
 import { TbGhost2 } from "react-icons/tb"
 import { useAppStore } from "../../store/useAppStore"
-import EditPostModal from "./EditPostModal"
 
 const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoadingPinnedPosts }) => {
   const {
@@ -21,8 +20,6 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
     totalLikedPostsCount,
     message,
   } = useGetPosts({ feedType, username })
-
-  const { setShowEditPostModal, showEditPostModal } = useAppStore()
 
   const { combinedPosts, filteredPostsForRender } = useCombinedPosts({
     posts,
@@ -56,9 +53,9 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
   useEffect(() => {
     if (!isLoading && !isRefetching && posts !== undefined && onPostsFetched) {
       const combinedCount =
-        feedType === "posts"
-          ? (totalPostsCount || 0) + (pinnedPosts?.length || 0)
-          : totalLikedPostsCount
+        feedType === "likes"
+          ? totalLikedPostsCount
+          : (totalPostsCount || 0) + (pinnedPosts?.length || 0)
       onPostsFetched(combinedCount)
     }
   }, [
@@ -129,7 +126,6 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
       {filteredPostsForRender.map((post, index) => {
         const elementRef = filteredPostsForRender.length === index + 1 ? lastPostElementRef : null
 
-
         return (
           <div ref={elementRef} key={post._id}>
             <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
@@ -143,7 +139,7 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
         </div>
       )}
       {!hasNextPage && filteredPostsForRender.length > 0 && !isFetchingNextPage && (
-        <p className="my-4 text-center text-gray-500">You've reached the end!</p>
+        <p className="my-12 text-center text-gray-500">You've reached the end!</p>
       )}
     </div>
   )

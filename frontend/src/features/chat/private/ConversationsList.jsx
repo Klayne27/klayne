@@ -4,13 +4,7 @@ import ConversationItem from "./ConversationItem"
 import React from "react"
 import { useGetOrCreateConversation } from "./privateChatHooks/useGetOrCreateConversation"
 import { useGetFollowedUsersForMessaging } from "./privateChatHooks/useGetFollowedUsersForMessaging" // Updated hook import
-import { useSocket } from "../../../context/SocketContext"
-import { FaCog } from "react-icons/fa"
-import DropdownMenu from "../../../components/common/DropdownMenu"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
-import { Link } from "react-router-dom"
-import { useUpdateStatusPreference } from "../../users/usersHooks/useUpdateStatusPreference"
-import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import ConversationsListHeader from "./ConversationsListHeader"
 
 const ConversationsList = ({ conversations }) => {

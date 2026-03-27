@@ -4,6 +4,7 @@ import { useSocket } from "../../context/SocketContext"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
 import { conversationKeys } from "../../features/chat/private/privateChatHooks/conversationKeys"
+import { groupKeys } from "../../features/chat/group/groupChatHooks/groupKeys"
 
 export const useGlobalPrivateChatSocketEvents = () => {
   const queryClient = useQueryClient()

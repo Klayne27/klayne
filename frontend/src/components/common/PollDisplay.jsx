@@ -71,3 +71,6 @@ const PollDisplay = ({ post }) => {
 }
 
 export default PollDisplay
+
+
+

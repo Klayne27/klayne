@@ -6,7 +6,6 @@ import { useState, useRef, useEffect, useCallback } from "react"
 import { useDeleteAccount } from "../../features/users/usersHooks/useDeleteAccount"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
-import { LuListTodo } from "react-icons/lu"
 import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
 import React from "react"
@@ -17,17 +16,26 @@ import FeatherIcon from "../svgs/FeatherIcon"
 import { useAppStore } from "../../store/useAppStore"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { formatCount } from "../../utils/textUtils"
-import { IoIosTimer } from "react-icons/io"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import klayneLogo from "/klaynelogo2.png"
 import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
+import klayneLogo from "/klaynelogo2.png"
 
-const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPrompt }) => {
+import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
+import { IoIosTimer } from "react-icons/io"
+import { LuListTodo } from "react-icons/lu"
+
+const Sidebar = ({
+  onOpenCreatePostModal,
+  installApp,
+  isInstalled,
+  deferredPrompt,
+  isIOSDevice,
+}) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
 
@@ -361,8 +369,6 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
   const shouldAlwaysHide =
     pathname.includes("/public-chat") || // Public chat
     pathname.includes("/post/") || // Individual post page
-    pathname.includes("/pomodoro") ||
-    pathname.includes("/study") ||
     isChatWindowOpen // Private chat window is open
 
   useEffect(() => {
@@ -705,6 +711,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 Bookmarks
               </span>
             </li>
+
             <li
               className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[160px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/pomodoro")}
@@ -776,6 +783,32 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 className={`ml-2 text-xl ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
               >
                 Themes
+              </span>
+            </li>
+            <li
+              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[135px] md:p-0 md:hover:bg-secondary"
+              onClick={() => navigate("/devlog")}
+            >
+              <button
+                className={`${
+                  pathname === "/devlog" ? "font-bold text-opacity-100" : ""
+                } flex w-full max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
+                  isTouchDevice && activeButtonId === "devlog" ? "bg-secondary bg-opacity-80" : ""
+                }`}
+                onTouchStart={() => handleTouchStart("devlog")}
+                onTouchEnd={handleTouchEnd}
+                onTouchCancel={handleTouchCancel}
+              >
+                {pathname === "/devlog" ? (
+                  <MdLibraryBooks className="size-7" />
+                ) : (
+                  <MdOutlineLibraryBooks className="size-7" />
+                )}
+              </button>
+              <span
+                className={`ml-2 text-xl ${pathname === "/devlog" ? "font-bold text-opacity-100" : ""}`}
+              >
+                Devlog
               </span>
             </li>
 
@@ -852,7 +885,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`mr-2 flex w-full items-start gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={`mr-2 flex w-full gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
@@ -861,22 +894,22 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                <Link to={`/profile/${authUser.username}`}>
-                  <div className={`avatar relative`}>
-                    <div className="w-10 rounded-full">
-                      <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
-                    </div>
-                    {isOnline ? (
-                      <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
-                    ) : (
-                      <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
-                    )}
+                {/* <Link to={`/profile/${authUser.username}`}> */}
+                <div className={`avatar relative flex justify-center`}>
+                  <div className="w-10 rounded-full">
+                    <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
                   </div>
-                </Link>
+                  {isOnline ? (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+                  ) : (
+                    <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                  )}
+                </div>
+                {/* </Link> */}
                 <div className="flex flex-1 items-center justify-between">
                   <div className="flex flex-col">
                     <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>
-                    <p className="text-sm text-slate-500">@{authUser?.username}</p>
+                    <p className="self-start text-sm text-slate-500">@{authUser?.username}</p>
                   </div>
                   <BsThreeDots className="h-5 w-5 cursor-pointer" />
                 </div>
@@ -896,7 +929,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
                     <div className="flex flex-col pb-2">
                       <div className="relative mb-2 cursor-pointer" onClick={handleClickProfile}>
                         <img
-                          src={authUser?.coverImg?.imageUrl || "/cover-placeholder.png"}
+                          src={authUser?.coverImg?.imageUrl || "/cover.png"}
                           alt="User cover"
                           className="h-16 w-full rounded-t-xl object-cover"
                         />
@@ -1015,6 +1048,7 @@ const Sidebar = ({ onOpenCreatePostModal, installApp, isInstalled, deferredPromp
           deferredPrompt={deferredPrompt}
           handleLogout={handleLogout}
           handleConfirmDeleteClick={handleConfirmDeleteClick}
+          isIOSDevice={isIOSDevice}
         />
       }
 

@@ -6,17 +6,24 @@ import { useUnpinMessage } from "./privateChatHooks/useUnpinMessage"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { RiPushpinFill } from "react-icons/ri"
 import { useChatViewStore } from "../../../store/useChatViewStore"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 
 function PinnedMessagesModal({ isOpen, onClose }) {
+  const { authUser } = useAuthUser()
   const { selectedConversation } = usePrivateChatStore()
   const { pinnedMessages, loadingPinnedMessages, isError, error } = useGetPinnedMessages(
     selectedConversation?._id,
   )
 
-
-  const { setMessageIdToJumpTo } = useChatViewStore() // 👈 Get the action from the store
+  const { setMessageIdToJumpTo } = useChatViewStore()
 
   const { unpinMessage, isUnpinning } = useUnpinMessage()
+
+  const myMember = selectedConversation?.members?.find(
+    (m) => (m.user?._id || m.user)?.toString() === authUser?._id?.toString(),
+  )
+
+  const isUserAdminOrOwner = myMember?.role === "owner" || myMember?.role === "admin"
 
   const handleUnpinClick = (messageId) => {
     if (!messageId || !selectedConversation?._id) {
@@ -101,6 +108,7 @@ function PinnedMessagesModal({ isOpen, onClose }) {
                     pinnedMessage={pinnedMessage}
                     onUnpinMessage={handleUnpinClick}
                     onJumpToMessage={handleJumpToMessage} // 👈 Pass the new handler      onJumpToMessage={handleJumpToMessage} // 👈 Pass the new handler
+                    isUserAdminOrOwner={isUserAdminOrOwner}
                   />
                 )
               })}

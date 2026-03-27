@@ -11,22 +11,21 @@ import { registerSW } from "virtual:pwa-register"
 import { useGlobalPrivateChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPrivateChatSocketEvents"
 import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlobalPublicChatSocketEvent"
 import LoadingSpinner from "./components/common/LoadingSpinner"
-import { useState } from "react"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
+import { resubscribeIfNeeded } from "./utils/push"
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
-const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"))
-const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
-
+// const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"))
+// const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
 function App() {
   const { authUser, isLoading } = useAuthUser()
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
-  const { deferredPrompt, isInstalled, installApp } = usePWAInstall()
-  const [isPushSubscribed, setIsPushSubscribed] = useState(false)
+  const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
+  // const [isPushSubscribed, setIsPushSubscribed] = useState(false)
 
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
@@ -44,15 +43,31 @@ function App() {
     }
   }, [])
 
+  // useEffect(() => {
+  //   const checkSubscription = async () => {
+  //     if ("serviceWorker" in navigator && "PushManager" in window) {
+  //       const registration = await navigator.serviceWorker.ready
+  //       const subscription = await registration.pushManager.getSubscription()
+  //       setIsPushSubscribed(!!subscription)
+  //     }
+  //   }
+  //   checkSubscription()
+  // }, [])
+
   useEffect(() => {
-    const checkSubscription = async () => {
-      if ("serviceWorker" in navigator && "PushManager" in window) {
-        const registration = await navigator.serviceWorker.ready
-        const subscription = await registration.pushManager.getSubscription()
-        setIsPushSubscribed(!!subscription)
+    const initPush = async () => {
+      if (!("serviceWorker" in navigator) || !("PushManager" in window)) return
+
+      if (Notification.permission !== "granted") return
+
+      try {
+        await resubscribeIfNeeded()
+      } catch (err) {
+        console.error("Push init error:", err)
       }
     }
-    checkSubscription()
+
+    initPush()
   }, [])
 
   useEffect(() => {
@@ -84,14 +99,14 @@ function App() {
         <Routes>
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
           <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
-          <Route
+          {/* <Route
             path="/reset-password/:token"
             element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
           />
           <Route
             path="/forgot-password"
             element={!authUser ? <ForgotPasswordPage /> : <Navigate to="/" />}
-          />
+          /> */}
 
           <Route
             path="/*"
@@ -101,7 +116,7 @@ function App() {
                   deferredPrompt={deferredPrompt}
                   isInstalled={isInstalled}
                   installApp={installApp}
-                  isPushSubscribed={isPushSubscribed}
+                  isIOSDevice={isIOSDevice} // ADD
                 />
               ) : (
                 <Navigate to="/login" />

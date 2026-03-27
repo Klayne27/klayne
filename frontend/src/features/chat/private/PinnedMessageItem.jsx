@@ -2,12 +2,22 @@ import { format } from "date-fns"
 import { FaArrowTurnUp } from "react-icons/fa6"
 import { RiUnpinFill } from "react-icons/ri"
 import { Link } from "react-router-dom"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 
-const PinnedMessageItem = ({ pinnedMessage, onUnpinMessage, onJumpToMessage }) => {
+const PinnedMessageItem = ({
+  pinnedMessage,
+  onUnpinMessage,
+  onJumpToMessage,
+  isUserAdminOrOwner,
+}) => {
+  const { authUser } = useAuthUser()
+
   // Extract the actual message from the pinned message structure
   const message = pinnedMessage.message
   const pinnedBy = pinnedMessage.pinnedBy
   const pinnedAt = pinnedMessage.pinnedAt
+
+  const isPinnedByMe = pinnedBy?._id?.toString() === authUser._id?.toString()
 
   // Safety checks
   if (!message || !message.sender) {
@@ -72,14 +82,15 @@ const PinnedMessageItem = ({ pinnedMessage, onUnpinMessage, onJumpToMessage }) =
         </div>
       </div>
 
-      <button
-        onClick={() => onUnpinMessage(message._id)}
-        className="flex-shrink-0 text-red-500 hover:text-red-400"
-        title="Unpin Message"
+      {(isUserAdminOrOwner || isPinnedByMe) && (
+        <button
+          onClick={() => onUnpinMessage(message._id)}
+          className="flex-shrink-0 text-red-500 transition-colors hover:text-red-400"
+          title="Unpin Message"
         >
-        <RiUnpinFill size={20} />
-      </button>
-    
+          <RiUnpinFill size={20} />
+        </button>
+      )}
     </div>
   )
 }

@@ -8,6 +8,7 @@ const updatePostLikes = (oldData, postId, userId) => {
   if (!oldData) return oldData
 
   const handlePost = (post) => {
+    if (!post) return post
     const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
 
     if (targetPost._id === postId) {
@@ -24,21 +25,31 @@ const updatePostLikes = (oldData, postId, userId) => {
     return post
   }
 
+  // 1. Handle Infinite Query Pages (Main feeds / Replies)
   if (oldData.pages) {
     const newPages = oldData.pages.map((page) => ({
       ...page,
-      posts: (page.posts || []).map(handlePost),
+      posts: page.posts ? page.posts.map(handlePost) : undefined,
+      replies: page.replies ? page.replies.map(handlePost) : undefined,
     }))
     return { ...oldData, pages: newPages }
   }
 
-  if (oldData._id) {
-    return handlePost(oldData)
+  // 2. NEW: Handle Thread Object (Ancestors and the Hero Post)
+  // This matches the structure returned by useGetPostThread
+  if (oldData.ancestors || oldData.post) {
+    return {
+      ...oldData,
+      post: oldData.post ? handlePost(oldData.post) : oldData.post,
+      ancestors: oldData.ancestors ? oldData.ancestors.map(handlePost) : oldData.ancestors,
+    }
   }
 
-  if (Array.isArray(oldData)) {
-    return oldData.map(handlePost)
-  }
+  // 3. Handle single post (details)
+  if (oldData._id) return handlePost(oldData)
+
+  // 4. Handle simple arrays (if any exist)
+  if (Array.isArray(oldData)) return oldData.map(handlePost)
 
   return oldData
 }
@@ -51,39 +62,27 @@ export const useLikePost = (username = null) => {
     mutationFn: (postId) => likePostApi(postId),
 
     onMutate: async (postId) => {
+      await queryClient.cancelQueries({ queryKey: postKeys.all })
 
-      const allActiveQueryKeys = queryClient
-        .getQueryCache()
-        .getAll()
-        .map((query) => query.queryKey)
+      // 2. Get all keys currently in the cache
+      const allActiveQueries = queryClient.getQueryCache().getAll()
 
-      // 2. Filter to find only the keys that match our bookmarks pattern.
-      //    This will find ['posts', 'bookmarked', ''] and ['posts', 'bookmarked', 'react'], etc.
-      const bookmarkedKeysToUpdate = allActiveQueryKeys.filter(
-        (key) => Array.isArray(key) && key[0] === "posts" && key[1] === "bookmarked",
-      )
+      const previousData = {}
 
-      // 3. Combine our dynamically found keys with the other static keys.
-      const keysToUpdate = [
-        postKeys.list("/api/posts/all"),
-        postKeys.list("/api/posts/following"),
-        postKeys.list("/api/posts/vent"),
-        ...bookmarkedKeysToUpdate, // Add all found bookmark keys here
-        postKeys.pinned(username),
-        postKeys.details(postId),
-        postKeys.user(username),
-        postKeys.likes(username),
-      ].filter((key) => queryClient.getQueryData(key))
+      // 3. Iterate through every cached query
+      allActiveQueries.forEach((query) => {
+        const key = query.queryKey
 
-      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
+        // Check if this query is a "posts" related query
+        if (Array.isArray(key) && key[0] === "posts") {
+          const data = queryClient.getQueryData(key)
 
-      const previousData = keysToUpdate.reduce((acc, key) => {
-        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
-        return acc
-      }, {})
+          // Save for rollback
+          previousData[JSON.stringify(key)] = data
 
-      keysToUpdate.forEach((key) => {
-        queryClient.setQueryData(key, (oldData) => updatePostLikes(oldData, postId, authUser._id))
+          // 4. Perform the update
+          queryClient.setQueryData(key, (oldData) => updatePostLikes(oldData, postId, authUser._id))
+        }
       })
 
       return { previousData }

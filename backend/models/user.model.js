@@ -92,13 +92,7 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
-    likedTodoLists: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "TodoList",
-        default: [],
-      },
-    ],
+
     pinnedPosts: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -126,6 +120,53 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastReadICFeedTimestamp: {
+      type: Date,
+      default: null,
+    },
+    badges: [
+      {
+        type: String,
+        default: [],
+      },
+    ],
+    isLikedFeedPrivate: {
+      type: Boolean,
+      default: true,
+    },
+    relationshipStatus: {
+      type: String,
+      enum: [
+        "Single",
+        "In a relationship",
+        "It's complicated",
+        "Casually Dating",
+        "Engaged",
+        "Married",
+        "", // Allowing empty string if they want to hide it
+      ],
+      default: "",
+    },
+    statusPreference: {
+      type: String,
+      enum: ["online", "offline"],
+      default: "online",
+    },
+    resetPasswordToken: {
+      type: String,
+      default: undefined,
+    },
+    resetPasswordExpires: {
+      type: Date,
+      default: undefined,
+    },
+    likedTodoLists: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "TodoList",
+        default: [],
+      },
+    ],
     totalStudyDuration: {
       type: Number,
       default: 0,
@@ -176,12 +217,6 @@ const userSchema = new mongoose.Schema(
         default: null,
       },
     },
-    badges: [
-      {
-        type: String,
-        default: [],
-      },
-    ],
     preferredBadge: {
       type: String,
       default: null,
@@ -212,17 +247,8 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
-    isLikedFeedPrivate: {
-      type: Boolean,
-      default: true,
-    },
-    statusPreference: {
-      type: String,
-      enum: ["online", "offline"],
-      default: "online",
-    },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const User = mongoose.model("User", userSchema);

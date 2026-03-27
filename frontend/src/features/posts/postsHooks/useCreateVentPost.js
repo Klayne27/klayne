@@ -1,5 +1,3 @@
-// hooks/posts/useCreateVentPost.js
-
 import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { createVentPostApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"

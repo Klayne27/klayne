@@ -5,7 +5,7 @@ export const usePrivateChatStore = create(
   immer((set) => ({
     replyingToMessage: null,
     editingMessage: null,
-    isTypingOtherUser: false,
+    isTypingOtherUser: [],
     showNewMessageButton: false,
     selectedConversation: null,
     activeMessageModalId: null, // State for the mobile slide-up menu

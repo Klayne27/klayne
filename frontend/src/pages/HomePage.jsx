@@ -19,6 +19,9 @@ const HomePage = () => {
     showNewVentPostsButton,
     setShowNewVentPostsButton,
     newVentPostCount,
+    newICPostCount,
+    showNewICPostsButton,
+    setShowNewICPostsButton,
   } = useSocket()
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const feedType = useAppStore((state) => state.feedType)
@@ -52,10 +55,14 @@ const HomePage = () => {
       // TODO: Create and use a useMarkVentsAsRead hook
       markVentFeedAsRead()
       setShowNewVentPostsButton(false)
-    } else {
+    } else if (feedType === "forYou") {
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
       markFeedAsRead()
       setShowNewFeedPostsButton(false)
+    } else {
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
+      // markFeedAsRead()
+      setShowNewICPostsButton(false)
     }
   }, [
     queryClient,
@@ -64,6 +71,7 @@ const HomePage = () => {
     markVentFeedAsRead,
     feedType,
     setShowNewVentPostsButton,
+    setShowNewICPostsButton,
   ])
 
   useEffect(() => {
@@ -114,7 +122,8 @@ const HomePage = () => {
       behavior: "smooth",
     })
     setShowNewFeedPostsButton(false)
-    setShowNewVentPostsButton(false) // This is for the vent feed
+    setShowNewVentPostsButton(false)
+    setShowNewICPostsButton(false)
     setShowHeader(true)
   }
 
@@ -151,7 +160,12 @@ const HomePage = () => {
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              For you
+              <span className="relative">
+                For You
+                {newPostCount > 0 && (
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                )}
+              </span>
               {feedType === "forYou" && (
                 <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
               )}
@@ -178,6 +192,29 @@ const HomePage = () => {
                 <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
               )}
             </div>
+            <div
+              className={`flex flex-1 cursor-pointer justify-center p-3 ${
+                !isTouchDevice
+                  ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
+                  : ""
+              } ${
+                activeButtonId === "ic" ? "bg-secondary bg-opacity-50" : ""
+              } ${feedType === "ic" ? "font-bold" : "text-base-content/50"}`}
+              onClick={() => handleTabClick("ic")}
+              onTouchStart={() => handleTouchStart("ic")}
+              onTouchEnd={handleTouchEnd}
+            >
+              <span className="relative">
+                Study
+                {newICPostCount > 0 && (
+                  <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
+                )}
+              </span>
+              {feedType === "ic" && (
+                <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary"></div>
+              )}
+            </div>
+
             <div
               className={`flex flex-1 cursor-pointer justify-center p-3 ${
                 !isTouchDevice
@@ -229,6 +266,15 @@ const HomePage = () => {
           >
             <FaArrowUp className="size-4" />
             <span>{newPostCount} new post(s)</span>
+          </button>
+        )}
+        {feedType === "ic" && showNewICPostsButton && showScrollButton && newICPostCount && (
+          <button
+            onClick={handleNewPostsButtonClick}
+            className="white-shadow fixed left-1/2 top-[60px] z-50 flex -translate-x-1/2 items-center gap-2 rounded-full bg-primary px-3 py-2 text-xs font-semibold text-white transition-all duration-200 hover:bg-primary/90 md:top-[53px] md:-translate-x-[110%] md:text-sm"
+          >
+            <FaArrowUp className="size-4" />
+            <span>{newICPostCount} new post(s)</span>
           </button>
         )}
         <div ref={scrollableContentRef}>

@@ -1,4 +1,3 @@
-
 export const postKeys = {
   all: ["posts"],
   list: (type) => [...postKeys.all, "list", type],
@@ -6,5 +5,8 @@ export const postKeys = {
   details: (postId) => [...postKeys.all, "details", postId],
   bookmarked: (searchQuery) => [...postKeys.all, "bookmarked", searchQuery],
   likes: (username) => [...postKeys.all, "likes", username],
-  user: (username) => [...postKeys.all, "user", username]
+  userReplies: (username) => [...postKeys.all, "userReplies", username],
+  user: (username) => [...postKeys.all, "user", username],
+  replies: (postId) => [...postKeys.all, "replies", postId],
+  thread: (postId) => [...postKeys.all, "thread", postId],
 }

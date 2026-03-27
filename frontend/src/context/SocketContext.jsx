@@ -23,13 +23,16 @@ export const SocketContextProvider = ({ children }) => {
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false)
   const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false)
-  const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
   const [hasUnreadPublicChat, setHasUnreadPublicChat] = useState(false)
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [unreadPublicChatCount, setUnreadPublicChatCount] = useState(0)
   const [newPostCount, setNewPostCount] = useState(0)
+  const [newICPostCount, setNewICPostCount] = useState(0)
   const [newVentPostCount, setNewVentPostCount] = useState(0)
+  const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
+  const [showNewICPostsButton, setShowNewICPostsButton] = useState(false)
+
   const [showNewVentPostsButton, setShowNewVentPostsButton] = useState(false)
 
   const socketRef = useRef(null)
@@ -96,6 +99,11 @@ export const SocketContextProvider = ({ children }) => {
       newSocket.on("newPostCount", (data) => {
         setShowNewFeedPostsButton(true)
         setNewPostCount(data.newPostCount)
+      })
+
+      newSocket.on("newICPostCount", (data) => {
+        setShowNewICPostsButton(true)
+        setNewICPostCount(data.newICPostCount)
       })
 
       newSocket.on("newVentPostCount", (data) => {
@@ -167,11 +175,13 @@ export const SocketContextProvider = ({ children }) => {
       setActiveConversationId(null)
       setHasUnreadNotifications(false)
       setHasNewFeedPosts(false)
+      setShowNewICPostsButton(false)
       setShowNewFeedPostsButton(false)
       setHasUnreadPublicChat(false) // Clear public chat unread status on logout
       setUnreadNotificationsCount(0)
       setUnreadMessageCount(0)
       setNewPostCount(0)
+      setNewICPostCount(0)
       setUnreadPublicChatCount(0)
       setNewVentPostCount(0)
     }
@@ -223,6 +233,10 @@ export const SocketContextProvider = ({ children }) => {
         setShowNewVentPostsButton,
         newVentPostCount,
         showNewVentPostsButton,
+        setNewICPostCount,
+        setShowNewICPostsButton,
+        newICPostCount,
+        showNewICPostsButton,
       }}
     >
       {children}

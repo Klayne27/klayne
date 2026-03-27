@@ -10,16 +10,8 @@ import {
 } from "recharts"
 import { CustomTooltip } from "../../components/common/CustomToolTip"
 
-export const ChartComponent = ({ data, view, type, color, tooltipFormatter }) => {
+export const ChartComponent = ({ data, view, type, color }) => {
   const isWeekly = view === "weekly"
-
-  const tooltipStyles = {
-    backgroundColor: "#1c1917",
-    border: "none",
-    borderRadius: "8px",
-    fontSize: "12px",
-  }
-  const tooltipItemStyles = { color: "#e5e7eb" }
 
   const Chart = isWeekly ? BarChart : LineChart
   const DataComponent = isWeekly ? Bar : Line

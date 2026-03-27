@@ -25,12 +25,22 @@ import {
   markFeedVentPostsAsRead,
   editPost,
   getPostHistory,
+  getICPosts,
+  createReply,
+  getPostReplies,
+  getPostThread,
+  getUserReplies,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
 
 router.post("/create", protectRoute, createPost);
 router.put("/edit/:id", protectRoute, editPost);
+
+router.post("/:id/reply", protectRoute, createReply);
+router.get("/:id/replies", protectRoute, getPostReplies);
+router.get("/:id/thread", protectRoute, getPostThread);
+
 router.delete("/:id", protectRoute, deletePost);
 router.get("/history/:id", protectRoute, getPostHistory);
 
@@ -42,7 +52,11 @@ router.post("/pin/:id", protectRoute, pinUnpinPost);
 router.delete("/pin/:id", protectRoute, pinUnpinPost);
 
 router.get("/all", protectRoute, getAllPosts);
+router.get("/ic", protectRoute, getICPosts);
+
 router.get("/likes/:username", protectRoute, getLikedPosts);
+router.get("/replies/:username", protectRoute, getUserReplies);
+
 router.get("/following", protectRoute, getFollowingPosts);
 router.get("/bookmarked", protectRoute, getBookmarkedPosts);
 router.get("/check-repost/:originalPostId", protectRoute, checkIfUserReposted);

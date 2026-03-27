@@ -1,7 +1,6 @@
-
 import { signInWithPopup } from "firebase/auth"
 import { useNavigate } from "react-router-dom"
-import { useQueryClient } from "@tanstack/react-query" 
+import { useQueryClient } from "@tanstack/react-query"
 import { userKeys } from "../../features/users/usersHooks/userKeys"
 import { auth, googleProvider } from "../../services/firebase"
 
@@ -38,11 +37,11 @@ const GoogleSignInButton = () => {
 
   return (
     <button
-      className="flex gap-3 hover:bg-secondary transition duration-200 border rounded-full px-3 py-2 border-accent"
+      className="flex gap-3 rounded-full border border-accent bg-white px-3 py-2 text-black transition duration-200 hover:bg-white/80"
       onClick={handleGoogleSignIn}
     >
       <img src="/google-icon.png" className="size-6" />
-      <span>Sign in with Google</span>
+      <span className="font-semibold">Sign in with Google</span>
     </button>
   )
 }

@@ -31,9 +31,11 @@ export const addCommentApi = async ({ postId, text, img }) => {
     body: JSON.stringify({ text, img }),
   });
   const data = await res.json();
+
   if (!res.ok) {
     throw new Error(data.error || "Failed to add comment");
   }
+
   return data;
 };
 
@@ -42,9 +44,11 @@ export const deleteCommentApi = async ({ commentId }) => {
     method: "DELETE",
   });
   const data = await res.json();
+
   if (!res.ok) {
     throw new Error(data.error || "Failed to delete comment");
   }
+  
   return data;
 };
 

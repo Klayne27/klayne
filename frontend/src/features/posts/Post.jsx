@@ -1,4 +1,4 @@
-import { FaHeart, FaPen, FaRegComment } from "react-icons/fa6"
+import { FaHeart, FaPen, FaRegComment, FaReply, FaWrench } from "react-icons/fa6"
 import { FaRetweet } from "react-icons/fa6"
 import { FaRegHeart } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
@@ -19,7 +19,7 @@ import { usePinPost } from "./postsHooks/usePinPost"
 import { BsPin, BsPinFill, BsThreeDots } from "react-icons/bs"
 import { useBlockUnblockUser } from "../users/usersHooks/useBlockUnblockUser"
 import useFollow from "../users/usersHooks/useFollow"
-import { MdBlock } from "react-icons/md"
+import { MdBlock, MdLocalPolice } from "react-icons/md"
 import { useAppStore } from "../../store/useAppStore"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
@@ -28,19 +28,30 @@ import AnimatedCount from "../../components/common/AnimatedCount"
 import { TbUserMinus, TbUserPlus } from "react-icons/tb"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { getDisplayUsername } from "../../utils/truncateText"
-import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
 import { useProfileCardHover } from "../../hooks/customHooks/useProfileCardHover.js"
 import ProfileInfoModal from "../../components/common/ProfileInfoModal.jsx"
 import PostModal from "./PostModal.jsx"
 import { useGetPostHistory } from "./postsHooks/useGetPostHistory.js"
 import EditHistoryModal from "./EditHistoryModal.jsx"
 import { FaHistory } from "react-icons/fa"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
+import { BiHealth } from "react-icons/bi"
+import { PiChefHatFill } from "react-icons/pi"
+import { useGetPostThread } from "./postsHooks/useGetPostThread.js"
+import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
 
-const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
+const Post = ({
+  post,
+  profilePinnedPosts = [],
+  currentProfileUsername,
+  hasLineBelow = false,
+  hasLineAbove = false,
+  index,
+}) => {
   const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
-  const { username } = useParams()
+  const { username, pid } = useParams()
   const [isAnimatingRepost, setIsAnimatingRepost] = useState(false)
   const [isAnimatingLike, setIsAnimatingLike] = useState(false)
   const [isAnimatingPin, setIsAnimatingPin] = useState(false) // NEW
@@ -48,6 +59,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const [isAnimatingComment, setIsAnimatingComment] = useState(false)
   const [showEditModal, setShowEditModal] = useState(false) // Local state for the modal
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
+  const [showDeletePostModal, setShowDeletePostModal] = useState(false)
 
   const { setEditPostModalData } = useAppStore()
 
@@ -102,6 +114,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const { likePost, isLiking } = useLikePost(username)
   const { deletePost, isDeleting } = useDeletePosts()
   const { pinUnpinPost, isPinning } = usePinPost()
+  const { ancestors, isLoading: isLoadingThread } = useGetPostThread(post._id)
 
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow()
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
@@ -109,6 +122,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
   const displayTimestamp = sourcePost.publishedAt ? sourcePost.publishedAt : sourcePost.createdAt
 
   const formattedDate = formatPostDate(displayTimestamp)
+  const isMainPost = pid === sourcePost._id
 
   const { history, isLoadingHistory, isHistoryError, historyError } = useGetPostHistory(
     isHistoryModalOpen ? post._id : null,
@@ -128,7 +142,8 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
       return
     }
 
-    if (pathname.includes("/post/")) {
+    const currentPagePostId = pathname.split("/post/")[1]
+    if (currentPagePostId && currentPagePostId === sourcePost._id?.toString()) {
       return
     }
 
@@ -143,6 +158,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     ) {
       return
     }
+
     navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
   }
 
@@ -178,9 +194,15 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     toggleBookmark(sourcePost._id)
   }
 
-  const handleDeletePostClick = (e) => {
+  const handleCloseDeletePostModal = () => {
+    setShowDeletePostModal(false)
+  }
+
+  const handleConfirmDeletePost = (e) => {
     handleInteractiveClick(e)
     deletePost(sourcePost?._id)
+    setShowMenu(false)
+    setShowDeletePostModal(false)
   }
 
   useEffect(() => {
@@ -283,7 +305,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
     if (isAnimatingRepost) {
       timerRepost = setTimeout(() => {
         setIsAnimatingRepost(false)
-      }, 400) // Match the animation duration (0.4s)
+      }, 400)
     }
 
     if (isAnimatingLike) {
@@ -319,15 +341,17 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
 
   return (
     <div
-      className={`${
-        showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
-      } flex flex-col gap-0 border-b border-accent px-4 py-3 transition duration-500`}
-      onClick={navigateToPostPage}
+      className={`${showMenu ? "bg-base-100" : "hover:bg-gray-700/30"} flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${index === 0 && "pt-3"} ${hasLineAbove ? "" : "border-b border-accent"} ${hasLineBelow ? "" : "border-b border-accent pt-3 pb-2"}`}
+      onClick={isMainPost ? undefined : navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
     >
-      {isRepost && repostingUser && (
+      {hasLineAbove && index > 0 && (
+        <div className="ml-[19px] flex h-3 w-0.5 items-center bg-gray-600/50" />
+      )}
+
+      {!isMainPost && isRepost && repostingUser && (
         <div
           className="ml-6 flex items-center gap-1 text-sm font-semibold text-slate-500"
           data-profile-trigger="true"
@@ -336,9 +360,9 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
         >
           <FaRetweet className="inline-block text-lg" size={16} />
           <span className="cursor-pointer hover:underline" onClick={navigateToReposterProfile}>
-            {repostingUser.fullName.length > 15
-              ? repostingUser.fullName.slice(0, 15) + "..."
-              : repostingUser.fullName}{" "}
+            {repostingUser.username.length > 15
+              ? repostingUser.username.slice(0, 15) + "..."
+              : repostingUser.username}{" "}
             reposted
           </span>
         </div>
@@ -350,10 +374,25 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
         </div>
       )}
 
-      <div className="relative flex cursor-pointer items-start gap-2">
-        <div className="avatar mt-1">
+      {post.parentPost && !pathname.includes("/post/") && (
+        <div
+          className="ml-6 flex items-center gap-1 text-sm font-semibold text-slate-500"
+          data-profile-trigger="true"
+          onMouseEnter={(e) => handleMouseEnter(repostingUser, e)}
+          onMouseLeave={handleMouseLeave}
+        >
+          <FaReply className="inline-block text-lg" size={14} />
+          <span>Replying to @{post.parentPost?.user?.username}</span>
+        </div>
+      )}
+
+      <div className="relative flex cursor-pointer gap-2">
+        <div
+          className={`flex w-10 flex-shrink-0 flex-col items-center ${index === 0 && "mt-1"} mt-1`}
+        >
           {post.isAnonymous ? (
-            <div className="size-10 overflow-hidden rounded-full">
+            <div className="size-10 flex-shrink-0 overflow-hidden rounded-full">
+              {" "}
               <img
                 src={"/avatar-placeholder.png"}
                 alt={`${originalPostOwner.username}'s profile`}
@@ -363,21 +402,23 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="size-10 overflow-hidden rounded-full hover:opacity-80"
+              className="size-10 flex-shrink-0 overflow-hidden rounded-full hover:opacity-80" // ADD flex-shrink-0
               onClick={(e) => handleInteractiveClick(e)}
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
               <img
-                src={originalPostOwner.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                src={getOptimizedImageUrl(originalPostOwner?.profileImg?.imageUrl, "avatar")}
                 alt={`${originalPostOwner.username}'s profile`}
+                className="h-full w-full object-cover"
                 loading="lazy"
               />
             </Link>
           )}
+          {hasLineBelow && <div className="mt-1 h-full w-0.5 bg-gray-600/50" />}{" "}
         </div>
 
-        <div className="relative flex min-w-0 flex-1 flex-col">
+        <div className={`relative flex min-w-0 flex-1 flex-col`}>
           <div className="flex items-center gap-1">
             <div className="flex min-w-0 items-center gap-1 overflow-hidden">
               {post.isAnonymous ? (
@@ -407,6 +448,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                           loading="lazy"
                         />
                       )}
+
                     </span>
                   )}
                 </div>
@@ -439,11 +481,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                           loading="lazy"
                         />
                       )}
-                      {originalPostOwner.preferredBadge && (
-                        <div className="ml-1 size-[17px] flex-shrink-0">
-                          {getBadgeIcon(originalPostOwner.preferredBadge)}
-                        </div>
-                      )}
+
                     </span>
                   }
                 </Link>
@@ -463,8 +501,15 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                     @{getDisplayUsername(originalPostOwner.username, isMobile)}
                   </Link>
                 )}
-                <span>·</span>
-                <span className="shrink-0">{formattedDate}</span>{" "}
+                {pathname.includes("/post/") && post._id === pid ? (
+                  ""
+                ) : (
+                  <>
+                    <span>·</span>
+                    <span className="shrink-0">{formattedDate}</span>
+                  </>
+                )}
+
               </span>
             </div>
 
@@ -515,7 +560,11 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                           )}
                           <button
                             className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
-                            onClick={handleDeletePostClick}
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              setShowDeletePostModal(true)
+                              setShowMenu(false)
+                            }}
                             disabled={isDeleting}
                           >
                             {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
@@ -564,6 +613,20 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                               </span>
                             )}
                           </button>
+                          {authUser?.isAdmin && (
+                            <button
+                              className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setShowDeletePostModal(true)
+                                setShowMenu(false)
+                              }}
+                              disabled={isDeleting}
+                            >
+                              {isDeleting ? <LoadingSpinner size="xs" /> : <FaTrashCan />}
+                              Delete Post
+                            </button>
+                          )}
                         </>
                       )}
                     </div>
@@ -582,7 +645,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <div className="inline-flex max-w-full justify-center">
                   <Link to={`/images/${sourcePost.image?._id}`}>
                     <img
-                      src={sourcePost.image.imageUrl}
+                      src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
                       className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
                       alt="post image"
                       loading="lazy"
@@ -606,7 +669,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
             {post.pollOptions && post.pollOptions.length > 0 && <PollDisplay post={post} />}
           </div>
 
-          <div className="mt-3 w-2/3">
+          <div className={`mt-3 w-2/3 ${hasLineBelow && "pt-3 pb-2"}`}>
             <div className="flex justify-between">
               <div
                 className="group flex cursor-pointer items-center"
@@ -632,7 +695,7 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
                 <span
                   className={`text-sm text-slate-500 transition duration-200 group-hover:text-sky-400`}
                 >
-                  {sourcePost.commentsCount || 0}
+                  {sourcePost.repliesCount || 0}
                 </span>
               </div>
 
@@ -806,6 +869,18 @@ const Post = ({ post, profilePinnedPosts = [], currentProfileUsername }) => {
           editPost={sourcePost} // Pass the correct post data
           title="Edit Your Post"
           onClose={() => setShowEditModal(false)} // Close the modal and reset state
+        />
+      )}
+
+      {showDeletePostModal && (
+        <ConfirmationModal
+          isOpen={showDeletePostModal}
+          modalTitle="Delete post?"
+          message={`This can’t be undone and it will be removed from your profile and from the timeline of any accounts that follow you `}
+          confirmButtonText="Delete"
+          onConfirm={handleConfirmDeletePost}
+          onClose={handleCloseDeletePostModal}
+          danger={true}
         />
       )}
     </div>

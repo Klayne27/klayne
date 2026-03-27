@@ -70,9 +70,9 @@ const LoginPage = () => {
           </button>
           {isError && <p className="text-center text-red-500">{error.message}</p>}
         </form>
-        <Link to="/forgot-password">
+        {/* <Link to="/forgot-password">
           <p className="mt-4 text-center text-sm text-primary hover:underline">Forgot password?</p>
-        </Link>
+        </Link> */}
         <div className="divider my-4">OR</div>
         <GoogleSignInButton />
         <div className="divider my-4"></div>

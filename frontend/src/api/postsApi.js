@@ -1,5 +1,33 @@
 const BASE_URL = "/api/posts"
 
+// Add to your posts api file
+
+export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
+  const res = await fetch(`${BASE_URL}/${parentId}/reply`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ text, img, video, isIC }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Something went wrong")
+  return data
+}
+
+export const getPostRepliesApi = async ({ queryKey, pageParam = 1 }) => {
+  const [, , postId] = queryKey
+  const res = await fetch(`${BASE_URL}/${postId}/replies?page=${pageParam}&limit=12`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch replies")
+  return data
+}
+
+export const getPostThreadApi = async (postId) => {
+  const res = await fetch(`${BASE_URL}/${postId}/thread`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch thread")
+  return data
+}
+
 export const getPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
   const url = `${POST_ENDPOINT}?page=${pageParam}&limit=${limit}`
   const res = await fetch(url)
@@ -56,11 +84,11 @@ export const getScheduledPostsApi = async () => {
   return data
 }
 
-export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt }) => {
+export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt, isIC }) => {
   const res = await fetch(`${BASE_URL}/create`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, video, pollOptions, scheduledAt }),
+    body: JSON.stringify({ text, img, video, pollOptions, scheduledAt, isIC }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Something went wrong")
@@ -198,13 +226,13 @@ export const markVentPostsAsReadApi = async () => {
   return data
 }
 
-export const createVentPostApi = async ({ text, img, video, isAnonymous }) => {
+export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOptions }) => {
   const response = await fetch("/api/posts/vent", {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ text, img, video, isAnonymous }),
+    body: JSON.stringify({ text, img, video, isAnonymous, pollOptions }),
   })
 
   if (!response.ok) {

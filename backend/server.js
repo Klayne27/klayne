@@ -19,6 +19,8 @@ import postRoutes from "./routes/post.routes.js";
 import commentRoutes from "./routes/comment.routes.js";
 import messageRoutes from "./routes/message.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
+import groupRoutes from "./routes/group.routes.js";
+import devlogRoutes from "./routes/devlog.routes.js";
 import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
 
@@ -52,6 +54,8 @@ app.use("/api/posts", postRoutes);
 app.use("/api/notifications", notificationRoutes);
 app.use("/api/messages", messageRoutes);
 app.use("/api/comments", commentRoutes);
+app.use("/api/groups", groupRoutes);
+app.use("/api/devlogs", devlogRoutes);
 app.use("/api/public-chat", publicChatRoutes);
 app.use("/api/images", imageRoutes);
 app.use("/api/push", pushRoutes);

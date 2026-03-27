@@ -15,15 +15,7 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: [
-        "follow",
-        "like",
-        "comment",
-        "repost",
-        "commentLike",
-        "commentReply",
-        "mention",
-      ],
+      enum: ["follow", "like", "repost", "mention", "reply"],
     },
     read: {
       type: Boolean,
@@ -33,29 +25,7 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
       required: function () {
-        return [
-          "comment",
-          "repost",
-          "like",
-          "commentLike",
-          "commentReply",
-          "mention",
-        ].includes(this.type);
-      },
-    },
-    commentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Comment",
-      required: function () {
-        return ["comment", "commentLike", "commentReply"].includes(this.type);
-      },
-    },
-    parentCommentId: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Comment",
-      default: null,
-      required: function () {
-        return this.type === "commentReply" && this.commentId !== null;
+        return ["repost", "like", "mention", "reply"].includes(this.type);
       },
     },
     isAnonymousInteraction: {
@@ -63,9 +33,10 @@ const notificationSchema = new mongoose.Schema(
       default: false,
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Notification = mongoose.model("Notification", notificationSchema);
 
 export default Notification;
+

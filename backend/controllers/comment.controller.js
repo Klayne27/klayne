@@ -2,7 +2,6 @@ import Post from "../models/post.model.js";
 import Comment from "../models/comment.model.js";
 import {
   createAndSendNotification,
-  emitUnreadNotificationStatus,
 } from "../lib/socket.js";
 import mongoose from "mongoose";
 import User from "../models/user.model.js";
@@ -157,10 +156,10 @@ export const getComments = async (req, res) => {
         const commentObj = comment.toObject();
 
         commentObj.user = {
-          _id: comment.user._id, // Keep the ID for potential client-side logic
+          _id: comment.user._id,
           username: "Anonymous",
           fullName: "Anonymous",
-          profileImg: { imageUrl: "/avatar-placeholder.png" }, // Use a placeholder avatar
+          profileImg: { imageUrl: "/avatar-placeholder.png" },
           isVerified: false,
           isGoldVerified: false,
           badges: [],
@@ -168,7 +167,7 @@ export const getComments = async (req, res) => {
         };
         return commentObj;
       }
-      return comment; // Return the original comment if not anonymous
+      return comment;
     });
 
     const totalComments = await Comment.countDocuments(query);
@@ -369,9 +368,8 @@ export const replyToComment = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // 👇 START: ADD THIS LOGIC
     let isOwnerCommentingAnonymously = false;
-    // Check if the post is an anonymous vent and if the replier is the post owner
+
     if (
       post.isVent &&
       post.isAnonymous &&
@@ -406,7 +404,7 @@ export const replyToComment = async (req, res) => {
 
         newImage = new Image({
           imageUrl: img,
-          parentDocument: null, // Set after the comment is created
+          parentDocument: null,
           parentModel: "Comment",
           uploadedBy: userId,
           publicId: uploadedResponse.public_id,
@@ -428,7 +426,7 @@ export const replyToComment = async (req, res) => {
       image: newImage?._id || null,
       parentComment: parentCommentId,
       mentionedUsers: mentionedUserIds,
-      isAnonymous: isOwnerCommentingAnonymously, // ✅ Use the new flag here
+      isAnonymous: isOwnerCommentingAnonymously,
     });
     if (newImage) {
       newImage.parentDocument = newReply._id;
@@ -465,7 +463,7 @@ export const replyToComment = async (req, res) => {
         postId: post._id,
         commentId: newReply._id,
         parentCommentId: parentCommentId,
-        isAnonymousInteraction, // Pass the flag
+        isAnonymousInteraction, 
       });
     }
 
@@ -482,14 +480,9 @@ export const replyToComment = async (req, res) => {
         type: "mention",
         postId: post._id,
         commentId: newReply._id,
-        isAnonymousInteraction, // Pass the flag
+        isAnonymousInteraction, 
       });
     }
-
-    // await emitUnreadNotificationStatus(parentComment.user._id.toString());
-    // for (const mentionedUserId of mentionedUserIds) {
-    //   await emitUnreadNotificationStatus(mentionedUserId.toString());
-    // }
 
     res.status(201).json(newReply);
   } catch (error) {
@@ -556,8 +549,6 @@ export const likeUnlikeComment = async (req, res) => {
           isAnonymousInteraction,
         });
       }
-
-      // await emitUnreadNotificationStatus(comment.user._id.toString());
 
       await comment.save();
       res

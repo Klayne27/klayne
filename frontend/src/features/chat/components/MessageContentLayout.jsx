@@ -19,7 +19,7 @@ function MessageContentLayout({
           <div >
             <img
               alt="User Avatar"
-              src={message.sender.profileImg?.imageUrl || "/avatar-placeholder.png"}
+              src={message?.sender?.profileImg?.imageUrl || "/avatar-placeholder.png"}
               className="mt-0.5 size-9 cursor-pointer rounded-full object-cover"
               onClick={(e) => onUsernameClick(message.sender, e)}
             />

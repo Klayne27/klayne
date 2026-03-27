@@ -16,6 +16,7 @@ import PinnedMessagesModal from "./PinnedMessageModal"
 import { useGetPinnedMessages } from "./privateChatHooks/useGetPinnedMessages"
 import { useChatViewStore } from "../../../store/useChatViewStore"
 import { showAppToast } from "../../../utils/showAppToast"
+import { useGroupChatSocketEvents } from "../../../hooks/socketEventHooks/useGroupChatSocketEvents"
 
 const PrivateChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()
@@ -53,6 +54,7 @@ const PrivateChatWindow = () => {
   })
 
   usePrivateChatSocketEvents(conversationId, setIsTypingOtherUser, otherUser, handleReactionAdded)
+  useGroupChatSocketEvents(socket)
 
   const privateChatInputRef = useRef(null)
   const currentOptimisticIdRef = useRef(null)
@@ -114,16 +116,27 @@ const PrivateChatWindow = () => {
   ])
 
   const isChatEmpty = !messages?.length
+  const isGroup = selectedConversation.isGroup
 
   return (
     <div className="relative flex h-full flex-col border-accent md:border-r">
-      <PrivateChatHeader otherUser={otherUser} onOpenPinnedModal={handleOpenPinnedModal} />
+      <PrivateChatHeader
+        selectedConversation={selectedConversation}
+        otherUser={otherUser}
+        onOpenPinnedModal={handleOpenPinnedModal}
+      />
       {isChatEmpty && !isLoadingMessages && (
         <div className="flex h-[60%] flex-col items-center justify-end p-4 text-center">
           <IoChatbubblesOutline className="mb-4 text-6xl text-gray-300" />
-          <p className="mb-2 text-xl font-semibold">
-            You're starting a new chat with @{otherUser?.username}!
-          </p>
+          {isGroup ? (
+            <p className="mb-2 text-xl font-semibold">
+              You're starting a new chat on {selectedConversation.name}!
+            </p>
+          ) : (
+            <p className="mb-2 text-xl font-semibold">
+              You're starting a new chat with @{otherUser?.username}!
+            </p>
+          )}
           <p className="max-w-sm text-base italic text-gray-500">
             Say hello and send your first message to begin your conversation.
           </p>
@@ -145,7 +158,6 @@ const PrivateChatWindow = () => {
             isLoadingInitialMessages={isLoadingMessages && !isFetchingNextPage}
             isFetchingOlderMessages={isFetchingNextPage}
             hasNextPage={hasNextPage}
-            isTypingOtherUser={isTypingOtherUser}
             handleLoadImage={handleLoadImage}
             onReactionAdded={handleReactionAdded}
             messageListRef={messageListRef}
@@ -172,6 +184,7 @@ const PrivateChatWindow = () => {
           onSenderMessageSent={handleSenderMessageSent}
           socket={socket}
           onNewMessageButtonClick={handleNewMessageButtonClick}
+          isTypingOtherUser={isTypingOtherUser}
         />
       </div>
       <PinnedMessagesModal isOpen={isPinnedModalOpen} onClose={handleClosePinnedModal} />

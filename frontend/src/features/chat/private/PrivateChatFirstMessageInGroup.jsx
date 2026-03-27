@@ -1,12 +1,25 @@
 import { formatTime } from "../../../utils/date"
 
-function PrivateChatFirstMessageInGroup({ message, isSentByCurrentUser, onUsernameClick }) {
+function PrivateChatFirstMessageInGroup({
+  message,
+  isSentByCurrentUser,
+  onUsernameClick,
+  selectedConversation,
+}) {
+  const groupParticipants = selectedConversation.participants
+  const senderId = message.sender._id
+
+  const isUserAMember = groupParticipants.includes(senderId)
+
   return (
     <>
       {message.isFirstInGroup && (
         <div className={`mb-0.5 flex items-center text-sm`}>
           {!isSentByCurrentUser && (
-            <div className="mr-1 cursor-pointer font-semibold" onClick={(e) => onUsernameClick(message.sender, e)}>
+            <div
+              className={`mr-1 cursor-pointer font-semibold`}
+              onClick={(e) => onUsernameClick(message.sender, e)}
+            >
               {message.senderUsername}
             </div>
           )}

@@ -5,43 +5,39 @@ import { showAppToast } from "../../../utils/showAppToast"
 
 const updatePostRepostStatus = (oldData, postId, userId) => {
   if (!oldData) return oldData
-
   const handlePost = (post) => {
+    if (!post) return post
     const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
-    const isTarget = targetPost._id === postId
-
-    if (isTarget) {
+    if (targetPost._id === postId) {
       const isReposted = targetPost.repostedBy?.includes(userId)
       const newRepostedBy = isReposted
         ? (targetPost.repostedBy || []).filter((id) => id !== userId)
         : [...(targetPost.repostedBy || []), userId]
-
-      const newRepostCount = newRepostedBy.length
-
-      if (post.repostedFrom?._id === postId) {
-        return {
-          ...post,
-          repostedFrom: { ...targetPost, repostedBy: newRepostedBy, repostsCount: newRepostCount },
-        }
-      }
-      return { ...post, repostedBy: newRepostedBy, repostsCount: newRepostCount }
+      const update = { repostedBy: newRepostedBy, repostsCount: newRepostedBy.length }
+      return post.repostedFrom?._id === postId
+        ? { ...post, repostedFrom: { ...targetPost, ...update } }
+        : { ...post, ...update }
     }
-
     return post
   }
 
-  if (oldData.pages) {
-    const newPages = oldData.pages.map((page) => ({
-      ...page,
-      posts: (page.posts || []).map(handlePost),
-    }))
-    return { ...oldData, pages: newPages }
-  }
-
-  if (oldData._id) {
-    return handlePost(oldData)
-  }
-
+  if (oldData.pages)
+    return {
+      ...oldData,
+      pages: oldData.pages.map((p) => ({
+        ...p,
+        posts: p.posts?.map(handlePost),
+        replies: p.replies?.map(handlePost),
+      })),
+    }
+  if (oldData.ancestors || oldData.post)
+    return {
+      ...oldData,
+      post: handlePost(oldData.post),
+      ancestors: oldData.ancestors?.map(handlePost),
+    }
+  if (oldData._id) return handlePost(oldData)
+  if (Array.isArray(oldData)) return oldData.map(handlePost)
   return oldData
 }
 
@@ -63,42 +59,17 @@ export const useRepostPost = (username) => {
     },
 
     onMutate: async (postId) => {
-      const allActiveQueryKeys = queryClient
-        .getQueryCache()
-        .getAll()
-        .map((query) => query.queryKey)
+      await queryClient.cancelQueries({ queryKey: postKeys.all })
+      const allQueries = queryClient.getQueryCache().getAll()
+      const previousData = {}
 
-      // 2. Filter to find only the keys that match our bookmarks pattern.
-      //    This will find ['posts', 'bookmarked', ''] and ['posts', 'bookmarked', 'react'], etc.
-      const bookmarkedKeysToUpdate = allActiveQueryKeys.filter(
-        (key) => Array.isArray(key) && key[0] === "posts" && key[1] === "bookmarked",
-      )
-
-      // 3. Combine our dynamically found keys with the other static keys.
-      const keysToUpdate = [
-        postKeys.list("/api/posts/all"),
-        postKeys.list("/api/posts/following"),
-        postKeys.list("/api/posts/vent"),
-        ...bookmarkedKeysToUpdate, // Add all found bookmark keys here
-        postKeys.pinned(username),
-        postKeys.details(postId),
-        postKeys.user(username),
-        postKeys.likes(username),
-      ].filter((key) => queryClient.getQueryData(key))
-
-      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
-
-      const previousData = keysToUpdate.reduce((acc, key) => {
-        acc[JSON.stringify(key)] = queryClient.getQueryData(key)
-        return acc
-      }, {})
-
-      keysToUpdate.forEach((key) => {
-        queryClient.setQueryData(key, (oldData) =>
-          updatePostRepostStatus(oldData, postId, authUser._id),
-        )
+      allQueries.forEach((query) => {
+        const key = query.queryKey
+        if (Array.isArray(key) && key[0] === "posts") {
+          previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
+          queryClient.setQueryData(key, (old) => updatePostRepostStatus(old, postId, authUser._id))
+        }
       })
-
       return { previousData }
     },
 

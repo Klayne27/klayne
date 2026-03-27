@@ -3,6 +3,7 @@ import { renderClickableText } from "../../../utils/textUtils"
 import { truncateText } from "../../../utils/truncateText"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { PiMicrophoneStageFill } from "react-icons/pi"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 const MessageBubble = ({
   message,
@@ -18,6 +19,7 @@ const MessageBubble = ({
 }) => {
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
   const { authUser } = useAuthUser()
+  const finalIsDeleted = isMessageDeleted || isSenderBanned || message.isDeletedByAdmin
 
   return (
     <div
@@ -62,7 +64,7 @@ const MessageBubble = ({
                 )}
             {message.repliedTo.img && (
               <img
-                src={message.repliedTo.img}
+                src={getOptimizedImageUrl(message.repliedTo.img, "post")}
                 onLoad={onLoadImage}
                 onError={onLoadImage}
                 alt="replied message attachment"
@@ -77,7 +79,7 @@ const MessageBubble = ({
             )}
           </div>
         )}
-        {isMessageDeleted || isSenderBanned ? (
+        {finalIsDeleted ? (
           messageDeleted
         ) : (
           <>

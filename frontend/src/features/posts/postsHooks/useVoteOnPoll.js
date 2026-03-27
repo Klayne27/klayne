@@ -22,12 +22,16 @@ export const useVoteOnPoll = () => {
       // Step 1: Define all possible query keys that might contain the post.
       const keysToUpdate = [
         postKeys.list("/api/posts/all"),
+        postKeys.list("/api/posts/ic"),
+        postKeys.list("/api/posts/vent"),
         postKeys.list("/api/posts/following"),
         postKeys.bookmarked(),
         postKeys.pinned(username),
         postKeys.details(postId),
         postKeys.user(username),
         postKeys.likes(username),
+        postKeys.replies(postId),
+        postKeys.thread(postId),
       ].filter((key) => queryClient.getQueryData(key))
 
       // Step 2: Cancel ongoing queries and capture previous state.

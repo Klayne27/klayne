@@ -5,6 +5,7 @@ import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { sendMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
+import { groupKeys } from "../../group/groupChatHooks/groupKeys"
 
 export const useSendMessage = (onSenderMessageSent) => {
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)
@@ -20,7 +21,6 @@ export const useSendMessage = (onSenderMessageSent) => {
 
       await queryClient.cancelQueries({ queryKey: messagesQueryKey })
       await queryClient.cancelQueries({ queryKey: conversationQueryKey })
-      console.log('replyingtom',replyingToMessage);
 
       const previousMessages = queryClient.getQueryData(messagesQueryKey)
       const previousConversations = queryClient.getQueryData(conversationQueryKey)
@@ -109,7 +109,6 @@ export const useSendMessage = (onSenderMessageSent) => {
       // })
       queryClient.invalidateQueries(messageKeys.privateMessages(context.conversationId))
       queryClient.setQueryData(conversationKeys.list(), (oldData) => {
-
         if (!oldData) return oldData
         return oldData.map((conversation) => {
           if (conversation._id === newMessage.conversationId) {
@@ -121,7 +120,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 img: newMessage.img,
                 seen: newMessage.seen,
                 messageId: newMessage._id,
-                audio: newMessage.voiceMessageId?.imageUrl
+                audio: newMessage.voiceMessageId?.imageUrl,
               },
               updatedAt: newMessage.createdAt,
             }

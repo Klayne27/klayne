@@ -1,6 +1,6 @@
 // Enhanced version with better error handling and logging
 const vapidPublicKey =
-  "BAobWDLKcBxIRRJJCgoNz7TC_bpt-fBLdNHVof61Ngpsc2vC0ao7QLmvApnvhmqWHwk0S2l-gzyOnfOX63pj00Y"
+  "BK226lMlv1A_NshzSWU5c0Jpns10EielyCWSVYLGjvn_nEs8DItTRXFN1PbEXzDSzvb93-c1zgAueVWb3kICcf4"
 
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
@@ -30,28 +30,15 @@ export const checkSubscriptionStatus = async () => {
 
   try {
     const registration = await navigator.serviceWorker.ready
-
     const subscription = await registration.pushManager.getSubscription()
 
-    if (!subscription) {
-      return false
-    }
-
-    const response = await fetch("/api/push/status")
-
-    if (!response.ok) {
-      return false
-    }
-
-    const data = await response.json()
-    return data.hasActiveSubscription
+    return !!subscription
   } catch (error) {
     return false
   }
 }
 
 export const subscribeUserToPush = async () => {
-
   if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
     console.warn("❌ Push notifications not supported")
     return null
@@ -60,10 +47,9 @@ export const subscribeUserToPush = async () => {
   try {
     const registration = await navigator.serviceWorker.ready
 
-    // Check existing subscription
     const existingSubscription = await registration.pushManager.getSubscription()
     if (existingSubscription) {
-      await existingSubscription.unsubscribe()
+      return existingSubscription
     }
 
     const newSubscription = await registration.pushManager.subscribe({
@@ -79,7 +65,6 @@ export const subscribeUserToPush = async () => {
 }
 
 export const handleEnablePushNotifications = async () => {
-
   try {
     // Check current permission
 
@@ -114,7 +99,6 @@ export const handleEnablePushNotifications = async () => {
       }),
     })
 
-
     if (!response.ok) {
       const errorData = await response.json()
       console.error("❌ Backend error:", errorData)
@@ -130,9 +114,28 @@ export const handleEnablePushNotifications = async () => {
 }
 
 export const resubscribeIfNeeded = async () => {
-  const isSubscribed = await checkSubscriptionStatus()
-  if (!isSubscribed) {
+  try {
+    const registration = await navigator.serviceWorker.ready
+    const subscription = await registration.pushManager.getSubscription()
+
+    if (subscription) return true
+
     return await handleEnablePushNotifications()
+  } catch (err) {
+    console.error("Resubscribe error:", err)
+    return false
   }
-  return true
+}
+
+export const isStandalone = () => {
+  return (
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.navigator.standalone === true || // For iOS
+    document.referrer.includes("android-app://")
+  )
+}
+
+export const getNotificationPermissionState = () => {
+  if (!("Notification" in window)) return "unsupported"
+  return Notification.permission // "default" | "granted" | "denied"
 }

@@ -11,11 +11,6 @@ import PublicChatMessage from "../models/publicMessage.model.js";
 import { getBlockingUsers } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 import { admin } from "../config/firebaseAdmin.js";
-import LevelUp from "../models/levelup.model.js";
-import StudySession from "../models/studySession.js";
-import Todo from "../models/todo.model.js";
-import TodoActivity from "../models/todoActivity.model.js";
-import TodoList from "../models/todoList.model.js";
 import PushSubscription from "../models/pushSubscription.js";
 
 export const getUserProfile = async (req, res) => {
@@ -30,7 +25,7 @@ export const getUserProfile = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+            "username fullName profileImg isVerified isGoldVerified  badges preferredBadge",
         },
       })
       .populate("profileImg", "imageUrl") // Populate the profile image
@@ -45,7 +40,7 @@ export const getUserProfile = async (req, res) => {
 
     if (currentUserId && currentUserId.toString() !== user._id.toString()) {
       const currentUser = await User.findById(currentUserId).select(
-        "blockedUsers blockedBy"
+        "blockedUsers blockedBy",
       );
 
       if (currentUser) {
@@ -86,7 +81,8 @@ export const getFollowingUsers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "following",
-      select: "username fullName isVerified isGoldVerified badges preferredBadge",
+      select:
+        "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -109,7 +105,8 @@ export const getFollowers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "followers",
-      select: "username fullName isVerified isGoldVerified badges preferredBadge",
+      select:
+        "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -162,7 +159,7 @@ export const followUnfollowUser = async (req, res) => {
       await Conversation.updateOne(
         { participants: { $all: [req.user._id, id] } },
         { $addToSet: { hiddenFor: req.user._id } },
-        { timestamps: false }
+        { timestamps: false },
       );
 
       res.status(200).json({ message: "User unfollowed successfully" });
@@ -179,7 +176,7 @@ export const followUnfollowUser = async (req, res) => {
         await Conversation.updateOne(
           { _id: existingConversation._id },
           { $pull: { hiddenFor: req.user._id } },
-          { timestamps: false }
+          { timestamps: false },
         );
       } else {
         const newConversation = new Conversation({
@@ -275,6 +272,7 @@ export const updateUser = async (req, res) => {
     bio,
     link,
     confirmNewPassword,
+    relationshipStatus,
   } = req.body;
   const { profileImg, coverImg } = req.body;
 
@@ -301,7 +299,7 @@ export const updateUser = async (req, res) => {
       if (existingUserWithUsername) {
         return res.status(409).json({ error: "Username is already taken." });
       }
-    } // --- Password and Validation Logic ---
+    } 
 
     if ((newPassword && !currentPassword) || (!newPassword && currentPassword)) {
       return res
@@ -337,7 +335,9 @@ export const updateUser = async (req, res) => {
         user.profileImg = null;
       } else {
         // No need for 'else if (profileImg)' because the outer 'if' already guarantees it
-        const uploadedResponse = await cloudinary.uploader.upload(profileImg);
+        const uploadedResponse = await cloudinary.uploader.upload(profileImg, {
+          upload_preset: "ml_avatars",
+        });
         const newProfileImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
           parentDocument: userId,
@@ -348,8 +348,6 @@ export const updateUser = async (req, res) => {
       }
     }
 
-    // --- Cover Image Logic ---
-    // ✅ FIX: Apply the same logic for the cover image.
     if (coverImg || coverImg === "") {
       if (user.coverImg) {
         const publicId = user.coverImg.imageUrl.split("/").pop().split(".")[0];
@@ -360,7 +358,9 @@ export const updateUser = async (req, res) => {
       if (coverImg === "") {
         user.coverImg = null;
       } else {
-        const uploadedResponse = await cloudinary.uploader.upload(coverImg);
+        const uploadedResponse = await cloudinary.uploader.upload(coverImg, {
+          upload_preset: "ml_covers",
+        });
         const newCoverImage = await Image.create({
           imageUrl: uploadedResponse.secure_url,
           parentDocument: userId,
@@ -376,6 +376,10 @@ export const updateUser = async (req, res) => {
     if (username !== undefined) user.username = username;
     if (bio !== undefined) user.bio = bio;
     if (link !== undefined) user.link = link;
+
+    if (relationshipStatus !== undefined) {
+      user.relationshipStatus = relationshipStatus;
+    }
 
     await user.save(); // Re-fetch the user to ensure all fields, including the new images, are populated
 
@@ -423,22 +427,16 @@ export const deleteUserAccount = async (req, res) => {
       await Post.findByIdAndDelete(post._id);
     } // ⭐ NEW STEP: 3. Delete all data from new schemas associated with the user ⭐
 
-    await LevelUp.deleteMany({ user: id });
     await PushSubscription.deleteMany({ userId: id });
-    await StudySession.deleteMany({ user: id });
-    await Todo.deleteMany({ user: id });
-    await TodoActivity.deleteMany({ user: id });
-    await TodoList.deleteMany({ owner: id });
 
     await User.updateMany(
       { $or: [{ blockedUsers: id }, { blockedBy: id }] },
-      { $pull: { blockedUsers: id, blockedBy: id } }
+      { $pull: { blockedUsers: id, blockedBy: id } },
     );
     await Post.updateMany({ likes: id }, { $pull: { likes: id } });
-    await Post.updateMany({ "comments.user": id }, { $pull: { comments: { user: id } } });
     await User.updateMany(
       { $or: [{ following: id }, { followers: id }] },
-      { $pull: { following: id, followers: id } }
+      { $pull: { following: id, followers: id } },
     );
     await Notification.deleteMany({ $or: [{ from: id }, { to: id }] });
     await PublicChatMessage.deleteMany({ sender: id }); // 5. Delete messages and conversations
@@ -482,57 +480,6 @@ export const searchUsers = async (req, res) => {
   } catch (error) {
     console.error("Error in searchUsers controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
-  }
-};
-
-export const getVacationModeStatus = async (req, res) => {
-  try {
-    // Select both fields
-    const user = await User.findById(req.user.id).select(
-      "isVacationMode vacationModeStartDate"
-    );
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-    // Return both fields in the response
-    res.json({
-      isVacationMode: user.isVacationMode,
-      vacationModeStartDate: user.vacationModeStartDate,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
-  }
-};
-
-export const toggleVacationMode = async (req, res) => {
-  try {
-    const { isVacationMode } = req.body;
-    if (typeof isVacationMode !== "boolean") {
-      return res.status(400).json({ message: "Invalid value for isVacationMode" });
-    }
-
-    const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
-
-    user.isVacationMode = isVacationMode;
-
-    // If turning vacation mode ON, set the start date.
-    if (isVacationMode) {
-      user.vacationModeStartDate = new Date();
-    }
-    // IMPORTANT: Do not set it to null when turning it OFF here.
-    // The endStudySession controller will handle that when the vacation is "used".
-
-    await user.save();
-
-    res.json({
-      message: "Vacation mode updated successfully",
-      isVacationMode: user.isVacationMode,
-    });
-  } catch (error) {
-    res.status(500).json({ message: "Server error" });
   }
 };
 
@@ -651,28 +598,19 @@ export const adminDeleteUserAccount = async (req, res) => {
       await Post.findByIdAndDelete(post._id);
     } // ⭐ NEW STEP: 4. Delete all data from new schemas associated with the user ⭐
 
-    await LevelUp.deleteMany({ user: userIdToDelete });
     await PushSubscription.deleteMany({ userId: userIdToDelete });
-    await StudySession.deleteMany({ user: userIdToDelete });
-    await Todo.deleteMany({ user: userIdToDelete });
-    await TodoActivity.deleteMany({ user: userIdToDelete });
-    await TodoList.deleteMany({ owner: userIdToDelete }); // ⭐ Crucial step to remove user's reactions from all public chat messages. ⭐
 
     await User.updateMany(
       { $or: [{ blockedUsers: userIdToDelete }, { blockedBy: userIdToDelete }] },
-      { $pull: { blockedUsers: userIdToDelete, blockedBy: userIdToDelete } }
+      { $pull: { blockedUsers: userIdToDelete, blockedBy: userIdToDelete } },
     );
     await Post.updateMany(
       { likes: userIdToDelete },
-      { $pull: { likes: userIdToDelete } }
-    );
-    await Post.updateMany(
-      { "comments.user": userIdToDelete },
-      { $pull: { comments: { user: userIdToDelete } } }
+      { $pull: { likes: userIdToDelete } },
     );
     await User.updateMany(
       { $or: [{ following: userIdToDelete }, { followers: userIdToDelete }] },
-      { $pull: { following: userIdToDelete, followers: userIdToDelete } }
+      { $pull: { following: userIdToDelete, followers: userIdToDelete } },
     );
     await Notification.deleteMany({
       $or: [{ from: userIdToDelete }, { to: userIdToDelete }],
@@ -680,7 +618,7 @@ export const adminDeleteUserAccount = async (req, res) => {
     await PublicChatMessage.deleteMany({ sender: userIdToDelete }); // 6. Delete messages and conversations
     await PublicChatMessage.updateMany(
       {},
-      { $pull: { reactions: { userId: userIdToDelete } } }
+      { $pull: { reactions: { userId: userIdToDelete } } },
     );
 
     const conversationsToDelete = await Conversation.find({
@@ -728,6 +666,82 @@ export const toggleLikedFeedPrivacy = async (req, res) => {
   }
 };
 
+export const updateStatusPreference = async (req, res) => {
+  try {
+    const { status } = req.body;
+    const userId = req.user._id;
+
+    if (!["online", "offline"].includes(status)) {
+      return res.status(400).json({ error: "Invalid status value." });
+    }
+
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { statusPreference: status },
+      { new: true, select: "-password" }, // new:true returns the updated doc, select excludes the password
+    );
+
+    if (!updatedUser) {
+      return res.status(404).json({ error: "User not found." });
+    }
+
+    res.status(200).json(updatedUser);
+  } catch (error) {
+    console.error("Error updating status preference:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getVacationModeStatus = async (req, res) => {
+  try {
+    // Select both fields
+    const user = await User.findById(req.user.id).select(
+      "isVacationMode vacationModeStartDate",
+    );
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    // Return both fields in the response
+    res.json({
+      isVacationMode: user.isVacationMode,
+      vacationModeStartDate: user.vacationModeStartDate,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+export const toggleVacationMode = async (req, res) => {
+  try {
+    const { isVacationMode } = req.body;
+    if (typeof isVacationMode !== "boolean") {
+      return res.status(400).json({ message: "Invalid value for isVacationMode" });
+    }
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    user.isVacationMode = isVacationMode;
+
+    // If turning vacation mode ON, set the start date.
+    if (isVacationMode) {
+      user.vacationModeStartDate = new Date();
+    }
+    // IMPORTANT: Do not set it to null when turning it OFF here.
+    // The endStudySession controller will handle that when the vacation is "used".
+
+    await user.save();
+
+    res.json({
+      message: "Vacation mode updated successfully",
+      isVacationMode: user.isVacationMode,
+    });
+  } catch (error) {
+    res.status(500).json({ message: "Server error" });
+  }
+};
+
 export const updatePreferredBadge = async (req, res) => {
   const { preferredBadge } = req.body;
   const userId = req.user._id;
@@ -757,31 +771,5 @@ export const updatePreferredBadge = async (req, res) => {
   } catch (error) {
     console.error("Error updating preferred badge:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
-  }
-};
-
-export const updateStatusPreference = async (req, res) => {
-  try {
-    const { status } = req.body;
-    const userId = req.user._id;
-
-    if (!["online", "offline"].includes(status)) {
-      return res.status(400).json({ error: "Invalid status value." });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { statusPreference: status },
-      { new: true, select: "-password" } // new:true returns the updated doc, select excludes the password
-    );
-
-    if (!updatedUser) {
-      return res.status(404).json({ error: "User not found." });
-    }
-
-    res.status(200).json(updatedUser);
-  } catch (error) {
-    console.error("Error updating status preference:", error);
-    res.status(500).json({ error: "Internal server error" });
   }
 };

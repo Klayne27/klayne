@@ -5,14 +5,8 @@ const messageSchema = new mongoose.Schema(
     conversationId: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation" },
     sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     text: String,
-    seen: {
-      type: Boolean,
-      default: false,
-    },
-    img: {
-      type: String,
-      default: "",
-    },
+    seen: { type: Boolean, default: false },
+    img: { type: String, default: "" },
     repliedTo: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Message",
@@ -28,24 +22,20 @@ const messageSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
-    voiceMessageDuration: {
-      type: Number,
+    voiceMessageDuration: { type: Number, default: null },
+    isEdited: { type: Boolean, default: false },
+    isDeletedByUser: { type: Boolean, default: false },
+    // ── NEW ──────────────────────────────────────────────────────────────────
+    isDeletedByAdmin: { type: Boolean, default: false },
+    deletedByAdmin: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
       default: null,
     },
-    isEdited: {
-      type: Boolean,
-      default: false,
-    },
-    isDeletedByUser: {
-      type: Boolean,
-      default: false,
-    },
+    // ─────────────────────────────────────────────────────────────────────────
     reactions: [
       {
-        emoji: {
-          type: String,
-          required: true,
-        },
+        emoji: { type: String, required: true },
         userId: {
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
@@ -59,12 +49,12 @@ const messageSchema = new mongoose.Schema(
       default: [],
     },
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 messageSchema.index({ conversationId: 1, createdAt: -1 });
 messageSchema.index({ conversationId: 1, sender: 1, seen: 1 });
 
 const Message = mongoose.model("Message", messageSchema);
-
 export default Message;
+

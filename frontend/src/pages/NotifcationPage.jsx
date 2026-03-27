@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom"
 import { IoSettingsOutline } from "react-icons/io5"
-import { FaUser, FaHeart, FaComment, FaRetweet, FaReply } from "react-icons/fa6"
+import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
 import { useGetNotifications } from "../features/notifications/notificationsHooks/useGetNotifications"
 import { useDeleteNotification } from "../features/notifications/notificationsHooks/useDeleteNotification"
@@ -11,6 +11,10 @@ import NotificationsSkeleton from "../components/skeletons/NotificationsSkeleton
 import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"
 import { useRef } from "react"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { BiHealth } from "react-icons/bi"
+import { MdLocalPolice } from "react-icons/md"
+import { PiChefHatFill } from "react-icons/pi"
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useGetNotifications()
@@ -24,10 +28,8 @@ const NotificationPage = () => {
     if (
       (notification.type === "like" ||
         notification.type === "mention" ||
-        notification.type === "comment" ||
         notification.type === "repost" ||
-        notification.type === "commentLike" ||
-        notification.type === "commentReply") &&
+        notification.type === "reply") &&
       notification.from?._id.toString() === authUser?._id.toString()
     ) {
       return false
@@ -50,15 +52,7 @@ const NotificationPage = () => {
     if (notification.type === "follow") {
       targetLink = `/profile/${notification.from?.username}`
     } else if (notification.postId && notification.postId._id) {
-      if (
-        notification.type === "commentReply" &&
-        notification.commentId &&
-        notification.commentId._id
-      ) {
-        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}?commentId=${notification.commentId._id}`
-      } else {
-        targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`
-      }
+      targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`
     } else {
       console.warn("Could not determine navigation link for notification:", notification)
       return
@@ -81,16 +75,12 @@ const NotificationPage = () => {
         return <FaUser className="h-6 w-6 text-primary" />
       case "like":
         return <FaHeart className="h-6 w-6 text-red-500" />
-      case "commentLike":
-        return <FaHeart className="h-6 w-6 text-pink-500" />
-      case "comment":
-        return <FaComment className="h-6 w-6 text-blue-500" />
-      case "commentReply":
-        return <FaReply className="h-6 w-6 text-sky-500" />
       case "repost":
         return <FaRetweet className="h-6 w-6 text-green-500" />
       case "mention":
         return <FaAt className="h-6 w-6 text-purple-500" />
+      case "reply":
+        return <FaReply className="h-6 w-6 text-sky-400" />
       default:
         return null
     }
@@ -114,24 +104,12 @@ const NotificationPage = () => {
         return `@${displayUsername} followed you.`
       case "like":
         return `@${displayUsername} liked your post.`
-      case "comment":
-        return `@${displayUsername} commented on your post.`
-      case "commentLike":
-        if (notification?.postId?.user?.username === authUser.username) {
-          return `@${displayUsername} liked your comment on your post.`
-        } else {
-          return `@${displayUsername} liked your comment on ${postOwnerDisplayName}'s post.`
-        }
-      case "commentReply":
-        if (notification?.postId?.user?.username === authUser.username) {
-          return `@${displayUsername} replied to your comment on your post.`
-        } else {
-          return `@${displayUsername} replied to your comment on ${postOwnerDisplayName}'s post.`
-        }
       case "repost":
         return `@${displayUsername} reposted your post.`
       case "mention":
         return `@${displayUsername} mentioned you in a post.`
+      case "reply":
+        return `@${displayUsername} replied to your post.`
       default:
         return ""
     }
@@ -188,16 +166,9 @@ const NotificationPage = () => {
           const isGoldVerified = notification.from.isGoldVerified
           const isVerified = notification.from.isVerified
 
-          const isCommentNotification =
-            notification.type === "comment" ||
-            notification.type === "commentLike" ||
-            notification.type === "commentReply"
-
           let contentToDisplay = null
 
-          if (isCommentNotification && notification.commentId) {
-            contentToDisplay = notification.commentId
-          } else if (notification.postId) {
+          if (notification.postId) {
             contentToDisplay = notification.postId
           }
 
@@ -220,14 +191,17 @@ const NotificationPage = () => {
                   >
                     <div className="w-10 rounded-full">
                       <img
-                        src={notification.from?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                        src={getOptimizedImageUrl(
+                          notification.from?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )}
                         alt={`${notification.from?.username}'s profile`}
                       />
                     </div>
                   </div>
 
                   <div className="flex flex-col">
-                    <div className="flex items-center gap-1">
+                    <div className="flex items-center gap-[2px]">
                       <span
                         className={`cursor-pointer font-bold ${!notification.isAnonymousInteraction && "hover:underline"}`}
                         onClick={(e) =>

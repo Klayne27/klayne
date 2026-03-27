@@ -50,7 +50,7 @@ const FollowButton = ({
         !isCurrentlyFollowing
           ? "bg-secondary/40 transition duration-200 md:hover:bg-secondary"
           : // Initial state for "Following" button
-            "bg-base-100" // Added a subtle border for consistency
+            "bg-primary" // Added a subtle border for consistency
       } ${
         // Apply red styles ONLY if following, hovering AND NOT a touch device
         isCurrentlyFollowing && isHoveringUnfollow && !isTouchDevice

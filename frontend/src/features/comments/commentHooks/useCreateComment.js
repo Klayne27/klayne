@@ -21,7 +21,6 @@ export const useCreateComment = (postId, parentCommentId = null) => {
       }
     },
     onMutate: async ({ text, img }) => {
-      // ... (cancellations)
       await queryClient.cancelQueries({ queryKey: postKeys.details(postId) })
       await queryClient.cancelQueries({ queryKey: postKeys.all })
 

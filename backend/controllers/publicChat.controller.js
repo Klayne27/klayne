@@ -35,7 +35,7 @@ export const getPublicMessages = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName  isAdmin isVerified isGoldVerified badges preferredBadge isBannedInPublicChat",
+            "username fullName  isAdmin isVerified isGoldVerified  badges preferredBadge isBannedInPublicChat",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",
@@ -98,7 +98,7 @@ export const sendPublicMessage = async (req, res) => {
 
     if (imgBase64) {
       const uploadResponse = await cloudinary.uploader.upload(imgBase64, {
-        folder: "public-chat-images",
+        upload_preset: "ml_publicmessages",
       });
       img = uploadResponse.secure_url;
 
@@ -169,7 +169,7 @@ export const sendPublicMessage = async (req, res) => {
       {
         path: "sender",
         select:
-          "username fullName isAdmin isVerified isGoldVerified badges preferredBadge",
+          "username fullName isAdmin isVerified isGoldVerified  badges preferredBadge",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -203,7 +203,7 @@ export const sendPublicMessage = async (req, res) => {
 
     const usersToNotify = allOnlineUserIds.filter(
       (userId) =>
-        userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId)
+        userId.toString() !== senderId.toString() && !activePublicChatUsers.has(userId),
     );
 
     for (const userId of usersToNotify) {
@@ -230,7 +230,7 @@ export const adminDeletePublicMessage = async (req, res) => {
 
     const message = await PublicChatMessage.findById(messageId).populate(
       "voiceMessageId",
-      "imageUrl"
+      "imageUrl",
     );
 
     if (!message) {
@@ -371,7 +371,7 @@ export const addReactionToPublicMessage = async (req, res) => {
 
     const reactionExists = message.reactions.some(
       (reaction) =>
-        reaction.userId.toString() === userId.toString() && reaction.emoji === emoji
+        reaction.userId.toString() === userId.toString() && reaction.emoji === emoji,
     );
 
     let updatedMessage;
@@ -379,13 +379,13 @@ export const addReactionToPublicMessage = async (req, res) => {
       updatedMessage = await PublicChatMessage.findOneAndUpdate(
         { _id: messageId, "reactions.userId": userId, "reactions.emoji": emoji },
         { $pull: { reactions: { userId: userId, emoji: emoji } } },
-        { new: true }
+        { new: true },
       );
     } else {
       updatedMessage = await PublicChatMessage.findOneAndUpdate(
         { _id: messageId },
         { $push: { reactions: { emoji, userId: userId } } },
-        { new: true }
+        { new: true },
       );
     }
 
@@ -438,7 +438,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     const message = await PublicChatMessage.findById(messageId).populate(
       "voiceMessageId",
-      "imageUrl"
+      "imageUrl",
     );
     // const message = await PublicChatMessage.findByIdAndDelete(messageId);
 
@@ -575,7 +575,7 @@ export const editPublicMessage = async (req, res) => {
         {
           path: "sender",
           select:
-            "username fullName isAdmin isVerified badges preferredBadge isGoldVerified isBannedInPublicChat",
+            "username fullName isAdmin isVerified badges preferredBadge isGoldVerified  isBannedInPublicChat",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",

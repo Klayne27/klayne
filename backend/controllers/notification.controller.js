@@ -14,7 +14,8 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username fullName isVerified isGoldVerified badges preferredBadge",
+        select:
+          "username fullName isVerified isGoldVerified  badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -22,19 +23,22 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "postId",
-        select: "text img video mediaType user isVent isAnonymous", // Add isVent and isAnonymous
-        populate: {
-          path: "user",
-          select: "username fullName",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
+        select: "text img video mediaType user isVent isIC isAnonymous parentPost",
+        populate: [
+          {
+            path: "user",
+            select: "username fullName",
+            populate: { path: "profileImg", select: "imageUrl" },
           },
-        },
-      })
-      .populate({
-        path: "commentId",
-        select: "text img",
+          {
+            path: "parentPost",
+            select: "text user",
+            populate: {
+              path: "user",
+              select: "username fullName",
+            },
+          },
+        ],
       })
       .limit(50);
 
@@ -71,7 +75,6 @@ export const getNotifications = async (req, res) => {
           populatedNotif.from.username = "Anonymous";
           populatedNotif.from.fullName = "Anonymous";
           populatedNotif.from.isGoldVerified = false;
-          populatedNotif.from.isVerified = false;
           if (populatedNotif.from.profileImg) {
             populatedNotif.from.profileImg.imageUrl = "/avatar-placeholder.png";
           } else {

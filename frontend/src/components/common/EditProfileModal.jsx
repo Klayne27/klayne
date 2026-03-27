@@ -1,12 +1,10 @@
-// src/components/common/EditProfileModal.jsx
 import { useEffect, useRef, useState } from "react"
 import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateUserProfile"
 import { useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
-import { MdEdit } from "react-icons/md"
 import { TbCameraPlus } from "react-icons/tb"
-import LoadingSpinner from "../common/LoadingSpinner" // Import LoadingSpinner
+import LoadingSpinner from "../common/LoadingSpinner"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -18,6 +16,7 @@ const EditProfileModal = ({ authUser }) => {
     newPassword: "",
     currentPassword: "",
     confirmNewPassword: "",
+    relationshipStatus: "",
   }) // Add new state for image previews
 
   const [profileImg, setProfileImg] = useState(null)
@@ -90,6 +89,7 @@ const EditProfileModal = ({ authUser }) => {
         email: authUser?.email,
         bio: authUser?.bio,
         link: authUser?.link,
+        relationshipStatus: authUser?.relationshipStatus || "", // Add this
         newPassword: "",
         currentPassword: "",
         confirmNewPassword: "",
@@ -182,7 +182,7 @@ const EditProfileModal = ({ authUser }) => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Full Name"
+                placeholder="Username"
                 className="input-md w-full flex-1 rounded-[4px] border border-secondary bg-base-100 p-2 focus:border-primary focus:outline-none"
                 value={formData.fullName}
                 name="fullName"
@@ -200,7 +200,7 @@ const EditProfileModal = ({ authUser }) => {
             <div className="relative">
               <input
                 type="text"
-                placeholder="Username"
+                placeholder="Handle"
                 className="input-md w-full flex-1 rounded-[4px] border border-secondary bg-base-100 p-2 focus:border-primary focus:outline-none"
                 value={formData.username}
                 name="username"
@@ -265,6 +265,23 @@ const EditProfileModal = ({ authUser }) => {
                 />
               </div>
             )}
+            <div className="relative">
+              <label className="mb-1 ml-1 block text-xs text-slate-500">Relationship Status</label>
+              <select
+                name="relationshipStatus"
+                className="select-md w-full flex-1 cursor-pointer appearance-none rounded-[4px] border border-secondary bg-base-100 p-2 text-sm focus:border-primary focus:outline-none"
+                value={formData.relationshipStatus}
+                onChange={handleInputChange}
+              >
+                <option value="">Prefer not to say</option>
+                <option value="Single">Single</option>
+                <option value="In a relationship">In a relationship</option>
+                <option value="It's complicated">It's complicated</option>
+                <option value="Casually Dating">Casually Dating</option>
+                <option value="Engaged">Engaged</option>
+                <option value="Married">Married</option>
+              </select>
+            </div>
             {!authUser?.googleId && (
               <>
                 <h3 className="text-lg font-bold">Change Password</h3>

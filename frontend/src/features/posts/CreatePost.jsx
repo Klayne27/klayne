@@ -7,7 +7,6 @@ import { Link } from "react-router-dom"
 import { BiImageAdd, BiPoll } from "react-icons/bi"
 import { FaPlus } from "react-icons/fa6"
 import { TbCalendarClock } from "react-icons/tb"
-
 import SchedulePostModal from "./post-scheduler/SchedulePostModal"
 import ScheduledPostsModal from "./post-scheduler/ScheduledPostsModal"
 import EditScheduledPostModal from "./post-scheduler/EditSchedulePostModal"
@@ -32,15 +31,18 @@ import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
 import CircularBarProgress from "../../components/common/CircularBarProgress"
 
-// At the top of the CreatePost component
-
-// Constants for character limits
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
 
 const CreatePost = ({ feedType }) => {
-  const { setShowNewFeedPostsButton, newPostCount, newVentPostCount, setShowNewVentPostsButton } =
-    useSocket()
+  const {
+    newPostCount,
+    setShowNewFeedPostsButton,
+    newVentPostCount,
+    setShowNewVentPostsButton,
+    newICPostCount,
+    setShowNewICPostsButton,
+  } = useSocket()
   const queryClient = useQueryClient()
 
   // State for post content
@@ -84,12 +86,10 @@ const CreatePost = ({ feedType }) => {
   // Hooks
   const { authUser } = useAuthUser()
   const { createPost, isPending, isError, error } = useCreatePosts()
-  const { createVentPost, isCreatingVentPost } = useCreateVentPost() // 👈 ADD THE NEW HOOK
-  const [isAnonymous, setIsAnonymous] = useState(false) // Default to true for venting
+  const { createVentPost, isCreatingVentPost } = useCreateVentPost()
+  const [isAnonymous, setIsAnonymous] = useState(false)
 
   const isMobile = useIsMobile()
-
-  // Empty dependency array means this runs once on mount and cleans up on unmount
 
   // Fetch mention suggestions using react-query
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
@@ -183,10 +183,14 @@ const CreatePost = ({ feedType }) => {
       // TODO: Create and use a useMarkVentsAsRead hook
       markVentFeedAsRead()
       setShowNewVentPostsButton(false)
-    } else {
+    } else if (feedType === "forYou") {
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
       markFeedAsRead()
       setShowNewFeedPostsButton(false)
+    } else {
+      queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
+      // markFeedAsRead()
+      setShowNewICPostsButton(false)
     }
   }, [
     queryClient,
@@ -195,6 +199,7 @@ const CreatePost = ({ feedType }) => {
     markVentFeedAsRead,
     feedType,
     setShowNewVentPostsButton,
+    setShowNewICPostsButton,
   ])
 
   const handlePaste = usePasteHandler({
@@ -288,43 +293,28 @@ const CreatePost = ({ feedType }) => {
     async (e) => {
       e.preventDefault()
 
-      // 1. Check for valid input
-      if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) {
-        return
+      if (postInput.trim() === "" && !postSelectedFile && !showPollInputs) return
+      if (isCreatingVentPost || isPending) return
+
+      // --- 1. Prepare postData ---
+      let postData = {
+        text: postInput,
+        isIC: feedType === "ic",
       }
 
-      if (isCreatingVentPost || isPending) {
-        return // Prevent duplicate submissions
-      }
-
-      // 2. Handle Poll Posts
+      // --- 2. Handle Polls ---
       if (showPollInputs) {
         const filledPollChoices = pollChoices.filter((choice) => choice.text.trim() !== "")
         if (postInput.trim() === "" || filledPollChoices.length < 2) {
           showAppToast("Polls must have a question and at least two options.", "error")
           return
         }
-        if (filledPollChoices.some((choice) => choice.text.length > POLL_CHOICE_MAX_LENGTH)) {
-          showAppToast(`Poll options cannot exceed ${POLL_CHOICE_MAX_LENGTH} characters.`, "error")
-          return
-        }
-        const postData = {
-          text: postInput,
-          pollOptions: filledPollChoices.map((c) => ({ text: c.text })),
-        }
-        createPost(postData, {
-          onSuccess: resetForm,
-          onError: (err) =>
-            showAppToast(err?.message || "Failed to create post with poll.", "error"),
-        })
-        return
+        postData.pollOptions = filledPollChoices.map((c) => ({ text: c.text }))
       }
 
-      let postData = { text: postInput }
-
-      if (postSelectedFile) {
+      // --- 3. Handle Media (Only if not a poll) ---
+      else if (postSelectedFile) {
         try {
-          // Use a Promise to await the FileReader's result
           const base64File = await new Promise((resolve, reject) => {
             const reader = new FileReader()
             reader.onloadend = () => resolve(reader.result)
@@ -343,10 +333,11 @@ const CreatePost = ({ feedType }) => {
         }
       }
 
-      // 4. Send the data based on feed type
+      // --- 4. Final Submission Logic ---
       if (feedType === "venting") {
-        postData.isAnonymous = isAnonymous // Add isAnonymous for vent posts
-        await createVentPost(postData, {
+        postData.isAnonymous = isAnonymous
+        // We use the specific Venting mutation here
+        createVentPost(postData, {
           onSuccess: () => {
             resetForm()
             setIsAnonymous(false)
@@ -354,10 +345,7 @@ const CreatePost = ({ feedType }) => {
           onError: (err) => showAppToast(err?.message || "Failed to create vent post.", "error"),
         })
       } else {
-        // Regular post
-        if (scheduledAt) {
-          postData.scheduledAt = scheduledAt
-        }
+        if (scheduledAt) postData.scheduledAt = scheduledAt
         createPost(postData, {
           onSuccess: resetForm,
           onError: (err) => showAppToast(err?.message || "Failed to create post.", "error"),
@@ -399,14 +387,35 @@ const CreatePost = ({ feedType }) => {
         return
       }
 
-      setPostSelectedFile(file)
-      setPostPreviewImage(URL.createObjectURL(file))
+      if (file.type.startsWith("video/")) {
+        const videoElement = document.createElement("video")
+        videoElement.preload = "metadata"
+
+        videoElement.onloadedmetadata = () => {
+          window.URL.revokeObjectURL(videoElement.src)
+          if (videoElement.duration > 30) {
+            showAppToast("Video duration cannot exceed 30 seconds.", "error")
+            setPostSelectedFile(null)
+            setPostPreviewImage(null)
+            if (postFileInputRef.current) postFileInputRef.current.value = null
+            return
+          }
+          setPostSelectedFile(file)
+          setPostPreviewImage(URL.createObjectURL(file))
+        }
+
+        videoElement.src = URL.createObjectURL(file)
+      } else {
+        // ✅ THIS BRANCH WAS MISSING
+        setPostSelectedFile(file)
+        setPostPreviewImage(URL.createObjectURL(file))
+      }
 
       // Reset conflicting states
       setShowPollInputs(false)
       setPollChoices([{ text: "" }, { text: "" }])
       setShowMentionSuggestions(false)
-      setScheduledAt(null) // Clear scheduledAt if media is selected
+      setScheduledAt(null)
     } else {
       setPostSelectedFile(null)
       setPostPreviewImage(null)
@@ -626,7 +635,7 @@ const CreatePost = ({ feedType }) => {
               className="relative max-h-[270px] w-full resize-none overflow-y-auto border-none border-gray-800 bg-inherit p-0 pb-4 text-xl focus:outline-none"
               placeholder={
                 feedType === "venting"
-                  ? "What's on your mind?"
+                  ? "Spill the tea"
                   : scheduledAt
                     ? "What is happening?"
                     : showPollInputs
@@ -858,7 +867,16 @@ const CreatePost = ({ feedType }) => {
                     onChange={handleFileChange}
                   />
 
-                  <div className="relative">
+                  {!postSelectedFile && !scheduledAt && (
+                    <BiPoll
+                      className="size-6 cursor-pointer text-primary hover:text-primary/80"
+                      onClick={handlePollIconClick}
+                      title="Add a poll"
+                      aria-label="Add a poll"
+                    />
+                  )}
+
+                  <div className="relative flex items-center">
                     <PiSmiley
                       ref={emojiButtonRef}
                       className="hidden cursor-pointer text-primary hover:text-primary/80 md:block"
@@ -908,7 +926,7 @@ const CreatePost = ({ feedType }) => {
                       progressColor={progressColor}
                     />
                   </div>
-                  <div className="h-10  w-[1px] bg-gray-600" />
+                  <div className="h-10 w-[1px] bg-gray-600" />
                 </>
               )}
               <button
@@ -971,7 +989,7 @@ const CreatePost = ({ feedType }) => {
           onClick={handleNewPostsButtonClick}
           className="cursor-pointer border-b border-accent py-3 text-center text-primary transition duration-500 hover:bg-gray-700/30"
         >
-          Show {newVentPostCount} rant{newVentPostCount > 1 ? "s" : ""}
+          Show {newVentPostCount} rants
         </div>
       )}
       {feedType === "forYou" && newPostCount > 0 && (
@@ -980,6 +998,17 @@ const CreatePost = ({ feedType }) => {
           className="cursor-pointer border-b border-accent py-3 text-center text-primary transition duration-500 hover:bg-gray-700/30"
         >
           Show {newPostCount} post{newPostCount > 1 ? "s" : ""}
+        </div>
+      )}
+      {feedType === "ic" && newICPostCount > 0 && (
+        <div
+          onClick={handleNewPostsButtonClick}
+          className="cursor-pointer border-b border-accent py-3 text-center text-primary transition duration-500 hover:bg-gray-700/30"
+        >
+          <span>
+            {" "}
+            Show {newICPostCount} post{newICPostCount > 1 ? "s" : ""}
+          </span>
         </div>
       )}
     </>

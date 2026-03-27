@@ -66,22 +66,16 @@ export const usePrivateChatSocketEvents = (
     [conversationId, queryClient],
   )
 
-  const handleTyping = useCallback(
-    ({ conversationId: typingConvId, userId, isEditing }) => {
-      if (typingConvId === conversationId && userId === otherUser._id.toString()) {
-        setIsTypingOtherUser(true)
-      }
-    },
-    [conversationId, setIsTypingOtherUser, otherUser?._id],
-  )
+  // Remove handleTyping and handleStopTyping entirely, add this instead:
+  const handleTypingUpdate = useCallback(
+    ({ conversationId: typingConvId, typingUsers: incomingTypingUsers }) => {
+      if (typingConvId !== conversationId) return
 
-  const handleStopTyping = useCallback(
-    ({ conversationId: stopTypingConvId, userId, isEditing }) => {
-      if (stopTypingConvId === conversationId && userId === otherUser?._id.toString()) {
-        setIsTypingOtherUser(false)
-      }
+      // Filter out the current user, same as public chat does
+      const filtered = incomingTypingUsers.filter((u) => u.userId !== currentUserId?.toString())
+      setIsTypingOtherUser(filtered) // now an array, not a boolean
     },
-    [conversationId, otherUser?._id, setIsTypingOtherUser],
+    [conversationId, currentUserId, setIsTypingOtherUser],
   )
 
   const handleMessageEdited = useCallback(
@@ -151,7 +145,6 @@ export const usePrivateChatSocketEvents = (
 
   const handlePinnedMessage = useCallback(
     (newPinData) => {
-
       // Strict validation of the incoming data structure
       if (
         !newPinData ||
@@ -187,7 +180,6 @@ export const usePrivateChatSocketEvents = (
         )
 
         if (isAlreadyPinned) {
-          console.log("Pin already exists, skipping duplicate")
           return existingPins
         }
 
@@ -202,7 +194,6 @@ export const usePrivateChatSocketEvents = (
           pinnedAt: newPinData.pinnedAt,
         }
 
-        console.log("Adding new pin to cache:", normalizedPinData)
         return [...existingPins, normalizedPinData]
       })
 
@@ -214,7 +205,6 @@ export const usePrivateChatSocketEvents = (
 
   useEffect(() => {
     if (!socket || !conversationId) {
-      console.log("Socket or conversationId not available for private chat, skipping setup.")
       return
     }
 
@@ -223,8 +213,8 @@ export const usePrivateChatSocketEvents = (
 
     socket.on("messageDeleted", handleMessageDeleted)
     socket.on("messagesSeen", handleMessagesSeen)
-    socket.on("typing", handleTyping)
-    socket.on("stopTyping", handleStopTyping)
+    socket.on("typing_update", handleTypingUpdate)
+
     socket.on("messageEdited", handleMessageEdited)
     socket.on("conversationUpdated", handleConversationUpdated)
     socket.on("messageReacted", handleMessageReacted)
@@ -235,8 +225,8 @@ export const usePrivateChatSocketEvents = (
       socket.emit("userActiveInChat", { conversationId: null })
       socket.off("messageDeleted", handleMessageDeleted)
       socket.off("messagesSeen", handleMessagesSeen)
-      socket.off("typing", handleTyping)
-      socket.off("stopTyping", handleStopTyping)
+      socket.off("typing_update", handleTypingUpdate)
+
       socket.off("messageEdited", handleMessageEdited)
       socket.off("conversationUpdated", handleConversationUpdated)
       socket.off("messageReacted", handleMessageReacted)
@@ -247,8 +237,7 @@ export const usePrivateChatSocketEvents = (
     conversationId,
     handleMessageDeleted,
     handleMessagesSeen,
-    handleTyping,
-    handleStopTyping,
+    handleTypingUpdate,
     handleMessageEdited,
     handleConversationUpdated,
     handleMessageReacted,

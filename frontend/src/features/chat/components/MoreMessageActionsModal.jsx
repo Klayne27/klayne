@@ -3,9 +3,11 @@ import { FaTrashCan } from "react-icons/fa6"
 import { MdDeleteForever, MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
-import {  PiSmileyFill } from "react-icons/pi"
+import { PiSmileyFill } from "react-icons/pi"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import { RiPushpinFill } from "react-icons/ri"
+import { useLocation } from "react-router-dom"
+import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 
 function MoreMessageActionsModal({
   onCloseMoreActionsModal,
@@ -25,11 +27,13 @@ function MoreMessageActionsModal({
   onOpenViewReactionsModal,
   onOpenSlideUpReactionsMenu,
   reactToMessage,
+  onAdminDeleteMessage,
+  isAuthUserAdminOrOwner,
 }) {
-
   const hasReactions = message?.reactions?.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"]
 
+  const { pathname } = useLocation()
   const isMobile = useIsMobile()
 
   const handleQuickReaction = (messageId, emoji) => {
@@ -97,7 +101,7 @@ function MoreMessageActionsModal({
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
-        {(
+        {!pathname.includes("/public-chat") && (
           <button
             onClick={onPinMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
@@ -114,6 +118,15 @@ function MoreMessageActionsModal({
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
             Delete Message
+            <FaTrashCan size={18} />
+          </button>
+        )}
+        {isAuthUserAdminOrOwner && !isMessageDeleted && (
+          <button
+            onClick={onAdminDeleteMessage}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
+          >
+            Delete Message (Admin)
             <FaTrashCan size={18} />
           </button>
         )}

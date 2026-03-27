@@ -74,10 +74,10 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
   if (!currentUser || !targetUser) return false;
 
   const currentUserBlockedTarget = (currentUser.blockedUsers || []).some(
-    (id) => id.toString() === targetUserId.toString()
+    (id) => id.toString() === targetUserId.toString(),
   );
   const targetUserBlockedCurrentUser = (targetUser.blockedUsers || []).some(
-    (id) => id.toString() === currentUserId.toString()
+    (id) => id.toString() === currentUserId.toString(),
   );
 
   return currentUserBlockedTarget || targetUserBlockedCurrentUser;
@@ -93,7 +93,7 @@ export async function emitUnreadMessageStatus(userId) {
       ...(user?.blockedBy?.map((id) => id.toString()) || []),
     ];
     const blockedUserObjectIds = [...new Set(blockedUserIds)].map(
-      (id) => new mongoose.Types.ObjectId(id)
+      (id) => new mongoose.Types.ObjectId(id),
     );
 
     const conversations = await Conversation.find({
@@ -114,7 +114,7 @@ export async function emitUnreadMessageStatus(userId) {
     const activeConversationId = userActiveChats.get(userId.toString());
     if (activeConversationId) {
       const index = eligibleConversationIds.findIndex(
-        (id) => id.toString() === activeConversationId
+        (id) => id.toString() === activeConversationId,
       );
       if (index > -1) {
         eligibleConversationIds.splice(index, 1);
@@ -143,13 +143,8 @@ export async function emitNewPostCount(userId) {
     const recipientSocketIds = getReceiverSocketIds(userId);
 
     const user = await User.findById(userIdObj).select("lastReadFeedTimestamp").lean();
+    if (!user) return;
 
-    if (!user) {
-      console.warn(`User ${userId} not found for emitNewPostCount.`);
-      return;
-    }
-
-    // Use epoch if lastReadFeedTimestamp is null or undefined
     const lastReadTimestamp = user.lastReadFeedTimestamp || new Date(0);
 
     const newPostCount = await Post.countDocuments({
@@ -157,6 +152,8 @@ export async function emitNewPostCount(userId) {
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
       isVent: { $ne: true },
+      isIC: { $ne: true }, // ADD: exclude IC posts from OOC count
+      // parentPost is intentionally NOT filtered out — replies count too
     });
 
     recipientSocketIds.forEach((socketId) => {
@@ -164,6 +161,33 @@ export async function emitNewPostCount(userId) {
     });
   } catch (error) {
     console.error(`Unhandled error in emitNewPostCount for user ${userId}:`, error);
+  }
+}
+
+export async function emitNewICPostCount(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+
+    const user = await User.findById(userIdObj).select("lastReadICFeedTimestamp").lean();
+    if (!user) return;
+
+    const lastReadTimestamp = user.lastReadICFeedTimestamp || new Date(0);
+
+    const newICPostCount = await Post.countDocuments({
+      user: { $ne: userIdObj },
+      isScheduled: false,
+      publishedAt: { $gt: lastReadTimestamp },
+      isIC: true,
+      isVent: { $ne: true },
+      // replies included intentionally
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newICPostCount", { newICPostCount });
+    });
+  } catch (error) {
+    console.error(`Unhandled error in emitNewICPostCount for user ${userId}:`, error);
   }
 }
 
@@ -240,7 +264,7 @@ export async function emitUnreadPublicChatStatus(userId) {
   } catch (error) {
     console.error(
       `Unhandled error in emitUnreadPublicChatStatus for user ${userId}:`,
-      error
+      error,
     );
   }
 }
@@ -275,7 +299,7 @@ export async function emitUnreadNotificationStatus(userId) {
   } catch (error) {
     console.error(
       `Unhandled error in emitUnreadNotificationStatus for user ${userId}:`,
-      error
+      error,
     );
   }
 }
@@ -285,8 +309,6 @@ export const createAndSendNotification = async ({
   to,
   type,
   postId,
-  commentId = null,
-  parentCommentId = null,
   isAnonymousInteraction = false,
 }) => {
   try {
@@ -304,8 +326,6 @@ export const createAndSendNotification = async ({
       to,
       type,
       postId,
-      commentId,
-      parentCommentId,
       isAnonymousInteraction,
     });
     await newNotification.save();
@@ -321,23 +341,21 @@ export const createAndSendNotification = async ({
     if (postId) {
       await newNotification.populate({
         path: "postId",
-        select: "text img user isAnonymous",
-        populate: {
-          path: "user",
-          select: "username fullName",
-        },
-      });
-    }
-    if (commentId && type !== "commentReply") {
-      await newNotification.populate({
-        path: "commentId",
-        select: "text user img",
-      });
-    }
-    if (parentCommentId && type === "commentReply") {
-      await newNotification.populate({
-        path: "parentCommentId",
-        select: "text user img",
+        select: "text img user isAnonymous parentPost",
+        populate: [
+          {
+            path: "user",
+            select: "username fullName",
+          },
+          {
+            path: "parentPost",
+            select: "user",
+            populate: {
+              path: "user",
+              select: "username",
+            },
+          },
+        ],
       });
     }
 
@@ -355,8 +373,18 @@ export const createAndSendNotification = async ({
 
       let postOwnerUsername = null;
       if (postId) {
-        const post = await Post.findById(postId).populate("user", "username").lean();
+        const post = await Post.findById(postId)
+          .populate("user", "username")
+          .populate({
+            // ADD: for reply type, get parent owner
+            path: "parentPost",
+            populate: { path: "user", select: "username" },
+          })
+          .lean();
+
         if (post && post.user) {
+          // For reply notifications, the URL should go to the reply's page,
+          // which is owned by the replier — use post.user.username
           postOwnerUsername = post.user.username;
         }
       }
@@ -369,7 +397,7 @@ export const createAndSendNotification = async ({
         title: dynamicTitle,
         body: dynamicBody,
         url: dynamicUrl,
-        icon: `${BASE_URL}/klaynelogo.png`,
+        icon: `${BASE_URL}/twatter.png`,
       };
       await sendPushNotification(to.toString(), payload);
     }
@@ -489,80 +517,114 @@ io.on("connection", async (socket) => {
     const senderId = socket.userId;
     if (!conversationId || !senderId) return;
 
-    if (!typingUsersInConversation.has(conversationId)) {
-      typingUsersInConversation.set(conversationId, new Set());
-    }
-    const typingUsers = typingUsersInConversation.get(conversationId);
-
-    if (!typingUsers.has(senderId)) {
-      typingUsers.add(senderId);
-
-      try {
-        const conversation = await Conversation.findById(conversationId).select(
-          "participants"
-        );
-        if (conversation) {
-          const participantIds = conversation.participants.map((p) => p.toString());
-          for (const participantId of participantIds) {
-            if (participantId.toString() === senderId.toString()) continue;
-
-            const blocked = await isBlockedOrBlockedBy(senderId, participantId);
-            if (!blocked) {
-              const receiverSocketIds = getReceiverSocketIds(participantId);
-              receiverSocketIds.forEach((sockId) => {
-                io.to(sockId).emit("typing", {
-                  conversationId,
-                  userId: senderId,
-                  isEditing,
-                });
-              });
-            }
-          }
-        }
-      } catch (err) {
-        console.error("Error fetching conversation for typing status:", err);
+    try {
+      // Get or create the per-conversation typing map
+      if (!typingUsersInConversation.has(conversationId)) {
+        typingUsersInConversation.set(conversationId, new Map());
       }
+      const typingMap = typingUsersInConversation.get(conversationId);
+
+      // Resolve username (cached on socket after first lookup)
+      if (!socket.username) {
+        const user = await User.findById(senderId).select("username").lean();
+        if (!user) return;
+        socket.username = user.username;
+      }
+
+      // Always update (covers isEditing toggle too)
+      typingMap.set(senderId, { username: socket.username, isEditing });
+
+      const conversation = await Conversation.findById(conversationId)
+        .select("participants members isGroup")
+        .lean();
+      if (!conversation) return;
+
+      // Build recipient list — works for both DMs and groups
+      const recipientIds = conversation.isGroup
+        ? conversation.members
+            .map((m) => m.user.toString())
+            .filter((id) => id !== senderId)
+        : conversation.participants
+            .map((p) => p.toString())
+            .filter((id) => id !== senderId);
+
+      // Build the typing array to broadcast
+      const typingUsersArray = Array.from(typingMap.entries()).map(([userId, data]) => ({
+        userId,
+        username: data.username,
+        isEditing: data.isEditing,
+      }));
+
+      for (const recipientId of recipientIds) {
+        // Skip block check for groups (members already opted in)
+        if (!conversation.isGroup) {
+          const blocked = await isBlockedOrBlockedBy(senderId, recipientId);
+          if (blocked) continue;
+        }
+
+        const receiverSocketIds = getReceiverSocketIds(recipientId);
+        receiverSocketIds.forEach((sockId) => {
+          io.to(sockId).emit("typing_update", {
+            conversationId,
+            typingUsers: typingUsersArray,
+          });
+        });
+      }
+    } catch (err) {
+      console.error("Error in typing handler:", err);
     }
   });
 
-  socket.on("stopTyping", async ({ conversationId, isEditing }) => {
+  socket.on("stopTyping", async ({ conversationId }) => {
     const senderId = socket.userId;
     if (!conversationId || !senderId) return;
 
-    if (typingUsersInConversation.has(conversationId)) {
-      const typingUsers = typingUsersInConversation.get(conversationId);
-      if (typingUsers.has(senderId)) {
-        typingUsers.delete(senderId);
-        if (typingUsers.size === 0) {
-          typingUsersInConversation.delete(conversationId);
-        }
+    try {
+      const typingMap = typingUsersInConversation.get(conversationId);
+      if (!typingMap || !typingMap.has(senderId)) return;
 
-        try {
-          const conversation = await Conversation.findById(conversationId).select(
-            "participants"
-          );
-          if (conversation) {
-            const participantIds = conversation.participants.map((p) => p.toString());
-            for (const participantId of participantIds) {
-              if (participantId.toString() === senderId.toString()) continue;
-
-              const blocked = await isBlockedOrBlockedBy(senderId, participantId);
-              if (!blocked) {
-                const receiverSocketIds = getReceiverSocketIds(participantId);
-                receiverSocketIds.forEach((sockId) => {
-                  io.to(sockId).emit("stopTyping", {
-                    conversationId,
-                    userId: senderId,
-                    isEditing,
-                  });
-                });
-              }
-            }
-          }
-        } catch (err) {
-          console.error("Error fetching conversation for stop typing status:", err);
-        }
+      typingMap.delete(senderId);
+      if (typingMap.size === 0) {
+        typingUsersInConversation.delete(conversationId);
       }
+
+      const conversation = await Conversation.findById(conversationId)
+        .select("participants members isGroup")
+        .lean();
+      if (!conversation) return;
+
+      const recipientIds = conversation.isGroup
+        ? conversation.members
+            .map((m) => m.user.toString())
+            .filter((id) => id !== senderId)
+        : conversation.participants
+            .map((p) => p.toString())
+            .filter((id) => id !== senderId);
+
+      const typingUsersArray = Array.from((typingMap || new Map()).entries()).map(
+        ([userId, data]) => ({
+          userId,
+          username: data.username,
+          isEditing: data.isEditing,
+        }),
+      );
+
+      for (const recipientId of recipientIds) {
+        if (!conversation.isGroup) {
+          const blocked = await isBlockedOrBlockedBy(senderId, recipientId);
+          if (blocked) continue;
+        }
+
+        const receiverSocketIds = getReceiverSocketIds(recipientId);
+        receiverSocketIds.forEach((sockId) => {
+          io.to(sockId).emit("typing_update", {
+            conversationId,
+            typingUsers: typingUsersArray,
+          });
+        });
+      }
+    } catch (err) {
+      console.error("Error in stopTyping handler:", err);
     }
   });
 
@@ -601,7 +663,7 @@ io.on("connection", async (socket) => {
               seen: false,
             },
             { $set: { seen: true } },
-            { session }
+            { session },
           );
 
           // Update the conversation's lastMessage.seen only if it was sent by the other user
@@ -612,7 +674,7 @@ io.on("connection", async (socket) => {
               "lastMessage.seen": false,
             },
             { $set: { "lastMessage.seen": true } },
-            { timestamps: false, session }
+            { timestamps: false, session },
           );
         });
       } finally {
@@ -623,19 +685,20 @@ io.on("connection", async (socket) => {
       const updatedConversation = await Conversation.findById(conversationObjectId)
         .populate({
           path: "participants",
-          select: "username fullName isVerified isGoldVerified badges preferredBadge",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
+          select:
+            "username fullName isVerified isGoldVerified  badges preferredBadge",
+          populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({
+          path: "members.user", // Ensure members are also populated for group context
+          select: "username fullName profileImg",
+          populate: { path: "profileImg", select: "imageUrl" },
+        })
+        .populate({ path: "avatar", select: "imageUrl" }) // <--- ADD THIS LINE
+        .populate({
           path: "lastMessage.sender",
-          select: "username fullName isVerified isGoldVerified badges preferredBadge",
-          populate: {
-            path: "profileImg",
-            select: "imageUrl",
-          },
+          select: "username fullName",
+          populate: { path: "profileImg", select: "imageUrl" },
         });
 
       if (updatedConversation) {
@@ -648,18 +711,25 @@ io.on("connection", async (socket) => {
         });
 
         // Emit messagesSeen event to the sender only
-        const otherParticipantId = updatedConversation.participants.find(
-          (pId) => pId._id.toString() !== readerId.toString()
-        );
+        // const otherParticipantId = updatedConversation.participants.find(
+        //   (pId) => pId._id.toString() !== readerId.toString(),
+        // );
 
-        if (otherParticipantId) {
-          const senderSocketIds = getReceiverSocketIds(otherParticipantId._id.toString());
-          if (senderSocketIds.length > 0) {
-            io.to(senderSocketIds).emit("messagesSeen", {
-              conversationId,
-              readerId,
-              messageCount: unseenMessagesCount,
-            });
+        if (!updatedConversation.isGroup) {
+          const otherParticipantId = updatedConversation.participants.find(
+            (pId) => pId._id.toString() !== readerId.toString(),
+          );
+          if (otherParticipantId) {
+            const senderSocketIds = getReceiverSocketIds(
+              otherParticipantId._id.toString(),
+            );
+            if (senderSocketIds.length > 0) {
+              io.to(senderSocketIds).emit("messagesSeen", {
+                conversationId,
+                readerId,
+                messageCount: unseenMessagesCount,
+              });
+            }
           }
         }
       }
@@ -683,14 +753,14 @@ io.on("connection", async (socket) => {
         await User.findByIdAndUpdate(
           socket.userId,
           { $set: { lastReadPublicChatTimestamp: latestPublicMessage.createdAt } },
-          { new: true }
+          { new: true },
         );
       } else {
         // If no messages yet, just set to current time
         await User.findByIdAndUpdate(
           socket.userId,
           { $set: { lastReadPublicChatTimestamp: new Date() } },
-          { new: true }
+          { new: true },
         );
       }
       // After marking as read, emit false to ensure no red dot appears
@@ -698,7 +768,7 @@ io.on("connection", async (socket) => {
     } catch (error) {
       console.error(
         `Error marking public chat as read on "userEnteredPublicChat" for user ${socket.userId}:`,
-        error
+        error,
       );
     }
   });
@@ -715,43 +785,31 @@ io.on("connection", async (socket) => {
     try {
       let userUsername;
 
-      // Option 1: Store username on socket during connection/login (Recommended)
       if (socket.username) {
         userUsername = socket.username;
       } else {
-        // Fallback: Fetch if not already on socket, but avoid for every event.
-        // This part should ideally be optimized out if username is set on connect.
         const user = await User.findById(socket.userId).select("username").lean();
         if (!user) return;
         userUsername = user.username;
-        socket.username = user.username; // Cache it on the socket for future events
+        socket.username = user.username;
       }
 
-      // Always update the user's typing status in the map
-      // This is crucial: if a user is already typing, their 'isEditing' status needs to be updated.
-      // And even if just typing, refreshing their presence in the map (and thus the timestamp if you add it)
-      // is good for keeping track of active typers.
       publicChatTypingUsers.set(socket.userId, {
         username: userUsername,
         isEditing: isEditing,
-        timestamp: Date.now(), // Add a timestamp for potential inactivity cleanup
+        timestamp: Date.now(),
       });
 
-      // Emit the *updated* list of all current typing users to everyone
-      // This simplifies client-side state management significantly.
-      // Instead of sending individual start/stop, send the full current list.
       const typingUsersArray = Array.from(publicChatTypingUsers.entries()).map(
         ([userId, data]) => ({
           userId,
           username: data.username,
           isEditing: data.isEditing,
-        })
+        }),
       );
       socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
         typingUsers: typingUsersArray,
       });
-      // You could also emit to the sender to confirm their status, if needed.
-      // socket.emit("public_typing_update", { typingUsers: typingUsersArray });
     } catch (error) {
       console.error("Error handling public_typing event:", error);
     }
@@ -771,7 +829,7 @@ io.on("connection", async (socket) => {
         userId,
         username: data.username,
         isEditing: data.isEditing,
-      })
+      }),
     );
     socket.to(PUBLIC_CHAT_ROOM).emit("public_typing_update", {
       typingUsers: typingUsersArray,
@@ -786,7 +844,7 @@ io.on("connection", async (socket) => {
       }
       await Notification.updateMany(
         { to: userId, read: false },
-        { $set: { read: true } }
+        { $set: { read: true } },
       );
       await emitUnreadNotificationStatus(userId);
     } catch (error) {
@@ -826,9 +884,12 @@ io.on("connection", async (socket) => {
       if (userSockets.size === 0) {
         onlineUsersMap.delete(disconnectedUserId);
 
-        typingUsersInConversation.forEach((typingUsers, convId) => {
-          if (typingUsers.has(disconnectedUserId)) {
-            typingUsers.delete(disconnectedUserId);
+        typingUsersInConversation.forEach((typingMap, convId) => {
+          if (typingMap.has(disconnectedUserId)) {
+            typingMap.delete(disconnectedUserId);
+            if (typingMap.size === 0) {
+              typingUsersInConversation.delete(convId);
+            }
           }
         });
 

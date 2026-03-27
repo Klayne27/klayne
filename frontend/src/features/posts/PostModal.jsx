@@ -1,5 +1,4 @@
-// components/PostModal/PostModal.jsx
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useRef, useEffect, useCallback } from "react"
 
 // Import components
 import { PostModalHeader } from "./PostModalHeader"
@@ -165,17 +164,28 @@ const PostModal = ({
       }
 
       if (mode === "edit") {
-
         if (input.trim() === editPost.text.trim()) {
           showAppToast("No changes detected.", "info")
           onClose()
           return
         }
 
-        updatePost({
-          postId: editPost._id,
-          postData: { text: input }, // Correctly format the data for the API call
-        })
+        updatePost(
+          {
+            postId: editPost._id,
+            postData: { text: input },
+          },
+          {
+            onSuccess: () => {
+              resetForm()
+              onClose()
+              setShowCreatePostModal(false)
+            },
+            onError: (err) => {
+              showAppToast(err?.message || "Failed to update", "error")
+            },
+          },
+        )
         resetForm()
         onClose()
       } else if (feedType === "venting") {

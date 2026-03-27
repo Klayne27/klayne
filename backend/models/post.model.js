@@ -38,16 +38,13 @@ const postSchema = new mongoose.Schema(
         ref: "User",
       },
     ],
-    comments: [
-      {
-        type: mongoose.Schema.Types.ObjectId,
-        ref: "Comment",
-      },
-    ],
-    commentsCount: {
-      type: Number,
-      default: 0,
+    parentPost: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "Post",
+      default: null,
+      index: true, // important for query performance
     },
+    repliesCount: { type: Number, default: 0 },
     repostedFrom: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
@@ -131,6 +128,11 @@ const postSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    isIC: {
+      type: Boolean,
+      default: false,
+      index: true,
+    },
     editHistory: [
       {
         text: String,
@@ -141,9 +143,10 @@ const postSchema = new mongoose.Schema(
       },
     ],
   },
-  { timestamps: true }
+  { timestamps: true },
 );
 
 const Post = mongoose.model("Post", postSchema);
 
 export default Post;
+

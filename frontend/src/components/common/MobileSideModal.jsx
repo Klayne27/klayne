@@ -3,8 +3,6 @@ import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
 import { IoBookmark, IoBookmarkOutline, IoClose } from "react-icons/io5"
-import { LuListTodo } from "react-icons/lu"
-import { IoIosTimer } from "react-icons/io"
 import { BiLogOut } from "react-icons/bi"
 import { useEffect } from "react"
 import { useState } from "react"
@@ -12,6 +10,9 @@ import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 import { useSocket } from "../../context/SocketContext"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
+import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
+import { IoIosTimer } from "react-icons/io"
+import { LuListTodo } from "react-icons/lu"
 
 function MobileSideModal({
   showSideModal,
@@ -23,6 +24,7 @@ function MobileSideModal({
   deferredPrompt,
   handleLogout,
   handleConfirmDeleteClick,
+  isIOSDevice,
 }) {
   const { authUser } = useAuthUser()
   const { pathname } = useLocation()
@@ -43,37 +45,49 @@ function MobileSideModal({
 
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
+  const [notifPermission, setNotifPermission] = useState("default")
 
   useEffect(() => {
     const checkPushStatus = async () => {
-      if (isInstalled) {
-        setIsCheckingSubscription(true)
-        const isSubscribed = await checkSubscriptionStatus()
-        setIsPushSubscribed(isSubscribed)
-        setIsCheckingSubscription(false)
-      }
+      setIsCheckingSubscription(true)
+      const isSubscribed = await checkSubscriptionStatus()
+      setIsPushSubscribed(isSubscribed)
+      setIsCheckingSubscription(false)
     }
 
     checkPushStatus()
   }, [isInstalled])
 
   useEffect(() => {
-    if (!isInstalled) return
-
-    const interval = setInterval(async () => {
+    const checkPushStatus = async () => {
+      setIsCheckingSubscription(true)
       const isSubscribed = await checkSubscriptionStatus()
-      if (isSubscribed !== isPushSubscribed) {
-        setIsPushSubscribed(isSubscribed)
+      setIsPushSubscribed(isSubscribed)
+      // ADD: capture the actual permission state
+      if ("Notification" in window) {
+        setNotifPermission(Notification.permission)
       }
-    }, 30000) // Check every 30 seconds
-
-    return () => clearInterval(interval)
-  }, [isInstalled, isPushSubscribed])
+      setIsCheckingSubscription(false)
+    }
+    checkPushStatus()
+  }, [isInstalled])
 
   const handleNotificationClick = async () => {
+    // ADD: if already denied, we can't prompt again — tell the user
+    if (Notification.permission === "denied") {
+      alert(
+        "Notifications are blocked. To enable them, go to your device Settings → Apps → [this app] → Notifications and turn them on.",
+      )
+      return
+    }
+
     const success = await handleEnablePushNotifications()
+
     if (success) {
       setIsPushSubscribed(true)
+      setNotifPermission("granted") // ADD
+    } else if (!isInstalled) {
+      alert("Open the installed app to fully enable notifications.")
     }
   }
 
@@ -229,28 +243,6 @@ function MobileSideModal({
                   Bookmarks
                 </span>
               </li>
-              {/* Themes Tab in Side Modal */}
-              <li
-                onClick={() => {
-                  if (pathname === "/themes") return
-                  navigate("/themes")
-                  setShowSideModal(false) // Close modal on navigation
-                }}
-                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
-                  isTouchDevice && activeButtonId === "modal-themes"
-                    ? "bg-secondary bg-opacity-50 transition duration-150"
-                    : "transition duration-150"
-                }`}
-              >
-                {pathname === "/themes" ? (
-                  <HiPaintBrush className="mr-4 size-7" />
-                ) : (
-                  <HiOutlinePaintBrush className="mr-4 size-7" />
-                )}{" "}
-                <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
-                  Themes
-                </span>
-              </li>
               <li
                 onClick={() => {
                   if (pathname === "/pomodoro") return
@@ -285,6 +277,49 @@ function MobileSideModal({
               >
                 <LuListTodo className="mr-4 size-7" strokeWidth={pathname === "/todos" ? 2 : 2} />
                 <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>Todos</span>
+              </li>
+              {/* Themes Tab in Side Modal */}
+              <li
+                onClick={() => {
+                  if (pathname === "/themes") return
+                  navigate("/themes")
+                  setShowSideModal(false) // Close modal on navigation
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-themes"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                {pathname === "/themes" ? (
+                  <HiPaintBrush className="mr-4 size-7" />
+                ) : (
+                  <HiOutlinePaintBrush className="mr-4 size-7" />
+                )}{" "}
+                <span className={`text-xl ${pathname === "/themes" ? "font-bold" : ""}`}>
+                  Themes
+                </span>
+              </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/devlog") return
+                  navigate("/devlog")
+                  setShowSideModal(false) // Close modal on navigation
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-devlog"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                {pathname === "/devlog" ? (
+                  <MdLibraryBooks className="mr-4 size-7" />
+                ) : (
+                  <MdOutlineLibraryBooks className="mr-4 size-7" />
+                )}{" "}
+                <span className={`text-xl ${pathname === "/devlog" ? "font-bold" : ""}`}>
+                  Devlog
+                </span>
               </li>
 
               {/* Separator if needed */}
@@ -352,31 +387,89 @@ function MobileSideModal({
               </li>
             </ul>
           </div>
-          {!isInstalled && deferredPrompt && (
+          {!isInstalled && (deferredPrompt || isIOSDevice) && (
             <div className="mt-4 rounded-2xl border border-accent p-4">
               <p className="mb-2 text-xl font-bold">Install the App</p>
-              <p className="mb-4 text-sm text-gray-500">Get the full experience on your device.</p>
-              <button
-                onClick={installApp}
-                className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
-              >
-                Install
-              </button>
+
+              {isIOSDevice ? (
+                // iOS: can't trigger programmatically, show manual steps
+                <div className="flex flex-col gap-2">
+                  <p className="text-sm text-gray-500">To install on iPhone or iPad:</p>
+                  <ol className="flex flex-col gap-1 text-sm text-gray-400">
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-white">1.</span>
+                      Tap the "Share" button in Safari's toolbar
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-white">2.</span>
+                      Scroll down and tap "Add to Home Screen"
+                    </li>
+                    <li className="flex items-start gap-2">
+                      <span className="font-bold text-white">3.</span>
+                      Tap "Add" in the top right
+                    </li>
+                  </ol>
+                  <p className="mt-1 text-xs text-gray-600">
+                    Must be opened in Safari, not Chrome or Firefox.
+                  </p>
+                </div>
+              ) : (
+                // Android / Chrome: use the deferred prompt
+                <>
+                  <p className="mb-4 text-sm text-gray-500">
+                    Install the app to your home screen to enable real-time notifications.
+                  </p>
+                  <button
+                    onClick={installApp}
+                    className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+                  >
+                    Install
+                  </button>
+                </>
+              )}
             </div>
           )}
 
-          {isInstalled && !isCheckingSubscription && !isPushSubscribed && (
+          {!isCheckingSubscription && !isPushSubscribed && isInstalled && (
             <div className="mt-4 rounded-2xl border border-accent p-4">
               <p className="mb-2 text-xl font-bold">Stay Updated</p>
-              <p className="mb-4 text-sm text-gray-500">
-                Enable push notifications to get real-time updates.
-              </p>
-              <button
-                onClick={handleNotificationClick}
-                className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
-              >
-                Enable Notifications
-              </button>
+
+              {notifPermission === "denied" ? (
+                // Permission was blocked — button won't work, show instructions instead
+                <>
+                  <p className="mb-3 text-sm text-gray-500">
+                    Notifications are currently blocked for this app.
+                  </p>
+                  <p className="mb-3 text-sm text-gray-400">
+                    To fix this, go to your device{" "}
+                    <span className="font-semibold text-white">
+                      Settings → Apps → Notifications
+                    </span>{" "}
+                    and allow notifications for this app, then reopen it.
+                  </p>
+                  <button
+                    onClick={() =>
+                      alert("Go to Settings → Apps → [this app] → Notifications → Allow.")
+                    }
+                    className="w-full rounded-md border border-accent py-2 text-sm text-gray-400 transition duration-200 hover:bg-gray-700/30"
+                  >
+                    How to enable
+                  </button>
+                </>
+              ) : (
+                // Permission is "default" (not yet asked) or "granted" but no subscription
+                <>
+                  <p className="mb-4 text-sm text-gray-500">
+                    Enable push notifications to get real-time updates.
+                  </p>
+                  <button
+                    onClick={handleNotificationClick}
+                    className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
+                  >
+                    Enable Notifications
+                  </button>
+                </>
+              )}
             </div>
           )}
 

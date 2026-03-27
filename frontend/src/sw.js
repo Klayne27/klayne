@@ -37,8 +37,8 @@ self.addEventListener("push", (event) => {
   const title = payload.title || "Default Title"
   const options = {
     body: payload.body || "Default body message.",
-    icon: "/klaynelogo.png",
-    badge: "/kbadge3.png",
+    icon: "/twatter.png",
+    badge: "/twatterbadge2.png",
     data: {
       url: payload.url || "/",
     },
@@ -53,7 +53,6 @@ self.addEventListener("notificationclick", (event) => {
 
   const notificationData = event.notification.data
   const urlToOpen = new URL(notificationData.url || "/", self.location.origin).href
-
 
   event.waitUntil(
     clients.matchAll({ type: "window", includeUncontrolled: true }).then((windowClients) => {

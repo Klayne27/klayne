@@ -20,6 +20,7 @@ export const useCreatePosts = () => {
       } else {
         showAppToast("Post created successfully", "success")
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/all") })
+        queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
         queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/following") })
       }
     },

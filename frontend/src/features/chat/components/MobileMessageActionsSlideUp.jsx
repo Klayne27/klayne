@@ -5,6 +5,7 @@ import { IoCopy } from "react-icons/io5"
 import { FaTrashCan } from "react-icons/fa6"
 import { PiSmileyFill } from "react-icons/pi"
 import { RiPushpinFill } from "react-icons/ri"
+import { useLocation } from "react-router-dom"
 
 const MobileMessageActionsSlideUp = ({
   isOpen,
@@ -24,6 +25,8 @@ const MobileMessageActionsSlideUp = ({
 }) => {
   const quickReactions = ["❤️", "👍", "👎", "😂", "😭", "🫂"]
   const hasReactions = message.reactions?.length > 0
+
+  const { pathname } = useLocation()
 
   const handleAction = (action) => {
     action()
@@ -84,13 +87,17 @@ const MobileMessageActionsSlideUp = ({
           >
             <IoCopy /> <span>Copy Message</span>
           </button>
-          <div className="h-[1px] bg-accent"></div>
-          <button
-            onClick={() => handleAction(onPinMessage)}
-            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-          >
-            <RiPushpinFill /> <span>Pin Message</span>
-          </button>
+          {!pathname.includes("/public-chat") && (
+            <>
+              <div className="h-[1px] bg-accent"></div>
+              <button
+                onClick={() => handleAction(onPinMessage)}
+                className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+              >
+                <RiPushpinFill /> <span>Pin Message</span>
+              </button>{" "}
+            </>
+          )}
           {hasReactions && (
             <>
               <div className="h-[1px] bg-accent"></div>

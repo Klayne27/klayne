@@ -4,8 +4,8 @@ import Image from "../models/image.model.js";
 import User from "../models/user.model.js";
 import bcrypt from "bcryptjs";
 import nodemailer from "nodemailer";
-import jwt from "jsonwebtoken"
 import { generateRandomString } from "../lib/utils/helpers.js";
+import crypto from "crypto";
 
 export const signup = async (req, res) => {
   try {
@@ -148,7 +148,6 @@ export const googleAuth = async (req, res) => {
     let user = await User.findOne({ email });
 
     if (user) {
-      // Existing user logic remains the same
       if (!user.googleId) {
         user.googleId = uid;
         if (!user.profileImg && picture) {
@@ -168,27 +167,21 @@ export const googleAuth = async (req, res) => {
         return res
           .status(400)
           .json({ error: "Email is already associated with another account." });
-      } // If the user already has a googleId, they are simply logging in.
+      }
     } else {
       const baseUsername = "user-";
       let username;
       let userExists = true;
       let attemptCount = 0;
-      const MAX_ATTEMPTS = 5; 
+      const MAX_ATTEMPTS = 5;
 
       while (userExists && attemptCount < MAX_ATTEMPTS) {
-        username = baseUsername + generateRandomString(8); 
+        username = baseUsername + generateRandomString(8);
         const existingUser = await User.findOne({ username });
         if (!existingUser) {
           userExists = false;
         }
         attemptCount++;
-      }
-
-      if (userExists) {
-        // This case is highly unlikely but a good fallback
-        console.error("Could not generate a unique username after multiple attempts.");
-        return res.status(500).json({ error: "Failed to create a unique username." });
       }
 
       user = new User({
@@ -212,7 +205,7 @@ export const googleAuth = async (req, res) => {
 
       await user.save();
       console.log("New Google user created with a random username.");
-    } // Now, generate a token and send back the populated user.
+    }
 
     generateTokenAndSetCookie(user._id, res);
 
@@ -230,15 +223,26 @@ export const googleAuth = async (req, res) => {
 
 export const forgotPassword = async (req, res) => {
   const { email } = req.body;
+
+  const CLIENT_URL = process.env.CLIENT_URL || "http://localhost:3000";
+
   try {
     const user = await User.findOne({ email });
     if (!user) {
-      return res.status(404).json({ error: "User not found with that email address." });
+      return res
+        .status(200)
+        .json({ message: "If that email exists, a reset link has been sent." });
     }
 
-    const resetToken = jwt.sign({ _id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "15m",
-    });
+    // Generate a secure random token and store its hash
+    const rawToken = crypto.randomBytes(32).toString("hex");
+    const hashedToken = crypto.createHash("sha256").update(rawToken).digest("hex");
+
+    user.resetPasswordToken = hashedToken;
+    user.resetPasswordExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 minutes
+    await user.save();
+
+    const resetUrl = `${CLIENT_URL}/reset-password/${rawToken}`;
 
     const transporter = nodemailer.createTransport({
       service: "gmail",
@@ -248,28 +252,27 @@ export const forgotPassword = async (req, res) => {
       },
     });
 
-    // 3. Create the email content
-    const resetUrl = `http://localhost:3000/reset-password/${resetToken}`;
     const mailOptions = {
       from: process.env.EMAIL_USER,
       to: user.email,
       subject: "Password Reset Request",
       html: `
-    <div style="font-family: sans-serif; text-align: center; padding: 20px;">
-      <h1 style="color: #333;">Password Reset</h1>
-      <p style="font-size: 16px; color: #555;">You requested a password reset. Click the button below to set a new password:</p>
-      <a href="${resetUrl}" style="background-color: #1D9BF0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px;">
-        Reset Password
-      </a>
-      <p style="font-size: 14px; color: #999; margin-top: 20px;">This link is valid for 15 minutes.</p>
-    </div>
-  `,
+        <div style="font-family: sans-serif; text-align: center; padding: 20px;">
+          <h1 style="color: #333;">Password Reset</h1>
+          <p style="font-size: 16px; color: #555;">You requested a password reset. Click the button below to set a new password:</p>
+          <a href="${resetUrl}" style="background-color: #1D9BF0; color: white; padding: 12px 24px; text-decoration: none; border-radius: 5px; font-weight: bold; display: inline-block; margin-top: 20px;">
+            Reset Password
+          </a>
+          <p style="font-size: 14px; color: #999; margin-top: 20px;">This link is valid for 15 minutes. If you did not request this, you can safely ignore this email.</p>
+        </div>
+      `,
     };
 
-    // 4. Send the email
     await transporter.sendMail(mailOptions);
 
-    res.status(200).json({ message: "Password reset link sent to your email." });
+    res
+      .status(200)
+      .json({ message: "If that email exists, a reset link has been sent." });
   } catch (error) {
     console.error("Error in forgotPassword controller:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
@@ -280,26 +283,37 @@ export const resetPassword = async (req, res) => {
   const { token } = req.params;
   const { newPassword } = req.body;
 
-  if (newPassword.length < 6) {
-    return res.status(400).json({ error: "Password must be at least 6 characters long." });
+  if (!newPassword || newPassword.length < 6) {
+    return res
+      .status(400)
+      .json({ error: "Password must be at least 6 characters long." });
   }
 
   try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findById(decoded._id);
+    // Hash the incoming raw token to compare against what's stored
+    const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken: hashedToken,
+      resetPasswordExpires: { $gt: new Date() }, // must not be expired
+    });
 
     if (!user) {
-      return res.status(404).json({ error: "Invalid or expired token." });
+      return res.status(400).json({ error: "Invalid or expired reset link." });
     }
 
     const salt = await bcrypt.genSalt(10);
-    const hashedPassword = await bcrypt.hash(newPassword, salt);
-    user.password = hashedPassword;
+    user.password = await bcrypt.hash(newPassword, salt);
+
+    // Invalidate the token immediately after use
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpires = undefined;
+
     await user.save();
 
-    res.status(200).json({ message: "Password reset successfully." });
+    res.status(200).json({ message: "Password reset successfully. You can now log in." });
   } catch (error) {
     console.error("Error in resetPassword controller:", error.message);
-    res.status(400).json({ error: "Invalid or expired token." });
+    res.status(500).json({ error: "Internal Server Error" });
   }
 };

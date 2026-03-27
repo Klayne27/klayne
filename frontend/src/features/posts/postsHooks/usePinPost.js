@@ -5,7 +5,6 @@ import { postKeys } from "./postKeys"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { showAppToast } from "../../../utils/showAppToast"
 
-
 const updatePostPinStatus = (oldData, postId, action) => {
   if (!oldData) return oldData
 

@@ -6,119 +6,139 @@ import { useDebounce } from "../hooks/customHooks/useDebounce"
 import { useSearchUsers } from "../features/users/usersHooks/userSearchUsers"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useGetPost } from "../features/posts/postsHooks/useGetPost"
-import { useGetComments } from "../features/comments/commentHooks/useGetComments"
-import { useCreateComment } from "../features/comments/commentHooks/useCreateComment"
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler"
-import { showAppToast } from "../utils/showAppToast"
 import LoadingSpinner from "../components/common/LoadingSpinner"
-import CommentItem from "../features/comments/CommentItem"
-import CommentsSkeleton from "../components/skeletons/CommentsSkeleton"
 import Post from "../features/posts/Post"
 import { BiImageAdd } from "react-icons/bi"
-import { useAppStore } from "../store/useAppStore"
 import { IoClose } from "react-icons/io5"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useGetPostThread } from "../features/posts/postsHooks/useGetPostThread"
+import { useGetReplies } from "../features/posts/postsHooks/useGetReplies"
+import { useCreateReply } from "../features/posts/postsHooks/useCreateReply"
+import HeroPost from "../features/posts/HeroPost"
 
 const PostPage = () => {
   const { pid } = useParams()
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
 
-  const [replyingToComment, setReplyingToComment] = useState(null)
-
-  const [commentInput, setCommentInput] = useState("")
-  const [commentPreviewImage, setCommentPreviewImage] = useState(null)
-  const [commentSelectedFile, setCommentSelectedFile] = useState(null)
-  const commentFileInputRef = useRef(null)
-  const commentInputRef = useRef(null)
-  const feedType = useAppStore((state) => state.feedType)
+  const [replyInput, setReplyInput] = useState("")
+  const [replyPreviewImage, setReplyPreviewImage] = useState(null)
+  const [replySelectedFile, setReplySelectedFile] = useState(null)
+  const replyFileInputRef = useRef(null)
+  const replyInputRef = useRef(null)
+  const observerTarget = useRef(null)
 
   const [showButton, setShowButton] = useState(false)
-
-  // --- NEW STATES FOR MENTIONS ---
   const [mentionSearchTerm, setMentionSearchTerm] = useState("")
   const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300)
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
-
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
-  // --- END NEW STATES ---
-
-  const commentsListRef = useRef(null)
-  const observerTarget = useRef(null)
 
   const isMobile = useIsMobile()
 
-  // --- TEXTAREA HEIGHT ADJUSTMENT ---
+  // ── Data fetching ──────────────────────────────────────────────────────────
+  // The hero post (same hook you already have)
+  const { post, isLoading, isError, error, refetch: refetchPost } = useGetPost(pid)
+
+  // Ancestor chain above the hero
+  const { ancestors, isLoading: isLoadingThread } = useGetPostThread(pid)
+
+  // Replies below the hero
+  const {
+    replies,
+    isLoading: isLoadingReplies,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch: refetchReplies,
+  } = useGetReplies(pid)
+
+  // Mutation
+  const { createReply, isCreatingReply } = useCreateReply(pid)
+
+  // The actual post data to display (unwrap reposts the same way you do now)
+  const displayPost = post?.repostedFrom || post
+
+  // ── Textarea auto-height ───────────────────────────────────────────────────
   const adjustTextareaHeight = useCallback(() => {
-    const textarea = commentInputRef.current // Use the new ref
+    const textarea = replyInputRef.current
     if (textarea) {
-      textarea.style.height = "auto" // Reset height
+      textarea.style.height = "auto"
       textarea.style.height = `${textarea.scrollHeight}px`
     }
   }, [])
 
   useEffect(() => {
     adjustTextareaHeight()
-  }, [commentInput, adjustTextareaHeight]) // Trigger on commentInput change
-  // --- END TEXTAREA HEIGHT ADJUSTMENT ---
+  }, [replyInput, adjustTextareaHeight])
 
-  const { post, isLoading, isError, error, refetch: refetchPost } = useGetPost(pid)
-  const {
-    comments,
-    isLoading: isLoadingComments,
-    isFetchingNextPage: isFetchingNextCommentsPage,
-    hasNextPage: hasNextCommentsPage,
-    fetchNextPage: fetchNextCommentsPage,
-    refetch: refetchComments,
-  } = useGetComments(pid, null)
+  // ── Navigation guards ──────────────────────────────────────────────────────
+  // useEffect(() => {
+  //   if (!isLoading && (isError || !post)) {
+  //     showAppToast(error?.message || "Post not found.", "error")
+  //     navigate("/", { replace: true })
+  //   }
+  // }, [isLoading, isError, error, post, navigate])
 
-  const { createComment, isCreatingComment } = useCreateComment(pid, null)
+  // Refetch when pid changes (navigating from reply → its own page)
+  useEffect(() => {
+    if (pid) {
+      refetchPost()
+      refetchReplies()
+    }
+  }, [pid, refetchPost, refetchReplies])
 
-  const displayPost = post?.repostedFrom || post
+  // ── Infinite scroll ────────────────────────────────────────────────────────
+  useEffect(() => {
+    const el = observerTarget.current
+    if (!el || !hasNextPage || isFetchingNextPage) return
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting) fetchNextPage()
+      },
+      { threshold: 0.1 },
+    )
+    observer.observe(el)
+    return () => observer.disconnect()
+  }, [fetchNextPage, hasNextPage, isFetchingNextPage, pid])
 
-  // Add this new function
+  // ── Media handlers ─────────────────────────────────────────────────────────
   const handlePaste = usePasteHandler({
-    inputRef: commentInputRef,
-    input: commentInput,
-    setInput: setCommentInput,
-    setSelectedFile: setCommentSelectedFile,
-    setPreviewImage: setCommentPreviewImage,
-    fileInputRef: commentFileInputRef,
+    inputRef: replyInputRef,
+    input: replyInput,
+    setInput: setReplyInput,
+    setSelectedFile: setReplySelectedFile,
+    setPreviewImage: setReplyPreviewImage,
+    fileInputRef: replyFileInputRef,
   })
 
-  const handleFocus = () => {
-    setShowButton(true)
-  }
-
-  const handleMainCommentMediaChange = (e) => {
+  const handleMediaChange = (e) => {
     const file = e.target.files[0]
     if (file) {
-      setCommentSelectedFile(file)
-      setCommentPreviewImage(URL.createObjectURL(file))
+      setReplySelectedFile(file)
+      setReplyPreviewImage(URL.createObjectURL(file))
     } else {
-      setCommentSelectedFile(null)
-      setCommentPreviewImage(null)
+      setReplySelectedFile(null)
+      setReplyPreviewImage(null)
     }
   }
 
-  const handleRemoveMainCommentMedia = () => {
-    setCommentSelectedFile(null)
-    setCommentPreviewImage(null)
-    if (commentFileInputRef.current) {
-      commentFileInputRef.current.value = ""
-    }
+  const handleRemoveMedia = () => {
+    setReplySelectedFile(null)
+    setReplyPreviewImage(null)
+    if (replyFileInputRef.current) replyFileInputRef.current.value = ""
   }
 
-  // --- NEW HANDLER FOR MENTION INPUT ---
-  const handleCommentTextChange = (e) => {
+  // ── Mention handlers ───────────────────────────────────────────────────────
+  const handleReplyTextChange = (e) => {
     const newText = e.target.value
-    setCommentInput(newText)
-
+    setReplyInput(newText)
     const lastAtIndex = newText.lastIndexOf("@")
     if (lastAtIndex !== -1) {
-      const potentialMention = newText.substring(lastAtIndex + 1)
-      // Show suggestions if the character after @ is a letter/number and it's not a space
-      if (potentialMention.length > 0 && !/\s/.test(potentialMention)) {
-        setMentionSearchTerm(potentialMention)
+      const potential = newText.substring(lastAtIndex + 1)
+      if (potential.length > 0 && !/\s/.test(potential)) {
+        setMentionSearchTerm(potential)
         setShowMentionSuggestions(true)
       } else {
         setMentionSearchTerm("")
@@ -132,106 +152,64 @@ const PostPage = () => {
 
   const handleSelectMention = useCallback(
     (username) => {
-      const currentText = commentInput
-      const lastAtIndex = currentText.lastIndexOf("@")
-
-      if (lastAtIndex !== -1) {
-        // Get the part of the string from the '@' sign onwards
-        const textFromAt = currentText.substring(lastAtIndex)
-
-        const match = textFromAt.match(/^@([a-zA-Z0-9_]*)/) // Match starts with '@' followed by word chars
-
-        let partialMentionLength = 0
-        if (match && match[1]) {
-          // If a match exists and the capture group (the username part) is not empty
-          partialMentionLength = match[1].length
+      const text = replyInput
+      const lastAt = text.lastIndexOf("@")
+      if (lastAt === -1) return
+      const fromAt = text.substring(lastAt)
+      const match = fromAt.match(/^@([a-zA-Z0-9_]*)/)
+      const partialLen = match?.[1]?.length ?? 0
+      const newText =
+        text.substring(0, lastAt) + `@${username} ` + text.substring(lastAt + 1 + partialLen)
+      setReplyInput(newText)
+      setMentionSearchTerm("")
+      setShowMentionSuggestions(false)
+      setTimeout(() => {
+        const input = replyInputRef.current
+        if (input) {
+          const pos = lastAt + username.length + 2
+          input.setSelectionRange(pos, pos)
+          input.focus()
         }
-
-        // Calculate the start and end indices of the segment to replace
-        // The start of replacement is `lastAtIndex` (where '@' is)
-        // The end of replacement is `lastAtIndex + 1 + partialMentionLength` (after the partial username)
-        const replaceStartIndex = lastAtIndex
-        const replaceEndIndex = lastAtIndex + 1 + partialMentionLength
-
-        // Construct the new text
-        const newText =
-          currentText.substring(0, replaceStartIndex) + // Text before the @
-          `@${username} ` + // The full @username with a space
-          currentText.substring(replaceEndIndex) // Text after the partial mention
-
-        setCommentInput(newText)
-        setMentionSearchTerm("")
-        setShowMentionSuggestions(false)
-
-        // Manually set cursor to the end of the newly inserted mention
-        setTimeout(() => {
-          const input = commentInputRef.current
-          if (input) {
-            const newCursorPos =
-              currentText.substring(0, replaceStartIndex).length + `@${username} `.length
-            input.setSelectionRange(newCursorPos, newCursorPos)
-            input.focus()
-          }
-        }, 0)
-      }
+      }, 0)
     },
-    [commentInput],
+    [replyInput],
   )
-  // --- END NEW HANDLER ---
 
-  const handleAddOrReplyComment = useCallback(
+  // ── Submit ─────────────────────────────────────────────────────────────────
+  const handleSubmitReply = useCallback(
     async (e) => {
       e.preventDefault()
+      if (!replyInput.trim() && !replySelectedFile) return
+      if (isCreatingReply) return
 
-      if (!commentInput.trim() && !commentSelectedFile) {
-        console.warn("Attempted to send empty comment with no media.")
-        return
-      }
-      if (isCreatingComment) return
+      const payload = { text: replyInput }
 
-      let commentPayload = { text: commentInput }
-
-      if (commentSelectedFile) {
-        const reader = new FileReader()
-        reader.onloadend = async () => {
-          if (commentSelectedFile.type.startsWith("image/")) {
-            commentPayload.img = reader.result
-          } else if (commentSelectedFile.type.startsWith("video/")) {
-            commentPayload.video = reader.result
-          }
-
-          if (replyingToComment) {
-            commentPayload.parentCommentId = replyingToComment._id
-          }
-
-          await createComment(commentPayload)
-
-          setCommentInput("")
-          // setReplyingToComment(null);
-          setCommentPreviewImage(null)
-          setCommentSelectedFile(null)
-          if (commentFileInputRef.current) {
-            commentFileInputRef.current.value = ""
-          }
-          // Reset mention states after sending
-          setMentionSearchTerm("")
-          setShowMentionSuggestions(false)
-        }
-        reader.readAsDataURL(commentSelectedFile)
-      } else {
-        if (replyingToComment) {
-          commentPayload.parentCommentId = replyingToComment._id
-        }
-        await createComment(commentPayload)
-
-        setCommentInput("")
-        // setReplyingToComment(null);
-        // Reset mention states after sending
+      const submit = async (finalPayload) => {
+        await createReply(finalPayload)
+        setReplyInput("")
+        setReplyPreviewImage(null)
+        setReplySelectedFile(null)
+        if (replyFileInputRef.current) replyFileInputRef.current.value = ""
         setMentionSearchTerm("")
         setShowMentionSuggestions(false)
       }
+
+      if (replySelectedFile) {
+        const reader = new FileReader()
+        reader.onloadend = async () => {
+          if (replySelectedFile.type.startsWith("image/")) {
+            payload.img = reader.result
+          } else if (replySelectedFile.type.startsWith("video/")) {
+            payload.video = reader.result
+          }
+          await submit(payload)
+        }
+        reader.readAsDataURL(replySelectedFile)
+      } else {
+        await submit(payload)
+      }
     },
-    [commentInput, createComment, isCreatingComment, commentSelectedFile, replyingToComment],
+    [replyInput, replySelectedFile, isCreatingReply, createReply],
   )
 
   const handleKeyDown = useCallback(
@@ -242,92 +220,38 @@ const PostPage = () => {
           handleSelectMention(suggestedUsers[0].username)
         } else if (isMobile) {
           e.preventDefault()
-          const { current: input } = commentInputRef
-          if (input) {
-            const start = input.selectionStart
-            const end = input.selectionEnd
-            const newValue = commentInput.substring(0, start) + "\n" + commentInput.substring(end)
-            setCommentInput(newValue)
-            setTimeout(() => {
-              input.selectionStart = input.selectionEnd = start + 1
-            }, 0)
-          }
+          const input = replyInputRef.current
+          if (!input) return
+          const { selectionStart: s, selectionEnd: end } = input
+          setReplyInput(replyInput.substring(0, s) + "\n" + replyInput.substring(end))
+          setTimeout(() => input.setSelectionRange(s + 1, s + 1), 0)
+        } else if (e.shiftKey) {
+          e.preventDefault()
+          const input = replyInputRef.current
+          if (!input) return
+          const { selectionStart: s, selectionEnd: end } = input
+          setReplyInput(replyInput.substring(0, s) + "\n" + replyInput.substring(end))
+          setTimeout(() => input.setSelectionRange(s + 1, s + 1), 0)
         } else {
-          if (e.shiftKey) {
+          if (!isCreatingReply) {
             e.preventDefault()
-            const { current: input } = commentInputRef
-            if (input) {
-              const start = input.selectionStart
-              const end = input.selectionEnd
-              const newValue = commentInput.substring(0, start) + "\n" + commentInput.substring(end)
-              setCommentInput(newValue)
-              setTimeout(() => {
-                input.selectionStart = input.selectionEnd = start + 1
-              }, 0)
-            }
-          } else {
-            if (!isCreatingComment) {
-              e.preventDefault()
-              handleAddOrReplyComment(e)
-            }
+            handleSubmitReply(e)
           }
         }
       }
     },
     [
       isMobile,
-      commentInputRef,
-      commentInput,
-      setCommentInput,
+      replyInput,
       showMentionSuggestions,
       suggestedUsers,
       handleSelectMention,
-      isCreatingComment,
-      handleAddOrReplyComment,
+      isCreatingReply,
+      handleSubmitReply,
     ],
   )
 
-  useEffect(() => {
-    if (!isLoading && (isError || !post)) {
-      if (isError) {
-        showAppToast(error?.message || "Could not load post.", "error")
-      } else if (!post) {
-        showAppToast("The post you are looking for does not exist or has been deleted.", "error")
-      }
-      navigate("/", { replace: true })
-    }
-  }, [isLoading, isError, error, post, navigate])
-
-  useEffect(() => {
-    if (pid) {
-      refetchComments()
-      refetchPost()
-    }
-  }, [pid, refetchComments, refetchPost])
-
-  useEffect(() => {
-    const currentObserverTarget = observerTarget.current
-    if (!currentObserverTarget || !hasNextCommentsPage || isFetchingNextCommentsPage) return
-
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting && hasNextCommentsPage && !isFetchingNextCommentsPage) {
-          fetchNextCommentsPage()
-        }
-      },
-      { threshold: 0.1 },
-    )
-
-    observer.observe(currentObserverTarget)
-
-    return () => {
-      if (currentObserverTarget) {
-        observer.unobserve()
-      }
-    }
-  }, [fetchNextCommentsPage, hasNextCommentsPage, isFetchingNextCommentsPage, pid])
-
-  if (isLoading) {
+  if (isLoading || isLoadingThread) {
     return (
       <div className="flex h-screen w-full flex-1 items-center justify-center">
         <LoadingSpinner size="lg" />
@@ -337,14 +261,11 @@ const PostPage = () => {
 
   if (!displayPost) {
     return (
-      <div className="w-ful flex h-screen flex-1 flex-col items-center justify-center p-4">
+      <div className="flex h-screen w-full flex-1 flex-col items-center justify-center p-4">
         <h2 className="mb-4 text-center text-2xl font-bold">Post Not Found</h2>
-        <p className="text-center text-slate-500">
-          The post you are looking for does not exist or has been deleted.
-        </p>
         <button
           onClick={() => navigate(-1)}
-          className="bg-parimary mt-6 rounded-full px-4 py-2 transition-colors hover:bg-secondary"
+          className="mt-6 rounded-full px-4 py-2 hover:bg-secondary"
         >
           Go Back
         </button>
@@ -352,8 +273,10 @@ const PostPage = () => {
     )
   }
 
+  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
+      {/* ── Header ── */}
       <div className="flex items-center gap-2 border-b border-accent px-3 py-2 md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
@@ -364,21 +287,38 @@ const PostPage = () => {
         <h1 className="flex-1 truncate text-lg font-bold md:text-xl">Post</h1>
       </div>
 
-      <div className="border-accent">
-        <Post post={displayPost} />
-      </div>
+      {/* ── Ancestor thread (context above the hero) ── */}
+      {ancestors.length > 0 && (
+        <div>
+          {ancestors.map((ancestor, index) => (
+            <Post
+              key={ancestor._id}
+              post={ancestor}
+              hasLineBelow={true}
+              hasLineAbove={true}
+              index={index}
+            />
+          ))}
+          {/* Hero gets a line above its avatar */}
+          <HeroPost post={displayPost} hasLineAbove={true} />
+        </div>
+      )}
 
+      {/* ── Hero post ── */}
+      {ancestors.length === 0 && <HeroPost post={displayPost} />}
+
+      {/* ── Reply input ── */}
       {authUser && (
         <form
-          onSubmit={handleAddOrReplyComment}
-          className="relative flex flex-col gap-2 border-b border-accent px-2 py-3 md:p-4" // Added relative for positioning suggestions
+          onSubmit={handleSubmitReply}
+          className="relative flex flex-col gap-2 border-b border-accent px-2 py-3 md:p-4"
         >
           <div className="flex items-start md:gap-4">
             <div className="avatar flex-shrink-0">
-              <div className={`w-8 rounded-full md:w-9`}>
+              <div className="w-8 rounded-full md:w-9">
                 <img
                   src={
-                    displayPost.isAnonymous && authUser._id === displayPost.user._id
+                    post.isAnonymous && post.user._id === authUser._id
                       ? "/avatar-placeholder.png"
                       : authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"
                   }
@@ -386,23 +326,17 @@ const PostPage = () => {
                 />
               </div>
             </div>
-            {/* Wrapper for input and mention suggestions */}
             <div className="relative flex-1">
               <textarea
-                ref={commentInputRef} // Attach ref to the input
-                type="text"
-                value={commentInput}
-                onChange={handleCommentTextChange} // Use the new handler
+                ref={replyInputRef}
+                value={replyInput}
+                onChange={handleReplyTextChange}
                 onKeyDown={handleKeyDown}
-                onFocus={handleFocus}
+                onFocus={() => setShowButton(true)}
                 onPaste={handlePaste}
-                placeholder={
-                  replyingToComment
-                    ? `Replying to @${replyingToComment.user.username}...`
-                    : "Post your reply"
-                }
-                className="max-h-[140px] w-full resize-none overflow-y-auto bg-black/0 pl-3 text-base placeholder-gray-400 focus:outline-none sm:text-lg" // Added resize-none, max-height, and overflow-y-auto
-                disabled={isCreatingComment}
+                placeholder="Post your reply"
+                className="max-h-[140px] w-full resize-none overflow-y-auto bg-black/0 pl-3 text-base placeholder-gray-400 focus:outline-none sm:text-lg"
+                disabled={isCreatingReply}
                 rows={1}
               />
 
@@ -412,28 +346,27 @@ const PostPage = () => {
                     type="file"
                     accept="image/*,video/*"
                     hidden
-                    ref={commentFileInputRef}
-                    onChange={handleMainCommentMediaChange}
+                    ref={replyFileInputRef}
+                    onChange={handleMediaChange}
                   />
                   <button
                     type="button"
-                    onClick={() => commentFileInputRef.current.click()}
-                    className={`ml-[9px] flex-shrink-0 rounded-full text-primary transition duration-200 hover:text-primary/80`}
-                    title="Add image or video to comment"
+                    onClick={() => replyFileInputRef.current.click()}
+                    className="ml-[9px] flex-shrink-0 rounded-full text-primary transition duration-200 hover:text-primary/80"
                   >
                     <BiImageAdd size={24} />
                   </button>
-
                   <button
                     type="submit"
                     className="md:text-md block flex-shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
-                    disabled={isCreatingComment || (!commentInput.trim() && !commentPreviewImage)}
+                    disabled={isCreatingReply || (!replyInput.trim() && !replyPreviewImage)}
                   >
-                    Reply
+                    {isCreatingReply ? <LoadingSpinner size="xs" /> : "Reply"}
                   </button>
                 </div>
               )}
-              {/* Mention Suggestions Dropdown */}
+
+              {/* Mention suggestions */}
               {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
                 <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-accent bg-base-200 shadow-lg">
                   {isLoadingSuggestedUsers ? (
@@ -450,7 +383,10 @@ const PostPage = () => {
                         <div className="avatar">
                           <div className="w-8 rounded-full">
                             <img
-                              src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                              src={getOptimizedImageUrl(
+                                user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                                "avatar",
+                              )}
                               alt={user.username}
                             />
                           </div>
@@ -469,18 +405,19 @@ const PostPage = () => {
             </div>
           </div>
 
-          {commentPreviewImage && (
+          {/* Media preview */}
+          {replyPreviewImage && (
             <div className="relative ml-12 mt-2 size-40 self-start">
-              {commentSelectedFile.type.startsWith("image/") ? (
+              {replySelectedFile.type.startsWith("image/") ? (
                 <img
-                  src={commentPreviewImage}
-                  alt="Comment preview"
+                  src={replyPreviewImage}
+                  alt="Reply preview"
                   className="h-full w-full rounded-lg object-contain"
                 />
               ) : (
                 <video
                   controls
-                  src={commentPreviewImage}
+                  src={replyPreviewImage}
                   className="h-full w-full rounded-lg object-contain"
                   preload="metadata"
                 >
@@ -489,9 +426,8 @@ const PostPage = () => {
               )}
               <button
                 type="button"
-                onClick={handleRemoveMainCommentMedia}
-                className="absolute -right-2 -top-2 rounded-full bg-slate-500 p-1 text-xs text-white transition duration-200 hover:bg-slate-600"
-                title="Remove media"
+                onClick={handleRemoveMedia}
+                className="absolute -right-2 -top-2 rounded-full bg-slate-500 p-1 text-xs text-white hover:bg-slate-600"
               >
                 <IoClose size={15} />
               </button>
@@ -500,43 +436,37 @@ const PostPage = () => {
         </form>
       )}
 
-      <div className="flex flex-col" ref={commentsListRef}>
-        {isLoadingComments ? (
-          <div className="flex h-full flex-col gap-4 p-2 md:gap-14 md:p-4">
-            <CommentsSkeleton />
-            <CommentsSkeleton />
-            <CommentsSkeleton />
-            <CommentsSkeleton />
+      {/* ── Replies list ── */}
+      <div className="flex flex-col">
+        {isLoadingReplies ? (
+          <div className="flex h-full flex-col items-center gap-4 p-2 md:gap-14 md:p-4">
+            {/* Reuse whatever skeleton component you have */}
+            <LoadingSpinner size="md" />
           </div>
-        ) : comments.length > 0 ? (
+        ) : replies.length > 0 ? (
           <>
-            {comments.map((comment) => (
-              <div key={comment._id} id={`comment-${comment._id}`}>
-                <CommentItem
-                  comment={comment}
-                  postId={displayPost._id}
-                  isPostOwner={authUser?._id === displayPost.user?._id}
-                  isProfileImgAnonymous={
-                    displayPost.isAnonymous && authUser._id === displayPost.user._id
-                  }
-                />
-              </div>
+            {replies.map((reply) => (
+              /*
+                Each reply is a Post. The Post component already handles
+                click-to-navigate via navigateToPostPage, so no changes needed there.
+              */
+              <Post key={reply._id} post={reply} />
             ))}
-            {hasNextCommentsPage && (
+            {hasNextPage && (
               <div className="flex justify-center py-4" ref={observerTarget}>
                 <button
-                  onClick={() => fetchNextCommentsPage()}
-                  disabled={isFetchingNextCommentsPage}
+                  onClick={() => fetchNextPage()}
+                  disabled={isFetchingNextPage}
                   className="text-primary hover:underline"
                 >
-                  {isFetchingNextCommentsPage ? <LoadingSpinner size="sm" /> : "Load more comments"}
+                  {isFetchingNextPage ? <LoadingSpinner size="sm" /> : "Load more replies"}
                 </button>
               </div>
             )}
           </>
         ) : (
           <p className="mt-4 p-4 text-center text-gray-400">
-            No comments yet. Be the first to add one!
+            No replies yet. Be the first to reply!
           </p>
         )}
       </div>

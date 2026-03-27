@@ -4,56 +4,40 @@ import { toggleBookmarkApi } from "../../../api/postsApi"
 import { postKeys } from "./postKeys"
 import { showAppToast } from "../../../utils/showAppToast"
 
-const updatePostBookmarkStatus = (data, postId, userId) => {
-  if (!data) return data
-
+const updatePostBookmarkStatus = (oldData, postId, userId) => {
+  if (!oldData) return oldData
   const handlePost = (post) => {
+    if (!post) return post
     const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
-    const isTarget = targetPost._id === postId
-
-    if (isTarget) {
-      const isAlreadyBookmarked = targetPost.bookmarkedBy?.includes(userId)
-      const newBookmarkedBy = isAlreadyBookmarked
+    if (targetPost._id === postId) {
+      const isBookmarked = targetPost.bookmarkedBy?.includes(userId)
+      const newBookmarkedBy = isBookmarked
         ? (targetPost.bookmarkedBy || []).filter((id) => id !== userId)
         : [...(targetPost.bookmarkedBy || []), userId]
-
-      if (post.repostedFrom?._id === postId) {
-        return {
-          ...post,
-          repostedFrom: { ...targetPost, bookmarkedBy: newBookmarkedBy },
-        }
-      }
-      return { ...post, bookmarkedBy: newBookmarkedBy }
+      return post.repostedFrom?._id === postId
+        ? { ...post, repostedFrom: { ...targetPost, bookmarkedBy: newBookmarkedBy } }
+        : { ...post, bookmarkedBy: newBookmarkedBy }
     }
     return post
   }
 
-  if (data._id) {
-    return handlePost(data)
-  }
-
-  if (Array.isArray(data)) {
-    return data.map(handlePost)
-  }
-
-  if (data.pages) {
-    const newPages = data.pages.map((page) => ({
-      ...page,
-      posts: (page.posts || []).map(handlePost),
+  if (oldData.pages) {
+    const newPages = oldData.pages.map((p) => ({
+      ...p,
+      posts: p.posts?.map(handlePost),
+      replies: p.replies?.map(handlePost),
     }))
-
-    if (JSON.stringify(data.queryKey) === JSON.stringify(postKeys.bookmarked())) {
-      const newFilteredPages = newPages.map((page) => ({
-        ...page,
-        posts: page.posts.filter((p) => p.bookmarkedBy?.includes(userId)),
-      }))
-      return { ...data, pages: newFilteredPages }
-    }
-
-    return { ...data, pages: newPages }
+    return { ...oldData, pages: newPages }
   }
-
-  return data
+  if (oldData.ancestors || oldData.post)
+    return {
+      ...oldData,
+      post: handlePost(oldData.post),
+      ancestors: oldData.ancestors?.map(handlePost),
+    }
+  if (oldData._id) return handlePost(oldData)
+  if (Array.isArray(oldData)) return oldData.map(handlePost)
+  return oldData
 }
 
 export const useToggleBookmarks = (currentProfileUsername = null) => {
@@ -64,37 +48,20 @@ export const useToggleBookmarks = (currentProfileUsername = null) => {
     mutationFn: toggleBookmarkApi,
 
     onMutate: async (postId) => {
-      if (!authUser?._id) {
-        console.warn("No authenticated user ID for optimistic bookmark update.")
-        return
-      }
+      await queryClient.cancelQueries({ queryKey: postKeys.all })
+      const allQueries = queryClient.getQueryCache().getAll()
+      const previousData = {}
 
-
-      const keysToUpdate = [
-        postKeys.list("/api/posts/all"),
-        postKeys.list("/api/posts/following"),
-        postKeys.bookmarked(),
-        postKeys.details(postId),
-        postKeys.user(currentProfileUsername),
-        postKeys.likes(currentProfileUsername),
-        postKeys.pinned(currentProfileUsername),
-      ].filter((key) => queryClient.getQueryData(key) !== undefined)
-
-      await Promise.all(keysToUpdate.map((key) => queryClient.cancelQueries({ queryKey: key })))
-
-      const previousDataSnapshots = keysToUpdate.reduce((acc, key) => {
-        const snapshotKey = JSON.stringify(key)
-        acc[snapshotKey] = queryClient.getQueryData(key)
-        return acc
-      }, {})
-
-      keysToUpdate.forEach((key) => {
-        queryClient.setQueryData(key, (oldData) =>
-          updatePostBookmarkStatus(oldData, postId, authUser._id),
-        )
+      allQueries.forEach((query) => {
+        const key = query.queryKey
+        if (Array.isArray(key) && key[0] === "posts") {
+          previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
+          queryClient.setQueryData(key, (old) =>
+            updatePostBookmarkStatus(old, postId, authUser._id),
+          )
+        }
       })
-
-      return previousDataSnapshots
+      return { previousData }
     },
 
     onSuccess: (data) => {

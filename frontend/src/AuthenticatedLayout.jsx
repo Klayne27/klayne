@@ -31,6 +31,10 @@ const PrivateChatPage = lazy(() => import("./pages/chat/PrivateChatPage"))
 const PostPage = lazy(() => import("./pages/PostPage"))
 const SearchPage = lazy(() => import("./pages/SearchPage"))
 const TodoPageLayout = lazy(() => import("./pages/todos/TodoPageLayout"))
+const DevlogPage = lazy(() => import("./pages/DevlogPage"))
+const GroupSettingsPage = lazy(() => import("./pages/GroupSettingsPage"))
+const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
+
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
@@ -79,12 +83,17 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               />
               <Route path="/notifications" element={<NotificationPage />} />
               <Route path="/messages" element={<PrivateChatPage />} />
+              <Route path="/messages/:conversationId/settings" element={<GroupSettingsPage />} />
+              <Route path="/join/:inviteCode" element={<JoinGroupPage />} />
+
               <Route path="/messages/:conversationId" element={<PrivateChatPage />} />
               <Route path="/public-chat" element={<PublicChatPage />} />
               <Route path="/bookmarks" element={<BookmarksPage />} />
               <Route path="/themes" element={<ThemesPage />} />
               <Route path="/:username/post/:pid" element={<PostPage />} />
               <Route path="/search" element={<SearchPage />} />
+              <Route path="/devlog" element={<DevlogPage />} />
+
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<PomodoroDashboardPage />} />
               <Route path="/study-activity" element={<StudyActivityPage />} />

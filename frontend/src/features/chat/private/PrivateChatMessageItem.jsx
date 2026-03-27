@@ -25,6 +25,7 @@ import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
 import { usePinMessage } from "./privateChatHooks/usePinMessage"
+import { useAdminDeleteMessage } from "../group/groupChatHooks/useAdminDeleteMessage"
 
 const PrivateChatMessageItem = ({
   message,
@@ -57,12 +58,20 @@ const PrivateChatMessageItem = ({
     selectedConversationId: selectedConversation._id,
     onReactionAdded,
   })
+
+  const { adminDeleteMessage } = useAdminDeleteMessage(selectedConversation._id)
   const { pinMessage } = usePinMessage()
 
   const isMobile = useIsMobile()
 
-  const { isSentByCurrentUser, isEditable, isMessageEdited, groupedReactions, hasAnyReactions } =
-    useMessagingMetaData(message, currentUser)
+  const {
+    isSentByCurrentUser,
+    isEditable,
+    isMessageEdited,
+    groupedReactions,
+    hasAnyReactions,
+    isReplyToMessageDeleted,
+  } = useMessagingMetaData(message, currentUser)
 
   const {
     handleMouseEnter,
@@ -112,6 +121,14 @@ const PrivateChatMessageItem = ({
     messageListRef,
   })
 
+  const isAuthUserAdminOrOwner =
+    selectedConversation?.isGroup &&
+    selectedConversation?.members?.some(
+      (member) =>
+        member.user._id.toString() === currentUser?._id.toString() &&
+        (member.role === "admin" || member.role === "owner"),
+    )
+
   const messageContentStyle = isMobile
     ? {
         userSelect: "none",
@@ -148,6 +165,14 @@ const PrivateChatMessageItem = ({
     deleteMessage({
       messageId: message._id,
       conversationId: message.conversationId,
+    })
+    setShowMoreActionsModal(false)
+  }
+
+  const handleAdminDeleteMessage = () => {
+    adminDeleteMessage({
+      groupId: selectedConversation._id,
+      messageId: message._id,
     })
     setShowMoreActionsModal(false)
   }
@@ -218,6 +243,7 @@ const PrivateChatMessageItem = ({
             onEditClick={handleEditClick}
             onCopyMessage={handleCopyMessage}
             onDeleteOwnMessage={handleDeleteOwnMessage}
+            onAdminDeleteMessage={handleAdminDeleteMessage}
             isEditable={isEditable}
             isSentByCurrentUser={isSentByCurrentUser}
             onOpenViewReactionsModal={handleOpenViewReactionsModal}
@@ -225,6 +251,7 @@ const PrivateChatMessageItem = ({
             onReactionAdded={onReactionAdded}
             reactToMessage={reactToMessage}
             onPinMessage={handlePinMessage}
+            isAuthUserAdminOrOwner={isAuthUserAdminOrOwner}
           />
         )}
         <MessageContentLayout
@@ -246,6 +273,7 @@ const PrivateChatMessageItem = ({
             className={`flex flex-col ${isSentByCurrentUser ? "items-end" : "items-start"} w-fit max-w-[75%]`}
           >
             <PrivateChatFirstMessageInGroup
+              selectedConversation={selectedConversation}
               message={message}
               isSentByCurrentUser={isSentByCurrentUser}
               onUsernameClick={onUsernameClick}
@@ -269,15 +297,20 @@ const PrivateChatMessageItem = ({
                 onImageClick={handleImageClick}
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}
+                isReplyToMessageDeleted={isReplyToMessageDeleted}
               />
-              {isSentByCurrentUser && (
-                <span className="ml-1 flex-shrink-0 self-end text-sm">
-                  {message?.seen ? (
-                    <BsCheck2All size={16} className="text-primary" />
-                  ) : (
-                    <BsCheck2 size={16} className="text-gray-500" />
-                  )}
-                </span>
+              {selectedConversation.isGroup ? (
+                <div></div>
+              ) : (
+                isSentByCurrentUser && (
+                  <span className="ml-1 flex-shrink-0 self-end text-sm">
+                    {message?.seen ? (
+                      <BsCheck2All size={16} className="text-primary" />
+                    ) : (
+                      <BsCheck2 size={16} className="text-gray-500" />
+                    )}
+                  </span>
+                )
               )}
             </div>
             {/* Grouped Reactions Display */}

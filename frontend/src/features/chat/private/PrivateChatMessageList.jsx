@@ -26,7 +26,6 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
 ) {
   const { authUser: currentUser } = useAuthUser()
   const processedMessages = useProcessedMessage(messagesToRender, pinnedMessagesInfo)
-  const { isTypingOtherUser } = usePrivateChatStore()
   const { setMessageIdToJumpTo } = useChatViewStore()
 
   const [modalState, setModalState] = useState({
@@ -67,8 +66,6 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
 
   return (
     <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
-      {/* ... rest of the code ... */}
-
       {!isNewChat &&
         processedMessages.length > 0 &&
         processedMessages.map((message) => {
@@ -122,15 +119,6 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
             />
           )
         })}
-
-      {isTypingOtherUser && (
-        <PrivateChatMessageItem
-          key="typing-indicator"
-          isTypingOtherUser={isTypingOtherUser}
-          currentUser={currentUser}
-          message={{}} // Pass an empty message object since it's a special case
-        />
-      )}
 
       {modalState.isOpen && (
         <ProfileModalContainer modalState={modalState} handleCloseModal={handleCloseModal} />

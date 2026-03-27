@@ -35,12 +35,16 @@ export const PostModalActions = ({
             />
           )}
 
-          <input
-            type="file"
-            accept="image/*,video/*"
-            hidden
-            ref={fileInputRef}
-          />
+          {!selectedFile && !scheduledAt && (
+            <BiPoll
+              className="size-6 cursor-pointer text-primary hover:text-primary/80"
+              onClick={onPollClick}
+              title="Add a poll"
+              aria-label="Add a poll"
+            />
+          )}
+
+          <input type="file" accept="image/*,video/*" hidden ref={fileInputRef} />
 
           <div className="relative">
             <PiSmiley

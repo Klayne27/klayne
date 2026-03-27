@@ -13,7 +13,6 @@ export const getImageById = async (req, res) => {
       }
     });
 
-    // If no image is found, return a 404 error.
     if (!image) {
       return res.status(404).json({ error: "Image not found" });
     }
