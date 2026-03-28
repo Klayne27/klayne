@@ -45,6 +45,7 @@ export default function GroupSettingsPage() {
   const [isEditMode, setIsEditMode] = useState(false)
   const [showLeaveModal, setShowLeaveModal] = useState(false)
   const [showDeleteModal, setShowDeleteModal] = useState(false)
+  const [editIsPrivate, setEditIsPrivate] = useState(false) // Add this
   const [inviteCode, setInviteCode] = useState(null)
 
   const handleAvatarChange = (e) => {
@@ -83,6 +84,7 @@ export default function GroupSettingsPage() {
       groupId: conversationId,
       name: editName || group.name,
       description: editDescription !== undefined ? editDescription : group.description,
+      isPrivate: editIsPrivate, // Add this
     })
     setIsEditMode(false)
   }
@@ -155,6 +157,22 @@ export default function GroupSettingsPage() {
               placeholder="Description"
               rows={2}
             />
+            <div className="flex w-full items-center justify-between px-2 py-2">
+              <div className="flex flex-col">
+                <span className="text-sm font-semibold">{editIsPrivate ? "Private Group": "Public Group"}</span>
+                <span className="text-xs text-gray-500">
+                  {editIsPrivate
+                    ? "Members must be approved to join"
+                    : "Anyone with the link can join immediately"}
+                </span>
+              </div>
+              <input
+                type="checkbox"
+                className="toggle toggle-primary" // Assuming you use DaisyUI based on your class names
+                checked={editIsPrivate}
+                onChange={(e) => setEditIsPrivate(e.target.checked)}
+              />
+            </div>
             <div className="flex gap-2">
               <button
                 className="rounded-full bg-primary px-4 py-1.5 text-sm font-bold text-white"
@@ -181,6 +199,7 @@ export default function GroupSettingsPage() {
                   setEditName(group.name)
                   setEditDescription(group.description)
                   setIsEditMode(true)
+                  setEditIsPrivate(group.isPrivate) // Sync current privacy status
                 }}
               >
                 Edit info
