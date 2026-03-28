@@ -29,6 +29,7 @@ dotenv.config();
 import { initPush } from "./lib/utils/sendPush.js";
 import { initFirebaseAdmin } from "./config/firebaseAdmin.js";
 import { startMonthlyCronJob } from "./cron/monthlyReset.js";
+import { startWeeklyCronJob } from "./cron/weeklyReset.js";
 
 initPush();
 initFirebaseAdmin();
