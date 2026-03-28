@@ -14,26 +14,29 @@ export const signup = async (req, res) => {
     fullName = fullName.trim();
     username = username.trim();
 
-    if (username.endsWith("/")) {
-      return res.status(400).json({ error: "Username cannot end with a slash (/)." });
-    }
-
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
     }
 
+    const endsWithSpecialChar = /[^a-zA-Z0-9]$/;
+    if (endsWithSpecialChar.test(username)) {
+      return res
+        .status(400)
+        .json({ error: "Handle must end with a letter or a number." });
+    }
+
     if (username.length === 0) {
-      return res.status(400).json({ error: "Username cannot be empty." });
+      return res.status(400).json({ error: "Handle cannot be empty." });
     }
 
     if (fullName.length === 0) {
-      return res.status(400).json({ error: "Full Name cannot be empty." });
+      return res.status(400).json({ error: "Username cannot be empty." });
     }
 
     const existingUser = await User.findOne({ username });
     if (existingUser) {
-      return res.status(400).json({ error: "Username is already taken" });
+      return res.status(400).json({ error: "Handle is already taken" });
     }
 
     const existingEmail = await User.findOne({ email });

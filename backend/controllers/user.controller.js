@@ -271,6 +271,8 @@ export const updateUser = async (req, res) => {
     link,
     confirmNewPassword,
     relationshipStatus,
+    levelOfEducation, // Added
+    majorOrField, // Added
   } = req.body;
   const { profileImg, coverImg } = req.body;
 
@@ -293,13 +295,18 @@ export const updateUser = async (req, res) => {
     }
 
     if (username !== undefined && username !== user.username) {
-      if (username.endsWith("/")) {
-        return res.status(400).json({ error: "Username cannot end with a slash (/)." });
+      username = username.trim();
+
+      const endsWithSpecialChar = /[^a-zA-Z0-9]$/;
+      if (endsWithSpecialChar.test(username)) {
+        return res
+          .status(400)
+          .json({ error: "Handle must end with a letter or a number." });
       }
 
       const existingUserWithUsername = await User.findOne({ username });
       if (existingUserWithUsername) {
-        return res.status(409).json({ error: "Username is already taken." });
+        return res.status(409).json({ error: "Handle is already taken." });
       }
     }
 
@@ -382,6 +389,9 @@ export const updateUser = async (req, res) => {
     if (relationshipStatus !== undefined) {
       user.relationshipStatus = relationshipStatus;
     }
+
+    if (levelOfEducation !== undefined) user.levelOfEducation = levelOfEducation;
+    if (majorOrField !== undefined) user.majorOrField = majorOrField;
 
     await user.save(); // Re-fetch the user to ensure all fields, including the new images, are populated
 

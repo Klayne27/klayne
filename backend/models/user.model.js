@@ -134,6 +134,24 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: true,
     },
+    levelOfEducation: {
+      type: String,
+      enum: [
+        "Middle School",
+        "High School",
+        "Undergraduate",
+        "Postgraduate",
+        "Vocational",
+        "Self-Taught",
+        "Other",
+      ],
+      default: "High School",
+    },
+    majorOrField: {
+      type: String, // e.g., "Computer Science" or "Arts"
+      trim: true,
+      default: "",
+    },
     relationshipStatus: {
       type: String,
       enum: [
@@ -143,7 +161,7 @@ const userSchema = new mongoose.Schema(
         "Casually Dating",
         "Engaged",
         "Married",
-        "", // Allowing empty string if they want to hide it
+        "",
       ],
       default: "",
     },
@@ -216,6 +234,12 @@ const userSchema = new mongoose.Schema(
         type: String,
         default: null,
       },
+    },
+    weeklyStats: {
+      studyDuration: { type: Number, default: 0 },
+      sessionsCompleted: { type: Number, default: 0 },
+      xpEarned: { type: Number, default: 0 },
+      weekStart: { type: String, default: null }, // ISO string of the Monday this week started
     },
     preferredBadge: {
       type: String,

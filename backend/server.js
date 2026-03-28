@@ -79,7 +79,8 @@ server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   await connectMongoDB();
   console.log("MongoDB connected.");
-  if (process.env.NODE_ENV === "production") {
-    startMonthlyCronJob();
-  }
+if (process.env.NODE_ENV === "production") {
+  startMonthlyCronJob();
+  startWeeklyCronJob(); // ADD
+}
 });

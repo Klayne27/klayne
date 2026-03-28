@@ -17,6 +17,8 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
     confirmNewPassword: "",
     relationshipStatus: "",
+    levelOfEducation: "", // Added
+    majorOrField: "", // Added
   }) // Add new state for image previews
 
   const [profileImg, setProfileImg] = useState(null)
@@ -90,6 +92,8 @@ const EditProfileModal = ({ authUser }) => {
         bio: authUser?.bio,
         link: authUser?.link,
         relationshipStatus: authUser?.relationshipStatus || "", // Add this
+        levelOfEducation: authUser?.levelOfEducation || "", // Added
+        majorOrField: authUser?.majorOrField || "", // Added
         newPassword: "",
         currentPassword: "",
         confirmNewPassword: "",
@@ -117,12 +121,6 @@ const EditProfileModal = ({ authUser }) => {
 
   return (
     <>
-      <button
-        className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
-        onClick={() => document.getElementById("edit_profile_modal").showModal()}
-      >
-        Edit profile
-      </button>
       <dialog id="edit_profile_modal" className="modal">
         <div className="modal-box rounded-2xl shadow-md">
           <h3 className="mb-4 text-lg font-bold">Update Profile</h3>
@@ -265,6 +263,37 @@ const EditProfileModal = ({ authUser }) => {
                 />
               </div>
             )}
+            <div className="flex flex-col gap-4 sm:flex-row">
+              <div className="relative flex-1">
+                <label className="mb-1 ml-1 block text-xs text-slate-500">Education Level</label>
+                <select
+                  name="levelOfEducation"
+                  className="select-md w-full cursor-pointer rounded-[4px] border border-secondary bg-base-100 p-2 text-sm focus:border-primary focus:outline-none"
+                  value={formData.levelOfEducation}
+                  onChange={handleInputChange}
+                >
+                  <option value="Middle School">Middle School</option>
+                  <option value="High School">High School</option>
+                  <option value="Undergraduate">Undergraduate</option>
+                  <option value="Postgraduate">Postgraduate</option>
+                  <option value="Vocational">Vocational</option>
+                  <option value="Self-Taught">Self-Taught</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+
+              <div className="relative flex-1">
+                <label className="mb-1 ml-1 block text-xs text-slate-500">Major / Field</label>
+                <input
+                  type="text"
+                  placeholder="e.g. Computer Science"
+                  className="input-md w-full rounded-[4px] border border-secondary bg-base-100 p-2 text-sm focus:border-primary focus:outline-none"
+                  value={formData.majorOrField}
+                  name="majorOrField"
+                  onChange={handleInputChange}
+                />
+              </div>
+            </div>
             <div className="relative">
               <label className="mb-1 ml-1 block text-xs text-slate-500">Relationship Status</label>
               <select

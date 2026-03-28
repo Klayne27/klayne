@@ -4,7 +4,7 @@ import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useGetPreviousWinners = () => {
   const { data: previousWinners, isLoading: isLoadingPreviousWinners } = useQuery({
-    queryKey: pomodoroKeys.leaderboardWinners(),
+    queryKey: pomodoroKeys.leaderboardMonthlyWinners(), // renamed
     queryFn: getPreviousWinnersApi,
   })
 

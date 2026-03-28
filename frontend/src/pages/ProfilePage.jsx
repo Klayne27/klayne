@@ -7,9 +7,9 @@ import ProfileHeaderSkeleton from "../components/skeletons/ProfileHeaderSkeleton
 import EditProfileModal from "../components/common/EditProfileModal"
 import FollowListModal from "../components/common/FollowListModal"
 
-import { FaArrowLeft, FaWrench } from "react-icons/fa6"
+import { FaArrowLeft, FaGraduationCap, FaWrench } from "react-icons/fa6"
 import { IoCalendarOutline } from "react-icons/io5"
-import { MdBlock, MdDeleteForever, MdEdit, MdLocalPolice } from "react-icons/md"
+import { MdBlock, MdDeleteForever, MdEdit, MdLocalPolice, MdSchool } from "react-icons/md"
 import { formatMemberSinceDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useUpdateUserProfile } from "../features/users/usersHooks/useUpdateUserProfile"
@@ -32,6 +32,7 @@ import PostModal from "../features/posts/PostModal.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { BiHealth } from "react-icons/bi"
 import { PiChefHatFill, PiLinkSimpleBold } from "react-icons/pi"
+
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -306,8 +307,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2 px-4">
-              {isMyProfile && <EditProfileModal authUser={authUser} />}
-
+              <button
+                className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
+                onClick={() => document.getElementById("edit_profile_modal").showModal()}
+              >
+                Edit profile
+              </button>
               {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
               {isAdminUser && !isMyProfile && userProfile && (
                 <button
@@ -443,6 +448,30 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   </span>
                 </div>
               </div>
+              {(userProfile?.levelOfEducation || userProfile?.majorOrField) && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                  {userProfile?.levelOfEducation && (
+                    <div className="flex items-center gap-1.5">
+                      <FaGraduationCap className="size-4 text-slate-500" />
+                      <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-bold uppercase tracking-wider text-primary">
+                        {userProfile.levelOfEducation}
+                      </span>
+                    </div>
+                  )}
+
+                  {userProfile?.majorOrField && (
+                    <div className="flex items-center gap-1.5">
+                      <MdSchool className="size-4 text-slate-500" />
+                      <span className="text-sm text-slate-400">
+                        Studies{" "}
+                        <span className="font-medium text-slate-200">
+                          {userProfile.majorOrField}
+                        </span>
+                      </span>
+                    </div>
+                  )}
+                </div>
+              )}
               {userProfile?.relationshipStatus && (
                 <div className="flex flex-col">
                   <p className="text-sm text-slate-500">Relationship Status</p>
@@ -620,6 +649,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
           onClose={closeEditPostModal}
         />
       )}
+      {isMyProfile && <EditProfileModal authUser={authUser} />}
     </>
   )
 }

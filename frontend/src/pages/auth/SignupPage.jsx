@@ -53,25 +53,25 @@ const SignUpPage = () => {
           </label>
           <div className="flex flex-wrap gap-4">
             <label className="input input-bordered flex flex-1 items-center gap-2 rounded">
-              <FaUser />
-              <input
-                type="text"
-                className="grow"
-                placeholder="Username"
-                name="username"
-                onChange={handleInputChange}
-                value={formData.username}
-              />
-            </label>
-            <label className="input input-bordered flex flex-1 items-center gap-2 rounded">
               <MdDriveFileRenameOutline />
               <input
                 type="text"
                 className="grow"
-                placeholder="Full Name"
+                placeholder="Username"
                 name="fullName"
                 onChange={handleInputChange}
                 value={formData.fullName}
+              />
+            </label>
+            <label className="input input-bordered flex flex-1 items-center gap-2 rounded">
+              <FaUser />
+              <input
+                type="text"
+                className="grow"
+                placeholder="Handle"
+                name="username"
+                onChange={handleInputChange}
+                value={formData.username}
               />
             </label>
           </div>

@@ -129,6 +129,31 @@ export const endStudySession = async (req, res) => {
     const today = new Date();
     const getDateString = (date) => date.toISOString().split("T")[0];
 
+    const getMondayOfWeek = (date) => {
+      const d = new Date(date);
+      const day = d.getUTCDay(); // 0 = Sunday, 1 = Monday...
+      const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+      d.setUTCDate(d.getUTCDate() + diff);
+      d.setUTCHours(0, 0, 0, 0);
+      return d.toISOString().split("T")[0]; // "2025-03-24"
+    };
+
+    const currentWeekStart = getMondayOfWeek(today);
+
+    // Reset weekly stats if we're in a new week:
+    if (user.weeklyStats.weekStart !== currentWeekStart) {
+      user.weeklyStats = {
+        studyDuration: 0,
+        sessionsCompleted: 0,
+        xpEarned: 0,
+        weekStart: currentWeekStart,
+      };
+    }
+
+    // Then accumulate (add this alongside your monthly accumulation):
+    user.weeklyStats.studyDuration += duration;
+    user.weeklyStats.sessionsCompleted += 1;
+
     const currentMonth = today.toISOString().slice(0, 7);
     if (user.monthlyStats.lastResetMonth !== currentMonth) {
       user.monthlyStats = {
@@ -196,7 +221,7 @@ export const endStudySession = async (req, res) => {
 
     const monthlyStreakResult = updateStreak(
       user.lastMonthlyStudyDate,
-      user.monthlyStudyStreak
+      user.monthlyStudyStreak,
     );
     user.monthlyStudyStreak = monthlyStreakResult.streak;
 
@@ -218,6 +243,7 @@ export const endStudySession = async (req, res) => {
     const xpResult = await handleXPAndLeveling(user, duration);
     if (xpResult && xpResult.xpEarned) {
       user.monthlyStats.xpEarned += xpResult.xpEarned;
+      user.weeklyStats.xpEarned += xpResult.xpEarned; // ADD
       await user.save();
     }
     await checkAndAwardBadges(user);
@@ -257,7 +283,7 @@ export const updatePomodoroSettings = async (req, res) => {
         "pomodoroSettings.isMuted": isMuted,
         "pomodoroSettings.skipBreaks": skipBreaks,
       },
-      { new: true }
+      { new: true },
     );
     res.status(200).json({ message: "Settings updated successfully", user });
   } catch (error) {
@@ -330,7 +356,7 @@ export const logStudyTime = async (req, res) => {
     const [taskUpdateResult, userUpdateResult] = await Promise.all([
       StudyTask.updateOne(
         { _id: taskId, user: userId },
-        { $inc: { totalDuration: secondsToAdd } }
+        { $inc: { totalDuration: secondsToAdd } },
       ),
       User.updateOne(
         { _id: userId },
@@ -339,7 +365,7 @@ export const logStudyTime = async (req, res) => {
             totalStudyDuration: secondsToAdd,
             "monthlyStats.studyDuration": secondsToAdd,
           },
-        }
+        },
       ),
     ]);
 

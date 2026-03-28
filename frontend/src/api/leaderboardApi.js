@@ -30,3 +30,20 @@ export const getPreviousWinnersApi = async () => {
 
   return res.json()
 }
+
+
+export const getWeeklyLeaderboardApi = async (page = 1) => {
+  const res = await fetch(`${BASE_URL}/leaderboard/weekly?page=${page}&limit=10`, {
+    credentials: "include",
+  })
+  if (!res.ok) throw new Error("Failed to fetch weekly leaderboard")
+  return res.json()
+}
+
+export const getPreviousWeekWinnersApi = async () => {
+  const res = await fetch(`${BASE_URL}/leaderboard/weekly/previous-winners`, {
+    credentials: "include",
+  })
+  if (!res.ok) throw new Error("Failed to fetch previous week winners")
+  return res.json()
+}
