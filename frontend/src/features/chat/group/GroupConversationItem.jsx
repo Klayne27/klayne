@@ -29,6 +29,7 @@ function GroupConversationItem({ conv }) {
   const { deleteGroup, isDeletingGroup } = useDeleteGroup()
 
   const isSelected = selectedConversation?._id === conv._id
+  console.log(selectedConversation);
 
   const myMember = conv.members?.find(
     (m) => (m.user?._id || m.user)?.toString() === currentUser._id.toString(),

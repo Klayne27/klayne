@@ -59,58 +59,48 @@ export const createGroup = async (req, res) => {
       return res.status(400).json({ error: "Group name is required." });
     }
 
-    // Deduplicate and validate invited members (creator is always owner)
     const uniqueInvited = [
       ...new Set((memberIds || []).map((id) => id.toString())),
     ].filter((id) => id !== userId);
 
-    const validUsers = await User.find({
-      _id: { $in: uniqueInvited },
-    }).select("_id");
+    const validUsers = await User.find({ _id: { $in: uniqueInvited } }).select("_id");
     const validIds = validUsers.map((u) => u._id.toString());
 
     const members = [
       { user: userId, role: "owner" },
       ...validIds.map((id) => ({ user: id, role: "member" })),
     ];
-
-    // Also populate participants for DM-style compatibility (all member user IDs)
     const participants = members.map((m) => m.user);
-
-    let avatarUrl = null;
-    let avatarPublicId = null;
-
-    if (avatar) {
-      const uploaded = await cloudinary.uploader.upload(avatar, {
-        upload_preset: "ml_avatars",
-      });
-      avatarUrl = uploaded.secure_url;
-      avatarPublicId = uploaded.public_id;
-    }
 
     const inviteCode = nanoid(10);
 
+    // Create the group first to get the ID for the Image's parentDocument
     const group = new Conversation({
       isGroup: true,
       name: name.trim(),
       description: description || "",
       isPrivate: isPrivate || false,
       members,
-      participants, // keep in sync so existing queries don't break
+      participants,
       inviteCode,
     });
 
     await group.save();
 
-    if (avatar && avatarUrl) {
-      const newImage = new Image({
-        imageUrl: avatarUrl,
+    // --- Group Avatar Creation ---
+    if (avatar && avatar !== "") {
+      const uploaded = await cloudinary.uploader.upload(avatar, {
+        upload_preset: "ml_avatars",
+      });
+
+      const newImage = await Image.create({
+        imageUrl: uploaded.secure_url,
         parentDocument: group._id,
         parentModel: "Conversation",
         uploadedBy: userId,
-        publicId: avatarPublicId,
+        publicId: uploaded.public_id,
       });
-      await newImage.save();
+
       group.avatar = newImage._id;
       await group.save();
     }
@@ -119,7 +109,7 @@ export const createGroup = async (req, res) => {
       .populate(POPULATE_MEMBER_USER)
       .populate(POPULATE_AVATAR);
 
-    // Notify invited members that they were added to a group
+    // Notify invited members
     validIds.forEach((memberId) => {
       const socketIds = getReceiverSocketIds(memberId);
       if (socketIds.length > 0) {
@@ -129,11 +119,10 @@ export const createGroup = async (req, res) => {
 
     res.status(201).json(populated);
   } catch (error) {
-    console.error("Error in createGroup:", error.message, error.errors ?? "");
+    console.error("Error in createGroup:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 // ─── get group conversations for current user ─────────────────────────────────
 
 export const getGroupConversations = async (req, res) => {
@@ -189,10 +178,13 @@ export const updateGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
     const { name, description, isPrivate } = req.body;
-    let { avatar } = req.body;
+    let { avatar } = req.body; // base64 string or empty string
     const userId = req.user._id;
 
-    const group = await Conversation.findOne({ _id: groupId, isGroup: true });
+    // 1. Populate avatar initially to get the imageUrl for deletion
+    const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate(
+      "avatar",
+    );
     if (!group) return res.status(404).json({ error: "Group not found." });
 
     if (!isAdminOrOwner(group, userId)) {
@@ -203,29 +195,31 @@ export const updateGroup = async (req, res) => {
     if (description !== undefined) group.description = description;
     if (isPrivate !== undefined) group.isPrivate = isPrivate;
 
-    if (avatar) {
-      // Delete old avatar from cloudinary if it exists
+    // --- Group Avatar Logic (Mirrored from updateUser) ---
+    if (avatar || avatar === "") {
+      // Delete old avatar if it exists
       if (group.avatar) {
-        const oldImage = await Image.findById(group.avatar);
-        if (oldImage?.publicId) {
-          await cloudinary.uploader.destroy(oldImage.publicId);
-        }
-        await Image.deleteOne({ _id: group.avatar });
+        const publicId = group.avatar.imageUrl.split("/").pop().split(".")[0];
+        await cloudinary.uploader.destroy(publicId);
+        await Image.findByIdAndDelete(group.avatar._id);
       }
 
-      const uploaded = await cloudinary.uploader.upload(avatar, {
-        upload_preset: "ml_avatars",
-      });
+      if (avatar === "") {
+        group.avatar = null;
+      } else {
+        const uploadedResponse = await cloudinary.uploader.upload(avatar, {
+          upload_preset: "ml_avatars",
+        });
 
-      const newImage = new Image({
-        imageUrl: uploaded.secure_url,
-        parentDocument: group._id,
-        parentModel: "Conversation",
-        uploadedBy: userId,
-        publicId: uploaded.public_id,
-      });
-      await newImage.save();
-      group.avatar = newImage._id;
+        const newGroupImage = await Image.create({
+          imageUrl: uploadedResponse.secure_url,
+          parentDocument: group._id,
+          parentModel: "Conversation",
+          uploadedBy: userId,
+          publicId: uploadedResponse.public_id, // Storing this is good practice
+        });
+        group.avatar = newGroupImage._id;
+      }
     }
 
     await group.save();
@@ -486,14 +480,17 @@ export const deleteGroup = async (req, res) => {
     const { groupId } = req.params;
     const userId = req.user._id.toString();
 
-    const group = await Conversation.findOne({ _id: groupId, isGroup: true });
+    // 1. Populate avatar so we have the imageUrl for deletion
+    const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate(
+      "avatar",
+    );
     if (!group) return res.status(404).json({ error: "Group not found." });
 
     if (getMemberRole(group, userId) !== "owner") {
       return res.status(403).json({ error: "Only the owner can delete the group." });
     }
 
-    // Notify all members before deleting
+    // 2. Notify all members before deleting
     group.members.forEach((m) => {
       const socketIds = getReceiverSocketIds(m.user.toString());
       if (socketIds.length > 0) {
@@ -501,13 +498,23 @@ export const deleteGroup = async (req, res) => {
       }
     });
 
-    // Clean up avatar
+    // 3. Clean up Group Avatar (Mirrored from updateUser logic)
     if (group.avatar) {
-      const img = await Image.findById(group.avatar);
-      if (img?.publicId) await cloudinary.uploader.destroy(img.publicId);
-      await Image.deleteOne({ _id: group.avatar });
+      const publicId = group.avatar.imageUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(publicId);
+      await Image.findByIdAndDelete(group.avatar._id);
     }
 
+    // 4. (Optional but Recommended) Clean up all message images in Cloudinary
+    // This finds all Image docs where parentDocument is this group
+    const relatedImages = await Image.find({ parentDocument: group._id });
+    for (const img of relatedImages) {
+      const pId = img.imageUrl.split("/").pop().split(".")[0];
+      await cloudinary.uploader.destroy(pId);
+    }
+    await Image.deleteMany({ parentDocument: group._id });
+
+    // 5. Final database cleanup
     await Message.deleteMany({ conversationId: group._id });
     await Conversation.deleteOne({ _id: group._id });
 
