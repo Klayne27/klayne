@@ -10,6 +10,7 @@ import {
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { formatDistanceToNow } from "date-fns"
+import AnimatedCount from "../components/common/AnimatedCount"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -185,7 +186,8 @@ const DevlogCard = ({ devlog, isAdmin, authUserId, onEdit, onDelete, onLike }) =
                   d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z"
                 />
               </svg>
-              {devlog.likes?.length || 0}
+
+             {devlog.likes?.length || 0} 
             </button>
 
             <span className="flex items-center gap-1 text-xs text-base-content/40">
