@@ -123,6 +123,7 @@ export const createGroup = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 // ─── get group conversations for current user ─────────────────────────────────
 
 export const getGroupConversations = async (req, res) => {

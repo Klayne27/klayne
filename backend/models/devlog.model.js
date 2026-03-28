@@ -25,6 +25,17 @@ const devlogSchema = new mongoose.Schema(
       ref: "User",
       required: true,
     },
+    likes: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "User",
+        default: [],
+      },
+    ],
+    commentsCount: {
+      type: Number,
+      default: 0,
+    },
   },
   { timestamps: true },
 );
