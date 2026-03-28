@@ -11,21 +11,27 @@ export default function JoinGroupPage() {
 
   useEffect(() => {
     if (inviteCode && !hasJoined.current) {
-      hasJoined.current = true // Lock it immediately
+      hasJoined.current = true
       joinViaInviteCode(inviteCode)
     }
   }, [inviteCode, joinViaInviteCode])
 
   return (
     <div className="flex h-screen items-center justify-center">
-      {isJoining ? (
-        <div className="flex flex-col items-center gap-3">
-          <LoadingSpinner size="md" />
-          <p className="text-gray-400">Joining group...</p>
-        </div>
-      ) : (
-        <p className="text-gray-400">Processing invite link...</p>
-      )}
+      {/* If isJoining is true, show the spinner. 
+         If it's false, it means we are either waiting to start 
+         OR we are currently redirecting.
+      */}
+      <div className="flex flex-col items-center gap-3">
+        {isJoining ? (
+          <>
+            <LoadingSpinner size="md" />
+            <p className="text-gray-400">Joining group...</p>
+          </>
+        ) : (
+          <p className="text-gray-400">Redirecting...</p>
+        )}
+      </div>
     </div>
   )
 }

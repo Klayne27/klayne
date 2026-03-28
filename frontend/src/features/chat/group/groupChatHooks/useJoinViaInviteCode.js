@@ -12,11 +12,15 @@ export const useJoinViaInviteCode = () => {
   const { mutate: joinViaInviteCode, isPending: isJoining } = useMutation({
     mutationFn: joinViaInviteCodeApi,
     onSuccess: (data) => {
-      // If private group, it returned a "request sent" message
+      // --- PRIVATE GROUP CASE ---
       if (data.message && !data._id) {
         showAppToast(data.message, "success")
+        // Navigate away so the user isn't stuck on the loading page
+        navigate("/messages") 
         return
       }
+
+      // --- PUBLIC GROUP CASE ---
       queryClient.invalidateQueries({ queryKey: groupKeys.list() })
       queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
       showAppToast("Joined group!", "success")
@@ -24,6 +28,8 @@ export const useJoinViaInviteCode = () => {
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to join group.", "error")
+      // Also navigate away on error so they aren't stuck
+      navigate("/messages")
     },
   })
 
