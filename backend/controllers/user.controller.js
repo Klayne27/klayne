@@ -81,8 +81,7 @@ export const getFollowingUsers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "following",
-      select:
-        "username fullName isVerified isGoldVerified  badges preferredBadge",
+      select: "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -105,8 +104,7 @@ export const getFollowers = async (req, res) => {
     const { id } = req.params;
     const user = await User.findById(id).populate({
       path: "followers",
-      select:
-        "username fullName isVerified isGoldVerified  badges preferredBadge",
+      select: "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -295,11 +293,15 @@ export const updateUser = async (req, res) => {
     }
 
     if (username !== undefined && username !== user.username) {
+      if (username.endsWith("/")) {
+        return res.status(400).json({ error: "Username cannot end with a slash (/)." });
+      }
+
       const existingUserWithUsername = await User.findOne({ username });
       if (existingUserWithUsername) {
         return res.status(409).json({ error: "Username is already taken." });
       }
-    } 
+    }
 
     if ((newPassword && !currentPassword) || (!newPassword && currentPassword)) {
       return res

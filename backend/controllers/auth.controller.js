@@ -14,6 +14,10 @@ export const signup = async (req, res) => {
     fullName = fullName.trim();
     username = username.trim();
 
+    if (username.endsWith("/")) {
+      return res.status(400).json({ error: "Username cannot end with a slash (/)." });
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
       return res.status(400).json({ error: "Invalid email format" });
