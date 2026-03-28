@@ -10,7 +10,6 @@ import {
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { formatDistanceToNow } from "date-fns"
-import AnimatedCount from "../components/common/AnimatedCount"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",

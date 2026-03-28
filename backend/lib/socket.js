@@ -152,7 +152,7 @@ export async function emitNewPostCount(userId) {
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
       isVent: { $ne: true },
-      isIC: { $ne: true }, // ADD: exclude IC posts from OOC count
+      isIC: { $ne: true }, 
       // parentPost is intentionally NOT filtered out — replies count too
     });
 

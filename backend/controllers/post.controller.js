@@ -324,7 +324,7 @@ export const getAllPosts = async (req, res) => {
 
     const initialMatchConditions = {
       isVent: { $ne: true },
-      isIC: { $ne: true }, // Add this: Filter out IC posts from the OOC feed
+      isIC: { $ne: true }, 
       // parentPost: null,
 
       "deletedFor.user": { $ne: userId },
