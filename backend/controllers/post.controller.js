@@ -1239,7 +1239,7 @@ export const getFollowingPosts = async (req, res) => {
 
     const queryConditions = {
       isVent: { $ne: true },
-      // parentPost: null,
+      parentPost: null,
       $and: [
         { "deletedFor.user": { $ne: userId } },
         {
