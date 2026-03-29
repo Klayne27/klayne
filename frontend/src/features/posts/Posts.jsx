@@ -127,7 +127,14 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
         const elementRef = filteredPostsForRender.length === index + 1 ? lastPostElementRef : null
 
         return (
-          <div ref={elementRef} key={post._id}>
+          <div
+            ref={elementRef}
+            key={post._id}
+            style={{
+              contentVisibility: "auto",
+              containIntrinsicSize: "150px",
+            }}
+          >
             <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
           </div>
         )
