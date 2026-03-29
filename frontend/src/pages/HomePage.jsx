@@ -10,6 +10,7 @@ import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { postKeys } from "../features/posts/postsHooks/postKeys"
 import CreatePost from "../features/posts/CreatePost"
 import { useMarkVentPostsAsRead } from "../features/posts/postsHooks/useMarkVentPostsAsRead"
+import { useMarkICPostsAsRead } from "../features/posts/postsHooks/useMarkICPostsAsRead"
 
 const HomePage = () => {
   const {
@@ -22,6 +23,8 @@ const HomePage = () => {
     newICPostCount,
     showNewICPostsButton,
     setShowNewICPostsButton,
+    hasNewICPosts,
+    hasNewVentPosts,
   } = useSocket()
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
   const feedType = useAppStore((state) => state.feedType)
@@ -35,6 +38,7 @@ const HomePage = () => {
   const queryClient = useQueryClient()
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
+  const { markICPostsAsRead } = useMarkICPostsAsRead()
 
   const { isTouchDevice, activeButtonId, handleTouchEnd, handleTouchStart, handleTouchCancel } =
     useTouchHoverEffect()
@@ -61,7 +65,7 @@ const HomePage = () => {
       setShowNewFeedPostsButton(false)
     } else {
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
-      // markFeedAsRead()
+      markICPostsAsRead()
       setShowNewICPostsButton(false)
     }
   }, [
@@ -69,6 +73,7 @@ const HomePage = () => {
     setShowNewFeedPostsButton,
     markFeedAsRead,
     markVentFeedAsRead,
+    markICPostsAsRead,
     feedType,
     setShowNewVentPostsButton,
     setShowNewICPostsButton,
@@ -206,7 +211,7 @@ const HomePage = () => {
             >
               <span className="relative">
                 Study
-                {newICPostCount > 0 && (
+                {hasNewICPosts && (
                   <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
                 )}
               </span>
@@ -234,7 +239,7 @@ const HomePage = () => {
             >
               <span className="relative">
                 Rants
-                {newVentPostCount > 0 && (
+                {hasNewVentPosts && (
                   <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
                 )}
               </span>

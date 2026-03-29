@@ -222,6 +222,61 @@ export async function emitNewVentPostCount(userId) {
   }
 }
 
+export async function emitNewICUnreadDot(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+    if (recipientSocketIds.length === 0) return;
+
+    const user = await User.findById(userIdObj).select("lastReadICFeedTimestamp").lean();
+    if (!user) return;
+
+    const lastReadTimestamp = user.lastReadICFeedTimestamp || new Date(0);
+
+    const hasNew = await Post.exists({
+      user: { $ne: userIdObj },
+      isScheduled: false,
+      publishedAt: { $gt: lastReadTimestamp },
+      isIC: true,
+      isVent: { $ne: true },
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newICUnreadDot", { hasNew: !!hasNew });
+    });
+  } catch (error) {
+    console.error(`Error in emitNewICUnreadDot for user ${userId}:`, error);
+  }
+}
+
+export async function emitNewVentUnreadDot(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+    if (recipientSocketIds.length === 0) return;
+
+    const user = await User.findById(userIdObj)
+      .select("lastReadVentFeedTimestamp")
+      .lean();
+    if (!user) return;
+
+    const lastReadTimestamp = user.lastReadVentFeedTimestamp || new Date(0);
+
+    const hasNew = await Post.exists({
+      user: { $ne: userIdObj },
+      isScheduled: false,
+      publishedAt: { $gt: lastReadTimestamp },
+      isVent: true,
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newVentUnreadDot", { hasNew: !!hasNew });
+    });
+  } catch (error) {
+    console.error(`Error in emitNewVentUnreadDot for user ${userId}:`, error);
+  }
+}
+
 export async function emitUnreadPublicChatStatus(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
@@ -303,6 +358,8 @@ export async function emitUnreadNotificationStatus(userId) {
     );
   }
 }
+
+
 
 export const createAndSendNotification = async ({
   from,
@@ -472,6 +529,8 @@ io.on("connection", async (socket) => {
 
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
+    emitNewICUnreadDot(userId)
+    emitNewVentUnreadDot(userId)
     await emitUnreadPublicChatStatus(userId); // <--- CALL NEW FUNCTION HERE
   } else {
     socket.disconnect(true);

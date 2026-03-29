@@ -30,6 +30,7 @@ import {
   getPostReplies,
   getPostThread,
   getUserReplies,
+  markFeedICPostsAsRead,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
@@ -74,5 +75,6 @@ router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts
 
 router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);
 router.post("/mark-as-read/vent", protectRoute, markFeedVentPostsAsRead);
+router.post("/mark-as-read/ic", protectRoute, markFeedICPostsAsRead);
 
 export default router;

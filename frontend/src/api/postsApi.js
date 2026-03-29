@@ -226,6 +226,19 @@ export const markVentPostsAsReadApi = async () => {
   return data
 }
 
+export const markICPostsAsReadApi = async () => {
+  const res = await fetch(`${BASE_URL}/mark-as-read/ic`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+  })
+
+  const data = await res.json()
+
+  if (!res.ok) throw new Error(data.error || "Failed to mark posts as read")
+
+  return data
+}
+
 export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOptions }) => {
   const response = await fetch("/api/posts/vent", {
     method: "POST",

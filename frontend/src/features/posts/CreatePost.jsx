@@ -31,6 +31,7 @@ import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
 import CircularBarProgress from "../../components/common/CircularBarProgress"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useMarkICPostsAsRead } from "./postsHooks/useMarkICPostsAsRead"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -96,6 +97,7 @@ const CreatePost = ({ feedType }) => {
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
+  const { markICPostsAsRead } = useMarkICPostsAsRead()
 
   // Determine character limit based on user status
   const characterLimit =
@@ -190,7 +192,7 @@ const CreatePost = ({ feedType }) => {
       setShowNewFeedPostsButton(false)
     } else {
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/ic") })
-      // markFeedAsRead()
+      markICPostsAsRead()
       setShowNewICPostsButton(false)
     }
   }, [
@@ -198,6 +200,7 @@ const CreatePost = ({ feedType }) => {
     setShowNewFeedPostsButton,
     markFeedAsRead,
     markVentFeedAsRead,
+    markICPostsAsRead,
     feedType,
     setShowNewVentPostsButton,
     setShowNewICPostsButton,

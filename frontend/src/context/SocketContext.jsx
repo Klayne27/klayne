@@ -32,8 +32,11 @@ export const SocketContextProvider = ({ children }) => {
   const [newVentPostCount, setNewVentPostCount] = useState(0)
   const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
   const [showNewICPostsButton, setShowNewICPostsButton] = useState(false)
-
   const [showNewVentPostsButton, setShowNewVentPostsButton] = useState(false)
+
+  // ── New: unread dots (no count, just boolean) ─────────────────────────────
+  const [hasNewICPosts, setHasNewICPosts] = useState(false)
+  const [hasNewVentPosts, setHasNewVentPosts] = useState(false)
 
   const socketRef = useRef(null)
   const queryClient = useQueryClient()
@@ -111,6 +114,15 @@ export const SocketContextProvider = ({ children }) => {
         setNewVentPostCount(data.newVentPostCount)
       })
 
+      // ── Unread dot listeners (boolean only, no count) ─────────────────────
+      newSocket.on("newICUnreadDot", ({ hasNew }) => {
+        setHasNewICPosts(hasNew)
+      })
+
+      newSocket.on("newVentUnreadDot", ({ hasNew }) => {
+        setHasNewVentPosts(hasNew)
+      })
+
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
         if (actorId === user._id) {
           return
@@ -146,10 +158,6 @@ export const SocketContextProvider = ({ children }) => {
         setUnreadPublicChatCount(unreadPublicChatCount)
       })
 
-      // newSocket.on("disconnect", (reason) => {
-      //   console.warn(`Socket disconnected: ${reason}`)
-      // })
-
       newSocket.on("connect_error", (error) => {
         console.error("Socket connection error:", error.message)
       })
@@ -177,32 +185,28 @@ export const SocketContextProvider = ({ children }) => {
       setHasNewFeedPosts(false)
       setShowNewICPostsButton(false)
       setShowNewFeedPostsButton(false)
-      setHasUnreadPublicChat(false) // Clear public chat unread status on logout
+      setHasUnreadPublicChat(false)
       setUnreadNotificationsCount(0)
       setUnreadMessageCount(0)
       setNewPostCount(0)
       setNewICPostCount(0)
       setUnreadPublicChatCount(0)
       setNewVentPostCount(0)
+      setHasNewICPosts(false) // ADD
+      setHasNewVentPosts(false) // ADD
     }
   }, [user, isLoadingAuthUser, queryClient])
-
-  useEffect(() => {
-    // This existing useEffect updates `activeConversationIdRef` based on `activeConversationId` state.
-    // It's fine as is for private chats.
-  }, [activeConversationId])
 
   useEffect(() => {
     if (!socket || !user) return
 
     const currentPath = location.pathname
-    const prevPath = previousPathRef.current // When user ENTERS the public chat
+    const prevPath = previousPathRef.current
 
     if (currentPath === PUBLIC_CHAT_ROUTE && prevPath !== PUBLIC_CHAT_ROUTE) {
       socket.emit("userEnteredPublicChat")
       setHasUnreadPublicChat(false)
-    } // When user LEAVES the public chat
-    else if (currentPath !== PUBLIC_CHAT_ROUTE && prevPath === PUBLIC_CHAT_ROUTE) {
+    } else if (currentPath !== PUBLIC_CHAT_ROUTE && prevPath === PUBLIC_CHAT_ROUTE) {
       socket.emit("userLeftPublicChat")
     }
 
@@ -237,6 +241,10 @@ export const SocketContextProvider = ({ children }) => {
         setShowNewICPostsButton,
         newICPostCount,
         showNewICPostsButton,
+        hasNewICPosts,
+        setHasNewICPosts,
+        hasNewVentPosts,
+        setHasNewVentPosts,
       }}
     >
       {children}

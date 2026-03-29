@@ -6,8 +6,10 @@ import mongoose from "mongoose";
 import {
   createAndSendNotification,
   emitNewICPostCount,
+  emitNewICUnreadDot,
   emitNewPostCount,
   emitNewVentPostCount,
+  emitNewVentUnreadDot,
   io,
   onlineUsersMap,
 } from "../lib/socket.js";
@@ -325,7 +327,7 @@ export const getAllPosts = async (req, res) => {
     const initialMatchConditions = {
       isVent: { $ne: true },
       isIC: { $ne: true }, 
-      // parentPost: null,
+      parentPost: null,
 
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
@@ -350,7 +352,7 @@ export const getAllPosts = async (req, res) => {
           // Keep existing conditions
           isVent: { $ne: true },
           isIC: { $ne: true },
-          // parentPost: null,
+          parentPost: null,
 
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
@@ -428,7 +430,7 @@ export const getAllPosts = async (req, res) => {
         $match: {
           isVent: { $ne: true },
           isIC: { $ne: true },
-          // parentPost: null,
+          parentPost: null,
 
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
@@ -681,6 +683,7 @@ export const getICPosts = async (req, res) => {
     const icMatchConditions = {
       isIC: true,
       isVent: { $ne: true },
+      parentPost: null,
       "deletedFor.user": { $ne: userId },
       ...scheduledPostConditions,
       user: { $nin: blockedAndBlockingObjectIds },
@@ -705,6 +708,7 @@ export const getICPosts = async (req, res) => {
           isVent: { $ne: true },
           isIC: true,
           "deletedFor.user": { $ne: userId },
+          parentPost: null,
           ...scheduledPostConditions,
           user: { $nin: blockedAndBlockingObjectIds },
           // New condition to filter out reposts of vent posts
@@ -780,6 +784,7 @@ export const getICPosts = async (req, res) => {
           isVent: { $ne: true },
           isIC: true,
           "deletedFor.user": { $ne: userId },
+          parentPost: null,
           ...scheduledPostConditions,
           user: { $nin: blockedAndBlockingObjectIds },
           "repostedFromPostData.isVent": { $ne: true },
@@ -949,7 +954,8 @@ export const getICPosts = async (req, res) => {
     const hasNextPage = page * limit < totalCount;
 
     await User.findByIdAndUpdate(userId, { lastReadICFeedTimestamp: new Date() });
-    emitNewICPostCount(userId.toString());
+    await emitNewICPostCount(userId.toString());
+    await emitNewICUnreadDot(userId.toString());
 
     res
       .status(200)
@@ -2062,6 +2068,7 @@ export const createPost = async (req, res) => {
           if (onlineUserId.toString() !== userId.toString()) {
             if (newPost.isIC) {
               await emitNewICPostCount(onlineUserId);
+              await emitNewICUnreadDot(onlineUserId);
             } else {
               await emitNewPostCount(onlineUserId);
             }
@@ -2352,6 +2359,7 @@ export const markFeedVentPostsAsRead = async (req, res) => {
     );
 
     await emitNewVentPostCount(userId.toString());
+    await emitNewVentUnreadDot(userId.toString());
 
     res.status(200).json({ message: "Feed vent posts marked as read." });
   } catch (error) {
@@ -2359,6 +2367,30 @@ export const markFeedVentPostsAsRead = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const markFeedICPostsAsRead = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+
+    const now = new Date();
+
+    await User.findByIdAndUpdate(
+      userIdObj,
+      { $set: { lastReadICFeedTimestamp: now } },
+      { new: true },
+    );
+
+    await emitNewICPostCount(userId.toString());
+    await emitNewICUnreadDot(userId.toString());
+
+    res.status(200).json({ message: "Feed vent posts marked as read." });
+  } catch (error) {
+    console.error("Error marking feed posts as read:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 
 export const checkIfUserReposted = async (req, res) => {
   try {
@@ -2731,6 +2763,7 @@ export const createVentPost = async (req, res) => {
       for (const [onlineUserId] of onlineUsersMap.entries()) {
         if (onlineUserId.toString() !== userId.toString()) {
           await emitNewVentPostCount(onlineUserId);
+          await emitNewVentUnreadDot(onlineUserId);
         }
       }
     }
@@ -2941,6 +2974,7 @@ export const getVentPosts = async (req, res) => {
 
     await User.findByIdAndUpdate(userId, { lastReadVentFeedTimestamp: new Date() });
     emitNewVentPostCount(userId.toString());
+    emitNewVentUnreadDot(userId.toString());
 
     const hasNextPage = page * limit < totalCount;
 
