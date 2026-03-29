@@ -13,6 +13,7 @@ import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUp
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 function MobileSideModal({
   showSideModal,
@@ -119,7 +120,7 @@ function MobileSideModal({
                   onTouchCancel={handleTouchCancel}
                 >
                   <img
-                    src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                     alt="User Profile"
                   />
                   {isOnline ? (

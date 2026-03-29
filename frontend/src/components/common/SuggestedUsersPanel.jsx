@@ -8,6 +8,7 @@ import React, { useState } from "react"
 import FollowButton from "./FollowButton"
 import ConfirmationModal from "./ConfirmationModal"
 import { useAppStore } from "../../store/useAppStore"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
@@ -67,7 +68,9 @@ const SuggestedUsersPanel = () => {
                 <div className="flex flex-grow items-center gap-2">
                   <div className="avatar">
                     <div className="w-8 rounded-full">
-                      <img src={user.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                      <img
+                        src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                      />
                     </div>
                   </div>
                   <div className="flex flex-col">

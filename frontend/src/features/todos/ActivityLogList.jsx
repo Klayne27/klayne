@@ -3,6 +3,7 @@ import { FaCheck, FaMinus, FaPen, FaPlus, } from "react-icons/fa"
 import { colorMap, getBadgeColor, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils"
 import { formatTime } from "../../utils/date"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const getActionIcon = (action) => {
   switch (action) {
@@ -49,10 +50,13 @@ export const ActivityLogList = forwardRef(
                     key={activity._id}
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
-                    <div className="flex items-center relative gap-3 px-3 py-1">
+                    <div className="relative flex items-center gap-3 px-3 py-1">
                       <div className="relative">
                         <img
-                          src={activity.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                          src={
+                            getOptimizedImageUrl(activity.user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar")
+                          }
                           className="size-9 rounded-full"
                         />
                         <div

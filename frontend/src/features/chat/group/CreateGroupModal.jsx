@@ -77,7 +77,7 @@ export default function CreateGroupModal({ isOpen, onClose }) {
             onClick={() => fileRef.current?.click()}
           >
             {avatarPreview ? (
-              <img src={avatarPreview} alt="avatar" className="h-full w-full object-cover" />
+              <img src={getOptimizedImageUrl(avatarPreview, "avatar")} alt="avatar" className="h-full w-full object-cover" />
             ) : (
               <div className="flex h-full w-full items-center justify-center text-gray-400">
                 <FiUpload size={20} />

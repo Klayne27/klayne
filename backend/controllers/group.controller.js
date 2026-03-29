@@ -163,8 +163,6 @@ export const getGroup = async (req, res) => {
   }
 };
 
-// ─── update group info ────────────────────────────────────────────────────────
-
 export const updateGroup = async (req, res) => {
   try {
     const { groupId } = req.params;

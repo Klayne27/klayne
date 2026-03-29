@@ -290,7 +290,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   {/* <Link to={`/images/${userProfile?.profileImg?._id}`}> */}
                   <img
                     src={
-                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                      getOptimizedImageUrl(profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar")
                     }
                     alt="user avatar"
                     className="cursor-pointer"

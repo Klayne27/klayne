@@ -12,9 +12,6 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"
 import { useRef } from "react"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
-import { BiHealth } from "react-icons/bi"
-import { MdLocalPolice } from "react-icons/md"
-import { PiChefHatFill } from "react-icons/pi"
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useGetNotifications()
@@ -85,6 +82,7 @@ const NotificationPage = () => {
         return null
     }
   }
+
 
   const getNotificationMessage = (notification) => {
     const displayUsername =
@@ -235,7 +233,7 @@ const NotificationPage = () => {
                     {contentToDisplay?.img && (
                       <div className="flex justify-center">
                         <img
-                          src={contentToDisplay.img}
+                          src={getOptimizedImageUrl(contentToDisplay.img, "post")}
                           className="mt-2 max-h-72 rounded-xl object-contain"
                           alt="Content"
                         />

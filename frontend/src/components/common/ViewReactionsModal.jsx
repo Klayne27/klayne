@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom"
 import { useEffect, useState } from "react"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
   const groupedReactions = reactions.reduce((acc, reaction) => {
@@ -60,7 +61,7 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
               >
                 <Link to={`/profile/${user?.username}`} onClick={onClose}>
                   <img
-                    src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    src={getOptimizedImageUrl(user?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                     alt={user?.username}
                     className="size-7 rounded-full object-cover"
                   />

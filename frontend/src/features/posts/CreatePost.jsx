@@ -30,6 +30,7 @@ import { useCreateVentPost } from "./postsHooks/useCreateVentPost"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
 import CircularBarProgress from "../../components/common/CircularBarProgress"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -621,7 +622,12 @@ const CreatePost = ({ feedType }) => {
           <Link to={`/profile/${authUser.username}`}>
             <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
               <div className="w-10 rounded-full">
-                <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                <img
+                  src={getOptimizedImageUrl(
+                    authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                    "avatar",
+                  )}
+                />
               </div>
             </div>
           </Link>
@@ -671,7 +677,7 @@ const CreatePost = ({ feedType }) => {
                       <div className="avatar">
                         <div className="w-8 rounded-full">
                           <img
-                            src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                            src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                             alt="profile"
                           />
                         </div>

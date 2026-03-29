@@ -3,6 +3,7 @@ import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/t
 import { formatTime } from "../../utils/date/index.js"
 import { FaCheck } from "react-icons/fa6"
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
 
 const PublicCompletedTodosList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
@@ -44,7 +45,10 @@ const PublicCompletedTodosList = forwardRef(
                     <div className="relative flex items-center gap-3 px-3 py-1">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                          src={
+                            getOptimizedImageUrl(todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar")
+                          }
                           className="size-9 rounded-full"
                           alt="User profile"
                         />

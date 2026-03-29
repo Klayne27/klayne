@@ -6,6 +6,7 @@ import { useGetOrCreateConversation } from "./privateChatHooks/useGetOrCreateCon
 import { useGetFollowedUsersForMessaging } from "./privateChatHooks/useGetFollowedUsersForMessaging" // Updated hook import
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import ConversationsListHeader from "./ConversationsListHeader"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 const ConversationsList = ({ conversations }) => {
   const { authUser } = useAuthUser()
@@ -99,7 +100,7 @@ const ConversationsList = ({ conversations }) => {
                       <div className="avatar">
                         <div className="w-8 rounded-full">
                           <img
-                            src={user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                            src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                             alt={`${user.username}'s profile`}
                           />
                         </div>

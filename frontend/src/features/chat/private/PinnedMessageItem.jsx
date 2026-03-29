@@ -3,6 +3,7 @@ import { FaArrowTurnUp } from "react-icons/fa6"
 import { RiUnpinFill } from "react-icons/ri"
 import { Link } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 const PinnedMessageItem = ({
   pinnedMessage,
@@ -31,7 +32,7 @@ const PinnedMessageItem = ({
   return (
     <div className="mb-3 flex w-full items-start gap-4 rounded-lg border border-accent p-4">
       <img
-        src={message.sender?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+        src={getOptimizedImageUrl(message.sender?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
         alt={message.sender?.username}
         className="size-10 rounded-full object-cover"
       />
@@ -63,7 +64,7 @@ const PinnedMessageItem = ({
               {message.image?._id ? (
                 <Link to={`/images/${message.image._id}`}>
                   <img
-                    src={imageUrl}
+                    src={getOptimizedImageUrl(imageUrl, "post")}
                     className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
                     alt="message image"
                     loading="lazy"
@@ -71,7 +72,7 @@ const PinnedMessageItem = ({
                 </Link>
               ) : (
                 <img
-                  src={imageUrl}
+                  src={getOptimizedImageUrl(imageUrl, "post")}
                   className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
                   alt="message image"
                   loading="lazy"

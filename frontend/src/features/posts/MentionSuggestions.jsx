@@ -1,3 +1,5 @@
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+
 export const MentionSuggestions = ({
   show,
   suggestions,
@@ -31,7 +33,10 @@ export const MentionSuggestions = ({
           >
             <div className="avatar">
               <div className="w-8 rounded-full">
-                <img src={user.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="profile" />
+                <img
+                  src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                  alt="profile"
+                />
               </div>
             </div>
             <div>

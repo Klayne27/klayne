@@ -96,7 +96,7 @@ const MessageBubble = ({
             {message.image?._id && (
               <div className="mb-2 h-auto w-[200px] cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                 <img
-                  src={message.image.imageUrl}
+                  src={getOptimizedImageUrl(message.image.imageUrl, "post")}
                   alt="Chat image"
                   className="h-full w-full object-cover"
                   onClick={onImageClick}

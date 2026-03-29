@@ -9,6 +9,7 @@ import { HiUserGroup } from "react-icons/hi"
 import CreateGroupModal from "../group/CreateGroupModal"
 import { MdGroupAdd } from "react-icons/md"
 import { HiMiniUserGroup } from "react-icons/hi2"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 function ConversationsListHeader() {
   const { authUser } = useAuthUser()
@@ -50,7 +51,11 @@ function ConversationsListHeader() {
                 <Link to={`/profile/${authUser.username}`}>
                   <div className={`avatar relative`}>
                     <div className="w-10 rounded-full">
-                      <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                      <img
+                        src={
+                          getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
+                        }
+                      />
                     </div>
                     {isOnline ? (
                       <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>

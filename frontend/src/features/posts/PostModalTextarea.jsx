@@ -3,6 +3,7 @@ import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { TbCalendarClock } from "react-icons/tb"
 import { MentionSuggestions } from "./MentionSuggestions"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 export const PostModalTextarea = ({
   input,
@@ -51,7 +52,7 @@ export const PostModalTextarea = ({
         <Link to={`/profile/${authUser.username}`}>
           <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
             <div className="w-10 rounded-full">
-              <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+              <img src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")} />
             </div>
           </div>
         </Link>

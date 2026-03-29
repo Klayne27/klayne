@@ -3,6 +3,7 @@ import { FaCheck } from "react-icons/fa6"
 import LoadingSpinner from "../../components/common/LoadingSpinner.jsx"
 import { forwardRef } from "react"
 import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
 
 const CompletedTodoList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
@@ -41,10 +42,13 @@ const CompletedTodoList = forwardRef(
                     key={todo?._id}
                     className="border-b border-slate-600 pb-2 text-sm last:border-b-0"
                   >
-                    <div className="flex items-center gap-3 px-3 py-1 relative">
+                    <div className="relative flex items-center gap-3 px-3 py-1">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                          src={
+                            getOptimizedImageUrl(todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar")
+                          }
                           className="size-9 rounded-full"
                           alt="User profile"
                         />
@@ -60,8 +64,14 @@ const CompletedTodoList = forwardRef(
                         </p>
                         <p className="text-slate-400">{formatTime(todo?.completedAt)}</p>
                       </div>
-                      <div className="mt-5 absolute right-3 flex text-xs text-slate-400 items-center gap-1">
-                        <span>{IconComponent ? <IconComponent className={`${colorMap[todo?.listMeta?.color]}`} /> : ""}</span>
+                      <div className="absolute right-3 mt-5 flex items-center gap-1 text-xs text-slate-400">
+                        <span>
+                          {IconComponent ? (
+                            <IconComponent className={`${colorMap[todo?.listMeta?.color]}`} />
+                          ) : (
+                            ""
+                          )}
+                        </span>
                         {todo?.listMeta?.name}
                       </div>
                     </div>

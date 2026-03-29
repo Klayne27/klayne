@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils";
 
 function MessageContentLayout({
   isSentByCurrentUser,
@@ -16,10 +17,10 @@ function MessageContentLayout({
     >
       {!isSentByCurrentUser && message.isFirstInGroup && (
         <div className="flex-shrink-0">
-          <div >
+          <div>
             <img
               alt="User Avatar"
-              src={message?.sender?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+              src={getOptimizedImageUrl(message?.sender?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
               className="mt-0.5 size-9 cursor-pointer rounded-full object-cover"
               onClick={(e) => onUsernameClick(message.sender, e)}
             />

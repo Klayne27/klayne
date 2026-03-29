@@ -20,6 +20,7 @@ import BadgeDisplay from "../../components/common/BadgeDisplay"
 import { useDashboardData } from "../../hooks/customHooks/useDashboardData"
 import { GoalProgressCard } from "../../features/study-dashboard/GoalProgressCard"
 import { ChartComponent } from "../../features/study-dashboard/ChartComponent"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const StudyDashboardPage = () => {
   const { authUser } = useAuthUser()
@@ -146,7 +147,7 @@ const StudyDashboardPage = () => {
             <Link to={`/profile/${authUser?.username}`} className="cursor-pointer">
               {authUser.profileImg?.imageUrl && (
                 <img
-                  src={authUser.profileImg.imageUrl}
+                  src={getOptimizedImageUrl(authUser.profileImg.imageUrl, "avatar")}
                   alt="User profile"
                   className="size-24 rounded-full object-cover md:size-12"
                 />

@@ -28,6 +28,7 @@ import klayneLogo from "/klaynelogo2.png"
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -827,7 +828,10 @@ const Sidebar = ({
                 onTouchCancel={handleTouchCancel}
               >
                 <img
-                  src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                  src={getOptimizedImageUrl(
+                    authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                    "avatar",
+                  )}
                   className="size-7 rounded-full"
                   alt="User Profile"
                 />
@@ -897,7 +901,12 @@ const Sidebar = ({
                 {/* <Link to={`/profile/${authUser.username}`}> */}
                 <div className={`avatar relative flex justify-center`}>
                   <div className="w-10 rounded-full">
-                    <img src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"} />
+                    <img
+                      src={getOptimizedImageUrl(
+                        authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                        "avatar",
+                      )}
+                    />
                   </div>
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
@@ -929,12 +938,15 @@ const Sidebar = ({
                     <div className="flex flex-col pb-2">
                       <div className="relative mb-2 cursor-pointer" onClick={handleClickProfile}>
                         <img
-                          src={authUser?.coverImg?.imageUrl || "/cover.png"}
+                          src={getOptimizedImageUrl(authUser?.coverImg?.imageUrl || "/cover.png", "cover")}
                           alt="User cover"
                           className="h-16 w-full rounded-t-xl object-cover"
                         />
                         <img
-                          src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                          src={getOptimizedImageUrl(
+                            authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar",
+                          )}
                           alt="User profile"
                           className="absolute -bottom-6 left-2 size-12 rounded-full border-2 border-base-100 object-cover"
                         />

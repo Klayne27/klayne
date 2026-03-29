@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const ReactionsSlideUpMenuContent = ({ reactions, onClose }) => {
   const groupedReactions = reactions.reduce((acc, reaction) => {
@@ -49,7 +50,7 @@ const ReactionsSlideUpMenuContent = ({ reactions, onClose }) => {
           >
             <Link to={`/profile/${user?.username}`} onClick={onClose}>
               <img
-                src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                src={getOptimizedImageUrl(user?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                 alt={user?.username}
                 className="size-7 rounded-full object-cover"
               />

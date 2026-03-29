@@ -271,7 +271,10 @@ function ConversationItem({ conv }) {
         <div className="flex w-full flex-col gap-5 px-4">
           <div className="flex items-center justify-start gap-2 font-bold">
             <img
-              src={otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+              src={getOptimizedImageUrl(
+                otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                "avatar",
+              )}
               className="size-10 rounded-full"
             />
             <span>@{otherUser?.username}</span>

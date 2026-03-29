@@ -320,7 +320,10 @@ const PostPage = () => {
                   src={
                     post.isAnonymous && post.user._id === authUser._id
                       ? "/avatar-placeholder.png"
-                      : authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                      : getOptimizedImageUrl(
+                          authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )
                   }
                   alt="Your profile"
                 />

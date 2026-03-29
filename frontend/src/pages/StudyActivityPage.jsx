@@ -8,6 +8,7 @@ import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
 import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/useGetStudyActivityFeed"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -153,7 +154,9 @@ const StudyActivityPage = () => {
               <Link to={`/profile/${activity.user.username}`} className="avatar">
                 <div className="w-12 rounded-full">
                   <img
-                    src={activity.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    src={
+                      getOptimizedImageUrl(activity.user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
+                    }
                     alt={`${activity.user.username}'s profile`}
                   />
                 </div>

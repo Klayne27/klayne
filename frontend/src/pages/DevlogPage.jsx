@@ -10,6 +10,7 @@ import {
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { formatDistanceToNow } from "date-fns"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -148,7 +149,7 @@ const DevlogCard = ({ devlog, isAdmin, authUserId, onEdit, onDelete, onLike }) =
             <div className="h-5 w-5 shrink-0 overflow-hidden rounded-full bg-base-300">
               {devlog.author?.profileImg?.imageUrl ? (
                 <img
-                  src={devlog.author.profileImg.imageUrl}
+                  src={getOptimizedImageUrl(devlog.author.profileImg.imageUrl, "avatar")}
                   alt={devlog.author.username}
                   className="h-full w-full object-cover"
                 />
@@ -186,7 +187,7 @@ const DevlogCard = ({ devlog, isAdmin, authUserId, onEdit, onDelete, onLike }) =
                 />
               </svg>
 
-             {devlog.likes?.length || 0} 
+              {devlog.likes?.length || 0}
             </button>
 
             <span className="flex items-center gap-1 text-xs text-base-content/40">

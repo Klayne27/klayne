@@ -3,6 +3,7 @@ import { FaInfoCircle } from "react-icons/fa"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { IoIosStats } from "react-icons/io"
 import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -45,7 +46,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                   className="h-10 w-10 overflow-hidden rounded-full"
                 >
                   <img
-                    src={profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    src={getOptimizedImageUrl(profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                     alt={`${fullName} avatar`}
                     className="h-full w-full object-cover"
                   />

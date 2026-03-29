@@ -5,6 +5,7 @@ import { RiPushpinFill } from "react-icons/ri"
 import { truncateText } from "../../../utils/truncateText"
 import { CiCircleInfo } from "react-icons/ci"
 import { IoInformationCircleOutline } from "react-icons/io5"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation }) {
   const navigate = useNavigate()
@@ -32,7 +33,7 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
       <div className="flex">
         <Link to={!isGroup && `/profile/${otherUser?.username}`} className="relative">
           <img
-            src={isGroup ? groupAvatar : otherUserProfileImg}
+            src={getOptimizedImageUrl(isGroup ? groupAvatar : otherUserProfileImg, "avatar")}
             alt={isGroup ? groupName : otherUserName}
             className="mr-2 h-8 w-8 rounded-full object-cover"
           />

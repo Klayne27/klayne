@@ -13,6 +13,7 @@ import {
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import AnimatedCount from "../components/common/AnimatedCount"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -47,7 +48,7 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
       <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-base-300">
         {comment.author?.profileImg?.imageUrl ? (
           <img
-            src={comment.author.profileImg.imageUrl}
+            src={getOptimizedImageUrl(comment.author.profileImg.imageUrl, "avatar")}
             alt={comment.author.username}
             className="h-full w-full object-cover"
           />
@@ -169,7 +170,7 @@ const CommentComposer = ({ devlogId, authUser }) => {
       <div className="h-8 w-8 shrink-0 overflow-hidden rounded-full bg-base-300">
         {authUser?.profileImg?.imageUrl ? (
           <img
-            src={authUser.profileImg.imageUrl}
+            src={getOptimizedImageUrl(authUser.profileImg.imageUrl, "avatar")}
             alt={authUser.username}
             className="h-full w-full object-cover"
           />
@@ -298,7 +299,7 @@ const DevlogDetailPage = () => {
             <div className="h-6 w-6 shrink-0 overflow-hidden rounded-full bg-base-300">
               {devlog.author?.profileImg?.imageUrl ? (
                 <img
-                  src={devlog.author.profileImg.imageUrl}
+                  src={getOptimizedImageUrl(devlog.author.profileImg.imageUrl, "avatar")}
                   alt={devlog.author.username}
                   className="h-full w-full object-cover"
                 />

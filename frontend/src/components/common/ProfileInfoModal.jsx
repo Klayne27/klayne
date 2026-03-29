@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom"
 import FollowButton from "../common/FollowButton" // Assuming this is your Follow button component
 import { formatMemberSinceDate } from "../../utils/date"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const ProfileInfoModal = ({ user, position = 1 }) => {
   const { authUser } = useAuthUser()
@@ -24,7 +25,7 @@ const ProfileInfoModal = ({ user, position = 1 }) => {
           {/* Cover Photo */}
           <div className="relative h-24 w-full">
             <img
-              src={user?.coverImg?.imageUrl || "/cover.png"}
+              src={getOptimizedImageUrl(user?.coverImg?.imageUrl || "/cover.png", "cover")}
               alt="cover"
               className="h-full w-full rounded-t-xl object-cover"
             />
@@ -34,7 +35,7 @@ const ProfileInfoModal = ({ user, position = 1 }) => {
                 className="w-16 cursor-pointer rounded-full border-2 border-base-200"
                 onClick={() => navigate(`/profile/${user.username}`)}
               >
-                <img src={user?.profileImg?.imageUrl || "/avatar-placeholder.png"} alt="profile" />
+                <img src={getOptimizedImageUrl(user?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")} alt="profile" />
               </div>
             </div>
           </div>

@@ -14,6 +14,7 @@ import { useState } from "react"
 import { useEffect } from "react"
 import { forwardRef } from "react"
 import { colorMap, iconMap } from "../../utils/todoUtils"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const TodoSectionItem = forwardRef(
   (
@@ -119,7 +120,7 @@ const TodoSectionItem = forwardRef(
           {pathname.startsWith("/todos/") && (
             <div className="flex items-center gap-3 p-2">
               <img
-                src={list?.owner.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                src={getOptimizedImageUrl(list?.owner.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                 className="size-8 rounded-full object-cover"
                 alt={`${list?.owner.username}'s profile`}
               />

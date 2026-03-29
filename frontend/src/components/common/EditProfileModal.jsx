@@ -5,6 +5,7 @@ import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
 import { TbCameraPlus } from "react-icons/tb"
 import LoadingSpinner from "../common/LoadingSpinner"
+import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({
@@ -136,7 +137,7 @@ const EditProfileModal = ({ authUser }) => {
                 onClick={() => coverImgRef.current.click()}
               >
                 <img
-                  src={coverImg || authUser.coverImg?.imageUrl || "/cover.png"}
+                  src={getOptimizedImageUrl(coverImg || authUser.coverImg?.imageUrl || "/cover.png", "cover")}
                   className="h-full w-full object-cover opacity-75 transition"
                   alt="cover image preview"
                 />
@@ -151,7 +152,10 @@ const EditProfileModal = ({ authUser }) => {
               >
                 <div className="avatar size-32 rounded-full border-4 border-base-100">
                   <img
-                    src={profileImg || authUser.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                    src={getOptimizedImageUrl(
+                      profileImg || authUser.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     className="size-32 rounded-full opacity-75 transition"
                     alt="profile image preview"
                   />

@@ -13,6 +13,7 @@ import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGet
 import { useGetPreviousWeekWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWeekWinners"
 import useLockBodyScroll from "../hooks/customHooks/useLockBodyScroll"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
+import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 
 function StudyLeaderboardPage() {
   const navigate = useNavigate()
@@ -230,7 +231,9 @@ function StudyLeaderboardPage() {
                     className={`avatar transition-transform duration-200 hover:scale-105 ${index === 0 ? "ring-4 ring-amber-400" : index === 1 ? "ring-4 ring-slate-400" : "ring-4 ring-yellow-800"} h-12 w-12 rounded-full ring-offset-2 ring-offset-base-100`}
                   >
                     <img
-                      src={winner.user.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                      src={
+                        getOptimizedImageUrl(winner.user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
+                      }
                       alt={`${winner.user.fullName} avatar`}
                       className="rounded-full"
                     />
@@ -383,7 +386,7 @@ function StudyLeaderboardPage() {
                       className={`${getRankColor(globalRank)} w-10 rounded-full ring ring-offset-2 ring-offset-base-100 md:w-12`}
                     >
                       <img
-                        src={entry?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                        src={getOptimizedImageUrl(entry?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
                         alt={`${entry.fullName} avatar`}
                       />
                     </div>
