@@ -137,7 +137,10 @@ const EditProfileModal = ({ authUser }) => {
                 onClick={() => coverImgRef.current.click()}
               >
                 <img
-                  src={getOptimizedImageUrl(coverImg || authUser.coverImg?.imageUrl || "/cover.png", "cover")}
+                  src={getOptimizedImageUrl(
+                    coverImg || authUser.coverImg?.imageUrl || "/cover.png",
+                    "cover",
+                  )}
                   className="h-full w-full object-cover opacity-75 transition"
                   alt="cover image preview"
                 />
@@ -276,6 +279,7 @@ const EditProfileModal = ({ authUser }) => {
                   value={formData.levelOfEducation}
                   onChange={handleInputChange}
                 >
+                  <option value="">Prefer not to say</option>
                   <option value="Middle School">Middle School</option>
                   <option value="High School">High School</option>
                   <option value="Undergraduate">Undergraduate</option>

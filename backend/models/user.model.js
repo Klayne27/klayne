@@ -144,8 +144,9 @@ const userSchema = new mongoose.Schema(
         "Vocational",
         "Self-Taught",
         "Other",
+        "",
       ],
-      default: "High School",
+      default: "",
     },
     majorOrField: {
       type: String, // e.g., "Computer Science" or "Arts"
