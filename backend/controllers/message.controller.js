@@ -400,6 +400,12 @@ export const sendMessage = async (req, res) => {
     }
 
     if (voiceMessage) {
+      if (!req.user.isGoldVerified) {
+        return res.status(403).json({
+          error: "Only Gold Verified users can send voice messages.",
+        });
+      }
+
       if (!voiceMessageDuration || voiceMessageDuration > DURATION_LIMIT) {
         return res.status(400).json({
           error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
@@ -781,8 +787,7 @@ export const reactToMessage = async (req, res) => {
     const populatedMessage = await Message.findById(updatedMessage._id)
       .populate({
         path: "sender",
-        select:
-          "username fullName isVerified isGoldVerified  badges preferredBadge",
+        select: "username fullName isVerified isGoldVerified  badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -793,8 +798,7 @@ export const reactToMessage = async (req, res) => {
         select: "text img",
         populate: {
           path: "sender",
-          select:
-            "username fullName isVerified isGoldVerified  badges preferredBadge",
+          select: "username fullName isVerified isGoldVerified  badges preferredBadge",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -860,8 +864,7 @@ export const editMessage = async (req, res) => {
     const populatedMessage = await Message.findById(message._id)
       .populate({
         path: "sender",
-        select:
-          "username fullName isVerified isGoldVerified  badges preferredBadge",
+        select: "username fullName isVerified isGoldVerified  badges preferredBadge",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
@@ -898,14 +901,12 @@ export const editMessage = async (req, res) => {
         const updatedConversation = await Conversation.findById(conversation._id)
           .populate({
             path: "participants",
-            select:
-              "username fullName isVerified isGoldVerified  badges preferredBadge",
+            select: "username fullName isVerified isGoldVerified  badges preferredBadge",
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .populate({
             path: "lastMessage.sender",
-            select:
-              "username fullName isVerified isGoldVerified  badges preferredBadge",
+            select: "username fullName isVerified isGoldVerified  badges preferredBadge",
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .lean();

@@ -1913,9 +1913,9 @@ export const createPost = async (req, res) => {
     if (!user) return res.status(404).json({ error: "User not found" });
 
     if (video) {
-      if (!user.isVerified && !user.isGoldVerified) {
+      if (!user.isGoldVerified) {
         return res.status(403).json({
-          error: "Only verified users can post videos.",
+          error: "Only Gold Verified users can post videos.",
         });
       }
     }
@@ -2637,8 +2637,8 @@ export const createVentPost = async (req, res) => {
     const user = await User.findById(userId);
 
     // 1. Validation Logic
-    if (video && !user.isVerified && !user.isGoldVerified) {
-      return res.status(403).json({ error: "Only verified users can post videos." });
+    if (video && !user.isGoldVerified) {
+      return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
 
     if (!text?.trim() && !img && !video && (!pollOptions || pollOptions.length === 0)) {

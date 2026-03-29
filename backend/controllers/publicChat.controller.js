@@ -357,6 +357,12 @@ export const addReactionToPublicMessage = async (req, res) => {
       return res.status(400).json({ error: "Message ID and emoji are required." });
     }
 
+    if (voiceMessageBase64 && !req.user.isGoldVerified) {
+      return res.status(403).json({
+        error: "Only Gold Verified users can send voice messages in public chat.",
+      });
+    }
+
     if (await isBanned(userId)) {
       return res.status(403).json({
         error: "You are banned from the public chat and cannot react.",

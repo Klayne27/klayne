@@ -4,9 +4,6 @@ import DevlogComment from "../models/devlogComment.model.js";
 const AUTHOR_PROJECTION =
   "_id username fullName profileImg isAdmin isVerified isGoldVerified";
 
-// ─── Devlog CRUD ──────────────────────────────────────────────────────────────
-
-// GET /api/devlogs?page=1&limit=10
 export const getDevlogs = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -37,7 +34,6 @@ export const getDevlogs = async (req, res) => {
   }
 };
 
-// GET /api/devlogs/:id
 export const getDevlog = async (req, res) => {
   try {
     const devlog = await Devlog.findById(req.params.id).populate({
@@ -58,7 +54,6 @@ export const getDevlog = async (req, res) => {
   }
 };
 
-// POST /api/devlogs  (admin only)
 export const createDevlog = async (req, res) => {
   try {
     const { title, body, tag, isPinned } = req.body;
@@ -84,7 +79,6 @@ export const createDevlog = async (req, res) => {
   }
 };
 
-// PUT /api/devlogs/:id  (admin only)
 export const updateDevlog = async (req, res) => {
   try {
     const { title, body, tag, isPinned } = req.body;
@@ -108,13 +102,11 @@ export const updateDevlog = async (req, res) => {
   }
 };
 
-// DELETE /api/devlogs/:id  (admin only)
 export const deleteDevlog = async (req, res) => {
   try {
     const devlog = await Devlog.findById(req.params.id);
     if (!devlog) return res.status(404).json({ error: "Devlog not found" });
 
-    // Cascade-delete all comments for this devlog
     await DevlogComment.deleteMany({ devlog: req.params.id });
     await Devlog.findByIdAndDelete(req.params.id);
 
@@ -125,9 +117,6 @@ export const deleteDevlog = async (req, res) => {
   }
 };
 
-// ─── Likes ────────────────────────────────────────────────────────────────────
-
-// POST /api/devlogs/:id/like
 export const likeDevlog = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -155,9 +144,6 @@ export const likeDevlog = async (req, res) => {
   }
 };
 
-// ─── Comments ─────────────────────────────────────────────────────────────────
-
-// GET /api/devlogs/:id/comments?page=1&limit=20
 export const getDevlogComments = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -191,7 +177,6 @@ export const getDevlogComments = async (req, res) => {
   }
 };
 
-// POST /api/devlogs/:id/comments
 export const createDevlogComment = async (req, res) => {
   try {
     const { text } = req.body;
@@ -209,7 +194,6 @@ export const createDevlogComment = async (req, res) => {
       text: text.trim(),
     });
 
-    // Keep commentsCount in sync
     await Devlog.findByIdAndUpdate(req.params.id, { $inc: { commentsCount: 1 } });
 
     const populated = await comment.populate({
@@ -228,8 +212,6 @@ export const createDevlogComment = async (req, res) => {
   }
 };
 
-// DELETE /api/devlogs/:id/comments/:commentId
-// Authors can delete their own; admins can delete any
 export const deleteDevlogComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -257,7 +239,6 @@ export const deleteDevlogComment = async (req, res) => {
   }
 };
 
-// POST /api/devlogs/:id/comments/:commentId/like
 export const likeDevlogComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -271,7 +252,6 @@ export const likeDevlogComment = async (req, res) => {
     if (alreadyLiked) {
       comment.likes = comment.likes.filter((id) => !id.equals(userId));
     } else {
-      // Remove dislike if switching
       comment.dislikes = comment.dislikes.filter((id) => !id.equals(userId));
       comment.likes.push(userId);
     }
@@ -289,7 +269,6 @@ export const likeDevlogComment = async (req, res) => {
   }
 };
 
-// POST /api/devlogs/:id/comments/:commentId/dislike
 export const dislikeDevlogComment = async (req, res) => {
   try {
     const { commentId } = req.params;
@@ -303,7 +282,6 @@ export const dislikeDevlogComment = async (req, res) => {
     if (alreadyDisliked) {
       comment.dislikes = comment.dislikes.filter((id) => !id.equals(userId));
     } else {
-      // Remove like if switching
       comment.likes = comment.likes.filter((id) => !id.equals(userId));
       comment.dislikes.push(userId);
     }

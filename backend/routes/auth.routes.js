@@ -5,8 +5,8 @@ import {
   logout,
   signup,
   googleAuth,
-  forgotPassword,
-  resetPassword,
+  // forgotPassword,
+  // resetPassword,
 } from "../controllers/auth.controller.js";
 import { protectRoute } from "../middleware/protectRoute.js";
 import rateLimit from "express-rate-limit";
@@ -40,13 +40,10 @@ router.get("/me", protectRoute, getMe);
 router.post("/signup", signupLimiter, signup);
 router.post("/login", loginLimiter, login);
 
-// router.post("/signup", signup);
-// router.post("/login", login);
-
 router.post("/logout", logout);
 router.post("/google", googleAuth);
-router.post("/forgot-password", forgotPassword);
-router.post("/reset-password/:token", resetPassword);
+// router.post("/forgot-password", forgotPassword);
+// router.post("/reset-password/:token", resetPassword);
 
 
 export default router;

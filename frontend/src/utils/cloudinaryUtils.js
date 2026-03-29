@@ -2,8 +2,10 @@ export const getOptimizedImageUrl = (url, type = "post") => {
   if (!url) return "/avatar-placeholder.png"
   if (!url) return "/cover.png"
 
-  if (url.includes("/avatar-placeholder.png") || url.includes("/cover.png")) return url
-
+  if (!url || url.includes("placeholder") || url.includes("cover.png")) {
+    return url || (type === "avatar" ? "/avatar-placeholder.png" : "/cover.png")
+  }
+  
   if (!url.includes("cloudinary.com")) return url
 
   let params = "f_auto,q_auto"

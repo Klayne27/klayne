@@ -1,6 +1,4 @@
-import Comment from "../../models/comment.model.js";
 import LevelUp from "../../models/levelup.model.js";
-import Notification from "../../models/notification.model.js";
 import User from "../../models/user.model.js";
 
 export const getBlockingUsers = async (userId) => {
@@ -34,29 +32,6 @@ export const extractAndValidateMentions = async (text) => {
   return mentionedUsersIds;
 };
 
-export async function deleteAllChildComments(commentId) {
-  let deletedCount = 0;
-  const commentsToDeleteQueue = [commentId];
-
-  while (commentsToDeleteQueue.length > 0) {
-    const currentCommentId = commentsToDeleteQueue.shift();
-
-    const directReplies = await Comment.find({ parentComment: currentCommentId }).select(
-      "_id"
-    );
-
-    directReplies.forEach((reply) => commentsToDeleteQueue.push(reply._id));
-
-    const deleteResult = await Comment.deleteOne({ _id: currentCommentId });
-    if (deleteResult.deletedCount > 0) {
-      deletedCount++;
-      await Notification.deleteMany({
-        $or: [{ commentId: currentCommentId }, { parentCommentId: currentCommentId }],
-      });
-    }
-  }
-  return deletedCount;
-}
 
 import mongoose from "mongoose";
 

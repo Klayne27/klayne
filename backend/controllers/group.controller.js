@@ -8,7 +8,6 @@ import Image from "../models/image.model.js";
 import { io } from "../lib/socket.js";
 import { getReceiverSocketIds } from "../lib/socket.js";
 
-// ─── helpers ──────────────────────────────────────────────────────────────────
 const POPULATE_MEMBER_USER = {
   path: "members.user",
   select:
@@ -27,7 +26,7 @@ function getMemberRole(conversation, userId) {
 
 function isMember(conversation, userId) {
   return conversation.members.some((m) => {
-    const id = m.user?._id ?? m.user; // handles both ObjectId and populated object
+    const id = m.user?._id ?? m.user;
     return id?.toString() === userId.toString();
   });
 }
@@ -37,7 +36,6 @@ function isAdminOrOwner(conversation, userId) {
   return role === "admin" || role === "owner";
 }
 
-// Emit a group conversation update to all online members
 function emitGroupUpdate(conversation) {
   conversation.members.forEach((m) => {
     const userId = (m.user?._id ?? m.user).toString();
@@ -48,7 +46,6 @@ function emitGroupUpdate(conversation) {
   });
 }
 
-// ─── create group ─────────────────────────────────────────────────────────────
 export const createGroup = async (req, res) => {
   try {
     const { name, description, isPrivate, memberIds } = req.body;
@@ -74,7 +71,6 @@ export const createGroup = async (req, res) => {
 
     const inviteCode = nanoid(10);
 
-    // Create the group first to get the ID for the Image's parentDocument
     const group = new Conversation({
       isGroup: true,
       name: name.trim(),
@@ -87,7 +83,6 @@ export const createGroup = async (req, res) => {
 
     await group.save();
 
-    // --- Group Avatar Creation ---
     if (avatar && avatar !== "") {
       const uploaded = await cloudinary.uploader.upload(avatar, {
         upload_preset: "ml_avatars",
@@ -109,7 +104,6 @@ export const createGroup = async (req, res) => {
       .populate(POPULATE_MEMBER_USER)
       .populate(POPULATE_AVATAR);
 
-    // Notify invited members
     validIds.forEach((memberId) => {
       const socketIds = getReceiverSocketIds(memberId);
       if (socketIds.length > 0) {
@@ -123,8 +117,6 @@ export const createGroup = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// ─── get group conversations for current user ─────────────────────────────────
 
 export const getGroupConversations = async (req, res) => {
   try {
@@ -145,8 +137,6 @@ export const getGroupConversations = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// ─── get single group ─────────────────────────────────────────────────────────
 
 export const getGroup = async (req, res) => {
   try {
