@@ -32,7 +32,26 @@ import PostModal from "../features/posts/PostModal.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { BiHealth } from "react-icons/bi"
 import { PiChefHatFill, PiLinkSimpleBold } from "react-icons/pi"
+import ReactCalendarHeatmap from "react-calendar-heatmap"
+import { Tooltip } from "react-tooltip"
 
+const formatStudyTime = (totalMinutes) => {
+  const hours = Math.floor(totalMinutes / 60)
+  const minutes = totalMinutes % 60
+
+  if (hours === 0) return `${minutes}m`
+  if (minutes === 0) return `${hours}h`
+  return `${hours}h ${minutes}m`
+}
+
+const formatHeatmapDate = (dateString) => {
+  if (!dateString) return ""
+  const date = new Date(dateString)
+  return new Intl.DateTimeFormat("en-US", {
+    month: "long",
+    day: "numeric",
+  }).format(date)
+}
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -63,6 +82,28 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const { conversationStatus, isLoadingConversationStatus, isErrorConversationStatus } =
     useGetConversationBetweenUsers(userProfile?._id)
+
+const getDatesInRange = (startDate, endDate) => {
+  const dates = []
+  let curr = new Date(startDate)
+  while (curr <= endDate) {
+    dates.push(curr.toISOString().split("T")[0])
+    curr.setDate(curr.getDate() + 1)
+  }
+  return dates
+}
+
+// 2. Map your existing data into a full calendar year
+const allYearDates = getDatesInRange(new Date("2026-01-01"), new Date("2026-12-31"))
+
+const heatmapData = allYearDates.map((dateStr) => {
+  const existingEntry = userProfile?.studyHistory.find((item) => item.date === dateStr)
+  return {
+    date: dateStr,
+    count: existingEntry ? existingEntry.count : 0,
+    duration: existingEntry ? existingEntry.duration : 0,
+  }
+})
 
   const {
     pinnedPosts,
@@ -289,10 +330,10 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
                   {/* <Link to={`/images/${userProfile?.profileImg?._id}`}> */}
                   <img
-                    src={
-                      getOptimizedImageUrl(profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                      "avatar")
-                    }
+                    src={getOptimizedImageUrl(
+                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     alt="user avatar"
                     className="cursor-pointer"
                     onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
@@ -308,12 +349,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2 px-4">
-              {authUser.username === username && <button
-                className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
-                onClick={() => document.getElementById("edit_profile_modal").showModal()}
-              >
-                Edit profile
-              </button>}
+              {authUser.username === username && (
+                <button
+                  className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
+                  onClick={() => document.getElementById("edit_profile_modal").showModal()}
+                >
+                  Edit profile
+                </button>
+              )}
               {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
               {isAdminUser && !isMyProfile && userProfile && (
                 <button
@@ -498,7 +541,95 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   <span className="text-sm text-slate-500">Followers</span>{" "}
                 </div>
               </div>
+
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center justify-between px-1">
+                  <div className="flex items-center gap-2">
+                    <BiHealth className="text-primary" size={18} />
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-slate-400">
+                      Study Activity
+                    </h3>
+                  </div>
+
+                  <div className="flex gap-4">
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs text-slate-500">Total Sessions</span>
+                      <span className="text-sm font-bold">
+                        {userProfile?.totalSessionsCompleted || 0}
+                      </span>
+                    </div>
+                    <div className="flex flex-col items-end">
+                      <span className="text-xs text-slate-500">Total Time</span>
+                      <span className="text-sm font-bold">
+                        {formatStudyTime(userProfile?.totalStudyDuration || 0)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="overflow-x-auto">
+                  <div className="min-w-[500px]">
+                    <ReactCalendarHeatmap
+                      startDate={new Date("2026-01-01")}
+                      endDate={new Date("2026-12-31")}
+                      values={heatmapData}
+                      gutterSize={3} // Increases the space between the rounded squares
+                      classForValue={(value) => {
+                        if (!value || !value.count) return "color-empty"
+                        return `color-scale-${Math.min(value.count, 4)}`
+                      }}
+                      tooltipDataAttrs={(value) => {
+                        const date = value?.date
+                        const formattedDate = date ? formatHeatmapDate(date) : "Unknown date"
+
+                        // 2. Handle the "Empty" case
+                        if (!value || !value.count) {
+                          return {
+                            "data-tooltip-id": "study-tooltip",
+                            "data-tooltip-content": `${formattedDate}: No activity recorded`,
+                          }
+                        }
+
+                        // 3. Handle the "Active" case
+                        const timeLabel = formatStudyTime(value.duration || 0)
+                        const sessionLabel = value.count === 1 ? "session" : "sessions"
+
+                        return {
+                          "data-tooltip-id": "study-tooltip",
+                          "data-tooltip-content": `${formattedDate}: ${value.count} ${sessionLabel} (${timeLabel})`,
+                        }
+                      }}
+                    />
+
+                    {/* Ensure the Tooltip component is present below the Heatmap */}
+                    <Tooltip
+                      id="study-tooltip"
+                      className="z-50 !opacity-100 shadow-xl"
+                      style={{
+                        backgroundColor: "var(--fallback-b2,oklch(var(--b2)))",
+                        color: "var(--fallback-bc,oklch(var(--bc)))",
+                        borderRadius: "12px",
+                        border: "1px solid var(--fallback-b3,oklch(var(--b3)))",
+                        padding: "8px 12px",
+                      }}
+                    />
+                  </div>
+                </div>
+
+                <div className="flex justify-end gap-2 px-1">
+                  <span className="text-[10px] text-slate-500">Less</span>
+                  <div className="flex items-center gap-1">
+                    <div className="size-2 rounded-[2px] bg-[#161b22]"></div>
+                    <div className="size-2 rounded-[2px] bg-[#1e6334]"></div>
+                    <div className="size-2 rounded-[2px] bg-[#27813f]"></div>
+                    <div className="size-2 rounded-[2px] bg-[#36ad56]"></div>
+                    <div className="size-2 rounded-[2px] bg-[#42e46a]"></div>
+                  </div>
+                  <span className="text-[10px] text-slate-500">More</span>
+                </div>
+              </div>
             </div>
+
             <div className="mt-4 flex w-full border-b border-accent">
               {/* Posts Tab */}
               <div

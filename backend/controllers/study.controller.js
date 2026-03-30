@@ -118,6 +118,7 @@ export const endStudySession = async (req, res) => {
       return res.status(400).json({ error: "Duration is required" });
     }
 
+    // 1. Create the session record
     await StudySession.create({
       user: userId,
       duration,
@@ -127,20 +128,48 @@ export const endStudySession = async (req, res) => {
 
     const user = await User.findById(userId);
     const today = new Date();
+
+    // Helper for YYYY-MM-DD
     const getDateString = (date) => date.toISOString().split("T")[0];
+    const todayString = getDateString(today);
+
+    // --- NEW: HEATMAP LOGIC ---
+    // Check if we already have an entry for today in the history
+    const historyIndex = user.studyHistory.findIndex(
+      (entry) => entry.date === todayString,
+    );
+
+    if (historyIndex !== -1) {
+      // Increment existing day
+      user.studyHistory[historyIndex].count += 1;
+      user.studyHistory[historyIndex].duration += duration;
+    } else {
+      // Add new day to history
+      user.studyHistory.push({
+        date: todayString,
+        count: 1,
+        duration: duration,
+      });
+
+      // Optional: Keep history to last 365 days to keep User object small
+      if (user.studyHistory.length > 365) {
+        user.studyHistory.shift();
+      }
+    }
+    // ---------------------------
 
     const getMondayOfWeek = (date) => {
       const d = new Date(date);
-      const day = d.getUTCDay(); // 0 = Sunday, 1 = Monday...
-      const diff = day === 0 ? -6 : 1 - day; // shift to Monday
+      const day = d.getUTCDay();
+      const diff = day === 0 ? -6 : 1 - day;
       d.setUTCDate(d.getUTCDate() + diff);
       d.setUTCHours(0, 0, 0, 0);
-      return d.toISOString().split("T")[0]; // "2025-03-24"
+      return d.toISOString().split("T")[0];
     };
 
     const currentWeekStart = getMondayOfWeek(today);
 
-    // Reset weekly stats if we're in a new week:
+    // Reset weekly stats if new week
     if (user.weeklyStats.weekStart !== currentWeekStart) {
       user.weeklyStats = {
         studyDuration: 0,
@@ -150,7 +179,6 @@ export const endStudySession = async (req, res) => {
       };
     }
 
-    // Then accumulate (add this alongside your monthly accumulation):
     user.weeklyStats.studyDuration += duration;
     user.weeklyStats.sessionsCompleted += 1;
 
@@ -170,8 +198,6 @@ export const endStudySession = async (req, res) => {
     user.totalSessionsCompleted += 1;
     user.monthlyStats.studyDuration += duration;
     user.monthlyStats.sessionsCompleted += 1;
-
-    const todayString = getDateString(today);
 
     const updateStreak = (lastStudyDate, currentStreak) => {
       const lastStudyString = lastStudyDate
@@ -198,7 +224,7 @@ export const endStudySession = async (req, res) => {
           : null;
 
         const dayAfterLastStudy = new Date(lastStudyDay);
-        dayAfterLastStudy.setUTCDate(lastStudyDay.getUTCDate() + 1); // Use UTC to avoid timezone issues
+        dayAfterLastStudy.setUTCDate(lastStudyDay.getUTCDate() + 1);
         dayAfterLastStudy.setUTCHours(0, 0, 0, 0);
 
         const isGapExcusedByVacation =
@@ -230,7 +256,6 @@ export const endStudySession = async (req, res) => {
       user.vacationModeStartDate = null;
     }
 
-    // Update last study dates
     user.lastStudyDate = today;
     user.lastMonthlyStudyDate = today;
 
@@ -238,19 +263,20 @@ export const endStudySession = async (req, res) => {
       user.longestStudyStreak = user.studyStreak;
     }
 
-    await user.save();
-
+    // Handle XP and Levels
     const xpResult = await handleXPAndLeveling(user, duration);
     if (xpResult && xpResult.xpEarned) {
       user.monthlyStats.xpEarned += xpResult.xpEarned;
-      user.weeklyStats.xpEarned += xpResult.xpEarned; // ADD
-      await user.save();
+      user.weeklyStats.xpEarned += xpResult.xpEarned;
     }
+
+    await user.save(); // Save once at the end
     await checkAndAwardBadges(user);
 
     res.status(200).json({
       message: "Study session logged successfully",
       xpResult,
+      studyHistory: user.studyHistory, // Return updated history for frontend UI
     });
   } catch (error) {
     console.error("Error in endStudySession", error.message);

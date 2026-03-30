@@ -449,6 +449,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             <span className="flex gap-1">
               {/* <span className="font-bold text-white">{sourcePost.likes.length}</span>{" "} */}
               <AnimatedCount count={sourcePost.likes.length} className={"font-bold"} />
+              
 
               <span className="text-slate-500">Likes</span>
             </span>

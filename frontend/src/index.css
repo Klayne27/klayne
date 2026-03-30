@@ -160,3 +160,45 @@ body {
     scrollbar-width: none;
   }
 } */
+
+/* GitHub style greens */
+.react-calendar-heatmap .color-empty { fill: #161b22; }
+.react-calendar-heatmap .color-scale-1 { fill: #1e6334; }
+.react-calendar-heatmap .color-scale-2 { fill: #27813f; }
+.react-calendar-heatmap .color-scale-3 { fill: #36ad56; }
+.react-calendar-heatmap .color-scale-4 { fill: #42e46a; }
+
+.react-calendar-heatmap rect {
+  rx: 2px; /* Adjust this value for more or less roundness */
+  ry: 2px;
+  transition: fill 0.3s ease; /* Optional: makes color changes smooth */
+}
+
+/* Optional: Add a slight gap between squares for a cleaner look */
+.react-calendar-heatmap .color-empty,
+.react-calendar-heatmap .color-scale-1,
+.react-calendar-heatmap .color-scale-2,
+.react-calendar-heatmap .color-scale-3,
+.react-calendar-heatmap .color-scale-4 {
+  shape-rendering: geometricPrecision;
+}
+
+.react-calendar-heatmap text {
+  fill: var(--fallback-p,oklch(var(--p))); 
+  font-size: 10px;
+  text-transform: uppercase; /* Gives it a clean, modern UI look */
+  letter-spacing: 0.05em;
+}
+
+.react-calendar-heatmap text {
+  transform: translateX(12px); 
+}
+
+/* If using a library like react-tooltip with the heatmap */
+.react-tooltip {
+  background-color: var(--fallback-b2,oklch(var(--b2))) !important;
+  color: var(--fallback-bc,oklch(var(--bc))) !important;
+  border: 1px solid var(--fallback-b3,oklch(var(--b3)));
+  border-radius: 8px;
+}
+

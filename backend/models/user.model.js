@@ -272,6 +272,13 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    studyHistory: [
+      {
+        date: { type: String, required: true }, // Format: "YYYY-MM-DD"
+        count: { type: Number, default: 0 }, // Number of sessions that day
+        duration: { type: Number, default: 0 }, // Total seconds studied that day
+      },
+    ],
   },
   { timestamps: true },
 );
