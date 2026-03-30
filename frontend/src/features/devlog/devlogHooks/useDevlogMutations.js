@@ -14,6 +14,7 @@ import {
   dislikeDevlogCommentApi,
 } from "../../../api/devlogApi"
 import toast from "react-hot-toast"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 
 // ── Read hooks ────────────────────────────────────────────────────────────────
 
@@ -131,31 +132,76 @@ export const useDeleteDevlog = () => {
 
 export const useLikeDevlog = () => {
   const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
+
   return useMutation({
     mutationFn: likeDevlogApi,
-    onSuccess: (data, devlogId) => {
-      // Patch both the list cache and the detail cache optimistically
-      const patch = (devlog) => {
-        if (devlog._id !== devlogId) return devlog
-        return { ...devlog, likes: data.likes }
+
+    onMutate: async (devlogId) => {
+      // Cancel in-flight queries so they don't overwrite our optimistic update
+      await queryClient.cancelQueries({ queryKey: devlogKeys.all })
+
+      const userId = authUser._id
+
+      // Snapshot every devlog-related cache entry for rollback
+      const allQueries = queryClient.getQueryCache().getAll()
+      const previousData = {}
+
+      allQueries.forEach((query) => {
+        const key = query.queryKey
+        if (Array.isArray(key) && key[0] === "devlogs") {
+          previousData[JSON.stringify(key)] = queryClient.getQueryData(key)
+        }
+      })
+
+      // Toggle helper — works whether likes contains strings or ObjectId-shaped objects
+      const toggleLike = (likes = []) => {
+        const isLiked = likes.some((id) => (id?._id ?? id)?.toString() === userId.toString())
+        return isLiked
+          ? likes.filter((id) => (id?._id ?? id)?.toString() !== userId.toString())
+          : [...likes, userId]
       }
 
+      // Patch list cache (infinite query)
       queryClient.setQueriesData({ queryKey: devlogKeys.list() }, (old) => {
-        if (!old) return old
+        if (!old?.pages) return old
         return {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            devlogs: page.devlogs.map(patch),
+            devlogs: (page.devlogs ?? []).map((devlog) =>
+              devlog._id === devlogId ? { ...devlog, likes: toggleLike(devlog.likes) } : devlog,
+            ),
           })),
         }
       })
 
-      queryClient.setQueryData(devlogKeys.detail(devlogId), (old) =>
-        old ? { ...old, likes: data.likes } : old,
-      )
+      // Patch detail cache (single query)
+      queryClient.setQueryData(devlogKeys.detail(devlogId), (old) => {
+        if (!old) return old
+        return { ...old, likes: toggleLike(old.likes) }
+      })
+
+      return { previousData }
     },
-    onError: (err) => toast.error(err.message || "Failed to like devlog"),
+
+    onError: (err, _devlogId, context) => {
+      // Roll back every patched cache entry
+      if (context?.previousData) {
+        Object.entries(context.previousData).forEach(([key, value]) => {
+          queryClient.setQueryData(JSON.parse(key), value)
+        })
+      }
+      toast.error(err.message || "Failed to like devlog")
+    },
+
+    // No onSuccess needed — the optimistic update already reflects the correct state.
+    // If you want to sync the exact server array (e.g. race condition safety), uncomment:
+    // onSuccess: (data, devlogId) => {
+    //   queryClient.setQueryData(devlogKeys.detail(devlogId), (old) =>
+    //     old ? { ...old, likes: data.likes } : old
+    //   )
+    // },
   })
 }
 
@@ -218,44 +264,112 @@ export const useDeleteDevlogComment = (devlogId) => {
 
 export const useLikeDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
+
   return useMutation({
     mutationFn: likeDevlogCommentApi,
-    onSuccess: (data, { commentId }) => {
+
+    onMutate: async ({ commentId }) => {
+      await queryClient.cancelQueries({ queryKey: devlogKeys.comments(devlogId) })
+
+      const previousComments = queryClient.getQueryData(devlogKeys.comments(devlogId))
+      const userId = authUser._id
+
       queryClient.setQueryData(devlogKeys.comments(devlogId), (old) => {
-        if (!old) return old
+        if (!old?.pages) return old
         return {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            comments: page.comments.map((c) =>
-              c._id === commentId ? { ...c, likes: data.likes, dislikes: data.dislikes } : c,
-            ),
+            comments: (page.comments ?? []).map((c) => {
+              if (c._id !== commentId) return c
+
+              const isLiked = c.likes?.some(
+                (id) => (id?._id ?? id)?.toString() === userId.toString(),
+              )
+              const isDisliked = c.dislikes?.some(
+                (id) => (id?._id ?? id)?.toString() === userId.toString(),
+              )
+
+              return {
+                ...c,
+                // Toggle like
+                likes: isLiked
+                  ? c.likes.filter((id) => (id?._id ?? id)?.toString() !== userId.toString())
+                  : [...(c.likes ?? []), userId],
+                // Remove dislike if switching sides
+                dislikes: isDisliked
+                  ? c.dislikes.filter((id) => (id?._id ?? id)?.toString() !== userId.toString())
+                  : (c.dislikes ?? []),
+              }
+            }),
           })),
         }
       })
+
+      return { previousComments }
     },
-    onError: (err) => toast.error(err.message || "Failed"),
+
+    onError: (err, _vars, context) => {
+      queryClient.setQueryData(devlogKeys.comments(devlogId), context?.previousComments)
+      toast.error(err.message || "Failed to like comment")
+    },
   })
 }
 
+// ─── Comment dislike ──────────────────────────────────────────────────────────
+
 export const useDislikeDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
+
   return useMutation({
     mutationFn: dislikeDevlogCommentApi,
-    onSuccess: (data, { commentId }) => {
+
+    onMutate: async ({ commentId }) => {
+      await queryClient.cancelQueries({ queryKey: devlogKeys.comments(devlogId) })
+
+      const previousComments = queryClient.getQueryData(devlogKeys.comments(devlogId))
+      const userId = authUser._id
+
       queryClient.setQueryData(devlogKeys.comments(devlogId), (old) => {
-        if (!old) return old
+        if (!old?.pages) return old
         return {
           ...old,
           pages: old.pages.map((page) => ({
             ...page,
-            comments: page.comments.map((c) =>
-              c._id === commentId ? { ...c, likes: data.likes, dislikes: data.dislikes } : c,
-            ),
+            comments: (page.comments ?? []).map((c) => {
+              if (c._id !== commentId) return c
+
+              const isDisliked = c.dislikes?.some(
+                (id) => (id?._id ?? id)?.toString() === userId.toString(),
+              )
+              const isLiked = c.likes?.some(
+                (id) => (id?._id ?? id)?.toString() === userId.toString(),
+              )
+
+              return {
+                ...c,
+                // Toggle dislike
+                dislikes: isDisliked
+                  ? c.dislikes.filter((id) => (id?._id ?? id)?.toString() !== userId.toString())
+                  : [...(c.dislikes ?? []), userId],
+                // Remove like if switching sides
+                likes: isLiked
+                  ? c.likes.filter((id) => (id?._id ?? id)?.toString() !== userId.toString())
+                  : (c.likes ?? []),
+              }
+            }),
           })),
         }
       })
+
+      return { previousComments }
     },
-    onError: (err) => toast.error(err.message || "Failed"),
+
+    onError: (err, _vars, context) => {
+      queryClient.setQueryData(devlogKeys.comments(devlogId), context?.previousComments)
+      toast.error(err.message || "Failed to dislike comment")
+    },
   })
 }
