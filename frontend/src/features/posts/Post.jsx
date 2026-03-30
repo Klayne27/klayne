@@ -334,12 +334,14 @@ const Post = ({
     return null
   }
 
+  console.log("sourcepost", sourcePost)
+
   const isFollowingOriginalPostOwner = authUser?.following?.includes(originalPostOwner._id)
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id)
 
   return (
     <div
-      className={`${showMenu ? "bg-base-100" : "hover:bg-gray-700/30"} flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${index === 0 && "pt-3"} ${hasLineAbove ? "" : "border-b border-accent"} ${hasLineBelow ? "" : "border-b border-accent pt-3 pb-2"}`}
+      className={`${showMenu ? "bg-base-100" : "hover:bg-gray-700/30"} flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${index === 0 && "pt-3"} ${hasLineAbove ? "" : "border-b border-accent"} ${hasLineBelow ? "" : "border-b border-accent pb-2 pt-3"}`}
       onClick={isMainPost ? undefined : navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
@@ -446,7 +448,6 @@ const Post = ({
                           loading="lazy"
                         />
                       )}
-
                     </span>
                   )}
                 </div>
@@ -479,7 +480,6 @@ const Post = ({
                           loading="lazy"
                         />
                       )}
-
                     </span>
                   }
                 </Link>
@@ -507,7 +507,6 @@ const Post = ({
                     <span className="shrink-0">{formattedDate}</span>
                   </>
                 )}
-
               </span>
             </div>
 
@@ -525,7 +524,7 @@ const Post = ({
                     <div
                       className="fixed inset-0 z-10 cursor-default bg-transparent"
                       onClick={toggleMenu}
-                    ></div>
+                    />
                     <div
                       ref={menuRef}
                       className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
@@ -571,21 +570,24 @@ const Post = ({
                         </>
                       ) : (
                         <>
-                          <button
-                            className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
-                            onClick={handleFollowClick}
-                            disabled={isFollowingOrUnfollowing}
-                          >
-                            {isFollowingOriginalPostOwner ? (
-                              <span className="flex items-center justify-center gap-3 font-semibold">
-                                <TbUserMinus strokeWidth={2} /> Unfollow
-                              </span>
-                            ) : (
-                              <span className="flex items-center justify-center gap-3 font-semibold">
-                                <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
-                              </span>
-                            )}
-                          </button>
+                          {!sourcePost.isAnonymous && (
+                            <button
+                              className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
+                              onClick={handleFollowClick}
+                              disabled={isFollowingOrUnfollowing}
+                            >
+                              {isFollowingOriginalPostOwner ? (
+                                <span className="flex items-center justify-center gap-3 font-semibold">
+                                  <TbUserMinus strokeWidth={2} /> Unfollow
+                                </span>
+                              ) : (
+                                <span className="flex items-center justify-center gap-3 font-semibold">
+                                  <TbUserPlus strokeWidth={2} /> Follow @
+                                  {originalPostOwner.username}
+                                </span>
+                              )}
+                            </button>
+                          )}
                           {hasEditHistory && (
                             <button
                               className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
@@ -598,19 +600,21 @@ const Post = ({
                               <FaHistory className="inline-block" /> View History
                             </button>
                           )}
-                          <button
-                            className="transtion flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 duration-200 hover:bg-gray-700/30"
-                            onClick={handleBlockClick}
-                            disabled={isBlocking}
-                          >
-                            {isBlockedByAuthUser ? (
-                              "Unblock"
-                            ) : (
-                              <span className="flex items-center justify-center gap-3 font-semibold">
-                                <MdBlock /> Block @{originalPostOwner.username}
-                              </span>
-                            )}
-                          </button>
+                          {!sourcePost.isAnonymous && (
+                            <button
+                              className="transtion flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 duration-200 hover:bg-gray-700/30"
+                              onClick={handleBlockClick}
+                              disabled={isBlocking}
+                            >
+                              {isBlockedByAuthUser ? (
+                                "Unblock"
+                              ) : (
+                                <span className="flex items-center justify-center gap-3 font-semibold">
+                                  <MdBlock /> Block @{originalPostOwner.username}
+                                </span>
+                              )}
+                            </button>
+                          )}
                           {authUser?.isAdmin && (
                             <button
                               className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
@@ -633,6 +637,7 @@ const Post = ({
               </span>
             }
           </div>
+
           <div className="flex cursor-pointer flex-col gap-3 overflow-hidden">
             <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
               {renderClickableText(sourcePost.text)}
@@ -667,7 +672,7 @@ const Post = ({
             {post.pollOptions && post.pollOptions.length > 0 && <PollDisplay post={post} />}
           </div>
 
-          <div className={`mt-3 w-2/3 ${hasLineBelow && "pt-3 pb-2"}`}>
+          <div className={`mt-3 w-2/3 ${hasLineBelow && "pb-2 pt-3"}`}>
             <div className="flex justify-between">
               <div
                 className="group flex cursor-pointer items-center"

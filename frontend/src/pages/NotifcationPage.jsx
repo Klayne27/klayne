@@ -187,6 +187,7 @@ const NotificationPage = () => {
             contentToDisplay = notification.postId
           }
 
+          console.log(filteredNotifications);
           return (
             <div
               className="relative flex cursor-pointer gap-4 border-b border-accent p-4 transition-colors hover:bg-secondary"

@@ -326,7 +326,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                   </>
                 ) : (
                   <>
-                    <button
+                    {!sourcePost.isAnonymous && <button
                       className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
                       onClick={handleFollowClick}
                       disabled={isFollowingOrUnfollowing}
@@ -340,7 +340,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                           <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
                         </span>
                       )}
-                    </button>
+                    </button>}
                     {hasEditHistory && (
                       <button
                         className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
@@ -353,19 +353,21 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                         <FaHistory /> View History
                       </button>
                     )}
-                    <button
-                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 transition duration-200 hover:bg-gray-700/30"
-                      onClick={handleBlockClick}
-                      disabled={isBlocking}
-                    >
-                      {isBlockedByAuthUser ? (
-                        "Unblock"
-                      ) : (
-                        <span className="flex items-center gap-3 font-semibold">
-                          <MdBlock /> Block @{originalPostOwner.username}
-                        </span>
-                      )}
-                    </button>
+                    {!sourcePost.isAnonymous && (
+                      <button
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 transition duration-200 hover:bg-gray-700/30"
+                        onClick={handleBlockClick}
+                        disabled={isBlocking}
+                      >
+                        {isBlockedByAuthUser ? (
+                          "Unblock"
+                        ) : (
+                          <span className="flex items-center gap-3 font-semibold">
+                            <MdBlock /> Block @{originalPostOwner.username}
+                          </span>
+                        )}
+                      </button>
+                    )}
                     {authUser?.isAdmin && (
                       <button
                         className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"

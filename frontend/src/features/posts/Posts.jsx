@@ -109,7 +109,7 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
             <div></div>
           ) : (
             pinnedPosts.length > 0 && (
-              <div>
+              <div >
                 {pinnedPosts.map((post) => (
                   <Post
                     key={post._id}
@@ -131,10 +131,6 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
           <div
             ref={elementRef}
             key={post._id}
-            style={{
-              contentVisibility: "auto",
-              containIntrinsicSize: "150px",
-            }}
           >
             <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
           </div>
