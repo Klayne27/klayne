@@ -12,6 +12,8 @@ import { getBlockingUsers } from "../lib/utils/helpers.js";
 import Image from "../models/image.model.js";
 import { admin } from "../config/firebaseAdmin.js";
 import PushSubscription from "../models/pushSubscription.js";
+import DevlogComment from "../models/devlogComment.model.js";
+import Devlog from "../models/devlog.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -411,61 +413,101 @@ export const deleteUserAccount = async (req, res) => {
   try {
     const { id } = req.params;
     if (id !== req.user._id.toString()) {
-      return res
-        .status(401)
-        .json({ error: "You are not authorized to delete this account." });
+      return res.status(401).json({ error: "Unauthorized." });
     }
-    const userToDelete = await User.findById(id);
-    if (!userToDelete) {
-      return res.status(404).json({ error: "User not found." });
-    }
-    if (userToDelete.firebaseUid) {
-      await admin.auth().deleteUser(userToDelete.firebaseUid);
-    } // 1. Find all images uploaded by the user to delete from Cloudinary and the database
 
-    const userImages = await Image.find({ uploadedBy: userToDelete._id });
+    const userToDelete = await User.findById(id);
+    if (!userToDelete) return res.status(404).json({ error: "User not found." });
+
+    // --- STEP 1: CALCULATE REPLIES BEFORE DELETING POSTS ---
+    const userReplies = await Post.find({ user: id, parentPost: { $ne: null } });
+    const replyCountsPerPost = userReplies.reduce((acc, reply) => {
+      const parentId = reply.parentPost.toString();
+      acc[parentId] = (acc[parentId] || 0) + 1;
+      return acc;
+    }, {});
+
+    const replyUpdatePromises = Object.keys(replyCountsPerPost).map((parentId) =>
+      Post.findByIdAndUpdate(parentId, {
+        $inc: { repliesCount: -replyCountsPerPost[parentId] },
+      }),
+    );
+    await Promise.all(replyUpdatePromises);
+
+    // --- STEP 2: CALCULATE DEVLOG COMMENTS ---
+    const userDevlogComments = await DevlogComment.find({ author: id });
+    if (userDevlogComments.length > 0) {
+      const commentsPerDevlog = userDevlogComments.reduce((acc, comment) => {
+        const devlogId = comment.devlog.toString();
+        acc[devlogId] = (acc[devlogId] || 0) + 1;
+        return acc;
+      }, {});
+
+      const devlogUpdatePromises = Object.keys(commentsPerDevlog).map((devlogId) =>
+        Devlog.findByIdAndUpdate(devlogId, {
+          $inc: { commentsCount: -commentsPerDevlog[devlogId] },
+        }),
+      );
+      await Promise.all(devlogUpdatePromises);
+    }
+
+    // --- STEP 3: REPOSTS COUNT FIX ---
+    // Instead of -1, we should decrement by the actual number of reposts the user has
+    // but updateMany with $inc -1 works if the user can only repost a post once.
+    await Post.updateMany(
+      { repostedBy: id },
+      { $pull: { repostedBy: id }, $inc: { repostsCount: -1 } },
+    );
+
+    const userImages = await Image.find({ uploadedBy: id });
     for (const image of userImages) {
       const publicId = image.imageUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
-    await Image.deleteMany({ uploadedBy: userToDelete._id }); // 2. Find and delete user's posts, including any associated videos
 
-    const userPosts = await Post.find({ user: userToDelete._id });
+    // --- STEP 4: MEDIA CLEANUP (Cloudinary) ---
+    const userPosts = await Post.find({ user: id });
     for (const post of userPosts) {
       if (post.video) {
         const videoId = post.video.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
-      await Post.findByIdAndDelete(post._id);
-    } // ⭐ NEW STEP: 3. Delete all data from new schemas associated with the user ⭐
+      // If you have image public IDs, delete them here too
+    }
 
+    // --- STEP 5: DELETE ACTUAL RECORDS ---
+    await Post.deleteMany({ user: id });
+    await DevlogComment.deleteMany({ author: id });
+    await Image.deleteMany({ uploadedBy: id });
     await PushSubscription.deleteMany({ userId: id });
-
-    await User.updateMany(
-      { $or: [{ blockedUsers: id }, { blockedBy: id }] },
-      { $pull: { blockedUsers: id, blockedBy: id } },
-    );
-    await Post.updateMany({ likes: id }, { $pull: { likes: id } });
-    await User.updateMany(
-      { $or: [{ following: id }, { followers: id }] },
-      { $pull: { following: id, followers: id } },
-    );
     await Notification.deleteMany({ $or: [{ from: id }, { to: id }] });
-    await PublicChatMessage.deleteMany({ sender: id }); // 5. Delete messages and conversations
-    await PublicChatMessage.updateMany({}, { $pull: { reactions: { userId: id } } });
+    await PublicChatMessage.deleteMany({ sender: id });
 
-    const conversationsToDelete = await Conversation.find({ participants: id });
-    const conversationIds = conversationsToDelete.map((conv) => conv._id);
-    await Message.deleteMany({ conversationId: { $in: conversationIds } });
-    await Conversation.deleteMany({ _id: { $in: conversationIds } }); // 6. Finally, delete the user document
+    // --- STEP 6: ARRAY CLEANUP (Likes/Follows) ---
+    await Post.updateMany(
+      { $or: [{ likes: id }, { bookmarkedBy: id }] },
+      { $pull: { likes: id, bookmarkedBy: id } },
+    );
+    await Devlog.updateMany({ likes: id }, { $pull: { likes: id } });
+    await User.updateMany(
+      {
+        $or: [
+          { following: id },
+          { followers: id },
+          { blockedUsers: id },
+          { blockedBy: id },
+        ],
+      },
+      { $pull: { following: id, followers: id, blockedUsers: id, blockedBy: id } },
+    );
 
+    // Final Account Deletion
+    if (userToDelete.firebaseUid) await admin.auth().deleteUser(userToDelete.firebaseUid);
     await User.findByIdAndDelete(id);
 
-    res.status(200).json({
-      message: "Account deleted successfully. All associated data has been removed.",
-    });
+    res.status(200).json({ message: "Account deleted successfully." });
   } catch (error) {
-    console.error("Error in deleteUserAccount: ", error.message);
+    console.error("Delete error:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 };
@@ -590,16 +632,53 @@ export const adminDeleteUserAccount = async (req, res) => {
       });
     }
 
-    if (userToDelete.firebaseUid) {
-      await admin.auth().deleteUser(userToDelete.firebaseUid);
-    } // 2. Delete all images associated with the user from Cloudinary and the database
+    // --- STEP A: CALCULATE REPLIES BEFORE DELETING POSTS ---
+    const userReplies = await Post.find({
+      user: userIdToDelete,
+      parentPost: { $ne: null },
+    });
+    const replyCountsPerPost = userReplies.reduce((acc, reply) => {
+      const parentId = reply.parentPost.toString();
+      acc[parentId] = (acc[parentId] || 0) + 1;
+      return acc;
+    }, {});
 
+    const replyUpdatePromises = Object.keys(replyCountsPerPost).map((parentId) =>
+      Post.findByIdAndUpdate(parentId, {
+        $inc: { repliesCount: -replyCountsPerPost[parentId] },
+      }),
+    );
+    await Promise.all(replyUpdatePromises);
+
+    // --- STEP B: CALCULATE DEVLOG COMMENTS BEFORE DELETING ---
+    const userDevlogComments = await DevlogComment.find({ author: userIdToDelete });
+    if (userDevlogComments.length > 0) {
+      const commentsPerDevlog = userDevlogComments.reduce((acc, comment) => {
+        const devlogId = comment.devlog.toString();
+        acc[devlogId] = (acc[devlogId] || 0) + 1; // Fixed: Use devlogId as key
+        return acc;
+      }, {});
+
+      const devlogUpdatePromises = Object.keys(commentsPerDevlog).map((devlogId) =>
+        Devlog.findByIdAndUpdate(devlogId, {
+          $inc: { commentsCount: -commentsPerDevlog[devlogId] },
+        }),
+      );
+      await Promise.all(devlogUpdatePromises);
+    }
+
+    // --- STEP C: CLEANUP REPOST COUNTS ---
+    await Post.updateMany(
+      { repostedBy: userIdToDelete },
+      { $pull: { repostedBy: userIdToDelete }, $inc: { repostsCount: -1 } },
+    );
+
+    // --- STEP D: MEDIA CLEANUP (Cloudinary) ---
     const userImages = await Image.find({ uploadedBy: userIdToDelete });
     for (const image of userImages) {
       const publicId = image.imageUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
-    await Image.deleteMany({ uploadedBy: userIdToDelete }); // 3. Find and delete user's posts and their videos
 
     const userPosts = await Post.find({ user: userIdToDelete });
     for (const post of userPosts) {
@@ -607,43 +686,83 @@ export const adminDeleteUserAccount = async (req, res) => {
         const videoId = post.video.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(videoId, { resource_type: "video" });
       }
-      await Post.findByIdAndDelete(post._id);
-    } // ⭐ NEW STEP: 4. Delete all data from new schemas associated with the user ⭐
+    }
 
+    // --- STEP E: MASS DELETE ACTUAL RECORDS ---
+    await Image.deleteMany({ uploadedBy: userIdToDelete });
+    await Post.deleteMany({ user: userIdToDelete });
+    await DevlogComment.deleteMany({ author: userIdToDelete });
     await PushSubscription.deleteMany({ userId: userIdToDelete });
-
-    await User.updateMany(
-      { $or: [{ blockedUsers: userIdToDelete }, { blockedBy: userIdToDelete }] },
-      { $pull: { blockedUsers: userIdToDelete, blockedBy: userIdToDelete } },
-    );
-    await Post.updateMany(
-      { likes: userIdToDelete },
-      { $pull: { likes: userIdToDelete } },
-    );
-    await User.updateMany(
-      { $or: [{ following: userIdToDelete }, { followers: userIdToDelete }] },
-      { $pull: { following: userIdToDelete, followers: userIdToDelete } },
-    );
     await Notification.deleteMany({
       $or: [{ from: userIdToDelete }, { to: userIdToDelete }],
     });
-    await PublicChatMessage.deleteMany({ sender: userIdToDelete }); // 6. Delete messages and conversations
+    await PublicChatMessage.deleteMany({ sender: userIdToDelete });
+    await DevlogComment.deleteMany({ author: userIdToDelete });
+
+    // --- STEP F: ARRAY CLEANUP (Likes, Bookmarks, Follows, Blocks) ---
+    await Post.updateMany(
+      {
+        $or: [
+          { likes: userIdToDelete },
+          { bookmarkedBy: userIdToDelete },
+          { mentionedUsers: userIdToDelete },
+        ],
+      },
+      {
+        $pull: {
+          likes: userIdToDelete,
+          bookmarkedBy: userIdToDelete,
+          mentionedUsers: userIdToDelete,
+        },
+      },
+    );
+    await Devlog.updateMany(
+      { likes: userIdToDelete },
+      { $pull: { likes: userIdToDelete } },
+    );
+    await DevlogComment.updateMany(
+      { $or: [{ likes: userIdToDelete }, { dislikes: userIdToDelete }] },
+      { $pull: { likes: userIdToDelete, dislikes: userIdToDelete } },
+    );
+    await User.updateMany(
+      {
+        $or: [
+          { following: userIdToDelete },
+          { followers: userIdToDelete },
+          { blockedUsers: userIdToDelete },
+          { blockedBy: userIdToDelete },
+        ],
+      },
+      {
+        $pull: {
+          following: userIdToDelete,
+          followers: userIdToDelete,
+          blockedUsers: userIdToDelete,
+          blockedBy: userIdToDelete,
+        },
+      },
+    );
     await PublicChatMessage.updateMany(
       {},
       { $pull: { reactions: { userId: userIdToDelete } } },
     );
 
+    // --- STEP G: MESSAGES & CONVERSATIONS ---
     const conversationsToDelete = await Conversation.find({
       participants: userIdToDelete,
     });
     const conversationIds = conversationsToDelete.map((conv) => conv._id);
     await Message.deleteMany({ conversationId: { $in: conversationIds } });
-    await Conversation.deleteMany({ _id: { $in: conversationIds } }); // 7. Finally, delete the user document
+    await Conversation.deleteMany({ _id: { $in: conversationIds } });
 
+    // --- STEP H: FIREBASE & USER DOCUMENT ---
+    if (userToDelete.firebaseUid) {
+      await admin.auth().deleteUser(userToDelete.firebaseUid);
+    }
     await User.findByIdAndDelete(userIdToDelete);
 
     res.status(200).json({
-      message: `Account of ${userToDelete.username} deleted successfully. All associated data has been removed.`,
+      message: `Account of ${userToDelete.username} and all associated data deleted successfully.`,
     });
   } catch (error) {
     console.error("Error in adminDeleteUserAccount: ", error.message);

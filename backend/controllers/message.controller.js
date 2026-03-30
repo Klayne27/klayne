@@ -82,7 +82,6 @@ export const getMessagesByConversationId = async (req, res) => {
       }
     }
 
-    // ── Block check: DMs only. Group chats are never affected by individual blocks. ──
     if (!conversation.isGroup) {
       const otherParticipantId = conversation.participants.find(
         (participantId) => participantId.toString() !== userId.toString(),
@@ -299,18 +298,15 @@ export const getConversations = async (req, res) => {
           "username fullName profileImg isVerified isGoldVerified  badges preferredBadge",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      // CRITICAL: Ensure the group avatar is always populated
       .populate({ path: "avatar", select: "imageUrl" })
-      // CRITICAL: Ensure lastMessage sender is populated so the UI knows who sent it
       .populate({ path: "lastMessage.sender", select: "username fullName" })
       .populate({ path: "pinnedMessages.pinnedBy", select: "username fullName" })
       .sort({ updatedAt: -1 })
       .lean();
 
     const finalConversations = conversations.filter((conv) => {
-      if (conv.isGroup) return true; // Groups don't get filtered by individual blocks usually
+      if (conv.isGroup) return true; 
 
-      // DM Block Filter
       const other = conv.participants.find(
         (p) => p && p._id.toString() !== userId.toString(),
       );
@@ -372,11 +368,9 @@ export const sendMessage = async (req, res) => {
     }
 
     const isGroup = conversation.isGroup;
-    // For empty groups, recipientId will be undefined. This is expected.
     const recipientId = conversation.participants?.find((p) => !p.equals(senderId));
 
     if (!isGroup) {
-      // Existing DM logic
       if (!recipientId) {
         return res.status(404).json({ error: "Conversation recipient not found." });
       }
@@ -386,7 +380,6 @@ export const sendMessage = async (req, res) => {
         return res.status(403).json({ error: "You cannot send messages to this user." });
       }
     } else {
-      // Group: check membership
       const isMember = conversation.members.some(
         (m) => m.user.toString() === senderId.toString(),
       );
@@ -413,11 +406,9 @@ export const sendMessage = async (req, res) => {
       }
     }
 
-    // --- SAFELY SCOPED REAL-TIME VARIABLES ---
     let isSeen = false;
     let recipientSocketIds = [];
 
-    // Only attempt to read recipient properties if it is a DM AND recipientId exists
     if (!isGroup && recipientId) {
       const recipientActiveChat = userActiveChats.get(recipientId.toString());
       const isRecipientInChat = recipientActiveChat === conversationId.toString();
@@ -484,7 +475,6 @@ export const sendMessage = async (req, res) => {
       await newMessage.save();
     }
 
-    // Update the lastMessage in the conversation
     conversation.lastMessage = {
       text: newMessage.text,
       img: newMessage.img,
@@ -494,7 +484,6 @@ export const sendMessage = async (req, res) => {
       audio: uploadedVoiceUrl,
     };
 
-    // Save conversation with cleaned pinnedMessages
     await conversation.save();
 
     await newMessage.populate([
@@ -539,7 +528,6 @@ export const sendMessage = async (req, res) => {
     }
 
     if (isGroup) {
-      // Emit to each member individually, skipping the sender
       const messageObj = newMessage.toObject();
       conversation.members.forEach((m) => {
         const memberId = (m.user?._id ?? m.user).toString();
@@ -550,7 +538,6 @@ export const sendMessage = async (req, res) => {
         }
       });
 
-      // Push notification to offline members
       const offlineMembers = conversation.members.filter((m) => {
         const mId = (m.user?._id ?? m.user).toString();
         if (mId === senderId.toString()) return false;
@@ -587,12 +574,10 @@ export const sendMessage = async (req, res) => {
         }
       });
     } else {
-      // Existing DM emit logic (unchanged, but now safe)
       if (recipientSocketIds.length > 0) {
         io.to(recipientSocketIds).emit("newMessage", newMessage.toObject());
       }
       {
-        // Send push notification only if recipient is offline
         const senderUser = await User.findById(senderId)
           .select("username")
           .populate("profileImg", "imageUrl")
@@ -612,7 +597,6 @@ export const sendMessage = async (req, res) => {
           icon: resizedProfileImg || `${BASE_URL}/avatar-placeholder.png`,
         };
 
-        // recipientId is guaranteed to exist here because isGroup is false
         await sendPushNotification(recipientId.toString(), payload);
       }
 
@@ -765,17 +749,15 @@ export const reactToMessage = async (req, res) => {
 
     let updatedMessage;
     if (reactionExists) {
-      // 2. Change `reactions.user` in the update query
       updatedMessage = await Message.findOneAndUpdate(
-        { _id: messageId, "reactions.userId": userId, "reactions.emoji": emoji }, // 👈 Changed from `reactions.user`
-        { $pull: { reactions: { userId: userId, emoji: emoji } } }, // 👈 Changed from `user: userId`
+        { _id: messageId, "reactions.userId": userId, "reactions.emoji": emoji },
+        { $pull: { reactions: { userId: userId, emoji: emoji } } },
         { new: true },
       );
     } else {
-      // 3. Change `user` to `userId` in the push operation
       updatedMessage = await Message.findOneAndUpdate(
         { _id: messageId },
-        { $push: { reactions: { emoji, userId: userId } } }, // 👈 Changed from `user: userId`
+        { $push: { reactions: { emoji, userId: userId } } },
         { new: true },
       );
     }
@@ -806,7 +788,7 @@ export const reactToMessage = async (req, res) => {
         },
       })
       .populate({
-        path: "reactions.userId", // 👈 Change population path to `reactions.userId`
+        path: "reactions.userId",
         select: "username fullName ",
         populate: {
           path: "profileImg",
@@ -1011,17 +993,15 @@ export const deleteConversation = async (req, res) => {
 
     const publicIdsToDelete = messagesWithImages
       .map((message) => getPublicIdFromUrl(message.img))
-      .filter(Boolean); // Filter out any null values
+      .filter(Boolean);
 
     if (publicIdsToDelete.length > 0) {
-      // You must use a promise.all here for multiple deletions
       const deletionPromises = publicIdsToDelete.map((publicId) =>
         cloudinary.uploader.destroy(publicId),
       );
       await Promise.all(deletionPromises);
     }
 
-    // Now, delete the associated Mongoose Image documents
     const imageIdsToDelete = messagesWithImages
       .map((message) => message.image)
       .filter(Boolean);
@@ -1067,8 +1047,8 @@ export const deleteAllMessagesOnMySide = async (req, res) => {
 
     await Conversation.findByIdAndUpdate(
       conversationId,
-      { $unset: { lastMessage: "" } }, // Use $unset to remove the field
-      { new: true }, // Return the updated document
+      { $unset: { lastMessage: "" } },
+      { new: true },
     );
 
     res.status(200).json({
@@ -1101,13 +1081,10 @@ export const pinMessage = async (req, res) => {
       return res.status(404).json({ error: "Message not found in this conversation" });
     }
 
-    // Check if message is already pinned (fix the logic)
-    // 👇 FIX: Filter out any corrupted entries before checking the array
     const validPinnedMessages = conversation.pinnedMessages.filter(
       (pin) => pin && pin.message,
     );
 
-    // Now, check against the clean array
     const isAlreadyPinned = validPinnedMessages.some(
       (pin) => pin.message.toString() === messageId.toString(),
     );
@@ -1115,14 +1092,12 @@ export const pinMessage = async (req, res) => {
       return res.status(400).json({ error: "Message is already pinned" });
     }
 
-    // Create the new pin information object
     const pinInfo = {
       message: messageId,
       pinnedBy: userId,
       pinnedAt: new Date(),
     };
 
-    // Push the new object to the array
     const updatedConversation = await Conversation.findByIdAndUpdate(
       conversationId,
       { $push: { pinnedMessages: pinInfo } },
@@ -1131,7 +1106,6 @@ export const pinMessage = async (req, res) => {
 
     const sender = await User.findById(userId).select("fullName username profileImg");
 
-    // Socket payload with correct structure
     const socketPayload = {
       conversationId,
       message: messageId,
@@ -1175,7 +1149,6 @@ export const unpinMessage = async (req, res) => {
       (pin) => pin && pin.message,
     );
 
-    // Find the index in the clean array
     const pinIndex = validPinnedMessages.findIndex(
       (pin) => pin.message.toString() === messageId.toString(),
     );
@@ -1184,7 +1157,6 @@ export const unpinMessage = async (req, res) => {
       return res.status(404).json({ error: "Message is not pinned" });
     }
 
-    // Update the original conversation document's array
     conversation.pinnedMessages = validPinnedMessages.filter(
       (pin) => pin.message.toString() !== messageId.toString(),
     );
@@ -1192,7 +1164,6 @@ export const unpinMessage = async (req, res) => {
 
     const sender = await User.findById(userId).select("fullName username profileImg");
 
-    // Emit socket event to notify other users
     const socketPayload = {
       conversationId,
       messageId,
@@ -1221,7 +1192,7 @@ export const getPinnedMessages = async (req, res) => {
   const userId = req.user._id;
 
   try {
-    const conversation = await Conversation.findById(conversationId).lean(); // Use .lean() for performance
+    const conversation = await Conversation.findById(conversationId).lean();
 
     if (!conversation) {
       return res.status(404).json({ error: "Conversation not found" });
@@ -1231,19 +1202,18 @@ export const getPinnedMessages = async (req, res) => {
       return res.status(403).json({ error: "Not authorized to view pinned messages" });
     }
 
-    // This is the main change: We populate the fields inside the pinnedMessages array
     const populatedPins = await Conversation.findById(conversationId)
-      .select("pinnedMessages") // We only need the pinnedMessages field
+      .select("pinnedMessages") 
       .populate({
-        path: "pinnedMessages.pinnedBy", // Populate the 'pinnedBy' user in each object
+        path: "pinnedMessages.pinnedBy", 
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
-        path: "pinnedMessages.message", // Populate the 'message' in each object
-        select: "text sender img createdAt", // Select the fields you need from the message
+        path: "pinnedMessages.message",
+        select: "text sender img createdAt",
         populate: {
-          path: "sender", // Also populate the original sender of the message itself
+          path: "sender",
           select: "username fullName",
           populate: { path: "profileImg", select: "imageUrl" },
         },
@@ -1251,7 +1221,7 @@ export const getPinnedMessages = async (req, res) => {
       .lean();
 
     if (!populatedPins) {
-      return res.status(200).json([]); // Return empty array if no conversation
+      return res.status(200).json([]);
     }
 
     const pinnedMessages = populatedPins?.pinnedMessages || [];

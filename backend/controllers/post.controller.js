@@ -2526,7 +2526,7 @@ export const voteOnPoll = async (req, res) => {
       { repostedFrom: targetPostId, "pollOptions._id": optionId },
       {
         $push: { "pollOptions.$.voters": userId },
-        $inc: { pollTotalVotes: 1 },
+        $inc: { pollTotalVotes: 1, },
       },
     );
 

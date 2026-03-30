@@ -78,11 +78,11 @@ export const getPublicMessages = async (req, res) => {
 export const sendPublicMessage = async (req, res) => {
   try {
     const { text, imgBase64, repliedTo, voiceMessageBase64, voiceMessageDuration } =
-      req.body; // 👈 Add voiceMessageBase64
+      req.body;
     const senderId = req.user._id;
     let img = null;
     let newImage = null;
-    let newVoiceMessage = null; // 👈 New variable for the voice message Image document
+    let newVoiceMessage = null;
 
     const DURATION_LIMIT = 30;
 
@@ -104,7 +104,7 @@ export const sendPublicMessage = async (req, res) => {
 
       newImage = new Image({
         imageUrl: img,
-        parentDocument: null, // Will be set after the message is created
+        parentDocument: null,
         parentModel: "PublicChatMessage",
         uploadedBy: senderId,
         publicId: uploadResponse.public_id,
@@ -112,10 +112,9 @@ export const sendPublicMessage = async (req, res) => {
       await newImage.save();
     }
 
-    // 👈 Add voice message handling logic
     if (voiceMessageBase64) {
       const uploadResponse = await cloudinary.uploader.upload(voiceMessageBase64, {
-        resource_type: "video", // Cloudinary treats audio files as video resources
+        resource_type: "video",
       });
 
       newVoiceMessage = new Image({

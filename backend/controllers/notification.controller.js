@@ -10,7 +10,7 @@ export const getNotifications = async (req, res) => {
     const blockedAndBlockingUsers = [...new Set([...blockedByMe, ...blockedMe])];
 
     const notifications = await Notification.find({ to: userId })
-      .select("-__v -updatedAt") // Add a select to get rid of extra fields
+      .select("-__v -updatedAt")
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
@@ -67,10 +67,7 @@ export const getNotifications = async (req, res) => {
         populatedNotif.from?._id?.toString() ===
         populatedNotif.postId?.user?._id?.toString();
 
-      // You can now use the isPostOwner variable to apply conditional logic.
-      // For example, to decide if the notification should be anonymized.
       if (isPostOwner && populatedNotif.postId.isAnonymous) {
-        // Only apply anonymity if the user is the post owner AND the post is anonymous
         if (populatedNotif.from) {
           populatedNotif.from.username = "Anonymous";
           populatedNotif.from.fullName = "Anonymous";
