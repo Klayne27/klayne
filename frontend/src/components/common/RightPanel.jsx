@@ -3,11 +3,13 @@ import SearchPanel from "./SearchPanel"
 import SuggestedUsersPanel from "./SuggestedUsersPanel"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { checkSubscriptionStatus, handleEnablePushNotifications } from "../../utils/push"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 
 const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
   const { authUser } = useAuthUser()
   const [isPushSubscribed, setIsPushSubscribed] = useState(false)
   const [isCheckingSubscription, setIsCheckingSubscription] = useState(true)
+  const isMobile = useIsMobile()
 
   useEffect(() => {
     const checkPushStatus = async () => {
@@ -47,7 +49,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
       <SearchPanel />
       <SuggestedUsersPanel />
 
-      {!isInstalled && deferredPrompt && (
+      {/* {!isInstalled && deferredPrompt && (
         <div className="mt-4 rounded-2xl border border-accent p-4">
           <p className="mb-2 text-xl font-bold">Install the App</p>
           <p className="mb-4 text-sm text-gray-500">Get the full experience on your device.</p>
@@ -73,7 +75,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
             Enable Notifications
           </button>
         </div>
-      )}
+      )} */}
 
       {/* {isInstalled && !isCheckingSubscription && isPushSubscribed && (
         <div className="mt-4 rounded-2xl border border-green-500 p-4">
