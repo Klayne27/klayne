@@ -334,8 +334,6 @@ const Post = ({
     return null
   }
 
-  console.log("sourcepost", sourcePost)
-
   const isFollowingOriginalPostOwner = authUser?.following?.includes(originalPostOwner._id)
   const isBlockedByAuthUser = authUser?.blockedUsers?.includes(originalPostOwner._id)
 

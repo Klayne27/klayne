@@ -346,7 +346,7 @@ export const unbanUserFromPublicChat = async (req, res) => {
 export const addReactionToPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { emoji } = req.body;
+    const { emoji, voiceMessageBase64 } = req.body;
     const userId = req.user._id;
 
     if (!userId) {
