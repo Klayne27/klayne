@@ -5,7 +5,6 @@ import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { sendMessageApi } from "../../../../api/privateChatApi"
 import { showAppToast } from "../../../../utils/showAppToast"
-import { groupKeys } from "../../group/groupChatHooks/groupKeys"
 
 export const useSendMessage = (onSenderMessageSent) => {
   const replyingToMessage = usePrivateChatStore((state) => state.replyingToMessage)

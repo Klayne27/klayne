@@ -123,6 +123,7 @@ const EditProfileModal = ({ authUser }) => {
   return (
     <>
       <dialog id="edit_profile_modal" className="modal">
+        
         <div className="modal-box rounded-2xl shadow-md">
           <h3 className="mb-4 text-lg font-bold">Update Profile</h3>
           <form

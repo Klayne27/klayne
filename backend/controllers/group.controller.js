@@ -7,11 +7,11 @@ import Message from "../models/message.model.js";
 import Image from "../models/image.model.js";
 import { io } from "../lib/socket.js";
 import { getReceiverSocketIds } from "../lib/socket.js";
+import { getPublicIdFromUrl } from "../lib/utils/helpers.js";
 
 const POPULATE_MEMBER_USER = {
   path: "members.user",
-  select:
-    "username fullName isVerified isGoldVerified  badges",
+  select: "username fullName isVerified isGoldVerified  badges",
   populate: { path: "profileImg", select: "imageUrl" },
 };
 
@@ -167,10 +167,9 @@ export const updateGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
     const { name, description, isPrivate } = req.body;
-    let { avatar } = req.body; // base64 string or empty string
+    let { avatar } = req.body;
     const userId = req.user._id;
 
-    // 1. Populate avatar initially to get the imageUrl for deletion
     const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate(
       "avatar",
     );
@@ -184,9 +183,7 @@ export const updateGroup = async (req, res) => {
     if (description !== undefined) group.description = description;
     if (isPrivate !== undefined) group.isPrivate = isPrivate;
 
-    // --- Group Avatar Logic (Mirrored from updateUser) ---
     if (avatar || avatar === "") {
-      // Delete old avatar if it exists
       if (group.avatar) {
         const publicId = group.avatar.imageUrl.split("/").pop().split(".")[0];
         await cloudinary.uploader.destroy(publicId);
@@ -205,7 +202,7 @@ export const updateGroup = async (req, res) => {
           parentDocument: group._id,
           parentModel: "Conversation",
           uploadedBy: userId,
-          publicId: uploadedResponse.public_id, // Storing this is good practice
+          publicId: uploadedResponse.public_id,
         });
         group.avatar = newGroupImage._id;
       }
@@ -225,8 +222,6 @@ export const updateGroup = async (req, res) => {
   }
 };
 
-// ─── member directory (searchable) ───────────────────────────────────────────
-
 export const getMembers = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -235,8 +230,7 @@ export const getMembers = async (req, res) => {
 
     const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate({
       path: "members.user",
-      select:
-        "username fullName isVerified isGoldVerified badges ",
+      select: "username fullName isVerified isGoldVerified badges ",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 
@@ -274,8 +268,6 @@ export const getMembers = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// ─── add members ──────────────────────────────────────────────────────────────
 
 export const addMembers = async (req, res) => {
   try {
@@ -325,8 +317,6 @@ export const addMembers = async (req, res) => {
   }
 };
 
-// ─── kick member ──────────────────────────────────────────────────────────────
-
 export const kickMember = async (req, res) => {
   try {
     const { groupId, targetUserId } = req.params;
@@ -344,7 +334,6 @@ export const kickMember = async (req, res) => {
       return res.status(404).json({ error: "User is not a member of this group." });
     }
 
-    // Admins cannot kick the owner, admins cannot kick other admins
     if (targetRole === "owner") {
       return res.status(403).json({ error: "Cannot kick the group owner." });
     }
@@ -378,8 +367,6 @@ export const kickMember = async (req, res) => {
   }
 };
 
-// ─── leave group ──────────────────────────────────────────────────────────────
-
 export const leaveGroup = async (req, res) => {
   try {
     const { groupId } = req.params;
@@ -393,14 +380,6 @@ export const leaveGroup = async (req, res) => {
     }
 
     const role = getMemberRole(group, userId);
-
-    // Owner must transfer ownership or delete the group instead
-    if (role === "owner") {
-      return res.status(400).json({
-        error:
-          "You are the owner. Transfer ownership or delete the group before leaving.",
-      });
-    }
 
     group.members = group.members.filter((m) => m.user.toString() !== userId);
     group.participants = group.participants.filter((p) => p.toString() !== userId);
@@ -419,12 +398,10 @@ export const leaveGroup = async (req, res) => {
   }
 };
 
-// ─── promote / demote member ──────────────────────────────────────────────────
-
 export const updateMemberRole = async (req, res) => {
   try {
     const { groupId, targetUserId } = req.params;
-    const { role } = req.body; // "admin" or "member"
+    const { role } = req.body;
     const userId = req.user._id.toString();
 
     if (!["admin", "member"].includes(role)) {
@@ -434,7 +411,6 @@ export const updateMemberRole = async (req, res) => {
     const group = await Conversation.findOne({ _id: groupId, isGroup: true });
     if (!group) return res.status(404).json({ error: "Group not found." });
 
-    // Only owner can change roles
     if (getMemberRole(group, userId) !== "owner") {
       return res.status(403).json({ error: "Only the owner can change roles." });
     }
@@ -462,24 +438,31 @@ export const updateMemberRole = async (req, res) => {
   }
 };
 
-// ─── delete group ─────────────────────────────────────────────────────────────
-
 export const deleteGroup = async (req, res) => {
+  const { groupId } = req.params;
+  const userId = req.user._id;
+  const session = await mongoose.startSession();
+
   try {
-    const { groupId } = req.params;
-    const userId = req.user._id.toString();
+    session.startTransaction();
 
-    // 1. Populate avatar so we have the imageUrl for deletion
-    const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate(
-      "avatar",
-    );
-    if (!group) return res.status(404).json({ error: "Group not found." });
+    // 1. Fetch group with session and populate avatar
+    const group = await Conversation.findOne({ _id: groupId, isGroup: true })
+      .populate("avatar")
+      .session(session);
 
-    if (getMemberRole(group, userId) !== "owner") {
+    if (!group) {
+      await session.abortTransaction();
+      return res.status(404).json({ error: "Group not found." });
+    }
+
+    // 2. Check Permissions
+    if (getMemberRole(group, userId.toString()) !== "owner") {
+      await session.abortTransaction();
       return res.status(403).json({ error: "Only the owner can delete the group." });
     }
 
-    // 2. Notify all members before deleting
+    // 3. Socket Notification (Do this before deleting from DB)
     group.members.forEach((m) => {
       const socketIds = getReceiverSocketIds(m.user.toString());
       if (socketIds.length > 0) {
@@ -487,30 +470,53 @@ export const deleteGroup = async (req, res) => {
       }
     });
 
-    // 3. Clean up Group Avatar (Mirrored from updateUser logic)
-    if (group.avatar) {
-      const publicId = group.avatar.imageUrl.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(publicId);
-      await Image.findByIdAndDelete(group.avatar._id);
+    // 4. Handle Group Avatar Deletion
+    if (group.avatar && group.avatar.imageUrl) {
+      const avatarPublicId = getPublicIdFromUrl(group.avatar.imageUrl);
+      if (avatarPublicId) {
+        await cloudinary.uploader.destroy(avatarPublicId);
+      }
+      await Image.findByIdAndDelete(group.avatar._id).session(session);
     }
 
-    // 4. (Optional but Recommended) Clean up all message images in Cloudinary
-    // This finds all Image docs where parentDocument is this group
-    const relatedImages = await Image.find({ parentDocument: group._id });
-    for (const img of relatedImages) {
-      const pId = img.imageUrl.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(pId);
+    // 5. Find all messages in this group that have images
+    // Note: Adjust the field name 'image' or 'img' based on your Message schema
+    const messagesWithImages = await Message.find({
+      conversationId: groupId,
+      image: { $exists: true, $ne: null },
+    }).session(session);
+
+    // 6. Delete Message Images from Cloudinary
+    const publicIdsToDelete = messagesWithImages
+      .map((message) => getPublicIdFromUrl(message.img))
+      .filter(Boolean);
+
+    if (publicIdsToDelete.length > 0) {
+      const deletionPromises = publicIdsToDelete.map((publicId) =>
+        cloudinary.uploader.destroy(publicId),
+      );
+      await Promise.all(deletionPromises);
     }
-    await Image.deleteMany({ parentDocument: group._id });
 
-    // 5. Final database cleanup
-    await Message.deleteMany({ conversationId: group._id });
-    await Conversation.deleteOne({ _id: group._id });
+    // 7. Delete Mongoose Image documents for those messages
+    const messageImageIds = messagesWithImages.map((msg) => msg.image).filter(Boolean);
 
-    res.status(200).json({ message: "Group deleted successfully." });
+    if (messageImageIds.length > 0) {
+      await Image.deleteMany({ _id: { $in: messageImageIds } }).session(session);
+    }
+
+    // 8. Final Cleanup: Delete Messages and the Conversation
+    await Message.deleteMany({ conversationId: groupId }).session(session);
+    await Conversation.deleteOne({ _id: groupId }).session(session);
+
+    await session.commitTransaction();
+    res.status(200).json({ message: "Group and all assets deleted successfully." });
   } catch (error) {
     console.error("Error in deleteGroup:", error);
+    await session.abortTransaction();
     res.status(500).json({ error: "Internal server error" });
+  } finally {
+    session.endSession();
   }
 };
 
@@ -685,7 +691,6 @@ export const handleJoinRequest = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 // ─── admin delete message ─────────────────────────────────────────────────────
 

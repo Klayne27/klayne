@@ -308,12 +308,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="mt-5 flex justify-end gap-2 px-4">
-              <button
+              {authUser.username === username && <button
                 className="rounded-full border border-secondary px-4 py-1.5 transition duration-200 hover:bg-secondary"
                 onClick={() => document.getElementById("edit_profile_modal").showModal()}
               >
                 Edit profile
-              </button>
+              </button>}
               {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
               {isAdminUser && !isMyProfile && userProfile && (
                 <button
