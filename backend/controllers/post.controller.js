@@ -218,14 +218,23 @@ export const createReply = async (req, res) => {
 
     // --- NOTIFICATIONS ---
     if (parent.user._id.toString() !== userId.toString()) {
-      await createAndSendNotification({
-        from: userId,
-        to: parent.user._id,
-        type: "reply",
-        postId: newReply._id,
-        // Ensure the notification also respects anonymity
-        isAnonymousInteraction: isOwnerReplyingAnonymously,
-      });
+      if (parent.parentPost === null) {
+        await createAndSendNotification({
+          from: userId,
+          to: parent.user._id,
+          type: "reply",
+          postId: newReply._id,
+          isAnonymousInteraction: isOwnerReplyingAnonymously,
+        });
+      } else {
+        await createAndSendNotification({
+          from: userId,
+          to: parent.user._id,
+          type: "replyReply",
+          postId: newReply._id,
+          isAnonymousInteraction: isOwnerReplyingAnonymously,
+        });
+      }
     }
 
     // --- POPULATE & MASK ---
@@ -328,7 +337,7 @@ export const getAllPosts = async (req, res) => {
 
     const initialMatchConditions = {
       isVent: { $ne: true },
-      isIC: { $ne: true }, 
+      isIC: { $ne: true },
       parentPost: null,
 
       "deletedFor.user": { $ne: userId },
@@ -2223,12 +2232,21 @@ export const likeUnlikePost = async (req, res) => {
 
       if (post.user.toString() !== userId.toString()) {
         // ------------------ FIX: Call the unified function ------------------
-        await createAndSendNotification({
-          from: userId,
-          to: post.user,
-          type: "like",
-          postId: postId,
-        });
+        if (post.parentPost === null) {
+          await createAndSendNotification({
+            from: userId,
+            to: post.user,
+            type: "like",
+            postId: postId,
+          });
+        } else {
+          await createAndSendNotification({
+            from: userId,
+            to: post.user,
+            type: "replyLike",
+            postId: postId,
+          });
+        }
         // --------------------------------------------------------------------
       }
 
@@ -2301,12 +2319,21 @@ export const repostPost = async (req, res) => {
       );
 
       if (!originalPost.user.equals(userId)) {
-        await createAndSendNotification({
-          from: userId,
-          to: originalPost.user,
-          type: "repost",
-          postId: originalPostId,
-        });
+        if (originalPost.parentPost === null) {
+          await createAndSendNotification({
+            from: userId,
+            to: originalPost.user,
+            type: "repost",
+            postId: originalPostId,
+          });
+        } else {
+          await createAndSendNotification({
+            from: userId,
+            to: originalPost.user,
+            type: "replyRepost",
+            postId: originalPostId,
+          });
+        }
       }
 
       if (onlineUsersMap && io) {
@@ -2392,7 +2419,6 @@ export const markFeedICPostsAsRead = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 export const checkIfUserReposted = async (req, res) => {
   try {
@@ -3014,16 +3040,14 @@ export const editPost = async (req, res) => {
       const populatedPost = await Post.findById(post._id)
         .populate({
           path: "user",
-          select:
-            "username fullName isVerified isGoldVerified  badges preferredBadge",
+          select: "username fullName isVerified isGoldVerified  badges preferredBadge",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({
           path: "repostedFrom",
           populate: {
             path: "user",
-            select:
-              "username fullName isVerified isGoldVerified  badges preferredBadge",
+            select: "username fullName isVerified isGoldVerified  badges preferredBadge",
             populate: { path: "profileImg", select: "imageUrl" },
           },
         });

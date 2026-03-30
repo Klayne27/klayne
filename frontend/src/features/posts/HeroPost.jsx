@@ -28,8 +28,10 @@ import { BiHealth } from "react-icons/bi"
 import { PiChefHatFill } from "react-icons/pi"
 import { FaHistory } from "react-icons/fa"
 import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
+import { getDisplayUsername } from "../../utils/truncateText.js"
+import { useIsMobile } from "../../hooks/customHooks/useIsMobile.js"
 
-const HeroPost =  forwardRef(({ post, hasLineAbove = false }, ref) => {
+const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { username } = useParams()
@@ -55,6 +57,8 @@ const HeroPost =  forwardRef(({ post, hasLineAbove = false }, ref) => {
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
+
+  const isMobile = useIsMobile()
 
   const isRepost = !!post.repostedFrom
   const sourcePost = post.repostedFrom || post
@@ -174,48 +178,96 @@ const HeroPost =  forwardRef(({ post, hasLineAbove = false }, ref) => {
       <div className="flex items-center gap-2">
         <div className="flex flex-col items-center self-stretch">
           {hasLineAbove && <div className="mb-1 h-3 w-0.5 bg-gray-600/50" />}
-          <Link
-            to={`/profile/${originalPostOwner.username}`}
-            className="mt-1 size-10 flex-shrink-0 overflow-hidden rounded-full hover:opacity-80"
-            onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
-            onMouseLeave={handleMouseLeave}
-          >
-            <img
-              src={getOptimizedImageUrl(originalPostOwner?.profileImg?.imageUrl, "avatar")}
-              alt={`${originalPostOwner.username}'s profile`}
-              className="h-full w-full object-cover"
-              loading="lazy"
-            />
-          </Link>
+
+          {post.isAnonymous ? (
+            <div className="size-10 flex-shrink-0 overflow-hidden rounded-full">
+              {" "}
+              <img
+                src={"/avatar-placeholder.png"}
+                alt={`${originalPostOwner.username}'s profile`}
+                loading="lazy"
+              />
+            </div>
+          ) : (
+            <Link
+              to={`/profile/${originalPostOwner.username}`}
+              className="mt-1 size-10 flex-shrink-0 overflow-hidden rounded-full hover:opacity-80"
+              onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+              onMouseLeave={handleMouseLeave}
+            >
+              <img
+                src={getOptimizedImageUrl(originalPostOwner?.profileImg?.imageUrl, "avatar")}
+                alt={`${originalPostOwner.username}'s profile`}
+                className="h-full w-full object-cover"
+                loading="lazy"
+              />
+            </Link>
+          )}
         </div>
         <div className={`flex min-w-0 flex-1 flex-col ${hasLineAbove && "mt-3"}`}>
-          <Link
-            to={`/profile/${originalPostOwner.username}`}
-            className="flex items-center gap-1 font-bold hover:underline"
-            onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
-            onMouseLeave={handleMouseLeave}
-          >
-            {originalPostOwner.fullName}
-            <span className="flex items-center">
-              {originalPostOwner.isVerified && (
-                <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
+          {post.isAnonymous ? (
+            <div className="flex items-center gap-1 truncate font-bold">
+              {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
+
+              {post.isAnonymous && originalPostOwner ? (
+                <span></span>
+              ) : (
+                <span className="flex items-center">
+                  {originalPostOwner.isVerified && (
+                    <img
+                      src="/verified2.png"
+                      className="size-[17px]"
+                      alt="Verified"
+                      loading="lazy"
+                    />
+                  )}
+                  {originalPostOwner.isGoldVerified && (
+                    <img
+                      src="/gold-verified2.png"
+                      className="size-[17px]"
+                      alt="Verified"
+                      loading="lazy"
+                    />
+                  )}
+                </span>
               )}
-              {originalPostOwner.isGoldVerified && (
-                <img
-                  src="/gold-verified2.png"
-                  className="size-[17px]"
-                  alt="Gold Verified"
-                  loading="lazy"
-                />
-              )}
-            </span>
-          </Link>
-          <Link
-            to={`/profile/${originalPostOwner.username}`}
-            className="text-sm text-slate-500 hover:underline"
-          >
-            @{originalPostOwner.username}
-          </Link>
+            </div>
+          ) : (
+            <Link
+              to={`/profile/${originalPostOwner.username}`}
+              className="flex items-center gap-1 font-bold hover:underline"
+              onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+              onMouseLeave={handleMouseLeave}
+            >
+              {originalPostOwner.fullName}
+              <span className="flex items-center">
+                {originalPostOwner.isVerified && (
+                  <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
+                )}
+                {originalPostOwner.isGoldVerified && (
+                  <img
+                    src="/gold-verified2.png"
+                    className="size-[17px]"
+                    alt="Gold Verified"
+                    loading="lazy"
+                  />
+                )}
+              </span>
+            </Link>
+          )}
+
+          <span className="flex min-w-0 gap-1 text-sm text-slate-500">
+            {post.isAnonymous ? (
+              <span>@{getDisplayUsername("Anonymous", isMobile)}</span>
+            ) : (
+              <Link
+                to={`/profile/${originalPostOwner.username}`}
+                className="text-sm text-slate-500 hover:underline"
+              >
+                @{originalPostOwner.username}
+              </Link>
+            )}
+          </span>
         </div>
 
         {/* ── Three-dot menu ── */}

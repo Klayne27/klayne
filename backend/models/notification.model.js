@@ -15,7 +15,16 @@ const notificationSchema = new mongoose.Schema(
     type: {
       type: String,
       required: true,
-      enum: ["follow", "like", "repost", "mention", "reply"],
+      enum: [
+        "follow",
+        "like",
+        "repost",
+        "mention",
+        "reply",
+        "replyLike",
+        "replyRepost",
+        "replyReply",
+      ],
     },
     read: {
       type: Boolean,
@@ -25,7 +34,15 @@ const notificationSchema = new mongoose.Schema(
       type: mongoose.Schema.Types.ObjectId,
       ref: "Post",
       required: function () {
-        return ["repost", "like", "mention", "reply"].includes(this.type);
+        return [
+          "repost",
+          "like",
+          "mention",
+          "reply",
+          "replyLike",
+          "replyRepost",
+          "replyReply",
+        ].includes(this.type);
       },
     },
     isAnonymousInteraction: {
@@ -39,4 +56,3 @@ const notificationSchema = new mongoose.Schema(
 const Notification = mongoose.model("Notification", notificationSchema);
 
 export default Notification;
-

@@ -21,12 +21,17 @@ const NotificationPage = () => {
   const navigate = useNavigate()
   const dropdownToggleRef = useRef(null)
 
+  console.log(notifications);
+
   const filteredNotifications = notifications?.filter((notification) => {
     if (
       (notification.type === "like" ||
         notification.type === "mention" ||
         notification.type === "repost" ||
-        notification.type === "reply") &&
+        notification.type === "reply" ||
+        notification.type === "replyLike" ||
+        notification.type === "replyRepost" ||
+        notification.type === "replyReply") &&
       notification.from?._id.toString() === authUser?._id.toString()
     ) {
       return false
@@ -78,6 +83,12 @@ const NotificationPage = () => {
         return <FaAt className="h-6 w-6 text-purple-500" />
       case "reply":
         return <FaReply className="h-6 w-6 text-sky-400" />
+      case "replyLike":
+        return <FaHeart className="h-6 w-6 text-red-500" />
+      case "replyRepost":
+        return <FaRetweet className="h-6 w-6 text-green-500" />
+      case "replyReply":
+        return <FaReply className="h-6 w-6 text-sky-400" />
       default:
         return null
     }
@@ -108,6 +119,12 @@ const NotificationPage = () => {
         return `@${displayUsername} mentioned you in a post.`
       case "reply":
         return `@${displayUsername} replied to your post.`
+      case "replyLike":
+        return `@${displayUsername} liked your reply.`
+      case "replyRepost":
+        return `@${displayUsername} reposted your reply.`
+      case "replyReply":
+        return `@${displayUsername} replied to your reply.`
       default:
         return ""
     }
