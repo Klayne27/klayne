@@ -490,7 +490,7 @@ const Sidebar = ({
             <img src={klayneLogo} className="rounded-lg bg-gray-950" loading="lazy" />
           </div>
 
-          <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-4">
+          <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-3">
             {/* Home */}
             <li
               onClick={() => {
@@ -498,7 +498,7 @@ const Sidebar = ({
                 // navigate("/");
                 handleHomeClick()
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[120px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center rounded-full px-2 py-2 pl-[9px] pr-[7px] transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -527,7 +527,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === "/" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -541,7 +541,7 @@ const Sidebar = ({
                 navigate("/messages")
                 // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[155px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[160px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -566,7 +566,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname.startsWith("/messages") ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -579,7 +579,7 @@ const Sidebar = ({
                 if (pathname === "/notifications") return
                 navigate("/notifications")
               }}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[185px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[190px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center gap-3 rounded-full px-2 py-2 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -606,7 +606,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === "/notifications" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -616,7 +616,7 @@ const Sidebar = ({
 
             <li
               onClick={handlePublicChatClick}
-              className="flex cursor-pointer items-center justify-center rounded-full p-1 md:w-[170px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[175px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`relative flex max-w-fit cursor-pointer items-center justify-center gap-3 rounded-full px-2 py-2.5 pl-2.5 transition duration-200 ${!isTouchDevice ? "hover:bg-secondary md:hover:bg-transparent" : ""} ${
@@ -644,7 +644,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === "/public-chat" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -673,7 +673,7 @@ const Sidebar = ({
                 />
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === "/search" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -683,7 +683,7 @@ const Sidebar = ({
 
             {/* Bookmarks - Hidden on mobile, visible on desktop */}
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full p-1 md:flex md:w-[170px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full p-1 transition duration-200 md:flex md:w-[175px] md:p-0 md:hover:bg-secondary"
               onClick={handleBookmarksClick}
             >
               <button
@@ -705,7 +705,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === "/bookmarks" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -714,7 +714,7 @@ const Sidebar = ({
             </li>
 
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[160px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full transition duration-200 md:flex md:w-[165px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/pomodoro")}
             >
               <button
@@ -730,7 +730,7 @@ const Sidebar = ({
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-xl ml-2${
+                className={`text-lg ml-3${
                   pathname === "/pomodoro" ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -738,7 +738,7 @@ const Sidebar = ({
               </span>
             </li>
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[120px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full transition duration-200 md:flex md:w-[125px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/todos")}
             >
               <button
@@ -754,14 +754,14 @@ const Sidebar = ({
                 <LuListTodo className="size-7" strokeWidth={pathname === "/todos" ? 2.5 : 2} />
               </button>
               <span
-                className={`text-xl ml-2${pathname === "/todos" ? "font-bold text-opacity-100" : ""}`}
+                className={`text-lg ml-3${pathname === "/todos" ? "font-bold text-opacity-100" : ""}`}
               >
                 Todos
               </span>
             </li>
             {/* Themes */}
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[135px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full transition duration-200 md:flex md:w-[140px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/themes")}
             >
               <button
@@ -781,13 +781,13 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 text-xl ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
+                className={`ml-3 text-lg ${pathname === "/themes" ? "font-bold text-opacity-100" : ""}`}
               >
                 Themes
               </span>
             </li>
             <li
-              className="hidden cursor-pointer items-center justify-start rounded-full md:flex md:w-[135px] md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-start rounded-full transition duration-200 md:flex md:w-[135px] md:p-0 md:hover:bg-secondary"
               onClick={() => navigate("/devlog")}
             >
               <button
@@ -807,7 +807,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 text-xl ${pathname === "/devlog" ? "font-bold text-opacity-100" : ""}`}
+                className={`ml-3 text-lg ${pathname === "/devlog" ? "font-bold text-opacity-100" : ""}`}
               >
                 Devlog
               </span>
@@ -844,7 +844,7 @@ const Sidebar = ({
                 if (pathname === `/profile/${authUser?.username}`) return
                 navigate(`/profile/${authUser?.username}`)
               }}
-              className="hidden cursor-pointer items-center justify-center rounded-full p-1 md:flex md:w-[130px] md:justify-start md:p-0 md:hover:bg-secondary"
+              className="hidden cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:flex md:w-[130px] md:justify-start md:p-0 md:hover:bg-secondary"
             >
               <button
                 className={`hidden md:block ${
@@ -865,7 +865,7 @@ const Sidebar = ({
                 )}
               </button>
               <span
-                className={`ml-2 hidden text-xl md:block ${
+                className={`ml-3 hidden text-lg md:block ${
                   pathname === `/profile/${authUser?.username}` ? "font-bold text-opacity-100" : ""
                 }`}
               >
@@ -938,7 +938,10 @@ const Sidebar = ({
                     <div className="flex flex-col pb-2">
                       <div className="relative mb-2 cursor-pointer" onClick={handleClickProfile}>
                         <img
-                          src={getOptimizedImageUrl(authUser?.coverImg?.imageUrl || "/cover.png", "cover")}
+                          src={getOptimizedImageUrl(
+                            authUser?.coverImg?.imageUrl || "/cover.png",
+                            "cover",
+                          )}
                           alt="User cover"
                           className="h-16 w-full rounded-t-xl object-cover"
                         />
