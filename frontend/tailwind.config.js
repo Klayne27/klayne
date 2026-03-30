@@ -101,13 +101,25 @@ export default {
           "--text-on-base-color": "hsl(0, 0%, 100%)",
         },
       },
-      // {
-      //   light: {
-      //     ...daisyUIThemes["light"],
-      //     secondary: "#d6d6d6",
-      //     "--text-on-base-color": "hsl(0, 0%, 0%)",
-      //   },
-      // },
+      {
+        light: {
+          ...daisyUIThemes["light"],
+          primary: "rgb(29, 155, 240)", // Twitter Blue
+          "primary-content": "#ffffff", // White text on blue buttons
+          secondary: "#f7f9f9", // Extra light gray (used for hover/sidebar)
+          accent: "#1d9bf0", // Keep accent consistent with blue
+          neutral: "#0f1419", // Dark gray/black for main text
+          "base-100": "#ffffff", // Main background (Pure White)
+          "base-200": "#f7f9f9", // Light gray background (Sidebar/Input)
+          "base-300": "#eff3f4", // Border colors
+          "base-content": "#0f1419", // Main text color
+          "--text-on-base-color": "hsl(0, 0%, 0%)",
+
+          // Optional: Twitter-style rounded corners are usually more pronounced
+          "--rounded-btn": "9999px", // Pill-shaped buttons
+          "--rounded-box": "1rem", // Card rounding
+        },
+      },
       {
         forest: {
           ...daisyUIThemes["forest"],
@@ -180,30 +192,23 @@ export default {
         },
       },
       {
-        dracula: {
-          ...daisyUIThemes["dracula"],
-          secondary: "hsl(265, 89%, 20%)",
-          "base-content": "hsl(0, 0%, 100%)",
-          "--text-on-base-color": "hsl(0, 0%, 100%)",
-        },
-      },
-      {
         pastel: {
           ...daisyUIThemes["pastel"],
           "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
-      {
-        cyberpunk: {
-          ...daisyUIThemes["cyberpunk"],
-          "base-content": "hsl(0, 0%, 0%)",
-          "--text-on-base-color": "hsl(0, 0%, 0%)",
-        },
-      },
+      // {
+      //   cyberpunk: {
+      //     ...daisyUIThemes["cyberpunk"],
+      //     "base-content": "hsl(0, 0%, 0%)",
+      //     "--text-on-base-color": "hsl(0, 0%, 0%)",
+      //   },
+      // },
       {
         retro: {
           ...daisyUIThemes["retro"],
+          "base-100": "#f4ede4", // A lighter, cleaner sand color
           "base-content": "hsl(0, 0%, 0%)",
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
@@ -215,9 +220,10 @@ export default {
           "--text-on-base-color": "hsl(0, 0%, 0%)",
         },
       },
+      "nord",
       "coffee",
       "cupcake",
-      "cyberpunk",
+      // "cyberpunk",
       "retro",
       "pastel",
       "lemonade",
