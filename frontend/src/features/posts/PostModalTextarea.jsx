@@ -34,7 +34,8 @@ export const PostModalTextarea = ({
   }
 
   const getPlaceholder = () => {
-    if (feedType === "venting") return "What's on your mind?"
+    if (feedType === "venting") return "Let it out"
+    if (feedType === "ic") return "Share your studies"
     if (scheduledAt) return "What is happening?"
     if (showPollInputs) return "Ask a question"
     return "What is happening?"

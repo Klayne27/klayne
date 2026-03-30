@@ -649,7 +649,9 @@ const CreatePost = ({ feedType }) => {
                     ? "What is happening?"
                     : showPollInputs
                       ? "Ask a question"
-                      : "What is happening?"
+                      : feedType === "ic"
+                        ? "Share your studies"
+                        : "What is happening?"
               }
               value={postInput}
               onChange={handleTextChange}
@@ -680,7 +682,10 @@ const CreatePost = ({ feedType }) => {
                       <div className="avatar">
                         <div className="w-8 rounded-full">
                           <img
-                            src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                            src={getOptimizedImageUrl(
+                              user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                              "avatar",
+                            )}
                             alt="profile"
                           />
                         </div>
