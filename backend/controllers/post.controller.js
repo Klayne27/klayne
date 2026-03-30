@@ -202,17 +202,19 @@ export const createReply = async (req, res) => {
 
     await Post.findByIdAndUpdate(parentId, { $inc: { repliesCount: 1 } });
 
-    if (onlineUsersMap && io) {
-      for (const [onlineUserId] of onlineUsersMap.entries()) {
-        if (onlineUserId.toString() !== userId.toString()) {
-          if (newReply.isIC) {
-            await emitNewICPostCount(onlineUserId);
-          } else {
-            await emitNewPostCount(onlineUserId);
-          }
-        }
-      }
-    }
+    // replies doesnt emit event
+
+    // if (onlineUsersMap && io) {
+    //   for (const [onlineUserId] of onlineUsersMap.entries()) {
+    //     if (onlineUserId.toString() !== userId.toString()) {
+    //       if (newReply.isIC) {
+    //         await emitNewICPostCount(onlineUserId);
+    //       } else {
+    //         await emitNewPostCount(onlineUserId);
+    //       }
+    //     }
+    //   }
+    // }
 
     // --- NOTIFICATIONS ---
     if (parent.user._id.toString() !== userId.toString()) {
