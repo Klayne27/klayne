@@ -446,7 +446,6 @@ export const deleteGroup = async (req, res) => {
   try {
     session.startTransaction();
 
-    // 1. Fetch group with session and populate avatar
     const group = await Conversation.findOne({ _id: groupId, isGroup: true })
       .populate("avatar")
       .session(session);
@@ -456,13 +455,11 @@ export const deleteGroup = async (req, res) => {
       return res.status(404).json({ error: "Group not found." });
     }
 
-    // 2. Check Permissions
     if (getMemberRole(group, userId.toString()) !== "owner") {
       await session.abortTransaction();
       return res.status(403).json({ error: "Only the owner can delete the group." });
     }
 
-    // 3. Socket Notification (Do this before deleting from DB)
     group.members.forEach((m) => {
       const socketIds = getReceiverSocketIds(m.user.toString());
       if (socketIds.length > 0) {
@@ -470,7 +467,6 @@ export const deleteGroup = async (req, res) => {
       }
     });
 
-    // 4. Handle Group Avatar Deletion
     if (group.avatar && group.avatar.imageUrl) {
       const avatarPublicId = getPublicIdFromUrl(group.avatar.imageUrl);
       if (avatarPublicId) {
@@ -479,14 +475,11 @@ export const deleteGroup = async (req, res) => {
       await Image.findByIdAndDelete(group.avatar._id).session(session);
     }
 
-    // 5. Find all messages in this group that have images
-    // Note: Adjust the field name 'image' or 'img' based on your Message schema
     const messagesWithImages = await Message.find({
       conversationId: groupId,
       image: { $exists: true, $ne: null },
     }).session(session);
 
-    // 6. Delete Message Images from Cloudinary
     const publicIdsToDelete = messagesWithImages
       .map((message) => getPublicIdFromUrl(message.img))
       .filter(Boolean);
@@ -498,14 +491,12 @@ export const deleteGroup = async (req, res) => {
       await Promise.all(deletionPromises);
     }
 
-    // 7. Delete Mongoose Image documents for those messages
     const messageImageIds = messagesWithImages.map((msg) => msg.image).filter(Boolean);
 
     if (messageImageIds.length > 0) {
       await Image.deleteMany({ _id: { $in: messageImageIds } }).session(session);
     }
 
-    // 8. Final Cleanup: Delete Messages and the Conversation
     await Message.deleteMany({ conversationId: groupId }).session(session);
     await Conversation.deleteOne({ _id: groupId }).session(session);
 
@@ -519,8 +510,6 @@ export const deleteGroup = async (req, res) => {
     session.endSession();
   }
 };
-
-// ─── regenerate invite link ───────────────────────────────────────────────────
 
 export const regenerateInviteCode = async (req, res) => {
   try {
@@ -544,8 +533,6 @@ export const regenerateInviteCode = async (req, res) => {
   }
 };
 
-// ─── join via invite code ─────────────────────────────────────────────────────
-
 export const joinViaInviteCode = async (req, res) => {
   try {
     const { inviteCode } = req.params;
@@ -560,7 +547,6 @@ export const joinViaInviteCode = async (req, res) => {
       return res.status(400).json({ error: "You are already a member of this group." });
     }
 
-    // Check for existing pending request
     const existingRequest = group.joinRequests.find(
       (r) => r.user.toString() === userId && r.status === "pending",
     );
@@ -578,7 +564,6 @@ export const joinViaInviteCode = async (req, res) => {
         .json({ message: "Join request sent. Waiting for admin approval." });
     }
 
-    // Public group — join immediately
     group.members.push({ user: userId, role: "member" });
     group.participants.push(new mongoose.Types.ObjectId(userId));
     await group.save();
@@ -600,8 +585,6 @@ export const joinViaInviteCode = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
-// ─── get join requests ────────────────────────────────────────────────────────
 
 export const getJoinRequests = async (req, res) => {
   try {
@@ -628,12 +611,10 @@ export const getJoinRequests = async (req, res) => {
   }
 };
 
-// ─── handle join request ──────────────────────────────────────────────────────
-
 export const handleJoinRequest = async (req, res) => {
   try {
     const { groupId, requestId } = req.params;
-    const { action } = req.body; // "approve" or "reject"
+    const { action } = req.body;
     const userId = req.user._id.toString();
 
     if (!["approve", "reject"].includes(action)) {
@@ -664,7 +645,6 @@ export const handleJoinRequest = async (req, res) => {
         .populate(POPULATE_MEMBER_USER)
         .populate(POPULATE_AVATAR);
 
-      // Tell the approved user they're now in the group
       const approvedSocketIds = getReceiverSocketIds(requestUserId);
       if (approvedSocketIds.length > 0) {
         io.to(approvedSocketIds).emit("addedToGroup", populated);
@@ -692,8 +672,6 @@ export const handleJoinRequest = async (req, res) => {
   }
 };
 
-// ─── admin delete message ─────────────────────────────────────────────────────
-
 export const adminDeleteMessage = async (req, res) => {
   try {
     const { groupId, messageId } = req.params;
@@ -716,7 +694,6 @@ export const adminDeleteMessage = async (req, res) => {
     message.deletedByAdmin = userId;
     await message.save();
 
-    // Emit to all group members so the UI updates instantly
     group.members.forEach((m) => {
       const socketIds = getReceiverSocketIds(m.user.toString());
       if (socketIds.length > 0) {
@@ -735,8 +712,6 @@ export const adminDeleteMessage = async (req, res) => {
   }
 };
 
-// ─── transfer ownership ───────────────────────────────────────────────────────
-
 export const transferOwnership = async (req, res) => {
   try {
     const { groupId, targetUserId } = req.params;
@@ -754,7 +729,6 @@ export const transferOwnership = async (req, res) => {
       return res.status(404).json({ error: "Target user is not a member." });
     }
 
-    // Demote current owner to admin, promote target to owner
     group.members = group.members.map((m) => {
       if (m.user.toString() === userId) return { ...m.toObject(), role: "admin" };
       if (m.user.toString() === targetUserId) return { ...m.toObject(), role: "owner" };

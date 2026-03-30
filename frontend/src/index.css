@@ -195,10 +195,10 @@ body {
 }
 
 /* If using a library like react-tooltip with the heatmap */
-.react-tooltip {
+/* .react-tooltip {
   background-color: var(--fallback-b2,oklch(var(--b2))) !important;
   color: var(--fallback-bc,oklch(var(--bc))) !important;
   border: 1px solid var(--fallback-b3,oklch(var(--b3)));
   border-radius: 8px;
-}
+} */
 

@@ -447,7 +447,7 @@ const heatmapData = allYearDates.map((dateStr) => {
         )}
 
         {!isLoading && !isRefetching && displayMessage && (
-          <p className="mt-16 text-center text-lg text-slate-400">{displayMessage}</p>
+          <p className="mt-16 text-center text-lg  flex justify-center items-center text-slate-400">{displayMessage}</p>
         )}
 
         {showFullProfileContent && userProfile && (

@@ -48,9 +48,9 @@ const FollowButton = ({
       className={`flex items-center justify-center rounded-full border border-accent px-3 py-2 text-sm font-semibold transition duration-200 md:min-w-[90px] md:text-center ${
         // Initial state for "Follow" button
         !isCurrentlyFollowing
-          ? "bg-secondary/40 transition duration-200 md:hover:bg-secondary"
+          ? "bg-primary hover:bg-primary/80 transition duration-200"
           : // Initial state for "Following" button
-            "bg-primary" // Added a subtle border for consistency
+            "bg-secondary/40 transition duration-200 md:hover:bg-secondary" // Added a subtle border for consistency
       } ${
         // Apply red styles ONLY if following, hovering AND NOT a touch device
         isCurrentlyFollowing && isHoveringUnfollow && !isTouchDevice
@@ -58,12 +58,8 @@ const FollowButton = ({
           : ""
       } `}
       onClick={handleFollowClick}
-      onMouseEnter={
-        !isTouchDevice ? () => setIsHoveringUnfollow(true) : undefined
-      }
-      onMouseLeave={
-        !isTouchDevice ? () => setIsHoveringUnfollow(false) : undefined
-      }
+      onMouseEnter={!isTouchDevice ? () => setIsHoveringUnfollow(true) : undefined}
+      onMouseLeave={!isTouchDevice ? () => setIsHoveringUnfollow(false) : undefined}
       disabled={isPending} // Disable button during pending follow/unfollow action
     >
       {isCurrentlyFollowing

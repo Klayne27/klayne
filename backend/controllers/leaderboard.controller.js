@@ -1,5 +1,6 @@
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 import User from "../models/user.model.js";
+import WeeklyWinners from "../models/weeklyWinners.model.js";
 
 const getMondayOfWeek = (date) => {
   const d = new Date(date);
@@ -56,7 +57,6 @@ export const getWeeklyLeaderboard = async (req, res) => {
 
 export const getPreviousWeekWinners = async (req, res) => {
   try {
-    // Get last Monday
     const lastMonday = new Date();
     lastMonday.setUTCDate(lastMonday.getUTCDate() - 7);
     const lastWeekStart = getMondayOfWeek(lastMonday);
