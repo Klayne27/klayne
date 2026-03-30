@@ -92,37 +92,32 @@ const NotificationPage = () => {
     }
   }
 
-
   const getNotificationMessage = (notification) => {
-    const displayUsername =
-      notification.isAnonymousInteraction && notification.postId?.user._id === notification.from._id
-        ? "Anonymous"
-        : notification.from?.username
-    if (!displayUsername) {
-      return "A user"
-    }
+    // Trust the interaction flag first
+    const isAnon = notification.isAnonymousInteraction
+    const displayUsername = isAnon ? "Anonymous" : notification.from?.username
 
-    const postOwnerDisplayName = notification?.postId?.isAnonymous
-      ? "Anonymous"
-      : notification?.postId?.user?.username
+    if (!displayUsername) return "A user"
+
+    const prefix = isAnon ? "" : "@"
 
     switch (notification.type) {
       case "follow":
-        return `@${displayUsername} followed you.`
+        return `${prefix}${displayUsername} followed you.`
       case "like":
-        return `@${displayUsername} liked your post.`
+        return `${prefix}${displayUsername} liked your post.`
       case "repost":
-        return `@${displayUsername} reposted your post.`
+        return `${prefix}${displayUsername} reposted your post.`
       case "mention":
-        return `@${displayUsername} mentioned you in a post.`
+        return `${prefix}${displayUsername} mentioned you in a post.`
       case "reply":
-        return `@${displayUsername} replied to your post.`
+        return `${prefix}${displayUsername} replied to your post.`
       case "replyLike":
-        return `@${displayUsername} liked your reply.`
+        return `${prefix}${displayUsername} liked your reply.`
       case "replyRepost":
-        return `@${displayUsername} reposted your reply.`
+        return `${prefix}${displayUsername} reposted your reply.`
       case "replyReply":
-        return `@${displayUsername} replied to your reply.`
+        return `${prefix}${displayUsername} replied to your reply.`
       default:
         return ""
     }
@@ -178,8 +173,10 @@ const NotificationPage = () => {
         {filteredNotifications?.map((notification) => {
           const isGoldVerified = notification.from.isGoldVerified
           const isVerified = notification.from.isVerified
+          const isAnon = notification.isAnonymousInteraction
 
           let contentToDisplay = null
+          console.log(filteredNotifications)
 
           if (notification.postId) {
             contentToDisplay = notification.postId
@@ -197,18 +194,21 @@ const NotificationPage = () => {
                   <div
                     className="avatar cursor-pointer"
                     onClick={(e) =>
-                      !notification.isAnonymousInteraction
-                        ? handleProfileClick(e, notification.from?.username)
-                        : ""
+                      !isAnon ? handleProfileClick(e, notification.from?.username) : ""
                     }
                   >
                     <div className="w-10 rounded-full">
                       <img
-                        src={getOptimizedImageUrl(
-                          notification.from?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                          "avatar",
-                        )}
-                        alt={`${notification.from?.username}'s profile`}
+                        src={
+                          isAnon
+                            ? "/avatar-placeholder.png" // Force placeholder for anonymous
+                            : getOptimizedImageUrl(
+                                notification.from?.profileImg?.imageUrl ||
+                                  "/avatar-placeholder.png",
+                                "avatar",
+                              )
+                        }
+                        alt="profile"
                       />
                     </div>
                   </div>
@@ -216,21 +216,24 @@ const NotificationPage = () => {
                   <div className="flex flex-col">
                     <div className="flex items-center gap-[2px]">
                       <span
-                        className={`cursor-pointer font-bold ${!notification.isAnonymousInteraction && "hover:underline"}`}
+                        className={`font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                         onClick={(e) =>
-                          !notification.isAnonymousInteraction
+                          !isAnon
                             ? handleProfileClick(e, notification.from?.username)
-                            : ""
+                            : null
                         }
                       >
-                        {notification.from?.fullName}
+                        {isAnon
+                          ? "Anonymous"
+                          : notification.from?.fullName}
                       </span>
 
-                      {isVerified && (
+                      {/* Only show verification badges if NOT anonymous */}
+                      {!isAnon && isVerified && (
                         <img src="/verified2.png" className="size-[17px]" alt="Verified" />
                       )}
 
-                      {isGoldVerified && (
+                      {!isAnon && isGoldVerified && (
                         <img
                           src="/gold-verified2.png"
                           className="size-[17px]"

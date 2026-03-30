@@ -2231,13 +2231,19 @@ export const likeUnlikePost = async (req, res) => {
       await post.save();
 
       if (post.user.toString() !== userId.toString()) {
-        // ------------------ FIX: Call the unified function ------------------
+        // --- ANONYMITY CHECK ---
+        // If the post is a vent and marked anonymous,
+        // and the person liking it is the owner, hide their identity.
+        const isAnonymousInteraction =
+          post.isVent && post.isAnonymous && post.user.toString() === userId.toString();
+
         if (post.parentPost === null) {
           await createAndSendNotification({
             from: userId,
             to: post.user,
             type: "like",
             postId: postId,
+            isAnonymousInteraction: isAnonymousInteraction, // Pass the flag here!
           });
         } else {
           await createAndSendNotification({
@@ -2245,9 +2251,9 @@ export const likeUnlikePost = async (req, res) => {
             to: post.user,
             type: "replyLike",
             postId: postId,
+            isAnonymousInteraction: isAnonymousInteraction, // Pass the flag here!
           });
         }
-        // --------------------------------------------------------------------
       }
 
       res.status(200).json(post.likes);

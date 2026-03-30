@@ -146,7 +146,13 @@ export const getDynamicPushBody = (type, username) => {
     case "mention":
       return `@${username} mentioned you in a post.`;
     case "reply":
-      return `@${username} replied to your post.`; // ADD
+      return `@${username} replied to your post.`;
+    case "replyLike":
+      return `@${username} liked your reply.`;
+    case "replyRepost":
+      return `@${username} reposted your reply.`;
+    case "replyReply":
+      return `@${username} replied to your reply.`;
     default:
       return "You have a new notification on Twatter!";
   }
@@ -164,6 +170,12 @@ export const getDynamicPushTitle = (type) => {
       return "New Like";
     case "repost":
       return "New Repost";
+    case "replyLike":
+      return "New Like";
+    case "replyRepost":
+      return "New Repost";
+    case "replyReply":
+      return "New Reply";
     default:
       return "New Notification";
   }

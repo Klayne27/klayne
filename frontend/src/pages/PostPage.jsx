@@ -257,6 +257,8 @@ const PostPage = () => {
     ],
   )
 
+  console.log(post);
+
   if (isLoading || isLoadingThread) {
     return (
       <div className="flex h-screen w-full flex-1 items-center justify-center">
@@ -278,6 +280,7 @@ const PostPage = () => {
       </div>
     )
   }
+
 
   // ── Render ─────────────────────────────────────────────────────────────────
   return (
