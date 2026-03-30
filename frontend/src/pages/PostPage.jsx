@@ -28,6 +28,7 @@ const PostPage = () => {
   const replyFileInputRef = useRef(null)
   const replyInputRef = useRef(null)
   const observerTarget = useRef(null)
+  const heroRef = useRef(null)
 
   const [showButton, setShowButton] = useState(false)
   const [mentionSearchTerm, setMentionSearchTerm] = useState("")
@@ -40,7 +41,6 @@ const PostPage = () => {
   // ── Data fetching ──────────────────────────────────────────────────────────
   // The hero post (same hook you already have)
   const { post, isLoading, isError, error, refetch: refetchPost } = useGetPost(pid)
-
   // Ancestor chain above the hero
   const { ancestors, isLoading: isLoadingThread } = useGetPostThread(pid)
 
@@ -68,6 +68,12 @@ const PostPage = () => {
       textarea.style.height = `${textarea.scrollHeight}px`
     }
   }, [])
+
+  useEffect(() => {
+    if (heroRef.current && !isLoading ) {
+      heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
+    }
+  }, [isLoading, isLoadingThread, isLoadingReplies])
 
   useEffect(() => {
     adjustTextareaHeight()
@@ -300,12 +306,12 @@ const PostPage = () => {
             />
           ))}
           {/* Hero gets a line above its avatar */}
-          <HeroPost post={displayPost} hasLineAbove={true} />
+          <HeroPost ref={heroRef} post={displayPost} hasLineAbove={true} />
         </div>
       )}
 
       {/* ── Hero post ── */}
-      {ancestors.length === 0 && <HeroPost post={displayPost} />}
+      {ancestors.length === 0 && <HeroPost ref={heroRef} post={displayPost} />}
 
       {/* ── Reply input ── */}
       {authUser && (

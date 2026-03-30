@@ -28,6 +28,7 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
   })
 
   const observer = useRef()
+  
   const lastPostElementRef = useCallback(
     (node) => {
       if (isLoading || isFetchingNextPage) return

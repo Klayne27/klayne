@@ -7,7 +7,7 @@ import { useDeletePosts } from "./postsHooks/useDeletePosts"
 import { useLikePost } from "./postsHooks/useLikePosts"
 import { useRepostPost } from "./postsHooks/useRepostPost"
 import { renderClickableText } from "../../utils/textUtils"
-import { useEffect, useState, useRef } from "react"
+import { useEffect, useState, useRef, forwardRef } from "react"
 import { useToggleBookmarks } from "./postsHooks/useToggleBookmarks"
 import PollDisplay from "../../components/common/PollDisplay"
 import { BsThreeDots } from "react-icons/bs"
@@ -29,7 +29,7 @@ import { PiChefHatFill } from "react-icons/pi"
 import { FaHistory } from "react-icons/fa"
 import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
 
-const HeroPost = ({ post, hasLineAbove = false }) => {
+const HeroPost =  forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { username } = useParams()
@@ -153,7 +153,7 @@ const HeroPost = ({ post, hasLineAbove = false }) => {
   if (!sourcePost || !originalPostOwner) return null
 
   return (
-    <div className={`border-b border-accent px-4 ${hasLineAbove ? "" : "py-3"}`}>
+    <div ref={ref} className={`border-b border-accent px-4 ${hasLineAbove ? "" : "py-3"}`}>
       {/* ── Repost banner ── */}
       {isRepost && repostingUser && (
         <div className="mb-2 flex items-center gap-1 text-sm font-semibold text-slate-500">
@@ -553,6 +553,6 @@ const HeroPost = ({ post, hasLineAbove = false }) => {
       )}
     </div>
   )
-}
+})
 
 export default HeroPost
