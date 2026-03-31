@@ -179,7 +179,7 @@ const CustomDatePicker = ({
         ReactDOM.createPortal(
           <div
             ref={calendarRef}
-            className="white-shadow absolute left-2 top-0 z-[1001] mt-2 h-auto w-72 rounded-xl bg-base-100 p-4"
+            className="white-shadow fixed left-10 top-20 z-[1001] mt-2 h-auto w-72 rounded-xl bg-base-100 p-4"
           >
             {/* Header */}
             <div className="mb-4 flex items-center justify-between">
