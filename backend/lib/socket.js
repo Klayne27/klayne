@@ -369,14 +369,10 @@ export const createAndSendNotification = async ({
   isAnonymousInteraction = false,
 }) => {
   try {
-    if (from.toString() === to.toString()) {
-      return;
-    }
+    if (from.toString() === to.toString()) return;
 
     const blocked = await isBlockedOrBlockedBy(from, to);
-    if (blocked) {
-      return;
-    }
+    if (blocked) return;
 
     const newNotification = new Notification({
       from,
@@ -390,27 +386,19 @@ export const createAndSendNotification = async ({
     await newNotification.populate({
       path: "from",
       select: "username fullName",
-      populate: {
-        path: "profileImg",
-        select: "imageUrl",
-      },
+      populate: { path: "profileImg", select: "imageUrl" },
     });
+
     if (postId) {
       await newNotification.populate({
         path: "postId",
         select: "text img user isAnonymous parentPost",
         populate: [
-          {
-            path: "user",
-            select: "username fullName",
-          },
+          { path: "user", select: "username fullName" },
           {
             path: "parentPost",
             select: "user",
-            populate: {
-              path: "user",
-              select: "username",
-            },
+            populate: { path: "user", select: "username" },
           },
         ],
       });
@@ -422,50 +410,40 @@ export const createAndSendNotification = async ({
       newNotification.from.profileImg = { imageUrl: "/avatar-placeholder.png" };
     }
 
-    const receiverSocketIds = getReceiverSocketIds(to.toString());
+    // --- Build push payload (always, regardless of socket status) ---
+    const fromUser = await User.findById(from).select("username").lean();
+    const username = isAnonymousInteraction
+      ? "Anonymous"
+      : (fromUser?.username ?? "A user");
 
-    if (receiverSocketIds.length === 0) {
-      const fromUser = await User.findById(from).select("username").lean();
-      const username = fromUser ? fromUser.username : "A user";
-
-      let postOwnerUsername = null;
-      if (postId) {
-        const post = await Post.findById(postId)
-          .populate("user", "username")
-          .populate({
-            // ADD: for reply type, get parent owner
-            path: "parentPost",
-            populate: { path: "user", select: "username" },
-          })
-          .lean();
-
-        if (post && post.user) {
-          // For reply notifications, the URL should go to the reply's page,
-          // which is owned by the replier — use post.user.username
-          postOwnerUsername = post.user.username;
-        }
-      }
-
-      const dynamicBody = getDynamicPushBody(type, username);
-      const dynamicTitle = getDynamicPushTitle(type);
-      const dynamicUrl = getDynamicPushUrl(type, postOwnerUsername, postId, username);
-
-      const payload = {
-        title: dynamicTitle,
-        body: dynamicBody,
-        url: dynamicUrl,
-        icon: `${BASE_URL}/twatter.png`,
-      };
-      await sendPushNotification(to.toString(), payload);
+    let postOwnerUsername = null;
+    if (postId) {
+      const post = await Post.findById(postId)
+        .populate("user", "username")
+        .populate({ path: "parentPost", populate: { path: "user", select: "username" } })
+        .lean();
+      if (post?.user) postOwnerUsername = post.user.username;
     }
 
+    const payload = {
+      title: getDynamicPushTitle(type),
+      body: getDynamicPushBody(type, username),
+      url: getDynamicPushUrl(type, postOwnerUsername, postId, username),
+      icon: `${BASE_URL}/twatter.png`,
+    };
+
+    // Always send push — it handles background/locked screen delivery
+    await sendPushNotification(to.toString(), payload);
+
+    // --- Socket: real-time in-app UI update ---
+    const receiverSocketIds = getReceiverSocketIds(to.toString());
     receiverSocketIds.forEach((socketId) => {
       io.to(socketId).emit("newNotification", newNotification);
     });
 
     await emitUnreadNotificationStatus(to.toString());
   } catch (error) {
-    console.error("Error in createAndSendNotification (socket.js): ", error.message);
+    console.error("Error in createAndSendNotification:", error.message);
   }
 };
 
