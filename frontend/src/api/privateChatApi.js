@@ -50,19 +50,30 @@ export const getFollowedUsersForMessagingApi = async (searchQuery = "") => {
   return data
 }
 
-export const getOrCreateConversationApi = async (targetUserId) => {
-  const res = await fetch(`${BASE_URL}/conversations/get-or-create`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-    },
-    body: JSON.stringify({ targetUserId }),
+export const searchConversationsAndUsersApi = async (searchQuery = "") => {
+  const url = searchQuery
+    ? `${BASE_URL}/search?q=${encodeURIComponent(searchQuery)}`
+    : `${BASE_URL}/search`
+
+  const res = await fetch(url, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
   })
 
   const data = await res.json()
-  if (!res.ok) {
-    throw new Error(data.error || "Failed to get or create conversation.")
-  }
+  if (!res.ok) throw new Error(data.error || "Failed to search.")
+  return data // { users: [], groupChats: [] }
+}
+
+export const getOrCreateConversationApi = async ({ targetUserId, participantIds, name }) => {
+  const res = await fetch(`${BASE_URL}/conversations/get-or-create`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ targetUserId, participantIds, name }),
+  })
+
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to get or create conversation.")
   return data
 }
 

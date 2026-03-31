@@ -16,6 +16,7 @@ import {
   pinMessage,
   unpinMessage,
   getPinnedMessages,
+  searchConversationsAndUsers,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
@@ -38,6 +39,7 @@ router.get(
 );
 
 router.get("/followed-for-messaging", protectRoute, getFollowedUsersForMessaging);
+router.get("/search", protectRoute, searchConversationsAndUsers);
 
 router.post("/conversations/get-or-create", protectRoute, getOrCreateConversation);
 

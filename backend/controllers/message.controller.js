@@ -212,6 +212,51 @@ export const getFollowedUsersForMessaging = async (req, res) => {
   }
 };
 
+export const searchConversationsAndUsers = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const { q } = req.query;
+
+    const currentUser = await User.findById(userId).select("following");
+    if (!currentUser) return res.status(404).json({ error: "User not found." });
+
+    // Search followed users
+    let userQuery = { _id: { $in: currentUser.following } };
+    if (q) {
+      userQuery.$or = [
+        { username: { $regex: `^${q}`, $options: "i" } },
+        { fullName: { $regex: `^${q}`, $options: "i" } },
+      ];
+    }
+
+    const [users, groupChats] = await Promise.all([
+      User.find(userQuery)
+        .select("-password -email -blockedUsers -followers -following")
+        .populate("profileImg", "imageUrl")
+        .limit(10),
+
+      // Only search groups the user is a member of
+      q
+        ? Conversation.find({
+            isGroup: true,
+            "members.user": userId,
+            name: { $regex: q, $options: "i" },
+          })
+            .populate("avatar", "imageUrl")
+            .limit(10)
+        : [],
+    ]);
+
+    res.status(200).json({
+      users,
+      groupChats,
+    });
+  } catch (error) {
+    console.error("Error in searchConversationsAndUsers:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const getOrCreateConversation = async (req, res) => {
   try {
     const { targetUserId, participantIds, name } = req.body;

@@ -83,27 +83,27 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const { conversationStatus, isLoadingConversationStatus, isErrorConversationStatus } =
     useGetConversationBetweenUsers(userProfile?._id)
 
-const getDatesInRange = (startDate, endDate) => {
-  const dates = []
-  let curr = new Date(startDate)
-  while (curr <= endDate) {
-    dates.push(curr.toISOString().split("T")[0])
-    curr.setDate(curr.getDate() + 1)
+  const getDatesInRange = (startDate, endDate) => {
+    const dates = []
+    let curr = new Date(startDate)
+    while (curr <= endDate) {
+      dates.push(curr.toISOString().split("T")[0])
+      curr.setDate(curr.getDate() + 1)
+    }
+    return dates
   }
-  return dates
-}
 
-// 2. Map your existing data into a full calendar year
-const allYearDates = getDatesInRange(new Date("2026-01-01"), new Date("2026-12-31"))
+  // 2. Map your existing data into a full calendar year
+  const allYearDates = getDatesInRange(new Date("2026-01-01"), new Date("2026-12-31"))
 
-const heatmapData = allYearDates.map((dateStr) => {
-  const existingEntry = userProfile?.studyHistory.find((item) => item.date === dateStr)
-  return {
-    date: dateStr,
-    count: existingEntry ? existingEntry.count : 0,
-    duration: existingEntry ? existingEntry.duration : 0,
-  }
-})
+  const heatmapData = allYearDates.map((dateStr) => {
+    const existingEntry = userProfile?.studyHistory.find((item) => item.date === dateStr)
+    return {
+      date: dateStr,
+      count: existingEntry ? existingEntry.count : 0,
+      duration: existingEntry ? existingEntry.duration : 0,
+    }
+  })
 
   const {
     pinnedPosts,
@@ -208,7 +208,7 @@ const heatmapData = allYearDates.map((dateStr) => {
     }
 
     if (!conversationStatus.conversationId || conversationStatus.isHiddenForCurrentUser) {
-      getOrCreateConversation(userProfile._id)
+      getOrCreateConversation({ targetUserId: userProfile._id })
     } else {
       navigate(`/messages/${conversationStatus.conversationId}`)
     }
@@ -447,7 +447,9 @@ const heatmapData = allYearDates.map((dateStr) => {
         )}
 
         {!isLoading && !isRefetching && displayMessage && (
-          <p className="mt-16 text-center text-lg  flex justify-center items-center text-slate-400">{displayMessage}</p>
+          <p className="mt-16 flex items-center justify-center text-center text-lg text-slate-400">
+            {displayMessage}
+          </p>
         )}
 
         {showFullProfileContent && userProfile && (
@@ -576,7 +578,9 @@ const heatmapData = allYearDates.map((dateStr) => {
                       gutterSize={3} // Increases the space between the rounded squares
                       classForValue={(value) => {
                         if (!value || !value.count) return "color-empty"
-                        return `color-scale-${Math.min(value.count, 4)}`
+                        const scale = Math.ceil(value.count / 2)
+
+                        return `color-scale-${Math.min(scale, 4)}`
                       }}
                       tooltipDataAttrs={(value) => {
                         const date = value?.date
@@ -610,7 +614,6 @@ const heatmapData = allYearDates.map((dateStr) => {
                         color: "var(--fallback-bc,oklch(var(--bc)))",
                         borderRadius: "12px",
                         padding: "6px 12px",
-                        
                       }}
                       border="1px solid var(--fallback-b3,oklch(var(--b3)))"
                     />

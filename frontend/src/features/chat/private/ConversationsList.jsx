@@ -3,134 +3,156 @@ import { IoSearch, IoSettingsOutline } from "react-icons/io5"
 import ConversationItem from "./ConversationItem"
 import React from "react"
 import { useGetOrCreateConversation } from "./privateChatHooks/useGetOrCreateConversation"
-import { useGetFollowedUsersForMessaging } from "./privateChatHooks/useGetFollowedUsersForMessaging" // Updated hook import
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import ConversationsListHeader from "./ConversationsListHeader"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { useSearchConversations } from "./privateChatHooks/useSearchConversations"
 
 const ConversationsList = ({ conversations }) => {
   const { authUser } = useAuthUser()
   const [followedSearchQuery, setFollowedSearchQuery] = useState("")
   const [debouncedFollowedQuery, setDebouncedFollowedQuery] = useState("")
-  const [showFollowedDropdown, setShowFollowedDropdown] = useState(false) // Controls dropdown visibility
-
+  const [showFollowedDropdown, setShowFollowedDropdown] = useState(false)
   const searchInputWrapperRef = useRef(null)
 
   useEffect(() => {
-    const timerId = setTimeout(() => {
-      setDebouncedFollowedQuery(followedSearchQuery)
-    }, 500)
-
-    return () => {
-      clearTimeout(timerId)
-    }
+    const timerId = setTimeout(() => setDebouncedFollowedQuery(followedSearchQuery), 500)
+    return () => clearTimeout(timerId)
   }, [followedSearchQuery])
 
-  const {
-    searchedFollowedUsers,
-    isLoadingFollowedUsers,
-    isErrorFollowedUsers,
-    followedUsersError,
-    isFetchingFollowedUsers,
-  } = useGetFollowedUsersForMessaging(debouncedFollowedQuery) // Pass debounced query here
+  const { users, groupChats, isLoading, isFetching, isError, error } =
+    useSearchConversations(debouncedFollowedQuery)
 
-  // Mutation hook to get or create a conversation
   const { getOrCreateConversation, isCreatingConversation } = useGetOrCreateConversation()
 
-  // Handler for when a followed user is selected from the dropdown
-  const handleSelectFollowedUserForMessage = (selectedUser) => {
+  const handleSelectUser = (selectedUser) => {
     if (isCreatingConversation) return
-
     setFollowedSearchQuery("")
     setShowFollowedDropdown(false)
+    getOrCreateConversation({ targetUserId: selectedUser._id })
+  }
 
-    getOrCreateConversation(selectedUser._id)
+  const handleSelectGroup = (conv) => {
+    setFollowedSearchQuery("")
+    setShowFollowedDropdown(false)
+    // Just navigate to the existing group — no need to create
+    getOrCreateConversation({ existingConversationId: conv._id })
   }
 
   useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (searchInputWrapperRef.current && !searchInputWrapperRef.current.contains(event.target)) {
+    const handleClickOutside = (e) => {
+      if (searchInputWrapperRef.current && !searchInputWrapperRef.current.contains(e.target)) {
         setShowFollowedDropdown(false)
       }
     }
-
     document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
+    return () => document.removeEventListener("mousedown", handleClickOutside)
   }, [])
 
-  const isOnline = authUser?.statusPreference === "online"
+  const hasResults = users.length > 0 || groupChats.length > 0
+  const showDropdown = showFollowedDropdown && (debouncedFollowedQuery.length > 0 || hasResults)
 
   return (
     <div className="template flex h-full flex-col border-accent">
-      {/* Header */}
       <ConversationsListHeader />
 
-      {/* Search Bar for followed users */}
       <div className="px-3 py-2">
         <div ref={searchInputWrapperRef} className="relative w-full">
           <IoSearch className="absolute top-1/2 mx-3 h-4 w-4 -translate-y-1/2 text-gray-500" />
           <input
             type="text"
-            placeholder="Search for a conversation"
+            placeholder="Search conversations"
             className="focus:border-accent/99 w-full rounded-full border border-accent bg-black/0 p-2 px-3 pl-8 text-sm focus:outline-none"
             value={followedSearchQuery}
             onChange={(e) => setFollowedSearchQuery(e.target.value)}
             onFocus={() => setShowFollowedDropdown(true)}
           />
 
-          {/* Dropdown for followed users search results */}
-          {showFollowedDropdown &&
-          (debouncedFollowedQuery.length > 0 ||
-            (searchedFollowedUsers && searchedFollowedUsers.length > 0)) ? (
+          {showDropdown && (
             <div className="absolute left-0 top-[calc(100%+8px)] z-50 max-h-[300px] w-full overflow-y-auto rounded-2xl border border-accent bg-base-100 shadow-md shadow-gray-400">
-              {(isLoadingFollowedUsers || isFetchingFollowedUsers) && debouncedFollowedQuery ? (
-                <p className="p-4 text-center text-gray-400">Searching followed users...</p>
-              ) : isErrorFollowedUsers ? (
-                <p className="p-4 text-center text-red-500">Error: {followedUsersError.message}</p>
-              ) : searchedFollowedUsers && searchedFollowedUsers.length > 0 ? (
-                <>
-                  {searchedFollowedUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="flex cursor-pointer items-center gap-3 px-2 py-2 transition-colors hover:bg-secondary"
-                      onClick={() => handleSelectFollowedUserForMessage(user)}
-                    >
-                      <div className="avatar">
-                        <div className="w-8 rounded-full">
-                          <img
-                            src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
-                            alt={`${user.username}'s profile`}
-                          />
-                        </div>
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="max-w-[120px] truncate font-semibold">
-                          {user.fullName}
-                        </span>
-                        <span className="max-w-[120px] truncate text-sm text-gray-500">
-                          @{user.username}
-                        </span>
-                      </div>
-                    </div>
-                  ))}
-                </>
-              ) : debouncedFollowedQuery &&
-                !isLoadingFollowedUsers &&
-                !isFetchingFollowedUsers &&
-                searchedFollowedUsers.length === 0 ? (
-                <p className="p-4 text-center text-gray-400">
-                  No followed users found matching your search.
-                </p>
+              {(isLoading || isFetching) && debouncedFollowedQuery ? (
+                <p className="p-4 text-center text-gray-400">Searching...</p>
+              ) : isError ? (
+                <p className="p-4 text-center text-red-500">Error: {error.message}</p>
+              ) : !hasResults && debouncedFollowedQuery ? (
+                <p className="p-4 text-center text-gray-400">No results found.</p>
+              ) : !debouncedFollowedQuery ? (
+                <p className="p-4 text-center text-gray-400">Start typing to search.</p>
               ) : (
-                // This message appears when the dropdown is shown but no query is typed yet
-                <p className="p-4 text-center text-gray-400">
-                  Start typing to search your followed users.
-                </p>
+                <>
+                  {groupChats.length > 0 && (
+                    <>
+                      <p className="px-3 pt-3 text-xs font-semibold uppercase text-gray-500">
+                        Group Chats
+                      </p>
+                      {groupChats.map((conv) => (
+                        <div
+                          key={conv._id}
+                          className="flex cursor-pointer items-center gap-3 px-2 py-2 transition-colors hover:bg-secondary"
+                          onClick={() => handleSelectGroup(conv)}
+                        >
+                          <div className="avatar">
+                            <div className="w-8 rounded-full">
+                              <img
+                                src={getOptimizedImageUrl(
+                                  conv.avatar?.imageUrl || "/avatar-placeholder.png",
+                                  "avatar",
+                                )}
+                                alt={conv.name}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="max-w-[120px] truncate font-semibold">
+                              {conv.name}
+                            </span>
+                            <span className="max-w-[120px] truncate text-sm text-gray-500">
+                              {conv.members?.length} members
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+
+                  {users.length > 0 && (
+                    <>
+                      <p className="px-3 pt-3 text-xs font-semibold uppercase text-gray-500">
+                        People
+                      </p>
+                      {users.map((user) => (
+                        <div
+                          key={user._id}
+                          className="flex cursor-pointer items-center gap-3 px-2 py-2 transition-colors hover:bg-secondary"
+                          onClick={() => handleSelectUser(user)}
+                        >
+                          <div className="avatar">
+                            <div className="w-8 rounded-full">
+                              <img
+                                src={getOptimizedImageUrl(
+                                  user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                                  "avatar",
+                                )}
+                                alt={user.username}
+                              />
+                            </div>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="max-w-[120px] truncate font-semibold">
+                              {user.fullName}
+                            </span>
+                            <span className="max-w-[120px] truncate text-sm text-gray-500">
+                              @{user.username}
+                            </span>
+                          </div>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </>
               )}
             </div>
-          ) : null}
+          )}
         </div>
       </div>
 

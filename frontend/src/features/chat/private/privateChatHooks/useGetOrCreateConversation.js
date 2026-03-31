@@ -8,10 +8,10 @@ export const useGetOrCreateConversation = () => {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
-  const { mutate: getOrCreateConversation, isPending: isCreatingConversation }= useMutation({
+  const { mutate, isPending: isCreatingConversation } = useMutation({
     mutationFn: getOrCreateConversationApi,
     onSuccess: (conversation) => {
-      if (conversation && conversation._id) {
+      if (conversation?._id) {
         navigate(`/messages/${conversation._id}`)
       } else {
         showAppToast("Failed to open chat: Conversation ID missing.")
@@ -23,5 +23,19 @@ export const useGetOrCreateConversation = () => {
     },
   })
 
-  return {getOrCreateConversation, isCreatingConversation}
+  const getOrCreateConversation = ({
+    existingConversationId,
+    targetUserId,
+    participantIds,
+    name,
+  } = {}) => {
+    // Group search result — already exists, just navigate
+    if (existingConversationId) {
+      navigate(`/messages/${existingConversationId}`)
+      return
+    }
+    mutate({ targetUserId, participantIds, name })
+  }
+
+  return { getOrCreateConversation, isCreatingConversation }
 }
