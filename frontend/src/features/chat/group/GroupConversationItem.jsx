@@ -14,6 +14,9 @@ import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 import DropdownMenu from "../../../components/common/DropdownMenu"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
+import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
+import SlideUpMenu from "../../../components/common/SlideUpMenu"
+import { TbUser } from "react-icons/tb"
 
 function GroupConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -27,6 +30,19 @@ function GroupConversationItem({ conv }) {
 
   const { leaveGroup, isLeavingGroup } = useLeaveGroup()
   const { deleteGroup, isDeletingGroup } = useDeleteGroup()
+
+  const {
+    activeConversationId,
+    // setActiveConversationId,
+    handleCloseMenu,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchCancel,
+    isMobile,
+  } = useMobileConversationLongPress()
+
+  const isMenuOpen = activeConversationId === conv._id
 
   const isSelected = selectedConversation?._id === conv._id
 
@@ -68,6 +84,11 @@ function GroupConversationItem({ conv }) {
     setAudioBlob(null)
   }
 
+   const handleTouchStartWithId = (e) => {
+     e.convId = conv._id // Pass the conversation ID to the long press hook
+     handleTouchStart(e)
+   }
+
   return (
     <>
       <div
@@ -75,6 +96,10 @@ function GroupConversationItem({ conv }) {
           isSelected ? "border-r-2 border-r-primary bg-secondary" : ""
         }`}
         onClick={handleSelect}
+        onTouchStart={handleTouchStartWithId}
+        onTouchEnd={handleTouchEnd}
+        onTouchMove={handleTouchMove}
+        onTouchCancel={handleTouchCancel}
       >
         {/* Avatar */}
         <div className="relative shrink-0 p-1">
@@ -112,42 +137,97 @@ function GroupConversationItem({ conv }) {
           </div>
         </div>
 
-        <DropdownMenu icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}>
-          <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition hover:bg-gray-700/30"
-            onClick={(e) => {
-              e.stopPropagation()
-              navigate(`/messages/${conv._id}/settings`)
-            }}
-          >
-            <IoSettingsOutline />
-            Group settings
-          </button>
-          {!isOwner && (
+        {!isMobile && (
+          <DropdownMenu icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}>
             <button
-              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition hover:bg-gray-700/30"
+              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition hover:bg-gray-700/30"
               onClick={(e) => {
                 e.stopPropagation()
-                setShowLeaveModal(true)
+                navigate(`/messages/${conv._id}/settings`)
               }}
             >
-              <FaDoorOpen />
-              Leave group
+              <IoSettingsOutline />
+              Group settings
             </button>
-          )}
-          {isOwner && (
-            <button
-              className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition hover:bg-gray-700/30"
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowDeleteModal(true)
-              }}
-            >
-              <FaTrashCan />
-              Delete group
-            </button>
-          )}
-        </DropdownMenu>
+            {!isOwner && (
+              <button
+                className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition hover:bg-gray-700/30"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowLeaveModal(true)
+                }}
+              >
+                <FaDoorOpen />
+                Leave group
+              </button>
+            )}
+            {isOwner && (
+              <button
+                className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition hover:bg-gray-700/30"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  setShowDeleteModal(true)
+                }}
+              >
+                <FaTrashCan />
+                Delete group
+              </button>
+            )}
+          </DropdownMenu>
+        )}
+
+        <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+          {/* className="flex w-full flex-col gap-5" */}
+          <div className="flex w-full flex-col gap-5 px-4">
+            <div className="flex items-center justify-start gap-2 font-bold">
+              <img
+                src={getOptimizedImageUrl(
+                  conv?.avatar?.imageUrl || "/avatar-placeholder.png",
+                  "avatar",
+                )}
+                className="size-10 rounded-full"
+              />
+              <span>@{conv?.name}</span>
+            </div>
+            <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
+              <button
+                className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigate(`/messages/${conv?._id}/settings`)
+                }}
+              >
+                <TbUser />
+                Group settings
+              </button>
+              <div className="h-[1px] bg-accent"></div>
+              {!isOwner && (
+                <button
+                  className="flex w-full items-center gap-2 text-red-500 text-left font-semibold transition duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowLeaveModal(true)
+                  }}
+                >
+                  <FaDoorOpen />
+                  Leave group
+                </button>
+              )}
+              {isOwner && (
+                <button
+                  className="flex w-full items-center gap-2 text-left text-red-500 font-semibold transition duration-200"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    setShowDeleteModal(true)
+                  }}
+                >
+                  <FaTrashCan />
+                  Delete group
+                </button>
+              )}
+            </div>
+          </div>
+        </SlideUpMenu>
       </div>
 
       {showLeaveModal && (

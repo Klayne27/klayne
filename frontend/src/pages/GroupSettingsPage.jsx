@@ -371,7 +371,7 @@ export default function GroupSettingsPage() {
       </div>
 
       {/* Danger zone */}
-      <div className="rounded-2xl border border-red-500/30 p-4">
+      <div className="rounded-2xl border border-red-500/30 p-4 mb-14">
         <p className="mb-3 font-semibold text-red-500">Danger Zone</p>
         {!isOwner && (
           <button
