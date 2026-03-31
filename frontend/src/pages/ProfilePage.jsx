@@ -111,8 +111,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     isRefetching: isRefetchingPinnedPosts,
   } = useGetPinnedPosts(username)
 
-  console.log(pinnedPosts);
-
   const { editPostModalData, closeEditPostModal } = useAppStore()
 
   const { updateProfile, isUpdatingProfile } = useUpdateUserProfile()
