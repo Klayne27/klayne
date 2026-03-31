@@ -23,6 +23,7 @@
     "express-rate-limit": "^8.0.1",
     "firebase-admin": "^13.4.0",
     "jsonwebtoken": "^9.0.2",
+    "jws": "^4.0.1",
     "mongodb": "^7.1.1",
     "mongoose": "^8.15.1",
     "nanoid": "^5.1.7",
