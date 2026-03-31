@@ -14,7 +14,7 @@ const ProfileImageModal = ({ src, onClose }) => {
           className="w-[280px] rounded-full relative group/avatar"
           onClick={(e) => e.stopPropagation()}
         >
-          <img src={getOptimizedImageUrl(src, "avatar")} alt="Enlarged" className="" />
+          <img src={getOptimizedImageUrl(src, "large")} alt="Enlarged" className="" />
           <button
             className="absolute top-0 right-0 text-white  font-bold bg-slate-500 duration-200 transition hover:bg-slate-600 rounded-full size-5 flex items-center justify-center cursor-pointer"
             onClick={onClose}
