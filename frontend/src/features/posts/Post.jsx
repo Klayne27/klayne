@@ -339,7 +339,7 @@ const Post = ({
 
   return (
     <div
-      className={`${showMenu ? "bg-base-100" : "hover:bg-gray-700/30"} flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${index === 0 && "pt-3"} ${hasLineAbove ? "" : "border-b border-accent"} ${hasLineBelow ? "" : "border-b border-accent pb-2 pt-3"}`}
+      className={`${showMenu ? "bg-base-100" : "hover:bg-gray-700/30"} flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${index === 0 && "pt-3"} ${hasLineAbove ? "" : "pt-3"} ${hasLineBelow ? "" : "border-b border-accent pb-2"}`}
       onClick={isMainPost ? undefined : navigateToPostPage}
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}

@@ -450,18 +450,22 @@ const PostPage = () => {
       <div className="flex flex-col">
         {isLoadingReplies ? (
           <div className="flex h-full flex-col items-center gap-4 p-2 md:gap-14 md:p-4">
-            {/* Reuse whatever skeleton component you have */}
             <LoadingSpinner size="md" />
           </div>
         ) : replies.length > 0 ? (
           <>
             {replies.map((reply) => (
-              /*
-                Each reply is a Post. The Post component already handles
-                click-to-navigate via navigateToPostPage, so no changes needed there.
-              */
-              <Post key={reply._id} post={reply} />
+              <div key={reply._id}>
+                {/* The reply itself — has a line below if it has a first child */}
+                <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
+
+                {/* First child reply — connected by the line above */}
+                {reply.firstChildReply && (
+                  <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />
+                )}
+              </div>
             ))}
+
             {hasNextPage && (
               <div className="flex justify-center py-4" ref={observerTarget}>
                 <button

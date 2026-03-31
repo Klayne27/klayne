@@ -6,35 +6,56 @@ import { showAppToast } from "../../../utils/showAppToast"
 
 const updatePostBookmarkStatus = (oldData, postId, userId) => {
   if (!oldData) return oldData
+
   const handlePost = (post) => {
     if (!post) return post
-    const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
+
+    const isRepost = post.repostedFrom?._id === postId
+    const targetPost = isRepost ? post.repostedFrom : post
+
+    let updatedPost = { ...post }
+
     if (targetPost._id === postId) {
       const isBookmarked = targetPost.bookmarkedBy?.includes(userId)
       const newBookmarkedBy = isBookmarked
         ? (targetPost.bookmarkedBy || []).filter((id) => id !== userId)
         : [...(targetPost.bookmarkedBy || []), userId]
-      return post.repostedFrom?._id === postId
-        ? { ...post, repostedFrom: { ...targetPost, bookmarkedBy: newBookmarkedBy } }
-        : { ...post, bookmarkedBy: newBookmarkedBy }
+
+      if (isRepost) {
+        updatedPost = { ...post, repostedFrom: { ...targetPost, bookmarkedBy: newBookmarkedBy } }
+      } else {
+        updatedPost = { ...post, bookmarkedBy: newBookmarkedBy }
+      }
     }
-    return post
+
+    // 2. RECURSIVE CHECK: Handle the firstChildReply
+    if (updatedPost.firstChildReply) {
+      const updatedChild = handlePost(updatedPost.firstChildReply)
+      if (updatedChild !== updatedPost.firstChildReply) {
+        updatedPost = { ...updatedPost, firstChildReply: updatedChild }
+      }
+    }
+
+    return updatedPost
   }
 
   if (oldData.pages) {
-    const newPages = oldData.pages.map((p) => ({
-      ...p,
-      posts: p.posts?.map(handlePost),
-      replies: p.replies?.map(handlePost),
-    }))
-    return { ...oldData, pages: newPages }
-  }
-  if (oldData.ancestors || oldData.post)
     return {
       ...oldData,
-      post: handlePost(oldData.post),
+      pages: oldData.pages.map((p) => ({
+        ...p,
+        posts: p.posts?.map(handlePost),
+        replies: p.replies?.map(handlePost),
+      })),
+    }
+  }
+  if (oldData.ancestors || oldData.post) {
+    return {
+      ...oldData,
+      post: oldData.post ? handlePost(oldData.post) : null,
       ancestors: oldData.ancestors?.map(handlePost),
     }
+  }
   if (oldData._id) return handlePost(oldData)
   if (Array.isArray(oldData)) return oldData.map(handlePost)
   return oldData

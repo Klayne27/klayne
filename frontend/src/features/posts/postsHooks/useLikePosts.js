@@ -9,21 +9,46 @@ const updatePostLikes = (oldData, postId, userId) => {
 
   const handlePost = (post) => {
     if (!post) return post
-    const targetPost = post.repostedFrom?._id === postId ? post.repostedFrom : post
 
+    // 1. Determine the actual target (handling repost logic)
+    const isRepost = post.repostedFrom?._id === postId
+    const targetPost = isRepost ? post.repostedFrom : post
+
+    let updatedPost = { ...post }
+
+    // 2. If this post (or its reposted source) is the one being liked
     if (targetPost._id === postId) {
       const isLiked = targetPost.likes?.includes(userId)
       const newLikes = isLiked
         ? (targetPost.likes || []).filter((id) => id !== userId)
         : [...(targetPost.likes || []), userId]
 
-      if (post.repostedFrom?._id === postId) {
-        return { ...post, repostedFrom: { ...targetPost, likes: newLikes } }
+      if (isRepost) {
+        updatedPost = {
+          ...post,
+          repostedFrom: { ...targetPost, likes: newLikes },
+        }
+      } else {
+        updatedPost = { ...post, likes: newLikes }
       }
-      return { ...post, likes: newLikes }
     }
-    return post
+
+    // 3. NEW: Recursive Check for Nested firstChildReply
+    // We must check this even if the parent post wasn't the target
+    if (updatedPost.firstChildReply) {
+      const updatedChild = handlePost(updatedPost.firstChildReply)
+      if (updatedChild !== updatedPost.firstChildReply) {
+        updatedPost = {
+          ...updatedPost,
+          firstChildReply: updatedChild,
+        }
+      }
+    }
+
+    return updatedPost
   }
+
+  // --- Rest of your logic remains the same ---
 
   // 1. Handle Infinite Query Pages (Main feeds / Replies)
   if (oldData.pages) {
@@ -35,8 +60,7 @@ const updatePostLikes = (oldData, postId, userId) => {
     return { ...oldData, pages: newPages }
   }
 
-  // 2. NEW: Handle Thread Object (Ancestors and the Hero Post)
-  // This matches the structure returned by useGetPostThread
+  // 2. Handle Thread Object (Ancestors and the Hero Post)
   if (oldData.ancestors || oldData.post) {
     return {
       ...oldData,
@@ -45,10 +69,10 @@ const updatePostLikes = (oldData, postId, userId) => {
     }
   }
 
-  // 3. Handle single post (details)
+  // 3. Handle single post
   if (oldData._id) return handlePost(oldData)
 
-  // 4. Handle simple arrays (if any exist)
+  // 4. Handle simple arrays
   if (Array.isArray(oldData)) return oldData.map(handlePost)
 
   return oldData

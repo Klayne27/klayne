@@ -97,17 +97,41 @@ export const getPostReplies = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isVerified isGoldVerified  profileImg badges preferredBadge",
+          "username fullName isVerified isGoldVerified profileImg badges preferredBadge",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
       .sort({ createdAt: -1 })
       .skip(skip)
-      .limit(limit);
+      .limit(limit)
+      .lean();
+
+    // For each reply, fetch its first child reply (if any)
+    const repliesWithFirstChild = await Promise.all(
+      replies.map(async (reply) => {
+        if (reply.repliesCount === 0) return { ...reply, firstChildReply: null };
+
+        const firstChild = await Post.findOne({
+          parentPost: reply._id,
+          user: { $nin: blockedIds },
+        })
+          .populate({
+            path: "user",
+            select:
+              "username fullName isVerified isGoldVerified profileImg badges preferredBadge",
+            populate: { path: "profileImg", select: "imageUrl" },
+          })
+          .populate({ path: "image", select: "imageUrl" })
+          .sort({ createdAt: 1 }) // oldest first — the actual first reply
+          .lean();
+
+        return { ...reply, firstChildReply: firstChild || null };
+      }),
+    );
 
     const hasNextPage = page * limit < totalReplies;
 
-    res.status(200).json({ replies, hasNextPage, totalReplies });
+    res.status(200).json({ replies: repliesWithFirstChild, hasNextPage, totalReplies });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.error("Error in getPostReplies controller:", error);
