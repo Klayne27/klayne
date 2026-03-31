@@ -159,9 +159,26 @@ export const getMonthlyLeaderboard = async (req, res) => {
 
 export const getPreviousWinners = async (req, res) => {
   try {
-    const lastMonth = new Date();
-    lastMonth.setMonth(lastMonth.getMonth() - 1);
-    const lastMonthISO = lastMonth.toISOString().slice(0, 7);
+    // 1. Get current time (In your test: March 31, 2026)
+    const now = new Date();
+
+    // 2. Adjust to UTC-12:00 (AoE - Anywhere on Earth)
+    // This ensures the "month" doesn't flip until the last timezone does
+    const aoetDate = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+
+    // 3. SECURE PREVIOUS MONTH CALCULATION
+    // Move to the 1st day of the CURRENT month first to prevent 31st-day overflow
+    const targetMonth = new Date(aoetDate);
+    targetMonth.setUTCDate(1);
+
+    // Now subtract 1 month from the 1st (e.g., March 1 -> Feb 1)
+    targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
+
+    const lastMonthISO = targetMonth.toISOString().slice(0, 7);
+
+    console.log("Input Date:", now.toISOString());
+    console.log("AoE Date (UTC-12):", aoetDate.toISOString());
+    console.log("Fetching Winners for ISO:", lastMonthISO); // Will correctly be 2026-02
 
     const previousWinners = await MonthlyWinners.findOne({ month: lastMonthISO })
       .select("winners month")
@@ -174,6 +191,7 @@ export const getPreviousWinners = async (req, res) => {
         },
       });
 
+    // Return empty array instead of 404 so frontend doesn't crash
     if (!previousWinners) {
       return res.status(200).json({ winners: [], month: lastMonthISO });
     }
