@@ -87,16 +87,24 @@ const PomodoroPage = () => {
   const handleSessionEndRef = useRef(() => {})
   const alarmAudioRef = useRef(null)
   const isEndingSessionRef = useRef(false)
+  const breakEndAudioRef = useRef(null)
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
-      alarmAudioRef.current = new Audio("/alarm.mp3")
+      const audio = new Audio("/alarm.mp3")
+      audio.volume = 0.3 // Sets volume to 30%
+      alarmAudioRef.current = audio
     }
+    // If you added the breakEndAudioRef from before:
+    if (!breakEndAudioRef.current) {
+      const breakAudio = new Audio("/breakalarm.mp3")
+      breakAudio.volume = 0.1
+      breakEndAudioRef.current = breakAudio
+    }
+
     return () => {
-      if (alarmAudioRef.current) {
-        alarmAudioRef.current.pause()
-        alarmAudioRef.current = null
-      }
+      if (alarmAudioRef.current) alarmAudioRef.current.pause()
+      if (breakEndAudioRef.current) breakEndAudioRef.current.pause()
     }
   }, [])
 
@@ -268,6 +276,10 @@ const PomodoroPage = () => {
           },
         )
       } else {
+        if (settings && !settings.isMuted && breakEndAudioRef.current) {
+          breakEndAudioRef.current.play()
+        }
+
         isEndingSessionRef.current = false
         startNextTimer(settings.autoplay, sessionCount, false)
       }

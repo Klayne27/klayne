@@ -80,6 +80,6 @@ server.listen(PORT, async () => {
   console.log("MongoDB connected.");
 if (process.env.NODE_ENV === "production") {
   startMonthlyCronJob();
-  startWeeklyCronJob(); // ADD
+  startWeeklyCronJob();
 }
 });
