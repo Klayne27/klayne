@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react"
-import { IoSearch, IoSettingsOutline } from "react-icons/io5"
+import { IoSearch } from "react-icons/io5"
 import ConversationItem from "./ConversationItem"
 import React from "react"
 import { useGetOrCreateConversation } from "./privateChatHooks/useGetOrCreateConversation"
