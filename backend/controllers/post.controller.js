@@ -1488,16 +1488,19 @@ export const getUserPosts = async (req, res) => {
       })
       .populate({
         path: "repostedFrom",
-        populate: {
-          path: "user",
-          select: "-password",
-          populate: {
-            path: "profileImg coverImg",
-            select: "imageUrl publicId",
+        populate: [
+          {
+            path: "user",
+            select: "-password",
+            populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
-        },
+          {
+            path: "image", 
+            select: "imageUrl",
+          },
+        ],
         select:
-          "text img video mediaType likes bookmarkedBy repostsCount isIC repostedBy createdAt user isScheduled scheduledAt",
+          "text img video mediaType likes bookmarkedBy repostsCount isIC repostedBy createdAt user isScheduled scheduledAt image",
       })
       .populate("image", "imageUrl")
       .lean();
@@ -1878,15 +1881,28 @@ export const getPinnedPosts = async (req, res) => {
               select: "imageUrl",
             },
           },
-
+          {
+            path: "image", // FIX 1: populate the post's own image
+            select: "imageUrl",
+          },
           {
             path: "repostedFrom",
-            populate: {
-              path: "user",
-              select: "-password",
-            },
             select:
-              "text img video mediaType likes bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy",
+              "text img video mediaType likes bookmarkedBy repostsCount createdAt user isScheduled scheduledAt repostedBy image",
+            populate: [
+              {
+                path: "user",
+                select: "-password",
+                populate: {
+                  path: "profileImg",
+                  select: "imageUrl",
+                },
+              },
+              {
+                path: "image", // FIX 2: populate repostedFrom's image too
+                select: "imageUrl",
+              },
+            ],
           },
         ],
       })
@@ -2340,6 +2356,10 @@ export const repostPost = async (req, res) => {
         isIC: isOriginalIC,
         pollOptions: originalPost.pollOptions,
         pollTotalVotes: originalPost.pollTotalVotes,
+        image: originalPost.image,
+        img: originalPost.img,
+        video: originalPost.video,
+        mediaType: originalPost.mediaType,
       });
 
       await newRepost.save();
@@ -2550,7 +2570,7 @@ export const voteOnPoll = async (req, res) => {
       { repostedFrom: targetPostId, "pollOptions._id": optionId },
       {
         $push: { "pollOptions.$.voters": userId },
-        $inc: { pollTotalVotes: 1, },
+        $inc: { pollTotalVotes: 1 },
       },
     );
 
