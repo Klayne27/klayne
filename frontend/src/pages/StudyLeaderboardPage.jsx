@@ -59,7 +59,6 @@ function StudyLeaderboardPage() {
 
   const { previousWinners } = useGetPreviousWinners()
   const { previousWeekWinners } = useGetPreviousWeekWinners()
-  console.log('previouswinners monthly', previousWinners);
 
   const currentLeaderboard =
     leaderboardType === "total"
