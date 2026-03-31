@@ -157,7 +157,9 @@ const Post = ({
       return
     }
 
-    navigate(`/${originalPostOwner.username}/post/${sourcePost._id}`)
+    navigate(
+      `/${sourcePost.isAnonymous ? "Anonymous" : originalPostOwner.username}/post/${sourcePost._id}`,
+    )
   }
 
   const handleEditClick = () => {

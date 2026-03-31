@@ -120,7 +120,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
 
   const handleCopyLink = (e) => {
     stopProp(e)
-    const postUrl = `${window.location.origin}/${originalPostOwner.username}/post/${sourcePost._id}`
+    const postUrl = `${window.location.origin}/${sourcePost.isAnonymous ? "Anonymous" : originalPostOwner.username}/post/${sourcePost._id}`
 
     navigator.clipboard.writeText(postUrl).then(() => {
       setIsCopied(true)
@@ -326,21 +326,23 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                   </>
                 ) : (
                   <>
-                    {!sourcePost.isAnonymous && <button
-                      className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
-                      onClick={handleFollowClick}
-                      disabled={isFollowingOrUnfollowing}
-                    >
-                      {isFollowingOriginalPostOwner ? (
-                        <span className="flex items-center gap-3 font-semibold">
-                          <TbUserMinus strokeWidth={2} /> Unfollow
-                        </span>
-                      ) : (
-                        <span className="flex items-center gap-3 font-semibold">
-                          <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
-                        </span>
-                      )}
-                    </button>}
+                    {!sourcePost.isAnonymous && (
+                      <button
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
+                        onClick={handleFollowClick}
+                        disabled={isFollowingOrUnfollowing}
+                      >
+                        {isFollowingOriginalPostOwner ? (
+                          <span className="flex items-center gap-3 font-semibold">
+                            <TbUserMinus strokeWidth={2} /> Unfollow
+                          </span>
+                        ) : (
+                          <span className="flex items-center gap-3 font-semibold">
+                            <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
+                          </span>
+                        )}
+                      </button>
+                    )}
                     {hasEditHistory && (
                       <button
                         className="z-50 flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-white transition duration-200 hover:bg-gray-700/30"
@@ -449,7 +451,6 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             <span className="flex gap-1">
               {/* <span className="font-bold text-white">{sourcePost.likes.length}</span>{" "} */}
               <AnimatedCount count={sourcePost.likes.length} className={"font-bold"} />
-              
 
               <span className="text-slate-500">Likes</span>
             </span>
