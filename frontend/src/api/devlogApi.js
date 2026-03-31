@@ -1,7 +1,5 @@
 const BASE_URL = "/api/devlogs"
 
-// ── Devlogs ───────────────────────────────────────────────────────────────────
-
 export const getDevlogsApi = async (page = 1, limit = 10) => {
   const res = await fetch(`${BASE_URL}?page=${page}&limit=${limit}`)
   const data = await res.json()
@@ -89,7 +87,7 @@ export const likeDevlogCommentApi = async ({ devlogId, commentId }) => {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to like comment")
-  return data // { likes, dislikes, isLiked }
+  return data 
 }
 
 export const dislikeDevlogCommentApi = async ({ devlogId, commentId }) => {
@@ -98,5 +96,5 @@ export const dislikeDevlogCommentApi = async ({ devlogId, commentId }) => {
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to dislike comment")
-  return data // { likes, dislikes, isDisliked }
+  return data 
 }

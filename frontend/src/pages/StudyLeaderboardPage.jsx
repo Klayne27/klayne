@@ -15,6 +15,31 @@ import useLockBodyScroll from "../hooks/customHooks/useLockBodyScroll"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 
+const WinnerAvatar = ({ winner, rank, size, ringColor }) => (
+  <Link
+    to={`/profile/${winner?.user?.username}`}
+    className="group relative transition-transform hover:scale-110"
+  >
+    <div className={`avatar ${ringColor} rounded-full ring ring-offset-2 ring-offset-base-100`}>
+      <div className={`${size} rounded-full`}>
+        <img
+          src={getOptimizedImageUrl(
+            winner?.user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+            "avatar",
+          )}
+          alt={winner?.user?.fullName}
+        />
+      </div>
+    </div>
+    {/* Rank Badge */}
+    <div
+      className={`absolute -bottom-1 -right-1 flex size-5 items-center justify-center rounded-full border-2 border-base-100 text-[10px] font-bold text-white shadow-sm ${rank === 1 ? "bg-amber-500" : rank === 2 ? "bg-slate-500" : "bg-yellow-800"}`}
+    >
+      {rank}
+    </div>
+  </Link>
+)
+
 function StudyLeaderboardPage() {
   const navigate = useNavigate()
   const [page, setPage] = useState(1)
@@ -34,6 +59,7 @@ function StudyLeaderboardPage() {
 
   const { previousWinners } = useGetPreviousWinners()
   const { previousWeekWinners } = useGetPreviousWeekWinners()
+  console.log('previouswinners monthly', previousWinners);
 
   const currentLeaderboard =
     leaderboardType === "total"
@@ -207,55 +233,99 @@ function StudyLeaderboardPage() {
     )
   }
 
-  // Shared winners panel renderer
-  const renderWinnersPanel = (winners, label) => {
-    if (!winners || winners.winners?.length === 0) return null
+  // Updated renderer with a "Podium" feel
+const renderWinnersPanel = (winnersData, label) => {
+  const winnersArray = winnersData?.winners || []
+  if (winnersArray.length === 0) return null
+
+  const getWinnerByRank = (index) => winnersArray[index] || null
+
+  // Helper to render the name/time block to avoid repetition
+  const WinnerStats = (winner) => {
+    if (!winner) return <div className="flex-1 opacity-0" /> // Spacer for missing ranks
     return (
-      <div className="mb-6 rounded-xl border border-base-300 bg-base-100 p-4 shadow-xl">
-        <div className="mb-4 text-center">
-          <h3 className="mb-1 text-2xl font-extrabold text-primary">Previous Winners 🏆</h3>
-          <p className="text-sm font-medium text-base-content/70">{label}</p>
-        </div>
-        <div className="flex justify-center gap-6">
-          {winners.winners.map((winner, index) => (
-            <div key={winner.user._id} className="flex flex-col items-center text-center">
-              <div className="relative">
-                {index === 0 && (
-                  <FaCrown
-                    className="absolute -top-3 left-2/3 -translate-x-1/2 -translate-y-1/2 rotate-12 text-amber-400 drop-shadow-md"
-                    size={32}
-                  />
-                )}
-                <Link to={`/profile/${winner.user.username}`} className="block">
-                  <div
-                    className={`avatar transition-transform duration-200 hover:scale-105 ${index === 0 ? "ring-4 ring-amber-400" : index === 1 ? "ring-4 ring-slate-400" : "ring-4 ring-yellow-800"} h-12 w-12 rounded-full ring-offset-2 ring-offset-base-100`}
-                  >
-                    <img
-                      src={
-                        getOptimizedImageUrl(winner.user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
-                      }
-                      alt={`${winner.user.fullName} avatar`}
-                      className="rounded-full"
-                    />
-                  </div>
-                </Link>
-              </div>
-              <p className="mt-2 max-w-[80px] truncate text-sm font-bold text-base-content/90">
-                {winner.user.fullName}
-              </p>
-              <div className="flex items-center gap-1 text-sm font-semibold text-primary/80">
-                <FaClock className="text-sm" />
-                <span>
-                  {Math.floor(winner.studyDuration / 60)}h {winner.studyDuration % 60}m
-                </span>
-              </div>
-            </div>
-          ))}
-        </div>
+      <div className="min-w-0 flex-1 px-1">
+        <p className="truncate text-[11px] font-bold text-base-content sm:text-xs">
+          {winner.user?.fullName}
+        </p>
+        <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
+          <FaClock className="text-[9px]" />
+          <span>
+            {Math.floor((winner.studyDuration || 0) / 60)}h {(winner.studyDuration || 0) % 60}m
+          </span>
+        </p>
       </div>
     )
   }
 
+  return (
+    <div className="mb-8 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/20 to-base-100 p-1 shadow-xl">
+      <div className="rounded-[calc(1rem-1px)] bg-base-100 py-5 px-10 md:px-28">
+        <div className="mb-6 text-center">
+          <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+            <FaTrophy className="text-sm" /> Hall of Fame
+          </div>
+          <h3 className="mt-2 text-xl font-black text-base-content">{label}</h3>
+        </div>
+
+        {/* Podium Layout */}
+        <div className="flex items-end justify-center gap-2 sm:gap-6">
+          {/* 2nd Place */}
+          <div className="flex flex-1 flex-col items-center">
+            <WinnerAvatar
+              winner={getWinnerByRank(1)}
+              rank={2}
+              size="w-14 sm:w-16"
+              ringColor="ring-slate-400"
+            />
+            <div className="mt-3 h-16 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-slate-300 to-transparent p-2 text-center">
+              <span className="text-lg font-black text-slate-600">2nd</span>
+            </div>
+          </div>
+
+          {/* 1st Place */}
+          <div className="flex flex-1 flex-col items-center">
+            <div className="relative mb-2">
+              <FaCrown
+                className="absolute -top-7 left-1/2 -translate-x-1/2 rotate-[-5deg] text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                size={32}
+              />
+              <WinnerAvatar
+                winner={getWinnerByRank(0)}
+                rank={1}
+                size="w-20 sm:w-24"
+                ringColor="ring-amber-400"
+              />
+            </div>
+            <div className="h-24 w-full max-w-[100px] rounded-t-lg bg-gradient-to-b from-amber-400 to-transparent p-2 text-center shadow-lg">
+              <span className="text-2xl font-black text-amber-700">1st</span>
+            </div>
+          </div>
+
+          {/* 3rd Place */}
+          <div className="flex flex-1 flex-col items-center">
+            <WinnerAvatar
+              winner={getWinnerByRank(2)}
+              rank={3}
+              size="w-14 sm:w-16"
+              ringColor="ring-yellow-800"
+            />
+            <div className="mt-3 h-12 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-yellow-700/50 to-transparent p-2 text-center">
+              <span className="text-lg font-black text-yellow-900">3rd</span>
+            </div>
+          </div>
+        </div>
+
+        {/* Bottom Details - Now explicitly ordered [2, 1, 3] to match podium */}
+        <div className="mt-4 flex justify-between gap-2 border-t border-base-200 pt-4 text-center sm:gap-6">
+          {WinnerStats(getWinnerByRank(1))} {/* Under 2nd place */}
+          {WinnerStats(getWinnerByRank(0))} {/* Under 1st place */}
+          {WinnerStats(getWinnerByRank(2))} {/* Under 3rd place */}
+        </div>
+      </div>
+    </div>
+  )
+}
   return (
     <div className="template container mx-auto max-w-2xl p-4">
       {/* Header */}
@@ -307,27 +377,21 @@ function StudyLeaderboardPage() {
       </div>
 
       {/* Type tabs */}
-      <div className="mb-6 flex justify-center">
-        <div className="join">
+      <div className="mb-6 flex border-b border-gray-700">
+        {["total", "weekly", "monthly"].map((type) => (
           <button
-            className={`btn join-item ${leaderboardType === "total" ? "btn-primary btn-active" : ""}`}
-            onClick={() => handleLeaderboardTypeChange("total")}
+            key={type}
+            onClick={() => handleLeaderboardTypeChange(type)}
+            className={`relative flex-1 pb-3 text-sm font-bold transition-colors ${
+              leaderboardType === type ? "text-primary" : "text-gray-500"
+            }`}
           >
-            <FaTrophy className="mr-2" /> All Time
+            {type === "total" ? "All Time" : type === "weekly" ? "Weekly" : "Monthly"}
+            {leaderboardType === type && (
+              <div className="absolute bottom-0 left-0 right-0 h-1 rounded-t-full bg-primary" />
+            )}
           </button>
-          <button
-            className={`btn join-item ${leaderboardType === "weekly" ? "btn-primary btn-active" : ""}`}
-            onClick={() => handleLeaderboardTypeChange("weekly")}
-          >
-            <FaCalendar className="mr-2" /> This Week
-          </button>
-          <button
-            className={`btn join-item ${leaderboardType === "monthly" ? "btn-primary btn-active" : ""}`}
-            onClick={() => handleLeaderboardTypeChange("monthly")}
-          >
-            <FaCalendar className="mr-2" /> This Month
-          </button>
-        </div>
+        ))}
       </div>
 
       {/* Previous winners toggle + panel */}
@@ -366,85 +430,112 @@ function StudyLeaderboardPage() {
       </div>
 
       {/* Leaderboard list */}
-      <ul className="space-y-4">
+      <ul className="space-y-3">
         {leaderboard.map((entry, index) => {
           const globalRank = (page - 1) * 10 + index + 1
+          const isMe = currentUser && currentUser._id === entry._id
+
           return (
             <li
               key={entry._id}
-              className={`flex flex-col items-start rounded-lg p-3 md:flex-row md:items-center md:gap-0 ${getRankColor(globalRank)} relative border border-accent shadow-lg transition-transform duration-200 ease-in-out ${currentUser && currentUser._id === entry._id ? "scale-[1.05]" : ""}`}
+              className={`relative flex items-center justify-between rounded-2xl border p-3 transition-all duration-300 sm:p-4 ${isMe ? "z-10 scale-[1.02] border-primary bg-primary/5 shadow-md" : "border-base-300 bg-base-100 hover:border-gray-400"} `}
             >
-              <div className="flex w-full items-center md:w-auto">
-                <span
-                  className={`mr-4 text-center text-lg font-bold md:w-10 ${getRankIndexColor(globalRank)}`}
-                >
-                  {globalRank}.
-                </span>
-                <Link to={`/profile/${entry?.username}`} className="mr-3 flex-shrink-0">
-                  <div className="avatar">
+              {/* LEFT SIDE: Rank, Avatar, and Info */}
+              <div className="flex min-w-0 flex-1 items-center gap-3">
+                {/* 1. Dedicated Rank Column */}
+                <div className="flex w-6 flex-shrink-0 items-center justify-center sm:w-8">
+                  <span
+                    className={`text-lg font-black italic sm:text-xl ${getRankIndexColor(globalRank)} ${globalRank > 3 ? "opacity-30" : "opacity-100"}`}
+                  >
+                    {globalRank}
+                  </span>
+                </div>
+
+                {/* 2. Avatar with Crown */}
+                <Link to={`/profile/${entry?.username}`} className="relative flex-shrink-0">
+                  <div className={`avatar ${globalRank <= 3 ? "p-0.5" : ""}`}>
                     <div
-                      className={`${getRankColor(globalRank)} w-10 rounded-full ring ring-offset-2 ring-offset-base-100 md:w-12`}
+                      className={`w-10 rounded-full ring-offset-2 ring-offset-base-100 sm:w-12 ${
+                        globalRank === 1
+                          ? "ring-2 ring-amber-400"
+                          : globalRank === 2
+                            ? "ring-2 ring-slate-400"
+                            : globalRank === 3
+                              ? "ring-2 ring-yellow-700"
+                              : "ring-1 ring-base-300"
+                      }`}
                     >
                       <img
-                        src={getOptimizedImageUrl(entry?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
-                        alt={`${entry.fullName} avatar`}
+                        src={getOptimizedImageUrl(
+                          entry?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )}
+                        alt={entry.fullName}
+                        className="rounded-full"
                       />
                     </div>
-                    {globalRank === 1 && (
-                      <FaCrown
-                        className="absolute -top-[27px] z-50 translate-x-1/2 rotate-[19deg] text-amber-400 md:translate-x-2/3"
-                        size={30}
-                      />
-                    )}
                   </div>
+                  {globalRank === 1 && (
+                    <FaCrown
+                      className="absolute -right-1 -top-5 rotate-[24deg] text-amber-400 drop-shadow-md"
+                      size={27}
+                    />
+                  )}
                 </Link>
-                <div className="flex-1 overflow-hidden">
-                  <div className="flex items-center gap-1">
+
+                {/* 3. Name and Level */}
+                <div className="flex min-w-0 flex-col overflow-hidden">
+                  <div className="flex items-center gap-1.5">
                     <Link
                       to={`/profile/${entry.username}`}
-                      className="text-md truncate font-bold hover:underline md:text-lg"
+                      className="truncate text-sm font-bold transition-colors hover:text-primary sm:text-base"
                     >
                       {entry.fullName}
                     </Link>
                     {entry.preferredBadge && (
-                      <div className="ml-1 size-[17px] flex-shrink-0">
+                      <span className="size-3.5 flex-shrink-0">
                         {getBadgeIcon(entry.preferredBadge)}
-                      </div>
+                      </span>
                     )}
-                    {leaderboardType === "total" && entry.studyStreak >= 3 && (
-                      <div
-                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.studyStreak)} md:order-none md:ml-auto`}
-                      >
-                        <FaFire className="text-xl" />
-                        <span>{entry.studyStreak}</span>
-                      </div>
-                    )}
-                    {leaderboardType === "monthly" && entry.monthlyStudyStreak >= 3 && (
-                      <div
-                        className={`order-1 flex items-center gap-1 text-sm font-semibold ${getFireColor(entry.monthlyStudyStreak)} md:order-none md:ml-auto`}
-                      >
-                        <FaFire className="text-xl" />
-                        <span>{entry.monthlyStudyStreak}</span>
-                      </div>
+                    {isMe && (
+                      <span className="badge badge-primary badge-xs px-1 text-[9px] font-bold">
+                        YOU
+                      </span>
                     )}
                   </div>
-                  <div className="flex">
-                    <p className="truncate rounded-lg bg-slate-700/70 px-2 text-sm text-slate-400">
-                      Level {entry.pomodoroLevel}
-                    </p>
+
+                  <div className="mt-0.5 flex items-center gap-2">
+                    <span className="rounded bg-slate-200/50 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-tighter text-slate-500 dark:bg-slate-800">
+                      Lvl {entry.pomodoroLevel}
+                    </span>
+                    {(leaderboardType === "total" ? entry.studyStreak : entry.monthlyStudyStreak) >=
+                      3 && (
+                      <div
+                        className={`flex items-center gap-0.5 text-[11px] font-bold ${getFireColor(leaderboardType === "total" ? entry.studyStreak : entry.monthlyStudyStreak)}`}
+                      >
+                        <FaFire />
+                        <span>
+                          {leaderboardType === "total"
+                            ? entry.studyStreak
+                            : entry.monthlyStudyStreak}
+                        </span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>
-              <div className="flex w-full flex-wrap items-center justify-between md:ml-auto md:w-auto md:flex-col md:flex-nowrap md:justify-end">
-                <div className="order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold md:order-none md:ml-4 md:mt-0">
-                  <FaClock className="text-sm" />
-                  <span>
+
+              {/* RIGHT SIDE: Stats Section */}
+              <div className="ml-3 flex flex-shrink-0 flex-col items-end border-l border-base-200 pl-3 sm:pl-4">
+                <div className="flex items-center gap-1 text-primary">
+                  <FaClock className="text-[10px] sm:text-xs" />
+                  <span className="whitespace-nowrap text-xs font-black tabular-nums sm:text-sm">
                     {Math.floor(entry.totalStudyDuration / 60)}h {entry.totalStudyDuration % 60}m
                   </span>
                 </div>
-                <div className="order-2 ml-0 mt-2 flex items-center gap-1 text-sm font-semibold text-slate-500 md:order-none md:ml-4 md:mt-0">
-                  <FaCheckCircle className="text-sm" />
-                  <span>{entry.totalSessionsCompleted} sessions</span>
+                <div className="flex items-center gap-1 text-[10px] font-medium text-base-content/60 sm:text-[11px]">
+                  <FaCheckCircle className="text-[9px]" />
+                  <span className="whitespace-nowrap">{entry.totalSessionsCompleted} sess.</span>
                 </div>
               </div>
             </li>

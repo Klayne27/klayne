@@ -1,7 +1,7 @@
-const BASE_URL = "/api"
+const BASE_URL = "/api/leaderboard"
 
 export const getTotalLeaderboardApi = async (page = 1) => {
-  const res = await fetch(`${BASE_URL}/leaderboard/total?page=${page}&limit=10`, {
+  const res = await fetch(`${BASE_URL}/total?page=${page}&limit=10`, {
     credentials: "include",
   })
   if (!res.ok) {
@@ -11,7 +11,7 @@ export const getTotalLeaderboardApi = async (page = 1) => {
 }
 
 export const getMonthlyLeaderboardApi = async (page = 1) => {
-  const res = await fetch(`${BASE_URL}/leaderboard/monthly?page=${page}&limit=10`, {
+  const res = await fetch(`${BASE_URL}/monthly?page=${page}&limit=10`, {
     credentials: "include",
   })
   if (!res.ok) {
@@ -22,7 +22,7 @@ export const getMonthlyLeaderboardApi = async (page = 1) => {
 
 
 export const getPreviousWinnersApi = async () => {
-  const res = await fetch(`${BASE_URL}/leaderboard/previous-winners`)
+  const res = await fetch(`${BASE_URL}/previous-winners`)
 
   if (!res.ok) {
     throw new Error("Failed to fetch previous winners")
@@ -33,7 +33,7 @@ export const getPreviousWinnersApi = async () => {
 
 
 export const getWeeklyLeaderboardApi = async (page = 1) => {
-  const res = await fetch(`${BASE_URL}/leaderboard/weekly?page=${page}&limit=10`, {
+  const res = await fetch(`${BASE_URL}/weekly?page=${page}&limit=10`, {
     credentials: "include",
   })
   if (!res.ok) throw new Error("Failed to fetch weekly leaderboard")
@@ -41,7 +41,7 @@ export const getWeeklyLeaderboardApi = async (page = 1) => {
 }
 
 export const getPreviousWeekWinnersApi = async () => {
-  const res = await fetch(`${BASE_URL}/leaderboard/weekly/previous-winners`, {
+  const res = await fetch(`${BASE_URL}/weekly/previous-winners`, {
     credentials: "include",
   })
   if (!res.ok) throw new Error("Failed to fetch previous week winners")

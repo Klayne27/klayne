@@ -54,7 +54,7 @@ export const authUserApi = async () => {
 }
 
 export const resetPasswordRequestApi = async ({ token, newPassword }) => {
-  const response = await fetch(`/api/auth/reset-password/${token}`, {
+  const response = await fetch(`${BASE_URL}/reset-password/${token}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ newPassword }),
@@ -69,7 +69,7 @@ export const resetPasswordRequestApi = async ({ token, newPassword }) => {
 }
 
 export const forgotPasswordRequestApi = async (email) => {
-  const response = await fetch("/api/auth/forgot-password", {
+  const response = await fetch(`${BASE_URL}/forgot-password`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email }),

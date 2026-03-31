@@ -1,7 +1,5 @@
 const BASE_URL = "/api/posts"
 
-// Add to your posts api file
-
 export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
   const res = await fetch(`${BASE_URL}/${parentId}/reply`, {
     method: "POST",
@@ -40,11 +38,11 @@ export const getPostsApi = async (POST_ENDPOINT, pageParam = 1, limit = 12) => {
 
 export const getPostApi = async (postId) => {
   const res = await fetch(`${BASE_URL}/${postId}`)
+  const data = await res.json()
   if (!res.ok) {
-    const errorData = await res.json()
-    throw new Error(errorData.error || "Failed to fetch post")
+    throw new Error(data.error || "Failed to fetch post")
   }
-  return res.json()
+  return data
 }
 
 export const getBookmarkedPostsApi = async ({ pageParam = 1, searchQuery = "" }) => {
@@ -240,7 +238,7 @@ export const markICPostsAsReadApi = async () => {
 }
 
 export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOptions }) => {
-  const response = await fetch("/api/posts/vent", {
+  const response = await fetch(`${BASE_URL}/vent`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -256,7 +254,7 @@ export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOpt
 }
 
 export const editPostApi = async ({ postId, postData }) => {
-  const res = await fetch(`/api/posts/edit/${postId}`, {
+  const res = await fetch(`${BASE_URL}/edit/${postId}`, {
     method: "PUT",
     headers: {
       "Content-Type": "application/json",
@@ -271,7 +269,7 @@ export const editPostApi = async ({ postId, postData }) => {
 }
 
 export const getPostHistoryApi = async (postId) => {
-  const res = await fetch(`/api/posts/history/${postId}`)
+  const res = await fetch(`${BASE_URL}/history/${postId}`)
 
   const data = await res.json()
 
