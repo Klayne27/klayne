@@ -2,8 +2,7 @@ import { useState } from "react"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { Link, useNavigate } from "react-router-dom"
 import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons/fa6"
-import { FaFire, FaInfoCircle } from "react-icons/fa"
-import { IoClose } from "react-icons/io5"
+import { FaFire } from "react-icons/fa"
 import { FaCheckCircle } from "react-icons/fa"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
@@ -315,11 +314,10 @@ const renderWinnersPanel = (winnersData, label) => {
           </div>
         </div>
 
-        {/* Bottom Details - Now explicitly ordered [2, 1, 3] to match podium */}
         <div className="mt-4 flex justify-between gap-2 border-t border-base-200 pt-4 text-center sm:gap-6">
-          {WinnerStats(getWinnerByRank(1))} {/* Under 2nd place */}
-          {WinnerStats(getWinnerByRank(0))} {/* Under 1st place */}
-          {WinnerStats(getWinnerByRank(2))} {/* Under 3rd place */}
+          {WinnerStats(getWinnerByRank(1))}
+          {WinnerStats(getWinnerByRank(0))}
+          {WinnerStats(getWinnerByRank(2))}
         </div>
       </div>
     </div>
@@ -336,43 +334,7 @@ const renderWinnersPanel = (winnersData, label) => {
           <FaArrowLeft className="text-xl" />
         </button>
         <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
-        {leaderboardType === "monthly" ? (
-          <div className="relative">
-            <button
-              onClick={() => setIsInfoDropdownOpen(!isInfoDropdownOpen)}
-              className="rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white focus:outline-none"
-            >
-              <FaInfoCircle className="h-5 w-5" />
-            </button>
-            {isInfoDropdownOpen && (
-              <div
-                className="fixed inset-0 z-[1000] flex items-center justify-center bg-black bg-opacity-50 backdrop-blur-sm"
-                onClick={() => setIsInfoDropdownOpen(false)}
-              >
-                <div
-                  className="max-h-[80vh] w-full max-w-lg rounded-lg bg-gray-800 p-4 text-sm text-base-content shadow-lg"
-                  onClick={(e) => e.stopPropagation()}
-                >
-                  <div className="mb-4 flex w-full items-center justify-between border-b border-gray-600 pb-3">
-                    <h4 className="text-lg font-bold">Monthly Leaderboard</h4>
-                    <span onClick={() => setIsInfoDropdownOpen(false)}>
-                      <IoClose size={20} className="cursor-pointer" />
-                    </span>
-                  </div>
-                  <ul className="list-inside list-disc space-y-2">
-                    <li>At the start of every month, all users' monthly stats will reset to 0.</li>
-                    <li>
-                      At the end of each month, the top 3 users will earn special badges as a reward
-                      for their hard work.
-                    </li>
-                  </ul>
-                </div>
-              </div>
-            )}
-          </div>
-        ) : (
-          <div className="w-9" />
-        )}
+
       </div>
 
       {/* Type tabs */}
