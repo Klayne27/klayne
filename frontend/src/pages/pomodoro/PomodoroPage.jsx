@@ -206,7 +206,7 @@ const PomodoroPage = () => {
   )
 
   const handleSessionEnd = useCallback(() => {
-    if (isEndingSessionRef.current || !settings) return // <-- ADD THIS GUARD
+    if (isEndingSessionRef.current || !settings) return
 
     isEndingSessionRef.current = true
 

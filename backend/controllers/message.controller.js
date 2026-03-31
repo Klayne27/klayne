@@ -214,15 +214,46 @@ export const getFollowedUsersForMessaging = async (req, res) => {
 
 export const getOrCreateConversation = async (req, res) => {
   try {
-    const { targetUserId } = req.body;
+    const { targetUserId, participantIds, name } = req.body;
     const currentUserId = req.user._id;
+
+    // --- GROUP CHAT ---
+    if (participantIds && participantIds.length > 0) {
+      const allParticipants = [
+        currentUserId.toString(),
+        ...participantIds.map((id) => id.toString()),
+      ];
+
+      const conversation = new Conversation({
+        participants: allParticipants,
+        isGroup: true,
+        name: name || "Group Chat",
+        messages: [],
+      });
+      await conversation.save();
+
+      const populated = await conversation.populate({
+        path: "participants",
+        select: "-password -email -blockedUsers -blockedBy -following -followers",
+        populate: { path: "profileImg", select: "imageUrl" },
+      });
+
+      return res.status(201).json(populated);
+    }
+
+    // --- DM ---
+    if (!targetUserId) {
+      return res.status(400).json({ error: "targetUserId is required for DMs." });
+    }
 
     if (currentUserId.toString() === targetUserId.toString()) {
       return res.status(400).json({ error: "Cannot create conversation with yourself." });
     }
 
+    // Match only 2-person (non-group) conversations containing exactly these two users
     let conversation = await Conversation.findOne({
-      participants: { $all: [currentUserId, targetUserId] },
+      isGroup: false,
+      participants: { $all: [currentUserId, targetUserId], $size: 2 },
     });
 
     if (!conversation) {
@@ -235,18 +266,17 @@ export const getOrCreateConversation = async (req, res) => {
 
       conversation = new Conversation({
         participants: [currentUserId, targetUserId],
+        isGroup: false,
         messages: [],
       });
       await conversation.save();
     } else {
-      const isHiddenForCurrentUser = conversation.hiddenFor.includes(currentUserId);
-      if (isHiddenForCurrentUser) {
+      if (conversation.hiddenFor.includes(currentUserId)) {
         await Conversation.updateOne(
           { _id: conversation._id },
           { $pull: { hiddenFor: currentUserId } },
           { timestamps: false },
         );
-
         conversation = await Conversation.findById(conversation._id);
       }
     }
@@ -254,10 +284,7 @@ export const getOrCreateConversation = async (req, res) => {
     conversation = await conversation.populate({
       path: "participants",
       select: "-password -email -blockedUsers -blockedBy -following -followers",
-      populate: {
-        path: "profileImg",
-        select: "imageUrl",
-      },
+      populate: { path: "profileImg", select: "imageUrl" },
     });
 
     return res.status(200).json(conversation);

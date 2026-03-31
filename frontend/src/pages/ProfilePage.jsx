@@ -207,7 +207,9 @@ const heatmapData = allYearDates.map((dateStr) => {
       return
     }
 
-    if (!conversationStatus.conversationId) {
+    console.log(conversationStatus);
+
+    if (!conversationStatus.conversationId || conversationStatus.isHiddenForCurrentUser) {
       getOrCreateConversation(userProfile._id)
     } else {
       navigate(`/messages/${conversationStatus.conversationId}`)
@@ -609,9 +611,10 @@ const heatmapData = allYearDates.map((dateStr) => {
                         backgroundColor: "var(--fallback-b2,oklch(var(--b2)))",
                         color: "var(--fallback-bc,oklch(var(--bc)))",
                         borderRadius: "12px",
-                        border: "1px solid var(--fallback-b3,oklch(var(--b3)))",
-                        padding: "8px 12px",
+                        padding: "6px 12px",
+                        
                       }}
+                      border="1px solid var(--fallback-b3,oklch(var(--b3)))"
                     />
                   </div>
                 </div>
