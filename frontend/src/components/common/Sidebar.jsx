@@ -97,17 +97,20 @@ const Sidebar = ({
   // Effect to handle favicon and title updates
   useEffect(() => {
     let faviconLink = document.querySelector('link[rel="icon"]')
-    if (faviconLink && !originalFaviconHref.current) {
-      originalFaviconHref.current = faviconLink.href
-    } else if (!faviconLink) {
-      const canvas = document.createElement("canvas")
-      canvas.width = 32
-      canvas.height = 32
-      canvas.getContext("2d").clearRect(0, 0, 0, 0)
-      originalFaviconHref.current = canvas.toDataURL()
-      faviconLink = document.createElement("link")
-      faviconLink.rel = "icon"
-      document.head.appendChild(faviconLink)
+
+    // Capture original href once, reliably
+    if (!originalFaviconHref.current) {
+      if (faviconLink) {
+        // Resolve relative href to absolute URL so new Image() can load it cross-context
+        const a = document.createElement("a")
+        a.href = faviconLink.getAttribute("href")
+        originalFaviconHref.current = a.href
+      } else {
+        faviconLink = document.createElement("link")
+        faviconLink.rel = "icon"
+        document.head.appendChild(faviconLink)
+        originalFaviconHref.current = "/klaynelogo.png"
+      }
     }
   }, [])
 
@@ -128,72 +131,59 @@ const Sidebar = ({
       newPostCount > 0 ||
       newVentPostCount > 0
 
-    if (hasAnyNewNotification) {
-      document.title = `(${totalNotifications}) ${originalTitle.current}`
-    } else {
-      document.title = originalTitle.current
-    }
+    // Title
+    document.title = hasAnyNewNotification
+      ? `(${totalNotifications}) ${originalTitle.current}`
+      : originalTitle.current
 
+    // Favicon
     const faviconLink = document.querySelector('link[rel="icon"]')
-    if (!faviconLink || !originalFaviconHref.current) {
-      console.warn("Favicon link not found or original favicon not captured. Cannot apply badge.")
+    if (!faviconLink || !originalFaviconHref.current) return
+
+    if (!hasAnyNewNotification) {
+      faviconLink.href = originalFaviconHref.current
       return
     }
 
-    if (hasAnyNewNotification) {
-      const canvas = document.createElement("canvas")
-      canvas.width = 32
-      canvas.height = 32
-      const ctx = canvas.getContext("2d")
+    const canvas = document.createElement("canvas")
+    canvas.width = 32
+    canvas.height = 32
+    const ctx = canvas.getContext("2d")
 
-      const img = new Image()
-      img.src = originalFaviconHref.current
-      img.crossOrigin = "anonymous"
+    const img = new Image()
+    // Required so canvas doesn't taint when drawing a local file URL
+    img.crossOrigin = "anonymous"
 
-      const drawFaviconWithBadge = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height)
+    img.onload = () => {
+      ctx.clearRect(0, 0, 32, 32)
+      ctx.drawImage(img, 0, 0, 32, 32)
 
-        const badgeSize = 10
-        const padding = 0
-        ctx.beginPath()
-        ctx.arc(
-          canvas.width - badgeSize / 2 - padding,
-          badgeSize / 2 + padding,
-          badgeSize / 2,
-          0,
-          Math.PI * 2,
-          false,
-        )
-        ctx.fillStyle = "red"
-        ctx.fill()
-        ctx.lineWidth = 1
-        ctx.strokeStyle = "#000"
-        ctx.stroke()
+      // Red badge dot
+      const badgeSize = 10
+      ctx.beginPath()
+      ctx.arc(32 - badgeSize / 2, badgeSize / 2, badgeSize / 2, 0, Math.PI * 2)
+      ctx.fillStyle = "red"
+      ctx.fill()
+      ctx.lineWidth = 1
+      ctx.strokeStyle = "#000"
+      ctx.stroke()
 
-        faviconLink.href = canvas.toDataURL("image/png")
-      }
-
-      img.onload = drawFaviconWithBadge
-
-      img.onerror = () => {
-        console.warn(
-          "Could not load original favicon for badging. Reverting to basic red dot as fallback.",
-        )
-        ctx.clearRect(0, 0, canvas.width, canvas.height)
-        ctx.beginPath()
-        ctx.arc(canvas.width / 2, canvas.height / 2, 8, 0, Math.PI * 2, false)
-        ctx.fillStyle = "red"
-        ctx.fill()
-        faviconLink.href = canvas.toDataURL("image/png")
-      }
-
-      if (img.complete) {
-        drawFaviconWithBadge()
-      }
-    } else {
-      faviconLink.href = originalFaviconHref.current
+      faviconLink.href = canvas.toDataURL("image/png")
     }
+
+    img.onerror = () => {
+      // Logo failed to load — draw a simple red dot on transparent bg
+      // rather than replacing the entire icon with just a dot
+      ctx.clearRect(0, 0, 32, 32)
+      ctx.beginPath()
+      ctx.arc(24, 8, 5, 0, Math.PI * 2)
+      ctx.fillStyle = "red"
+      ctx.fill()
+      faviconLink.href = canvas.toDataURL("image/png")
+    }
+
+    // Set src AFTER handlers are attached
+    img.src = originalFaviconHref.current
 
     return () => {
       document.title = originalTitle.current
@@ -202,18 +192,13 @@ const Sidebar = ({
       }
     }
   }, [
-    hasUnreadMessages,
-    hasUnreadNotifications,
-    hasNewFeedPosts,
-    hasUnreadPublicChat,
-    newPostCount,
-    newVentPostCount,
-    totalNotifications,
     unreadMessageCount,
     unreadNotificationsCount,
     unreadPublicChatCount,
+    newPostCount,
+    newVentPostCount,
+    totalNotifications,
   ])
-
   const handleMobileSearchClick = () => {
     navigate("/search")
   }
