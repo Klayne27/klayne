@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { useParams, useNavigate } from "react-router-dom"
+import { useParams, useNavigate, Link } from "react-router-dom"
 
 import { IoArrowBack, IoCopy } from "react-icons/io5"
 import { FaTrashCan, FaDoorOpen } from "react-icons/fa6"
@@ -159,7 +159,9 @@ export default function GroupSettingsPage() {
             />
             <div className="flex w-full items-center justify-between px-2 py-2">
               <div className="flex flex-col">
-                <span className="text-sm font-semibold">{editIsPrivate ? "Private Group": "Public Group"}</span>
+                <span className="text-sm font-semibold">
+                  {editIsPrivate ? "Private Group" : "Public Group"}
+                </span>
                 <span className="text-xs text-gray-500">
                   {editIsPrivate
                     ? "Members must be approved to join"
@@ -303,14 +305,16 @@ export default function GroupSettingsPage() {
               return (
                 <div key={memberId} className="flex items-center justify-between gap-2">
                   <div className="flex items-center gap-2">
-                    <img
-                      src={getOptimizedImageUrl(
-                        user?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                        "avatar",
-                      )}
-                      className="h-8 w-8 rounded-full object-cover"
-                      alt={user?.username}
-                    />
+                    <Link to={`/profile/${user.username}`}>
+                      <img
+                        src={getOptimizedImageUrl(
+                          user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )}
+                        className="h-8 w-8 rounded-full object-cover"
+                        alt={user?.username}
+                      />
+                    </Link>
                     <div className="flex flex-col">
                       <span className="text-sm font-semibold">{user?.fullName}</span>
                       <span className="text-xs text-gray-400">@{user?.username}</span>
@@ -371,7 +375,7 @@ export default function GroupSettingsPage() {
       </div>
 
       {/* Danger zone */}
-      <div className="rounded-2xl border border-red-500/30 p-4 mb-14">
+      <div className="mb-14 rounded-2xl border border-red-500/30 p-4">
         <p className="mb-3 font-semibold text-red-500">Danger Zone</p>
         {!isOwner && (
           <button
