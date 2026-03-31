@@ -207,8 +207,6 @@ const heatmapData = allYearDates.map((dateStr) => {
       return
     }
 
-    console.log(conversationStatus);
-
     if (!conversationStatus.conversationId || conversationStatus.isHiddenForCurrentUser) {
       getOrCreateConversation(userProfile._id)
     } else {

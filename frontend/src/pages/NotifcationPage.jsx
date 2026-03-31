@@ -176,7 +176,6 @@ const NotificationPage = () => {
           const isAnon = notification.isAnonymousInteraction
 
           let contentToDisplay = null
-          console.log(filteredNotifications)
 
           if (notification.postId) {
             contentToDisplay = notification.postId
