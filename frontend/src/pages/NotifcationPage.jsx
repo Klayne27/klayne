@@ -93,6 +93,7 @@ const NotificationPage = () => {
   }
 
   const getNotificationMessage = (notification) => {
+    console.log(notification);
     // Trust the interaction flag first
     const isAnon = notification.isAnonymousInteraction
     const displayUsername = isAnon ? "Anonymous" : notification.from?.username

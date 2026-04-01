@@ -165,10 +165,6 @@ export const getPreviousWinners = async (req, res) => {
 
     const lastMonthISO = targetMonth.toISOString().slice(0, 7);
 
-    console.log("Input Date:", now.toISOString());
-    console.log("AoE Date (UTC-12):", aoetDate.toISOString());
-    console.log("Fetching Winners for ISO:", lastMonthISO);
-
     const previousWinners = await MonthlyWinners.findOne({ month: lastMonthISO })
       .select("winners month")
       .populate({

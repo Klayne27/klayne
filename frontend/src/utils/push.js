@@ -1,6 +1,6 @@
 // Enhanced version with better error handling and logging
 const vapidPublicKey =
-  "BK226lMlv1A_NshzSWU5c0Jpns10EielyCWSVYLGjvn_nEs8DItTRXFN1PbEXzDSzvb93-c1zgAueVWb3kICcf4"
+  "BAobWDLKcBxIRRJJCgoNz7TC_bpt-fBLdNHVof61Ngpsc2vC0ao7QLmvApnvhmqWHwk0S2l-gzyOnfOX63pj00Y"
 
 const urlBase64ToUint8Array = (base64String) => {
   const padding = "=".repeat((4 - (base64String.length % 4)) % 4)
