@@ -8,9 +8,8 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
 import { useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetWeeklyLeaderboard"
-import { useGetPreviousWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
+import { useGetPreviousMonthWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
 import { useGetPreviousWeekWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWeekWinners"
-import useLockBodyScroll from "../hooks/customHooks/useLockBodyScroll"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 
@@ -44,10 +43,6 @@ function StudyLeaderboardPage() {
   const [page, setPage] = useState(1)
   const [leaderboardType, setLeaderboardType] = useState("total")
   const [showPreviousWinners, setShowPreviousWinners] = useState(true)
-  const [isInfoDropdownOpen, setIsInfoDropdownOpen] = useState(false)
-
-  useLockBodyScroll(isInfoDropdownOpen)
-
 
   const { authUser: currentUser } = useAuthUser()
 
@@ -57,7 +52,7 @@ function StudyLeaderboardPage() {
   })
   const weeklyLeaderboard = useGetWeeklyLeaderboard(page, { enabled: leaderboardType === "weekly" })
 
-  const { previousWinners } = useGetPreviousWinners()
+  const { previousMonthWinners } = useGetPreviousMonthWinners()
   const { previousWeekWinners } = useGetPreviousWeekWinners()
 
   const currentLeaderboard =
@@ -111,7 +106,6 @@ function StudyLeaderboardPage() {
     return "text-blue-500"
   }
 
-  // Format "2025-03-24" → "Mar 24 – Mar 30"
   const formatWeekRange = (weekStartStr) => {
     if (!weekStartStr) return ""
     const start = new Date(weekStartStr)
@@ -367,7 +361,7 @@ function StudyLeaderboardPage() {
 
       {showPreviousWinners &&
         leaderboardType === "monthly" &&
-        renderWinnersPanel(previousWinners, `Top 3 for ${previousWinners?.month}`)}
+        renderWinnersPanel(previousMonthWinners, `Top 3 for ${previousMonthWinners?.month}`)}
 
       {showPreviousWinners &&
         leaderboardType === "weekly" &&

@@ -19,23 +19,28 @@ import {
 
 const router = express.Router();
 
-router.post("/", protectRoute, createTodo);
-router.get("/", protectRoute, getUserTodos);
+// --- PROTECTED ROUTES ---
+router.use(protectRoute);
+
+router.post("/", createTodo);
+router.get("/", getUserTodos);
+router.get("/activities", getMyActivities);
+router.get("/following", getFollowingTodos);
 router.get("/public", getPublicTodos);
-router.get("/completed", protectRoute, getCompletedTodos);
-router.get("/following", protectRoute, getFollowingTodos);
-router.get("/activities", protectRoute, getMyActivities);
-router.get("/public-completed", protectRoute, getPublicCompletedTodos);
-router.get("/completed-count", protectRoute, getCompletedTodosCount);
-router.get("/active-count", protectRoute, getActiveTodosCount);
-router.get("/completed-goal", protectRoute, getCompletedTodosWithDates);
 
-router.get("/:id", protectRoute, getTodoById);
-router.put("/:id", protectRoute, updateTodo);
-router.put("/:id/complete", protectRoute, completeTodo);
-router.delete("/:id", protectRoute, deleteTodo);
-router.put("/:id", protectRoute, updateTodo);
+// --- FILTERS & COMPLETED STATE ---
+router.get("/completed", getCompletedTodos);
+router.get("/public-completed", getPublicCompletedTodos);
 
+// --- STATS & GOALS ---
+router.get("/active-count", getActiveTodosCount);
+router.get("/completed-count", getCompletedTodosCount);
+router.get("/completed-goal", getCompletedTodosWithDates);
 
+// --- INDIVIDUAL TODO OPERATIONS ---
+router.get("/:id", getTodoById);
+router.put("/:id", updateTodo);
+router.delete("/:id", deleteTodo);
+router.put("/complete/:id", completeTodo);
 
 export default router;

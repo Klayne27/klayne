@@ -43,16 +43,12 @@ export const deleteDevlogApi = async (id) => {
   return data
 }
 
-// ── Likes ─────────────────────────────────────────────────────────────────────
-
 export const likeDevlogApi = async (id) => {
   const res = await fetch(`${BASE_URL}/${id}/like`, { method: "POST" })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to like devlog")
-  return data // { likes, isLiked }
+  return data 
 }
-
-// ── Comments ──────────────────────────────────────────────────────────────────
 
 export const getDevlogCommentsApi = async (devlogId, page = 1, limit = 20) => {
   const res = await fetch(`${BASE_URL}/${devlogId}/comments?page=${page}&limit=${limit}`)

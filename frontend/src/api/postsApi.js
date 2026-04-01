@@ -1,7 +1,7 @@
 const BASE_URL = "/api/posts"
 
 export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
-  const res = await fetch(`${BASE_URL}/${parentId}/reply`, {
+  const res = await fetch(`${BASE_URL}/reply/${parentId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, img, video, isIC }),
@@ -13,14 +13,14 @@ export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
 
 export const getPostRepliesApi = async ({ queryKey, pageParam = 1 }) => {
   const [, , postId] = queryKey
-  const res = await fetch(`${BASE_URL}/${postId}/replies?page=${pageParam}&limit=12`)
+  const res = await fetch(`${BASE_URL}/replies/${postId}?page=${pageParam}&limit=12`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch replies")
   return data
 }
 
 export const getPostThreadApi = async (postId) => {
-  const res = await fetch(`${BASE_URL}/${postId}/thread`)
+  const res = await fetch(`${BASE_URL}/thread/${postId}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch thread")
   return data
@@ -254,6 +254,7 @@ export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOpt
 }
 
 export const editPostApi = async ({ postId, postData }) => {
+  console.log(postData);
   const res = await fetch(`${BASE_URL}/edit/${postId}`, {
     method: "PUT",
     headers: {

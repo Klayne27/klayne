@@ -1,4 +1,4 @@
-const API_URL = "/api/todos"
+const BASE_URL = "/api/todos"
 
 export const createTodoApi = async ({
   title,
@@ -8,7 +8,7 @@ export const createTodoApi = async ({
   priority,
   dueDate,
 }) => {
-  const res = await fetch(API_URL, {
+  const res = await fetch(BASE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ title, description, todoListId, isPublic, priority, dueDate }),
@@ -19,28 +19,28 @@ export const createTodoApi = async ({
 }
 
 export const getUserTodosApi = async () => {
-  const res = await fetch(API_URL)
+  const res = await fetch(BASE_URL)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch todos")
   return data
 }
 
 export const getFollowingTodosApi = async () => {
-  const res = await fetch(`${API_URL}/following`)
+  const res = await fetch(`${BASE_URL}/following`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch following's todos")
   return data
 }
 
 export const getPublicTodosApi = async () => {
-  const res = await fetch(`${API_URL}/public`)
+  const res = await fetch(`${BASE_URL}/public`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch public todos")
   return data
 }
 
 export const updateTodoApi = async (todoId, todoData) => {
-  const res = await fetch(`${API_URL}/${todoId}`, {
+  const res = await fetch(`${BASE_URL}/${todoId}`, {
     method: "PUT",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(todoData),
@@ -51,7 +51,7 @@ export const updateTodoApi = async (todoId, todoData) => {
 }
 
 export const completeTodoApi = async (todoId) => {
-  const res = await fetch(`${API_URL}/${todoId}/complete`, {
+  const res = await fetch(`${BASE_URL}/complete/${todoId}`, {
     method: "PUT",
   })
   const data = await res.json()
@@ -60,7 +60,7 @@ export const completeTodoApi = async (todoId) => {
 }
 
 export const deleteTodoApi = async (todoId) => {
-  const res = await fetch(`${API_URL}/${todoId}`, {
+  const res = await fetch(`${BASE_URL}/${todoId}`, {
     method: "DELETE",
   })
   const data = await res.json()
@@ -69,14 +69,14 @@ export const deleteTodoApi = async (todoId) => {
 }
 
 export const getCompletedTodosApi = async ({ pageParam = 0 }) => {
-  const res = await fetch(`${API_URL}/completed?page=${pageParam}`)
+  const res = await fetch(`${BASE_URL}/completed?page=${pageParam}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch completed todos")
   return data
 }
 
 export const getPublicCompletedTodosApi = async ({ pageParam = 0 }) => {
-  const res = await fetch(`${API_URL}/public-completed?page=${pageParam}`)
+  const res = await fetch(`${BASE_URL}/public-completed?page=${pageParam}`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch public completed todos")
 
@@ -84,7 +84,7 @@ export const getPublicCompletedTodosApi = async ({ pageParam = 0 }) => {
 }
 
 export const getTodoActivityApi = async ({ pageParam = 0 }) => {
-  const res = await fetch(`${API_URL}/activities?page=${pageParam}`)
+  const res = await fetch(`${BASE_URL}/activities?page=${pageParam}`)
 
   const data = await res.json()
 
@@ -94,19 +94,19 @@ export const getTodoActivityApi = async ({ pageParam = 0 }) => {
 }
 
 export const getCompletedTodosCountApi = async () => {
-  const res = await fetch(`${API_URL}/completed-count`)
+  const res = await fetch(`${BASE_URL}/completed-count`)
   if (!res.ok) throw new Error("Failed to fetch completed tasks count")
   return res.json()
 }
 
 export const getActiveTodosCountApi = async () => {
-  const res = await fetch(`${API_URL}/active-count`)
+  const res = await fetch(`${BASE_URL}/active-count`)
   if (!res.ok) throw new Error("Failed to fetch active todos count")
   return res.json()
 }
 
 export const getCompletedTodosWithDatesApi = async () => {
-  const res = await fetch(`${API_URL}/completed-goal`)
+  const res = await fetch(`${BASE_URL}/completed-goal`)
 
   const data = await res.json()
   if (!res.ok) throw new Error("Failed to fetch completed todos with dates")

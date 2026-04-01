@@ -158,7 +158,7 @@ export const unbanUserFromPublicChatApi = async (userId) => {
 }
 
 export const addPublicMessageReactionApi = async (messageId, emoji) => {
-  const res = await fetch(`${BASE_URL}/${messageId}/react`, {
+  const res = await fetch(`${BASE_URL}/react/${messageId}`, {
     method: "POST",
     headers: { "Content-type": "application/json" },
     body: JSON.stringify({ emoji }),

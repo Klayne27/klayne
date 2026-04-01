@@ -33,7 +33,7 @@ const isBlockedOrBlockedBy = async (currentUserId, targetUserId) => {
 
 export const getPostThread = async (req, res) => {
   try {
-    const { id: postId } = req.params;
+    const { postId } = req.params;
 
     const post = await Post.findById(postId)
       .populate({
@@ -74,7 +74,7 @@ export const getPostThread = async (req, res) => {
 
 export const getPostReplies = async (req, res) => {
   try {
-    const { id: postId } = req.params;
+    const { postId } = req.params;
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 12;
     const skip = (page - 1) * limit;
@@ -140,7 +140,7 @@ export const getPostReplies = async (req, res) => {
 
 export const createReply = async (req, res) => {
   try {
-    const { id: parentId } = req.params;
+    const { parentId } = req.params;
     const { text, isIC } = req.body;
     let { img, video } = req.body;
     const userId = req.user._id; // Keep as ObjectId for comparison
@@ -1495,7 +1495,7 @@ export const getUserPosts = async (req, res) => {
             populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
           {
-            path: "image", 
+            path: "image",
             select: "imageUrl",
           },
         ],
@@ -1699,9 +1699,10 @@ export const getUserReplies = async (req, res) => {
 
 export const getPost = async (req, res) => {
   try {
+    const { postId } = req.params;
     const currentUserId = req.user?._id;
 
-    const post = await Post.findById(req.params.id)
+    const post = await Post.findById(postId)
       .populate({
         path: "user",
         select: "-password",
@@ -2161,10 +2162,10 @@ export const createPost = async (req, res) => {
 
 export const deletePost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { postId } = req.params;
     const userId = req.user._id;
 
-    const postToDelete = await Post.findById(id);
+    const postToDelete = await Post.findById(postId);
 
     if (!postToDelete) {
       return res.status(404).json({ error: "Post not found" });
@@ -2214,7 +2215,7 @@ export const deletePost = async (req, res) => {
         });
       }
 
-      await Post.deleteOne({ _id: id });
+      await Post.deleteOne({ _id: postId });
     } else {
       await Post.updateOne(
         { _id: postToDelete.repostedFrom },
@@ -2223,7 +2224,7 @@ export const deletePost = async (req, res) => {
           $pull: { repostedBy: userId },
         },
       );
-      await Post.deleteOne({ _id: id });
+      await Post.deleteOne({ _id: postId });
     }
 
     res.status(200).json({
@@ -2239,7 +2240,7 @@ export const deletePost = async (req, res) => {
 export const likeUnlikePost = async (req, res) => {
   try {
     const userId = req.user._id;
-    const { id: postId } = req.params;
+    const { postId } = req.params;
 
     const post = await Post.findById(postId);
 
@@ -2498,7 +2499,7 @@ export const checkIfUserReposted = async (req, res) => {
 
 export const toggleBookmark = async (req, res) => {
   try {
-    const { id: postId } = req.params;
+    const { postId } = req.params;
     const userId = req.user._id;
 
     const post = await Post.findById(postId);
@@ -2587,7 +2588,7 @@ export const voteOnPoll = async (req, res) => {
 
 export const pinUnpinPost = async (req, res) => {
   try {
-    const { id: postId } = req.params;
+    const { postId } = req.params;
     const userId = req.user._id;
 
     const post = await Post.findById(postId);
@@ -2627,11 +2628,11 @@ export const pinUnpinPost = async (req, res) => {
 
 export const updateScheduledPost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { postId } = req.params;
     const { text, scheduledAt } = req.body;
     const userId = req.user._id;
 
-    const post = await Post.findById(id);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
@@ -3065,7 +3066,7 @@ export const getVentPosts = async (req, res) => {
 
 export const editPost = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { postId } = req.params;
     const { text } = req.body;
     const userId = req.user._id;
 
@@ -3073,7 +3074,7 @@ export const editPost = async (req, res) => {
       return res.status(400).json({ error: "Post cannot be empty." });
     }
 
-    const post = await Post.findById(id);
+    const post = await Post.findById(postId);
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
@@ -3141,9 +3142,9 @@ export const editPost = async (req, res) => {
 
 export const getPostHistory = async (req, res) => {
   try {
-    const { id } = req.params;
+    const { postId } = req.params;
 
-    const post = await Post.findById(id).select("editHistory"); // Only fetch the editHistory field
+    const post = await Post.findById(postId).select("editHistory"); // Only fetch the editHistory field
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });

@@ -1,46 +1,54 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import {
-  getGroupConversations,
-  getGroup,
-  updateGroup,
   addMembers,
+  adminDeleteMessage,
+  createGroup,
+  deleteGroup,
+  getGroup,
+  getGroupConversations,
+  getJoinRequests,
+  getMembers,
+  handleJoinRequest,
+  joinViaInviteCode,
   kickMember,
   leaveGroup,
-  updateMemberRole,
-  deleteGroup,
   regenerateInviteCode,
-  joinViaInviteCode,
-  getJoinRequests,
-  handleJoinRequest,
-  getMembers,
-  adminDeleteMessage,
   transferOwnership,
-  createGroup,
+  updateGroup,
+  updateMemberRole,
 } from "../controllers/group.controller.js";
 
 const router = express.Router();
 
-router.post("/", protectRoute, createGroup);
-router.get("/", protectRoute, getGroupConversations);
-router.get("/:groupId", protectRoute, getGroup);
-router.put("/:groupId", protectRoute, updateGroup);
-router.delete("/:groupId", protectRoute, deleteGroup);
+// Apply protection to all group routes
+router.use(protectRoute);
 
-router.post("/:groupId/members", protectRoute, addMembers);
-router.delete("/:groupId/members/:targetUserId", protectRoute, kickMember);
-router.delete("/:groupId/leave", protectRoute, leaveGroup);
-router.put("/:groupId/members/:targetUserId/role", protectRoute, updateMemberRole);
-router.put("/:groupId/transfer/:targetUserId", protectRoute, transferOwnership);
+// --- GROUP DISCOVERY & CREATION ---
+router.get("/", getGroupConversations);
+router.post("/", createGroup);
+router.post("/join/:inviteCode", joinViaInviteCode);
 
-router.get("/:groupId/invite", protectRoute, regenerateInviteCode);
-router.post("/join/:inviteCode", protectRoute, joinViaInviteCode);
+// --- MEMBERSHIP MANAGEMENT ---
+router.get("/:groupId/members", getMembers);
+router.post("/:groupId/members", addMembers);
+router.delete("/:groupId/leave", leaveGroup);
+router.delete("/:groupId/members/:targetUserId", kickMember);
+router.put("/:groupId/members/:targetUserId/role", updateMemberRole);
 
-router.get("/:groupId/join-requests", protectRoute, getJoinRequests);
-router.put("/:groupId/join-requests/:requestId", protectRoute, handleJoinRequest);
+// --- INVITES & REQUESTS ---
+router.get("/:groupId/invite", regenerateInviteCode);
+router.get("/:groupId/join-requests", getJoinRequests);
+router.put("/:groupId/join-requests/:requestId", handleJoinRequest);
 
-router.get("/:groupId/members", protectRoute, getMembers);
+// --- SETTINGS & ADMINISTRATION ---
+router.put("/:groupId", updateGroup);
+router.delete("/:groupId", deleteGroup);
+router.put("/:groupId/transfer/:targetUserId", transferOwnership);
+router.delete("/:groupId/messages/:messageId", adminDeleteMessage);
 
-router.delete("/:groupId/messages/:messageId", protectRoute, adminDeleteMessage);
+// --- SPECIFIC GROUP DATA ---
+// Placed last to ensure it doesn't swallow routes like /join or /members
+router.get("/:groupId", getGroup);
 
 export default router;

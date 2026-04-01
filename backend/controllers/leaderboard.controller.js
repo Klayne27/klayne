@@ -152,7 +152,7 @@ export const getMonthlyLeaderboard = async (req, res) => {
   }
 };
 
-export const getPreviousWinners = async (req, res) => {
+export const getPreviousMonthWinners = async (req, res) => {
   try {
     const now = new Date();
 

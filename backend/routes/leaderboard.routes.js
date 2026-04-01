@@ -3,7 +3,7 @@ import { protectRoute } from "../middleware/protectRoute.js";
 import {
   getMonthlyLeaderboard,
   getPreviousWeekWinners,
-  getPreviousWinners,
+  getPreviousMonthWinners,
   getTotalLeaderboard,
   getWeeklyLeaderboard,
 } from "../controllers/leaderboard.controller.js";
@@ -12,7 +12,7 @@ const router = express.Router();
 
 router.get("/total", protectRoute, getTotalLeaderboard);
 router.get("/monthly", protectRoute, getMonthlyLeaderboard);
-router.get("/previous-winners", protectRoute, getPreviousWinners)
+router.get("/monthly/previous-winners", protectRoute, getPreviousMonthWinners)
 router.get("/weekly", protectRoute, getWeeklyLeaderboard);
 router.get("/weekly/previous-winners", protectRoute, getPreviousWeekWinners);
 

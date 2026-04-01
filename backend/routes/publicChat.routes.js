@@ -1,28 +1,32 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import {
-  banUserFromPublicChat,
+  addReactionToPublicMessage,
   adminDeletePublicMessage,
+  banUserFromPublicChat,
+  deleteOwnPublicMessage,
+  editPublicMessage,
   getPublicMessages,
   sendPublicMessage,
   unbanUserFromPublicChat,
-  addReactionToPublicMessage,
-  deleteOwnPublicMessage,
-  editPublicMessage,
 } from "../controllers/publicChat.controller.js";
 
 const router = express.Router();
 
-router.post("/send", protectRoute, sendPublicMessage); 
-router.get("/messages", protectRoute, getPublicMessages);
+router.use(protectRoute);
 
-router.delete("/admin/delete/:messageId", protectRoute, adminDeletePublicMessage);
-router.put("/admin/ban/:userId", protectRoute, banUserFromPublicChat);
-router.put("/admin/unban/:userId", protectRoute, unbanUserFromPublicChat);
+// --- CORE CHAT FUNCTIONS ---
+router.get("/messages", getPublicMessages);
+router.post("/send", sendPublicMessage);
 
-router.post("/:messageId/react", protectRoute, addReactionToPublicMessage);
-router.delete("/:messageId", protectRoute, deleteOwnPublicMessage);
+// --- USER MESSAGE ACTIONS ---
+router.put("/edit/:messageId", editPublicMessage);
+router.post("/react/:messageId", addReactionToPublicMessage);
+router.delete("/:messageId", deleteOwnPublicMessage);
 
-router.put("/edit/:messageId", protectRoute, editPublicMessage);
+// --- ADMIN MODERATION ---
+router.delete("/admin/delete/:messageId", adminDeletePublicMessage);
+router.put("/admin/ban/:userId", banUserFromPublicChat);
+router.put("/admin/unban/:userId", unbanUserFromPublicChat);
 
 export default router;

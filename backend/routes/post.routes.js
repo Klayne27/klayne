@@ -35,46 +35,56 @@ import {
 
 const router = express.Router();
 
-router.post("/create", protectRoute, createPost);
-router.put("/edit/:id", protectRoute, editPost);
+// All routes below require authentication
+router.use(protectRoute);
 
-router.post("/:id/reply", protectRoute, createReply);
-router.get("/:id/replies", protectRoute, getPostReplies);
-router.get("/:id/thread", protectRoute, getPostThread);
+// --- CORE CRUD & POST ACTIONS ---
+router.post("/create", createPost);
+router.get("/all", getAllPosts);
+router.put("/edit/:postId", editPost);
+router.get("/history/:postId", getPostHistory);
 
-router.delete("/:id", protectRoute, deletePost);
-router.get("/history/:id", protectRoute, getPostHistory);
+// --- SOCIAL INTERACTIONS ---
+router.post("/like/:postId", likeUnlikePost);
+router.post("/repost/:postId", repostPost);
+router.post("/bookmark/:postId", toggleBookmark);
+router.post("/vote/:postId", voteOnPoll);
+router.get("/check-repost/:originalPostId", checkIfUserReposted);
 
-router.post("/like/:id", protectRoute, likeUnlikePost);
-router.post("/repost/:postId", protectRoute, repostPost);
-router.post("/bookmark/:id", protectRoute, toggleBookmark);
-router.post("/:postId/vote", protectRoute, voteOnPoll);
-router.post("/pin/:id", protectRoute, pinUnpinPost);
-router.delete("/pin/:id", protectRoute, pinUnpinPost);
+// --- REPLIES & THREADS ---
+router.post("/reply/:parentId", createReply);
+router.get("/replies/:postId", getPostReplies);
+router.get("/thread/:postId", getPostThread);
 
-router.get("/all", protectRoute, getAllPosts);
-router.get("/ic", protectRoute, getICPosts);
+// --- FEED & FILTERED LISTS ---
+router.get("/following", getFollowingPosts);
+router.get("/bookmarked", getBookmarkedPosts);
+router.get("/ic", getICPosts);
+router.get("/vent", getVentPosts);
+router.post("/vent", createVentPost);
 
-router.get("/likes/:username", protectRoute, getLikedPosts);
-router.get("/replies/:username", protectRoute, getUserReplies);
+// --- USER SPECIFIC ROUTES ---
+router.get("/user/:username", getUserPosts);
+router.get("/likes/:username", getLikedPosts);
+router.get("/replies/user/:username", getUserReplies); // Renamed slightly for clarity
 
-router.get("/following", protectRoute, getFollowingPosts);
-router.get("/bookmarked", protectRoute, getBookmarkedPosts);
-router.get("/check-repost/:originalPostId", protectRoute, checkIfUserReposted);
-router.get("/profile/:username/pinned-posts", protectRoute, getPinnedPosts);
+// --- PINNED POSTS ---
+router.get("/profile/:username/pinned-posts", getPinnedPosts);
+router.route("/pin/:postId")
+  .post(pinUnpinPost)
+  .delete(pinUnpinPost);
 
-router.get("/scheduled", protectRoute, getScheduledPosts);
-router.get("/user/:username", protectRoute, getUserPosts);
-router.post("/vent", protectRoute, createVentPost);
-router.get("/vent", protectRoute, getVentPosts);
+// --- SCHEDULED POSTS ---
+router.get("/scheduled", getScheduledPosts);
+router.put("/scheduled/:postId", updateScheduledPost);
+router.post("/scheduled/bulk-delete", deleteMultipleScheduledPosts);
 
-router.get("/:id", protectRoute, getPost);
+router.get("/:postId", getPost); // Keep parameterized routes lower to avoid collision
+router.delete("/:postId", deletePost);
 
-router.put("/scheduled/:id", protectRoute, updateScheduledPost);
-router.post("/scheduled/bulk-delete", protectRoute, deleteMultipleScheduledPosts);
-
-router.post("/mark-as-read", protectRoute, markFeedPostsAsRead);
-router.post("/mark-as-read/vent", protectRoute, markFeedVentPostsAsRead);
-router.post("/mark-as-read/ic", protectRoute, markFeedICPostsAsRead);
+// --- FEED MANAGEMENT (UTILITY) ---
+router.post("/mark-as-read", markFeedPostsAsRead);
+router.post("/mark-as-read/vent", markFeedVentPostsAsRead);
+router.post("/mark-as-read/ic", markFeedICPostsAsRead);
 
 export default router;

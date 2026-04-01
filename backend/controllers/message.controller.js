@@ -891,7 +891,7 @@ export const reactToMessage = async (req, res) => {
 
 export const editMessage = async (req, res) => {
   try {
-    const { id: messageId } = req.params;
+    const { messageId } = req.params;
     const { newText } = req.body;
     const senderId = req.user._id;
 

@@ -1,37 +1,48 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
-import {
-  getDevlogs,
-  getDevlog,
-  createDevlog,
-  updateDevlog,
-  deleteDevlog,
-  likeDevlog,
-  getDevlogComments,
-  createDevlogComment,
-  deleteDevlogComment,
-  likeDevlogComment,
-  dislikeDevlogComment,
-} from "../controllers/devlog.controller.js";
 import { isAdmin } from "../middleware/isAdmin.js";
+import {
+  createDevlog,
+  createDevlogComment,
+  deleteDevlog,
+  deleteDevlogComment,
+  dislikeDevlogComment,
+  getDevlog,
+  getDevlogComments,
+  getDevlogs,
+  likeDevlog,
+  likeDevlogComment,
+  updateDevlog,
+} from "../controllers/devlog.controller.js";
 
 const router = express.Router();
 
-// ── Devlog CRUD ───────────────────────────────────────────────────────────────
-router.get("/", protectRoute, getDevlogs);
-router.get("/:id", protectRoute, getDevlog);
-router.post("/", protectRoute, isAdmin, createDevlog);
-router.put("/:id", protectRoute, isAdmin, updateDevlog);
-router.delete("/:id", protectRoute, isAdmin, deleteDevlog);
+// All devlog routes require authentication
+router.use(protectRoute);
 
-// ── Likes ─────────────────────────────────────────────────────────────────────
-router.post("/:id/like", protectRoute, likeDevlog);
+// --- MAIN DEVLOG FEED ---
+router.get("/", getDevlogs);
 
-// ── Comments ──────────────────────────────────────────────────────────────────
-router.get("/:id/comments", protectRoute, getDevlogComments);
-router.post("/:id/comments", protectRoute, createDevlogComment);
-router.delete("/:id/comments/:commentId", protectRoute, deleteDevlogComment);
-router.post("/:id/comments/:commentId/like", protectRoute, likeDevlogComment);
-router.post("/:id/comments/:commentId/dislike", protectRoute, dislikeDevlogComment);
+// --- ADMIN ACTIONS ---
+// Grouped together to clearly see which routes are protected by isAdmin
+router.post("/", isAdmin, createDevlog);
+router.put("/:id", isAdmin, updateDevlog);
+router.delete("/:id", isAdmin, deleteDevlog);
+
+// --- DEVLOG INTERACTIONS ---
+router.post("/:id/like", likeDevlog);
+
+// --- COMMENT MANAGEMENT ---
+router.get("/:id/comments", getDevlogComments);
+router.post("/:id/comments", createDevlogComment);
+router.delete("/:id/comments/:commentId", deleteDevlogComment);
+
+// --- COMMENT INTERACTIONS ---
+router.post("/:id/comments/:commentId/like", likeDevlogComment);
+router.post("/:id/comments/:commentId/dislike", dislikeDevlogComment);
+
+// --- SPECIFIC DEVLOG (Parameterized) ---
+// Placed at bottom to avoid intercepting specific sub-paths
+router.get("/:id", getDevlog);
 
 export default router;

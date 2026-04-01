@@ -1,34 +1,38 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import {
-  endStudySession,
-  getStudyActivityFeed,
-  getPomodoroSettings,
-  getUserBadges,
-  updatePomodoroSettings,
-  getUserStudyTasks,
   createStudyTask,
   deleteStudyTask,
+  endStudySession,
+  getPomodoroSettings,
+  getStudyActivityFeed,
+  getStudyHistory,
+  getUserBadges,
+  getUserStudyTasks,
   logStudyTime,
-  getStudyHistory
+  updatePomodoroSettings,
 } from "../controllers/study.controller.js";
 
 const router = express.Router();
 
-router.post("/session/end", protectRoute, endStudySession);
-router.get("/activity", protectRoute, getStudyActivityFeed);
-router.post("/settings", protectRoute, updatePomodoroSettings);
-router.get("/badges/:userId", protectRoute, getUserBadges);
-router.get("/users/settings/pomodoro", protectRoute, getPomodoroSettings);
+router.use(protectRoute);
 
-// New Routes for Study Tasks (CRUD)
-router.get("/tasks", protectRoute, getUserStudyTasks);
-router.post("/tasks", protectRoute, createStudyTask);
-router.delete("/tasks/:id", protectRoute, deleteStudyTask);
+// --- STUDY SESSIONS & HISTORY ---
+router.post("/session/end", endStudySession);
+router.get("/activity", getStudyActivityFeed);
+router.get("/history", getStudyHistory);
 
-// New Route for logging time every second
-router.post("/tasks/log-time", protectRoute, logStudyTime);
+// --- TASK MANAGEMENT ---
+router.get("/tasks", getUserStudyTasks);
+router.post("/tasks", createStudyTask);
+router.post("/tasks/log-time", logStudyTime);
+router.delete("/tasks/:id", deleteStudyTask);
 
-router.get("/history", protectRoute, getStudyHistory);
+// --- SETTINGS & PREFERENCES ---
+router.get("/users/settings/pomodoro", getPomodoroSettings);
+router.post("/settings", updatePomodoroSettings);
+
+// --- USER ACHIEVEMENTS ---
+router.get("/badges/:userId", getUserBadges);
 
 export default router;

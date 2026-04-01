@@ -2,27 +2,33 @@ import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import {
   createTodoList,
-  getUserTodoLists,
-  getTodoListById,
-  updateTodoList,
   deleteTodoList,
   getFollowingTodoLists,
   getPublicTodoLists,
+  getTodoListById,
   getTodosInList,
+  getUserTodoLists,
   likeUnlikeTodoList,
+  updateTodoList,
 } from "../controllers/todoList.controller.js";
 
 const router = express.Router();
 
-router.post("/", protectRoute, createTodoList);
-router.get("/", protectRoute, getUserTodoLists);
-router.get("/following", protectRoute, getFollowingTodoLists);
-router.get("/public", getPublicTodoLists);
-router.get("/:id", protectRoute, getTodoListById);
-router.get("/:id/todos", protectRoute, getTodosInList);
-router.put("/:id", protectRoute, updateTodoList);
-router.delete("/:id", protectRoute, deleteTodoList);
-router.post("/like/:id", protectRoute, likeUnlikeTodoList)
+router.use(protectRoute);
 
+// --- COLLECTION LISTS ---
+router.get("/", getUserTodoLists);
+router.get("/public", getPublicTodoLists);
+router.get("/following", getFollowingTodoLists);
+
+// --- LIST MANAGEMENT ---
+router.post("/", createTodoList);
+router.post("/like/:id", likeUnlikeTodoList);
+router.get("/todos/:id", getTodosInList);
+
+// --- SPECIFIC LIST CRUD ---
+router.get("/:id", getTodoListById);
+router.put("/:id", updateTodoList);
+router.delete("/:id", deleteTodoList);
 
 export default router;

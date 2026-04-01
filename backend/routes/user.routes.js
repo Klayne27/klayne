@@ -1,41 +1,51 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
+import { isAdmin } from "../middleware/isAdmin.js";
 import {
-  updateUser,
-  getSuggestedUsers,
+  adminDeleteUserAccount,
+  blockUnblockUser,
+  deleteUserAccount,
   followUnfollowUser,
-  getUserProfile,
   getFollowers,
   getFollowingUsers,
-  deleteUserAccount,
-  searchUsers,
-  blockUnblockUser,
-  adminDeleteUserAccount,
+  getSuggestedUsers,
+  getUserProfile,
   getVacationModeStatus,
-  toggleVacationMode,
+  searchUsers,
   toggleLikedFeedPrivacy,
+  toggleVacationMode,
   updatePreferredBadge,
   updateStatusPreference,
+  updateUser,
 } from "../controllers/user.controller.js";
-import { isAdmin } from "../middleware/isAdmin.js";
 
 const router = express.Router();
 
-router.get("/profile/:username", protectRoute, getUserProfile);
-router.get("/suggested", protectRoute, getSuggestedUsers);
-router.post("/follow/:id", protectRoute, followUnfollowUser);
-router.post("/update", protectRoute, updateUser);
-router.get("/followers/:id", protectRoute, getFollowers);
-router.get("/following/:id", protectRoute, getFollowingUsers);
-router.delete("/delete/:id", protectRoute, deleteUserAccount);
-router.get("/search", protectRoute, searchUsers);
-router.post("/block/:id", protectRoute, blockUnblockUser);
-router.get("/vacation-mode", protectRoute, getVacationModeStatus);
-router.put("/vacation-mode", protectRoute, toggleVacationMode);
-router.put("/toggle-liked-feed-privacy", protectRoute, toggleLikedFeedPrivacy);
-router.post("/update-preferred-badge", protectRoute, updatePreferredBadge);
-router.put("/update-status-preference", protectRoute, updateStatusPreference);
+router.use(protectRoute);
 
-router.delete("/admin/delete/:id", protectRoute, isAdmin, adminDeleteUserAccount);
+// --- PROFILE & SEARCH ---
+router.get("/profile/:username", getUserProfile);
+router.get("/search", searchUsers);
+router.post("/update", updateUser);
+
+// --- SOCIAL & RELATIONSHIPS ---
+router.get("/suggested", getSuggestedUsers);
+router.post("/follow/:userId", followUnfollowUser);
+router.get("/followers/:userId", getFollowers);
+router.get("/following/:userId", getFollowingUsers);
+router.post("/block/:userToBlockId", blockUnblockUser);
+
+// --- SETTINGS & PRIVACY ---
+router.get("/vacation-mode", getVacationModeStatus);
+router.put("/vacation-mode", toggleVacationMode);
+router.put("/toggle-liked-feed-privacy", toggleLikedFeedPrivacy);
+router.post("/update-preferred-badge", updatePreferredBadge);
+router.put("/update-status-preference", updateStatusPreference);
+
+// --- ACCOUNT MANAGEMENT ---
+router.delete("/delete/:userId", deleteUserAccount);
+
+// --- ADMIN ONLY ---
+router.delete("/admin/delete/:userIdToDelete", isAdmin, adminDeleteUserAccount);
 
 export default router;

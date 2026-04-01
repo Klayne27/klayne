@@ -52,33 +52,3 @@ export const authUserApi = async () => {
     throw new Error(error)
   }
 }
-
-export const resetPasswordRequestApi = async ({ token, newPassword }) => {
-  const response = await fetch(`${BASE_URL}/reset-password/${token}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ newPassword }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || "Failed to reset password.")
-  }
-
-  return response.json()
-}
-
-export const forgotPasswordRequestApi = async (email) => {
-  const response = await fetch(`${BASE_URL}/forgot-password`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email }),
-  })
-
-  if (!response.ok) {
-    const errorData = await response.json()
-    throw new Error(errorData.error || "Failed to send reset link.")
-  }
-
-  return response.json()
-}

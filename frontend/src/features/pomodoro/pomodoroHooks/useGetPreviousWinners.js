@@ -1,12 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
-import { getPreviousWinnersApi } from "../../../api/leaderboardApi"
+import { getPreviousMonthWinnersApi } from "../../../api/leaderboardApi"
 import { pomodoroKeys } from "./pomodoroKeys"
 
-export const useGetPreviousWinners = () => {
-  const { data: previousWinners, isLoading: isLoadingPreviousWinners } = useQuery({
-    queryKey: pomodoroKeys.leaderboardMonthlyWinners(), // renamed
-    queryFn: getPreviousWinnersApi,
+export const useGetPreviousMonthWinners = () => {
+  const { data: previousMonth, isLoading: isLoadingPreviousMonthWinners } = useQuery({
+    queryKey: pomodoroKeys.leaderboardMonthlyWinners(),
+    queryFn: getPreviousMonthWinnersApi,
   })
 
-  return { previousWinners, isLoadingPreviousWinners }
+  return { previousMonth, isLoadingPreviousMonthWinners }
 }

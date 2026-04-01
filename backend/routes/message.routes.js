@@ -1,52 +1,52 @@
 import express from "express";
 import { protectRoute } from "../middleware/protectRoute.js";
 import {
-  getConversations,
-  sendMessage,
-  getMessagesByConversationId,
-  deleteMessage,
-  reactToMessage,
-  editMessage,
-  toggleConversationVisibility,
-  getConversationBetweenUsers,
-  getFollowedUsersForMessaging,
-  getOrCreateConversation,
-  deleteConversation,
   deleteAllMessagesOnMySide,
-  pinMessage,
-  unpinMessage,
+  deleteConversation,
+  deleteMessage,
+  editMessage,
+  getConversationBetweenUsers,
+  getConversations,
+  getFollowedUsersForMessaging,
+  getMessagesByConversationId,
+  getOrCreateConversation,
   getPinnedMessages,
+  pinMessage,
+  reactToMessage,
   searchConversationsAndUsers,
+  sendMessage,
+  toggleConversationVisibility,
+  unpinMessage,
 } from "../controllers/message.controller.js";
 
 const router = express.Router();
 
-router.get("/conversations", protectRoute, getConversations);
-router.get("/conversations/:conversationId", protectRoute, getMessagesByConversationId);
-router.post("/", protectRoute, sendMessage);
-router.delete("/:messageId", protectRoute, deleteMessage);
-router.post("/react/:messageId", protectRoute, reactToMessage);
-router.put("/edit/:id", protectRoute, editMessage);
-router.put(
-  "/conversations/visibility/:conversationId",
-  protectRoute,
-  toggleConversationVisibility
-);
-router.get(
-  "/conversations/between/:otherUserId",
-  protectRoute,
-  getConversationBetweenUsers
-);
+router.use(protectRoute);
 
-router.get("/followed-for-messaging", protectRoute, getFollowedUsersForMessaging);
-router.get("/search", protectRoute, searchConversationsAndUsers);
+// --- SEARCH & DISCOVERY ---
+router.get("/search", searchConversationsAndUsers);
+router.get("/followed-for-messaging", getFollowedUsersForMessaging);
 
-router.post("/conversations/get-or-create", protectRoute, getOrCreateConversation);
+// --- CONVERSATION MANAGEMENT ---
+router.get("/conversations", getConversations);
+router.post("/conversations/get-or-create", getOrCreateConversation);
+router.get("/conversations/between/:otherUserId", getConversationBetweenUsers);
+router.put("/conversations/visibility/:conversationId", toggleConversationVisibility);
+router.delete("/conversations/:id", deleteConversation);
 
-router.delete("/conversations/:id", protectRoute, deleteConversation);
-router.delete("/all/:conversationId", protectRoute, deleteAllMessagesOnMySide);
+// --- MESSAGE ACTIONS (CRUD) ---
+router.post("/", sendMessage);
+router.put("/edit/:messageId", editMessage);
+router.post("/react/:messageId", reactToMessage);
+router.delete("/:messageId", deleteMessage);
+router.delete("/all/:conversationId", deleteAllMessagesOnMySide);
 
-router.get("/:conversationId/pinned", protectRoute, getPinnedMessages)
-router.post("/pin-message", protectRoute, pinMessage);
-router.post("/unpin-message", protectRoute, unpinMessage);
+// --- PINNED MESSAGES ---
+router.post("/pin-message", pinMessage);
+router.post("/unpin-message", unpinMessage);
+router.get("/:conversationId/pinned", getPinnedMessages);
+
+// --- FETCH MESSAGES (Parameterized) ---
+router.get("/conversations/:conversationId", getMessagesByConversationId);
+
 export default router;

@@ -80,8 +80,8 @@ export const getUserProfile = async (req, res) => {
 
 export const getFollowingUsers = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findById(id).populate({
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate({
       path: "following",
       select: "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
@@ -103,8 +103,8 @@ export const getFollowingUsers = async (req, res) => {
 
 export const getFollowers = async (req, res) => {
   try {
-    const { id } = req.params;
-    const user = await User.findById(id).populate({
+    const { userId } = req.params;
+    const user = await User.findById(userId).populate({
       path: "followers",
       select: "username fullName isVerified isGoldVerified  badges preferredBadge",
       populate: {
@@ -126,11 +126,11 @@ export const getFollowers = async (req, res) => {
 
 export const followUnfollowUser = async (req, res) => {
   try {
-    const { id } = req.params;
-    const userToModify = await User.findById(id);
+    const { userId } = req.params;
+    const userToModify = await User.findById(userId);
     const currentUser = await User.findById(req.user._id);
 
-    if (id === req.user._id.toString()) {
+    if (userId === req.user._id.toString()) {
       return res.status(400).json({ error: "You can't follow/unfollow yourself" });
     }
 
@@ -149,15 +149,15 @@ export const followUnfollowUser = async (req, res) => {
         .json({ error: "This user has blocked you. You cannot follow them." });
     }
 
-    const isFollowing = currentUser.following.includes(id);
+    const isFollowing = currentUser.following.includes(userId);
 
     if (isFollowing) {
       // --- UNFOLLOW LOGIC ---
-      await User.findByIdAndUpdate(id, { $pull: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $pull: { following: id } });
+      await User.findByIdAndUpdate(userId, { $pull: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $pull: { following: userId } });
 
       await Conversation.updateOne(
-        { participants: { $all: [req.user._id, id] } },
+        { participants: { $all: [req.user._id, userId] } },
         { $addToSet: { hiddenFor: req.user._id } },
         { timestamps: false },
       );
@@ -165,11 +165,11 @@ export const followUnfollowUser = async (req, res) => {
       res.status(200).json({ message: "User unfollowed successfully" });
     } else {
       // --- FOLLOW LOGIC ---
-      await User.findByIdAndUpdate(id, { $push: { followers: req.user._id } });
-      await User.findByIdAndUpdate(req.user._id, { $push: { following: id } });
+      await User.findByIdAndUpdate(userId, { $push: { followers: req.user._id } });
+      await User.findByIdAndUpdate(req.user._id, { $push: { following: userId } });
 
       const existingConversation = await Conversation.findOne({
-        participants: { $all: [req.user._id, id] },
+        participants: { $all: [req.user._id, userId] },
       });
 
       if (existingConversation) {
@@ -180,7 +180,7 @@ export const followUnfollowUser = async (req, res) => {
         );
       } else {
         const newConversation = new Conversation({
-          participants: [req.user._id, id],
+          participants: [req.user._id, userId],
           hiddenFor: [userToModify._id],
         });
         await newConversation.save();
@@ -411,16 +411,16 @@ export const updateUser = async (req, res) => {
 
 export const deleteUserAccount = async (req, res) => {
   try {
-    const { id } = req.params;
-    if (id !== req.user._id.toString()) {
+    const { userId } = req.params;
+    if (userId !== req.user._id.toString()) {
       return res.status(401).json({ error: "Unauthorized." });
     }
 
-    const userToDelete = await User.findById(id);
+    const userToDelete = await User.findById(userId);
     if (!userToDelete) return res.status(404).json({ error: "User not found." });
 
     // --- STEP 1: CALCULATE REPLIES BEFORE DELETING POSTS ---
-    const userReplies = await Post.find({ user: id, parentPost: { $ne: null } });
+    const userReplies = await Post.find({ user: userId, parentPost: { $ne: null } });
     const replyCountsPerPost = userReplies.reduce((acc, reply) => {
       const parentId = reply.parentPost.toString();
       acc[parentId] = (acc[parentId] || 0) + 1;
@@ -435,7 +435,7 @@ export const deleteUserAccount = async (req, res) => {
     await Promise.all(replyUpdatePromises);
 
     // --- STEP 2: CALCULATE DEVLOG COMMENTS ---
-    const userDevlogComments = await DevlogComment.find({ author: id });
+    const userDevlogComments = await DevlogComment.find({ author: userId });
     if (userDevlogComments.length > 0) {
       const commentsPerDevlog = userDevlogComments.reduce((acc, comment) => {
         const devlogId = comment.devlog.toString();
@@ -455,18 +455,18 @@ export const deleteUserAccount = async (req, res) => {
     // Instead of -1, we should decrement by the actual number of reposts the user has
     // but updateMany with $inc -1 works if the user can only repost a post once.
     await Post.updateMany(
-      { repostedBy: id },
-      { $pull: { repostedBy: id }, $inc: { repostsCount: -1 } },
+      { repostedBy: userId },
+      { $pull: { repostedBy: userId }, $inc: { repostsCount: -1 } },
     );
 
-    const userImages = await Image.find({ uploadedBy: id });
+    const userImages = await Image.find({ uploadedBy: userId });
     for (const image of userImages) {
       const publicId = image.imageUrl.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(publicId);
     }
 
     // --- STEP 4: MEDIA CLEANUP (Cloudinary) ---
-    const userPosts = await Post.find({ user: id });
+    const userPosts = await Post.find({ user: userId });
     for (const post of userPosts) {
       if (post.video) {
         const videoId = post.video.split("/").pop().split(".")[0];
@@ -476,34 +476,34 @@ export const deleteUserAccount = async (req, res) => {
     }
 
     // --- STEP 5: DELETE ACTUAL RECORDS ---
-    await Post.deleteMany({ user: id });
-    await DevlogComment.deleteMany({ author: id });
-    await Image.deleteMany({ uploadedBy: id });
-    await PushSubscription.deleteMany({ userId: id });
-    await Notification.deleteMany({ $or: [{ from: id }, { to: id }] });
-    await PublicChatMessage.deleteMany({ sender: id });
+    await Post.deleteMany({ user: userId });
+    await DevlogComment.deleteMany({ author: userId });
+    await Image.deleteMany({ uploadedBy: userId });
+    await PushSubscription.deleteMany({ userId: userId });
+    await Notification.deleteMany({ $or: [{ from: userId }, { to: userId }] });
+    await PublicChatMessage.deleteMany({ sender: userId });
 
     // --- STEP 6: ARRAY CLEANUP (Likes/Follows) ---
     await Post.updateMany(
-      { $or: [{ likes: id }, { bookmarkedBy: id }] },
-      { $pull: { likes: id, bookmarkedBy: id } },
+      { $or: [{ likes: userId }, { bookmarkedBy: userId }] },
+      { $pull: { likes: userId, bookmarkedBy: userId } },
     );
-    await Devlog.updateMany({ likes: id }, { $pull: { likes: id } });
+    await Devlog.updateMany({ likes: userId }, { $pull: { likes: userId } });
     await User.updateMany(
       {
         $or: [
-          { following: id },
-          { followers: id },
-          { blockedUsers: id },
-          { blockedBy: id },
+          { following: userId },
+          { followers: userId },
+          { blockedUsers: userId },
+          { blockedBy: userId },
         ],
       },
-      { $pull: { following: id, followers: id, blockedUsers: id, blockedBy: id } },
+      { $pull: { following: userId, followers: userId, blockedUsers: userId, blockedBy: userId } },
     );
 
     // Final Account Deletion
     if (userToDelete.firebaseUid) await admin.auth().deleteUser(userToDelete.firebaseUid);
-    await User.findByIdAndDelete(id);
+    await User.findByIdAndDelete(userId);
 
     res.status(200).json({ message: "Account deleted successfully." });
   } catch (error) {
@@ -539,7 +539,7 @@ export const searchUsers = async (req, res) => {
 
 export const blockUnblockUser = async (req, res) => {
   try {
-    const { id: userToBlockId } = req.params;
+    const { userToBlockId } = req.params;
     const currentUserId = req.user._id;
 
     if (userToBlockId.toString() === currentUserId.toString()) {
@@ -619,7 +619,7 @@ export const adminDeleteUserAccount = async (req, res) => {
       });
     }
 
-    const { id: userIdToDelete } = req.params;
+    const { userIdToDelete } = req.params;
 
     const userToDelete = await User.findById(userIdToDelete);
     if (!userToDelete) {

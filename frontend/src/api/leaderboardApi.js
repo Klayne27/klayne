@@ -21,7 +21,7 @@ export const getMonthlyLeaderboardApi = async (page = 1) => {
 }
 
 
-export const getPreviousWinnersApi = async () => {
+export const getPreviousMonthWinnersApi = async () => {
   const res = await fetch(`${BASE_URL}/previous-winners`)
 
   if (!res.ok) {
