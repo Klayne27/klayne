@@ -154,7 +154,7 @@ export const getDynamicPushBody = (type, username) => {
     case "replyReply":
       return `@${username} replied to your reply.`;
     default:
-      return "You have a new notification on Twatter!";
+      return "You have a new notification on Klayne!";
   }
 };
 
