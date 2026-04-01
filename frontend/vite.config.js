@@ -31,12 +31,12 @@ export default defineConfig({
         start_url: "/",
         icons: [
           {
-            src: "klaynelogo.png",
+            src: "klaynelogoreal.png",
             sizes: "192x192",
             type: "image/png",
           },
           {
-            src: "klaynelogo.png",
+            src: "klaynelogoreal.png",
             sizes: "512x512",
             type: "image/png",
           },

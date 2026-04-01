@@ -109,7 +109,7 @@ const Sidebar = ({
         faviconLink = document.createElement("link")
         faviconLink.rel = "icon"
         document.head.appendChild(faviconLink)
-        originalFaviconHref.current = "/klaynelogo.png"
+        originalFaviconHref.current = "/klaynelogoreal.png"
       }
     }
   }, [])

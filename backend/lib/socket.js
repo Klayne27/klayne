@@ -429,7 +429,7 @@ export const createAndSendNotification = async ({
       title: getDynamicPushTitle(type),
       body: getDynamicPushBody(type, username),
       url: getDynamicPushUrl(type, postOwnerUsername, postId, username),
-      icon: `${BASE_URL}/klaynelogo.png`,
+      icon: `${BASE_URL}/klaynelogoreal.png`,
     };
 
     // Always send push — it handles background/locked screen delivery
