@@ -32,7 +32,7 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
       if (isSubscribed !== isPushSubscribed) {
         setIsPushSubscribed(isSubscribed)
       }
-    }, 30000) // Check every 30 seconds
+    }, 30000)
 
     return () => clearInterval(interval)
   }, [isInstalled, isPushSubscribed])
@@ -48,41 +48,6 @@ const RightPanel = ({ deferredPrompt, isInstalled, installApp }) => {
     <div className="sticky top-0 hidden h-[100vh] w-[380px] border-l border-accent px-4 pt-4 lg:block">
       <SearchPanel />
       <SuggestedUsersPanel />
-
-      {/* {!isInstalled && deferredPrompt && (
-        <div className="mt-4 rounded-2xl border border-accent p-4">
-          <p className="mb-2 text-xl font-bold">Install the App</p>
-          <p className="mb-4 text-sm text-gray-500">Get the full experience on your device.</p>
-          <button
-            onClick={installApp}
-            className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
-          >
-            Install
-          </button>
-        </div>
-      )}
-
-      {isInstalled && !isCheckingSubscription && !isPushSubscribed && (
-        <div className="mt-4 rounded-2xl border border-accent p-4">
-          <p className="mb-2 text-xl font-bold">Stay Updated</p>
-          <p className="mb-4 text-sm text-gray-500">
-            Enable push notifications to get real-time updates.
-          </p>
-          <button
-            onClick={handleNotificationClick}
-            className="w-full rounded-md bg-primary py-2 text-white transition duration-200 hover:bg-primary/85"
-          >
-            Enable Notifications
-          </button>
-        </div>
-      )} */}
-
-      {/* {isInstalled && !isCheckingSubscription && isPushSubscribed && (
-        <div className="mt-4 rounded-2xl border border-green-500 p-4">
-          <p className="mb-2 text-xl font-bold text-green-600">✓ Notifications Enabled</p>
-          <p className="text-sm text-gray-500">You're all set to receive push notifications!</p>
-        </div>
-      )} */}
     </div>
   )
 }

@@ -13,7 +13,6 @@ export const usePWAInstall = () => {
   const [isIOSDevice, setIsIOSDevice] = useState(false)
 
   useEffect(() => {
-    // Check if already installed (works for both Android and iOS)
     const standalone =
       window.matchMedia("(display-mode: standalone)").matches ||
       window.navigator.standalone === true
@@ -23,13 +22,11 @@ export const usePWAInstall = () => {
       return
     }
 
-    // Detect iOS — we show manual instructions instead of a prompt
     if (isIOS()) {
       setIsIOSDevice(true)
       return
     }
 
-    // Android / Chrome — use the deferred prompt
     const handleBeforeInstallPrompt = (e) => {
       e.preventDefault()
       setDeferredPrompt(e)

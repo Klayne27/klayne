@@ -12,7 +12,7 @@ const getMondayOfWeek = (date) => {
 };
 
 const resetWeeklyStats = cron.schedule(
-  "0 8 * * 1", // Monday at 8:00 AM UTC = Sunday Midnight UTC-8
+  "0 8 * * 1",
   async () => {
     try {
       const now = new Date();

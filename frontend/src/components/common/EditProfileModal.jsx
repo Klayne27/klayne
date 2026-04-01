@@ -18,12 +18,12 @@ const EditProfileModal = ({ authUser }) => {
     currentPassword: "",
     confirmNewPassword: "",
     relationshipStatus: "",
-    levelOfEducation: "", // Added
-    majorOrField: "", // Added
-  }) // Add new state for image previews
+    levelOfEducation: "",
+    majorOrField: "",
+  })
 
   const [profileImg, setProfileImg] = useState(null)
-  const [coverImg, setCoverImg] = useState(null) // Add refs for file input elements
+  const [coverImg, setCoverImg] = useState(null)
 
   const coverImgRef = useRef(null)
   const profileImgRef = useRef(null)
@@ -92,9 +92,9 @@ const EditProfileModal = ({ authUser }) => {
         email: authUser?.email,
         bio: authUser?.bio,
         link: authUser?.link,
-        relationshipStatus: authUser?.relationshipStatus || "", // Add this
-        levelOfEducation: authUser?.levelOfEducation || "", // Added
-        majorOrField: authUser?.majorOrField || "", // Added
+        relationshipStatus: authUser?.relationshipStatus || "",
+        levelOfEducation: authUser?.levelOfEducation || "",
+        majorOrField: authUser?.majorOrField || "",
         newPassword: "",
         currentPassword: "",
         confirmNewPassword: "",
@@ -113,26 +113,20 @@ const EditProfileModal = ({ authUser }) => {
   const handleTogglePrivacy = () => {
     toggleLikedFeedPrivacy(!isLikedFeedPrivate)
     setIsLikedFeedPrivate(!isLikedFeedPrivate)
-  } // Combine all form data, including images, for the update call
+  }
 
   const handleUpdate = (e) => {
-    e.preventDefault() // Pass profileImg and coverImg along with other form data
+    e.preventDefault()
     updateProfile({ ...formData, profileImg, coverImg })
   }
 
   return (
     <>
       <dialog id="edit_profile_modal" className="modal">
-        
         <div className="modal-box rounded-2xl shadow-md">
           <h3 className="mb-4 text-lg font-bold">Update Profile</h3>
-          <form
-            className="flex flex-col gap-4"
-            onSubmit={handleUpdate} // Use the new handleUpdate function
-          >
-            {/* The image preview section is already correct */}
+          <form className="flex flex-col gap-4" onSubmit={handleUpdate}>
             <div className="relative">
-              {/* Cover Image Preview */}
               <div
                 className="group/cover relative h-52 w-full cursor-pointer overflow-hidden rounded-t-lg transition duration-200"
                 onClick={() => coverImgRef.current.click()}
@@ -149,7 +143,6 @@ const EditProfileModal = ({ authUser }) => {
                   <TbCameraPlus className="text-white" size={50} />
                 </div>
               </div>
-              {/* Profile Image Preview */}
               <div
                 className="group/profile absolute -bottom-16 left-4 cursor-pointer"
                 onClick={() => profileImgRef.current.click()}
@@ -168,7 +161,6 @@ const EditProfileModal = ({ authUser }) => {
                   <TbCameraPlus size={40} className="text-white" />
                 </div>
               </div>
-              {/* Hidden File Inputs */}
               <input
                 type="file"
                 hidden
@@ -184,7 +176,7 @@ const EditProfileModal = ({ authUser }) => {
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
             </div>
-            {/* Spacer to push form elements down */} <div className="h-16"></div>
+            <div className="h-16"></div>
             <div className="relative">
               <input
                 type="text"
@@ -393,7 +385,6 @@ const EditProfileModal = ({ authUser }) => {
                 </div>
               </>
             )}
-            {/* New Section for Liked Feed Privacy */}
             <h1 className="text-xl font-bold">Privacy</h1>
             <div className="flex items-center justify-between">
               <h3 className="text-md">Liked Posts</h3>
@@ -409,14 +400,12 @@ const EditProfileModal = ({ authUser }) => {
                     disabled={isTogglingPrivacy}
                   />
                   <div className="peer h-6 w-11 rounded-full bg-gray-600 after:absolute after:start-[2px] after:top-[2px] after:h-5 after:w-5 after:rounded-full after:border after:border-gray-300 after:bg-white after:transition-all after:content-[''] peer-checked:bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white rtl:peer-checked:after:-translate-x-full"></div>
-                  {/* FIXED: Add a fixed width to the span to prevent shifting */}
                   <span className="ms-3 w-16 text-left text-sm font-medium text-slate-500">
                     {isLikedFeedPrivate ? "Private" : "Public"}
                   </span>
                 </label>
               )}
             </div>
-            {/* End of New Section */}
             <button className="btn btn-primary btn-sm rounded-full text-white">
               {isUpdatingProfile ? "Updating..." : "Update"}
             </button>

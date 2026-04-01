@@ -1,4 +1,4 @@
-import { Link, useLocation, useNavigate } from "react-router-dom"
+import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useLogout } from "../../features/auth/authHooks/useLogout"
 import { CiMail, CiSearch } from "react-icons/ci"
@@ -39,14 +39,7 @@ const Sidebar = ({
 }) => {
   const { authUser } = useAuthUser()
   const isChatWindowOpen = useAppStore((state) => state.isChatWindowOpen)
-
-  const { logout } = useLogout()
-  const { deleteAccount, isDeletingAccount } = useDeleteAccount()
   const {
-    hasUnreadMessages,
-    hasUnreadNotifications,
-    hasNewFeedPosts,
-    hasUnreadPublicChat,
     setShowNewFeedPostsButton,
     unreadNotificationsCount,
     unreadMessageCount,
@@ -54,7 +47,11 @@ const Sidebar = ({
     newPostCount,
     newVentPostCount,
   } = useSocket()
+
+  const { logout } = useLogout()
   const queryClient = useQueryClient()
+
+  const { deleteAccount, isDeletingAccount } = useDeleteAccount()
 
   const { pathname } = useLocation()
   const navigate = useNavigate()
@@ -62,22 +59,20 @@ const Sidebar = ({
   const [showPopover, setShowPopover] = useState(false)
   const [showConfirmDeleteModal, setShowConfirmDeleteModal] = useState(false)
   const [isMobileBarVisible, setIsMobileBarVisible] = useState(true)
-  const [showSideModal, setShowSideModal] = useState(false) // New state for side modal
+  const [showSideModal, setShowSideModal] = useState(false)
   const [isFeatherIconVisible, setIsFeatherIconVisible] = useState(true)
 
-  // NEW STATE: To track if FollowListModals are open
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
 
   const lastScrollY = useRef(0)
-  const profileButtonRef = useRef(null) // Used for desktop popover
-  const popoverRef = useRef(null) // Used for desktop popover
-  const sideModalRef = useRef(null) // Ref for the new side modal
+  const profileButtonRef = useRef(null)
+  const popoverRef = useRef(null)
+  const sideModalRef = useRef(null)
 
   const originalTitle = useRef(document.title)
   const originalFaviconHref = useRef(null)
 
-  // const { markFeedAsRead } = useMarkPostsAsRead()
   const feedType = useAppStore((state) => state.feedType)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
@@ -88,20 +83,16 @@ const Sidebar = ({
     setShowPopover((prev) => !prev)
   }, [])
 
-  // New function to toggle the side modal
   const toggleSideModal = useCallback((e) => {
     e.stopPropagation()
     setShowSideModal((prev) => !prev)
   }, [])
 
-  // Effect to handle favicon and title updates
   useEffect(() => {
     let faviconLink = document.querySelector('link[rel="icon"]')
 
-    // Capture original href once, reliably
     if (!originalFaviconHref.current) {
       if (faviconLink) {
-        // Resolve relative href to absolute URL so new Image() can load it cross-context
         const a = document.createElement("a")
         a.href = faviconLink.getAttribute("href")
         originalFaviconHref.current = a.href
@@ -131,12 +122,10 @@ const Sidebar = ({
       newPostCount > 0 ||
       newVentPostCount > 0
 
-    // Title
     document.title = hasAnyNewNotification
       ? `(${totalNotifications}) ${originalTitle.current}`
       : originalTitle.current
 
-    // Favicon
     const faviconLink = document.querySelector('link[rel="icon"]')
     if (!faviconLink || !originalFaviconHref.current) return
 
@@ -151,14 +140,12 @@ const Sidebar = ({
     const ctx = canvas.getContext("2d")
 
     const img = new Image()
-    // Required so canvas doesn't taint when drawing a local file URL
     img.crossOrigin = "anonymous"
 
     img.onload = () => {
       ctx.clearRect(0, 0, 32, 32)
       ctx.drawImage(img, 0, 0, 32, 32)
 
-      // Red badge dot
       const badgeSize = 10
       ctx.beginPath()
       ctx.arc(32 - badgeSize / 2, badgeSize / 2, badgeSize / 2, 0, Math.PI * 2)
@@ -172,8 +159,6 @@ const Sidebar = ({
     }
 
     img.onerror = () => {
-      // Logo failed to load — draw a simple red dot on transparent bg
-      // rather than replacing the entire icon with just a dot
       ctx.clearRect(0, 0, 32, 32)
       ctx.beginPath()
       ctx.arc(24, 8, 5, 0, Math.PI * 2)
@@ -182,11 +167,11 @@ const Sidebar = ({
       faviconLink.href = canvas.toDataURL("image/png")
     }
 
-    // Set src AFTER handlers are attached
     img.src = originalFaviconHref.current
+    const originallTitleCurrent = originalTitle.current
 
     return () => {
-      document.title = originalTitle.current
+      document.title = originallTitleCurrent
       if (faviconLink && originalFaviconHref.current) {
         faviconLink.href = originalFaviconHref.current
       }
@@ -213,9 +198,6 @@ const Sidebar = ({
     } else {
       navigate("/")
     }
-    // queryClient.invalidateQueries({ queryKey: ["posts", "/api/posts/all"] })
-
-    // markFeedAsRead()
     setShowNewFeedPostsButton(true)
   }, [setShowNewFeedPostsButton, navigate, pathname])
 
@@ -225,12 +207,10 @@ const Sidebar = ({
     navigate("/bookmarks")
   }
 
-  // Function to open FollowListModal
   const openFollowListModal = (type) => {
-    // We need to get the specific modal ID to show it
     const modalId =
       type === "following"
-        ? `follow_modal_list_following` // Use the fixed IDs from FollowListModal
+        ? `follow_modal_list_following`
         : `follow_modal_list_followers`
 
     const modalElement = document.getElementById(modalId)
@@ -244,14 +224,13 @@ const Sidebar = ({
     }
   }
 
-  // Function to close FollowListModal
   const closeFollowListModal = (type) => {
     const modalId =
       type === "following" ? `follow_modal_list_following` : `follow_modal_list_followers`
 
     const modalElement = document.getElementById(modalId)
     if (modalElement) {
-      modalElement.close() // Use native close
+      modalElement.close()
       if (type === "following") {
         setIsFollowingModalOpen(false)
         setShowSideModal(true)
@@ -272,13 +251,6 @@ const Sidebar = ({
     }
   }, [pathname])
 
-  // useEffect(() => {
-  //   if (pathname.includes("/todos")) {
-  //     setShowTodoPageNavbar(true)
-  //   }
-  // }, [pathname])
-
-  // Handle click outside desktop popover
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
@@ -302,41 +274,36 @@ const Sidebar = ({
     }
   }, [showPopover])
 
-  // Logic for handling clicks outside the mobile sidebar itself
   useEffect(() => {
     const handleClickOutsideSideModal = (event) => {
-      // If the side modal is open and the click is outside it AND outside any follow list modal
       if (
         showSideModal &&
         sideModalRef.current &&
         !sideModalRef.current.contains(event.target) &&
-        !isFollowingModalOpen && // Check if following modal is NOT open
-        !isFollowersModalOpen // Check if followers modal is NOT open
+        !isFollowingModalOpen &&
+        !isFollowersModalOpen
       ) {
-        // We only close the sidebar if *no* follow list modal is active
         setShowSideModal(false)
       }
     }
 
-    // Add event listener to the document
     document.addEventListener("mousedown", handleClickOutsideSideModal)
 
-    // Cleanup the event listener
     return () => {
       document.removeEventListener("mousedown", handleClickOutsideSideModal)
     }
-  }, [showSideModal, isFollowingModalOpen, isFollowersModalOpen]) // Dependencies
+  }, [showSideModal, isFollowingModalOpen, isFollowersModalOpen])
 
   const handleLogout = (e) => {
     e.preventDefault()
     logout()
     setShowPopover(false)
-    setShowSideModal(false) // Close side modal on logout
+    setShowSideModal(false)
   }
 
   const handleConfirmDeleteClick = () => {
     setShowPopover(false)
-    setShowSideModal(false) // Close side modal before showing delete confirmation
+    setShowSideModal(false)
     setShowConfirmDeleteModal(true)
   }
 
@@ -353,25 +320,23 @@ const Sidebar = ({
   }
 
   const shouldAlwaysHide =
-    pathname.includes("/public-chat") || // Public chat
-    pathname.includes("/post/") || // Individual post page
-    isChatWindowOpen // Private chat window is open
+    pathname.includes("/public-chat") || 
+    pathname.includes("/post/") || 
+    isChatWindowOpen
 
   useEffect(() => {
     const handleScroll = () => {
       if (window.innerWidth < 768) {
         if (shouldAlwaysHide) {
           setIsMobileBarVisible(false)
-          setIsFeatherIconVisible(false) // Immediately hid
-          lastScrollY.current = window.scrollY // Reset lastScrollY to current to prevent immediate re-showing
-          return // Exit early, no further scroll logic needed for these paths
+          setIsFeatherIconVisible(false)
+          lastScrollY.current = window.scrollY 
+          return
         }
 
         if (pathname.startsWith("/messages")) {
-          // Special handling for messages page, based on prop
           setIsMobileBarVisible(true)
         } else {
-          // General scroll-hide/show behavior for other mobile pages
           const currentScrollY = window.scrollY
           if (currentScrollY > lastScrollY.current && currentScrollY > 50) {
             setIsMobileBarVisible(false)
@@ -383,24 +348,19 @@ const Sidebar = ({
           lastScrollY.current = currentScrollY
         }
       } else {
-        // Always visible on desktop
         setIsMobileBarVisible(true)
         setIsFeatherIconVisible(true)
       }
     }
 
-    // Initial check when component mounts or dependencies change
-    // This handles navigation directly to a hidden path
     if (window.innerWidth < 768) {
-      // const shouldAlwaysHide =
-      //   pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
 
       if (shouldAlwaysHide) {
         setIsMobileBarVisible(false)
         setIsFeatherIconVisible(false)
       } else {
-        setIsMobileBarVisible(true) // Default to visible for other paths
-        setIsFeatherIconVisible(true) // Default to visible for other paths on mobile initially
+        setIsMobileBarVisible(true)
+        setIsFeatherIconVisible(true)
       }
     } else {
       setIsMobileBarVisible(true)
@@ -414,7 +374,7 @@ const Sidebar = ({
       window.removeEventListener("scroll", handleScroll)
       window.removeEventListener("resize", handleScroll)
     }
-  }, [isChatWindowOpen, pathname])
+  }, [isChatWindowOpen, pathname, shouldAlwaysHide])
 
   const shouldRenderMobileSidebar = !isChatWindowOpen || window.innerWidth >= 768
 
@@ -444,7 +404,6 @@ const Sidebar = ({
 
   return (
     <>
-      {/* Main Sidebar */}
       {
         <div
           className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-1 transition-transform duration-300 ease-out md:sticky md:top-0 md:z-0 md:h-dvh md:max-w-[264px] md:flex-[2_2_0] md:flex-col md:items-start md:justify-start md:border-r md:border-t-0 ${!isMobileBarVisible ? "translate-y-full" : ""}`}
@@ -459,16 +418,15 @@ const Sidebar = ({
           >
             <FeatherIcon />
           </div>
-          {/* X-SVG button, apply hover & active */}
           <div
             to="/"
             onClick={handleHomeClick}
             className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 duration-200 hover:bg-secondary md:flex ${
-              isTouchDevice && activeButtonId === "x-logo"
+              isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
             }`}
-            onTouchStart={() => handleTouchStart("x-logo")}
+            onTouchStart={() => handleTouchStart("k-logo")}
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
@@ -476,11 +434,8 @@ const Sidebar = ({
           </div>
 
           <ul className="mt-0 flex w-full flex-row justify-around md:mt-4 md:flex-col md:justify-start md:gap-3">
-            {/* Home */}
             <li
               onClick={() => {
-                // if (pathname === "/") return
-                // navigate("/");
                 handleHomeClick()
               }}
               className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[125px] md:justify-start md:p-0 md:hover:bg-secondary"
@@ -524,7 +479,6 @@ const Sidebar = ({
               onClick={() => {
                 if (pathname === "/messages") return
                 navigate("/messages")
-                // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
               }}
               className="flex cursor-pointer items-center justify-center rounded-full p-1 transition duration-200 md:w-[160px] md:justify-start md:p-0 md:hover:bg-secondary"
             >

@@ -3,7 +3,7 @@ import User from "../models/user.model.js";
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 
 const resetMonthlyStats = cron.schedule(
-  "0 8 1 * *", // 8:00 AM UTC = 00:00 AM UTC-8
+  "0 8 1 * *",
   async () => {
     await performMonthlyReset();
   },
@@ -14,16 +14,14 @@ export const performMonthlyReset = async () => {
   try {
     console.log("Starting Monthly Reset Logic...");
 
-    // 1. Get Top 3 users BEFORE resetting
     const topUsers = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
       .sort({ "monthlyStats.studyDuration": -1 })
       .limit(3);
 
-    // 2. Identify the month that just ended (from UTC-8 perspective)
     const now = new Date();
     const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
     const targetMonth = new Date(pdtDate);
-    targetMonth.setUTCDate(1); // Crucial: Fixes the March 31st overflow bug
+    targetMonth.setUTCDate(1);
     targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
     const lastMonthISO = targetMonth.toISOString().slice(0, 7);
 
@@ -67,19 +65,16 @@ export const performMonthlyReset = async () => {
   }
 };
 
-// Function to start the cron job
 export const startMonthlyCronJob = () => {
   resetMonthlyStats.start();
   console.log("Monthly leaderboard reset cron job started");
 };
 
-// Function to stop the cron job
 export const stopMonthlyCronJob = () => {
   resetMonthlyStats.stop();
   console.log("Monthly leaderboard reset cron job stopped");
 };
 
-// Manual function to reset monthly stats (for testing or manual triggers)
 export const manualMonthlyReset = async () => {
   try {
     const currentMonth = new Date().toISOString().slice(0, 7);

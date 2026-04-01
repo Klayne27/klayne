@@ -10,30 +10,25 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
   const initialYRef = useRef(0)
   const menuRef = useRef(null)
   const contentRef = useRef(null)
-  const scrollPositionRef = useRef(0) // <-- Ref to store scroll position
-  const touchStartTimeRef = useRef(0) // Track touch start time
+  const scrollPositionRef = useRef(0) 
+  const touchStartTimeRef = useRef(0)
 
-  useLockBodyScroll(isRendered) // Lock scroll when rendered, not just open
+  useLockBodyScroll(isRendered)
 
   useEffect(() => {
     let mountTimer
     let animationTimer
 
     if (isOpen) {
-      // 1. Mount the component
       setIsRendered(true)
-      // 2. After a tiny delay, trigger the animation
-      // This gives React time to render the component in its "closed" state first.
       mountTimer = setTimeout(() => {
         setVisualState("open")
-      }, 10) // 10ms is enough for the browser to catch up
+      }, 10) 
     } else {
-      // 1. Trigger the closing animation
       setVisualState("closed")
-      // 2. After the animation duration, unmount the component
       animationTimer = setTimeout(() => {
         setIsRendered(false)
-      }, 300) // Must match your CSS transition duration
+      }, 300)
     }
 
     return () => {
@@ -65,12 +60,10 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     }
   }, [isOpen])
 
-  // Prevent pull-to-refresh when the menu is open
   useEffect(() => {
     if (!isRendered) return
 
     const preventPullToRefresh = (e) => {
-      // Only prevent if we're at the top of the page and pulling down
       if (window.scrollY === 0 && e.touches && e.touches[0].clientY > e.touches[0].pageY) {
         e.preventDefault()
       }
@@ -82,7 +75,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       }
     }
 
-    // Add passive: false to allow preventDefault to work
     document.addEventListener("touchstart", preventPullToRefresh, { passive: false })
     document.addEventListener("touchmove", handleTouchMove, { passive: false })
 
@@ -105,7 +97,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
       menuRef.current.style.transition = "none"
     }
 
-    // Prevent pull-to-refresh immediately on touch start
     e.preventDefault()
   }, [])
 
@@ -113,14 +104,12 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
     (e) => {
       if (!isDragging) return
 
-      // Always prevent default during dragging to stop pull-to-refresh
       e.preventDefault()
       e.stopPropagation()
 
       const currentY = e.touches[0].clientY
       const deltaY = currentY - initialYRef.current
 
-      // Only allow dragging down
       if (deltaY < 0) return
 
       if (menuRef.current) {
@@ -143,7 +132,6 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
 
     menu.style.transition = "transform 300ms ease-out"
 
-    // Close if dragged more than 40% down or if it was a quick swipe down
     const shouldClose =
       currentTransform > menuHeight * 0.4 || (currentTransform > 50 && touchDuration < 300)
 
@@ -178,7 +166,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
         ref={menuRef}
         style={{
           bottom: `${keyboardHeight}px`,
-          touchAction: "none", // Disable default touch behaviors
+          touchAction: "none",
         }}
         className={`fixed left-0 right-0 z-50 transform transition-transform duration-300 ease-out ${
           visualState === "open" ? "translate-y-0" : "translate-y-full"
@@ -189,7 +177,7 @@ const SlideUpMenu = ({ isOpen, onClose, children }) => {
           onTouchStart={handleTouchStart}
           onTouchMove={handleTouchMove}
           onTouchEnd={handleTouchEnd}
-          style={{ touchAction: "none" }} // Also disable on the draggable area
+          style={{ touchAction: "none" }}
         >
           <div className="flex w-full items-center justify-center">
             <div className="my-1.5 h-1 w-10 rounded-full bg-accent" />

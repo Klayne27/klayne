@@ -5,7 +5,6 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
   const processedMessages = useMemo(() => {
     if (!messages && !pinnedMessagesInfo) return []
 
-    // Handle case where messages might be undefined or not have pages
     let flattenedMessages = []
     if (messages) {
       if (Array.isArray(messages)) {
@@ -15,44 +14,31 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
       }
     }
 
-    // Create a Set of message IDs for fast lookups.
-    // This is the core of the fix.
-    const messageIdSet = new Set(flattenedMessages.map((msg) => msg._id.toString()))
-
-    // 1. Create system message objects from the persistent pinned data.
-    //    We now FILTER this list to only include pins whose original message
-    //    is present in the current user's flattenedMessages list.
     const systemMessages = (pinnedMessagesInfo || [])
       .filter((pin) => {
-        // Safety check for pin structure and to see if the original message exists in the current view.
         return pin && pin.pinnedBy && pin.message
       })
       .map((pin) => {
         return {
-          _id: `pinned-${pin.message._id}-${pin.pinnedAt}`, // Create a stable unique key
+          _id: `pinned-${pin.message._id}-${pin.pinnedAt}`, 
           isSystemMessage: true,
           text: `${pin.pinnedBy.username || "Unknown user"} pinned a message`,
           pinnedAt: pin.pinnedAt,
-          // Use the 'createdAt' field for sorting purposes
           createdAt: pin.pinnedAt,
           pinnedMessageId: pin.message,
-          // The sender is the user who pinned the message
           sender: pin.pinnedBy,
         }
       })
       .filter(Boolean)
 
-    // Combine the existing messages and the now-filtered system messages.
     const allMessages = [...flattenedMessages, ...systemMessages]
 
-    // Sort by createdAt date
     allMessages.sort((a, b) => {
       const dateA = new Date(a.createdAt || a.pinnedAt)
       const dateB = new Date(b.createdAt || b.pinnedAt)
       return dateA - dateB
     })
 
-    // The rest of your logic now runs on the fully combined and sorted list
     if (allMessages.length === 0) return []
 
     const getSenderInfo = (msg) => {
@@ -78,7 +64,6 @@ export const useProcessedMessage = (messages, pinnedMessagesInfo) => {
     let lastMessageDate = null
     const enhanced = allMessages
       .map((message, index) => {
-        // Safety check for message
         if (!message) {
           console.warn("Undefined message at index:", index)
           return null

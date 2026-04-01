@@ -6,7 +6,6 @@ const CircularBarProgress = ({ progress, size, strokeWidth, progressColor }) => 
 
   return (
     <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
-      {/* Background circle */}
       <circle
         className="text-gray-700"
         stroke="currentColor"
@@ -16,7 +15,6 @@ const CircularBarProgress = ({ progress, size, strokeWidth, progressColor }) => 
         cx={size / 2}
         cy={size / 2}
       />
-      {/* Progress circle */}
       <circle
         className={`transition-colors duration-300 ${progressColor}`}
         stroke="currentColor"
@@ -26,9 +24,7 @@ const CircularBarProgress = ({ progress, size, strokeWidth, progressColor }) => 
         r={radius}
         cx={size / 2}
         cy={size / 2}
-        // Set the strokeDasharray to the full circumference
         strokeDasharray={circumference}
-        // Apply the calculated strokeDashoffset
         style={{
           transition: "stroke-dashoffset 0.35s",
           strokeDashoffset: strokeDashoffset,

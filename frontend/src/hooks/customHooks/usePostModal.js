@@ -31,7 +31,6 @@ export const usePostModal = () => {
   const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300)
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
 
-  // Auto-resize textarea
   const adjustTextareaHeight = useCallback(() => {
     if (inputRef.current) {
       inputRef.current.style.height = "auto"
@@ -43,7 +42,6 @@ export const usePostModal = () => {
     adjustTextareaHeight()
   }, [input, adjustTextareaHeight])
 
-  // Paste handler
   const handlePaste = usePasteHandler({
     inputRef,
     input,
@@ -53,7 +51,6 @@ export const usePostModal = () => {
     fileInputRef,
   })
 
-  // Text change handler with mention detection
   const handleTextChange = useCallback(
     (e) => {
       const newText = e.target.value
@@ -85,7 +82,6 @@ export const usePostModal = () => {
     [setInput, setMentionQuery, setMentionStartIndex, setShowMentionSuggestions],
   )
 
-  // Mention selection
   const handleMentionSelect = useCallback(
     (username) => {
       const currentText = input
@@ -129,7 +125,6 @@ export const usePostModal = () => {
     ],
   )
 
-  // File handling
   const handleFileChange = useCallback(
     (e) => {
       const file = e.target.files[0]

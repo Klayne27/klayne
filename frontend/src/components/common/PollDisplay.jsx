@@ -5,7 +5,6 @@ const PollDisplay = ({ post }) => {
   const { authUser } = useAuthUser()
   const { voteOnPoll, isVoting } = useVoteOnPoll()
 
-  // Determine the user's vote directly from the post data
   const userVotedOption = post.pollOptions.find((option) => option.voters.includes(authUser?._id))
   const userVotedOptionId = userVotedOption?._id || null
 

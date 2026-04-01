@@ -1,7 +1,6 @@
 import { useCallback } from "react"
 import { usePostModalStore } from "../../store/usePostModalStore"
 
-// hooks/useScheduleModal.js
 export const useScheduleModal = () => {
   const {
     scheduledAt,

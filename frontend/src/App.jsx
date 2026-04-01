@@ -25,7 +25,6 @@ function App() {
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
   const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
-  // const [isPushSubscribed, setIsPushSubscribed] = useState(false)
 
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
@@ -42,17 +41,6 @@ function App() {
       document.documentElement.setAttribute("data-theme", savedTheme)
     }
   }, [])
-
-  // useEffect(() => {
-  //   const checkSubscription = async () => {
-  //     if ("serviceWorker" in navigator && "PushManager" in window) {
-  //       const registration = await navigator.serviceWorker.ready
-  //       const subscription = await registration.pushManager.getSubscription()
-  //       setIsPushSubscribed(!!subscription)
-  //     }
-  //   }
-  //   checkSubscription()
-  // }, [])
 
   useEffect(() => {
     const initPush = async () => {

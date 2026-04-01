@@ -1,5 +1,5 @@
 import { Link, useNavigate } from "react-router-dom"
-import FollowButton from "../common/FollowButton" // Assuming this is your Follow button component
+import FollowButton from "../common/FollowButton"
 import { formatMemberSinceDate } from "../../utils/date"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
@@ -22,14 +22,12 @@ const ProfileInfoModal = ({ user, position = 1 }) => {
           style={{ top: `${position.top}px`, left: `${position.left}px` }}
           onClick={handleModalClick}
         >
-          {/* Cover Photo */}
           <div className="relative h-24 w-full">
             <img
               src={getOptimizedImageUrl(user?.coverImg?.imageUrl || "/cover.png", "cover")}
               alt="cover"
               className="h-full w-full rounded-t-xl object-cover"
             />
-            {/* Profile Image */}
             <div className="avatar absolute -bottom-8 left-4">
               <div
                 className="w-16 cursor-pointer rounded-full border-2 border-base-200"
@@ -52,14 +50,12 @@ const ProfileInfoModal = ({ user, position = 1 }) => {
               )}
             </div>
 
-            {/* Bio */}
             {user.bio && <span className="my-2 text-sm text-base-content">{user.bio}</span>}
 
             <div className="flex items-center text-slate-500">
               <span className="text-xs">Joined {formatMemberSinceDate(user.createdAt)}</span>
             </div>
 
-            {/* Following/Followers Count */}
             <div className="mt-2 flex gap-4">
               <div
                 className="flex items-center gap-1"

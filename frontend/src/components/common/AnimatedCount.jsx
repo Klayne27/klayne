@@ -21,7 +21,7 @@ const AnimatedCount = ({ count, className }) => {
 
   const digitCount = String(displayCount).length
   const widthClass =
-    digitCount === 1 ? "w-3" : digitCount === 2 ? "w-4" : digitCount === 3 ? "w-6" : "w-8" // For 4+ digits
+    digitCount === 1 ? "w-3" : digitCount === 2 ? "w-4" : digitCount === 3 ? "w-6" : "w-8" 
 
   return (
     <div className={`relative h-5 overflow-hidden text-left tabular-nums ${widthClass}`}>

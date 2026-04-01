@@ -1,6 +1,6 @@
 import Post from "../models/post.model.js";
 import User from "../models/user.model.js";
-import Notification from "../models/notification.model.js"; // Assume you have this model
+import Notification from "../models/notification.model.js";
 
 export const publishScheduledPosts = async (io, onlineUsersMap) => {
   try {
@@ -18,7 +18,6 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
     const usersToUpdate = {};
     const notificationsToCreate = [];
 
-    // Aggregate all updates and notifications first
     for (const post of postsToPublish) {
       postsToUpdate.push({
         updateOne: {
@@ -52,10 +51,8 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       }
     }
 
-    // Perform bulk database operations
     await Post.bulkWrite(postsToUpdate);
 
-    // Create bulk user update operations
     const userUpdateOps = Object.keys(usersToUpdate).map((userId) => ({
       updateOne: {
         filter: { _id: userId },
@@ -68,7 +65,6 @@ export const publishScheduledPosts = async (io, onlineUsersMap) => {
       await Notification.insertMany(notificationsToCreate);
     }
 
-    // Emit socket events after all DB writes are done
     // This part can still be a bottleneck if there are many online users.
     if (onlineUsersMap && io) {
       for (const post of postsToPublish) {

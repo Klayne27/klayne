@@ -6,19 +6,17 @@ const BadgeModal = ({ badge, onClose }) => {
   const { authUser } = useAuthUser()
   const { updateBadge } = useUpdatePreferredBadge()
 
-  if (!badge || !authUser) return null // Check if the current badge is the one the user has chosen to display
+  if (!badge || !authUser) return null
 
   const isCurrentlyDisplayed = authUser.preferredBadge === badge.name
 
   const handleToggleDisplay = () => {
-    // If the badge is currently displayed, remove it. Otherwise, set it.
     const newPreferredBadge = isCurrentlyDisplayed ? null : badge.name
     updateBadge(newPreferredBadge)
-    onClose() // Optional: Close the modal after the action is taken
+    onClose()
   }
 
   const getBadgeIconLarge = (badgeName) => {
-    // A larger version of your existing badge icon logic
     switch (badgeName) {
       case "twentyfive-hour-scholar":
         return <img src="/badge-hrs-25.png" alt="25 Hour Scholar" className="size-24" />
@@ -47,7 +45,7 @@ const BadgeModal = ({ badge, onClose }) => {
       default:
         return null
     }
-  } // Define a description for each badge
+  }
 
   const getBadgeDescription = (badgeName) => {
     switch (badgeName) {

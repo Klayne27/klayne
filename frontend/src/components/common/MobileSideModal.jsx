@@ -64,7 +64,6 @@ function MobileSideModal({
       setIsCheckingSubscription(true)
       const isSubscribed = await checkSubscriptionStatus()
       setIsPushSubscribed(isSubscribed)
-      // ADD: capture the actual permission state
       if ("Notification" in window) {
         setNotifPermission(Notification.permission)
       }
@@ -74,7 +73,6 @@ function MobileSideModal({
   }, [isInstalled])
 
   const handleNotificationClick = async () => {
-    // ADD: if already denied, we can't prompt again — tell the user
     if (Notification.permission === "denied") {
       alert(
         "Notifications are blocked. To enable them, go to your device Settings → Apps → [this app] → Notifications and turn them on.",
@@ -150,11 +148,9 @@ function MobileSideModal({
               <p className="text-sm text-slate-500">@{authUser?.username}</p>
             </div>
             <div className="mt-4 flex gap-4 text-sm">
-              {/* Follower/Following links in modal */}
               <p
                 onClick={() => {
                   openFollowListModal("following")
-                  // setShowSideModal(false); // Add this line if you want the sidebar to close
                 }}
                 className={`cursor-pointer rounded-md p-1 font-bold ${
                   isTouchDevice && activeButtonId === "modal-following"
@@ -171,7 +167,6 @@ function MobileSideModal({
               <p
                 onClick={() => {
                   openFollowListModal("followers")
-                  // setShowSideModal(false); // Add this line if you want the sidebar to close
                 }}
                 className={`cursor-pointer rounded-md p-1 font-bold ${
                   isTouchDevice && activeButtonId === "modal-followers"
@@ -188,14 +183,12 @@ function MobileSideModal({
             </div>
           </div>
 
-          {/* Scrollable navigation links */}
           <div className="scrollbar-on-hover flex-1 overflow-y-auto py-2">
             <ul className="flex flex-col gap-0">
-              {/* Profile Tab in Side Modal */}
               <li
                 onClick={() => {
                   navigate(`/profile/${authUser?.username}`)
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-profile"
@@ -219,12 +212,11 @@ function MobileSideModal({
                   Profile
                 </span>
               </li>
-              {/* Bookmarks Tab in Side Modal (now visible only in modal on mobile) */}
               <li
                 onClick={() => {
                   if (pathname === "/bookmarks") return
                   navigate("/bookmarks")
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-bookmarks"
@@ -248,7 +240,7 @@ function MobileSideModal({
                 onClick={() => {
                   if (pathname === "/pomodoro") return
                   navigate("/pomodoro")
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-pomodoro"
@@ -279,12 +271,11 @@ function MobileSideModal({
                 <LuListTodo className="mr-4 size-7" strokeWidth={pathname === "/todos" ? 2 : 2} />
                 <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>Todos</span>
               </li>
-              {/* Themes Tab in Side Modal */}
               <li
                 onClick={() => {
                   if (pathname === "/themes") return
                   navigate("/themes")
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-themes"
@@ -305,7 +296,7 @@ function MobileSideModal({
                 onClick={() => {
                   if (pathname === "/devlog") return
                   navigate("/devlog")
-                  setShowSideModal(false) // Close modal on navigation
+                  setShowSideModal(false)
                 }}
                 className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "modal-devlog"
@@ -323,7 +314,6 @@ function MobileSideModal({
                 </span>
               </li>
 
-              {/* Separator if needed */}
               <div className="my-2 border-t border-accent"></div>
               <div className="flex flex-col gap-1 px-3 py-2">
                 <span className="px-1 text-xs font-bold text-gray-400">Set Status</span>
@@ -352,7 +342,6 @@ function MobileSideModal({
               </div>
               <div className="my-2 border-t border-accent"></div>
 
-              {/* Delete Account Button in Side Modal */}
               <li
                 onClick={handleConfirmDeleteClick}
                 className={`flex cursor-pointer items-center gap-1 px-4 py-2 font-bold text-red-500 hover:bg-secondary ${
@@ -369,7 +358,6 @@ function MobileSideModal({
                 </span>
                 Delete Account
               </li>
-              {/* Logout Button in Side Modal */}
               <li
                 onClick={handleLogout}
                 className={`flex cursor-pointer items-center px-4 py-2 font-bold hover:bg-secondary ${
@@ -393,7 +381,6 @@ function MobileSideModal({
               <p className="mb-2 text-xl font-bold">Install the App</p>
 
               {isIOSDevice ? (
-                // iOS: can't trigger programmatically, show manual steps
                 <div className="flex flex-col gap-2">
                   <p className="text-sm text-gray-500">To install on iPhone or iPad:</p>
                   <ol className="flex flex-col gap-1 text-sm text-gray-400">
@@ -415,7 +402,6 @@ function MobileSideModal({
                   </p>
                 </div>
               ) : (
-                // Android / Chrome: use the deferred prompt
                 <>
                   <p className="mb-4 text-sm text-gray-500">
                     Install the app to your home screen to enable real-time notifications.
@@ -436,7 +422,6 @@ function MobileSideModal({
               <p className="mb-2 text-xl font-bold">Stay Updated</p>
 
               {notifPermission === "denied" ? (
-                // Permission was blocked — button won't work, show instructions instead
                 <>
                   <p className="mb-3 text-sm text-gray-500">
                     Notifications are currently blocked for this app.
@@ -458,7 +443,6 @@ function MobileSideModal({
                   </button>
                 </>
               ) : (
-                // Permission is "default" (not yet asked) or "granted" but no subscription
                 <>
                   <p className="mb-4 text-sm text-gray-500">
                     Enable push notifications to get real-time updates.

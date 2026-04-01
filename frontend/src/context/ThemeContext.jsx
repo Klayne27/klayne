@@ -1,52 +1,51 @@
-import { createContext, useState, useEffect, useContext } from "react";
-import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
+import { createContext, useState, useEffect, useContext } from "react"
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
+import { useCallback } from "react"
 
-export const ThemeContext = createContext();
+export const ThemeContext = createContext()
 
-export const useTheme = () => useContext(ThemeContext);
+export const useTheme = () => useContext(ThemeContext)
 
 export const ThemeProvider = ({ children }) => {
-  const { authUser, isLoading } = useAuthUser();
+  const { authUser, isLoading } = useAuthUser()
 
-  const getInitialTheme = () => {
+  const getInitialTheme = useCallback(() => {
     if (isLoading || !authUser) {
-      return localStorage.getItem("theme") || "black";
+      return localStorage.getItem("theme") || "black"
     }
 
     if (authUser.forceBlackTheme) {
-      return "black";
+      return "black"
     }
 
-    const storedTheme = localStorage.getItem("theme");
+    const storedTheme = localStorage.getItem("theme")
     if (storedTheme) {
-      return storedTheme;
+      return storedTheme
     }
-    return "black"; 
-  };
+    return "black"
+  }, [authUser, isLoading])
 
-  const [theme, setThemeState] = useState(getInitialTheme);
+  const [theme, setThemeState] = useState(getInitialTheme)
 
   useEffect(() => {
     if (!isLoading) {
-      setThemeState(getInitialTheme());
+      setThemeState(getInitialTheme())
     }
-  }, [authUser, isLoading]);
+  }, [authUser, isLoading, getInitialTheme])
 
   const setTheme = (newTheme) => {
     if (authUser && authUser.forceBlackTheme) {
-      console.warn("Theme selection is locked for this user.");
-      return;
+      console.warn("Theme selection is locked for this user.")
+      return
     }
 
-    setThemeState(newTheme);
-    localStorage.setItem("theme", newTheme);
-  };
+    setThemeState(newTheme)
+    localStorage.setItem("theme", newTheme)
+  }
 
   useEffect(() => {
-    document.documentElement.setAttribute("data-theme", theme);
-  }, [theme]);
+    document.documentElement.setAttribute("data-theme", theme)
+  }, [theme])
 
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
-  );
-};
+  return <ThemeContext.Provider value={{ theme, setTheme }}>{children}</ThemeContext.Provider>
+}

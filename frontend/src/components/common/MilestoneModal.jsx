@@ -41,13 +41,10 @@ const MILESTONE_MESSAGES = new Map([
   ],
 ])
 
-// Function to generate dynamic post content
 const getPostContent = (level) => {
-  // Check if the level is divisible by 10 and if a specific message exists
   if (level % 10 === 0 && MILESTONE_MESSAGES.has(level)) {
     return MILESTONE_MESSAGES.get(level)
   } else {
-    // This is the dynamic default message for all other milestones
     return `🏆 Another milestone achieved! Just hit Level ${level} in my study journey.`
   }
 }
@@ -72,22 +69,19 @@ const MilestoneModal = ({ level, onClose, isOpen }) => {
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 px-4 backdrop-blur-sm"
-      onClick={onClose} // Allow closing by clicking the backdrop
+      onClick={onClose}
     >
       <div
         className="animate-fade-in-up relative w-full max-w-md rounded-2xl border border-primary/50 bg-slate-800 p-8 text-center text-white shadow-2xl shadow-primary/20"
-        onClick={(e) => e.stopPropagation()} // Prevent modal from closing when clicking inside it
+        onClick={(e) => e.stopPropagation()} 
       >
-        {/* Decorative Gradient Blurs */}
         <div className="absolute -bottom-12 -right-12 -z-10 h-32 w-32 rounded-full bg-primary/20 blur-3xl"></div>
         <div className="absolute -left-12 -top-12 -z-10 h-32 w-32 rounded-full bg-teal-400/20 blur-3xl"></div>
 
-        {/* Icon */}
         <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full bg-primary/20 ring-4 ring-primary/30">
           <FaTrophy className="text-4xl text-yellow-300" />
         </div>
 
-        {/* Content */}
         <h2 className="mt-6 text-3xl font-bold">Milestone Reached!</h2>
         <p className="mt-2 text-lg text-slate-300">
           Incredible work! You've just hit{" "}
@@ -95,7 +89,6 @@ const MilestoneModal = ({ level, onClose, isOpen }) => {
         </p>
         <p className="mt-4 text-slate-400">Share your achievement with the community!</p>
 
-        {/* Action Buttons */}
         <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:justify-center">
           <button
             onClick={handleShare}

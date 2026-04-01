@@ -32,28 +32,23 @@ const CustomDatePicker = ({
 
   const daysOfWeek = ["Su", "Mo", "Tu", "We", "Th", "Fr", "Sa"]
 
-  // Get days in month
   const getDaysInMonth = (month, year) => {
     return new Date(year, month + 1, 0).getDate()
   }
 
-  // Get first day of month (0 = Sunday, 1 = Monday, etc.)
   const getFirstDayOfMonth = (month, year) => {
     return new Date(year, month, 1).getDay()
   }
 
-  // Generate calendar days
   const generateCalendarDays = () => {
     const daysInMonth = getDaysInMonth(currentMonth, currentYear)
     const firstDay = getFirstDayOfMonth(currentMonth, currentYear)
     const days = []
 
-    // Add empty cells for days before the first day of the month
     for (let i = 0; i < firstDay; i++) {
       days.push(null)
     }
 
-    // Add days of the month
     for (let day = 1; day <= daysInMonth; day++) {
       days.push(day)
     }
@@ -61,7 +56,6 @@ const CustomDatePicker = ({
     return days
   }
 
-  // Handle date selection
   const handleDateSelect = (day) => {
     if (day) {
       const newDate = new Date(currentYear, currentMonth, day)
@@ -70,7 +64,6 @@ const CustomDatePicker = ({
     }
   }
 
-  // Navigate months
   const navigateMonth = (direction) => {
     if (direction === "prev") {
       if (currentMonth === 0) {
@@ -89,7 +82,6 @@ const CustomDatePicker = ({
     }
   }
 
-  // Check if date is today
   const isToday = (day) => {
     const today = new Date()
     return (
@@ -99,7 +91,6 @@ const CustomDatePicker = ({
     )
   }
 
-  // Check if date is selected
   const isSelected = (day) => {
     if (!selectedDate || !day) return false
     const selected = new Date(selectedDate)
@@ -110,7 +101,6 @@ const CustomDatePicker = ({
     )
   }
 
-  // Handle click outside and recalculate position on resize/scroll
   useEffect(() => {
     const handleClickOutside = (event) => {
       event.stopPropagation()
@@ -133,7 +123,6 @@ const CustomDatePicker = ({
     }
   }, [isOpen, onToggle])
 
-  // Update current month/year when selectedDate changes
   useEffect(() => {
     if (selectedDate) {
       const date = new Date(selectedDate)
@@ -144,7 +133,6 @@ const CustomDatePicker = ({
 
   const calendarDays = generateCalendarDays()
 
-  // Find or create the portal container
   let portalRoot = document.getElementById("date-picker-portal-root")
   if (!portalRoot) {
     portalRoot = document.createElement("div")
@@ -154,7 +142,6 @@ const CustomDatePicker = ({
 
   return (
     <>
-      {/* Input Button */}
       <button
         ref={datePickerRef}
         type="button"
@@ -174,20 +161,17 @@ const CustomDatePicker = ({
         </span>
       </button>
 
-      {/* Calendar Dropdown - Rendered using a Portal */}
       {isOpen &&
         ReactDOM.createPortal(
           <div
             ref={calendarRef}
             className="white-shadow fixed left-10 top-20 z-[1001] mt-2 h-auto w-72 rounded-xl bg-base-100 p-4"
           >
-            {/* Header */}
             <div className="mb-4 flex items-center justify-between">
               <button
                 type="button"
                 onClick={() => navigateMonth("prev")}
                 onMouseDown={(e) => e.preventDefault()}
-                // Increased padding and size for better touch/click targets.
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -208,7 +192,6 @@ const CustomDatePicker = ({
                 type="button"
                 onClick={() => navigateMonth("next")}
                 onMouseDown={(e) => e.preventDefault()}
-                // Increased padding and size for better touch/click targets.
                 className="rounded-lg p-2 text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -222,13 +205,10 @@ const CustomDatePicker = ({
               </button>
             </div>
 
-            {/* Days of Week Header */}
             <div className="mb-2 grid grid-cols-7 gap-1">
               {daysOfWeek.map((day) => (
                 <div
                   key={day}
-                  // `uppercase` makes the weekday labels more distinct.
-                  // `tracking-wider` adds a slight letter spacing for readability.
                   className="py-2 text-center text-xs font-medium uppercase tracking-wider text-gray-500 dark:text-gray-400"
                 >
                   {day}
@@ -236,7 +216,6 @@ const CustomDatePicker = ({
               ))}
             </div>
 
-            {/* Calendar Grid */}
             <div className="grid grid-cols-7 gap-1">
               {calendarDays.map((day, index) => (
                 <button
@@ -245,11 +224,9 @@ const CustomDatePicker = ({
                   onClick={() => handleDateSelect(day)}
                   onMouseDown={(e) => e.preventDefault()}
                   disabled={!day}
-                  // `h-8 w-8` is a good standard size for a calendar day button.
-                  // The hover/focus states are improved for better user feedback.
                   className={`h-8 w-8 rounded-lg text-sm font-medium transition-colors ${
                     !day
-                      ? "cursor-default text-gray-400 dark:text-gray-600" // Faded out text for empty days.
+                      ? "cursor-default text-gray-400 dark:text-gray-600"
                       : isSelected(day)
                         ? "bg-primary text-white hover:bg-blue-600"
                         : isToday(day)
@@ -262,7 +239,6 @@ const CustomDatePicker = ({
               ))}
             </div>
 
-            {/* Footer Buttons */}
             <div className="mt-4 flex justify-end gap-2">
               <button
                 type="button"
@@ -271,7 +247,6 @@ const CustomDatePicker = ({
                   onToggle(false)
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                // Using a more neutral color for the clear button.
                 className="rounded-lg px-3 py-2 text-sm text-gray-500 hover:bg-gray-100 dark:text-gray-400 dark:hover:bg-gray-700"
               >
                 Clear
@@ -286,7 +261,6 @@ const CustomDatePicker = ({
                   onToggle(false)
                 }}
                 onMouseDown={(e) => e.preventDefault()}
-                // The `Today` button is now an accent color to stand out.
                 className="rounded-lg px-3 py-2 text-sm text-primary hover:bg-primary/20"
               >
                 Today

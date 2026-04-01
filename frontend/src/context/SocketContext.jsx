@@ -22,29 +22,30 @@ export const SocketContextProvider = ({ children }) => {
 
   const [hasUnreadMessages, setHasUnreadMessages] = useState(false)
   const [hasUnreadNotifications, setHasUnreadNotifications] = useState(false)
-  const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false)
   const [hasUnreadPublicChat, setHasUnreadPublicChat] = useState(false)
+  const [hasNewFeedPosts, setHasNewFeedPosts] = useState(false)
+
   const [unreadNotificationsCount, setUnreadNotificationsCount] = useState(0)
   const [unreadMessageCount, setUnreadMessageCount] = useState(0)
   const [unreadPublicChatCount, setUnreadPublicChatCount] = useState(0)
   const [newPostCount, setNewPostCount] = useState(0)
   const [newICPostCount, setNewICPostCount] = useState(0)
   const [newVentPostCount, setNewVentPostCount] = useState(0)
+
   const [showNewFeedPostsButton, setShowNewFeedPostsButton] = useState(false)
   const [showNewICPostsButton, setShowNewICPostsButton] = useState(false)
   const [showNewVentPostsButton, setShowNewVentPostsButton] = useState(false)
 
-  // ── New: unread dots (no count, just boolean) ─────────────────────────────
   const [hasNewICPosts, setHasNewICPosts] = useState(false)
   const [hasNewVentPosts, setHasNewVentPosts] = useState(false)
 
-  const socketRef = useRef(null)
   const queryClient = useQueryClient()
 
   const location = useLocation()
   const previousPathRef = useRef(location.pathname)
-
+  const socketRef = useRef(null)
   const activeConversationIdRef = useRef(activeConversationId)
+
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId
   }, [activeConversationId])
@@ -74,30 +75,19 @@ export const SocketContextProvider = ({ children }) => {
         }
       }, 60 * 1000)
 
-      newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
-        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
-      })
-
-      newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, text, img }) => {
-        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
-      })
-
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users)
       })
 
-      newSocket.on("unreadMessageStatus", ({ hasUnread, unreadMessageCount }) => {
+      newSocket.on("unreadMessageStatus", ({ unreadMessageCount }) => {
         setHasUnreadMessages(unreadMessageCount > 0)
         setUnreadMessageCount(unreadMessageCount)
       })
 
-      newSocket.on(
-        "unreadNotificationStatus",
-        ({ hasUnreadNotifications, unreadNotificationsCount }) => {
-          setHasUnreadNotifications(unreadNotificationsCount > 0)
-          setUnreadNotificationsCount(unreadNotificationsCount)
-        },
-      )
+      newSocket.on("unreadNotificationStatus", ({ unreadNotificationsCount }) => {
+        setHasUnreadNotifications(unreadNotificationsCount > 0)
+        setUnreadNotificationsCount(unreadNotificationsCount)
+      })
 
       newSocket.on("newPostCount", (data) => {
         setShowNewFeedPostsButton(true)
@@ -114,13 +104,35 @@ export const SocketContextProvider = ({ children }) => {
         setNewVentPostCount(data.newVentPostCount)
       })
 
-      // ── Unread dot listeners (boolean only, no count) ─────────────────────
       newSocket.on("newICUnreadDot", ({ hasNew }) => {
         setHasNewICPosts(hasNew)
       })
 
       newSocket.on("newVentUnreadDot", ({ hasNew }) => {
         setHasNewVentPosts(hasNew)
+      })
+
+      newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
+        queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
+          if (!oldData) return oldData
+          const updatedPages = oldData.pages.map((page) =>
+            page.filter((message) => message._id !== messageId),
+          )
+          return { ...oldData, pages: updatedPages }
+        })
+      })
+
+      newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat, unreadPublicChatCount }) => {
+        setHasUnreadPublicChat(hasUnreadPublicChat)
+        setUnreadPublicChatCount(unreadPublicChatCount)
+      })
+
+      newSocket.on("publicMessageDeleted", ({ messageId, senderId, text, img }) => {
+        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
+      })
+
+      newSocket.on("publicOwnMessageDeleted", ({ messageId, senderId, text, img }) => {
+        queryClient.invalidateQueries({ queryKey: messageKeys.publicMessages() })
       })
 
       newSocket.on("publicMessageReactionUpdated", ({ actorId, updatedMessage }) => {
@@ -141,21 +153,6 @@ export const SocketContextProvider = ({ children }) => {
           )
           return { ...oldData, pages: updatedPages }
         })
-      })
-
-      newSocket.on("messageDeleted", ({ messageId, conversationId }) => {
-        queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
-          if (!oldData) return oldData
-          const updatedPages = oldData.pages.map((page) =>
-            page.filter((message) => message._id !== messageId),
-          )
-          return { ...oldData, pages: updatedPages }
-        })
-      })
-
-      newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat, unreadPublicChatCount }) => {
-        setHasUnreadPublicChat(hasUnreadPublicChat)
-        setUnreadPublicChatCount(unreadPublicChatCount)
       })
 
       newSocket.on("connect_error", (error) => {
@@ -192,8 +189,8 @@ export const SocketContextProvider = ({ children }) => {
       setNewICPostCount(0)
       setUnreadPublicChatCount(0)
       setNewVentPostCount(0)
-      setHasNewICPosts(false) // ADD
-      setHasNewVentPosts(false) // ADD
+      setHasNewICPosts(false)
+      setHasNewVentPosts(false)
     }
   }, [user, isLoadingAuthUser, queryClient])
 
@@ -218,9 +215,9 @@ export const SocketContextProvider = ({ children }) => {
       value={{
         socket,
         onlineUsers,
-        setHasUnreadMessages,
+        
         hasUnreadMessages,
-        setActiveConversationId,
+        setHasUnreadMessages,
         hasUnreadNotifications,
         setHasUnreadNotifications,
         hasNewFeedPosts,
@@ -229,22 +226,23 @@ export const SocketContextProvider = ({ children }) => {
         setShowNewFeedPostsButton,
         hasUnreadPublicChat,
         setHasUnreadPublicChat,
-        unreadNotificationsCount,
-        unreadMessageCount,
-        unreadPublicChatCount,
-        newPostCount,
-        setNewPostCount,
-        setShowNewVentPostsButton,
-        newVentPostCount,
+
         showNewVentPostsButton,
-        setNewICPostCount,
-        setShowNewICPostsButton,
-        newICPostCount,
+        setShowNewVentPostsButton,
         showNewICPostsButton,
+        setShowNewICPostsButton,
         hasNewICPosts,
         setHasNewICPosts,
         hasNewVentPosts,
         setHasNewVentPosts,
+
+        setActiveConversationId,
+        newPostCount,
+        newICPostCount,
+        newVentPostCount,
+        unreadNotificationsCount,
+        unreadMessageCount,
+        unreadPublicChatCount,
       }}
     >
       {children}

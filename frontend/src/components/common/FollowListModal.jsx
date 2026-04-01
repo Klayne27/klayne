@@ -1,4 +1,3 @@
-// components/common/FollowListModal.jsx
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
 import LoadingSpinner from "./LoadingSpinner";
@@ -7,7 +6,7 @@ import { IoClose } from "react-icons/io5";
 
 const FollowListModal = ({ userId, type, onClose, page }) => {
   const modalTitle = type === "following" ? "Following" : "Followers";
-  const dialogRef = useRef(null); // Rename to dialogRef for clarity
+  const dialogRef = useRef(null); 
 
   const { users, isLoading, error } = useGetFollowList(userId, type);
 
@@ -16,7 +15,7 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
     if (!dialogElement) return;
 
     const handleDialogClose = () => {
-      onClose(); // Call the parent's onClose handler
+      onClose();
     };
 
     dialogElement.addEventListener("close", handleDialogClose);
@@ -24,7 +23,7 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
     return () => {
       dialogElement.removeEventListener("close", handleDialogClose);
     };
-  }, [onClose]); // Dependency array: re-run if onClose changes
+  }, [onClose]);
 
   const handleMouseDownOnDialog = (e) => {
     if (dialogRef.current && e.target === dialogRef.current) {
@@ -34,7 +33,7 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
 
   return (
     <dialog
-      ref={dialogRef} // Assign the ref to the dialog element
+      ref={dialogRef}
       id={`${
         page === "profilePage" ? `follow_list_modal_${type}` : `follow_modal_list_${type}`
       }`}
@@ -63,7 +62,7 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
               <UserListItem
                 key={user._id}
                 user={user}
-                onModalClose={onClose} // Renamed prop to avoid confusion if UserListItem has its own onClose
+                onModalClose={onClose} 
               />
             ))}
           </div>
@@ -72,8 +71,8 @@ const FollowListModal = ({ userId, type, onClose, page }) => {
           <button
             className="btn btn-sm btn-circle btn-ghost absolute right-2 top-2"
             onClick={(e) => {
-              e.stopPropagation(); // VERY IMPORTANT: Prevents the button click from bubbling up
-              onClose(); // Call the close function
+              e.stopPropagation();
+              onClose();
             }}
           >
             <IoClose size={25} />

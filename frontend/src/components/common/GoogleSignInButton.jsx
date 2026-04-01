@@ -6,7 +6,7 @@ import { auth, googleProvider } from "../../services/firebase"
 
 const GoogleSignInButton = () => {
   const navigate = useNavigate()
-  const queryClient = useQueryClient() // Get the query client
+  const queryClient = useQueryClient()
 
   const handleGoogleSignIn = async () => {
     try {
@@ -25,7 +25,7 @@ const GoogleSignInButton = () => {
         const userData = await response.json()
         await queryClient.invalidateQueries({ queryKey: userKeys.auth() })
 
-        navigate("/") // Navigate to the homepage
+        navigate("/") 
       } else {
         const errorData = await response.json()
         console.error("Backend error:", errorData)
