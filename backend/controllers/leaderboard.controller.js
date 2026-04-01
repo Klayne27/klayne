@@ -57,28 +57,23 @@ export const getWeeklyLeaderboard = async (req, res) => {
 
 export const getPreviousWeekWinners = async (req, res) => {
   try {
-    const lastMonday = new Date();
-    lastMonday.setUTCDate(lastMonday.getUTCDate() - 7);
-    const lastWeekStart = getMondayOfWeek(lastMonday);
+    const now = new Date();
+    const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
 
-    const previousWinners = await WeeklyWinners.findOne({ weekStart: lastWeekStart })
-      .select("winners weekStart")
-      .populate({
-        path: "winners.user",
-        select: "username fullName",
-        populate: { path: "profileImg", select: "imageUrl" },
-      });
+    const lastWeekDate = new Date(pdtDate);
+    lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
+    const lastWeekStart = getMondayOfWeek(lastWeekDate);
 
-    if (!previousWinners) {
-      return res.status(200).json({ winners: [], weekStart: lastWeekStart });
-    }
-
-    res.status(200).json({
-      winners: previousWinners.winners,
-      weekStart: previousWinners.weekStart,
+    const previousWinners = await WeeklyWinners.findOne({
+      weekStart: lastWeekStart,
+    }).populate({
+      path: "winners.user",
+      select: "username fullName profileImg",
+      populate: { path: "profileImg", select: "imageUrl" },
     });
+
+    res.status(200).json(previousWinners || { winners: [], weekStart: lastWeekStart });
   } catch (error) {
-    console.error("Error fetching previous week winners:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -159,26 +154,20 @@ export const getMonthlyLeaderboard = async (req, res) => {
 
 export const getPreviousWinners = async (req, res) => {
   try {
-    // 1. Get current time (In your test: March 31, 2026)
     const now = new Date();
 
-    // 2. Adjust to UTC-12:00 (AoE - Anywhere on Earth)
-    // This ensures the "month" doesn't flip until the last timezone does
-    const aoetDate = new Date(now.getTime() - 12 * 60 * 60 * 1000);
+    const aoetDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
 
-    // 3. SECURE PREVIOUS MONTH CALCULATION
-    // Move to the 1st day of the CURRENT month first to prevent 31st-day overflow
     const targetMonth = new Date(aoetDate);
     targetMonth.setUTCDate(1);
 
-    // Now subtract 1 month from the 1st (e.g., March 1 -> Feb 1)
     targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
 
     const lastMonthISO = targetMonth.toISOString().slice(0, 7);
 
     console.log("Input Date:", now.toISOString());
     console.log("AoE Date (UTC-12):", aoetDate.toISOString());
-    console.log("Fetching Winners for ISO:", lastMonthISO); // Will correctly be 2026-02
+    console.log("Fetching Winners for ISO:", lastMonthISO);
 
     const previousWinners = await MonthlyWinners.findOne({ month: lastMonthISO })
       .select("winners month")
@@ -191,7 +180,6 @@ export const getPreviousWinners = async (req, res) => {
         },
       });
 
-    // Return empty array instead of 404 so frontend doesn't crash
     if (!previousWinners) {
       return res.status(200).json({ winners: [], month: lastMonthISO });
     }

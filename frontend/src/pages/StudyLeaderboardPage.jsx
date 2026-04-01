@@ -48,6 +48,7 @@ function StudyLeaderboardPage() {
 
   useLockBodyScroll(isInfoDropdownOpen)
 
+
   const { authUser: currentUser } = useAuthUser()
 
   const totalLeaderboard = useGetTotalLeaderboard(page, { enabled: leaderboardType === "total" })
@@ -232,97 +233,97 @@ function StudyLeaderboardPage() {
   }
 
   // Updated renderer with a "Podium" feel
-const renderWinnersPanel = (winnersData, label) => {
-  const winnersArray = winnersData?.winners || []
-  if (winnersArray.length === 0) return null
+  const renderWinnersPanel = (winnersData, label) => {
+    const winnersArray = winnersData?.winners || []
+    if (winnersArray.length === 0) return null
 
-  const getWinnerByRank = (index) => winnersArray[index] || null
+    const getWinnerByRank = (index) => winnersArray[index] || null
 
-  // Helper to render the name/time block to avoid repetition
-  const WinnerStats = (winner) => {
-    if (!winner) return <div className="flex-1 opacity-0" /> // Spacer for missing ranks
+    // Helper to render the name/time block to avoid repetition
+    const WinnerStats = (winner) => {
+      if (!winner) return <div className="flex-1 opacity-0" /> // Spacer for missing ranks
+      return (
+        <div className="min-w-0 flex-1 px-1">
+          <p className="truncate text-[11px] font-bold text-base-content sm:text-xs">
+            {winner.user?.fullName}
+          </p>
+          <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
+            <FaClock className="text-[9px]" />
+            <span>
+              {Math.floor((winner.studyDuration || 0) / 60)}h {(winner.studyDuration || 0) % 60}m
+            </span>
+          </p>
+        </div>
+      )
+    }
+
     return (
-      <div className="min-w-0 flex-1 px-1">
-        <p className="truncate text-[11px] font-bold text-base-content sm:text-xs">
-          {winner.user?.fullName}
-        </p>
-        <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
-          <FaClock className="text-[9px]" />
-          <span>
-            {Math.floor((winner.studyDuration || 0) / 60)}h {(winner.studyDuration || 0) % 60}m
-          </span>
-        </p>
+      <div className="mb-8 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/20 to-base-100 p-1 shadow-xl">
+        <div className="rounded-[calc(1rem-1px)] bg-base-100 px-10 py-5 md:px-28">
+          <div className="mb-6 text-center">
+            <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
+              <FaTrophy className="text-sm" /> Hall of Fame
+            </div>
+            <h3 className="mt-2 text-xl font-black text-base-content">{label}</h3>
+          </div>
+
+          {/* Podium Layout */}
+          <div className="flex items-end justify-center gap-2 sm:gap-6">
+            {/* 2nd Place */}
+            <div className="flex flex-1 flex-col items-center">
+              <WinnerAvatar
+                winner={getWinnerByRank(1)}
+                rank={2}
+                size="w-14 sm:w-16"
+                ringColor="ring-slate-400"
+              />
+              <div className="mt-3 h-16 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-slate-300 to-transparent p-2 text-center">
+                <span className="text-lg font-black text-slate-600">2nd</span>
+              </div>
+            </div>
+
+            {/* 1st Place */}
+            <div className="flex flex-1 flex-col items-center">
+              <div className="relative mb-2">
+                <FaCrown
+                  className="absolute -top-7 left-1/2 -translate-x-1/2 rotate-[-5deg] text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
+                  size={32}
+                />
+                <WinnerAvatar
+                  winner={getWinnerByRank(0)}
+                  rank={1}
+                  size="w-20 sm:w-24"
+                  ringColor="ring-amber-400"
+                />
+              </div>
+              <div className="h-24 w-full max-w-[100px] rounded-t-lg bg-gradient-to-b from-amber-400 to-transparent p-2 text-center shadow-lg">
+                <span className="text-2xl font-black text-amber-700">1st</span>
+              </div>
+            </div>
+
+            {/* 3rd Place */}
+            <div className="flex flex-1 flex-col items-center">
+              <WinnerAvatar
+                winner={getWinnerByRank(2)}
+                rank={3}
+                size="w-14 sm:w-16"
+                ringColor="ring-yellow-800"
+              />
+              <div className="mt-3 h-12 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-yellow-700/50 to-transparent p-2 text-center">
+                <span className="text-lg font-black text-yellow-900">3rd</span>
+              </div>
+            </div>
+          </div>
+
+          <div className="mt-4 flex justify-between gap-2 border-t border-base-200 pt-4 text-center sm:gap-6">
+            {WinnerStats(getWinnerByRank(1))}
+            {WinnerStats(getWinnerByRank(0))}
+            {WinnerStats(getWinnerByRank(2))}
+          </div>
+        </div>
       </div>
     )
   }
-
-  return (
-    <div className="mb-8 overflow-hidden rounded-2xl border border-primary/30 bg-gradient-to-b from-primary/20 to-base-100 p-1 shadow-xl">
-      <div className="rounded-[calc(1rem-1px)] bg-base-100 py-5 px-10 md:px-28">
-        <div className="mb-6 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full bg-amber-500/10 px-3 py-1 text-xs font-bold uppercase tracking-widest text-amber-600 dark:text-amber-400">
-            <FaTrophy className="text-sm" /> Hall of Fame
-          </div>
-          <h3 className="mt-2 text-xl font-black text-base-content">{label}</h3>
-        </div>
-
-        {/* Podium Layout */}
-        <div className="flex items-end justify-center gap-2 sm:gap-6">
-          {/* 2nd Place */}
-          <div className="flex flex-1 flex-col items-center">
-            <WinnerAvatar
-              winner={getWinnerByRank(1)}
-              rank={2}
-              size="w-14 sm:w-16"
-              ringColor="ring-slate-400"
-            />
-            <div className="mt-3 h-16 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-slate-300 to-transparent p-2 text-center">
-              <span className="text-lg font-black text-slate-600">2nd</span>
-            </div>
-          </div>
-
-          {/* 1st Place */}
-          <div className="flex flex-1 flex-col items-center">
-            <div className="relative mb-2">
-              <FaCrown
-                className="absolute -top-7 left-1/2 -translate-x-1/2 rotate-[-5deg] text-amber-400 drop-shadow-[0_0_8px_rgba(251,191,36,0.5)]"
-                size={32}
-              />
-              <WinnerAvatar
-                winner={getWinnerByRank(0)}
-                rank={1}
-                size="w-20 sm:w-24"
-                ringColor="ring-amber-400"
-              />
-            </div>
-            <div className="h-24 w-full max-w-[100px] rounded-t-lg bg-gradient-to-b from-amber-400 to-transparent p-2 text-center shadow-lg">
-              <span className="text-2xl font-black text-amber-700">1st</span>
-            </div>
-          </div>
-
-          {/* 3rd Place */}
-          <div className="flex flex-1 flex-col items-center">
-            <WinnerAvatar
-              winner={getWinnerByRank(2)}
-              rank={3}
-              size="w-14 sm:w-16"
-              ringColor="ring-yellow-800"
-            />
-            <div className="mt-3 h-12 w-full max-w-[80px] rounded-t-lg bg-gradient-to-b from-yellow-700/50 to-transparent p-2 text-center">
-              <span className="text-lg font-black text-yellow-900">3rd</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="mt-4 flex justify-between gap-2 border-t border-base-200 pt-4 text-center sm:gap-6">
-          {WinnerStats(getWinnerByRank(1))}
-          {WinnerStats(getWinnerByRank(0))}
-          {WinnerStats(getWinnerByRank(2))}
-        </div>
-      </div>
-    </div>
-  )
-}
   return (
     <div className="template container mx-auto max-w-2xl p-4">
       {/* Header */}
@@ -334,7 +335,6 @@ const renderWinnersPanel = (winnersData, label) => {
           <FaArrowLeft className="text-xl" />
         </button>
         <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
-
       </div>
 
       {/* Type tabs */}

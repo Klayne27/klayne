@@ -3,24 +3,32 @@ import User from "../models/user.model.js";
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 
 const resetMonthlyStats = cron.schedule(
-  "0 0 1 * *",
+  "0 8 1 * *", // 8:00 AM UTC = 00:00 AM UTC-8
   async () => {
-    try {
-      console.log("Starting monthly leaderboard reset...");
+    await performMonthlyReset();
+  },
+  { scheduled: false },
+);
 
-      // Step 1: Get the top 3 users from the just-ended month
-      const topUsers = await User.find({
-        "monthlyStats.studyDuration": { $gt: 0 },
-      })
-        .sort({ "monthlyStats.studyDuration": -1 })
-        .limit(3)
-        .select("monthlyStats");
+export const performMonthlyReset = async () => {
+  try {
+    console.log("Starting Monthly Reset Logic...");
 
-      // Step 2: Prepare and save the data to the new collection
-      const lastMonth = new Date();
-      lastMonth.setMonth(lastMonth.getMonth() - 1);
-      const lastMonthISO = lastMonth.toISOString().slice(0, 7);
+    // 1. Get Top 3 users BEFORE resetting
+    const topUsers = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
+      .sort({ "monthlyStats.studyDuration": -1 })
+      .limit(3);
 
+    // 2. Identify the month that just ended (from UTC-8 perspective)
+    const now = new Date();
+    const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
+    const targetMonth = new Date(pdtDate);
+    targetMonth.setUTCDate(1); // Crucial: Fixes the March 31st overflow bug
+    targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
+    const lastMonthISO = targetMonth.toISOString().slice(0, 7);
+
+    // 3. Save Winners
+    if (topUsers.length > 0) {
       const winnersData = topUsers.map((user, index) => ({
         user: user._id,
         rank: index + 1,
@@ -30,39 +38,34 @@ const resetMonthlyStats = cron.schedule(
       await MonthlyWinners.findOneAndUpdate(
         { month: lastMonthISO },
         { $set: { winners: winnersData } },
-        { upsert: true, new: true }
+        { upsert: true },
       );
-      console.log(`Saved previous month's winners for ${lastMonthISO}.`);
-
-      // Step 3: Reset the monthly stats for all users (your existing logic)
-      const currentMonth = new Date().toISOString().slice(0, 7);
-      const result = await User.updateMany(
-        {
-          $or: [
-            { "monthlyStats.lastResetMonth": { $ne: currentMonth } },
-            { "monthlyStats.lastResetMonth": null },
-          ],
-        },
-        {
-          $set: {
-            "monthlyStats.studyDuration": 0,
-            "monthlyStats.sessionsCompleted": 0,
-            "monthlyStats.xpEarned": 0,
-            "monthlyStats.lastResetMonth": currentMonth,
-            "monthlyStudyStreak": 0,
-            "lastMonthlyStudyDate": null,
-          },
-        }
-      );
-      console.log(`Monthly stats reset for ${result.modifiedCount} users.`);
-    } catch (error) {
-      console.error("Error during monthly leaderboard reset:", error);
+      console.log(`Saved winners for ${lastMonthISO}`);
     }
-  },
-  {
-    scheduled: false,
+
+    // 4. Reset All Users
+    const currentMonthISO = pdtDate.toISOString().slice(0, 7);
+    const result = await User.updateMany(
+      {},
+      {
+        $set: {
+          "monthlyStats.studyDuration": 0,
+          "monthlyStats.sessionsCompleted": 0,
+          "monthlyStats.xpEarned": 0,
+          "monthlyStats.lastResetMonth": currentMonthISO,
+          monthlyStudyStreak: 0,
+          lastMonthlyStudyDate: null,
+        },
+      },
+    );
+
+    console.log(`Reset successful for ${result.modifiedCount} users.`);
+    return { success: true, month: lastMonthISO };
+  } catch (error) {
+    console.error("Monthly Reset Error:", error);
+    throw error;
   }
-);
+};
 
 // Function to start the cron job
 export const startMonthlyCronJob = () => {

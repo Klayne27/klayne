@@ -12,43 +12,37 @@ const getMondayOfWeek = (date) => {
 };
 
 const resetWeeklyStats = cron.schedule(
-  "0 0 * * 1", // Every Monday at midnight UTC
+  "0 8 * * 1", // Monday at 8:00 AM UTC = Sunday Midnight UTC-8
   async () => {
     try {
-      console.log("Starting weekly leaderboard reset...");
+      const now = new Date();
+      const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
 
-      const lastWeekMonday = new Date();
-      lastWeekMonday.setUTCDate(lastWeekMonday.getUTCDate() - 7);
-      const lastWeekStart = getMondayOfWeek(lastWeekMonday);
+      const lastWeekDate = new Date(pdtDate);
+      lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
+      const lastWeekStart = getMondayOfWeek(lastWeekDate);
 
-      // Save top 3 from the week that just ended
-      const topUsers = await User.find({
-        "weeklyStats.studyDuration": { $gt: 0 },
-        "weeklyStats.weekStart": lastWeekStart,
-      })
+      const topUsers = await User.find({ "weeklyStats.studyDuration": { $gt: 0 } })
         .sort({ "weeklyStats.studyDuration": -1 })
-        .limit(3)
-        .select("weeklyStats");
+        .limit(3);
 
-      const winnersData = topUsers.map((user, index) => ({
-        user: user._id,
-        rank: index + 1,
-        studyDuration: user.weeklyStats.studyDuration,
-      }));
+      if (topUsers.length > 0) {
+        const winnersData = topUsers.map((user, index) => ({
+          user: user._id,
+          rank: index + 1,
+          studyDuration: user.weeklyStats.studyDuration,
+        }));
 
-      if (winnersData.length > 0) {
         await WeeklyWinners.findOneAndUpdate(
           { weekStart: lastWeekStart },
           { $set: { winners: winnersData } },
-          { upsert: true, new: true },
+          { upsert: true },
         );
-        console.log(`Saved weekly winners for week of ${lastWeekStart}.`);
       }
 
-      // Reset weekly stats for all users whose weekStart is not the new week
-      const newWeekStart = getMondayOfWeek(new Date());
-      const result = await User.updateMany(
-        { "weeklyStats.weekStart": { $ne: newWeekStart } },
+      const newWeekStart = getMondayOfWeek(pdtDate);
+      await User.updateMany(
+        {},
         {
           $set: {
             "weeklyStats.studyDuration": 0,
@@ -58,9 +52,8 @@ const resetWeeklyStats = cron.schedule(
           },
         },
       );
-      console.log(`Weekly stats reset for ${result.modifiedCount} users.`);
     } catch (error) {
-      console.error("Error during weekly leaderboard reset:", error);
+      console.error("Weekly Reset Error:", error);
     }
   },
   { scheduled: false },
