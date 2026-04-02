@@ -257,7 +257,15 @@ const PostPage = () => {
     ],
   )
 
-  if (isLoading || isLoadingThread) {
+  // if (isLoading || isLoadingThread) {
+  //   return (
+  //     <div className="flex h-screen w-full flex-1 items-center justify-center">
+  //       <LoadingSpinner size="lg" />
+  //     </div>
+  //   )
+  // }
+
+  if (isLoading && !post) {
     return (
       <div className="flex h-screen w-full flex-1 items-center justify-center">
         <LoadingSpinner size="lg" />
