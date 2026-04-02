@@ -35,7 +35,6 @@ import { useGetPostHistory } from "./postsHooks/useGetPostHistory.js"
 import EditHistoryModal from "./EditHistoryModal.jsx"
 import { FaHistory } from "react-icons/fa"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
-import { useGetPostThread } from "./postsHooks/useGetPostThread.js"
 import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
 
 const Post = ({
@@ -52,10 +51,10 @@ const Post = ({
   const { username, pid } = useParams()
   const [isAnimatingRepost, setIsAnimatingRepost] = useState(false)
   const [isAnimatingLike, setIsAnimatingLike] = useState(false)
-  const [isAnimatingPin, setIsAnimatingPin] = useState(false) // NEW
-  const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false) // NEW
+  const [isAnimatingPin, setIsAnimatingPin] = useState(false)
+  const [isAnimatingBookmark, setIsAnimatingBookmark] = useState(false)
   const [isAnimatingComment, setIsAnimatingComment] = useState(false)
-  const [showEditModal, setShowEditModal] = useState(false) // Local state for the modal
+  const [showEditModal, setShowEditModal] = useState(false)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [showDeletePostModal, setShowDeletePostModal] = useState(false)
 
@@ -103,7 +102,7 @@ const Post = ({
     (pinnedPost) => pinnedPost._id === sourcePost._id,
   )
 
-  const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id // NEW: Check if the original post belongs to the current user
+  const isMyOriginalPost = authUser && originalPostOwner && authUser._id === originalPostOwner._id
   const hasEditHistory = sourcePost.editHistory && sourcePost.editHistory.length > 0
 
   const { toggleBookmark, isBookmarking } = useToggleBookmarks(currentProfileUsername)
@@ -112,7 +111,6 @@ const Post = ({
   const { likePost, isLiking } = useLikePost(username)
   const { deletePost, isDeleting } = useDeletePosts()
   const { pinUnpinPost, isPinning } = usePinPost()
-  const { ancestors, isLoading: isLoadingThread } = useGetPostThread(post._id)
 
   const { follow, isPending: isFollowingOrUnfollowing } = useFollow()
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
@@ -122,9 +120,9 @@ const Post = ({
   const formattedDate = formatPostDate(displayTimestamp)
   const isMainPost = pid === sourcePost._id
 
-  const { history, isLoadingHistory, isHistoryError, historyError } = useGetPostHistory(
+  const { history, isLoadingHistory } = useGetPostHistory(
     isHistoryModalOpen ? post._id : null,
-  ) // Only fetch if modal is open
+  )
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()

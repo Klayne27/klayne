@@ -15,7 +15,6 @@ const PublicCompletedTodosPage = () => {
     isFetchingNextPage,
   } = useGetPublicCompletedTodos()
 
-
   const { ref, inView } = useInView()
 
   useEffect(() => {

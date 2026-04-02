@@ -72,7 +72,7 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
 
   // Display the specific message if it exists
   if (message && combinedPosts?.length === 0) {
-    return <p className="my-4 text-center text-gray-500">{message}</p>
+    return <p className="py-16 text-center text-gray-500">{message}</p>
   }
 
   if (isLoading) {

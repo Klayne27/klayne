@@ -7,9 +7,9 @@ import ProfileHeaderSkeleton from "../components/skeletons/ProfileHeaderSkeleton
 import EditProfileModal from "../components/common/EditProfileModal"
 import FollowListModal from "../components/common/FollowListModal"
 
-import { FaArrowLeft, FaGraduationCap, FaWrench } from "react-icons/fa6"
+import { FaArrowLeft, FaGraduationCap } from "react-icons/fa6"
 import { IoCalendarOutline } from "react-icons/io5"
-import { MdBlock, MdDeleteForever, MdEdit, MdLocalPolice, MdSchool } from "react-icons/md"
+import { MdBlock, MdDeleteForever, MdEdit, MdSchool } from "react-icons/md"
 import { formatMemberSinceDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useUpdateUserProfile } from "../features/users/usersHooks/useUpdateUserProfile"
@@ -31,7 +31,7 @@ import { RiLockFill } from "react-icons/ri"
 import PostModal from "../features/posts/PostModal.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { BiHealth } from "react-icons/bi"
-import { PiChefHatFill, PiLinkSimpleBold } from "react-icons/pi"
+import { PiLinkSimpleBold } from "react-icons/pi"
 import ReactCalendarHeatmap from "react-calendar-heatmap"
 import { Tooltip } from "react-tooltip"
 
@@ -59,9 +59,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const [coverImg, setCoverImg] = useState(null)
   const [profileImg, setProfileImg] = useState(null)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
-  const [showUnfollowModal, setShowUnfollowModal] = useState(false) // New state for unfollow modal
-  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false) // NEW STATE for delete modal
-  const [userToUnfollow, setUserToUnfollow] = useState(null) // State to hold user info for unfollow modal
+  const [showUnfollowModal, setShowUnfollowModal] = useState(false)
+  const [showDeleteUserModal, setShowDeleteUserModal] = useState(false)
+  const [userToUnfollow, setUserToUnfollow] = useState(null)
   const navigate = useNavigate()
 
   const [userPostsCount, setUserPostsCount] = useState(0)
@@ -75,7 +75,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   const { follow, isPending } = useFollow()
 
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
-  const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser() // USE NEW HOOK
+  const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser()
 
   const { userProfile, isLoading, isRefetching, isError, error, isBlockedByYou, hasBlockedYou } =
     useGetUserProfile(username)
@@ -93,7 +93,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     return dates
   }
 
-  // 2. Map your existing data into a full calendar year
   const allYearDates = getDatesInRange(new Date("2026-01-01"), new Date("2026-12-31"))
 
   const heatmapData = allYearDates.map((dateStr) => {
@@ -139,7 +138,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const handleConfirmDeleteUser = () => {
     if (userProfile?._id) {
-      adminDeleteUser(userProfile._id) // Call the new mutation hook
+      adminDeleteUser(userProfile._id)
       closeDeleteUserModal()
     }
   }
@@ -159,7 +158,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     blockUnblockUser(userProfile._id)
   }
 
-  // New functions for Unfollow Modal
   const openUnfollowModal = (userToUnfollow) => {
     setUserToUnfollow(userToUnfollow)
     setShowUnfollowModal(true)
@@ -172,7 +170,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const handleConfirmUnfollow = () => {
     if (userToUnfollow) {
-      follow(userToUnfollow._id) // This will unfollow the user
+      follow(userToUnfollow._id)
       closeUnfollowModal()
     }
   }
@@ -197,7 +195,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
       return
     }
 
-    // Add the new loading state to the check
     if (isLoadingConversationStatus || isCreatingConversation) {
       return
     }
@@ -328,7 +325,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               />
               <div className="avatar absolute -bottom-16 left-4">
                 <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
-                  {/* <Link to={`/images/${userProfile?.profileImg?._id}`}> */}
                   <img
                     src={getOptimizedImageUrl(
                       profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
@@ -339,7 +335,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
                     loading="lazy"
                   />
-                  {/* </Link> */}
                   {isMyProfile && (
                     <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
                       <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />
@@ -357,7 +352,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   Edit profile
                 </button>
               )}
-              {/* ADMIN DELETE BUTTON - ONLY VISIBLE IF currentUser IS ADMIN AND NOT viewing their own profile */}
               {isAdminUser && !isMyProfile && userProfile && (
                 <button
                   onClick={openDeleteUserModal}
@@ -397,23 +391,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </button>
               )}
 
-              {/* {!isMyProfile && !amIFollowing && !isBlockingRelationship && (
-                <button
-                  onClick={handleMessageClick}
-                  className="hidden p-1 md:p-2 border rounded-full hover:bg-secondary transition duration-200 z-20 md:text-md text-xs"
-                  disabled={isBlockingRelationship}
-                >
-                  <CiMail size={20} strokeWidth={1} />
-                </button>
-              )} */}
-
-              {/* Follow/Unfollow Button - FIXED WIDTH */}
               {!isMyProfile && !isBlockingRelationship && (
                 <FollowButton
                   user={userProfile}
                   isFollowing={amIFollowing}
                   currentUserId={authUser?._id}
-                  openUnfollowModal={openUnfollowModal} // Pass the new prop
+                  openUnfollowModal={openUnfollowModal} 
                 />
               )}
 
@@ -423,17 +406,14 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   onClick={async () => {
                     const updatePayload = {}
                     if (profileImg !== null) {
-                      // Only add if a new profile image was selected
                       updatePayload.profileImg = profileImg
                     }
                     if (coverImg !== null) {
-                      // Only add if a new cover image was selected
                       updatePayload.coverImg = coverImg
                     }
 
-                    await updateProfile(updatePayload) // Send only the relevant image data
+                    await updateProfile(updatePayload) 
 
-                    // Reset local states after successful update
                     setProfileImg(null)
                     setCoverImg(null)
                   }}
@@ -477,7 +457,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     <>
                       <PiLinkSimpleBold className="size-4 text-slate-500" />
                       <a
-                        href={getFullProfileLink(userProfile?.link)} // Use the new function for the href
+                        href={getFullProfileLink(userProfile?.link)} 
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-primary hover:underline"
@@ -575,7 +555,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       startDate={new Date("2026-01-01")}
                       endDate={new Date("2026-12-31")}
                       values={heatmapData}
-                      gutterSize={3} // Increases the space between the rounded squares
+                      gutterSize={3}
                       classForValue={(value) => {
                         if (!value || !value.count) return "color-empty"
                         const scale = Math.ceil(value.count / 2)
@@ -586,7 +566,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                         const date = value?.date
                         const formattedDate = date ? formatHeatmapDate(date) : "Unknown date"
 
-                        // 2. Handle the "Empty" case
                         if (!value || !value.count) {
                           return {
                             "data-tooltip-id": "study-tooltip",
@@ -594,7 +573,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                           }
                         }
 
-                        // 3. Handle the "Active" case
                         const timeLabel = formatStudyTime(value.duration || 0)
                         const sessionLabel = value.count === 1 ? "session" : "sessions"
 
@@ -605,7 +583,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       }}
                     />
 
-                    {/* Ensure the Tooltip component is present below the Heatmap */}
                     <Tooltip
                       id="study-tooltip"
                       className="z-50 !opacity-100 shadow-xl"

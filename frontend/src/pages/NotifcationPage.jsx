@@ -93,8 +93,6 @@ const NotificationPage = () => {
   }
 
   const getNotificationMessage = (notification) => {
-    console.log(notification);
-    // Trust the interaction flag first
     const isAnon = notification.isAnonymousInteraction
     const displayUsername = isAnon ? "Anonymous" : notification.from?.username
 
@@ -154,16 +152,9 @@ const NotificationPage = () => {
 
         {isLoading && (
           <div className="mt-4">
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
-            <NotificationsSkeleton />
+            {Array.from({ length: 10 }).map((_, i) => (
+              <NotificationsSkeleton key={i} />
+            ))}
           </div>
         )}
 
@@ -201,7 +192,7 @@ const NotificationPage = () => {
                       <img
                         src={
                           isAnon
-                            ? "/avatar-placeholder.png" // Force placeholder for anonymous
+                            ? "/avatar-placeholder.png"
                             : getOptimizedImageUrl(
                                 notification.from?.profileImg?.imageUrl ||
                                   "/avatar-placeholder.png",
@@ -218,14 +209,10 @@ const NotificationPage = () => {
                       <span
                         className={`font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                         onClick={(e) =>
-                          !isAnon
-                            ? handleProfileClick(e, notification.from?.username)
-                            : null
+                          !isAnon ? handleProfileClick(e, notification.from?.username) : null
                         }
                       >
-                        {isAnon
-                          ? "Anonymous"
-                          : notification.from?.fullName}
+                        {isAnon ? "Anonymous" : notification.from?.fullName}
                       </span>
 
                       {/* Only show verification badges if NOT anonymous */}

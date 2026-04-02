@@ -16,9 +16,9 @@ export const useGetPosts = ({ feedType, username = null }) => {
       case "posts":
         return `/api/posts/user/${username}`
       case "likes":
-        return `/api/posts/likes/${username}`
+        return `/api/posts/likes/user/${username}`
       case "userReplies":
-        return `/api/posts/replies/${username}`
+        return `/api/posts/replies/user/${username}`
       default:
         return "/api/posts/all"
     }

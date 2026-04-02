@@ -38,13 +38,9 @@ const PostPage = () => {
 
   const isMobile = useIsMobile()
 
-  // ── Data fetching ──────────────────────────────────────────────────────────
-  // The hero post (same hook you already have)
-  const { post, isLoading, isError, error, refetch: refetchPost } = useGetPost(pid)
-  // Ancestor chain above the hero
+  const { post, isLoading, refetch: refetchPost } = useGetPost(pid)
   const { ancestors, isLoading: isLoadingThread } = useGetPostThread(pid)
 
-  // Replies below the hero
   const {
     replies,
     isLoading: isLoadingReplies,
@@ -54,13 +50,10 @@ const PostPage = () => {
     refetch: refetchReplies,
   } = useGetReplies(pid)
 
-  // Mutation
   const { createReply, isCreatingReply } = useCreateReply(pid)
 
-  // The actual post data to display (unwrap reposts the same way you do now)
   const displayPost = post?.repostedFrom || post
 
-  // ── Textarea auto-height ───────────────────────────────────────────────────
   const adjustTextareaHeight = useCallback(() => {
     const textarea = replyInputRef.current
     if (textarea) {
@@ -79,15 +72,6 @@ const PostPage = () => {
     adjustTextareaHeight()
   }, [replyInput, adjustTextareaHeight])
 
-  // ── Navigation guards ──────────────────────────────────────────────────────
-  // useEffect(() => {
-  //   if (!isLoading && (isError || !post)) {
-  //     showAppToast(error?.message || "Post not found.", "error")
-  //     navigate("/", { replace: true })
-  //   }
-  // }, [isLoading, isError, error, post, navigate])
-
-  // Refetch when pid changes (navigating from reply → its own page)
   useEffect(() => {
     if (pid) {
       refetchPost()
@@ -95,7 +79,6 @@ const PostPage = () => {
     }
   }, [pid, refetchPost, refetchReplies])
 
-  // ── Infinite scroll ────────────────────────────────────────────────────────
   useEffect(() => {
     const el = observerTarget.current
     if (!el || !hasNextPage || isFetchingNextPage) return
@@ -109,7 +92,6 @@ const PostPage = () => {
     return () => observer.disconnect()
   }, [fetchNextPage, hasNextPage, isFetchingNextPage, pid])
 
-  // ── Media handlers ─────────────────────────────────────────────────────────
   const handlePaste = usePasteHandler({
     inputRef: replyInputRef,
     input: replyInput,
@@ -136,7 +118,6 @@ const PostPage = () => {
     if (replyFileInputRef.current) replyFileInputRef.current.value = ""
   }
 
-  // ── Mention handlers ───────────────────────────────────────────────────────
   const handleReplyTextChange = (e) => {
     const newText = e.target.value
     setReplyInput(newText)
@@ -181,7 +162,6 @@ const PostPage = () => {
     [replyInput],
   )
 
-  // ── Submit ─────────────────────────────────────────────────────────────────
   const handleSubmitReply = useCallback(
     async (e) => {
       e.preventDefault()
@@ -280,10 +260,8 @@ const PostPage = () => {
   }
 
 
-  // ── Render ─────────────────────────────────────────────────────────────────
   return (
     <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">
-      {/* ── Header ── */}
       <div className="flex items-center gap-2 border-b border-accent px-3 py-2 md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
@@ -294,7 +272,6 @@ const PostPage = () => {
         <h1 className="flex-1 truncate text-lg font-bold md:text-xl">Post</h1>
       </div>
 
-      {/* ── Ancestor thread (context above the hero) ── */}
       {ancestors.length > 0 && (
         <div>
           {ancestors.map((ancestor, index) => (
@@ -306,15 +283,12 @@ const PostPage = () => {
               index={index}
             />
           ))}
-          {/* Hero gets a line above its avatar */}
           <HeroPost ref={heroRef} post={displayPost} hasLineAbove={true} />
         </div>
       )}
 
-      {/* ── Hero post ── */}
       {ancestors.length === 0 && <HeroPost ref={heroRef} post={displayPost} />}
 
-      {/* ── Reply input ── */}
       {authUser && (
         <form
           onSubmit={handleSubmitReply}
@@ -376,7 +350,6 @@ const PostPage = () => {
                 </div>
               )}
 
-              {/* Mention suggestions */}
               {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
                 <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-accent bg-base-200 shadow-lg">
                   {isLoadingSuggestedUsers ? (
@@ -415,7 +388,6 @@ const PostPage = () => {
             </div>
           </div>
 
-          {/* Media preview */}
           {replyPreviewImage && (
             <div className="relative ml-12 mt-2 size-40 self-start">
               {replySelectedFile.type.startsWith("image/") ? (
@@ -446,7 +418,6 @@ const PostPage = () => {
         </form>
       )}
 
-      {/* ── Replies list ── */}
       <div className="flex flex-col">
         {isLoadingReplies ? (
           <div className="flex h-full flex-col items-center gap-4 p-2 md:gap-14 md:p-4">
@@ -456,10 +427,8 @@ const PostPage = () => {
           <>
             {replies.map((reply) => (
               <div key={reply._id}>
-                {/* The reply itself — has a line below if it has a first child */}
                 <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
 
-                {/* First child reply — connected by the line above */}
                 {reply.firstChildReply && (
                   <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />
                 )}

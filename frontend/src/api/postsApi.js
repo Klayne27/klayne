@@ -12,7 +12,7 @@ export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
 }
 
 export const getPostRepliesApi = async ({ queryKey, pageParam = 1 }) => {
-  const [, , postId] = queryKey
+  const [, ,postId] = queryKey
   const res = await fetch(`${BASE_URL}/replies/${postId}?page=${pageParam}&limit=12`)
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to fetch replies")

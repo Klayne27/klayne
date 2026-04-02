@@ -42,7 +42,8 @@ export const getPostThread = async (req, res) => {
           "username fullName isVerified isGoldVerified  profileImg badges preferredBadge",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate({ path: "image", select: "imageUrl" });
+      .populate({ path: "image", select: "imageUrl" })
+      .lean()
 
     if (!post) return res.status(404).json({ error: "Post not found." });
 
@@ -58,7 +59,8 @@ export const getPostThread = async (req, res) => {
             "username fullName isVerified isGoldVerified  profileImg badges preferredBadge",
           populate: { path: "profileImg", select: "imageUrl" },
         })
-        .populate({ path: "image", select: "imageUrl" });
+        .populate({ path: "image", select: "imageUrl" })
+        .lean()
 
       if (!parent) break;
       ancestors.unshift(parent); // prepend so order is top → current

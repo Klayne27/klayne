@@ -39,7 +39,6 @@ export const usePrivateChatSocketEvents = (
             }),
           )
 
-          // Only update if we actually changed some messages
           if (updatedCount > 0) {
             return { ...oldData, pages: updatedPages }
           }
@@ -61,19 +60,16 @@ export const usePrivateChatSocketEvents = (
           return { ...oldData, pages: updatedPages }
         })
       }
-      // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
     },
     [conversationId, queryClient],
   )
 
-  // Remove handleTyping and handleStopTyping entirely, add this instead:
   const handleTypingUpdate = useCallback(
     ({ conversationId: typingConvId, typingUsers: incomingTypingUsers }) => {
       if (typingConvId !== conversationId) return
 
-      // Filter out the current user, same as public chat does
       const filtered = incomingTypingUsers.filter((u) => u.userId !== currentUserId?.toString())
-      setIsTypingOtherUser(filtered) // now an array, not a boolean
+      setIsTypingOtherUser(filtered) 
     },
     [conversationId, currentUserId, setIsTypingOtherUser],
   )
@@ -113,14 +109,12 @@ export const usePrivateChatSocketEvents = (
           return [updatedConversation, ...oldConversations]
         }
       })
-      // queryClient.invalidateQueries({ queryKey: conversationKeys.list() })
     },
     [queryClient],
   )
 
   const handleMessageReacted = useCallback(
     ({ actorId, updatedMessage }) => {
-      // You should only update the messages for the active conversation
       if (actorId === currentUser._id) {
         return
       }
@@ -145,7 +139,6 @@ export const usePrivateChatSocketEvents = (
 
   const handlePinnedMessage = useCallback(
     (newPinData) => {
-      // Strict validation of the incoming data structure
       if (
         !newPinData ||
         !newPinData.pinnedBy ||
@@ -158,7 +151,6 @@ export const usePrivateChatSocketEvents = (
         return
       }
 
-      // Validate ObjectId format
       const isValidMessageId = /^[0-9a-fA-F]{24}$/.test(newPinData.message)
       const isValidPinnedById = /^[0-9a-fA-F]{24}$/.test(newPinData.pinnedBy._id)
 
@@ -170,11 +162,9 @@ export const usePrivateChatSocketEvents = (
         return
       }
 
-      // Update the query cache for pinned messages
       queryClient.setQueryData(messageKeys.pinned(conversationId), (oldData) => {
         const existingPins = oldData || []
 
-        // Check for duplicates using string comparison
         const isAlreadyPinned = existingPins.some(
           (pin) => pin && pin.message && pin.message.toString() === newPinData.message.toString(),
         )
@@ -183,7 +173,6 @@ export const usePrivateChatSocketEvents = (
           return existingPins
         }
 
-        // Create a properly structured pin object
         const normalizedPinData = {
           message: newPinData.message,
           pinnedBy: {
@@ -197,7 +186,6 @@ export const usePrivateChatSocketEvents = (
         return [...existingPins, normalizedPinData]
       })
 
-      // Also show a success toast
       showAppToast(`Message pinned by ${newPinData.pinnedBy.username}`, "success")
     },
     [queryClient, conversationId],

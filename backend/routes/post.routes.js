@@ -35,7 +35,6 @@ import {
 
 const router = express.Router();
 
-// All routes below require authentication
 router.use(protectRoute);
 
 // --- CORE CRUD & POST ACTIONS ---
@@ -65,12 +64,13 @@ router.post("/vent", createVentPost);
 
 // --- USER SPECIFIC ROUTES ---
 router.get("/user/:username", getUserPosts);
-router.get("/likes/:username", getLikedPosts);
+router.get("/likes/user/:username", getLikedPosts);
 router.get("/replies/user/:username", getUserReplies); // Renamed slightly for clarity
 
 // --- PINNED POSTS ---
 router.get("/profile/:username/pinned-posts", getPinnedPosts);
-router.route("/pin/:postId")
+router
+  .route("/pin/:postId")
   .post(pinUnpinPost)
   .delete(pinUnpinPost);
 

@@ -18,10 +18,6 @@ export default function JoinGroupPage() {
 
   return (
     <div className="flex h-screen items-center justify-center">
-      {/* If isJoining is true, show the spinner. 
-         If it's false, it means we are either waiting to start 
-         OR we are currently redirecting.
-      */}
       <div className="flex flex-col items-center gap-3">
         {isJoining ? (
           <>
