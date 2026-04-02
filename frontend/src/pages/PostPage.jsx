@@ -62,22 +62,42 @@ const PostPage = () => {
     }
   }, [])
 
+  // useEffect(() => {
+  //   if (heroRef.current && !isLoading ) {
+  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
+  //   }
+  // }, [isLoading, isLoadingThread, isLoadingReplies])
+
+  // useEffect(() => {
+
+  //   if (!isLoading && heroRef.current) {
+  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
+  //   }
+  // }, [isLoading, pid])
+
   useEffect(() => {
-    if (heroRef.current && !isLoading ) {
-      heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
+    const isMainContentReady = !isLoading && !isLoadingThread
+
+    if (isMainContentReady && heroRef.current) {
+      // Small delay to ensure the DOM has finished painting the ancestors
+      const timeout = setTimeout(() => {
+        heroRef.current?.scrollIntoView({ behavior: "instant", block: "start" })
+      }, 0)
+
+      return () => clearTimeout(timeout)
     }
-  }, [isLoading, isLoadingThread, isLoadingReplies])
+  }, [isLoading, isLoadingThread, pid])
 
   useEffect(() => {
     adjustTextareaHeight()
   }, [replyInput, adjustTextareaHeight])
 
-  useEffect(() => {
-    if (pid) {
-      refetchPost()
-      refetchReplies()
-    }
-  }, [pid, refetchPost, refetchReplies])
+  // useEffect(() => {
+  //   if (pid) {
+  //     refetchPost()
+  //     refetchReplies()
+  //   }
+  // }, [pid, refetchPost, refetchReplies])
 
   useEffect(() => {
     const el = observerTarget.current
@@ -258,7 +278,6 @@ const PostPage = () => {
       </div>
     )
   }
-
 
   return (
     <div className="template mx-auto min-h-screen w-full flex-1 overflow-x-hidden border-accent md:max-w-3xl lg:max-w-4xl">

@@ -10,7 +10,8 @@ export const useGetPostThread = (postId) => {
     queryKey: postKeys.thread(postId),
     queryFn: () => getPostThreadApi(postId),
     enabled: !!postId,
-    // Use initialData to show the post immediately, even if ancestors aren't known yet
+    staleTime: 5 * 60 * 1000, 
+    gcTime: 10 * 60 * 1000, 
     initialData: () => {
       const existingPost = queryClient.getQueryData(postKeys.details(postId))
       if (existingPost) {

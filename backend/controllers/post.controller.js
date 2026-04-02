@@ -43,7 +43,7 @@ export const getPostThread = async (req, res) => {
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
-      .lean()
+      .lean();
 
     if (!post) return res.status(404).json({ error: "Post not found." });
 
@@ -60,7 +60,7 @@ export const getPostThread = async (req, res) => {
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({ path: "image", select: "imageUrl" })
-        .lean()
+        .lean();
 
       if (!parent) break;
       ancestors.unshift(parent); // prepend so order is top → current
@@ -1326,7 +1326,8 @@ export const getFollowingPosts = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "-password",
+        select:
+          "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1336,7 +1337,8 @@ export const getFollowingPosts = async (req, res) => {
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          select:
+            "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",
@@ -1350,7 +1352,8 @@ export const getFollowingPosts = async (req, res) => {
         path: "parentPost",
         populate: {
           path: "user",
-          select: "-password",
+          select:
+            "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
         },
       })
       .lean();
@@ -1482,7 +1485,8 @@ export const getUserPosts = async (req, res) => {
       .limit(limit)
       .populate({
         path: "user",
-        select: "-password",
+        select:
+          "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1493,7 +1497,8 @@ export const getUserPosts = async (req, res) => {
         populate: [
           {
             path: "user",
-            select: "-password",
+            select:
+              "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
             populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
           {
@@ -1707,7 +1712,8 @@ export const getPost = async (req, res) => {
     const post = await Post.findById(postId)
       .populate({
         path: "user",
-        select: "-password",
+        select:
+          "username fullName profileImg badges isVerified isGoldVerified preferredBadge",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1718,7 +1724,8 @@ export const getPost = async (req, res) => {
         populate: [
           {
             path: "user",
-            select: "-password",
+            select:
+              "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
             populate: {
               path: "profileImg coverImg",
               select: "imageUrl publicId",
@@ -1811,7 +1818,8 @@ export const getBookmarkedPosts = async (req, res) => {
       .limit(parsedLimit)
       .populate({
         path: "user",
-        select: "-password",
+        select:
+          "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -1821,7 +1829,8 @@ export const getBookmarkedPosts = async (req, res) => {
         path: "repostedFrom",
         populate: {
           path: "user",
-          select: "-password",
+          select:
+            "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -1834,7 +1843,8 @@ export const getBookmarkedPosts = async (req, res) => {
         path: "parentPost",
         populate: {
           path: "user",
-          select: "-password",
+          select:
+            "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
         },
       })
       .populate("image", "imageUrl")
@@ -1878,7 +1888,8 @@ export const getPinnedPosts = async (req, res) => {
         populate: [
           {
             path: "user",
-            select: "-password",
+            select:
+              "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
             populate: {
               path: "profileImg",
               select: "imageUrl",
@@ -1895,7 +1906,8 @@ export const getPinnedPosts = async (req, res) => {
             populate: [
               {
                 path: "user",
-                select: "-password",
+                select:
+                  "username fullName profileImg badges isAdmin isVerified isGoldVerified preferredBadge",
                 populate: {
                   path: "profileImg",
                   select: "imageUrl",

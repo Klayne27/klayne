@@ -254,7 +254,6 @@ export const createVentPostApi = async ({ text, img, video, isAnonymous, pollOpt
 }
 
 export const editPostApi = async ({ postId, postData }) => {
-  console.log(postData);
   const res = await fetch(`${BASE_URL}/edit/${postId}`, {
     method: "PUT",
     headers: {

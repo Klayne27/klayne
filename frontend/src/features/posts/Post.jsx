@@ -36,6 +36,10 @@ import EditHistoryModal from "./EditHistoryModal.jsx"
 import { FaHistory } from "react-icons/fa"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
 import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
+import { useGetPostThread } from "./postsHooks/useGetPostThread.js"
+import { useQueryClient } from "@tanstack/react-query"
+import { postKeys } from "./postsHooks/postKeys.js"
+import { getPostThreadApi } from "../../api/postsApi.js"
 
 const Post = ({
   post,
@@ -59,6 +63,7 @@ const Post = ({
   const [showDeletePostModal, setShowDeletePostModal] = useState(false)
 
   const { setEditPostModalData } = useAppStore()
+  const queryClient = useQueryClient()
 
   const { pathname } = useLocation()
 
@@ -69,6 +74,7 @@ const Post = ({
   const initialClientX = useRef(0)
 
   const { toggleMenu, showMenu, setShowMenu, menuRef } = useDropdownMenu()
+  // const { ancestors, isLoading: isLoadingThread } = useGetPostThread(post._id)
 
   const {
     modalState,
@@ -120,12 +126,18 @@ const Post = ({
   const formattedDate = formatPostDate(displayTimestamp)
   const isMainPost = pid === sourcePost._id
 
-  const { history, isLoadingHistory } = useGetPostHistory(
-    isHistoryModalOpen ? post._id : null,
-  )
+  const { history, isLoadingHistory } = useGetPostHistory(isHistoryModalOpen ? post._id : null)
 
   const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
     useTouchHoverEffect()
+
+  const handlePrefetch = () => {
+    queryClient.prefetchQuery({
+      queryKey: postKeys.thread(post._id),
+      queryFn: () => getPostThreadApi(post._id),
+      staleTime: 5 * 60 * 1000,
+    })
+  }
 
   const navigateToPostPage = (e) => {
     if (isHistoryModalOpen || showEditModal) {
@@ -344,6 +356,7 @@ const Post = ({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
+      onMouseEnter={handlePrefetch}
     >
       {hasLineAbove && index > 0 && (
         <div className="ml-[19px] flex h-3 w-0.5 items-center bg-gray-600/50" />
