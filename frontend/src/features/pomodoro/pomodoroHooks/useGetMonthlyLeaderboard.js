@@ -8,7 +8,7 @@ export const useGetMonthlyLeaderboard = (page, options) => {
     queryFn: () => getMonthlyLeaderboardApi(page),
     ...options
   })
-
+  
   return {
     leaderboard: data?.leaderboard,
     totalPages: data?.totalPages,

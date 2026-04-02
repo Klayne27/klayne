@@ -3,10 +3,11 @@ import { getPreviousMonthWinnersApi } from "../../../api/leaderboardApi"
 import { pomodoroKeys } from "./pomodoroKeys"
 
 export const useGetPreviousMonthWinners = () => {
-  const { data: previousMonth, isLoading: isLoadingPreviousMonthWinners } = useQuery({
+  const { data: previousMonthWinners, isLoading: isLoadingPreviousMonthWinners } = useQuery({
     queryKey: pomodoroKeys.leaderboardMonthlyWinners(),
     queryFn: getPreviousMonthWinnersApi,
   })
 
-  return { previousMonth, isLoadingPreviousMonthWinners }
+
+  return { previousMonthWinners, isLoadingPreviousMonthWinners }
 }

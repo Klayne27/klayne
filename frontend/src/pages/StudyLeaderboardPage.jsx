@@ -8,7 +8,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
 import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
 import { useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetWeeklyLeaderboard"
-import { useGetPreviousMonthWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWinners"
+import { useGetPreviousMonthWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousMonthWinners.js"
 import { useGetPreviousWeekWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWeekWinners"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
@@ -53,6 +53,7 @@ function StudyLeaderboardPage() {
   const weeklyLeaderboard = useGetWeeklyLeaderboard(page, { enabled: leaderboardType === "weekly" })
 
   const { previousMonthWinners } = useGetPreviousMonthWinners()
+  console.log(previousMonthWinners);
   const { previousWeekWinners } = useGetPreviousWeekWinners()
 
   const currentLeaderboard =

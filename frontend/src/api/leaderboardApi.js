@@ -22,7 +22,7 @@ export const getMonthlyLeaderboardApi = async (page = 1) => {
 
 
 export const getPreviousMonthWinnersApi = async () => {
-  const res = await fetch(`${BASE_URL}/previous-winners`)
+  const res = await fetch(`${BASE_URL}/monthly/previous-winners`)
 
   if (!res.ok) {
     throw new Error("Failed to fetch previous winners")
