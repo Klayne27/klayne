@@ -74,7 +74,7 @@ const Post = ({
   const initialClientX = useRef(0)
 
   const { toggleMenu, showMenu, setShowMenu, menuRef } = useDropdownMenu()
-  // const { ancestors, isLoading: isLoadingThread } = useGetPostThread(post._id)
+  const { ancestors, isLoading: isLoadingThread } = useGetPostThread(post._id)
 
   const {
     modalState,
@@ -356,7 +356,7 @@ const Post = ({
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
-      onMouseEnter={handlePrefetch}
+      // onMouseEnter={handlePrefetch}
     >
       {hasLineAbove && index > 0 && (
         <div className="ml-[19px] flex h-3 w-0.5 items-center bg-gray-600/50" />
