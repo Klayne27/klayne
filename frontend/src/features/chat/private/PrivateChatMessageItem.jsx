@@ -25,7 +25,7 @@ import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
 import { usePinMessage } from "./privateChatHooks/usePinMessage"
-import { useAdminDeleteMessage } from "../group/groupChatHooks/useAdminDeleteMessage"
+import { useAdminDeleteMessage } from "../group/groupChatHooks/useGroupMutations"
 
 const PrivateChatMessageItem = ({
   message,

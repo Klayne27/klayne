@@ -4,20 +4,24 @@ import { useParams, useNavigate, Link } from "react-router-dom"
 import { IoArrowBack, IoCopy } from "react-icons/io5"
 import { FaTrashCan, FaDoorOpen } from "react-icons/fa6"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
-import { useGetGroup } from "../features/chat/group/groupChatHooks/useGetGroup"
-import { useUpdateGroup } from "../features/chat/group/groupChatHooks/useUpdateGroup"
-import { useKickMember } from "../features/chat/group/groupChatHooks/useKickMember"
-import { useUpdateMemberRole } from "../features/chat/group/groupChatHooks/useUpdateMemberRole"
-import { useGetJoinRequests } from "../features/chat/group/groupChatHooks/useGetJoinRequests"
-import { useHandleJoinRequest } from "../features/chat/group/groupChatHooks/useHandleJoinRequest"
-import { useLeaveGroup } from "../features/chat/group/groupChatHooks/useLeaveGroup"
-import { useDeleteGroup } from "../features/chat/group/groupChatHooks/useDeleteGroup"
-import { useGetMembers } from "../features/chat/group/groupChatHooks/useGetMembers"
 import { regenerateInviteCodeApi } from "../api/groupApi"
 import { showAppToast } from "../utils/showAppToast"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import ConfirmationModal from "../components/common/ConfirmationModal"
+import {
+  useGetGroup,
+  useGetJoinRequests,
+  useGetMembers,
+} from "../features/chat/group/groupChatHooks/useGroupQueries"
+import {
+  useDeleteGroup,
+  useHandleJoinRequest,
+  useKickMember,
+  useLeaveGroup,
+  useUpdateGroup,
+  useUpdateMemberRole,
+} from "../features/chat/group/groupChatHooks/useGroupMutations"
 
 export default function GroupSettingsPage() {
   const { conversationId } = useParams()

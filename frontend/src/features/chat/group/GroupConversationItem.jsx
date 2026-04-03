@@ -8,8 +8,6 @@ import { FaDoorOpen } from "react-icons/fa6"
 import { IoSettingsOutline } from "react-icons/io5"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { useLeaveGroup } from "./groupChatHooks/useLeaveGroup"
-import { useDeleteGroup } from "./groupChatHooks/useDeleteGroup"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 import DropdownMenu from "../../../components/common/DropdownMenu"
@@ -17,6 +15,7 @@ import ConfirmationModal from "../../../components/common/ConfirmationModal"
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import { TbUser } from "react-icons/tb"
+import { useDeleteGroup, useLeaveGroup } from "./groupChatHooks/useGroupMutations"
 
 function GroupConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
