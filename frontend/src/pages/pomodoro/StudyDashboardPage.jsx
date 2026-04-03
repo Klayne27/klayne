@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { lazy, Suspense, useState } from "react"
 import { FaCog, FaCheckCircle, FaHourglassHalf, FaTachometerAlt, FaFire } from "react-icons/fa"
 import { FaArrowLeft, FaEllipsis } from "react-icons/fa6"
 import { TbList, TbListCheck } from "react-icons/tb"
@@ -12,13 +12,18 @@ import { formatShortDuration, getGreeting } from "../../utils/dashboardUtils"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { BentoCard } from "../../components/common/BentoCard"
 import { StatItem } from "../../components/common/StatItem"
-import BadgeDisplay from "../../components/common/BadgeDisplay"
 import { useDashboardData } from "../../hooks/customHooks/useDashboardData"
-import { GoalProgressCard } from "../../features/study-dashboard/GoalProgressCard"
-import { ChartComponent } from "../../features/study-dashboard/ChartComponent"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useGetAllSessions } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
-import { useGetActiveTodosCount, useGetCompletedTodosCount, useGetCompletedTodosWithDates } from "../../features/todos/todoHooks/useTodoQueries"
+import {
+  useGetActiveTodosCount,
+  useGetCompletedTodosCount,
+  useGetCompletedTodosWithDates,
+} from "../../features/todos/todoHooks/useTodoQueries"
+
+const ChartComponent = lazy(() => import("../../features/study-dashboard/ChartComponent"))
+const GoalProgressCard = lazy(() => import("../../features/study-dashboard/GoalProgressCard"))
+const BadgeDisplay = lazy(() => import("../../components/common/BadgeDisplay"))
 
 const StudyDashboardPage = () => {
   const { authUser } = useAuthUser()
@@ -71,31 +76,31 @@ const StudyDashboardPage = () => {
   }
 
   return (
-    <div className="min-h-screen bg-base-100 p-4 font-sans template">
+    <div className="template min-h-screen bg-base-100 p-4 font-sans">
       <div className="mx-auto max-w-7xl space-y-5">
         {/* Header */}
         <div className="flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-4">
             <button
               onClick={() => navigate(-1)}
-              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
+              className="template rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaArrowLeft className="size-5" />
             </button>
             <div>
-              <h1 className="text-2xl font-bold template">Dashboard</h1>
+              <h1 className="template text-2xl font-bold">Dashboard</h1>
             </div>
           </div>
           <div className="relative flex items-center gap-1">
             <button
               onClick={() => navigate("/study-dashboard/settings")}
-              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
+              className="template rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaCog />
             </button>
             <button
               onClick={() => setOpenProfileDropdown(!openProfileDropdown)}
-              className="rounded-full p-2 template transition-colors hover:bg-gray-700 hover:text-white"
+              className="template rounded-full p-2 transition-colors hover:bg-gray-700 hover:text-white"
             >
               <FaEllipsis />
             </button>
@@ -153,7 +158,7 @@ const StudyDashboardPage = () => {
             </Link>
           </div>
           <div>
-            <h2 className="text-3xl font-bold template">
+            <h2 className="template text-3xl font-bold">
               {getGreeting()}, {authUser.fullName.split(" ")[0]}.
             </h2>
             <p className="text-neutral-400">Track your progress and stay focused</p>
@@ -246,13 +251,17 @@ const StudyDashboardPage = () => {
                   </button>
                 </div>
               </div>
-              <ChartComponent
-                data={chartData}
-                view={studyView}
-                type="time"
-                color="#a855f7"
-                tooltipFormatter={(value) => formatShortDuration(value)}
-              />
+              <Suspense
+                fallback={<div className="h-48 w-full animate-pulse rounded-xl bg-base-300" />}
+              >
+                <ChartComponent
+                  data={chartData}
+                  view={studyView}
+                  type="time"
+                  color="#a855f7"
+                  tooltipFormatter={(value) => formatShortDuration(value)}
+                />
+              </Suspense>
             </div>
           </BentoCard>
 
@@ -300,46 +309,57 @@ const StudyDashboardPage = () => {
                   </button>
                 </div>
               </div>
-              <ChartComponent
-                data={todoChartData}
-                view={todoView}
-                type="count"
-                color="#22c55e"
-                tooltipFormatter={(value) => `${value} todos`}
-              />
+              <Suspense
+                fallback={<div className="h-48 w-full animate-pulse rounded-xl bg-base-300" />}
+              >
+                <ChartComponent
+                  data={todoChartData}
+                  view={todoView}
+                  type="count"
+                  color="#22c55e"
+                  tooltipFormatter={(value) => `${value} todos`}
+                />
+              </Suspense>
             </div>
           </BentoCard>
         </div>
 
         {/* Goal Cards */}
         <div className="grid gap-5 md:grid-cols-3">
-          <GoalProgressCard
-            title="Study Goal"
-            dailyLabel="Daily Study Goal"
-            weeklyLabel="Weekly Study Goal"
-            goalView={studyGoalView}
-            setGoalView={setStudyGoalView}
-            progress={studyGoalProgress}
-            currentCount={formatShortDuration(currentStudyDuration)}
-            currentGoal={currentStudyGoal}
-            color="purple"
-            unit="hours"
-          />
-          <GoalProgressCard
-            title="Todo Goal"
-            dailyLabel="Daily Task Goal"
-            weeklyLabel="Weekly Task Goal"
-            goalView={todoGoalView}
-            setGoalView={setTodoGoalView}
-            progress={todoGoalProgress}
-            currentCount={currentTodoCount}
-            currentGoal={currentTodoGoal}
-            color="green"
-            unit="tasks"
-          />
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-base-300" />}>
+            <GoalProgressCard
+              title="Study Goal"
+              dailyLabel="Daily Study Goal"
+              weeklyLabel="Weekly Study Goal"
+              goalView={studyGoalView}
+              setGoalView={setStudyGoalView}
+              progress={studyGoalProgress}
+              currentCount={formatShortDuration(currentStudyDuration)}
+              currentGoal={currentStudyGoal}
+              color="purple"
+              unit="hours"
+            />
+          </Suspense>
+          <Suspense fallback={<div className="h-64 animate-pulse rounded-xl bg-base-300" />}>
+            <GoalProgressCard
+              title="Todo Goal"
+              dailyLabel="Daily Task Goal"
+              weeklyLabel="Weekly Task Goal"
+              goalView={todoGoalView}
+              setGoalView={setTodoGoalView}
+              progress={todoGoalProgress}
+              currentCount={currentTodoCount}
+              currentGoal={currentTodoGoal}
+              color="green"
+              unit="tasks"
+            />
+          </Suspense>
+
           <BentoCard className="md:col-span-1">
             <h3 className="text-md font-semibold">My Badges</h3>
-            {authUser?.badges && <BadgeDisplay badges={authUser.badges} />}
+            <Suspense fallback={<div className="h-20 animate-pulse rounded-full bg-base-300" />}>
+              {authUser?.badges && <BadgeDisplay badges={authUser.badges} />}
+            </Suspense>
           </BentoCard>
         </div>
       </div>

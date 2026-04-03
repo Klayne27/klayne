@@ -5,7 +5,6 @@ import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
 import CreatePostModal from "./features/posts/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
-import DevlogDetailPage from "./pages/DevlogDetailPage"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
@@ -33,8 +32,10 @@ const PostPage = lazy(() => import("./pages/PostPage"))
 const SearchPage = lazy(() => import("./pages/SearchPage"))
 const TodoPageLayout = lazy(() => import("./pages/todos/TodoPageLayout"))
 const DevlogPage = lazy(() => import("./pages/DevlogPage"))
+const DevlogDetailPage = lazy(() => import("./pages/DevlogDetailPage"))
 const GroupSettingsPage = lazy(() => import("./pages/GroupSettingsPage"))
 const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
+
 
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {

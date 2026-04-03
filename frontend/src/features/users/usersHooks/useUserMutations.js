@@ -271,7 +271,7 @@ export const useUpdatePreferredBadge = () => {
   const { mutate: updateBadge } = useMutation({
     mutationFn: updatePreferredBadgeApi,
     onSuccess: () => {
-      showAppToast("Badge preference updated!", "success") // Invalidate the user query to refetch the new preferredBadge
+      showAppToast("Badge preference updated!", "success")
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
     },
     onError: (error) => {
@@ -340,7 +340,6 @@ export const useVacationMode = () => {
     },
 
     onError: (err, newIsVacationMode, context) => {
-      // Revert the UI to the previous data on failure
       queryClient.setQueryData(["vacationMode"], context.previousVacationMode)
       showAppToast("Failed to toggle vacation mode. Please try again.", "error")
     },

@@ -1,18 +1,19 @@
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  Tooltip,
-} from "recharts"
+// Import from the specific 'es6' paths to help the bundler tree-shake effectively
+import { ResponsiveContainer } from "recharts/es6/component/ResponsiveContainer"
+import { BarChart } from "recharts/es6/chart/BarChart"
+import { Bar } from "recharts/es6/cartesian/Bar"
+import { LineChart } from "recharts/es6/chart/LineChart"
+import { Line } from "recharts/es6/cartesian/Line"
+import { XAxis } from "recharts/es6/cartesian/XAxis"
+import { YAxis } from "recharts/es6/cartesian/YAxis"
+import { Tooltip } from "recharts/es6/component/Tooltip"
+
 import { CustomTooltip } from "../../components/common/CustomToolTip"
 
-export const ChartComponent = ({ data, view, type, color }) => {
+const ChartComponent = ({ data, view, type, color }) => {
   const isWeekly = view === "weekly"
 
+  // Dynamic selection is fine as long as both are imported above
   const Chart = isWeekly ? BarChart : LineChart
   const DataComponent = isWeekly ? Bar : Line
   const bottomValue = isWeekly ? 0 : 5
@@ -22,7 +23,7 @@ export const ChartComponent = ({ data, view, type, color }) => {
       <ResponsiveContainer width="100%" height="100%">
         <Chart data={data} margin={{ top: 10, right: 10, left: 10, bottom: bottomValue }}>
           {!isWeekly ? (
-            <XAxis datakey="name" hide />
+            <XAxis dataKey="name" hide />
           ) : (
             <XAxis dataKey="name" stroke="#525252" axisLine={false} tickLine={false} interval={0} />
           )}
@@ -40,3 +41,5 @@ export const ChartComponent = ({ data, view, type, color }) => {
     </div>
   )
 }
+
+export default ChartComponent
