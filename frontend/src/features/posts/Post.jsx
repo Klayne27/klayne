@@ -34,11 +34,11 @@ import EditHistoryModal from "./EditHistoryModal.jsx"
 import { FaHistory } from "react-icons/fa"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
 import ConfirmationModal from "../../components/common/ConfirmationModal.jsx"
-import { useGetPostThread } from "./postsHooks/useGetPostThread.js"
 import { useQueryClient } from "@tanstack/react-query"
 import { postKeys } from "./postsHooks/postKeys.js"
 import { getPostThreadApi } from "../../api/postsApi.js"
 import { useBlockUnblockUser, useFollow } from "../users/usersHooks/useUserMutations.js"
+import { useGetPostThread } from "./postsHooks/usePostsQueries.js"
 
 const Post = ({
   post,
