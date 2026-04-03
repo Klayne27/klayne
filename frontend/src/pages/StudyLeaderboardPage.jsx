@@ -5,13 +5,10 @@ import { FaArrowLeft, FaClock, FaTrophy, FaCalendar, FaCrown } from "react-icons
 import { FaFire } from "react-icons/fa"
 import { FaCheckCircle } from "react-icons/fa"
 import LoadingSpinner from "../components/common/LoadingSpinner"
-import { useGetTotalLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetTotalLeaderboard"
-import { useGetMonthlyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetMonthlyLeaderboard"
-import { useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/useGetWeeklyLeaderboard"
-import { useGetPreviousMonthWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousMonthWinners.js"
-import { useGetPreviousWeekWinners } from "../features/pomodoro/pomodoroHooks/useGetPreviousWeekWinners"
+
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
+import { useGetMonthlyLeaderboard, useGetPreviousMonthWinners, useGetPreviousWeekWinners, useGetTotalLeaderboard, useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
 
 const WinnerAvatar = ({ winner, rank, size, ringColor }) => (
   <Link

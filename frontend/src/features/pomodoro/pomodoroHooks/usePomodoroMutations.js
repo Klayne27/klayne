@@ -1,5 +1,5 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { endStudySessionApi } from "../../../api/pomodoroApi"
+import { endStudySessionApi, updatePomodoroSettingsApi } from "../../../api/pomodoroApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { pomodoroKeys } from "./pomodoroKeys"
@@ -23,7 +23,7 @@ export const useEndStudySession = () => {
         const newMonthlyStats = { ...oldUser.monthlyStats }
 
         newMonthlyStats.studyDuration += duration
-        newMonthlyStats.sessionsCompleted += 1 
+        newMonthlyStats.sessionsCompleted += 1
 
         return {
           ...oldUser,
@@ -31,7 +31,7 @@ export const useEndStudySession = () => {
           totalSessionsCompleted: newTotalSessionsCompleted,
           monthlyStats: newMonthlyStats,
         }
-      }) 
+      })
 
       return { previousAuthUser }
     },
@@ -50,4 +50,38 @@ export const useEndStudySession = () => {
   })
 
   return { endStudySession }
+}
+
+export const useUpdatePomodoroSettings = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: updateSettings, isPending: isUpdatingSettings } = useMutation({
+    mutationFn: updatePomodoroSettingsApi,
+    onMutate: async (newSettings) => {
+      await queryClient.cancelQueries({ queryKey: pomodoroKeys.settings() })
+
+      const previousSettings = queryClient.getQueryData(pomodoroKeys.settings())
+
+      queryClient.setQueryData(pomodoroKeys.settings(), (oldSettings) => ({
+        ...oldSettings,
+        ...newSettings,
+      }))
+
+      return { previousSettings }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: pomodoroKeys.settings() })
+    },
+    onError: (err, newSettings, context) => {
+      if (context?.previousSettings) {
+        queryClient.setQueryData(pomodoroKeys.settings(), context.previousSettings)
+      }
+      console.error("Failed to update settings. Rolling back.", err)
+    },
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: pomodoroKeys.settings() })
+    },
+  })
+
+  return { updateSettings, isUpdatingSettings }
 }

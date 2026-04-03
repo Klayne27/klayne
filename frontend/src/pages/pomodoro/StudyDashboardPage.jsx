@@ -11,7 +11,6 @@ import { useGoalStore } from "../../store/useGoalStore"
 import { useGetCompletedTodosCount } from "../../features/todos/todoHooks/useGetCompletedTodosCount"
 import { useGetActiveTodosCount } from "../../features/todos/todoHooks/useGetActiveTodosCount"
 import { useGetCompletedTodosWithDates } from "../../features/todos/todoHooks/useGetCompletedTodosWithDates"
-import { useGetAllSessions } from "../../features/pomodoro/pomodoroHooks/useGetAllSessions"
 import { formatShortDuration, getGreeting } from "../../utils/dashboardUtils"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { BentoCard } from "../../components/common/BentoCard"
@@ -21,6 +20,7 @@ import { useDashboardData } from "../../hooks/customHooks/useDashboardData"
 import { GoalProgressCard } from "../../features/study-dashboard/GoalProgressCard"
 import { ChartComponent } from "../../features/study-dashboard/ChartComponent"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useGetAllSessions } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 
 const StudyDashboardPage = () => {
   const { authUser } = useAuthUser()

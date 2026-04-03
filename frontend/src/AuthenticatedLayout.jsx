@@ -8,7 +8,7 @@ import LoadingSpinner from "./components/common/LoadingSpinner"
 import DevlogDetailPage from "./pages/DevlogDetailPage"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
-const PomodoroDashboardPage = lazy(() => import("./pages/pomodoro/PomodoroDashboardPage"))
+const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
 const GoalsPage = lazy(() => import("./pages/pomodoro/GoalsPage"))
 const PublicCompletedTodosPage = lazy(() => import("./pages/todos/PublicCompletedTodosPage"))
 const EditTodoListPage = lazy(() => import("./pages/todos/EditTodoListPage"))
@@ -97,7 +97,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/devlog/:id" element={<DevlogDetailPage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
-              <Route path="/study-dashboard" element={<PomodoroDashboardPage />} />
+              <Route path="/study-dashboard" element={<StudyDashboardPage />} />
               <Route path="/study-activity" element={<StudyActivityPage />} />
               <Route path="/study-leaderboard" element={<StudyLeaderboardPage />} />
               <Route path="/pomodoro-settings" element={<PomodoroSettingsPage />} />

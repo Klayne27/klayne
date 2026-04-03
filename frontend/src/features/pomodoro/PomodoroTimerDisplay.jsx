@@ -1,9 +1,9 @@
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { showAppToast } from "../../utils/showAppToast"
-import { useGetPomodoroSettings } from "./pomodoroHooks/useGetPomodoroSettings"
-import { useUpdatePomodoroSettings } from "./pomodoroHooks/useUpdatePomodoroSettings"
 import { FaBell, FaBellSlash, FaForward } from "react-icons/fa6"
 import { RxReset } from "react-icons/rx"
+import { useUpdatePomodoroSettings } from "./pomodoroHooks/usePomodoroMutations"
+import { useGetPomodoroSettings } from "./pomodoroHooks/usePomodoroQueries"
 
 function PomodoroTimerDisplay({
   isBreak,
