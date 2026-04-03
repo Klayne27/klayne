@@ -5,8 +5,8 @@ import { FaUser } from "react-icons/fa"
 import { MdPassword } from "react-icons/md"
 import { MdDriveFileRenameOutline } from "react-icons/md"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
+import { useSignup } from "../../features/auth/authHooks/useAuthMutations"
 
-import { useSignup } from "../../features/auth/authHooks/useSignup"
 
 const SignUpPage = () => {
   const [formData, setFormData] = useState({
@@ -18,7 +18,7 @@ const SignUpPage = () => {
 
   const [showPassword, setShowPassword] = useState(false)
 
-  const { signup, isPending, isError, error } = useSignup(formData)
+  const { signup, isPending, isError, error } = useSignup()
 
   const handleSubmit = (e) => {
     e.preventDefault()

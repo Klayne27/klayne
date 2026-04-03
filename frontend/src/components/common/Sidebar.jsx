@@ -1,6 +1,5 @@
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { useLogout } from "../../features/auth/authHooks/useLogout"
 import { CiMail, CiSearch } from "react-icons/ci"
 import { useState, useRef, useEffect, useCallback } from "react"
 import { useDeleteAccount } from "../../features/users/usersHooks/useDeleteAccount"
@@ -29,6 +28,7 @@ import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useLogout } from "../../features/auth/authHooks/useAuthMutations"
 
 const Sidebar = ({
   onOpenCreatePostModal,

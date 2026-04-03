@@ -2,9 +2,9 @@ import { useState } from "react"
 import { Link } from "react-router-dom"
 import { MdOutlineMail } from "react-icons/md"
 import { MdPassword } from "react-icons/md"
-import { useLogin } from "../../features/auth/authHooks/useLogin"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import GoogleSignInButton from "../../components/common/GoogleSignInButton"
+import { useLogin } from "../../features/auth/authHooks/useAuthMutations"
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
