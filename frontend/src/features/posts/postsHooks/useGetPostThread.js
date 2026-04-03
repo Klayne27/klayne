@@ -12,22 +12,30 @@ export const useGetPostThread = (postId) => {
     enabled: !!postId,
     staleTime: 5 * 60 * 1000,
     initialData: () => {
-      // Use the query cache to find this post anywhere (Feed, Search, other threads)
       const allQueries = queryClient.getQueryCache().findAll()
 
       for (const query of allQueries) {
         const d = query.state.data
-        // Search in infinite pages (feeds/replies)
+
         if (d?.pages) {
           for (const page of d.pages) {
             const found =
               page.posts?.find((p) => p._id === postId) ||
               page.replies?.find((r) => r._id === postId)
-            if (found) return { post: found, ancestors: [] }
+
+            if (found) {
+              // Only use as initialData if the post has no parent —
+              // if it's a reply, ancestors would be wrong so skip it
+              // and let the API fetch the correct thread
+              if (!found.parentPost) {
+                return { post: found, ancestors: [] }
+              }
+              return undefined
+            }
           }
         }
-        // Search in other thread objects
-        if (d?.post?._id === postId) return { post: d.post, ancestors: [] }
+
+        if (d?.post?._id === postId) return { post: d.post, ancestors: d.ancestors ?? [] }
       }
       return undefined
     },
@@ -36,7 +44,6 @@ export const useGetPostThread = (postId) => {
   return {
     post: data?.post ?? null,
     ancestors: data?.ancestors ?? [],
-    // This is the key: Only loading if we have NO data at all
     isLoading: !data && isLoading,
     isError,
   }
