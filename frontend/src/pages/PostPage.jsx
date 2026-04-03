@@ -35,7 +35,6 @@ const PostPage = () => {
   const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300)
   const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
-  
 
   const isMobile = useIsMobile()
 
