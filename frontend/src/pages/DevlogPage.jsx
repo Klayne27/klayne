@@ -5,12 +5,12 @@ import {
   useUpdateDevlog,
   useDeleteDevlog,
   useLikeDevlog,
-  useGetDevlogs,
 } from "../features/devlog/devlogHooks/useDevlogMutations"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { formatDistanceToNow } from "date-fns"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useGetDevlogs } from "../features/devlog/devlogHooks/useDevlogQueries"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",

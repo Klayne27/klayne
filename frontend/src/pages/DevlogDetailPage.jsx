@@ -1,9 +1,7 @@
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import {
-  useGetDevlog,
-  useGetDevlogComments,
   useLikeDevlog,
   useCreateDevlogComment,
   useDeleteDevlogComment,
@@ -14,6 +12,7 @@ import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import AnimatedCount from "../components/common/AnimatedCount"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useGetDevlog, useGetDevlogComments } from "../features/devlog/devlogHooks/useDevlogQueries"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
