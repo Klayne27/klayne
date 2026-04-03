@@ -7,14 +7,14 @@ import PublicChatMessageList from "./PublicChatMessageList"
 import PublicChatInput from "./PublicChatInput"
 
 import { FaCaretDown } from "react-icons/fa"
-import { useGetPublicMessages } from "./publicChatHooks/useGetPublicMessages"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
-import { usePublicChatSocketEvents } from "../../../hooks/socketEventHooks/usePublicChatSocketEvents"
+import { usePublicChatSocketEvents } from "../hooks/usePublicChatSocketEvents"
 import { useMessageScroll } from "../../../hooks/customHooks/useMessageScroll"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 import { useQueryClient } from "@tanstack/react-query"
-import { messageKeys } from "../private/privateChatHooks/messageKeys"
+import { messageKeys } from "../hooks/messageKeys"
 import { userKeys } from "../../users/usersHooks/userKeys"
+import { useGetPublicMessages } from "./publicChatHooks/usePublicChatQueries"
 
 const PublicChatWindow = () => {
   const { authUser: currentUser } = useAuthUser()

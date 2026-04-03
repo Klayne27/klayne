@@ -1,10 +1,10 @@
-import { useInfiniteQuery } from "@tanstack/react-query";
-import { useMemo } from "react";
-import { getPublicMessagesApi } from "../../../../api/publicChatApi";
-import { messageKeys } from "../../private/privateChatHooks/messageKeys";
+import { useInfiniteQuery } from "@tanstack/react-query"
+import { useMemo } from "react"
+import { getPublicMessagesApi } from "../../../../api/publicChatApi"
+import { messageKeys } from "../../hooks/messageKeys"
 
 export const useGetPublicMessages = () => {
-  const MESSAGE_LIMIT = 40;
+  const MESSAGE_LIMIT = 40
 
   const {
     data,
@@ -20,20 +20,20 @@ export const useGetPublicMessages = () => {
     queryFn: getPublicMessagesApi,
     getNextPageParam: (lastPage, allPages) => {
       if (lastPage.length < MESSAGE_LIMIT) {
-        return undefined;
+        return undefined
       }
-      return allPages.length + 1;
+      return allPages.length + 1
     },
     refetchOnWindowFocus: false,
     staleTime: 5 * 60 * 1000,
     gcTime: 10 * 60 * 1000,
     refetchOnReconnect: true,
     refetchOnMount: true,
-  });
+  })
 
   const messages = useMemo(() => {
-    return data ? [...data.pages].reverse().flatMap((page) => page) : [];
-  }, [data]);
+    return data ? [...data.pages].reverse().flatMap((page) => page) : []
+  }, [data])
 
   return {
     messages,
@@ -44,5 +44,5 @@ export const useGetPublicMessages = () => {
     isMessagesError,
     messagesError,
     refetch,
-  };
-};
+  }
+}

@@ -1,11 +1,6 @@
 import React, { useRef, useState } from "react"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
-import { useBanUserFromPublicChat } from "./publicChatHooks/useBanUserFromPublicChat"
-import { useDeletePublicMessage } from "./publicChatHooks/useDeletePublicMessage"
-import { useDeleteOwnPublicMessage } from "./publicChatHooks/useDeleteOwnPublicMessage"
-import { useAddPublicMessageReaction } from "./publicChatHooks/useAddPublicMessageReaction"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
-import { useUnbanUserFromPublicChat } from "./publicChatHooks/useUnbanUserFromPublicChat"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
@@ -28,6 +23,7 @@ import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
 import PublicChatFirstMessageInGroup from "./PublicChatFirstMessageInGroup"
 import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
+import { useAddPublicMessageReaction, useBanUserFromPublicChat, useDeleteOwnPublicMessage, useDeletePublicMessage, useUnbanUserFromPublicChat } from "./publicChatHooks/usePublicChatMutations"
 
 const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,

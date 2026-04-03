@@ -1,8 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getConversationBetweenUsersApi, getConversationsApi, getFollowedUsersForMessagingApi, getMessagesApi, getOrCreateConversationApi, getPinnedMessagesApi, searchConversationsAndUsersApi } from "../../../../api/privateChatApi"
 import { useMemo } from "react"
-import { messageKeys } from "./messageKeys"
-import { conversationKeys } from "./conversationKeys"
+import { messageKeys } from "../../hooks/messageKeys"
+import { conversationKeys } from "../../hooks/conversationKeys"
 import { useNavigate } from "react-router-dom"
 import { showAppToast } from "../../../../utils/showAppToast"
 
@@ -74,19 +74,17 @@ export const useGetPinnedMessages = (conversationId) => {
   } = useQuery({
     queryKey: messageKeys.pinned(conversationId),
     queryFn: () => getPinnedMessagesApi(conversationId),
-    enabled: !!conversationId, // Only run if conversationId exists
-    staleTime: 5 * 60 * 1000, // 5 minutes
-    retry: 3, // Retry up to 3 times on failure
-    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000), // Exponential backoff
+    enabled: !!conversationId,
+    staleTime: 5 * 60 * 1000, 
+    retry: 3, 
+    retryDelay: (attemptIndex) => Math.min(1000 * 2 ** attemptIndex, 30000),
     select: (data) => {
-      // Ensure data is always an array and filter out invalid entries
       if (!data) return []
       if (!Array.isArray(data)) {
         console.warn("Expected array but got:", typeof data, data)
         return []
       }
 
-      // Filter and validate the structure
       return data
         .filter((pin) => {
           if (!pin) {
@@ -107,7 +105,6 @@ export const useGetPinnedMessages = (conversationId) => {
           return true
         })
         .sort((a, b) => {
-          // Sort by pinnedAt date, most recent first
           const dateA = new Date(a.pinnedAt)
           const dateB = new Date(b.pinnedAt)
           return dateB - dateA
@@ -170,7 +167,6 @@ export const useGetOrCreateConversation = () => {
     participantIds,
     name,
   } = {}) => {
-    // Group search result — already exists, just navigate
     if (existingConversationId) {
       navigate(`/messages/${existingConversationId}`)
       return

@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { messageKeys } from "./messageKeys"
-import { conversationKeys } from "./conversationKeys"
+import { messageKeys } from "../../hooks/messageKeys"
+import { conversationKeys } from "../../hooks/conversationKeys"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import {
@@ -55,7 +55,7 @@ export const useSendMessage = (onSenderMessageSent) => {
               img: replyingToMessage.img,
             }
           : null,
-        audio: newMessageData.voiceMessage || null, // Add the audio property
+        audio: newMessageData.voiceMessage || null, 
       }
 
       queryClient.setQueryData(messagesQueryKey, (oldData) => {
@@ -80,7 +80,7 @@ export const useSendMessage = (onSenderMessageSent) => {
                 img: optimisticMessage.img,
                 seen: optimisticMessage.seen,
                 messageId: optimisticMessage._id,
-                audio: optimisticMessage.audio, // Add the audio property here
+                audio: optimisticMessage.audio, 
               },
               updatedAt: optimisticMessage.createdAt,
             }
@@ -141,7 +141,6 @@ export const useSendMessage = (onSenderMessageSent) => {
 
     onError: (err, variables, context) => {
       showAppToast(err.message, "error")
-      // 6. On error, revert the optimistic updates
       queryClient.setQueryData(context.messagesQueryKey, context.previousMessages)
       queryClient.setQueryData(context.conversationQueryKey, context.previousConversations)
     },
@@ -327,11 +326,9 @@ export const useUnpinMessage = () => {
     onSuccess: (data, variables) => {
       showAppToast("Message unpinned", "success")
 
-      // Update the pinned messages cache
       queryClient.setQueryData(messageKeys.pinned(variables.conversationId), (oldData) => {
         if (!oldData) return []
 
-        // Remove the unpinned message
         return oldData.filter(
           (pin) =>
             pin &&
@@ -341,7 +338,6 @@ export const useUnpinMessage = () => {
         )
       })
 
-      // Invalidate to ensure fresh data
       queryClient.invalidateQueries({
         queryKey: messageKeys.pinned(variables.conversationId),
       })
@@ -385,7 +381,6 @@ export const useDeleteAllMessagesOnMySide = () => {
         })
       })
 
-      // Step 4: Return snapshots in the context
       return { previousMessages, previousConversations, conversationId }
     },
     onSuccess: (data) => {

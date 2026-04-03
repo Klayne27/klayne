@@ -3,7 +3,7 @@ import io from "socket.io-client"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useQueryClient } from "@tanstack/react-query"
 import { useLocation } from "react-router-dom"
-import { messageKeys } from "../features/chat/private/privateChatHooks/messageKeys"
+import { messageKeys } from "../features/chat/hooks/messageKeys"
 
 const SocketContext = createContext()
 

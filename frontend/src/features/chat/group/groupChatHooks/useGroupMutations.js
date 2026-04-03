@@ -12,9 +12,9 @@ import {
   updateMemberRoleApi,
 } from "../../../../api/groupApi"
 import { groupKeys } from "./groupKeys"
-import { conversationKeys } from "../../private/privateChatHooks/conversationKeys"
+import { conversationKeys } from "../../hooks/conversationKeys"
 import { showAppToast } from "../../../../utils/showAppToast"
-import { messageKeys } from "../../private/privateChatHooks/messageKeys"
+import { messageKeys } from "../../hooks/messageKeys"
 
 export const useCreateGroup = () => {
   const queryClient = useQueryClient()

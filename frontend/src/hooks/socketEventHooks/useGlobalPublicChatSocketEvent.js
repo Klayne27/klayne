@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { useSocket } from "../../context/SocketContext"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useEffect, useCallback } from "react"
-import { messageKeys } from "../../features/chat/private/privateChatHooks/messageKeys"
+import { messageKeys } from "../../features/chat/hooks/messageKeys"
 
 export const useGlobalPublicChatSocketEvents = () => {
   const queryClient = useQueryClient()

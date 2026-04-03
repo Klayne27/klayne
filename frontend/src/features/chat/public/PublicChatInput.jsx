@@ -4,15 +4,14 @@ import { MdCheck, MdEdit, MdSend } from "react-icons/md"
 import { truncateText } from "../../../utils/truncateText"
 import { FaReply } from "react-icons/fa6"
 import { FaCircle } from "react-icons/fa"
-import { useEditPublicMessage } from "./publicChatHooks/useEditPublicMessage"
 import { usePublicChatStore } from "../../../store/usePublicChatStore"
 import { getTypingMessage } from "../../../utils/getTypingMessage"
 import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
-import { useSendPublicMessage } from "./publicChatHooks/useSendPublicMessage"
 import { PiSmiley } from "react-icons/pi"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
+import { useEditPublicMessage, useSendPublicMessage } from "./publicChatHooks/usePublicChatMutations"
 
 const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
   const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =

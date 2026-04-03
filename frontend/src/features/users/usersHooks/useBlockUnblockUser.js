@@ -3,8 +3,8 @@ import { userKeys } from "./userKeys"
 import { blockUnblockUserApi } from "../../../api/usersApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { postKeys } from "../../posts/postsHooks/postKeys"
-import { conversationKeys } from "../../chat/private/privateChatHooks/conversationKeys"
-import { messageKeys } from "../../chat/private/privateChatHooks/messageKeys"
+import { conversationKeys } from "../../chat/hooks/conversationKeys"
+import { messageKeys } from "../../chat/hooks/messageKeys"
 import { notificationKeys } from "../../notifications/notificationsHooks/notificationKeys"
 
 export const useBlockUnblockUser = () => {
