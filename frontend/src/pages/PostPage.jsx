@@ -3,7 +3,6 @@ import { useParams, useNavigate } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useDebounce } from "../hooks/customHooks/useDebounce"
-import { useSearchUsers } from "../features/users/usersHooks/userSearchUsers"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useGetPost } from "../features/posts/postsHooks/useGetPost"
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler"
@@ -16,6 +15,7 @@ import { useGetPostThread } from "../features/posts/postsHooks/useGetPostThread"
 import { useGetReplies } from "../features/posts/postsHooks/useGetReplies"
 import { useCreateReply } from "../features/posts/postsHooks/useCreateReply"
 import HeroPost from "../features/posts/HeroPost"
+import { useSearchUsers } from "../features/users/usersHooks/useUserMutations"
 
 const PostPage = () => {
   const { pid } = useParams()

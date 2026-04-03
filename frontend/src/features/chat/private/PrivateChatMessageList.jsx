@@ -7,9 +7,8 @@ import { formatDate, formatTime } from "../../../utils/date"
 import { RiPushpinFill } from "react-icons/ri"
 import { useState } from "react"
 import ProfileInfoModal from "../../../components/common/ProfileInfoModal"
-import { useGetUserProfile } from "../../users/usersHooks/useGetUserProfile" // Keep the import
-import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import { useChatViewStore } from "../../../store/useChatViewStore"
+import { useGetUserProfile } from "../../users/usersHooks/useUserQueries"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {

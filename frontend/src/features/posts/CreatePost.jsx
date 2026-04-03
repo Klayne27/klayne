@@ -10,7 +10,6 @@ import { TbCalendarClock } from "react-icons/tb"
 import SchedulePostModal from "./post-scheduler/SchedulePostModal"
 import ScheduledPostsModal from "./post-scheduler/ScheduledPostsModal"
 import EditScheduledPostModal from "./post-scheduler/EditSchedulePostModal"
-import { useSearchUsers } from "../users/usersHooks/userSearchUsers"
 import { useDebounce } from "../../hooks/customHooks/useDebounce"
 import { showAppToast } from "../../utils/showAppToast"
 import { useSocket } from "../../context/SocketContext"
@@ -32,6 +31,7 @@ import { useMarkVentPostsAsRead } from "./postsHooks/useMarkVentPostsAsRead"
 import CircularBarProgress from "../../components/common/CircularBarProgress"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useMarkICPostsAsRead } from "./postsHooks/useMarkICPostsAsRead"
+import { useSearchUsers } from "../users/usersHooks/useUserMutations"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800

@@ -17,8 +17,6 @@ import { FaBookmark, FaRegBookmark } from "react-icons/fa6"
 import PollDisplay from "../../components/common/PollDisplay"
 import { usePinPost } from "./postsHooks/usePinPost"
 import { BsPin, BsPinFill, BsThreeDots } from "react-icons/bs"
-import { useBlockUnblockUser } from "../users/usersHooks/useBlockUnblockUser"
-import useFollow from "../users/usersHooks/useFollow"
 import { MdBlock } from "react-icons/md"
 import { useAppStore } from "../../store/useAppStore"
 import useDropdownMenu from "../../hooks/customHooks/useDropdownMenu"
@@ -40,6 +38,7 @@ import { useGetPostThread } from "./postsHooks/useGetPostThread.js"
 import { useQueryClient } from "@tanstack/react-query"
 import { postKeys } from "./postsHooks/postKeys.js"
 import { getPostThreadApi } from "../../api/postsApi.js"
+import { useBlockUnblockUser, useFollow } from "../users/usersHooks/useUserMutations.js"
 
 const Post = ({
   post,

@@ -3,11 +3,11 @@ import DropdownMenu from "../../../components/common/DropdownMenu"
 import { Link } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
-import { useUpdateStatusPreference } from "../../users/usersHooks/useUpdateStatusPreference"
 import { useState } from "react"
 import CreateGroupModal from "../group/CreateGroupModal"
 import { HiMiniUserGroup } from "react-icons/hi2"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { useUpdateStatusPreference } from "../../users/usersHooks/useUserMutations"
 
 function ConversationsListHeader() {
   const { authUser } = useAuthUser()

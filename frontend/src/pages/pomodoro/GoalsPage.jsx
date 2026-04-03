@@ -3,8 +3,8 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 import GoalModal from "../../components/common/GoalModal"
 import { useGoalStore } from "../../store/useGoalStore"
-import { useVacationMode } from "../../features/users/usersHooks/useVacationMode"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { useVacationMode } from "../../features/users/usersHooks/useUserMutations"
 
 const GoalsPage = () => {
   const [modalOpen, setModalOpen] = useState(false)

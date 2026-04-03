@@ -1,8 +1,8 @@
 import { useEffect, useRef } from "react";
 import UserListItem from "./UserListItem";
 import LoadingSpinner from "./LoadingSpinner";
-import { useGetFollowList } from "../../features/users/usersHooks/useGetFollowList";
 import { IoClose } from "react-icons/io5";
+import { useGetFollowList } from "../../features/users/usersHooks/useUserQueries";
 
 const FollowListModal = ({ userId, type, onClose, page }) => {
   const modalTitle = type === "following" ? "Following" : "Followers";

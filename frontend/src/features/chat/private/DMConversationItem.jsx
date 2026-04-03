@@ -10,7 +10,6 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { useBlockUnblockUser } from "../../users/usersHooks/useBlockUnblockUser"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 import DropdownMenu from "../../../components/common/DropdownMenu"
@@ -19,6 +18,7 @@ import ConfirmationModal from "../../../components/common/ConfirmationModal"
 
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
 import { useDeleteAllMessagesOnMySide, useDeleteConversation, useToggleConversationVisibility } from "./privateChatHooks/usePrivateChatMutations"
+import { useBlockUnblockUser } from "../../users/usersHooks/useUserMutations"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()

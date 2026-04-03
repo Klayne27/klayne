@@ -2,7 +2,6 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { CiMail, CiSearch } from "react-icons/ci"
 import { useState, useRef, useEffect, useCallback } from "react"
-import { useDeleteAccount } from "../../features/users/usersHooks/useDeleteAccount"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
 import { BiLogOut } from "react-icons/bi"
@@ -21,7 +20,6 @@ import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
-import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
@@ -29,6 +27,7 @@ import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useLogout } from "../../features/auth/authHooks/useAuthMutations"
+import { useDeleteAccount, useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
 
 const Sidebar = ({
   onOpenCreatePostModal,

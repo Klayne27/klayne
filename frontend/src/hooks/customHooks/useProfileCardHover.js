@@ -1,5 +1,5 @@
 import { useState, useRef, useCallback, useEffect } from "react"
-import { useGetUserProfile } from "../../features/users/usersHooks/useGetUserProfile"
+import { useGetUserProfile } from "../../features/users/usersHooks/useUserQueries"
 
 const HOVER_DELAY_MS = 500 
 const LEAVE_DELAY_MS = 300 
