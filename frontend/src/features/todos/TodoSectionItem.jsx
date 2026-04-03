@@ -1,8 +1,6 @@
 import { FaEdit } from "react-icons/fa"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { useLocation, useNavigate } from "react-router-dom"
-import { useDeleteTodoList } from "./todoListHooks/useDeleteTodoList"
-import { useLikeUnlikeTodoList } from "./todoListHooks/useLikeUnlikeTodoList"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { useTodoStore } from "../../store/useTodoStore"
 import { FaEllipsisVertical, FaPlus, FaTrashCan, FaHeart, FaRegHeart } from "react-icons/fa6"
@@ -15,6 +13,7 @@ import { useEffect } from "react"
 import { forwardRef } from "react"
 import { colorMap, iconMap } from "../../utils/todoUtils"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useDeleteTodoList, useLikeUnlikeTodoList } from "./todoListHooks/useTodoListMutations"
 
 const TodoSectionItem = forwardRef(
   (

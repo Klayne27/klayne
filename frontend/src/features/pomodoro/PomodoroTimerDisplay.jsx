@@ -21,8 +21,7 @@ function PomodoroTimerDisplay({
 
   const handleSkipBreak = () => {
     if (isBreak) {
-      // Stop the current timer
-      setIsActive(false) // Directly start the next study session
+      setIsActive(false) 
       startNextTimer(true, sessionCount, false)
       showAppToast("Break skipped!", "info")
     }

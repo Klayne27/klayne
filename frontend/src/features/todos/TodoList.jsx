@@ -1,7 +1,6 @@
-// src/components/todos/TodoList.jsx
-import { useUpdateTodo } from "./todoHooks/useUpdateTodo"
 import { useTodoStore } from "../../store/useTodoStore"
 import TodoEditModal from "./TodoEditModal"
+import { useUpdateTodo } from "./todoHooks/useTodoMutations"
 import TodoItem from "./TodoItem"
 
 const TodoList = ({ todos, isLoading, isError, openTodoDropdownId, setOpenTodoDropdownId }) => {

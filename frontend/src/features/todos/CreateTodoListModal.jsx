@@ -3,9 +3,9 @@ import { useState } from "react"
 import { useRef } from "react"
 import { useEffect } from "react"
 import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils"
-import { useCreateTodoList } from "./todoListHooks/useCreateTodoList"
 import { useTodoStore } from "../../store/useTodoStore"
 import { showAppToast } from "../../utils/showAppToast"
+import { useCreateTodoList } from "./todoListHooks/useTodoListMutations"
 
 const CreateTodoListModal = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()

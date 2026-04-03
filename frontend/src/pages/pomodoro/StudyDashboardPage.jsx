@@ -8,9 +8,6 @@ import { GoHome } from "react-icons/go"
 import { Link, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { useGoalStore } from "../../store/useGoalStore"
-import { useGetCompletedTodosCount } from "../../features/todos/todoHooks/useGetCompletedTodosCount"
-import { useGetActiveTodosCount } from "../../features/todos/todoHooks/useGetActiveTodosCount"
-import { useGetCompletedTodosWithDates } from "../../features/todos/todoHooks/useGetCompletedTodosWithDates"
 import { formatShortDuration, getGreeting } from "../../utils/dashboardUtils"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { BentoCard } from "../../components/common/BentoCard"
@@ -21,6 +18,7 @@ import { GoalProgressCard } from "../../features/study-dashboard/GoalProgressCar
 import { ChartComponent } from "../../features/study-dashboard/ChartComponent"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useGetAllSessions } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
+import { useGetActiveTodosCount, useGetCompletedTodosCount, useGetCompletedTodosWithDates } from "../../features/todos/todoHooks/useTodoQueries"
 
 const StudyDashboardPage = () => {
   const { authUser } = useAuthUser()

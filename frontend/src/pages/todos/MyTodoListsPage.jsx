@@ -1,8 +1,8 @@
 import { useTodoStore } from "../../store/useTodoStore"
-import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUserTodoLists"
 import CreateTodoListModal from "../../features/todos/CreateTodoListModal"
 import TodoSectionList from "../../features/todos/TodoSectionList"
 import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
+import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 
 const MyTodoListsPage = () => {
   const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
