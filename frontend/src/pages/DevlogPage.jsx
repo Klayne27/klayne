@@ -298,10 +298,10 @@ const DevlogPage = () => {
   const { devlogs, totalCount, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetDevlogs()
 
-  const { mutate: createDevlog, isPending: isCreating } = useCreateDevlog()
-  const { mutate: updateDevlog, isPending: isUpdating } = useUpdateDevlog()
-  const { mutate: deleteDevlog } = useDeleteDevlog()
-  const { mutate: likeDevlog } = useLikeDevlog()
+  const { createDevlog, isCreating } = useCreateDevlog()
+  const { updateDevlog, isUpdating } = useUpdateDevlog()
+  const { deleteDevlog } = useDeleteDevlog()
+  const { likeDevlog } = useLikeDevlog()
 
   const [modal, setModal] = useState(null)
 

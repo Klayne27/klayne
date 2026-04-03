@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { loginApi, logoutApi, signupApi } from "../../../api/authApi"
+import { loginApi, logoutApi, signInWithGoogleApi, signupApi } from "../../../api/authApi"
 import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
+import { useNavigate } from "react-router-dom"
 
 export const useLogin = () => {
   const queryClient = useQueryClient()
@@ -58,4 +59,25 @@ export const useSignup = () => {
   })
 
   return { signup, isPending, isError, error }
+}
+
+export const useSignInWithGoodle = () => {
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+
+  const { mutate: googleSignIn, isPending } = useMutation({
+    mutationFn: signInWithGoogleApi,
+    onSuccess: (userData) => {
+      queryClient.setQueryData(userKeys.auth(), userData)
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+
+      navigate("/")
+    },
+    onError: (error) => {
+      console.error("Google Sign-In Error:", error.message)
+      showAppToast("Failed to sign in. Please try again.", "error")
+    },
+  })
+
+  return { googleSignIn, isPending }
 }

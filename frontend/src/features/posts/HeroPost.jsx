@@ -119,7 +119,6 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
     navigator.clipboard.writeText(postUrl).then(() => {
       setIsCopied(true)
       setTimeout(() => setIsCopied(false), 2000)
-      // Optional: toast.success("Link copied to clipboard!");
     })
   }
 

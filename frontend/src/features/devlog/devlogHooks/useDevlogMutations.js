@@ -10,52 +10,57 @@ import {
   likeDevlogCommentApi,
   dislikeDevlogCommentApi,
 } from "../../../api/devlogApi"
-import toast from "react-hot-toast"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
-
+import { showAppToast } from "../../../utils/showAppToast"
 
 export const useCreateDevlog = () => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: createDevlog, isPending: isCreating } = useMutation({
     mutationFn: createDevlogApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: devlogKeys.list() })
-      toast.success("Devlog posted!")
+      showAppToast("Devlog posted!", "success")
     },
-    onError: (err) => toast.error(err.message || "Failed to create devlog"),
+    onError: (err) => showAppToast(err.message || "Failed to create devlog", "error"),
   })
+
+  return { createDevlog, isCreating }
 }
 
 export const useUpdateDevlog = () => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: updateDevlog, isPending: isUpdating } = useMutation({
     mutationFn: updateDevlogApi,
     onSuccess: (data) => {
       queryClient.invalidateQueries({ queryKey: devlogKeys.list() })
       queryClient.invalidateQueries({ queryKey: devlogKeys.detail(data._id) })
-      toast.success("Devlog updated!")
+      showAppToast("Devlog updated!", "success")
     },
-    onError: (err) => toast.error(err.message || "Failed to update devlog"),
+    onError: (err) => showAppToast(err.message || "Failed to update devlog", "error"),
   })
+
+  return { updateDevlog, isUpdating }
 }
 
 export const useDeleteDevlog = () => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: deleteDevlog } = useMutation({
     mutationFn: deleteDevlogApi,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: devlogKeys.list() })
-      toast.success("Devlog deleted")
+      showAppToast("Devlog deleted", "success")
     },
-    onError: (err) => toast.error(err.message || "Failed to delete devlog"),
+    onError: (err) => showAppToast(err.message || "Failed to delete devlog", "error"),
   })
+
+  return { deleteDevlog }
 }
 
 export const useLikeDevlog = () => {
   const queryClient = useQueryClient()
   const { authUser } = useAuthUser()
 
-  return useMutation({
+  const { mutate: likeDevlog } = useMutation({
     mutationFn: likeDevlogApi,
 
     onMutate: async (devlogId) => {
@@ -107,14 +112,16 @@ export const useLikeDevlog = () => {
           queryClient.setQueryData(JSON.parse(key), value)
         })
       }
-      toast.error(err.message || "Failed to like devlog")
+      showAppToast(err.message || "Failed to like devlog", "error")
     },
   })
+
+  return { likeDevlog }
 }
 
 export const useCreateDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: createComment, isPending: isCreatingComment } = useMutation({
     mutationFn: createDevlogCommentApi,
     onSuccess: (newComment) => {
       queryClient.setQueryData(devlogKeys.comments(devlogId), (old) => {
@@ -137,13 +144,15 @@ export const useCreateDevlogComment = (devlogId) => {
         old ? { ...old, commentsCount: (old.commentsCount || 0) + 1 } : old,
       )
     },
-    onError: (err) => toast.error(err.message || "Failed to post comment"),
+    onError: (err) => showAppToast(err.message || "Failed to post comment", "error"),
   })
+
+  return { createComment, isCreatingComment }
 }
 
 export const useDeleteDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
-  return useMutation({
+  const { mutate: deleteComment, isPending: isDeleting } = useMutation({
     mutationFn: deleteDevlogCommentApi,
     onSuccess: (_, { commentId }) => {
       queryClient.setQueryData(devlogKeys.comments(devlogId), (old) => {
@@ -161,15 +170,17 @@ export const useDeleteDevlogComment = (devlogId) => {
         old ? { ...old, commentsCount: Math.max(0, (old.commentsCount || 1) - 1) } : old,
       )
     },
-    onError: (err) => toast.error(err.message || "Failed to delete comment"),
+    onError: (err) => showAppToast(err.message || "Failed to delete comment", "error"),
   })
+
+  return { deleteComment, isDeleting }
 }
 
 export const useLikeDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
   const { authUser } = useAuthUser()
 
-  return useMutation({
+  const { mutate: likeComment, isPending: isLiking } = useMutation({
     mutationFn: likeDevlogCommentApi,
 
     onMutate: async ({ commentId }) => {
@@ -213,16 +224,18 @@ export const useLikeDevlogComment = (devlogId) => {
 
     onError: (err, _vars, context) => {
       queryClient.setQueryData(devlogKeys.comments(devlogId), context?.previousComments)
-      toast.error(err.message || "Failed to like comment")
+      showAppToast(err.message || "Failed to like comment", "error")
     },
   })
+
+  return { likeComment, isLiking }
 }
 
 export const useDislikeDevlogComment = (devlogId) => {
   const queryClient = useQueryClient()
   const { authUser } = useAuthUser()
 
-  return useMutation({
+  const { mutate: dislikeComment, isPending: isDisliking } = useMutation({
     mutationFn: dislikeDevlogCommentApi,
 
     onMutate: async ({ commentId }) => {
@@ -266,7 +279,9 @@ export const useDislikeDevlogComment = (devlogId) => {
 
     onError: (err, _vars, context) => {
       queryClient.setQueryData(devlogKeys.comments(devlogId), context?.previousComments)
-      toast.error(err.message || "Failed to dislike comment")
+      showAppToast(err.message || "Failed to dislike comment", "error")
     },
   })
+
+  return { dislikeComment, isDisliking }
 }

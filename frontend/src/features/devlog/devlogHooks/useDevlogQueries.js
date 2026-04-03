@@ -41,12 +41,18 @@ export const useGetDevlogs = () => {
 }
 
 export const useGetDevlog = (id) => {
-  return useQuery({
+  const {
+    data: devlog,
+    isLoading: devlogLoading,
+    isError,
+  } = useQuery({
     queryKey: devlogKeys.detail(id),
     queryFn: () => getDevlogApi(id),
     enabled: !!id,
     staleTime: 5 * 60 * 1000,
   })
+
+  return { devlog, devlogLoading, isError }
 }
 
 export const useGetDevlogComments = (devlogId) => {

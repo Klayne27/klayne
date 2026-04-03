@@ -161,7 +161,6 @@ export const createReply = async (req, res) => {
       parent.isAnonymous &&
       parent.user._id.toString() === userId.toString();
 
-    // Blocking check (consistent with your createComment logic)
     if (await isBlockedOrBlockedBy(userId, parent.user._id)) {
       return res
         .status(403)
