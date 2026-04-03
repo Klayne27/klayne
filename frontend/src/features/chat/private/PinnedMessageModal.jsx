@@ -1,12 +1,12 @@
 import { BsXLg } from "react-icons/bs"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 import PinnedMessageItem from "./PinnedMessageItem"
-import { useGetPinnedMessages } from "./privateChatHooks/useGetPinnedMessages"
-import { useUnpinMessage } from "./privateChatHooks/useUnpinMessage"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { RiPushpinFill } from "react-icons/ri"
 import { useChatViewStore } from "../../../store/useChatViewStore"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { useUnpinMessage } from "./privateChatHooks/usePrivateChatMutations"
+import { useGetPinnedMessages } from "./privateChatHooks/usePrivateChatQueries"
 
 function PinnedMessagesModal({ isOpen, onClose }) {
   const { authUser } = useAuthUser()

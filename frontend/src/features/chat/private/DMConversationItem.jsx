@@ -1,12 +1,11 @@
 import { useNavigate } from "react-router-dom"
-import { MdBlock, MdImage, MdLocalPolice } from "react-icons/md"
+import { MdBlock, MdImage } from "react-icons/md"
 import React, { useState } from "react"
-import { FaTrashCan, FaWrench } from "react-icons/fa6"
+import { FaTrashCan } from "react-icons/fa6"
 import { FaBroom } from "react-icons/fa6"
 import { TbUser, TbUserMinus } from "react-icons/tb"
 import { BsThreeDots } from "react-icons/bs"
-import { PiChefHatFill, PiMicrophoneStageFill } from "react-icons/pi"
-import { BiHealth } from "react-icons/bi"
+import { PiMicrophoneStageFill } from "react-icons/pi"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import useDropdownMenu from "../../../hooks/customHooks/useDropdownMenu"
@@ -17,10 +16,9 @@ import { formatPostDate } from "../../../utils/date"
 import DropdownMenu from "../../../components/common/DropdownMenu"
 import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import ConfirmationModal from "../../../components/common/ConfirmationModal"
-import { useToggleConversationVisibility } from "./privateChatHooks/useToggleConversationVisibility"
-import useDeleteConversation from "./privateChatHooks/useDeleteConversation"
-import useDeleteAllMessagesOnMySide from "./privateChatHooks/useDeleteAllMessagesOnMySide"
+
 import useMobileConversationLongPress from "../../../hooks/customHooks/useMobileConversationLongPress"
+import { useDeleteAllMessagesOnMySide, useDeleteConversation, useToggleConversationVisibility } from "./privateChatHooks/usePrivateChatMutations"
 
 function ConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()

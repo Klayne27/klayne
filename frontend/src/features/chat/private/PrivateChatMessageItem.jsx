@@ -2,8 +2,6 @@ import React, { useRef, useState } from "react"
 import { FaCircle } from "react-icons/fa"
 import { BsCheck2, BsCheck2All } from "react-icons/bs"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { useDeleteMessage } from "./privateChatHooks/useDeleteMessage"
-import { useReactToMessage } from "./privateChatHooks/useReactToMessage"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
@@ -24,8 +22,8 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import MobileMessageActionsSlideUp from "../components/MobileMessageActionsSlideUp"
-import { usePinMessage } from "./privateChatHooks/usePinMessage"
 import { useAdminDeleteMessage } from "../group/groupChatHooks/useGroupMutations"
+import { useDeleteMessage, usePinMessage, useReactToMessage } from "./privateChatHooks/usePrivateChatMutations"
 
 const PrivateChatMessageItem = ({
   message,

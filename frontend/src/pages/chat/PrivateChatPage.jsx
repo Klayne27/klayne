@@ -3,10 +3,10 @@ import { useParams } from "react-router-dom"
 import { useAppStore } from "../../store/useAppStore"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { useGetConversations } from "../../features/chat/private/privateChatHooks/useGetConversations"
 import ConversationsList from "../../features/chat/private/ConversationsList"
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
 import PrivateChatWindow from "../../features/chat/private/PrivateChatWindow"
+import { useGetConversations } from "../../features/chat/private/privateChatHooks/usePrivateChatQueries"
 
 
 const PrivateChatPage = () => {
@@ -15,7 +15,6 @@ const PrivateChatPage = () => {
   const setSelectedConversation = usePrivateChatStore((state) => state.setSelectedConversation)
 
   const { conversationId: urlConversationId } = useParams()
-
 
   const isMobile = useIsMobile()
 

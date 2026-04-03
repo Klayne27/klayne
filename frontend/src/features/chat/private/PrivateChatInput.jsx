@@ -3,15 +3,14 @@ import { truncateText } from "../../../utils/truncateText"
 import { IoClose, IoImageOutline, IoMicOutline, IoStopCircleOutline } from "react-icons/io5"
 import { PiSmiley } from "react-icons/pi"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
-import { useEditMessage } from "./privateChatHooks/useEditMessage"
 import { FaReply } from "react-icons/fa6"
 import React from "react"
 import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { useSendMessage } from "./privateChatHooks/useSendMessage"
 import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../hooks/customHooks/useChatInput"
+import { useEditMessage, useSendMessage } from "./privateChatHooks/usePrivateChatMutations"
 
 function PrivateChatInput({
   actualConversationId,
