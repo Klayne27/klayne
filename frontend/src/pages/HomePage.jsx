@@ -4,13 +4,11 @@ import Posts from "../features/posts/Posts"
 import { useSocket } from "../context/SocketContext"
 import { useAppStore } from "../store/useAppStore"
 import { useQueryClient } from "@tanstack/react-query"
-import { useMarkPostsAsRead } from "../features/posts/postsHooks/useMarkPostsAsRead"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { postKeys } from "../features/posts/postsHooks/postKeys"
 import CreatePost from "../features/posts/CreatePost"
-import { useMarkVentPostsAsRead } from "../features/posts/postsHooks/useMarkVentPostsAsRead"
-import { useMarkICPostsAsRead } from "../features/posts/postsHooks/useMarkICPostsAsRead"
+import { useMarkICPostsAsRead, useMarkPostsAsRead, useMarkVentPostsAsRead } from "../features/posts/postsHooks/usePostsMutations"
 
 const HomePage = () => {
   const {

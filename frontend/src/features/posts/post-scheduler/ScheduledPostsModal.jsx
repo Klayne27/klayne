@@ -3,12 +3,12 @@ import { TbCalendarClock } from "react-icons/tb";
 import { format } from "date-fns";
 import { IoClose } from "react-icons/io5";
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll";
-import { useGetScheduledPosts } from "../postsHooks/useGetScheduledPosts";
-import { useDeleteMultipleScheduledPosts } from "../postsHooks/useDeleteMultipleScheduledPosts";
 import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect";
 import { showAppToast } from "../../../utils/showAppToast";
 import LoadingSpinner from "../../../components/common/LoadingSpinner";
 import ConfirmationModal from "../../../components/common/ConfirmationModal";
+import { useGetScheduledPosts } from "../postsHooks/usePostsQueries";
+import { useDeleteMultipleScheduledPosts } from "../postsHooks/usePostsMutations";
 
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {

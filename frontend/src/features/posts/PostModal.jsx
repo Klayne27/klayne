@@ -11,14 +11,12 @@ import { useScheduleModal } from "../../hooks/customHooks/useScheduleModal"
 import { usePollModal } from "../../hooks/customHooks/usePollModal"
 import { useEmojiPickerPopover } from "../../hooks/customHooks/useEmojiPickerPopover"
 import { useAppStore } from "../../store/useAppStore"
-import { useCreatePosts } from "./postsHooks/useCreatePosts"
-import { useCreateVentPost } from "./postsHooks/useCreateVentPost"
-import { useUpdatePost } from "./postsHooks/useUpdatePost"
 import { showAppToast } from "../../utils/showAppToast"
 import SchedulePostModal from "./post-scheduler/SchedulePostModal"
 import ScheduledPostsModal from "./post-scheduler/ScheduledPostsModal"
 import EditScheduledPostModal from "./post-scheduler/EditSchedulePostModal"
 import { PollInputs } from "./PollInput"
+import { useCreatePosts, useCreateVentPost, useUpdatePost } from "./postsHooks/usePostsMutations"
 
 const PostModal = ({
   onClose,

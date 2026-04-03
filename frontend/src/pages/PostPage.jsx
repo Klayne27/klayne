@@ -10,11 +10,10 @@ import Post from "../features/posts/Post"
 import { BiImageAdd } from "react-icons/bi"
 import { IoClose } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
-import { useGetReplies } from "../features/posts/postsHooks/useGetReplies"
-import { useCreateReply } from "../features/posts/postsHooks/useCreateReply"
 import HeroPost from "../features/posts/HeroPost"
 import { useSearchUsers } from "../features/users/usersHooks/useUserMutations"
-import { useGetPost, useGetPostThread } from "../features/posts/postsHooks/usePostsQueries"
+import { useGetPost, useGetPostThread, useGetReplies } from "../features/posts/postsHooks/usePostsQueries"
+import { useCreateReply } from "../features/posts/postsHooks/usePostsMutations"
 
 const PostPage = () => {
   const { pid } = useParams()

@@ -1,5 +1,5 @@
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { useVoteOnPoll } from "../../features/posts/postsHooks/useVoteOnPoll"
+import { useVoteOnPoll } from "../../features/posts/postsHooks/usePostsMutations"
 
 const PollDisplay = ({ post }) => {
   const { authUser } = useAuthUser()

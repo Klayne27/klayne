@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query"
 import { postKeys } from "./postKeys"
-import { getPostApi, getPostsApi, getPostThreadApi } from "../../../api/postsApi"
+import { getBookmarkedPostsApi, getPinnedPostsApi, getPostApi, getPostHistoryApi, getPostRepliesApi, getPostsApi, getPostThreadApi, getScheduledPostsApi } from "../../../api/postsApi"
 
 export const useGetPosts = ({ feedType, username = null }) => {
   const getPostEndpoint = () => {
@@ -37,7 +37,6 @@ export const useGetPosts = ({ feedType, username = null }) => {
     isError,
     error,
   } = useInfiniteQuery({
-    // Update queryKey to handle the new feedType
     queryKey:
       feedType === "posts"
         ? postKeys.user(username)
@@ -57,7 +56,7 @@ export const useGetPosts = ({ feedType, username = null }) => {
   })
 
   const posts = data?.pages.flatMap((page) => page?.posts || []) || []
-  const message = data?.pages?.[0]?.message // 👈 Corrected: get message from the first page object
+  const message = data?.pages?.[0]?.message
   const totalPostsCount = data?.pages[0]?.totalPosts || 0
   const totalLikedPostsCount = data?.pages[0]?.totalLikedPosts || 0
 
@@ -93,9 +92,7 @@ export const useGetPost = (pid) => {
     enabled: !!pid,
     staleTime: 15 * 60 * 1000,
 
-    // --- THIS IS THE MAGIC ---
     initialData: () => {
-      // 1. Try to find the post in the "all posts" feeds
       const allPostsData = queryClient.getQueryCache().findAll({
         queryKey: ["posts"], // This matches your postKeys.all
       })
@@ -103,7 +100,6 @@ export const useGetPost = (pid) => {
       for (const query of allPostsData) {
         const data = query.state.data
 
-        // Search in infinite query pages
         if (data?.pages) {
           for (const page of data.pages) {
             const found =
@@ -114,7 +110,6 @@ export const useGetPost = (pid) => {
           }
         }
 
-        // Search in single post thread caches (ancestors/hero)
         if (data?.post?._id === pid) return data.post
         if (data?.ancestors) {
           const found = data.ancestors.find((a) => a._id === pid)
@@ -138,22 +133,27 @@ export const useGetPostThread = (postId) => {
     enabled: !!postId,
     staleTime: 5 * 60 * 1000,
     initialData: () => {
-      // Use the query cache to find this post anywhere (Feed, Search, other threads)
       const allQueries = queryClient.getQueryCache().findAll()
 
       for (const query of allQueries) {
         const d = query.state.data
-        // Search in infinite pages (feeds/replies)
+
         if (d?.pages) {
           for (const page of d.pages) {
             const found =
               page.posts?.find((p) => p._id === postId) ||
               page.replies?.find((r) => r._id === postId)
-            if (found) return { post: found, ancestors: [] }
+
+            if (found) {
+              if (!found.parentPost) {
+                return { post: found, ancestors: [] }
+              }
+              return undefined
+            }
           }
         }
-        // Search in other thread objects
-        if (d?.post?._id === postId) return { post: d.post, ancestors: [] }
+
+        if (d?.post?._id === postId) return { post: d.post, ancestors: d.ancestors ?? [] }
       }
       return undefined
     },
@@ -162,8 +162,114 @@ export const useGetPostThread = (postId) => {
   return {
     post: data?.post ?? null,
     ancestors: data?.ancestors ?? [],
-    // This is the key: Only loading if we have NO data at all
     isLoading: !data && isLoading,
     isError,
   }
+}
+
+export const useGetReplies = (postId) => {
+  const { data, isLoading, isFetchingNextPage, hasNextPage, fetchNextPage, refetch } =
+    useInfiniteQuery({
+      queryKey: postKeys.replies(postId),
+      queryFn: getPostRepliesApi,
+      getNextPageParam: (lastPage) =>
+        lastPage.hasNextPage ? (lastPage.nextPage ?? true) : undefined,
+      enabled: !!postId,
+    })
+
+  const replies = data?.pages.flatMap((page) => page.replies) ?? []
+
+  return {
+    replies,
+    isLoading,
+    isFetchingNextPage,
+    hasNextPage,
+    fetchNextPage,
+    refetch,
+  }
+}
+
+export const useGetPinnedPosts = (username) => {
+  const {
+    data: pinnedPosts,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    isRefetching,
+  } = useQuery({
+    queryKey: postKeys.pinned(username),
+    queryFn: async () => getPinnedPostsApi(username),
+    enabled: !!username,
+    staleTime: 5 * 60 * 1000,
+    cacheTime: 10 * 60 * 1000,
+  });
+
+  return { pinnedPosts, isLoading, isError, error, refetch, isRefetching };
+};
+
+export const useGetBookmarkedPosts = (searchQuery = "") => {
+  const {
+    data,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isLoading,
+    error,
+  } = useInfiniteQuery({
+    queryKey: postKeys.bookmarked(searchQuery),
+    queryFn: ({ pageParam = 1 }) => getBookmarkedPostsApi({ pageParam, searchQuery }),
+    getNextPageParam: (lastPage, allPages) => {
+      if (lastPage.hasNextPage) {
+        return lastPage.currentPage + 1;
+      }
+      return undefined;
+    },
+    staleTime: 1000 * 60 * 5,
+    refetchOnWindowFocus: false,
+    refetchOnMount: true,
+  });
+
+  const bookmarkedPosts = data?.pages?.flatMap((page) => page.posts) || [];
+  const isLoadingBookmarkedPosts = isLoading;
+  const bookmarkedPostsError = error; 
+
+  return {
+    bookmarkedPosts,
+    isLoadingBookmarkedPosts,
+    bookmarkedPostsError,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  };
+};
+
+export const useGetScheduledPosts = () => {
+  const {
+    data: scheduledPosts,
+    isLoading,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: postKeys.list("scheduled"),
+    queryFn: getScheduledPostsApi,
+  });
+
+  return { scheduledPosts, isLoading, isError, error, refetch };
+};
+
+export const useGetPostHistory = (postId) => {
+  const {
+    data: history,
+    isLoading: isLoadingHistory,
+    isError: isHistoryError,
+    error: historyError,
+  } = useQuery({
+    queryKey: ["postHistory", postId],
+    queryFn: () => getPostHistoryApi(postId),
+    enabled: !!postId, // Only run the query if a postId is provided
+  })
+
+  return { history, isLoadingHistory, isHistoryError, historyError }
 }

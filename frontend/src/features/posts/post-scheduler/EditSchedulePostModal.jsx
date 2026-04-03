@@ -1,13 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from "react"
 import { IoClose } from "react-icons/io5"
 
-import { useUpdateScheduledPost } from "../postsHooks/useUpdateScheduledPost"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { PiSmiley } from "react-icons/pi"
 import EmojiPicker from "emoji-picker-react"
 import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
 import DateTimeSelector from "../../../components/common/DateTimeSelector"
 import useDateTimeStore from "../../../store/useDateTimeStore"
+import { useUpdateScheduledPost } from "../postsHooks/usePostsMutations"
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null)

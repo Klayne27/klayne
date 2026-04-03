@@ -14,7 +14,6 @@ import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { CiMail } from "react-icons/ci"
 import ScrollToTop from "../utils/ScrollToTop"
 import ConfirmationModal from "../components/common/ConfirmationModal"
-import { useGetPinnedPosts } from "../features/posts/postsHooks/useGetPinnedPosts"
 import FollowButton from "../components/common/FollowButton"
 import { showAppToast } from "../utils/showAppToast"
 import { useAppStore } from "../store/useAppStore"
@@ -30,6 +29,7 @@ import { Tooltip } from "react-tooltip"
 import { useGetConversationBetweenUsers, useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/usePrivateChatQueries.js"
 import { useAdminDeleteUser, useBlockUnblockUser, useFollow, useUpdateUserProfile } from "../features/users/usersHooks/useUserMutations.js"
 import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
+import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
