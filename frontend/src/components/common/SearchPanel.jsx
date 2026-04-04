@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
 import { Link } from "react-router-dom"
 import { CiSearch } from "react-icons/ci"
-import { useSearchUsers } from "../../features/users/usersHooks/userSearchUsers"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useSearchUsers } from "../../features/users/usersHooks/useUserMutations"
 
 const SearchPanel = () => {
   const [searchQuery, setSearchQuery] = useState("")

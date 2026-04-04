@@ -220,7 +220,6 @@ export const searchConversationsAndUsers = async (req, res) => {
     const currentUser = await User.findById(userId).select("following");
     if (!currentUser) return res.status(404).json({ error: "User not found." });
 
-    // Search followed users
     let userQuery = { _id: { $in: currentUser.following } };
     if (q) {
       userQuery.$or = [
@@ -235,7 +234,6 @@ export const searchConversationsAndUsers = async (req, res) => {
         .populate("profileImg", "imageUrl")
         .limit(10),
 
-      // Only search groups the user is a member of
       q
         ? Conversation.find({
             isGroup: true,

@@ -3,19 +3,17 @@ import { useParams, useNavigate } from "react-router-dom"
 import { FaArrowLeft } from "react-icons/fa6"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import { useDebounce } from "../hooks/customHooks/useDebounce"
-import { useSearchUsers } from "../features/users/usersHooks/userSearchUsers"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
-import { useGetPost } from "../features/posts/postsHooks/useGetPost"
 import { usePasteHandler } from "../hooks/customHooks/usePasteHandler"
 import LoadingSpinner from "../components/common/LoadingSpinner"
-import Post from "../features/posts/Post"
+import Post from "../features/posts/components/Post"
 import { BiImageAdd } from "react-icons/bi"
 import { IoClose } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
-import { useGetPostThread } from "../features/posts/postsHooks/useGetPostThread"
-import { useGetReplies } from "../features/posts/postsHooks/useGetReplies"
-import { useCreateReply } from "../features/posts/postsHooks/useCreateReply"
-import HeroPost from "../features/posts/HeroPost"
+import HeroPost from "../features/posts/components/HeroPost"
+import { useSearchUsers } from "../features/users/usersHooks/useUserMutations"
+import { useGetPost, useGetPostThread, useGetReplies } from "../features/posts/postsHooks/usePostsQueries"
+import { useCreateReply } from "../features/posts/postsHooks/usePostsMutations"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -62,18 +60,6 @@ const PostPage = () => {
     }
   }, [])
 
-  // useEffect(() => {
-  //   if (heroRef.current && !isLoading ) {
-  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
-  //   }
-  // }, [isLoading, isLoadingThread, isLoadingReplies])
-
-  // useEffect(() => {
-
-  //   if (!isLoading && heroRef.current) {
-  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
-  //   }
-  // }, [isLoading, pid])
 
   useEffect(() => {
     const isMainContentReady = !isLoading && !isLoadingThread
@@ -92,12 +78,6 @@ const PostPage = () => {
     adjustTextareaHeight()
   }, [replyInput, adjustTextareaHeight])
 
-  // useEffect(() => {
-  //   if (pid) {
-  //     refetchPost()
-  //     refetchReplies()
-  //   }
-  // }, [pid, refetchPost, refetchReplies])
 
   useEffect(() => {
     const el = observerTarget.current
@@ -256,14 +236,6 @@ const PostPage = () => {
       handleSubmitReply,
     ],
   )
-
-  // if (isLoading || isLoadingThread) {
-  //   return (
-  //     <div className="flex h-screen w-full flex-1 items-center justify-center">
-  //       <LoadingSpinner size="lg" />
-  //     </div>
-  //   )
-  // }
 
   if (isLoading && !post) {
     return (

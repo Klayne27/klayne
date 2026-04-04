@@ -5,12 +5,12 @@ import {
   useUpdateDevlog,
   useDeleteDevlog,
   useLikeDevlog,
-  useGetDevlogs,
 } from "../features/devlog/devlogHooks/useDevlogMutations"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { formatDistanceToNow } from "date-fns"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useGetDevlogs } from "../features/devlog/devlogHooks/useDevlogQueries"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -298,10 +298,10 @@ const DevlogPage = () => {
   const { devlogs, totalCount, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } =
     useGetDevlogs()
 
-  const { mutate: createDevlog, isPending: isCreating } = useCreateDevlog()
-  const { mutate: updateDevlog, isPending: isUpdating } = useUpdateDevlog()
-  const { mutate: deleteDevlog } = useDeleteDevlog()
-  const { mutate: likeDevlog } = useLikeDevlog()
+  const { createDevlog, isCreating } = useCreateDevlog()
+  const { updateDevlog, isUpdating } = useUpdateDevlog()
+  const { deleteDevlog } = useDeleteDevlog()
+  const { likeDevlog } = useLikeDevlog()
 
   const [modal, setModal] = useState(null)
 

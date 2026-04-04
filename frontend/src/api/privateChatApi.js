@@ -178,7 +178,7 @@ export const reactToMessageApi = async (messageId, emoji) => {
   return data
 }
 
-export const deleteAllMessagesOnMySide = async (conversationId) => {
+export const deleteAllMessagesOnMySideApi = async (conversationId) => {
   const res = await fetch(`${BASE_URL}/all/${conversationId}`, {
     method: "DELETE",
     headers: {

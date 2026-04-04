@@ -6,9 +6,9 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useState } from "react"
 import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
-import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/useGetStudyActivityFeed"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
+import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)

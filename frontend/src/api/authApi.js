@@ -1,3 +1,6 @@
+import { signInWithPopup } from "firebase/auth"
+import { auth, googleProvider } from "../services/firebase"
+
 const BASE_URL = "/api/auth"
 
 export const signupApi = async (formData) => {
@@ -51,4 +54,24 @@ export const authUserApi = async () => {
   } catch (error) {
     throw new Error(error)
   }
+}
+
+export const signInWithGoogleApi = async () => {
+  // 1. Firebase Auth
+  const result = await signInWithPopup(auth, googleProvider)
+  const idToken = await result.user.getIdToken()
+
+  // 2. Sync with Backend
+  const response = await fetch("/api/auth/google", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ idToken }),
+  })
+
+  if (!response.ok) {
+    const errorData = await response.json()
+    throw new Error(errorData.message || "Backend authentication failed")
+  }
+
+  return response.json()
 }

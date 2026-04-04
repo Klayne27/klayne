@@ -1,11 +1,11 @@
 import { useCallback, useRef, useEffect } from "react"
 
 import { usePostModalStore } from "../../store/usePostModalStore"
-import { useSearchUsers } from "../../features/users/usersHooks/userSearchUsers"
 import { useDebounce } from "./useDebounce"
 import { usePasteHandler } from "./usePasteHandler"
 import { showAppToast } from "../../utils/showAppToast"
 import { MAX_FILE_SIZE_MB } from "../../constants/numberConstants"
+import { useSearchUsers } from "../../features/users/usersHooks/useUserMutations"
 
 export const usePostModal = () => {
   const {

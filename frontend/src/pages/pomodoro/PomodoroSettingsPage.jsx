@@ -2,8 +2,8 @@ import { useState, useEffect } from "react"
 import { useNavigate } from "react-router-dom" 
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { showAppToast } from "../../utils/showAppToast"
-import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/useGetPomodoroSettings"
-import { useUpdatePomodoroSettings } from "../../features/pomodoro/pomodoroHooks/useUpdatePomodoroSettings"
+import { useUpdatePomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
+import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 
 function PomodoroSettingsPage() {
   const navigate = useNavigate()

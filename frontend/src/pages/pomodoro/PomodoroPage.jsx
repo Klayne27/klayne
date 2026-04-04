@@ -1,32 +1,32 @@
 import { useState, useEffect, useRef, useCallback, useMemo } from "react"
 import { useNavigate } from "react-router-dom"
 
-import PomodoroSettingsModal from "../../features/pomodoro/PomodoroSettingsModal"
+import PomodoroSettingsModal from "../../features/pomodoro/components/PomodoroSettingsModal"
 
 import LoadingSpinner from "../../components/common/LoadingSpinner"
 import { showAppToast } from "../../utils/showAppToast"
-import PomodoroHeader from "../../features/pomodoro/PomodoroHeader"
+import PomodoroHeader from "../../features/pomodoro/components/PomodoroHeader"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import MilestoneModal from "../../components/common/MilestoneModal"
-import PomodoroInfoModal from "../../features/pomodoro/PomodoroInfoModal"
+import PomodoroInfoModal from "../../features/pomodoro/components/PomodoroInfoModal"
 import ConfirmationModal from "../../components/common/ConfirmationModal"
 
-import { useEndStudySession } from "../../features/pomodoro/pomodoroHooks/useEndStudySession"
-import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/useGetPomodoroSettings"
 import useXpStore from "../../store/useXpStore"
-import LeftDropdown from "../../features/pomodoro/LeftDropdown"
-import RightDropdown from "../../features/pomodoro/RightDropdown"
-import PomodoroTimerDisplay from "../../features/pomodoro/PomodoroTimerDisplay"
-import PomodoroTimerControls from "../../features/pomodoro/PomodoroTimerControls"
-import PomodoroTasksList from "../../features/pomodoro/PomodoroTaskList"
-import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useGetUserTodoLists"
-import { useCompleteTodo } from "../../features/todos/todoHooks/useCompleteTodo"
+import LeftDropdown from "../../features/pomodoro/components/LeftDropdown"
+import RightDropdown from "../../features/pomodoro/components/RightDropdown"
+import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
+import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
+import PomodoroTasksList from "../../features/pomodoro/components/PomodoroTaskList"
 import { colorMap, getCompletedColor, getPriorityColor, iconMap } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { FaCheckCircle } from "react-icons/fa"
 import { truncateText } from "../../utils/truncateText"
 import { FaCalendar, FaPlus } from "react-icons/fa6"
 import { IoClose } from "react-icons/io5"
+import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
+import { useEndStudySession } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
+import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
+import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 
 const ACTIVE_KEY = "pomodoro_is_active"
 const START_TIMESTAMP_KEY = "pomodoro_start_timestamp"
@@ -407,10 +407,6 @@ const PomodoroPage = () => {
   }, [selectedTaskId])
 
   const handleStart = async () => {
-    // if (!selectedTaskId) {
-    //   showAppToast("Please select a task to begin your study session.", "error")
-    //   return
-    // }
 
     if (isActive || !settings || timer <= 0 || isGoalReached) return
     const now = Date.now()

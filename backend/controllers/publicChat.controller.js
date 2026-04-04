@@ -148,7 +148,6 @@ export const sendPublicMessage = async (req, res) => {
 
     const newPublicMessage = new PublicChatMessage(newMessageData);
 
-    // ✅ FIX 2: Link the Image document to the message
     if (newImage) {
       newPublicMessage.image = newImage._id;
       newImage.parentDocument = newPublicMessage._id;
@@ -445,7 +444,6 @@ export const deleteOwnPublicMessage = async (req, res) => {
       "voiceMessageId",
       "imageUrl",
     );
-    // const message = await PublicChatMessage.findByIdAndDelete(messageId);
 
     if (!message) {
       return res.status(404).json({ error: "Message not found." });
@@ -464,63 +462,6 @@ export const deleteOwnPublicMessage = async (req, res) => {
     message.img = null;
     await message.save();
 
-    // if (imageUrlToDelete) {
-    //   let imgId;
-    //   try {
-    //     const parts = imageUrlToDelete.split("/upload/");
-    //     if (parts.length > 1) {
-    //       const pathAfterUpload = parts[1];
-    //       const idWithExtension = pathAfterUpload.split("/").slice(1).join("/");
-    //       imgId = idWithExtension.split(".")[0];
-
-    //       const urlSegments = imageUrlToDelete.split("/");
-    //       const uploadIndex = urlSegments.indexOf("upload");
-    //       if (uploadIndex !== -1 && urlSegments.length > uploadIndex + 1) {
-    //         let startIndex = uploadIndex + 1;
-    //         if (
-    //           urlSegments[startIndex].startsWith("v") &&
-    //           urlSegments[startIndex].length === 11 &&
-    //           !isNaN(urlSegments[startIndex].substring(1))
-    //         ) {
-    //           startIndex++;
-    //         }
-
-    //         imgId = urlSegments.slice(startIndex).join("/").split(".")[0];
-    //       } else {
-    //         console.error(
-    //           "Cloudinary URL format unexpected. Could not extract public ID."
-    //         );
-    //         imgId = null;
-    //       }
-    //     } else {
-    //       console.error(
-    //         "Cloudinary URL does not contain '/upload/'. Could not extract public ID."
-    //       );
-    //       imgId = null;
-    //     }
-
-    //     if (!imgId) {
-    //       console.error(
-    //         "Cloudinary public ID is null or empty after extraction. Deletion skipped."
-    //       );
-    //     } else {
-    //       const result = await cloudinary.uploader.destroy(imgId);
-    //       if (result.result === "not found") {
-    //         console.warn(
-    //           `Cloudinary image with ID ${imgId} not found or already deleted.`
-    //         );
-    //       } else if (result.result !== "ok") {
-    //         console.error(`Cloudinary deletion failed for ID ${imgId}:`, result.result);
-    //       }
-    //     }
-    //   } catch (cloudinaryError) {
-    //     console.error(
-    //       "Error during Cloudinary deletion process:",
-    //       cloudinaryError.message
-    //     );
-    //   }
-    // }
-
     if (imageUrlToDelete) {
       const imgId = imageUrlToDelete.split("/").pop().split(".")[0];
       await cloudinary.uploader.destroy(imgId);
@@ -528,7 +469,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     if (audioUrlToDelete) {
       const audioId = audioUrlToDelete.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(audioId, { resource_type: "video" }); // Cloudinary treats audio as a 'video' resource type
+      await cloudinary.uploader.destroy(audioId, { resource_type: "video" }); 
     }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {

@@ -1,6 +1,6 @@
-import TodoSectionList from "../../features/todos/TodoSectionList"
-import { useGetPublicTodoLists } from "../../features/todos/todoListHooks/useGetPublicTodoLists"
-import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
+import TodoSectionList from "../../features/todos/components/TodoSectionList"
+import TodoPagesHeader from "../../features/todos/components/TodoPagesHeader"
+import { useGetPublicTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 
 const PublicListsPage = () => {
   const { publicLists, publicLoading, publicError, publicHasNextPage, publicFetchNextPage } =

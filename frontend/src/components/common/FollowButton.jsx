@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react"
-import useFollow from "../../features/users/usersHooks/useFollow"
+import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 
 const FollowButton = ({
   user,

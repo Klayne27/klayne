@@ -15,7 +15,6 @@ export const pomodoroKeys = {
   leaderboardWeekly: () => [...pomodoroKeys.leaderboard, "weekly"],
   leaderboardWeeklyPage: (page) => [...pomodoroKeys.leaderboardWeekly(), "page", page],
 
-  // Renamed from leaderboardWinners
   leaderboardMonthlyWinners: () => [...pomodoroKeys.leaderboard, "monthlyWinners"],
   leaderboardWeeklyWinners: () => [...pomodoroKeys.leaderboard, "weeklyWinners"],
 }

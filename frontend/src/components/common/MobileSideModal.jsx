@@ -9,11 +9,11 @@ import { useState } from "react"
 import { TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 import { useSocket } from "../../context/SocketContext"
-import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUpdateStatusPreference"
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
 
 function MobileSideModal({
   showSideModal,

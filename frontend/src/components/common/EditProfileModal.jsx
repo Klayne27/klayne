@@ -1,11 +1,10 @@
 import { useEffect, useRef, useState } from "react"
-import { useUpdateUserProfile } from "../../features/users/usersHooks/useUpdateUserProfile"
 import { useNavigate } from "react-router-dom"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
-import { useToggleLikedFeedPrivacy } from "../../features/users/usersHooks/useToggleLikedFeed"
 import { TbCameraPlus } from "react-icons/tb"
 import LoadingSpinner from "../common/LoadingSpinner"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useToggleLikedFeedPrivacy, useUpdateUserProfile } from "../../features/users/usersHooks/useUserMutations"
 
 const EditProfileModal = ({ authUser }) => {
   const [formData, setFormData] = useState({

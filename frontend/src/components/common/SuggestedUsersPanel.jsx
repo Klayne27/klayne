@@ -1,7 +1,5 @@
 import { Link } from "react-router-dom"
 import RightPanelSkeleton from "../skeletons/RightPanelSkeleton"
-import useFollow from "../../features/users/usersHooks/useFollow"
-import { useGetSuggestedUsers } from "../../features/users/usersHooks/useGetSuggestedUsers"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { BiRefresh } from "react-icons/bi"
 import React, { useState } from "react"
@@ -9,6 +7,8 @@ import FollowButton from "./FollowButton"
 import ConfirmationModal from "./ConfirmationModal"
 import { useAppStore } from "../../store/useAppStore"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { useGetSuggestedUsers } from "../../features/users/usersHooks/useUserQueries"
+import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)

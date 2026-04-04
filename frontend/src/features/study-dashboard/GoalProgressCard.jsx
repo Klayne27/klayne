@@ -3,7 +3,7 @@ import "react-circular-progressbar/dist/styles.css"
 import { getCssVar } from "../../utils/dashboardUtils"
 import { BentoCard } from "../../components/common/BentoCard"
 
-export const GoalProgressCard = ({
+const GoalProgressCard = ({
   title,
   dailyLabel,
   weeklyLabel,
@@ -68,3 +68,5 @@ export const GoalProgressCard = ({
     </BentoCard>
   )
 }
+
+export default GoalProgressCard

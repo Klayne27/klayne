@@ -2,9 +2,6 @@ import { useNavigate } from "react-router-dom"
 import { IoSettingsOutline } from "react-icons/io5"
 import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
-import { useGetNotifications } from "../features/notifications/notificationsHooks/useGetNotifications"
-import { useDeleteNotification } from "../features/notifications/notificationsHooks/useDeleteNotification"
-import { useDeleteNotifications } from "../features/notifications/notificationsHooks/useDeleteNotifications"
 import { formatPostDate } from "../utils/date"
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import NotificationsSkeleton from "../components/skeletons/NotificationsSkeleton"
@@ -12,6 +9,7 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"
 import { useRef } from "react"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useDeleteNotification, useDeleteNotifications, useGetNotifications } from "../features/notifications/notificationsHooks/useNotifications"
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useGetNotifications()

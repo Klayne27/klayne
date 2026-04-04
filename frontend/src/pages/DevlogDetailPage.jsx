@@ -1,9 +1,7 @@
-import { useState, useRef } from "react"
+import { useState } from "react"
 import { useParams, useNavigate } from "react-router-dom"
 import { formatDistanceToNow } from "date-fns"
 import {
-  useGetDevlog,
-  useGetDevlogComments,
   useLikeDevlog,
   useCreateDevlogComment,
   useDeleteDevlogComment,
@@ -14,6 +12,7 @@ import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import AnimatedCount from "../components/common/AnimatedCount"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
+import { useGetDevlog, useGetDevlogComments } from "../features/devlog/devlogHooks/useDevlogQueries"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -38,9 +37,9 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
   const isDisliked = comment.dislikes?.some((id) => id === authUserId || id?._id === authUserId)
   const isOwn = comment.author?._id === authUserId
 
-  const { mutate: likeComment, isPending: liking } = useLikeDevlogComment(devlogId)
-  const { mutate: dislikeComment, isPending: disliking } = useDislikeDevlogComment(devlogId)
-  const { mutate: deleteComment, isPending: deleting } = useDeleteDevlogComment(devlogId)
+  const { likeComment, isLiking } = useLikeDevlogComment(devlogId)
+  const { dislikeComment, isDisliking } = useDislikeDevlogComment(devlogId)
+  const { deleteComment, isDeleting } = useDeleteDevlogComment(devlogId)
 
   return (
     <div className="flex gap-3 border-b border-base-300/40 py-3 last:border-0">
@@ -79,7 +78,7 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
         <div className="mt-2 flex items-center gap-3">
           <button
             onClick={() => likeComment({ devlogId, commentId: comment._id })}
-            disabled={liking}
+            disabled={isLiking}
             className={`flex items-center gap-1 text-xs transition-colors ${isLiked ? "text-success" : "text-base-content/40 hover:text-success"}`}
           >
             <svg
@@ -100,7 +99,7 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
 
           <button
             onClick={() => dislikeComment({ devlogId, commentId: comment._id })}
-            disabled={disliking}
+            disabled={isDisliking}
             className={`flex items-center gap-1 text-xs transition-colors ${isDisliked ? "text-error" : "text-base-content/40 hover:text-error"}`}
           >
             <svg
@@ -122,10 +121,10 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
           {(isOwn || isAdmin) && (
             <button
               onClick={() => deleteComment({ devlogId, commentId: comment._id })}
-              disabled={deleting}
+              disabled={isDeleting}
               className="ml-auto text-xs text-base-content/30 transition-colors hover:text-error"
             >
-              {deleting ? (
+              {isDeleting ? (
                 <LoadingSpinner size="xs" />
               ) : (
                 <svg
@@ -153,11 +152,11 @@ const CommentRow = ({ comment, devlogId, authUserId, isAdmin }) => {
 // ── Comment composer ──────────────────────────────────────────────────────────
 const CommentComposer = ({ devlogId, authUser }) => {
   const [text, setText] = useState("")
-  const { mutate: createComment, isPending } = useCreateDevlogComment(devlogId)
+  const { createComment, isCreatingComment } = useCreateDevlogComment(devlogId)
   const MAX = 500
 
   const handleSubmit = () => {
-    if (!text.trim() || isPending) return
+    if (!text.trim() || isCreatingComment) return
     createComment({ devlogId, text }, { onSuccess: () => setText("") })
   }
 
@@ -198,10 +197,10 @@ const CommentComposer = ({ devlogId, authUser }) => {
           </span>
           <button
             onClick={handleSubmit}
-            disabled={isPending || !text.trim()}
+            disabled={isCreatingComment || !text.trim()}
             className="btn btn-primary btn-sm"
           >
-            {isPending ? <LoadingSpinner size="xs" /> : "Post"}
+            {isCreatingComment ? <LoadingSpinner size="xs" /> : "Post"}
           </button>
         </div>
       </div>
@@ -216,7 +215,7 @@ const DevlogDetailPage = () => {
   const { authUser } = useAuthUser()
   const isAdmin = authUser?.isAdmin
 
-  const { data: devlog, isLoading: devlogLoading, isError } = useGetDevlog(id)
+  const { devlog, devlogLoading, isError } = useGetDevlog(id)
   const {
     comments,
     totalCount: commentCount,
@@ -226,7 +225,7 @@ const DevlogDetailPage = () => {
     isFetchingNextPage,
   } = useGetDevlogComments(id)
 
-  const { mutate: likeDevlog } = useLikeDevlog()
+  const { likeDevlog } = useLikeDevlog()
 
   if (devlogLoading) {
     return (
