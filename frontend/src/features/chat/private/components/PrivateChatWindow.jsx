@@ -141,7 +141,7 @@ const PrivateChatWindow = () => {
           </p>
         </div>
       )}
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden md:max-w-[585px]">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden ">
         {isLoadingMessages ? (
           <div className="flex h-full items-center justify-center">
             <LoadingSpinner size="md" />
