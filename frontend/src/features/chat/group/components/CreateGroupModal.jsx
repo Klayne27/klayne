@@ -1,9 +1,9 @@
 import { useState, useRef } from "react"
 import { IoClose } from "react-icons/io5"
 import { FiUpload } from "react-icons/fi"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
-import { useCreateGroup } from "./groupChatHooks/useGroupMutations"
-import { useGetFollowedUsersForMessaging } from "../private/privateChatHooks/usePrivateChatQueries"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { useCreateGroup } from "../groupChatHooks/useGroupMutations"
+import { useGetFollowedUsersForMessaging } from "../../private/privateChatHooks/usePrivateChatQueries"
 
 export default function CreateGroupModal({ isOpen, onClose }) {
   const [name, setName] = useState("")

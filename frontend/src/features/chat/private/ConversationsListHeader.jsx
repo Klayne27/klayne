@@ -4,10 +4,10 @@ import { Link } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useSocket } from "../../../context/SocketContext"
 import { useState } from "react"
-import CreateGroupModal from "../group/CreateGroupModal"
 import { HiMiniUserGroup } from "react-icons/hi2"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../users/usersHooks/useUserMutations"
+import CreateGroupModal from "../group/components/CreateGroupModal"
 
 function ConversationsListHeader() {
   const { authUser } = useAuthUser()
