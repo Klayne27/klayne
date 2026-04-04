@@ -441,12 +441,12 @@ const Sidebar = ({
           </div>
 
           <ul
-            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${isInMessagesTab ? "mt-1 md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
+            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${isInMessagesTab ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
           >
             {/* HOME */}
             <li
               onClick={handleHomeClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               {/* FIXED WIDTH ICON WRAPPER (This ensures vertical alignment) */}
               <div className={iconWrapperStyle}>
@@ -475,7 +475,7 @@ const Sidebar = ({
             {/* MESSAGES */}
             <li
               onClick={() => pathname !== "/messages" && navigate("/messages")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname.startsWith("/messages") ? (
@@ -504,7 +504,7 @@ const Sidebar = ({
             {/* NOTIFICATIONS */}
             <li
               onClick={() => pathname !== "/notifications" && navigate("/notifications")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/notifications" ? (
@@ -533,7 +533,7 @@ const Sidebar = ({
             {/* PUBLIC CHAT */}
             <li
               onClick={handlePublicChatClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/public-chat" ? (
@@ -572,7 +572,7 @@ const Sidebar = ({
             {/* BOOKMARKS */}
             <li
               onClick={handleBookmarksClick}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/bookmarks" ? (
@@ -593,7 +593,7 @@ const Sidebar = ({
             {/* POMODORO */}
             <li
               onClick={() => navigate("/pomodoro")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 0.5 : 0} />
@@ -610,7 +610,7 @@ const Sidebar = ({
             {/* TODOS */}
             <li
               onClick={() => navigate("/todos")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <LuListTodo className="size-7" />
@@ -627,7 +627,7 @@ const Sidebar = ({
             {/* THEMES */}
             <li
               onClick={() => navigate("/themes")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/themes" ? (
@@ -648,7 +648,7 @@ const Sidebar = ({
             {/* DEVLOG */}
             <li
               onClick={() => navigate("/devlog")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/devlog" ? (
@@ -689,7 +689,7 @@ const Sidebar = ({
                 pathname !== `/profile/${authUser?.username}` &&
                 navigate(`/profile/${authUser?.username}`)
               }
-              className={`hidden cursor-pointer items-center justify-center rounded-full ${isInMessagesTab ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === `/profile/${authUser?.username}` ? (
