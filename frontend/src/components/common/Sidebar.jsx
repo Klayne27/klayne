@@ -8,7 +8,7 @@ import { BiLogOut } from "react-icons/bi"
 import FollowListModal from "./FollowListModal"
 import React from "react"
 import { showAppToast } from "../../utils/showAppToast"
-import { BsChatDots, BsChatDotsFill, BsThreeDots } from "react-icons/bs"
+import { BsThreeDots } from "react-icons/bs"
 import ConfirmationModal from "./ConfirmationModal"
 import FeatherIcon from "../svgs/FeatherIcon"
 import { useAppStore } from "../../store/useAppStore"
@@ -18,7 +18,7 @@ import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
-import { IoBookmark, IoBookmarkOutline } from "react-icons/io5"
+import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
 import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
@@ -537,9 +537,9 @@ const Sidebar = ({
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/public-chat" ? (
-                  <BsChatDotsFill className="size-6" />
+                  <IoChatbubbles className="size-7" />
                 ) : (
-                  <BsChatDots className="size-6" />
+                  <IoChatbubblesOutline className="size-7" />
                 )}
                 {unreadPublicChatCount > 0 && (
                   <div
@@ -735,7 +735,7 @@ const Sidebar = ({
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`mr-2 flex gap-2 rounded-full w-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={`mr-2 flex w-full gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
