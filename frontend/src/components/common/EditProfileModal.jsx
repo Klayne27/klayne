@@ -41,7 +41,7 @@ const EditProfileModal = ({ authUser }) => {
   const confirmNewPasswordRef = useRef(null)
 
   const { updateProfile, isUpdatingProfile, isSuccess, newUsername } =
-    useUpdateUserProfile(formData)
+    useUpdateUserProfile()
   const { toggleLikedFeedPrivacy, isTogglingPrivacy } = useToggleLikedFeedPrivacy()
 
   const handleInputChange = (e) => {

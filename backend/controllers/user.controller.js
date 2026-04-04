@@ -266,7 +266,6 @@ export const updateUser = async (req, res) => {
   const {
     fullName,
     email,
-    username,
     currentPassword,
     newPassword,
     bio,
@@ -276,6 +275,7 @@ export const updateUser = async (req, res) => {
     levelOfEducation, // Added
     majorOrField, // Added
   } = req.body;
+  let { username } = req.body;
   const { profileImg, coverImg } = req.body;
 
   const userId = req.user._id;
@@ -498,7 +498,14 @@ export const deleteUserAccount = async (req, res) => {
           { blockedBy: userId },
         ],
       },
-      { $pull: { following: userId, followers: userId, blockedUsers: userId, blockedBy: userId } },
+      {
+        $pull: {
+          following: userId,
+          followers: userId,
+          blockedUsers: userId,
+          blockedBy: userId,
+        },
+      },
     );
 
     // Final Account Deletion
