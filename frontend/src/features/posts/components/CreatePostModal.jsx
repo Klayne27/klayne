@@ -1,5 +1,5 @@
 import PostModal from "./PostModal"
-import { useAppStore } from "../../store/useAppStore"
+import { useAppStore } from "../../../store/useAppStore"
 
 function CreatePostModal() {
   const { showCreatePostModal, setShowCreatePostModal } = useAppStore()

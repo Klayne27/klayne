@@ -1,6 +1,6 @@
-import { useTodoStore } from "../../store/useTodoStore"
+import { useTodoStore } from "../../../store/useTodoStore"
 import TodoEditModal from "./TodoEditModal"
-import { useUpdateTodo } from "./todoHooks/useTodoMutations"
+import { useUpdateTodo } from "../todoHooks/useTodoMutations"
 import TodoItem from "./TodoItem"
 
 const TodoList = ({ todos, isLoading, isError, openTodoDropdownId, setOpenTodoDropdownId }) => {

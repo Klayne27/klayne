@@ -1,5 +1,5 @@
 import { TbCalendarClock } from "react-icons/tb"
-import EmojiPickerPopover from "../../components/common/EmojiPickerPopover"
+import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import { PiSmiley } from "react-icons/pi"
 import { BiImageAdd, BiPoll } from "react-icons/bi"
 

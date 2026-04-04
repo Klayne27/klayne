@@ -1,6 +1,6 @@
 import { IoClose } from "react-icons/io5"
 import { format } from "date-fns" // A great library for date formatting
-import { formatDate, formatTime } from "../../utils/date"
+import { formatDate, formatTime } from "../../../utils/date"
 
 const EditHistoryModal = ({ isOpen, onClose, history }) => {
   if (!isOpen) return null

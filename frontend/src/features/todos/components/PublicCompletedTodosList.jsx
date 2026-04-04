@@ -1,14 +1,14 @@
-import { formatTime } from "../../utils/date/index.js"
-import { FaCheck } from "react-icons/fa6"
-import LoadingSpinner from "../../components/common/LoadingSpinner.jsx"
 import { forwardRef } from "react"
-import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../utils/todoUtils.jsx"
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
+import { colorMap, getTextColor, groupTodosByDate, iconMap } from "../../../utils/todoUtils.jsx"
+import { formatTime } from "../../../utils/date/index.js"
+import { FaCheck } from "react-icons/fa6"
+import LoadingSpinner from "../../../components/common/LoadingSpinner.jsx"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils.js"
 
-const CompletedTodoList = forwardRef(
+const PublicCompletedTodosList = forwardRef(
   ({ todos, isLoading, isError, isFetchingNextPage, hasNextPage }, ref) => {
-    const allCompletedTodos = todos?.pages?.flatMap((page) => page.completedTodos) || []
-    const groupedTodos = groupTodosByDate(allCompletedTodos)
+    const allPublicTodos = todos?.pages?.flatMap((page) => page.publicCompletedTodos) || []
+    const groupedTodos = groupTodosByDate(allPublicTodos)
 
     if (isLoading)
       return (
@@ -16,9 +16,9 @@ const CompletedTodoList = forwardRef(
           <LoadingSpinner />
         </div>
       )
-    if (isError) return <div className="p-4 text-error">Error fetching completed tasks.</div>
-    if (!todos || todos.length === 0) {
-      return <div className="p-4 text-center text-gray-500">No completed tasks yet.</div>
+    if (isError) return <div className="p-4 text-error">Error fetching public completed tasks.</div>
+    if (!allPublicTodos || allPublicTodos.length === 0) {
+      return <div className="p-4 text-center text-gray-500">No public completed tasks yet.</div>
     }
 
     return (
@@ -56,11 +56,10 @@ const CompletedTodoList = forwardRef(
                           <FaCheck className="size-2" />
                         </div>
                       </div>
-
                       <div className="min-w-0 flex-1">
                         <p className="truncate">
-                          You completed a task:{" "}
-                          <strong className={getTextColor(todo.priority)}>{todo?.title}</strong>
+                          <strong>{todo?.user?.fullName}</strong> completed a task:{" "}
+                          <strong className={getTextColor(todo?.priority)}>{todo?.title}</strong>
                         </p>
                         <p className="text-slate-400">{formatTime(todo?.completedAt)}</p>
                       </div>
@@ -78,17 +77,17 @@ const CompletedTodoList = forwardRef(
                   </li>
                 )
               })}
+              {hasNextPage && isFetchingNextPage && (
+                <div className="flex justify-center p-4" ref={ref}>
+                  <LoadingSpinner />
+                </div>
+              )}
             </ul>
           </div>
         ))}
-        {hasNextPage && isFetchingNextPage && (
-          <div className="flex justify-center p-4" ref={ref}>
-            <LoadingSpinner />
-          </div>
-        )}
       </>
     )
   },
 )
 
-export default CompletedTodoList
+export default PublicCompletedTodosList

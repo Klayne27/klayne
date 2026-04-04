@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
-import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { useAuthUser } from "../auth/authHooks/useAuthUser"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { TbCalendarClock } from "react-icons/tb"
 import { MentionSuggestions } from "./MentionSuggestions"
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 export const PostModalTextarea = ({
   input,

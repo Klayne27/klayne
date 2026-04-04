@@ -1,7 +1,7 @@
 import { useTodoStore } from "../../store/useTodoStore"
-import CreateTodoListModal from "../../features/todos/CreateTodoListModal"
-import TodoSectionList from "../../features/todos/TodoSectionList"
-import TodoPagesHeader from "../../features/todos/TodoPagesHeader"
+import CreateTodoListModal from "../../features/todos/components/CreateTodoListModal"
+import TodoSectionList from "../../features/todos/components/TodoSectionList"
+import TodoPagesHeader from "../../features/todos/components/TodoPagesHeader"
 import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 
 const MyTodoListsPage = () => {

@@ -1,4 +1,4 @@
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 export const MentionSuggestions = ({
   show,

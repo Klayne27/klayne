@@ -3,7 +3,7 @@ import { lazy, useState, Suspense } from "react"
 import Sidebar from "./components/common/Sidebar"
 import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
-import CreatePostModal from "./features/posts/CreatePostModal"
+import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))

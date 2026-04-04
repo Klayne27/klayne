@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react"
-import { useTodoStore } from "../../store/useTodoStore"
+import { useTodoStore } from "../../../store/useTodoStore"
 import TodoSectionItem from "./TodoSectionItem"
-import SlideUpMenu from "../../components/common/SlideUpMenu"
+import SlideUpMenu from "../../../components/common/SlideUpMenu"
 import TodoAddForm from "./TodoAddForm"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import EditTodoListModal from "./EditTodoListModal"
 import { useInView } from "react-intersection-observer"
 

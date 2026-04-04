@@ -1,9 +1,9 @@
 import Post from "./Post"
-import PostSkeleton from "../../components/skeletons/PostSkeleton"
+import PostSkeleton from "../../../components/skeletons/PostSkeleton"
 import { useEffect, useRef, useCallback } from "react"
-import { useCombinedPosts } from "../../hooks/customHooks/useCombinedPosts"
+import { useCombinedPosts } from "../../../hooks/customHooks/useCombinedPosts"
 import { TbGhost2 } from "react-icons/tb"
-import { useGetPosts } from "./postsHooks/usePostsQueries"
+import { useGetPosts } from "../postsHooks/usePostsQueries"
 
 const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoadingPinnedPosts }) => {
   const {

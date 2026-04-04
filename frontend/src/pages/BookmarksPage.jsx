@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom"
 import { CiSearch } from "react-icons/ci"
 import { FaArrowLeft } from "react-icons/fa6"
 import PostSkeleton from "../components/skeletons/PostSkeleton"
-import Post from "../features/posts/Post"
+import Post from "../features/posts/components/Post"
 import { useInView } from "react-intersection-observer"
 import { useGetBookmarkedPosts } from "../features/posts/postsHooks/usePostsQueries"
 

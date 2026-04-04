@@ -1,4 +1,4 @@
-import { useAppStore } from "../../store/useAppStore"
+import { useAppStore } from "../../../store/useAppStore"
 import PostModal from "./PostModal"
 
 function EditPostModal({post}) {

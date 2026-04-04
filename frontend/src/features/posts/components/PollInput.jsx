@@ -1,7 +1,7 @@
 // components/PostModal/PollInputs.jsx
 import { IoCloseSharp } from "react-icons/io5"
 import { FaPlus } from "react-icons/fa"
-import { MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../constants/numberConstants"
+import { MAX_POLL_CHOICES, POLL_CHOICE_MAX_LENGTH } from "../../../constants/numberConstants"
 
 export const PollInputs = ({
   pollChoices,

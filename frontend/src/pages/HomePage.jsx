@@ -1,13 +1,13 @@
 import { useState, useRef, useEffect, useCallback } from "react"
 import { FaArrowUp } from "react-icons/fa6"
-import Posts from "../features/posts/Posts"
+import Posts from "../features/posts/components/Posts"
 import { useSocket } from "../context/SocketContext"
 import { useAppStore } from "../store/useAppStore"
 import { useQueryClient } from "@tanstack/react-query"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { postKeys } from "../features/posts/postsHooks/postKeys"
-import CreatePost from "../features/posts/CreatePost"
+import CreatePost from "../features/posts/components/CreatePost"
 import { useMarkICPostsAsRead, useMarkPostsAsRead, useMarkVentPostsAsRead } from "../features/posts/postsHooks/usePostsMutations"
 
 const HomePage = () => {

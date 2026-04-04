@@ -1,8 +1,8 @@
 import { useEffect, useState } from "react"
-import { useTodoStore } from "../../store/useTodoStore.js"
+import { useTodoStore } from "../../../store/useTodoStore.js"
 import { useRef } from "react"
-import { bgColorMap, colorOptions, iconOptions } from "../../utils/todoUtils.jsx"
-import { useUpdateTodoList } from "./todoListHooks/useTodoListMutations.js"
+import { bgColorMap, colorOptions, iconOptions } from "../../../utils/todoUtils.jsx"
+import { useUpdateTodoList } from "../todoListHooks/useTodoListMutations.js"
 
 function EditTodoListModal() {
   const { showEditTodoListModal, setShowEditTodoListModal, todoListToEdit } = useTodoStore()
