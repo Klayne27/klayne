@@ -19,7 +19,7 @@ export default defineConfig({
       },
       devOptions: {
         enabled: true,
-        type: "module", 
+        type: "module",
       },
       manifest: {
         name: "Klayne",
@@ -44,6 +44,21 @@ export default defineConfig({
       },
     }),
   ],
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (id.includes("node_modules/react")) {
+            return "vendor-react"
+          }
+          if (id.includes("node_modules/recharts") || id.includes("node_modules/react-icons")) {
+            return "vendor-heavy"
+          }
+        },
+      },
+    },
+    chunkSizeWarningLimit: 600,
+  },
   optimizeDeps: {
     exclude: ["date-fns"],
   },
