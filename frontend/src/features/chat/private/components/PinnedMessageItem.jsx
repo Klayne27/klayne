@@ -2,8 +2,8 @@ import { format } from "date-fns"
 import { FaArrowTurnUp } from "react-icons/fa6"
 import { RiUnpinFill } from "react-icons/ri"
 import { Link } from "react-router-dom"
-import { useAuthUser } from "../../auth/authHooks/useAuthUser"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 
 const PinnedMessageItem = ({
   pinnedMessage,

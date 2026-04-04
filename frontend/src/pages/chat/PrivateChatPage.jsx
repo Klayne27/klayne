@@ -3,10 +3,10 @@ import { useParams } from "react-router-dom"
 import { useAppStore } from "../../store/useAppStore"
 import { usePrivateChatStore } from "../../store/usePrivateChatStore"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import ConversationsList from "../../features/chat/private/ConversationsList"
 import ConversationListSkeleton from "../../components/skeletons/ConversationListSkeleton"
-import PrivateChatWindow from "../../features/chat/private/PrivateChatWindow"
 import { useGetConversations } from "../../features/chat/private/privateChatHooks/usePrivateChatQueries"
+import ConversationsList from "../../features/chat/private/components/ConversationsList"
+import PrivateChatWindow from "../../features/chat/private/components/PrivateChatWindow"
 
 
 const PrivateChatPage = () => {

@@ -1,8 +1,8 @@
 import { Link } from "react-router-dom"
-import { formatTime } from "../../../utils/date"
+import { formatTime } from "../../../../utils/date/index.js"
 import { MdAdminPanelSettings } from "react-icons/md"
 import { FaBan } from "react-icons/fa"
-import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
+import { getBadgeIcon } from "../../../../utils/badgeUtils.jsx"
 
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {

@@ -1,50 +1,38 @@
 import { useRef, useCallback, useMemo } from "react"
-import { truncateText } from "../../../utils/truncateText"
 import { IoClose, IoImageOutline, IoMicOutline, IoStopCircleOutline } from "react-icons/io5"
-import { PiSmiley } from "react-icons/pi"
 import { MdCheck, MdEdit, MdSend } from "react-icons/md"
+import { truncateText } from "../../../../utils/truncateText"
 import { FaReply } from "react-icons/fa6"
-import React from "react"
-import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
-import { usePasteHandler } from "../../../hooks/customHooks/usePasteHandler"
-import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
-import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
-import { useChatInput } from "../../../hooks/customHooks/useChatInput"
-import { useEditMessage, useSendMessage } from "./privateChatHooks/usePrivateChatMutations"
+import { FaCircle } from "react-icons/fa"
+import { usePublicChatStore } from "../../../../store/usePublicChatStore"
+import { getTypingMessage } from "../../../../utils/getTypingMessage"
+import { usePasteHandler } from "../../../../hooks/customHooks/usePasteHandler"
+import { PiSmiley } from "react-icons/pi"
+import { useEmojiPickerPopover } from "../../../../hooks/customHooks/useEmojiPickerPopover"
+import EmojiPickerPopover from "../../../../components/common/EmojiPickerPopover"
+import { useChatInput } from "../../../../hooks/customHooks/useChatInput"
+import { useEditPublicMessage, useSendPublicMessage } from "../publicChatHooks/usePublicChatMutations"
 
-function PrivateChatInput({
-  actualConversationId,
-  privateChatInputRef,
-  socket,
-  onSenderMessageSent,
-}) {
-  const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
-  const privateChatFileInputRef = useRef(null)
+const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
+  const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =
+    usePublicChatStore()
+
   const emojiButtonRef = useRef(null)
 
-  const { editPrivateMessage } = useEditMessage(actualConversationId)
-  const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
+  const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
 
+  const publicChatFileInputRef = useRef(null)
 
-  const { isRecording, audioBlob } = usePrivateChatStore()
-
-  const typingConfig = useMemo(
-    () => ({
-      startEvent: "typing",
-      stopEvent: "stopTyping",
-      payload: {
-        conversationId: actualConversationId,
-      },
-    }),
-    [actualConversationId],
-  )
+  const { sendPublicMessage } = useSendPublicMessage({ onSenderMessageSent })
+  const { editPublicMessage } = useEditPublicMessage()
 
   const handleSendMessage = useCallback(
-    async ({ text, file, repliedToId, duration }) => {
-      let base64Data = null
+    async ({ text, file, repliedToId, voiceMessage, duration }) => {
+      let imgBase64 = null
+      let voiceMessageBase64 = null
 
       if (file) {
-        base64Data = await new Promise((resolve, reject) => {
+        imgBase64 = await new Promise((resolve, reject) => {
           const reader = new FileReader()
           reader.onloadend = () => resolve(reader.result)
           reader.onerror = reject
@@ -52,53 +40,89 @@ function PrivateChatInput({
         })
       }
 
-      sendPrivateMessage({
-        message: text,
+      if (voiceMessage) {
+        voiceMessageBase64 = await new Promise((resolve, reject) => {
+          const reader = new FileReader()
+          reader.onloadend = () => resolve(reader.result)
+          reader.onerror = reject
+          reader.readAsDataURL(voiceMessage)
+        })
+      }
+
+      sendPublicMessage({
+        text,
         repliedTo: repliedToId,
-        conversationId: actualConversationId,
-        img: file && file.type.startsWith("image/") ? base64Data : null,
-        voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null,
-        voiceMessageDuration: duration, 
+        imgBase64,
+        voiceMessageBase64,
+        voiceMessageDuration: duration,
       })
     },
-    [sendPrivateMessage, actualConversationId],
+    [sendPublicMessage],
   )
 
   const handleEditMessage = useCallback(
     async ({ messageId, newText }) => {
-      editPrivateMessage({ messageId, newText })
+      editPublicMessage({ messageId, newText })
     },
-    [editPrivateMessage],
+    [editPublicMessage],
+  )
+
+  const typingConfig = useMemo(
+    () => ({
+      startEvent: "public_typing",
+      stopEvent: "public_stop_typing",
+      payload: {},
+    }),
+    [],
   )
 
   const {
+    currentUser,
     textInput,
-    setTextInput,
     previewImage,
     setPreviewImage,
-    selectedFile,
     setSelectedFile,
+    setTextInput,
+    selectedFile,
+    isSendButtonDisabled,
     handleTextInputChange,
     handleFileChange,
-    handleSubmit,
     handleKeyDown,
     handleEmojiClick,
     handleRemoveImage,
     handleCancelEdit,
     handleImageButtonClick,
-    isSendButtonDisabled,
-    handleStartRecording, // <-- Add this
-    handleStopRecording, // <-- Add this
-    handleClearRecording, // <-- Add this
+    handleStartRecording,
+    handleStopRecording,
+    handleClearRecording,
+    clearInputState,
   } = useChatInput({
-    inputRef: privateChatInputRef,
-    fileInputRef: privateChatFileInputRef,
+    inputRef: publicChatInputRef,
+    fileInputRef: publicChatFileInputRef,
     socket,
-    chatStore: usePrivateChatStore(),
+    chatStore: usePublicChatStore(),
     onSendMessage: handleSendMessage,
     onEditMessage: handleEditMessage,
     typingConfig: typingConfig,
   })
+
+  const publicHandleSubmit = async (e) => {
+    e.preventDefault()
+    const content = textInput.trim()
+    const repliedToId = replyingToMessage?._id || null
+
+    if (editingMessage) {
+      await editPublicMessage({ messageId: editingMessage._id, newText: content })
+    } else {
+      await handleSendMessage({
+        text: content,
+        file: selectedFile,
+        repliedToId,
+        voiceMessage: audioBlob, // 👈 Pass the audioBlob here
+      })
+    }
+    clearInputState()
+  }
 
   const {
     showEmojiPickerPopover,
@@ -107,36 +131,42 @@ function PrivateChatInput({
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
+  const canSendImages = currentUser?.isVerified || currentUser?.isGoldVerified
+
   const handlePaste = usePasteHandler({
-    inputRef: privateChatInputRef,
+    inputRef: publicChatInputRef,
     input: textInput,
     setInput: setTextInput,
     setSelectedFile: setSelectedFile,
     setPreviewImage: setPreviewImage,
-    fileInputRef: privateChatFileInputRef,
+    fileInputRef: publicChatFileInputRef,
     editingMessage,
   })
 
-  const renderFormContent = (isEditingMode = false) => (
-    <>
+  const showTypingIndicator = typingUsers && typingUsers.length > 0
+  const messageDeleted = <span className="mt-1 italic text-gray-600">[Message Deleted]</span>
+
+  const renderInputForm = (isEditingMode, typingIndicator) => (
+    <form onSubmit={publicHandleSubmit} className="relative flex items-center bg-black/0 px-2">
       <input
         type="file"
         accept="image/*"
         onChange={handleFileChange}
-        ref={privateChatFileInputRef}
+        ref={publicChatFileInputRef}
         className="hidden"
+        disabled={!canSendImages}
       />
 
       <div className="focus-within:border-accent/99 relative mb-4 flex flex-1 items-center rounded-xl border border-transparent bg-secondary">
         <div className="flex pl-1">
           <button
             type="button"
-            onClick={handleImageButtonClick} // Use the new handler
-            className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700"
+            onClick={handleImageButtonClick}
+            className={`${canSendImages ? "cursor-pointer" : "cursor-not-allowed"} rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700`}
+            disabled={!canSendImages}
           >
             <IoImageOutline className="h-5 w-5" />
           </button>
-
           <button
             type="button"
             className="relative hidden rounded-full p-2 text-primary transition-colors duration-200 hover:bg-gray-700 md:block"
@@ -175,7 +205,7 @@ function PrivateChatInput({
             <button
               type="button"
               onClick={handleStopRecording}
-              className="rounded-full p-2 text-primary transition-colors duration-200 hover:bg-red-700"
+              className="rounded-full p-2 hover:bg-primary/70 transition-colors duration-200 text-red-700"
             >
               <IoStopCircleOutline className="h-5 w-5" />
             </button>
@@ -187,7 +217,6 @@ function PrivateChatInput({
           onChange={handleTextInputChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
-          onFocus={(e) => e.stopPropagation()}
           placeholder={
             isEditingMode
               ? "Editing message..."
@@ -196,7 +225,7 @@ function PrivateChatInput({
                 : "Type your message..."
           }
           className="flex max-h-[140px] w-full resize-none overflow-y-auto rounded-r-xl bg-secondary py-2 pl-3 pr-14 placeholder-gray-400 focus:outline-none"
-          ref={privateChatInputRef}
+          ref={publicChatInputRef}
           rows={1}
         />
 
@@ -212,13 +241,15 @@ function PrivateChatInput({
           {isEditingMode ? <MdCheck className="h-5 w-5" /> : <MdSend className="h-5 w-5" />}
         </button>
       </div>
-    </>
+      {typingIndicator}
+    </form>
   )
 
   return (
     <>
+      {/* Preview image (rendered conditionally) */}
       {previewImage && (
-        <div className="flex border-t border-accent p-5">
+        <div className="mt-4 flex border-t border-accent p-5">
           <div className="relative">
             <img
               src={previewImage}
@@ -248,7 +279,7 @@ function PrivateChatInput({
         </div>
       )}
 
-      {/* Only show replyingToMessage if NOT in editing mode */}
+      {/* Replying message indicator */}
       {replyingToMessage && !editingMessage && (
         <div className="flex items-center justify-between border-t border-accent bg-black/0 p-2 pt-0">
           <div className="flex flex-1 flex-col rounded-md p-3">
@@ -257,7 +288,7 @@ function PrivateChatInput({
               <div className="text-sm font-bold text-primary">Replying to</div>
             </div>
             <div className="mt-1 text-xs italic text-gray-400">
-              {truncateText(replyingToMessage.text, 40)}
+              {isMessageDeleted ? messageDeleted : truncateText(replyingToMessage.text)}
               {replyingToMessage.img && !replyingToMessage.text && " (Image)"}
               {replyingToMessage.voiceMessageId && !replyingToMessage.text && " (Voice Message)"}
             </div>
@@ -271,10 +302,9 @@ function PrivateChatInput({
         </div>
       )}
 
-      {/* Conditional rendering for the entire input section */}
-      {editingMessage ? (
-        // EDIT MODE CONTAINER
-        <div className="flex w-full flex-col border-t border-accent bg-base-100">
+      {/* Input section wrapper */}
+      <div className="relative w-full flex-col bg-base-100">
+        {editingMessage && (
           <div className="flex items-center justify-between px-1 py-2 pt-0 text-sm">
             <div className="flex flex-col items-start p-3">
               <div className="flex items-center gap-2">
@@ -293,27 +323,31 @@ function PrivateChatInput({
               <IoClose size={20} />
             </button>
           </div>
+        )}
 
-          {/* The form, now nested inside the edit mode container */}
-          <form
-            onSubmit={handleSubmit}
-            className="relative flex items-center bg-black/0 px-2" // change back to p-2 if new typing indicator is ugly
-          >
-            {renderFormContent(true)}{" "}
-            {/* Pass true to indicate editing mode for placeholders/icons */}
-          </form>
-        </div>
-      ) : (
-        // NORMAL MODE (not editing)
-        <form
-          onSubmit={handleSubmit}
-          className="relative flex items-center bg-black/0 px-2" // change back to p-2
-        >
-          {renderFormContent(false)} {/* Pass false for normal mode */}
-        </form>
-      )}
+        {/* Conditionally render the typing indicator */}
+        {showTypingIndicator && (
+          <div className="absolute -top-7 left-0 flex w-full items-center justify-start bg-base-100 p-1 px-4 text-sm text-gray-400">
+            <span className="animate-pulse font-semibold">{getTypingMessage(typingUsers)}</span>
+            <span className="ml-1 mt-2.5 flex gap-0.5">
+              <span className="pulsing-dot pulsing-dot-1 inline-block">
+                <FaCircle size={6} />
+              </span>
+              <span className="pulsing-dot pulsing-dot-2 inline-block">
+                <FaCircle size={6} />
+              </span>
+              <span className="pulsing-dot pulsing-dot-3 inline-block">
+                <FaCircle size={6} />
+              </span>
+            </span>
+          </div>
+        )}
+
+        {/* The single input form that handles both modes */}
+        {renderInputForm(!!editingMessage, null)}
+      </div>
     </>
   )
 }
 
-export default React.memo(PrivateChatInput)
+export default PublicChatInput

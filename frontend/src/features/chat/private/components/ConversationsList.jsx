@@ -2,10 +2,10 @@ import { useEffect, useRef, useState } from "react"
 import { IoSearch } from "react-icons/io5"
 import ConversationItem from "./ConversationItem"
 import React from "react"
-import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import ConversationsListHeader from "./ConversationsListHeader"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
-import { useGetOrCreateConversation, useSearchConversations } from "./privateChatHooks/usePrivateChatQueries"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { useGetOrCreateConversation, useSearchConversations } from "../privateChatHooks/usePrivateChatQueries"
 
 const ConversationsList = ({ conversations }) => {
   const { authUser } = useAuthUser()

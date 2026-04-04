@@ -1,6 +1,6 @@
 import React from "react"
+import GroupConversationItem from "../../group/components/GroupConversationItem"
 import DMConversationItem from "./DMConversationItem"
-import GroupConversationItem from "../group/components/GroupConversationItem"
 
 function ConversationItem({ conv }) {
   if (conv.isGroup) return <GroupConversationItem conv={conv} />

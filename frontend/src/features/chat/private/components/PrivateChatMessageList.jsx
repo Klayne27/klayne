@@ -1,14 +1,14 @@
 import React, { forwardRef } from "react"
-import { useAuthUser } from "../../auth/authHooks/useAuthUser"
-import LoadingSpinner from "../../../components/common/LoadingSpinner"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
+import LoadingSpinner from "../../../../components/common/LoadingSpinner"
 import PrivateChatMessageItem from "./PrivateChatMessageItem"
-import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
-import { formatDate, formatTime } from "../../../utils/date"
+import { useProcessedMessage } from "../../../../hooks/customHooks/useProcessedMessages"
+import { formatDate, formatTime } from "../../../../utils/date"
 import { RiPushpinFill } from "react-icons/ri"
 import { useState } from "react"
-import ProfileInfoModal from "../../../components/common/ProfileInfoModal"
-import { useChatViewStore } from "../../../store/useChatViewStore"
-import { useGetUserProfile } from "../../users/usersHooks/useUserQueries"
+import ProfileInfoModal from "../../../../components/common/ProfileInfoModal"
+import { useChatViewStore } from "../../../../store/useChatViewStore"
+import { useGetUserProfile } from "../../../users/usersHooks/useUserQueries"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {

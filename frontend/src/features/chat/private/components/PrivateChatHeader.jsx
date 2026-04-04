@@ -1,9 +1,9 @@
 import { FaArrowLeft } from "react-icons/fa6"
 import { Link, useNavigate } from "react-router-dom"
-import { useSocket } from "../../../context/SocketContext"
+import { useSocket } from "../../../../context/SocketContext"
 import { RiPushpinFill } from "react-icons/ri"
 import { IoInformationCircleOutline } from "react-icons/io5"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 
 function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation }) {
   const navigate = useNavigate()

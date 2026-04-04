@@ -1,6 +1,6 @@
 
 import { RiPushpinFill } from "react-icons/ri"
-import { formatDate, formatTime } from "../../../utils/date"
+import { formatDate, formatTime } from "../../../../utils/date"
 
 const SystemMessageItem = ({
   message,

@@ -1,13 +1,13 @@
 import { FaCog } from "react-icons/fa"
-import DropdownMenu from "../../../components/common/DropdownMenu"
+import DropdownMenu from "../../../../components/common/DropdownMenu"
 import { Link } from "react-router-dom"
-import { useAuthUser } from "../../auth/authHooks/useAuthUser"
-import { useSocket } from "../../../context/SocketContext"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
+import { useSocket } from "../../../../context/SocketContext"
 import { useState } from "react"
 import { HiMiniUserGroup } from "react-icons/hi2"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
-import { useUpdateStatusPreference } from "../../users/usersHooks/useUserMutations"
-import CreateGroupModal from "../group/components/CreateGroupModal"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { useUpdateStatusPreference } from "../../../users/usersHooks/useUserMutations"
+import CreateGroupModal from "../../group/components/CreateGroupModal"
 
 function ConversationsListHeader() {
   const { authUser } = useAuthUser()
