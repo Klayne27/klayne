@@ -1,5 +1,5 @@
 import { useState } from "react"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
 
 // ── Admin form modal ──────────────────────────────────────────────────────────
 const EMPTY_FORM = { title: "", body: "", tag: "", isPinned: false }
