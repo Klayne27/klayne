@@ -1,6 +1,6 @@
 import { useEffect, useRef } from "react"
 import { useParams } from "react-router-dom"
-import { useJoinViaInviteCode } from "../features/chat/group/groupChatHooks/useJoinViaInviteCode"
+import { useJoinViaInviteCode } from "../features/chat/group/groupChatHooks/useGroupMutations.js"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 
 export default function JoinGroupPage() {
