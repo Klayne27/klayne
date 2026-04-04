@@ -1,8 +1,8 @@
-import LoadingSpinner from "../../components/common/LoadingSpinner"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { FaCalendar, FaFlag } from "react-icons/fa6"
-import { colorMap, getTextColor, iconMap } from "../../utils/todoUtils"
-import { truncateText } from "../../utils/truncateText"
-import useLockBodyScroll from "../../hooks/customHooks/useLockBodyScroll"
+import { colorMap, getTextColor, iconMap } from "../../../utils/todoUtils"
+import { truncateText } from "../../../utils/truncateText"
+import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
 
 const PomodoroTasksList = ({isOpen, tasks, isLoading, selectedTaskId, setSelectedTaskId }) => {
   useLockBodyScroll(isOpen)

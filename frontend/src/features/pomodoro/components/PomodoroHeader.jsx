@@ -1,9 +1,9 @@
 import { Link } from "react-router-dom"
 import { FaInfoCircle } from "react-icons/fa"
-import { useAuthUser } from "../auth/authHooks/useAuthUser"
+import { useAuthUser } from "../../auth/authHooks/useAuthUser.js"
 import { IoIosStats } from "react-icons/io"
-import { getBadgeIcon } from "../../utils/badgeUtils.jsx"
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils.js"
+import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils.js"
 
 const xpForLevel = (level) => {
   if (level <= 1) {

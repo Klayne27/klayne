@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react"
-import { showAppToast } from "../../utils/showAppToast"
-import { useUpdatePomodoroSettings } from "./pomodoroHooks/usePomodoroMutations"
+import { showAppToast } from "../../../utils/showAppToast"
+import { useUpdatePomodoroSettings } from "../pomodoroHooks/usePomodoroMutations"
 
 const PomodoroSettingsModal = ({ isOpen, onClose, initialSettings }) => {
   const [settings, setSettings] = useState(initialSettings)

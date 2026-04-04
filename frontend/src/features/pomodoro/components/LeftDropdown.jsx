@@ -1,8 +1,8 @@
 import { CiMail } from "react-icons/ci"
 import { FaEllipsis, FaEllipsisVertical } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
-import { formatCount } from "../../utils/textUtils"
-import { useSocket } from "../../context/SocketContext"
+import { formatCount } from "../../../utils/textUtils"
+import { useSocket } from "../../../context/SocketContext"
 import { BsChatDots } from "react-icons/bs"
 import { GoHome } from "react-icons/go"
 
