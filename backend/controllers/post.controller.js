@@ -145,7 +145,7 @@ export const createReply = async (req, res) => {
     const { parentId } = req.params;
     const { text, isIC } = req.body;
     let { img, video } = req.body;
-    const userId = req.user._id; // Keep as ObjectId for comparison
+    const userId = req.user._id;
 
     const parent = await Post.findById(parentId).populate("user");
     if (!parent) return res.status(404).json({ error: "Post not found." });
@@ -154,8 +154,6 @@ export const createReply = async (req, res) => {
       return res.status(400).json({ error: "Reply must have text, image, or video." });
     }
 
-    // --- ANONYMITY LOGIC ---
-    // Check if the owner of the parent post is replying to their own anonymous vent
     const isOwnerReplyingAnonymously =
       parent.isVent &&
       parent.isAnonymous &&
@@ -167,7 +165,6 @@ export const createReply = async (req, res) => {
         .json({ error: "Cannot reply due to blocking restrictions." });
     }
 
-    // --- MEDIA UPLOAD ---
     let uploadedImgUrl = null;
     let imgPublicId = null;
     let uploadedVideoUrl = null;
@@ -192,7 +189,6 @@ export const createReply = async (req, res) => {
 
     const mentionedUsersIds = await extractAndValidateMentions(text);
 
-    // --- CREATE THE REPLY ---
     const newReply = new Post({
       user: userId,
       text,
@@ -204,14 +200,13 @@ export const createReply = async (req, res) => {
       mentionedUsers: mentionedUsersIds,
       parentPost: parentId,
       publishedAt: new Date(),
-      isIC: parent.isIC || isIC || false, // inherit from parent, fallback to request body
+      isIC: parent.isIC || isIC || false,
       isVent: parent.isVent,
       isAnonymous: isOwnerReplyingAnonymously,
     });
 
     await newReply.save();
 
-    // Image document storage
     if (img && uploadedImgUrl) {
       const newImage = new Image({
         imageUrl: uploadedImgUrl,
@@ -227,21 +222,6 @@ export const createReply = async (req, res) => {
 
     await Post.findByIdAndUpdate(parentId, { $inc: { repliesCount: 1 } });
 
-    // replies doesnt emit event
-
-    // if (onlineUsersMap && io) {
-    //   for (const [onlineUserId] of onlineUsersMap.entries()) {
-    //     if (onlineUserId.toString() !== userId.toString()) {
-    //       if (newReply.isIC) {
-    //         await emitNewICPostCount(onlineUserId);
-    //       } else {
-    //         await emitNewPostCount(onlineUserId);
-    //       }
-    //     }
-    //   }
-    // }
-
-    // --- NOTIFICATIONS ---
     if (parent.user._id.toString() !== userId.toString()) {
       if (parent.parentPost === null) {
         await createAndSendNotification({
@@ -262,7 +242,6 @@ export const createReply = async (req, res) => {
       }
     }
 
-    // --- POPULATE & MASK ---
     const populatedReply = await Post.findById(newReply._id)
       .populate({
         path: "user",
@@ -274,7 +253,6 @@ export const createReply = async (req, res) => {
 
     let finalReply = populatedReply.toObject();
 
-    // If it's an anonymous reply, mask the user data before sending to client
     if (isOwnerReplyingAnonymously) {
       finalReply.user = {
         _id: populatedReply.user._id,
@@ -382,10 +360,8 @@ export const getAllPosts = async (req, res) => {
       },
       { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
 
-      // Step 2: Add the new match condition before the other lookups
       {
         $match: {
-          // Keep existing conditions
           isVent: { $ne: true },
           isIC: { $ne: true },
           parentPost: null,
@@ -393,7 +369,6 @@ export const getAllPosts = async (req, res) => {
           "deletedFor.user": { $ne: userId },
           ...scheduledPostConditions,
           user: { $nin: blockedAndBlockingObjectIds },
-          // New condition to filter out reposts of vent posts
           "repostedFromPostData.isVent": { $ne: true },
           "repostedFromPostData.isIC": { $ne: true },
         },
@@ -737,17 +712,14 @@ export const getICPosts = async (req, res) => {
       },
       { $unwind: { path: "$repostedFromPostData", preserveNullAndEmptyArrays: true } },
 
-      // Step 2: Add the new match condition before the other lookups
       {
         $match: {
-          // Keep existing conditions
           isVent: { $ne: true },
           isIC: true,
           "deletedFor.user": { $ne: userId },
           parentPost: null,
           ...scheduledPostConditions,
           user: { $nin: blockedAndBlockingObjectIds },
-          // New condition to filter out reposts of vent posts
           "repostedFromPostData.isVent": { $ne: true },
         },
       },
@@ -853,7 +825,7 @@ export const getICPosts = async (req, res) => {
       { $unwind: "$user" },
       {
         $lookup: {
-          from: "images", // The name of your image collection
+          from: "images",
           localField: "image",
           foreignField: "_id",
           as: "image",
@@ -1104,7 +1076,7 @@ export const getLikedPosts = async (req, res) => {
           pipeline: [
             {
               $lookup: {
-                from: "images", // Lookup the Image collection for the user's profile image
+                from: "images", 
                 localField: "profileImg",
                 foreignField: "_id",
                 as: "profileImg",
@@ -1640,7 +1612,6 @@ export const getUserReplies = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
-      // Also populate the parent post so the UI can show "replying to X"
       {
         $lookup: {
           from: "posts",
@@ -1895,7 +1866,7 @@ export const getPinnedPosts = async (req, res) => {
             },
           },
           {
-            path: "image", // FIX 1: populate the post's own image
+            path: "image", 
             select: "imageUrl",
           },
           {
@@ -1913,7 +1884,7 @@ export const getPinnedPosts = async (req, res) => {
                 },
               },
               {
-                path: "image", // FIX 2: populate repostedFrom's image too
+                path: "image",
                 select: "imageUrl",
               },
             ],
@@ -2074,7 +2045,6 @@ export const createPost = async (req, res) => {
     const newPost = new Post(newPostData);
     await newPost.save();
 
-    // ✅ FIX 1: Create Image document and link it to the Post
     let newImage = null;
     let newVideo = null;
 
@@ -2089,24 +2059,8 @@ export const createPost = async (req, res) => {
       await newImage.save();
 
       newPost.image = newImage._id;
-      await newPost.save(); // Save again to update the post with the new image ID
+      await newPost.save();
     }
-
-    // const isAnonymousInteraction =
-    //   newPost.isVent && newPost.isAnonymous && newPost.user._id === userId;
-
-    // if (!newPost.isScheduled) {
-    //   await User.findByIdAndUpdate(userId, { $inc: { postsCount: 1 } });
-
-    //   const notificationPromises = mentionedUsersIds.map((mentionedUserId) =>
-    //     createAndSendNotification({
-    //       from: userId,
-    //       to: mentionedUserId,
-    //       type: "mention",
-    //       postId: newPost._id,
-    //       isAnonymousInteraction,
-    //     }),
-    //   );
 
     const isAnonymousInteraction =
       newPost.isVent &&
@@ -2285,9 +2239,6 @@ export const likeUnlikePost = async (req, res) => {
       await post.save();
 
       if (post.user.toString() !== userId.toString()) {
-        // --- ANONYMITY CHECK ---
-        // If the post is a vent and marked anonymous,
-        // and the person liking it is the owner, hide their identity.
         const isAnonymousInteraction =
           post.isVent && post.isAnonymous && post.user.toString() === userId.toString();
 
@@ -2297,7 +2248,7 @@ export const likeUnlikePost = async (req, res) => {
             to: post.user,
             type: "like",
             postId: postId,
-            isAnonymousInteraction: isAnonymousInteraction, // Pass the flag here!
+            isAnonymousInteraction: isAnonymousInteraction, 
           });
         } else {
           await createAndSendNotification({
@@ -2305,7 +2256,7 @@ export const likeUnlikePost = async (req, res) => {
             to: post.user,
             type: "replyLike",
             postId: postId,
-            isAnonymousInteraction: isAnonymousInteraction, // Pass the flag here!
+            isAnonymousInteraction: isAnonymousInteraction,
           });
         }
       }
@@ -2547,14 +2498,11 @@ export const voteOnPoll = async (req, res) => {
       return res.status(400).json({ error: "Post ID and option ID are required." });
     }
 
-    // 1. Find the post the user is interacting with
     const postToVoteOn = await Post.findById(postId);
     if (!postToVoteOn) return res.status(404).json({ error: "Post not found." });
 
-    // 2. Determine the "Source of Truth" (The original post)
     const targetPostId = postToVoteOn.repostedFrom || postToVoteOn._id;
 
-    // 3. Check if user already voted on the ORIGINAL post
     const hasUserVoted = await Post.findOne({
       _id: targetPostId,
       "pollOptions.voters": userId,
@@ -2566,7 +2514,6 @@ export const voteOnPoll = async (req, res) => {
       });
     }
 
-    // 4. Update the Original Post
     const updatedOriginal = await Post.findOneAndUpdate(
       {
         _id: targetPostId,
@@ -2579,7 +2526,6 @@ export const voteOnPoll = async (req, res) => {
       { new: true },
     ).lean();
 
-    // 5. Sync the vote to all reposts of this poll (Optional but keeps UI consistent)
     await Post.updateMany(
       { repostedFrom: targetPostId, "pollOptions._id": optionId },
       {
@@ -2754,13 +2700,12 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
 
 export const createVentPost = async (req, res) => {
   try {
-    const { text, isAnonymous, pollOptions } = req.body; // Added pollOptions here
+    const { text, isAnonymous, pollOptions } = req.body; 
     let { img, video } = req.body;
 
     const userId = req.user._id;
     const user = await User.findById(userId);
 
-    // 1. Validation Logic
     if (video && !user.isGoldVerified) {
       return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
@@ -2771,7 +2716,6 @@ export const createVentPost = async (req, res) => {
         .json({ error: "Vent post must have text, media, or a poll." });
     }
 
-    // 2. Poll vs Media Constraint
     if ((img || video) && pollOptions && pollOptions.length > 0) {
       return res
         .status(400)
@@ -2784,7 +2728,6 @@ export const createVentPost = async (req, res) => {
     let videoPublicId = null;
     let mediaType = "none";
 
-    // 3. Media Upload
     if (img) {
       const uploadedResponse = await cloudinary.uploader.upload(img, {
         upload_preset: "ml_ventposts",
@@ -2801,11 +2744,10 @@ export const createVentPost = async (req, res) => {
       mediaType = "video";
     }
 
-    // 4. Build Post Data
     const newPostData = {
       user: userId,
       text,
-      isVent: true, // This ensures it stays in the Vent feed
+      isVent: true, 
       isAnonymous: isAnonymous === true,
       publishedAt: new Date(),
       img: uploadedImgUrl,
@@ -2815,7 +2757,6 @@ export const createVentPost = async (req, res) => {
       mediaType,
     };
 
-    // 5. Process Poll Options (Same logic as createPost)
     if (pollOptions && pollOptions.length > 0) {
       if (pollOptions.length < 2) {
         return res.status(400).json({ error: "A poll must have at least two options." });
@@ -2829,14 +2770,12 @@ export const createVentPost = async (req, res) => {
 
       newPostData.pollOptions = validPollOptions;
       newPostData.pollTotalVotes = 0;
-      // Ensure media is cleared if poll exists
       newPostData.mediaType = "none";
     }
 
     const newPost = new Post(newPostData);
     await newPost.save();
 
-    // 6. Handle Image Document linking
     if (img) {
       const newImage = new Image({
         imageUrl: uploadedImgUrl,
@@ -2850,7 +2789,6 @@ export const createVentPost = async (req, res) => {
       await newPost.save();
     }
 
-    // 7. Socket Notifications
     if (onlineUsersMap && io) {
       for (const [onlineUserId] of onlineUsersMap.entries()) {
         if (onlineUserId.toString() !== userId.toString()) {
@@ -2860,7 +2798,6 @@ export const createVentPost = async (req, res) => {
       }
     }
 
-    // 8. Final Populate & Response
     const populatedPost = await Post.findById(newPost._id)
       .populate({
         path: "user",
@@ -2942,7 +2879,6 @@ export const getVentPosts = async (req, res) => {
         },
       },
       { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
-      // 👇 Add this new $lookup stage to handle repostedFrom
       {
         $lookup: {
           from: "posts",
@@ -3093,14 +3029,11 @@ export const editPost = async (req, res) => {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Authorization check: only the author can edit the post
     if (post.user.toString() !== userId.toString()) {
       return res.status(403).json({ error: "You are not authorized to edit this post." });
     }
 
-    // Check if the new text is the same as the old text
     if (post.text === text) {
-      // Re-populate and return the post if there are no changes
       const populatedPost = await Post.findById(post._id)
         .populate({
           path: "user",
@@ -3118,19 +3051,15 @@ export const editPost = async (req, res) => {
       return res.status(200).json(populatedPost);
     }
 
-    // Save the old text to the edit history
     post.editHistory.push({ text: post.text });
 
-    // Update the post with the new text and update the timestamp
     post.text = text;
     post.updatedAt = new Date();
 
-    // You may also want to update mentions
     post.mentionedUsers = await extractAndValidateMentions(text);
 
     await post.save();
 
-    // After saving, find the post again and populate it
     const populatedPost = await Post.findById(post._id)
       .populate({
         path: "user",
@@ -3157,13 +3086,12 @@ export const getPostHistory = async (req, res) => {
   try {
     const { postId } = req.params;
 
-    const post = await Post.findById(postId).select("editHistory"); // Only fetch the editHistory field
+    const post = await Post.findById(postId).select("editHistory"); 
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
     }
 
-    // Return only the edit history array
     res.status(200).json(post.editHistory);
   } catch (error) {
     console.error("Error in getPostHistory controller:", error);

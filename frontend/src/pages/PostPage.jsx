@@ -60,18 +60,6 @@ const PostPage = () => {
     }
   }, [])
 
-  // useEffect(() => {
-  //   if (heroRef.current && !isLoading ) {
-  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
-  //   }
-  // }, [isLoading, isLoadingThread, isLoadingReplies])
-
-  // useEffect(() => {
-
-  //   if (!isLoading && heroRef.current) {
-  //     heroRef.current.scrollIntoView({ behavior: "instant", block: "start" })
-  //   }
-  // }, [isLoading, pid])
 
   useEffect(() => {
     const isMainContentReady = !isLoading && !isLoadingThread
@@ -90,12 +78,6 @@ const PostPage = () => {
     adjustTextareaHeight()
   }, [replyInput, adjustTextareaHeight])
 
-  // useEffect(() => {
-  //   if (pid) {
-  //     refetchPost()
-  //     refetchReplies()
-  //   }
-  // }, [pid, refetchPost, refetchReplies])
 
   useEffect(() => {
     const el = observerTarget.current
@@ -254,14 +236,6 @@ const PostPage = () => {
       handleSubmitReply,
     ],
   )
-
-  // if (isLoading || isLoadingThread) {
-  //   return (
-  //     <div className="flex h-screen w-full flex-1 items-center justify-center">
-  //       <LoadingSpinner size="lg" />
-  //     </div>
-  //   )
-  // }
 
   if (isLoading && !post) {
     return (

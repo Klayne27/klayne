@@ -407,10 +407,6 @@ const PomodoroPage = () => {
   }, [selectedTaskId])
 
   const handleStart = async () => {
-    // if (!selectedTaskId) {
-    //   showAppToast("Please select a task to begin your study session.", "error")
-    //   return
-    // }
 
     if (isActive || !settings || timer <= 0 || isGoalReached) return
     const now = Date.now()

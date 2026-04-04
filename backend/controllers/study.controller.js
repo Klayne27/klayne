@@ -9,15 +9,14 @@ export const getStudyActivityFeed = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const skip = (page - 1) * limit;
 
-    // Use a single aggregation pipeline for both collections
     const combinedPipeline = [
       {
         $unionWith: {
-          coll: "levelups", // Assuming the collection name is 'levelups'
+          coll: "levelups", 
         },
       },
       {
-        $sort: { createdAt: -1 }, // Sort by date to get a single, chronological feed
+        $sort: { createdAt: -1 },
       },
       {
         $skip: skip,
@@ -25,10 +24,9 @@ export const getStudyActivityFeed = async (req, res) => {
       {
         $limit: limit,
       },
-      // You may need a lookup to populate the user data here
       {
         $lookup: {
-          from: "users", // Assuming your user collection is named 'users'
+          from: "users",
           localField: "user",
           foreignField: "_id",
           as: "user",
@@ -61,7 +59,6 @@ export const getStudyActivityFeed = async (req, res) => {
       },
     ];
 
-    // Execute both pipelines in parallel
     const [combinedResults, totalCountResult] = await Promise.all([
       StudySession.aggregate(combinedPipeline),
       StudySession.aggregate(totalCountPipeline),
@@ -118,7 +115,6 @@ export const endStudySession = async (req, res) => {
       return res.status(400).json({ error: "Duration is required" });
     }
 
-    // 1. Create the session record
     await StudySession.create({
       user: userId,
       duration,
@@ -134,29 +130,24 @@ export const endStudySession = async (req, res) => {
     const todayString = getDateString(today);
 
     // --- NEW: HEATMAP LOGIC ---
-    // Check if we already have an entry for today in the history
     const historyIndex = user.studyHistory.findIndex(
       (entry) => entry.date === todayString,
     );
 
     if (historyIndex !== -1) {
-      // Increment existing day
       user.studyHistory[historyIndex].count += 1;
       user.studyHistory[historyIndex].duration += duration;
     } else {
-      // Add new day to history
       user.studyHistory.push({
         date: todayString,
         count: 1,
         duration: duration,
       });
 
-      // Optional: Keep history to last 365 days to keep User object small
       if (user.studyHistory.length > 365) {
         user.studyHistory.shift();
       }
     }
-    // ---------------------------
 
     const getMondayOfWeek = (date) => {
       const d = new Date(date);
@@ -169,7 +160,6 @@ export const endStudySession = async (req, res) => {
 
     const currentWeekStart = getMondayOfWeek(today);
 
-    // Reset weekly stats if new week
     if (user.weeklyStats.weekStart !== currentWeekStart) {
       user.weeklyStats = {
         studyDuration: 0,
@@ -263,20 +253,19 @@ export const endStudySession = async (req, res) => {
       user.longestStudyStreak = user.studyStreak;
     }
 
-    // Handle XP and Levels
     const xpResult = await handleXPAndLeveling(user, duration);
     if (xpResult && xpResult.xpEarned) {
       user.monthlyStats.xpEarned += xpResult.xpEarned;
       user.weeklyStats.xpEarned += xpResult.xpEarned;
     }
 
-    await user.save(); // Save once at the end
+    await user.save();
     await checkAndAwardBadges(user);
 
     res.status(200).json({
       message: "Study session logged successfully",
       xpResult,
-      studyHistory: user.studyHistory, // Return updated history for frontend UI
+      studyHistory: user.studyHistory, 
     });
   } catch (error) {
     console.error("Error in endStudySession", error.message);
@@ -326,7 +315,6 @@ export const createStudyTask = async (req, res) => {
       return res.status(400).json({ error: "Task name is required" });
     }
 
-    // Prevent duplicate task names for the same user
     const existingTask = await StudyTask.findOne({ user: userId, name });
     if (existingTask) {
       return res.status(400).json({ error: "A task with this name already exists" });

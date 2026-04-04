@@ -52,9 +52,7 @@ const HomePage = () => {
     })
 
     if (feedType === "venting") {
-      // New check
       queryClient.invalidateQueries({ queryKey: postKeys.list("/api/posts/vent") })
-      // TODO: Create and use a useMarkVentsAsRead hook
       markVentFeedAsRead()
       setShowNewVentPostsButton(false)
     } else if (feedType === "forYou") {
