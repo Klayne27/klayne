@@ -4,10 +4,9 @@ import { MdDeleteForever, MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaUserCheck, FaUserSlash } from "react-icons/fa"
 import { PiSmileyFill } from "react-icons/pi"
-import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import { useIsMobile } from "../../../../hooks/customHooks/useIsMobile"
 import { RiPushpinFill } from "react-icons/ri"
 import { useLocation } from "react-router-dom"
-import { usePrivateChatStore } from "../../../store/usePrivateChatStore"
 
 function MoreMessageActionsModal({
   onCloseMoreActionsModal,

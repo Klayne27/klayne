@@ -1,5 +1,5 @@
 import { HiOutlineReply } from "react-icons/hi"
-import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
+import SlideUpMenu, { SlideUpMenuContent } from "../../../../components/common/SlideUpMenu"
 import { MdEdit } from "react-icons/md"
 import { IoCopy } from "react-icons/io5"
 import { FaTrashCan } from "react-icons/fa6"

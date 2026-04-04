@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 
 function MessageContentLayout({
   isSentByCurrentUser,

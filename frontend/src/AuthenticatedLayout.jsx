@@ -36,8 +36,6 @@ const DevlogDetailPage = lazy(() => import("./pages/DevlogDetailPage"))
 const GroupSettingsPage = lazy(() => import("./pages/GroupSettingsPage"))
 const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
 
-
-
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")

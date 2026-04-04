@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query"
 import { addPublicMessageReactionApi, adminDeletePublicMessageApi, banUserFromPublicChatApi, deleteOwnPublicMessageApi, editPublicMessageApi, sendPublicMessageApi, unbanUserFromPublicChatApi } from "../../../../api/publicChatApi"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { showAppToast } from "../../../../utils/showAppToast"
-import { messageKeys } from "../../hooks/messageKeys"
+import { messageKeys } from "../../common/hooks/messageKeys"
 
 export const useSendPublicMessage = ({ onSenderMessageSent }) => {
   const queryClient = useQueryClient()

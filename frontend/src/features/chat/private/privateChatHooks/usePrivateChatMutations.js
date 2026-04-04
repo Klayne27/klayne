@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query"
-import { messageKeys } from "../../hooks/messageKeys"
-import { conversationKeys } from "../../hooks/conversationKeys"
+import { messageKeys } from "../../common/hooks/messageKeys"
+import { conversationKeys } from "../../common/hooks/conversationKeys"
 import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
 import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import {

@@ -1,9 +1,9 @@
 import { FaReply } from "react-icons/fa6"
-import { renderClickableText } from "../../../utils/textUtils"
-import { truncateText } from "../../../utils/truncateText"
-import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { PiMicrophoneStageFill } from "react-icons/pi"
-import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
+import { truncateText } from "../../../../utils/truncateText"
+import { renderClickableText } from "../../../../utils/textUtils"
+import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 
 const MessageBubble = ({
   message,

@@ -1,10 +1,10 @@
 import { useEffect } from "react"
 import { useQueryClient } from "@tanstack/react-query"
 import { useNavigate } from "react-router-dom"
-import { groupKeys } from "../group/groupChatHooks/groupKeys"
 import { conversationKeys } from "./conversationKeys"
+import { groupKeys } from "../../group/groupChatHooks/groupKeys"
 import { messageKeys } from "./messageKeys"
-import { showAppToast } from "../../../utils/showAppToast"
+import { showAppToast } from "../../../../utils/showAppToast"
 
 export const useGroupChatSocketEvents = (socket) => {
   const queryClient = useQueryClient()

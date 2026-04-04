@@ -1,4 +1,4 @@
-import { formatTime } from "../../../utils/date"
+import { formatTime } from "../../../../utils/date"
 
 function ShowMessageTimeOnHover({ message, isSentByCurrentUser, isMessageHighlighted }) {
   return (

@@ -4,9 +4,9 @@ import { useState } from "react"
 import { userKeys } from "./userKeys"
 import { showAppToast } from "../../../utils/showAppToast"
 import { postKeys } from "../../posts/postsHooks/postKeys"
-import { messageKeys } from "../../chat/hooks/messageKeys"
+import { messageKeys } from "../../chat/common/hooks/messageKeys"
 import { notificationKeys } from "../../notifications/notificationsHooks/notificationKeys"
-import { conversationKeys } from "../../chat/hooks/conversationKeys"
+import { conversationKeys } from "../../chat/common/hooks/conversationKeys"
 import { useNavigate } from "react-router-dom"
 
 export const useUpdateUserProfile = () => {

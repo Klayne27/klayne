@@ -1,8 +1,8 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { getConversationBetweenUsersApi, getConversationsApi, getFollowedUsersForMessagingApi, getMessagesApi, getOrCreateConversationApi, getPinnedMessagesApi, searchConversationsAndUsersApi } from "../../../../api/privateChatApi"
 import { useMemo } from "react"
-import { messageKeys } from "../../hooks/messageKeys"
-import { conversationKeys } from "../../hooks/conversationKeys"
+import { messageKeys } from "../../common/hooks/messageKeys"
+import { conversationKeys } from "../../common/hooks/conversationKeys"
 import { useNavigate } from "react-router-dom"
 import { showAppToast } from "../../../../utils/showAppToast"
 

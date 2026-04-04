@@ -1,7 +1,7 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { useMemo } from "react"
 import { getPublicMessagesApi } from "../../../../api/publicChatApi"
-import { messageKeys } from "../../hooks/messageKeys"
+import { messageKeys } from "../../common/hooks/messageKeys"
 
 export const useGetPublicMessages = () => {
   const MESSAGE_LIMIT = 40

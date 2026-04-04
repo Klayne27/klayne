@@ -1,5 +1,5 @@
 import { PiSmileyFill } from "react-icons/pi"
-import AnimatedCount from "../../../components/common/AnimatedCount"
+import AnimatedCount from "../../../../components/common/AnimatedCount"
 
 const MessageReactions = ({
   groupedReactions,
