@@ -5,6 +5,7 @@ import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
 import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
+import BoardPage from "./pages/BoardPage"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
@@ -39,6 +40,7 @@ const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")
+  const isBoardPage = pathname.includes("/board")
   const isPublicChatPage = pathname.includes("/public-chat")
   const { showCreatePostModal, setShowCreatePostModal } =
     useAppStore()
@@ -46,7 +48,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const [feedType, setFeedType] = useState("posts")
 
   const shouldHideSidePanels =
-    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos")
+    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos") 
 
   return (
     <>
@@ -94,6 +96,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/search" element={<SearchPage />} />
               <Route path="/devlog" element={<DevlogPage />} />
               <Route path="/devlog/:id" element={<DevlogDetailPage />} />
+              <Route path="/board" element={<BoardPage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />
@@ -114,7 +117,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
             </Routes>
           </Suspense>
         </main>
-        {!isMessagePage && !isPublicChatPage && !shouldHideSidePanels && (
+        {!isMessagePage && !isPublicChatPage && !shouldHideSidePanels && !isBoardPage && (
           <RightPanel
             deferredPrompt={deferredPrompt}
             isInstalled={isInstalled}

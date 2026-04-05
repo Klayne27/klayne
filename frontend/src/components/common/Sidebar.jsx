@@ -399,7 +399,7 @@ const Sidebar = ({
 
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full p-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
-  const isInMessagesTab = pathname.includes("/messages")
+  const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -410,7 +410,7 @@ const Sidebar = ({
       {
         <div
           className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-1 md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
-            isInMessagesTab
+            shouldCollapseSidebar
               ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center" // Collapsed State
               : "md:max-w-[264px] md:flex-[2_2_0] md:items-start" // Expanded State
           } ${!isMobileBarVisible ? "translate-y-full md:translate-y-0" : ""}`}
@@ -428,7 +428,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 ${isInMessagesTab ? "mr-2" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 ${shouldCollapseSidebar ? "mr-2" : ""} hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -441,12 +441,12 @@ const Sidebar = ({
           </div>
 
           <ul
-            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${isInMessagesTab ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
+            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${shouldCollapseSidebar ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
           >
             {/* HOME */}
             <li
               onClick={handleHomeClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               {/* FIXED WIDTH ICON WRAPPER (This ensures vertical alignment) */}
               <div className={iconWrapperStyle}>
@@ -463,7 +463,7 @@ const Sidebar = ({
                   />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/" ? "font-bold" : ""}`}
                 >
@@ -475,7 +475,7 @@ const Sidebar = ({
             {/* MESSAGES */}
             <li
               onClick={() => pathname !== "/messages" && navigate("/messages")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname.startsWith("/messages") ? (
@@ -492,7 +492,7 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname.startsWith("/messages") ? "font-bold" : ""}`}
                 >
@@ -504,7 +504,7 @@ const Sidebar = ({
             {/* NOTIFICATIONS */}
             <li
               onClick={() => pathname !== "/notifications" && navigate("/notifications")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/notifications" ? (
@@ -521,7 +521,7 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/notifications" ? "font-bold" : ""}`}
                 >
@@ -533,7 +533,7 @@ const Sidebar = ({
             {/* PUBLIC CHAT */}
             <li
               onClick={handlePublicChatClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/public-chat" ? (
@@ -550,7 +550,7 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/public-chat" ? "font-bold" : ""}`}
                 >
@@ -572,7 +572,7 @@ const Sidebar = ({
             {/* BOOKMARKS */}
             <li
               onClick={handleBookmarksClick}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/bookmarks" ? (
@@ -581,7 +581,7 @@ const Sidebar = ({
                   <IoBookmarkOutline className="size-7" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/bookmarks" ? "font-bold" : ""}`}
                 >
@@ -593,12 +593,12 @@ const Sidebar = ({
             {/* POMODORO */}
             <li
               onClick={() => navigate("/pomodoro")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 0.5 : 0} />
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/pomodoro" ? "font-bold" : ""}`}
                 >
@@ -610,12 +610,12 @@ const Sidebar = ({
             {/* TODOS */}
             <li
               onClick={() => navigate("/todos")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <LuListTodo className="size-7" />
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/todos" ? "font-bold" : ""}`}
                 >
@@ -627,7 +627,7 @@ const Sidebar = ({
             {/* THEMES */}
             <li
               onClick={() => navigate("/themes")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/themes" ? (
@@ -636,7 +636,7 @@ const Sidebar = ({
                   <HiOutlinePaintBrush className="size-7" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/themes" ? "font-bold" : ""}`}
                 >
@@ -648,7 +648,7 @@ const Sidebar = ({
             {/* DEVLOG */}
             <li
               onClick={() => navigate("/devlog")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/devlog" ? (
@@ -657,11 +657,30 @@ const Sidebar = ({
                   <MdOutlineLibraryBooks className="size-7" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/devlog" ? "font-bold" : ""}`}
                 >
                   Devlog
+                </span>
+              )}
+            </li>
+            <li
+              onClick={() => navigate("/board")}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                {pathname === "/board" ? (
+                  <MdLibraryBooks className="size-7" />
+                ) : (
+                  <MdOutlineLibraryBooks className="size-7" />
+                )}
+              </div>
+              {!shouldCollapseSidebar && (
+                <span
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/board" ? "font-bold" : ""}`}
+                >
+                  Board
                 </span>
               )}
             </li>
@@ -689,7 +708,7 @@ const Sidebar = ({
                 pathname !== `/profile/${authUser?.username}` &&
                 navigate(`/profile/${authUser?.username}`)
               }
-              className={`hidden cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === `/profile/${authUser?.username}` ? (
@@ -698,7 +717,7 @@ const Sidebar = ({
                   <TbUser className="size-8" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === `/profile/${authUser?.username}` ? "font-bold" : ""}`}
                 >
@@ -708,7 +727,7 @@ const Sidebar = ({
             </li>
 
             {/* POST BUTTON */}
-            {isInMessagesTab && !isMobile ? (
+            {shouldCollapseSidebar && !isMobile ? (
               <div
                 className={
                   `z-[50] mt-4 size-[50px] cursor-pointer rounded-full bg-primary p-3 text-white hover:bg-opacity-85` // <-- ADD THESE CLASSES
@@ -761,7 +780,7 @@ const Sidebar = ({
                   )}
                 </div>
                 {/* </Link> */}
-                {!isInMessagesTab && (
+                {!shouldCollapseSidebar && (
                   <div className="flex flex-1 items-center justify-between">
                     <div className="flex flex-col">
                       <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>
