@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineInformationCircle } from "react-icons/hi"; // Import a new icon for info/rules
-import { BsChatDots } from "react-icons/bs";
 import { IoChatbubblesOutline } from "react-icons/io5";
 
 const PublicChatHeader = () => {
