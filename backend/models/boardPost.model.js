@@ -27,7 +27,13 @@ const boardPostSchema = new mongoose.Schema(
     reactions: [
       {
         emoji: { type: String, required: true },
-        users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        userId: {
+          // Changed from 'users: []' to 'userId' to match Message
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        _id: false,
       },
     ],
     commentsCount: { type: Number, default: 0 },

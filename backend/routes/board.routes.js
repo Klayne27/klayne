@@ -10,6 +10,7 @@ import {
   createBoardComment,
   deleteBoardComment,
   reactToBoardComment,
+  editBoardComment,
 } from "../controllers/board.controller.js";
 
 const router = express.Router();
@@ -24,5 +25,6 @@ router.get("/:id/comments", protectRoute, getBoardComments);
 router.post("/:id/comments", protectRoute, createBoardComment);
 router.delete("/comments/:commentId", protectRoute, deleteBoardComment);
 router.post("/comments/:commentId/react", protectRoute, reactToBoardComment);
+router.put("/comments/:commentId", protectRoute, editBoardComment);
 
 export default router;

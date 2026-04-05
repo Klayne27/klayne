@@ -15,7 +15,6 @@ const boardCommentSchema = new mongoose.Schema(
     },
     content: {
       type: String,
-      required: true,
       trim: true,
     },
     image: {
@@ -24,10 +23,26 @@ const boardCommentSchema = new mongoose.Schema(
       default: null,
     },
     img: { type: String, default: null },
+    // Flat reply — stores which comment this is replying to
+    parentComment: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BoardComment",
+      default: null,
+    },
+    isEdited: { type: Boolean, default: false },
+    isDeletedByUser: { type: Boolean, default: false },
+    isDeletedByAdmin: { type: Boolean, default: false },
+    // Same format as Message.reactions so useMessagingMetaData works directly
     reactions: [
       {
         emoji: { type: String, required: true },
-        users: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        userId: {
+          // Keep the name userId as requested
+          type: mongoose.Schema.Types.ObjectId,
+          ref: "User",
+          required: true,
+        },
+        _id: false,
       },
     ],
   },
@@ -35,6 +50,7 @@ const boardCommentSchema = new mongoose.Schema(
 );
 
 boardCommentSchema.index({ boardPost: 1, createdAt: 1 });
+boardCommentSchema.index({ parentComment: 1 });
 
 const BoardComment = mongoose.model("BoardComment", boardCommentSchema);
 export default BoardComment;

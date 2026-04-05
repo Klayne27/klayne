@@ -16,6 +16,31 @@ const userProjection = {
   preferredBadge: 1,
 };
 
+// Shared populate config for comments
+const commentPopulate = [
+  {
+    path: "user",
+    select:
+      "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+    populate: { path: "profileImg", select: "imageUrl" },
+  },
+  { path: "image", select: "imageUrl" },
+  {
+    path: "parentComment",
+    select: "content user isDeletedByUser isDeletedByAdmin",
+    populate: {
+      path: "user",
+      select: "username fullName profileImg",
+      populate: { path: "profileImg", select: "imageUrl" },
+    },
+  },
+  {
+    path: "reactions.userId",
+    select: "username fullName profileImg",
+    populate: { path: "profileImg", select: "imageUrl" },
+  },
+];
+
 // ── GET all board posts (paginated) ──────────────────────────────────────────
 export const getBoardPosts = async (req, res) => {
   try {
@@ -33,6 +58,11 @@ export const getBoardPosts = async (req, res) => {
         path: "user",
         select:
           "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -57,6 +87,11 @@ export const getBoardPost = async (req, res) => {
         path: "user",
         select:
           "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -172,34 +207,43 @@ export const reactToBoardPost = async (req, res) => {
     const { emoji } = req.body;
     const userId = req.user._id;
 
-    if (!emoji) return res.status(400).json({ error: "Emoji is required." });
+    if (!id || !emoji) {
+      return res.status(400).json({ error: "Post ID and emoji are required." });
+    }
 
     const post = await BoardPost.findById(id);
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
-    const existing = post.reactions.find((r) => r.emoji === emoji);
+    // Check if reaction exists (same logic as reactToMessage)
+    const reactionExists = post.reactions.some(
+      (r) => r.userId.toString() === userId.toString() && r.emoji === emoji,
+    );
 
-    if (existing) {
-      const userIndex = existing.users.findIndex((u) => u.equals(userId));
-      if (userIndex !== -1) {
-        existing.users.splice(userIndex, 1);
-        if (existing.users.length === 0) {
-          post.reactions = post.reactions.filter((r) => r.emoji !== emoji);
-        }
-      } else {
-        existing.users.push(userId);
-      }
+    let updatedPost;
+    if (reactionExists) {
+      updatedPost = await BoardPost.findOneAndUpdate(
+        { _id: id },
+        { $pull: { reactions: { userId: userId, emoji: emoji } } },
+        { new: true },
+      );
     } else {
-      post.reactions.push({ emoji, users: [userId] });
+      updatedPost = await BoardPost.findOneAndUpdate(
+        { _id: id },
+        { $push: { reactions: { emoji, userId: userId } } },
+        { new: true },
+      );
     }
 
-    await post.save();
-
-    const populated = await BoardPost.findById(id)
+    const populated = await BoardPost.findById(updatedPost._id)
       .populate({
         path: "user",
         select:
           "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "reactions.userId", // Populating the user info for the reaction
+        select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" });
@@ -211,7 +255,7 @@ export const reactToBoardPost = async (req, res) => {
   }
 };
 
-// ── GET comments ─────────────────────────────────────────────────────────────
+// ── GET comments (updated to populate reactions.userId and parentComment) ────
 export const getBoardComments = async (req, res) => {
   try {
     const { id } = req.params;
@@ -225,17 +269,10 @@ export const getBoardComments = async (req, res) => {
       .sort({ createdAt: 1 })
       .skip(skip)
       .limit(limit)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" })
+      .populate(commentPopulate)
       .lean();
 
     const hasNextPage = page * limit < totalCount;
-
     res.status(200).json({ comments, hasNextPage, totalCount });
   } catch (error) {
     console.error("Error in getBoardComments:", error);
@@ -243,11 +280,11 @@ export const getBoardComments = async (req, res) => {
   }
 };
 
-// ── CREATE comment ───────────────────────────────────────────────────────────
+// ── CREATE comment (updated — handle parentComment) ──────────────────────────
 export const createBoardComment = async (req, res) => {
   try {
     const { id: boardPostId } = req.params;
-    const { content } = req.body;
+    const { content, parentCommentId } = req.body;
     let { img } = req.body;
     const userId = req.user._id;
 
@@ -257,6 +294,14 @@ export const createBoardComment = async (req, res) => {
 
     const post = await BoardPost.findById(boardPostId);
     if (!post) return res.status(404).json({ error: "Board post not found." });
+
+    // Validate parentComment belongs to the same board post
+    if (parentCommentId) {
+      const parent = await BoardComment.findById(parentCommentId);
+      if (!parent || parent.boardPost.toString() !== boardPostId) {
+        return res.status(400).json({ error: "Invalid parent comment." });
+      }
+    }
 
     let uploadedImgUrl = null;
     let imgPublicId = null;
@@ -274,6 +319,7 @@ export const createBoardComment = async (req, res) => {
       user: userId,
       content: content?.trim() || "",
       img: uploadedImgUrl,
+      parentComment: parentCommentId || null,
     });
 
     await newComment.save();
@@ -293,15 +339,9 @@ export const createBoardComment = async (req, res) => {
 
     await BoardPost.findByIdAndUpdate(boardPostId, { $inc: { commentsCount: 1 } });
 
-    const populated = await BoardComment.findById(newComment._id)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" });
-
+    const populated = await BoardComment.findById(newComment._id).populate(
+      commentPopulate,
+    );
     res.status(201).json(populated);
   } catch (error) {
     console.error("Error in createBoardComment:", error);
@@ -332,48 +372,79 @@ export const deleteBoardComment = async (req, res) => {
   }
 };
 
-// ── REACT to comment ─────────────────────────────────────────────────────────
+// ── REACT to comment (updated — per-entry format matching Message) ────────────
 export const reactToBoardComment = async (req, res) => {
   try {
     const { commentId } = req.params;
     const { emoji } = req.body;
     const userId = req.user._id;
 
-    if (!emoji) return res.status(400).json({ error: "Emoji is required." });
+    if (!commentId || !emoji) {
+      return res.status(400).json({ error: "Comment ID and emoji are required." });
+    }
 
     const comment = await BoardComment.findById(commentId);
     if (!comment) return res.status(404).json({ error: "Comment not found." });
 
-    const existing = comment.reactions.find((r) => r.emoji === emoji);
+    const reactionExists = comment.reactions.some(
+      (r) => r.userId.toString() === userId.toString() && r.emoji === emoji,
+    );
 
-    if (existing) {
-      const userIndex = existing.users.findIndex((u) => u.equals(userId));
-      if (userIndex !== -1) {
-        existing.users.splice(userIndex, 1);
-        if (existing.users.length === 0) {
-          comment.reactions = comment.reactions.filter((r) => r.emoji !== emoji);
-        }
-      } else {
-        existing.users.push(userId);
-      }
+    let updatedComment;
+    if (reactionExists) {
+      updatedComment = await BoardComment.findOneAndUpdate(
+        { _id: commentId },
+        { $pull: { reactions: { userId: userId, emoji: emoji } } },
+        { new: true },
+      );
     } else {
-      comment.reactions.push({ emoji, users: [userId] });
+      updatedComment = await BoardComment.findOneAndUpdate(
+        { _id: commentId },
+        { $push: { reactions: { emoji, userId: userId } } },
+        { new: true },
+      );
     }
 
-    await comment.save();
-
-    const populated = await BoardComment.findById(commentId)
+    // Using your existing commentPopulate and adding reaction population
+    const populated = await BoardComment.findById(updatedComment._id)
+      .populate(commentPopulate)
       .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+        path: "reactions.userId",
+        select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" });
+      });
 
     res.status(200).json(populated);
   } catch (error) {
     console.error("Error in reactToBoardComment:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+// ── EDIT comment ─────────────────────────────────────────────────────────────
+export const editBoardComment = async (req, res) => {
+  try {
+    const { commentId } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    if (!content?.trim()) {
+      return res.status(400).json({ error: "Content cannot be empty." });
+    }
+
+    const comment = await BoardComment.findById(commentId);
+    if (!comment) return res.status(404).json({ error: "Comment not found." });
+    if (!comment.user.equals(userId)) {
+      return res.status(403).json({ error: "Not authorized." });
+    }
+
+    comment.content = content.trim();
+    comment.isEdited = true;
+    await comment.save();
+
+    const populated = await BoardComment.findById(commentId).populate(commentPopulate);
+    res.status(200).json(populated);
+  } catch (error) {
+    console.error("Error in editBoardComment:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };

@@ -49,8 +49,8 @@ const MessageReactions = ({
             onReactionClick(message._id, emoji)
           }}
         >
-          <span className="text-[16px] mr-1 md:mr-0.5">{emoji}</span>
-          <AnimatedCount count={data.count} className="absolute font-bold text-white top-[1px]" />
+          <span className="mr-1 text-[16px] md:mr-0.5">{emoji}</span>
+          <AnimatedCount count={data.count} className="absolute top-[1px] font-bold text-white" />
           {/* <span className="ml-1 font-bold text-white">{data.count}</span> */}
         </div>
       )

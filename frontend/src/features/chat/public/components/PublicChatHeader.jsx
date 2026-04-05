@@ -2,7 +2,6 @@ import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineInformationCircle } from "react-icons/hi"; // Import a new icon for info/rules
-import { BsChatDots } from "react-icons/bs";
 import { IoChatbubblesOutline } from "react-icons/io5";
 
 const PublicChatHeader = () => {
@@ -45,55 +44,60 @@ const PublicChatHeader = () => {
 
         {/* Rules Modal/Dropdown */}
         {showRulesModal && (
-          <div
-            id="public-chat-rules-modal"
-            className="animate-fade-in-down absolute right-0 z-50 mt-2 w-72 rounded-lg bg-base-200 p-4 shadow-xl md:w-96"
-            // Optional: Add a click handler to close when clicking outside
-            // onBlur={() => setShowRulesModal(false)} // This might be tricky with focus
-            // tabIndex="-1" // Make it focusable to enable onBlur
-          >
-            <h3 className="mb-2 text-center text-lg font-bold">Welcome to the Public Chat!</h3>
-            <p className="mb-4 text-center text-sm text-gray-400">
-              This is a shared space for all users. Please keep it friendly and respectful.
-            </p>
-            <div className="max-h-60 overflow-y-auto text-sm">
-              <h4 className="mb-2 text-base font-semibold">Community Guidelines:</h4>
-              <ul className="list-disc space-y-2 pl-5">
-                <li>
-                  **Be Respectful:** Treat everyone with kindness. No hate speech, harassment, or
-                  personal attacks.
-                </li>
-                <li>
-                  **Keep it PG-13:** Avoid explicit, offensive, or otherwise inappropriate content.
-                </li>
-                <li>
-                  **No Spamming:** Don't flood the chat with repetitive messages, excessive emojis,
-                  or unapproved links.
-                </li>
-                {/* <li>
+          <>
+            <div
+              className="fixed inset-0 h-screen bg-transparent"
+              onClick={() => setShowRulesModal(false)}
+            />
+            <div
+              id="public-chat-rules-modal"
+              className="animate-fade-in-down absolute right-0 z-50 mt-2 w-72 rounded-lg bg-base-200 p-4 shadow-xl md:w-96"
+              // Optional: Add a click handler to close when clicking outside
+            >
+              <h3 className="mb-2 text-center text-lg font-bold">Welcome to the Public Chat!</h3>
+              <p className="mb-4 text-center text-sm text-gray-400">
+                This is a shared space for all users. Please keep it friendly and respectful.
+              </p>
+              <div className="max-h-60 overflow-y-auto text-sm">
+                <h4 className="mb-2 text-base font-semibold">Community Guidelines:</h4>
+                <ul className="list-disc space-y-2 pl-5">
+                  <li>
+                    **Be Respectful:** Treat everyone with kindness. No hate speech, harassment, or
+                    personal attacks.
+                  </li>
+                  <li>
+                    **Keep it PG-13:** Avoid explicit, offensive, or otherwise inappropriate
+                    content.
+                  </li>
+                  <li>
+                    **No Spamming:** Don't flood the chat with repetitive messages, excessive
+                    emojis, or unapproved links.
+                  </li>
+                  {/* <li>
                   **Stay on Topic (Generally):** While casual conversation is fine, try to
                   keep discussions relevant to the community's purpose.
                 </li> */}
-                <li>
-                  **Protect Your Privacy:** Do not share personal information (yours or others').
-                </li>
-                <li>**No Impersonation:** Do not pretend to be another user.</li>
-                <li>
-                  **Report Issues:** If you see something that violates these rules, message Wayne.
-                  (report button soon maybe)
-                </li>
-                <li>**Listen to Admins:** Instructions from admins are final.</li>
-              </ul>
+                  <li>
+                    **Protect Your Privacy:** Do not share personal information (yours or others').
+                  </li>
+                  <li>**No Impersonation:** Do not pretend to be another user.</li>
+                  <li>
+                    **Report Issues:** If you see something that violates these rules, message
+                    Wayne. (report button soon maybe)
+                  </li>
+                  <li>**Listen to Admins:** Instructions from admins are final.</li>
+                </ul>
+              </div>
+              <div className="mt-4 text-center">
+                <button
+                  onClick={() => setShowRulesModal(false)}
+                  className="btn btn-outline btn-primary btn-sm"
+                >
+                  Got it!
+                </button>
+              </div>
             </div>
-            <div className="mt-4 text-center">
-              <button
-                onClick={() => setShowRulesModal(false)}
-                className="btn btn-outline btn-primary btn-sm"
-              >
-                Got it!
-              </button>
-            </div>
-          </div>
+          </>
         )}
       </div>
     </div>

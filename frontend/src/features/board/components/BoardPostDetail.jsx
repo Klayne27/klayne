@@ -1,12 +1,17 @@
-import { useState, useRef } from "react"
-import { FaArrowLeft, FaTrashCan } from "react-icons/fa6"
+import { useState, useRef, useEffect } from "react"
+import { FaTrashCan } from "react-icons/fa6"
+import { IoChatbubbleSharp, IoClose } from "react-icons/io5"
 import { Link } from "react-router-dom"
-import { useGetBoardComments, useGetBoardPost } from "../boardHooks/boardQueries"
+
+import BoardCommentItem from "./BoardCommentItem"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { useBoardStore } from "../../../store/useBoardStore"
+import { useGetBoardComments, useGetBoardPost } from "../boardHooks/boardQueries"
 import {
   useCreateBoardComment,
   useDeleteBoardComment,
   useDeleteBoardPost,
+  useEditBoardComment,
   useReactToBoardComment,
   useReactToBoardPost,
 } from "../boardHooks/boardMutations"
@@ -14,72 +19,58 @@ import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 import { renderClickableText } from "../../../utils/textUtils"
-import { useAppStore } from "../../../store/useAppStore"
-import { IoClose } from "react-icons/io5"
-import { BiImageAdd } from "react-icons/bi"
+import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
+import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
+import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
+import MessageActionsModal from "../../chat/common/components/MessageActionsModal"
+import MessageReactions from "../../chat/common/components/MessageReactions"
+import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 
-const EMOJI_OPTIONS = ["👍", "❤️", "😂", "😮", "😢", "🔥", "🎉", "👀"]
-
-const ReactionBar = ({ reactions, onReact, currentUserId }) => (
-  <div className="mt-2 flex flex-wrap items-center gap-1">
-    {reactions?.map((r) => {
-      const reacted = r.users.some((u) => (u?._id || u)?.toString() === currentUserId)
-      return (
-        <button
-          key={r.emoji}
-          onClick={() => onReact(r.emoji)}
-          className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-sm transition ${
-            reacted ? "bg-primary/20 text-primary" : "bg-gray-700/40 hover:bg-gray-700/70"
-          }`}
-        >
-          <span>{r.emoji}</span>
-          <span className="text-xs">{r.users.length}</span>
-        </button>
-      )
-    })}
-    <div className="relative">
-      <EmojiPicker onPick={onReact} />
-    </div>
-  </div>
-)
-
-const EmojiPicker = ({ onPick }) => {
-  const [open, setOpen] = useState(false)
-  return (
-    <div className="relative">
-      <button
-        onClick={() => setOpen((o) => !o)}
-        className="rounded-full bg-gray-700/40 px-2 py-0.5 text-sm hover:bg-gray-700/70"
-      >
-        +
-      </button>
-      {open && (
-        <>
-          <div className="fixed inset-0 z-10" onClick={() => setOpen(false)} />
-          <div className="absolute left-0 top-full z-20 mt-1 flex gap-1 rounded-xl border border-accent bg-base-100 p-2 shadow-lg">
-            {EMOJI_OPTIONS.map((e) => (
-              <button
-                key={e}
-                onClick={() => {
-                  onPick(e)
-                  setOpen(false)
-                }}
-                className="rounded p-1 text-lg hover:bg-gray-700/40"
-              >
-                {e}
-              </button>
-            ))}
-          </div>
-        </>
-      )}
-    </div>
-  )
-}
+const toMessageShape = (post) => ({
+  ...post,
+  sender: post?.user, // useMessagingMetaData reads .sender
+  text: post?.content, // cosmetic alias
+  isDeletedByAdmin: post?.isDeletedByAdmin || false,
+  isDeletedByUser: post?.isDeletedByUser || false,
+})
 
 const BoardPostDetail = ({ postId, onClose }) => {
   const { authUser } = useAuthUser()
+  const setReplyingToComment = useBoardStore((s) => s.setReplyingToComment)
+  const setEditingComment = useBoardStore((s) => s.setEditingComment)
+  const replyingToComment = useBoardStore((s) => s.replyingToComment)
+  const editingComment = useBoardStore((s) => s.editingComment)
+  const activeCommentModalId = useBoardStore((s) => s.activeCommentModalId)
+  const setActiveCommentModalId = useBoardStore((s) => s.setActiveCommentModalId)
+  const boardInputRef = useRef(null)
+
   const { post, isLoading } = useGetBoardPost(postId)
-  const openImageModal = useAppStore((state) => state.openImageModal)
+
+  const messageShape = toMessageShape(post)
+
+  const { isSentByCurrentUser, isEditable, groupedReactions, hasAnyReactions } =
+    useMessagingMetaData(messageShape, authUser)
+
+  const moreEmojisButtonRef = useRef(null)
+  const addReactionButtonRef = useRef(null)
+
+  const {
+    showEmojiPickerPopover,
+    popoverPosition,
+    handleOpenEmojiPickerPopover,
+    handleCloseEmojiPickerPopover,
+  } = useEmojiPickerPopover()
+
+  const { handleMouseEnter, handleMouseLeave, showModal } = useMessageModalInteractions(
+    post?._id,
+    setActiveCommentModalId,
+    activeCommentModalId,
+    null, // no mobile long press handler yet
+  )
+
+  const isAdmin = authUser?.isAdmin
+  const clearReplyAndEdit = useBoardStore((s) => s.clearReplyAndEdit)
+
   const {
     comments,
     isLoading: isLoadingComments,
@@ -87,36 +78,72 @@ const BoardPostDetail = ({ postId, onClose }) => {
     hasNextPage,
     isFetchingNextPage,
   } = useGetBoardComments(postId)
+
   const { createComment, isCreatingComment } = useCreateBoardComment(postId)
   const { deleteComment } = useDeleteBoardComment(postId)
   const { deleteBoardPost } = useDeleteBoardPost()
   const { reactToPost } = useReactToBoardPost()
   const { reactToComment } = useReactToBoardComment(postId)
+  const { editComment, isEditingComment } = useEditBoardComment(postId)
 
   const [commentInput, setCommentInput] = useState("")
-  const [previewImg, setPreviewImg] = useState(null)
-  const [imgBase64, setImgBase64] = useState(null)
-  const commentRef = useRef(null)
-  const fileRef = useRef(null)
+  const [editInput, setEditInput] = useState("")
+  // const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (editingComment) {
+      setEditInput(editingComment.content)
+      setTimeout(() => boardInputRef.current?.focus(), 0)
+    }
+  }, [editingComment, boardInputRef])
+
+  useEffect(() => {
+    if (replyingToComment) {
+      setTimeout(() => boardInputRef.current?.focus(), 0)
+    }
+  }, [replyingToComment, boardInputRef])
+
+  useEffect(() => {
+    return () => clearReplyAndEdit()
+  }, [postId, clearReplyAndEdit])
+
+  const handleReactionClick = (id, emoji) => {
+    reactToPost({ id, emoji })
+  }
+
+  const handleEmojiPickerSelect = (emojiData) => {
+    reactToPost({ id: post._id, emoji: emojiData.emoji })
+    handleCloseEmojiPickerPopover()
+  }
 
   const handleSubmitComment = (e) => {
     e.preventDefault()
-    if (!commentInput.trim()) return
-    createComment(
-      { content: commentInput, img: imgBase64 },
-      {
-        onSuccess: () => setCommentInput(""),
-      },
-    )
-  }
-
-  const handleImageChange = (e) => {
-    const file = e.target.files[0]
-    if (!file) return
-    setPreviewImg(URL.createObjectURL(file))
-    const reader = new FileReader()
-    reader.onloadend = () => setImgBase64(reader.result)
-    reader.readAsDataURL(file)
+    if (editingComment) {
+      if (!editInput.trim()) return
+      editComment(
+        { commentId: editingComment._id, content: editInput },
+        {
+          onSuccess: () => {
+            setEditInput("")
+            clearReplyAndEdit()
+          },
+        },
+      )
+    } else {
+      if (!commentInput.trim()) return
+      createComment(
+        {
+          content: commentInput,
+          parentCommentId: replyingToComment?._id || null,
+        },
+        {
+          onSuccess: () => {
+            setCommentInput("")
+            clearReplyAndEdit()
+          },
+        },
+      )
+    }
   }
 
   if (isLoading) {
@@ -132,150 +159,143 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const isOwner = authUser?._id === post.user?._id || authUser?._id === post.user
 
   return (
-    <div className="flex h-full flex-col">
-      {/* Detail header */}
-      <div className="flex items-center gap-3 border-b border-accent px-4 py-3">
-        <button
-          onClick={onClose}
-          className="flex-shrink-0 rounded-full p-2 transition hover:bg-gray-800 md:hidden"
-        >
-          <FaArrowLeft className="h-4 w-4" />
-        </button>
-        <h2 className="flex-1 truncate text-lg font-bold">{post.title}</h2>
-        {(isOwner || authUser?.isAdmin) && (
-          <button
-            onClick={() => {
-              deleteBoardPost(postId)
-              onClose()
-            }}
-            className="rounded-full p-2 text-red-500 transition hover:bg-red-500/10"
-          >
-            <FaTrashCan size={14} />
-          </button>
-        )}
-      </div>
-
-      <div className="flex-1 overflow-y-auto">
+    <div className="relative flex h-full flex-col bg-base-100">
+      {/* Scrollable Area */}
+      <div className="flex-1 overflow-y-auto pb-24">
+        {/* Header */}
+        <div className="mt-6 flex items-center gap-3 px-4 py-3">
+          <h2 className="mb-4 flex flex-col gap-4 break-words text-4xl font-semibold leading-tight">
+            <span>
+              <IoChatbubbleSharp size={44} className="text-primary" />
+            </span>
+            {post.title}
+          </h2>
+          {(isOwner || authUser?.isAdmin) && (
+            <button
+              onClick={() => {
+                deleteBoardPost(postId)
+                onClose()
+              }}
+              className="ml-auto rounded-full p-2 text-red-500 transition hover:bg-red-500/10"
+            >
+              <FaTrashCan size={18} />
+            </button>
+          )}
+        </div>
         {/* Post body */}
-        <div className="border-b border-accent px-4 py-4">
-          <div className="mb-3 flex items-center gap-2">
-            <Link to={`/profile/${post.user?.username}`}>
-              <img
-                src={getOptimizedImageUrl(post.user?.profileImg?.imageUrl, "avatar")}
-                className="h-9 w-9 rounded-full object-cover"
-                alt={post.user?.username}
-              />
-            </Link>
-            <div>
-              <Link to={`/profile/${post.user?.username}`} className="font-bold hover:underline">
-                {post.user?.fullName}
+        <div
+          className="group relative mb-2 border-accent transition hover:bg-gray-700/10"
+          onMouseEnter={handleMouseEnter}
+          onMouseLeave={handleMouseLeave}
+        >
+          <section className="p-4">
+            <div className="mb-3 flex items-center gap-2">
+              <Link to={`/profile/${post.user?.username}`}>
+                <img
+                  src={getOptimizedImageUrl(post.user?.profileImg?.imageUrl, "avatar")}
+                  className="h-9 w-9 rounded-full object-cover"
+                  alt={post.user?.username}
+                />
               </Link>
-              <p className="text-xs text-slate-500">
-                @{post.user?.username} · {formatPostDate(post.createdAt)}
+              <div>
+                <Link to={`/profile/${post.user?.username}`} className="font-bold hover:underline">
+                  {post.user?.fullName}
+                </Link>
+                <p className="text-xs text-slate-500">
+                  @{post.user?.username} · {formatPostDate(post.createdAt)}
+                </p>
+              </div>
+            </div>
+
+            {post.content && (
+              <p className="whitespace-pre-wrap leading-relaxed">
+                {renderClickableText(post.content)}
               </p>
-            </div>
-          </div>
+            )}
 
-          {post.content && (
-            <p className="whitespace-pre-wrap text-sm leading-relaxed">
-              {renderClickableText(post.content)}
-            </p>
-          )}
+            {post.image?.imageUrl && (
+              <Link to={`/images/${post.image._id}`}>
+                <img
+                  src={post.image.imageUrl}
+                  alt="post"
+                  className="mt-3 max-h-80 w-full rounded-2xl border border-accent object-contain"
+                />
+              </Link>
+            )}
 
-          {post.image?.imageUrl && (
-            <Link to={`/images/${post.image?._id}`}>
-              <img
-                src={post.image.imageUrl}
-                alt="post"
-                className="mt-3 max-h-80 w-full rounded-2xl border border-accent object-contain"
-              />
-            </Link>
-          )}
+            {post.tags?.length > 0 && (
+              <div className="mt-3 flex flex-wrap gap-1">
+                {post.tags.map((tag) => (
+                  <span
+                    key={tag}
+                    className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
+                  >
+                    #{tag}
+                  </span>
+                ))}
+              </div>
+            )}
+          </section>
 
-          {post.tags?.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1">
-              {post.tags.map((tag) => (
-                <span
-                  key={tag}
-                  className="rounded-full bg-primary/10 px-2 py-0.5 text-xs text-primary"
-                >
-                  #{tag}
-                </span>
-              ))}
-            </div>
-          )}
-
-          <ReactionBar
-            reactions={post.reactions}
-            onReact={(emoji) => reactToPost({ id: postId, emoji })}
-            currentUserId={authUser?._id}
+          {/* MessageActionsModal — appears on hover exactly like chat */}
+          <MessageActionsModal
+            message={messageShape}
+            isSentByCurrentUser={false}
+            showModal={showModal}
+            messageContentStyle={{}}
+            onReactionClick={handleReactionClick}
+            moreEmojisButtonRef={moreEmojisButtonRef}
+            handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+            onReplyClick={() => setReplyingToComment(post)}
+            onOpenMoreActionsModal={() => {
+              if (isEditable) setEditingComment(post)
+            }}
           />
         </div>
+        <div className="border-b-8 border-t border-accent">
+          {/* Reactions row */}
+          {hasAnyReactions && (
+            <div className="p-2">
+              <MessageReactions
+                groupedReactions={groupedReactions}
+                currentUser={authUser}
+                isSentByCurrentUser={false}
+                messageContentStyle={{}}
+                addReactionButtonRef={addReactionButtonRef}
+                handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+                message={messageShape}
+                onReactionClick={handleReactionClick}
+              />
+            </div>
+          )}
+        </div>
 
-        {/* Comments */}
+        {/* Comments list */}
         <div className="flex flex-col">
           {isLoadingComments ? (
             <div className="flex justify-center py-6">
               <LoadingSpinner size="md" />
             </div>
           ) : comments.length === 0 ? (
-            <p className="py-8 text-center text-sm text-gray-500">No comments yet.</p>
+            <p className="py-12 text-center text-sm italic text-gray-500">
+              No comments yet. Start the conversation!
+            </p>
           ) : (
             comments.map((comment) => (
-              <div key={comment._id} className="border-b border-accent px-4 py-3">
-                <div className="flex items-start gap-2">
-                  <Link to={`/profile/${comment.user?.username}`}>
-                    <img
-                      src={getOptimizedImageUrl(comment.user?.profileImg?.imageUrl, "avatar")}
-                      className="mt-0.5 h-8 w-8 flex-shrink-0 rounded-full object-cover"
-                      alt={comment.user?.username}
-                    />
-                  </Link>
-                  <div className="min-w-0 flex-1">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-1">
-                        <Link
-                          to={`/profile/${comment.user?.username}`}
-                          className="text-sm font-bold hover:underline"
-                        >
-                          {comment.user?.fullName}
-                        </Link>
-                        <span className="text-xs text-slate-500">
-                          · {formatPostDate(comment.createdAt)}
-                        </span>
-                      </div>
-                      {(authUser?._id === comment.user?._id || authUser?.isAdmin) && (
-                        <button
-                          onClick={() => deleteComment(comment._id)}
-                          className="text-slate-500 transition hover:text-red-500"
-                        >
-                          <FaTrashCan size={12} />
-                        </button>
-                      )}
-                    </div>
-                    <p className="mt-0.5 whitespace-pre-wrap text-sm">{comment.content}</p>
-                    {comment.image?.imageUrl && (
-                      <img
-                        src={comment.image.imageUrl}
-                        className="mt-2 max-h-48 rounded-xl border border-accent object-contain"
-                        alt="comment"
-                      />
-                    )}
-                    <ReactionBar
-                      reactions={comment.reactions}
-                      onReact={(emoji) => reactToComment({ commentId: comment._id, emoji })}
-                      currentUserId={authUser?._id}
-                    />
-                  </div>
-                </div>
-              </div>
+              <BoardCommentItem
+                key={comment._id}
+                comment={comment}
+                boardPostId={postId}
+                onReact={reactToComment}
+                onDelete={deleteComment}
+              />
             ))
           )}
           {hasNextPage && (
             <button
               onClick={() => fetchNextPage()}
               disabled={isFetchingNextPage}
-              className="py-3 text-center text-sm text-primary hover:underline"
+              className="py-6 text-center text-sm text-primary hover:underline"
             >
               {isFetchingNextPage ? <LoadingSpinner size="sm" /> : "Load more comments"}
             </button>
@@ -283,59 +303,87 @@ const BoardPostDetail = ({ postId, onClose }) => {
         </div>
       </div>
 
-      {/* Comment input */}
+      {/* FLOATING INPUT BAR */}
       {authUser && (
-        <form onSubmit={handleSubmitComment} className="border-t border-accent p-3">
-          <div className="flex items-center gap-2">
-            <img
-              src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl, "avatar")}
-              className="h-8 w-8 flex-shrink-0 rounded-full object-cover"
-              alt="you"
-            />
-            <input
-              ref={commentRef}
-              value={commentInput}
-              onChange={(e) => setCommentInput(e.target.value)}
-              placeholder="Write a comment..."
-              className="flex-1 rounded-full bg-gray-700/30 px-4 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
-              disabled={isCreatingComment}
-            />
-            {previewImg && (
-              <div className="relative w-fit">
-                <img
-                  src={previewImg}
-                  className="max-h-40 rounded-xl object-contain"
-                  alt="preview"
-                />
+        <div className="absolute bottom-2 left-0 right-0 px-2 md:bottom-4 md:px-4">
+          {" "}
+          {/* Container for the "Float" effect */}
+          <form
+            onSubmit={handleSubmitComment}
+            className="mx-auto max-w-4xl rounded-2xl border border-accent bg-base-100/80 p-3 shadow-2xl backdrop-blur-lg"
+          >
+            {/* Context banner: replying or editing */}
+            {(replyingToComment || editingComment) && (
+              <div className="mb-2 flex items-center justify-between rounded-lg border border-primary/20 px-3 py-1.5 text-xs text-primary">
+                <span className="font-medium">
+                  {editingComment
+                    ? "Editing your comment"
+                    : `Replying to @${replyingToComment.user?.username}`}
+                </span>
                 <button
                   type="button"
-                  onClick={() => {
-                    setPreviewImg(null)
-                    setImgBase64(null)
-                  }}
-                  className="absolute -right-2 -top-2 rounded-full bg-slate-600 p-1 text-white hover:bg-slate-500"
+                  onClick={clearReplyAndEdit}
+                  className="ml-2 rounded-full p-0.5 hover:bg-primary/20"
                 >
                   <IoClose size={14} />
                 </button>
               </div>
             )}
-            <button
-              type="button"
-              onClick={() => fileRef.current?.click()}
-              className="flex items-center gap-1 text-primary transition hover:text-primary/80"
-            >
-              <BiImageAdd size={22} />
-            </button>
-            <input type="file" accept="image/*" hidden ref={fileRef} onChange={handleImageChange} />
-            <button
-              type="submit"
-              disabled={isCreatingComment || !commentInput.trim()}
-              className="flex-shrink-0 rounded-full bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary/80 disabled:bg-slate-600 disabled:text-black"
-            >
-              {isCreatingComment ? <LoadingSpinner size="xs" /> : "Post"}
-            </button>
-          </div>
-        </form>
+
+            <div className="flex items-center gap-3">
+              <img
+                src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl, "avatar")}
+                className="h-9 w-9 flex-shrink-0 rounded-full border border-accent object-cover"
+                alt="you"
+              />
+              <div className="flex flex-1 items-center rounded-full border border-transparent bg-base-200 px-4 py-1 transition-all focus-within:border-primary/50">
+                <input
+                  ref={boardInputRef}
+                  value={editingComment ? editInput : commentInput}
+                  onChange={(e) =>
+                    editingComment ? setEditInput(e.target.value) : setCommentInput(e.target.value)
+                  }
+                  placeholder={
+                    editingComment
+                      ? "Edit your comment..."
+                      : replyingToComment
+                        ? `Reply to @${replyingToComment.user?.username}...`
+                        : "Write a comment..."
+                  }
+                  className="w-full bg-transparent py-2 text-sm placeholder-gray-500 focus:outline-none"
+                  disabled={isCreatingComment || isEditingComment}
+                />
+              </div>
+              <button
+                type="submit"
+                disabled={
+                  isCreatingComment ||
+                  isEditingComment ||
+                  !(editingComment ? editInput.trim() : commentInput.trim())
+                }
+                className="flex-shrink-0 rounded-full bg-primary px-5 py-2 text-sm font-bold text-white transition hover:scale-105 active:scale-95 disabled:opacity-50 disabled:hover:scale-100"
+              >
+                {isCreatingComment || isEditingComment ? (
+                  <LoadingSpinner size="xs" />
+                ) : editingComment ? (
+                  "Save"
+                ) : (
+                  "Post"
+                )}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      {/* Emoji picker portal */}
+      {showEmojiPickerPopover && (
+        <EmojiPickerPopover
+          position={popoverPosition}
+          onClose={handleCloseEmojiPickerPopover}
+          onEmojiClick={handleEmojiPickerSelect}
+          triggerRef={moreEmojisButtonRef}
+        />
       )}
     </div>
   )

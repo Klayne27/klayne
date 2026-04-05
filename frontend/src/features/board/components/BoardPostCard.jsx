@@ -2,14 +2,23 @@ import { FaComment } from "react-icons/fa"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 
-const getMostUsedEmoji = (reactions) => {
-  if (!reactions || reactions.length === 0) return null
-  return reactions.reduce((max, r) => (r.users.length > max.users.length ? r : max)).emoji
-}
+const getMostUsedEmojiData = (reactions) => {
+  if (!reactions || reactions.length === 0) return { emoji: null, count: 0 }
 
+  const counts = reactions.reduce((acc, r) => {
+    acc[r.emoji] = (acc[r.emoji] || 0) + 1
+    return acc
+  }, {})
+
+  const topEmoji = Object.keys(counts).reduce((a, b) => (counts[a] > counts[b] ? a : b))
+
+  return {
+    emoji: topEmoji,
+    count: counts[topEmoji],
+  }
+}
 const BoardPostCard = ({ post, isSelected, onClick }) => {
-  const topEmoji = getMostUsedEmoji(post.reactions)
-  const totalReactions = post.reactions?.reduce((sum, r) => sum + r.users.length, 0) || 0
+  const { emoji: topEmoji, count: topEmojiCount } = getMostUsedEmojiData(post.reactions)
 
   return (
     <div
@@ -29,6 +38,12 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
           {post.content && (
             <p className="mt-0.5 line-clamp-2 text-sm text-slate-400">{post.content}</p>
           )}
+          {post?.image && (
+            <img
+              src={post.image.imageUrl}
+              className="mt-2 max-h-48 rounded-xl border border-accent object-contain"
+            />
+          )}
           <div className="mt-2 flex items-center gap-3 text-xs text-slate-500">
             <span>{post.user?.username}</span>
             <span>·</span>
@@ -46,7 +61,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
         {topEmoji && (
           <span className="flex items-center gap-1">
             <span>{topEmoji}</span>
-            <span>{totalReactions}</span>
+            <span>{topEmojiCount}</span>
           </span>
         )}
         {post.tags?.length > 0 && (

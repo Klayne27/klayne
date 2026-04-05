@@ -37,7 +37,6 @@ export const useChatHandlers = ({
     setActiveMessageModalId(null)
   }
 
-
   const handleEditClick = () => {
     if (message.isOptimistic) {
       showAppToast("Message is still being sent. Please wait to edit.")
@@ -58,7 +57,7 @@ export const useChatHandlers = ({
   }
 
   const handleReplyClick = () => {
-    if (message.isOptimistic) {
+    if (message?.isOptimistic) {
       showAppToast("Message is still being sent. Please wait to reply.")
       return
     }
@@ -95,7 +94,7 @@ export const useChatHandlers = ({
     return () => {
       document.removeEventListener("click", handleClickOutsideMessage)
     }
-  }, [activeMessageModalId, isMobile, setActiveMessageModalId, message._id])
+  }, [activeMessageModalId, isMobile, setActiveMessageModalId, message?._id])
 
   return {
     handleJumpToOriginalMessage,

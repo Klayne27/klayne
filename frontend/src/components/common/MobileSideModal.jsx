@@ -118,7 +118,10 @@ function MobileSideModal({
                   onTouchCancel={handleTouchCancel}
                 >
                   <img
-                    src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                    src={getOptimizedImageUrl(
+                      authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     alt="User Profile"
                   />
                   {isOnline ? (
@@ -311,6 +314,27 @@ function MobileSideModal({
                 )}{" "}
                 <span className={`text-xl ${pathname === "/devlog" ? "font-bold" : ""}`}>
                   Devlog
+                </span>
+              </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/board") return
+                  navigate("/board")
+                  setShowSideModal(false)
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-board"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                {pathname === "/board" ? (
+                  <MdLibraryBooks className="mr-4 size-7" />
+                ) : (
+                  <MdOutlineLibraryBooks className="mr-4 size-7" />
+                )}{" "}
+                <span className={`text-xl ${pathname === "/board" ? "font-bold" : ""}`}>
+                  Board
                 </span>
               </li>
 

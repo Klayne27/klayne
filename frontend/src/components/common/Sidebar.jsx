@@ -322,7 +322,7 @@ const Sidebar = ({
   }
 
   const shouldAlwaysHide =
-    pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
+    pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen || pathname.includes("/board/")
 
   useEffect(() => {
     const handleScroll = () => {

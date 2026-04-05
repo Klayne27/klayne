@@ -28,6 +28,7 @@ function MoreMessageActionsModal({
   reactToMessage,
   onAdminDeleteMessage,
   isAuthUserAdminOrOwner,
+  reactToComment,
 }) {
   const hasReactions = message?.reactions?.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"]
@@ -39,6 +40,13 @@ function MoreMessageActionsModal({
     reactToMessage({ messageId: messageId, emoji })
     onCloseMoreActionsModal()
   }
+
+  const handleQuickReactionBoard = (commentId, emoji) => {
+    reactToComment({ commentId: commentId, emoji })
+    onCloseMoreActionsModal()
+  }
+
+  const isBoard = pathname.includes("/board")
 
   return (
     <div className="fixed inset-0 z-50" onClick={onCloseMoreActionsModal}>
@@ -56,7 +64,13 @@ function MoreMessageActionsModal({
             <div
               key={emoji}
               className="hover mb-2 flex size-9 w-full items-center justify-around rounded-md bg-gray-800 text-xl transition duration-200 hover:bg-gray-700"
-              onClick={() => handleQuickReaction(message?._id, emoji)}
+              onClick={() => {
+                if (isBoard) {
+                  handleQuickReactionBoard(message._id, emoji)
+                } else {
+                  handleQuickReaction(message._id, emoji)
+                }
+              }}
             >
               {emoji}
             </div>
@@ -100,7 +114,7 @@ function MoreMessageActionsModal({
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
-        {!pathname.includes("/public-chat") && (
+        {!pathname.includes("/public-chat") || !pathname.includes("/board") && (
           <button
             onClick={onPinMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"

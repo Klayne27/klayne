@@ -51,11 +51,11 @@ export const getBoardCommentsApi = async ({ queryKey, pageParam = 1 }) => {
   return data
 }
 
-export const createBoardCommentApi = async ({ id, content, img }) => {
+export const createBoardCommentApi = async ({ id, content, img, parentCommentId }) => {
   const res = await fetch(`${BASE_URL}/${id}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, img }),
+    body: JSON.stringify({ content, img, parentCommentId }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to create comment")
@@ -79,3 +79,15 @@ export const reactToBoardCommentApi = async ({ commentId, emoji }) => {
   if (!res.ok) throw new Error(data.error || "Failed to react to comment")
   return data
 }
+
+export const editBoardCommentApi = async ({ commentId, content }) => {
+  const res = await fetch(`${BASE_URL}/comments/${commentId}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ content }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to edit comment")
+  return data
+}
+
