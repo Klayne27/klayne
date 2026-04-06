@@ -21,7 +21,7 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
   }
 
   return (
-    <div className="fixed top-0 z-10 flex w-full items-center justify-between border-accent bg-black bg-opacity-20 px-4 py-3 shadow-lg backdrop-blur-md md:w-[751px]">
+    <div className="fixed top-0 z-10 flex w-full items-center justify-between border-accent bg-base-200 bg-opacity-20 px-4 py-3 shadow-lg backdrop-blur-md md:w-[751px]">
       <div className="flex gap-2 items-center">
         <button
           onClick={handleBackToConversations}

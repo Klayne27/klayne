@@ -25,6 +25,17 @@ export const createBoardPostApi = async ({ title, content, img, tags }) => {
   return data
 }
 
+export const editBoardPostApi = async ({ id, title, content, tags }) => {
+  const res = await fetch(`${BASE_URL}/${id}`, {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ title, content, tags }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to edit board post");
+  return data;
+};
+
 export const deleteBoardPostApi = async (id) => {
   const res = await fetch(`${BASE_URL}/${id}`, { method: "DELETE" })
   const data = await res.json()

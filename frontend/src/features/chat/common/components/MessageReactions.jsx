@@ -10,12 +10,13 @@ const MessageReactions = ({
   handleOpenEmojiPickerPopover,
   message,
   onReactionClick,
+  hideAddButton,
 }) => (
   <div
     className={`flex flex-wrap items-center gap-1 rounded-full pt-0.5 text-xs font-semibold ${isSentByCurrentUser ? "justify-end" : "justify-start"} relative`}
     style={messageContentStyle}
   >
-    {isSentByCurrentUser && (
+    {isSentByCurrentUser && !hideAddButton && (
       <button
         ref={addReactionButtonRef}
         onClick={(e) => handleOpenEmojiPickerPopover(e)}
@@ -56,7 +57,7 @@ const MessageReactions = ({
       )
     })}
 
-    {!isSentByCurrentUser && (
+    {!isSentByCurrentUser && !hideAddButton && (
       <button
         ref={addReactionButtonRef}
         onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}

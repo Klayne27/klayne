@@ -11,12 +11,14 @@ import {
   deleteBoardComment,
   reactToBoardComment,
   editBoardComment,
+  editBoardPost,
 } from "../controllers/board.controller.js";
 
 const router = express.Router();
 
 router.get("/", protectRoute, getBoardPosts);
 router.get("/:id", protectRoute, getBoardPost);
+router.put("/:id", protectRoute, editBoardPost);
 router.post("/", protectRoute, createBoardPost);
 router.delete("/:id", protectRoute, deleteBoardPost);
 router.post("/:id/react", protectRoute, reactToBoardPost);

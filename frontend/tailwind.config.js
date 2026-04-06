@@ -5,6 +5,9 @@ export default {
   content: ["./index.html", "./src/**/*.{js,ts,jsx,tsx}"],
   theme: {
     extend: {
+      perspective: {
+        1000: "1000px",
+      },
       colors: {
         "primary-glow": "var(--p)",
         "secondary-glow": "var(--s)",
@@ -88,7 +91,17 @@ export default {
       },
     },
   },
-  plugins: [daisyui],
+  plugins: [
+    daisyui,
+    function ({ addUtilities, theme }) {
+      const perspectives = theme("perspective", {})
+      const utilities = Object.entries(perspectives).reduce((acc, [key, value]) => {
+        acc[`.perspective-${key}`] = { perspective: value }
+        return acc
+      }, {})
+      addUtilities(utilities)
+    },
+  ],
 
   daisyui: {
     themes: [

@@ -9,10 +9,18 @@ export const useBoardStore = create(
     isSlideMenuOpen: false,
     commentForSlideMenu: null,
     boardInputRef: { current: null },
+    editingPost: null,
+    replyingToPost: false,
+
+    setReplyingToPost: (value) =>
+      set({ replyingToPost: value, replyingToComment: null, editingComment: null }),
+    setEditingPost: (post) =>
+      set({ editingPost: post, replyingToComment: null, editingComment: null }),
 
     setReplyingToComment: (comment) => set({ replyingToComment: comment, editingComment: null }),
     setEditingComment: (comment) => set({ editingComment: comment, replyingToComment: null }),
-    clearReplyAndEdit: () => set({ replyingToComment: null, editingComment: null }),
+    clearReplyAndEdit: () =>
+      set({ replyingToComment: null, editingComment: null, replyingToPost: false }),
     setActiveCommentModalId: (id) =>
       set((state) => {
         state.activeCommentModalId = id

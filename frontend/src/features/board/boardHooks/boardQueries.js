@@ -30,10 +30,10 @@ export const useGetBoardComments = (boardPostId) => {
   const { data, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useInfiniteQuery({
     queryKey: boardKeys.comments(boardPostId),
     queryFn: getBoardCommentsApi,
-    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage ?? true : undefined),
+    getNextPageParam: (lastPage) => (lastPage.hasNextPage ? lastPage.nextPage : undefined),
     initialPageParam: 1,
     enabled: !!boardPostId,
-  });
+  })
 
   const comments = data?.pages.flatMap((p) => p.comments) ?? [];
   return { comments, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage };

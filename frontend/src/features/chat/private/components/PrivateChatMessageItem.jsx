@@ -144,6 +144,12 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
     setShowViewReactionsModal(true)
   }
+
+   const handleCloseViewReactionsModal = () => {
+     setShowViewReactionsModal(false)
+   }
+
+
   const handleOpenSlideUpReactionsMenu = (e) => {
     e.stopPropagation()
     setShowMoreActionsModal(false)
@@ -151,10 +157,7 @@ const PrivateChatMessageItem = ({
     closeSlideMenu()
   }
 
-  const handleCloseViewReactionsModal = () => {
-    setShowViewReactionsModal(false)
-  }
-
+ 
   const handleCloseSlideUpReactionsMenu = () => {
     setShowSlideUpReactionsMenu(false)
   }

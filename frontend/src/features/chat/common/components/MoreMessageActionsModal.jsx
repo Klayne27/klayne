@@ -29,6 +29,9 @@ function MoreMessageActionsModal({
   onAdminDeleteMessage,
   isAuthUserAdminOrOwner,
   reactToComment,
+  isBoardPostOwner,
+  postId,
+  commentId,
 }) {
   const hasReactions = message?.reactions?.length > 0
   const topReactions = ["😭", "😆", "🫂", "😡"]
@@ -41,8 +44,13 @@ function MoreMessageActionsModal({
     onCloseMoreActionsModal()
   }
 
-  const handleQuickReactionBoard = (commentId, emoji) => {
+  const handleQuickReactionBoardComment = (commentId, emoji) => {
     reactToComment({ commentId: commentId, emoji })
+    onCloseMoreActionsModal()
+  }
+
+  const handleQuickReactionBoardPost = (id, emoji) => {
+    reactToComment({ id: id, emoji })
     onCloseMoreActionsModal()
   }
 
@@ -65,8 +73,10 @@ function MoreMessageActionsModal({
               key={emoji}
               className="hover mb-2 flex size-9 w-full items-center justify-around rounded-md bg-gray-800 text-xl transition duration-200 hover:bg-gray-700"
               onClick={() => {
-                if (isBoard) {
-                  handleQuickReactionBoard(message._id, emoji)
+                if (isBoard && commentId) {
+                  handleQuickReactionBoardComment(message._id, emoji)
+                } else if (isBoard && postId && !commentId) {
+                  handleQuickReactionBoardPost(message._id, emoji)
                 } else {
                   handleQuickReaction(message._id, emoji)
                 }
@@ -99,7 +109,7 @@ function MoreMessageActionsModal({
             onClick={onEditClick}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
-            Edit Message
+            Edit {isBoard && commentId ? "Comment" : isBoard && postId && !commentId ? "Post" : "Message"}
             <MdEdit size={16} className="text-slate-400" />
           </button>
         )}
@@ -114,15 +124,16 @@ function MoreMessageActionsModal({
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
-        {!pathname.includes("/public-chat") || !pathname.includes("/board") && (
-          <button
-            onClick={onPinMessage}
-            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
-          >
-            Pin Message
-            <RiPushpinFill size={18} className="text-slate-400" />
-          </button>
-        )}
+        {!pathname.includes("/public-chat") ||
+          (!isBoard && (
+            <button
+              onClick={onPinMessage}
+              className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
+            >
+              Pin Message
+              <RiPushpinFill size={18} className="text-slate-400" />
+            </button>
+          ))}
 
         {isSentByCurrentUser && <div className="my-1 h-[1px] bg-accent"></div>}
         {isSentByCurrentUser && !isMessageDeleted && (
@@ -134,6 +145,17 @@ function MoreMessageActionsModal({
             <FaTrashCan size={18} />
           </button>
         )}
+
+        {isBoardPostOwner && isBoard && (
+          <button
+            onClick={onDeleteOwnMessage}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
+          >
+            Delete (OP)
+            <FaTrashCan size={18} />
+          </button>
+        )}
+
         {isAuthUserAdminOrOwner && !isMessageDeleted && (
           <button
             onClick={onAdminDeleteMessage}

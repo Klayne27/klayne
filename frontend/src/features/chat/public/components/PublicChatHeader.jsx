@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { FaArrowLeft } from "react-icons/fa6";
 import { useNavigate } from "react-router-dom";
-import { HiOutlineInformationCircle } from "react-icons/hi"; // Import a new icon for info/rules
+import { HiOutlineInformationCircle } from "react-icons/hi";
 import { IoChatbubblesOutline } from "react-icons/io5";
 
 const PublicChatHeader = () => {
@@ -13,7 +13,7 @@ const PublicChatHeader = () => {
   };
 
   return (
-    <div className="fixed top-0 z-[40] flex w-full items-center justify-between bg-black bg-opacity-20 px-4 py-2 backdrop-blur-md md:w-[977px]">
+    <div className="fixed top-0 z-[40] flex w-full items-center justify-between bg-base-200 bg-opacity-20 px-4 py-2 backdrop-blur-md md:w-[977px]">
       <div className="flex items-center gap-3">
         <div className="avatar">
           <button

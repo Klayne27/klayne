@@ -113,10 +113,6 @@ export const createBoardPost = async (req, res) => {
     let { img } = req.body;
     const userId = req.user._id;
 
-    if (!title?.trim()) {
-      return res.status(400).json({ error: "Title is required." });
-    }
-
     let uploadedImgUrl = null;
     let imgPublicId = null;
 
@@ -168,6 +164,44 @@ export const createBoardPost = async (req, res) => {
     res.status(201).json(populated);
   } catch (error) {
     console.error("Error in createBoardPost:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── EDIT board post ────────────────────────────────────────────────────────
+export const editBoardPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { content } = req.body;
+    const userId = req.user._id;
+
+    const post = await BoardPost.findById(id);
+    if (!post) return res.status(404).json({ error: "Board post not found." });
+    if (!post.user.equals(userId)) {
+      return res.status(403).json({ error: "Not authorized." });
+    }
+
+    post.content = content?.trim() || "";
+    post.isEdited = true;
+    await post.save();
+
+    const populated = await BoardPost.findById(post._id)
+      .populate({
+        path: "user",
+        select:
+          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({
+        path: "reactions.userId",
+        select: "username fullName",
+        populate: { path: "profileImg", select: "imageUrl" },
+      })
+      .populate({ path: "image", select: "imageUrl" });
+
+    res.status(200).json(populated);
+  } catch (error) {
+    console.error("Error in editBoardPost:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -273,7 +307,8 @@ export const getBoardComments = async (req, res) => {
       .lean();
 
     const hasNextPage = page * limit < totalCount;
-    res.status(200).json({ comments, hasNextPage, totalCount });
+    const nextPage = hasNextPage ? page + 1 : undefined;
+    res.status(200).json({ comments, hasNextPage, totalCount, nextPage });
   } catch (error) {
     console.error("Error in getBoardComments:", error);
     res.status(500).json({ error: "Internal server error" });
@@ -420,6 +455,7 @@ export const reactToBoardComment = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
 // ── EDIT comment ─────────────────────────────────────────────────────────────
 export const editBoardComment = async (req, res) => {
   try {

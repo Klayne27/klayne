@@ -20,6 +20,33 @@ export const formatPostDate = (createdAt) => {
   }
 };
 
+export const formatPostDateShort = (date) => {
+  const now = new Date()
+  const postDate = new Date(date)
+  const diffInSeconds = Math.floor((now - postDate) / 1000)
+
+  // Future dates or invalid dates
+  if (diffInSeconds < 0) return "just now"
+
+  // Less than 1 minute
+  if (diffInSeconds < 60) return `${diffInSeconds}s ago`
+
+  // Less than 1 hour
+  const diffInMinutes = Math.floor(diffInSeconds / 60)
+  if (diffInMinutes < 60) return `${diffInMinutes}m ago`
+
+  // Less than 24 hours
+  const diffInHours = Math.floor(diffInMinutes / 60)
+  if (diffInHours < 24) return `${diffInHours}hr ago`
+
+  // Less than or equal to 30 days
+  const diffInDays = Math.floor(diffInHours / 24)
+  if (diffInDays <= 30) return `${diffInDays}d ago`
+
+  // Over 30 days
+  return ">30d ago"
+}
+
 export const formatMemberSinceDate = (createdAt) => {
   const date = new Date(createdAt);
   const months = [

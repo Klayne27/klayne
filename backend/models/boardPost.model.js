@@ -22,6 +22,7 @@ const boardPostSchema = new mongoose.Schema(
       ref: "Image",
       default: null,
     },
+    isEdited: { type: Boolean, default: false },
     img: { type: String, default: null },
     imgPublicId: { type: String, default: null },
     reactions: [
