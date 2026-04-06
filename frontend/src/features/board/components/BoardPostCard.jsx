@@ -22,6 +22,7 @@ const getMostUsedEmojiData = (reactions) => {
     count: counts[topEmoji],
   }
 }
+
 const BoardPostCard = ({ post, isSelected, onClick }) => {
   const { authUser } = useAuthUser() // You'll need this for the reaction component
   const { emoji: topEmoji } = getMostUsedEmojiData(post.reactions)
@@ -39,7 +40,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
   const handleReactionClick = (id, emoji) => {
     reactToPost({ id: id, emoji })
   }
-  
+
   const cardRef = useRef(null)
   const [rotate, setRotate] = useState({ x: 0, y: 0 })
 
@@ -92,7 +93,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
             <p className="text-md truncate font-bold leading-none">{post.user?.fullName}</p>
             <p className="truncate text-xs text-slate-500">@{post.user?.username}</p>
           </div>
-          <span className="text-md text-base-500 hidden font-normal opacity-60 sm:block">
+          <span className="text-xs text-base-500 hidden font-normal opacity-60 sm:block">
             {formatPostDateShort(post.createdAt)}
           </span>
         </div>

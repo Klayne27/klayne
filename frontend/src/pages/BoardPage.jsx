@@ -127,7 +127,7 @@ useEffect(() => {
         {showPostList && (
           <div
             style={{ width: isMobile ? "100%" : `${leftWidth}px` }}
-            className="flex flex-col overflow-y-auto border-r border-accent bg-base-100 transition-colors"
+            className="flex flex-col overflow-y-auto border-r pb-32 md:pb-0 border-accent bg-base-100 transition-colors"
           >
             {/* GRID WRAPPER ADDED HERE */}
             <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3 p-3">
@@ -167,7 +167,7 @@ useEffect(() => {
         )}
         {/* Right: post detail */}
         {showPostDetail && (
-          <div className="flex w-full min-w-[330px] flex-col overflow-hidden md:flex-1">
+          <div className="flex w-full min-w-[330px] md:min-w-[380px] flex-col overflow-hidden md:flex-1">
             {isLoading && urlPostId ? (
               <div></div>
             ) : selectedPostId ? (

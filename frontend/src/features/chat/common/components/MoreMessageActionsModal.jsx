@@ -109,7 +109,12 @@ function MoreMessageActionsModal({
             onClick={onEditClick}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
-            Edit {isBoard && commentId ? "Comment" : isBoard && postId && !commentId ? "Post" : "Message"}
+            Edit{" "}
+            {isBoard && commentId
+              ? "Comment"
+              : isBoard && postId && !commentId
+                ? "Post"
+                : "Message"}
             <MdEdit size={16} className="text-slate-400" />
           </button>
         )}
@@ -120,7 +125,7 @@ function MoreMessageActionsModal({
             onClick={onCopyMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
           >
-            Copy Message
+            Copy Text
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
@@ -136,7 +141,7 @@ function MoreMessageActionsModal({
           ))}
 
         {isSentByCurrentUser && <div className="my-1 h-[1px] bg-accent"></div>}
-        {isSentByCurrentUser && !isMessageDeleted && (
+        {isSentByCurrentUser && !isMessageDeleted && !isBoard && (
           <button
             onClick={onDeleteOwnMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
@@ -146,15 +151,38 @@ function MoreMessageActionsModal({
           </button>
         )}
 
+        {/** Delete buttons for board posts and comments lol **/}
         {isBoardPostOwner && isBoard && (
           <button
             onClick={onDeleteOwnMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
-            Delete (OP)
+            Delete{" "}
+            {isBoard && commentId
+              ? "Comment"
+              : isBoard && postId && !commentId
+                ? "Post"
+                : "Message"}
             <FaTrashCan size={18} />
           </button>
         )}
+
+        {isSentByCurrentUser && !isBoardPostOwner && isBoard && (
+          <button
+            onClick={onDeleteOwnMessage}
+            className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
+          >
+            Delete{" "}
+            {isBoard && commentId
+              ? "Comment"
+              : isBoard && postId && !commentId
+                ? "Post"
+                : "Message"}
+            <FaTrashCan size={18} />
+          </button>
+        )}
+
+        {/* -----------  */}
 
         {isAuthUserAdminOrOwner && !isMessageDeleted && (
           <button

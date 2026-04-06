@@ -1,5 +1,4 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react"
-import { FaTrashCan } from "react-icons/fa6"
 import { IoChatbubbleSharp, IoClose } from "react-icons/io5"
 import { Link } from "react-router-dom"
 import { useInView } from "react-intersection-observer"
@@ -33,6 +32,9 @@ import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
 import { MdSend } from "react-icons/md"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import MobileMessageActionsSlideUp from "../../chat/common/components/MobileMessageActionsSlideUp"
+import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
+import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
 
 const formatDateSeparator = (dateStr) => {
   const date = new Date(dateStr)
@@ -64,11 +66,17 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const setReplyingToPost = useBoardStore((s) => s.setReplyingToPost)
   const editingPost = useBoardStore((s) => s.editingPost)
   const setEditingPost = useBoardStore((s) => s.setEditingPost)
+  const isPostSlideMenuOpen = useBoardStore((s) => s.isPostSlideMenuOpen)
+  const postForSlideMenu = useBoardStore((s) => s.postForSlideMenu)
+  const openPostSlideMenu = useBoardStore((s) => s.openPostSlideMenu)
+  const closePostSlideMenu = useBoardStore((s) => s.closePostSlideMenu)
 
   const boardInputRef = useRef(null)
   const inlineTextareaRef = useRef(null) // New ref for the content textarea
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
+  const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
+
   const [editPostContent, setEditPostContent] = useState("")
   const [isEditingPostInline, setIsEditingPostInline] = useState(false)
   const [inlinePostContent, setInlinePostContent] = useState("")
@@ -83,9 +91,10 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
-  const commentRefs = useRef({}) // { [commentId]: domNode }
+  const commentRefs = useRef({}) 
   const scrollContainerRef = useRef(null)
   const isMobile = useIsMobile()
+  const postMoreEmojisButtonRef = useRef(null)
 
   const {
     showEmojiPickerPopover,
@@ -95,13 +104,21 @@ const BoardPostDetail = ({ postId, onClose }) => {
     setShowEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const { handleMouseEnter, handleMouseLeave, showModal } = useMessageModalInteractions(
+  // Replace the existing useMessageModalInteractions call for the post with:
+  const {
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart: handlePostTouchStart,
+    handleTouchEnd: handlePostTouchEnd,
+    handleTouchMove: handlePostTouchMove,
+    handleTouchCancel: handlePostTouchCancel,
+    showModal,
+  } = useMessageModalInteractions(
     post?._id,
     setActiveCommentModalId,
     activeCommentModalId,
-    null, // no mobile long press handler yet
+    () => openPostSlideMenu(messageShape), // long press opens slide menu for the post
   )
-
   const isAdmin = authUser?.isAdmin
   const clearReplyAndEdit = useBoardStore((s) => s.clearReplyAndEdit)
 
@@ -129,9 +146,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
   const [commentInput, setCommentInput] = useState("")
   const [editInput, setEditInput] = useState("")
-  // const inputRef = useRef(null)
 
-  // Auto-resize logic
   useLayoutEffect(() => {
     if (isEditingPostInline && inlineTextareaRef.current) {
       inlineTextareaRef.current.style.height = "auto"
@@ -154,13 +169,12 @@ const BoardPostDetail = ({ postId, onClose }) => {
       const length = el.value.length
       el.setSelectionRange(length, length)
     }
-  }, [isEditingPostInline]) // Only run when the inline mode toggle changes
+  }, [isEditingPostInline])
 
   const handleJumpToComment = useCallback((commentId) => {
     const node = commentRefs.current[commentId]
     if (!node) return
     node.scrollIntoView({ behavior: "smooth", block: "center" })
-    // Flash highlight
     node.classList.add("bg-primary/10")
     setTimeout(() => node.classList.remove("bg-primary/10"), 1500)
   }, [])
@@ -221,7 +235,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
   }
 
   const handleOpenEditPost = () => {
-    // setInlinePostTitle(post.title)
     setInlinePostContent(post.content)
     setIsEditingPostInline(true)
     setShowMoreActionsModal(false)
@@ -250,6 +263,17 @@ const BoardPostDetail = ({ postId, onClose }) => {
     if (e.key === "Escape") {
       handleCancelEditPost()
     }
+  }
+
+  const handleOpenSlideUpReactionsMenu = (e) => {
+    // e.stopPropagation()
+    setShowMoreActionsModal(false)
+    setShowSlideUpReactionsMenu(true)
+    closePostSlideMenu()
+  }
+
+  const handleCloseSlideUpReactionsMenu = () => {
+    setShowSlideUpReactionsMenu(false)
   }
 
   const handleSubmitComment = (e) => {
@@ -317,6 +341,10 @@ const BoardPostDetail = ({ postId, onClose }) => {
           className="group relative mb-2 border-accent transition hover:bg-gray-700/10"
           onMouseEnter={!isEditingPostInline ? handleMouseEnter : undefined}
           onMouseLeave={!isEditingPostInline ? handleMouseLeave : undefined}
+          onTouchStart={!isEditingPostInline ? handlePostTouchStart : undefined}
+          onTouchEnd={!isEditingPostInline ? handlePostTouchEnd : undefined}
+          onTouchMove={!isEditingPostInline ? handlePostTouchMove : undefined}
+          onTouchCancel={!isEditingPostInline ? handlePostTouchCancel : undefined}
         >
           <section className="p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -583,7 +611,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   }
                   className="mb-0.5 flex-shrink-0 rounded-full bg-primary p-2.5 text-white transition hover:scale-105 active:scale-95 disabled:opacity-50"
                 >
-                  {isCreatingComment ? <LoadingSpinner size="xs" /> : <MdSend size={18} />}
+                  <MdSend size={18} />
                 </button>
               )}
             </div>
@@ -599,11 +627,57 @@ const BoardPostDetail = ({ postId, onClose }) => {
           triggerRef={moreEmojisButtonRef}
         />
       )}
+      <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+        <SlideUpMenuContent
+          className="flex h-[50vh] w-full flex-col overflow-y-auto"
+          disablePullToRefresh={true}
+        >
+          <ReactionsSlideUpMenuContent
+            reactions={post.reactions ? post.reactions : []}
+            onClose={handleCloseViewReactionsModal}
+          />
+        </SlideUpMenuContent>
+      </SlideUpMenu>
       {showViewReactionsModal && (
         <ViewReactionsModal
           isOpen={showViewReactionsModal}
           onClose={handleCloseViewReactionsModal}
           reactions={post.reactions ? post.reactions : []}
+        />
+      )}
+      {isMobile && post && (
+        <MobileMessageActionsSlideUp
+          isOpen={isPostSlideMenuOpen && postForSlideMenu?._id === post._id}
+          onClose={closePostSlideMenu}
+          message={messageShape}
+          isBoardPostOwner={isBoardPostOwner}
+          isEditable={isEditable}
+          isSentByCurrentUser={isSentByCurrentUser}
+          onReactionClick={(_, emoji) => reactToPost({ id: post._id, emoji })}
+          onReplyClick={() => {
+            setReplyingToPost(true)
+            closePostSlideMenu()
+          }}
+          onEditClick={() => {
+            handleOpenEditPost()
+            closePostSlideMenu()
+          }}
+          onCopyMessage={() => {
+            navigator.clipboard.writeText(post.content)
+            closePostSlideMenu()
+          }}
+          onDeleteOwnMessage={() => {
+            deleteBoardPost(post._id)
+            closePostSlideMenu()
+          }}
+          handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+          moreEmojisButtonRef={postMoreEmojisButtonRef}
+          // onOpenSlideUpReactionsMenu={(e) => {
+          //   e.stopPropagation()
+          //   closePostSlideMenu()
+          // }}
+          onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
+          postId={postId}
         />
       )}
     </div>

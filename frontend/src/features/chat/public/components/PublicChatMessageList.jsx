@@ -224,12 +224,12 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             onEditClick={handleEditClick}
             onCopyMessage={handleCopyMessage}
             onDeleteOwnMessage={handleDeleteOwnMessage}
-            onAdminDeleteMessage={handleAdminDeleteMessage}
             onBanUser={handleBanUser}
             onUnbanUser={handleUnbanUser}
             message={message}
             isEditable={isEditable}
             isSentByCurrentUser={isSentByCurrentUser}
+            onAdminDeleteMessage={handleAdminDeleteMessage}
             isAuthUserAdmin={isAuthUserAdmin}
             isMessageDeleted={isMessageDeleted}
             isSenderBanned={isSenderBanned}
@@ -319,7 +319,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
           </div>
         </MessageContentLayout>
 
-        { (
+        {
           <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
             <SlideUpMenuContent className="flex h-[50vh] w-full flex-col overflow-y-auto">
               <ReactionsSlideUpMenuContent
@@ -328,7 +328,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
               />
             </SlideUpMenuContent>
           </SlideUpMenu>
-        )}
+        }
 
         {showViewReactionsModal && (
           <ViewReactionsModal
@@ -365,6 +365,11 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
             handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
             moreEmojisButtonRef={moreEmojisButtonRef}
             onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
+            onAdminDeleteMessage={handleAdminDeleteMessage}
+            isAuthUserAdmin={isAuthUserAdmin}
+            isMessageDeleted={isMessageDeleted}
+            isSenderBanned={isSenderBanned}
+            onOpenConfirmationModal={openConfirmationModal}
           />
         )}
       </div>

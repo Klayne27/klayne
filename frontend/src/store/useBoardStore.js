@@ -12,6 +12,19 @@ export const useBoardStore = create(
     editingPost: null,
     replyingToPost: false,
 
+    isPostSlideMenuOpen: false,
+    postForSlideMenu: null,
+
+    openPostSlideMenu: (post) =>
+      set((state) => {
+        state.isPostSlideMenuOpen = true
+        state.postForSlideMenu = post
+      }),
+    closePostSlideMenu: () =>
+      set((state) => {
+        state.isPostSlideMenuOpen = false
+        state.postForSlideMenu = null
+      }),
     setReplyingToPost: (value) =>
       set({ replyingToPost: value, replyingToComment: null, editingComment: null }),
     setEditingPost: (post) =>

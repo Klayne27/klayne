@@ -1,20 +1,23 @@
-import { useRef, useState, useEffect, useLayoutEffect } from "react"
-import { FaTrashCan } from "react-icons/fa6"
+import { useState, useRef, useEffect, useLayoutEffect } from "react"
 import { Link } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useBoardStore } from "../../../store/useBoardStore"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useMessageModalInteractions } from "../../../hooks/customHooks/useMessageModalInteractions"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
+import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { formatPostDate } from "../../../utils/date"
 import EmojiPickerPopover from "../../../components/common/EmojiPickerPopover"
 import MessageActionsModal from "../../chat/common/components/MessageActionsModal"
 import MessageReactions from "../../chat/common/components/MessageReactions"
 import MoreMessageActionsModal from "../../chat/common/components/MoreMessageActionsModal"
-import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
+import MobileMessageActionsSlideUp from "../../chat/common/components/MobileMessageActionsSlideUp"
 import { useEditBoardComment } from "../boardHooks/boardMutations"
+import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
+import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
+import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
 
 const toMessageShape = (comment) => ({
   ...comment,
@@ -26,19 +29,24 @@ const toMessageShape = (comment) => ({
 
 const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJumpToComment }) => {
   const { authUser } = useAuthUser()
+  const isMobile = useIsMobile()
   const setReplyingToComment = useBoardStore((s) => s.setReplyingToComment)
   const activeCommentModalId = useBoardStore((s) => s.activeCommentModalId)
   const setActiveCommentModalId = useBoardStore((s) => s.setActiveCommentModalId)
+  const isSlideMenuOpen = useBoardStore((s) => s.isSlideMenuOpen)
+  const commentForSlideMenu = useBoardStore((s) => s.commentForSlideMenu)
+  const openSlideMenu = useBoardStore((s) => s.openSlideMenu)
+  const closeSlideMenu = useBoardStore((s) => s.closeSlideMenu)
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
-
-  // ── Inline edit state ──────────────────────────────────────────────────────
+  const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editValue, setEditValue] = useState(comment.content)
   const editTextareaRef = useRef(null)
+  const moreEmojisButtonRef = useRef(null)
+  const addReactionButtonRef = useRef(null)
   const { editComment, isEditingComment } = useEditBoardComment(boardPostId)
 
-  // 1. Auto-resize logic (The same as we did for Post Detail)
   useLayoutEffect(() => {
     if (isEditing && editTextareaRef.current) {
       editTextareaRef.current.style.height = "inherit"
@@ -83,18 +91,12 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
       e.preventDefault()
       handleSaveEdit()
     }
-    if (e.key === "Escape") {
-      handleCancelEdit()
-    }
+    if (e.key === "Escape") handleCancelEdit()
   }
 
   const messageShape = toMessageShape(comment)
-
   const { isSentByCurrentUser, isEditable, groupedReactions, hasAnyReactions } =
     useMessagingMetaData(messageShape, authUser)
-
-  const moreEmojisButtonRef = useRef(null)
-  const addReactionButtonRef = useRef(null)
 
   const isBoardPostOwner = post?.user._id === authUser._id
 
@@ -111,25 +113,32 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
     handleOpenMoreActionsModal,
     setShowMoreActionsModal,
     showMoreActionsModal,
-  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, comment })
+  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, message: comment })
 
-  const { handleMouseEnter, handleMouseLeave, showModal } = useMessageModalInteractions(
+  // Reusing the same hook as PrivateChatMessageItem
+  const {
+    handleMouseEnter,
+    handleMouseLeave,
+    handleTouchStart,
+    handleTouchEnd,
+    handleTouchMove,
+    handleTouchCancel,
+    showModal,
+  } = useMessageModalInteractions(
     comment._id,
     setActiveCommentModalId,
     activeCommentModalId,
-    null,
+    () => openSlideMenu(comment), // long press opens slide menu
   )
 
-  const handleReactionClick = (commentId, emoji) => {
-    onReact({ commentId, emoji })
-  }
+  const handleReactionClick = (commentId, emoji) => onReact({ commentId, emoji })
 
   const handleEmojiPickerSelect = (emojiData) => {
     onReact({ commentId: comment._id, emoji: emojiData.emoji })
     handleCloseEmojiPickerPopover()
   }
 
-  const handleReplyClick = (comment) => {
+  const handleReplyClick = () => {
     setReplyingToComment(comment)
     setShowMoreActionsModal(false)
   }
@@ -150,18 +159,37 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
     setShowViewReactionsModal(true)
   }
 
+  const handleOpenSlideUpReactionsMenu = (e) => {
+    // e.stopPropagation()
+    setShowMoreActionsModal(false)
+    setShowSlideUpReactionsMenu(true)
+    closeSlideMenu()
+  }
+
+  const handleCloseSlideUpReactionsMenu = () => {
+    setShowSlideUpReactionsMenu(false)
+  }
+
+  const handleCloseViewReactionsModal = () => {
+    setShowViewReactionsModal(false)
+  }
+
   return (
     <div
       className="group relative my-2 border-accent px-4 py-2 transition hover:bg-gray-700/10"
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
+      onTouchStart={handleTouchStart}
+      onTouchEnd={handleTouchEnd}
+      onTouchMove={handleTouchMove}
+      onTouchCancel={handleTouchCancel}
     >
       {comment.parentComment && (
         <div
           className="mb-1 flex cursor-pointer items-center gap-1 pl-10 text-xs text-slate-500 hover:text-primary"
-          onClick={() => onJumpToComment?.(comment.parentComment._id)} // ADD onClick
+          onClick={() => onJumpToComment?.(comment.parentComment._id)}
         >
-          <span>↩</span>
+          <span>↩ Replying to</span>
           <span className="font-semibold text-primary">
             @{comment.parentComment?.user?.username}
           </span>
@@ -174,8 +202,6 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
       )}
 
       <div className="flex min-w-0 items-start gap-2">
-        {" "}
-        {/* Added min-w-0 */}
         <Link to={`/profile/${comment.user?.username}`} className="flex-shrink-0">
           <img
             src={getOptimizedImageUrl(comment.user?.profileImg?.imageUrl, "avatar")}
@@ -185,10 +211,9 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
         </Link>
         <div className="flex min-w-0 flex-col items-start gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
-            {" "}
             <Link
               to={`/profile/${comment.user?.username}`}
-              className="truncate text-sm font-bold hover:underline" // Added truncate
+              className="truncate text-sm font-bold hover:underline"
             >
               {comment.user?.fullName}
             </Link>
@@ -200,19 +225,17 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
             )}
           </div>
 
-          {/* ── Content or inline edit ─────────────────────────────────── */}
           {comment.isDeletedByAdmin || comment.isDeletedByUser ? (
             <p className="mt-0.5 text-sm italic text-slate-600">
               {comment.isDeletedByAdmin ? "Deleted by admin." : "Message deleted."}
             </p>
           ) : isEditing ? (
-            <div className="mt-1">
+            <div className="mt-1 w-full">
               <textarea
                 ref={editTextareaRef}
                 value={editValue}
                 onChange={(e) => setEditValue(e.target.value)}
                 onKeyDown={handleEditKeyDown}
-                // Removed static rows={3}, added overflow-hidden and break-words
                 className="w-full resize-none overflow-hidden break-words rounded-lg border border-primary/40 bg-base-200 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
                 disabled={isEditingComment}
               />
@@ -240,10 +263,9 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
             </div>
           ) : (
             <>
-              {/* Added break-words and min-w-0 to prevent UI pushing */}
               <p className="mt-0.5 min-w-0 max-w-full overflow-hidden whitespace-pre-wrap break-words">
                 {comment.content}
-              </p>{" "}
+              </p>
               {comment.image?.imageUrl && (
                 <img
                   src={comment.image.imageUrl}
@@ -253,10 +275,9 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
               )}
             </>
           )}
+
           {hasAnyReactions && (
             <div className="min-w-0">
-              {" "}
-              {/* Wrapper for reactions */}
               <MessageReactions
                 groupedReactions={groupedReactions}
                 currentUser={authUser}
@@ -272,7 +293,6 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
         </div>
       </div>
 
-      {/* Hide action modal while inline editing */}
       {!isEditing && (
         <MessageActionsModal
           message={messageShape}
@@ -282,7 +302,7 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
           onReactionClick={handleReactionClick}
           moreEmojisButtonRef={moreEmojisButtonRef}
           handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
-          onReplyClick={() => handleReplyClick(comment)}
+          onReplyClick={handleReplyClick}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
       )}
@@ -292,8 +312,8 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
           message={messageShape}
           onCloseMoreActionsModal={() => setShowMoreActionsModal(false)}
           moreActionsModalPosition={moreActionsModalPosition}
-          onReplyClick={() => handleReplyClick(comment)}
-          onEditClick={handleOpenEdit} // ← opens inline edit
+          onReplyClick={handleReplyClick}
+          onEditClick={handleOpenEdit}
           onCopyMessage={handleCopyMessage}
           onDeleteOwnMessage={handleDeleteOwnMessage}
           reactToComment={onReact}
@@ -314,11 +334,49 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
         />
       )}
 
+      {
+        <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
+          <SlideUpMenuContent
+            className="flex h-[50vh] w-full flex-col overflow-y-auto"
+            disablePullToRefresh={true}
+          >
+            <ReactionsSlideUpMenuContent
+              reactions={comment.reactions ? comment.reactions : []}
+              onClose={handleCloseViewReactionsModal}
+            />
+          </SlideUpMenuContent>
+        </SlideUpMenu>
+      }
+
       {showViewReactionsModal && (
         <ViewReactionsModal
           isOpen={showViewReactionsModal}
           onClose={() => setShowViewReactionsModal(false)}
           reactions={comment.reactions ?? []}
+        />
+      )}
+
+      {/* Mobile slide-up menu — same pattern as PrivateChatMessageItem */}
+      {isMobile && (
+        <MobileMessageActionsSlideUp
+          isOpen={isSlideMenuOpen && commentForSlideMenu?._id === comment._id}
+          onClose={closeSlideMenu}
+          message={messageShape}
+          isEditable={isEditable}
+          isBoardPostOwner={isBoardPostOwner}
+          isSentByCurrentUser={isSentByCurrentUser}
+          onReactionClick={handleReactionClick}
+          onReplyClick={handleReplyClick}
+          onEditClick={handleOpenEdit}
+          onCopyMessage={handleCopyMessage}
+          onDeleteOwnMessage={handleDeleteOwnMessage}
+          handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+          moreEmojisButtonRef={moreEmojisButtonRef}
+          onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
+          showModal={showModal}
+          messageContentStyle={{}}
+          onOpenMoreActionsModal={handleOpenMoreActionsModal}
+          commentId={comment._id}
         />
       )}
     </div>

@@ -384,6 +384,13 @@ const PrivateChatMessageItem = ({
             moreEmojisButtonRef={moreEmojisButtonRef}
             onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
             onPinMessage={handlePinMessage}
+            onCloseMoreActionsModal={handleCloseMoreActionsModal}
+            moreActionsModalPosition={moreActionsModalPosition}
+            onAdminDeleteMessage={handleAdminDeleteMessage}
+            onOpenViewReactionsModal={handleOpenViewReactionsModal}
+            onReactionAdded={onReactionAdded}
+            reactToMessage={reactToMessage}
+            isAuthUserAdminOrOwner={isAuthUserAdminOrOwner}
           />
         )}
       </div>
