@@ -12,19 +12,24 @@ const getMondayOfWeek = (date) => {
 };
 
 const resetWeeklyStats = cron.schedule(
-  "0 8 * * 1",
+  "0 8 * * 1", // 08:00 UTC every Monday = 00:00 PST / 01:00 PDT
   async () => {
     try {
       const now = new Date();
-      const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
 
-      const lastWeekDate = new Date(pdtDate);
-      lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
-      const lastWeekStart = getMondayOfWeek(lastWeekDate);
+      // Current Monday (today) — this becomes the new week's start
+      const thisMonday = getMondayOfWeek(now);
 
+      // Last Monday — this is the week we're archiving winners for
+      const lastMondayDate = new Date(now);
+      lastMondayDate.setUTCDate(lastMondayDate.getUTCDate() - 7);
+      const lastMonday = getMondayOfWeek(lastMondayDate);
+
+      // Save top 3 from the week that just ended
       const topUsers = await User.find({ "weeklyStats.studyDuration": { $gt: 0 } })
         .sort({ "weeklyStats.studyDuration": -1 })
-        .limit(3);
+        .limit(3)
+        .select("_id weeklyStats");
 
       if (topUsers.length > 0) {
         const winnersData = topUsers.map((user, index) => ({
@@ -34,23 +39,31 @@ const resetWeeklyStats = cron.schedule(
         }));
 
         await WeeklyWinners.findOneAndUpdate(
-          { weekStart: lastWeekStart },
+          { weekStart: lastMonday },
           { $set: { winners: winnersData } },
           { upsert: true },
         );
+
+        console.log(`Saved ${winnersData.length} winners for week of ${lastMonday}`);
+      } else {
+        console.log(`No study activity for week of ${lastMonday}, skipping winners save`);
       }
 
-      const newWeekStart = getMondayOfWeek(pdtDate);
-      await User.updateMany(
+      // Reset everyone's weekly stats for the new week
+      const result = await User.updateMany(
         {},
         {
           $set: {
             "weeklyStats.studyDuration": 0,
             "weeklyStats.sessionsCompleted": 0,
             "weeklyStats.xpEarned": 0,
-            "weeklyStats.weekStart": newWeekStart,
+            "weeklyStats.weekStart": thisMonday,
           },
         },
+      );
+
+      console.log(
+        `Weekly reset complete. ${result.modifiedCount} users reset. New week: ${thisMonday}`,
       );
     } catch (error) {
       console.error("Weekly Reset Error:", error);
