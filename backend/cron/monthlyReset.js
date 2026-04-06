@@ -14,18 +14,29 @@ export const performMonthlyReset = async () => {
   try {
     console.log("Starting Monthly Reset Logic...");
 
+    const now = new Date();
+
+    const lastMonthDate = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
+    lastMonthDate.setUTCMonth(lastMonthDate.getUTCMonth() - 1);
+    const lastMonthISO = lastMonthDate.toISOString().slice(0, 7);
+
+    const currentMonthISO = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1))
+      .toISOString()
+      .slice(0, 7);
+
+    console.log(`Archiving winners for ${lastMonthISO}, resetting to ${currentMonthISO}`);
+
+    const activeUsers = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
+      .select("_id")
+      .lean();
+    const activeUserIds = activeUsers.map((u) => u._id);
+
     const topUsers = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
       .sort({ "monthlyStats.studyDuration": -1 })
-      .limit(3);
+      .limit(3)
+      .select("_id monthlyStats");
 
-    const now = new Date();
-    const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-    const targetMonth = new Date(pdtDate);
-    targetMonth.setUTCDate(1);
-    targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
-    const lastMonthISO = targetMonth.toISOString().slice(0, 7);
-
-    // 3. Save Winners
+    // ── Bug 2 fix: actually save the winners ──────────────────────────────
     if (topUsers.length > 0) {
       const winnersData = topUsers.map((user, index) => ({
         user: user._id,
@@ -38,11 +49,12 @@ export const performMonthlyReset = async () => {
         { $set: { winners: winnersData } },
         { upsert: true },
       );
-      console.log(`Saved winners for ${lastMonthISO}`);
+      console.log(`Saved ${winnersData.length} winners for ${lastMonthISO}`);
+    } else {
+      console.log(`No study activity for ${lastMonthISO}, skipping winners save`);
     }
 
-    // 4. Reset All Users
-    const currentMonthISO = pdtDate.toISOString().slice(0, 7);
+    // ── Bug 1 fix: capture result ─────────────────────────────────────────
     const result = await User.updateMany(
       {},
       {
@@ -51,13 +63,18 @@ export const performMonthlyReset = async () => {
           "monthlyStats.sessionsCompleted": 0,
           "monthlyStats.xpEarned": 0,
           "monthlyStats.lastResetMonth": currentMonthISO,
-          monthlyStudyStreak: 0,
-          lastMonthlyStudyDate: null,
         },
       },
     );
 
-    console.log(`Reset successful for ${result.modifiedCount} users.`);
+    await User.updateMany(
+      { _id: { $nin: activeUserIds } },
+      { $set: { monthlyStudyStreak: 0, lastMonthlyStudyDate: null } },
+    );
+
+    console.log(
+      `Monthly reset complete. ${result.modifiedCount} users reset for ${currentMonthISO}`,
+    );
     return { success: true, month: lastMonthISO };
   } catch (error) {
     console.error("Monthly Reset Error:", error);
@@ -88,7 +105,7 @@ export const manualMonthlyReset = async () => {
           "monthlyStats.xpEarned": 0,
           "monthlyStats.lastResetMonth": currentMonth,
         },
-      }
+      },
     );
 
     console.log(`Manual monthly reset completed. Updated ${result.modifiedCount} users.`);
