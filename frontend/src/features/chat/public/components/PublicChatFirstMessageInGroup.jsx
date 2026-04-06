@@ -22,7 +22,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
                   ? "text-[#1D9BF0]"
                   : isSenderGoldVerified
                     ? "text-[#E3B812]"
-                    : "text-white"
+                    : ""
               }`}
             >
               {message.sender?.username}
