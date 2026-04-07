@@ -27,7 +27,15 @@ const toMessageShape = (comment) => ({
   isDeletedByUser: comment.isDeletedByUser || false,
 })
 
-const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJumpToComment }) => {
+const BoardCommentItem = ({
+  comment,
+  post,
+  boardPostId,
+  onReact,
+  onDelete,
+  onJumpToComment,
+  onJumpToPost,
+}) => {
   const { authUser } = useAuthUser()
   const isMobile = useIsMobile()
   const setReplyingToComment = useBoardStore((s) => s.setReplyingToComment)
@@ -174,6 +182,8 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
     setShowViewReactionsModal(false)
   }
 
+  console.log(comment)
+
   return (
     <div
       className="group relative my-2 border-accent px-4 py-2 transition hover:bg-gray-700/10"
@@ -184,22 +194,37 @@ const BoardCommentItem = ({ comment, post, boardPostId, onReact, onDelete, onJum
       onTouchMove={handleTouchMove}
       onTouchCancel={handleTouchCancel}
     >
-      {comment.parentComment && (
-        <div
-          className="mb-1 flex cursor-pointer items-center gap-1 pl-10 text-xs text-slate-500 hover:text-primary"
-          onClick={() => onJumpToComment?.(comment.parentComment._id)}
-        >
-          <span>↩ Replying to</span>
-          <span className="font-semibold text-primary">
-            @{comment.parentComment?.user?.username}
-          </span>
-          {comment.parentComment.isDeletedByUser || comment.parentComment.isDeletedByAdmin ? (
-            <span className="italic text-slate-600">(deleted)</span>
-          ) : (
-            <span className="max-w-[120px] truncate italic">"{comment.parentComment.content}"</span>
-          )}
-        </div>
-      )}
+      {
+        comment.parentComment ? (
+          // Replying to another comment — jump to it
+          <div
+            className="mb-1 flex cursor-pointer items-center gap-1 pl-10 text-xs text-slate-500 hover:text-primary"
+            onClick={() => onJumpToComment?.(comment.parentComment._id)}
+          >
+            <span>↩</span>
+            <span className="font-semibold text-primary">
+              @{comment.parentComment?.user?.username}
+            </span>
+            {comment.parentComment.isDeletedByUser || comment.parentComment.isDeletedByAdmin ? (
+              <span className="italic text-slate-600">(deleted)</span>
+            ) : (
+              <span className="max-w-[200px] truncate italic">
+                "{comment.parentComment.content}"
+              </span>
+            )}
+          </div>
+        ) : comment.isReplyToPost ? (
+          // Replying to the board post itself — jump to top
+          <div
+            className="mb-1 flex cursor-pointer items-center gap-1 pl-10 text-xs text-slate-500 hover:text-primary"
+            onClick={() => onJumpToPost?.()}
+          >
+            <span>↩</span>
+            <span className="font-semibold text-primary">@{comment.boardPost?.user?.username}</span>
+            <span className="max-w-[200px] truncate italic">"{comment.boardPost?.title}"</span>
+          </div>
+        ) : null /* Regular top-level comment — no indicator */
+      }
 
       <div className="flex min-w-0 items-start gap-2">
         <Link to={`/profile/${comment.user?.username}`} className="flex-shrink-0">

@@ -11,6 +11,7 @@ import { useEmojiPickerPopover } from "../../../../hooks/customHooks/useEmojiPic
 import EmojiPickerPopover from "../../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../../hooks/customHooks/useChatInput"
 import { useEditMessage, useSendMessage } from "../privateChatHooks/usePrivateChatMutations"
+import ImagePreviewCloseButton from "../../../../components/common/ImagePreviewCloseButton"
 
 function PrivateChatInput({
   actualConversationId,
@@ -24,7 +25,6 @@ function PrivateChatInput({
 
   const { editPrivateMessage } = useEditMessage(actualConversationId)
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
-
 
   const { isRecording, audioBlob } = usePrivateChatStore()
 
@@ -58,7 +58,7 @@ function PrivateChatInput({
         conversationId: actualConversationId,
         img: file && file.type.startsWith("image/") ? base64Data : null,
         voiceMessage: file && file.type.startsWith("audio/") ? base64Data : null,
-        voiceMessageDuration: duration, 
+        voiceMessageDuration: duration,
       })
     },
     [sendPrivateMessage, actualConversationId],
@@ -225,12 +225,7 @@ function PrivateChatInput({
               alt="Preview"
               className="max-h-[200px] max-w-[200px] rounded-md object-contain"
             />
-            <button
-              onClick={handleRemoveImage}
-              className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
-            >
-              <IoClose size={15} />
-            </button>
+            <ImagePreviewCloseButton onClick={handleRemoveImage} />
           </div>
         </div>
       )}

@@ -8,6 +8,7 @@ import BoardPostCard from "../features/board/components/BoardPostCard"
 import BoardPostDetail from "../features/board/components/BoardPostDetail"
 import CreateBoardPostModal from "../features/board/components/CreateBoardPostModal"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
+import { useBoardStore } from "../store/useBoardStore"
 
 const BoardPage = () => {
   const navigate = useNavigate()
@@ -18,45 +19,48 @@ const BoardPage = () => {
   const isMobile = useIsMobile()
   const observerTarget = useRef(null)
 
-const [leftWidth, setLeftWidth] = useState(400)
-const [isResizing, setIsResizing] = useState(false)
-const containerRef = useRef(null) // Attach to the flex container
+  const [leftWidth, setLeftWidth] = useState(400)
+  const [isResizing, setIsResizing] = useState(false)
+  const containerRef = useRef(null) // Attach to the flex container
 
-const startResizing = useCallback((e) => {
-  e.preventDefault()
-  setIsResizing(true)
-}, [])
+  const setIsEditingPostInline = useBoardStore((s) => s.setIsEditingPostInline)
+  const setReplyingToComment = useBoardStore((s) => s.setReplyingToComment)
 
-const stopResizing = useCallback(() => {
-  setIsResizing(false)
-}, [])
+  const startResizing = useCallback((e) => {
+    e.preventDefault()
+    setIsResizing(true)
+  }, [])
 
-const resize = useCallback((e) => {
-  if (!containerRef.current) return
-  const containerRect = containerRef.current.getBoundingClientRect()
-  const newWidth = e.clientX - containerRect.left
+  const stopResizing = useCallback(() => {
+    setIsResizing(false)
+  }, [])
 
-  // 280 is a good minimum for the sidebar
-  // 800 (or higher) allows the sidebar to take up most of the screen
-  if (newWidth > 280 && newWidth < 900) {
-    setLeftWidth(newWidth)
-  }
-}, [])
+  const resize = useCallback((e) => {
+    if (!containerRef.current) return
+    const containerRect = containerRef.current.getBoundingClientRect()
+    const newWidth = e.clientX - containerRect.left
 
-useEffect(() => {
-  if (!isResizing) return // guard here instead
+    // 280 is a good minimum for the sidebar
+    // 800 (or higher) allows the sidebar to take up most of the screen
+    if (newWidth > 280 && newWidth < 900) {
+      setLeftWidth(newWidth)
+    }
+  }, [])
 
-  const handleMouseMove = (e) => resize(e)
-  const handleMouseUp = () => stopResizing()
+  useEffect(() => {
+    if (!isResizing) return // guard here instead
 
-  window.addEventListener("mousemove", handleMouseMove)
-  window.addEventListener("mouseup", handleMouseUp)
+    const handleMouseMove = (e) => resize(e)
+    const handleMouseUp = () => stopResizing()
 
-  return () => {
-    window.removeEventListener("mousemove", handleMouseMove)
-    window.removeEventListener("mouseup", handleMouseUp)
-  }
-}, [isResizing, resize, stopResizing])
+    window.addEventListener("mousemove", handleMouseMove)
+    window.addEventListener("mouseup", handleMouseUp)
+
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove)
+      window.removeEventListener("mouseup", handleMouseUp)
+    }
+  }, [isResizing, resize, stopResizing])
 
   const { posts, isLoading, fetchNextPage, hasNextPage, isFetchingNextPage } = useGetBoardPosts()
 
@@ -74,6 +78,8 @@ useEffect(() => {
   const handleSelectPost = (id) => {
     setSelectedPostId(id)
     navigate(`/board/${id}`, { replace: true })
+    setIsEditingPostInline(false)
+    setReplyingToComment(false)
   }
 
   const handleClose = () => {
@@ -127,7 +133,7 @@ useEffect(() => {
         {showPostList && (
           <div
             style={{ width: isMobile ? "100%" : `${leftWidth}px` }}
-            className="flex flex-col overflow-y-auto border-r pb-32 md:pb-0 border-accent bg-base-100 transition-colors"
+            className="flex flex-col overflow-y-auto border-r border-accent bg-base-100 pb-32 transition-colors md:pb-0"
           >
             {/* GRID WRAPPER ADDED HERE */}
             <div className="grid grid-cols-[repeat(auto-fill,minmax(250px,1fr))] gap-3 p-3">
@@ -167,7 +173,7 @@ useEffect(() => {
         )}
         {/* Right: post detail */}
         {showPostDetail && (
-          <div className="flex w-full min-w-[330px] md:min-w-[380px] flex-col overflow-hidden md:flex-1">
+          <div className="flex w-full min-w-[330px] flex-col overflow-hidden md:min-w-[380px] md:flex-1">
             {isLoading && urlPostId ? (
               <div></div>
             ) : selectedPostId ? (

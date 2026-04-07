@@ -9,7 +9,7 @@ export const useBoardStore = create(
     isSlideMenuOpen: false,
     commentForSlideMenu: null,
     boardInputRef: { current: null },
-    editingPost: null,
+    isEditingPostInline: null,
     replyingToPost: false,
 
     isPostSlideMenuOpen: false,
@@ -27,8 +27,8 @@ export const useBoardStore = create(
       }),
     setReplyingToPost: (value) =>
       set({ replyingToPost: value, replyingToComment: null, editingComment: null }),
-    setEditingPost: (post) =>
-      set({ editingPost: post, replyingToComment: null, editingComment: null }),
+    setIsEditingPostInline: (post) =>
+      set({ isEditingPostInline: post, replyingToComment: null, editingComment: null }),
 
     setReplyingToComment: (comment) => set({ replyingToComment: comment, editingComment: null }),
     setEditingComment: (comment) => set({ editingComment: comment, replyingToComment: null }),

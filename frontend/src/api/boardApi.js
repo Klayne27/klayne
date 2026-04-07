@@ -13,17 +13,17 @@ export const getBoardPostApi = async (id) => {
   if (!res.ok) throw new Error(data.error || "Failed to fetch board post")
   return data
 }
-
-export const createBoardPostApi = async ({ title, content, img, tags }) => {
+// Update createBoardPostApi — send imgs array instead of img
+export const createBoardPostApi = async ({ title, content, imgs, tags }) => {
   const res = await fetch(BASE_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ title, content, img, tags }),
-  })
-  const data = await res.json()
-  if (!res.ok) throw new Error(data.error || "Failed to create board post")
-  return data
-}
+    body: JSON.stringify({ title, content, imgs, tags }),
+  });
+  const data = await res.json();
+  if (!res.ok) throw new Error(data.error || "Failed to create board post");
+  return data;
+};
 
 export const editBoardPostApi = async ({ id, title, content, tags }) => {
   const res = await fetch(`${BASE_URL}/${id}`, {
@@ -62,11 +62,17 @@ export const getBoardCommentsApi = async ({ queryKey, pageParam = 1 }) => {
   return data
 }
 
-export const createBoardCommentApi = async ({ id, content, img, parentCommentId }) => {
+export const createBoardCommentApi = async ({
+  id,
+  content,
+  img,
+  parentCommentId,
+  isReplyToPost,
+}) => {
   const res = await fetch(`${BASE_URL}/${id}/comments`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ content, img, parentCommentId }),
+    body: JSON.stringify({ content, img, parentCommentId, isReplyToPost }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Failed to create comment")

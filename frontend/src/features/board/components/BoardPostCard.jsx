@@ -64,7 +64,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
   }
 
   return (
-    <div className="perspective-1000 w-full">
+    <div className="w-full perspective-1000">
       <div
         ref={cardRef}
         onClick={onClick}
@@ -93,7 +93,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
             <p className="text-md truncate font-bold leading-none">{post.user?.fullName}</p>
             <p className="truncate text-xs text-slate-500">@{post.user?.username}</p>
           </div>
-          <span className="text-xs text-base-500 hidden font-normal opacity-60 sm:block">
+          <span className="text-base-500 hidden text-xs font-normal opacity-60 sm:block">
             {formatPostDateShort(post.createdAt)}
           </span>
         </div>
@@ -102,13 +102,27 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
         <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
           <p className="mb-1 line-clamp-2 text-sm font-bold leading-tight">{post.title}</p>
 
-          {post?.image ? (
-            <div className="mt-1 min-h-0 flex-1">
-              <img
-                src={post.image.imageUrl}
-                className="h-full w-full rounded-lg border border-accent object-cover"
-                alt="post"
-              />
+          {/* Replace the existing image block with: */}
+          {post?.images?.length > 0 ? (
+            <div
+              className={`mt-1 grid min-h-0 flex-1 gap-1 ${
+                post.images.length === 1 ? "grid-cols-1" : "grid-cols-2"
+              }`}
+            >
+              {post.images.slice(0, 4).map((img, i) => (
+                <div
+                  key={img._id || i}
+                  className={`relative overflow-hidden rounded-md border border-accent ${
+                    post.images.length === 3 && i === 0 ? "col-span-2" : ""
+                  }`}
+                >
+                  <img
+                    src={img.imageUrl}
+                    className="h-full w-full object-cover"
+                    alt={`post image ${i + 1}`}
+                  />
+                </div>
+              ))}
             </div>
           ) : (
             <div className="min-h-0 flex-1 rounded-lg border border-accent/50 bg-base-300/30 p-2">

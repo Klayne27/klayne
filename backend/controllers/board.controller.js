@@ -35,93 +35,49 @@ const commentPopulate = [
     },
   },
   {
+    // Populate boardPost just enough for the reply indicator
+    path: "boardPost",
+    select: "title user",
+    populate: {
+      path: "user",
+      select: "username fullName",
+    },
+  },
+  {
     path: "reactions.userId",
     select: "username fullName profileImg",
     populate: { path: "profileImg", select: "imageUrl" },
   },
 ];
 
-// ── GET all board posts (paginated) ──────────────────────────────────────────
-export const getBoardPosts = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
-    const skip = (page - 1) * limit;
-
-    const totalCount = await BoardPost.countDocuments();
-
-    const posts = await BoardPost.find()
-      .sort({ isPinned: -1, updatedAt: -1 })
-      .skip(skip)
-      .limit(limit)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({
-        path: "reactions.userId",
-        select: "username fullName",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" })
-      .lean();
-
-    const hasNextPage = page * limit < totalCount;
-
-    res.status(200).json({ posts, hasNextPage, totalCount });
-  } catch (error) {
-    console.error("Error in getBoardPosts:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-// ── GET single board post ────────────────────────────────────────────────────
-export const getBoardPost = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const post = await BoardPost.findById(id)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({
-        path: "reactions.userId",
-        select: "username fullName",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" })
-      .lean();
-
-    if (!post) return res.status(404).json({ error: "Board post not found." });
-
-    res.status(200).json(post);
-  } catch (error) {
-    console.error("Error in getBoardPost:", error);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+const boardPostPopulate = [
+  {
+    path: "user",
+    select:
+      "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+    populate: { path: "profileImg", select: "imageUrl" },
+  },
+  {
+    path: "reactions.userId",
+    select: "username fullName",
+    populate: { path: "profileImg", select: "imageUrl" },
+  },
+  { path: "images", select: "imageUrl publicId" },
+];
 
 // ── CREATE board post ────────────────────────────────────────────────────────
 export const createBoardPost = async (req, res) => {
   try {
     const { title, content, tags } = req.body;
-    let { img } = req.body;
+    const imgs = req.body.imgs; // array of base64 strings, max 4
     const userId = req.user._id;
 
-    let uploadedImgUrl = null;
-    let imgPublicId = null;
+    if (!title?.trim()) {
+      return res.status(400).json({ error: "Title is required." });
+    }
 
-    if (img) {
-      const uploaded = await cloudinary.uploader.upload(img, {
-        upload_preset: "ml_posts",
-      });
-      uploadedImgUrl = uploaded.secure_url;
-      imgPublicId = uploaded.public_id;
+    if (imgs && (!Array.isArray(imgs) || imgs.length > 4)) {
+      return res.status(400).json({ error: "Maximum 4 images allowed." });
     }
 
     const parsedTags = Array.isArray(tags)
@@ -132,35 +88,36 @@ export const createBoardPost = async (req, res) => {
       user: userId,
       title: title.trim(),
       content: content?.trim() || "",
-      img: uploadedImgUrl,
-      imgPublicId,
       tags: parsedTags,
     });
 
     await newPost.save();
 
-    if (img && uploadedImgUrl) {
-      const newImage = new Image({
-        imageUrl: uploadedImgUrl,
-        parentDocument: newPost._id,
-        parentModel: "Post",
-        uploadedBy: userId,
-        publicId: imgPublicId,
-      });
-      await newImage.save();
-      newPost.image = newImage._id;
+    // Upload all images in parallel
+    if (imgs && imgs.length > 0) {
+      const uploadedImages = await Promise.all(
+        imgs.map(async (imgBase64) => {
+          const uploaded = await cloudinary.uploader.upload(imgBase64, {
+            upload_preset: "ml_posts",
+          });
+
+          const newImage = new Image({
+            imageUrl: uploaded.secure_url,
+            parentDocument: newPost._id,
+            parentModel: "Post",
+            uploadedBy: userId,
+            publicId: uploaded.public_id,
+          });
+          await newImage.save();
+          return newImage._id;
+        }),
+      );
+
+      newPost.images = uploadedImages;
       await newPost.save();
     }
 
-    const populated = await BoardPost.findById(newPost._id)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" });
-
+    const populated = await BoardPost.findById(newPost._id).populate(boardPostPopulate);
     res.status(201).json(populated);
   } catch (error) {
     console.error("Error in createBoardPost:", error);
@@ -168,7 +125,7 @@ export const createBoardPost = async (req, res) => {
   }
 };
 
-// ── EDIT board post ────────────────────────────────────────────────────────
+// ── EDIT board post ───────────────────────────────────────────────────────────
 export const editBoardPost = async (req, res) => {
   try {
     const { id } = req.params;
@@ -185,20 +142,7 @@ export const editBoardPost = async (req, res) => {
     post.isEdited = true;
     await post.save();
 
-    const populated = await BoardPost.findById(post._id)
-      .populate({
-        path: "user",
-        select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({
-        path: "reactions.userId",
-        select: "username fullName",
-        populate: { path: "profileImg", select: "imageUrl" },
-      })
-      .populate({ path: "image", select: "imageUrl" });
-
+    const populated = await BoardPost.findById(post._id).populate(boardPostPopulate);
     res.status(200).json(populated);
   } catch (error) {
     console.error("Error in editBoardPost:", error);
@@ -206,30 +150,93 @@ export const editBoardPost = async (req, res) => {
   }
 };
 
-// ── DELETE board post ────────────────────────────────────────────────────────
+// ── DELETE board post — cascade delete images ─────────────────────────────────
 export const deleteBoardPost = async (req, res) => {
   try {
     const { id } = req.params;
     const userId = req.user._id;
 
-    const post = await BoardPost.findById(id);
+    // Populate images so we have access to the imageUrl strings
+    const post = await BoardPost.findById(id).populate("images");
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
+    // Authorization check
     if (!post.user.equals(userId) && !req.user.isAdmin) {
       return res.status(403).json({ error: "Not authorized." });
     }
 
-    if (post.imgPublicId) {
-      await cloudinary.uploader.destroy(post.imgPublicId);
-      await Image.deleteOne({ parentDocument: post._id });
+    // 1. Delete all images from Cloudinary and DB
+    if (post.images && post.images.length > 0) {
+      await Promise.all(
+        post.images.map(async (img) => {
+          if (img.imageUrl) {
+            // Extract publicId from URL (Logic from your deleteMessage reference)
+            // Example: https://res.cloudinary.com/.../v1234/folder/image_name.jpg
+            // Result: image_name
+            const publicId = img.imageUrl.split("/").pop().split(".")[0];
+
+            try {
+              await cloudinary.uploader.destroy(publicId);
+            } catch (cloudErr) {
+              console.error("Cloudinary error for image:", publicId, cloudErr.message);
+              // We continue so the DB record still gets wiped even if Cloudinary fails
+            }
+          }
+          // Remove the image document from your Image collection
+          return Image.deleteOne({ _id: img._id });
+        }),
+      );
     }
 
+    // 2. Cascade delete comments
     await BoardComment.deleteMany({ boardPost: id });
+
+    // 3. Finally delete the post
     await BoardPost.deleteOne({ _id: id });
 
-    res.status(200).json({ message: "Board post deleted." });
+    res.status(200).json({ message: "Board post and all media deleted successfully." });
   } catch (error) {
-    console.error("Error in deleteBoardPost:", error);
+    console.error("Error in deleteBoardPost:", error.message);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── GET all board posts — update populate ─────────────────────────────────────
+export const getBoardPosts = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const totalCount = await BoardPost.countDocuments();
+
+    const posts = await BoardPost.find()
+      .sort({ isPinned: -1, updatedAt: -1 })
+      .skip(skip)
+      .limit(limit)
+      .populate(boardPostPopulate)
+      .lean();
+
+    const hasNextPage = page * limit < totalCount;
+    res.status(200).json({ posts, hasNextPage, totalCount });
+  } catch (error) {
+    console.error("Error in getBoardPosts:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+// ── GET single board post — update populate ───────────────────────────────────
+export const getBoardPost = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const post = await BoardPost.findById(id).populate(boardPostPopulate).lean();
+
+    if (!post) return res.status(404).json({ error: "Board post not found." });
+
+    res.status(200).json(post);
+  } catch (error) {
+    console.error("Error in getBoardPost:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -280,7 +287,7 @@ export const reactToBoardPost = async (req, res) => {
         select: "username fullName",
         populate: { path: "profileImg", select: "imageUrl" },
       })
-      .populate({ path: "image", select: "imageUrl" });
+      .populate({ path: "images", select: "imageUrl" });
 
     res.status(200).json(populated);
   } catch (error) {
@@ -319,7 +326,7 @@ export const getBoardComments = async (req, res) => {
 export const createBoardComment = async (req, res) => {
   try {
     const { id: boardPostId } = req.params;
-    const { content, parentCommentId } = req.body;
+    const { content, parentCommentId, isReplyToPost } = req.body; // ADD isReplyToPost
     let { img } = req.body;
     const userId = req.user._id;
 
@@ -355,6 +362,7 @@ export const createBoardComment = async (req, res) => {
       content: content?.trim() || "",
       img: uploadedImgUrl,
       parentComment: parentCommentId || null,
+      isReplyToPost: !parentCommentId && !!isReplyToPost, // only set if no parent comment
     });
 
     await newComment.save();
@@ -390,19 +398,50 @@ export const deleteBoardComment = async (req, res) => {
     const { commentId } = req.params;
     const userId = req.user._id;
 
-    const comment = await BoardComment.findById(commentId);
+    // 1. Find the comment and populate the image reference
+    // In your schema, the field is likely 'image' (singular) or part of the document
+    const comment = await BoardComment.findById(commentId).populate("image");
     if (!comment) return res.status(404).json({ error: "Comment not found." });
 
+    // Authorization check
     if (!comment.user.equals(userId) && !req.user.isAdmin) {
       return res.status(403).json({ error: "Not authorized." });
     }
 
-    await BoardPost.findByIdAndUpdate(comment.boardPost, { $inc: { commentsCount: -1 } });
+    // 2. Delete the associated image if it exists
+    if (comment.image) {
+      const img = comment.image;
+
+      if (img.imageUrl) {
+        // Extract publicId: takes 'image_name.jpg', then grabs 'image_name'
+        const publicId = img.imageUrl.split("/").pop().split(".")[0];
+
+        try {
+          await cloudinary.uploader.destroy(publicId);
+        } catch (cloudErr) {
+          console.error(
+            "Cloudinary error for comment image:",
+            publicId,
+            cloudErr.message,
+          );
+        }
+      }
+
+      // Remove the image document from your Image collection
+      await Image.deleteOne({ _id: img._id });
+    }
+
+    // 3. Decrement the post's comment count
+    await BoardPost.findByIdAndUpdate(comment.boardPost, {
+      $inc: { commentsCount: -1 },
+    });
+
+    // 4. Finally delete the comment
     await BoardComment.deleteOne({ _id: commentId });
 
-    res.status(200).json({ message: "Comment deleted.", commentId });
+    res.status(200).json({ message: "Comment and media deleted successfully." });
   } catch (error) {
-    console.error("Error in deleteBoardComment:", error);
+    console.error("Error in deleteBoardComment:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };

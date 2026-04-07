@@ -27,7 +27,14 @@ import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import CircularBarProgress from "../../../components/common/CircularBarProgress"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 import { useSearchUsers } from "../../users/usersHooks/useUserMutations"
-import { useCreatePosts, useCreateVentPost, useMarkICPostsAsRead, useMarkPostsAsRead, useMarkVentPostsAsRead } from "../postsHooks/usePostsMutations"
+import {
+  useCreatePosts,
+  useCreateVentPost,
+  useMarkICPostsAsRead,
+  useMarkPostsAsRead,
+  useMarkVentPostsAsRead,
+} from "../postsHooks/usePostsMutations"
+import ImagePreviewCloseButton from "../../../components/common/ImagePreviewCloseButton"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -699,9 +706,7 @@ const CreatePost = ({ feedType }) => {
 
           {postPreviewImage && (
             <div className="relative mx-auto max-w-full sm:w-auto">
-              <IoClose
-                size={25}
-                className="absolute -right-2 -top-2 z-10 cursor-pointer rounded-full bg-slate-500 p-1 text-white transition duration-200 hover:bg-gray-600"
+              <ImagePreviewCloseButton
                 onClick={() => {
                   setPostSelectedFile(null)
                   setPostPreviewImage(null)

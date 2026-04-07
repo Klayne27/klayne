@@ -104,7 +104,7 @@ function MoreMessageActionsModal({
           Reply
           <HiOutlineReply size={18} className="text-slate-400" />
         </button>
-        {isEditable && !isMessageDeleted && (
+        {isEditable && !isMessageDeleted &&  (
           <button
             onClick={onEditClick}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"

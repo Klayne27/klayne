@@ -17,19 +17,19 @@ const boardPostSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-    image: {
-      type: mongoose.Schema.Types.ObjectId,
-      ref: "Image",
-      default: null,
-    },
+
+    images: [
+      {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "Image",
+        default: [],
+      },
+    ],
     isEdited: { type: Boolean, default: false },
-    img: { type: String, default: null },
-    imgPublicId: { type: String, default: null },
     reactions: [
       {
         emoji: { type: String, required: true },
         userId: {
-          // Changed from 'users: []' to 'userId' to match Message
           type: mongoose.Schema.Types.ObjectId,
           ref: "User",
           required: true,

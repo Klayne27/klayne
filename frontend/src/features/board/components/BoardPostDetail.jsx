@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react"
-import { IoChatbubbleSharp, IoClose } from "react-icons/io5"
+import { IoChatbubbleSharp } from "react-icons/io5"
 import { Link } from "react-router-dom"
 import { useInView } from "react-intersection-observer"
 
@@ -8,7 +8,6 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useBoardStore } from "../../../store/useBoardStore"
 import { useGetBoardComments, useGetBoardPost } from "../boardHooks/boardQueries"
 import {
-  useCreateBoardComment,
   useDeleteBoardComment,
   useDeleteBoardPost,
   useEditBoardComment,
@@ -30,11 +29,13 @@ import MoreMessageActionsModal from "../../chat/common/components/MoreMessageAct
 import { useOpenMoreActionsModal } from "../../../hooks/customHooks/useOpenMoreActionsModal"
 import ViewReactionsModal from "../../../components/common/ViewReactionsModal"
 import { useProcessedMessage } from "../../../hooks/customHooks/useProcessedMessages"
-import { MdSend } from "react-icons/md"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import MobileMessageActionsSlideUp from "../../chat/common/components/MobileMessageActionsSlideUp"
 import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
+
+import BoardPostInput from "./BoardPostInput"
+import { PiSmiley } from "react-icons/pi"
 
 const formatDateSeparator = (dateStr) => {
   const date = new Date(dateStr)
@@ -56,29 +57,26 @@ const toMessageShape = (post) => ({
 
 const BoardPostDetail = ({ postId, onClose }) => {
   const { authUser } = useAuthUser()
-  const setReplyingToComment = useBoardStore((s) => s.setReplyingToComment)
-  const setEditingComment = useBoardStore((s) => s.setEditingComment)
   const replyingToComment = useBoardStore((s) => s.replyingToComment)
-  const editingComment = useBoardStore((s) => s.editingComment)
+  const replyingToPost = useBoardStore((s) => s.replyingToPost)
   const activeCommentModalId = useBoardStore((s) => s.activeCommentModalId)
   const setActiveCommentModalId = useBoardStore((s) => s.setActiveCommentModalId)
-  const replyingToPost = useBoardStore((s) => s.replyingToPost)
   const setReplyingToPost = useBoardStore((s) => s.setReplyingToPost)
-  const editingPost = useBoardStore((s) => s.editingPost)
-  const setEditingPost = useBoardStore((s) => s.setEditingPost)
   const isPostSlideMenuOpen = useBoardStore((s) => s.isPostSlideMenuOpen)
   const postForSlideMenu = useBoardStore((s) => s.postForSlideMenu)
   const openPostSlideMenu = useBoardStore((s) => s.openPostSlideMenu)
   const closePostSlideMenu = useBoardStore((s) => s.closePostSlideMenu)
+  const isEditingPostInline = useBoardStore((s) => s.isEditingPostInline)
+  const setIsEditingPostInline = useBoardStore((s) => s.setIsEditingPostInline)
 
-  const boardInputRef = useRef(null)
-  const inlineTextareaRef = useRef(null) // New ref for the content textarea
+  const inlineTextareaRef = useRef(null)
+  const floatingInputRef = useRef(null)
+  const postRef = useRef(null)
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
 
-  const [editPostContent, setEditPostContent] = useState("")
-  const [isEditingPostInline, setIsEditingPostInline] = useState(false)
+  // const [isEditingPostInline, setIsEditingPostInline] = useState(false)
   const [inlinePostContent, setInlinePostContent] = useState("")
 
   const { post, isLoading } = useGetBoardPost(postId)
@@ -91,8 +89,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
-  const commentRefs = useRef({}) 
-  const scrollContainerRef = useRef(null)
+  const commentRefs = useRef({})
   const isMobile = useIsMobile()
   const postMoreEmojisButtonRef = useRef(null)
 
@@ -119,8 +116,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
     activeCommentModalId,
     () => openPostSlideMenu(messageShape), // long press opens slide menu for the post
   )
-  const isAdmin = authUser?.isAdmin
-  const clearReplyAndEdit = useBoardStore((s) => s.clearReplyAndEdit)
 
   const {
     comments,
@@ -137,15 +132,10 @@ const BoardPostDetail = ({ postId, onClose }) => {
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, post })
 
-  const { createComment, isCreatingComment } = useCreateBoardComment(postId)
   const { deleteComment } = useDeleteBoardComment(postId)
   const { deleteBoardPost } = useDeleteBoardPost()
   const { reactToPost } = useReactToBoardPost()
   const { reactToComment } = useReactToBoardComment(postId)
-  const { editComment, isEditingComment } = useEditBoardComment(postId)
-
-  const [commentInput, setCommentInput] = useState("")
-  const [editInput, setEditInput] = useState("")
 
   useLayoutEffect(() => {
     if (isEditingPostInline && inlineTextareaRef.current) {
@@ -155,10 +145,10 @@ const BoardPostDetail = ({ postId, onClose }) => {
   }, [inlinePostContent, isEditingPostInline])
 
   useEffect(() => {
-    if (replyingToComment) {
-      setTimeout(() => inlineTextareaRef.current?.focus(), 0)
+    if (replyingToComment || replyingToPost) {
+      setTimeout(() => floatingInputRef.current?.focus(), 0)
     }
-  }, [replyingToComment, inlineTextareaRef])
+  }, [replyingToComment, floatingInputRef, replyingToPost])
 
   useEffect(() => {
     if (isEditingPostInline && inlineTextareaRef.current) {
@@ -190,16 +180,28 @@ const BoardPostDetail = ({ postId, onClose }) => {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const resetForm = () => {
-    // if (postFileInputRef.current) {
-    //   postFileInputRef.current.value = null
-    // }
-    setCommentInput("")
-    clearReplyAndEdit()
-    if (inlineTextareaRef.current) {
-      inlineTextareaRef.current.style.height = "auto"
-    }
+  const handleInlinePostEmojiClick = (emojiObject) => {
+    setInlinePostContent((prev) => prev + emojiObject.emoji)
+
+    // Refocus and auto-resize
+    setTimeout(() => {
+      if (inlineTextareaRef.current) {
+        inlineTextareaRef.current.focus()
+        inlineTextareaRef.current.style.height = "auto"
+        inlineTextareaRef.current.style.height = `${inlineTextareaRef.current.scrollHeight}px`
+      }
+    }, 0)
   }
+
+  const handleJumpToPost = useCallback(() => {
+    const node = postRef.current
+    if (!node) return
+
+    node.scrollIntoView({ behavior: "smooth", block: "center" })
+
+    node.classList.add("bg-primary/10")
+    setTimeout(() => node.classList.remove("bg-primary/10"), 1500)
+  }, [])
 
   const handleReactionClick = (id, emoji) => {
     reactToPost({ id: id, emoji })
@@ -276,36 +278,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
     setShowSlideUpReactionsMenu(false)
   }
 
-  const handleSubmitComment = (e) => {
-    e.preventDefault()
-
-    if (editingComment) {
-      if (!editInput.trim()) return
-      editComment(
-        { commentId: editingComment._id, content: editInput },
-        {
-          onSuccess: () => {
-            setEditInput("")
-            clearReplyAndEdit()
-          },
-        },
-      )
-      return
-    }
-
-    if (!commentInput.trim()) return
-    createComment(
-      {
-        content: commentInput,
-        parentCommentId: replyingToComment?._id || null,
-      },
-      {
-        onSuccess: () => {
-          resetForm()
-        },
-      },
-    )
-  }
   if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
@@ -345,6 +317,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
           onTouchEnd={!isEditingPostInline ? handlePostTouchEnd : undefined}
           onTouchMove={!isEditingPostInline ? handlePostTouchMove : undefined}
           onTouchCancel={!isEditingPostInline ? handlePostTouchCancel : undefined}
+          ref={postRef}
         >
           <section className="p-4">
             <div className="mb-3 flex items-center gap-2">
@@ -367,18 +340,48 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
             {/* Content — editable inline when editing */}
             {isEditingPostInline ? (
-              <div>
-                <textarea
-                  ref={inlineTextareaRef}
-                  value={inlinePostContent}
-                  onChange={(e) => setInlinePostContent(e.target.value)}
-                  onKeyDown={handleEditKeyDown}
-                  placeholder="Content"
-                  className="w-full resize-none overflow-hidden break-words rounded-lg border border-primary/40 bg-base-200 px-3 py-2 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
-                  disabled={isEditingPost}
-                  // style={{ minHeight: "100px" }}
-                />
+              <div className="flex flex-col">
+                {/* Container for Textarea and Emoji Button */}
+                <div className="relative w-full">
+                  <textarea
+                    ref={inlineTextareaRef}
+                    value={inlinePostContent}
+                    onChange={(e) => setInlinePostContent(e.target.value)}
+                    onKeyDown={handleEditKeyDown}
+                    placeholder="Content"
+                    className="w-full resize-none overflow-hidden break-words rounded-lg border border-primary/40 bg-base-200 py-2 pl-3 pr-10 placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
+                    disabled={isEditingPost}
+                  />
 
+                  {/* Floating Emoji Button */}
+                  <div className="absolute right-2 top-2">
+                    <button
+                      type="button"
+                      onClick={(e) => handleOpenEmojiPickerPopover(e)}
+                      className="text-slate-500 transition-colors hover:text-primary"
+                    >
+                      <PiSmiley size={22} />
+                    </button>
+
+                    {/* Localized Popover */}
+                    {showEmojiPickerPopover && (
+                      <div className="absolute bottom-full right-0 z-50 mb-2">
+                        <div
+                          className="fixed inset-0 z-[-1]"
+                          onClick={handleCloseEmojiPickerPopover}
+                        />
+                        <EmojiPickerPopover
+                          position={popoverPosition}
+                          onClose={handleCloseEmojiPickerPopover}
+                          onEmojiClick={handleInlinePostEmojiClick}
+                          triggerRef={moreEmojisButtonRef} // Optional based on your component needs
+                        />
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Actions */}
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
                   <span>
                     escape to{" "}
@@ -393,7 +396,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     <button
                       type="button"
                       onClick={handleSaveEditPost}
-                      disabled={isEditingComment}
+                      disabled={isEditingPost}
                       className="text-primary hover:underline disabled:opacity-50"
                     >
                       save
@@ -408,14 +411,34 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     {renderClickableText(post.content)}
                   </p>
                 )}
-                {post.image?.imageUrl && (
-                  <Link to={`/images/${post.image._id}`}>
-                    <img
-                      src={post.image.imageUrl}
-                      alt="post"
-                      className="mt-3 max-h-80 w-full rounded-2xl border border-accent object-contain"
-                    />
-                  </Link>
+                {post.images?.length > 0 && (
+                  <div
+                    className={`mt-3 grid gap-1 ${
+                      post.images.length === 1
+                        ? "grid-cols-1"
+                        : post.images.length === 2
+                          ? "grid-cols-2"
+                          : post.images.length === 3
+                            ? "grid-cols-2"
+                            : "grid-cols-2"
+                    }`}
+                  >
+                    {post.images.map((img, i) => (
+                      <Link
+                        key={img._id || i}
+                        to={`/images/${img._id}`}
+                        className={`relative overflow-hidden rounded-md border border-accent ${
+                          post.images.length === 3 && i === 0 ? "col-span-2" : ""
+                        }`}
+                      >
+                        <img
+                          src={img.imageUrl}
+                          alt={`post image ${i + 1}`}
+                          className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-105"
+                        />
+                      </Link>
+                    ))}
+                  </div>
                 )}
                 {post.tags?.length > 0 && (
                   <div className="mt-3 flex flex-wrap gap-1">
@@ -522,6 +545,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     onReact={reactToComment}
                     onDelete={deleteComment}
                     onJumpToComment={handleJumpToComment}
+                    onJumpToPost={handleJumpToPost}
                   />
                 </div>
               ))}
@@ -535,89 +559,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
         </div>
       </div>
       {/* FLOATING INPUT BAR */}
-      {authUser && (
-        <div className="absolute bottom-2 left-0 right-0 px-2 md:bottom-4 md:px-4">
-          <form
-            onSubmit={handleSubmitComment}
-            className="mx-auto max-w-4xl rounded-2xl border border-accent bg-base-100/80 p-3 shadow-2xl backdrop-blur-lg"
-          >
-            {/* Context banner */}
-            {(replyingToComment || replyingToPost || editingComment) && (
-              <div className="mb-2 flex items-center justify-between rounded-lg border border-primary/20 px-3 py-1.5 text-xs text-primary">
-                <span className="truncate font-medium">
-                  {editingComment
-                    ? "Editing your comment"
-                    : replyingToPost
-                      ? `Replying to post by @${post.user?.username}`
-                      : `Replying to @${replyingToComment?.user?.username}`}
-                </span>
-                <button
-                  type="button"
-                  onClick={clearReplyAndEdit}
-                  className="ml-2 rounded-full p-0.5 hover:bg-primary/20"
-                >
-                  <IoClose size={14} />
-                </button>
-              </div>
-            )}
-
-            <div className="flex items-end gap-3">
-              <img
-                src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl, "avatar")}
-                className="mb-1 h-9 w-9 flex-shrink-0 rounded-full border border-accent object-cover"
-                alt="you"
-              />
-
-              {/* min-w-0 is CRITICAL here to allow the flex item to shrink on small screens */}
-              <div className="flex min-w-0 flex-1 items-center rounded-xl border border-transparent bg-base-200 px-3 transition-all focus-within:border-primary/50">
-                <textarea
-                  ref={inlineTextareaRef}
-                  rows={1}
-                  value={editingComment ? editInput : commentInput}
-                  onChange={(e) => {
-                    const val = e.target.value
-                    editingComment ? setEditInput(val) : setCommentInput(val)
-
-                    // Auto-grow height logic
-                    e.target.style.height = "auto"
-                    e.target.style.height = `${e.target.scrollHeight}px`
-                  }}
-                  onKeyDown={(e) => {
-                    // Submit on Enter (but allow Shift+Enter for new lines)
-                    if (e.key === "Enter" && !e.shiftKey && !isMobile) {
-                      e.preventDefault()
-                      handleSubmitComment(e)
-                    }
-                  }}
-                  placeholder={
-                    editingComment
-                      ? "Edit your comment..."
-                      : replyingToPost
-                        ? `Reply to @${post.user?.username}...`
-                        : "Write a comment..."
-                  }
-                  className="max-h-32 w-full resize-none bg-transparent py-2.5 text-sm placeholder-gray-500 focus:outline-none"
-                  disabled={isCreatingComment || isEditingComment}
-                />
-              </div>
-
-              {isMobile && (
-                <button
-                  type="submit"
-                  disabled={
-                    isCreatingComment ||
-                    isEditingComment ||
-                    !(editingComment ? editInput.trim() : commentInput.trim())
-                  }
-                  className="mb-0.5 flex-shrink-0 rounded-full bg-primary p-2.5 text-white transition hover:scale-105 active:scale-95 disabled:opacity-50"
-                >
-                  <MdSend size={18} />
-                </button>
-              )}
-            </div>
-          </form>
-        </div>
-      )}
+      {authUser && <BoardPostInput post={post} floatingInputRef={floatingInputRef} />}
       {/* Emoji picker portal */}
       {showEmojiPickerPopover && (
         <EmojiPickerPopover

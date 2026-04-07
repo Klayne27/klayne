@@ -14,6 +14,8 @@ import { admin } from "../config/firebaseAdmin.js";
 import PushSubscription from "../models/pushSubscription.js";
 import DevlogComment from "../models/devlogComment.model.js";
 import Devlog from "../models/devlog.model.js";
+import BoardPost from "../models/boardPost.model.js";
+import BoardComment from "../models/boardComment.model.js";
 
 export const getUserProfile = async (req, res) => {
   const { username } = req.params;
@@ -482,6 +484,8 @@ export const deleteUserAccount = async (req, res) => {
     await PushSubscription.deleteMany({ userId: userId });
     await Notification.deleteMany({ $or: [{ from: userId }, { to: userId }] });
     await PublicChatMessage.deleteMany({ sender: userId });
+    await BoardPost.deleteMany({ user: userId });
+    await BoardComment.deleteMany({ user: userId });
 
     // --- STEP 6: ARRAY CLEANUP (Likes/Follows) ---
     await Post.updateMany(
@@ -705,6 +709,8 @@ export const adminDeleteUserAccount = async (req, res) => {
     });
     await PublicChatMessage.deleteMany({ sender: userIdToDelete });
     await DevlogComment.deleteMany({ author: userIdToDelete });
+    await BoardPost.deleteMany({ user: userIdToDelete });
+    await BoardComment.deleteMany({ user: userIdToDelete });
 
     // --- STEP F: ARRAY CLEANUP (Likes, Bookmarks, Follows, Blocks) ---
     await Post.updateMany(

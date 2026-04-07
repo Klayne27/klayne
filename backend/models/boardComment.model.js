@@ -29,6 +29,7 @@ const boardCommentSchema = new mongoose.Schema(
       ref: "BoardComment",
       default: null,
     },
+    isReplyToPost: { type: Boolean, default: false },
     isEdited: { type: Boolean, default: false },
     isDeletedByUser: { type: Boolean, default: false },
     isDeletedByAdmin: { type: Boolean, default: false },
