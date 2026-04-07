@@ -12,8 +12,13 @@ import { IoClose } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 import HeroPost from "../features/posts/components/HeroPost"
 import { useSearchUsers } from "../features/users/usersHooks/useUserMutations"
-import { useGetPost, useGetPostThread, useGetReplies } from "../features/posts/postsHooks/usePostsQueries"
+import {
+  useGetPost,
+  useGetPostThread,
+  useGetReplies,
+} from "../features/posts/postsHooks/usePostsQueries"
 import { useCreateReply } from "../features/posts/postsHooks/usePostsMutations"
+import ImagePreviewCloseButton from "../components/common/ImagePreviewCloseButton"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -60,7 +65,6 @@ const PostPage = () => {
     }
   }, [])
 
-
   useEffect(() => {
     const isMainContentReady = !isLoading && !isLoadingThread
 
@@ -77,7 +81,6 @@ const PostPage = () => {
   useEffect(() => {
     adjustTextareaHeight()
   }, [replyInput, adjustTextareaHeight])
-
 
   useEffect(() => {
     const el = observerTarget.current
@@ -405,13 +408,7 @@ const PostPage = () => {
                   Your browser does not support the video tag.
                 </video>
               )}
-              <button
-                type="button"
-                onClick={handleRemoveMedia}
-                className="absolute -right-2 -top-2 rounded-full bg-slate-500 p-1 text-xs text-white hover:bg-slate-600"
-              >
-                <IoClose size={15} />
-              </button>
+              <ImagePreviewCloseButton onClick={handleRemoveMedia} />
             </div>
           )}
         </form>

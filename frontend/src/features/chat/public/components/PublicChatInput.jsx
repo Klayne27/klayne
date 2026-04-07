@@ -11,7 +11,11 @@ import { PiSmiley } from "react-icons/pi"
 import { useEmojiPickerPopover } from "../../../../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../../../../components/common/EmojiPickerPopover"
 import { useChatInput } from "../../../../hooks/customHooks/useChatInput"
-import { useEditPublicMessage, useSendPublicMessage } from "../publicChatHooks/usePublicChatMutations"
+import {
+  useEditPublicMessage,
+  useSendPublicMessage,
+} from "../publicChatHooks/usePublicChatMutations"
+import ImagePreviewCloseButton from "../../../../components/common/ImagePreviewCloseButton"
 
 const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
   const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =
@@ -205,7 +209,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
             <button
               type="button"
               onClick={handleStopRecording}
-              className="rounded-full p-2 hover:bg-primary/70 transition-colors duration-200 text-red-700"
+              className="rounded-full p-2 text-red-700 transition-colors duration-200 hover:bg-primary/70"
             >
               <IoStopCircleOutline className="h-5 w-5" />
             </button>
@@ -256,12 +260,7 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
               alt="Preview"
               className="max-h-[200px] max-w-[200px] rounded-md object-contain"
             />
-            <button
-              onClick={handleRemoveImage}
-              className="absolute -right-2 -top-2 rounded-full bg-gray-500 p-1 text-white transition duration-200 hover:bg-gray-600"
-            >
-              <IoClose size={15} />
-            </button>
+            <ImagePreviewCloseButton onClick={handleRemoveImage} />
           </div>
         </div>
       )}

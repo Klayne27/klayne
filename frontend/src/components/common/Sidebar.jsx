@@ -19,7 +19,11 @@ import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
-import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+import {
+  HiPaintBrush,
+  HiOutlinePaintBrush,
+  HiOutlineEllipsisHorizontalCircle,
+} from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
@@ -32,6 +36,7 @@ import {
   useUpdateStatusPreference,
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -68,6 +73,9 @@ const Sidebar = ({
 
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
+
+  const [showMorePopover, setShowMorePopover] = useState(false)
+  const moreButtonRef = useRef(null)
 
   const lastScrollY = useRef(0)
   const profileButtonRef = useRef(null)
@@ -322,7 +330,10 @@ const Sidebar = ({
   }
 
   const shouldAlwaysHide =
-    pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen
+    pathname.includes("/public-chat") ||
+    pathname.includes("/post/") ||
+    isChatWindowOpen ||
+    pathname.includes("/board/")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -399,7 +410,7 @@ const Sidebar = ({
 
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full p-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
-  const isInMessagesTab = pathname.includes("/messages")
+  const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -410,7 +421,7 @@ const Sidebar = ({
       {
         <div
           className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-1 md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
-            isInMessagesTab
+            shouldCollapseSidebar
               ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center" // Collapsed State
               : "md:max-w-[264px] md:flex-[2_2_0] md:items-start" // Expanded State
           } ${!isMobileBarVisible ? "translate-y-full md:translate-y-0" : ""}`}
@@ -428,7 +439,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 ${isInMessagesTab ? "mr-2" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 ${shouldCollapseSidebar ? "mr-2" : ""} hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -441,12 +452,12 @@ const Sidebar = ({
           </div>
 
           <ul
-            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${isInMessagesTab ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
+            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${shouldCollapseSidebar ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
           >
             {/* HOME */}
             <li
               onClick={handleHomeClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               {/* FIXED WIDTH ICON WRAPPER (This ensures vertical alignment) */}
               <div className={iconWrapperStyle}>
@@ -463,7 +474,7 @@ const Sidebar = ({
                   />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/" ? "font-bold" : ""}`}
                 >
@@ -475,7 +486,7 @@ const Sidebar = ({
             {/* MESSAGES */}
             <li
               onClick={() => pathname !== "/messages" && navigate("/messages")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname.startsWith("/messages") ? (
@@ -492,7 +503,7 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname.startsWith("/messages") ? "font-bold" : ""}`}
                 >
@@ -504,7 +515,7 @@ const Sidebar = ({
             {/* NOTIFICATIONS */}
             <li
               onClick={() => pathname !== "/notifications" && navigate("/notifications")}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/notifications" ? (
@@ -521,7 +532,7 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/notifications" ? "font-bold" : ""}`}
                 >
@@ -533,7 +544,7 @@ const Sidebar = ({
             {/* PUBLIC CHAT */}
             <li
               onClick={handlePublicChatClick}
-              className={`group flex cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`group flex cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/public-chat" ? (
@@ -550,11 +561,31 @@ const Sidebar = ({
                   </div>
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/public-chat" ? "font-bold" : ""}`}
                 >
                   Public Chat
+                </span>
+              )}
+            </li>
+
+            <li
+              onClick={() => navigate("/board")}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                {pathname === "/board" ? (
+                  <PiSquaresFourFill className="size-8" />
+                ) : (
+                  <PiSquaresFourLight className="size-8" />
+                )}
+              </div>
+              {!shouldCollapseSidebar && (
+                <span
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/board" ? "font-bold" : ""}`}
+                >
+                  Board
                 </span>
               )}
             </li>
@@ -572,7 +603,7 @@ const Sidebar = ({
             {/* BOOKMARKS */}
             <li
               onClick={handleBookmarksClick}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === "/bookmarks" ? (
@@ -581,7 +612,7 @@ const Sidebar = ({
                   <IoBookmarkOutline className="size-7" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/bookmarks" ? "font-bold" : ""}`}
                 >
@@ -593,12 +624,12 @@ const Sidebar = ({
             {/* POMODORO */}
             <li
               onClick={() => navigate("/pomodoro")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <IoIosTimer className="size-7" strokeWidth={pathname === "/pomodoro" ? 0.5 : 0} />
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/pomodoro" ? "font-bold" : ""}`}
                 >
@@ -610,58 +641,16 @@ const Sidebar = ({
             {/* TODOS */}
             <li
               onClick={() => navigate("/todos")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 <LuListTodo className="size-7" />
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === "/todos" ? "font-bold" : ""}`}
                 >
                   Todos
-                </span>
-              )}
-            </li>
-
-            {/* THEMES */}
-            <li
-              onClick={() => navigate("/themes")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/themes" ? (
-                  <HiPaintBrush className="size-7" />
-                ) : (
-                  <HiOutlinePaintBrush className="size-7" />
-                )}
-              </div>
-              {!isInMessagesTab && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/themes" ? "font-bold" : ""}`}
-                >
-                  Themes
-                </span>
-              )}
-            </li>
-
-            {/* DEVLOG */}
-            <li
-              onClick={() => navigate("/devlog")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/devlog" ? (
-                  <MdLibraryBooks className="size-7" />
-                ) : (
-                  <MdOutlineLibraryBooks className="size-7" />
-                )}
-              </div>
-              {!isInMessagesTab && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/devlog" ? "font-bold" : ""}`}
-                >
-                  Devlog
                 </span>
               )}
             </li>
@@ -689,7 +678,7 @@ const Sidebar = ({
                 pathname !== `/profile/${authUser?.username}` &&
                 navigate(`/profile/${authUser?.username}`)
               }
-              className={`hidden cursor-pointer items-center justify-center rounded-full ${isInMessagesTab && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
+              className={`hidden cursor-pointer items-center justify-center rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:justify-start md:hover:bg-secondary`}
             >
               <div className={iconWrapperStyle}>
                 {pathname === `/profile/${authUser?.username}` ? (
@@ -698,7 +687,7 @@ const Sidebar = ({
                   <TbUser className="size-8" />
                 )}
               </div>
-              {!isInMessagesTab && (
+              {!shouldCollapseSidebar && (
                 <span
                   className={`ml-2.5 hidden text-lg md:block ${pathname === `/profile/${authUser?.username}` ? "font-bold" : ""}`}
                 >
@@ -707,8 +696,58 @@ const Sidebar = ({
               )}
             </li>
 
+            <li
+              ref={moreButtonRef}
+              onClick={() => setShowMorePopover(!showMorePopover)}
+              className={`relative hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                <HiOutlineEllipsisHorizontalCircle className="size-7" />
+              </div>
+              {!shouldCollapseSidebar && (
+                <span className="ml-2.5 hidden text-lg md:block">More</span>
+              )}
+
+              {/* MORE POPOVER */}
+              {showMorePopover && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60] cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowMorePopover(false)
+                    }}
+                  />
+                  <div className="white-shadow absolute bottom-full left-0 z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/devlog")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <MdOutlineLibraryBooks className="size-6" />
+                      <span>Devlog</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/themes")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <HiOutlinePaintBrush className="size-6" />
+                      <span>Themes</span>
+                    </button>
+                  </div>
+                </>
+              )}
+            </li>
+
             {/* POST BUTTON */}
-            {isInMessagesTab && !isMobile ? (
+            {shouldCollapseSidebar && !isMobile ? (
               <div
                 className={
                   `z-[50] mt-4 size-[50px] cursor-pointer rounded-full bg-primary p-3 text-white hover:bg-opacity-85` // <-- ADD THESE CLASSES
@@ -761,7 +800,7 @@ const Sidebar = ({
                   )}
                 </div>
                 {/* </Link> */}
-                {!isInMessagesTab && (
+                {!shouldCollapseSidebar && (
                   <div className="flex flex-1 items-center justify-between">
                     <div className="flex flex-col">
                       <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>

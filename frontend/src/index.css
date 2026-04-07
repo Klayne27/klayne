@@ -194,6 +194,12 @@ body {
   transform: translateX(12px); 
 }
 
+/* @layer utilities {
+  .perspective-1000 {
+    perspective: 1000px;
+  }
+} */
+
 /* If using a library like react-tooltip with the heatmap */
 /* .react-tooltip {
   background-color: var(--fallback-b2,oklch(var(--b2))) !important;

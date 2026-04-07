@@ -10,7 +10,7 @@ export const useOpenMoreActionsModal = ({ setShowEmojiPickerPopover, isEditable,
 
   const handleOpenMoreActionsModal = useCallback(
     (e) => {
-      if (message.isOptimistic) {
+      if (message?.isOptimistic) {
         showAppToast("Message is still being sent. Please wait")
         return
       }
