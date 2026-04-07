@@ -569,7 +569,7 @@ const Sidebar = ({
                 </span>
               )}
             </li>
-
+{/* 
             <li
               onClick={() => navigate("/board")}
               className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
@@ -588,7 +588,7 @@ const Sidebar = ({
                   Board
                 </span>
               )}
-            </li>
+            </li> */}
 
             {/* SEARCH (Mobile Only) */}
             <li
@@ -812,9 +812,9 @@ const Sidebar = ({
               </button>
 
               {showPopover && (
-                <>
+                <div >
                   <div
-                    className="fixed inset-0 z-10 h-screen w-screen cursor-default bg-transparent"
+                    className="fixed inset-0 z-50 h-screen w-screen cursor-default bg-transparent"
                     onClick={() => setShowPopover(false)}
                   />
                   <div
@@ -932,7 +932,7 @@ const Sidebar = ({
                       Logout @{authUser?.username}
                     </button>
                   </div>
-                </>
+                </div>
               )}
             </div>
           )}
