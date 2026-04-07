@@ -10,7 +10,6 @@ import { useGetBoardComments, useGetBoardPost } from "../boardHooks/boardQueries
 import {
   useDeleteBoardComment,
   useDeleteBoardPost,
-  useEditBoardComment,
   useEditBoardPost,
   useReactToBoardComment,
   useReactToBoardPost,
@@ -49,8 +48,8 @@ const formatDateSeparator = (dateStr) => {
 
 const toMessageShape = (post) => ({
   ...post,
-  sender: post?.user, // useMessagingMetaData reads .sender
-  text: post?.content, // cosmetic alias
+  sender: post?.user,
+  text: post?.content,
   isDeletedByAdmin: post?.isDeletedByAdmin || false,
   isDeletedByUser: post?.isDeletedByUser || false,
 })
@@ -72,11 +71,14 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const inlineTextareaRef = useRef(null)
   const floatingInputRef = useRef(null)
   const postRef = useRef(null)
+  const moreEmojisButtonRef = useRef(null)
+  const addReactionButtonRef = useRef(null)
+  const postMoreEmojisButtonRef = useRef(null)
+  // Separate trigger ref for the inline-edit emoji button
+  const editEmojiButtonRef = useRef(null)
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
-
-  // const [isEditingPostInline, setIsEditingPostInline] = useState(false)
   const [inlinePostContent, setInlinePostContent] = useState("")
 
   const { post, isLoading } = useGetBoardPost(postId)
@@ -87,21 +89,26 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const { isSentByCurrentUser, isEditable, groupedReactions, hasAnyReactions } =
     useMessagingMetaData(messageShape, authUser)
 
-  const moreEmojisButtonRef = useRef(null)
-  const addReactionButtonRef = useRef(null)
   const commentRefs = useRef({})
   const isMobile = useIsMobile()
-  const postMoreEmojisButtonRef = useRef(null)
 
+  // ── Instance 1: reactions emoji picker ───────────────────────────────────────
   const {
-    showEmojiPickerPopover,
-    popoverPosition,
-    handleOpenEmojiPickerPopover,
-    handleCloseEmojiPickerPopover,
-    setShowEmojiPickerPopover,
+    showEmojiPickerPopover: showReactionPicker,
+    popoverPosition: reactionPickerPosition,
+    handleOpenEmojiPickerPopover: handleOpenReactionPicker,
+    handleCloseEmojiPickerPopover: handleCloseReactionPicker,
+    setShowEmojiPickerPopover: setShowReactionPicker,
   } = useEmojiPickerPopover()
 
-  // Replace the existing useMessageModalInteractions call for the post with:
+  // ── Instance 2: inline-edit text insertion picker ─────────────────────────
+  const {
+    showEmojiPickerPopover: showEditPicker,
+    popoverPosition: editPickerPosition,
+    handleOpenEmojiPickerPopover: handleOpenEditPicker,
+    handleCloseEmojiPickerPopover: handleCloseEditPicker,
+  } = useEmojiPickerPopover()
+
   const {
     handleMouseEnter,
     handleMouseLeave,
@@ -110,11 +117,8 @@ const BoardPostDetail = ({ postId, onClose }) => {
     handleTouchMove: handlePostTouchMove,
     handleTouchCancel: handlePostTouchCancel,
     showModal,
-  } = useMessageModalInteractions(
-    post?._id,
-    setActiveCommentModalId,
-    activeCommentModalId,
-    () => openPostSlideMenu(messageShape), // long press opens slide menu for the post
+  } = useMessageModalInteractions(post?._id, setActiveCommentModalId, activeCommentModalId, () =>
+    openPostSlideMenu(messageShape),
   )
 
   const {
@@ -130,7 +134,11 @@ const BoardPostDetail = ({ postId, onClose }) => {
     handleOpenMoreActionsModal,
     setShowMoreActionsModal,
     showMoreActionsModal,
-  } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, post })
+  } = useOpenMoreActionsModal({
+    setShowEmojiPickerPopover: setShowReactionPicker,
+    isEditable,
+    post,
+  })
 
   const { deleteComment } = useDeleteBoardComment(postId)
   const { deleteBoardPost } = useDeleteBoardPost()
@@ -153,9 +161,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
   useEffect(() => {
     if (isEditingPostInline && inlineTextareaRef.current) {
       const el = inlineTextareaRef.current
-
       el.focus()
-
       const length = el.value.length
       el.setSelectionRange(length, length)
     }
@@ -180,40 +186,26 @@ const BoardPostDetail = ({ postId, onClose }) => {
     }
   }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
 
-  const handleInlinePostEmojiClick = (emojiObject) => {
-    setInlinePostContent((prev) => prev + emojiObject.emoji)
-
-    // Refocus and auto-resize
-    setTimeout(() => {
-      if (inlineTextareaRef.current) {
-        inlineTextareaRef.current.focus()
-        inlineTextareaRef.current.style.height = "auto"
-        inlineTextareaRef.current.style.height = `${inlineTextareaRef.current.scrollHeight}px`
-      }
-    }, 0)
-  }
-
   const handleJumpToPost = useCallback(() => {
     const node = postRef.current
     if (!node) return
-
     node.scrollIntoView({ behavior: "smooth", block: "center" })
-
     node.classList.add("bg-primary/10")
     setTimeout(() => node.classList.remove("bg-primary/10"), 1500)
   }, [])
 
   const handleReactionClick = (id, emoji) => {
-    reactToPost({ id: id, emoji })
+    reactToPost({ id, emoji })
   }
 
   const handleCloseMoreActionsModal = () => {
     setShowMoreActionsModal(false)
   }
 
-  const handleEmojiPickerSelect = (emojiData) => {
+  // Reactions picker: posts a reaction emoji
+  const handleReactionEmojiSelect = (emojiData) => {
     reactToPost({ id: post._id, emoji: emojiData.emoji })
-    handleCloseEmojiPickerPopover()
+    handleCloseReactionPicker()
   }
 
   const handleCopyMessage = () => {
@@ -244,6 +236,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
   const handleCancelEditPost = () => {
     setIsEditingPostInline(false)
+    handleCloseEditPicker()
   }
 
   const handleSaveEditPost = () => {
@@ -267,8 +260,33 @@ const BoardPostDetail = ({ postId, onClose }) => {
     }
   }
 
+  // Edit picker: inserts emoji at cursor position in the textarea
+  const handleEditEmojiSelect = useCallback(
+    (emojiData) => {
+      const textarea = inlineTextareaRef.current
+      if (!textarea) return
+
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const before = inlinePostContent.slice(0, start)
+      const after = inlinePostContent.slice(end)
+      const newContent = before + emojiData.emoji + after
+
+      setInlinePostContent(newContent)
+
+      // Restore cursor position right after the inserted emoji
+      requestAnimationFrame(() => {
+        const newCursor = start + emojiData.emoji.length
+        textarea.focus()
+        textarea.setSelectionRange(newCursor, newCursor)
+      })
+
+      handleCloseEditPicker()
+    },
+    [inlinePostContent, handleCloseEditPicker],
+  )
+
   const handleOpenSlideUpReactionsMenu = (e) => {
-    // e.stopPropagation()
     setShowMoreActionsModal(false)
     setShowSlideUpReactionsMenu(true)
     closePostSlideMenu()
@@ -292,7 +310,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
   return (
     <div className="group relative flex h-full min-w-0 flex-col bg-base-100">
-      {" "}
       {/* Scrollable Area */}
       <div className="flex-1 overflow-y-auto pb-24">
         {/* Header */}
@@ -341,7 +358,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
             {/* Content — editable inline when editing */}
             {isEditingPostInline ? (
               <div className="flex flex-col">
-                {/* Container for Textarea and Emoji Button */}
                 <div className="relative w-full">
                   <textarea
                     ref={inlineTextareaRef}
@@ -353,35 +369,19 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     disabled={isEditingPost}
                   />
 
-                  {/* Floating Emoji Button */}
+                  {/* Edit-mode emoji button — uses its own picker instance */}
                   <div className="absolute right-2 top-2">
                     <button
+                      ref={editEmojiButtonRef}
                       type="button"
-                      onClick={(e) => handleOpenEmojiPickerPopover(e)}
+                      onClick={handleOpenEditPicker}
                       className="text-slate-500 transition-colors hover:text-primary"
                     >
                       <PiSmiley size={22} />
                     </button>
-
-                    {/* Localized Popover */}
-                    {showEmojiPickerPopover && (
-                      <div className="absolute bottom-full right-0 z-50 mb-2">
-                        <div
-                          className="fixed inset-0 z-[-1]"
-                          onClick={handleCloseEmojiPickerPopover}
-                        />
-                        <EmojiPickerPopover
-                          position={popoverPosition}
-                          onClose={handleCloseEmojiPickerPopover}
-                          onEmojiClick={handleInlinePostEmojiClick}
-                          triggerRef={moreEmojisButtonRef} // Optional based on your component needs
-                        />
-                      </div>
-                    )}
                   </div>
                 </div>
 
-                {/* Footer Actions */}
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
                   <span>
                     escape to{" "}
@@ -456,7 +456,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
             )}
           </section>
 
-          {/* Hide action bar while editing inline */}
           {!isEditingPostInline && (
             <>
               <MessageActionsModal
@@ -466,7 +465,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                 messageContentStyle={{}}
                 onReactionClick={handleReactionClick}
                 moreEmojisButtonRef={moreEmojisButtonRef}
-                handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+                handleOpenEmojiPickerPopover={handleOpenReactionPicker}
                 onReplyClick={() => setReplyingToPost(true)}
                 onOpenMoreActionsModal={handleOpenMoreActionsModal}
               />
@@ -477,7 +476,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   onCloseMoreActionsModal={handleCloseMoreActionsModal}
                   moreActionsModalPosition={moreActionsModalPosition}
                   onReplyClick={() => setReplyingToPost(true)}
-                  onEditClick={handleOpenEditPost} // ← opens inline edit
+                  onEditClick={handleOpenEditPost}
                   onCopyMessage={handleCopyMessage}
                   onDeleteOwnMessage={handleDeleteOwnMessage}
                   reactToComment={reactToPost}
@@ -491,8 +490,8 @@ const BoardPostDetail = ({ postId, onClose }) => {
             </>
           )}
         </div>
+
         <div className="border-b-8 border-t border-accent">
-          {/* Reactions row */}
           {hasAnyReactions && (
             <div className="p-2">
               <MessageReactions
@@ -501,7 +500,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                 isSentByCurrentUser={false}
                 messageContentStyle={{}}
                 addReactionButtonRef={addReactionButtonRef}
-                handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+                handleOpenEmojiPickerPopover={handleOpenReactionPicker}
                 message={messageShape}
                 onReactionClick={handleReactionClick}
               />
@@ -528,7 +527,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   }}
                   className="transition-colors duration-500"
                 >
-                  {/* Date separator */}
                   {comment.isNewDay && (
                     <div className="relative my-4 flex items-center px-4">
                       <div className="flex-1 border-t border-accent" />
@@ -550,7 +548,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
                 </div>
               ))}
 
-              {/* Auto-load sentinel — replaces the "Load more" button */}
               <div ref={loadMoreRef} className="py-2 text-center">
                 {isFetchingNextPage && <LoadingSpinner size="sm" />}
               </div>
@@ -558,17 +555,29 @@ const BoardPostDetail = ({ postId, onClose }) => {
           )}
         </div>
       </div>
-      {/* FLOATING INPUT BAR */}
+
       {authUser && <BoardPostInput post={post} floatingInputRef={floatingInputRef} />}
-      {/* Emoji picker portal */}
-      {showEmojiPickerPopover && (
+
+      {/* ── Reactions emoji picker (portal) ── */}
+      {showReactionPicker && (
         <EmojiPickerPopover
-          position={popoverPosition}
-          onClose={handleCloseEmojiPickerPopover}
-          onEmojiClick={handleEmojiPickerSelect}
+          position={reactionPickerPosition}
+          onClose={handleCloseReactionPicker}
+          onEmojiClick={handleReactionEmojiSelect}
           triggerRef={moreEmojisButtonRef}
         />
       )}
+
+      {/* ── Inline-edit emoji picker (portal) ── */}
+      {showEditPicker && (
+        <EmojiPickerPopover
+          position={editPickerPosition}
+          onClose={handleCloseEditPicker}
+          onEmojiClick={handleEditEmojiSelect}
+          triggerRef={editEmojiButtonRef}
+        />
+      )}
+
       <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
         <SlideUpMenuContent
           className="flex h-[50vh] w-full flex-col overflow-y-auto"
@@ -580,6 +589,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
           />
         </SlideUpMenuContent>
       </SlideUpMenu>
+
       {showViewReactionsModal && (
         <ViewReactionsModal
           isOpen={showViewReactionsModal}
@@ -587,6 +597,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
           reactions={post.reactions ? post.reactions : []}
         />
       )}
+
       {isMobile && post && (
         <MobileMessageActionsSlideUp
           isOpen={isPostSlideMenuOpen && postForSlideMenu?._id === post._id}
@@ -612,12 +623,8 @@ const BoardPostDetail = ({ postId, onClose }) => {
             deleteBoardPost(post._id)
             closePostSlideMenu()
           }}
-          handleOpenEmojiPickerPopover={handleOpenEmojiPickerPopover}
+          handleOpenEmojiPickerPopover={handleOpenReactionPicker}
           moreEmojisButtonRef={postMoreEmojisButtonRef}
-          // onOpenSlideUpReactionsMenu={(e) => {
-          //   e.stopPropagation()
-          //   closePostSlideMenu()
-          // }}
           onOpenSlideUpReactionsMenu={handleOpenSlideUpReactionsMenu}
           postId={postId}
         />

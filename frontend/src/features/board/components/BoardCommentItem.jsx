@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect, useLayoutEffect } from "react"
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from "react"
 import { Link } from "react-router-dom"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useBoardStore } from "../../../store/useBoardStore"
@@ -18,6 +18,7 @@ import { useEditBoardComment } from "../boardHooks/boardMutations"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
+import { PiSmiley } from "react-icons/pi"
 
 const toMessageShape = (comment) => ({
   ...comment,
@@ -55,6 +56,8 @@ const BoardCommentItem = ({
   const addReactionButtonRef = useRef(null)
   const { editComment, isEditingComment } = useEditBoardComment(boardPostId)
 
+  const editEmojiButtonRef = useRef(null)
+
   useLayoutEffect(() => {
     if (isEditing && editTextareaRef.current) {
       editTextareaRef.current.style.height = "inherit"
@@ -81,6 +84,7 @@ const BoardCommentItem = ({
   const handleCancelEdit = () => {
     setIsEditing(false)
     setEditValue(comment.content)
+    handleCloseEditPicker() // same as BoardPostDetail's handleCancelEditPost
   }
 
   const handleSaveEdit = () => {
@@ -123,6 +127,13 @@ const BoardCommentItem = ({
     showMoreActionsModal,
   } = useOpenMoreActionsModal({ setShowEmojiPickerPopover, isEditable, message: comment })
 
+  const {
+    showEmojiPickerPopover: showEditPicker,
+    popoverPosition: editPickerPosition,
+    handleOpenEmojiPickerPopover: handleOpenEditPicker,
+    handleCloseEmojiPickerPopover: handleCloseEditPicker,
+  } = useEmojiPickerPopover()
+
   // Reusing the same hook as PrivateChatMessageItem
   const {
     handleMouseEnter,
@@ -140,6 +151,31 @@ const BoardCommentItem = ({
   )
 
   const handleReactionClick = (commentId, emoji) => onReact({ commentId, emoji })
+
+  // Add the cursor-aware emoji insert handler
+  const handleEditEmojiSelect = useCallback(
+    (emojiData) => {
+      const textarea = editTextareaRef.current
+      if (!textarea) return
+
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const before = editValue.slice(0, start)
+      const after = editValue.slice(end)
+      const newContent = before + emojiData.emoji + after
+
+      setEditValue(newContent)
+
+      requestAnimationFrame(() => {
+        const newCursor = start + emojiData.emoji.length
+        textarea.focus()
+        textarea.setSelectionRange(newCursor, newCursor)
+      })
+
+      handleCloseEditPicker()
+    },
+    [editValue, handleCloseEditPicker],
+  )
 
   const handleEmojiPickerSelect = (emojiData) => {
     onReact({ commentId: comment._id, emoji: emojiData.emoji })
@@ -181,8 +217,6 @@ const BoardCommentItem = ({
   const handleCloseViewReactionsModal = () => {
     setShowViewReactionsModal(false)
   }
-
-  console.log(comment)
 
   return (
     <div
@@ -226,7 +260,7 @@ const BoardCommentItem = ({
         ) : null /* Regular top-level comment — no indicator */
       }
 
-      <div className="flex min-w-0 items-start gap-2">
+      <div className="flex w-full items-start gap-2">
         <Link to={`/profile/${comment.user?.username}`} className="flex-shrink-0">
           <img
             src={getOptimizedImageUrl(comment.user?.profileImg?.imageUrl, "avatar")}
@@ -234,7 +268,7 @@ const BoardCommentItem = ({
             alt={comment.user?.username}
           />
         </Link>
-        <div className="flex min-w-0 flex-col items-start gap-2">
+        <div className="flex w-full flex-col items-start gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
             <Link
               to={`/profile/${comment.user?.username}`}
@@ -250,20 +284,32 @@ const BoardCommentItem = ({
             )}
           </div>
 
-          {comment.isDeletedByAdmin || comment.isDeletedByUser ? (
-            <p className="mt-0.5 text-sm italic text-slate-600">
-              {comment.isDeletedByAdmin ? "Deleted by admin." : "Message deleted."}
-            </p>
-          ) : isEditing ? (
+          {isEditing ? (
             <div className="mt-1 w-full">
-              <textarea
-                ref={editTextareaRef}
-                value={editValue}
-                onChange={(e) => setEditValue(e.target.value)}
-                onKeyDown={handleEditKeyDown}
-                className="w-full resize-none overflow-hidden break-words rounded-lg border border-primary/40 bg-base-200 px-3 py-2 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
-                disabled={isEditingComment}
-              />
+              {/* relative wrapper — same as BoardPostDetail */}
+              <div className="relative w-full">
+                <textarea
+                  ref={editTextareaRef}
+                  value={editValue}
+                  onChange={(e) => setEditValue(e.target.value)}
+                  onKeyDown={handleEditKeyDown}
+                  className="w-full resize-none overflow-hidden break-words rounded-lg border border-primary/40 bg-base-200 py-2 pl-3 pr-10 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
+                  disabled={isEditingComment}
+                />
+
+                {/* Edit-mode emoji button */}
+                <div className="absolute right-2 top-2">
+                  <button
+                    ref={editEmojiButtonRef}
+                    type="button"
+                    onClick={handleOpenEditPicker}
+                    className="text-slate-500 transition-colors hover:text-primary"
+                  >
+                    <PiSmiley size={22} />
+                  </button>
+                </div>
+              </div>
+
               <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
                 <span>
                   escape to{" "}
@@ -356,6 +402,16 @@ const BoardCommentItem = ({
           onClose={handleCloseEmojiPickerPopover}
           onEmojiClick={handleEmojiPickerSelect}
           triggerRef={moreEmojisButtonRef}
+        />
+      )}
+
+      {/* Edit picker portal — new */}
+      {showEditPicker && (
+        <EmojiPickerPopover
+          position={editPickerPosition}
+          onClose={handleCloseEditPicker}
+          onEmojiClick={handleEditEmojiSelect}
+          triggerRef={editEmojiButtonRef}
         />
       )}
 
