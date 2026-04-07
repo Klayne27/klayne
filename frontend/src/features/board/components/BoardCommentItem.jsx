@@ -270,15 +270,23 @@ const BoardCommentItem = ({
         </Link>
         <div className="flex w-full flex-col items-start gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
-            <Link
-              to={`/profile/${comment.user?.username}`}
-              className="truncate text-sm font-bold hover:underline"
-            >
-              {comment.user?.fullName}
-            </Link>
+            <div className="flex gap-1 items-center">
+              <Link
+                to={`/profile/${comment.user?.username}`}
+                className="truncate text-sm font-bold hover:underline"
+              >
+                {comment.user?.fullName}
+              </Link>
+              {comment.user?.isVerified && (
+                <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+              )}
+              {comment.user?.isGoldVerified && (
+                <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+              )}
             <span className="flex-shrink-0 text-xs text-slate-500">
               · {formatPostDate(comment.createdAt)}
             </span>
+            </div>
             {comment.isEdited && (
               <span className="flex-shrink-0 text-xs italic text-slate-600">(edited)</span>
             )}
@@ -298,16 +306,18 @@ const BoardCommentItem = ({
                 />
 
                 {/* Edit-mode emoji button */}
-                {!isMobile &&  <div className="absolute right-2 top-2">
-                  <button
-                    ref={editEmojiButtonRef}
-                    type="button"
-                    onClick={handleOpenEditPicker}
-                    className="text-slate-500 transition-colors hover:text-primary"
-                  >
-                    <PiSmiley size={22} />
-                  </button>
-                </div>}
+                {!isMobile && (
+                  <div className="absolute right-2 top-2">
+                    <button
+                      ref={editEmojiButtonRef}
+                      type="button"
+                      onClick={handleOpenEditPicker}
+                      className="text-slate-500 transition-colors hover:text-primary"
+                    >
+                      <PiSmiley size={22} />
+                    </button>
+                  </div>
+                )}
               </div>
 
               <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
@@ -406,7 +416,7 @@ const BoardCommentItem = ({
       )}
 
       {/* Edit picker portal — new */}
-      {showEditPicker && !isMobile &&  (
+      {showEditPicker && !isMobile && (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}

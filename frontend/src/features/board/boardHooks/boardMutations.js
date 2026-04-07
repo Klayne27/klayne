@@ -81,7 +81,7 @@ export const useReactToBoardPost = () => {
 
       const previousDetail = queryClient.getQueryData(boardKeys.detail(id))
       const previousLists = queryClient.getQueriesData({ queryKey: boardKeys.list() })
-      
+
       const updatePostLogic = (oldPost) => {
         if (!oldPost || oldPost._id !== id) return oldPost
 
@@ -156,28 +156,98 @@ export const useReactToBoardPost = () => {
 
 export const useCreateBoardComment = (boardPostId) => {
   const queryClient = useQueryClient()
+  const { authUser } = useAuthUser()
+
   const { mutate: createComment, isPending: isCreatingComment } = useMutation({
     mutationFn: (payload) => createBoardCommentApi({ id: boardPostId, ...payload }),
+
+    onMutate: async (payload) => {
+      await queryClient.cancelQueries({ queryKey: boardKeys.comments(boardPostId) })
+      const previous = queryClient.getQueryData(boardKeys.comments(boardPostId))
+
+      const optimisticComment = {
+        _id: `temp-${Date.now()}`,
+        content: payload.content,
+        user: {
+          _id: authUser._id,
+          username: authUser.username,
+          fullName: authUser.fullName,
+          profileImg: authUser.profileImg,
+          isVerified: authUser.isVerified,
+          isGoldVerified: authUser.isGoldVerified,
+        },
+        reactions: [],
+        isEdited: false,
+        createdAt: new Date().toISOString(),
+        _isOptimistic: true,
+      }
+
+      queryClient.setQueryData(boardKeys.comments(boardPostId), (oldData) => {
+        if (!oldData?.pages) return oldData
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page, i) =>
+            i === 0 ? { ...page, comments: [optimisticComment, ...page.comments] } : page,
+          ),
+        }
+      })
+
+      return { previous }
+    },
+
+    onError: (err, _, context) => {
+      queryClient.setQueryData(boardKeys.comments(boardPostId), context.previous)
+      showAppToast(err.message, "error")
+    },
+
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: boardKeys.comments(boardPostId) })
       queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardPostId) })
       queryClient.invalidateQueries({ queryKey: boardKeys.list() })
     },
-    onError: (err) => showAppToast(err.message, "error"),
+
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: boardKeys.comments(boardPostId) })
+    },
   })
+
   return { createComment, isCreatingComment }
 }
 
 export const useDeleteBoardComment = (boardPostId) => {
   const queryClient = useQueryClient()
+
   const { mutate: deleteComment } = useMutation({
     mutationFn: deleteBoardCommentApi,
-    onSuccess: () => {
+
+    onMutate: async (commentId) => {
+      await queryClient.cancelQueries({ queryKey: boardKeys.comments(boardPostId) })
+      const previous = queryClient.getQueryData(boardKeys.comments(boardPostId))
+
+      queryClient.setQueryData(boardKeys.comments(boardPostId), (oldData) => {
+        if (!oldData?.pages) return oldData
+        return {
+          ...oldData,
+          pages: oldData.pages.map((page) => ({
+            ...page,
+            comments: page.comments.filter((c) => c._id !== commentId),
+          })),
+        }
+      })
+
+      return { previous }
+    },
+
+    onError: (err, _, context) => {
+      queryClient.setQueryData(boardKeys.comments(boardPostId), context.previous)
+      showAppToast(err.message, "error")
+    },
+
+    onSettled: () => {
       queryClient.invalidateQueries({ queryKey: boardKeys.comments(boardPostId) })
       queryClient.invalidateQueries({ queryKey: boardKeys.detail(boardPostId) })
     },
-    onError: (err) => showAppToast(err.message, "error"),
   })
+
   return { deleteComment }
 }
 

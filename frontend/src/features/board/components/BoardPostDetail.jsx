@@ -16,7 +16,7 @@ import {
 } from "../boardHooks/boardMutations"
 import LoadingSpinner from "../../../components/common/LoadingSpinner"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
-import { formatPostDate } from "../../../utils/date"
+import { formatFullDateTime } from "../../../utils/date"
 import { renderClickableText } from "../../../utils/textUtils"
 import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMetaData"
 import { useEmojiPickerPopover } from "../../../hooks/customHooks/useEmojiPickerPopover"
@@ -346,12 +346,24 @@ const BoardPostDetail = ({ postId, onClose }) => {
                 />
               </Link>
               <div>
-                <Link to={`/profile/${post.user?.username}`} className="font-bold hover:underline">
-                  {post.user?.fullName}
-                </Link>
-                <p className="text-xs text-slate-500">
-                  @{post.user?.username} · {formatPostDate(post.createdAt)}
-                </p>
+                <div className="flex items-center gap-1">
+                  <Link
+                    to={`/profile/${post.user?.username}`}
+                    className="font-bold hover:underline"
+                  >
+                    {post.user?.fullName}
+                  </Link>
+                  {post.user?.isVerified && (
+                    <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+                  )}
+                  {post.user?.isGoldVerified && (
+                    <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+                  )}
+                  <span className="text-xs text-slate-500">
+                    · {formatFullDateTime(post.createdAt)}
+                  </span>
+                </div>
+                <p className="text-xs text-slate-500">@{post.user?.username}</p>
               </div>
             </div>
 
@@ -370,16 +382,18 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   />
 
                   {/* Edit-mode emoji button — uses its own picker instance */}
-                  {!isMobile && <div className="absolute right-2 top-2">
-                    <button
-                      ref={editEmojiButtonRef}
-                      type="button"
-                      onClick={handleOpenEditPicker}
-                      className="text-slate-500 transition-colors hover:text-primary"
-                    >
-                      <PiSmiley size={22} />
-                    </button>
-                  </div>}
+                  {!isMobile && (
+                    <div className="absolute right-2 top-2">
+                      <button
+                        ref={editEmojiButtonRef}
+                        type="button"
+                        onClick={handleOpenEditPicker}
+                        className="text-slate-500 transition-colors hover:text-primary"
+                      >
+                        <PiSmiley size={22} />
+                      </button>
+                    </div>
+                  )}
                 </div>
 
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">

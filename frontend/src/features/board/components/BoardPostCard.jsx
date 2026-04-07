@@ -64,7 +64,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
   }
 
   return (
-    <div className="w-full perspective-1000">
+    <div className="z-0 w-full perspective-1000">
       <div
         ref={cardRef}
         onClick={onClick}
@@ -72,13 +72,15 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
         onMouseLeave={handleMouseLeave}
         style={{
           transform: `rotateX(${rotate.x}deg) rotateY(${rotate.y}deg)`,
-          // Merge the tilt reset transition with a general transition for background/shadow
+          // Add this to ensure the transform doesn't break out of the container
+          transformStyle: "preserve-3d",
           transition:
             rotate.x === 0
               ? "transform 0.5s ease, background-color 0.2s ease, box-shadow 0.2s ease"
               : "background-color 0.2s ease, box-shadow 0.2s ease",
         }}
-        className={`relative flex aspect-square cursor-pointer flex-col rounded-xl border border-accent p-4 shadow-sm hover:bg-secondary/20 hover:shadow-xl ${
+        // Ensure relative and z-0 are here
+        className={`relative z-0 flex aspect-square cursor-pointer flex-col rounded-xl border border-accent p-4 shadow-sm hover:bg-secondary/20 hover:shadow-xl ${
           isSelected ? "border-primary bg-primary/5" : "bg-base-200/50"
         }`}
       >
@@ -90,7 +92,15 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
             className="h-7 w-7 flex-shrink-0 rounded-full object-cover"
           />
           <div className="min-w-0 flex-1">
-            <p className="text-md truncate font-bold leading-none">{post.user?.fullName}</p>
+            <div className="flex items-center gap-1">
+              <p className="text-md truncate font-bold leading-none">{post.user?.fullName}</p>
+              {post.user?.isVerified && (
+                <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+              )}
+              {post.user?.isGoldVerified && (
+                <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+              )}
+            </div>
             <p className="truncate text-xs text-slate-500">@{post.user?.username}</p>
           </div>
           <span className="text-base-500 hidden text-xs font-normal opacity-60 sm:block">
