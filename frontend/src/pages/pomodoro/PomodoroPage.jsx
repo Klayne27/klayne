@@ -81,13 +81,14 @@ const PomodoroPage = () => {
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
   const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
 
-  const rafRef = useRef(null)
   const startTimestampRef = useRef(0)
   const durationAtStartRef = useRef(0)
   const handleSessionEndRef = useRef(() => {})
   const alarmAudioRef = useRef(null)
   const isEndingSessionRef = useRef(false)
   const breakEndAudioRef = useRef(null)
+  const workerRef = useRef(null)
+  const audioUnlockedRef = useRef(false)
 
   useEffect(() => {
     if (!alarmAudioRef.current) {
@@ -112,6 +113,9 @@ const PomodoroPage = () => {
     if (settings && !settings.isMuted && alarmAudioRef.current) {
       alarmAudioRef.current.currentTime = 0
       alarmAudioRef.current.play().catch((e) => console.error("Audio playback failed:", e))
+    }
+    if (Notification.permission === "granted") {
+      new Notification("Pomodoro", { body: "Session complete! Time for a break." })
     }
   }, [settings])
 
@@ -297,30 +301,43 @@ const PomodoroPage = () => {
     selectedTaskId,
   ])
 
-  const startAnimation = useCallback(() => {
-    const tick = () => {
-      const elapsedSec = (Date.now() - startTimestampRef.current) / 1000
-      const remaining = durationAtStartRef.current - elapsedSec
+  useEffect(() => {
+    workerRef.current = new Worker("/timerWorker.js")
+
+    workerRef.current.onmessage = (e) => {
+      if (e.data.type !== "TICK") return
+
+      const startTime = startTimestampRef.current
+      const duration = durationAtStartRef.current
+      if (!startTime || !duration) return
+
+      const elapsed = (Date.now() - startTime) / 1000
+      const remaining = duration - elapsed
+
       if (remaining <= 0) {
         setTimer(0)
+        workerRef.current.postMessage({ type: "STOP" })
         handleSessionEndRef.current()
-        return
+      } else {
+        setTimer(remaining)
       }
-      setTimer(remaining)
-      rafRef.current = requestAnimationFrame(tick)
     }
-    cancelAnimationFrame(rafRef.current)
-    rafRef.current = requestAnimationFrame(tick)
+
+    return () => {
+      workerRef.current.postMessage({ type: "STOP" })
+      workerRef.current.terminate()
+    }
   }, [])
 
   useEffect(() => {
+    if (!workerRef.current) return
+
     if (isActive && !isGoalReached) {
-      startAnimation()
+      workerRef.current.postMessage({ type: "START" })
     } else {
-      cancelAnimationFrame(rafRef.current)
+      workerRef.current.postMessage({ type: "STOP" })
     }
-    return () => cancelAnimationFrame(rafRef.current)
-  }, [isActive, isGoalReached, startAnimation])
+  }, [isActive, isGoalReached])
 
   useEffect(() => {
     handleSessionEndRef.current = handleSessionEnd
@@ -367,38 +384,6 @@ const PomodoroPage = () => {
   }, [isSettingsLoading, settings])
 
   useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (document.hidden) return
-      if (localStorage.getItem(GOAL_REACHED_KEY) === "true") {
-        setIsActive(false)
-        setTimer(0)
-        setIsGoalReached(true)
-        return
-      }
-      if (localStorage.getItem(ACTIVE_KEY) === "true") {
-        const startTime = parseInt(localStorage.getItem(START_TIMESTAMP_KEY), 10)
-        const durationAtStart = parseInt(localStorage.getItem(DURATION_AT_START_KEY), 10)
-        if (startTime && durationAtStart) {
-          const elapsedTime = (Date.now() - startTime) / 1000
-          const newTimer = durationAtStart - elapsedTime
-          if (newTimer <= 0) {
-            setTimer(0)
-            setIsActive(false)
-            handleSessionEndRef.current()
-          } else {
-            setTimer(newTimer)
-            setIsActive(true)
-            startTimestampRef.current = startTime
-            durationAtStartRef.current = durationAtStart
-          }
-        }
-      }
-    }
-    document.addEventListener("visibilitychange", handleVisibilityChange)
-    return () => document.removeEventListener("visibilitychange", handleVisibilityChange)
-  }, [])
-
-  useEffect(() => {
     if (selectedTaskId) {
       localStorage.setItem(SELECTED_TASK_KEY, selectedTaskId)
     } else {
@@ -406,7 +391,26 @@ const PomodoroPage = () => {
     }
   }, [selectedTaskId])
 
+  const unlockAudio = useCallback(() => {
+    if (audioUnlockedRef.current) return
+    // Play and immediately pause to satisfy browser autoplay policy
+    if (alarmAudioRef.current) {
+      alarmAudioRef.current
+        .play()
+        .then(() => {
+          alarmAudioRef.current.pause()
+          alarmAudioRef.current.currentTime = 0
+          audioUnlockedRef.current = true
+        })
+        .catch(() => {})
+    }
+  }, [])
+
   const handleStart = async () => {
+    unlockAudio()
+    if (Notification.permission === "default") {
+      Notification.requestPermission()
+    }
 
     if (isActive || !settings || timer <= 0 || isGoalReached) return
     const now = Date.now()
