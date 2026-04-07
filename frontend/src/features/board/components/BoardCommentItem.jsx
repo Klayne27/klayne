@@ -270,7 +270,7 @@ const BoardCommentItem = ({
         </Link>
         <div className="flex w-full flex-col items-start gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
-            <div className="flex gap-1 items-center">
+            <div className="flex items-center gap-1">
               <Link
                 to={`/profile/${comment.user?.username}`}
                 className="truncate text-sm font-bold hover:underline"
@@ -283,9 +283,9 @@ const BoardCommentItem = ({
               {comment.user?.isGoldVerified && (
                 <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
               )}
-            <span className="flex-shrink-0 text-xs text-slate-500">
-              · {formatPostDate(comment.createdAt)}
-            </span>
+              <span className="flex-shrink-0 text-xs text-slate-500">
+                · {formatPostDate(comment.createdAt)}
+              </span>
             </div>
             {comment.isEdited && (
               <span className="flex-shrink-0 text-xs italic text-slate-600">(edited)</span>
@@ -348,11 +348,13 @@ const BoardCommentItem = ({
                 {comment.content}
               </p>
               {comment.image?.imageUrl && (
-                <img
-                  src={comment.image.imageUrl}
-                  className="mt-2 max-h-48 rounded-xl border border-accent object-contain"
-                  alt="comment"
-                />
+                <Link to={`/images/${comment.image?._id}`}>
+                  <img
+                    src={getOptimizedImageUrl(comment.image.imageUrl, "post")}
+                    className="mt-2 max-h-48 rounded-xl border border-accent object-contain"
+                    alt="comment"
+                  />
+                </Link>
               )}
             </>
           )}

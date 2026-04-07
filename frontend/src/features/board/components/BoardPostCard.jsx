@@ -127,7 +127,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
                   }`}
                 >
                   <img
-                    src={img.imageUrl}
+                    src={getOptimizedImageUrl(img.imageUrl, "post")}
                     className="h-full w-full object-cover"
                     alt={`post image ${i + 1}`}
                   />

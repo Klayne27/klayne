@@ -446,7 +446,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                         }`}
                       >
                         <img
-                          src={img.imageUrl}
+                          src={getOptimizedImageUrl(img.imageUrl, "post")}
                           alt={`post image ${i + 1}`}
                           className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-105"
                         />
