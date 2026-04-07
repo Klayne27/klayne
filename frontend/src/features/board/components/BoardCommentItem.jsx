@@ -408,7 +408,7 @@ const BoardCommentItem = ({
         />
       )}
 
-      {showEmojiPickerPopover && !isMobile && (
+      {showEmojiPickerPopover  && (
         <EmojiPickerPopover
           position={popoverPosition}
           onClose={handleCloseEmojiPickerPopover}
@@ -418,7 +418,7 @@ const BoardCommentItem = ({
       )}
 
       {/* Edit picker portal — new */}
-      {showEditPicker && !isMobile && (
+      {showEditPicker  && (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}

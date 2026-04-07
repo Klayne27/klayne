@@ -573,7 +573,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       {authUser && <BoardPostInput post={post} floatingInputRef={floatingInputRef} />}
 
       {/* ── Reactions emoji picker (portal) ── */}
-      {showReactionPicker && !isMobile && (
+      {showReactionPicker &&  (
         <EmojiPickerPopover
           position={reactionPickerPosition}
           onClose={handleCloseReactionPicker}
@@ -583,7 +583,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       )}
 
       {/* ── Inline-edit emoji picker (portal) ── */}
-      {showEditPicker && !isMobile && (
+      {showEditPicker &&  (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}
