@@ -14,6 +14,7 @@ import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
+import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 
 function MobileSideModal({
   showSideModal,
@@ -217,6 +218,25 @@ function MobileSideModal({
               </li>
               <li
                 onClick={() => {
+                  if (pathname === "/board") return
+                  navigate("/board")
+                  setShowSideModal(false)
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-board"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                {pathname === "/board" ? (
+                  <PiSquaresFourFill className="mr-4 size-7" />
+                ) : (
+                  <PiSquaresFourLight className="mr-4 size-7" />
+                )}{" "}
+                <span className={`text-xl ${pathname === "/board" ? "font-bold" : ""}`}>Board</span>
+              </li>
+              <li
+                onClick={() => {
                   if (pathname === "/bookmarks") return
                   navigate("/bookmarks")
                   setShowSideModal(false)
@@ -314,27 +334,6 @@ function MobileSideModal({
                 )}{" "}
                 <span className={`text-xl ${pathname === "/devlog" ? "font-bold" : ""}`}>
                   Devlog
-                </span>
-              </li>
-              <li
-                onClick={() => {
-                  if (pathname === "/board") return
-                  navigate("/board")
-                  setShowSideModal(false)
-                }}
-                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
-                  isTouchDevice && activeButtonId === "modal-board"
-                    ? "bg-secondary bg-opacity-50 transition duration-150"
-                    : "transition duration-150"
-                }`}
-              >
-                {pathname === "/board" ? (
-                  <MdLibraryBooks className="mr-4 size-7" />
-                ) : (
-                  <MdOutlineLibraryBooks className="mr-4 size-7" />
-                )}{" "}
-                <span className={`text-xl ${pathname === "/board" ? "font-bold" : ""}`}>
-                  Board
                 </span>
               </li>
 

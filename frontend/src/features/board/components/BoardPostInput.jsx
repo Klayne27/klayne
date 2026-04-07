@@ -208,7 +208,7 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
               }}
               onPaste={handlePaste}
               placeholder={"Write a comment..."}
-              className="max-h-32 w-full resize-none bg-transparent py-2.5 text-sm placeholder-gray-500 focus:outline-none"
+              className=" w-full resize-none bg-transparent py-2.5 text-sm placeholder-gray-500 focus:outline-none"
               disabled={isCreatingComment}
             />
           </div>
