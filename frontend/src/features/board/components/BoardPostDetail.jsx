@@ -370,7 +370,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   />
 
                   {/* Edit-mode emoji button — uses its own picker instance */}
-                  <div className="absolute right-2 top-2">
+                  {!isMobile && <div className="absolute right-2 top-2">
                     <button
                       ref={editEmojiButtonRef}
                       type="button"
@@ -379,7 +379,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     >
                       <PiSmiley size={22} />
                     </button>
-                  </div>
+                  </div>}
                 </div>
 
                 <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
@@ -559,7 +559,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       {authUser && <BoardPostInput post={post} floatingInputRef={floatingInputRef} />}
 
       {/* ── Reactions emoji picker (portal) ── */}
-      {showReactionPicker && (
+      {showReactionPicker && !isMobile && (
         <EmojiPickerPopover
           position={reactionPickerPosition}
           onClose={handleCloseReactionPicker}
@@ -569,7 +569,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       )}
 
       {/* ── Inline-edit emoji picker (portal) ── */}
-      {showEditPicker && (
+      {showEditPicker && !isMobile && (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}

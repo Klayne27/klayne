@@ -169,7 +169,7 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
             >
               <IoImageOutline className="h-5 w-5" />
             </button>
-            <button
+            {!isMobile && <button
               type="button"
               onClick={(e) => handleOpenEmojiPickerPopover(e)}
               className="mb-1 rounded-full p-2 text-primary hover:bg-primary/10"
@@ -191,7 +191,7 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
                   </div>
                 </>
               )}
-            </button>
+            </button>}
           </div>
 
           <div className="flex min-w-0 flex-1 items-center rounded-xl border border-transparent bg-base-200 px-3 transition-all focus-within:border-primary/50">

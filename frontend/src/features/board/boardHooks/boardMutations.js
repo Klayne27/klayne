@@ -81,7 +81,7 @@ export const useReactToBoardPost = () => {
 
       const previousDetail = queryClient.getQueryData(boardKeys.detail(id))
       const previousLists = queryClient.getQueriesData({ queryKey: boardKeys.list() })
-      // Helper to update the post object (used for both Detail and List caches)
+      
       const updatePostLogic = (oldPost) => {
         if (!oldPost || oldPost._id !== id) return oldPost
 

@@ -298,7 +298,7 @@ const BoardCommentItem = ({
                 />
 
                 {/* Edit-mode emoji button */}
-                <div className="absolute right-2 top-2">
+                {!isMobile &&  <div className="absolute right-2 top-2">
                   <button
                     ref={editEmojiButtonRef}
                     type="button"
@@ -307,7 +307,7 @@ const BoardCommentItem = ({
                   >
                     <PiSmiley size={22} />
                   </button>
-                </div>
+                </div>}
               </div>
 
               <div className="mt-1.5 flex items-center gap-2 text-xs text-slate-400">
@@ -396,7 +396,7 @@ const BoardCommentItem = ({
         />
       )}
 
-      {showEmojiPickerPopover && (
+      {showEmojiPickerPopover && !isMobile && (
         <EmojiPickerPopover
           position={popoverPosition}
           onClose={handleCloseEmojiPickerPopover}
@@ -406,7 +406,7 @@ const BoardCommentItem = ({
       )}
 
       {/* Edit picker portal — new */}
-      {showEditPicker && (
+      {showEditPicker && !isMobile &&  (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}

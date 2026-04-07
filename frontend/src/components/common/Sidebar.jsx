@@ -19,7 +19,11 @@ import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
-import { HiPaintBrush, HiOutlinePaintBrush } from "react-icons/hi2"
+import {
+  HiPaintBrush,
+  HiOutlinePaintBrush,
+  HiOutlineEllipsisHorizontalCircle,
+} from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
@@ -32,6 +36,7 @@ import {
   useUpdateStatusPreference,
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
+import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -68,6 +73,9 @@ const Sidebar = ({
 
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
+
+  const [showMorePopover, setShowMorePopover] = useState(false)
+  const moreButtonRef = useRef(null)
 
   const lastScrollY = useRef(0)
   const profileButtonRef = useRef(null)
@@ -322,7 +330,10 @@ const Sidebar = ({
   }
 
   const shouldAlwaysHide =
-    pathname.includes("/public-chat") || pathname.includes("/post/") || isChatWindowOpen || pathname.includes("/board/")
+    pathname.includes("/public-chat") ||
+    pathname.includes("/post/") ||
+    isChatWindowOpen ||
+    pathname.includes("/board/")
 
   useEffect(() => {
     const handleScroll = () => {
@@ -559,6 +570,26 @@ const Sidebar = ({
               )}
             </li>
 
+            <li
+              onClick={() => navigate("/board")}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                {pathname === "/board" ? (
+                  <PiSquaresFourFill className="size-8" />
+                ) : (
+                  <PiSquaresFourLight className="size-8" />
+                )}
+              </div>
+              {!shouldCollapseSidebar && (
+                <span
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/board" ? "font-bold" : ""}`}
+                >
+                  Board
+                </span>
+              )}
+            </li>
+
             {/* SEARCH (Mobile Only) */}
             <li
               onClick={handleMobileSearchClick}
@@ -624,67 +655,6 @@ const Sidebar = ({
               )}
             </li>
 
-            {/* THEMES */}
-            <li
-              onClick={() => navigate("/themes")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/themes" ? (
-                  <HiPaintBrush className="size-7" />
-                ) : (
-                  <HiOutlinePaintBrush className="size-7" />
-                )}
-              </div>
-              {!shouldCollapseSidebar && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/themes" ? "font-bold" : ""}`}
-                >
-                  Themes
-                </span>
-              )}
-            </li>
-
-            {/* DEVLOG */}
-            <li
-              onClick={() => navigate("/devlog")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/devlog" ? (
-                  <MdLibraryBooks className="size-7" />
-                ) : (
-                  <MdOutlineLibraryBooks className="size-7" />
-                )}
-              </div>
-              {!shouldCollapseSidebar && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/devlog" ? "font-bold" : ""}`}
-                >
-                  Devlog
-                </span>
-              )}
-            </li>
-            <li
-              onClick={() => navigate("/board")}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                {pathname === "/board" ? (
-                  <MdLibraryBooks className="size-7" />
-                ) : (
-                  <MdOutlineLibraryBooks className="size-7" />
-                )}
-              </div>
-              {!shouldCollapseSidebar && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/board" ? "font-bold" : ""}`}
-                >
-                  Board
-                </span>
-              )}
-            </li>
-
             {/* MOBILE PROFILE */}
             <li className="flex cursor-pointer items-center justify-center p-1 md:hidden">
               <button
@@ -723,6 +693,56 @@ const Sidebar = ({
                 >
                   Profile
                 </span>
+              )}
+            </li>
+
+            <li
+              ref={moreButtonRef}
+              onClick={() => setShowMorePopover(!showMorePopover)}
+              className={`relative hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                <HiOutlineEllipsisHorizontalCircle className="size-7" />
+              </div>
+              {!shouldCollapseSidebar && (
+                <span className="ml-2.5 hidden text-lg md:block">More</span>
+              )}
+
+              {/* MORE POPOVER */}
+              {showMorePopover && (
+                <>
+                  <div
+                    className="fixed inset-0 z-[60] cursor-default"
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setShowMorePopover(false)
+                    }}
+                  />
+                  <div className="white-shadow absolute bottom-full left-0 z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl">
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/devlog")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <MdOutlineLibraryBooks className="size-6" />
+                      <span>Devlog</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        navigate("/themes")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <HiOutlinePaintBrush className="size-6" />
+                      <span>Themes</span>
+                    </button>
+                  </div>
+                </>
               )}
             </li>
 
