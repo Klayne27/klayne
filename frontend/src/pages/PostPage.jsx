@@ -19,6 +19,9 @@ import {
 } from "../features/posts/postsHooks/usePostsQueries"
 import { useCreateReply } from "../features/posts/postsHooks/usePostsMutations"
 import ImagePreviewCloseButton from "../components/common/ImagePreviewCloseButton"
+import { useEmojiPickerPopover } from "../hooks/customHooks/useEmojiPickerPopover"
+import EmojiPickerPopover from "../components/common/EmojiPickerPopover"
+import { PiSmiley } from "react-icons/pi"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -32,6 +35,7 @@ const PostPage = () => {
   const replyInputRef = useRef(null)
   const observerTarget = useRef(null)
   const heroRef = useRef(null)
+  const emojiButtonRef = useRef(null)
 
   const [showButton, setShowButton] = useState(false)
   const [mentionSearchTerm, setMentionSearchTerm] = useState("")
@@ -54,6 +58,37 @@ const PostPage = () => {
   } = useGetReplies(pid)
 
   const { createReply, isCreatingReply } = useCreateReply(pid)
+
+  const {
+    showEmojiPickerPopover,
+    popoverPosition,
+    handleOpenEmojiPickerPopover,
+    handleCloseEmojiPickerPopover,
+  } = useEmojiPickerPopover()
+
+  const handleEmojiSelect = useCallback(
+    (emojiData) => {
+      const textarea = replyInputRef.current
+      if (!textarea) return
+
+      const start = textarea.selectionStart
+      const end = textarea.selectionEnd
+      const before = replyInput.slice(0, start)
+      const after = replyInput.slice(end)
+      const newText = before + emojiData.emoji + after
+
+      setReplyInput(newText)
+
+      requestAnimationFrame(() => {
+        const newCursor = start + emojiData.emoji.length
+        textarea.focus()
+        textarea.setSelectionRange(newCursor, newCursor)
+      })
+
+      handleCloseEmojiPickerPopover()
+    },
+    [replyInput, handleCloseEmojiPickerPopover],
+  )
 
   const displayPost = post?.repostedFrom || post
 
@@ -335,13 +370,23 @@ const PostPage = () => {
                     ref={replyFileInputRef}
                     onChange={handleMediaChange}
                   />
-                  <button
-                    type="button"
-                    onClick={() => replyFileInputRef.current.click()}
-                    className="ml-[9px] flex-shrink-0 rounded-full text-primary transition duration-200 hover:text-primary/80"
-                  >
-                    <BiImageAdd size={24} />
-                  </button>
+                  <div className="flex items-center gap-1">
+                    <button
+                      type="button"
+                      onClick={() => replyFileInputRef.current.click()}
+                      className="ml-[9px] flex-shrink-0 rounded-full text-primary transition duration-200 hover:text-primary/80"
+                    >
+                      <BiImageAdd size={24} />
+                    </button>
+                    <button
+                      ref={emojiButtonRef}
+                      type="button"
+                      onClick={handleOpenEmojiPickerPopover}
+                      className="flex-shrink-0 rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
+                    >
+                      <PiSmiley size={22} />
+                    </button>
+                  </div>
                   <button
                     type="submit"
                     className="md:text-md block flex-shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
@@ -414,7 +459,7 @@ const PostPage = () => {
         </form>
       )}
 
-      <div className="flex flex-col min-w-0">
+      <div className="flex min-w-0 flex-col">
         {isLoadingReplies ? (
           <div className="flex h-full flex-col items-center gap-4 p-2 md:gap-14 md:p-4">
             <LoadingSpinner size="md" />
@@ -426,7 +471,7 @@ const PostPage = () => {
                 <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
 
                 {reply.firstChildReply && (
-                  <Post post={reply.firstChildReply} hasLineAbove={true} index={1}  />
+                  <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />
                 )}
               </div>
             ))}
@@ -449,6 +494,14 @@ const PostPage = () => {
           </p>
         )}
       </div>
+      {showEmojiPickerPopover && (
+        <EmojiPickerPopover
+          position={popoverPosition}
+          onClose={handleCloseEmojiPickerPopover}
+          onEmojiClick={handleEmojiSelect}
+          triggerRef={emojiButtonRef}
+        />
+      )}
     </div>
   )
 }
