@@ -498,7 +498,7 @@ const Sidebar = ({
                 )}
                 {unreadMessageCount > 0 && (
                   <div
-                    className="absolute right-1 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadMessageCount)}
@@ -527,7 +527,7 @@ const Sidebar = ({
                 )}
                 {unreadNotificationsCount > 0 && (
                   <div
-                    className="absolute right-1 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadNotificationsCount)}
@@ -556,7 +556,7 @@ const Sidebar = ({
                 )}
                 {unreadPublicChatCount > 0 && (
                   <div
-                    className="absolute right-1 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadPublicChatCount)}
@@ -584,7 +584,7 @@ const Sidebar = ({
                 )}
                 {showNewBoardPostsButton && newBoardPostCount > 0 && (
                   <div
-                    className="absolute right-1 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(newBoardPostCount)}
