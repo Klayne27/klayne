@@ -28,8 +28,16 @@ export const signup = async (req, res) => {
       return res.status(400).json({ error: "Handle cannot be empty." });
     }
 
+    if (username.length > 50) {
+      return res.status(400).json({ error: "Handle can only be 50 characters long" });
+    }
+
     if (fullName.length === 0) {
       return res.status(400).json({ error: "Username cannot be empty." });
+    }
+
+    if (fullName.length > 50) {
+      return res.status(400).json({ error: "Username can only be 50 characters long." });
     }
 
     const existingUser = await User.findOne({ username });

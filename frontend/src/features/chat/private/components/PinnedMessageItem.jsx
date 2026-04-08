@@ -38,7 +38,7 @@ const PinnedMessageItem = ({
       />
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center gap-2">
-          <p className="font-semibold text-white">
+          <p className="font-semibold text-white truncate">
             {message.sender?.fullName || message.sender?.username}
           </p>
           <span className="text-xs text-slate-400">

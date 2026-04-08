@@ -23,7 +23,12 @@ import { getDisplayUsername } from "../../../utils/truncateText.js"
 import { useIsMobile } from "../../../hooks/customHooks/useIsMobile.js"
 import { useBlockUnblockUser, useFollow } from "../../users/usersHooks/useUserMutations.js"
 import { useGetPostHistory } from "../postsHooks/usePostsQueries.js"
-import { useDeletePosts, useLikePost, useRepostPost, useToggleBookmarks } from "../postsHooks/usePostsMutations.js"
+import {
+  useDeletePosts,
+  useLikePost,
+  useRepostPost,
+  useToggleBookmarks,
+} from "../postsHooks/usePostsMutations.js"
 
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
@@ -168,7 +173,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
       )}
 
       {/* ── Author row: larger avatar + stacked name/username ── */}
-      <div className="flex items-center gap-2">
+      <div className="flex min-w-0 items-center gap-2">
         <div className="flex flex-col items-center self-stretch">
           {hasLineAbove && <div className="mb-1 h-3 w-0.5 bg-gray-600/50" />}
 
@@ -200,7 +205,9 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
         <div className={`flex min-w-0 flex-1 flex-col ${hasLineAbove && "mt-3"}`}>
           {post.isAnonymous ? (
             <div className="flex items-center gap-1 truncate font-bold">
-              {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
+              <span className="min-w-0 truncate">
+                {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
+              </span>
 
               {post.isAnonymous && originalPostOwner ? (
                 <span></span>
@@ -228,7 +235,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="flex items-center gap-1 font-bold hover:underline"
+              className="flex min-w-0 items-center gap-1 truncate font-bold hover:underline"
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
@@ -255,7 +262,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             ) : (
               <Link
                 to={`/profile/${originalPostOwner.username}`}
-                className="text-sm text-slate-500 hover:underline"
+                className="min-w-0 truncate text-sm text-slate-500 hover:underline"
               >
                 @{originalPostOwner.username}
               </Link>

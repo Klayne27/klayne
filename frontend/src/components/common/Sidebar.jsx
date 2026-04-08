@@ -411,7 +411,7 @@ const Sidebar = ({
   }
 
   const iconWrapperStyle =
-    "relative flex w-12 items-center justify-center rounded-full p-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
+    "relative flex w-12 items-center justify-center rounded-full pl-1 py-2 pr-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
   const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
 
   if (!shouldRenderMobileSidebar) {
@@ -441,7 +441,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-2 ${shouldCollapseSidebar ? "mr-2" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-2" : ""} hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -454,7 +454,7 @@ const Sidebar = ({
           </div>
 
           <ul
-            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${shouldCollapseSidebar ? "md:mt-5 lg:gap-3" : "md:mt-4 lg:gap-1"}`}
+            className={`mt-0 flex w-full flex-row justify-around md:flex-col md:justify-start md:gap-1 ${shouldCollapseSidebar ? "md:mt-3 lg:gap-3" : "md:mt-2 lg:gap-1"}`}
           >
             {/* HOME */}
             <li
@@ -780,11 +780,11 @@ const Sidebar = ({
 
           {/* User Profile and Popover (Desktop only) */}
           {authUser && (
-            <div className="relative mb-3 mt-auto hidden w-full justify-start md:flex">
+            <div className="relative mb-3 mt-auto hidden items-center w-full justify-start md:flex">
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`mr-2 flex w-full gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={`mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-150"
                     : "transition duration-150"
@@ -793,14 +793,15 @@ const Sidebar = ({
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
               >
-                {/* <Link to={`/profile/${authUser.username}`}> */}
-                <div className={`avatar relative flex justify-center`}>
-                  <div className="w-10 items-start rounded-full">
+                {/* Avatar: Removed justify-center */}
+                <div className="avatar relative flex shrink-0">
+                  <div className="w-10 rounded-full">
                     <img
                       src={getOptimizedImageUrl(
                         authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
                         "avatar",
                       )}
+                      alt="profile"
                     />
                   </div>
                   {isOnline ? (
@@ -809,14 +810,19 @@ const Sidebar = ({
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
                   )}
                 </div>
-                {/* </Link> */}
+
                 {!shouldCollapseSidebar && (
-                  <div className="flex flex-1 items-center justify-between">
-                    <div className="flex flex-col">
-                      <p className="self-start truncate text-sm font-bold">{authUser?.fullName}</p>
-                      <p className="self-start text-sm text-slate-500">@{authUser?.username}</p>
+                  <div className="flex min-w-0 flex-1 items-center justify-between">
+                    {/* Changed items-center to items-start to align text to the left */}
+                    <div className="flex min-w-0 flex-col items-start overflow-hidden">
+                      <p className="w-full truncate text-start text-sm font-bold">
+                        {authUser?.fullName}
+                      </p>
+                      <p className="w-full truncate text-start text-sm text-slate-500">
+                        @{authUser?.username}
+                      </p>
                     </div>
-                    <BsThreeDots className="h-5 w-5 cursor-pointer" />
+                    <BsThreeDots className="ml-2 h-5 w-5 shrink-0 cursor-pointer text-slate-400 transition-colors hover:text-white" />
                   </div>
                 )}
               </button>
@@ -829,7 +835,9 @@ const Sidebar = ({
                   />
                   <div
                     ref={popoverRef}
-                    className={`white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] ${shouldCollapseSidebar ? "-translate-x-[90%]" : "-translate-x-1/2"} flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3`}
+                    className={`white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] max-w-[250px] ${
+                      shouldCollapseSidebar ? "-translate-x-[90%]" : "-translate-x-1/2"
+                    } flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3 shadow-xl`}
                   >
                     {/* Mini-Profile Section */}
                     <div className="flex flex-col pb-2">
@@ -850,16 +858,21 @@ const Sidebar = ({
                           alt="User profile"
                           className="absolute -bottom-6 left-2 size-12 rounded-full border-2 border-base-100 object-cover"
                         />
-                        {/* The status badge */}
                         <span
                           className={`absolute -bottom-6 left-10 size-[14px] rounded-full border-2 border-base-100 ${
                             isOnline ? "bg-green-500" : "bg-gray-500"
                           }`}
                         ></span>
                       </div>
-                      <div className="mt-4 flex flex-col items-start px-3">
-                        <span className="text-sm font-bold">{authUser?.fullName}</span>
-                        <span className="mb-1 text-xs text-gray-500">@{authUser?.username}</span>
+
+                      {/* Name Section - Enforced Truncation */}
+                      <div className="mt-4 flex w-full flex-col items-start overflow-hidden px-3">
+                        <span className="w-full truncate text-sm font-bold text-white">
+                          {authUser?.fullName}
+                        </span>
+                        <span className="mb-1 w-full truncate text-xs text-gray-500">
+                          @{authUser?.username}
+                        </span>
                         <div className="flex gap-2 text-xs text-gray-400">
                           <span>
                             <span className="font-semibold text-white">
@@ -884,62 +897,49 @@ const Sidebar = ({
                       <span className="px-1 text-xs font-bold text-gray-400">Set Status</span>
                       <button
                         onClick={() => handleStatusChange("online")}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition hover:bg-gray-700/30 disabled:cursor-wait"
                         disabled={isUpdatingStatus}
                       >
-                        <span className="size-[14px] rounded-full border-2 border-base-100 bg-green-500"></span>
-                        <div className="flex flex-col">
+                        <span className="size-[14px] shrink-0 rounded-full border-2 border-base-100 bg-green-500"></span>
+                        <div className="flex flex-col overflow-hidden">
                           <span className="text-sm">Online</span>
-                          <span className="text-xs text-gray-500">You will appear online</span>
+                          <span className="truncate text-xs text-gray-500">
+                            You will appear online
+                          </span>
                         </div>
                       </button>
                       <button
                         onClick={() => handleStatusChange("offline")}
-                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30 disabled:cursor-wait"
+                        className="flex w-full items-center gap-2 rounded-lg px-2 py-2 text-left font-semibold transition hover:bg-gray-700/30 disabled:cursor-wait"
                         disabled={isUpdatingStatus}
                       >
-                        <span className="size-[14px] rounded-full border-2 border-base-100 bg-gray-500"></span>
-                        <div className="flex flex-col">
+                        <span className="size-[14px] shrink-0 rounded-full border-2 border-base-100 bg-gray-500"></span>
+                        <div className="flex flex-col overflow-hidden">
                           <span className="text-sm">Offline</span>
-                          <span className="text-xs text-gray-500">You will appear offline</span>
+                          <span className="truncate text-xs text-gray-500">
+                            You will appear offline
+                          </span>
                         </div>
                       </button>
                     </div>
 
                     <div className="h-[1px] w-full bg-accent"></div>
 
-                    {/* Existing Buttons */}
+                    {/* Action Buttons */}
                     <button
                       onClick={handleConfirmDeleteClick}
-                      className={`text-md flex w-full items-center px-3 py-2 text-left font-bold text-red-500 hover:bg-secondary ${
-                        isTouchDevice && activeButtonId === "delete-account-popover"
-                          ? "bg-secondary bg-opacity-50 transition duration-150"
-                          : "transition duration-150"
-                      }`}
-                      onTouchStart={() => handleTouchStart("delete-account-popover")}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchCancel={handleTouchCancel}
+                      className="flex w-full items-center px-3 py-2.5 text-left font-bold text-red-500 transition hover:bg-secondary/20"
                     >
-                      <span>
-                        <TbUserX className="mr-3 size-6" />
-                      </span>
-                      Delete Account
+                      <TbUserX className="mr-3 size-5 shrink-0" />
+                      <span className="text-sm">Delete Account</span>
                     </button>
+
                     <button
                       onClick={handleLogout}
-                      className={`text-md flex w-full items-center px-3 py-2 pl-2 text-left font-bold hover:bg-secondary ${
-                        isTouchDevice && activeButtonId === "logout-popover"
-                          ? "bg-secondary bg-opacity-50 transition duration-150"
-                          : "transition duration-150"
-                      }`}
-                      onTouchStart={() => handleTouchStart("logout-popover")}
-                      onTouchEnd={handleTouchEnd}
-                      onTouchCancel={handleTouchCancel}
+                      className="flex w-full items-center px-3 py-2.5 text-left font-bold transition hover:bg-secondary/20"
                     >
-                      <span>
-                        <BiLogOut className="mr-4 size-6" />
-                      </span>
-                      Logout @{authUser?.username}
+                      <BiLogOut className="mr-3 size-5 shrink-0" />
+                      <span className="min-w-0 truncate text-sm">Logout @{authUser?.username}</span>
                     </button>
                   </div>
                 </div>

@@ -261,7 +261,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   return (
     <>
       <ScrollToTop />
-      <div className="template min-h-screen flex-[4_4_0] border-accent">
+      <div className="template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent">
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
 
         {showFullProfileHeader && userProfile && (
@@ -273,8 +273,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               >
                 <FaArrowLeft className="h-4 w-4" />
               </button>
-              <div className="flex flex-col">
-                <p className="text-lg font-bold">{userProfile?.fullName}</p>
+              <div className="flex flex-col min-w-0">
+                <p className="min-w-0 truncate text-lg font-bold">{userProfile?.fullName}</p>
                 <span className="text-sm text-slate-500">
                   {feedType === "likes"
                     ? `${userPostsCount} likes`
@@ -392,7 +392,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   user={userProfile}
                   isFollowing={amIFollowing}
                   currentUserId={authUser?._id}
-                  openUnfollowModal={openUnfollowModal} 
+                  openUnfollowModal={openUnfollowModal}
                 />
               )}
 
@@ -408,7 +408,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       updatePayload.coverImg = coverImg
                     }
 
-                    await updateProfile(updatePayload) 
+                    await updateProfile(updatePayload)
 
                     setProfileImg(null)
                     setCoverImg(null)
@@ -433,7 +433,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             <div className="mt-3 flex flex-col gap-4 px-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="text-lg font-bold">{userProfile?.fullName}</span>
+                  <span className="break-all text-lg font-bold">{userProfile?.fullName}</span>
                   <span className="flex items-center">
                     {userProfile?.isVerified && (
                       <img src="/verified2.png" className="size-[18px]" />
@@ -443,7 +443,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     )}
                   </span>
                 </div>
-                <span className="text-sm text-slate-500">@{userProfile?.username}</span>
+                <span className="break-all text-sm text-slate-500">@{userProfile?.username}</span>
                 <span className="my-1 text-sm">{userProfile?.bio}</span>
               </div>
 
@@ -453,7 +453,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     <>
                       <PiLinkSimpleBold className="size-4 text-slate-500" />
                       <a
-                        href={getFullProfileLink(userProfile?.link)} 
+                        href={getFullProfileLink(userProfile?.link)}
                         target="_blank"
                         rel="noreferrer"
                         className="text-sm text-primary hover:underline"

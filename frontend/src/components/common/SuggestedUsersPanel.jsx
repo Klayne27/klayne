@@ -9,6 +9,7 @@ import { useAppStore } from "../../store/useAppStore"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useGetSuggestedUsers } from "../../features/users/usersHooks/useUserQueries"
 import { useFollow } from "../../features/users/usersHooks/useUserMutations"
+import { truncateText } from "../../utils/truncateText"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
@@ -83,7 +84,7 @@ const SuggestedUsersPanel = () => {
                         <img src="/gold-verified2.png" className="size-[17px]" />
                       )}
                     </span>
-                    <span className="text-sm text-slate-500">@{user.username}</span>
+                    <span className="text-sm text-slate-500">@{truncateText(user.username, 12)}</span>
                   </div>
                 </div>
                 <div>

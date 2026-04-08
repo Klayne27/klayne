@@ -22,15 +22,22 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
 
   return (
     <div className="fixed top-0 z-10 flex w-full items-center justify-between border-accent bg-base-200 bg-opacity-20 px-4 py-3 shadow-lg backdrop-blur-md md:w-[751px]">
-      <div className="flex gap-2 items-center">
+      {/* Added 'min-w-0' and 'flex-1' to the left side container 
+         to ensure it takes up space but allows shrinking.
+      */}
+      <div className="flex min-w-0 flex-1 items-center gap-2">
         <button
           onClick={handleBackToConversations}
           className="mr-2 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white md:hidden"
         >
           <FaArrowLeft />
         </button>
-        <div className="flex">
-          <Link to={!isGroup && `/profile/${otherUser?.username}`} className="relative">
+
+        <div className="flex min-w-0 flex-1 items-center">
+          <Link
+            to={!isGroup && `/profile/${otherUser?.username}`}
+            className="relative flex-shrink-0"
+          >
             <img
               src={getOptimizedImageUrl(isGroup ? groupAvatar : otherUserProfileImg, "avatar")}
               alt={isGroup ? groupName : otherUserName}
@@ -46,31 +53,33 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
               <span className="absolute bottom-0 right-1 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
             )}
           </Link>
-          <div className="flex flex-col">
-            <div className="flex items-center">
-              <h3 className="mr-1 text-lg font-bold">
+
+          {/* Key Fix: Added 'min-w-0' here so the flex-col can shrink
+           */}
+          <div className="flex min-w-0 flex-col overflow-hidden">
+            <div className="flex min-w-0 items-center">
+              <h3 className="mr-1 min-w-0 truncate text-lg font-bold">
                 {isGroup ? groupName : otherUser?.fullName}
               </h3>
               {!isGroup && (
-                <>
-                  {" "}
+                <div className="flex flex-shrink-0 items-center gap-1">
                   {otherUser?.isVerified && (
-                    <img src="/verified2.png" className="size-[17px]" alt="Verified badge" />
+                    <img src="/verified2.png" className="size-[17px]" alt="Verified" />
                   )}
                   {otherUser?.isGoldVerified && (
-                    <img src="/gold-verified2.png" className="size-[17px]" alt="Verified badge" />
+                    <img src="/gold-verified2.png" className="size-[17px]" alt="Gold" />
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
         </div>
       </div>
 
-      <div className="flex">
+      <div className="flex flex-shrink-0 items-center">
         {isGroup && (
           <button
-            className="ml-auto mr-2 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+            className="rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/messages/${selectedConversation._id}/settings`)
@@ -81,7 +90,7 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
         )}
         <button
           onClick={onOpenPinnedModal}
-          className="ml-auto mr-2 rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
+          className="rounded-full p-2.5 transition duration-200 hover:bg-gray-800"
           title="View Pinned Messages"
         >
           <RiPushpinFill size={20} />

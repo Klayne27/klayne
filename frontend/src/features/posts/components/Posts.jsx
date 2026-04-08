@@ -101,14 +101,14 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
   }
 
   return (
-    <div>
+    <div className="w-full min-w-0 overflow-hidden">
       {feedType === "posts" && (
         <div>
           {isLoadingPinnedPosts ? (
             <div></div>
           ) : (
             pinnedPosts.length > 0 && (
-              <div >
+              <div className="w-full min-w-0">
                 {pinnedPosts.map((post) => (
                   <Post
                     key={post._id}
@@ -125,12 +125,8 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
 
       {filteredPostsForRender.map((post, index) => {
         const elementRef = filteredPostsForRender.length === index + 1 ? lastPostElementRef : null
-
         return (
-          <div
-            ref={elementRef}
-            key={post._id}
-          >
+          <div ref={elementRef} key={post._id}>
             <Post post={post} profilePinnedPosts={pinnedPosts} currentProfileUsername={username} />
           </div>
         )

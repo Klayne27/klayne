@@ -92,7 +92,7 @@ const CreateBoardPostModal = ({ onClose }) => {
       <div className="flex max-h-[90vh] w-full max-w-lg flex-col rounded-2xl border border-accent bg-base-100 shadow-xl">
         {/* Header */}
         <div className="flex flex-shrink-0 items-center justify-between border-b border-accent px-4 py-3">
-          <h2 className="text-lg font-bold">New Board Post</h2>
+          <h2 >New Board Post</h2>
           <button onClick={onClose} className="rounded-full p-2 transition hover:bg-gray-700">
             <IoClose size={20} />
           </button>

@@ -414,7 +414,7 @@ const PostPage = () => {
         </form>
       )}
 
-      <div className="flex flex-col">
+      <div className="flex flex-col min-w-0">
         {isLoadingReplies ? (
           <div className="flex h-full flex-col items-center gap-4 p-2 md:gap-14 md:p-4">
             <LoadingSpinner size="md" />
@@ -422,11 +422,11 @@ const PostPage = () => {
         ) : replies.length > 0 ? (
           <>
             {replies.map((reply) => (
-              <div key={reply._id}>
+              <div key={reply._id} className="min-w-0">
                 <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
 
                 {reply.firstChildReply && (
-                  <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />
+                  <Post post={reply.firstChildReply} hasLineAbove={true} index={1}  />
                 )}
               </div>
             ))}

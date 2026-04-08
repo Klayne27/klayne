@@ -10,7 +10,7 @@ function MessageContentLayout({
 }) {
   return (
     <div
-      className={`relative flex items-start gap-2 ${
+      className={`relative flex min-w-0 max-w-full items-start gap-2 ${
         isSentByCurrentUser ? "justify-end" : "justify-start"
       }`}
       style={messageContentStyle}

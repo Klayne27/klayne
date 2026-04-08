@@ -63,11 +63,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
           />
         )}
         <main
-          className={`${
-            isPublicChatPage
-              ? "flex h-screen max-h-screen flex-col overflow-y-auto md:flex-1"
-              : "flex-1 md:pb-0"
-          }`}
+          className={`min-w-0 ${isPublicChatPage ? "flex h-screen max-h-screen flex-col overflow-y-auto md:flex-1" : "flex-1 md:pb-0"}`}
         >
           <Suspense
             fallback={

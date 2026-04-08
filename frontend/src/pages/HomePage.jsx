@@ -161,7 +161,7 @@ const HomePage = () => {
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <span className="relative">
+              <span className="relative text-sm">
                 For You
                 {newPostCount > 0 && (
                   <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
@@ -172,7 +172,7 @@ const HomePage = () => {
               )}
             </div>
             <div
-              className={`flex flex-1 cursor-pointer justify-center p-3 ${
+              className={`flex flex-1 cursor-pointer justify-center p-3 text-sm ${
                 !isTouchDevice
                   ? "transition duration-300 hover:bg-secondary hover:bg-opacity-50"
                   : ""
@@ -205,7 +205,7 @@ const HomePage = () => {
               onTouchStart={() => handleTouchStart("ic")}
               onTouchEnd={handleTouchEnd}
             >
-              <span className="relative">
+              <span className="relative text-sm">
                 Study
                 {hasNewICPosts && (
                   <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>
@@ -233,7 +233,7 @@ const HomePage = () => {
               onTouchEnd={handleTouchEnd}
               onTouchCancel={handleTouchCancel}
             >
-              <span className="relative">
+              <span className="relative text-sm">
                 Rants
                 {hasNewVentPosts && (
                   <div className="absolute -right-3 top-0 h-3 w-3 rounded-full border-2 border-black bg-primary"></div>

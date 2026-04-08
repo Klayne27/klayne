@@ -204,7 +204,7 @@ const NotificationPage = () => {
               onClick={(e) => handleNotificationItemClick(e, notification)}
             >
               <div className="mt-1 flex-shrink-0"> {getNotificationIcon(notification.type)}</div>
-              <div className="flex w-full flex-col gap-2">
+              <div className="flex w-full min-w-0 flex-col gap-2">
                 <div className="flex items-start gap-2">
                   <div
                     className="avatar cursor-pointer"
@@ -228,10 +228,10 @@ const NotificationPage = () => {
                     </div>
                   </div>
 
-                  <div className="flex flex-col">
-                    <div className="flex items-center gap-[2px]">
+                  <div className="flex min-w-0 flex-1 flex-col">
+                    <div className="flex min-w-0 items-center gap-[2px]">
                       <span
-                        className={`font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
+                        className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                         onClick={(e) =>
                           !isAnon ? handleProfileClick(e, notification.from?.username) : null
                         }
@@ -252,7 +252,20 @@ const NotificationPage = () => {
                         />
                       )}
                     </div>
-                    <div className="text-sm">{getNotificationMessage(notification)}</div>
+                    <div className="min-w-0 truncate text-sm">
+                      {getNotificationMessage(notification)}
+                    </div>
+                  </div>
+                  <div className="flex" onClick={(e) => e.stopPropagation()}>
+                    <button
+                      className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
+                      onClick={() => deleteNotification(notification._id)}
+                    >
+                      <FaTrashCan
+                        className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
+                        size={15}
+                      />
+                    </button>
                   </div>
                 </div>
                 {/* Post Content Display */}
@@ -278,17 +291,6 @@ const NotificationPage = () => {
                 <span className="text-sm text-slate-500">
                   {formatPostDate(notification.createdAt)}
                 </span>
-              </div>
-              <div className="absolute right-4 top-4" onClick={(e) => e.stopPropagation()}>
-                <button
-                  className="group rounded-full p-2 transition duration-200 hover:bg-red-600 hover:bg-opacity-15 hover:text-red-500"
-                  onClick={() => deleteNotification(notification._id)}
-                >
-                  <FaTrashCan
-                    className="cursor-pointer text-slate-500 transition duration-200 group-hover:text-red-600"
-                    size={15}
-                  />
-                </button>
               </div>
             </div>
           )
