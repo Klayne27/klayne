@@ -98,7 +98,7 @@ const PomodoroPage = () => {
     const duration = durationAtStartRef.current
     if (!startTime || !duration) return
 
-    const elapsed = (Date.now() - startTime) / 100
+    const elapsed = (Date.now() - startTime) / 1000
     const remaining = duration - elapsed
 
     if (remaining <= 0) {
@@ -417,7 +417,7 @@ useEffect(() => {
       return
     }
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsedTime = (Date.now() - savedStartTime) / 100
+      const elapsedTime = (Date.now() - savedStartTime) / 1000
       const newTimer = savedDurationAtStart - elapsedTime
       setTimer(newTimer > 0 ? newTimer : 0)
       setIsActive(newTimer > 0)
