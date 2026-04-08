@@ -819,7 +819,7 @@ const Sidebar = ({
                   />
                   <div
                     ref={popoverRef}
-                    className="white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] -translate-x-1/2 flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3"
+                    className={`white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] ${shouldCollapseSidebar ? "-translate-x-[90%]" : "-translate-x-1/2"} flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3`}
                   >
                     {/* Mini-Profile Section */}
                     <div className="flex flex-col pb-2">

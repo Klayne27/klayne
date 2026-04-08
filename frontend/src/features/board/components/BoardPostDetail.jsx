@@ -35,6 +35,7 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 
 import BoardPostInput from "./BoardPostInput"
 import { PiSmiley } from "react-icons/pi"
+import ImageLightbox from "./ImageLightbox"
 
 const formatDateSeparator = (dateStr) => {
   const date = new Date(dateStr)
@@ -74,25 +75,30 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const moreEmojisButtonRef = useRef(null)
   const addReactionButtonRef = useRef(null)
   const postMoreEmojisButtonRef = useRef(null)
-  // Separate trigger ref for the inline-edit emoji button
+  const commentRefs = useRef({})
   const editEmojiButtonRef = useRef(null)
 
   const [showViewReactionsModal, setShowViewReactionsModal] = useState(false)
   const [showSlideUpReactionsMenu, setShowSlideUpReactionsMenu] = useState(false)
   const [inlinePostContent, setInlinePostContent] = useState("")
+  const [selectedImgIndex, setSelectedImgIndex] = useState(null)
 
-  const { post, isLoading } = useGetBoardPost(postId)
   const { editBoardPost, isEditingPost } = useEditBoardPost()
+  const { deleteComment } = useDeleteBoardComment(postId)
+  const { deleteBoardPost } = useDeleteBoardPost()
+  const { reactToPost } = useReactToBoardPost()
+  const { reactToComment } = useReactToBoardComment(postId)
+  const { post, isLoading } = useGetBoardPost(postId)
+  const {
+    comments,
+    isLoading: isLoadingComments,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+  } = useGetBoardComments(postId)
 
   const messageShape = toMessageShape(post)
 
-  const { isSentByCurrentUser, isEditable, groupedReactions, hasAnyReactions } =
-    useMessagingMetaData(messageShape, authUser)
-
-  const commentRefs = useRef({})
-  const isMobile = useIsMobile()
-
-  // ── Instance 1: reactions emoji picker ───────────────────────────────────────
   const {
     showEmojiPickerPopover: showReactionPicker,
     popoverPosition: reactionPickerPosition,
@@ -101,7 +107,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
     setShowEmojiPickerPopover: setShowReactionPicker,
   } = useEmojiPickerPopover()
 
-  // ── Instance 2: inline-edit text insertion picker ─────────────────────────
   const {
     showEmojiPickerPopover: showEditPicker,
     popoverPosition: editPickerPosition,
@@ -121,13 +126,8 @@ const BoardPostDetail = ({ postId, onClose }) => {
     openPostSlideMenu(messageShape),
   )
 
-  const {
-    comments,
-    isLoading: isLoadingComments,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-  } = useGetBoardComments(postId)
+  const { isSentByCurrentUser, isEditable, groupedReactions, hasAnyReactions } =
+    useMessagingMetaData(messageShape, authUser)
 
   const {
     moreActionsModalPosition,
@@ -140,54 +140,23 @@ const BoardPostDetail = ({ postId, onClose }) => {
     post,
   })
 
-  const { deleteComment } = useDeleteBoardComment(postId)
-  const { deleteBoardPost } = useDeleteBoardPost()
-  const { reactToPost } = useReactToBoardPost()
-  const { reactToComment } = useReactToBoardComment(postId)
+  const mappedForProcessing = comments.map((c) => ({ ...c, sender: c.user }))
 
-  useLayoutEffect(() => {
-    if (isEditingPostInline && inlineTextareaRef.current) {
-      inlineTextareaRef.current.style.height = "auto"
-      inlineTextareaRef.current.style.height = `${inlineTextareaRef.current.scrollHeight}px`
-    }
-  }, [inlinePostContent, isEditingPostInline])
+  const isMobile = useIsMobile()
+  const processedComments = useProcessedMessage(mappedForProcessing, null)
 
-  useEffect(() => {
-    if (replyingToComment || replyingToPost) {
-      setTimeout(() => floatingInputRef.current?.focus(), 0)
-    }
-  }, [replyingToComment, floatingInputRef, replyingToPost])
+  const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 })
 
-  useEffect(() => {
-    if (isEditingPostInline && inlineTextareaRef.current) {
-      const el = inlineTextareaRef.current
-      el.focus()
-      const length = el.value.length
-      el.setSelectionRange(length, length)
-    }
-  }, [isEditingPostInline])
-
-  const handleJumpToComment = useCallback((commentId) => {
-    const node = commentRefs.current[commentId]
+  const handleJumpToPost = useCallback(() => {
+    const node = postRef.current
     if (!node) return
     node.scrollIntoView({ behavior: "smooth", block: "center" })
     node.classList.add("bg-primary/10")
     setTimeout(() => node.classList.remove("bg-primary/10"), 1500)
   }, [])
 
-  const mappedForProcessing = comments.map((c) => ({ ...c, sender: c.user }))
-  const processedComments = useProcessedMessage(mappedForProcessing, null)
-
-  const { ref: loadMoreRef, inView } = useInView({ threshold: 0.1 })
-
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
-    }
-  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
-
-  const handleJumpToPost = useCallback(() => {
-    const node = postRef.current
+  const handleJumpToComment = useCallback((commentId) => {
+    const node = commentRefs.current[commentId]
     if (!node) return
     node.scrollIntoView({ behavior: "smooth", block: "center" })
     node.classList.add("bg-primary/10")
@@ -202,7 +171,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
     setShowMoreActionsModal(false)
   }
 
-  // Reactions picker: posts a reaction emoji
   const handleReactionEmojiSelect = (emojiData) => {
     reactToPost({ id: post._id, emoji: emojiData.emoji })
     handleCloseReactionPicker()
@@ -260,7 +228,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
     }
   }
 
-  // Edit picker: inserts emoji at cursor position in the textarea
   const handleEditEmojiSelect = useCallback(
     (emojiData) => {
       const textarea = inlineTextareaRef.current
@@ -274,7 +241,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
 
       setInlinePostContent(newContent)
 
-      // Restore cursor position right after the inserted emoji
       requestAnimationFrame(() => {
         const newCursor = start + emojiData.emoji.length
         textarea.focus()
@@ -295,6 +261,54 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const handleCloseSlideUpReactionsMenu = () => {
     setShowSlideUpReactionsMenu(false)
   }
+
+  const handlePrevImage = useCallback(() => {
+    setSelectedImgIndex((prev) => (prev === 0 ? post.images.length - 1 : prev - 1))
+  }, [post])
+
+  const handleNextImage = useCallback(() => {
+    setSelectedImgIndex((prev) => (prev === post.images.length - 1 ? 0 : prev + 1))
+  }, [post])
+
+  useLayoutEffect(() => {
+    if (isEditingPostInline && inlineTextareaRef.current) {
+      inlineTextareaRef.current.style.height = "auto"
+      inlineTextareaRef.current.style.height = `${inlineTextareaRef.current.scrollHeight}px`
+    }
+  }, [inlinePostContent, isEditingPostInline])
+
+  useEffect(() => {
+    if (replyingToComment || replyingToPost) {
+      setTimeout(() => floatingInputRef.current?.focus(), 0)
+    }
+  }, [replyingToComment, floatingInputRef, replyingToPost])
+
+  useEffect(() => {
+    if (isEditingPostInline && inlineTextareaRef.current) {
+      const el = inlineTextareaRef.current
+      el.focus()
+      const length = el.value.length
+      el.setSelectionRange(length, length)
+    }
+  }, [isEditingPostInline])
+
+  useEffect(() => {
+    if (inView && hasNextPage && !isFetchingNextPage) {
+      fetchNextPage()
+    }
+  }, [inView, hasNextPage, isFetchingNextPage, fetchNextPage])
+
+  // Keyboard listener
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (selectedImgIndex === null) return
+      if (e.key === "ArrowLeft") handlePrevImage()
+      if (e.key === "ArrowRight") handleNextImage()
+      if (e.key === "Escape") setSelectedImgIndex(null)
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [selectedImgIndex, handlePrevImage, handleNextImage])
 
   if (isLoading) {
     return (
@@ -438,10 +452,10 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     }`}
                   >
                     {post.images.map((img, i) => (
-                      <Link
+                      <div // Changed from Link to div
                         key={img._id || i}
-                        to={`/images/${img._id}`}
-                        className={`relative overflow-hidden rounded-md border border-accent ${
+                        onClick={() => setSelectedImgIndex(i)}
+                        className={`relative cursor-pointer overflow-hidden rounded-md border border-accent ${
                           post.images.length === 3 && i === 0 ? "col-span-2" : ""
                         }`}
                       >
@@ -450,7 +464,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                           alt={`post image ${i + 1}`}
                           className="aspect-square w-full object-cover transition-transform duration-300 hover:scale-105"
                         />
-                      </Link>
+                      </div>
                     ))}
                   </div>
                 )}
@@ -573,7 +587,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       {authUser && <BoardPostInput post={post} floatingInputRef={floatingInputRef} />}
 
       {/* ── Reactions emoji picker (portal) ── */}
-      {showReactionPicker &&  (
+      {showReactionPicker && (
         <EmojiPickerPopover
           position={reactionPickerPosition}
           onClose={handleCloseReactionPicker}
@@ -583,7 +597,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
       )}
 
       {/* ── Inline-edit emoji picker (portal) ── */}
-      {showEditPicker &&  (
+      {showEditPicker && (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}
@@ -643,6 +657,14 @@ const BoardPostDetail = ({ postId, onClose }) => {
           postId={postId}
         />
       )}
+
+      <ImageLightbox
+        images={post.images}
+        currentIndex={selectedImgIndex}
+        onClose={() => setSelectedImgIndex(null)}
+        onPrev={handlePrevImage}
+        onNext={handleNextImage}
+      />
     </div>
   )
 }
