@@ -24,6 +24,8 @@ const notificationSchema = new mongoose.Schema(
         "replyLike",
         "replyRepost",
         "replyReply",
+        "boardComment", // someone commented on your board post
+        "boardReply", // someone replied to your board comment
       ],
     },
     read: {
@@ -44,6 +46,16 @@ const notificationSchema = new mongoose.Schema(
           "replyReply",
         ].includes(this.type);
       },
+    },
+    boardPostId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BoardPost",
+      default: null,
+    },
+    boardCommentId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "BoardComment",
+      default: null,
     },
     isAnonymousInteraction: {
       type: Boolean,

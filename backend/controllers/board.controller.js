@@ -4,6 +4,7 @@ import User from "../models/user.model.js";
 import BoardPost from "../models/boardPost.model.js";
 import Image from "../models/image.model.js";
 import BoardComment from "../models/boardComment.model.js";
+import { createAndSendBoardNotification, emitNewBoardPostCount, io, onlineUsersMap } from "../lib/socket.js";
 
 const userProjection = {
   _id: 1,
@@ -115,6 +116,14 @@ export const createBoardPost = async (req, res) => {
 
       newPost.images = uploadedImages;
       await newPost.save();
+    }
+
+    if (onlineUsersMap && io) {
+      for (const [onlineUserId] of onlineUsersMap.entries()) {
+        if (onlineUserId.toString() !== userId.toString()) {
+          await emitNewBoardPostCount(onlineUserId);
+        }
+      }
     }
 
     const populated = await BoardPost.findById(newPost._id).populate(boardPostPopulate);
@@ -382,6 +391,33 @@ export const createBoardComment = async (req, res) => {
 
     await BoardPost.findByIdAndUpdate(boardPostId, { $inc: { commentsCount: 1 } });
 
+    if (post.user.toString() !== userId.toString()) {
+      await createAndSendBoardNotification({
+        from: userId,
+        to: post.user,
+        type: "boardComment",
+        boardPostId: post._id,
+        boardCommentId: newComment._id,
+      });
+    }
+
+    // If replying to a specific comment, also notify that comment's author
+    if (parentCommentId) {
+      const parentComment = await BoardComment.findById(parentCommentId).select("user");
+      if (parentComment && parentComment.user.toString() !== userId.toString()) {
+        // Don't double-notify if parent comment owner === board post owner
+        if (parentComment.user.toString() !== post.user.toString()) {
+          await createAndSendBoardNotification({
+            from: userId,
+            to: parentComment.user,
+            type: "boardReply",
+            boardPostId: post._id,
+            boardCommentId: newComment._id,
+          });
+        }
+      }
+    }
+
     const populated = await BoardComment.findById(newComment._id).populate(
       commentPopulate,
     );
@@ -520,6 +556,15 @@ export const editBoardComment = async (req, res) => {
     res.status(200).json(populated);
   } catch (error) {
     console.error("Error in editBoardComment:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const markBoardAsRead = async (req, res) => {
+  try {
+    await User.findByIdAndUpdate(req.user._id, { lastReadBoardTimestamp: new Date() });
+    res.status(200).json({ message: "ok" });
+  } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }
 };

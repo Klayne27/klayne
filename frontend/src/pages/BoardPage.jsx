@@ -9,6 +9,7 @@ import BoardPostDetail from "../features/board/components/BoardPostDetail"
 import CreateBoardPostModal from "../features/board/components/CreateBoardPostModal"
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useBoardStore } from "../store/useBoardStore"
+import { useSocket } from "../context/SocketContext"
 
 const BoardPage = () => {
   const navigate = useNavigate()
@@ -18,6 +19,13 @@ const BoardPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const isMobile = useIsMobile()
   const observerTarget = useRef(null)
+  const { setShowNewBoardPostsButton } = useSocket()
+
+  useEffect(() => {
+    setShowNewBoardPostsButton(false)
+    // Also update lastReadBoardTimestamp
+    fetch("/api/board/mark-as-read", { method: "POST", credentials: "include" })
+  }, [setShowNewBoardPostsButton])
 
   const [leftWidth, setLeftWidth] = useState(400)
   const [isResizing, setIsResizing] = useState(false)

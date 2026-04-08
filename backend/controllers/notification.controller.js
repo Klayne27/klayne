@@ -14,8 +14,7 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select:
-          "username fullName isVerified isGoldVerified  badges preferredBadge",
+        select: "username fullName isVerified isGoldVerified  badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -39,6 +38,16 @@ export const getNotifications = async (req, res) => {
             },
           },
         ],
+      })
+      .populate({
+        path: "boardPostId",
+        select: "title user img",
+        populate: { path: "user", select: "username fullName" },
+      })
+      .populate({
+        path: "boardCommentId",
+        select: "content user img",
+        populate: { path: "user", select: "username" },
       })
       .limit(50);
 

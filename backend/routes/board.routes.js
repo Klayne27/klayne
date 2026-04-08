@@ -12,6 +12,7 @@ import {
   reactToBoardComment,
   editBoardComment,
   editBoardPost,
+  markBoardAsRead,
 } from "../controllers/board.controller.js";
 
 const router = express.Router();
@@ -28,5 +29,7 @@ router.post("/:id/comments", protectRoute, createBoardComment);
 router.delete("/comments/:commentId", protectRoute, deleteBoardComment);
 router.post("/comments/:commentId/react", protectRoute, reactToBoardComment);
 router.put("/comments/:commentId", protectRoute, editBoardComment);
+
+router.post("/mark-as-read", protectRoute, markBoardAsRead);
 
 export default router;

@@ -124,6 +124,7 @@ const userSchema = new mongoose.Schema(
       type: Date,
       default: null,
     },
+    lastReadBoardTimestamp: { type: Date, default: null },
     badges: [
       {
         type: String,

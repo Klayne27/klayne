@@ -39,6 +39,9 @@ export const SocketContextProvider = ({ children }) => {
   const [hasNewICPosts, setHasNewICPosts] = useState(false)
   const [hasNewVentPosts, setHasNewVentPosts] = useState(false)
 
+  const [newBoardPostCount, setNewBoardPostCount] = useState(0)
+  const [showNewBoardPostsButton, setShowNewBoardPostsButton] = useState(false)
+
   const queryClient = useQueryClient()
 
   const location = useLocation()
@@ -77,6 +80,13 @@ export const SocketContextProvider = ({ children }) => {
 
       newSocket.on("getOnlineUsers", (users) => {
         setOnlineUsers(users)
+      })
+
+      newSocket.on("newBoardPostCount", ({ newBoardPostCount }) => {
+        if (newBoardPostCount > 0) {
+          setNewBoardPostCount(newBoardPostCount)
+          setShowNewBoardPostsButton(true)
+        }
       })
 
       newSocket.on("unreadMessageStatus", ({ unreadMessageCount }) => {
@@ -191,6 +201,8 @@ export const SocketContextProvider = ({ children }) => {
       setNewVentPostCount(0)
       setHasNewICPosts(false)
       setHasNewVentPosts(false)
+      setNewBoardPostCount(0)
+      setShowNewBoardPostsButton(false)
     }
   }, [user, isLoadingAuthUser, queryClient])
 
@@ -215,7 +227,7 @@ export const SocketContextProvider = ({ children }) => {
       value={{
         socket,
         onlineUsers,
-        
+
         hasUnreadMessages,
         setHasUnreadMessages,
         hasUnreadNotifications,
@@ -235,6 +247,10 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewICPosts,
         hasNewVentPosts,
         setHasNewVentPosts,
+
+        newBoardPostCount,
+        showNewBoardPostsButton,
+        setShowNewBoardPostsButton,
 
         setActiveConversationId,
         newPostCount,

@@ -95,7 +95,7 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
             img: base64Image, // Send the string, not the Object
             isReplyToPost: !!replyingToPost, // ADD
           },
-          { onSuccess: resetForm },
+          // { onSuccess: resetForm },
         )
       }
       reader.readAsDataURL(selectedFile)
@@ -107,10 +107,22 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
           parentCommentId: replyingToComment?._id || null,
           isReplyToPost: !!replyingToPost, // ADD
         },
-        { onSuccess: resetForm },
+        // { onSuccess: resetForm },
       )
     }
+    resetForm()
   }
+
+  useEffect(() => {
+    if (floatingInputRef.current) {
+      // Reset height to auto to correctly calculate scrollHeight for shrinking
+      floatingInputRef.current.style.height = "auto"
+
+      // Set height to scrollHeight (the full height of the text)
+      // You can add a limit like: Math.min(floatingInputRef.current.scrollHeight, 200) + "px"
+      floatingInputRef.current.style.height = `${floatingInputRef.current.scrollHeight}px`
+    }
+  }, [commentInput, floatingInputRef])
 
   return (
     <div className="absolute bottom-2 left-0 right-0 px-2 md:bottom-4 md:px-4">
@@ -208,7 +220,7 @@ const BoardPostInput = ({ post, floatingInputRef }) => {
               }}
               onPaste={handlePaste}
               placeholder={"Write a comment..."}
-              className=" w-full resize-none bg-transparent py-2.5 text-sm placeholder-gray-500 focus:outline-none"
+              className="max-h-[200px] w-full resize-none bg-transparent py-2.5 text-sm placeholder-gray-500 focus:outline-none"
               disabled={isCreatingComment}
             />
           </div>

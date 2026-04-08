@@ -135,6 +135,33 @@ export const getPublicIdFromUrl = (url) => {
   return match && match[1] ? match[1] : null;
 };
 
+export const getDynamicPushTitle = (type) => {
+  switch (type) {
+    case "follow":
+      return "New Follower";
+    case "mention":
+      return "New Mention";
+    case "reply":
+      return "New Reply";
+    case "like":
+      return "New Like";
+    case "repost":
+      return "New Repost";
+    case "replyLike":
+      return "New Like";
+    case "replyRepost":
+      return "New Repost";
+    case "replyReply":
+      return "New Reply";
+    case "boardComment":
+      return "New Board Comment"; // ADD
+    case "boardReply":
+      return "New Board Reply"; // ADD
+    default:
+      return "New Notification";
+  }
+};
+
 export const getDynamicPushBody = (type, username) => {
   switch (type) {
     case "follow":
@@ -153,31 +180,12 @@ export const getDynamicPushBody = (type, username) => {
       return `@${username} reposted your reply.`;
     case "replyReply":
       return `@${username} replied to your reply.`;
+    case "boardComment":
+      return `@${username} commented on your board post.`; // ADD
+    case "boardReply":
+      return `@${username} replied to your board comment.`; // ADD
     default:
       return "You have a new notification on Klayne!";
-  }
-};
-
-export const getDynamicPushTitle = (type) => {
-  switch (type) {
-    case "follow":
-      return `New Follower`;
-    case "mention":
-      return "New Mention";
-    case "reply":
-      return "New Reply";
-    case "like":
-      return "New Like";
-    case "repost":
-      return "New Repost";
-    case "replyLike":
-      return "New Like";
-    case "replyRepost":
-      return "New Repost";
-    case "replyReply":
-      return "New Reply";
-    default:
-      return "New Notification";
   }
 };
 

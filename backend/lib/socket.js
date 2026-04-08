@@ -152,7 +152,7 @@ export async function emitNewPostCount(userId) {
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
       isVent: { $ne: true },
-      isIC: { $ne: true }, 
+      isIC: { $ne: true },
       // parentPost is intentionally NOT filtered out — replies count too
     });
 
@@ -359,7 +359,85 @@ export async function emitUnreadNotificationStatus(userId) {
   }
 }
 
+export async function emitNewBoardPostCount(userId) {
+  try {
+    const userIdObj = new mongoose.Types.ObjectId(userId);
+    const recipientSocketIds = getReceiverSocketIds(userId);
+    if (recipientSocketIds.length === 0) return;
 
+    const user = await User.findById(userIdObj).select("lastReadBoardTimestamp").lean();
+    const lastReadTimestamp = user?.lastReadBoardTimestamp || new Date(0);
+
+    // Count board posts created after user's last read
+    const BoardPost = (await import("../models/boardPost.model.js")).default;
+    const newBoardPostCount = await BoardPost.countDocuments({
+      user: { $ne: userIdObj },
+      createdAt: { $gt: lastReadTimestamp },
+    });
+
+    recipientSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newBoardPostCount", { newBoardPostCount });
+    });
+  } catch (error) {
+    console.error(`Error in emitNewBoardPostCount for user ${userId}:`, error);
+  }
+}
+
+export const createAndSendBoardNotification = async ({
+  from,
+  to,
+  type,
+  boardPostId,
+  boardCommentId,
+}) => {
+  try {
+    if (from.toString() === to.toString()) return;
+
+    const blocked = await isBlockedOrBlockedBy(from, to);
+    if (blocked) return;
+
+    const Notification = (await import("../models/notification.model.js")).default;
+    const User = (await import("../models/user.model.js")).default;
+
+    const newNotification = new Notification({
+      from,
+      to,
+      type,
+      boardPostId: boardPostId || null,
+      boardCommentId: boardCommentId || null,
+    });
+    await newNotification.save();
+
+    await newNotification.populate({
+      path: "from",
+      select: "username fullName",
+      populate: { path: "profileImg", select: "imageUrl" },
+    });
+
+    // Push notification
+    const fromUser = await User.findById(from).select("username").lean();
+    const username = fromUser?.username ?? "A user";
+
+    const payload = {
+      title: getDynamicPushTitle(type),
+      body: getDynamicPushBody(type, username),
+      url: `/board/${boardPostId}`,
+      icon: `${BASE_URL}/klaynelogoreal.png`,
+    };
+
+    await sendPushNotification(to.toString(), payload);
+
+    // Socket
+    const receiverSocketIds = getReceiverSocketIds(to.toString());
+    receiverSocketIds.forEach((socketId) => {
+      io.to(socketId).emit("newNotification", newNotification);
+    });
+
+    await emitUnreadNotificationStatus(to.toString());
+  } catch (error) {
+    console.error("Error in createAndSendBoardNotification:", error.message);
+  }
+};
 
 export const createAndSendNotification = async ({
   from,
@@ -507,8 +585,8 @@ io.on("connection", async (socket) => {
 
     emitUnreadMessageStatus(userId);
     emitUnreadNotificationStatus(userId);
-    emitNewICUnreadDot(userId)
-    emitNewVentUnreadDot(userId)
+    emitNewICUnreadDot(userId);
+    emitNewVentUnreadDot(userId);
     await emitUnreadPublicChatStatus(userId); // <--- CALL NEW FUNCTION HERE
   } else {
     socket.disconnect(true);
@@ -722,8 +800,7 @@ io.on("connection", async (socket) => {
       const updatedConversation = await Conversation.findById(conversationObjectId)
         .populate({
           path: "participants",
-          select:
-            "username fullName isVerified isGoldVerified  badges preferredBadge",
+          select: "username fullName isVerified isGoldVerified  badges preferredBadge",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({

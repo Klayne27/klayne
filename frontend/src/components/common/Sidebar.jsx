@@ -55,6 +55,9 @@ const Sidebar = ({
     unreadPublicChatCount,
     newPostCount,
     newVentPostCount,
+    socket,
+    newBoardPostCount,
+    showNewBoardPostsButton,
   } = useSocket()
 
   const { logout } = useLogout()
@@ -393,7 +396,6 @@ const Sidebar = ({
     navigate("/public-chat")
   }
 
-  const { socket } = useSocket()
   const { updateStatus, isUpdatingStatus } = useUpdateStatusPreference()
 
   const handleStatusChange = (status) => {
@@ -579,6 +581,14 @@ const Sidebar = ({
                   <PiSquaresFourFill className="size-8" />
                 ) : (
                   <PiSquaresFourLight className="size-8" />
+                )}
+                {showNewBoardPostsButton && newBoardPostCount > 0 && (
+                  <div
+                    className="absolute right-1 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    style={{ transform: "translate(40%, -40%)" }}
+                  >
+                    {formatCount(newBoardPostCount)}
+                  </div>
                 )}
               </div>
               {!shouldCollapseSidebar && (

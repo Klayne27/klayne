@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom"
-import { IoSettingsOutline } from "react-icons/io5"
+import { IoChatbubbleSharp, IoSettingsOutline } from "react-icons/io5"
 import { FaUser, FaHeart, FaRetweet, FaReply, FaWrench } from "react-icons/fa6"
 import { FaTrashCan } from "react-icons/fa6"
 import { formatPostDate } from "../utils/date"
@@ -9,7 +9,11 @@ import { FaArrowLeft } from "react-icons/fa6"
 import { FaAt } from "react-icons/fa"
 import { useRef } from "react"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
-import { useDeleteNotification, useDeleteNotifications, useGetNotifications } from "../features/notifications/notificationsHooks/useNotifications"
+import {
+  useDeleteNotification,
+  useDeleteNotifications,
+  useGetNotifications,
+} from "../features/notifications/notificationsHooks/useNotifications"
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useGetNotifications()
@@ -27,7 +31,9 @@ const NotificationPage = () => {
         notification.type === "reply" ||
         notification.type === "replyLike" ||
         notification.type === "replyRepost" ||
-        notification.type === "replyReply") &&
+        notification.type === "replyReply" ||
+        notification.type === "boardComment" ||
+        notification.type === "boardReply") &&
       notification.from?._id.toString() === authUser?._id.toString()
     ) {
       return false
@@ -51,6 +57,8 @@ const NotificationPage = () => {
       targetLink = `/profile/${notification.from?.username}`
     } else if (notification.postId && notification.postId._id) {
       targetLink = `/${notification.postId.user?.username}/post/${notification.postId._id}`
+    } else if (notification.type === "boardComment" || notification.type === "boardReply") {
+      targetLink = `/board/${notification.boardPostId?._id}`
     } else {
       console.warn("Could not determine navigation link for notification:", notification)
       return
@@ -85,6 +93,10 @@ const NotificationPage = () => {
         return <FaRetweet className="h-6 w-6 text-green-500" />
       case "replyReply":
         return <FaReply className="h-6 w-6 text-sky-400" />
+      case "boardComment":
+        return <IoChatbubbleSharp className="h-6 w-6 text-teal-400" />
+      case "boardReply":
+        return <FaReply className="h-6 w-6 text-sky-400" />
       default:
         return null
     }
@@ -115,8 +127,20 @@ const NotificationPage = () => {
         return `${prefix}${displayUsername} reposted your reply.`
       case "replyReply":
         return `${prefix}${displayUsername} replied to your reply.`
+      case "boardComment":
+        return `@${displayUsername} commented on your board post.`
+      case "boardReply":
+        return `@${displayUsername} replied to your board comment.`
       default:
         return ""
+    }
+  }
+
+  const contentToDisplay = (notif) => {
+    if (notif.postId) {
+      return notif.postId.text
+    } else if (notif.boardCommentId) {
+      return notif.boardCommentId.content
     }
   }
 
@@ -165,10 +189,12 @@ const NotificationPage = () => {
           const isVerified = notification.from.isVerified
           const isAnon = notification.isAnonymousInteraction
 
-          let contentToDisplay = null
+          let imgToDisplay = null
 
           if (notification.postId) {
-            contentToDisplay = notification.postId
+            imgToDisplay = notification.postId
+          } else if (notification.boardCommentId) {
+            imgToDisplay = notification.boardCommentId
           }
 
           return (
@@ -230,13 +256,18 @@ const NotificationPage = () => {
                   </div>
                 </div>
                 {/* Post Content Display */}
-                {(contentToDisplay?.text || contentToDisplay?.img) && (
+                {(notification.postId?.text ||
+                  imgToDisplay?.img ||
+                  notification.boardCommentId?.content) && (
                   <div className="mt-2 rounded-xl border border-accent p-3">
-                    {contentToDisplay?.text && <p className="text-sm">{contentToDisplay.text}</p>}
-                    {contentToDisplay?.img && (
+                    {notification.postId?.text ||
+                      (notification.boardCommentId?.content && (
+                        <p className="text-sm">{contentToDisplay(notification)}</p>
+                      ))}
+                    {imgToDisplay?.img && (
                       <div className="flex justify-center">
                         <img
-                          src={getOptimizedImageUrl(contentToDisplay.img, "post")}
+                          src={getOptimizedImageUrl(imgToDisplay.img, "post")}
                           className="mt-2 max-h-72 rounded-xl object-contain"
                           alt="Content"
                         />

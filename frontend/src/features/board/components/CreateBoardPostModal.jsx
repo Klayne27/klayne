@@ -115,7 +115,7 @@ const CreateBoardPostModal = ({ onClose }) => {
             value={content}
             onChange={(e) => setContent(e.target.value)}
             onPaste={handlePaste}
-            rows={4}
+            rows={8}
             className="w-full resize-none rounded-lg bg-gray-700/30 px-4 py-2.5 text-sm placeholder-gray-500 focus:outline-none focus:ring-1 focus:ring-primary"
           />
           <input
