@@ -12,6 +12,7 @@ import {
 import { boardKeys } from "./boardKeys"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { showAppToast } from "../../../utils/showAppToast"
+import { useBoardStore } from "../../../store/useBoardStore"
 
 export const useCreateBoardPost = () => {
   const queryClient = useQueryClient()
@@ -165,6 +166,33 @@ export const useCreateBoardComment = (boardPostId) => {
       await queryClient.cancelQueries({ queryKey: boardKeys.comments(boardPostId) })
       const previous = queryClient.getQueryData(boardKeys.comments(boardPostId))
 
+      // 1. Find parent comment data in cache if replying to a comment
+      let optimisticParent = null
+      if (payload.parentCommentId && previous?.pages) {
+        // Flatten pages to find the specific comment being replied to
+        const allComments = previous.pages.flatMap((page) => page.comments)
+        const parentData = allComments.find((c) => c._id === payload.parentCommentId)
+
+        if (parentData) {
+          optimisticParent = {
+            _id: parentData._id,
+            content: parentData.content,
+            user: parentData.user, // Now we have the username!
+          }
+        }
+      }
+
+      // 2. Find post author data if replying to the post
+      let optimisticBoardPost = null
+      if (payload.isReplyToPost) {
+        // Attempt to get the post details from the detail cache
+        const postData = queryClient.getQueryData(boardKeys.detail(boardPostId))
+        optimisticBoardPost = {
+          user: postData?.user, // Gets the post owner's username
+          title: postData?.title,
+        }
+      }
+
       const optimisticComment = {
         _id: `temp-${Date.now()}`,
         content: payload.content,
@@ -180,6 +208,10 @@ export const useCreateBoardComment = (boardPostId) => {
         isEdited: false,
         createdAt: new Date().toISOString(),
         _isOptimistic: true,
+        // Apply the looked-up data
+        parentComment: optimisticParent,
+        isReplyToPost: payload.isReplyToPost,
+        boardPost: optimisticBoardPost,
       }
 
       queryClient.setQueryData(boardKeys.comments(boardPostId), (oldData) => {

@@ -150,6 +150,8 @@ const BoardCommentItem = ({
     () => openSlideMenu(comment), // long press opens slide menu
   )
 
+  console.log('comment', comment);
+
   const handleReactionClick = (commentId, emoji) => onReact({ commentId, emoji })
 
   // Add the cursor-aware emoji insert handler

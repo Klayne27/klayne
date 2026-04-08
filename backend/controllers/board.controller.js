@@ -4,7 +4,12 @@ import User from "../models/user.model.js";
 import BoardPost from "../models/boardPost.model.js";
 import Image from "../models/image.model.js";
 import BoardComment from "../models/boardComment.model.js";
-import { createAndSendBoardNotification, emitNewBoardPostCount, io, onlineUsersMap } from "../lib/socket.js";
+import {
+  createAndSendBoardNotification,
+  emitNewBoardPostCount,
+  io,
+  onlineUsersMap,
+} from "../lib/socket.js";
 
 const userProjection = {
   _id: 1,
@@ -28,7 +33,7 @@ const commentPopulate = [
   { path: "image", select: "imageUrl" },
   {
     path: "parentComment",
-    select: "content user isDeletedByUser isDeletedByAdmin",
+    select: "content user  ",
     populate: {
       path: "user",
       select: "username fullName profileImg",
@@ -343,12 +348,12 @@ export const createBoardComment = async (req, res) => {
       return res.status(400).json({ error: "Comment must have content or an image." });
     }
 
-    const post = await BoardPost.findById(boardPostId);
+    const post = await BoardPost.findById(boardPostId).populate("user");
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
     // Validate parentComment belongs to the same board post
     if (parentCommentId) {
-      const parent = await BoardComment.findById(parentCommentId);
+      const parent = await BoardComment.findById(parentCommentId).populate("user");
       if (!parent || parent.boardPost.toString() !== boardPostId) {
         return res.status(400).json({ error: "Invalid parent comment." });
       }

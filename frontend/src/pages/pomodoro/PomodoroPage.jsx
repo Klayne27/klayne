@@ -90,6 +90,42 @@ const PomodoroPage = () => {
   const workerRef = useRef(null)
   const audioUnlockedRef = useRef(false)
 
+  const fallbackIntervalRef = useRef(null)
+
+  // Add this function before the worker useEffect:
+  const processTick = useCallback(() => {
+    const startTime = startTimestampRef.current
+    const duration = durationAtStartRef.current
+    if (!startTime || !duration) return
+
+    const elapsed = (Date.now() - startTime) / 100
+    const remaining = duration - elapsed
+
+    if (remaining <= 0) {
+      setTimer(0)
+      if (workerRef.current) workerRef.current.postMessage({ type: "STOP" })
+      if (fallbackIntervalRef.current) {
+        clearInterval(fallbackIntervalRef.current)
+        fallbackIntervalRef.current = null
+      }
+      handleSessionEndRef.current()
+    } else {
+      setTimer(remaining)
+    }
+  }, [])
+
+  const startFallbackInterval = useCallback(() => {
+    if (fallbackIntervalRef.current) clearInterval(fallbackIntervalRef.current)
+    fallbackIntervalRef.current = setInterval(processTick, 500)
+  }, [processTick])
+
+  const stopFallbackInterval = useCallback(() => {
+    if (fallbackIntervalRef.current) {
+      clearInterval(fallbackIntervalRef.current)
+      fallbackIntervalRef.current = null
+    }
+  }, [])
+
   useEffect(() => {
     if (!alarmAudioRef.current) {
       const audio = new Audio("/alarm.mp3")
@@ -114,9 +150,10 @@ const PomodoroPage = () => {
       alarmAudioRef.current.currentTime = 0
       alarmAudioRef.current.play().catch((e) => console.error("Audio playback failed:", e))
     }
-    if (Notification.permission === "granted") {
+    if (typeof Notification !== "undefined" && Notification.permission === "granted") {
       new Notification("Pomodoro", { body: "Session complete! Time for a break." })
     }
+
   }, [settings])
 
   const handleReset = useCallback(() => {
@@ -301,43 +338,55 @@ const PomodoroPage = () => {
     selectedTaskId,
   ])
 
-  useEffect(() => {
-    workerRef.current = new Worker("/timerWorker.js")
+useEffect(() => {
+  const supportsWorker = typeof Worker !== "undefined"
 
-    workerRef.current.onmessage = (e) => {
-      if (e.data.type !== "TICK") return
+  if (supportsWorker) {
+    try {
+      workerRef.current = new Worker("/timerWorker.js")
 
-      const startTime = startTimestampRef.current
-      const duration = durationAtStartRef.current
-      if (!startTime || !duration) return
-
-      const elapsed = (Date.now() - startTime) / 1000
-      const remaining = duration - elapsed
-
-      if (remaining <= 0) {
-        setTimer(0)
-        workerRef.current.postMessage({ type: "STOP" })
-        handleSessionEndRef.current()
-      } else {
-        setTimer(remaining)
+      workerRef.current.onerror = (e) => {
+        console.warn("Worker failed, falling back to setInterval:", e)
+        workerRef.current = null
+        startFallbackInterval()
       }
-    }
 
-    return () => {
+      workerRef.current.onmessage = (e) => {
+        if (e.data.type !== "TICK") return
+        processTick()
+      }
+    } catch {
+      startFallbackInterval()
+    }
+  } else {
+    startFallbackInterval()
+  }
+
+  return () => {
+    if (workerRef.current) {
       workerRef.current.postMessage({ type: "STOP" })
       workerRef.current.terminate()
     }
-  }, [])
+    if (fallbackIntervalRef.current) {
+      clearInterval(fallbackIntervalRef.current)
+    }
+  }
+}, [])
 
-  useEffect(() => {
-    if (!workerRef.current) return
-
-    if (isActive && !isGoalReached) {
+useEffect(() => {
+  if (isActive && !isGoalReached) {
+    if (workerRef.current) {
       workerRef.current.postMessage({ type: "START" })
     } else {
+      startFallbackInterval()
+    }
+  } else {
+    if (workerRef.current) {
       workerRef.current.postMessage({ type: "STOP" })
     }
-  }, [isActive, isGoalReached])
+    stopFallbackInterval()
+  }
+}, [isActive, isGoalReached, startFallbackInterval, stopFallbackInterval])
 
   useEffect(() => {
     handleSessionEndRef.current = handleSessionEnd
@@ -368,7 +417,7 @@ const PomodoroPage = () => {
       return
     }
     if (savedIsActive && savedStartTime && savedDurationAtStart) {
-      const elapsedTime = (Date.now() - savedStartTime) / 1000
+      const elapsedTime = (Date.now() - savedStartTime) / 100
       const newTimer = savedDurationAtStart - elapsedTime
       setTimer(newTimer > 0 ? newTimer : 0)
       setIsActive(newTimer > 0)
@@ -408,7 +457,7 @@ const PomodoroPage = () => {
 
   const handleStart = async () => {
     unlockAudio()
-    if (Notification.permission === "default") {
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
     }
 

@@ -17,7 +17,7 @@ const boardPostSchema = new mongoose.Schema(
       type: String,
       trim: true,
     },
-
+    sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
     images: [
       {
         type: mongoose.Schema.Types.ObjectId,
@@ -41,6 +41,7 @@ const boardPostSchema = new mongoose.Schema(
     isPinned: { type: Boolean, default: false },
     tags: [{ type: String, trim: true }],
   },
+
   { timestamps: true },
 );
 
