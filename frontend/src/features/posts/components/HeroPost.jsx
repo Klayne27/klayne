@@ -202,7 +202,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             </Link>
           )}
         </div>
-        <div className={`flex min-w-0 flex-1 flex-col ${hasLineAbove && "mt-3"}`}>
+        <div className={`flex overflow-hidden flex-1 flex-col ${hasLineAbove && "mt-3"}`}>
           {post.isAnonymous ? (
             <div className="flex items-center gap-1 truncate font-bold">
               <span className="min-w-0 truncate">
@@ -235,7 +235,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="flex min-w-0 items-center gap-1 truncate font-bold hover:underline"
+              className="truncate min-w-0 items-center gap-1 font-bold hover:underline"
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >

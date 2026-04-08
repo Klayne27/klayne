@@ -20,7 +20,7 @@ import useMobileConversationLongPress from "../../../../hooks/customHooks/useMob
 import { useDeleteAllMessagesOnMySide, useDeleteConversation, useToggleConversationVisibility } from "../privateChatHooks/usePrivateChatMutations"
 import { useBlockUnblockUser } from "../../../users/usersHooks/useUserMutations"
 
-function ConversationItem({ conv }) {
+function DMConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
   const navigate = useNavigate()
   const { onlineUsers } = useSocket()
@@ -182,15 +182,15 @@ function ConversationItem({ conv }) {
 
       <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center truncate" style={userSelectStyle}>
-            <span className="mr-1 font-bold">{otherUser.fullName}</span>
+          <div className="flex items-center min-w-0" style={userSelectStyle}>
+            <span className="mr-1 font-bold truncate min-w-0">{otherUser.fullName}</span>
             {otherUser.isVerified && (
               <img src="/verified2.png" className="size-[17px]" alt="Verified" />
             )}
             {otherUser.isGoldVerified && (
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
-            <span className="text-gray-400">@{otherUser.username}</span>
+            <span className="text-gray-400 min-w-0 truncate">@{otherUser.username}</span>
             <span className="mx-1 text-xs text-gray-400">·</span>
             <span className="shrink-0 text-xs text-gray-400">{formatPostDate(conv.updatedAt)}</span>
           </div>
@@ -374,4 +374,4 @@ function ConversationItem({ conv }) {
   )
 }
 
-export default React.memo(ConversationItem)
+export default React.memo(DMConversationItem)

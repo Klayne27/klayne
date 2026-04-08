@@ -37,7 +37,7 @@ const ConfirmationModal = ({
         onClick={(e) => e.stopPropagation()}
         tabIndex="-1" 
       >
-        <h2 id="modal-title" className="text-xl font-bold">
+        <h2 id="modal-title" className="text-xl font-bold break-words">
           {modalTitle}
         </h2>
         <p id="modal-description" className="text-gray-400 text-sm">

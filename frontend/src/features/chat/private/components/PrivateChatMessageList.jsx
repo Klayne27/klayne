@@ -139,7 +139,7 @@ const ProfileModalContainer = ({ modalState, handleCloseModal }) => {
       <div className="fixed inset-0 z-50 bg-transparent" onClick={handleCloseModal}></div>
       {isLoading ? (
         <div
-          className="absolute z-50 flex h-48 w-72 items-center justify-center rounded-xl border border-accent bg-base-200 shadow-lg"
+          className="fixed z-50 flex h-48 w-72 items-center justify-center rounded-xl border border-accent bg-base-200 shadow-lg"
           style={{
             top: modalState.position.top,
             left: modalState.position.left,
