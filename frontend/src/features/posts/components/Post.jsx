@@ -364,7 +364,7 @@ const Post = ({
       onMouseUp={handleMouseUp}
     >
       {hasLineAbove && index > 0 && (
-        <div className="ml-[19px] flex h-3 w-0.5 items-center bg-gray-600/50" />
+        <div className="ml-[20px] flex h-3 w-0.5 items-center bg-gray-600/50" />
       )}
 
       {!isMainPost && isRepost && repostingUser && (
