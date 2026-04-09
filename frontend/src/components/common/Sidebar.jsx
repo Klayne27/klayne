@@ -20,13 +20,12 @@ import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
 import {
-  HiPaintBrush,
   HiOutlinePaintBrush,
   HiOutlineEllipsisHorizontalCircle,
 } from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
-import { MdLibraryBooks, MdOutlineLibraryBooks } from "react-icons/md"
+import { MdOutlineLibraryBooks } from "react-icons/md"
 import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
@@ -728,7 +727,12 @@ const Sidebar = ({
                       setShowMorePopover(false)
                     }}
                   />
-                  <div className="white-shadow absolute bottom-full left-0 z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl">
+                  <div
+                    style={{
+                      animation: "fadeInSlideDown 0.2s ease-out forwards",
+                    }}
+                    className="white-shadow absolute bottom-full left-0 z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl"
+                  >
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
@@ -780,7 +784,7 @@ const Sidebar = ({
 
           {/* User Profile and Popover (Desktop only) */}
           {authUser && (
-            <div className="relative mb-3 mt-auto hidden items-center w-full justify-start md:flex">
+            <div className="relative mb-3 mt-auto hidden w-full items-center justify-start md:flex">
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
@@ -833,11 +837,14 @@ const Sidebar = ({
                     className="fixed inset-0 z-50 h-screen w-screen cursor-default bg-transparent"
                     onClick={() => setShowPopover(false)}
                   />
+
+                  {/* Popover Container */}
                   <div
                     ref={popoverRef}
-                    className={`white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] max-w-[250px] ${
-                      shouldCollapseSidebar ? "-translate-x-[90%]" : "-translate-x-1/2"
-                    } flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3 shadow-xl`}
+                    className={`white-shadow absolute bottom-full left-1/2 z-[1001] mb-2 flex min-w-[250px] max-w-[250px] flex-col gap-1 rounded-2xl border border-accent bg-base-100 pb-3 shadow-xl ${shouldCollapseSidebar ? "-translate-x-[90%]" : "-translate-x-1/2"} /* Animation Classes */ animate-in fade-in slide-in-from-top-2 duration-200 ease-out`}
+                    style={{
+                      animation: "fadeInSlideDown 0.2s ease-out forwards",
+                    }}
                   >
                     {/* Mini-Profile Section */}
                     <div className="flex flex-col pb-2">

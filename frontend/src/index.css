@@ -55,6 +55,31 @@ body {
   }
 }
 
+@keyframes fadeInSlideDown {
+  from {
+    opacity: 0;
+    transform: translate(
+      var(--tw-translate-x),
+      -10px
+    ); /* Adjusts based on your translate-x classes */
+  }
+  to {
+    opacity: 1;
+    transform: translate(var(--tw-translate-x), 0);
+  }
+}
+
+@keyframes fadeInSlideRight {
+  from {
+    opacity: 0;
+    transform: translate(-10px, var(--tw-translate-y, 0));
+  }
+  to {
+    opacity: 1;
+    transform: translate(0, var(--tw-translate-y, 0));
+  }
+}
+
 .pulsing-dot {
   background-color: currentColor;
   border-radius: 50%;

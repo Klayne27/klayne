@@ -111,7 +111,7 @@ export default function GroupSettingsPage() {
   }
 
   return (
-    <div className="mx-auto flex h-full max-w-xl flex-col overflow-y-auto p-4">
+    <div  className="mx-auto flex h-full max-w-xl flex-col overflow-y-auto p-4 ">
       {/* Header */}
       <div className="mb-4 flex items-center gap-3">
         <button onClick={() => navigate(-1)}>

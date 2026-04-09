@@ -29,6 +29,8 @@ import {
   useRepostPost,
   useToggleBookmarks,
 } from "../postsHooks/usePostsMutations.js"
+import { CgUnblock } from "react-icons/cg"
+
 
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
@@ -202,9 +204,9 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
             </Link>
           )}
         </div>
-        <div className={`flex overflow-hidden flex-1 flex-col ${hasLineAbove && "mt-3"}`}>
+        <div className={`flex flex-1 flex-col overflow-hidden ${hasLineAbove && "mt-3"}`}>
           {post.isAnonymous ? (
-            <div className="flex items-center gap-1 truncate font-bold">
+            <div className="flex items-center gap-1 overflow-hidden truncate font-bold">
               <span className="min-w-0 truncate">
                 {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
               </span>
@@ -235,7 +237,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="truncate min-w-0 items-center gap-1 font-bold hover:underline"
+              className="min-w-0 flex items-center gap-1 truncate font-bold hover:underline"
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
@@ -283,8 +285,10 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                 onClick={toggleMenu}
               />
               <div
+                style={{ animation: "fadeInSlideDown 0.2s ease-out forwards" }}
                 ref={menuRef}
-                className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
+                /* CHANGE: Changed w-max to a specific width like w-56 or max-w-[240px] */
+                className="white-shadow menu-popover absolute right-0 top-full z-10 mt-1 w-56 overflow-hidden rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
                 onClick={(e) => e.stopPropagation()}
               >
                 {isMyOriginalPost ? (
@@ -330,15 +334,16 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                       <button
                         className="flex w-full items-center gap-2 px-4 py-2 text-left text-white transition duration-200 hover:bg-gray-700/30"
                         onClick={handleFollowClick}
-                        disabled={isFollowingOrUnfollowing}
                       >
                         {isFollowingOriginalPostOwner ? (
-                          <span className="flex items-center gap-3 font-semibold">
+                          <span className="flex min-w-0 items-center gap-3 truncate font-semibold">
                             <TbUserMinus strokeWidth={2} /> Unfollow
                           </span>
                         ) : (
-                          <span className="flex items-center gap-3 font-semibold">
-                            <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
+                          <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                            <TbUserPlus className="shrink-0" />{" "}
+                            {/* Added shrink-0 so icon doesn't squash */}
+                            <span className="truncate">Follow @{originalPostOwner.username}</span>
                           </span>
                         )}
                       </button>
@@ -357,15 +362,23 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                     )}
                     {!sourcePost.isAnonymous && (
                       <button
-                        className="flex w-full items-center gap-2 px-4 py-2 text-left text-red-500 transition duration-200 hover:bg-gray-700/30"
+                        className="flex w-full items-center gap-2 px-4 py-2 text-left transition duration-200 hover:bg-gray-700/30"
                         onClick={handleBlockClick}
                         disabled={isBlocking}
                       >
                         {isBlockedByAuthUser ? (
-                          "Unblock"
+                          <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                            {" "}
+                            <CgUnblock className="shrink-0" />{" "}
+                            <span className="truncate">Unblock @{originalPostOwner.username}</span>
+                          </span>
                         ) : (
-                          <span className="flex items-center gap-3 font-semibold">
-                            <MdBlock /> Block @{originalPostOwner.username}
+                          <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                            {" "}
+                            <MdBlock className="shrink-0 text-red-500" />{" "}
+                            <span className="truncate text-red-500">
+                              Block @{originalPostOwner.username}
+                            </span>
                           </span>
                         )}
                       </button>

@@ -28,15 +28,15 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const { deleteTodo, isDeletingTodo } = useDeleteTodo()
   const { updateTodo, isUpdatingTodo } = useUpdateTodo()
 
-  useEffect(() => {
-    if (openTodoDropdownId === todo._id && ellipsisRef.current) {
-      const rect = ellipsisRef.current.getBoundingClientRect()
-      setDropdownPosition({
-        top: rect.bottom + window.scrollY + -15,
-        left: rect.left + window.scrollX - 155,
-      })
-    }
-  }, [openTodoDropdownId, todo._id])
+  // useEffect(() => {
+  //   if (openTodoDropdownId === todo._id && ellipsisRef.current) {
+  //     const rect = ellipsisRef.current.getBoundingClientRect()
+  //     setDropdownPosition({
+  //       top: rect.bottom + window.scrollY + -15,
+  //       left: rect.left + window.scrollX - 155,
+  //     })
+  //   }
+  // }, [openTodoDropdownId, todo._id])
 
   const shouldShowMobileMenu = isEditTodoMenuOpen === todo._id
 
@@ -90,7 +90,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
   const isTodoOwner = todo.user === currentUser._id
 
   return (
-    <>
+    <div className="relative">
       <li
         onClick={isMobile ? handleMenuToggle : null}
         className={`relative flex items-center justify-between border-b border-accent bg-base-100 py-[3px] pr-6 shadow-sm transition-all duration-500 ease-in-out ${isMobile ? "cursor-pointer" : ""} `}
@@ -137,7 +137,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
 
       {/* Desktop Dropdown Menu - Rendered via Portal */}
       {!isMobile && openTodoDropdownId === todo._id && (
-        <Portal>
+        <>
           <div
             className="fixed inset-0 z-50 cursor-default"
             onClick={() => {
@@ -145,10 +145,9 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
             }}
           ></div>
           <ul
-            className="white-shadow absolute z-50 w-44 rounded-xl bg-base-100 p-2"
+            className="white-shadow absolute right-9 top-12 z-50 w-48 rounded-xl bg-base-100 p-2"
             style={{
-              top: dropdownPosition.top,
-              left: dropdownPosition.left,
+              animation: "fadeInSlideDown 0.2s ease-out forwards",
             }}
           >
             <li>
@@ -171,7 +170,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
               </button>
             </li>
           </ul>
-        </Portal>
+        </>
       )}
 
       {/* Mobile Slide Up Menu with Edit Form */}
@@ -190,7 +189,7 @@ function TodoItem({ todo, openTodoDropdownId, setOpenTodoDropdownId }) {
           </div>
         </SlideUpMenu>
       )}
-    </>
+    </div>
   )
 }
 

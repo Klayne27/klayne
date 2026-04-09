@@ -5,6 +5,7 @@ import RightPanel from "./components/common/RightPanel"
 import { useAppStore } from "./store/useAppStore"
 import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
+import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
@@ -42,13 +43,12 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
   const isMessagePage = pathname.includes("/messages")
   const isBoardPage = pathname.includes("/board")
   const isPublicChatPage = pathname.includes("/public-chat")
-  const { showCreatePostModal, setShowCreatePostModal } =
-    useAppStore()
+  const { showCreatePostModal, setShowCreatePostModal } = useAppStore()
 
   const [feedType, setFeedType] = useState("posts")
 
   const shouldHideSidePanels =
-    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos") 
+    pathname.includes("/study") || pathname.includes("/pomodoro") || pathname.includes("/todos")
 
   return (
     <>
@@ -62,6 +62,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
             installApp={installApp}
           />
         )}
+        <PomodoroTimerEngine />
         <main
           className={`min-w-0 ${isPublicChatPage ? "flex h-screen max-h-screen flex-col overflow-y-auto md:flex-1" : "flex-1 md:pb-0"}`}
         >
@@ -115,13 +116,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
           </Suspense>
         </main>
         {!isMessagePage && !isPublicChatPage && !shouldHideSidePanels && !isBoardPage && (
-          <RightPanel
-            deferredPrompt={deferredPrompt}
-            isInstalled={isInstalled}
-            installApp={installApp}
-            isPushSubscribed={isPushSubscribed}
-            className="hidden md:block"
-          />
+          <RightPanel />
         )}
       </div>
 

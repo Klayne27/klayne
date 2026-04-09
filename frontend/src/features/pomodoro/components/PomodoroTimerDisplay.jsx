@@ -98,7 +98,7 @@ function PomodoroTimerDisplay({
             <span
               className={`absolute top-16 text-xl font-bold tracking-wider text-primary ${isBreak ? "text-teal-300" : "text-primary"}`}
             >
-              {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
+              {!isGoalReached ? (isBreak ? "Break Time" : "Focus Time") : "Finished"}
             </span>
           )}
 

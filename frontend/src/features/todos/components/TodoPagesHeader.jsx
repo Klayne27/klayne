@@ -91,7 +91,10 @@ function TodoPagesHeader({ pageTitle }) {
                 className="fixed inset-0 z-10 cursor-default bg-transparent"
                 onClick={handleCloseDropdown}
               ></div>
-              <ul className="white-shadow absolute right-2 top-3 z-20 w-52 rounded-xl bg-base-100 p-2">
+              <ul
+                style={{ animation: "fadeInSlideDown 0.2s ease-out forwards" }}
+                className="white-shadow absolute right-3 top-9 z-20 w-52 rounded-xl bg-base-100 p-2"
+              >
                 <li>
                   <button
                     onClick={handleStatsPageClick}

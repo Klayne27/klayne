@@ -8,7 +8,7 @@ function RightDropdown({ onToggleRightDropdown, isRightDropdownOpen }) {
   const navigate = useNavigate()
 
   return (
-    <div className="fixed right-6 top-32 z-40 flex flex-col items-center gap-3">
+    <div className="fixed right-1 top-24 md:right-6 md:top-32 z-40 flex flex-col items-center gap-3">
       <button
         onClick={onToggleRightDropdown}
         className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isRightDropdownOpen ? "bg-primary text-white" : "bg-base-200 text-slate-400 hover:text-white"}`}

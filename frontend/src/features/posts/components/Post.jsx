@@ -510,7 +510,7 @@ const Post = ({
               {showMenu && (
                 <>
                   <div
-                    className="fixed inset-0 z-[9998] cursor-default bg-transparent"
+                    className="fixed inset-0 z-10 cursor-default bg-transparent"
                     onClick={(e) => {
                       e.stopPropagation()
                       setShowMenu(false)
@@ -518,8 +518,11 @@ const Post = ({
                   />
 
                   <div
+                    style={{
+                      animation: "fadeInSlideDown 0.2s ease-out forwards",
+                    }}
                     ref={menuRef}
-                    className="white-shadow absolute right-0 top-full z-[9999] mt-1 w-max rounded-xl bg-base-100 py-2 text-lg shadow-xl shadow-primary/40"
+                    className="white-shadow menu-popover absolute right-0 top-full z-10 mt-1 w-56 overflow-hidden rounded-xl bg-base-100 py-2 text-lg shadow-md shadow-primary"
                     onClick={(e) => e.stopPropagation()}
                   >
                     {isMyOriginalPost ? (
@@ -571,11 +574,15 @@ const Post = ({
                           >
                             {isFollowingOriginalPostOwner ? (
                               <span className="flex items-center justify-center gap-3 font-semibold">
-                                <TbUserMinus strokeWidth={2} /> Unfollow
+                                <TbUserMinus strokeWidth={2} className="shrink-0" />
+                                <span className="truncate"> Unfollow </span>
                               </span>
                             ) : (
-                              <span className="flex items-center justify-center gap-3 font-semibold">
-                                <TbUserPlus strokeWidth={2} /> Follow @{originalPostOwner.username}
+                              <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                                <TbUserPlus strokeWidth={2} className="shrink-0" />{" "}
+                                <span className="truncate">
+                                  Follow @{originalPostOwner.username}
+                                </span>
                               </span>
                             )}
                           </button>
@@ -601,10 +608,20 @@ const Post = ({
                             disabled={isBlocking}
                           >
                             {isBlockedByAuthUser ? (
-                              "Unblock"
+                              <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                                {" "}
+                                <CgUnblock className="shrink-0" />{" "}
+                                <span className="truncate">
+                                  Unblock @{originalPostOwner.username}
+                                </span>
+                              </span>
                             ) : (
-                              <span className="flex items-center justify-center gap-3 font-semibold">
-                                <MdBlock /> Block @{originalPostOwner.username}
+                              <span className="flex w-full min-w-0 items-center gap-3 font-semibold">
+                                {" "}
+                                <MdBlock className="shrink-0 text-red-500" />{" "}
+                                <span className="truncate text-red-500">
+                                  Block @{originalPostOwner.username}
+                                </span>
                               </span>
                             )}
                           </button>

@@ -119,7 +119,10 @@ const TodoSectionItem = forwardRef(
           {pathname.startsWith("/todos/") && (
             <div className="flex items-center gap-3 p-2">
               <img
-                src={getOptimizedImageUrl(list?.owner.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                src={getOptimizedImageUrl(
+                  list?.owner.profileImg?.imageUrl || "/avatar-placeholder.png",
+                  "avatar",
+                )}
                 className="size-8 rounded-full object-cover"
                 alt={`${list?.owner.username}'s profile`}
               />
@@ -201,7 +204,10 @@ const TodoSectionItem = forwardRef(
                         setOpenListDropdownId(null)
                       }}
                     ></div>
-                    <ul className="white-shadow absolute right-2 top-3 z-50 w-48 rounded-xl bg-base-100 p-2">
+                    <ul
+                      style={{ animation: "fadeInSlideDown 0.2s ease-out forwards" }}
+                      className="white-shadow absolute right-3 top-9 z-50 w-48 rounded-xl bg-base-100 p-2"
+                    >
                       <li>
                         <button
                           onClick={(e) =>

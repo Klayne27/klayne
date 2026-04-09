@@ -21,8 +21,11 @@ const DropdownMenu = ({ children, icon }) => {
             onClick={toggleMenu}
           ></div>
           <div
+            style={{
+              animation: "fadeInSlideDown 0.2s ease-out forwards",
+            }}
             ref={menuRef}
-            className="white-shadow menu-popover absolute right-0 top-0 z-10 w-max rounded-xl bg-base-100 py-2"
+            className="white-shadow top-full mt-1 menu-popover absolute right-0  z-10 w-max rounded-xl bg-base-100 py-2"
             onClick={(e) => e.stopPropagation()}
           >
             {children}

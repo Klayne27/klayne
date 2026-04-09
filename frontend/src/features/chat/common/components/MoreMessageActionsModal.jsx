@@ -64,6 +64,7 @@ function MoreMessageActionsModal({
           top: moreActionsModalPosition.top,
           left: moreActionsModalPosition.left,
           minWidth: "180px",
+          animation: "fadeInSlideRight 0.2s ease-out forwards",
         }}
         onClick={(e) => e.stopPropagation()}
       >
@@ -104,7 +105,7 @@ function MoreMessageActionsModal({
           Reply
           <HiOutlineReply size={18} className="text-slate-400" />
         </button>
-        {isEditable && !isMessageDeleted &&  (
+        {isEditable && !isMessageDeleted && (
           <button
             onClick={onEditClick}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-slate-300 transition duration-200 hover:bg-secondary"
@@ -189,7 +190,7 @@ function MoreMessageActionsModal({
             onClick={onAdminDeleteMessage}
             className="flex w-full items-center justify-between gap-2 rounded-md px-3 py-1.5 text-red-400 transition duration-200 hover:bg-red-400/10"
           >
-            Delete Message (Admin)
+            Delete (Admin)
             <FaTrashCan size={18} />
           </button>
         )}

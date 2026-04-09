@@ -26,8 +26,16 @@ import { BiHealth } from "react-icons/bi"
 import { PiLinkSimpleBold } from "react-icons/pi"
 import ReactCalendarHeatmap from "react-calendar-heatmap"
 import { Tooltip } from "react-tooltip"
-import { useGetConversationBetweenUsers, useGetOrCreateConversation } from "../features/chat/private/privateChatHooks/usePrivateChatQueries.js"
-import { useAdminDeleteUser, useBlockUnblockUser, useFollow, useUpdateUserProfile } from "../features/users/usersHooks/useUserMutations.js"
+import {
+  useGetConversationBetweenUsers,
+  useGetOrCreateConversation,
+} from "../features/chat/private/privateChatHooks/usePrivateChatQueries.js"
+import {
+  useAdminDeleteUser,
+  useBlockUnblockUser,
+  useFollow,
+  useUpdateUserProfile,
+} from "../features/users/usersHooks/useUserMutations.js"
 import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 
@@ -273,7 +281,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               >
                 <FaArrowLeft className="h-4 w-4" />
               </button>
-              <div className="flex flex-col min-w-0">
+              <div className="flex min-w-0 flex-col">
                 <p className="min-w-0 truncate text-lg font-bold">{userProfile?.fullName}</p>
                 <span className="text-sm text-slate-500">
                   {feedType === "likes"

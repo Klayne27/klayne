@@ -66,25 +66,28 @@ const SuggestedUsersPanel = () => {
                 className="flex items-center justify-between gap-4"
                 key={user._id}
               >
-                <div className="flex flex-grow items-center gap-2">
+                <div className="flex flex-grow items-center gap-2 overflow-hidden">
                   <div className="avatar">
                     <div className="w-8 rounded-full">
                       <img
-                        src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                        src={getOptimizedImageUrl(
+                          user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )}
                       />
                     </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="flex w-full items-center gap-1 truncate font-bold tracking-tight hover:underline">
-                      {user.fullName.length > 15
-                        ? user.fullName.slice(0, 15) + "..."
-                        : user.fullName}{" "}
+                  <div className="flex flex-col overflow-hidden">
+                    <span className="flex w-full min-w-0 items-center gap-1 font-bold tracking-tight hover:underline">
+                      <span className="truncate">{user.fullName} </span>
                       {user.isVerified && <img src="/verified2.png" className="size-[17px]" />}
                       {user.isGoldVerified && (
                         <img src="/gold-verified2.png" className="size-[17px]" />
                       )}
                     </span>
-                    <span className="text-sm text-slate-500">@{truncateText(user.username, 12)}</span>
+                    <span className="truncate text-sm text-slate-500">
+                      @{truncateText(user.username, 12)}
+                    </span>
                   </div>
                 </div>
                 <div>
