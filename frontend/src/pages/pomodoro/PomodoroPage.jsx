@@ -632,7 +632,7 @@ useEffect(() => {
                           </span>
                         )}
                       </div>
-                      <h2 className="break-words text-sm font-bold text-white">
+                      <h2 className="break-words text-sm font-bold">
                         {selectedTask.title}
                       </h2>
                       {selectedTask.description && (
@@ -645,7 +645,7 @@ useEffect(() => {
 
                   <button
                     onClick={() => setSelectedTaskId(null)}
-                    className="ml-3 shrink-0 rounded-lg p-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
+                    className="ml-3 shrink-0 rounded-lg p-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-red-500 duration-200"
                   >
                     <IoClose size={20} />
                   </button>
@@ -702,7 +702,8 @@ useEffect(() => {
                       <FaFlag className={`${getTextColor(task.priority)} text-base`} />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="truncate text-sm font-bold text-slate-100">{task.title}</h4>
+                      <h4 className="truncate text-sm font-bold">{task.title}</h4>
+                      <h4 className="truncate text-xs text-slate-500">{task.description}</h4>
                       <div className="flex items-center gap-2">
                         <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-600">
                           {task.listName}
