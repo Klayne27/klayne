@@ -31,7 +31,6 @@ import {
 } from "../postsHooks/usePostsMutations.js"
 import { CgUnblock } from "react-icons/cg"
 
-
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
@@ -237,11 +236,11 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="min-w-0 flex items-center gap-1 truncate font-bold hover:underline"
+              className="flex min-w-0 items-center gap-1 overflow-hidden truncate font-bold hover:underline"
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
-              {originalPostOwner.fullName}
+              <span className="min-w-0 truncate">{originalPostOwner.fullName}</span>
               <span className="flex items-center">
                 {originalPostOwner.isVerified && (
                   <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />
@@ -577,8 +576,11 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
         >
           {isUserLoading ? (
             <div
-              className="absolute z-50 flex h-48 w-72 items-center justify-center rounded-xl border border-accent bg-base-200 shadow-lg"
-              style={{ top: modalState.position.top, left: modalState.position.left }}
+              className="fixed z-50 flex h-48 w-72 items-center justify-center rounded-xl border border-accent bg-base-200 shadow-lg"
+              style={{
+                top: modalState.position.top,
+                left: modalState.position.left,
+              }}
             >
               <LoadingSpinner size="md" />
             </div>

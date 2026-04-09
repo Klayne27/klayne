@@ -1,8 +1,8 @@
 import { useState, useRef, useCallback, useEffect } from "react"
 import { useGetUserProfile } from "../../features/users/usersHooks/useUserQueries"
 
-const HOVER_DELAY_MS = 500 
-const LEAVE_DELAY_MS = 300 
+const HOVER_DELAY_MS = 500
+const LEAVE_DELAY_MS = 300
 
 export const useProfileCardHover = () => {
   const [modalState, setModalState] = useState({
@@ -34,17 +34,31 @@ export const useProfileCardHover = () => {
 
   const handleMouseEnter = useCallback(
     (user, event) => {
-      clearTimers() 
+      clearTimers()
 
       if (modalState.isOpen && modalState.username === user.username) {
         return
       }
 
       const rect = event.currentTarget.getBoundingClientRect()
-      const position = {
-        top: rect.bottom + window.scrollY + 5,
-        left: rect.left + window.scrollX,
+      const modalWidth = 288
+      const modalHeight = 192
+      const padding = 8
+
+      let top = rect.bottom + 5
+      let left = rect.left
+
+      // prevent right overflow
+      if (left + modalWidth > window.innerWidth - padding) {
+        left = window.innerWidth - modalWidth - padding
       }
+
+      // prevent bottom overflow → flip above
+      if (top + modalHeight > window.innerHeight - padding) {
+        top = rect.top - modalHeight - 5
+      }
+
+      const position = { top, left }
 
       openTimerRef.current = setTimeout(() => {
         setModalState({
@@ -62,7 +76,6 @@ export const useProfileCardHover = () => {
 
     closeTimerRef.current = setTimeout(close, LEAVE_DELAY_MS)
   }, [clearTimers, close])
-
 
   const handleModalEnter = useCallback(() => {
     clearTimers()
