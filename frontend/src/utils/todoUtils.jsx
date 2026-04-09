@@ -15,13 +15,28 @@ import { PiMathOperationsFill } from "react-icons/pi"
 export const getPriorityColor = (priority) => {
   switch (priority) {
     case "urgent":
-      return "border-red-400 bg-red-500/30 rounded-full"
+      return "border-red-400 bg-red-500/10 rounded-full hover:bg-red-500/40 transition-colors cursor-pointer"
     case "high":
-      return "border-orange-400 bg-orange-500/30 rounded-full"
+      return "border-orange-400 bg-orange-500/10 rounded-full hover:bg-orange-500/40 transition-colors cursor-pointer"
     case "medium":
-      return "border-yellow-400 bg-yellow-500/30 rounded-full"
+      return "border-yellow-400 bg-yellow-500/10 rounded-full hover:bg-yellow-500/40 transition-colors cursor-pointer"
     case "low":
-      return "rounded-full border-slate-400"
+      return "border-slate-400 rounded-full hover:bg-slate-400/20 transition-colors cursor-pointer"
+    default:
+      return "rounded-full border-slate-500 cursor-pointer"
+  }
+}
+
+export const get = (priority) => {
+  switch (priority) {
+    case "urgent":
+      return "border-red-400 bg-red-500/50 rounded-full border"
+    case "high":
+      return "border-orange-400 bg-orange-500/50 rounded-full border"
+    case "medium":
+      return "border-yellow-400 bg-yellow-500/50 rounded-full border"
+    case "low":
+      return "rounded-full border-slate-400 bg-base-300/50 border"
     default:
       return
   }

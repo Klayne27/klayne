@@ -17,11 +17,9 @@ import RightDropdown from "../../features/pomodoro/components/RightDropdown"
 import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
 import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
 import PomodoroTasksList from "../../features/pomodoro/components/PomodoroTaskList"
-import { colorMap, getCompletedColor, getPriorityColor, iconMap } from "../../utils/todoUtils"
+import { getPriorityColor, getTextColor, iconMap } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { FaCheckCircle } from "react-icons/fa"
-import { truncateText } from "../../utils/truncateText"
-import { FaCalendar, FaPlus } from "react-icons/fa6"
+import { FaCheckCircle, FaFlag } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 import { useEndStudySession } from "../../features/pomodoro/pomodoroHooks/usePomodoroMutations"
@@ -75,11 +73,21 @@ const PomodoroPage = () => {
   const [milestoneLevel, setMilestoneLevel] = useState(null)
 
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(true)
-  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(true)
+  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(false)
+  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(false)
 
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
   const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
+  const [searchQuery, setSearchQuery] = useState("")
+
+  // Filter tasks based on search
+  const filteredTasks = useMemo(() => {
+    return allTodos.filter(
+      (task) =>
+        task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        task.listName.toLowerCase().includes(searchQuery.toLowerCase()),
+    )
+  }, [allTodos, searchQuery])
 
   const startTimestampRef = useRef(0)
   const durationAtStartRef = useRef(0)
@@ -546,81 +554,25 @@ useEffect(() => {
 
   return (
     <>
-      <main className="template container mx-auto flex h-dvh w-full max-w-2xl animate-fade-in flex-col items-center justify-between overflow-y-auto border-accent bg-base-100 font-sans md:border-x">
+      <main className="template container mx-auto flex min-h-screen w-full max-w-2xl animate-fade-in flex-col items-center border-accent bg-base-100 font-sans md:border-x">
+        {" "}
         <PomodoroHeader
           showXpGain={showXpGain}
           xpGainedAmount={xpGainedAmount}
           setShowInfoModal={setShowInfoModal}
         />
-
         <LeftDropdown
           onToggleLeftDropdown={toggleLeftDropdown}
           isLeftDropdownOpen={isLeftDropdownOpen}
         />
-
         <RightDropdown
           onToggleRightDropdown={toggleRightDropdown}
           isRightDropdownOpen={isRightDropdownOpen}
         />
-
-        <div className="relative flex w-[70%] flex-grow flex-col items-center justify-center gap-8 rounded-3xl p-3 md:p-10">
-          <div className="absolute top-[88px] flex w-full cursor-pointer justify-center">
-            {selectedTask ? (
-              <div
-                onClick={() => setShowTodoDropdown(true)}
-                className="gray-shadow absolute -top-20 flex w-full items-center justify-between rounded-lg border-l-4 border-primary bg-base-100 p-4 py-2"
-              >
-                <div className="flex flex-grow items-center gap-2">
-                  <button
-                    onClick={(e) => {
-                      handleComplete(selectedTask._id, e)
-                    }}
-                    className={`flex-shrink-0 rounded-full ${isVisuallyCompleted ? getCompletedColor(selectedTask.priority) : getPriorityColor(selectedTask.priority)} ${getPriorityColor(selectedTask.priority) === "rounded-full border-slate-400" ? "border" : "border-2"} size-5`}
-                    disabled={isCompletingTodo}
-                  >
-                    {isVisuallyCompleted && <FaCheckCircle className="size-4" />}
-                  </button>
-                  <div className="min-w-0 flex-1">
-                    <p className="flex items-center gap-1 text-xs font-bold">
-                      {IconComponent && (
-                        <IconComponent className={`${colorMap[selectedTask?.color]}`} />
-                      )}
-                      {truncateText(selectedTask.listName, 20)}
-                    </p>
-                    <h2 className="text-sm font-semibold">
-                      {truncateText(selectedTask.title, 20)}
-                    </h2>
-                    {selectedTask.description && (
-                      <p className="text-xs text-slate-500">
-                        {truncateText(selectedTask.description, 30)}
-                      </p>
-                    )}
-                    {selectedTask.dueDate && (
-                      <p className="text-xs text-slate-500">
-                        {" "}
-                        <p className="flex items-center gap-1 text-xs text-slate-500">
-                          <FaCalendar /> {formattedDueDate}
-                        </p>
-                      </p>
-                    )}
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <button
-                onClick={() => setShowTodoDropdown(true)}
-                className="absolute -top-16 font-semibold text-primary hover:underline"
-              >
-                <span className="flex items-center gap-1 text-center">
-                  <FaPlus size={14} />
-                  Choose Task
-                </span>
-              </button>
-            )}
-          </div>
+        {/* TIMER SECTION */}
+        <section className="flex min-h-[70dvh] w-full shrink-0 flex-col items-center justify-center gap-6 py-10">
           {!isMobile && (
             <h1
-              key={isBreak ? "break" : "study"}
               className={`text-3xl font-bold tracking-wider ${isBreak ? "text-teal-300" : "text-primary"}`}
             >
               {!isGoalReached ? (isBreak ? "Break Time" : "Study Time") : "Finished"}
@@ -647,7 +599,138 @@ useEffect(() => {
             timer={timer}
             onResetTimerClick={handleResetTimerClick}
           />
-        </div>
+
+          {/* ACTIVE TASK BANNER */}
+          <div className="w-full max-w-md px-4">
+            {selectedTask ? (
+              <div className="flex flex-col items-center gap-3">
+                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 opacity-80">
+                  Currently Focusing
+                </span>
+                <div className="gray-shadow flex w-full items-center justify-between rounded-2xl border-l-4 border-primary bg-base-200/60 p-4 backdrop-blur-sm transition-all">
+                  <div className="flex flex-1 items-center gap-4 overflow-hidden">
+                    <button
+                      onClick={(e) => handleComplete(selectedTask._id, e)}
+                      className={`group flex size-6 shrink-0 items-center justify-center border-2 ${getPriorityColor(selectedTask.priority)}`}
+                      title="Complete Task"
+                    >
+                      {/* Minimal check icon that appears on hover */}
+                      <FaCheckCircle
+                        className="text-green-500 opacity-0 transition-opacity group-hover:opacity-100"
+                        size={12}
+                      />
+                    </button>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-2">
+                        <p className="truncate text-[10px] font-bold uppercase text-primary/80">
+                          {selectedTask.listName}
+                        </p>
+                        {selectedTask.dueDate && (
+                          <span className="rounded-md bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-300">
+                            📅 {new Date(selectedTask.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                      <h2 className="break-words text-sm font-bold text-white">
+                        {selectedTask.title}
+                      </h2>
+                      {selectedTask.description && (
+                        <p className="break-words text-xs text-slate-400">
+                          {selectedTask.description}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+
+                  <button
+                    onClick={() => setSelectedTaskId(null)}
+                    className="ml-3 shrink-0 rounded-lg p-1 text-slate-500 transition-colors hover:bg-white/10 hover:text-white"
+                  >
+                    <IoClose size={20} />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border border-dashed border-slate-700 py-6 text-center">
+                <p className="text-sm font-medium italic text-slate-500">
+                  No task selected. Pick one below!
+                </p>
+              </div>
+            )}
+          </div>
+        </section>
+        {/* TASKS LIST SECTION */}
+        <section className="mt-4 w-full max-w-md px-4 pb-24">
+          <div className="mb-6 flex flex-col gap-4">
+            <div className="flex items-center justify-between">
+              <h3 className="text-lg font-bold text-white">Your Tasks</h3>
+              <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase text-primary">
+                {allTodos.length} Total
+              </span>
+            </div>
+
+            <div className="relative">
+              <input
+                type="text"
+                placeholder="Search tasks..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="transition-focus w-full rounded-xl border border-slate-800 bg-base-200 px-4 py-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
+              />
+            </div>
+          </div>
+
+          {myListsLoading ? (
+            <div className="flex justify-center py-10">
+              <LoadingSpinner size="sm" />
+            </div>
+          ) : (
+            <div className="flex flex-col gap-3">
+              {filteredTasks.map((task) => (
+                <div
+                  key={task._id}
+                  onClick={() => setSelectedTaskId(task._id)}
+                  className={`group flex cursor-pointer items-center justify-between rounded-xl p-4 transition-all duration-200 ${
+                    selectedTaskId === task._id
+                      ? "bg-primary/5 shadow-lg shadow-primary/5 ring-2 ring-primary"
+                      : "bg-base-200 hover:bg-secondary"
+                  }`}
+                >
+                  <div className="flex min-w-0 items-center gap-4">
+                    <div className="shrink-0">
+                      <FaFlag className={`${getTextColor(task.priority)} text-base`} />
+                    </div>
+                    <div className="min-w-0">
+                      <h4 className="truncate text-sm font-bold text-slate-100">{task.title}</h4>
+                      <div className="flex items-center gap-2">
+                        <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-600">
+                          {task.listName}
+                        </p>
+                        {task.dueDate && (
+                          <span className="text-[9px] font-medium text-slate-500">
+                            • Due {new Date(task.dueDate).toLocaleDateString()}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                  {selectedTaskId === task._id && (
+                    <div className="ml-2 shrink-0 animate-pulse text-[10px] font-black uppercase text-primary">
+                      Active
+                    </div>
+                  )}
+                </div>
+              ))}
+
+              {filteredTasks.length === 0 && (
+                <div className="py-12 text-center">
+                  <p className="text-sm text-slate-500">No tasks found matching your search.</p>
+                </div>
+              )}
+            </div>
+          )}
+        </section>
       </main>
       {settings && isSettingsOpen && (
         <PomodoroSettingsModal

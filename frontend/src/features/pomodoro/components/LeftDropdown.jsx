@@ -1,77 +1,75 @@
 import { CiMail } from "react-icons/ci"
-import { FaEllipsis, FaEllipsisVertical } from "react-icons/fa6"
+import { FaEllipsisVertical } from "react-icons/fa6"
 import { useNavigate } from "react-router-dom"
 import { formatCount } from "../../../utils/textUtils"
 import { useSocket } from "../../../context/SocketContext"
 import { GoHome } from "react-icons/go"
 import { IoChatbubblesOutline } from "react-icons/io5"
 
-function LeftDropdown({onToggleLeftDropdown, isLeftDropdownOpen}) {
+function LeftDropdown({ onToggleLeftDropdown, isLeftDropdownOpen }) {
   const navigate = useNavigate()
   const { unreadMessageCount, unreadPublicChatCount, newPostCount } = useSocket()
 
+  const Badge = ({ count, isDot = false }) => {
+    if (count <= 0) return null
+    return (
+      <div
+        className={`absolute -right-1 -top-1 z-10 flex items-center justify-center rounded-full border-2 border-base-100 bg-primary font-bold ${isDot ? "h-3 w-3" : "h-5 min-w-[1.25rem] px-1 text-[10px]"}`}
+      >
+        {!isDot && formatCount(count)}
+      </div>
+    )
+  }
+
   return (
-    <div className="absolute left-0 top-24 flex flex-col items-center justify-center gap-1 md:left-1 md:top-28">
+    <div className="fixed left-6 top-32 z-40 flex flex-col items-center gap-3">
       <button
         onClick={onToggleLeftDropdown}
-        className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-        aria-label="Toggle navigation"
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isLeftDropdownOpen ? " bg-primary text-white" : "bg-base-200 text-slate-400 hover:text-white"}`}
       >
-        {/* Vertical Ellipsis */}
         <FaEllipsisVertical
-          size={25}
-          className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-0 opacity-100" : "-rotate-90 opacity-0"} `}
+          size={20}
+          className={`transition-transform duration-500 ${isLeftDropdownOpen ? "rotate-180" : "rotate-0"}`}
         />
-        {/* Horizontal Ellipsis */}
-        <FaEllipsis
-          size={25}
-          className={`absolute transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "rotate-90 opacity-0" : "rotate-0 opacity-100"} `}
-        />{" "}
       </button>
-      {/* The dropdown content is now always rendered */}
+      {/* The Dock */}
       <div
-        className={`flex origin-top transform flex-col items-center justify-center gap-1 transition-all duration-300 ease-in-out ${isLeftDropdownOpen ? "visible scale-y-100 opacity-100" : "invisible scale-y-0 opacity-0"} `}
+        className={`flex flex-col gap-3 transition-all duration-500 ease-[cubic-bezier(0.23,1,0.32,1)] ${isLeftDropdownOpen ? "translate-x-0 scale-100 opacity-100" : "pointer-events-none -translate-x-12 scale-95 opacity-0"}`}
       >
-        <button
-          onClick={() => navigate("/")}
-          className="flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-        >
-          <GoHome size={25} />
-          {newPostCount > 0 && (
-            <div
-              className="absolute right-3.5 top-3.5 h-2 w-2 rounded-full bg-primary"
-              style={{ transform: "translate(50%, -50%)" }}
-            ></div>
-          )}
-        </button>
-        <button
-          onClick={() => navigate("/messages")}
-          className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-        >
-          <CiMail size={25} strokeWidth={0.5} />
-          {unreadMessageCount > 0 && (
-            <div
-              className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
-              style={{ transform: "translate(50%, -50%)" }}
-            >
-              {formatCount(unreadMessageCount)}
-            </div>
-          )}
-        </button>
-        <button
-          onClick={() => navigate("/public-chat")}
-          className="relative flex h-12 w-12 items-center justify-center rounded-full text-slate-500 transition-all md:hover:bg-slate-700/50 md:hover:text-white"
-        >
-          <IoChatbubblesOutline size={24} />
-          {unreadPublicChatCount > 0 && (
-            <div
-              className="absolute right-3 top-4 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
-              style={{ transform: "translate(50%, -50%)" }}
-            >
-              {formatCount(unreadPublicChatCount)}
-            </div>
-          )}
-        </button>
+        {[
+          {
+            icon: <GoHome size={24} />,
+            path: "/",
+            badge: <Badge count={newPostCount} isDot />,
+            label: "Home",
+          },
+          {
+            icon: <CiMail size={24} />,
+            path: "/messages",
+            badge: <Badge count={unreadMessageCount} />,
+            label: "Messages",
+          },
+          {
+            icon: <IoChatbubblesOutline size={22} />,
+            path: "/public-chat",
+            badge: <Badge count={unreadPublicChatCount} />,
+            label: "Public Chat",
+          },
+        ].map((item, i) => (
+          <button
+            key={item.path}
+            onClick={() => navigate(item.path)}
+            style={{ transitionDelay: `${i * 50}ms` }}
+            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl bg-base-200/80 text-slate-400 backdrop-blur-md transition-all hover:bg-primary hover:text-white hover:shadow-[0_0_15px_rgba(var(--p),0.4)]"
+          >
+            {item.icon}
+            {item.badge}
+            {/* Tooltip */}
+            <span className="absolute left-14 hidden whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs group-hover:block">
+              {item.label}
+            </span>
+          </button>
+        ))}
       </div>
     </div>
   )

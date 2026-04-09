@@ -35,7 +35,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const xpProgress = (pomodoroXP / xpNeededForNextLevel) * 100
 
   return (
-    <header className="w-full">
+    <header className="sticky top-0 z-50 w-full bg-base-100">
       <div className="flex flex-col items-center gap-4 border-b border-accent p-3 pb-3 md:p-4">
         <div className="relative w-full">
           <div className="flex items-center justify-between">
@@ -46,7 +46,10 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                   className="h-10 w-10 overflow-hidden rounded-full"
                 >
                   <img
-                    src={getOptimizedImageUrl(profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                    src={getOptimizedImageUrl(
+                      profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     alt={`${fullName} avatar`}
                     className="h-full w-full object-cover"
                   />

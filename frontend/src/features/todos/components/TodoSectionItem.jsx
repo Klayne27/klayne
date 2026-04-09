@@ -201,7 +201,7 @@ const TodoSectionItem = forwardRef(
                         setOpenListDropdownId(null)
                       }}
                     ></div>
-                    <ul className="white-shadow absolute right-2 top-3 z-50 w-44 rounded-xl bg-base-100 p-2">
+                    <ul className="white-shadow absolute right-2 top-3 z-50 w-48 rounded-xl bg-base-100 p-2">
                       <li>
                         <button
                           onClick={(e) =>
