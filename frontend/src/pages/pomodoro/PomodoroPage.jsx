@@ -17,7 +17,7 @@ import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTi
 import PomodoroTasksList from "../../features/pomodoro/components/PomodoroTaskList"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { FaCheckCircle, FaFlag } from "react-icons/fa"
+import { FaFlag } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
@@ -302,14 +302,9 @@ const PomodoroPage = () => {
                   <div className="flex flex-1 items-center gap-4 overflow-hidden">
                     <button
                       onClick={(e) => handleComplete(selectedTask._id, e)}
-                      className={`group flex size-6 shrink-0 items-center justify-center border-2 ${getPriorityColor(selectedTask.priority)}`}
+                      className={`group flex size-7 shrink-0 items-center justify-center border-2 ${getPriorityColor(selectedTask.priority)}`}
                       title="Complete Task"
-                    >
-                      <FaCheckCircle
-                        className="text-green-500 opacity-0 transition-opacity group-hover:opacity-100"
-                        size={12}
-                      />
-                    </button>
+                    ></button>
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -390,8 +385,8 @@ const PomodoroPage = () => {
                       <FaFlag className={`${getTextColor(task.priority)} text-base`} />
                     </div>
                     <div className="min-w-0">
-                      <h4 className="truncate text-sm font-bold">{task.title}</h4>
-                      <h4 className="truncate text-xs text-slate-500">{task.description}</h4>
+                      <h4 className="break-words text-sm font-bold">{task.title}</h4>
+                      <h4 className="break-words text-xs text-slate-500">{task.description}</h4>
                       <div className="flex items-center gap-2">
                         <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-600">
                           {task.listName}
