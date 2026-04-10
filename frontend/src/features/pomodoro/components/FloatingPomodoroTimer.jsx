@@ -14,6 +14,7 @@ const FloatingPomodoroTimer = () => {
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
 
   const { settings } = useGetPomodoroSettings()
+  const engineActions = usePomodoroTimerStore((s) => s.engineActions)
 
   const minutes = Math.floor(timer / 60)
   const seconds = Math.floor(timer % 60)
@@ -41,10 +42,8 @@ const FloatingPomodoroTimer = () => {
     } else {
       if (timer <= 0 || isGoalReached) return
       const now = Date.now()
-      if (window.__pomodoroEngine) {
-        window.__pomodoroEngine.startTimestampRef.current = now
-        window.__pomodoroEngine.durationAtStartRef.current = timer
-      }
+      engineActions.startTimestampRef && (engineActions.startTimestampRef.current = now)
+      engineActions.durationAtStartRef && (engineActions.durationAtStartRef.current = timer)
       localStorage.setItem("pomodoro_is_active", "true")
       localStorage.setItem("pomodoro_start_timestamp", now)
       localStorage.setItem("pomodoro_duration_at_start", timer)

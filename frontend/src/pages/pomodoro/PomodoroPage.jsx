@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react"
+import { useState, useCallback, useMemo, useRef } from "react"
 import { useNavigate } from "react-router-dom"
 
 import PomodoroSettingsModal from "../../features/pomodoro/components/PomodoroSettingsModal"
@@ -14,7 +14,6 @@ import LeftDropdown from "../../features/pomodoro/components/LeftDropdown"
 import RightDropdown from "../../features/pomodoro/components/RightDropdown"
 import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
 import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
-import PomodoroTasksList from "../../features/pomodoro/components/PomodoroTaskList"
 import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { FaFlag } from "react-icons/fa"
@@ -31,13 +30,14 @@ const PomodoroPage = () => {
   const isMobile = useIsMobile()
   const { xpGainedAmount, showXpGain } = useXpStore()
 
-  // ── Global timer state from store (owned by PomodoroTimerEngine) ──────────
+  // ── Global timer state ────────────────────────────────────────────────────
   const timer = usePomodoroTimerStore((s) => s.timer)
   const isActive = usePomodoroTimerStore((s) => s.isActive)
   const isBreak = usePomodoroTimerStore((s) => s.isBreak)
   const sessionCount = usePomodoroTimerStore((s) => s.sessionCount)
   const isGoalReached = usePomodoroTimerStore((s) => s.isGoalReached)
   const selectedTaskId = usePomodoroTimerStore((s) => s.selectedTaskId)
+  const engineActions = usePomodoroTimerStore((s) => s.engineActions)
 
   const setTimer = usePomodoroTimerStore((s) => s.setTimer)
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
@@ -45,15 +45,13 @@ const PomodoroPage = () => {
   const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
   const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
   const setSelectedTaskId = usePomodoroTimerStore((s) => s.setSelectedTaskId)
-
   const persistStart = usePomodoroTimerStore((s) => s.persistStart)
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
   const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 
-  // ── Local UI-only state ───────────────────────────────────────────────────
+  // ── Local UI state ────────────────────────────────────────────────────────
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
-  const [showTodoDropdown, setShowTodoDropdown] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [milestoneLevel, setMilestoneLevel] = useState(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
@@ -63,7 +61,6 @@ const PomodoroPage = () => {
   const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
   const [searchQuery, setSearchQuery] = useState("")
 
-  // Audio ref only for the unlock-on-first-click trick
   const alarmAudioRef = useRef(null)
 
   // ── Todos ─────────────────────────────────────────────────────────────────
@@ -90,14 +87,11 @@ const PomodoroPage = () => {
 
   const { completeTodo } = useCompleteTodo()
 
-  // ── Helpers that delegate to the global engine ────────────────────────────
-  const getEngine = () => window.__pomodoroEngine ?? null
-
-  // ── handleStart — unlocks audio, then hands off to the engine ────────────
+  // ── handleStart ───────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isActive || !settings || timer <= 0 || isGoalReached) return
 
-    // Satisfy browser autoplay policy by interacting with audio on a user gesture
+    // Unlock audio on user gesture to satisfy browser autoplay policy
     if (!alarmAudioRef.current) {
       alarmAudioRef.current = new Audio("/alarm.mp3")
       alarmAudioRef.current.volume = 0.3
@@ -115,10 +109,11 @@ const PomodoroPage = () => {
     }
 
     const now = Date.now()
-    const engine = getEngine()
-    if (engine) {
-      engine.startTimestampRef.current = now
-      engine.durationAtStartRef.current = timer
+
+    // Sync the engine's internal refs so the worker tick has correct values
+    if (engineActions) {
+      engineActions.startTimestampRef.current = now
+      engineActions.durationAtStartRef.current = timer
     }
 
     persistStart(now, timer, isBreak, sessionCount, selectedTaskId)
@@ -131,6 +126,7 @@ const PomodoroPage = () => {
     isBreak,
     sessionCount,
     selectedTaskId,
+    engineActions,
     persistStart,
     setIsActive,
   ])
@@ -154,7 +150,7 @@ const PomodoroPage = () => {
     persistReset()
   }, [settings, setIsActive, setTimer, setIsBreak, setSessionCount, setIsGoalReached, persistReset])
 
-  // ── handleResetCurrent — reset only this phase ────────────────────────────
+  // ── handleResetCurrent — reset only the current phase ────────────────────
   const handleResetCurrent = useCallback(() => {
     if (!settings) return
     setIsActive(false)
@@ -174,23 +170,24 @@ const PomodoroPage = () => {
     localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
     localStorage.removeItem(STORAGE_KEYS.START_TIMESTAMP)
     localStorage.removeItem(STORAGE_KEYS.DURATION_AT_START)
+    localStorage.removeItem(STORAGE_KEYS.COMMITTED_DURATION)
 
     showAppToast("Current timer reset!", "success")
     setShowResetCurrentSessionModal(false)
   }, [settings, isBreak, sessionCount, setIsActive, setTimer])
 
-  // ── handleSkipBreak — delegates to engine's startNextTimer ────────────────
+  // ── handleSkipBreak ───────────────────────────────────────────────────────
   const handleSkipBreak = useCallback(() => {
     if (!isBreak) return
     setIsActive(false)
-    getEngine()?.startNextTimer(true, sessionCount, false)
+    engineActions?.startNextTimer(true, sessionCount, false)
     showAppToast("Break skipped!", "info")
-  }, [isBreak, sessionCount, setIsActive])
+  }, [isBreak, sessionCount, setIsActive, engineActions])
 
-  // ── handleSessionEndManual — "forward" button on the timer display ────────
+  // ── handleSessionEndManual — forward button ───────────────────────────────
   const handleSessionEndManual = useCallback(() => {
-    getEngine()?.handleSessionEnd()
-  }, [])
+    engineActions?.handleSessionEnd()
+  }, [engineActions])
 
   // ── Todo completion ───────────────────────────────────────────────────────
   const handleComplete = useCallback(
@@ -223,13 +220,6 @@ const PomodoroPage = () => {
     if (isMobile) navigate("/pomodoro-settings")
     else setIsSettingsOpen(true)
   }
-
-  useEffect(() => {
-    window.scrollTo({
-      top: 0,
-      behavior: "instant",
-    })
-  }, [])
 
   // ── Loading guard ─────────────────────────────────────────────────────────
   if (isSettingsLoading) {
@@ -273,7 +263,7 @@ const PomodoroPage = () => {
             isBreak={isBreak}
             timer={timer}
             setIsActive={setIsActive}
-            startNextTimer={(...args) => getEngine()?.startNextTimer(...args)}
+            startNextTimer={(...args) => engineActions?.startNextTimer(...args)}
             sessionCount={sessionCount}
             setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
             isGoalReached={isGoalReached}
@@ -304,7 +294,7 @@ const PomodoroPage = () => {
                       onClick={(e) => handleComplete(selectedTask._id, e)}
                       className={`group flex size-7 shrink-0 items-center justify-center border-2 ${getPriorityColor(selectedTask.priority)}`}
                       title="Complete Task"
-                    ></button>
+                    />
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
@@ -458,51 +448,6 @@ const PomodoroPage = () => {
           confirmButtonText="Reset"
           modalTitle="Reset Timer"
         />
-      )}
-
-      {showTodoDropdown && (
-        <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-slate-700/70"
-          onClick={() => setShowTodoDropdown(false)}
-        >
-          <div
-            className="mx-2 w-full max-w-md rounded-3xl bg-base-100 p-4 shadow-xl"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h3 className="ml-1 text-xl font-bold">Choose a Task</h3>
-              <div className="flex gap-4">
-                <button
-                  onClick={() => {
-                    setSelectedTaskId(null)
-                    setShowTodoDropdown(false)
-                  }}
-                  className="rounded-full px-4 py-2 text-sm font-semibold text-primary transition-colors duration-200 hover:bg-primary hover:text-white"
-                >
-                  Clear
-                </button>
-                <button
-                  onClick={() => setShowTodoDropdown(false)}
-                  className="rounded-full p-2 text-sm font-semibold text-slate-500 transition-colors duration-200 hover:bg-slate-700 hover:text-white"
-                >
-                  <IoClose size={20} />
-                </button>
-              </div>
-            </div>
-            <div className="max-h-80 overflow-y-auto">
-              <PomodoroTasksList
-                isOpen={showTodoDropdown}
-                tasks={allTodos}
-                isLoading={myListsLoading}
-                selectedTaskId={selectedTaskId}
-                setSelectedTaskId={(taskId) => {
-                  setSelectedTaskId(taskId)
-                  setShowTodoDropdown(false)
-                }}
-              />
-            </div>
-          </div>
-        </div>
       )}
     </>
   )

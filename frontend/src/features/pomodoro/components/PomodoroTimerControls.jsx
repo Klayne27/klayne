@@ -15,7 +15,7 @@ function PomodoroTimerControls({
         onClick={onOpenSettingsPage}
         className="p-2 text-slate-500 transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
         aria-label="Open settings"
-        disabled={isActive || isGoalReached}
+        disabled={isGoalReached}
       >
         <FaCog size={30} />
       </button>

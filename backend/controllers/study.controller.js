@@ -93,18 +93,7 @@ export const getPomodoroSettings = async (req, res) => {
   }
 };
 
-export const getUserBadges = async (req, res) => {
-  try {
-    const { userId } = req.params;
-    const user = await User.findById(userId).select("badges");
-    if (!user) {
-      return res.status(404).json({ error: "User not found" });
-    }
-    res.status(200).json(user.badges);
-  } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
+
 
 export const endStudySession = async (req, res) => {
   try {
@@ -301,6 +290,19 @@ export const updatePomodoroSettings = async (req, res) => {
       { new: true },
     );
     res.status(200).json({ message: "Settings updated successfully", user });
+  } catch (error) {
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
+export const getUserBadges = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const user = await User.findById(userId).select("badges");
+    if (!user) {
+      return res.status(404).json({ error: "User not found" });
+    }
+    res.status(200).json(user.badges);
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
   }

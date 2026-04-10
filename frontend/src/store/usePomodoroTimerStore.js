@@ -10,6 +10,7 @@ const STORAGE_KEYS = {
   SESSION_COUNT: "pomodoro_session_count",
   GOAL_REACHED: "pomodoro_goal_reached",
   SELECTED_TASK: "pomodoro_selected_task",
+  COMMITTED_DURATION: "pomodoro_committed_duration",
 }
 
 export const usePomodoroTimerStore = create(
@@ -22,10 +23,19 @@ export const usePomodoroTimerStore = create(
     isGoalReached: false,
     selectedTaskId: localStorage.getItem(STORAGE_KEYS.SELECTED_TASK) || "",
 
+    // Add to your store's state/actions:
+    engineActions: {
+      startNextTimer: null,
+      handleSessionEnd: null,
+      startTimestampRef: null,
+      durationAtStartRef: null,
+    },
+
     // ── UI flags ───────────────────────────────────────────────────────────
     isInitialized: false, // true after first hydration from localStorage
 
     // ── Setters ────────────────────────────────────────────────────────────
+    setEngineActions: (actions) => set({ engineActions: actions }),
     setTimer: (value) => set({ timer: value }),
     setIsActive: (value) => set({ isActive: value }),
     setIsBreak: (value) => set({ isBreak: value }),
@@ -47,6 +57,10 @@ export const usePomodoroTimerStore = create(
       localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, sessionCount)
       localStorage.removeItem(STORAGE_KEYS.PAUSED_TIME)
       localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "false")
+      if (!isBreak) {
+        const durationMinutes = duration / 60
+        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, durationMinutes)
+      }
       if (selectedTaskId) localStorage.setItem(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
     },
 

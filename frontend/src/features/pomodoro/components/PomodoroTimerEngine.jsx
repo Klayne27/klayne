@@ -20,8 +20,8 @@ export const PomodoroTimerEngine = () => {
   const setSessionCount = usePomodoroTimerStore((s) => s.setSessionCount)
   const setIsGoalReached = usePomodoroTimerStore((s) => s.setIsGoalReached)
   const setIsInitialized = usePomodoroTimerStore((s) => s.setIsInitialized)
-
   const persistNextPhase = usePomodoroTimerStore((s) => s.persistNextPhase)
+  const setEngineActions = usePomodoroTimerStore((s) => s.setEngineActions)
 
   const { settings, isSettingsLoading } = useGetPomodoroSettings()
   const { authUser } = useAuthUser()
@@ -36,10 +36,16 @@ export const PomodoroTimerEngine = () => {
   const alarmAudioRef = useRef(null)
   const breakEndAudioRef = useRef(null)
 
-  // Keep refs in sync with store for use inside callbacks
+  // ── Snapshot of session duration locked in at START time ─────────────────
+  // This is the fix for the settings-change bug. We capture sessionDuration
+  // when the user presses Start, and use this value — not settingsRef —
+  // when calling endStudySession. Changing settings mid-session has no effect
+  // on what gets logged to the backend.
+  const committedSessionDurationRef = useRef(null)
+
+  // ── Refs kept in sync with latest store/props values ─────────────────────
   const isBreakRef = useRef(isBreak)
   const sessionCountRef = useRef(sessionCount)
-  const isActiveRef = useRef(isActive)
   const settingsRef = useRef(settings)
   const selectedTaskIdRef = useRef(selectedTaskId)
 
@@ -50,16 +56,13 @@ export const PomodoroTimerEngine = () => {
     sessionCountRef.current = sessionCount
   }, [sessionCount])
   useEffect(() => {
-    isActiveRef.current = isActive
-  }, [isActive])
-  useEffect(() => {
     settingsRef.current = settings
   }, [settings])
   useEffect(() => {
     selectedTaskIdRef.current = selectedTaskId
   }, [selectedTaskId])
 
-  // ── Audio setup ─────────────────────────────────────────────────────────
+  // ── Audio setup ───────────────────────────────────────────────────────────
   useEffect(() => {
     alarmAudioRef.current = new Audio("/alarm.mp3")
     alarmAudioRef.current.volume = 0.3
@@ -82,7 +85,7 @@ export const PomodoroTimerEngine = () => {
     }
   }, [])
 
-  // ── startNextTimer ───────────────────────────────────────────────────────
+  // ── startNextTimer ────────────────────────────────────────────────────────
   const startNextTimer = useCallback(
     (autoplay, nextSessionCount, nextIsBreak) => {
       const s = settingsRef.current
@@ -108,6 +111,12 @@ export const PomodoroTimerEngine = () => {
         const now = Date.now()
         startTimestampRef.current = now
         durationAtStartRef.current = duration
+
+        // Lock in the new session's duration as the committed value
+        if (!nextIsBreak) {
+          committedSessionDurationRef.current = s.sessionDuration
+        }
+
         setIsActive(true)
         persistNextPhase(nextIsBreak, nextSessionCount, duration, true, now)
       } else {
@@ -118,7 +127,7 @@ export const PomodoroTimerEngine = () => {
     [setTimer, setIsBreak, setSessionCount, setIsGoalReached, setIsActive, persistNextPhase],
   )
 
-  // ── handleSessionEnd ─────────────────────────────────────────────────────
+  // ── handleSessionEnd ──────────────────────────────────────────────────────
   const handleSessionEnd = useCallback(() => {
     if (isEndingSessionRef.current) return
     const s = settingsRef.current
@@ -131,22 +140,39 @@ export const PomodoroTimerEngine = () => {
     const currentSessionCount = sessionCountRef.current
     const currentSelectedTaskId = selectedTaskIdRef.current
 
+    // Use the duration that was locked in at session start, not the current
+    // settings value. Falls back to current settings only if somehow not set
+    // (e.g. first ever session before the ref was introduced).
+    const loggedDuration = committedSessionDurationRef.current ?? s.sessionDuration
+
     setTimeout(() => {
       if (!currentIsBreak) {
         playAlarm()
         const newSessionCount = currentSessionCount + 1
         const isGoalMet = s.sessionGoalCount > 0 && newSessionCount >= s.sessionGoalCount
 
-        let xpMultiplier = s.sessionDuration >= 120 ? 20 : s.sessionDuration >= 60 ? 15 : 10
-        const calculatedXp = s.sessionDuration * xpMultiplier
+        const xpMultiplier = loggedDuration >= 120 ? 20 : loggedDuration >= 60 ? 15 : 10
+        const calculatedXp = loggedDuration * xpMultiplier
 
         endStudySession(
-          { duration: s.sessionDuration, taskId: currentSelectedTaskId },
+          { duration: loggedDuration, taskId: currentSelectedTaskId },
           {
             onSuccess: (data) => {
               setXpGainedAmount(calculatedXp)
               setShowXpGain(true)
               setTimeout(() => setShowXpGain(false), 2000)
+
+              if (data?.xpResult?.levelsGained?.length > 0) {
+                const milestoneLevelReached = Math.max(
+                  ...data.xpResult.levelsGained.filter((level) => level % 10 === 0),
+                )
+                if (milestoneLevelReached > 0) {
+                  usePomodoroTimerStore.getState().setMilestoneLevel(milestoneLevelReached)
+                  usePomodoroTimerStore.getState().setShowShareModal(true)
+                } else {
+                  showAppToast(`You leveled up to Level ${data.xpResult.finalLevel}! 🎉`, "success")
+                }
+              }
 
               if (isGoalMet) {
                 showAppToast(`Goal of ${s.sessionGoalCount} sessions reached! 🎉`, "success")
@@ -190,7 +216,13 @@ export const PomodoroTimerEngine = () => {
     setShowXpGain,
   ])
 
-  // ── Tick processor ───────────────────────────────────────────────────────
+  // ── Keep handleSessionEnd ref current so processTick never goes stale ─────
+  const handleSessionEndRef = useRef(handleSessionEnd)
+  useEffect(() => {
+    handleSessionEndRef.current = handleSessionEnd
+  }, [handleSessionEnd])
+
+  // ── processTick ───────────────────────────────────────────────────────────
   const processTick = useCallback(() => {
     const startTime = startTimestampRef.current
     const duration = durationAtStartRef.current
@@ -206,25 +238,37 @@ export const PomodoroTimerEngine = () => {
         clearInterval(fallbackIntervalRef.current)
         fallbackIntervalRef.current = null
       }
-      handleSessionEnd()
+      handleSessionEndRef.current()
     } else {
       setTimer(remaining)
     }
-  }, [setTimer, handleSessionEnd])
+  }, [setTimer])
 
-  // ── Worker setup ─────────────────────────────────────────────────────────
+  // ── Keep processTick ref current so the worker closure never goes stale ───
+  const processTickRef = useRef(processTick)
   useEffect(() => {
-    try {
-      workerRef.current = new Worker("/timerWorker.js")
-      workerRef.current.onerror = () => {
-        workerRef.current = null
-        fallbackIntervalRef.current = setInterval(processTick, 500)
+    processTickRef.current = processTick
+  }, [processTick])
+
+  // ── Worker / fallback interval setup — created once, never recreated ──────
+  useEffect(() => {
+    const supportsWorker = typeof Worker !== "undefined"
+
+    if (supportsWorker) {
+      try {
+        workerRef.current = new Worker("/timerWorker.js")
+        workerRef.current.onerror = () => {
+          workerRef.current = null
+          fallbackIntervalRef.current = setInterval(() => processTickRef.current(), 500)
+        }
+        workerRef.current.onmessage = (e) => {
+          if (e.data.type === "TICK") processTickRef.current()
+        }
+      } catch {
+        fallbackIntervalRef.current = setInterval(() => processTickRef.current(), 500)
       }
-      workerRef.current.onmessage = (e) => {
-        if (e.data.type === "TICK") processTick()
-      }
-    } catch {
-      fallbackIntervalRef.current = setInterval(processTick, 500)
+    } else {
+      fallbackIntervalRef.current = setInterval(() => processTickRef.current(), 500)
     }
 
     return () => {
@@ -232,14 +276,15 @@ export const PomodoroTimerEngine = () => {
       workerRef.current?.terminate()
       if (fallbackIntervalRef.current) clearInterval(fallbackIntervalRef.current)
     }
-  }, [processTick])
+  }, []) // empty — never recreates
 
-  // ── Start/stop worker when isActive changes ──────────────────────────────
+  // ── Start/stop the worker when isActive or isGoalReached changes ──────────
   useEffect(() => {
     if (isActive && !isGoalReached) {
-      workerRef.current?.postMessage({ type: "START" })
-      if (!workerRef.current && !fallbackIntervalRef.current) {
-        fallbackIntervalRef.current = setInterval(processTick, 500)
+      if (workerRef.current) {
+        workerRef.current.postMessage({ type: "START" })
+      } else if (!fallbackIntervalRef.current) {
+        fallbackIntervalRef.current = setInterval(() => processTickRef.current(), 500)
       }
     } else {
       workerRef.current?.postMessage({ type: "STOP" })
@@ -248,9 +293,9 @@ export const PomodoroTimerEngine = () => {
         fallbackIntervalRef.current = null
       }
     }
-  }, [isActive, isGoalReached, processTick])
+  }, [isActive, isGoalReached])
 
-  // ── Hydrate from localStorage on first mount ─────────────────────────────
+  // ── Hydrate from localStorage on first mount ──────────────────────────────
   useEffect(() => {
     if (isSettingsLoading || !settings || isInitialized) return
 
@@ -261,11 +306,17 @@ export const PomodoroTimerEngine = () => {
     const savedIsBreak = localStorage.getItem(STORAGE_KEYS.BREAK) === "true"
     const savedSessionCount = parseInt(localStorage.getItem(STORAGE_KEYS.SESSION_COUNT), 10) || 0
     const savedGoalReached = localStorage.getItem(STORAGE_KEYS.GOAL_REACHED) === "true"
+    // Restore the committed duration so a page-reload mid-session still logs correctly
+    const savedCommittedDuration = parseFloat(localStorage.getItem(STORAGE_KEYS.COMMITTED_DURATION))
 
     setIsBreak(savedIsBreak)
     setSessionCount(savedSessionCount)
     setIsGoalReached(savedGoalReached)
     setIsInitialized(true)
+
+    if (!isNaN(savedCommittedDuration)) {
+      committedSessionDurationRef.current = savedCommittedDuration
+    }
 
     if (savedGoalReached) {
       setTimer(0)
@@ -284,12 +335,10 @@ export const PomodoroTimerEngine = () => {
         setTimer(remaining)
         setIsActive(true)
       } else {
-        // Timer expired while away — end session immediately
-        if (authUser) {
-          setTimer(0)
-          setIsActive(false)
-        //   handleSessionEnd()
-        }
+        setTimer(0)
+        setIsActive(false)
+        // Session ended while the tab was closed — log it
+        if (authUser) handleSessionEndRef.current()
       }
     } else if (!isNaN(savedPausedTime)) {
       setTimer(savedPausedTime)
@@ -300,16 +349,16 @@ export const PomodoroTimerEngine = () => {
     }
   }, [isSettingsLoading, settings, isInitialized])
 
-  // Expose startNextTimer and handleSessionEnd for PomodoroPage to call
-  // via a ref attached to a global singleton — we use a module-level ref instead
+  // ── Register engine actions into the store ────────────────────────────────
   useEffect(() => {
-    window.__pomodoroEngine = {
+    setEngineActions({
       startNextTimer,
       handleSessionEnd,
       startTimestampRef,
       durationAtStartRef,
-    }
-  }, [startNextTimer, handleSessionEnd])
+    })
+    return () => setEngineActions(null)
+  }, [startNextTimer, handleSessionEnd, setEngineActions])
 
-  return null // renders nothing, just runs logic
+  return null
 }
