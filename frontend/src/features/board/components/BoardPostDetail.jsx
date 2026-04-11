@@ -36,6 +36,7 @@ import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSli
 import BoardPostInput from "./BoardPostInput"
 import { PiSmiley } from "react-icons/pi"
 import ImageLightbox from "./ImageLightbox"
+import { useLightboxStore } from "../../../store/useLightboxStore"
 
 const formatDateSeparator = (dateStr) => {
   const date = new Date(dateStr)
@@ -68,6 +69,9 @@ const BoardPostDetail = ({ postId, onClose }) => {
   const closePostSlideMenu = useBoardStore((s) => s.closePostSlideMenu)
   const isEditingPostInline = useBoardStore((s) => s.isEditingPostInline)
   const setIsEditingPostInline = useBoardStore((s) => s.setIsEditingPostInline)
+
+  const currentIndex = useLightboxStore((s) => s.currentIndex)
+  const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   const inlineTextareaRef = useRef(null)
   const floatingInputRef = useRef(null)
@@ -454,7 +458,7 @@ const BoardPostDetail = ({ postId, onClose }) => {
                     {post.images.map((img, i) => (
                       <div // Changed from Link to div
                         key={img._id || i}
-                        onClick={() => setSelectedImgIndex(i)}
+                        onClick={() => openLightbox(post.images, i)}
                         className={`relative cursor-pointer overflow-hidden rounded-md border border-accent ${
                           post.images.length === 3 && i === 0 ? "col-span-2" : ""
                         }`}
@@ -657,14 +661,6 @@ const BoardPostDetail = ({ postId, onClose }) => {
           postId={postId}
         />
       )}
-
-      <ImageLightbox
-        images={post.images}
-        currentIndex={selectedImgIndex}
-        onClose={() => setSelectedImgIndex(null)}
-        onPrev={handlePrevImage}
-        onNext={handleNextImage}
-      />
     </div>
   )
 }

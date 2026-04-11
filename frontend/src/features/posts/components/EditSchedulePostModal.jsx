@@ -8,6 +8,7 @@ import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
 import DateTimeSelector from "../../../components/common/DateTimeSelector"
 import useDateTimeStore from "../../../store/useDateTimeStore"
 import { useUpdateScheduledPost } from "../postsHooks/usePostsMutations"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
   const modalRef = useRef(null)
@@ -116,7 +117,7 @@ const EditScheduledPostModal = ({ isOpen, onClose, post }) => {
 
         {/* Post Text Editing */}
         <div className="flex gap-3 border-b border-slate-500 p-4">
-          <img src={authUser?.profileImg?.imageUrl} className="size-8 rounded-full object-cover md:size-10" />
+          <img src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl, "avatar")} className="size-8 rounded-full object-cover md:size-10" />
           <div className="flex flex-1 flex-col">
             <textarea
               className="flex-1 resize-none rounded-lg bg-base-100 text-xl focus:outline-none"

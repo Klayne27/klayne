@@ -105,7 +105,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     handleEmojiSelect,
     handleCopyMessage,
     handleReplyClick,
-    handleImageClick,
+    // handleImageClick,
     handleCloseMoreActionsModal,
   } = useChatHandlers({
     message,
@@ -277,7 +277,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
               isSentByCurrentUser={isSentByCurrentUser}
               bubbleClasses={bubbleClasses}
               onLoadImage={handleLoadImage}
-              onImageClick={handleImageClick}
+              // onImageClick={handleImageClick}
               messageContentStyle={messageContentStyle}
               isReplyToMessageDeleted={isReplyToMessageDeleted}
               onJumpToOriginalMessage={handleJumpToOriginalMessage}

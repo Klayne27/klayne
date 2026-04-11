@@ -40,6 +40,7 @@ import {
   useRepostPost,
   useToggleBookmarks,
 } from "../postsHooks/usePostsMutations.js"
+import { useLightboxStore } from "../../../store/useLightboxStore.js"
 
 const Post = ({
   post,
@@ -49,7 +50,7 @@ const Post = ({
   hasLineAbove = false,
   index,
 }) => {
-  const openImageModal = useAppStore((state) => state.openImageModal)
+  // const openImageModal = useAppStore((state) => state.openImageModal)
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { username, pid } = useParams()
@@ -61,6 +62,8 @@ const Post = ({
   const [showEditModal, setShowEditModal] = useState(false)
   const [isHistoryModalOpen, setIsHistoryModalOpen] = useState(false)
   const [showDeletePostModal, setShowDeletePostModal] = useState(false)
+
+  const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   const { setEditPostModalData } = useAppStore()
   const queryClient = useQueryClient()
@@ -279,9 +282,9 @@ const Post = ({
 
   const handleMediaClick = (mediaUrl, mediaType, event) => {
     event.stopPropagation()
-    if (openImageModal && mediaType === "image") {
-      openImageModal(mediaUrl)
-    }
+    // if (openImageModal && mediaType === "image") {
+    //   openImageModal(mediaUrl)
+    // }
   }
 
   const handleFollowClick = (e) => {
@@ -657,14 +660,15 @@ const Post = ({
               sourcePost?.image?.imageUrl &&
               sourcePost.image?._id && (
                 <div className="inline-flex max-w-full justify-center">
-                  <Link to={`/images/${sourcePost.image?._id}`}>
-                    <img
-                      src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
-                      className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
-                      alt="post image"
-                      loading="lazy"
-                    />
-                  </Link>
+                  {/* <Link to={`/images/${sourcePost.image?._id}`}> */}
+                  <img
+                    src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
+                    onClick={() => openLightbox({ imageUrl: sourcePost.image.imageUrl })}
+                    className="block h-auto max-h-80 rounded-2xl border border-accent object-contain"
+                    alt="post image"
+                    loading="lazy"
+                  />
+                  {/* </Link> */}
                 </div>
               )}
             {sourcePost.mediaType === "video" && sourcePost.video && (

@@ -106,7 +106,7 @@ const PrivateChatMessageItem = ({
     handleEmojiSelect,
     handleCopyMessage,
     handleReplyClick,
-    handleImageClick,
+    // handleImageClick,
     handleCloseMoreActionsModal,
   } = useChatHandlers({
     message,
@@ -295,7 +295,7 @@ const PrivateChatMessageItem = ({
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
                 onLoadImage={handleLoadImage}
-                onImageClick={handleImageClick}
+                // onImageClick={handleImageClick}
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}
                 isReplyToMessageDeleted={isReplyToMessageDeleted}

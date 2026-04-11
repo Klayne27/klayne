@@ -13,6 +13,8 @@ import { useGlobalPublicChatSocketEvents } from "./hooks/socketEventHooks/useGlo
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { useGlobalNotificationSocketEvent } from "./hooks/socketEventHooks/useGlobalNotificationSocketEvent"
 import { resubscribeIfNeeded } from "./utils/push"
+import ImageLightbox from "./features/board/components/ImageLightbox"
+import { useLightboxStore } from "./store/useLightboxStore"
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
 const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
@@ -25,6 +27,7 @@ function App() {
   const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
     useAppStore()
   const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
+  const { images, closeLightbox, nextImage, prevImage, currentIndex, isOpen } = useLightboxStore()
 
   useGlobalPrivateChatSocketEvents()
   useGlobalPublicChatSocketEvents()
@@ -117,6 +120,13 @@ function App() {
       <Toaster position="bottom-center" />
       <ImageModal src={selectedImage} onClose={closeImageModal} />
       <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
+      {isOpen && <ImageLightbox
+        images={images}
+        currentIndex={currentIndex}
+        onClose={closeLightbox}
+        onPrev={prevImage}
+        onNext={nextImage}
+      />}
     </>
   )
 }

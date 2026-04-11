@@ -1,5 +1,6 @@
 import { formatDistanceToNow } from "date-fns"
 import { useState } from "react"
+import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
 
 const TAG_STYLES = {
   update: "bg-blue-500/20 text-blue-400 border border-blue-500/30",
@@ -117,7 +118,7 @@ const DevlogCard = ({ devlog, isAdmin, onEdit, onDelete }) => {
           <div className="avatar">
             <div className="h-5 w-5 rounded-full">
               {devlog.author?.profileImg?.imageUrl ? (
-                <img src={devlog.author.profileImg.imageUrl} alt={devlog.author.username} />
+                <img src={getOptimizedImageUrl(devlog.author.profileImg.imageUrl, "avatar")} alt={devlog.author.username} />
               ) : (
                 <div className="flex h-full w-full items-center justify-center rounded-full bg-base-300 text-[8px] font-bold uppercase text-base-content/50">
                   {devlog.author?.username?.[0]}

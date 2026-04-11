@@ -18,13 +18,13 @@ export const getOptimizedImageUrl = (url, type = "post") => {
       params += ",w_800,h_300,c_fill" // Wide rectangle
       break
     case "post":
-      params += ",w_600,c_limit" // Standard feed width
+      params += ",w_800,c_limit" // Standard feed width
       break
     case "large":
       params += ",w_1200,c_limit" // For the "Expanded/Modal" view
       break
     default:
-      params += ",w_600"
+      params += ",w_800"
   }
 
   return url.replace("/upload/", `/upload/${params}/`)

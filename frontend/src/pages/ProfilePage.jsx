@@ -38,6 +38,7 @@ import {
 } from "../features/users/usersHooks/useUserMutations.js"
 import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
+import { useLightboxStore } from "../store/useLightboxStore.js"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -86,6 +87,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const { conversationStatus, isLoadingConversationStatus, isErrorConversationStatus } =
     useGetConversationBetweenUsers(userProfile?._id)
+
+  const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -293,17 +296,21 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}>
-                <img
-                  src={getOptimizedImageUrl(
-                    coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
-                    "cover",
-                  )}
-                  className={`h-52 w-full cursor-pointer object-cover`}
-                  alt="cover image"
-                  loading="lazy"
-                />
-              </Link>
+              {/* <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}> */}
+              <img
+                src={getOptimizedImageUrl(
+                  coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
+                  "cover",
+                )}
+                onClick={() => {
+                  const url = userProfile?.coverImg?.imageUrl || "/cover.png"
+                  openLightbox({ imageUrl: url })
+                }}
+                className={`h-52 w-full cursor-pointer object-cover`}
+                alt="cover image"
+                loading="lazy"
+              />
+              {/* </Link> */}
               {isMyProfile && (
                 <div
                   className="absolute right-2 top-2 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
@@ -336,7 +343,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     )}
                     alt="user avatar"
                     className="cursor-pointer"
-                    onClick={(e) => handleProfileImageClick(userProfile?.profileImg?.imageUrl, e)}
+                    onClick={() => {
+                      const url =
+                        profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                      openLightbox({ imageUrl: url })
+                    }}
                     loading="lazy"
                   />
                   {isMyProfile && (

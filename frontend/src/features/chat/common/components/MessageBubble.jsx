@@ -4,6 +4,7 @@ import { useAuthUser } from "../../../auth/authHooks/useAuthUser"
 import { truncateText } from "../../../../utils/truncateText"
 import { renderClickableText } from "../../../../utils/textUtils"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import { useLightboxStore } from "../../../../store/useLightboxStore"
 
 const MessageBubble = ({
   message,
@@ -15,11 +16,12 @@ const MessageBubble = ({
   onJumpToOriginalMessage,
   isMessageDeleted,
   isSenderBanned,
-  onImageClick,
+  // onImageClick,
 }) => {
   const messageDeleted = <span className="text-sm italic text-gray-600">[Message Deleted]</span>
   const { authUser } = useAuthUser()
   const finalIsDeleted = isMessageDeleted || isSenderBanned || message.isDeletedByAdmin
+  const openLightbox = useLightboxStore((s) => s.openLightbox)
 
   return (
     <div
@@ -96,10 +98,11 @@ const MessageBubble = ({
             {message.image?._id && (
               <div className="mb-2 h-auto w-[200px] cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
                 <img
+                  onClick={() => openLightbox({ imageUrl: message.image.imageUrl })}
                   src={getOptimizedImageUrl(message.image.imageUrl, "post")}
                   alt="Chat image"
                   className="h-full w-full object-cover"
-                  onClick={onImageClick}
+                  // onClick={onImageClick}
                 />
               </div>
             )}
