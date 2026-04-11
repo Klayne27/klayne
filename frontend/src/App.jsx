@@ -2,8 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { Suspense, lazy } from "react"
 import { useAuthUser } from "./features/auth/authHooks/useAuthUser"
 import { Toaster } from "react-hot-toast"
-import ImageModal from "./components/common/ImageModal"
-import ProfileImageModal from "./components/common/ProfileImageModal"
+// import ImageModal from "./components/common/ImageModal"
+// import ProfileImageModal from "./components/common/ProfileImageModal"
 import { useAppStore } from "./store/useAppStore"
 import { useEffect } from "react"
 import { usePWAInstall } from "./hooks/customHooks/usePWAInstall"
@@ -24,8 +24,8 @@ const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
 
 function App() {
   const { authUser, isLoading } = useAuthUser()
-  const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
-    useAppStore()
+  // const { selectedProfileImage, closeProfileImageModal, selectedImage, closeImageModal } =
+  //   useAppStore()
   const { deferredPrompt, isInstalled, installApp, isIOSDevice } = usePWAInstall()
   const { images, closeLightbox, nextImage, prevImage, currentIndex, isOpen } = useLightboxStore()
 
@@ -118,8 +118,8 @@ function App() {
       </Suspense>
 
       <Toaster position="bottom-center" />
-      <ImageModal src={selectedImage} onClose={closeImageModal} />
-      <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} />
+      {/* <ImageModal src={selectedImage} onClose={closeImageModal} />
+      <ProfileImageModal src={selectedProfileImage} onClose={closeProfileImageModal} /> */}
       {isOpen && <ImageLightbox
         images={images}
         currentIndex={currentIndex}

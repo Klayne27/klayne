@@ -31,6 +31,7 @@ import {
   getPostThread,
   getUserReplies,
   markFeedICPostsAsRead,
+  getUserMedia,
 } from "../controllers/post.controller.js";
 
 const router = express.Router();
@@ -66,6 +67,7 @@ router.post("/vent", createVentPost);
 router.get("/user/:username", getUserPosts);
 router.get("/likes/user/:username", getLikedPosts);
 router.get("/replies/user/:username", getUserReplies); // Renamed slightly for clarity
+router.get("/media/user/:username", getUserMedia)
 
 // --- PINNED POSTS ---
 router.get("/profile/:username/pinned-posts", getPinnedPosts);

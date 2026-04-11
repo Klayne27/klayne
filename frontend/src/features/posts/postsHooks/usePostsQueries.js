@@ -1,6 +1,15 @@
 import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query"
 import { postKeys } from "./postKeys"
-import { getBookmarkedPostsApi, getPinnedPostsApi, getPostApi, getPostHistoryApi, getPostRepliesApi, getPostsApi, getPostThreadApi, getScheduledPostsApi } from "../../../api/postsApi"
+import {
+  getBookmarkedPostsApi,
+  getPinnedPostsApi,
+  getPostApi,
+  getPostHistoryApi,
+  getPostRepliesApi,
+  getPostsApi,
+  getPostThreadApi,
+  getScheduledPostsApi,
+} from "../../../api/postsApi"
 
 export const useGetPosts = ({ feedType, username = null }) => {
   const getPostEndpoint = () => {
@@ -19,6 +28,8 @@ export const useGetPosts = ({ feedType, username = null }) => {
         return `/api/posts/likes/user/${username}`
       case "userReplies":
         return `/api/posts/replies/user/${username}`
+      case "userMedia":
+        return `/api/posts/media/user/${username}`
       default:
         return "/api/posts/all"
     }
@@ -44,7 +55,9 @@ export const useGetPosts = ({ feedType, username = null }) => {
           ? postKeys.likes(username)
           : feedType === "userReplies"
             ? postKeys.userReplies(username)
-            : postKeys.list(POST_ENDPOINT),
+            : feedType === "userMedia"
+              ? postKeys.userMedia(username)
+              : postKeys.list(POST_ENDPOINT),
     queryFn: ({ pageParam }) => getPostsApi(POST_ENDPOINT, pageParam),
     initialPageParam: 1,
     getNextPageParam: (lastPage, allPages) => {
@@ -203,36 +216,30 @@ export const useGetPinnedPosts = (username) => {
     enabled: !!username,
     staleTime: 5 * 60 * 1000,
     cacheTime: 10 * 60 * 1000,
-  });
+  })
 
-  return { pinnedPosts, isLoading, isError, error, refetch, isRefetching };
-};
+  return { pinnedPosts, isLoading, isError, error, refetch, isRefetching }
+}
 
 export const useGetBookmarkedPosts = (searchQuery = "") => {
-  const {
-    data,
-    fetchNextPage,
-    hasNextPage,
-    isFetchingNextPage,
-    isLoading,
-    error,
-  } = useInfiniteQuery({
-    queryKey: postKeys.bookmarked(searchQuery),
-    queryFn: ({ pageParam = 1 }) => getBookmarkedPostsApi({ pageParam, searchQuery }),
-    getNextPageParam: (lastPage, allPages) => {
-      if (lastPage.hasNextPage) {
-        return lastPage.currentPage + 1;
-      }
-      return undefined;
-    },
-    staleTime: 1000 * 60 * 5,
-    refetchOnWindowFocus: false,
-    refetchOnMount: true,
-  });
+  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, isLoading, error } =
+    useInfiniteQuery({
+      queryKey: postKeys.bookmarked(searchQuery),
+      queryFn: ({ pageParam = 1 }) => getBookmarkedPostsApi({ pageParam, searchQuery }),
+      getNextPageParam: (lastPage, allPages) => {
+        if (lastPage.hasNextPage) {
+          return lastPage.currentPage + 1
+        }
+        return undefined
+      },
+      staleTime: 1000 * 60 * 5,
+      refetchOnWindowFocus: false,
+      refetchOnMount: true,
+    })
 
-  const bookmarkedPosts = data?.pages?.flatMap((page) => page.posts) || [];
-  const isLoadingBookmarkedPosts = isLoading;
-  const bookmarkedPostsError = error; 
+  const bookmarkedPosts = data?.pages?.flatMap((page) => page.posts) || []
+  const isLoadingBookmarkedPosts = isLoading
+  const bookmarkedPostsError = error
 
   return {
     bookmarkedPosts,
@@ -241,8 +248,8 @@ export const useGetBookmarkedPosts = (searchQuery = "") => {
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
-  };
-};
+  }
+}
 
 export const useGetScheduledPosts = () => {
   const {
@@ -254,10 +261,10 @@ export const useGetScheduledPosts = () => {
   } = useQuery({
     queryKey: postKeys.list("scheduled"),
     queryFn: getScheduledPostsApi,
-  });
+  })
 
-  return { scheduledPosts, isLoading, isError, error, refetch };
-};
+  return { scheduledPosts, isLoading, isError, error, refetch }
+}
 
 export const useGetPostHistory = (postId) => {
   const {

@@ -6,6 +6,7 @@ export const postKeys = {
   bookmarked: (searchQuery) => [...postKeys.all, "bookmarked", searchQuery],
   likes: (username) => [...postKeys.all, "likes", username],
   userReplies: (username) => [...postKeys.all, "userReplies", username],
+  userMedia: (username) => [...postKeys.all, "userMedia", username],
   user: (username) => [...postKeys.all, "user", username],
   replies: (postId) => [...postKeys.all, "replies", postId],
   thread: (postId) => [...postKeys.all, "thread", postId],

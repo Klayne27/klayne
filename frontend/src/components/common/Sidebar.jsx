@@ -410,7 +410,7 @@ const Sidebar = ({
   }
 
   const iconWrapperStyle =
-    "relative flex w-12 items-center justify-center rounded-full pl-1 py-2 pr-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
+    "relative flex w-12 items-center justify-center rounded-full  py-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
   const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
 
   if (!shouldRenderMobileSidebar) {
@@ -440,7 +440,7 @@ const Sidebar = ({
           <div
             to="/"
             onClick={handleHomeClick}
-            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-2" : ""} hover:bg-secondary md:flex ${
+            className={`hidden h-12 w-auto cursor-pointer justify-start rounded-full fill-primary p-1.5 ${shouldCollapseSidebar ? "mr-1" : ""} hover:bg-secondary md:flex ${
               isTouchDevice && activeButtonId === "k-logo"
                 ? "bg-secondary bg-opacity-50 transition duration-150"
                 : ""
@@ -449,7 +449,7 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <img src={klayneLogo} className="rounded-lg bg-gray-950" loading="lazy" />
+            <img src={klayneLogo} className="rounded-lg bg-black" loading="lazy" />
           </div>
 
           <ul

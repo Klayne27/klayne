@@ -1680,6 +1680,93 @@ export const getUserReplies = async (req, res) => {
   }
 };
 
+export const getUserMedia = async (req, res) => {
+  try {
+    const { username } = req.params;
+    const currentUserId = req.user?._id;
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 12;
+    const skip = (page - 1) * limit;
+
+    const targetUser = await User.findOne({ username });
+    if (!targetUser) return res.status(404).json({ error: "User not found" });
+
+    // Block logic (Keeping it consistent with your current code)
+    if (currentUserId && (await isBlockedOrBlockedBy(currentUserId, targetUser._id))) {
+      return res.status(403).json({ error: "Cannot view this user's media." });
+    }
+
+    const userProjection = {
+      _id: 1,
+      username: 1,
+      fullName: 1,
+      profileImg: 1,
+      isVerified: 1,
+      isGoldVerified: 1,
+      preferredBadge: 1,
+    };
+
+    const matchConditions = {
+      user: targetUser._id,
+      isVent: { $ne: true },
+      "deletedFor.user": { $ne: currentUserId },
+      // --- THE KEY FILTER ---
+      $or: [
+        { image: { $ne: null } },
+        { video: { $ne: null } },
+        { img: { $ne: null, $exists: true } },
+      ],
+    };
+
+    const totalCount = await Post.countDocuments(matchConditions);
+
+    // Reuse your existing aggregation pipeline logic here
+    const mediaPosts = await Post.aggregate([
+      { $match: matchConditions },
+      { $sort: { createdAt: -1 } },
+      { $skip: skip },
+      { $limit: limit },
+      // ... (Include the same $lookup and $project blocks you used in getUserReplies)
+      {
+        $lookup: {
+          from: "users",
+          localField: "user",
+          foreignField: "_id",
+          as: "user",
+          pipeline: [
+            {
+              $lookup: {
+                from: "images",
+                localField: "profileImg",
+                foreignField: "_id",
+                as: "profileImg",
+              },
+            },
+            { $unwind: { path: "$profileImg", preserveNullAndEmptyArrays: true } },
+            { $project: { ...userProjection, profileImg: "$profileImg" } },
+          ],
+        },
+      },
+      { $unwind: "$user" },
+      {
+        $lookup: {
+          from: "images",
+          localField: "image",
+          foreignField: "_id",
+          as: "image",
+        },
+      },
+      { $unwind: { path: "$image", preserveNullAndEmptyArrays: true } },
+    ]);
+
+    const hasNextPage = page * limit < totalCount;
+    res.status(200).json({ posts: mediaPosts, hasNextPage, totalPosts: totalCount });
+  } catch (error) {
+    console.error("Error in getUserMedia controller:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};
+
 export const getPost = async (req, res) => {
   try {
     const { postId } = req.params;
