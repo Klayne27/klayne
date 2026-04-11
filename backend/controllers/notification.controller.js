@@ -72,32 +72,33 @@ export const getNotifications = async (req, res) => {
     const notificationsWithAnonymity = filteredNotifications.map((notif) => {
       const populatedNotif = notif.toObject();
 
-      const isPostOwner =
-        populatedNotif.from?._id?.toString() ===
-        populatedNotif.postId?.user?._id?.toString();
+      if (populatedNotif.postId) {
+        // ADD this guard
+        const isPostOwner =
+          populatedNotif.from?._id?.toString() ===
+          populatedNotif.postId?.user?._id?.toString();
 
-      if (isPostOwner && populatedNotif.postId.isAnonymous) {
-        if (populatedNotif.from) {
-          populatedNotif.from.username = "Anonymous";
-          populatedNotif.from.fullName = "Anonymous";
-          populatedNotif.from.isGoldVerified = false;
-          if (populatedNotif.from.profileImg) {
-            populatedNotif.from.profileImg.imageUrl = "/avatar-placeholder.png";
-          } else {
-            populatedNotif.from.profileImg = {
-              imageUrl: "/avatar-placeholder.png",
-            };
+        if (isPostOwner && populatedNotif.postId.isAnonymous) {
+          if (populatedNotif.from) {
+            populatedNotif.from.username = "Anonymous";
+            populatedNotif.from.fullName = "Anonymous";
+            populatedNotif.from.isGoldVerified = false;
+            if (populatedNotif.from.profileImg) {
+              populatedNotif.from.profileImg.imageUrl = "/avatar-placeholder.png";
+            } else {
+              populatedNotif.from.profileImg = { imageUrl: "/avatar-placeholder.png" };
+            }
           }
         }
       }
+
       return populatedNotif;
     });
 
-    res.status(200).json(notificationsWithAnonymity);
-
     await Notification.updateMany({ to: userId, read: false }, { read: true });
-
     await emitUnreadNotificationStatus(userId.toString());
+
+    res.status(200).json(notificationsWithAnonymity); 
   } catch (error) {
     console.log("Error in getNotifications controller", error.message);
     res.status(500).json({ error: "Internal Server Error" });

@@ -17,6 +17,8 @@ import {
 
 const router = express.Router();
 
+router.post("/mark-as-read", protectRoute, markBoardAsRead);
+
 router.get("/", protectRoute, getBoardPosts);
 router.get("/:id", protectRoute, getBoardPost);
 router.put("/:id", protectRoute, editBoardPost);
@@ -29,7 +31,5 @@ router.post("/:id/comments", protectRoute, createBoardComment);
 router.delete("/comments/:commentId", protectRoute, deleteBoardComment);
 router.post("/comments/:commentId/react", protectRoute, reactToBoardComment);
 router.put("/comments/:commentId", protectRoute, editBoardComment);
-
-router.post("/mark-as-read", protectRoute, markBoardAsRead);
 
 export default router;

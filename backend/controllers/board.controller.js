@@ -351,6 +351,8 @@ export const createBoardComment = async (req, res) => {
     const post = await BoardPost.findById(boardPostId).populate("user");
     if (!post) return res.status(404).json({ error: "Board post not found." });
 
+    const postOwnerId = post.user._id; // extract ObjectId from populated user
+
     // Validate parentComment belongs to the same board post
     if (parentCommentId) {
       const parent = await BoardComment.findById(parentCommentId).populate("user");
@@ -396,22 +398,20 @@ export const createBoardComment = async (req, res) => {
 
     await BoardPost.findByIdAndUpdate(boardPostId, { $inc: { commentsCount: 1 } });
 
-    if (post.user.toString() !== userId.toString()) {
+    if (postOwnerId.toString() !== userId.toString()) {
       await createAndSendBoardNotification({
         from: userId,
-        to: post.user,
+        to: postOwnerId, // pass ObjectId, not the full user object
         type: "boardComment",
         boardPostId: post._id,
         boardCommentId: newComment._id,
       });
     }
 
-    // If replying to a specific comment, also notify that comment's author
     if (parentCommentId) {
       const parentComment = await BoardComment.findById(parentCommentId).select("user");
       if (parentComment && parentComment.user.toString() !== userId.toString()) {
-        // Don't double-notify if parent comment owner === board post owner
-        if (parentComment.user.toString() !== post.user.toString()) {
+        if (parentComment.user.toString() !== postOwnerId.toString()) {
           await createAndSendBoardNotification({
             from: userId,
             to: parentComment.user,
