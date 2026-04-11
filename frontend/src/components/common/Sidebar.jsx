@@ -19,10 +19,7 @@ import { postKeys } from "../../features/posts/postsHooks/postKeys"
 import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
-import {
-  HiOutlinePaintBrush,
-  HiOutlineEllipsisHorizontalCircle,
-} from "react-icons/hi2"
+import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle } from "react-icons/hi2"
 import klayneLogo from "/klaynelogo2.png"
 
 import { MdOutlineLibraryBooks } from "react-icons/md"
@@ -36,6 +33,8 @@ import {
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import { useTheme } from "../../context/ThemeContext"
+import { getKlayneColor } from "../../utils/getKlayneColor"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -58,6 +57,8 @@ const Sidebar = ({
     newBoardPostCount,
     showNewBoardPostsButton,
   } = useSocket()
+
+  const { theme } = useTheme()
 
   const { logout } = useLogout()
   const queryClient = useQueryClient()
@@ -421,7 +422,7 @@ const Sidebar = ({
     <>
       {
         <div
-          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-1 md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
+          className={`template fixed bottom-0 left-0 z-[10] flex w-full items-center justify-around border-t border-accent bg-base-100 pt-0.5 md:sticky md:top-0 md:z-0 md:h-dvh md:flex-col md:border-r md:border-t-0 ${
             shouldCollapseSidebar
               ? "md:max-w-[60px] md:flex-[0_0_auto] md:items-center" // Collapsed State
               : "md:max-w-[264px] md:flex-[2_2_0] md:items-start" // Expanded State
@@ -449,7 +450,7 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <img src={klayneLogo} className="rounded-lg bg-black" loading="lazy" />
+            <img src={klayneLogo} className={`rounded-lg p-0.5 ${getKlayneColor(theme)}`} loading="lazy" />
           </div>
 
           <ul
