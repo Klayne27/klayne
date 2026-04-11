@@ -86,11 +86,27 @@ export const sendPublicMessage = async (req, res) => {
 
     const DURATION_LIMIT = 30;
 
+    const { isGoldVerified, isVerified } = req.user;
+
     if (await isBanned(senderId)) {
       return res.status(403).json({ error: "You are banned from the public chat." });
     }
+    // --- RESTRICTION: ONLY GOLD VERIFIED CAN SEND VOICE ---
+    if (voiceMessageBase64 && !isGoldVerified) {
+      return res.status(403).json({
+        error: "Only Gold Verified accounts can send voice messages.",
+      });
+    }
 
-    if (voiceMessageDuration > DURATION_LIMIT) {
+    // --- RESTRICTION: ONLY VERIFIED CAN SEND IMAGES ---
+    if (imgBase64 && !isVerified) {
+      return res.status(403).json({
+        error: "Only verified users can send images.",
+      });
+    }
+
+    // Voice Duration Check
+    if (voiceMessageBase64 && voiceMessageDuration > DURATION_LIMIT) {
       return res.status(400).json({
         error: `Voice message duration cannot exceed ${DURATION_LIMIT} seconds.`,
       });
@@ -344,7 +360,7 @@ export const unbanUserFromPublicChat = async (req, res) => {
 export const addReactionToPublicMessage = async (req, res) => {
   try {
     const { messageId } = req.params;
-    const { emoji, voiceMessageBase64 } = req.body;
+    const { emoji } = req.body;
     const userId = req.user._id;
 
     if (!userId) {
@@ -353,12 +369,6 @@ export const addReactionToPublicMessage = async (req, res) => {
 
     if (!messageId || !emoji) {
       return res.status(400).json({ error: "Message ID and emoji are required." });
-    }
-
-    if (voiceMessageBase64 && !req.user.isGoldVerified) {
-      return res.status(403).json({
-        error: "Only Gold Verified users can send voice messages in public chat.",
-      });
     }
 
     if (await isBanned(userId)) {
@@ -469,7 +479,7 @@ export const deleteOwnPublicMessage = async (req, res) => {
 
     if (audioUrlToDelete) {
       const audioId = audioUrlToDelete.split("/").pop().split(".")[0];
-      await cloudinary.uploader.destroy(audioId, { resource_type: "video" }); 
+      await cloudinary.uploader.destroy(audioId, { resource_type: "video" });
     }
 
     io.to(PUBLIC_CHAT_ROOM).emit("publicOwnMessageDeleted", {

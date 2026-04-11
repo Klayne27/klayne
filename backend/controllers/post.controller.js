@@ -154,6 +154,12 @@ export const createReply = async (req, res) => {
       return res.status(400).json({ error: "Reply must have text, image, or video." });
     }
 
+    const { isGoldVerified } = req.user;
+
+    if (video && !isGoldVerified) {
+      return res.status(403).json({ error: "Only Gold Verified users can post videos." });
+    }
+
     const isOwnerReplyingAnonymously =
       parent.isVent &&
       parent.isAnonymous &&
@@ -1076,7 +1082,7 @@ export const getLikedPosts = async (req, res) => {
           pipeline: [
             {
               $lookup: {
-                from: "images", 
+                from: "images",
                 localField: "profileImg",
                 foreignField: "_id",
                 as: "profileImg",
@@ -1866,7 +1872,7 @@ export const getPinnedPosts = async (req, res) => {
             },
           },
           {
-            path: "image", 
+            path: "image",
             select: "imageUrl",
           },
           {
@@ -1951,15 +1957,17 @@ export const createPost = async (req, res) => {
 
     const userId = req.user._id.toString();
 
-    const user = await User.findById(userId);
-    if (!user) return res.status(404).json({ error: "User not found" });
+    // const user = await User.findById(userId);
+    // if (!user) return res.status(404).json({ error: "User not found" });
 
-    if (video) {
-      if (!user.isGoldVerified) {
-        return res.status(403).json({
-          error: "Only Gold Verified users can post videos.",
-        });
-      }
+    if (!text && !img && !video) {
+      return res.status(400).json({ error: "Reply must have text, image, or video." });
+    }
+
+    const { isGoldVerified } = req.user;
+
+    if (video && !isGoldVerified) {
+      return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
 
     try {
@@ -2248,7 +2256,7 @@ export const likeUnlikePost = async (req, res) => {
             to: post.user,
             type: "like",
             postId: postId,
-            isAnonymousInteraction: isAnonymousInteraction, 
+            isAnonymousInteraction: isAnonymousInteraction,
           });
         } else {
           await createAndSendNotification({
@@ -2700,7 +2708,7 @@ export const deleteMultipleScheduledPosts = async (req, res) => {
 
 export const createVentPost = async (req, res) => {
   try {
-    const { text, isAnonymous, pollOptions } = req.body; 
+    const { text, isAnonymous, pollOptions } = req.body;
     let { img, video } = req.body;
 
     const userId = req.user._id;
@@ -2747,7 +2755,7 @@ export const createVentPost = async (req, res) => {
     const newPostData = {
       user: userId,
       text,
-      isVent: true, 
+      isVent: true,
       isAnonymous: isAnonymous === true,
       publishedAt: new Date(),
       img: uploadedImgUrl,
@@ -3086,7 +3094,7 @@ export const getPostHistory = async (req, res) => {
   try {
     const { postId } = req.params;
 
-    const post = await Post.findById(postId).select("editHistory"); 
+    const post = await Post.findById(postId).select("editHistory");
 
     if (!post) {
       return res.status(404).json({ error: "Post not found" });
