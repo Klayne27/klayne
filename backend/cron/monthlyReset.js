@@ -91,27 +91,3 @@ export const stopMonthlyCronJob = () => {
   resetMonthlyStats.stop();
   console.log("Monthly leaderboard reset cron job stopped");
 };
-
-export const manualMonthlyReset = async () => {
-  try {
-    const currentMonth = new Date().toISOString().slice(0, 7);
-
-    const result = await User.updateMany(
-      {},
-      {
-        $set: {
-          "monthlyStats.studyDuration": 0,
-          "monthlyStats.sessionsCompleted": 0,
-          "monthlyStats.xpEarned": 0,
-          "monthlyStats.lastResetMonth": currentMonth,
-        },
-      },
-    );
-
-    console.log(`Manual monthly reset completed. Updated ${result.modifiedCount} users.`);
-    return result;
-  } catch (error) {
-    console.error("Error during manual monthly reset:", error);
-    throw error;
-  }
-};

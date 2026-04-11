@@ -58,8 +58,7 @@ export const usePomodoroTimerStore = create(
       localStorage.removeItem(STORAGE_KEYS.PAUSED_TIME)
       localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "false")
       if (!isBreak) {
-        const durationMinutes = duration / 60
-        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, durationMinutes)
+        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, Math.round(duration / 60))
       }
       if (selectedTaskId) localStorage.setItem(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
     },

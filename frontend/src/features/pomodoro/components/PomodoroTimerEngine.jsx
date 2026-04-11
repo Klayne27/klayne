@@ -114,7 +114,7 @@ export const PomodoroTimerEngine = () => {
 
         // Lock in the new session's duration as the committed value
         if (!nextIsBreak) {
-          committedSessionDurationRef.current = s.sessionDuration
+          committedSessionDurationRef.current = Math.round(s.sessionDuration) // ← add Math.round
         }
 
         setIsActive(true)
@@ -143,7 +143,7 @@ export const PomodoroTimerEngine = () => {
     // Use the duration that was locked in at session start, not the current
     // settings value. Falls back to current settings only if somehow not set
     // (e.g. first ever session before the ref was introduced).
-    const loggedDuration = committedSessionDurationRef.current ?? s.sessionDuration
+    const loggedDuration = Math.round(committedSessionDurationRef.current ?? s.sessionDuration)
 
     setTimeout(() => {
       if (!currentIsBreak) {
@@ -315,7 +315,7 @@ export const PomodoroTimerEngine = () => {
     setIsInitialized(true)
 
     if (!isNaN(savedCommittedDuration)) {
-      committedSessionDurationRef.current = savedCommittedDuration
+      committedSessionDurationRef.current = Math.round(savedCommittedDuration) // ← add Math.round
     }
 
     if (savedGoalReached) {

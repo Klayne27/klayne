@@ -94,7 +94,6 @@ export const getPomodoroSettings = async (req, res) => {
 };
 
 
-
 export const endStudySession = async (req, res) => {
   try {
     const userId = req.user._id;
