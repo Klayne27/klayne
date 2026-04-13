@@ -20,7 +20,7 @@ import messageRoutes from "./routes/message.routes.js";
 import notificationRoutes from "./routes/notification.routes.js";
 import groupRoutes from "./routes/group.routes.js";
 import devlogRoutes from "./routes/devlog.routes.js";
-import boardRoutes from "./routes/board.routes.js"
+import boardRoutes from "./routes/board.routes.js";
 import connectMongoDB from "./db/connectMongoDB.js";
 import { publishScheduledPosts } from "./cron/scheduledPostPublisher.js";
 
@@ -76,12 +76,13 @@ setInterval(() => {
   publishScheduledPosts(io, onlineUsersMap);
 }, 60 * 1000);
 
+startMonthlyCronJob();
+startWeeklyCronJob();
+
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   await connectMongoDB();
   console.log("MongoDB connected.");
-if (process.env.NODE_ENV === "production") {
-  startMonthlyCronJob();
-  startWeeklyCronJob();
-}
 });
+
+

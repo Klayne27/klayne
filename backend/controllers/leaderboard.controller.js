@@ -58,9 +58,12 @@ export const getWeeklyLeaderboard = async (req, res) => {
 export const getPreviousWeekWinners = async (req, res) => {
   try {
     const now = new Date();
-    const pdtDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
 
-    const lastWeekDate = new Date(pdtDate);
+    // 1. Get the Monday of the CURRENT week
+    const currentMonday = getMondayOfWeek(now);
+
+    // 2. Get the Monday of the PREVIOUS week (the one the cron just processed)
+    const lastWeekDate = new Date(currentMonday);
     lastWeekDate.setUTCDate(lastWeekDate.getUTCDate() - 7);
     const lastWeekStart = getMondayOfWeek(lastWeekDate);
 
@@ -72,8 +75,23 @@ export const getPreviousWeekWinners = async (req, res) => {
       populate: { path: "profileImg", select: "imageUrl" },
     });
 
-    res.status(200).json(previousWinners || { winners: [], weekStart: lastWeekStart });
+    // If no winners found for calculated date, fallback to the absolute latest entry
+    if (!previousWinners) {
+      const latestEntry = await WeeklyWinners.findOne()
+        .sort({ weekStart: -1 })
+        .populate({
+          path: "winners.user",
+          select: "username fullName profileImg",
+          populate: { path: "profileImg", select: "imageUrl" },
+        });
+      return res
+        .status(200)
+        .json(latestEntry || { winners: [], weekStart: lastWeekStart });
+    }
+
+    res.status(200).json(previousWinners);
   } catch (error) {
+    console.error("Error fetching previous winners:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
@@ -154,22 +172,12 @@ export const getMonthlyLeaderboard = async (req, res) => {
 
 export const getPreviousMonthWinners = async (req, res) => {
   try {
-    const now = new Date();
-
-    const aoetDate = new Date(now.getTime() - 8 * 60 * 60 * 1000);
-
-    const targetMonth = new Date(aoetDate);
-    targetMonth.setUTCDate(1);
-
-    targetMonth.setUTCMonth(targetMonth.getUTCMonth() - 1);
-
-    const lastMonthISO = targetMonth.toISOString().slice(0, 7);
-
-    const previousWinners = await MonthlyWinners.findOne({ month: lastMonthISO })
-      .select("winners month")
+    // Simply find the latest archived month in the collection
+    const previousWinners = await MonthlyWinners.findOne()
+      .sort({ month: -1 }) // Sorts YYYY-MM strings: "2024-03" comes before "2024-02"
       .populate({
         path: "winners.user",
-        select: "username fullName",
+        select: "username fullName profileImg",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -177,7 +185,12 @@ export const getPreviousMonthWinners = async (req, res) => {
       });
 
     if (!previousWinners) {
-      return res.status(200).json({ winners: [], month: lastMonthISO });
+      // If the DB is totally empty, we can provide a fallback ISO string
+      const now = new Date();
+      const lastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
+      const fallbackISO = lastMonth.toISOString().slice(0, 7);
+
+      return res.status(200).json({ winners: [], month: fallbackISO });
     }
 
     res.status(200).json({
@@ -185,7 +198,7 @@ export const getPreviousMonthWinners = async (req, res) => {
       month: previousWinners.month,
     });
   } catch (error) {
-    console.error("Error fetching previous winners:", error);
+    console.error("Error fetching previous monthly winners:", error);
     res.status(500).json({ error: "Internal server error" });
   }
 };
