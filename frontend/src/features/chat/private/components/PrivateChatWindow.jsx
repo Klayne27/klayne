@@ -161,6 +161,7 @@ const PrivateChatWindow = () => {
             onReactionAdded={handleReactionAdded}
             messageListRef={messageListRef}
             onOpenPinnedModal={handleOpenPinnedModal}
+            isTypingOtherUser={isTypingOtherUser}
           />
         )}
         {showNewMessageButton && (

@@ -9,6 +9,7 @@ import { useState } from "react"
 import ProfileInfoModal from "../../../../components/common/ProfileInfoModal"
 import { useChatViewStore } from "../../../../store/useChatViewStore"
 import { useGetUserProfile } from "../../../users/usersHooks/useUserQueries"
+import { FaCircle } from "react-icons/fa6"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
@@ -20,6 +21,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
     messageListRef,
     onOpenPinnedModal,
     pinnedMessagesInfo,
+    isTypingOtherUser,
   },
   ref,
 ) {
@@ -115,10 +117,27 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
               onReactionAdded={onReactionAdded}
               messageListRef={messageListRef}
               onUsernameClick={handleUsernameClick}
+              isTypingOtherUser={isTypingOtherUser}
             />
           )
         })}
-
+      {isTypingOtherUser?.length > 0 && (
+        <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
+          <div className="flex max-w-[70%] flex-col rounded-full bg-[#2F3336] p-3 text-white">
+            <span className="flex items-center gap-0.5">
+              <span className="pulsing-dot pulsing-dot-1 inline-block">
+                <FaCircle size={6} />
+              </span>
+              <span className="pulsing-dot pulsing-dot-2 inline-block">
+                <FaCircle size={6} />
+              </span>
+              <span className="pulsing-dot pulsing-dot-3 inline-block">
+                <FaCircle size={6} />
+              </span>
+            </span>
+          </div>
+        </div>
+      )}
       {modalState.isOpen && (
         <ProfileModalContainer modalState={modalState} handleCloseModal={handleCloseModal} />
       )}
