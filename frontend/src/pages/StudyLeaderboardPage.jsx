@@ -181,39 +181,33 @@ function StudyLeaderboardPage() {
 
   if (!leaderboard || leaderboard.length === 0) {
     return (
-      <div className="p-6">
-        <div className="mb-4 flex items-center">
+      <div className="template container mx-auto max-w-2xl p-4">
+        <div className="mb-6 flex items-center ">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
           >
             <FaArrowLeft className="text-xl" />
           </button>
-          <h2 className="flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
+          <h2 className="flex-1 text-center text-2xl font-bold ml-2">Study Leaderboard</h2>
         </div>
 
         {/* Type tabs — shown even on empty state so user can switch */}
-        <div className="mb-6 flex justify-center">
-          <div className="join">
+        <div className="mb-6 flex border-b border-gray-700">
+          {["total", "weekly", "monthly"].map((type) => (
             <button
-              className={`btn join-item ${leaderboardType === "total" ? "btn-primary btn-active" : ""}`}
-              onClick={() => handleLeaderboardTypeChange("total")}
+              key={type}
+              onClick={() => handleLeaderboardTypeChange(type)}
+              className={`relative flex-1 pb-3 text-sm font-bold transition-colors ${
+                leaderboardType === type ? "text-primary" : "text-gray-500"
+              }`}
             >
-              <FaTrophy className="mr-2" /> All Time
+              {type === "total" ? "All Time" : type === "weekly" ? "Weekly" : "Monthly"}
+              {leaderboardType === type && (
+                <div className="absolute bottom-0 left-0 right-0 h-1 rounded-t-full bg-primary" />
+              )}
             </button>
-            <button
-              className={`btn join-item ${leaderboardType === "weekly" ? "btn-primary btn-active" : ""}`}
-              onClick={() => handleLeaderboardTypeChange("weekly")}
-            >
-              <FaCalendar className="mr-2" /> This Week
-            </button>
-            <button
-              className={`btn join-item ${leaderboardType === "monthly" ? "btn-primary btn-active" : ""}`}
-              onClick={() => handleLeaderboardTypeChange("monthly")}
-            >
-              <FaCalendar className="mr-2" /> This Month
-            </button>
-          </div>
+          ))}
         </div>
 
         <div className="mt-8 flex items-center justify-center text-gray-500">
