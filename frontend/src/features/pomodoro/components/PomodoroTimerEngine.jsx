@@ -356,6 +356,8 @@ export const PomodoroTimerEngine = () => {
       handleSessionEnd,
       startTimestampRef,
       durationAtStartRef,
+      committedSessionDurationRef, // NEW — needed so handleStart can set it correctly
+      isEndingSessionRef, // NEW — needed so manual skip can unblock it
     })
     return () => setEngineActions(null)
   }, [startNextTimer, handleSessionEnd, setEngineActions])

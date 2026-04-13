@@ -88,48 +88,58 @@ const PomodoroPage = () => {
   const { completeTodo } = useCompleteTodo()
 
   // ── handleStart ───────────────────────────────────────────────────────────
-  const handleStart = useCallback(() => {
-    if (isActive || !settings || timer <= 0 || isGoalReached) return
+const handleStart = useCallback(() => {
+  if (isActive || !settings || timer <= 0 || isGoalReached) return
 
-    // Unlock audio on user gesture to satisfy browser autoplay policy
-    if (!alarmAudioRef.current) {
-      alarmAudioRef.current = new Audio("/alarm.mp3")
-      alarmAudioRef.current.volume = 0.3
+  if (!alarmAudioRef.current) {
+    alarmAudioRef.current = new Audio("/alarm.mp3")
+    alarmAudioRef.current.volume = 0.3
+  }
+  alarmAudioRef.current
+    .play()
+    .then(() => {
+      alarmAudioRef.current.pause()
+      alarmAudioRef.current.currentTime = 0
+    })
+    .catch(() => {})
+
+  if (typeof Notification !== "undefined" && Notification.permission === "default") {
+    Notification.requestPermission()
+  }
+
+  const now = Date.now()
+
+  if (engineActions) {
+    engineActions.startTimestampRef.current = now
+    engineActions.durationAtStartRef.current = timer
+    // Fix: commit the settings value (minutes), never the remaining timer seconds
+    if (!isBreak && engineActions.committedSessionDurationRef) {
+      engineActions.committedSessionDurationRef.current = settings.sessionDuration
     }
-    alarmAudioRef.current
-      .play()
-      .then(() => {
-        alarmAudioRef.current.pause()
-        alarmAudioRef.current.currentTime = 0
-      })
-      .catch(() => {})
+  }
 
-    if (typeof Notification !== "undefined" && Notification.permission === "default") {
-      Notification.requestPermission()
-    }
-
-    const now = Date.now()
-
-    // Sync the engine's internal refs so the worker tick has correct values
-    if (engineActions) {
-      engineActions.startTimestampRef.current = now
-      engineActions.durationAtStartRef.current = timer
-    }
-
-    persistStart(now, timer, isBreak, sessionCount, selectedTaskId)
-    setIsActive(true)
-  }, [
-    isActive,
-    settings,
+  // Pass settings.sessionDuration so persistStart writes the right value to localStorage
+  persistStart(
+    now,
     timer,
-    isGoalReached,
     isBreak,
     sessionCount,
     selectedTaskId,
-    engineActions,
-    persistStart,
-    setIsActive,
-  ])
+    !isBreak ? settings.sessionDuration : null,
+  )
+  setIsActive(true)
+}, [
+  isActive,
+  settings,
+  timer,
+  isGoalReached,
+  isBreak,
+  sessionCount,
+  selectedTaskId,
+  engineActions,
+  persistStart,
+  setIsActive,
+])
 
   // ── handlePause ───────────────────────────────────────────────────────────
   const handlePause = useCallback(() => {
@@ -185,9 +195,12 @@ const PomodoroPage = () => {
   }, [isBreak, sessionCount, setIsActive, engineActions])
 
   // ── handleSessionEndManual — forward button ───────────────────────────────
-  const handleSessionEndManual = useCallback(() => {
-    engineActions?.handleSessionEnd()
-  }, [engineActions])
+const handleSessionEndManual = useCallback(() => {
+  if (engineActions?.isEndingSessionRef) {
+    engineActions.isEndingSessionRef.current = false
+  }
+  engineActions?.handleSessionEnd()
+}, [engineActions])
 
   // ── Todo completion ───────────────────────────────────────────────────────
   const handleComplete = useCallback(

@@ -49,7 +49,15 @@ export const usePomodoroTimerStore = create(
     },
 
     // ── Persist active state to localStorage ──────────────────────────────
-    persistStart: (startTime, duration, isBreak, sessionCount, selectedTaskId) => {
+    // Change persistStart signature — add sessionDurationMinutes as last param
+    persistStart: (
+      startTime,
+      duration,
+      isBreak,
+      sessionCount,
+      selectedTaskId,
+      sessionDurationMinutes,
+    ) => {
       localStorage.setItem(STORAGE_KEYS.ACTIVE, "true")
       localStorage.setItem(STORAGE_KEYS.START_TIMESTAMP, startTime)
       localStorage.setItem(STORAGE_KEYS.DURATION_AT_START, duration)
@@ -57,8 +65,9 @@ export const usePomodoroTimerStore = create(
       localStorage.setItem(STORAGE_KEYS.SESSION_COUNT, sessionCount)
       localStorage.removeItem(STORAGE_KEYS.PAUSED_TIME)
       localStorage.setItem(STORAGE_KEYS.GOAL_REACHED, "false")
-      if (!isBreak) {
-        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, Math.round(duration / 60))
+      // Fix: use the passed-in settings value, NOT timer/60 (which is remaining time)
+      if (!isBreak && sessionDurationMinutes != null) {
+        localStorage.setItem(STORAGE_KEYS.COMMITTED_DURATION, Math.round(sessionDurationMinutes))
       }
       if (selectedTaskId) localStorage.setItem(STORAGE_KEYS.SELECTED_TASK, selectedTaskId)
     },
