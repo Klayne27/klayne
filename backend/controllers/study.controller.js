@@ -1,7 +1,6 @@
 import User from "../models/user.model.js";
 import StudySession from "../models/studySession.js";
 import { checkAndAwardBadges, handleXPAndLeveling } from "../lib/utils/helpers.js";
-import StudyTask from "../models/studyTask.model.js";
 
 export const getStudyActivityFeed = async (req, res) => {
   try {
@@ -303,94 +302,6 @@ export const getUserBadges = async (req, res) => {
     }
     res.status(200).json(user.badges);
   } catch (error) {
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const createStudyTask = async (req, res) => {
-  try {
-    const { name } = req.body;
-    const userId = req.user._id;
-
-    if (!name) {
-      return res.status(400).json({ error: "Task name is required" });
-    }
-
-    const existingTask = await StudyTask.findOne({ user: userId, name });
-    if (existingTask) {
-      return res.status(400).json({ error: "A task with this name already exists" });
-    }
-
-    const newTask = new StudyTask({ user: userId, name });
-    await newTask.save();
-    res.status(201).json(newTask);
-  } catch (error) {
-    console.error("Error in createStudyTask:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const getUserStudyTasks = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const tasks = await StudyTask.find({ user: userId }).sort({ createdAt: -1 });
-    res.status(200).json(tasks);
-  } catch (error) {
-    console.error("Error in getUserStudyTasks:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const deleteStudyTask = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const userId = req.user._id;
-    const task = await StudyTask.findOne({ _id: id, user: userId });
-
-    if (!task) {
-      return res.status(404).json({ error: "Task not found or user not authorized" });
-    }
-
-    await StudyTask.findByIdAndDelete(id);
-    res.status(200).json({ message: "Task deleted successfully" });
-  } catch (error) {
-    console.error("Error in deleteStudyTask:", error.message);
-    res.status(500).json({ error: "Internal server error" });
-  }
-};
-
-export const logStudyTime = async (req, res) => {
-  try {
-    const userId = req.user._id;
-    const { taskId, secondsToAdd } = req.body;
-
-    if (!taskId || !secondsToAdd) {
-      return res.status(400).json({ error: "taskId and secondsToAdd are required" });
-    }
-
-    const [taskUpdateResult, userUpdateResult] = await Promise.all([
-      StudyTask.updateOne(
-        { _id: taskId, user: userId },
-        { $inc: { totalDuration: secondsToAdd } },
-      ),
-      User.updateOne(
-        { _id: userId },
-        {
-          $inc: {
-            totalStudyDuration: secondsToAdd,
-            "monthlyStats.studyDuration": secondsToAdd,
-          },
-        },
-      ),
-    ]);
-
-    if (taskUpdateResult.nModified === 0) {
-      return res.status(404).json({ error: "Task not found or unauthorized" });
-    }
-
-    res.status(200).json({ message: "Time logged successfully" });
-  } catch (error) {
-    console.error("Error in logStudyTime:", error.message);
     res.status(500).json({ error: "Internal server error" });
   }
 };
