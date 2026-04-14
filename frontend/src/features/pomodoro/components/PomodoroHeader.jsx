@@ -4,6 +4,8 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser.js"
 import { IoIosStats } from "react-icons/io"
 import { getBadgeIcon } from "../../../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils.js"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite.js"
+import { useTheme } from "../../../context/ThemeContext.jsx"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -14,6 +16,7 @@ const xpForLevel = (level) => {
 
 const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
   const { authUser: currentUser } = useAuthUser()
+  const { theme } = useTheme()
 
   if (!currentUser) {
     return null
@@ -29,7 +32,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     isVerified,
     isGoldVerified,
     preferredBadge,
-    isCha
+    isCha,
   } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
@@ -102,7 +105,9 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                 className="h-full rounded-full bg-primary transition-all duration-500 ease-in-out"
                 style={{ width: `${Math.min(xpProgress, 100)}%` }}
               >
-                <span className="absolute inset-0 flex items-center justify-center font-mono text-xs font-semibold text-white/90">
+                <span
+                  className={`absolute inset-0 flex items-center justify-center font-mono text-xs font-semibold ${shouldTextBeWhite(theme)}`}
+                >
                   {pomodoroXP} / {xpNeededForNextLevel} XP
                 </span>
               </div>

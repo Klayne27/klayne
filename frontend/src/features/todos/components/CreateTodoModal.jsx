@@ -8,6 +8,8 @@ import { FaFlag } from "react-icons/fa6"
 import { FaCalendar } from "react-icons/fa"
 import { showAppToast } from "../../../utils/showAppToast.js"
 import { useCreateTodo } from "../todoHooks/useTodoMutations.js"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite.js"
+import { useTheme } from "../../../context/ThemeContext.jsx"
 
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
@@ -38,6 +40,7 @@ const CreateTodoModal = () => {
   const titleInputRef = useRef(null)
 
   const { createTodo } = useCreateTodo()
+  const { theme } = useTheme()
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -199,7 +202,7 @@ const CreateTodoModal = () => {
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`flex-1 rounded-lg bg-primary px-4 py-2 ${shouldTextBeWhite(theme)} transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50`}
               // disabled={isCreatingTodo}
             >
               Create

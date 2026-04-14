@@ -8,6 +8,8 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import useXpStore from "../../../store/useXpStore"
 import { RiCheckboxMultipleFill } from "react-icons/ri"
 import { IoIosStats } from "react-icons/io"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../context/ThemeContext"
 
 const xpForLevel = (level) => {
   if (level <= 1) {
@@ -23,6 +25,7 @@ function TodoPagesHeader({ pageTitle }) {
   const { showXpGain, xpGainedAmount } = useXpStore()
 
   const { pathname } = useLocation()
+  const { theme } = useTheme()
 
   const [showDropdown, setShowDropdown] = useState(false)
 
@@ -49,7 +52,7 @@ function TodoPagesHeader({ pageTitle }) {
     setShowDropdown(false)
   }
 
-  const handleStatsPageClick = e => {
+  const handleStatsPageClick = (e) => {
     e.stopPropagation()
     navigate("/study-dashboard")
     setShowDropdown(false)
@@ -150,7 +153,9 @@ function TodoPagesHeader({ pageTitle }) {
                 style={{ width: `${Math.min(xpProgress, 100)}%` }}
               ></div>
             </div>
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 font-mono text-xs font-semibold text-white/90">
+            <span
+              className={`absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 ${shouldTextBeWhite(theme)} font-mono text-xs font-semibold`}
+            >
               {pomodoroXP} / {xpNeededForNextLevel} XP
             </span>
             {showXpGain && (

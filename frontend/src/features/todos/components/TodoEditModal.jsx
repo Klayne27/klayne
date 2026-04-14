@@ -4,6 +4,8 @@ import { IoClose } from "react-icons/io5"
 import DatePicker from "react-datepicker"
 import { FaCalendar, FaFlag } from "react-icons/fa6"
 import { showAppToast } from "../../../utils/showAppToast.js"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite.js"
+import { useTheme } from "../../../context/ThemeContext.jsx"
 
 const CustomDatePickerInput = forwardRef(({ value, onClick }, ref) => (
   <button
@@ -28,6 +30,8 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
   const [isPriorityMenuOpen, setIsPriorityMenuOpen] = useState(false)
   const titleInputRef = useRef(null)
   const lastFocusedElementRef = useRef(null)
+
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (todo) {
@@ -232,7 +236,7 @@ const TodoEditModal = ({ isOpen, onClose, todo, onSave, isLoading }) => {
             <button
               type="submit"
               disabled={isLoading}
-              className="flex-1 rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50"
+              className={`flex-1 rounded-lg bg-primary ${shouldTextBeWhite(theme)} px-4 py-2 transition-colors hover:bg-primary/85 disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {isLoading ? "Saving..." : "Save Changes"}
             </button>
