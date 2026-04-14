@@ -9,7 +9,6 @@ import { useState } from "react"
 import ProfileInfoModal from "../../../../components/common/ProfileInfoModal"
 import { useChatViewStore } from "../../../../store/useChatViewStore"
 import { useGetUserProfile } from "../../../users/usersHooks/useUserQueries"
-import { FaCircle } from "react-icons/fa6"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
@@ -121,7 +120,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
             />
           )
         })}
-      {isTypingOtherUser?.length > 0 && (
+      {/* {isTypingOtherUser?.length > 0 && (
         <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
           <div className="flex max-w-[70%] flex-col rounded-full bg-[#2F3336] p-3 text-white">
             <span className="flex items-center gap-0.5">
@@ -137,7 +136,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
             </span>
           </div>
         </div>
-      )}
+      )} */}
       {modalState.isOpen && (
         <ProfileModalContainer modalState={modalState} handleCloseModal={handleCloseModal} />
       )}

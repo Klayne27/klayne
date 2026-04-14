@@ -12,12 +12,15 @@ import EmojiPickerPopover from "../../../../components/common/EmojiPickerPopover
 import { useChatInput } from "../../../../hooks/customHooks/useChatInput"
 import { useEditMessage, useSendMessage } from "../privateChatHooks/usePrivateChatMutations"
 import ImagePreviewCloseButton from "../../../../components/common/ImagePreviewCloseButton"
+import { getTypingMessage } from "../../../../utils/getTypingMessage"
+import { FaCircle } from "react-icons/fa"
 
 function PrivateChatInput({
   actualConversationId,
   privateChatInputRef,
   socket,
   onSenderMessageSent,
+  isTypingOtherUser,
 }) {
   const { setReplyingToMessage, replyingToMessage, editingMessage } = usePrivateChatStore()
   const privateChatFileInputRef = useRef(null)
@@ -116,6 +119,8 @@ function PrivateChatInput({
     fileInputRef: privateChatFileInputRef,
     editingMessage,
   })
+
+  const showTypingIndicator = isTypingOtherUser && isTypingOtherUser.length > 0
 
   const renderFormContent = (isEditingMode = false) => (
     <>
@@ -263,6 +268,23 @@ function PrivateChatInput({
           >
             <IoClose size={20} />
           </button>
+        </div>
+      )}
+
+      {showTypingIndicator &&  (
+        <div className="-top-7 left-0 flex w-full items-center justify-start bg-base-100 p-1 px-4 text-sm text-gray-400" >
+          <span className="animate-pulse font-semibold">{getTypingMessage(isTypingOtherUser)}</span>
+          <span className="ml-1 mt-2.5 flex gap-0.5">
+            <span className="pulsing-dot pulsing-dot-1 inline-block">
+              <FaCircle size={6} />
+            </span>
+            <span className="pulsing-dot pulsing-dot-2 inline-block">
+              <FaCircle size={6} />
+            </span>
+            <span className="pulsing-dot pulsing-dot-3 inline-block">
+              <FaCircle size={6} />
+            </span>
+          </span>
         </div>
       )}
 
