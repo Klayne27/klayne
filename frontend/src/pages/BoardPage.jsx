@@ -10,6 +10,8 @@ import CreateBoardPostModal from "../features/board/components/CreateBoardPostMo
 import { useIsMobile } from "../hooks/customHooks/useIsMobile"
 import { useBoardStore } from "../store/useBoardStore"
 import { useSocket } from "../context/SocketContext"
+import { shouldTextBeWhite } from "../utils/shouldTextBeWhite"
+import { useTheme } from "../context/ThemeContext"
 
 const BoardPage = () => {
   const navigate = useNavigate()
@@ -20,6 +22,8 @@ const BoardPage = () => {
   const isMobile = useIsMobile()
   const observerTarget = useRef(null)
   const { setShowNewBoardPostsButton } = useSocket()
+
+  const { theme } = useTheme()
 
   useEffect(() => {
     setShowNewBoardPostsButton(false)
@@ -123,7 +127,7 @@ const BoardPage = () => {
         {authUser && (
           <button
             onClick={() => setShowCreateModal(true)}
-            className="flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold text-white transition hover:bg-primary/80"
+            className={`flex items-center gap-2 rounded-full bg-primary px-4 py-2 text-sm font-bold ${shouldTextBeWhite(theme)} transition hover:bg-primary/80`}
           >
             <FaPlus size={14} />
             New Post

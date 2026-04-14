@@ -35,6 +35,7 @@ import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
 import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 import { useTheme } from "../../context/ThemeContext"
 import { getKlayneColor } from "../../utils/getKlayneColor"
+import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -498,7 +499,7 @@ const Sidebar = ({
                 )}
                 {unreadMessageCount > 0 && (
                   <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadMessageCount)}
@@ -527,7 +528,7 @@ const Sidebar = ({
                 )}
                 {unreadNotificationsCount > 0 && (
                   <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadNotificationsCount)}
@@ -556,7 +557,7 @@ const Sidebar = ({
                 )}
                 {unreadPublicChatCount > 0 && (
                   <div
-                    className="absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold text-white"
+                    className={`absolute right-2 top-2 z-10 flex h-5 min-w-[1.25rem] items-center justify-center rounded-full border-2 border-black bg-primary px-1 text-[11px] font-bold ${shouldTextBeWhite(theme)}`}
                     style={{ transform: "translate(40%, -40%)" }}
                   >
                     {formatCount(unreadPublicChatCount)}
@@ -732,7 +733,7 @@ const Sidebar = ({
                     style={{
                       animation: "fadeInSlideDown 0.2s ease-out forwards",
                     }}
-                    className="white-shadow absolute bottom-full left-0 z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl"
+                    className={`white-shadow absolute bottom-full z-[70] mb-2 w-56 overflow-hidden rounded-2xl border border-accent bg-base-100 py-2 shadow-2xl ${shouldCollapseSidebar ? "-translate-x-[80%]" : "left-0"}`}
                   >
                     <button
                       onClick={(e) => {
@@ -765,7 +766,7 @@ const Sidebar = ({
             {shouldCollapseSidebar && !isMobile ? (
               <div
                 className={
-                  `z-[50] mt-4 size-[50px] cursor-pointer rounded-full bg-primary p-3 text-white hover:bg-opacity-85` // <-- ADD THESE CLASSES
+                  `z-[50] mt-4 size-[50px] cursor-pointer rounded-full bg-primary p-3 ${shouldTextBeWhite(theme)} hover:bg-opacity-85` // <-- ADD THESE CLASSES
                 }
                 onClick={onOpenCreatePostModal}
               >
@@ -774,7 +775,7 @@ const Sidebar = ({
             ) : (
               <div className="mt-5 hidden w-full pr-6 md:block">
                 <button
-                  className="w-full cursor-pointer rounded-full bg-primary py-3 font-bold  shadow-lg transition duration-200 hover:bg-primary/90 active:scale-95"
+                  className={`w-full cursor-pointer rounded-full bg-primary py-3 font-bold  shadow-lg transition duration-200 hover:bg-primary/90 active:scale-95 ${shouldTextBeWhite(theme)}`}
                   onClick={onOpenCreatePostModal}
                 >
                   Post

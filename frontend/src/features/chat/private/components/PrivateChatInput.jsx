@@ -14,6 +14,8 @@ import { useEditMessage, useSendMessage } from "../privateChatHooks/usePrivateCh
 import ImagePreviewCloseButton from "../../../../components/common/ImagePreviewCloseButton"
 import { getTypingMessage } from "../../../../utils/getTypingMessage"
 import { FaCircle } from "react-icons/fa"
+import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../../context/ThemeContext"
 
 function PrivateChatInput({
   actualConversationId,
@@ -30,6 +32,8 @@ function PrivateChatInput({
   const { sendPrivateMessage } = useSendMessage(onSenderMessageSent)
 
   const { isRecording, audioBlob } = usePrivateChatStore()
+
+  const {theme} = useTheme()
 
   const typingConfig = useMemo(
     () => ({
@@ -210,8 +214,8 @@ function PrivateChatInput({
           disabled={isSendButtonDisabled}
           className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
             textInput.trim() || selectedFile || audioBlob
-              ? "bg-primary text-white"
-              : "cursor-not-allowed bg-primary text-white opacity-50"
+              ? `bg-primary ${shouldTextBeWhite(theme)}`
+              : `cursor-not-allowed bg-primary ${shouldTextBeWhite(theme)} opacity-50`
           } transition-colors duration-200`}
         >
           {isEditingMode ? <MdCheck className="h-5 w-5" /> : <MdSend className="h-5 w-5" />}

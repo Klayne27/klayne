@@ -6,6 +6,7 @@ import { IoImageOutline } from "react-icons/io5";
 import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
 import { useNavigate } from "react-router-dom";
 import { FaArrowLeft } from "react-icons/fa6";
+import { shouldTextBeWhite } from "../utils/shouldTextBeWhite";
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
@@ -91,7 +92,7 @@ const ThemesPage = () => {
                     >
                       <div
                         className={`max-w-[80%] rounded-3xl p-3 shadow-sm ${
-                          message.isSent ? `bg-primary ${theme === "luxury" ? "": "text-white"}` : "bg-[#2F3336] text-white"
+                          message.isSent ? `bg-primary ${shouldTextBeWhite(theme)}` : "bg-[#2F3336] text-white"
                         } `}
                       >
                         <p className="text-sm">{message.content}</p>
