@@ -3040,6 +3040,7 @@ export const getVentPosts = async (req, res) => {
                       nameColor: 1,
                       badges: 1,
                       preferredBadge: 1,
+                      nameColor: 1,
                     },
                   },
                 ],
@@ -3107,7 +3108,7 @@ export const getVentPosts = async (req, res) => {
                 isCha: false,
                 isVerified: false,
                 isGoldVerified: false,
-
+                
                 badges: [],
                 preferredBadge: null,
               },
@@ -3119,7 +3120,7 @@ export const getVentPosts = async (req, res) => {
                 isCha: "$author.isCha",
                 isVerified: "$author.isVerified",
                 isGoldVerified: "$author.isGoldVerified",
-
+                nameColor: "$author.nameColor",
                 badges: "$author.badges",
                 preferredBadge: "$author.preferredBadge",
               },
