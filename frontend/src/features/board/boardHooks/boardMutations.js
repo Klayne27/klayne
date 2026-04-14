@@ -201,6 +201,7 @@ export const useCreateBoardComment = (boardPostId) => {
           username: authUser.username,
           fullName: authUser.fullName,
           profileImg: authUser.profileImg,
+          isCha: authUser.isCha,
           isVerified: authUser.isVerified,
           isGoldVerified: authUser.isGoldVerified,
         },

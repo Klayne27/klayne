@@ -283,6 +283,8 @@ const BoardCommentItem = ({
               {comment.user?.isGoldVerified && (
                 <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
               )}
+              {comment.user?.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+
               <span className="flex-shrink-0 text-xs text-slate-500">
                 · {formatPostDate(comment.createdAt)}
               </span>
@@ -408,7 +410,7 @@ const BoardCommentItem = ({
         />
       )}
 
-      {showEmojiPickerPopover  && (
+      {showEmojiPickerPopover && (
         <EmojiPickerPopover
           position={popoverPosition}
           onClose={handleCloseEmojiPickerPopover}
@@ -418,7 +420,7 @@ const BoardCommentItem = ({
       )}
 
       {/* Edit picker portal — new */}
-      {showEditPicker  && (
+      {showEditPicker && (
         <EmojiPickerPopover
           position={editPickerPosition}
           onClose={handleCloseEditPicker}

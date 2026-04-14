@@ -28,7 +28,8 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
     badges,
     isVerified,
     isGoldVerified,
-    preferredBadge
+    preferredBadge,
+    isCha
   } = currentUser
 
   const xpNeededForNextLevel = xpForLevel(pomodoroLevel + 1)
@@ -61,6 +62,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
                   <h2 className="ml-1 text-base font-bold sm:text-lg">{fullName}</h2>
                   {isVerified && <img src="/verified2.png" className="size-[17px]" />}
                   {isGoldVerified && <img src="/gold-verified2.png" className="size-[17px]" />}
+                  {isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
                   {preferredBadge && (
                     <div className="ml-1 size-[17px] flex-shrink-0">
                       {getBadgeIcon(preferredBadge)}

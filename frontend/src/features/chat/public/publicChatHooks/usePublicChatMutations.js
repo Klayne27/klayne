@@ -56,6 +56,7 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
           fullName: authUser.fullName,
           profileImg: authUser.profileImg,
           isAdmin: authUser.isAdmin,
+          isCha: authUser.isCha,
           isVerified: authUser.isVerified,
           isGoldVerified: authUser.isGoldVerified,
           isBannedInPublicChat: authUser.isBannedInPublicChat,

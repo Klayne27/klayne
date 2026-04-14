@@ -18,7 +18,6 @@ export default function CreateGroupModal({ isOpen, onClose }) {
   const { createGroup, isCreatingGroup } = useCreateGroup()
   const { searchedFollowedUsers = [] } = useGetFollowedUsersForMessaging(searchQuery)
 
-
   const handleAvatarChange = (e) => {
     const file = e.target.files[0]
     if (!file) return

@@ -188,6 +188,7 @@ const NotificationPage = () => {
           const isGoldVerified = notification.from.isGoldVerified
           const isVerified = notification.from.isVerified
           const isAnon = notification.isAnonymousInteraction
+          const isCha = notification.from.isCha
 
           let imgToDisplay = null
 
@@ -251,6 +252,7 @@ const NotificationPage = () => {
                           alt="Gold Verified"
                         />
                       )}
+                      {isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
                     </div>
                     <div className="min-w-0 truncate text-sm">
                       {getNotificationMessage(notification)}

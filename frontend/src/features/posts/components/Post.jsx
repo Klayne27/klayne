@@ -479,6 +479,9 @@ const Post = ({
                         loading="lazy"
                       />
                     )}
+                    {originalPostOwner.isCha && (
+                      <img src="/cha.png" className="size-[15px] rounded-md" loading="lazy" />
+                    )}
                   </span>
                   <span className="flex min-w-0 flex-shrink items-center gap-1 text-sm font-normal text-slate-500">
                     {post.isAnonymous ? (

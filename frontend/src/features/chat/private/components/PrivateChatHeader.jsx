@@ -69,6 +69,7 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
                   {otherUser?.isGoldVerified && (
                     <img src="/gold-verified2.png" className="size-[17px]" alt="Gold" />
                   )}
+                  {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
                 </div>
               )}
             </div>

@@ -230,6 +230,9 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                       loading="lazy"
                     />
                   )}
+                  {originalPostOwner.isCha && (
+                    <img src="/cha.png" className="size-[15px] rounded-md" loading="lazy" />
+                  )}
                 </span>
               )}
             </div>
@@ -252,6 +255,9 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
                     alt="Gold Verified"
                     loading="lazy"
                   />
+                )}
+                {originalPostOwner.isCha && (
+                  <img src="/cha.png" className="size-[15px] rounded-md" loading="lazy" />
                 )}
               </span>
             </Link>

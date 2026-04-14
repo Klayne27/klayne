@@ -459,6 +459,9 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                     )}
                     {userProfile?.isGoldVerified && (
                       <img src="/gold-verified2.png" className="size-[18px]" />
+                    )}{" "}
+                    {userProfile?.isCha && (
+                      <img src="/cha.png " className="size-[16px] rounded-md" />
                     )}
                   </span>
                 </div>
@@ -686,24 +689,26 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 )}
               </div>
               {/* Likes Tab */}
-              {!userProfile.isLikedFeedPrivate && <div
-                className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
-                  isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""
-                } {/* Active background for touch */} ${
-                  feedType === "likes" ? "font-bold" : "opacity-50"
-                } {/* Existing text styling */} active`}
-                onClick={() => {
-                  setFeedType("likes")
-                }}
-                onTouchStart={() => handleTouchStart("likes")}
-                onTouchEnd={handleTouchEnd}
-                onTouchCancel={handleTouchCancel}
-              >
-                Likes
-                {feedType === "likes" && (
-                  <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
-                )}
-              </div>}
+              {!userProfile.isLikedFeedPrivate && (
+                <div
+                  className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
+                    isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""
+                  } {/* Active background for touch */} ${
+                    feedType === "likes" ? "font-bold" : "opacity-50"
+                  } {/* Existing text styling */} active`}
+                  onClick={() => {
+                    setFeedType("likes")
+                  }}
+                  onTouchStart={() => handleTouchStart("likes")}
+                  onTouchEnd={handleTouchEnd}
+                  onTouchCancel={handleTouchCancel}
+                >
+                  Likes
+                  {feedType === "likes" && (
+                    <div className="absolute bottom-0 h-1 w-10 rounded-full bg-primary" />
+                  )}
+                </div>
+              )}
             </div>
             {isMyProfile && feedType === "likes" && authUser?.isLikedFeedPrivate && (
               <div className="m-1 flex flex-col items-start rounded-lg bg-[#02113D] px-4 py-2.5">

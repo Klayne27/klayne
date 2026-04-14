@@ -101,7 +101,7 @@ function GroupConversationItem({ conv }) {
         onTouchCancel={handleTouchCancel}
       >
         {/* Avatar */}
-        <div className="relative shrink-0 p-1">
+        <div className="relative shrink-0 p-1 ">
           <img
             src={getOptimizedImageUrl(conv.avatar?.imageUrl || "/avatar-placeholder.png", "avatar")}
             alt={conv.name}

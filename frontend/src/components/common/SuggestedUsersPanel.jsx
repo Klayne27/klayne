@@ -84,6 +84,7 @@ const SuggestedUsersPanel = () => {
                       {user.isGoldVerified && (
                         <img src="/gold-verified2.png" className="size-[17px]" />
                       )}
+                      {user.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
                     </span>
                     <span className="truncate text-sm text-slate-500">
                       @{truncateText(user.username, 12)}

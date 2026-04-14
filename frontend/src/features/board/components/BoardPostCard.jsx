@@ -100,6 +100,7 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
               {post.user?.isGoldVerified && (
                 <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
               )}
+              {post.user?.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
             </div>
             <p className="truncate text-xs text-slate-500">@{post.user?.username}</p>
           </div>

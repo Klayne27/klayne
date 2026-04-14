@@ -9,6 +9,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
   const isSenderAdmin = message.sender?.isAdmin
   const isSenderVerified = message.sender?.isVerified
   const isSenderGoldVerified = message.sender?.isGoldVerified
+  const isSenderCha = message.sender?.isCha
 
   return (
     <>
@@ -18,11 +19,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             <Link
               to={`/profile/${message.sender?.username}`}
               className={`font-semibold ${
-                isSenderVerified
-                  ? "text-[#1D9BF0]"
-                  : isSenderGoldVerified
-                    ? "text-[#E3B812]"
-                    : ""
+                isSenderVerified ? "text-[#1D9BF0]" : isSenderGoldVerified ? "text-[#E3B812]" : ""
               }`}
             >
               {message.sender?.username}
@@ -35,7 +32,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             {isSenderGoldVerified && !isSentByCurrentUser && (
               <img src="/gold-verified2.png" className="size-[17px]" />
             )}
-
+            {isSenderCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
             {isSenderAdmin && !isSentByCurrentUser && (
               <span>
                 <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />
@@ -48,7 +45,9 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
               </span>
             )}
             {message.sender?.preferredBadge && !isSentByCurrentUser && (
-              <div className="ml-1 size-[17px] flex-shrink-0">{getBadgeIcon(message?.sender?.preferredBadge)}</div>
+              <div className="ml-1 size-[17px] flex-shrink-0">
+                {getBadgeIcon(message?.sender?.preferredBadge)}
+              </div>
             )}
           </span>
           <span className="text-xs text-gray-500">{formatTime(message.createdAt)}</span>

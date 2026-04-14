@@ -377,6 +377,9 @@ const BoardPostDetail = ({ postId, onClose }) => {
                   {post.user?.isGoldVerified && (
                     <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
                   )}
+                  {post.user?.isCha && (
+                    <img src="/cha.png" className="size-[15px] rounded-md" />
+                  )}
                   <span className="text-xs text-slate-500">
                     · {formatFullDateTime(post.createdAt)}
                   </span>

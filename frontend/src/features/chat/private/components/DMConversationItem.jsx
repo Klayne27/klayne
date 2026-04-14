@@ -182,15 +182,16 @@ function DMConversationItem({ conv }) {
 
       <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
         <div className="flex items-center justify-between">
-          <div className="flex items-center min-w-0" style={userSelectStyle}>
-            <span className="mr-1 font-bold truncate min-w-0">{otherUser.fullName}</span>
+          <div className="flex min-w-0 items-center" style={userSelectStyle}>
+            <span className="mr-1 flex-shrink-0 truncate font-bold">{otherUser.fullName}</span>
             {otherUser.isVerified && (
               <img src="/verified2.png" className="size-[17px]" alt="Verified" />
             )}
             {otherUser.isGoldVerified && (
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
-            <span className="text-gray-400 min-w-0 truncate">@{otherUser.username}</span>
+            {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+            <span className="flex-shrink-1 min-w-0 truncate text-gray-400">@{otherUser.username}</span>
             <span className="mx-1 text-xs text-gray-400">·</span>
             <span className="shrink-0 text-xs text-gray-400">{formatPostDate(conv.updatedAt)}</span>
           </div>
