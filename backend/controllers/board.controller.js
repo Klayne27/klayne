@@ -27,7 +27,7 @@ const commentPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   { path: "image", select: "imageUrl" },
@@ -60,7 +60,7 @@ const boardPostPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   {
@@ -293,7 +293,7 @@ export const reactToBoardPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg isVerified isGoldVerified badges preferredBadge",
+          "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({

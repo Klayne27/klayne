@@ -800,7 +800,7 @@ io.on("connection", async (socket) => {
       const updatedConversation = await Conversation.findById(conversationObjectId)
         .populate({
           path: "participants",
-          select: "username fullName isVerified isGoldVerified  badges preferredBadge",
+          select: "username fullName isCha isVerified isGoldVerified  badges preferredBadge",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({

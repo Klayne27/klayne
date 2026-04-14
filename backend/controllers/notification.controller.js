@@ -14,7 +14,7 @@ export const getNotifications = async (req, res) => {
       .sort({ createdAt: -1 })
       .populate({
         path: "from",
-        select: "username fullName isVerified isGoldVerified  badges preferredBadge",
+        select: "username fullName isCha isVerified isGoldVerified  badges preferredBadge",
         populate: {
           path: "profileImg",
           select: "imageUrl",

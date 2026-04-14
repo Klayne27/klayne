@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema(
       unique: true,
       sparse: true, // Allow multiple null values
     },
+    isCha: {
+      type: Boolean,
+      default: false,
+    },
     isVerified: {
       type: Boolean,
       default: false,

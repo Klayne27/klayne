@@ -2,7 +2,7 @@ import Devlog from "../models/devlog.model.js";
 import DevlogComment from "../models/devlogComment.model.js";
 
 const AUTHOR_PROJECTION =
-  "_id username fullName profileImg isAdmin isVerified isGoldVerified";
+  "_id username fullName profileImg isAdmin isCha isVerified isGoldVerified";
 
 export const getDevlogs = async (req, res) => {
   try {

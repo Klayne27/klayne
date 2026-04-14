@@ -11,7 +11,7 @@ import { getPublicIdFromUrl } from "../lib/utils/helpers.js";
 
 const POPULATE_MEMBER_USER = {
   path: "members.user",
-  select: "username fullName isVerified isGoldVerified  badges",
+  select: "username fullName isCha isVerified isGoldVerified  badges",
   populate: { path: "profileImg", select: "imageUrl" },
 };
 
@@ -230,7 +230,7 @@ export const getMembers = async (req, res) => {
 
     const group = await Conversation.findOne({ _id: groupId, isGroup: true }).populate({
       path: "members.user",
-      select: "username fullName isVerified isGoldVerified badges ",
+      select: "username fullName isCha isVerified isGoldVerified badges ",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 
