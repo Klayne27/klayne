@@ -23,7 +23,12 @@ import ViewReactionsModal from "../../../../components/common/ViewReactionsModal
 import EmojiPickerPopover from "../../../../components/common/EmojiPickerPopover"
 import MobileMessageActionsSlideUp from "../../common/components/MobileMessageActionsSlideUp"
 import { useAdminDeleteMessage } from "../../group/groupChatHooks/useGroupMutations"
-import { useDeleteMessage, usePinMessage, useReactToMessage } from "../privateChatHooks/usePrivateChatMutations"
+import {
+  useDeleteMessage,
+  usePinMessage,
+  useReactToMessage,
+} from "../privateChatHooks/usePrivateChatMutations"
+import { useTheme } from "../../../../context/ThemeContext"
 
 const PrivateChatMessageItem = ({
   message,
@@ -61,6 +66,7 @@ const PrivateChatMessageItem = ({
   const { pinMessage } = usePinMessage()
 
   const isMobile = useIsMobile()
+  const { theme } = useTheme()
 
   const {
     isSentByCurrentUser,
@@ -137,7 +143,7 @@ const PrivateChatMessageItem = ({
       }
     : {}
 
-  const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser)
+  const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser, theme)
 
   const handleOpenViewReactionsModal = (e) => {
     e.stopPropagation()
@@ -145,10 +151,9 @@ const PrivateChatMessageItem = ({
     setShowViewReactionsModal(true)
   }
 
-   const handleCloseViewReactionsModal = () => {
-     setShowViewReactionsModal(false)
-   }
-
+  const handleCloseViewReactionsModal = () => {
+    setShowViewReactionsModal(false)
+  }
 
   const handleOpenSlideUpReactionsMenu = (e) => {
     // e.stopPropagation()
@@ -157,7 +162,6 @@ const PrivateChatMessageItem = ({
     closeSlideMenu()
   }
 
- 
   const handleCloseSlideUpReactionsMenu = () => {
     setShowSlideUpReactionsMenu(false)
   }

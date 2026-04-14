@@ -23,7 +23,7 @@ const ProfileInfoModal = ({ user, position }) => {
 
   return (
     <div
-      className="fixed z-[1000] flex w-72 flex-col rounded-xl border border-accent bg-base-200 shadow-2xl"
+      className="fixed z-[1000] flex w-72 flex-col rounded-xl border border-accent bg-base-100 gray-shadow"
       style={modalStyle}
       onClick={(e) => e.stopPropagation()}
     >
@@ -65,9 +65,9 @@ const ProfileInfoModal = ({ user, position }) => {
 
         {user.bio && <p className="my-2 line-clamp-3 text-sm text-base-content">{user.bio}</p>}
 
-        <div className="mt-1 flex items-center text-slate-500">
+        {/* <div className="mt-1 flex items-center text-slate-500">
           <span className="text-xs">Joined {formatMemberSinceDate(user.createdAt)}</span>
-        </div>
+        </div> */}
 
         <div className="mt-3 flex gap-4">
           <div className="flex items-center gap-1">

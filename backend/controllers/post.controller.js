@@ -185,10 +185,10 @@ export const createReply = async (req, res) => {
       return res.status(403).json({ error: "Only Gold Verified users can post videos." });
     }
 
-    const isOwnerReplyingAnonymously =
-      parent.isVent &&
-      parent.isAnonymous &&
-      parent.user._id.toString() === userId.toString();
+    // const isOwnerReplyingAnonymously =
+    //   parent.isVent &&
+    //   parent.isAnonymous &&
+    //   parent.user._id.toString() === userId.toString();
 
     const finalIsAnonymous =
       // isOwnerReplyingAnonymously ||

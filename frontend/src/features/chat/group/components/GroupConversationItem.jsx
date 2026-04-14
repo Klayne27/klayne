@@ -108,7 +108,7 @@ function GroupConversationItem({ conv }) {
             className="h-8 w-8 rounded-full object-cover"
           />
           {/* Group icon badge */}
-          <span className="absolute bottom-0 right-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-base-100 bg-primary text-[8px] text-white">
+          <span className="absolute bottom-0 right-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-base-100 bg-primary text-[8px] ">
             G
           </span>
         </div>

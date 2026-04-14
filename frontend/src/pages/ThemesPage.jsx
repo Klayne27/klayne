@@ -91,7 +91,7 @@ const ThemesPage = () => {
                     >
                       <div
                         className={`max-w-[80%] rounded-3xl p-3 shadow-sm ${
-                          message.isSent ? "bg-primary text-white" : "bg-[#2F3336] text-white"
+                          message.isSent ? `bg-primary ${theme === "luxury" ? "": "text-white"}` : "bg-[#2F3336] text-white"
                         } `}
                       >
                         <p className="text-sm">{message.content}</p>

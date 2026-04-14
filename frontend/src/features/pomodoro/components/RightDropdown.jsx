@@ -11,7 +11,7 @@ function RightDropdown({ onToggleRightDropdown, isRightDropdownOpen }) {
     <div className="fixed right-1 top-24 md:right-6 md:top-32 z-40 flex flex-col items-center gap-3">
       <button
         onClick={onToggleRightDropdown}
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isRightDropdownOpen ? "bg-primary text-white" : "bg-base-200 text-slate-400 hover:text-white"}`}
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isRightDropdownOpen ? "bg-primary " : "bg-base-200 text-slate-400 hover:text-white"}`}
       >
         <FaEllipsisVertical
           size={20}
@@ -30,7 +30,7 @@ function RightDropdown({ onToggleRightDropdown, isRightDropdownOpen }) {
             key={item.path}
             onClick={() => navigate(item.path)}
             style={{ transitionDelay: `${i * 50}ms` }}
-            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl bg-base-200/80 text-slate-400 backdrop-blur-md transition-all hover:bg-primary hover:text-white"
+            className="group relative flex h-12 w-12 items-center justify-center rounded-2xl bg-base-200/80  backdrop-blur-md transition-all hover:bg-primary"
           >
             {item.icon}
             {/* Tooltip Right */}

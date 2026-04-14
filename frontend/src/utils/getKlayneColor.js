@@ -18,6 +18,14 @@ export const getKlayneColor = (theme) => {
       return "bg-primary"
     case "retro":
       return "bg-primary"
+    case "bumblebee":
+      return "bg-primary"
+    case "autumn":
+      return "bg-primary"
+    case "corporate":
+      return "bg-primary"
+    case "emerald":
+      return "bg-primary"
     default:
       "bg-transparent"
   }

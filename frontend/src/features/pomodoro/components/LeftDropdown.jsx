@@ -25,7 +25,7 @@ function LeftDropdown({ onToggleLeftDropdown, isLeftDropdownOpen }) {
     <div className="fixed left-1 top-24 md:left-6 md:top-32 z-40 flex flex-col items-center gap-3">
       <button
         onClick={onToggleLeftDropdown}
-        className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isLeftDropdownOpen ? " bg-primary text-white" : "bg-base-200 text-slate-400 hover:text-white"}`}
+        className={`flex h-12 w-12 items-center justify-center rounded-2xl shadow-lg transition-all duration-300 ${isLeftDropdownOpen ? " bg-primary " : "bg-base-200 text-slate-400 hover:text-white"}`}
       >
         <FaEllipsisVertical
           size={20}
@@ -65,7 +65,7 @@ function LeftDropdown({ onToggleLeftDropdown, isLeftDropdownOpen }) {
             {item.icon}
             {item.badge}
             {/* Tooltip */}
-            <span className="absolute left-14 hidden whitespace-nowrap rounded-md bg-slate-800 px-2 py-1 text-xs group-hover:block">
+            <span className="absolute left-14 hidden whitespace-nowrap rounded-md bg-slate-800 text-white px-2 py-1 text-xs group-hover:block">
               {item.label}
             </span>
           </button>
