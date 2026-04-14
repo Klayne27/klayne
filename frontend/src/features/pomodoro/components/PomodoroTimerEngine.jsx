@@ -13,6 +13,7 @@ export const PomodoroTimerEngine = () => {
   const isGoalReached = usePomodoroTimerStore((s) => s.isGoalReached)
   const selectedTaskId = usePomodoroTimerStore((s) => s.selectedTaskId)
   const isInitialized = usePomodoroTimerStore((s) => s.isInitialized)
+  const timer = usePomodoroTimerStore((s) => s.timer)
 
   const setTimer = usePomodoroTimerStore((s) => s.setTimer)
   const setIsActive = usePomodoroTimerStore((s) => s.setIsActive)
@@ -74,6 +75,44 @@ export const PomodoroTimerEngine = () => {
     }
   }, [])
 
+useEffect(() => {
+  if (!isInitialized) return
+
+  // Clear any existing revert timeout whenever the state changes
+  let revertTimeout
+
+  if (isGoalReached) {
+    document.title = "Goal Reached!"
+  } else if (isActive) {
+    const mins = Math.floor(timer / 60)
+    const secs = Math.floor(timer % 60)
+    const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+    const status = isBreak ? "Break" : "Focus"
+    document.title = `${timeString} ${status} | Klayne`
+  } else if (!isActive && timer > 0) {
+    // Logic for PAUSED state
+    const mins = Math.floor(timer / 60)
+    const secs = Math.floor(timer % 60)
+    const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+    document.title = `Paused - ${timeString}`
+
+    // Set a timeout to revert the title after 5 minutes (300,000 ms)
+    revertTimeout = setTimeout(
+      () => {
+        document.title = "Klayne"
+      },
+      5 * 60 * 1000,
+    )
+  } else {
+    document.title = "Klayne"
+  }
+
+  // Cleanup: This runs before the next effect execution to prevent memory leaks
+  // and cancel the pending revert if the user resumes or the timer ticks.
+  return () => {
+    if (revertTimeout) clearTimeout(revertTimeout)
+  }
+}, [timer, isActive, isBreak, isGoalReached, isInitialized])
   const playAlarm = useCallback(() => {
     const s = settingsRef.current
     if (s && !s.isMuted && alarmAudioRef.current) {

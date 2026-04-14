@@ -133,7 +133,32 @@ export const getPostReplies = async (req, res) => {
 
     const hasNextPage = page * limit < totalReplies;
 
-    res.status(200).json({ replies: repliesWithFirstChild, hasNextPage, totalReplies });
+    const maskAnonymousUser = (post) => {
+      if (!post || !post.isAnonymous) return post;
+      return {
+        ...post,
+        user: {
+          _id: post.user._id,
+          username: "Anonymous",
+          fullName: "Anonymous",
+          profileImg: { imageUrl: "/avatar-placeholder.png" },
+          isVerified: false,
+          isGoldVerified: false,
+          badges: [],
+          preferredBadge: null,
+        },
+      };
+    };
+
+    const maskedReplies = repliesWithFirstChild.map((reply) => {
+      const maskedReply = maskAnonymousUser(reply);
+      if (maskedReply.firstChildReply) {
+        maskedReply.firstChildReply = maskAnonymousUser(maskedReply.firstChildReply);
+      }
+      return maskedReply;
+    });
+
+    res.status(200).json({ replies: maskedReplies, hasNextPage, totalReplies });
   } catch (error) {
     res.status(500).json({ error: "Internal server error" });
     console.error("Error in getPostReplies controller:", error);
@@ -165,7 +190,12 @@ export const createReply = async (req, res) => {
       parent.isAnonymous &&
       parent.user._id.toString() === userId.toString();
 
-    if (await isBlockedOrBlockedBy(userId, parent.user._id)) {
+    const finalIsAnonymous =
+      // isOwnerReplyingAnonymously ||
+      (parent.isVent && req.body.isAnonymous === true) || // user opted in on any vent post
+      (!parent.isVent && parent.isAnonymous && req.body.isAnonymous !== false); // old behavior for non-vent anon posts
+    
+      if (await isBlockedOrBlockedBy(userId, parent.user._id)) {
       return res
         .status(403)
         .json({ error: "Cannot reply due to blocking restrictions." });
@@ -208,7 +238,7 @@ export const createReply = async (req, res) => {
       publishedAt: new Date(),
       isIC: parent.isIC || isIC || false,
       isVent: parent.isVent,
-      isAnonymous: isOwnerReplyingAnonymously,
+      isAnonymous: finalIsAnonymous, // ← use finalIsAnonymous
     });
 
     await newReply.save();
@@ -229,23 +259,13 @@ export const createReply = async (req, res) => {
     await Post.findByIdAndUpdate(parentId, { $inc: { repliesCount: 1 } });
 
     if (parent.user._id.toString() !== userId.toString()) {
-      if (parent.parentPost === null) {
-        await createAndSendNotification({
-          from: userId,
-          to: parent.user._id,
-          type: "reply",
-          postId: newReply._id,
-          isAnonymousInteraction: isOwnerReplyingAnonymously,
-        });
-      } else {
-        await createAndSendNotification({
-          from: userId,
-          to: parent.user._id,
-          type: "replyReply",
-          postId: newReply._id,
-          isAnonymousInteraction: isOwnerReplyingAnonymously,
-        });
-      }
+      await createAndSendNotification({
+        from: userId,
+        to: parent.user._id,
+        type: parent.parentPost === null ? "reply" : "replyReply",
+        postId: newReply._id,
+        isAnonymousInteraction: finalIsAnonymous, // ← was isOwnerReplyingAnonymously
+      });
     }
 
     const populatedReply = await Post.findById(newReply._id)
@@ -257,9 +277,10 @@ export const createReply = async (req, res) => {
       })
       .populate({ path: "image", select: "imageUrl" });
 
+    // Replace the existing masking block:
     let finalReply = populatedReply.toObject();
 
-    if (isOwnerReplyingAnonymously) {
+    if (finalIsAnonymous) {
       finalReply.user = {
         _id: populatedReply.user._id,
         username: "Anonymous",

@@ -8,7 +8,6 @@ import { usePasteHandler } from "../hooks/customHooks/usePasteHandler"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import Post from "../features/posts/components/Post"
 import { BiImageAdd } from "react-icons/bi"
-import { IoClose } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils"
 import HeroPost from "../features/posts/components/HeroPost"
 import { useSearchUsers } from "../features/users/usersHooks/useUserMutations"
@@ -28,6 +27,7 @@ const PostPage = () => {
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
 
+  const [isAnonymousReply, setIsAnonymousReply] = useState(false)
   const [replyInput, setReplyInput] = useState("")
   const [replyPreviewImage, setReplyPreviewImage] = useState(null)
   const [replySelectedFile, setReplySelectedFile] = useState(null)
@@ -200,13 +200,27 @@ const PostPage = () => {
     [replyInput],
   )
 
+  // Auto-default to anonymous when navigating to an anonymous post:
+  // Auto-default: anonymous posts stay anonymous, vent posts let the user choose
+  useEffect(() => {
+    if (displayPost?.isAnonymous) {
+      setIsAnonymousReply(true)
+    } else {
+      setIsAnonymousReply(false) // vent-but-not-anonymous posts default to false
+    }
+  }, [displayPost?.isAnonymous, pid])
+
+  // In handleSubmitReply, add isAnonymous to the payload:
   const handleSubmitReply = useCallback(
     async (e) => {
       e.preventDefault()
       if (!replyInput.trim() && !replySelectedFile) return
       if (isCreatingReply) return
 
-      const payload = { text: replyInput }
+      const payload = {
+        text: replyInput,
+        isAnonymous: isAnonymousReply, // ADD
+      }
 
       const submit = async (finalPayload) => {
         await createReply(finalPayload)
@@ -221,11 +235,8 @@ const PostPage = () => {
       if (replySelectedFile) {
         const reader = new FileReader()
         reader.onloadend = async () => {
-          if (replySelectedFile.type.startsWith("image/")) {
-            payload.img = reader.result
-          } else if (replySelectedFile.type.startsWith("video/")) {
-            payload.video = reader.result
-          }
+          if (replySelectedFile.type.startsWith("image/")) payload.img = reader.result
+          else if (replySelectedFile.type.startsWith("video/")) payload.video = reader.result
           await submit(payload)
         }
         reader.readAsDataURL(replySelectedFile)
@@ -233,7 +244,7 @@ const PostPage = () => {
         await submit(payload)
       }
     },
-    [replyInput, replySelectedFile, isCreatingReply, createReply],
+    [replyInput, replySelectedFile, isCreatingReply, createReply, isAnonymousReply], // ADD isAnonymousReply
   )
 
   const handleKeyDown = useCallback(
@@ -336,7 +347,7 @@ const PostPage = () => {
               <div className="w-8 rounded-full md:w-9">
                 <img
                   src={
-                    post.isAnonymous && post.user._id === authUser._id
+                    isAnonymousReply
                       ? "/avatar-placeholder.png"
                       : getOptimizedImageUrl(
                           authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
@@ -355,7 +366,7 @@ const PostPage = () => {
                 onKeyDown={handleKeyDown}
                 onFocus={() => setShowButton(true)}
                 onPaste={handlePaste}
-                placeholder="Post your reply"
+                placeholder={isAnonymousReply ? "Reply anonymously..." : "Post your reply"}
                 className="max-h-[140px] w-full resize-none overflow-y-auto bg-black/0 pl-3 text-base placeholder-gray-400 focus:outline-none sm:text-lg"
                 disabled={isCreatingReply}
                 rows={1}
@@ -386,7 +397,22 @@ const PostPage = () => {
                     >
                       <PiSmiley size={22} />
                     </button>
+
+                    {/* Anonymous toggle — only shown when parent post is anonymous */}
+
+                    {displayPost?.isVent && (
+                      <label className="flex cursor-pointer items-center gap-2 text-xs text-slate-500 md:text-sm">
+                        <input
+                          type="checkbox"
+                          className="checkbox-primary checkbox checkbox-xs"
+                          checked={isAnonymousReply}
+                          onChange={(e) => setIsAnonymousReply(e.target.checked)}
+                        />
+                        Reply Anonymously
+                      </label>
+                    )}
                   </div>
+
                   <button
                     type="submit"
                     className="md:text-md block flex-shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
@@ -468,7 +494,7 @@ const PostPage = () => {
           <>
             {replies.map((reply) => (
               <div key={reply._id} className="min-w-0">
-                <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
+                <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0}  />
 
                 {reply.firstChildReply && (
                   <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />

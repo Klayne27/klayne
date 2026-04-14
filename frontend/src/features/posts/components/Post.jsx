@@ -445,18 +445,23 @@ const Post = ({
                   className="flex min-w-0 items-center gap-1 overflow-hidden"
                   onClick={handleInteractiveClick}
                 >
-                  <span className="truncate font-bold">Anonymous</span>
+                  {/* Added shrink-0 to preserve "Anonymous" */}
+                  <span className="shrink-0 font-bold">Anonymous</span>
                 </div>
               ) : (
                 <Link
                   to={`/profile/${originalPostOwner.username}`}
-                  className="flex min-w-0 items-center gap-1 font-bold hover:underline"
+                  className="flex min-w-0 items-center gap-1 font-bold"
                   onClick={handleInteractiveClick}
                   data-profile-trigger="true"
                   onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  <span className="min-w-0 truncate">{originalPostOwner.fullName}</span>
+                  {/* CHANGED: Added flex-shrink-0 so the Full Name never truncates first */}
+                  <span className="flex-shrink-0 hover:underline">
+                    {originalPostOwner.fullName}
+                  </span>
+
                   <span className="flex shrink-0 items-center">
                     {originalPostOwner.isVerified && (
                       <img
@@ -475,31 +480,32 @@ const Post = ({
                       />
                     )}
                   </span>
+                  <span className="flex min-w-0 flex-shrink items-center gap-1 text-sm font-normal text-slate-500">
+                    {post.isAnonymous ? (
+                      <span className="truncate">@Anonymous</span>
+                    ) : (
+                      <Link
+                        to={`/profile/${originalPostOwner.username}`}
+                        className="min-w-0 truncate hover:underline"
+                        onClick={handleInteractiveClick}
+                        data-profile-trigger="true"
+                        onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
+                        onMouseLeave={handleMouseLeave}
+                      >
+                        @{originalPostOwner.username}
+                      </Link>
+                    )}
+                    {pathname.includes("/post/") && post._id === pid ? null : (
+                      <>
+                        <span className="shrink-0">·</span>
+                        <span className="shrink-0">{formattedDate}</span>
+                      </>
+                    )}
+                  </span>
                 </Link>
               )}
 
-              <span className="flex min-w-0 shrink items-center gap-1 text-sm text-slate-500">
-                {post.isAnonymous ? (
-                  <span className="truncate">@Anonymous</span>
-                ) : (
-                  <Link
-                    to={`/profile/${originalPostOwner.username}`}
-                    className="min-w-0 truncate"
-                    onClick={handleInteractiveClick}
-                    data-profile-trigger="true"
-                    onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
-                    onMouseLeave={handleMouseLeave}
-                  >
-                    @{originalPostOwner.username}
-                  </Link>
-                )}
-                {pathname.includes("/post/") && post._id === pid ? null : (
-                  <>
-                    <span className="shrink-0">·</span>
-                    <span className="shrink-0">{formattedDate}</span>
-                  </>
-                )}
-              </span>
+              {/* CHANGED: This span handles the truncation for username and date */}
             </div>
 
             <span

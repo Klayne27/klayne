@@ -1,10 +1,10 @@
 const BASE_URL = "/api/posts"
 
-export const createReplyApi = async ({ parentId, text, img, video, isIC }) => {
+export const createReplyApi = async ({ parentId, text, img, video, isIC, isAnonymous }) => {
   const res = await fetch(`${BASE_URL}/reply/${parentId}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text, img, video, isIC }),
+    body: JSON.stringify({ text, img, video, isIC, isAnonymous }),
   })
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Something went wrong")

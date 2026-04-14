@@ -259,7 +259,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
 
           <span className="flex min-w-0 gap-1 text-sm text-slate-500">
             {post.isAnonymous ? (
-              <span>@{getDisplayUsername("Anonymous", isMobile)}</span>
+              <span></span>
             ) : (
               <Link
                 to={`/profile/${originalPostOwner.username}`}
