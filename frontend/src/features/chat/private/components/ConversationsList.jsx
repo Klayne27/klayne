@@ -15,7 +15,7 @@ const ConversationsList = ({ conversations }) => {
   const searchInputWrapperRef = useRef(null)
 
   useEffect(() => {
-    const timerId = setTimeout(() => setDebouncedFollowedQuery(followedSearchQuery), 500)
+    const timerId = setTimeout(() => setDebouncedFollowedQuery(followedSearchQuery), 300)
     return () => clearTimeout(timerId)
   }, [followedSearchQuery])
 

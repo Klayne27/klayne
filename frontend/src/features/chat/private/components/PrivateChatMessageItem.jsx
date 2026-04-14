@@ -144,6 +144,9 @@ const PrivateChatMessageItem = ({
     : {}
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser, theme)
+  const isMentioned =
+    !!currentUser?.username &&
+    new RegExp(`@${currentUser.username}(?:\\s|$|[^a-zA-Z0-9_])`).test(message.text ?? "")
 
   const handleOpenViewReactionsModal = (e) => {
     e.stopPropagation()
@@ -218,8 +221,12 @@ const PrivateChatMessageItem = ({
       <div
         id={`message-${message._id}`}
         className={`relative mb-0 rounded-lg p-[1px] ${
-          isMessageHighlighted ? "bg-secondary" : ""
-        } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${message.isFirstInGroup ? "mt-2" : ""} `}
+          isMessageHighlighted
+            ? "bg-secondary"
+            : isMentioned
+              ? "border-l-2 border-yellow-400 bg-yellow-400/10"
+              : ""
+        } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${message.isFirstInGroup ? "mt-2" : ""}`}
         style={messageContentStyle}
         onMouseEnter={handleMouseEnter}
         onMouseLeave={handleMouseLeave}

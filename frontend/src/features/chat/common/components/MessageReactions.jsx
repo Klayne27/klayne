@@ -20,7 +20,7 @@ const MessageReactions = ({
       <button
         ref={addReactionButtonRef}
         onClick={(e) => handleOpenEmojiPickerPopover(e)}
-        className={`flex size-[30px] items-center justify-center rounded-lg border border-slate-500 bg-transparent text-gray-400 transition-colors duration-200 ease-in-out hover:bg-base-200 hover:text-gray-200`}
+        className={`flex size-[32px] items-center justify-center rounded-lg border border-slate-500 bg-transparent text-gray-400 transition-colors duration-200 ease-in-out hover:bg-base-200 hover:text-gray-200`}
         style={messageContentStyle}
         title="Add reaction"
       >
@@ -38,7 +38,7 @@ const MessageReactions = ({
       return (
         <div
           key={emoji}
-          className={`text-md flex cursor-pointer items-center rounded-lg px-1.5 py-1.5 ${
+          className={`text-[16px] flex cursor-pointer items-center rounded-lg px-1 py-1 ${
             hasCurrentUserReactedToThisEmoji
               ? "border border-violet-600 bg-violet-600/30"
               : "border border-slate-500 bg-transparent transition duration-200 hover:bg-base-200"
@@ -50,8 +50,8 @@ const MessageReactions = ({
             onReactionClick(message._id, emoji)
           }}
         >
-          <span className="mr-1 text-[16px] md:mr-0.5">{emoji}</span>
-          <AnimatedCount count={data.count} className="absolute top-[1px] font-bold" />
+          <span className="mr-1 text-[18px] md:mr-0.5">{emoji}</span>
+          <AnimatedCount count={data.count} className="absolute top-[2px] left-0.5 font-bold" />
           {/* <span className="ml-1 font-bold text-white">{data.count}</span> */}
         </div>
       )
@@ -61,7 +61,7 @@ const MessageReactions = ({
       <button
         ref={addReactionButtonRef}
         onClick={(e) => handleOpenEmojiPickerPopover(e, addReactionButtonRef)}
-        className={`flex size-[34px] items-center justify-center rounded-lg border border-slate-500 bg-transparent text-gray-400 transition-colors duration-200 ease-in-out hover:bg-base-200 hover:text-gray-200`}
+        className={`flex size-[32px] items-center justify-center rounded-lg border border-slate-500 bg-transparent text-gray-400 transition-colors duration-200 ease-in-out hover:bg-base-200 hover:text-gray-200`}
         title="Add reaction"
       >
         <PiSmileyFill className="size-5" />

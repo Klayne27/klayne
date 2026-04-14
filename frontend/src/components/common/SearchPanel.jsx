@@ -14,7 +14,7 @@ const SearchPanel = () => {
   useEffect(() => {
     const timerId = setTimeout(() => {
       setDebouncedQuery(searchQuery)
-    }, 500)
+    }, 300)
 
     return () => {
       clearTimeout(timerId)
@@ -23,6 +23,8 @@ const SearchPanel = () => {
 
   const { suggestedUsers, isLoadingSuggestedUsers, isError, error, isFetching } =
     useSearchUsers(debouncedQuery)
+
+  
 
   useEffect(() => {
     if (debouncedQuery || suggestedUsers?.length > 0 || isError) {

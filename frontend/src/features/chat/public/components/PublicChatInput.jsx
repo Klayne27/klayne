@@ -16,16 +16,19 @@ import {
   useSendPublicMessage,
 } from "../publicChatHooks/usePublicChatMutations"
 import ImagePreviewCloseButton from "../../../../components/common/ImagePreviewCloseButton"
+import { useMentionSuggestions } from "../../../../hooks/customHooks/useMentionSuggestions"
+import MentionSuggestionsDropdown from "../../../../components/common/MentionSuggestionsDropdown"
+import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../../context/ThemeContext"
 
 const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typingUsers }) => {
   const { replyingToMessage, setReplyingToMessage, editingMessage, isRecording, audioBlob } =
     usePublicChatStore()
 
   const emojiButtonRef = useRef(null)
-
   const isMessageDeleted = replyingToMessage?.isDeletedByAdmin || replyingToMessage?.isDeletedByUser
-
   const publicChatFileInputRef = useRef(null)
+  const { theme } = useTheme()
 
   const { sendPublicMessage } = useSendPublicMessage({ onSenderMessageSent })
   const { editPublicMessage } = useEditPublicMessage()
@@ -109,6 +112,28 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
     onEditMessage: handleEditMessage,
     typingConfig: typingConfig,
   })
+
+  const {
+    mentionSearchTerm,
+    debouncedMentionSearchTerm,
+    showMentionSuggestions,
+    suggestedUsers,
+    isLoadingSuggestedUsers,
+    handleMentionTextChange,
+    handleSelectMention,
+  } = useMentionSuggestions({
+    textInput,
+    setTextInput,
+    inputRef: publicChatInputRef,
+  })
+
+  const combinedTextChange = useCallback(
+    (e) => {
+      handleTextInputChange(e)
+      handleMentionTextChange(e)
+    },
+    [handleTextInputChange, handleMentionTextChange],
+  )
 
   const publicHandleSubmit = async (e) => {
     e.preventDefault()
@@ -216,9 +241,18 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
           )}
         </div>
 
+        {showMentionSuggestions && (
+          <MentionSuggestionsDropdown
+            users={suggestedUsers}
+            isLoading={isLoadingSuggestedUsers}
+            query={debouncedMentionSearchTerm}
+            onSelect={handleSelectMention}
+          />
+        )}
+
         <textarea
           value={textInput}
-          onChange={handleTextInputChange}
+          onChange={combinedTextChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           placeholder={
@@ -238,9 +272,9 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
           disabled={isSendButtonDisabled}
           className={`absolute right-4 top-1/2 -translate-y-1/2 rounded-full p-1.5 ${
             textInput.trim() || selectedFile || audioBlob
-              ? "bg-primary text-white"
-              : "cursor-not-allowed bg-primary text-white opacity-50"
-          } transition-colors duration-200`}
+              ? `bg-primary ${shouldTextBeWhite(theme)}`
+              : `cursor-not-allowed bg-primary ${shouldTextBeWhite(theme)} opacity-50`
+          } } transition-colors duration-200`}
         >
           {isEditingMode ? <MdCheck className="h-5 w-5" /> : <MdSend className="h-5 w-5" />}
         </button>

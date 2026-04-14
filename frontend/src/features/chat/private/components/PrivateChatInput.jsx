@@ -16,6 +16,8 @@ import { getTypingMessage } from "../../../../utils/getTypingMessage"
 import { FaCircle } from "react-icons/fa"
 import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
 import { useTheme } from "../../../../context/ThemeContext"
+import { useMentionSuggestions } from "../../../../hooks/customHooks/useMentionSuggestions"
+import MentionSuggestionsDropdown from "../../../../components/common/MentionSuggestionsDropdown"
 
 function PrivateChatInput({
   actualConversationId,
@@ -33,7 +35,7 @@ function PrivateChatInput({
 
   const { isRecording, audioBlob } = usePrivateChatStore()
 
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const typingConfig = useMemo(
     () => ({
@@ -106,6 +108,29 @@ function PrivateChatInput({
     onEditMessage: handleEditMessage,
     typingConfig: typingConfig,
   })
+
+  const {
+    mentionSearchTerm,
+    debouncedMentionSearchTerm,
+    showMentionSuggestions,
+    suggestedUsers,
+    isLoadingSuggestedUsers,
+    handleMentionTextChange,
+    handleSelectMention,
+    closeMentionSuggestions,
+  } = useMentionSuggestions({
+    textInput,
+    setTextInput,
+    inputRef: privateChatInputRef,
+  })
+
+  const combinedTextChange = useCallback(
+    (e) => {
+      handleTextInputChange(e) // existing — handles typing events, store, etc.
+      handleMentionTextChange(e) // new — tracks @ mentions
+    },
+    [handleTextInputChange, handleMentionTextChange],
+  )
 
   const {
     showEmojiPickerPopover,
@@ -190,10 +215,17 @@ function PrivateChatInput({
             </button>
           )}
         </div>
-
+        {showMentionSuggestions && (
+          <MentionSuggestionsDropdown
+            users={suggestedUsers}
+            isLoading={isLoadingSuggestedUsers}
+            query={debouncedMentionSearchTerm}
+            onSelect={handleSelectMention}
+          />
+        )}
         <textarea
           value={textInput}
-          onChange={handleTextInputChange}
+          onChange={combinedTextChange}
           onKeyDown={handleKeyDown}
           onPaste={handlePaste}
           onFocus={(e) => e.stopPropagation()}
@@ -275,8 +307,8 @@ function PrivateChatInput({
         </div>
       )}
 
-      {showTypingIndicator &&  (
-        <div className="-top-7 left-0 flex w-full items-center justify-start bg-base-100 p-1 px-4 text-sm text-gray-400" >
+      {showTypingIndicator && (
+        <div className="-top-7 left-0 flex w-full items-center justify-start bg-base-100 p-1 px-4 text-sm text-gray-400">
           <span className="animate-pulse font-semibold">{getTypingMessage(isTypingOtherUser)}</span>
           <span className="ml-1 mt-2.5 flex gap-0.5">
             <span className="pulsing-dot pulsing-dot-1 inline-block">

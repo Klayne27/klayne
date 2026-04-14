@@ -101,6 +101,7 @@ const CreatePost = ({ feedType }) => {
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
   const { markICPostsAsRead } = useMarkICPostsAsRead()
+  
 
   // Determine character limit based on user status
   const characterLimit =

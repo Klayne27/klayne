@@ -1,116 +1,113 @@
-import { useRef, useState } from "react";
-import { TbCalendarClock } from "react-icons/tb";
-import { format } from "date-fns";
-import { IoClose } from "react-icons/io5";
-import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll";
-import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect";
-import { showAppToast } from "../../../utils/showAppToast";
-import LoadingSpinner from "../../../components/common/LoadingSpinner";
-import ConfirmationModal from "../../../components/common/ConfirmationModal";
-import { useGetScheduledPosts } from "../postsHooks/usePostsQueries";
-import { useDeleteMultipleScheduledPosts } from "../postsHooks/usePostsMutations";
-
+import { useRef, useState } from "react"
+import { TbCalendarClock } from "react-icons/tb"
+import { format } from "date-fns"
+import { IoClose } from "react-icons/io5"
+import useLockBodyScroll from "../../../hooks/customHooks/useLockBodyScroll"
+import { useTouchHoverEffect } from "../../../hooks/customHooks/useTouchHoverEffect"
+import { showAppToast } from "../../../utils/showAppToast"
+import LoadingSpinner from "../../../components/common/LoadingSpinner"
+import ConfirmationModal from "../../../components/common/ConfirmationModal"
+import { useGetScheduledPosts } from "../postsHooks/usePostsQueries"
+import { useDeleteMultipleScheduledPosts } from "../postsHooks/usePostsMutations"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../context/ThemeContext"
 
 const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
-  const modalRef = useRef(null);
+  const modalRef = useRef(null)
 
-  const [isEditMode, setIsEditMode] = useState(false);
-  const [selectedPostIds, setSelectedPostIds] = useState([]);
-  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false);
+  const { theme } = useTheme()
 
-  useLockBodyScroll(isOpen);
+  const [isEditMode, setIsEditMode] = useState(false)
+  const [selectedPostIds, setSelectedPostIds] = useState([])
+  const [showDeleteConfirmModal, setShowDeleteConfirmModal] = useState(false)
 
-  const { scheduledPosts, isLoading, isError, error } = useGetScheduledPosts();
+  useLockBodyScroll(isOpen)
+
+  const { scheduledPosts, isLoading, isError, error } = useGetScheduledPosts()
   const { deleteMultipleScheduledPosts, isPending: isDeletingMultiple } =
-    useDeleteMultipleScheduledPosts();
+    useDeleteMultipleScheduledPosts()
 
-  const {
-    isTouchDevice,
-    activeButtonId,
-    handleTouchCancel,
-    handleTouchEnd,
-    handleTouchStart,
-  } = useTouchHoverEffect();
+  const { isTouchDevice, activeButtonId, handleTouchCancel, handleTouchEnd, handleTouchStart } =
+    useTouchHoverEffect()
 
   const handleCheckboxChange = (postId, isChecked) => {
     setSelectedPostIds((prevSelected) =>
-      isChecked ? [...prevSelected, postId] : prevSelected.filter((id) => id !== postId)
-    );
-  };
+      isChecked ? [...prevSelected, postId] : prevSelected.filter((id) => id !== postId),
+    )
+  }
 
   const handleDeleteSelected = () => {
     if (selectedPostIds.length === 0) {
-      showAppToast("Please select at least one post to delete.", "error");
-      return;
+      showAppToast("Please select at least one post to delete.", "error")
+      return
     }
-    setShowDeleteConfirmModal(true);
-  };
+    setShowDeleteConfirmModal(true)
+  }
 
   const areAllPostsSelected =
     (scheduledPosts && selectedPostIds.length === scheduledPosts.length) ||
-    selectedPostIds.length > 0;
+    selectedPostIds.length > 0
 
   const handleSelectAllToggle = () => {
     if (areAllPostsSelected) {
-      setSelectedPostIds([]);
+      setSelectedPostIds([])
     } else {
-      setSelectedPostIds(scheduledPosts ? scheduledPosts.map((post) => post._id) : []);
+      setSelectedPostIds(scheduledPosts ? scheduledPosts.map((post) => post._id) : [])
     }
-  };
+  }
 
   const handleToggleEditMode = () => {
-    setIsEditMode((prev) => !prev);
-    setSelectedPostIds([]);
-  };
-
+    setIsEditMode((prev) => !prev)
+    setSelectedPostIds([])
+  }
 
   const handleBackgroundClick = (e) => {
-    e.stopPropagation();
+    e.stopPropagation()
     if (modalRef.current && !modalRef.current.contains(e.target)) {
-      onClose();
-      setIsEditMode(false);
+      onClose()
+      setIsEditMode(false)
     }
-  };
+  }
 
   const handleEditPostClick = (post) => {
-    onPostSelectedForEdit(post);
-  };
+    onPostSelectedForEdit(post)
+  }
 
   const handlePostListItemClick = (post) => {
     if (isEditMode) {
-      const isCurrentlySelected = selectedPostIds.includes(post._id);
-      handleCheckboxChange(post._id, !isCurrentlySelected);
+      const isCurrentlySelected = selectedPostIds.includes(post._id)
+      handleCheckboxChange(post._id, !isCurrentlySelected)
     } else {
-      handleEditPostClick(post);
+      handleEditPostClick(post)
     }
-  };
+  }
 
   const handleConfirmDelete = () => {
-    deleteMultipleScheduledPosts(selectedPostIds);
-    setShowDeleteConfirmModal(false);
+    deleteMultipleScheduledPosts(selectedPostIds)
+    setShowDeleteConfirmModal(false)
     setIsEditMode(false)
-  };
+  }
 
-  if (!isOpen) return null;
+  if (!isOpen) return null
 
   return (
     <div
-      className={`fixed inset-0 bg-gray-700 bg-opacity-70 flex justify-center z-50 p-4 ${
+      className={`fixed inset-0 z-50 flex justify-center bg-gray-700 bg-opacity-70 p-4 ${
         isOpen ? "modal-open" : ""
       }`}
       onClick={handleBackgroundClick}
     >
       <div
         ref={modalRef}
-        className="bg-base-100 rounded-2xl shadow-lg mt-7 max-w-xl mx-auto w-full flex flex-col overflow-hidden h-[80vh]"
+        className="mx-auto mt-7 flex h-[80vh] w-full max-w-xl flex-col overflow-hidden rounded-2xl bg-base-100 shadow-lg"
       >
-        <div className="flex items-center justify-between px-3 py-2 border-b border-slate-500">
-          <div className="flex gap-5 items-center">
+        <div className="flex items-center justify-between border-b border-slate-500 px-3 py-2">
+          <div className="flex items-center gap-5">
             <button
-              className="hover:bg-secondary rounded-full p-1 transition duration-200"
+              className="rounded-full p-1 transition duration-200 hover:bg-secondary"
               onClick={() => {
-                onClose();
-                setIsEditMode(false);
+                onClose()
+                setIsEditMode(false)
               }}
             >
               <IoClose strokeWidth={1} size={24} />
@@ -120,7 +117,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
           {isEditMode ? (
             <div className="flex items-center gap-2">
               <button
-                className="bg-slate-500 text-white font-semibold px-4 py-1.5 rounded-full hover:bg-slate-600 transition duration-200 text-sm"
+                className={`bg-slate-500 ${shouldTextBeWhite(theme)} rounded-full px-4 py-1.5 text-sm font-semibold transition duration-200 hover:bg-slate-600`}
                 onClick={handleToggleEditMode}
               >
                 Done
@@ -128,7 +125,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
             </div>
           ) : (
             <button
-              className="bg-primary text-white font-semibold px-4 py-1.5 rounded-full hover:opacity-90 transition duration-200 text-sm"
+              className={`bg-primary ${shouldTextBeWhite(theme)} rounded-full px-4 py-1.5 text-sm font-semibold transition duration-200 hover:opacity-90`}
               onClick={handleToggleEditMode}
             >
               Edit
@@ -138,19 +135,19 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
 
         <div className="flex-1 overflow-y-auto">
           {isLoading && (
-            <div className="flex justify-center items-center h-full">
+            <div className="flex h-full items-center justify-center">
               <LoadingSpinner size="lg" />
             </div>
           )}
 
           {isError && (
-            <p className="text-red-500 text-center mt-4">
+            <p className="mt-4 text-center text-red-500">
               Error: {error?.message || "Failed to load scheduled posts."}
             </p>
           )}
 
           {!isLoading && !isError && scheduledPosts?.length === 0 && (
-            <p className="text-center text-slate-500 mt-4">No scheduled posts found.</p>
+            <p className="mt-4 text-center text-slate-500">No scheduled posts found.</p>
           )}
 
           {!isLoading && !isError && scheduledPosts?.length > 0 && (
@@ -158,9 +155,9 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
               {scheduledPosts.map((post) => (
                 <li
                   key={post._id}
-                  className={`px-4 py-2 border-b border-slate-500  transition duration-200 flex items-center gap-3 ${
+                  className={`flex items-center gap-3 border-b border-slate-500 px-4 py-2 transition duration-200 ${
                     !isTouchDevice ? "hover:bg-secondary" : ""
-                  }  ${
+                  } ${
                     isTouchDevice && activeButtonId === "scheduled-post"
                       ? "bg-secondary transition duration-150"
                       : ""
@@ -173,7 +170,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                   {isEditMode && (
                     <input
                       type="checkbox"
-                      className="checkbox checkbox-primary border-slate-500 [--chkfg:white] rounded-[4px] size-5 text-white border-2" // Use DaisyUI checkbox class if available
+                      className="checkbox-primary checkbox size-5 rounded-[4px] border-2 border-slate-500 text-white [--chkfg:white]" // Use DaisyUI checkbox class if available
                       checked={selectedPostIds.includes(post._id)}
                       onChange={(e) => handleCheckboxChange(post._id, e.target.checked)}
                       onClick={(e) => e.stopPropagation()}
@@ -184,7 +181,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
                       isEditMode ? "cursor-default" : "cursor-pointer"
                     }`}
                   >
-                    <p className="text-sm text-slate-500 mb-1 flex items-center gap-2">
+                    <p className="mb-1 flex items-center gap-2 text-sm text-slate-500">
                       <TbCalendarClock size={18} />
                       Will send on{" "}
                       {format(new Date(post.scheduledAt), "EEE, MMM d, yyyy 'at' h:mm a")}
@@ -199,7 +196,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
         {isEditMode && (
           <div className="flex justify-between border-t border-slate-500 p-1">
             <button
-              className="font-semibold px-4 py-1.5 rounded-full text-primary hover:bg-primary/10 transition duration-200"
+              className="rounded-full px-4 py-1.5 font-semibold text-primary transition duration-200 hover:bg-primary/10"
               onClick={handleSelectAllToggle}
               disabled={isLoading || isError || scheduledPosts?.length === 0}
             >
@@ -207,9 +204,9 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
             </button>
 
             <button
-              className={`px-4 py-1.5 rounded-full ${
+              className={`rounded-full px-4 py-1.5 ${
                 selectedPostIds.length === 0 ? "" : "hover:bg-red-700/10"
-              } text-red-600 font-semibold transition duration-200 disabled:opacity-50`}
+              } font-semibold text-red-600 transition duration-200 disabled:opacity-50`}
               onClick={handleDeleteSelected}
               disabled={selectedPostIds.length === 0 || isDeletingMultiple}
             >
@@ -229,7 +226,7 @@ const ScheduledPostsModal = ({ isOpen, onClose, onPostSelectedForEdit }) => {
         danger={true}
       />
     </div>
-  );
-};
+  )
+}
 
-export default ScheduledPostsModal;
+export default ScheduledPostsModal

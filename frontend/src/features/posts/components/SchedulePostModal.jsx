@@ -4,6 +4,8 @@ import { IoClose } from "react-icons/io5"
 import { showAppToast } from "../../../utils/showAppToast"
 import DateTimeSelector from "../../../components/common/DateTimeSelector" // Make sure this path is correct
 import useDateTimeStore from "../../../store/useDateTimeStore"
+import { shouldTextBeWhite } from "../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../context/ThemeContext"
 
 const SchedulePostModal = ({
   isOpen,
@@ -15,8 +17,8 @@ const SchedulePostModal = ({
   onRemoveSchedule,
 }) => {
   const modalRef = useRef(null)
-  const { isOverallPast, getScheduledDateTime, initializeDateTime } =
-    useDateTimeStore() 
+  const { isOverallPast, getScheduledDateTime, initializeDateTime } = useDateTimeStore()
+  const { theme } = useTheme()
 
   useEffect(() => {
     if (isOpen) {
@@ -91,7 +93,7 @@ const SchedulePostModal = ({
             )}
 
             <button
-              className={`rounded-full bg-primary px-4 py-1.5 text-sm font-semibold text-white transition duration-200 ${
+              className={`rounded-full bg-primary px-4 py-1.5 text-sm font-semibold ${shouldTextBeWhite(theme)} transition duration-200 ${
                 isOverallPast ? "cursor-not-allowed opacity-50" : "hover:opacity-80"
               }`}
               onClick={handleConfirm}

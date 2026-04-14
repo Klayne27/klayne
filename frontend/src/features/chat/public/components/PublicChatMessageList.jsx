@@ -22,7 +22,13 @@ import ViewReactionsModal from "../../../../components/common/ViewReactionsModal
 import ConfirmationModal from "../../../../components/common/ConfirmationModal"
 import PublicChatFirstMessageInGroup from "./PublicChatFirstMessageInGroup"
 import MobileMessageActionsSlideUp from "../../common/components/MobileMessageActionsSlideUp"
-import { useAddPublicMessageReaction, useBanUserFromPublicChat, useDeleteOwnPublicMessage, useDeletePublicMessage, useUnbanUserFromPublicChat } from "../publicChatHooks/usePublicChatMutations"
+import {
+  useAddPublicMessageReaction,
+  useBanUserFromPublicChat,
+  useDeleteOwnPublicMessage,
+  useDeletePublicMessage,
+  useUnbanUserFromPublicChat,
+} from "../publicChatHooks/usePublicChatMutations"
 import MessageBubble from "../../common/components/MessageBubble"
 import { useTheme } from "../../../../context/ThemeContext"
 
@@ -58,7 +64,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
   const { addReaction } = useAddPublicMessageReaction({ onReactionAdded })
 
   const isMobile = useIsMobile()
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const {
     isSenderBanned,
@@ -131,6 +137,9 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
     : {}
 
   const bubbleClasses = getMessageBubbleClasses(message, isSentByCurrentUser, theme)
+  const isMentioned =
+    !!currentUser?.username &&
+    new RegExp(`@${currentUser.username}(?:\\s|$|[^a-zA-Z0-9_])`).test(message.text ?? "")
 
   // Use the refactored, simplified admin actions hook
   const { handleAdminDeleteMessage, handleBanUser, handleUnbanUser } = usePublicChatAdminHandlers({
@@ -194,7 +203,11 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
         key={message._id}
         id={`message-${message._id}`}
         className={`relative mb-0 rounded-lg p-[1px] ${
-          isMessageHighlighted ? "bg-secondary" : ""
+          isMessageHighlighted
+            ? "bg-secondary"
+            : isMentioned
+              ? "border-l-2 border-yellow-400 bg-yellow-400/10"
+              : ""
         } ${isSentByCurrentUser ? "justify-end" : "justify-start"} ${
           message.isFirstInGroup ? "mt-4" : ""
         }`}
