@@ -209,7 +209,7 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
               <span
                 className="min-w-0 truncate"
                 style={
-                  originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
+                  !post.isAnonymous && originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
                 }
               >
                 {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
