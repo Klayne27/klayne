@@ -21,6 +21,8 @@ import ImagePreviewCloseButton from "../components/common/ImagePreviewCloseButto
 import { useEmojiPickerPopover } from "../hooks/customHooks/useEmojiPickerPopover"
 import EmojiPickerPopover from "../components/common/EmojiPickerPopover"
 import { PiSmiley } from "react-icons/pi"
+import { shouldTextBeWhite } from "../utils/shouldTextBeWhite"
+import { useTheme } from "../context/ThemeContext"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -44,6 +46,7 @@ const PostPage = () => {
   const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
 
   const isMobile = useIsMobile()
+  const {theme} = useTheme()
 
   const { post, isLoading, refetch: refetchPost } = useGetPost(pid)
   const { ancestors, isLoading: isLoadingThread } = useGetPostThread(pid)
@@ -415,7 +418,7 @@ const PostPage = () => {
 
                   <button
                     type="submit"
-                    className="md:text-md block flex-shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-bold text-white transition duration-300 hover:bg-primary/80 disabled:cursor-default disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2"
+                    className={`md:text-md block flex-shrink-0 rounded-full bg-primary px-3 py-1 text-sm font-bold transition duration-300 hover:bg-primary/80 disabled:cursor-default ${shouldTextBeWhite(theme)} disabled:bg-slate-500 disabled:text-black md:px-4 md:py-2`}
                     disabled={isCreatingReply || (!replyInput.trim() && !replyPreviewImage)}
                   >
                     {isCreatingReply ? <LoadingSpinner size="xs" /> : "Reply"}

@@ -4,6 +4,8 @@ import { FiUpload } from "react-icons/fi"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 import { useCreateGroup } from "../groupChatHooks/useGroupMutations"
 import { useGetFollowedUsersForMessaging } from "../../private/privateChatHooks/usePrivateChatQueries"
+import { shouldTextBeWhite } from "../../../../utils/shouldTextBeWhite"
+import { useTheme } from "../../../../context/ThemeContext"
 
 export default function CreateGroupModal({ isOpen, onClose }) {
   const [name, setName] = useState("")
@@ -13,6 +15,8 @@ export default function CreateGroupModal({ isOpen, onClose }) {
   const [searchQuery, setSearchQuery] = useState("")
   const [avatarPreview, setAvatarPreview] = useState(null)
   const [avatarBase64, setAvatarBase64] = useState(null)
+
+  const { theme } = useTheme()
 
   const fileRef = useRef(null)
   const { createGroup, isCreatingGroup } = useCreateGroup()
@@ -71,7 +75,10 @@ export default function CreateGroupModal({ isOpen, onClose }) {
           onClose()
         }}
       >
-        <div className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl border border-accent bg-base-100 p-6 shadow-xl" onClick={e => e.stopPropagation()}>
+        <div
+          className="relative flex w-full max-w-md flex-col gap-4 rounded-2xl border border-accent bg-base-100 p-6 shadow-xl"
+          onClick={(e) => e.stopPropagation()}
+        >
           <button className="absolute right-4 top-4" onClick={handleClose}>
             <IoClose size={22} />
           </button>
@@ -197,7 +204,7 @@ export default function CreateGroupModal({ isOpen, onClose }) {
           )}
 
           <button
-            className="w-full rounded-full bg-primary py-2 font-bold text-white disabled:opacity-50"
+            className={`w-full rounded-full bg-primary py-2 font-bold ${shouldTextBeWhite(theme)} disabled:opacity-50`}
             onClick={handleSubmit}
             disabled={!name.trim() || isCreatingGroup}
           >
