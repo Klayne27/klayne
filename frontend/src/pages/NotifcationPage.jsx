@@ -236,7 +236,11 @@ const NotificationPage = () => {
                         onClick={(e) =>
                           !isAnon ? handleProfileClick(e, notification.from?.username) : null
                         }
-                        style={notification.from?.nameColor ? { color: notification.from?.nameColor } : undefined}
+                        style={
+                          !isAnon && notification.from?.nameColor
+                            ? { color: notification.from?.nameColor }
+                            : undefined
+                        }
                       >
                         {isAnon ? "Anonymous" : notification.from?.fullName}
                       </span>
@@ -253,7 +257,9 @@ const NotificationPage = () => {
                           alt="Gold Verified"
                         />
                       )}
-                      {isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+                      {!isAnon && isCha && (
+                        <img src="/cha.png" className="size-[15px] rounded-md" />
+                      )}
                     </div>
                     <div className="min-w-0 truncate text-sm">
                       {getNotificationMessage(notification)}
