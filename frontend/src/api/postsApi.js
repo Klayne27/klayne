@@ -88,9 +88,15 @@ export const createPostApi = async ({ text, img, video, pollOptions, scheduledAt
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ text, img, video, pollOptions, scheduledAt, isIC }),
   })
+
+  const contentType = res.headers.get("content-type") ?? ""
+  if (!contentType.includes("application/json")) {
+    if (res.status === 413) throw new Error("Image is too large. Please use a smaller file.")
+    throw new Error(`Server error (${res.status}). Please try again.`)
+  }
+
   const data = await res.json()
   if (!res.ok) throw new Error(data.error || "Something went wrong")
-
   return data
 }
 
