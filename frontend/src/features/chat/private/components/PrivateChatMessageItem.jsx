@@ -151,7 +151,7 @@ const PrivateChatMessageItem = ({
 
 
   const handleOpenSlideUpReactionsMenu = (e) => {
-    e.stopPropagation()
+    // e.stopPropagation()
     setShowMoreActionsModal(false)
     setShowSlideUpReactionsMenu(true)
     closeSlideMenu()

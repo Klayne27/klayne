@@ -39,7 +39,7 @@ const MobileMessageActionsSlideUp = ({
   const { pathname } = useLocation()
   const isBoard = pathname.includes("/board")
   const hasReactions = message?.reactions?.length > 0
-  const quickReactions = ["😭", "😆", "🫂", "😡"]
+  const quickReactions = ["😭", "😆", "🫂", "❤️"]
 
 
   const handleAction = (action) => {
