@@ -229,7 +229,10 @@ function StudyLeaderboardPage() {
       if (!winner) return <div className="flex-1 opacity-0" /> // Spacer for missing ranks
       return (
         <div className="min-w-0 flex-1 px-1">
-          <p className="truncate text-[11px] font-bold text-base-content sm:text-xs">
+          <p
+            className="truncate text-[11px] font-bold text-base-content sm:text-xs"
+            style={winner.user?.nameColor ? { color: winner.user?.nameColor } : undefined}
+          >
             {winner.user?.fullName}
           </p>
           <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
@@ -435,6 +438,7 @@ function StudyLeaderboardPage() {
                     <Link
                       to={`/profile/${entry.username}`}
                       className="truncate text-sm font-bold transition-colors hover:text-primary sm:text-base"
+                      style={entry.nameColor ? { color: entry.nameColor } : undefined}
                     >
                       {entry.fullName}
                     </Link>

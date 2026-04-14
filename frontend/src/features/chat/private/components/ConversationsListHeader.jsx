@@ -50,9 +50,10 @@ function ConversationsListHeader() {
                   <div className={`avatar relative`}>
                     <div className="w-10 rounded-full">
                       <img
-                        src={
-                          getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
-                        }
+                        src={getOptimizedImageUrl(
+                          authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                          "avatar",
+                        )}
                       />
                     </div>
                     {isOnline ? (
@@ -66,6 +67,7 @@ function ConversationsListHeader() {
                   <Link
                     to={`/profile/${authUser?.username}`}
                     className="font-semibold hover:underline"
+                    style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
                   >
                     {authUser.fullName}
                   </Link>

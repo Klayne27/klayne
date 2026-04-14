@@ -458,7 +458,14 @@ const Post = ({
                   onMouseLeave={handleMouseLeave}
                 >
                   {/* CHANGED: Added flex-shrink-0 so the Full Name never truncates first */}
-                  <span className="flex-shrink-0 hover:underline">
+                  <span
+                    className="flex-shrink-0 hover:underline"
+                    style={
+                      originalPostOwner.nameColor
+                        ? { color: originalPostOwner.nameColor }
+                        : undefined
+                    }
+                  >
                     {originalPostOwner.fullName}
                   </span>
 

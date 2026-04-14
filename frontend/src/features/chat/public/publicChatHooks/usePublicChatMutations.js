@@ -60,6 +60,7 @@ export const useSendPublicMessage = ({ onSenderMessageSent }) => {
           isVerified: authUser.isVerified,
           isGoldVerified: authUser.isGoldVerified,
           isBannedInPublicChat: authUser.isBannedInPublicChat,
+          nameColor: authUser.nameColor
         },
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),

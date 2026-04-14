@@ -93,7 +93,12 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
-              <p className="text-md truncate font-bold leading-none">{post.user?.fullName}</p>
+              <p
+                className="text-md truncate font-bold leading-none"
+                style={post.user?.nameColor ? { color: post.user?.nameColor } : undefined}
+              >
+                {post.user?.fullName}
+              </p>
               {post.user?.isVerified && (
                 <img src="/verified2.png" className="size-[17px]" alt="Verified" />
               )}

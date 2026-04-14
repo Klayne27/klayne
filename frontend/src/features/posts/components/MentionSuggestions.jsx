@@ -34,13 +34,21 @@ export const MentionSuggestions = ({
             <div className="avatar">
               <div className="w-8 rounded-full">
                 <img
-                  src={getOptimizedImageUrl(user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                  src={getOptimizedImageUrl(
+                    user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                    "avatar",
+                  )}
                   alt="profile"
                 />
               </div>
             </div>
             <div>
-              <p className="font-semibold">{user.fullName}</p>
+              <p
+                className="font-semibold"
+                style={user.nameColor ? { color: user.nameColor } : undefined}
+              >
+                {user.fullName}
+              </p>
               <p className="text-sm text-slate-500">@{user.username}</p>
             </div>
           </div>

@@ -154,9 +154,10 @@ const StudyActivityPage = () => {
               <Link to={`/profile/${activity.user.username}`} className="avatar">
                 <div className="w-12 rounded-full">
                   <img
-                    src={
-                      getOptimizedImageUrl(activity.user.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")
-                    }
+                    src={getOptimizedImageUrl(
+                      activity.user.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     alt={`${activity.user.username}'s profile`}
                   />
                 </div>
@@ -165,6 +166,7 @@ const StudyActivityPage = () => {
                 <Link
                   to={`/profile/${activity.user.username}`}
                   className="text-lg font-bold hover:underline"
+                  style={activity.user.nameColor ? { color: activity.user.nameColor } : undefined}
                 >
                   {activity.user.fullName}
                 </Link>

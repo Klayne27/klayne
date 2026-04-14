@@ -29,7 +29,7 @@ export const getUserProfile = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg isCha isVerified isGoldVerified  badges preferredBadge",
+            "username fullName profileImg isCha isVerified isGoldVerified  badges preferredBadge nameColor",
         },
       })
       .populate("profileImg", "imageUrl") // Populate the profile image
@@ -86,7 +86,8 @@ export const getFollowingUsers = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId).populate({
       path: "following",
-      select: "username fullName isCha isVerified isGoldVerified  badges preferredBadge",
+      select:
+        "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -109,7 +110,8 @@ export const getFollowers = async (req, res) => {
     const { userId } = req.params;
     const user = await User.findById(userId).populate({
       path: "followers",
-      select: "username fullName isCha isVerified isGoldVerified  badges preferredBadge",
+      select:
+        "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
       populate: {
         path: "profileImg",
         select: "imageUrl",
@@ -255,6 +257,7 @@ export const getSuggestedUsers = async (req, res) => {
           isGoldVerified: 1,
           badges: 1,
           preferredBadge: 1,
+          nameColor:1 ,
         },
       },
     ]);
@@ -917,5 +920,30 @@ export const updatePreferredBadge = async (req, res) => {
   } catch (error) {
     console.error("Error updating preferred badge:", error.message);
     res.status(500).json({ error: "Internal server error: " + error.message });
+  }
+};
+
+export const updateNameColor = async (req, res) => {
+  try {
+    const { nameColor } = req.body;
+    const userId = req.user._id;
+
+    // Allow null to reset to default
+    if (nameColor !== null && !/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/.test(nameColor)) {
+      return res.status(400).json({ error: "Invalid hex color value." });
+    }
+
+    const user = await User.findByIdAndUpdate(
+      userId,
+      { nameColor: nameColor ?? null },
+      { new: true, select: "-password" },
+    );
+
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    res.status(200).json({ nameColor: user.nameColor });
+  } catch (error) {
+    console.error("Error in updateNameColor:", error.message);
+    res.status(500).json({ error: "Internal server error" });
   }
 };

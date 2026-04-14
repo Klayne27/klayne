@@ -206,7 +206,12 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
         <div className={`flex flex-1 flex-col overflow-hidden ${hasLineAbove && "mt-3"}`}>
           {post.isAnonymous ? (
             <div className="flex items-center gap-1 overflow-hidden truncate font-bold">
-              <span className="min-w-0 truncate">
+              <span
+                className="min-w-0 truncate"
+                style={
+                  originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
+                }
+              >
                 {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
               </span>
 
@@ -243,7 +248,14 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
-              <span className="min-w-0 truncate">{originalPostOwner.fullName}</span>
+              <span
+                className="min-w-0 truncate"
+                style={
+                  originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
+                }
+              >
+                {originalPostOwner.fullName}
+              </span>
               <span className="flex items-center">
                 {originalPostOwner.isVerified && (
                   <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />

@@ -18,9 +18,8 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
           {!isSentByCurrentUser && (
             <Link
               to={`/profile/${message.sender?.username}`}
-              className={`font-semibold ${
-                isSenderVerified ? "text-[#1D9BF0]" : isSenderGoldVerified ? "text-[#E3B812]" : ""
-              }`}
+              className={`font-semibold`}
+              style={message.sender?.nameColor ? { color: message.sender?.nameColor } : undefined}
             >
               {message.sender?.username}
             </Link>
@@ -32,7 +31,7 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             {isSenderGoldVerified && !isSentByCurrentUser && (
               <img src="/gold-verified2.png" className="size-[17px]" />
             )}
-            {isSenderCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+            {isSenderCha && !isSentByCurrentUser && <img src="/cha.png" className="size-[15px] rounded-md" />}
             {isSenderAdmin && !isSentByCurrentUser && (
               <span>
                 <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />

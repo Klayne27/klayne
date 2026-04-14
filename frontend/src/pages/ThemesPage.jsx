@@ -1,27 +1,28 @@
-import { MdSend } from "react-icons/md";
-import { AVAILABLE_THEMES } from "../constants/themes";
-import { useTheme } from "../context/ThemeContext";
-import { PiSmiley } from "react-icons/pi";
-import { IoImageOutline } from "react-icons/io5";
-import { useAuthUser } from "../features/auth/authHooks/useAuthUser";
-import { useNavigate } from "react-router-dom";
-import { FaArrowLeft } from "react-icons/fa6";
-import { shouldTextBeWhite } from "../utils/shouldTextBeWhite";
+import { MdSend } from "react-icons/md"
+import { AVAILABLE_THEMES } from "../constants/themes"
+import { useTheme } from "../context/ThemeContext"
+import { PiSmiley } from "react-icons/pi"
+import { IoImageOutline } from "react-icons/io5"
+import { useAuthUser } from "../features/auth/authHooks/useAuthUser"
+import { useNavigate } from "react-router-dom"
+import { FaArrowLeft } from "react-icons/fa6"
+import { shouldTextBeWhite } from "../utils/shouldTextBeWhite"
+import NameColorPicker from "../components/common/NameColorPicker"
 
 const PREVIEW_MESSAGES = [
   { id: 1, content: "Hey! How's it going?", isSent: false },
   { id: 2, content: "I'm doing great! Just working on some new features.", isSent: true },
-];
+]
 
 const ThemesPage = () => {
-  const { theme, setTheme } = useTheme();
+  const { theme, setTheme } = useTheme()
   const navigate = useNavigate()
   const { authUser } = useAuthUser()
 
-  const isThemeLocked = authUser && authUser.forceBlackTheme;
+  const isThemeLocked = authUser && authUser.forceBlackTheme
 
   return (
-    <main className="min-h-screen template flex-[4_4_0] border-accent">
+    <main className="template min-h-screen flex-[4_4_0] border-accent">
       <div className="sticky top-0 z-10 flex items-center gap-2 border-accent bg-opacity-20 px-3 py-2 backdrop-blur-md md:gap-4 md:px-4 md:py-3.5">
         <button
           onClick={() => navigate(-1)}
@@ -31,6 +32,15 @@ const ThemesPage = () => {
           <FaArrowLeft />
         </button>
         <h1 className="flex-1 truncate text-xl font-bold">Themes</h1>
+      </div>
+
+      <div className="flex flex-col gap-3 p-4">
+        <div className="flex flex-col gap-1">
+          <p className="text-sm text-base-content/70">
+            Customize the color of your display name across the site
+          </p>
+        </div>
+        <NameColorPicker />
       </div>
 
       <div className="space-y-6 p-4">
@@ -68,6 +78,7 @@ const ThemesPage = () => {
             </button>
           ))}
         </div>
+
         <h3 className="mb-3 px-4 text-lg font-semibold">Preview</h3>
         <div className="mx-4 overflow-hidden rounded-xl border border-base-300 bg-base-100 shadow-lg">
           <div className="bg-base-200 p-4">
@@ -76,10 +87,15 @@ const ThemesPage = () => {
                 <div className="border-b border-base-300 bg-base-100 px-4 py-3">
                   <div className="flex items-center gap-3">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary font-medium text-primary-content">
-                      J
+                      {authUser.fullName.split("")[0]}
                     </div>
                     <div>
-                      <h3 className="text-sm font-medium">John Doe</h3>
+                      <h3
+                        className="text-sm font-medium"
+                        style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                      >
+                        {authUser.fullName}
+                      </h3>
                     </div>
                   </div>
                 </div>
@@ -92,7 +108,9 @@ const ThemesPage = () => {
                     >
                       <div
                         className={`max-w-[80%] rounded-3xl p-3 shadow-sm ${
-                          message.isSent ? `bg-primary ${shouldTextBeWhite(theme)}` : "bg-[#2F3336] text-white"
+                          message.isSent
+                            ? `bg-primary ${shouldTextBeWhite(theme)}`
+                            : "bg-[#2F3336] text-white"
                         } `}
                       >
                         <p className="text-sm">{message.content}</p>
@@ -137,6 +155,6 @@ const ThemesPage = () => {
       </div>
     </main>
   )
-};
+}
 
-export default ThemesPage;
+export default ThemesPage

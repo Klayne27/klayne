@@ -14,6 +14,7 @@ import {
   searchUsers,
   toggleLikedFeedPrivacy,
   toggleVacationMode,
+  updateNameColor,
   updatePreferredBadge,
   updateStatusPreference,
   updateUser,
@@ -41,6 +42,8 @@ router.put("/vacation-mode", toggleVacationMode);
 router.put("/toggle-liked-feed-privacy", toggleLikedFeedPrivacy);
 router.post("/update-preferred-badge", updatePreferredBadge);
 router.put("/update-status-preference", updateStatusPreference);
+router.put("/name-color", protectRoute, updateNameColor);
+
 
 // --- ACCOUNT MANAGEMENT ---
 router.delete("/delete/:userId", deleteUserAccount);

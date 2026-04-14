@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { blockUnblockUserApi, deleteUserAccountAdminApi, deleteUserAccountApi, followApi, getVacationModeStatusApi, searchUsersApi, toggleLikedFeedPrivacyApi, toggleVacationModeApi, updatePreferredBadgeApi, updateStatusPreferenceApi, updateUserProfileApi } from "../../../api/usersApi"
+import { blockUnblockUserApi, deleteUserAccountAdminApi, deleteUserAccountApi, followApi, getVacationModeStatusApi, searchUsersApi, toggleLikedFeedPrivacyApi, toggleVacationModeApi, updateNameColorApi, updatePreferredBadgeApi, updateStatusPreferenceApi, updateUserProfileApi } from "../../../api/usersApi"
 import { useState } from "react"
 import { userKeys } from "./userKeys"
 import { showAppToast } from "../../../utils/showAppToast"
@@ -359,3 +359,20 @@ export const useVacationMode = () => {
   }
 }
 
+export const useUpdateNameColor = () => {
+  const queryClient = useQueryClient()
+
+  const { mutate: updateNameColor, isPending: isUpdatingNameColor } = useMutation({
+    mutationFn: updateNameColorApi,
+    onSuccess: (data) => {
+      // Update authUser cache so the new color reflects immediately everywhere
+      queryClient.setQueryData(userKeys.auth(), (old) =>
+        old ? { ...old, nameColor: data.nameColor } : old,
+      )
+      showAppToast("Name color updated!", "success")
+    },
+    onError: (err) => showAppToast(err.message, "error"),
+  })
+
+  return { updateNameColor, isUpdatingNameColor }
+}

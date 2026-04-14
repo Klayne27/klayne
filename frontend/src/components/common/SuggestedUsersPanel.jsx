@@ -79,7 +79,12 @@ const SuggestedUsersPanel = () => {
                   </div>
                   <div className="flex flex-col overflow-hidden">
                     <span className="flex w-full min-w-0 items-center gap-1 font-bold tracking-tight hover:underline">
-                      <span className="truncate">{user.fullName} </span>
+                      <span
+                        className="truncate"
+                        style={user.nameColor ? { color: user.nameColor } : undefined}
+                      >
+                        {user.fullName}{" "}
+                      </span>
                       {user.isVerified && <img src="/verified2.png" className="size-[17px]" />}
                       {user.isGoldVerified && (
                         <img src="/gold-verified2.png" className="size-[17px]" />

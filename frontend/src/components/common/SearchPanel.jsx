@@ -85,7 +85,12 @@ const SearchPanel = () => {
                       </div>
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span className="min-w-0 truncate font-semibold">{user.fullName}</span>
+                      <span
+                        className="min-w-0 truncate font-semibold"
+                        style={user.nameColor ? { color: user.nameColor } : undefined}
+                      >
+                        {user.fullName}
+                      </span>
                       <span className="min-w-0 truncate text-sm text-slate-500">
                         @{user.username}
                       </span>

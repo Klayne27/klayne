@@ -448,7 +448,12 @@ const PostPage = () => {
                           </div>
                         </div>
                         <div>
-                          <p className="text-sm font-semibold">{user.fullName}</p>
+                          <p
+                            className="text-sm font-semibold"
+                            style={user.nameColor ? { color: user.nameColor } : undefined}
+                          >
+                            {user.fullName}
+                          </p>
                           <p className="text-xs text-gray-400">@{user.username}</p>
                         </div>
                       </div>
@@ -494,7 +499,7 @@ const PostPage = () => {
           <>
             {replies.map((reply) => (
               <div key={reply._id} className="min-w-0">
-                <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0}  />
+                <Post post={reply} hasLineBelow={!!reply.firstChildReply} index={0} />
 
                 {reply.firstChildReply && (
                   <Post post={reply.firstChildReply} hasLineAbove={true} index={1} />

@@ -274,6 +274,7 @@ const BoardCommentItem = ({
               <Link
                 to={`/profile/${comment.user?.username}`}
                 className="truncate text-sm font-bold hover:underline"
+                style={comment.user?.nameColor ? { color: comment.user?.nameColor } : undefined}
               >
                 {comment.user?.fullName}
               </Link>

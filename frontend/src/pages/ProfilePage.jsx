@@ -285,7 +285,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 <FaArrowLeft className="h-4 w-4" />
               </button>
               <div className="flex min-w-0 flex-col">
-                <p className="min-w-0 truncate text-lg font-bold">{userProfile?.fullName}</p>
+                <p
+                  className="min-w-0 truncate text-lg font-bold"
+                  style={userProfile?.nameColor ? { color: userProfile?.nameColor } : undefined}
+                >
+                  {userProfile?.fullName}
+                </p>
                 <span className="text-sm text-slate-500">
                   {feedType === "likes"
                     ? `${userPostsCount} likes`
@@ -452,7 +457,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             <div className="mt-3 flex flex-col gap-4 px-4">
               <div className="flex flex-col">
                 <div className="flex items-center gap-1">
-                  <span className="break-all text-lg font-bold">{userProfile?.fullName}</span>
+                  <span
+                    className="break-all text-lg font-bold"
+                    style={userProfile.nameColor ? { color: userProfile.nameColor } : undefined}
+                  >
+                    {userProfile?.fullName}
+                  </span>
                   <span className="flex items-center">
                     {userProfile?.isVerified && (
                       <img src="/verified2.png" className="size-[18px]" />

@@ -320,7 +320,12 @@ export default function GroupSettingsPage() {
                       />
                     </Link>
                     <div className="flex flex-col">
-                      <span className="text-sm font-semibold">{user?.fullName}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={user?.nameColor ? { color: user?.nameColor } : undefined}
+                      >
+                        {user?.fullName}
+                      </span>
                       <span className="text-xs text-gray-400">@{user?.username}</span>
                     </div>
                     <span

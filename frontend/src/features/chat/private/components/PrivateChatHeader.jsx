@@ -58,7 +58,9 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
            */}
           <div className="flex min-w-0 flex-col overflow-hidden">
             <div className="flex min-w-0 items-center">
-              <h3 className="mr-1 min-w-0 truncate text-lg font-bold">
+              <h3
+                className="mr-1 min-w-0 truncate text-lg font-bold"
+              >
                 {isGroup ? groupName : otherUser?.fullName}
               </h3>
               {!isGroup && (

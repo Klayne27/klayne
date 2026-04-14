@@ -19,6 +19,7 @@ function PrivateChatFirstMessageInGroup({
             <div
               className={`mr-1 cursor-pointer font-semibold`}
               onClick={(e) => onUsernameClick(message.sender, e)}
+              style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
             >
               {message.senderUsername}
             </div>

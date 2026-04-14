@@ -45,10 +45,10 @@ const PublicCompletedTodosList = forwardRef(
                     <div className="relative flex items-center gap-3 px-3 py-1">
                       <div className="relative flex-shrink-0">
                         <img
-                          src={
-                            getOptimizedImageUrl(todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                            "avatar")
-                          }
+                          src={getOptimizedImageUrl(
+                            todo?.user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                            "avatar",
+                          )}
                           className="size-9 rounded-full"
                           alt="User profile"
                         />
@@ -58,7 +58,12 @@ const PublicCompletedTodosList = forwardRef(
                       </div>
                       <div className="min-w-0 flex-1">
                         <p className="truncate">
-                          <strong>{todo?.user?.fullName}</strong> completed a task:{" "}
+                          <strong
+                            style={todo?.user.nameColor ? { color: todo?.user.nameColor } : undefined}
+                          >
+                            {todo?.user?.fullName}
+                          </strong>{" "}
+                          completed a task:{" "}
                           <strong className={getTextColor(todo?.priority)}>{todo?.title}</strong>
                         </p>
                         <p className="text-slate-400">{formatTime(todo?.completedAt)}</p>

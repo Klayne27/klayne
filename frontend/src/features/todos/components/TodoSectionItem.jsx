@@ -127,7 +127,12 @@ const TodoSectionItem = forwardRef(
                 alt={`${list?.owner.username}'s profile`}
               />
               <div className="flex flex-col">
-                <p className="text-sm font-bold">{list?.owner.fullName}</p>
+                <p
+                  className="text-sm font-bold"
+                  style={list?.owner.nameColor ? { color: list?.owner.nameColor } : undefined}
+                >
+                  {list?.owner.fullName}
+                </p>
                 <p className="text-xs text-gray-500">@{list?.owner.username}</p>
               </div>
               <div

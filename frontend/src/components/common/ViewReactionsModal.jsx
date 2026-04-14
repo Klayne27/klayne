@@ -61,13 +61,21 @@ const ViewReactionsModal = ({ isOpen, onClose, reactions }) => {
               >
                 <Link to={`/profile/${user?.username}`} onClick={onClose}>
                   <img
-                    src={getOptimizedImageUrl(user?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+                    src={getOptimizedImageUrl(
+                      user?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                      "avatar",
+                    )}
                     alt={user?.username}
                     className="size-7 rounded-full object-cover"
                   />
                 </Link>
                 <Link to={`/profile/${user?.username}`} onClick={onClose}>
-                  <span className="font-semibold text-white hover:underline">{user?.fullName}</span>
+                  <span
+                    className="font-semibold hover:underline"
+                    style={user.nameColor ? { color: user.nameColor } : undefined}
+                  >
+                    {user?.fullName}
+                  </span>
                 </Link>
                 <span className="text-gray-400">@{user?.username}</span>
               </div>

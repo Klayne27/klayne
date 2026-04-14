@@ -23,7 +23,7 @@ const ProfileInfoModal = ({ user, position }) => {
 
   return (
     <div
-      className="fixed z-[1000] flex w-72 flex-col rounded-xl border border-accent bg-base-100 gray-shadow"
+      className="gray-shadow fixed z-[1000] flex w-72 flex-col rounded-xl border border-accent bg-base-100"
       style={modalStyle}
       onClick={(e) => e.stopPropagation()}
     >
@@ -56,7 +56,12 @@ const ProfileInfoModal = ({ user, position }) => {
             className="flex min-w-0 cursor-pointer flex-col"
             onClick={() => navigate(`/profile/${user.username}`)}
           >
-            <p className="truncate text-lg font-bold">{user.fullName}</p>
+            <p
+              className="truncate text-lg font-bold"
+              style={user.nameColor ? { color: user.nameColor } : undefined}
+            >
+              {user.fullName}
+            </p>
             <span className="truncate text-sm text-slate-500">@{user.username}</span>
           </div>
 

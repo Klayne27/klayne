@@ -5,6 +5,8 @@ import { MdPassword } from "react-icons/md"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useLogin } from "../../features/auth/authHooks/useAuthMutations"
 import GoogleSignInButton from "../../components/common/GoogleSignInButton"
+import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
+import { useTheme } from "../../context/ThemeContext"
 
 const LoginPage = () => {
   const [formData, setFormData] = useState({
@@ -13,6 +15,7 @@ const LoginPage = () => {
   })
 
   const [showPassword, setShowPassword] = useState(false)
+  const {theme} = useTheme()
 
   const { login, isPending, isError, error } = useLogin()
 
@@ -65,7 +68,7 @@ const LoginPage = () => {
               {!showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </label>
-          <button className="rounded-full bg-primary py-3 text-sm font-semibold text-white transition duration-200 hover:bg-primary/80">
+          <button className={`rounded-full bg-primary py-3 text-sm font-semibold ${shouldTextBeWhite(theme)} transition duration-200 hover:bg-primary/80`}>
             {isPending ? "Loading..." : "Login"}
           </button>
           {isError && <p className="text-center text-red-500">{error.message}</p>}

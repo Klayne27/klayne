@@ -164,7 +164,12 @@ export default function CreateGroupModal({ isOpen, onClose }) {
                         className="h-7 w-7 rounded-full object-cover"
                         alt={user.username}
                       />
-                      <span className="text-sm font-semibold">{user.fullName}</span>
+                      <span
+                        className="text-sm font-semibold"
+                        style={user.nameColor ? { color: user.nameColor } : undefined}
+                      >
+                        {user.fullName}
+                      </span>
                       <span className="text-xs text-gray-400">@{user.username}</span>
                       {selected && <span className="ml-auto text-primary">✓</span>}
                     </div>

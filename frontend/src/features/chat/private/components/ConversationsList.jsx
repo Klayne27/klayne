@@ -137,7 +137,10 @@ const ConversationsList = ({ conversations }) => {
                             </div>
                           </div>
                           <div className="flex flex-col">
-                            <span className="max-w-[120px] truncate font-semibold">
+                            <span
+                              className="max-w-[120px] truncate font-semibold"
+                              style={user.nameColor ? { color: user.nameColor } : undefined}
+                            >
                               {user.fullName}
                             </span>
                             <span className="max-w-[120px] truncate text-sm text-gray-500">

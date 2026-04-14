@@ -20,6 +20,7 @@ const userProjection = {
   isGoldVerified: 1,
   badges: 1,
   preferredBadge: 1,
+  nameColor: 1,
 };
 
 // Shared populate config for comments
@@ -27,7 +28,7 @@ const commentPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   { path: "image", select: "imageUrl" },
@@ -60,7 +61,7 @@ const boardPostPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   {
@@ -293,7 +294,7 @@ export const reactToBoardPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge",
+          "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({

@@ -32,13 +32,19 @@ const PinnedMessageItem = ({
   return (
     <div className="mb-3 flex w-full items-start gap-4 rounded-lg border border-accent p-4">
       <img
-        src={getOptimizedImageUrl(message.sender?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")}
+        src={getOptimizedImageUrl(
+          message.sender?.profileImg?.imageUrl || "/avatar-placeholder.png",
+          "avatar",
+        )}
         alt={message.sender?.username}
         className="size-10 rounded-full object-cover"
       />
       <div className="flex-1 overflow-hidden">
         <div className="flex items-center gap-2">
-          <p className="font-semibold text-white truncate">
+          <p
+            className="truncate font-semibold"
+            style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
+          >
             {message.sender?.fullName || message.sender?.username}
           </p>
           <span className="text-xs text-slate-400">

@@ -694,7 +694,12 @@ const CreatePost = ({ feedType }) => {
                         </div>
                       </div>
                       <div>
-                        <p className="font-semibold">{user.fullName}</p>
+                        <p
+                          className="font-semibold"
+                          style={user.nameColor ? { color: user.nameColor } : undefined}
+                        >
+                          {user.fullName}
+                        </p>
                         <p className="text-sm text-slate-500">@{user.username}</p>
                       </div>
                     </div>

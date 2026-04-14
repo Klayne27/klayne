@@ -6,6 +6,8 @@ import { MdPassword } from "react-icons/md"
 import { MdDriveFileRenameOutline } from "react-icons/md"
 import { FaEye, FaEyeSlash } from "react-icons/fa6"
 import { useSignup } from "../../features/auth/authHooks/useAuthMutations"
+import { useTheme } from "../../context/ThemeContext"
+import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 
 
 const SignUpPage = () => {
@@ -17,6 +19,7 @@ const SignUpPage = () => {
   })
 
   const [showPassword, setShowPassword] = useState(false)
+  const {theme} = useTheme()
 
   const { signup, isPending, isError, error } = useSignup()
 
@@ -92,7 +95,7 @@ const SignUpPage = () => {
               {!showPassword ? <FaEyeSlash /> : <FaEye />}
             </span>
           </label>
-          <button className="rounded-full bg-primary py-3 text-sm font-semibold text-white transition duration-200 hover:bg-primary/80">
+          <button className={`rounded-full bg-primary py-3 text-sm font-semibold ${shouldTextBeWhite(theme)} transition duration-200 hover:bg-primary/80`}>
             {isPending ? "Loading..." : "Sign up"}
           </button>
           {isError && <p className="text-red-500">{error.message}</p>}

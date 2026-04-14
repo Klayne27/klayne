@@ -236,6 +236,7 @@ const NotificationPage = () => {
                         onClick={(e) =>
                           !isAnon ? handleProfileClick(e, notification.from?.username) : null
                         }
+                        style={notification.from?.nameColor ? { color: notification.from?.nameColor } : undefined}
                       >
                         {isAnon ? "Anonymous" : notification.from?.fullName}
                       </span>

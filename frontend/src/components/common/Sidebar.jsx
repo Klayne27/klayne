@@ -451,7 +451,11 @@ const Sidebar = ({
             onTouchEnd={handleTouchEnd}
             onTouchCancel={handleTouchCancel}
           >
-            <img src={klayneLogo} className={`rounded-lg p-0.5 ${getKlayneColor(theme)}`} loading="lazy" />
+            <img
+              src={klayneLogo}
+              className={`rounded-lg p-0.5 ${getKlayneColor(theme)}`}
+              loading="lazy"
+            />
           </div>
 
           <ul
@@ -775,7 +779,7 @@ const Sidebar = ({
             ) : (
               <div className="mt-5 hidden w-full pr-6 md:block">
                 <button
-                  className={`w-full cursor-pointer rounded-full bg-primary py-3 font-bold  shadow-lg transition duration-200 hover:bg-primary/90 active:scale-95 ${shouldTextBeWhite(theme)}`}
+                  className={`w-full cursor-pointer rounded-full bg-primary py-3 font-bold shadow-lg transition duration-200 hover:bg-primary/90 active:scale-95 ${shouldTextBeWhite(theme)}`}
                   onClick={onOpenCreatePostModal}
                 >
                   Post
@@ -821,7 +825,10 @@ const Sidebar = ({
                   <div className="flex min-w-0 flex-1 items-center justify-between">
                     {/* Changed items-center to items-start to align text to the left */}
                     <div className="flex min-w-0 flex-col items-start overflow-hidden">
-                      <p className="w-full truncate text-start text-sm font-bold">
+                      <p
+                        className="w-full truncate text-start text-sm font-bold"
+                        style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                      >
                         {authUser?.fullName}
                       </p>
                       <p className="w-full truncate text-start text-sm text-slate-500">
@@ -876,7 +883,10 @@ const Sidebar = ({
 
                       {/* Name Section - Enforced Truncation */}
                       <div className="mt-4 flex w-full flex-col items-start overflow-hidden px-3">
-                        <span className="w-full truncate text-sm font-bold text-white">
+                        <span
+                          className="w-full truncate text-sm font-bold text-white"
+                          style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                        >
                           {authUser?.fullName}
                         </span>
                         <span className="mb-1 w-full truncate text-xs text-gray-500">

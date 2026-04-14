@@ -158,7 +158,10 @@ const StudyDashboardPage = () => {
             </Link>
           </div>
           <div>
-            <h2 className="template text-3xl font-bold">
+            <h2
+              className="template text-3xl font-bold"
+              style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+            >
               {getGreeting()}, {authUser.fullName.split(" ")[0]}.
             </h2>
             <p className="text-neutral-400">Track your progress and stay focused</p>

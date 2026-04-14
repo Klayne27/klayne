@@ -39,6 +39,11 @@ const userSchema = new mongoose.Schema(
       type: Boolean,
       default: false,
     },
+    nameColor: {
+      type: String,
+      default: null, // null = use default theme color
+      match: [/^#([0-9A-Fa-f]{3}|[0-9A-Fa-f]{6})$/, "Invalid hex color"],
+    },
     followers: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -148,8 +148,13 @@ function MobileSideModal({
               </button>
             </div>
             <div className="flex flex-col">
-              <p className="text-lg font-bold min-w-0 truncate">{authUser?.fullName}</p>
-              <p className="text-sm text-slate-500 min-w-0 truncate">@{authUser?.username}</p>
+              <p
+                className="min-w-0 truncate text-lg font-bold"
+                style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+              >
+                {authUser?.fullName}
+              </p>
+              <p className="min-w-0 truncate text-sm text-slate-500">@{authUser?.username}</p>
             </div>
             <div className="mt-4 flex gap-4 text-sm">
               <p
@@ -395,10 +400,7 @@ function MobileSideModal({
                 <span>
                   <BiLogOut className="mr-4 size-6" />
                 </span>
-                <span className="truncate ">
-
-                Logout @{authUser?.username}
-                </span>
+                <span className="truncate">Logout @{authUser?.username}</span>
               </li>
             </ul>
           </div>

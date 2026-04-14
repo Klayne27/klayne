@@ -204,3 +204,15 @@ export const updateStatusPreferenceApi = async (status) => {
 
   return data
 }
+
+// In your userApi.js or wherever user API calls live
+export const updateNameColorApi = async (nameColor) => {
+  const res = await fetch("/api/users/name-color", {
+    method: "PUT",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ nameColor }),
+  })
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to update name color")
+  return data
+}
