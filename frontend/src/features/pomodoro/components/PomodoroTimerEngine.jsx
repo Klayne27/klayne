@@ -5,6 +5,7 @@ import { useEndStudySession } from "../pomodoroHooks/usePomodoroMutations"
 import { showAppToast } from "../../../utils/showAppToast"
 import useXpStore from "../../../store/useXpStore"
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
+import { WARDROBE_CONFIG } from "../../wardrobe/wardrobeConfig"
 
 export const PomodoroTimerEngine = () => {
   const isActive = usePomodoroTimerStore((s) => s.isActive)
@@ -75,47 +76,47 @@ export const PomodoroTimerEngine = () => {
     }
   }, [])
 
-useEffect(() => {
-  if (!isInitialized) return
+  useEffect(() => {
+    if (!isInitialized) return
 
-  let revertTimeout
+    let revertTimeout
 
-  const isInitialState =
-    !isActive &&
-    startTimestampRef.current === 0 &&
-    timer === settingsRef.current?.sessionDuration * 60
+    const isInitialState =
+      !isActive &&
+      startTimestampRef.current === 0 &&
+      timer === settingsRef.current?.sessionDuration * 60
 
-  if (isGoalReached) {
-    document.title = "Goal Reached!"
-  } else if (isActive) {
-    const mins = Math.floor(timer / 60)
-    const secs = Math.floor(timer % 60)
-    const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-    const status = isBreak ? "Break" : "Focus"
-    document.title = `${timeString} ${status} | Klayne`
-  } else if (!isActive && timer > 0 && !isInitialState) {
-    // 2. Logic for PAUSED state (User has interacted, but it's not active)
-    const mins = Math.floor(timer / 60)
-    const secs = Math.floor(timer % 60)
-    const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
-    document.title = `Paused - ${timeString}`
+    if (isGoalReached) {
+      document.title = "Goal Reached!"
+    } else if (isActive) {
+      const mins = Math.floor(timer / 60)
+      const secs = Math.floor(timer % 60)
+      const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+      const status = isBreak ? "Break" : "Focus"
+      document.title = `${timeString} ${status} | Klayne`
+    } else if (!isActive && timer > 0 && !isInitialState) {
+      // 2. Logic for PAUSED state (User has interacted, but it's not active)
+      const mins = Math.floor(timer / 60)
+      const secs = Math.floor(timer % 60)
+      const timeString = `${String(mins).padStart(2, "0")}:${String(secs).padStart(2, "0")}`
+      document.title = `Paused - ${timeString}`
 
-    // Revert to "Klayne" after 5 minutes of inactivity
-    revertTimeout = setTimeout(
-      () => {
-        document.title = "Klayne"
-      },
-      5 * 60 * 1000,
-    )
-  } else {
-    // 3. Fallback for Initial State or when timer is 0
-    document.title = "Klayne"
-  }
+      // Revert to "Klayne" after 5 minutes of inactivity
+      revertTimeout = setTimeout(
+        () => {
+          document.title = "Klayne"
+        },
+        5 * 60 * 1000,
+      )
+    } else {
+      // 3. Fallback for Initial State or when timer is 0
+      document.title = "Klayne"
+    }
 
-  return () => {
-    if (revertTimeout) clearTimeout(revertTimeout)
-  }
-}, [timer, isActive, isBreak, isGoalReached, isInitialized])
+    return () => {
+      if (revertTimeout) clearTimeout(revertTimeout)
+    }
+  }, [timer, isActive, isBreak, isGoalReached, isInitialized])
 
   const playAlarm = useCallback(() => {
     const s = settingsRef.current
@@ -204,6 +205,15 @@ useEffect(() => {
               setXpGainedAmount(calculatedXp)
               setShowXpGain(true)
               setTimeout(() => setShowXpGain(false), 2000)
+
+              if (data.newUnlocks?.length > 0) {
+                data.newUnlocks.forEach((itemKey) => {
+                  const config = WARDROBE_CONFIG[itemKey]
+                  if (config) {
+                    showAppToast(`🎁 Unlocked: ${config.label}!`, "success")
+                  }
+                })
+              }
 
               if (data?.xpResult?.levelsGained?.length > 0) {
                 const milestoneLevelReached = Math.max(

@@ -6,6 +6,7 @@ import { useAppStore } from "./store/useAppStore"
 import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
+import StyleWrapper from "./features/wardrobe/StyleWrapper"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
@@ -52,6 +53,8 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
   return (
     <>
+      <StyleWrapper/>
+
       <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1242px] md:flex-row">
         {!shouldHideSidePanels && (
           <Sidebar

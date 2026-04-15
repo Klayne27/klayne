@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { CiMail, CiSearch } from "react-icons/ci"
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, Suspense } from "react"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
 import { BiLogOut } from "react-icons/bi"
@@ -32,10 +32,12 @@ import {
   useUpdateStatusPreference,
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import { PiCoatHanger, PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 import { useTheme } from "../../context/ThemeContext"
 import { getKlayneColor } from "../../utils/getKlayneColor"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
+import WardrobePage from "../../features/wardrobe/WardrobePage"
+import UserAvatar from "./UserAvatar"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -77,6 +79,8 @@ const Sidebar = ({
 
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
+
+  const [showWardrobe, setShowWardrobe] = useState(false)
 
   const [showMorePopover, setShowMorePopover] = useState(false)
   const moreButtonRef = useRef(null)
@@ -670,6 +674,22 @@ const Sidebar = ({
               )}
             </li>
 
+            <li
+              onClick={() => setShowWardrobe(true)}
+              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
+            >
+              <div className={iconWrapperStyle}>
+                <PiCoatHanger className="size-7" />
+              </div>
+              {!shouldCollapseSidebar && (
+                <span
+                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/todos" ? "font-bold" : ""}`}
+                >
+                  Wardrobe
+                </span>
+              )}
+            </li>
+
             {/* MOBILE PROFILE */}
             <li className="flex cursor-pointer items-center justify-center p-1 md:hidden">
               <button
@@ -806,13 +826,8 @@ const Sidebar = ({
                 {/* Avatar: Removed justify-center */}
                 <div className="avatar relative flex shrink-0">
                   <div className="w-10 rounded-full">
-                    <img
-                      src={getOptimizedImageUrl(
-                        authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                        "avatar",
-                      )}
-                      alt="profile"
-                    />
+                  <UserAvatar user={authUser} size={"md"} />
+    
                   </div>
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
@@ -1019,6 +1034,12 @@ const Sidebar = ({
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
         isLoading={isDeletingAccount}
       ></ConfirmationModal>
+
+      {showWardrobe && (
+        <Suspense fallback={null}>
+          <WardrobePage onClose={() => setShowWardrobe(false)} />
+        </Suspense>
+      )}
     </>
   )
 }

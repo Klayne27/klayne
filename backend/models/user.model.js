@@ -109,6 +109,18 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    inventory: {
+      themes: [{ type: String }],
+      fonts: [{ type: String }],
+      rings: [{ type: String }],
+      overlays: [{ type: String }],
+    },
+    equipped: {
+      theme: { type: String, default: null },
+      font: { type: String, default: null },
+      ring: { type: String, default: null },
+      overlay: { type: String, default: null },
+    },
     isAdmin: {
       type: Boolean,
       default: false,

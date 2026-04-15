@@ -35,6 +35,7 @@ import {
   useMarkVentPostsAsRead,
 } from "../postsHooks/usePostsMutations"
 import ImagePreviewCloseButton from "../../../components/common/ImagePreviewCloseButton"
+import UserAvatar from "../../../components/common/UserAvatar"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -627,14 +628,9 @@ const CreatePost = ({ feedType }) => {
           </div>
         ) : (
           <Link to={`/profile/${authUser.username}`}>
-            <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
+            <div className={` ${scheduledAt ? "mt-1" : ""}`}>
               <div className="w-10 rounded-full">
-                <img
-                  src={getOptimizedImageUrl(
-                    authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                    "avatar",
-                  )}
-                />
+                <UserAvatar user={authUser} size={"md"} />
               </div>
             </div>
           </Link>

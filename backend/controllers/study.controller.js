@@ -1,6 +1,7 @@
 import User from "../models/user.model.js";
 import StudySession from "../models/studySession.js";
 import { checkAndAwardBadges, handleXPAndLeveling } from "../lib/utils/helpers.js";
+import { checkUnlocks } from "../lib/utils/checkUnlocks.js";
 
 export const getStudyActivityFeed = async (req, res) => {
   try {
@@ -11,7 +12,7 @@ export const getStudyActivityFeed = async (req, res) => {
     const combinedPipeline = [
       {
         $unionWith: {
-          coll: "levelups", 
+          coll: "levelups",
         },
       },
       {
@@ -91,7 +92,6 @@ export const getPomodoroSettings = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
-
 
 export const endStudySession = async (req, res) => {
   try {
@@ -248,11 +248,13 @@ export const endStudySession = async (req, res) => {
 
     await user.save();
     await checkAndAwardBadges(user);
+    const newUnlocks = await checkUnlocks(user);
 
     res.status(200).json({
       message: "Study session logged successfully",
       xpResult,
-      studyHistory: user.studyHistory, 
+      studyHistory: user.studyHistory,
+      newUnlocks, // frontend can show a toast per unlocked item
     });
   } catch (error) {
     console.error("Error in endStudySession", error.message);

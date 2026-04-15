@@ -39,6 +39,7 @@ import {
 import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 import { useLightboxStore } from "../store/useLightboxStore.js"
+import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -89,6 +90,13 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     useGetConversationBetweenUsers(userProfile?._id)
 
   const openLightbox = useLightboxStore((s) => s.openLightbox)
+
+  const equippedFont = userProfile?.equipped?.font
+  const equippedTheme = userProfile?.equipped?.theme
+
+  // 2. Map them to your config values
+  const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
+  const themeVars = WARDROBE_CONFIG[equippedTheme]?.cssVars || {}
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -269,12 +277,21 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     will also not be able to follow or message you, and you will not see notifications from them.`
   }
 
+  console.log(userProfile?.equipped?.overlay);
+
   return (
     <>
       <ScrollToTop />
-      <div className="template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent">
+      <div
+        className={`template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""} ${userProfile?.equipped?.theme ? "custom-gradient-bg" : ""}`}
+        style={{
+          ...fontVars,
+          ...themeVars,
+          fontFamily: "var(--user-font, inherit)", // Force the font variable
+        }}
+      >
+        {" "}
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
-
         {showFullProfileHeader && userProfile && (
           <>
             <div className="flex items-center gap-2 px-3 py-0.5 md:gap-4 md:px-4 md:py-2">
@@ -301,30 +318,35 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              {/* <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}> */}
-              <img
-                src={getOptimizedImageUrl(
-                  coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
-                  "cover",
-                )}
-                onClick={() => {
-                  const url = userProfile?.coverImg?.imageUrl || "/cover.png"
-                  openLightbox({ imageUrl: url })
-                }}
-                className={`h-52 w-full cursor-pointer object-cover`}
-                alt="cover image"
-                loading="lazy"
-              />
-              {/* </Link> */}
-              {isMyProfile && (
-                <div
-                  className="absolute right-2 top-2 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
-                  onClick={() => coverImgRef.current.click()}
-                >
-                  <MdEdit className="h-5 w-5" />
-                </div>
-              )}
+              <div
+                className={`relative overflow-hidden ${
+                  userProfile?.equipped?.overlay === "rainy_window" ? "rainy-window-overlay" : ""
+                }`}
+              >
+                <img
+                  src={getOptimizedImageUrl(
+                    coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
+                    "cover",
+                  )}
+                  onClick={() => {
+                    const url = userProfile?.coverImg?.imageUrl || "/cover.png"
+                    openLightbox({ imageUrl: url })
+                  }}
+                  className="h-52 w-full cursor-pointer object-cover"
+                  alt="cover image"
+                  loading="lazy"
+                />
 
+                {/* Edit button stays inside inner wrapper so it's clipped correctly */}
+                {isMyProfile && (
+                  <div
+                    className="absolute right-2 top-2 z-10 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
+                    onClick={() => coverImgRef.current.click()}
+                  >
+                    <MdEdit className="h-5 w-5" />
+                  </div>
+                )}
+              </div>
               <input
                 type="file"
                 hidden
@@ -363,6 +385,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 </div>
               </div>
             </div>
+
             <div className="mt-5 flex justify-end gap-2 px-4">
               {authUser.username === username && (
                 <button
@@ -445,13 +468,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             </div>
           </>
         )}
-
         {!isLoading && !isRefetching && displayMessage && (
           <p className="mt-16 flex items-center justify-center text-center text-lg text-slate-400">
             {displayMessage}
           </p>
         )}
-
         {showFullProfileContent && userProfile && (
           <>
             <div className="mt-3 flex flex-col gap-4 px-4">
@@ -730,7 +751,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             )}
           </>
         )}
-
         {showFullProfileContent && userProfile && !isBlockedByYou && (
           <Posts
             feedType={feedType}
