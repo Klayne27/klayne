@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { equipItemApi, getInventoryApi } from "../../api/wardrobeApi"
 import { showAppToast } from "../../utils/showAppToast"
+import { userKeys } from "../users/usersHooks/userKeys"
 
 export const wardrobeKeys = {
   all: ["wardrobe"],
@@ -15,7 +16,7 @@ export const useInventory = () => {
   })
 
   return {
-    inventory: data?.inventory || { themes: [], fonts: [], rings: [], overlays: [] },
+    inventory: data?.inventory || { fonts: [], rings: [], overlays: [] },
     equipped: data?.equipped || {},
     isLoading,
   }
@@ -29,7 +30,8 @@ export const useEquipItem = () => {
     onSuccess: () => {
       // Invalidate both inventory (equipped state) and authUser (site-wide styling)
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.inventory() })
-      queryClient.invalidateQueries({ queryKey: ["authUser"] })
+      queryClient.invalidateQueries({ queryKey: userKeys.auth() })
+      queryClient.invalidateQueries({ queryKey: userKeys.profiles() })
       showAppToast("Item equipped!", "success")
     },
     onError: (error) => {

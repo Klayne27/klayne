@@ -6,7 +6,7 @@ import { FaCheckCircle, FaLock } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 import { useEquipItem, useInventory } from "./wardrobeHooks"
 
-const TABS = ["themes", "fonts", "rings", "overlays"]
+const TABS = ["fonts", "rings", "overlays"]
 
 // Simulated preview user — shows what the profile card would look like
 const PreviewCard = ({ previewEquipped, authUser }) => {
@@ -116,7 +116,6 @@ const WardrobePage = ({ onClose }) => {
 
   // Build a merged "preview" equipped state
   const CATEGORY_TO_SINGULAR = {
-    themes: "theme",
     fonts: "font",
     rings: "ring",
     overlays: "overlay",

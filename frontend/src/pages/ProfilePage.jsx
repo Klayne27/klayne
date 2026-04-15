@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 import Posts from "../features/posts/components/Posts.jsx"
 import ProfileHeaderSkeleton from "../components/skeletons/ProfileHeaderSkeleton"
@@ -40,6 +40,7 @@ import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.j
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 import { useLightboxStore } from "../store/useLightboxStore.js"
 import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
+import UserAvatar from "../components/common/UserAvatar.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -318,16 +319,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <div
-                className={`relative overflow-hidden ${
-                  userProfile?.equipped?.overlay === "rainy_window" ? "rainy-window-overlay" : ""
-                }`}
-              >
+              <div className="sakura-breeze-overlay relative overflow-hidden">
+                <div className="sakura-layer-3 pointer-events-none absolute inset-0 z-0" />
+                <div className="sakura-mist" />
+
                 <img
-                  src={getOptimizedImageUrl(
-                    coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
-                    "cover",
-                  )}
+                  src={getOptimizedImageUrl(userProfile.coverImg.imageUrl || "/cover.png", "cover")}
                   onClick={() => {
                     const url = userProfile?.coverImg?.imageUrl || "/cover.png"
                     openLightbox({ imageUrl: url })
@@ -361,25 +358,33 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 ref={profileImgRef}
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
-              <div className="avatar absolute -bottom-16 left-4">
-                <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
-                  <img
-                    src={getOptimizedImageUrl(
-                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                      "avatar",
-                    )}
-                    alt="user avatar"
-                    className="cursor-pointer"
+              <div className="absolute -bottom-16 left-4">
+                <div className="group/avatar relative">
+                  {/* 1. Use the component instead of the raw <img> */}
+                  <UserAvatar
+                    user={{
+                      ...userProfile,
+                      // If a local profileImg exists (from a fresh upload),
+                      // we override the nested imageUrl so UserAvatar displays the preview
+                      profileImg: profileImg ? { imageUrl: profileImg } : userProfile?.profileImg,
+                    }}
+                    size="xxl"
+                    className="cursor-pointer border-[3px] border-base-100"
+                    // 2. Attach the Lightbox click handler here
                     onClick={() => {
                       const url =
                         profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
                       openLightbox({ imageUrl: url })
                     }}
-                    loading="lazy"
                   />
+
+                  {/* 3. Keep the edit button overlay */}
                   {isMyProfile && (
-                    <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
-                      <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />
+                    <div
+                      className="absolute right-1 top-1 z-10 cursor-pointer rounded-full bg-primary p-1.5 text-white opacity-0 shadow-md duration-200 group-hover/avatar:opacity-100"
+                      onClick={() => profileImgRef.current.click()}
+                    >
+                      <MdEdit className="h-4 w-4" />
                     </div>
                   )}
                 </div>

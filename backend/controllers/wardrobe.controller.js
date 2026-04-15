@@ -1,10 +1,10 @@
+// wardrobe.controller.js
+
 import User from "../models/user.model.js";
 
-const VALID_CATEGORIES = ["theme", "font", "ring", "overlay"];
+const VALID_CATEGORIES = ["font", "ring", "overlay"];
 
-// Maps singular equipped key → plural inventory key
 const CATEGORY_MAP = {
-  theme: "themes",
   font: "fonts",
   ring: "rings",
   overlay: "overlays",
@@ -33,11 +33,9 @@ export const equipItem = async (req, res) => {
     const user = await User.findById(userId).select("inventory equipped");
     if (!user) return res.status(404).json({ error: "User not found." });
 
-    // Allow unequipping by passing null
     if (itemKey !== null) {
       const inventoryCategory = CATEGORY_MAP[category];
       const owned = user.inventory[inventoryCategory] || [];
-
       if (!owned.includes(itemKey)) {
         return res.status(403).json({ error: "You do not own this item." });
       }

@@ -824,9 +824,9 @@ const Sidebar = ({
                 onTouchCancel={handleTouchCancel}
               >
                 {/* Avatar: Removed justify-center */}
-                <div className="avatar relative flex shrink-0">
-                  <div className="w-10 rounded-full">
-                  <UserAvatar user={authUser} size={"md"} />
+                <div className=" relative flex shrink-0">
+                  <div className=" rounded-full">
+                  <UserAvatar user={authUser} size={"sm"} />
     
                   </div>
                   {isOnline ? (
