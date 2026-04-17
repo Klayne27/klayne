@@ -505,14 +505,14 @@ const Post = ({
                         @{originalPostOwner.username}
                       </Link>
                     )}
-                    {pathname.includes("/post/") && post._id === pid ? null : (
-                      <>
-                        <span className="shrink-0">·</span>
-                        <span className="shrink-0">{formattedDate}</span>
-                      </>
-                    )}
                   </span>
                 </Link>
+              )}
+              {pathname.includes("/post/") && post._id === pid ? null : (
+                <div className="text-sm font-normal text-slate-500 flex gap-1 min-w-0">
+                  <span className="shrink-0">·</span>
+                  <span className="shrink-0">{formattedDate}</span>
+                </div>
               )}
 
               {/* CHANGED: This span handles the truncation for username and date */}

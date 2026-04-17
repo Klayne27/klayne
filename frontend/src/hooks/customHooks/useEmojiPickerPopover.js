@@ -8,32 +8,38 @@ export const useEmojiPickerPopover = (initialState = false) => {
     (e) => {
       e.stopPropagation()
 
-      // if (setShowMoreActionsModal) {
-      //   setShowMoreActionsModal(false)
-      // }
-
       if (showEmojiPickerPopover) {
         setShowEmojiPickerPopover(false)
         return
       }
 
       const buttonRect = e.currentTarget.getBoundingClientRect()
+
+      // Get current scroll positions
+      const scrollY = window.scrollY || window.pageYOffset
+      const scrollX = window.scrollX || window.pageXOffset
+
       const estimatedPickerWidth = window.innerWidth < 768 ? 280 : 350
       const estimatedPickerHeight = window.innerWidth < 768 ? 400 : 400
 
-      let newTop = buttonRect.top - estimatedPickerHeight - 10
-      let newLeft = buttonRect.left + buttonRect.width / 2
+      // Calculate position relative to the DOCUMENT (adding scroll)
+      let newTop = buttonRect.top + scrollY - estimatedPickerHeight - 10
+      let newLeft = buttonRect.left + scrollX + buttonRect.width / 2
 
       const padding = 10
 
+      // Horizontal constraints
       if (newLeft - estimatedPickerWidth / 2 < padding) {
         newLeft = estimatedPickerWidth / 2 + padding
       }
       if (newLeft + estimatedPickerWidth / 2 > window.innerWidth - padding) {
         newLeft = window.innerWidth - estimatedPickerWidth / 2 - padding
       }
-      if (newTop < padding) {
-        newTop = buttonRect.bottom + 10
+
+      // Vertical flip logic (if it hits the top of the viewport, show below)
+      // Note: we check buttonRect.top (viewport relative) for the flip logic
+      if (buttonRect.top - estimatedPickerHeight < padding) {
+        newTop = buttonRect.bottom + scrollY + 10
       }
 
       setPopoverPosition({ top: newTop, left: newLeft })
