@@ -24,7 +24,7 @@ const UserAvatar = ({ user, size = "md", className = "" }) => {
   const ringClass = ringConfig?.ringClass || ""
 
   return (
-    <div className={`inline-flex flex-shrink-0 rounded-full ${ringClass}`}>
+    <div className={`inline-flex flex-shrink-0 ${ringClass}`}>
       <img
         src={getOptimizedImageUrl(
           user?.profileImg?.imageUrl || "/avatar-placeholder.png",

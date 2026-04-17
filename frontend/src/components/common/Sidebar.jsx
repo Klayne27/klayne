@@ -16,7 +16,14 @@ import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect
 import { formatCount } from "../../utils/textUtils"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
+import {
+  TbHanger2,
+  TbHanger2Filled,
+  TbMailFilled,
+  TbUser,
+  TbUserFilled,
+  TbUserX,
+} from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
 import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle } from "react-icons/hi2"
@@ -32,7 +39,12 @@ import {
   useUpdateStatusPreference,
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { PiCoatHanger, PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import {
+  PiCoatHanger,
+  PiCoatHangerBold,
+  PiSquaresFourFill,
+  PiSquaresFourLight,
+} from "react-icons/pi"
 import { useTheme } from "../../context/ThemeContext"
 import { getKlayneColor } from "../../utils/getKlayneColor"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
@@ -417,7 +429,8 @@ const Sidebar = ({
 
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full  py-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
-  const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
+  const shouldCollapseSidebar =
+    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe")
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -674,22 +687,6 @@ const Sidebar = ({
               )}
             </li>
 
-            <li
-              onClick={() => setShowWardrobe(true)}
-              className={`hidden cursor-pointer items-center justify-start rounded-full ${shouldCollapseSidebar && !isMobile ? "" : "py-1 pr-1 md:pr-8"} transition duration-200 md:flex md:w-fit md:hover:bg-secondary`}
-            >
-              <div className={iconWrapperStyle}>
-                <PiCoatHanger className="size-7" />
-              </div>
-              {!shouldCollapseSidebar && (
-                <span
-                  className={`ml-2.5 hidden text-lg md:block ${pathname === "/todos" ? "font-bold" : ""}`}
-                >
-                  Wardrobe
-                </span>
-              )}
-            </li>
-
             {/* MOBILE PROFILE */}
             <li className="flex cursor-pointer items-center justify-center p-1 md:hidden">
               <button
@@ -773,6 +770,17 @@ const Sidebar = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
+                        navigate("/wardrobe")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <PiCoatHangerBold className="size-6" />
+                      <span>Wardrobe</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
                         navigate("/themes")
                         setShowMorePopover(false)
                       }}
@@ -824,10 +832,9 @@ const Sidebar = ({
                 onTouchCancel={handleTouchCancel}
               >
                 {/* Avatar: Removed justify-center */}
-                <div className=" relative flex shrink-0">
-                  <div className=" rounded-full">
-                  <UserAvatar user={authUser} size={"sm"} />
-    
+                <div className="relative flex shrink-0">
+                  <div className="rounded-full">
+                    <UserAvatar user={authUser} size={"sm"} />
                   </div>
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
@@ -1034,12 +1041,6 @@ const Sidebar = ({
         confirmButtonText={isDeletingAccount ? "Deleting..." : "Yes, Delete Account"}
         isLoading={isDeletingAccount}
       ></ConfirmationModal>
-
-      {showWardrobe && (
-        <Suspense fallback={null}>
-          <WardrobePage onClose={() => setShowWardrobe(false)} />
-        </Suspense>
-      )}
     </>
   )
 }

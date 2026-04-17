@@ -629,7 +629,7 @@ const CreatePost = ({ feedType }) => {
         ) : (
           <Link to={`/profile/${authUser.username}`}>
             <div className={` ${scheduledAt ? "mt-1" : ""}`}>
-              <div className="w-10 rounded-full">
+              <div className="w-full flex rounded-full">
                 <UserAvatar user={authUser} size={"md"} />
               </div>
             </div>

@@ -1,48 +1,134 @@
 import { useState } from "react"
-import { WARDROBE_CONFIG, CATEGORY_LABELS } from "./wardrobeConfig"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
-import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { FaCheckCircle, FaLock } from "react-icons/fa"
-import { IoClose } from "react-icons/io5"
+import { WARDROBE_CONFIG, CATEGORY_LABELS } from "./wardrobeConfig"
 import { useEquipItem, useInventory } from "./wardrobeHooks"
+import { getNameplateClass } from "../../utils/getNameplateClass"
+import LoadingSpinner from "../../components/common/LoadingSpinner"
+import { FaArrowLeft, FaCheckCircle, FaLock, FaBolt, FaTrophy } from "react-icons/fa"
+import { useNavigate } from "react-router-dom"
+import UserAvatar from "../../components/common/UserAvatar"
+import { BsThreeDots } from "react-icons/bs"
+import FollowButton from "../../components/common/FollowButton"
 
-const TABS = ["fonts", "rings", "overlays"]
+const TABS = ["rings", "overlays", "fonts", "nameplates"]
 
-// Simulated preview user — shows what the profile card would look like
-const PreviewCard = ({ previewEquipped, authUser }) => {
-  const ringConfig = previewEquipped.ring ? WARDROBE_CONFIG[previewEquipped.ring] : null
+// ── Live Preview Panel ──────────────────────────────────────────────────────
+const LivePreview = ({ authUser, previewEquipped }) => {
+  const ringConfig = WARDROBE_CONFIG[previewEquipped.ring]
+  const overlayConfig = WARDROBE_CONFIG[previewEquipped.overlay]
+  const fontConfig = WARDROBE_CONFIG[previewEquipped.font]
+  const nameplateClass = getNameplateClass(previewEquipped.nameplate)
+
+  const fontFamily = fontConfig?.cssVars?.["--user-font"] || "inherit"
   const ringClass = ringConfig?.ringClass || ""
-
-  const fontVar = previewEquipped.font
-    ? WARDROBE_CONFIG[previewEquipped.font]?.cssVars?.["--user-font"]
-    : "inherit"
+  const overlayClass = overlayConfig?.overlayClass || ""
 
   return (
-    <div
-      className="flex flex-col items-center gap-3 rounded-2xl border border-accent bg-base-200 p-5"
-      style={{ fontFamily: fontVar }}
-    >
-      <p className="text-xs font-semibold uppercase tracking-wider text-slate-400">Preview</p>
-      <div className={`rounded-full ${ringClass}`}>
-        <img
-          src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
-          className="h-16 w-16 rounded-full object-cover"
-          alt="preview"
-        />
+    <div className="flex flex-col gap-8">
+      {/* 1. PROFILE CARD FIX */}
+      <div className="flex flex-col">
+        <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Profile Look
+        </p>
+        <div
+          className="group relative flex flex-col overflow-hidden rounded-2xl border border-accent bg-base-200 shadow-xl"
+          style={{ fontFamily }}
+        >
+          {/* Banner - Overflow hidden only here */}
+          <div className={`relative h-28 w-full shrink-0 overflow-hidden ${overlayClass}`}>
+            <img
+              src={authUser?.coverImg?.imageUrl || "/cover.png"}
+              className="h-full w-full object-cover"
+              alt="cover"
+            />
+          </div>
+
+          {/* Info Section - No overflow hidden, so avatar can pop out */}
+          <div className="relative flex flex-col px-4 pb-4 pt-12">
+            <div className="absolute right-2 top-3">
+              <FollowButton />
+            </div>
+            {/* AVATAR FIX: Positioned relative to this unclipped container */}
+            <div className="absolute -top-10 left-4 z-20">
+              <div className={`rounded-full bg-base-200 p-0.5 shadow-lg ${ringClass}`}>
+                <img
+                  src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                  className="h-20 w-20 rounded-full object-cover"
+                  alt="avatar"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-col">
+              <div className="flex justify-between">
+                <span className="">{authUser?.fullName}</span>
+              </div>
+              <span className="text-sm text-slate-500">@{authUser?.username}</span>
+
+              <span className="mt-2 text-xs">{authUser?.bio}</span>
+
+              <div className="mt-2 flex gap-2">
+                <div className="flex cursor-pointer items-center gap-1 hover:underline">
+                  <span className="text-sm font-bold">{authUser?.following?.length}</span>{" "}
+                  <span className="text-sm text-slate-500">Following</span>{" "}
+                </div>
+                <div className="flex cursor-pointer items-center gap-1 hover:underline">
+                  <span className="text-sm font-bold">{authUser?.followers?.length}</span>{" "}
+                  <span className="text-sm text-slate-500">Followers</span>{" "}
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
-      <div className="text-center">
-        <p className="font-bold">{authUser?.fullName}</p>
-        <p className="text-sm text-slate-400">@{authUser?.username}</p>
-        <p className="mt-1 text-xs text-slate-500">
-          {previewEquipped.theme ? WARDROBE_CONFIG[previewEquipped.theme]?.label : "Default theme"}
-          {" · "}
-          {previewEquipped.font ? WARDROBE_CONFIG[previewEquipped.font]?.label : "Default font"}
+
+      {/* 2. CONVERSATION ITEM PREVIEW (Full Row Nameplate) */}
+      <div className="flex flex-col">
+        <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
+          Inbox Preview
+        </p>
+        <div
+          className={`flex items-center gap-3 border border-accent/20 p-4 transition-all duration-300 ${nameplateClass}`}
+        >
+          {/* Avatar with Ring */}
+          <UserAvatar size={"sm"} className={ringClass} />
+
+          {/* Message Content */}
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="flex items-center justify-between">
+              <div className="flex min-w-0 items-center gap-1">
+                <span
+                  className="min-w-0 flex-shrink-0 truncate font-bold"
+                  style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                >
+                  {authUser?.fullName}
+                </span>
+                <span className="min-w-0 truncate text-sm text-gray-400">
+                  @{authUser?.username}
+                </span>
+                {authUser?.isVerified && (
+                  <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+                )}
+                {authUser?.isGoldVerified && (
+                  <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+                )}
+                {authUser?.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+                <span className="shrink-0 text-[10px] text-gray-400">· 27m</span>
+              </div>
+              <BsThreeDots />
+            </div>
+            <p className="truncate text-xs text-gray-400">No new messages...</p>
+          </div>
+        </div>
+        <p className="mt-2 px-1 text-[10px] italic text-gray-400">
+          * This is how other users see you in their message list.
         </p>
       </div>
     </div>
   )
 }
 
+// ── Item Card ───────────────────────────────────────────────────────────────
 const ItemCard = ({
   itemKey,
   config,
@@ -52,167 +138,271 @@ const ItemCard = ({
   onPreview,
   onEquip,
   onUnequip,
-}) => (
-  <div
-    className={`relative flex cursor-pointer flex-col gap-2 rounded-xl border p-3 transition ${
-      isPreviewing
-        ? "border-primary bg-primary/10"
-        : isEquipped
-          ? "border-green-500 bg-green-500/10"
-          : isOwned
-            ? "border-accent bg-base-200 hover:bg-secondary"
-            : "cursor-not-allowed border-accent/40 bg-base-300 opacity-50"
-    }`}
-    onClick={() => isOwned && onPreview(itemKey)}
-  >
-    {isEquipped && <FaCheckCircle className="absolute right-2 top-2 text-green-500" size={14} />}
-    {!isOwned && <FaLock className="absolute right-2 top-2 text-slate-500" size={14} />}
+}) => {
+  const rewardBadge =
+    config.rewardType === "sprint" ? (
+      <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-400">
+        <FaBolt size={8} />
+        Sprint
+      </span>
+    ) : (
+      <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
+        <FaTrophy size={8} />
+        Progress
+      </span>
+    )
 
-    {/* Ring preview swatch */}
-    {config.ringClass && (
-      <div className="flex justify-center py-2">
-        <div className={`h-10 w-10 rounded-full bg-slate-600 ${config.ringClass}`} />
+  // Ring swatch
+  const swatch = config.ringClass && (
+    <div className="mb-1 flex justify-center">
+      <div className={`h-8 w-8 rounded-full bg-slate-600 ${config.ringClass}`} />
+    </div>
+  )
+
+  // Nameplate preview
+  const npPreview = config.nameplateClass && (
+    <div className="mb-1 flex justify-center">
+      <span className={`text-xs ${config.nameplateClass}`}>Username</span>
+    </div>
+  )
+
+  return (
+    <div
+      className={`relative flex cursor-pointer select-none flex-col gap-1 rounded-xl border p-3 transition ${
+        isPreviewing
+          ? "border-primary bg-primary/10"
+          : isEquipped
+            ? "border-green-500 bg-green-500/10"
+            : isOwned
+              ? "border-accent bg-base-200 hover:bg-secondary"
+              : "border-accent/30 bg-base-300/50 opacity-60"
+      }`}
+      onClick={() => onPreview(itemKey)}
+    >
+      {/* Status icons */}
+      {isEquipped && <FaCheckCircle className="absolute right-2 top-2 text-green-500" size={12} />}
+      {!isOwned && <FaLock className="absolute right-2 top-2 text-slate-500" size={12} />}
+
+      {swatch}
+      {npPreview}
+
+      <p className="text-xs font-bold leading-tight">{config.label}</p>
+      <div className="flex items-center justify-between gap-1">
+        {rewardBadge}
+        <span className="truncate text-[9px] text-slate-500">{config.unlockHint}</span>
       </div>
-    )}
 
-    <p className="text-sm font-semibold">{config.label}</p>
-    {config.preview && <p className="text-xs text-slate-400">{config.preview}</p>}
+      {isPreviewing && isOwned && (
+        <div className="mt-1">
+          {!isEquipped ? (
+            <button
+              className="w-full rounded-full bg-primary py-0.5 text-xs font-bold text-white"
+              onClick={(e) => {
+                e.stopPropagation()
+                onEquip(itemKey)
+              }}
+            >
+              Equip
+            </button>
+          ) : (
+            <button
+              className="w-full rounded-full border border-red-500/40 py-0.5 text-xs text-red-400"
+              onClick={(e) => {
+                e.stopPropagation()
+                onUnequip()
+              }}
+            >
+              Unequip
+            </button>
+          )}
+        </div>
+      )}
+    </div>
+  )
+}
 
-    {isOwned && isPreviewing && (
-      <div className="mt-1 flex gap-2">
-        {!isEquipped ? (
-          <button
-            className="flex-1 rounded-full bg-primary py-1 text-xs font-bold text-white"
-            onClick={(e) => {
-              e.stopPropagation()
-              onEquip(itemKey)
-            }}
-          >
-            Equip
-          </button>
-        ) : (
-          <button
-            className="flex-1 rounded-full border border-red-500/40 py-1 text-xs text-red-500"
-            onClick={(e) => {
-              e.stopPropagation()
-              onUnequip()
-            }}
-          >
-            Unequip
-          </button>
-        )}
-      </div>
-    )}
-  </div>
-)
-
-const WardrobePage = ({ onClose }) => {
+// ── Main Page ───────────────────────────────────────────────────────────────
+const WardrobePage = () => {
+  const navigate = useNavigate()
   const { authUser } = useAuthUser()
   const { inventory, equipped, isLoading } = useInventory()
-  const { equipItem, isEquipping } = useEquipItem()
+  const { equipItem } = useEquipItem()
 
-  const [activeTab, setActiveTab] = useState("themes")
+  const [activeTab, setActiveTab] = useState("rings")
   const [previewKey, setPreviewKey] = useState(null)
+  const [filterMode, setFilterMode] = useState("all") // "all" | "owned" | "progress" | "sprint"
 
-  // Build a merged "preview" equipped state
-  const CATEGORY_TO_SINGULAR = {
-    fonts: "font",
-    rings: "ring",
-    overlays: "overlay",
-  }
-  const equippedKey = CATEGORY_TO_SINGULAR[activeTab]
+  const SINGULAR = { fonts: "font", rings: "ring", overlays: "overlay", nameplates: "nameplate" }
+  const equippedKey = SINGULAR[activeTab]
+
   const previewEquipped = {
     ...equipped,
     [equippedKey]: previewKey ?? equipped[equippedKey],
   }
 
-  const handleEquip = (itemKey) => {
-    equipItem({ category: equippedKey, itemKey })
-  }
-
+  const handleEquip = (key) => equipItem({ category: equippedKey, itemKey: key })
   const handleUnequip = () => {
     equipItem({ category: equippedKey, itemKey: null })
     setPreviewKey(null)
   }
 
-  // All items for this tab from the config
-  const tabItems = Object.entries(WARDROBE_CONFIG).filter(
-    ([, config]) => config.category === activeTab,
-  )
+  const tabItems = Object.entries(WARDROBE_CONFIG)
+    .filter(([, c]) => c.category === activeTab)
+    .filter(([key, c]) => {
+      if (filterMode === "owned") return (inventory[activeTab] || []).includes(key)
+      if (filterMode === "progress") return c.rewardType === "progress"
+      if (filterMode === "sprint") return c.rewardType === "sprint"
+      return true
+    })
 
   if (isLoading) {
     return (
-      <div className="flex h-64 items-center justify-center">
+      <div className="flex h-screen items-center justify-center">
         <LoadingSpinner size="md" />
       </div>
     )
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4">
-      <div className="flex w-full max-w-2xl flex-col gap-4 rounded-2xl border border-accent bg-base-100 p-6 shadow-2xl">
-        {/* Header */}
-        <div className="flex items-center justify-between">
-          <h2 className="text-lg font-bold">Wardrobe</h2>
-          <button onClick={onClose} className="rounded-full p-1 hover:bg-secondary">
-            <IoClose size={20} />
-          </button>
+    <div className="template min-h-screen flex-1 border-r border-accent">
+      {/* Header */}
+      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
+        <button
+          onClick={() => navigate(-1)}
+          className="rounded-full p-2 transition hover:bg-secondary"
+        >
+          <FaArrowLeft size={16} />
+        </button>
+        <h1 className="flex-1 text-lg font-bold">Wardrobe</h1>
+        <span className="text-xs text-slate-400">Changes apply instantly</span>
+      </div>
+
+      <div className="mx-auto flex flex-col gap-6 p-4 md:flex-row md:items-start">
+        {/* Left: Live Preview (sticky on desktop) */}
+        <div className="w-full md:sticky md:top-20 md:w-80 md:flex-shrink-0">
+          <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+            Live Preview
+          </p>
+          <LivePreview
+            authUser={authUser}
+            previewEquipped={previewEquipped}
+            activeTab={activeTab}
+          />
+
+          {/* Currently equipped summary */}
+          <div className="mt-3 rounded-xl border border-accent bg-base-200 p-3">
+            <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
+              Equipped
+            </p>
+            {["ring", "overlay", "font", "nameplate"].map((cat) => (
+              <div key={cat} className="flex items-center justify-between py-0.5">
+                <span className="text-xs capitalize text-slate-500">{cat}</span>
+                <span className="text-xs font-semibold">
+                  {equipped[cat] ? (
+                    WARDROBE_CONFIG[equipped[cat]]?.label || equipped[cat]
+                  ) : (
+                    <span className="text-slate-600">None</span>
+                  )}
+                </span>
+              </div>
+            ))}
+          </div>
         </div>
 
-        <div className="flex gap-4">
-          {/* Left: tabs + item grid */}
-          <div className="flex flex-1 flex-col gap-3 overflow-hidden">
-            {/* Tabs */}
-            <div className="flex gap-1 rounded-xl bg-base-200 p-1">
-              {TABS.map((tab) => (
-                <button
-                  key={tab}
-                  className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition ${
-                    activeTab === tab
-                      ? "bg-primary text-white"
-                      : "text-slate-400 hover:text-base-content"
-                  }`}
-                  onClick={() => {
-                    setActiveTab(tab)
-                    setPreviewKey(null)
-                  }}
-                >
-                  {CATEGORY_LABELS[tab]}
-                </button>
-              ))}
+        {/* Right: Selector */}
+        <div className="flex min-w-0 flex-1 flex-col gap-4">
+          {/* Category tabs */}
+          <div className="flex gap-1 rounded-xl bg-base-200 p-1">
+            {TABS.map((tab) => (
+              <button
+                key={tab}
+                className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition ${
+                  activeTab === tab
+                    ? "bg-primary text-white"
+                    : "text-slate-400 hover:text-base-content"
+                }`}
+                onClick={() => {
+                  setActiveTab(tab)
+                  setPreviewKey(null)
+                }}
+              >
+                {CATEGORY_LABELS[tab]}
+              </button>
+            ))}
+          </div>
+
+          {/* Filter strip — clearly distinguishes reward types */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-slate-500">Show:</span>
+            {["all", "owned", "progress", "sprint"].map((mode) => (
+              <button
+                key={mode}
+                onClick={() => setFilterMode(mode)}
+                className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
+                  filterMode === mode
+                    ? "bg-primary text-white"
+                    : "bg-base-200 text-slate-400 hover:bg-secondary"
+                }`}
+              >
+                {mode === "all" ? (
+                  "All"
+                ) : mode === "owned" ? (
+                  "Owned"
+                ) : mode === "progress" ? (
+                  <span className="flex items-center gap-1">
+                    <FaTrophy size={9} /> Progress
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <FaBolt size={9} /> Sprint
+                  </span>
+                )}
+              </button>
+            ))}
+          </div>
+
+          {/* Reward type legend */}
+          <div className="flex gap-4 rounded-xl border border-accent bg-base-200/50 px-3 py-2">
+            <div className="flex items-center gap-1.5">
+              <FaTrophy size={10} className="text-blue-400" />
+              <span className="text-xs text-slate-400">
+                <strong className="text-blue-400">Progress</strong> — permanent unlocks from
+                level/total hours
+              </span>
             </div>
-
-            {/* Item grid */}
-            <div className="grid max-h-72 grid-cols-2 gap-2 overflow-y-auto pr-1">
-              {tabItems.map(([key, config]) => {
-                const ownedList = inventory[activeTab] || []
-                const isOwned = ownedList.includes(key)
-                const isEquipped = equipped[equippedKey] === key
-                const isPreviewing = previewKey === key
-
-                return (
-                  <ItemCard
-                    key={key}
-                    itemKey={key}
-                    config={config}
-                    isOwned={isOwned}
-                    isEquipped={isEquipped}
-                    isPreviewing={isPreviewing}
-                    onPreview={setPreviewKey}
-                    onEquip={handleEquip}
-                    onUnequip={handleUnequip}
-                  />
-                )
-              })}
+            <div className="flex items-center gap-1.5">
+              <FaBolt size={10} className="text-amber-400" />
+              <span className="text-xs text-slate-400">
+                <strong className="text-amber-400">Sprint</strong> — requires weekly/monthly effort
+                to keep
+              </span>
             </div>
           </div>
 
-          {/* Right: preview card */}
-          <div className="w-44 flex-shrink-0">
-            <PreviewCard previewEquipped={previewEquipped} authUser={authUser} />
-            <p className="mt-2 text-center text-xs text-slate-500">
-              Click an item to preview, then equip.
-            </p>
+          {/* Item grid */}
+          <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">
+            {tabItems.map(([key, config]) => {
+              const isOwned = (inventory[activeTab] || []).includes(key)
+              const isEquipped = equipped[equippedKey] === key
+              return (
+                <ItemCard
+                  key={key}
+                  itemKey={key}
+                  config={config}
+                  isOwned={isOwned}
+                  isEquipped={isEquipped}
+                  isPreviewing={previewKey === key}
+                  onPreview={setPreviewKey}
+                  onEquip={handleEquip}
+                  onUnequip={handleUnequip}
+                />
+              )
+            })}
+            {tabItems.length === 0 && (
+              <p className="col-span-4 py-8 text-center text-sm text-slate-500">
+                No items match this filter.
+              </p>
+            )}
           </div>
         </div>
       </div>

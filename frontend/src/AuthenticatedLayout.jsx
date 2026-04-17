@@ -38,12 +38,15 @@ const DevlogDetailPage = lazy(() => import("./pages/DevlogDetailPage"))
 const GroupSettingsPage = lazy(() => import("./pages/GroupSettingsPage"))
 const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
 const BoardPage = lazy(() => import("./pages/BoardPage"))
+const WardrobePage = lazy(() => import("./features/wardrobe/WardrobePage"))
+
 
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")
   const isBoardPage = pathname.includes("/board")
   const isPublicChatPage = pathname.includes("/public-chat")
+  const isWardrobePage = pathname.includes("/wardrobe")
   const { showCreatePostModal, setShowCreatePostModal } = useAppStore()
 
   const [feedType, setFeedType] = useState("posts")
@@ -53,7 +56,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
 
   return (
     <>
-      <StyleWrapper/>
+      <StyleWrapper />
 
       <div className="mx-auto flex min-h-screen flex-col bg-base-100 md:max-w-[1242px] md:flex-row">
         {!shouldHideSidePanels && (
@@ -98,6 +101,7 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
               <Route path="/devlog/:id" element={<DevlogDetailPage />} />
               <Route path="/board" element={<BoardPage />} />
               <Route path="/board/:postId" element={<BoardPage />} />
+              <Route path="/wardrobe" element={<WardrobePage />} />
 
               <Route path="/pomodoro" element={<PomodoroPage />} />
               <Route path="/study-dashboard" element={<StudyDashboardPage />} />
@@ -118,9 +122,11 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
             </Routes>
           </Suspense>
         </main>
-        {!isMessagePage && !isPublicChatPage && !shouldHideSidePanels && !isBoardPage && (
-          <RightPanel />
-        )}
+        {!isMessagePage &&
+          !isPublicChatPage &&
+          !shouldHideSidePanels &&
+          !isBoardPage &&
+          !isWardrobePage && (<RightPanel />)}
       </div>
 
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}

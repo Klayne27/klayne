@@ -60,6 +60,13 @@ const formatHeatmapDate = (dateString) => {
   }).format(date)
 }
 
+
+ const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
+  if (!equippedOverlayKey || !wardrobeConfig[equippedOverlayKey]) return "";
+  
+  return wardrobeConfig[equippedOverlayKey].overlayClass || "";
+};
+
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
 
@@ -98,6 +105,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
   // 2. Map them to your config values
   const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
   const themeVars = WARDROBE_CONFIG[equippedTheme]?.cssVars || {}
+
+  const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -319,12 +328,12 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              <div className="sakura-breeze-overlay relative overflow-hidden">
-                <div className="sakura-layer-3 pointer-events-none absolute inset-0 z-0" />
-                <div className="sakura-mist" />
-
+              <div className={`group/cover relative overflow-hidden ${activeOverlayClass}`}>
+                {" "}
+                {/* <div className="sakura-layer-3 pointer-events-none absolute inset-0 z-0" /> */}
+                {/* <div className="sakura-mist" /> */}
                 <img
-                  src={getOptimizedImageUrl(userProfile.coverImg.imageUrl || "/cover.png", "cover")}
+                  src={getOptimizedImageUrl(userProfile?.coverImg?.imageUrl || "/cover.png", "cover")}
                   onClick={() => {
                     const url = userProfile?.coverImg?.imageUrl || "/cover.png"
                     openLightbox({ imageUrl: url })
@@ -333,7 +342,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                   alt="cover image"
                   loading="lazy"
                 />
-
                 {/* Edit button stays inside inner wrapper so it's clipped correctly */}
                 {isMyProfile && (
                   <div
@@ -369,7 +377,7 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                       profileImg: profileImg ? { imageUrl: profileImg } : userProfile?.profileImg,
                     }}
                     size="xxl"
-                    className="cursor-pointer border-[3px] border-base-100"
+                    className={`cursor-pointer ${userProfile?.equipped}`}
                     // 2. Attach the Lightbox click handler here
                     onClick={() => {
                       const url =

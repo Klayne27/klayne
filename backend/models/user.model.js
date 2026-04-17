@@ -109,17 +109,20 @@ const userSchema = new mongoose.Schema(
         default: [],
       },
     ],
+    // user.model.js — update inventory and equipped only
     inventory: {
       themes: [{ type: String }],
       fonts: [{ type: String }],
       rings: [{ type: String }],
       overlays: [{ type: String }],
+      nameplates: [{ type: String }], // NEW
     },
     equipped: {
       theme: { type: String, default: null },
       font: { type: String, default: null },
       ring: { type: String, default: null },
       overlay: { type: String, default: null },
+      nameplate: { type: String, default: null }, // NEW
     },
     isAdmin: {
       type: Boolean,

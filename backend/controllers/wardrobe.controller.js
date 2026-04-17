@@ -1,13 +1,13 @@
 // wardrobe.controller.js
-
 import User from "../models/user.model.js";
 
-const VALID_CATEGORIES = ["font", "ring", "overlay"];
+const VALID_CATEGORIES = ["font", "ring", "overlay", "nameplate"];
 
 const CATEGORY_MAP = {
   font: "fonts",
   ring: "rings",
   overlay: "overlays",
+  nameplate: "nameplates",
 };
 
 export const getInventory = async (req, res) => {

@@ -32,7 +32,7 @@ export const getWeeklyLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName weeklyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak nameColor",
+        "username fullName weeklyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak nameColor equipped",
       )
       .populate({ path: "profileImg", select: "imageUrl" });
 
@@ -109,7 +109,7 @@ export const getTotalLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak nameColor",
+        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak equipped",
       )
       .populate({
         path: "profileImg",
@@ -144,7 +144,7 @@ export const getMonthlyLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge monthlyStudyStreak nameColor",
+        "username fullName monthlyStats totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge monthlyStudyStreak nameColor equipped",
       )
       .populate({
         path: "profileImg",

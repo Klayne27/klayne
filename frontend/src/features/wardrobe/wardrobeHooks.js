@@ -32,7 +32,7 @@ export const useEquipItem = () => {
       queryClient.invalidateQueries({ queryKey: wardrobeKeys.inventory() })
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
       queryClient.invalidateQueries({ queryKey: userKeys.profiles() })
-      showAppToast("Item equipped!", "success")
+    //   showAppToast("Item equipped!", "success")
     },
     onError: (error) => {
       showAppToast(error.message || "Failed to equip item.", "error")

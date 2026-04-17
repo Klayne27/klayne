@@ -714,3 +714,1093 @@ body {
   70%  { transform: translate3d(-16%, -10%, 0) scale(1.25) rotate(-10deg); }
   100% { transform: translate3d(0%, 0%, 0) scale(1) rotate(0deg); }
 }
+
+/* ============================================================
+   WARDROBE — ANIMATED RINGS
+   All ring classes apply to a .rounded-full wrapper around
+   the avatar <img>. They use border + box-shadow animations.
+   ============================================================ */
+
+
+/* ── ORIGINAL: Scholar's Glow (Level 25) ──────────────────── */
+@keyframes scholars-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px 2px #fbbf24, 0 0 10px 4px #f59e0b;
+  }
+  50% {
+    box-shadow: 0 0 12px 5px #fde68a, 0 0 22px 8px #fbbf24;
+  }
+}
+.scholars-glow-ring {
+  border-radius: 9999px;
+  border: 2px solid #fbbf24;
+  animation: scholars-pulse 2.5s ease-in-out infinite;
+}
+
+/* ── ORIGINAL: Diamond Edge (Level 50) ───────────────────── */
+@keyframes diamond-spin {
+  0%   { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
+  33%  { box-shadow: 0 0 6px 2px #f0abfc, 0 0 12px 4px #a5f3fc; }
+  66%  { box-shadow: 0 0 6px 2px #818cf8, 0 0 12px 4px #f0abfc; }
+  100% { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
+}
+.diamond-edge-ring {
+  border-radius: 9999px;
+  border: 2px solid #e0f2fe;
+  animation: diamond-spin 3s linear infinite;
+}
+
+/* ── ORIGINAL: Neon Halo (Level 60) ─────────────────────── */
+@keyframes neon-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px 2px #a855f7, 0 0 12px 4px #7c3aed;
+  }
+  50% {
+    box-shadow: 0 0 14px 6px #c084fc, 0 0 28px 10px #a855f7;
+  }
+}
+.neon-halo-ring {
+  border-radius: 9999px;
+  border: 2px solid #a855f7;
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   ELEMENTAL PACK (Level 20)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Eternal Flame ─────────────────────────────────────────── */
+@keyframes flame-flicker {
+  0%   { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
+  20%  { box-shadow: 0 0 9px 4px #fb923c, 0 0 18px 7px #f97316, 0 0 30px 8px #fde68a; }
+  40%  { box-shadow: 0 0 5px 2px #ef4444, 0 0 12px 4px #f97316, 0 0 20px 6px #fb923c; }
+  60%  { box-shadow: 0 0 10px 5px #fbbf24, 0 0 20px 8px #f97316, 0 0 32px 9px #fde68a; }
+  80%  { box-shadow: 0 0 7px 3px #f97316, 0 0 16px 5px #ea580c, 0 0 24px 7px #fbbf24; }
+  100% { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
+}
+.eternal-flame-ring {
+  border-radius: 9999px;
+  border: 2px solid #f97316;
+  animation: flame-flicker 1.4s ease-in-out infinite;
+}
+
+/* ── Frozen Crystal ─────────────────────────────────────────── */
+@keyframes ice-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 6px 2px #bae6fd,
+      0 0 14px 5px #38bdf8,
+      0 0 22px 6px #0ea5e9;
+  }
+  50% {
+    box-shadow:
+      0 0 10px 5px #e0f2fe,
+      0 0 20px 8px #7dd3fc,
+      0 0 32px 10px #38bdf8;
+  }
+}
+@keyframes ice-border-shift {
+  0%, 100% { border-color: #7dd3fc; }
+  50%       { border-color: #e0f2fe; }
+}
+.frozen-crystal-ring {
+  border-radius: 9999px;
+  border: 2px solid #7dd3fc;
+  animation: ice-pulse 2.8s ease-in-out infinite,
+             ice-border-shift 2.8s ease-in-out infinite;
+}
+
+/* ── Electric Pulse ─────────────────────────────────────────── */
+@keyframes electric-flicker {
+  0%   { box-shadow: 0 0 4px 1px #facc15, 0 0 8px 2px #eab308; opacity: 1; }
+  10%  { box-shadow: 0 0 12px 5px #fde047, 0 0 22px 8px #facc15; opacity: 0.85; }
+  12%  { box-shadow: 0 0 3px 1px #eab308; opacity: 1; }
+  25%  { box-shadow: 0 0 10px 4px #fef08a, 0 0 20px 7px #facc15, 0 0 30px 9px #eab308; }
+  50%  { box-shadow: 0 0 5px 2px #facc15, 0 0 10px 3px #eab308; }
+  75%  { box-shadow: 0 0 14px 6px #fde047, 0 0 26px 9px #facc15; opacity: 0.9; }
+  76%  { box-shadow: 0 0 4px 1px #eab308; opacity: 1; }
+  100% { box-shadow: 0 0 4px 1px #facc15, 0 0 8px 2px #eab308; }
+}
+.electric-pulse-ring {
+  border-radius: 9999px;
+  border: 2px solid #facc15;
+  animation: electric-flicker 0.9s steps(1, end) infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   NATURE PACK (Level 35)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Ivy League ───────────────────────────────────────────── */
+@keyframes ivy-breathe {
+  0%, 100% {
+    box-shadow:
+      0 0 5px 2px #16a34a,
+      0 0 12px 4px #15803d,
+      0 0 18px 5px #166534;
+  }
+  50% {
+    box-shadow:
+      0 0 8px 4px #22c55e,
+      0 0 16px 6px #16a34a,
+      0 0 26px 8px #15803d;
+  }
+}
+.ivy-league-ring {
+  border-radius: 9999px;
+  border: 2px solid #16a34a;
+  animation: ivy-breathe 3.5s ease-in-out infinite;
+}
+
+/* ── Sakura ───────────────────────────────────────────────── */
+@keyframes sakura-bloom {
+  0%, 100% {
+    box-shadow:
+      0 0 5px 2px #f9a8d4,
+      0 0 10px 4px #f472b6;
+  }
+  50% {
+    box-shadow:
+      0 0 10px 5px #fbcfe8,
+      0 0 18px 8px #f9a8d4,
+      0 0 26px 9px #ec4899;
+  }
+}
+.sakura-ring {
+  border-radius: 9999px;
+  border: 2px solid #f9a8d4;
+  animation: sakura-bloom 3s ease-in-out infinite;
+}
+
+/* ── Golden Hour ──────────────────────────────────────────── */
+@keyframes golden-shimmer {
+  0%   { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
+  33%  { box-shadow: 0 0 10px 4px #fde68a, 0 0 20px 7px #fbbf24, 0 0 28px 8px #f59e0b; }
+  66%  { box-shadow: 0 0 8px 3px #f59e0b, 0 0 16px 5px #d97706; }
+  100% { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
+}
+@keyframes golden-border {
+  0%, 100% { border-color: #fbbf24; }
+  50%       { border-color: #fde68a; }
+}
+.golden-hour-ring {
+  border-radius: 9999px;
+  border: 2px solid #fbbf24;
+  animation: golden-shimmer 2.5s ease-in-out infinite,
+             golden-border 2.5s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   COSMIC / PRESTIGE PACK (Level 50–80)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Cosmic Dust ──────────────────────────────────────────── */
+@keyframes cosmic-orbit {
+  0%   { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+  25%  { box-shadow: 0 0 8px 4px #a78bfa, 0 0 16px 6px #8b5cf6, 0 0 26px 8px #6d28d9; }
+  50%  { box-shadow: 0 0 10px 5px #c4b5fd, 0 0 20px 8px #a78bfa, 0 0 30px 9px #8b5cf6; }
+  75%  { box-shadow: 0 0 8px 3px #7c3aed, 0 0 14px 5px #6d28d9, 0 0 22px 7px #4c1d95; }
+  100% { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+}
+.cosmic-dust-ring {
+  border-radius: 9999px;
+  border: 2px solid #8b5cf6;
+  animation: cosmic-orbit 4s ease-in-out infinite;
+}
+
+/* ── Aurora Borealis ──────────────────────────────────────── */
+@keyframes aurora-cycle {
+  0%   { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+  25%  { box-shadow: 0 0 10px 4px #6ee7b7, 0 0 20px 7px #34d399; border-color: #6ee7b7; }
+  50%  { box-shadow: 0 0 10px 4px #a78bfa, 0 0 20px 7px #7c3aed; border-color: #a78bfa; }
+  75%  { box-shadow: 0 0 8px 3px #67e8f9, 0 0 16px 6px #0891b2; border-color: #67e8f9; }
+  100% { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+}
+.aurora-borealis-ring {
+  border-radius: 9999px;
+  border: 2px solid #34d399;
+  animation: aurora-cycle 5s linear infinite;
+}
+
+/* ── Void Smoke ───────────────────────────────────────────── */
+@keyframes void-smoke {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 4px rgba(17, 24, 39, 0.95),
+      0 0 16px 8px rgba(31, 41, 55, 0.8),
+      0 0 24px 10px rgba(55, 65, 81, 0.5);
+    opacity: 1;
+  }
+  40% {
+    box-shadow:
+      0 0 12px 6px rgba(0, 0, 0, 1),
+      0 0 22px 10px rgba(17, 24, 39, 0.9),
+      0 0 34px 14px rgba(31, 41, 55, 0.6);
+    opacity: 0.85;
+  }
+  80% {
+    box-shadow:
+      0 0 6px 3px rgba(55, 65, 81, 0.7),
+      0 0 12px 5px rgba(17, 24, 39, 0.95);
+    opacity: 0.95;
+  }
+}
+.void-smoke-ring {
+  border-radius: 9999px;
+  border: 2px solid #374151;
+  animation: void-smoke 3s ease-in-out infinite;
+}
+
+/* ── Neon Circuit ─────────────────────────────────────────── */
+@keyframes circuit-trace {
+  0%   { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+  30%  { box-shadow: 0 0 8px 4px #67e8f9, 0 0 16px 7px #22d3ee, 0 0 24px 8px #0891b2; border-color: #67e8f9; }
+  60%  { box-shadow: 0 0 5px 2px #0e7490, 0 0 12px 5px #22d3ee; border-color: #22d3ee; }
+  80%  { box-shadow: 0 0 10px 5px #a5f3fc, 0 0 20px 8px #67e8f9; border-color: #a5f3fc; }
+  100% { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+}
+.neon-circuit-ring {
+  border-radius: 9999px;
+  border: 2px solid #22d3ee;
+  animation: circuit-trace 1.8s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   LEGENDS ONLY (Level 100 / 1000 Hours)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Solar Flare ──────────────────────────────────────────── */
+@keyframes solar-burst {
+  0%   {
+    box-shadow:
+      0 0 8px 3px #fef9c3,
+      0 0 18px 7px #fde047,
+      0 0 30px 10px #facc15,
+      0 0 44px 14px #ca8a04;
+    border-color: #fef9c3;
+  }
+  30%  {
+    box-shadow:
+      0 0 14px 7px #ffffff,
+      0 0 28px 12px #fef9c3,
+      0 0 42px 16px #fde047,
+      0 0 58px 20px #facc15;
+    border-color: #ffffff;
+  }
+  60%  {
+    box-shadow:
+      0 0 10px 4px #fde68a,
+      0 0 22px 8px #facc15,
+      0 0 36px 12px #d97706;
+    border-color: #fde68a;
+  }
+  100% {
+    box-shadow:
+      0 0 8px 3px #fef9c3,
+      0 0 18px 7px #fde047,
+      0 0 30px 10px #facc15,
+      0 0 44px 14px #ca8a04;
+    border-color: #fef9c3;
+  }
+}
+.solar-flare-ring {
+  border-radius: 9999px;
+  border: 2.5px solid #fef9c3;
+  animation: solar-burst 2s ease-in-out infinite;
+}
+
+/* ── Crimson Tide ─────────────────────────────────────────── */
+@keyframes crimson-wave {
+  0%   { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
+  25%  { box-shadow: 0 0 10px 5px #fca5a5, 0 0 20px 8px #ef4444, 0 0 30px 10px #dc2626; border-color: #fca5a5; }
+  50%  { box-shadow: 0 0 8px 3px #b91c1c, 0 0 16px 6px #991b1b, 0 0 24px 8px #7f1d1d; border-color: #ef4444; }
+  75%  { box-shadow: 0 0 12px 6px #f87171, 0 0 22px 9px #ef4444, 0 0 32px 10px #dc2626; border-color: #f87171; }
+  100% { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
+}
+.crimson-tide-ring {
+  border-radius: 9999px;
+  border: 2px solid #ef4444;
+  animation: crimson-wave 2.2s ease-in-out infinite;
+}
+
+/* ============================================================
+   WARDROBE — ANIMATED OVERLAYS
+   Overlay classes are applied to the banner wrapper element.
+   All visible effects are rendered via ::before / ::after
+   (and optional child layer divs for 3-layer effects) so
+   the banner image itself is never obscured.
+
+   The wrapper must be:   position: relative; overflow: hidden;
+   ============================================================ */
+
+
+/* ── ORIGINAL: Rainy Window ────────────────────────────────── */
+.rainy-window-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.rainy-window-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -50px;
+  pointer-events: none;
+  z-index: 0;
+  background-image: repeating-linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 95%,
+    rgba(255, 255, 255, 0.28) 95%,
+    transparent 100%
+  );
+  background-size: 40px 150px;
+  animation: heavy-rain 0.7s linear infinite;
+  opacity: 0.5;
+}
+@keyframes heavy-rain {
+  from { background-position: 0 0; }
+  to   { background-position: 20px 300px; }
+}
+
+
+/* ── ORIGINAL: Sakura Breeze ───────────────────────────────── */
+/* (preserved unchanged from original file) */
+.sakura-breeze-overlay {
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+  z-index: 0;
+  isolation: isolate;
+  background: linear-gradient(to bottom, rgba(255,182,193,0.08), rgba(255,105,180,0.03));
+}
+.sakura-breeze-overlay::before,
+.sakura-breeze-overlay::after {
+  content: "🌸";
+  position: absolute;
+  top: -30%;
+  left: 0;
+  right: 0;
+  color: transparent;
+  white-space: nowrap;
+  pointer-events: none;
+  will-change: transform, opacity;
+  animation-name: sakura-fall-continuous;
+  animation-timing-function: linear;
+  animation-iteration-count: infinite;
+}
+.sakura-breeze-overlay::before {
+  font-size: 18px;
+  opacity: 0.9;
+  filter: drop-shadow(0 0 5px rgba(255,182,193,0.5));
+  animation-duration: 14s;
+  animation-delay: -3s;
+  text-shadow:
+    3vw -10vh 0 #ffb7c5, 8vw 6vh 0 #ffc0cb, 13vw 18vh 0 #ff69b4,
+    18vw 2vh 0 #ffb7c5, 24vw 14vh 0 #ffc0cb, 30vw -4vh 0 #ff69b4,
+    36vw 20vh 0 #ffb7c5, 42vw 8vh 0 #ffc0cb, 48vw 26vh 0 #ff69b4,
+    54vw 12vh 0 #ffb7c5, 60vw 30vh 0 #ffc0cb, 66vw 16vh 0 #ff69b4,
+    72vw 34vh 0 #ffb7c5, 78vw 10vh 0 #ffc0cb, 84vw 28vh 0 #ff69b4,
+    90vw 14vh 0 #ffb7c5, 96vw 36vh 0 #ffc0cb, 0vw 22vh 0 #ff69b4;
+}
+.sakura-breeze-overlay::after {
+  font-size: 12px;
+  opacity: 0.7;
+  filter: drop-shadow(0 0 4px rgba(255,105,180,0.28));
+  animation-duration: 20s;
+  animation-delay: -9s;
+  text-shadow:
+    2vw -14vh 0 #ffb7c5, 7vw 8vh 0 #ffc0cb, 12vw 20vh 0 #ff69b4,
+    17vw 4vh 0 #ffb7c5, 23vw 16vh 0 #ffc0cb, 29vw -2vh 0 #ff69b4,
+    35vw 24vh 0 #ffb7c5, 41vw 10vh 0 #ffc0cb, 47vw 28vh 0 #ff69b4,
+    53vw 14vh 0 #ffb7c5, 59vw 32vh 0 #ffc0cb, 65vw 18vh 0 #ff69b4,
+    71vw 36vh 0 #ffb7c5, 77vw 12vh 0 #ffc0cb, 83vw 30vh 0 #ff69b4,
+    89vw 16vh 0 #ffb7c5, 95vw 38vh 0 #ffc0cb, 99vw 24vh 0 #ff69b4;
+}
+@keyframes sakura-fall-continuous {
+  0%   { transform: translate3d(-4vw, -28vh,  0) rotate(0deg)   scale(0.92); }
+  25%  { transform: translate3d( 3vw,  18vh,  0) rotate(110deg) scale(1);    }
+  50%  { transform: translate3d(-2vw,  58vh,  0) rotate(260deg) scale(0.97); }
+  75%  { transform: translate3d( 4vw,  96vh,  0) rotate(430deg) scale(0.95); }
+  100% { transform: translate3d(-3vw, 140vh,  0) rotate(620deg) scale(0.92); }
+}
+
+
+/* ── ORIGINAL: Matrix Code ─────────────────────────────────── */
+/* (preserved unchanged — full CSS in original wardrobe.css)   */
+
+
+/* ── ORIGINAL: Nebula Mist ─────────────────────────────────── */
+/* (preserved unchanged — full CSS in original wardrobe.css)   */
+
+
+/* ═══════════════════════════════════════════════════════════
+   NEW OVERLAYS
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Snowfall (Level 15) ───────────────────────────────────── */
+.snowfall-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.snowfall-overlay::before,
+.snowfall-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -10% 0 0 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+/* Front layer — larger, faster flakes */
+.snowfall-overlay::before {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.9) 1.5px, transparent 1.5px),
+    radial-gradient(circle, rgba(255,255,255,0.7) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.85) 2px, transparent 2px),
+    radial-gradient(circle, rgba(255,255,255,0.6) 1px, transparent 1px);
+  background-size: 80px 80px, 60px 60px, 100px 100px, 50px 50px;
+  background-position: 10px 0, 25px 20px, 50px 10px, 70px 30px;
+  animation: snow-fall-fast 6s linear infinite;
+  opacity: 0.8;
+}
+/* Back layer — smaller, slower flakes */
+.snowfall-overlay::after {
+  background-image:
+    radial-gradient(circle, rgba(255,255,255,0.5) 1px, transparent 1px),
+    radial-gradient(circle, rgba(255,255,255,0.4) 0.8px, transparent 0.8px),
+    radial-gradient(circle, rgba(255,255,255,0.6) 1.2px, transparent 1.2px);
+  background-size: 70px 70px, 90px 90px, 55px 55px;
+  background-position: 5px 15px, 35px 5px, 60px 25px;
+  animation: snow-fall-slow 11s linear infinite;
+  opacity: 0.5;
+  filter: blur(0.4px);
+}
+@keyframes snow-fall-fast {
+  from { transform: translateY(-10%) translateX(0); }
+  to   { transform: translateY(115%) translateX(15px); }
+}
+@keyframes snow-fall-slow {
+  from { transform: translateY(-10%) translateX(0); }
+  to   { transform: translateY(115%) translateX(-20px); }
+}
+
+
+/* ── Fireflies (Level 22) ──────────────────────────────────── */
+.fireflies-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.fireflies-overlay::before,
+.fireflies-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  border-radius: inherit;
+}
+.fireflies-overlay::before {
+  background-image:
+    radial-gradient(circle, rgba(253,224,71,0.95) 1.5px, rgba(253,224,71,0.2) 4px, transparent 8px),
+    radial-gradient(circle, rgba(250,204,21,0.9) 1px, rgba(250,204,21,0.15) 3px, transparent 7px),
+    radial-gradient(circle, rgba(253,224,71,0.85) 1.5px, rgba(253,224,71,0.2) 4px, transparent 8px),
+    radial-gradient(circle, rgba(251,191,36,0.9) 1px, rgba(251,191,36,0.15) 3px, transparent 7px),
+    radial-gradient(circle, rgba(253,224,71,0.8) 1.5px, rgba(253,224,71,0.1) 3px, transparent 7px);
+  background-size: 120px 80px, 90px 110px, 140px 70px, 80px 100px, 110px 90px;
+  background-position: 15% 30%, 40% 60%, 65% 25%, 80% 70%, 30% 80%;
+  background-repeat: no-repeat;
+  animation: firefly-drift-a 7s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+.fireflies-overlay::after {
+  background-image:
+    radial-gradient(circle, rgba(253,224,71,0.8) 1px, rgba(253,224,71,0.12) 3px, transparent 6px),
+    radial-gradient(circle, rgba(250,204,21,0.7) 1.5px, rgba(250,204,21,0.1) 4px, transparent 8px),
+    radial-gradient(circle, rgba(253,224,71,0.85) 1px, rgba(253,224,71,0.15) 3px, transparent 6px),
+    radial-gradient(circle, rgba(251,191,36,0.75) 1px, transparent 5px);
+  background-size: 100px 90px, 130px 80px, 85px 115px, 110px 75px;
+  background-position: 55% 40%, 20% 65%, 75% 50%, 45% 20%;
+  background-repeat: no-repeat;
+  animation: firefly-drift-b 9s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+@keyframes firefly-drift-a {
+  0%   { transform: translate(0px, 0px);     opacity: 0.4; }
+  25%  { transform: translate(8px, -12px);   opacity: 1;   }
+  50%  { transform: translate(-6px, 10px);   opacity: 0.6; }
+  75%  { transform: translate(12px, 6px);    opacity: 1;   }
+  100% { transform: translate(-4px, -8px);   opacity: 0.5; }
+}
+@keyframes firefly-drift-b {
+  0%   { transform: translate(0px, 0px);     opacity: 0.5; }
+  30%  { transform: translate(-10px, 8px);   opacity: 1;   }
+  60%  { transform: translate(7px, -14px);   opacity: 0.4; }
+  100% { transform: translate(4px, 6px);     opacity: 0.9; }
+}
+
+
+/* ── Northern Lights (Level 45) ────────────────────────────── */
+.northern-lights-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.northern-lights-overlay::before,
+.northern-lights-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -30%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+  mix-blend-mode: screen;
+  filter: blur(22px) saturate(1.3);
+}
+.northern-lights-overlay::before {
+  background:
+    radial-gradient(ellipse at 30% 40%, rgba(52,211,153,0.65) 0%, transparent 55%),
+    radial-gradient(ellipse at 70% 35%, rgba(103,232,249,0.55) 0%, transparent 55%),
+    radial-gradient(ellipse at 50% 60%, rgba(167,139,250,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse at 20% 70%, rgba(52,211,153,0.45) 0%, transparent 55%);
+  animation: aurora-ripple-a 12s ease-in-out infinite;
+  opacity: 0.85;
+}
+.northern-lights-overlay::after {
+  background:
+    radial-gradient(ellipse at 60% 30%, rgba(6,182,212,0.5) 0%, transparent 60%),
+    radial-gradient(ellipse at 40% 65%, rgba(52,211,153,0.5) 0%, transparent 55%),
+    radial-gradient(ellipse at 80% 55%, rgba(167,139,250,0.45) 0%, transparent 60%);
+  animation: aurora-ripple-b 18s ease-in-out infinite;
+  opacity: 0.65;
+  filter: blur(32px);
+}
+@keyframes aurora-ripple-a {
+  0%   { transform: translate3d(0%,   0%, 0) scaleX(1) rotate(0deg);   }
+  30%  { transform: translate3d(8%,  -5%, 0) scaleX(1.1) rotate(4deg); }
+  60%  { transform: translate3d(-7%, 8%,  0) scaleX(0.95) rotate(-3deg); }
+  100% { transform: translate3d(0%,   0%, 0) scaleX(1) rotate(0deg);   }
+}
+@keyframes aurora-ripple-b {
+  0%   { transform: translate3d(0%,  0%,  0) scale(1) rotate(0deg);    }
+  40%  { transform: translate3d(-10%, 6%, 0) scale(1.12) rotate(-6deg); }
+  70%  { transform: translate3d(9%, -8%,  0) scale(1.08) rotate(5deg);  }
+  100% { transform: translate3d(0%,  0%,  0) scale(1) rotate(0deg);    }
+}
+
+
+/* ── Star Rain (Level 70) ──────────────────────────────────── */
+.star-rain-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.star-rain-overlay::before,
+.star-rain-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -20% 0 0 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.star-rain-overlay::before {
+  background-image:
+    linear-gradient(60deg, transparent 45%, rgba(253,224,71,0.9) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(255,255,255,0.7) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(253,224,71,0.8) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(250,250,250,0.6) 50%, transparent 55%);
+  background-size: 3px 60px, 2px 45px, 2.5px 55px, 1.5px 40px;
+  background-position: 15% 0, 35% 20%, 60% 10%, 85% 30%;
+  background-repeat: no-repeat;
+  animation: star-streak 2.2s linear infinite;
+  opacity: 0.9;
+}
+.star-rain-overlay::after {
+  background-image:
+    linear-gradient(60deg, transparent 45%, rgba(255,255,255,0.6) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(253,224,71,0.7) 50%, transparent 55%),
+    linear-gradient(60deg, transparent 45%, rgba(255,255,255,0.5) 50%, transparent 55%);
+  background-size: 2px 50px, 1.5px 35px, 2px 45px;
+  background-position: 25% 15%, 50% 5%, 75% 25%;
+  background-repeat: no-repeat;
+  animation: star-streak 3.1s linear infinite;
+  opacity: 0.65;
+}
+@keyframes star-streak {
+  from { transform: translateY(-15%) translateX(-5%);  opacity: 1; }
+  80%  { opacity: 1; }
+  to   { transform: translateY(120%) translateX(30%); opacity: 0; }
+}
+
+
+/* ── Dust Particles (50 Hours) ─────────────────────────────── */
+.dust-particles-overlay {
+  position: relative;
+  overflow: hidden;
+}
+/* Film grain texture */
+.dust-particles-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 120px 120px;
+  opacity: 0.06;
+  mix-blend-mode: overlay;
+  animation: grain-shift 0.15s steps(1) infinite;
+}
+/* Floating motes */
+.dust-particles-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background-image:
+    radial-gradient(circle, rgba(255,248,220,0.8) 0.8px, transparent 0.8px),
+    radial-gradient(circle, rgba(255,248,220,0.6) 0.6px, transparent 0.6px),
+    radial-gradient(circle, rgba(255,248,220,0.7) 0.9px, transparent 0.9px),
+    radial-gradient(circle, rgba(255,248,220,0.5) 0.7px, transparent 0.7px),
+    radial-gradient(circle, rgba(255,248,220,0.75) 0.8px, transparent 0.8px);
+  background-size: 70px 60px, 50px 80px, 90px 70px, 60px 50px, 80px 65px;
+  background-position: 10% 20%, 30% 55%, 55% 35%, 75% 65%, 90% 30%;
+  background-repeat: no-repeat;
+  animation: dust-float 14s ease-in-out infinite alternate;
+  opacity: 0.7;
+}
+@keyframes grain-shift {
+  0%  { background-position: 0 0; }
+  20% { background-position: -5px -3px; }
+  40% { background-position: 4px 2px; }
+  60% { background-position: -3px 5px; }
+  80% { background-position: 2px -4px; }
+}
+@keyframes dust-float {
+  0%   { transform: translate(0, 0) scale(1);         opacity: 0.5; }
+  30%  { transform: translate(6px, -10px) scale(1.05); opacity: 0.8; }
+  65%  { transform: translate(-8px, 8px) scale(0.95);  opacity: 0.6; }
+  100% { transform: translate(4px, -6px) scale(1.02);  opacity: 0.75; }
+}
+
+
+/* ── Falling Leaves (200 Hours) ────────────────────────────── */
+.falling-leaves-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.falling-leaves-overlay::before,
+.falling-leaves-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -15% 0 0 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+/* Amber/orange leaf layer */
+.falling-leaves-overlay::before {
+  background-image:
+    radial-gradient(ellipse 5px 8px at center, rgba(217,119,6,0.9), transparent),
+    radial-gradient(ellipse 4px 7px at center, rgba(180,83,9,0.85), transparent),
+    radial-gradient(ellipse 6px 9px at center, rgba(234,88,12,0.9), transparent),
+    radial-gradient(ellipse 5px 7px at center, rgba(245,158,11,0.85), transparent),
+    radial-gradient(ellipse 4px 8px at center, rgba(217,119,6,0.8), transparent);
+  background-size: 14px 14px, 12px 12px, 16px 16px, 13px 13px, 11px 11px;
+  background-position: 8% 5%, 25% 12%, 45% 3%, 67% 8%, 88% 6%;
+  background-repeat: no-repeat;
+  animation: leaf-tumble-a 7s ease-in-out infinite;
+  opacity: 0.9;
+}
+/* Red/rust leaf layer */
+.falling-leaves-overlay::after {
+  background-image:
+    radial-gradient(ellipse 4px 7px at center, rgba(153,27,27,0.85), transparent),
+    radial-gradient(ellipse 5px 8px at center, rgba(185,28,28,0.8), transparent),
+    radial-gradient(ellipse 4px 6px at center, rgba(220,38,38,0.9), transparent),
+    radial-gradient(ellipse 6px 9px at center, rgba(161,98,7,0.85), transparent);
+  background-size: 12px 12px, 14px 14px, 11px 11px, 15px 15px;
+  background-position: 18% 8%, 40% 2%, 62% 10%, 82% 4%;
+  background-repeat: no-repeat;
+  animation: leaf-tumble-b 9.5s ease-in-out infinite;
+  opacity: 0.8;
+}
+@keyframes leaf-tumble-a {
+  0%   { transform: translate(0,   -5%) rotate(0deg);   }
+  25%  { transform: translate(15px, 22%) rotate(45deg);  }
+  50%  { transform: translate(-8px, 50%) rotate(120deg); }
+  75%  { transform: translate(18px, 78%) rotate(200deg); }
+  100% { transform: translate(-5px, 110%) rotate(270deg); }
+}
+@keyframes leaf-tumble-b {
+  0%   { transform: translate(0,    -8%) rotate(10deg);  }
+  30%  { transform: translate(-12px, 25%) rotate(70deg); }
+  60%  { transform: translate(10px,  60%) rotate(160deg); }
+  100% { transform: translate(-6px, 110%) rotate(300deg); }
+}
+
+
+/* ── Fog Drift (400 Hours) ─────────────────────────────────── */
+.fog-drift-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.fog-drift-overlay::before,
+.fog-drift-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.fog-drift-overlay::before {
+  background:
+    radial-gradient(ellipse 80% 40% at 30% 60%, rgba(255,255,255,0.35) 0%, transparent 65%),
+    radial-gradient(ellipse 70% 35% at 70% 40%, rgba(240,240,255,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 90% 30% at 50% 80%, rgba(255,255,255,0.22) 0%, transparent 65%);
+  filter: blur(18px);
+  animation: fog-roll-a 20s ease-in-out infinite alternate;
+  opacity: 0.75;
+}
+.fog-drift-overlay::after {
+  background:
+    radial-gradient(ellipse 75% 45% at 60% 50%, rgba(255,255,255,0.3) 0%, transparent 70%),
+    radial-gradient(ellipse 65% 30% at 20% 70%, rgba(240,248,255,0.25) 0%, transparent 65%);
+  filter: blur(28px);
+  animation: fog-roll-b 28s ease-in-out infinite alternate;
+  opacity: 0.6;
+}
+@keyframes fog-roll-a {
+  0%   { transform: translate3d(-5%,  0%,  0) scale(1);    }
+  50%  { transform: translate3d(8%,  -4%,  0) scale(1.08); }
+  100% { transform: translate3d(-3%,  5%,  0) scale(1.04); }
+}
+@keyframes fog-roll-b {
+  0%   { transform: translate3d(4%,   0%, 0) scale(1);    }
+  50%  { transform: translate3d(-9%,  5%, 0) scale(1.1);  }
+  100% { transform: translate3d(6%,  -3%, 0) scale(1.05); }
+}
+
+
+/* ── Confetti Burst (1000 Hours) ───────────────────────────── */
+.confetti-burst-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.confetti-burst-overlay::before,
+.confetti-burst-overlay::after {
+  content: "";
+  position: absolute;
+  inset: -10% 0 0 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+.confetti-burst-overlay::before {
+  background-image:
+    linear-gradient(45deg, #f87171 25%, transparent 25%),
+    linear-gradient(-45deg, #60a5fa 25%, transparent 25%),
+    linear-gradient(45deg, #34d399 25%, transparent 25%),
+    linear-gradient(-45deg, #fbbf24 25%, transparent 25%),
+    linear-gradient(45deg, #a78bfa 25%, transparent 25%),
+    linear-gradient(-45deg, #f472b6 25%, transparent 25%);
+  background-size: 6px 6px, 5px 5px, 7px 7px, 5px 5px, 6px 6px, 5px 5px;
+  background-position: 0 0, 5% 10%, 20% 5%, 40% 15%, 60% 3%, 80% 12%;
+  background-repeat: no-repeat;
+  animation: confetti-fall-a 4s linear infinite;
+  opacity: 0.9;
+}
+.confetti-burst-overlay::after {
+  background-image:
+    linear-gradient(-45deg, #fbbf24 25%, transparent 25%),
+    linear-gradient(45deg, #60a5fa 25%, transparent 25%),
+    linear-gradient(-45deg, #f87171 25%, transparent 25%),
+    linear-gradient(45deg, #a78bfa 25%, transparent 25%),
+    linear-gradient(-45deg, #34d399 25%, transparent 25%);
+  background-size: 5px 5px, 6px 6px, 5px 5px, 7px 7px, 6px 6px;
+  background-position: 10% 0, 30% 8%, 55% 2%, 70% 14%, 90% 6%;
+  background-repeat: no-repeat;
+  animation: confetti-fall-b 5.5s linear infinite;
+  opacity: 0.75;
+}
+@keyframes confetti-fall-a {
+  from { transform: translateY(-5%) rotate(0deg);   }
+  to   { transform: translateY(115%) rotate(360deg); }
+}
+@keyframes confetti-fall-b {
+  from { transform: translateY(-5%) rotate(0deg);   }
+  to   { transform: translateY(115%) rotate(-280deg); }
+}
+
+
+/* ── Ember Storm (30 hrs/week) ─────────────────────────────── */
+.ember-storm-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.ember-storm-overlay::before,
+.ember-storm-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  will-change: transform;
+}
+/* Orange ember particles */
+.ember-storm-overlay::before {
+  background-image:
+    radial-gradient(circle, rgba(251,146,60,0.95) 1.5px, rgba(251,146,60,0.15) 4px, transparent 7px),
+    radial-gradient(circle, rgba(239,68,68,0.9) 1px, rgba(239,68,68,0.1) 3px, transparent 6px),
+    radial-gradient(circle, rgba(252,211,77,0.9) 1.5px, rgba(252,211,77,0.15) 4px, transparent 7px),
+    radial-gradient(circle, rgba(249,115,22,0.85) 1px, rgba(249,115,22,0.1) 3px, transparent 6px),
+    radial-gradient(circle, rgba(239,68,68,0.9) 1.5px, rgba(239,68,68,0.12) 3px, transparent 6px),
+    radial-gradient(circle, rgba(251,146,60,0.8) 1px, transparent 5px);
+  background-size: 100px 70px, 80px 90px, 120px 65px, 70px 100px, 90px 75px, 110px 80px;
+  background-position: 10% 80%, 30% 60%, 50% 85%, 65% 55%, 80% 75%, 92% 65%;
+  background-repeat: no-repeat;
+  animation: ember-rise-a 3.5s ease-in-out infinite alternate;
+  mix-blend-mode: screen;
+}
+/* Glow haze */
+.ember-storm-overlay::after {
+  background:
+    radial-gradient(ellipse at 20% 100%, rgba(249,115,22,0.25) 0%, transparent 50%),
+    radial-gradient(ellipse at 60% 100%, rgba(239,68,68,0.2) 0%, transparent 45%),
+    radial-gradient(ellipse at 90% 100%, rgba(251,146,60,0.22) 0%, transparent 50%);
+  filter: blur(16px);
+  animation: ember-glow 5s ease-in-out infinite alternate;
+  opacity: 0.8;
+}
+@keyframes ember-rise-a {
+  0%   { transform: translate(0,   0px); opacity: 0.5; }
+  40%  { transform: translate(6px, -20px); opacity: 1;  }
+  70%  { transform: translate(-4px,-40px); opacity: 0.7; }
+  100% { transform: translate(8px, -60px); opacity: 0; }
+}
+@keyframes ember-glow {
+  0%   { transform: scaleX(1) translateY(0);   opacity: 0.6; }
+  50%  { transform: scaleX(1.08) translateY(-4px); opacity: 1;   }
+  100% { transform: scaleX(0.96) translateY(2px);  opacity: 0.7; }
+}
+
+
+/* ── Crystal Frost (80 hrs/month) ──────────────────────────── */
+.crystal-frost-overlay {
+  position: relative;
+  overflow: hidden;
+}
+.crystal-frost-overlay::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  background:
+    /* Corner frost blooms */
+    radial-gradient(ellipse 55% 35% at 0% 0%, rgba(186,230,253,0.45) 0%, transparent 65%),
+    radial-gradient(ellipse 50% 30% at 100% 0%, rgba(186,230,253,0.4) 0%, transparent 60%),
+    radial-gradient(ellipse 45% 30% at 0% 100%, rgba(186,230,253,0.35) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 35% at 100% 100%, rgba(186,230,253,0.4) 0%, transparent 65%),
+    /* Edge rime */
+    linear-gradient(to right, rgba(224,242,254,0.25) 0%, transparent 12%),
+    linear-gradient(to left, rgba(224,242,254,0.25) 0%, transparent 12%),
+    linear-gradient(to bottom, rgba(224,242,254,0.2) 0%, transparent 10%);
+  filter: blur(4px);
+  animation: frost-crystallize 8s ease-in-out infinite alternate;
+}
+.crystal-frost-overlay::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 0;
+  /* Crisp ice spikes — thin linear gradients as crystals */
+  background-image:
+    linear-gradient(135deg, rgba(186,230,253,0.8) 0%, transparent 15%),
+    linear-gradient(225deg, rgba(186,230,253,0.7) 0%, transparent 14%),
+    linear-gradient(315deg, rgba(186,230,253,0.75) 0%, transparent 15%),
+    linear-gradient(45deg,  rgba(186,230,253,0.7) 0%, transparent 14%);
+  background-size: 20% 20%, 20% 20%, 20% 20%, 20% 20%;
+  background-position: 0% 0%, 100% 0%, 0% 100%, 100% 100%;
+  background-repeat: no-repeat;
+  opacity: 0.7;
+  animation: frost-shimmer 6s ease-in-out infinite alternate;
+}
+@keyframes frost-crystallize {
+  0%   { opacity: 0.6; transform: scale(1);    }
+  50%  { opacity: 0.9; transform: scale(1.02); }
+  100% { opacity: 0.7; transform: scale(1);    }
+}
+@keyframes frost-shimmer {
+  0%   { opacity: 0.5; }
+  60%  { opacity: 0.85; }
+  100% { opacity: 0.6; }
+}
+
+/* ═══════════════════════════════════════════════
+   NEW RINGS
+═══════════════════════════════════════════════ */
+
+@keyframes celestial-orbit-spin {
+  0%   { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
+  50%  { box-shadow: 0 0 0 2px #a78bfa, 0 0 18px 6px #c4b5fd; }
+  100% { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
+}
+.celestial-orbit-ring {
+  border-radius: 9999px;
+  animation: celestial-orbit-spin 3s ease-in-out infinite;
+  border: 2px solid transparent;
+}
+
+@keyframes magma-pulse {
+  0%,100% { box-shadow: 0 0 0 2px #ea580c, 0 0 10px 3px #f97316; }
+  50%      { box-shadow: 0 0 0 3px #dc2626, 0 0 18px 6px #f97316; }
+}
+.magma-flow-ring {
+  border-radius: 9999px;
+  animation: magma-pulse 1.8s ease-in-out infinite;
+  border: 2px solid #f97316;
+}
+
+@keyframes cyber-neon-trace {
+  0%   { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; }
+  33%  { box-shadow: 0 0 6px 2px #a855f7, 0 0 14px 5px #9333ea; }
+  66%  { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; }
+  100% { box-shadow: 0 0 6px 2px #f0abfc, 0 0 14px 5px #e879f9; }
+}
+.cyber-neon-pulse-ring {
+  border-radius: 9999px;
+  animation: cyber-neon-trace 2.4s linear infinite;
+  border: 2px solid #22d3ee;
+}
+
+@keyframes zen-bloom {
+  0%,100% { box-shadow: 0 0 0 2px #f9a8d4, 0 0 8px 2px #fbcfe8; }
+  50%      { box-shadow: 0 0 0 3px #ec4899, 0 0 14px 5px #f9a8d4; }
+}
+.zen-blossom-ring {
+  border-radius: 9999px;
+  animation: zen-bloom 4s ease-in-out infinite;
+  border: 2px solid #f9a8d4;
+}
+
+/* ═══════════════════════════════════════════════
+   NAMEPLATES
+   Applied to a <span> or <div> wrapping the username
+═══════════════════════════════════════════════ */
+
+/* Shared base */
+[class^="np-"] {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+/* Golden Ribbon */
+@keyframes np-shine {
+  0%   { background-position: -200% center; }
+  100% { background-position: 200% center; }
+}
+.np-golden-ribbon {
+  background: linear-gradient(90deg, #b8860b, #ffd700, #ffec8b, #ffd700, #b8860b);
+  background-size: 200% auto;
+  color: #3b2a00;
+  animation: np-shine 3s linear infinite;
+  border: 1px solid #d4a017;
+}
+
+/* Gothic Parchment */
+.np-gothic-parchment {
+  background: linear-gradient(135deg, #d4b896, #c4a882, #bfa070);
+  color: #2c1a0e;
+  border: 1px solid #8b6914;
+  font-style: italic;
+  letter-spacing: 0.03em;
+  box-shadow: inset 0 1px 2px rgba(0,0,0,0.2);
+}
+
+/* Cyberpunk HUD */
+.np-cyber-hud {
+  background: transparent;
+  color: #22d3ee;
+  border: none;
+  padding: 1px 4px;
+  position: relative;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-size: 0.85em;
+}
+.np-cyber-hud::before { content: "[ "; color: #06b6d4; }
+.np-cyber-hud::after  { content: " ]"; color: #06b6d4; }
+
+/* Prismatic */
+@keyframes np-rainbow {
+  0%   { background-position: 0% 50%; }
+  50%  { background-position: 100% 50%; }
+  100% { background-position: 0% 50%; }
+}
+.np-prismatic {
+  background: linear-gradient(90deg, #f43f5e, #f97316, #eab308, #22c55e, #3b82f6, #a855f7, #f43f5e);
+  background-size: 300% 300%;
+  animation: np-rainbow 5s ease infinite;
+  color: #fff;
+  -webkit-text-stroke: 0.3px rgba(0,0,0,0.3);
+  border: none;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.4);
+}
+
+/* Obsidian Seal */
+.np-obsidian-seal {
+  background: linear-gradient(135deg, #1c1c1e, #2d2d30, #1c1c1e);
+  color: #94a3b8;
+  border: 1px solid #475569;
+  box-shadow: inset 0 0 6px rgba(148,163,184,0.1), 0 0 4px rgba(71,85,105,0.4);
+  letter-spacing: 0.05em;
+}
+
+/* Celestial Script */
+@keyframes np-star-shimmer {
+  0%,100% { text-shadow: 0 0 4px #818cf8, 0 0 8px #6366f1; }
+  50%      { text-shadow: 0 0 8px #c4b5fd, 0 0 16px #a78bfa; }
+}
+.np-celestial-script {
+  background: linear-gradient(135deg, #0f0c29, #1e1b4b);
+  color: #c4b5fd;
+  border: 1px solid #4f46e5;
+  animation: np-star-shimmer 3s ease-in-out infinite;
+  letter-spacing: 0.04em;
+}
+
+/* Scholar's Crest */
+.np-scholar-crest {
+  background: linear-gradient(135deg, #14532d, #166534, #15803d);
+  color: #bbf7d0;
+  border: 1px solid #22c55e;
+  box-shadow: 0 0 6px rgba(34,197,94,0.2);
+  font-variant: small-caps;
+  letter-spacing: 0.06em;
+}
+
+/* Inferno Tag */
+@keyframes np-fire {
+  0%,100% { background-position: 0% 50%; }
+  50%      { background-position: 100% 50%; }
+}
+.np-inferno-tag {
+  background: linear-gradient(90deg, #7f1d1d, #b91c1c, #ef4444, #f97316, #ef4444, #b91c1c);
+  background-size: 300% 300%;
+  animation: np-fire 2s ease infinite;
+  color: #fef2f2;
+  border: none;
+  text-shadow: 0 0 4px rgba(239,68,68,0.6);
+  font-weight: 700;
+}

@@ -355,7 +355,7 @@ const Post = ({
 
   return (
     <div
-      className={`min-w-0 ${
+      className={`min-w-0 z-[1001] ${
         showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
       } flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${
         index === 0 && "pt-3"
@@ -425,6 +425,7 @@ const Post = ({
               onClick={(e) => handleInteractiveClick(e)}
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
+              className="flex"
             >
               <UserAvatar user={originalPostOwner} size={"md"} />
             </Link>

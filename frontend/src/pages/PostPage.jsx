@@ -396,9 +396,10 @@ const PostPage = () => {
                       ref={emojiButtonRef}
                       type="button"
                       onClick={handleOpenEmojiPickerPopover}
-                      className="flex-shrink-0 rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
+                      className="flex-shrink-0  rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
                     >
                       <PiSmiley size={22} />
+
                     </button>
 
                     {/* Anonymous toggle — only shown when parent post is anonymous */}
