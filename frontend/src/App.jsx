@@ -17,7 +17,7 @@ import ImageLightbox from "./features/board/components/ImageLightbox"
 import { useLightboxStore } from "./store/useLightboxStore"
 
 const LoginPage = lazy(() => import("./pages/auth/LoginPage"))
-const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
+// const SignupPage = lazy(() => import("./pages/auth/SignupPage"))
 // const ResetPasswordPage = lazy(() => import("./pages/auth/ResetPasswordPage"))
 // const ForgotPasswordPage = lazy(() => import("./pages/auth/ForgotPasswordPage"))
 const AuthenticatedLayout = lazy(() => import("./AuthenticatedLayout"))
@@ -89,7 +89,7 @@ function App() {
       >
         <Routes>
           <Route path="/login" element={!authUser ? <LoginPage /> : <Navigate to="/" />} />
-          <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} />
+          {/* <Route path="/signup" element={!authUser ? <SignupPage /> : <Navigate to="/" />} /> */}
           {/* <Route
             path="/reset-password/:token"
             element={!authUser ? <ResetPasswordPage /> : <Navigate to="/" />}
