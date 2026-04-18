@@ -230,74 +230,7 @@ body {
   transform: translateX(12px);
 }
 
-/* Wardrobe: Neon Halo ring */
-@keyframes neon-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 6px 2px #a855f7,
-      0 0 12px 4px #7c3aed;
-  }
-  50% {
-    box-shadow:
-      0 0 14px 6px #c084fc,
-      0 0 28px 10px #a855f7;
-  }
-}
-.neon-halo-ring {
-  ring-width: 2px;
-  animation: neon-pulse 2s ease-in-out infinite;
-  border-radius: 9999px;
-  border: 2px solid #a855f7;
-}
 
-@keyframes scholars-pulse {
-  0%,
-  100% {
-    box-shadow:
-      0 0 5px 2px #fbbf24,
-      0 0 10px 4px #f59e0b;
-  }
-  50% {
-    box-shadow:
-      0 0 12px 5px #fde68a,
-      0 0 22px 8px #fbbf24;
-  }
-}
-.scholars-glow-ring {
-  border-radius: 9999px;
-  border: 2px solid #fbbf24;
-  animation: scholars-pulse 2.5s ease-in-out infinite;
-}
-
-/* ── Diamond Edge ring (Level 50) ─────────────────────────────────────── */
-@keyframes diamond-spin {
-  0% {
-    box-shadow:
-      0 0 6px 2px #a5f3fc,
-      0 0 12px 4px #818cf8;
-  }
-  33% {
-    box-shadow:
-      0 0 6px 2px #f0abfc,
-      0 0 12px 4px #a5f3fc;
-  }
-  66% {
-    box-shadow:
-      0 0 6px 2px #818cf8,
-      0 0 12px 4px #f0abfc;
-  }
-  100% {
-    box-shadow:
-      0 0 6px 2px #a5f3fc,
-      0 0 12px 4px #818cf8;
-  }
-}
-.diamond-edge-ring {
-  border-radius: 9999px;
-  border: 2px solid #e0f2fe;
-  animation: diamond-spin 3s linear infinite;
-}
 
 /* ── Rainy Window overlay ─────────────────────────────────────────────── */
 /* ── Rain: Fast Shimmering Streaks ── */
@@ -723,174 +656,8 @@ body {
 
 
 /* ── ORIGINAL: Scholar's Glow (Level 25) ──────────────────── */
-@keyframes scholars-pulse {
-  0%, 100% {
-    box-shadow: 0 0 5px 2px #fbbf24, 0 0 10px 4px #f59e0b;
-  }
-  50% {
-    box-shadow: 0 0 12px 5px #fde68a, 0 0 22px 8px #fbbf24;
-  }
-}
-.scholars-glow-ring {
-  border-radius: 9999px;
-  border: 2px solid #fbbf24;
-  animation: scholars-pulse 2.5s ease-in-out infinite;
-}
-
-/* ── ORIGINAL: Diamond Edge (Level 50) ───────────────────── */
-@keyframes diamond-spin {
-  0%   { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
-  33%  { box-shadow: 0 0 6px 2px #f0abfc, 0 0 12px 4px #a5f3fc; }
-  66%  { box-shadow: 0 0 6px 2px #818cf8, 0 0 12px 4px #f0abfc; }
-  100% { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
-}
-.diamond-edge-ring {
-  border-radius: 9999px;
-  border: 2px solid #e0f2fe;
-  animation: diamond-spin 3s linear infinite;
-}
-
-/* ── ORIGINAL: Neon Halo (Level 60) ─────────────────────── */
-@keyframes neon-pulse {
-  0%, 100% {
-    box-shadow: 0 0 6px 2px #a855f7, 0 0 12px 4px #7c3aed;
-  }
-  50% {
-    box-shadow: 0 0 14px 6px #c084fc, 0 0 28px 10px #a855f7;
-  }
-}
-.neon-halo-ring {
-  border-radius: 9999px;
-  border: 2px solid #a855f7;
-  animation: neon-pulse 2s ease-in-out infinite;
-}
 
 
-/* ═══════════════════════════════════════════════════════════
-   ELEMENTAL PACK (Level 20)
-   ═══════════════════════════════════════════════════════════ */
-
-/* ── Eternal Flame ─────────────────────────────────────────── */
-@keyframes flame-flicker {
-  0%   { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
-  20%  { box-shadow: 0 0 9px 4px #fb923c, 0 0 18px 7px #f97316, 0 0 30px 8px #fde68a; }
-  40%  { box-shadow: 0 0 5px 2px #ef4444, 0 0 12px 4px #f97316, 0 0 20px 6px #fb923c; }
-  60%  { box-shadow: 0 0 10px 5px #fbbf24, 0 0 20px 8px #f97316, 0 0 32px 9px #fde68a; }
-  80%  { box-shadow: 0 0 7px 3px #f97316, 0 0 16px 5px #ea580c, 0 0 24px 7px #fbbf24; }
-  100% { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
-}
-.eternal-flame-ring {
-  border-radius: 9999px;
-  border: 2px solid #f97316;
-  animation: flame-flicker 1.4s ease-in-out infinite;
-}
-
-/* ── Frozen Crystal ─────────────────────────────────────────── */
-@keyframes ice-pulse {
-  0%, 100% {
-    box-shadow:
-      0 0 6px 2px #bae6fd,
-      0 0 14px 5px #38bdf8,
-      0 0 22px 6px #0ea5e9;
-  }
-  50% {
-    box-shadow:
-      0 0 10px 5px #e0f2fe,
-      0 0 20px 8px #7dd3fc,
-      0 0 32px 10px #38bdf8;
-  }
-}
-@keyframes ice-border-shift {
-  0%, 100% { border-color: #7dd3fc; }
-  50%       { border-color: #e0f2fe; }
-}
-.frozen-crystal-ring {
-  border-radius: 9999px;
-  border: 2px solid #7dd3fc;
-  animation: ice-pulse 2.8s ease-in-out infinite,
-             ice-border-shift 2.8s ease-in-out infinite;
-}
-
-/* ── Electric Pulse ─────────────────────────────────────────── */
-@keyframes electric-flicker {
-  0%   { box-shadow: 0 0 4px 1px #facc15, 0 0 8px 2px #eab308; opacity: 1; }
-  10%  { box-shadow: 0 0 12px 5px #fde047, 0 0 22px 8px #facc15; opacity: 0.85; }
-  12%  { box-shadow: 0 0 3px 1px #eab308; opacity: 1; }
-  25%  { box-shadow: 0 0 10px 4px #fef08a, 0 0 20px 7px #facc15, 0 0 30px 9px #eab308; }
-  50%  { box-shadow: 0 0 5px 2px #facc15, 0 0 10px 3px #eab308; }
-  75%  { box-shadow: 0 0 14px 6px #fde047, 0 0 26px 9px #facc15; opacity: 0.9; }
-  76%  { box-shadow: 0 0 4px 1px #eab308; opacity: 1; }
-  100% { box-shadow: 0 0 4px 1px #facc15, 0 0 8px 2px #eab308; }
-}
-.electric-pulse-ring {
-  border-radius: 9999px;
-  border: 2px solid #facc15;
-  animation: electric-flicker 0.9s steps(1, end) infinite;
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   NATURE PACK (Level 35)
-   ═══════════════════════════════════════════════════════════ */
-
-/* ── Ivy League ───────────────────────────────────────────── */
-@keyframes ivy-breathe {
-  0%, 100% {
-    box-shadow:
-      0 0 5px 2px #16a34a,
-      0 0 12px 4px #15803d,
-      0 0 18px 5px #166534;
-  }
-  50% {
-    box-shadow:
-      0 0 8px 4px #22c55e,
-      0 0 16px 6px #16a34a,
-      0 0 26px 8px #15803d;
-  }
-}
-.ivy-league-ring {
-  border-radius: 9999px;
-  border: 2px solid #16a34a;
-  animation: ivy-breathe 3.5s ease-in-out infinite;
-}
-
-/* ── Sakura ───────────────────────────────────────────────── */
-@keyframes sakura-bloom {
-  0%, 100% {
-    box-shadow:
-      0 0 5px 2px #f9a8d4,
-      0 0 10px 4px #f472b6;
-  }
-  50% {
-    box-shadow:
-      0 0 10px 5px #fbcfe8,
-      0 0 18px 8px #f9a8d4,
-      0 0 26px 9px #ec4899;
-  }
-}
-.sakura-ring {
-  border-radius: 9999px;
-  border: 2px solid #f9a8d4;
-  animation: sakura-bloom 3s ease-in-out infinite;
-}
-
-/* ── Golden Hour ──────────────────────────────────────────── */
-@keyframes golden-shimmer {
-  0%   { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
-  33%  { box-shadow: 0 0 10px 4px #fde68a, 0 0 20px 7px #fbbf24, 0 0 28px 8px #f59e0b; }
-  66%  { box-shadow: 0 0 8px 3px #f59e0b, 0 0 16px 5px #d97706; }
-  100% { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
-}
-@keyframes golden-border {
-  0%, 100% { border-color: #fbbf24; }
-  50%       { border-color: #fde68a; }
-}
-.golden-hour-ring {
-  border-radius: 9999px;
-  border: 2px solid #fbbf24;
-  animation: golden-shimmer 2.5s ease-in-out infinite,
-             golden-border 2.5s ease-in-out infinite;
-}
 
 
 /* ═══════════════════════════════════════════════════════════
@@ -898,134 +665,6 @@ body {
    ═══════════════════════════════════════════════════════════ */
 
 /* ── Cosmic Dust ──────────────────────────────────────────── */
-@keyframes cosmic-orbit {
-  0%   { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
-  25%  { box-shadow: 0 0 8px 4px #a78bfa, 0 0 16px 6px #8b5cf6, 0 0 26px 8px #6d28d9; }
-  50%  { box-shadow: 0 0 10px 5px #c4b5fd, 0 0 20px 8px #a78bfa, 0 0 30px 9px #8b5cf6; }
-  75%  { box-shadow: 0 0 8px 3px #7c3aed, 0 0 14px 5px #6d28d9, 0 0 22px 7px #4c1d95; }
-  100% { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
-}
-.cosmic-dust-ring {
-  border-radius: 9999px;
-  border: 2px solid #8b5cf6;
-  animation: cosmic-orbit 4s ease-in-out infinite;
-}
-
-/* ── Aurora Borealis ──────────────────────────────────────── */
-@keyframes aurora-cycle {
-  0%   { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
-  25%  { box-shadow: 0 0 10px 4px #6ee7b7, 0 0 20px 7px #34d399; border-color: #6ee7b7; }
-  50%  { box-shadow: 0 0 10px 4px #a78bfa, 0 0 20px 7px #7c3aed; border-color: #a78bfa; }
-  75%  { box-shadow: 0 0 8px 3px #67e8f9, 0 0 16px 6px #0891b2; border-color: #67e8f9; }
-  100% { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
-}
-.aurora-borealis-ring {
-  border-radius: 9999px;
-  border: 2px solid #34d399;
-  animation: aurora-cycle 5s linear infinite;
-}
-
-/* ── Void Smoke ───────────────────────────────────────────── */
-@keyframes void-smoke {
-  0%, 100% {
-    box-shadow:
-      0 0 8px 4px rgba(17, 24, 39, 0.95),
-      0 0 16px 8px rgba(31, 41, 55, 0.8),
-      0 0 24px 10px rgba(55, 65, 81, 0.5);
-    opacity: 1;
-  }
-  40% {
-    box-shadow:
-      0 0 12px 6px rgba(0, 0, 0, 1),
-      0 0 22px 10px rgba(17, 24, 39, 0.9),
-      0 0 34px 14px rgba(31, 41, 55, 0.6);
-    opacity: 0.85;
-  }
-  80% {
-    box-shadow:
-      0 0 6px 3px rgba(55, 65, 81, 0.7),
-      0 0 12px 5px rgba(17, 24, 39, 0.95);
-    opacity: 0.95;
-  }
-}
-.void-smoke-ring {
-  border-radius: 9999px;
-  border: 2px solid #374151;
-  animation: void-smoke 3s ease-in-out infinite;
-}
-
-/* ── Neon Circuit ─────────────────────────────────────────── */
-@keyframes circuit-trace {
-  0%   { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
-  30%  { box-shadow: 0 0 8px 4px #67e8f9, 0 0 16px 7px #22d3ee, 0 0 24px 8px #0891b2; border-color: #67e8f9; }
-  60%  { box-shadow: 0 0 5px 2px #0e7490, 0 0 12px 5px #22d3ee; border-color: #22d3ee; }
-  80%  { box-shadow: 0 0 10px 5px #a5f3fc, 0 0 20px 8px #67e8f9; border-color: #a5f3fc; }
-  100% { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
-}
-.neon-circuit-ring {
-  border-radius: 9999px;
-  border: 2px solid #22d3ee;
-  animation: circuit-trace 1.8s ease-in-out infinite;
-}
-
-
-/* ═══════════════════════════════════════════════════════════
-   LEGENDS ONLY (Level 100 / 1000 Hours)
-   ═══════════════════════════════════════════════════════════ */
-
-/* ── Solar Flare ──────────────────────────────────────────── */
-@keyframes solar-burst {
-  0%   {
-    box-shadow:
-      0 0 8px 3px #fef9c3,
-      0 0 18px 7px #fde047,
-      0 0 30px 10px #facc15,
-      0 0 44px 14px #ca8a04;
-    border-color: #fef9c3;
-  }
-  30%  {
-    box-shadow:
-      0 0 14px 7px #ffffff,
-      0 0 28px 12px #fef9c3,
-      0 0 42px 16px #fde047,
-      0 0 58px 20px #facc15;
-    border-color: #ffffff;
-  }
-  60%  {
-    box-shadow:
-      0 0 10px 4px #fde68a,
-      0 0 22px 8px #facc15,
-      0 0 36px 12px #d97706;
-    border-color: #fde68a;
-  }
-  100% {
-    box-shadow:
-      0 0 8px 3px #fef9c3,
-      0 0 18px 7px #fde047,
-      0 0 30px 10px #facc15,
-      0 0 44px 14px #ca8a04;
-    border-color: #fef9c3;
-  }
-}
-.solar-flare-ring {
-  border-radius: 9999px;
-  border: 2.5px solid #fef9c3;
-  animation: solar-burst 2s ease-in-out infinite;
-}
-
-/* ── Crimson Tide ─────────────────────────────────────────── */
-@keyframes crimson-wave {
-  0%   { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
-  25%  { box-shadow: 0 0 10px 5px #fca5a5, 0 0 20px 8px #ef4444, 0 0 30px 10px #dc2626; border-color: #fca5a5; }
-  50%  { box-shadow: 0 0 8px 3px #b91c1c, 0 0 16px 6px #991b1b, 0 0 24px 8px #7f1d1d; border-color: #ef4444; }
-  75%  { box-shadow: 0 0 12px 6px #f87171, 0 0 22px 9px #ef4444, 0 0 32px 10px #dc2626; border-color: #f87171; }
-  100% { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
-}
-.crimson-tide-ring {
-  border-radius: 9999px;
-  border: 2px solid #ef4444;
-  animation: crimson-wave 2.2s ease-in-out infinite;
-}
 
 /* ============================================================
    WARDROBE — ANIMATED OVERLAYS
@@ -1126,15 +765,6 @@ body {
   75%  { transform: translate3d( 4vw,  96vh,  0) rotate(430deg) scale(0.95); }
   100% { transform: translate3d(-3vw, 140vh,  0) rotate(620deg) scale(0.92); }
 }
-
-
-/* ── ORIGINAL: Matrix Code ─────────────────────────────────── */
-/* (preserved unchanged — full CSS in original wardrobe.css)   */
-
-
-/* ── ORIGINAL: Nebula Mist ─────────────────────────────────── */
-/* (preserved unchanged — full CSS in original wardrobe.css)   */
-
 
 /* ═══════════════════════════════════════════════════════════
    NEW OVERLAYS
@@ -1647,49 +1277,6 @@ body {
    NEW RINGS
 ═══════════════════════════════════════════════ */
 
-@keyframes celestial-orbit-spin {
-  0%   { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
-  50%  { box-shadow: 0 0 0 2px #a78bfa, 0 0 18px 6px #c4b5fd; }
-  100% { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
-}
-.celestial-orbit-ring {
-  border-radius: 9999px;
-  animation: celestial-orbit-spin 3s ease-in-out infinite;
-  border: 2px solid transparent;
-}
-
-@keyframes magma-pulse {
-  0%,100% { box-shadow: 0 0 0 2px #ea580c, 0 0 10px 3px #f97316; }
-  50%      { box-shadow: 0 0 0 3px #dc2626, 0 0 18px 6px #f97316; }
-}
-.magma-flow-ring {
-  border-radius: 9999px;
-  animation: magma-pulse 1.8s ease-in-out infinite;
-  border: 2px solid #f97316;
-}
-
-@keyframes cyber-neon-trace {
-  0%   { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; }
-  33%  { box-shadow: 0 0 6px 2px #a855f7, 0 0 14px 5px #9333ea; }
-  66%  { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; }
-  100% { box-shadow: 0 0 6px 2px #f0abfc, 0 0 14px 5px #e879f9; }
-}
-.cyber-neon-pulse-ring {
-  border-radius: 9999px;
-  animation: cyber-neon-trace 2.4s linear infinite;
-  border: 2px solid #22d3ee;
-}
-
-@keyframes zen-bloom {
-  0%,100% { box-shadow: 0 0 0 2px #f9a8d4, 0 0 8px 2px #fbcfe8; }
-  50%      { box-shadow: 0 0 0 3px #ec4899, 0 0 14px 5px #f9a8d4; }
-}
-.zen-blossom-ring {
-  border-radius: 9999px;
-  animation: zen-bloom 4s ease-in-out infinite;
-  border: 2px solid #f9a8d4;
-}
-
 /* ═══════════════════════════════════════════════
    NAMEPLATES
    Applied to a <span> or <div> wrapping the username
@@ -1803,4 +1390,922 @@ body {
   border: none;
   text-shadow: 0 0 4px rgba(239,68,68,0.6);
   font-weight: 700;
+}
+
+/* ── Silver Thread (Level 8) ──────────────────────────────────── */
+.np-silver-thread {
+  background: linear-gradient(90deg, #94a3b8, #e2e8f0, #cbd5e1, #94a3b8);
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: silver-shimmer 3s linear infinite;
+}
+@keyframes silver-shimmer {
+  0%   { background-position: 0% center; }
+  100% { background-position: 200% center; }
+}
+
+/* ── Rose Gold (50h) ──────────────────────────────────────────── */
+.np-rose-gold {
+  background: linear-gradient(90deg, #c2596a, #e8a0a0, #d4856a, #e8b89a, #c2596a);
+  background-size: 300% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  animation: rose-gold-flow 4s linear infinite;
+}
+@keyframes rose-gold-flow {
+  0%   { background-position: 0% center; }
+  100% { background-position: 300% center; }
+}
+
+/* ── Midnight Ink (Level 35) ──────────────────────────────────── */
+.np-midnight-ink {
+  color: #e2e8f0;
+  text-shadow:
+    0 0 8px rgba(99,102,241,0.4),
+    0 1px 2px rgba(0,0,0,0.8);
+  border-bottom: 1px solid rgba(99,102,241,0.3);
+  padding-bottom: 1px;
+}
+
+/* ── Crystalline (Level 55) ───────────────────────────────────── */
+@keyframes crystal-glint {
+  0%, 90%, 100% { text-shadow: 0 0 4px rgba(224,242,254,0.5); }
+  92% { text-shadow: 0 0 12px rgba(255,255,255,0.9), 0 0 20px rgba(186,230,253,0.6); }
+  94% { text-shadow: 0 0 4px rgba(224,242,254,0.5); }
+}
+.np-crystalline {
+  color: #e0f2fe;
+  letter-spacing: 0.03em;
+  animation: crystal-glint 4s ease-in-out infinite;
+}
+
+/* ── Laurel Wreath (250h) ─────────────────────────────────────── */
+.np-laurel-wreath {
+  color: #86efac;
+  text-shadow:
+    0 0 6px rgba(134,239,172,0.3),
+    0 0 12px rgba(74,222,128,0.15);
+  font-style: italic;
+}
+
+/* ── Storm Seal (25h/week sprint) ─────────────────────────────── */
+@keyframes storm-flicker {
+  0%, 85%, 100% {
+    color: #94a3b8;
+    text-shadow: none;
+  }
+  88% {
+    color: #bfdbfe;
+    text-shadow: 0 0 8px #60a5fa, 0 0 16px #3b82f6;
+  }
+  89% { color: #94a3b8; text-shadow: none; }
+  92% {
+    color: #e0f2fe;
+    text-shadow: 0 0 12px #7dd3fc, 0 0 24px #38bdf8;
+  }
+}
+.np-storm-seal {
+  animation: storm-flicker 3s steps(1, end) infinite;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/* ═══════════════════════════════════════════════════════════
+   AVATAR RING SYSTEM — COMPLETE CSS
+   Applied to the wrapping div in UserAvatar.
+   UserAvatar wrapper must have position: relative.
+   ═══════════════════════════════════════════════════════════ */
+
+/* ─────────────────────────────────────────────────────
+   TIER 1 — STATIC  (Level 5–10)
+   Visual: Outline only, no animation. Clean and minimal.
+───────────────────────────────────────────────────────── */
+
+.slate-outline-ring {
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
+  border-radius: 9999px;
+}
+
+/* Freshman Pack rings use Tailwind in ringClass — no CSS needed.
+   ring_bronze  → ring-2 ring-amber-700 ring-offset-2 ring-offset-base-100
+   ring_silver  → ring-2 ring-gray-400 ...
+   ring_gold    → ring-2 ring-yellow-400 ...
+   ring_ruby    → ring-2 ring-red-500 ...
+   ring_sapphire→ ring-2 ring-blue-500 ...
+   ring_emerald → ring-2 ring-emerald-500 ...
+   ring_amethyst→ ring-2 ring-purple-500 ...
+   ring_obsidian→ ring-2 ring-gray-900 ...
+   ring_ivory   → ring-2 ring-stone-200 ...
+   ring_steel   → ring-2 ring-slate-500 ... */
+
+
+/* ─────────────────────────────────────────────────────
+   TIER 2 — SOFT SINGLE-COLOR GLOW  (Level 15–35)
+   Visual: One color, steady breathing/pulse. Soothing.
+───────────────────────────────────────────────────────── */
+
+/* Level 15 — Jade Glow */
+@keyframes jade-breathe {
+  0%, 100% { box-shadow: 0 0 4px 1px #16a34a, 0 0 8px 2px #15803d; }
+  50%       { box-shadow: 0 0 9px 4px #22c55e, 0 0 18px 6px #16a34a; }
+}
+.jade-glow-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #16a34a;
+  animation: jade-breathe 3.2s ease-in-out infinite;
+}
+
+/* Level 20 — Eternal Flame */
+@keyframes flame-flicker {
+  0%   { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
+  20%  { box-shadow: 0 0 9px 4px #fb923c, 0 0 18px 7px #f97316, 0 0 30px 8px #fde68a; }
+  40%  { box-shadow: 0 0 5px 2px #ef4444, 0 0 12px 4px #f97316, 0 0 20px 6px #fb923c; }
+  60%  { box-shadow: 0 0 10px 5px #fbbf24, 0 0 20px 8px #f97316, 0 0 32px 9px #fde68a; }
+  80%  { box-shadow: 0 0 7px 3px #f97316, 0 0 16px 5px #ea580c, 0 0 24px 7px #fbbf24; }
+  100% { box-shadow: 0 0 6px 2px #f97316, 0 0 14px 5px #ea580c, 0 0 22px 6px #fbbf24; }
+}
+.eternal-flame-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #f97316;
+  animation: flame-flicker 1.4s ease-in-out infinite;
+}
+
+/* Level 20 — Frozen Crystal */
+@keyframes ice-pulse {
+  0%, 100% { box-shadow: 0 0 6px 2px #bae6fd, 0 0 14px 5px #38bdf8, 0 0 22px 6px #0ea5e9; }
+  50%       { box-shadow: 0 0 10px 5px #e0f2fe, 0 0 20px 8px #7dd3fc, 0 0 32px 10px #38bdf8; }
+}
+.frozen-crystal-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #7dd3fc;
+  animation: ice-pulse 2.8s ease-in-out infinite;
+}
+
+/* Level 22 — Rose Quartz */
+@keyframes rose-drift {
+  0%, 100% { box-shadow: 0 0 5px 1px #fda4af, 0 0 10px 3px #fb7185; }
+  50%       { box-shadow: 0 0 10px 4px #fecdd3, 0 0 20px 7px #fda4af, 0 0 28px 8px #f43f5e; }
+}
+.rose-quartz-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #fda4af;
+  animation: rose-drift 4s ease-in-out infinite;
+}
+
+/* Level 25 — Scholar's Glow */
+@keyframes scholars-pulse {
+  0%, 100% { box-shadow: 0 0 5px 2px #fbbf24, 0 0 10px 4px #f59e0b; }
+  50%       { box-shadow: 0 0 12px 5px #fde68a, 0 0 22px 8px #fbbf24; }
+}
+.scholars-glow-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #fbbf24;
+  animation: scholars-pulse 2.5s ease-in-out infinite;
+}
+
+/* Level 28 — Copper Coil */
+@keyframes copper-breathe {
+  0%, 100% { box-shadow: 0 0 4px 1px #b45309, 0 0 10px 3px #92400e; }
+  50%       { box-shadow: 0 0 8px 4px #d97706, 0 0 18px 6px #b45309, 0 0 24px 6px #fbbf24; }
+}
+.copper-coil-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #b45309;
+  animation: copper-breathe 3.5s ease-in-out infinite;
+}
+
+/* Level 32 — Twilight Band (purple↔blue alternating — distinct from amethyst solid) */
+@keyframes twilight-shift {
+  0%, 100% { box-shadow: 0 0 6px 2px #7c3aed, 0 0 14px 5px #4f46e5; border-color: #7c3aed; }
+  33%       { box-shadow: 0 0 6px 2px #3b82f6, 0 0 14px 5px #6366f1; border-color: #3b82f6; }
+  66%       { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 14px 5px #7c3aed; border-color: #8b5cf6; }
+}
+.twilight-band-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #7c3aed;
+  animation: twilight-shift 4s ease-in-out infinite;
+}
+
+/* Level 35 — Ivy League */
+@keyframes ivy-breathe {
+  0%, 100% { box-shadow: 0 0 5px 2px #16a34a, 0 0 12px 4px #15803d, 0 0 18px 5px #166534; }
+  50%       { box-shadow: 0 0 8px 4px #22c55e, 0 0 16px 6px #16a34a, 0 0 26px 8px #15803d; }
+}
+.ivy-league-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #16a34a;
+  animation: ivy-breathe 3.5s ease-in-out infinite;
+}
+
+/* Level 35 — Golden Hour (warm 3-step — distinct from scholars_glow which is simpler 2-step) */
+@keyframes golden-shimmer {
+  0%   { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
+  33%  { box-shadow: 0 0 10px 4px #fde68a, 0 0 20px 7px #fbbf24, 0 0 28px 8px #f59e0b; }
+  66%  { box-shadow: 0 0 8px 3px #f59e0b, 0 0 16px 5px #d97706; }
+  100% { box-shadow: 0 0 6px 2px #fbbf24, 0 0 14px 5px #d97706; }
+}
+.golden-hour-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #d97706;
+  animation: golden-shimmer 2.5s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   TIER 3 — DUAL-COLOR / CYCLING  (Level 40–60)
+   Visual: Color changes mid-animation. More eye-catching.
+───────────────────────────────────────────────────────── */
+
+/* Level 40 — Prism (full rainbow color cycle) */
+@keyframes prism-cycle {
+  0%   { box-shadow: 0 0 0 2px #f43f5e, 0 0 10px 3px #f43f5e; border-color: #f43f5e; }
+  17%  { box-shadow: 0 0 0 2px #f97316, 0 0 10px 3px #f97316; border-color: #f97316; }
+  33%  { box-shadow: 0 0 0 2px #eab308, 0 0 10px 3px #eab308; border-color: #eab308; }
+  50%  { box-shadow: 0 0 0 2px #22c55e, 0 0 10px 3px #22c55e; border-color: #22c55e; }
+  67%  { box-shadow: 0 0 0 2px #3b82f6, 0 0 10px 3px #3b82f6; border-color: #3b82f6; }
+  83%  { box-shadow: 0 0 0 2px #a855f7, 0 0 10px 3px #a855f7; border-color: #a855f7; }
+  100% { box-shadow: 0 0 0 2px #f43f5e, 0 0 10px 3px #f43f5e; border-color: #f43f5e; }
+}
+.prism-spin-ring {
+  border-radius: 9999px;
+  border: 2px solid #f43f5e;
+  animation: prism-cycle 4s linear infinite;
+}
+
+/* Level 45 — Seafoam Wave (teal-cyan intensity wave) */
+@keyframes seafoam-wave {
+  0%, 100% { box-shadow: 0 0 6px 2px #0891b2, 0 0 12px 4px #0e7490; border-color: #22d3ee; }
+  33%       { box-shadow: 0 0 10px 5px #67e8f9, 0 0 22px 8px #22d3ee, 0 0 30px 8px #06b6d4; border-color: #67e8f9; }
+  66%       { box-shadow: 0 0 7px 3px #0891b2, 0 0 15px 5px #0e7490; border-color: #06b6d4; }
+}
+.seafoam-wave-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #22d3ee;
+  animation: seafoam-wave 3s ease-in-out infinite;
+}
+
+/* Level 50 — Diamond Edge (3-color prismatic, not rainbow — distinct from prism) */
+@keyframes diamond-spin {
+  0%   { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
+  33%  { box-shadow: 0 0 6px 2px #f0abfc, 0 0 12px 4px #a5f3fc; }
+  66%  { box-shadow: 0 0 6px 2px #818cf8, 0 0 12px 4px #f0abfc; }
+  100% { box-shadow: 0 0 6px 2px #a5f3fc, 0 0 12px 4px #818cf8; }
+}
+.diamond-edge-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #e0f2fe;
+  animation: diamond-spin 3s linear infinite;
+}
+
+/* Level 50 — Cosmic Dust (deep indigo drift — distinct from diamond by being slow and monochromatic) */
+@keyframes cosmic-drift {
+  0%   { box-shadow: 0 0 6px 2px #4f46e5, 0 0 14px 4px #3730a3; }
+  25%  { box-shadow: 0 0 8px 3px #818cf8, 0 0 18px 6px #6366f1, 0 0 26px 6px #c7d2fe; }
+  50%  { box-shadow: 0 0 6px 2px #7c3aed, 0 0 14px 4px #5b21b6; }
+  75%  { box-shadow: 0 0 8px 3px #a78bfa, 0 0 18px 6px #8b5cf6, 0 0 24px 5px #ddd6fe; }
+  100% { box-shadow: 0 0 6px 2px #4f46e5, 0 0 14px 4px #3730a3; }
+}
+.cosmic-dust-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #818cf8;
+  animation: cosmic-drift 5s ease-in-out infinite;
+}
+
+/* Level 55 — Void Static (glitch: mostly dark, rare color burst) */
+@keyframes void-glitch {
+  0%, 88%, 100% { box-shadow: 0 0 6px 2px #374151, 0 0 12px 3px #1f2937; border-color: #4b5563; }
+  90%            { box-shadow: 0 0 10px 4px #22d3ee, 0 0 20px 6px #06b6d4; border-color: #22d3ee; }
+  91%            { box-shadow: 0 0 4px 1px #374151; border-color: #4b5563; }
+  93%            { box-shadow: 0 0 12px 5px #f43f5e, 0 0 22px 8px #e11d48; border-color: #f43f5e; }
+  94%            { box-shadow: 0 0 4px 1px #374151; border-color: #4b5563; }
+  96%            { box-shadow: 0 0 8px 3px #a855f7; border-color: #a855f7; }
+  97%            { box-shadow: 0 0 4px 1px #374151; border-color: #4b5563; }
+}
+.void-static-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #4b5563;
+  animation: void-glitch 4s steps(1, end) infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   TIER 4 — INTENSE / COMPLEX  (Level 60–80)
+   Visual: Heavy animations, multiple simultaneous effects.
+───────────────────────────────────────────────────────── */
+
+/* Level 60 — Neon Halo */
+@keyframes neon-pulse {
+  0%, 100% { box-shadow: 0 0 6px 2px #a855f7, 0 0 12px 4px #7c3aed; }
+  50%       { box-shadow: 0 0 14px 6px #c084fc, 0 0 28px 10px #a855f7; }
+}
+.neon-halo-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #a855f7;
+  animation: neon-pulse 2s ease-in-out infinite;
+}
+
+/* Level 65 — Zen Blossom (slow gentle, opposite energy of neon) */
+@keyframes zen-bloom {
+  0%, 100% { box-shadow: 0 0 4px 1px #f9a8d4, 0 0 8px 2px #fbcfe8; }
+  50%       { box-shadow: 0 0 8px 4px #fce7f3, 0 0 16px 6px #f9a8d4, 0 0 22px 6px #ec4899; }
+}
+.zen-blossom-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #f9a8d4;
+  animation: zen-bloom 5s ease-in-out infinite;
+}
+
+/* Level 70 — Celestial Orbit */
+@keyframes celestial-orbit-spin {
+  0%   { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
+  50%  { box-shadow: 0 0 0 2px #a78bfa, 0 0 18px 6px #c4b5fd; }
+  100% { box-shadow: 0 0 0 2px #6366f1, 0 0 12px 4px #818cf8; }
+}
+.celestial-orbit-ring {
+  border-radius: 9999px;
+  border: 2px solid #6366f1;
+  animation: celestial-orbit-spin 3s ease-in-out infinite;
+}
+
+/* Level 75 — Phantom Drift (translucent purple shift, ghost-like) */
+@keyframes phantom-drift {
+  0%   { box-shadow: 0 0 8px 3px rgba(168,85,247,0.4), 0 0 16px 5px rgba(109,40,217,0.3); border-color: rgba(168,85,247,0.6); }
+  25%  { box-shadow: 0 0 12px 5px rgba(196,181,253,0.55), 0 0 26px 9px rgba(139,92,246,0.4); border-color: rgba(196,181,253,0.7); }
+  50%  { box-shadow: 0 0 6px 2px rgba(79,70,229,0.3), 0 0 14px 4px rgba(67,56,202,0.25); border-color: rgba(99,102,241,0.4); }
+  75%  { box-shadow: 0 0 14px 6px rgba(216,180,254,0.55), 0 0 28px 10px rgba(167,139,250,0.35); border-color: rgba(216,180,254,0.65); }
+  100% { box-shadow: 0 0 8px 3px rgba(168,85,247,0.4), 0 0 16px 5px rgba(109,40,217,0.3); border-color: rgba(168,85,247,0.6); }
+}
+.phantom-drift-ring {
+  border-radius: 9999px;
+  border: 1.5px solid rgba(168,85,247,0.6);
+  animation: phantom-drift 6s ease-in-out infinite;
+}
+
+/* Level 80 — Void Smoke (near-black, heavy dark pulse) */
+@keyframes void-smoke {
+  0%, 100% { box-shadow: 0 0 8px 3px #111827, 0 0 16px 6px #0f172a; border-color: #374151; }
+  25%       { box-shadow: 0 0 12px 5px #1f2937, 0 0 24px 9px #111827, 0 0 32px 8px rgba(55,65,81,0.5); border-color: #4b5563; }
+  50%       { box-shadow: 0 0 6px 2px #0f172a, 0 0 14px 4px #030712; border-color: #1f2937; }
+  75%       { box-shadow: 0 0 14px 7px #1f2937, 0 0 28px 11px #111827, 0 0 38px 10px rgba(17,24,39,0.4); border-color: #374151; }
+}
+.void-smoke-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #374151;
+  animation: void-smoke 5s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   TIER 5 — ELITE  (Level 85–100)
+   Visual: Max intensity, unique identifiable styles.
+───────────────────────────────────────────────────────── */
+
+/* Level 85 — Magma Flow */
+@keyframes magma-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #ea580c, 0 0 10px 3px #f97316; }
+  50%       { box-shadow: 0 0 0 3px #dc2626, 0 0 18px 6px #f97316, 0 0 28px 7px rgba(249,115,22,0.3); }
+}
+.magma-flow-ring {
+  border-radius: 9999px;
+  border: 2px solid #f97316;
+  animation: magma-pulse 1.8s ease-in-out infinite;
+}
+
+/* Level 90 — Cyber Neon Pulse (cyan→purple→pink rapid 3-cycle) */
+@keyframes cyber-neon-trace {
+  0%   { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; border-color: #22d3ee; }
+  33%  { box-shadow: 0 0 8px 3px #a855f7, 0 0 18px 6px #9333ea; border-color: #a855f7; }
+  66%  { box-shadow: 0 0 8px 3px #f0abfc, 0 0 18px 6px #e879f9; border-color: #f0abfc; }
+  100% { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; border-color: #22d3ee; }
+}
+.cyber-neon-pulse-ring {
+  border-radius: 9999px;
+  border: 2px solid #22d3ee;
+  animation: cyber-neon-trace 1.8s linear infinite;
+}
+
+/* Level 95 — Quantum Flux (8-color ultra-rapid cycle — distinctly busier than prism) */
+@keyframes quantum-flux {
+  0%    { box-shadow: 0 0 8px 3px #f43f5e, 0 0 18px 6px #e11d48; border-color: #f43f5e; }
+  12.5% { box-shadow: 0 0 8px 3px #f97316, 0 0 18px 6px #ea580c; border-color: #f97316; }
+  25%   { box-shadow: 0 0 8px 3px #22c55e, 0 0 18px 6px #16a34a; border-color: #22c55e; }
+  37.5% { box-shadow: 0 0 8px 3px #06b6d4, 0 0 18px 6px #0891b2; border-color: #06b6d4; }
+  50%   { box-shadow: 0 0 8px 3px #6366f1, 0 0 18px 6px #4f46e5; border-color: #6366f1; }
+  62.5% { box-shadow: 0 0 8px 3px #a855f7, 0 0 18px 6px #9333ea; border-color: #a855f7; }
+  75%   { box-shadow: 0 0 8px 3px #ec4899, 0 0 18px 6px #db2777; border-color: #ec4899; }
+  87.5% { box-shadow: 0 0 8px 3px #eab308, 0 0 18px 6px #ca8a04; border-color: #eab308; }
+  100%  { box-shadow: 0 0 8px 3px #f43f5e, 0 0 18px 6px #e11d48; border-color: #f43f5e; }
+}
+.quantum-flux-ring {
+  border-radius: 9999px;
+  border: 2px solid #f43f5e;
+  animation: quantum-flux 1.6s linear infinite;
+}
+
+/* Level 100 — Crimson Tide (rolling wave amplitude — distinct from rose quartz by sheer intensity) */
+@keyframes crimson-wave {
+  0%   { box-shadow: 0 0 8px 3px #dc2626, 0 0 18px 6px #b91c1c; }
+  25%  { box-shadow: 0 0 16px 7px #ef4444, 0 0 32px 12px #dc2626, 0 0 44px 12px rgba(220,38,38,0.4); }
+  50%  { box-shadow: 0 0 10px 4px #b91c1c, 0 0 20px 7px #991b1b; }
+  75%  { box-shadow: 0 0 18px 8px #fca5a5, 0 0 36px 14px #ef4444, 0 0 50px 14px rgba(220,38,38,0.35); }
+  100% { box-shadow: 0 0 8px 3px #dc2626, 0 0 18px 6px #b91c1c; }
+}
+.crimson-tide-ring {
+  border-radius: 9999px;
+  border: 2px solid #dc2626;
+  animation: crimson-wave 2.2s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   TOTAL HOURS — ESCALATING PRESTIGE
+   Visual: Calm early, increasingly elaborate at high hours.
+───────────────────────────────────────────────────────── */
+
+/* 10h — Sakura Ring */
+@keyframes sakura-bloom {
+  0%, 100% { box-shadow: 0 0 5px 2px #f9a8d4, 0 0 10px 4px #f472b6; }
+  50%       { box-shadow: 0 0 10px 5px #fbcfe8, 0 0 18px 8px #f9a8d4, 0 0 26px 9px #ec4899; }
+}
+.sakura-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #f9a8d4;
+  animation: sakura-bloom 3s ease-in-out infinite;
+}
+
+/* 25h — Moonbeam (soft white/silver, subtle and elegant) */
+@keyframes moonbeam-drift {
+  0%, 100% { box-shadow: 0 0 6px 2px #cbd5e1, 0 0 12px 4px #94a3b8; }
+  50%       { box-shadow: 0 0 12px 5px #f1f5f9, 0 0 22px 8px #cbd5e1, 0 0 30px 8px #e2e8f0; }
+}
+.moonbeam-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #cbd5e1;
+  animation: moonbeam-drift 4.5s ease-in-out infinite;
+}
+
+/* 75h — Amber Sunset (warm color travel: gold → orange → red) */
+@keyframes amber-sunset {
+  0%, 100% { box-shadow: 0 0 6px 2px #f59e0b, 0 0 14px 4px #d97706; border-color: #fbbf24; }
+  40%       { box-shadow: 0 0 10px 4px #fb923c, 0 0 20px 7px #f97316, 0 0 28px 7px #fde68a; border-color: #fb923c; }
+  80%       { box-shadow: 0 0 8px 3px #ef4444, 0 0 16px 5px #dc2626; border-color: #f97316; }
+}
+.amber-sunset-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #fbbf24;
+  animation: amber-sunset 5s ease-in-out infinite;
+}
+
+/* 150h — Deep Ocean (slow cycling blue depths) */
+@keyframes deep-ocean {
+  0%   { box-shadow: 0 0 6px 2px #1e40af, 0 0 14px 5px #1d4ed8; }
+  33%  { box-shadow: 0 0 10px 4px #3b82f6, 0 0 20px 7px #2563eb, 0 0 28px 6px #bfdbfe; }
+  66%  { box-shadow: 0 0 6px 2px #0369a1, 0 0 14px 5px #0284c7; }
+  100% { box-shadow: 0 0 6px 2px #1e40af, 0 0 14px 5px #1d4ed8; }
+}
+.deep-ocean-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #3b82f6;
+  animation: deep-ocean 4s ease-in-out infinite;
+}
+
+/* 300h — Aurora Borealis (green→teal→indigo→violet full shift) */
+@keyframes aurora-shift {
+  0%   { box-shadow: 0 0 8px 3px #22c55e, 0 0 18px 6px #16a34a; border-color: #22c55e; }
+  25%  { box-shadow: 0 0 10px 4px #06b6d4, 0 0 22px 8px #0891b2; border-color: #22d3ee; }
+  50%  { box-shadow: 0 0 10px 4px #6366f1, 0 0 22px 8px #4f46e5; border-color: #818cf8; }
+  75%  { box-shadow: 0 0 10px 4px #a855f7, 0 0 22px 8px #7c3aed; border-color: #c084fc; }
+  100% { box-shadow: 0 0 8px 3px #22c55e, 0 0 18px 6px #16a34a; border-color: #22c55e; }
+}
+.aurora-borealis-ring {
+  border-radius: 9999px;
+  border: 2px solid #22c55e;
+  animation: aurora-shift 5s ease-in-out infinite;
+}
+
+/* 500h — Starfield (silver particle shimmer, tri-layer depth) */
+@keyframes starfield-drift {
+  0%   { box-shadow: 0 0 6px 2px #94a3b8, 0 0 14px 4px #475569, 0 0 22px 5px #1e293b; }
+  33%  { box-shadow: 0 0 10px 4px #e2e8f0, 0 0 20px 7px #94a3b8, 0 0 32px 7px #334155; }
+  66%  { box-shadow: 0 0 7px 2px #cbd5e1, 0 0 15px 4px #64748b, 0 0 24px 5px #0f172a; }
+  100% { box-shadow: 0 0 6px 2px #94a3b8, 0 0 14px 4px #475569, 0 0 22px 5px #1e293b; }
+}
+.starfield-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #94a3b8;
+  animation: starfield-drift 6s ease-in-out infinite;
+}
+
+/* 750h — Singularity (near-invisible dark mass, barely perceptible) */
+@keyframes singularity-pulse {
+  0%, 100% { box-shadow: 0 0 0 2px #030712, 0 0 6px 2px rgba(15,23,42,0.8); border-color: #111827; }
+  50%       { box-shadow: 0 0 0 3px #0f172a, 0 0 12px 5px rgba(30,41,59,0.9), 0 0 20px 6px rgba(99,102,241,0.12); border-color: #1e293b; }
+}
+.singularity-ring {
+  border-radius: 9999px;
+  border: 2px solid #111827;
+  animation: singularity-pulse 7s ease-in-out infinite;
+}
+
+/* 1000h — Solar Flare (blinding max intensity, 4-layer corona) */
+@keyframes solar-flare {
+  0%   { box-shadow: 0 0 8px 3px #fde047, 0 0 18px 6px #facc15, 0 0 30px 8px #eab308; }
+  25%  { box-shadow: 0 0 14px 6px #fef08a, 0 0 28px 10px #fde047, 0 0 44px 12px #f59e0b, 0 0 58px 14px rgba(250,204,21,0.3); }
+  50%  { box-shadow: 0 0 10px 4px #fb923c, 0 0 22px 8px #f97316, 0 0 36px 10px #fde047; }
+  75%  { box-shadow: 0 0 16px 7px #fef9c3, 0 0 32px 12px #fde047, 0 0 52px 14px #facc15, 0 0 68px 16px rgba(250,204,21,0.25); }
+  100% { box-shadow: 0 0 8px 3px #fde047, 0 0 18px 6px #facc15, 0 0 30px 8px #eab308; }
+}
+.solar-flare-ring {
+  border-radius: 9999px;
+  border: 2px solid #fde047;
+  animation: solar-flare 3s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   WEEKLY SPRINT — HIGH INTENSITY, TEMPORARY
+   Visual: Fast, aggressive, unstable-feeling.
+───────────────────────────────────────────────────────── */
+
+/* 15h/week — Electric Pulse (irregular lightning flicker) */
+@keyframes electric-flicker {
+  0%, 100% { box-shadow: 0 0 4px 1px #facc15, 0 0 8px 2px #eab308; }
+  10%       { box-shadow: 0 0 12px 5px #fde047, 0 0 22px 8px #facc15; opacity: 0.85; }
+  11%       { box-shadow: 0 0 3px 1px #eab308; opacity: 1; }
+  25%       { box-shadow: 0 0 10px 4px #fef08a, 0 0 20px 7px #facc15, 0 0 30px 9px #eab308; }
+  50%       { box-shadow: 0 0 5px 2px #facc15, 0 0 10px 3px #eab308; }
+  75%       { box-shadow: 0 0 14px 6px #fde047, 0 0 26px 9px #facc15; opacity: 0.9; }
+  76%       { box-shadow: 0 0 4px 1px #eab308; opacity: 1; }
+}
+.electric-pulse-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #facc15;
+  animation: electric-flicker 0.9s steps(1, end) infinite;
+}
+
+/* 20h/week — Overdrive (fast aggressive orange-red oscillation) */
+@keyframes overdrive-blaze {
+  0%   { box-shadow: 0 0 8px 3px #f97316, 0 0 16px 5px #ea580c; }
+  20%  { box-shadow: 0 0 14px 6px #fb923c, 0 0 26px 9px #f97316, 0 0 36px 9px #fbbf24; }
+  40%  { box-shadow: 0 0 6px 2px #dc2626, 0 0 14px 4px #b91c1c; }
+  60%  { box-shadow: 0 0 12px 5px #fb923c, 0 0 24px 8px #f97316; }
+  80%  { box-shadow: 0 0 16px 7px #fbbf24, 0 0 30px 10px #f97316; }
+  100% { box-shadow: 0 0 8px 3px #f97316, 0 0 16px 5px #ea580c; }
+}
+.overdrive-ring {
+  border-radius: 9999px;
+  border: 2px solid #f97316;
+  animation: overdrive-blaze 1.2s ease-in-out infinite;
+}
+
+/* 25h/week — Neon Circuit (stepping on/off like circuit trace) */
+@keyframes neon-circuit-trace {
+  0%, 100% { box-shadow: 0 0 6px 2px #22d3ee, 0 0 14px 5px #06b6d4; border-color: #22d3ee; }
+  30%       { box-shadow: 0 0 12px 5px #67e8f9, 0 0 24px 9px #22d3ee, 0 0 34px 8px #0891b2; border-color: #67e8f9; }
+  50%       { box-shadow: 0 0 3px 1px #0891b2, 0 0 6px 2px #0e7490; border-color: #06b6d4; }
+  51%       { box-shadow: 0 0 14px 6px #22d3ee, 0 0 26px 10px #67e8f9; border-color: #22d3ee; }
+  80%       { box-shadow: 0 0 8px 3px #0891b2, 0 0 18px 6px #22d3ee; border-color: #22d3ee; }
+}
+.neon-circuit-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #22d3ee;
+  animation: neon-circuit-trace 1.5s steps(4, end) infinite;
+}
+
+/* 30h/week — Grindstone (dark heavy pulse, serious and brooding) */
+@keyframes grindstone-grind {
+  0%, 100% { box-shadow: 0 0 6px 2px #374151, 0 0 14px 5px #111827; border-color: #4b5563; }
+  50%       { box-shadow: 0 0 12px 5px #6b7280, 0 0 24px 8px #374151, 0 0 32px 8px rgba(75,85,99,0.5); border-color: #6b7280; }
+}
+.grindstone-ring {
+  border-radius: 9999px;
+  border: 2px solid #4b5563;
+  animation: grindstone-grind 2.5s ease-in-out infinite;
+}
+
+
+/* ─────────────────────────────────────────────────────
+   MONTHLY SPRINT — CONSISTENCY REWARDS
+   Visual: Sustained, steady energy. Less frantic than weekly.
+───────────────────────────────────────────────────────── */
+
+/* 30h/month — Persistence (steady calm blue) */
+@keyframes persistence-steady {
+  0%, 100% { box-shadow: 0 0 6px 2px #0284c7, 0 0 14px 5px #0369a1; }
+  50%       { box-shadow: 0 0 10px 4px #38bdf8, 0 0 20px 7px #0284c7; }
+}
+.persistence-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #0ea5e9;
+  animation: persistence-steady 5s ease-in-out infinite;
+}
+
+/* 50h/month — Marathon (warm sustained orange-red travel) */
+@keyframes marathon-burn {
+  0%, 100% { box-shadow: 0 0 7px 2px #c2410c, 0 0 15px 5px #9a3412; border-color: #ea580c; }
+  33%       { box-shadow: 0 0 10px 4px #fb923c, 0 0 22px 7px #c2410c; border-color: #fb923c; }
+  66%       { box-shadow: 0 0 8px 3px #dc2626, 0 0 18px 5px #b91c1c; border-color: #ef4444; }
+}
+.marathon-ring {
+  border-radius: 9999px;
+  border: 2px solid #ea580c;
+  animation: marathon-burn 4s ease-in-out infinite;
+}
+
+/* 70h/month — Titan (dark gold power surge — distinct from scholars_glow by intensity and layers) */
+@keyframes titan-power {
+  0%   { box-shadow: 0 0 8px 3px #b45309, 0 0 18px 6px #92400e; }
+  25%  { box-shadow: 0 0 14px 6px #d97706, 0 0 28px 10px #b45309, 0 0 40px 10px #fbbf24; }
+  50%  { box-shadow: 0 0 10px 4px #78350f, 0 0 20px 7px #451a03; }
+  75%  { box-shadow: 0 0 16px 7px #fbbf24, 0 0 32px 12px #d97706, 0 0 46px 12px rgba(180,83,9,0.4); }
+  100% { box-shadow: 0 0 8px 3px #b45309, 0 0 18px 6px #92400e; }
+}
+.titan-ring {
+  border-radius: 9999px;
+  border: 2px solid #d97706;
+  animation: titan-power 3s ease-in-out infinite;
+}
+
+@keyframes cosmic-orbit {
+  0%   { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+  25%  { box-shadow: 0 0 8px 4px #a78bfa, 0 0 16px 6px #8b5cf6, 0 0 26px 8px #6d28d9; }
+  50%  { box-shadow: 0 0 10px 5px #c4b5fd, 0 0 20px 8px #a78bfa, 0 0 30px 9px #8b5cf6; }
+  75%  { box-shadow: 0 0 8px 3px #7c3aed, 0 0 14px 5px #6d28d9, 0 0 22px 7px #4c1d95; }
+  100% { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+}
+.cosmic-dust-ring {
+  border-radius: 9999px;
+  border: 0px solid #8b5cf6;
+  animation: cosmic-orbit 4s ease-in-out infinite;
+}
+
+/* ── Aurora Borealis ──────────────────────────────────────── */
+@keyframes aurora-cycle {
+  0%   { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+  25%  { box-shadow: 0 0 10px 4px #6ee7b7, 0 0 20px 7px #34d399; border-color: #6ee7b7; }
+  50%  { box-shadow: 0 0 10px 4px #a78bfa, 0 0 20px 7px #7c3aed; border-color: #a78bfa; }
+  75%  { box-shadow: 0 0 8px 3px #67e8f9, 0 0 16px 6px #0891b2; border-color: #67e8f9; }
+  100% { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+}
+.aurora-borealis-ring {
+  border-radius: 9999px;
+  border: 0px solid #34d399;
+  animation: aurora-cycle 5s linear infinite;
+}
+
+/* ── Void Smoke ───────────────────────────────────────────── */
+@keyframes void-smoke {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 4px rgba(17, 24, 39, 0.95),
+      0 0 16px 8px rgba(31, 41, 55, 0.8),
+      0 0 24px 10px rgba(55, 65, 81, 0.5);
+    opacity: 1;
+  }
+  40% {
+    box-shadow:
+      0 0 12px 6px rgba(0, 0, 0, 1),
+      0 0 22px 10px rgba(17, 24, 39, 0.9),
+      0 0 34px 14px rgba(31, 41, 55, 0.6);
+    opacity: 0.85;
+  }
+  80% {
+    box-shadow:
+      0 0 6px 3px rgba(55, 65, 81, 0.7),
+      0 0 12px 5px rgba(17, 24, 39, 0.95);
+    opacity: 0.95;
+  }
+}
+.void-smoke-ring {
+  border-radius: 9999px;
+  border: 0px solid #374151;
+  animation: void-smoke 3s ease-in-out infinite;
+}
+
+/* ── Neon Circuit ─────────────────────────────────────────── */
+@keyframes circuit-trace {
+  0%   { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+  30%  { box-shadow: 0 0 8px 4px #67e8f9, 0 0 16px 7px #22d3ee, 0 0 24px 8px #0891b2; border-color: #67e8f9; }
+  60%  { box-shadow: 0 0 5px 2px #0e7490, 0 0 12px 5px #22d3ee; border-color: #22d3ee; }
+  80%  { box-shadow: 0 0 10px 5px #a5f3fc, 0 0 20px 8px #67e8f9; border-color: #a5f3fc; }
+  100% { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+}
+.neon-circuit-ring {
+  border-radius: 9999px;
+  border: 0px solid #22d3ee;
+  animation: circuit-trace 1.8s ease-in-out infinite;
+}
+
+
+/* ═══════════════════════════════════════════════════════════
+   LEGENDS ONLY (Level 100 / 1000 Hours)
+   ═══════════════════════════════════════════════════════════ */
+
+/* ── Solar Flare ──────────────────────────────────────────── */
+@keyframes solar-burst {
+  0%   {
+    box-shadow:
+      0 0 8px 3px #fef9c3,
+      0 0 18px 7px #fde047,
+      0 0 30px 10px #facc15,
+      0 0 44px 14px #ca8a04;
+    border-color: #fef9c3;
+  }
+  30%  {
+    box-shadow:
+      0 0 14px 7px #ffffff,
+      0 0 28px 12px #fef9c3,
+      0 0 42px 16px #fde047,
+      0 0 58px 20px #facc15;
+    border-color: #ffffff;
+  }
+  60%  {
+    box-shadow:
+      0 0 10px 4px #fde68a,
+      0 0 22px 8px #facc15,
+      0 0 36px 12px #d97706;
+    border-color: #fde68a;
+  }
+  100% {
+    box-shadow:
+      0 0 8px 3px #fef9c3,
+      0 0 18px 7px #fde047,
+      0 0 30px 10px #facc15,
+      0 0 44px 14px #ca8a04;
+    border-color: #fef9c3;
+  }
+}
+.solar-flare-ring {
+  border-radius: 9999px;
+  border: 0px solid #fef9c3;
+  animation: solar-burst 2s ease-in-out infinite;
+}
+
+/* ── Crimson Tide ─────────────────────────────────────────── */
+@keyframes crimson-wave {
+  0%   { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
+  25%  { box-shadow: 0 0 10px 5px #fca5a5, 0 0 20px 8px #ef4444, 0 0 30px 10px #dc2626; border-color: #fca5a5; }
+  50%  { box-shadow: 0 0 8px 3px #b91c1c, 0 0 16px 6px #991b1b, 0 0 24px 8px #7f1d1d; border-color: #ef4444; }
+  75%  { box-shadow: 0 0 12px 6px #f87171, 0 0 22px 9px #ef4444, 0 0 32px 10px #dc2626; border-color: #f87171; }
+  100% { box-shadow: 0 0 6px 2px #ef4444, 0 0 14px 5px #dc2626, 0 0 22px 7px #991b1b; border-color: #ef4444; }
+}
+.crimson-tide-ring {
+  border-radius: 9999px;
+  border: 0px solid #ef4444;
+  animation: crimson-wave 2.2s ease-in-out infinite;
+}
+
+/* ── Lavender Drift (Level 7) ─────────────────────────────────── */
+@keyframes lavender-breathe {
+  0%, 100% { box-shadow: 0 0 4px 1px #c4b5fd, 0 0 9px 3px #a78bfa; }
+  50%       { box-shadow: 0 0 8px 4px #ddd6fe, 0 0 16px 6px #c4b5fd, 0 0 22px 6px #a78bfa; }
+}
+.lavender-drift-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #c4b5fd;
+  animation: lavender-breathe 4.5s ease-in-out infinite;
+}
+
+/* ── Spectral Shift (Level 13) ────────────────────────────────── */
+/* Slow white→pastel shift — calm and rare, unlike prism's aggressive rainbow */
+@keyframes spectral-wave {
+  0%   { box-shadow: 0 0 5px 1px #f8fafc, 0 0 10px 3px #e2e8f0; border-color: #f1f5f9; }
+  25%  { box-shadow: 0 0 5px 1px #fce7f3, 0 0 10px 3px #fda4af; border-color: #fda4af; }
+  50%  { box-shadow: 0 0 5px 1px #dbeafe, 0 0 10px 3px #93c5fd; border-color: #bfdbfe; }
+  75%  { box-shadow: 0 0 5px 1px #dcfce7, 0 0 10px 3px #86efac; border-color: #bbf7d0; }
+  100% { box-shadow: 0 0 5px 1px #f8fafc, 0 0 10px 3px #e2e8f0; border-color: #f1f5f9; }
+}
+.spectral-shift-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #f1f5f9;
+  animation: spectral-wave 8s ease-in-out infinite;
+}
+
+/* ── Verdant Pulse (35h) ──────────────────────────────────────── */
+/* Bright neon green — energetic, vs jade which is dark and slow */
+@keyframes verdant-flash {
+  0%, 100% { box-shadow: 0 0 6px 2px #4ade80, 0 0 12px 4px #22c55e; }
+  50%       { box-shadow: 0 0 12px 6px #86efac, 0 0 22px 8px #4ade80, 0 0 30px 8px rgba(74,222,128,0.3); }
+}
+.verdant-pulse-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #4ade80;
+  animation: verdant-flash 1.8s ease-in-out infinite;
+}
+
+/* ── Thunder Strike (Level 38) ────────────────────────────────── */
+/* Dark navy base with rare white electrical flash — vs electric_pulse (yellow) */
+@keyframes thunder-flash {
+  0%, 80%, 100% {
+    box-shadow: 0 0 5px 2px #1e3a5f, 0 0 12px 4px #1e40af;
+    border-color: #1d4ed8;
+  }
+  82% {
+    box-shadow: 0 0 16px 7px #f0f9ff, 0 0 30px 12px #bfdbfe;
+    border-color: #e0f2fe;
+  }
+  83% { box-shadow: 0 0 4px 1px #1e40af; border-color: #1d4ed8; }
+  86% {
+    box-shadow: 0 0 20px 9px #ffffff, 0 0 36px 14px #93c5fd;
+    border-color: #ffffff;
+  }
+  87% { box-shadow: 0 0 4px 1px #1e40af; border-color: #1d4ed8; }
+  90% {
+    box-shadow: 0 0 10px 4px #bfdbfe, 0 0 20px 7px #60a5fa;
+    border-color: #93c5fd;
+  }
+}
+.thunder-strike-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #1d4ed8;
+  animation: thunder-flash 3.5s steps(1, end) infinite;
+}
+
+/* ── Blood Moon (Level 62) ────────────────────────────────────── */
+/* Deep maroon, very slow — vs crimson_tide (bright + fast waves) */
+@keyframes blood-moon-rise {
+  0%, 100% {
+    box-shadow: 0 0 4px 1px #7f1d1d, 0 0 10px 3px #450a0a;
+    border-color: #7f1d1d;
+  }
+  50% {
+    box-shadow: 0 0 10px 4px #991b1b, 0 0 20px 7px #7f1d1d, 0 0 28px 7px rgba(127,29,29,0.3);
+    border-color: #991b1b;
+  }
+}
+.blood-moon-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #7f1d1d;
+  animation: blood-moon-rise 7s ease-in-out infinite;
+}
+
+/* ── Abyssal (Level 68) ───────────────────────────────────────── */
+/* Deep navy/blue-black — vs void_smoke (dark grey), vs void_static (glitch) */
+@keyframes abyssal-tide {
+  0%, 100% {
+    box-shadow: 0 0 5px 2px #0f172a, 0 0 12px 4px #1e3a5f;
+    border-color: #1e3a5f;
+  }
+  50% {
+    box-shadow: 0 0 9px 4px #1e3a5f, 0 0 18px 6px #1e40af, 0 0 26px 6px rgba(30,64,175,0.15);
+    border-color: #1e40af;
+  }
+}
+.abyssal-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #1e3a5f;
+  animation: abyssal-tide 6s ease-in-out infinite;
+}
+
+/* ── Opal Sheen (125h) ────────────────────────────────────────── */
+/* Pearl iridescent — vs diamond_edge (fixed 3 sci-fi colors), vs spectral_shift (pastel, slow) */
+@keyframes opal-iridescent {
+  0%   { box-shadow: 0 0 5px 2px #f8fafc, 0 0 10px 3px #e2e8f0; border-color: #f1f5f9; }
+  20%  { box-shadow: 0 0 7px 3px #fce7f3, 0 0 13px 4px #f9a8d4; border-color: #fecdd3; }
+  40%  { box-shadow: 0 0 7px 3px #ede9fe, 0 0 13px 4px #c4b5fd; border-color: #ddd6fe; }
+  60%  { box-shadow: 0 0 7px 3px #e0f2fe, 0 0 13px 4px #bae6fd; border-color: #e0f2fe; }
+  80%  { box-shadow: 0 0 7px 3px #dcfce7, 0 0 13px 4px #bbf7d0; border-color: #d1fae5; }
+  100% { box-shadow: 0 0 5px 2px #f8fafc, 0 0 10px 3px #e2e8f0; border-color: #f1f5f9; }
+}
+.opal-sheen-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #f1f5f9;
+  animation: opal-iridescent 6s linear infinite;
+}
+
+/* ── Emerald Depths (350h) ────────────────────────────────────── */
+/* Dark forest green depth — vs emerald static tailwind, vs ivy_league (medium green breathe) */
+@keyframes emerald-deep-pulse {
+  0%, 100% {
+    box-shadow: 0 0 5px 2px #064e3b, 0 0 12px 4px #065f46;
+    border-color: #047857;
+  }
+  50% {
+    box-shadow: 0 0 10px 5px #059669, 0 0 20px 8px #047857, 0 0 30px 8px rgba(6,95,70,0.35);
+    border-color: #34d399;
+  }
+}
+.emerald-depths-ring {
+  border-radius: 9999px;
+  border: 1.5px solid #047857;
+  animation: emerald-deep-pulse 5s ease-in-out infinite;
 }

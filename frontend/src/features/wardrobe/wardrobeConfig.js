@@ -3,6 +3,8 @@ export const WARDROBE_CONFIG = {
   // ══════════════════════════════════════
   // FONTS
   // ══════════════════════════════════════
+
+  // Progress (Level-gated)
   scholarly_serif: {
     label: "Scholarly Serif",
     category: "fonts",
@@ -67,6 +69,8 @@ export const WARDROBE_CONFIG = {
     googleFont: "Orbitron:wght@400;600;700",
     cssVars: { "--user-font": "'Orbitron', sans-serif" },
   },
+
+  // Progress (Hour-gated)
   typewriter_pro: {
     label: "Typewriter Pro",
     category: "fonts",
@@ -107,14 +111,8 @@ export const WARDROBE_CONFIG = {
     googleFont: "Instrument+Serif:ital@0;1",
     cssVars: { "--user-font": "'Instrument Serif', Georgia, serif" },
   },
-  modern_minimalist: {
-    label: "Modern Minimalist",
-    category: "fonts",
-    rewardType: "sprint",
-    unlockHint: "40 hrs/month",
-    googleFont: null,
-    cssVars: { "--user-font": "'Inter', 'Helvetica Neue', sans-serif" },
-  },
+
+  // Sprints
   retro_pixel: {
     label: "Retro Pixel",
     category: "fonts",
@@ -123,23 +121,47 @@ export const WARDROBE_CONFIG = {
     googleFont: "Press+Start+2P",
     cssVars: { "--user-font": "'Press Start 2P', monospace" },
   },
+  modern_minimalist: {
+    label: "Modern Minimalist",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "40 hrs/month",
+    googleFont: null,
+    cssVars: { "--user-font": "'Inter', 'Helvetica Neue', sans-serif" },
+  },
 
   // ══════════════════════════════════════
-  // RINGS — Solid
+  // RINGS
   // ══════════════════════════════════════
+
+  // Progress (Level-gated)
+  slate_outline: {
+    label: "Slate",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 5",
+    ringClass: "slate-outline-ring",
+  },
+  lavender_drift: {
+    label: "Lavender Drift",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 7",
+    ringClass: "lavender-drift-ring",
+  },
   ring_bronze: {
     label: "Bronze",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-amber-700  ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-amber-700 ring-offset-2 ring-offset-base-100",
   },
   ring_silver: {
     label: "Silver",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-gray-400   ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-gray-400 ring-offset-2 ring-offset-base-100",
   },
   ring_gold: {
     label: "Gold",
@@ -153,14 +175,14 @@ export const WARDROBE_CONFIG = {
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-red-500    ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-red-500 ring-offset-2 ring-offset-base-100",
   },
   ring_sapphire: {
     label: "Sapphire",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-blue-500   ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-blue-500 ring-offset-2 ring-offset-base-100",
   },
   ring_emerald: {
     label: "Emerald",
@@ -181,30 +203,35 @@ export const WARDROBE_CONFIG = {
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-gray-900   ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-gray-900 ring-offset-2 ring-offset-base-100",
   },
   ring_ivory: {
     label: "Ivory",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-stone-200  ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-stone-200 ring-offset-2 ring-offset-base-100",
   },
   ring_steel: {
     label: "Steel",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
-    ringClass: "ring-2 ring-slate-500  ring-offset-2 ring-offset-base-100",
+    ringClass: "ring-2 ring-slate-500 ring-offset-2 ring-offset-base-100",
   },
-
-  // Animated rings
-  scholars_glow: {
-    label: "Scholar's Glow",
+  spectral_shift: {
+    label: "Spectral Shift",
     category: "rings",
     rewardType: "progress",
-    unlockHint: "Level 25",
-    ringClass: "scholars-glow-ring",
+    unlockHint: "Level 13",
+    ringClass: "spectral-shift-ring",
+  },
+  jade_glow: {
+    label: "Jade Glow",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 15",
+    ringClass: "jade-glow-ring",
   },
   eternal_flame: {
     label: "Eternal Flame",
@@ -220,12 +247,33 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 20",
     ringClass: "frozen-crystal-ring",
   },
-  electric_pulse: {
-    label: "Electric Pulse",
+  rose_quartz: {
+    label: "Rose Quartz",
     category: "rings",
-    rewardType: "sprint",
-    unlockHint: "25 hrs/wk or Lv20",
-    ringClass: "electric-pulse-ring",
+    rewardType: "progress",
+    unlockHint: "Level 22",
+    ringClass: "rose-quartz-ring",
+  },
+  scholars_glow: {
+    label: "Scholar's Glow",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 25",
+    ringClass: "scholars-glow-ring",
+  },
+  copper_coil: {
+    label: "Copper Coil",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 28",
+    ringClass: "copper-coil-ring",
+  },
+  twilight_band: {
+    label: "Twilight Band",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 32",
+    ringClass: "twilight-band-ring",
   },
   ivy_league: {
     label: "Ivy League",
@@ -238,15 +286,36 @@ export const WARDROBE_CONFIG = {
     label: "Sakura",
     category: "rings",
     rewardType: "progress",
-    unlockHint: "Level 35 or 10 hrs",
+    unlockHint: "Level 35",
     ringClass: "sakura-ring",
   },
   golden_hour: {
     label: "Golden Hour",
     category: "rings",
     rewardType: "progress",
-    unlockHint: "Level 35 or 100 hrs",
+    unlockHint: "Level 35",
     ringClass: "golden-hour-ring",
+  },
+  thunder_strike: {
+    label: "Thunder Strike",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 38",
+    ringClass: "thunder-strike-ring",
+  },
+  prism_spin: {
+    label: "Prism",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 40",
+    ringClass: "prism-spin-ring",
+  },
+  seafoam_wave: {
+    label: "Seafoam Wave",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 45",
+    ringClass: "seafoam-wave-ring",
   },
   diamond_edge: {
     label: "Diamond Edge",
@@ -262,6 +331,13 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 50",
     ringClass: "cosmic-dust-ring",
   },
+  void_static: {
+    label: "Void Static",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 55",
+    ringClass: "void-static-ring",
+  },
   neon_halo_ring: {
     label: "Neon Halo",
     category: "rings",
@@ -269,12 +345,12 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 60",
     ringClass: "neon-halo-ring",
   },
-  neon_circuit: {
-    label: "Neon Circuit",
+  blood_moon: {
+    label: "Blood Moon",
     category: "rings",
-    rewardType: "sprint",
-    unlockHint: "60 hrs/month or Lv60",
-    ringClass: "neon-circuit-ring",
+    rewardType: "progress",
+    unlockHint: "Level 62",
+    ringClass: "blood-moon-ring",
   },
   zen_blossom: {
     label: "Zen Blossom",
@@ -283,6 +359,13 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 65",
     ringClass: "zen-blossom-ring",
   },
+  abyssal: {
+    label: "Abyssal",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 68",
+    ringClass: "abyssal-ring",
+  },
   celestial_orbit: {
     label: "Celestial Orbit",
     category: "rings",
@@ -290,15 +373,15 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 70",
     ringClass: "celestial-orbit-ring",
   },
-  aurora_borealis: {
-    label: "Aurora Borealis",
+  phantom_drift: {
+    label: "Phantom Drift",
     category: "rings",
     rewardType: "progress",
-    unlockHint: "Level 80 or 500 hrs",
-    ringClass: "aurora-borealis-ring",
+    unlockHint: "Level 75",
+    ringClass: "phantom-drift-ring",
   },
   void_smoke: {
-    label: "Void",
+    label: "Void Smoke",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 80",
@@ -318,12 +401,12 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 90",
     ringClass: "cyber-neon-pulse-ring",
   },
-  solar_flare: {
-    label: "Solar Flare",
+  quantum_flux: {
+    label: "Quantum Flux",
     category: "rings",
     rewardType: "progress",
-    unlockHint: "Level 100 or 1000 hrs",
-    ringClass: "solar-flare-ring",
+    unlockHint: "Level 95",
+    ringClass: "quantum-flux-ring",
   },
   crimson_tide: {
     label: "Crimson Tide",
@@ -333,9 +416,134 @@ export const WARDROBE_CONFIG = {
     ringClass: "crimson-tide-ring",
   },
 
+  // Progress (Hour-gated)
+  moonbeam: {
+    label: "Moonbeam",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "25 total hours",
+    ringClass: "moonbeam-ring",
+  },
+  verdant_pulse: {
+    label: "Verdant Pulse",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "35 total hours",
+    ringClass: "verdant-pulse-ring",
+  },
+  amber_sunset: {
+    label: "Amber Sunset",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "75 total hours",
+    ringClass: "amber-sunset-ring",
+  },
+  opal_sheen: {
+    label: "Opal Sheen",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "125 total hours",
+    ringClass: "opal-sheen-ring",
+  },
+  deep_ocean_ring: {
+    label: "Deep Ocean",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "150 total hours",
+    ringClass: "deep-ocean-ring",
+  },
+  aurora_borealis: {
+    label: "Aurora Borealis",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "300 total hours",
+    ringClass: "aurora-borealis-ring",
+  },
+  emerald_depths: {
+    label: "Emerald Depths",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "350 total hours",
+    ringClass: "emerald-depths-ring",
+  },
+  starfield_ring: {
+    label: "Starfield",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "500 total hours",
+    ringClass: "starfield-ring",
+  },
+  singularity_ring: {
+    label: "Singularity",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "750 total hours",
+    ringClass: "singularity-ring",
+  },
+  solar_flare: {
+    label: "Solar Flare",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "1000 total hours",
+    ringClass: "solar-flare-ring",
+  },
+
+  // Sprints
+  overdrive_ring: {
+    label: "Overdrive",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "20 hrs/week",
+    ringClass: "overdrive-ring",
+  },
+  neon_circuit: {
+    label: "Neon Circuit",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "25 hrs/week",
+    ringClass: "neon-circuit-ring",
+  },
+  electric_pulse: {
+    label: "Electric Pulse",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "25 hrs/week",
+    ringClass: "electric-pulse-ring",
+  },
+  grindstone_ring: {
+    label: "Grindstone",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "30 hrs/week",
+    ringClass: "grindstone-ring",
+  },
+  persistence_ring: {
+    label: "Persistence",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "30 hrs/month",
+    ringClass: "persistence-ring",
+  },
+  marathon_ring: {
+    label: "Marathon",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "50 hrs/month",
+    ringClass: "marathon-ring",
+  },
+  titan_ring: {
+    label: "Titan",
+    category: "rings",
+    rewardType: "sprint",
+    unlockHint: "70 hrs/month",
+    ringClass: "titan-ring",
+  },
+
   // ══════════════════════════════════════
   // OVERLAYS
   // ══════════════════════════════════════
+
+  // Progress (Level-gated)
   snowfall: {
     label: "Snowfall",
     category: "overlays",
@@ -364,19 +572,14 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 70",
     overlayClass: "star-rain-overlay",
   },
+
+  // Progress (Hour-gated)
   dust_particles: {
     label: "Dust Particles",
     category: "overlays",
     rewardType: "progress",
     unlockHint: "50 total hours",
     overlayClass: "dust-particles-overlay",
-  },
-  rainy_window: {
-    label: "Rainy Window",
-    category: "overlays",
-    rewardType: "progress",
-    unlockHint: "150 total hours",
-    overlayClass: "rainy-window-overlay",
   },
   nebula_mist: {
     label: "Nebula Mist",
@@ -385,12 +588,12 @@ export const WARDROBE_CONFIG = {
     unlockHint: "100 total hours",
     overlayClass: "nebula-mist-overlay",
   },
-  sakura_breeze: {
-    label: "Sakura Breeze",
+  rainy_window: {
+    label: "Rainy Window",
     category: "overlays",
     rewardType: "progress",
-    unlockHint: "300 total hours",
-    overlayClass: "sakura-breeze-overlay",
+    unlockHint: "150 total hours",
+    overlayClass: "rainy-window-overlay",
   },
   falling_leaves: {
     label: "Falling Leaves",
@@ -398,6 +601,13 @@ export const WARDROBE_CONFIG = {
     rewardType: "progress",
     unlockHint: "200 total hours",
     overlayClass: "falling-leaves-overlay",
+  },
+  sakura_breeze: {
+    label: "Sakura Breeze",
+    category: "overlays",
+    rewardType: "progress",
+    unlockHint: "300 total hours",
+    overlayClass: "sakura-breeze-overlay",
   },
   fog_drift: {
     label: "Fog Drift",
@@ -413,6 +623,8 @@ export const WARDROBE_CONFIG = {
     unlockHint: "1000 total hours",
     overlayClass: "confetti-burst-overlay",
   },
+
+  // Sprints
   matrix_code: {
     label: "Matrix Code",
     category: "overlays",
@@ -438,6 +650,8 @@ export const WARDROBE_CONFIG = {
   // ══════════════════════════════════════
   // NAMEPLATES
   // ══════════════════════════════════════
+
+  // Progress (Level-gated)
   golden_ribbon: {
     label: "Golden Ribbon",
     category: "nameplates",
@@ -486,6 +700,8 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-celestial-script",
     preview: "Starfield glow with cosmic shimmer",
   },
+
+  // Progress (Hour-gated)
   scholar_crest: {
     label: "Scholar's Crest",
     category: "nameplates",
@@ -494,6 +710,8 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-scholar-crest",
     preview: "Academic laurel border in deep green",
   },
+
+  // Sprints
   inferno_tag: {
     label: "Inferno Tag",
     category: "nameplates",
@@ -501,6 +719,100 @@ export const WARDROBE_CONFIG = {
     unlockHint: "30 hrs/week",
     nameplateClass: "np-inferno-tag",
     preview: "Blazing fire gradient — for grinders only",
+  },
+
+  ////////////////////////// NEW ADDITIONS UNORGANIZED ////////////////////////////////
+
+  // ── NEW FONTS ────────────────────────────────────────────────────
+  raleway: {
+    label: "Raleway",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 14",
+    googleFont: "Raleway:wght@300;400;600",
+    cssVars: { "--user-font": "'Raleway', 'Helvetica Neue', sans-serif" },
+  },
+  spectral: {
+    label: "Spectral",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 22",
+    googleFont: "Spectral:ital,wght@0,300;0,400;0,600;1,400",
+    cssVars: { "--user-font": "'Spectral', Georgia, serif" },
+  },
+  josefin_slab: {
+    label: "Josefin Slab",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "75 total hours",
+    googleFont: "Josefin+Slab:wght@300;400;600",
+    cssVars: { "--user-font": "'Josefin Slab', 'Times New Roman', serif" },
+  },
+  bebas_neue: {
+    label: "Bebas Neue",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "15 hrs/week",
+    googleFont: "Bebas+Neue",
+    cssVars: { "--user-font": "'Bebas Neue', Impact, sans-serif" },
+  },
+  permanent_marker: {
+    label: "Permanent Marker",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "20 hrs/month",
+    googleFont: "Permanent+Marker",
+    cssVars: { "--user-font": "'Permanent Marker', cursive" },
+  },
+
+  // ── NEW NAMEPLATES ────────────────────────────────────────────────
+  silver_thread: {
+    label: "Silver Thread",
+    category: "nameplates",
+    rewardType: "progress",
+    unlockHint: "Level 8",
+    nameplateClass: "np-silver-thread",
+    preview: "Brushed silver metallic with fine thread border",
+  },
+  midnight_ink: {
+    label: "Midnight Ink",
+    category: "nameplates",
+    rewardType: "progress",
+    unlockHint: "Level 35",
+    nameplateClass: "np-midnight-ink",
+    preview: "Dark watercolor wash with ink-bleed edges",
+  },
+  crystalline: {
+    label: "Crystalline",
+    category: "nameplates",
+    rewardType: "progress",
+    unlockHint: "Level 55",
+    nameplateClass: "np-crystalline",
+    preview: "Frosted glass with prismatic edge glints",
+  },
+  rose_gold_frame: {
+    label: "Rose Gold",
+    category: "nameplates",
+    rewardType: "progress",
+    unlockHint: "50 total hours",
+    nameplateClass: "np-rose-gold",
+    preview: "Warm rose gold gradient with satin sheen",
+  },
+  laurel_wreath: {
+    label: "Laurel Wreath",
+    category: "nameplates",
+    rewardType: "progress",
+    unlockHint: "250 total hours",
+    nameplateClass: "np-laurel-wreath",
+    preview: "Classical olive-green laurel with gold leaf accents",
+  },
+  storm_seal: {
+    label: "Storm Seal",
+    category: "nameplates",
+    rewardType: "sprint",
+    unlockHint: "25 hrs/week",
+    nameplateClass: "np-storm-seal",
+    preview: "Dark storm clouds with electric blue flicker",
   },
 }
 
