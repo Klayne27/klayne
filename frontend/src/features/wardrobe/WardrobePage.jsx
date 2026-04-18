@@ -9,8 +9,10 @@ import { useNavigate } from "react-router-dom"
 import UserAvatar from "../../components/common/UserAvatar"
 import { BsThreeDots } from "react-icons/bs"
 import FollowButton from "../../components/common/FollowButton"
+import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
+import { useTheme } from "../../context/ThemeContext"
 
-const TABS = ["rings", "overlays", "fonts", "nameplates"]
+const TABS = ["rings", "fonts", "nameplates", "overlays"]
 
 // ── Live Preview Panel ──────────────────────────────────────────────────────
 const LivePreview = ({ authUser, previewEquipped }) => {
@@ -91,7 +93,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
           className={`flex items-center gap-3 border border-accent/20 p-4 transition-all duration-300 ${nameplateClass}`}
         >
           {/* Avatar with Ring */}
-          <UserAvatar size={"sm"} className={ringClass} />
+          <UserAvatar size={"sm"} className={ringClass}  />
 
           {/* Message Content */}
           <div className="flex min-w-0 flex-1 flex-col">
@@ -166,6 +168,8 @@ const ItemCard = ({
     </div>
   )
 
+  const {theme} = useTheme()
+
   return (
     <div
       className={`relative flex cursor-pointer select-none flex-col gap-1 rounded-xl border p-3 transition ${
@@ -196,7 +200,7 @@ const ItemCard = ({
         <div className="mt-1">
           {!isEquipped ? (
             <button
-              className="w-full rounded-full bg-primary py-0.5 text-xs font-bold text-white"
+              className={`w-full rounded-full bg-primary py-0.5 text-xs font-bold ${shouldTextBeWhite(theme)}`}
               onClick={(e) => {
                 e.stopPropagation()
                 onEquip(itemKey)
@@ -228,6 +232,8 @@ const WardrobePage = () => {
   const { inventory, equipped, isLoading } = useInventory()
   const { equipItem } = useEquipItem()
 
+  const {theme} = useTheme()
+
   const [activeTab, setActiveTab] = useState("rings")
   const [previewKey, setPreviewKey] = useState(null)
   const [filterMode, setFilterMode] = useState("all") // "all" | "owned" | "progress" | "sprint"
@@ -255,6 +261,8 @@ const WardrobePage = () => {
       return true
     })
 
+    const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts"
+
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -273,11 +281,11 @@ const WardrobePage = () => {
         >
           <FaArrowLeft size={16} />
         </button>
-        <h1 className="flex-1 text-lg font-bold">Wardrobe</h1>
+        <h1 className="flex-1 text-lg font-bold">Profile Wardrobe</h1>
         <span className="text-xs text-slate-400">Changes apply instantly</span>
       </div>
 
-      <div className="mx-auto flex flex-col gap-6 p-4 md:flex-row md:items-start">
+      <div className="mx-auto flex flex-col gap-6 p-4 mt-2 md:flex-row md:items-start">
         {/* Left: Live Preview (sticky on desktop) */}
         <div className="w-full md:sticky md:top-20 md:w-80 md:flex-shrink-0">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
@@ -312,7 +320,7 @@ const WardrobePage = () => {
         {/* Right: Selector */}
         <div className="flex min-w-0 flex-1 flex-col gap-4">
           {/* Category tabs */}
-          <div className="flex gap-1 rounded-xl bg-base-200 p-1">
+          {/* <div className="flex gap-1 rounded-xl bg-base-200 p-1">
             {TABS.map((tab) => (
               <button
                 key={tab}
@@ -329,6 +337,31 @@ const WardrobePage = () => {
                 {CATEGORY_LABELS[tab]}
               </button>
             ))}
+          </div> */}
+          <div className="flex gap-1 rounded-xl bg-base-200 p-1">
+            {TABS.map((tab) => {
+              const locked = isTabLocked(tab)
+              return (
+                <button
+                  key={tab}
+                  disabled={locked}
+                  className={`relative flex flex-1 items-center justify-center gap-2 rounded-lg py-1.5 text-xs font-bold transition ${
+                    activeTab === tab
+                      ? `bg-primary ${shouldTextBeWhite(theme)}`
+                      : locked
+                        ? "cursor-not-allowed text-slate-500 opacity-40"
+                        : "text-slate-400 hover:text-base-content"
+                  }`}
+                  onClick={() => {
+                    setActiveTab(tab)
+                    setPreviewKey(null)
+                  }}
+                >
+                  {CATEGORY_LABELS[tab]}
+                  {locked && <FaLock size={8} />}
+                </button>
+              )
+            })}
           </div>
 
           {/* Filter strip — clearly distinguishes reward types */}
@@ -340,7 +373,7 @@ const WardrobePage = () => {
                 onClick={() => setFilterMode(mode)}
                 className={`rounded-full px-3 py-0.5 text-xs font-bold transition ${
                   filterMode === mode
-                    ? "bg-primary text-white"
+                    ? `bg-primary ${shouldTextBeWhite(theme)}`
                     : "bg-base-200 text-slate-400 hover:bg-secondary"
                 }`}
               >
