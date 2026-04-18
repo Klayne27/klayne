@@ -6,7 +6,9 @@ export const renderClickableText = (text) => {
   const parts = []
   let lastIndex = 0
 
-  const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}_]+)/gu
+  // const regex = /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}_]+)/gu
+const regex =
+  /(https?:\/\/[^\s]+)|(#[\p{L}\p{N}_]+)|(?:^|(?<![\p{L}\p{N}_]))(@[\p{L}\p{N}](?:[\p{L}\p{N}._-]*[\p{L}\p{N}])?)/gu
 
   let match
   while ((match = regex.exec(text)) !== null) {

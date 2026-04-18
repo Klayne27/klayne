@@ -22,10 +22,10 @@ export const MentionSuggestions = ({
     >
       {isLoading ? (
         <p className="p-2 text-gray-400">Loading suggestions...</p>
-      ) : suggestions.length === 0 ? (
+      ) : suggestions?.length === 0 ? (
         <p className="p-2 text-slate-500">No users found.</p>
       ) : (
-        suggestions.map((user) => (
+        suggestions?.map((user) => (
           <div
             key={user._id}
             className="flex cursor-pointer items-center gap-2 p-2 hover:bg-secondary"

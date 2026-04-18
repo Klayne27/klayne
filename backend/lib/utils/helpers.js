@@ -13,7 +13,7 @@ export const getBlockingUsers = async (userId) => {
 };
 
 export const extractAndValidateMentions = async (text) => {
-  const mentionRegex = /@([a-zA-Z0-9_]{1,30})\b/g;
+  const mentionRegex = /@([a-zA-Z0-9](?:[a-zA-Z0-9._-]{0,28}[a-zA-Z0-9])?)/g;
   let match;
   const mentionedUsernames = new Set(); // Use a Set to avoid duplicate usernames
 
@@ -31,7 +31,6 @@ export const extractAndValidateMentions = async (text) => {
   }
   return mentionedUsersIds;
 };
-
 
 import mongoose from "mongoose";
 
