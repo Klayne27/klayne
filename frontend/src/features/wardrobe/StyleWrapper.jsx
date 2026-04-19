@@ -4,7 +4,7 @@ import { WARDROBE_CONFIG } from "./wardrobeConfig"
 
 const loadedFonts = new Set()
 
-const loadGoogleFont = (googleFont) => {
+export const loadGoogleFont = (googleFont) => {
   if (!googleFont || loadedFonts.has(googleFont)) return
   const link = document.createElement("link")
   link.rel = "stylesheet"

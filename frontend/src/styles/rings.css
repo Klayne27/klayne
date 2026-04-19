@@ -799,40 +799,44 @@
    field. The deep inset glow is the superheated core.
    [K][D]
    ──────────────────────────────────────────────────────────────── */
-@keyframes neon-plasma-core {
+/* Low Tier — Bright Neon Halo */
+
+@keyframes neon-bright-pulse {
   0%, 100% {
-    box-shadow:
-      0 0 8px 3px #a855f7, 0 0 18px 6px #7c3aed,
-      inset 0 0 12px 5px rgba(168,85,247,0.55);
+    box-shadow: 
+      0 0 12px 2px rgba(168, 85, 247, 0.8),  /* Main glow */
+      0 0 25px 4px rgba(168, 85, 247, 0.4), /* Distant haze */
+      inset 0 0 4px rgba(255, 255, 255, 0.3); /* Inner tube light */
+    border-color: #d8b4fe; /* Lighter purple core */
   }
   50% {
-    box-shadow:
-      0 0 18px 8px #c084fc, 0 0 36px 13px #a855f7,
-      0 0 50px 14px rgba(168,85,247,0.2),
-      inset 0 0 18px 7px rgba(192,132,252,0.55);
+    box-shadow: 
+      0 0 20px 6px rgba(168, 85, 247, 0.9),  /* Intense glow */
+      0 0 45px 10px rgba(168, 85, 247, 0.5), /* Large bloom */
+      inset 0 0 8px rgba(255, 255, 255, 0.5); /* Bright inner pulse */
+    border-color: #f5f3ff; /* Near-white at peak brightness */
   }
 }
+
 .neon-halo-ring {
   border-radius: 9999px;
-  border: 0px solid #a855f7;
-  animation: neon-plasma-core 2s ease-in-out infinite;
+  border: 0px solid #c084fc;
+  position: relative;
+  /* Use "filter: contrast" to sharpen the neon colors */
+  /* filter: contrast(1.2) brightness(1.1); */
+  animation: neon-bright-pulse 2.5s ease-in-out infinite;
 }
-.neon-halo-ring::before {
-  content: '';
-  position: absolute;
-  inset: -5px;
-  border-radius: 9999px;
-  border: 1.5px dashed #c084fc;
-  opacity: 0.7;
-  animation: _spin-cw 2s linear infinite;
-}
+
+/* Optional: Subtle extra bloom layer to make it look "blinding" */
 .neon-halo-ring::after {
   content: '';
   position: absolute;
-  inset: -9px;
+  inset: -2px;
   border-radius: 9999px;
-  border: 1px dashed rgba(168,85,247,0.35);
-  animation: _spin-ccw 3.1s linear infinite;
+  border: 2px solid #a855f7;
+  filter: blur(6px);
+  opacity: 0.6;
+  pointer-events: none;
 }
 
 
@@ -2182,9 +2186,9 @@
 
 @keyframes overdrive-strobe {
   0%, 100% { border-color: #f97316; filter: brightness(1); }
-  50% { border-color: #fbbf24; filter: brightness(1.4); }
-  52% { filter: brightness(1.8); } /* High-speed flicker */
-  54% { filter: brightness(1.4); }
+  50% { border-color: #fbbf24; filter: brightness(1.1); }
+  52% { filter: brightness(1.1); } /* High-speed flicker */
+  54% { filter: brightness(1.1); }
 }
 
 .overdrive-ring {
@@ -2297,4 +2301,383 @@
   border-radius: 9999px;
   box-shadow: 0 0 15px rgba(234, 88, 12, 0.2);
   filter: blur(4px);
+}
+
+/* Level 80+ — TITAN: THE STAR-FORGER */
+
+/* Level 80+ — TITAN (The Star-Forger) */
+
+@keyframes titan-containment-breach {
+  0%, 100% { 
+    border-color: #b45309; /* Deep Bronze */
+    box-shadow: 
+      0 0 10px #92400e, 
+      inset 0 0 8px #451a03; 
+  }
+  50% { 
+    border-color: #fef3c7; /* White-Hot */
+    box-shadow: 
+      0 0 25px #f59e0b, 
+      inset 0 0 15px #fbbf24; 
+  }
+}
+
+@keyframes titan-plasma-arc {
+  0% { transform: rotate(0deg) scale(1); opacity: 0; }
+  5% { opacity: 1; filter: brightness(2); }
+  10% { opacity: 0.2; filter: brightness(1); }
+  15% { opacity: 1; }
+  20% { opacity: 0; transform: rotate(180deg) scale(1.1); }
+  100% { opacity: 0; transform: rotate(360deg); }
+}
+
+@keyframes titan-eruption-glint {
+  0% { transform: rotate(0deg); opacity: 0; }
+  10% { opacity: 1; }
+  30% { opacity: 0; }
+  100% { transform: rotate(360deg); }
+}
+/* Level 80+ — TITAN (The Star-Forger) */
+
+@keyframes titan-containment-breach {
+  0%, 100% { 
+    border-color: #b45309;
+    box-shadow: 0 0 15px #92400e, inset 0 0 10px #451a03;
+    transform: scale(1);
+  }
+  50% { 
+    border-color: #fef3c7;
+    box-shadow: 0 0 30px #f59e0b, inset 0 0 18px #fbbf24;
+    transform: scale(1.03);
+  }
+}
+
+@keyframes titan-plasma-arc {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+/* New: The outer debris/energy field rotation */
+@keyframes titan-accretion-spin {
+  0% { transform: rotate(360deg) scale(1); opacity: 0.1; }
+  50% { transform: rotate(180deg) scale(1.1); opacity: 0.4; }
+  100% { transform: rotate(0deg) scale(1); opacity: 0.1; }
+}
+
+.titan-ring {
+  border-radius: 9999px;
+  border: 0px solid #d97706;
+  position: relative;
+  background: rgba(0, 0, 0, 0.4);
+  animation: titan-containment-breach 4s ease-in-out infinite;
+  z-index: 1;
+}
+
+/* THE ACCRETION RING: The new outermost layer */
+/* This creates a dashed energy orbit that sits behind the main flare */
+.titan-ring::before {
+  content: '';
+  position: absolute;
+  inset: -18px; /* Further out than the other layers */
+  border-radius: 9999px;
+  border: 2px dashed rgba(251, 191, 36, 0.6);
+  box-shadow: 0 0 20px rgba(180, 83, 9, 0.4);
+  animation: titan-accretion-spin 8s linear infinite;
+  mix-blend-mode: overlay;
+  pointer-events: none;
+}
+
+/* THE PLASMA ARCS: Moving light "cracks" */
+/* Using a span or extra element here is best, but we can stack it in ::after 
+   using a complex background if needed. For now, let's use the flare logic */
+.titan-ring::after {
+  content: '';
+  position: absolute;
+  inset: -12px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg,
+    transparent 0%,
+    #fef3c7 2%, 
+    transparent 10%,
+    #fbbf24 45%,
+    transparent 50%,
+    #fef3c7 52%,
+    transparent 60%
+  );
+  -webkit-mask: radial-gradient(circle, transparent 68%, black 70%);
+  mask: radial-gradient(circle, transparent 68%, black 70%);
+  animation: titan-plasma-arc 2s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  mix-blend-mode: color-dodge;
+  filter: drop-shadow(0 0 5px #fbbf24);
+}
+
+/* THE INNER PULSE (Apply this to the profile img container itself) */
+.titan-ring img {
+  filter: brightness(0.9) contrast(1.1);
+  animation: titan-inner-glimmer 2s ease-in-out infinite;
+}
+
+@keyframes titan-inner-glimmer {
+  0%, 100% { filter: brightness(0.8) sepia(0.2) saturate(1.2); }
+  50% { filter: brightness(1.1) sepia(0) saturate(1.5); }
+}
+@keyframes cosmic-orbit {
+  0%   { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+  25%  { box-shadow: 0 0 8px 4px #a78bfa, 0 0 16px 6px #8b5cf6, 0 0 26px 8px #6d28d9; }
+  50%  { box-shadow: 0 0 10px 5px #c4b5fd, 0 0 20px 8px #a78bfa, 0 0 30px 9px #8b5cf6; }
+  75%  { box-shadow: 0 0 8px 3px #7c3aed, 0 0 14px 5px #6d28d9, 0 0 22px 7px #4c1d95; }
+  100% { box-shadow: 0 0 6px 2px #8b5cf6, 0 0 12px 4px #6d28d9, 0 0 20px 6px #4c1d95; }
+}
+.cosmic-dust-ring {
+  border-radius: 9999px;
+  border: 0px solid #8b5cf6;
+  animation: cosmic-orbit 4s ease-in-out infinite;
+}
+
+/* ── Aurora Borealis ──────────────────────────────────────── */
+@keyframes aurora-cycle {
+  0%   { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+  25%  { box-shadow: 0 0 10px 4px #6ee7b7, 0 0 20px 7px #34d399; border-color: #6ee7b7; }
+  50%  { box-shadow: 0 0 10px 4px #a78bfa, 0 0 20px 7px #7c3aed; border-color: #a78bfa; }
+  75%  { box-shadow: 0 0 8px 3px #67e8f9, 0 0 16px 6px #0891b2; border-color: #67e8f9; }
+  100% { box-shadow: 0 0 8px 3px #34d399, 0 0 16px 6px #059669; border-color: #34d399; }
+}
+.aurora-borealis-ring {
+  border-radius: 9999px;
+  border: 0px solid #34d399;
+  animation: aurora-cycle 5s linear infinite;
+}
+
+/* ── Void Smoke ───────────────────────────────────────────── */
+@keyframes void-smoke {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 4px rgba(17, 24, 39, 0.95),
+      0 0 16px 8px rgba(31, 41, 55, 0.8),
+      0 0 24px 10px rgba(55, 65, 81, 0.5);
+    opacity: 1;
+  }
+  40% {
+    box-shadow:
+      0 0 12px 6px rgba(0, 0, 0, 1),
+      0 0 22px 10px rgba(17, 24, 39, 0.9),
+      0 0 34px 14px rgba(31, 41, 55, 0.6);
+    opacity: 0.85;
+  }
+  80% {
+    box-shadow:
+      0 0 6px 3px rgba(55, 65, 81, 0.7),
+      0 0 12px 5px rgba(17, 24, 39, 0.95);
+    opacity: 0.95;
+  }
+}
+.void-smoke-ring {
+  border-radius: 9999px;
+  border: 0px solid #374151;
+  animation: void-smoke 3s ease-in-out infinite;
+}
+
+/* ── Neon Circuit ─────────────────────────────────────────── */
+@keyframes circuit-trace {
+  0%   { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+  30%  { box-shadow: 0 0 8px 4px #67e8f9, 0 0 16px 7px #22d3ee, 0 0 24px 8px #0891b2; border-color: #67e8f9; }
+  60%  { box-shadow: 0 0 5px 2px #0e7490, 0 0 12px 5px #22d3ee; border-color: #22d3ee; }
+  80%  { box-shadow: 0 0 10px 5px #a5f3fc, 0 0 20px 8px #67e8f9; border-color: #a5f3fc; }
+  100% { box-shadow: 0 0 4px 2px #22d3ee, 0 0 10px 4px #0891b2; border-color: #22d3ee; }
+}
+.neon-circuit-ring {
+  border-radius: 9999px;
+  border: 0px solid #22d3ee;
+  animation: circuit-trace 1.8s ease-in-out infinite;
+}
+
+
+/* ── Base: Shared profession ring foundation ─────────────────────────────── */
+[class*="-prof-ring"] {
+  position: relative;
+  border-radius: 9999px;
+}
+
+[class*="-prof-ring"]::after {
+  position: absolute;
+  font-size: 11px;
+  line-height: 1;
+  text-align: center;
+  width: 18px;
+  height: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 10;
+  filter: drop-shadow(0 0 3px rgba(0,0,0,0.7));
+}
+
+/* ── 1. Medicine ─────────────────────────────────────────────────────────── */
+.medicine-prof-ring {
+  /* Using the peak red (#f87171) and peak glow (14px) from the original 50% keyframe */
+  box-shadow: 0 0 0 2px #f87171, 0 0 0 4px var(--fallback-b1, oklch(var(--b1))), 0 0 14px rgba(239, 68, 68, 0.4);
+}
+
+.medicine-prof-ring::after {
+  content: '+';
+  top: -9px;
+  background: #ef4444;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 900;
+  filter: drop-shadow(0 0 4px rgba(239, 68, 68, 0.6));
+}
+/* ── 2. Law ──────────────────────────────────────────────────────────────── */
+.law-prof-ring {
+  box-shadow: 0 0 0 2px #b45309, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+  animation: law-hover 4s ease-in-out infinite;
+}
+
+.law-prof-ring::after {
+  content: '⚖';
+  top: -9px;
+  background: #92400e;
+  color: #fbbf24;
+  font-size: 10px;
+  filter: drop-shadow(0 0 3px rgba(180,83,9,0.8));
+}
+
+/* ── 3. Engineering ──────────────────────────────────────────────────────── */
+.engineering-prof-ring {
+  box-shadow: 0 0 0 2px #64748b, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.engineering-prof-ring::after {
+  content: '⚙';
+  top: -9px;
+  background: #1e293b;
+  color: #94a3b8;
+  font-size: 12px;
+  animation: gear-spin 10s linear infinite;
+  filter: drop-shadow(0 0 3px rgba(100,116,139,0.6));
+}
+
+
+/* ── 4. Science ──────────────────────────────────────────────────────────── */
+.science-prof-ring {
+  box-shadow: 0 0 0 2px #38bdf8, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.science-prof-ring::after {
+  content: '⚛';
+  top: -9px;
+  background: #0c4a6e;
+  color: #38bdf8;
+  font-size: 11px;
+  filter: drop-shadow(0 0 4px rgba(56,189,248,0.7));
+}
+
+
+/* ── 5. Arts ─────────────────────────────────────────────────────────────── */
+.arts-prof-ring {
+  box-shadow: 0 0 0 2px #a78bfa, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.arts-prof-ring::after {
+  content: '🎨';
+  top: -10px;
+  background: #1e1b4b;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 3px rgba(167,139,250,0.6));
+}
+
+/* ── 6. Economics ────────────────────────────────────────────────────────── */
+.economics-prof-ring {
+  box-shadow: 0 0 0 2px #22c55e, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.economics-prof-ring::after {
+  content: '↑';
+  top: -9px;
+  background: #14532d;
+  color: #4ade80;
+  font-size: 12px;
+  font-weight: 900;
+  filter: drop-shadow(0 0 4px rgba(34,197,94,0.6));
+}
+
+
+/* ── 7. Music ────────────────────────────────────────────────────────────── */
+.music-prof-ring {
+  box-shadow: 0 0 0 2px #f472b6, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.music-prof-ring::after {
+  content: '♪';
+  top: -9px;
+  background: #831843;
+  color: #f9a8d4;
+  font-size: 12px;
+  filter: drop-shadow(0 0 4px rgba(244,114,182,0.7));
+}
+
+/* ── 8. Dentistry ────────────────────────────────────────────────────────── */
+.dentistry-prof-ring {
+  box-shadow: 0 0 0 2px #bae6fd, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.dentistry-prof-ring::after {
+  content: '🦷';
+  top: -10px;
+  background: #0c4a6e;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 5px rgba(186,230,253,0.8));
+}
+
+
+/* ── 9. Sports ───────────────────────────────────────────────────────────── */
+.sports-prof-ring {
+  box-shadow: 0 0 0 2px #fb923c, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.sports-prof-ring::after {
+  content: '🏆';
+  top: -10px;
+  background: #7c2d12;
+  font-size: 10px;
+  width: 20px;
+  height: 20px;
+  filter: drop-shadow(0 0 4px rgba(251,146,60,0.6));
+}
+
+
+/* ── 10. Psychology ──────────────────────────────────────────────────────── */
+.psychology-prof-ring {
+  box-shadow: 0 0 0 2px #818cf8, 0 0 0 4px var(--fallback-b1, oklch(var(--b1)));
+}
+.psychology-prof-ring::after {
+  content: 'Ψ';
+  top: -9px;
+  background: #1e1b4b;
+  color: #a5b4fc;
+  font-size: 11px;
+  font-weight: 700;
+  filter: drop-shadow(0 0 4px rgba(129,140,248,0.7));
+}
+
+
+/* ── 11. Veterinary ──────────────────────────────────────────────────────── */
+.veterinary-prof-ring {
+  /* Using a bright teal (#2dd4bf) for the ring and a matching soft glow */
+  box-shadow: 0 0 0 2px #2dd4bf, 0 0 0 4px var(--fallback-b1, oklch(var(--b1))), 0 0 12px rgba(45, 212, 191, 0.4);
+}
+
+.veterinary-prof-ring::after {
+  content: '🐾';
+  top: -10px;
+  background: #134e4a; /* Deep Dark Teal */
+  font-size: 9px;
+  width: 20px;
+  height: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 9999px;
+  filter: drop-shadow(0 0 3px rgba(45, 212, 191, 0.6));
 }

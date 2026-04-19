@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import { useAuthUser } from "../auth/authHooks/useAuthUser"
 import { WARDROBE_CONFIG, CATEGORY_LABELS } from "./wardrobeConfig"
 import { useEquipItem, useInventory } from "./wardrobeHooks"
@@ -11,6 +11,7 @@ import { BsThreeDots } from "react-icons/bs"
 import FollowButton from "../../components/common/FollowButton"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 import { useTheme } from "../../context/ThemeContext"
+import { loadGoogleFont } from "./StyleWrapper"
 
 const TABS = ["rings", "fonts", "nameplates", "overlays"]
 
@@ -20,6 +21,12 @@ const LivePreview = ({ authUser, previewEquipped }) => {
   const overlayConfig = WARDROBE_CONFIG[previewEquipped.overlay]
   const fontConfig = WARDROBE_CONFIG[previewEquipped.font]
   const nameplateClass = getNameplateClass(previewEquipped.nameplate)
+
+  useEffect(() => {
+    if (fontConfig?.googleFont) {
+      loadGoogleFont(fontConfig.googleFont)
+    }
+  }, [fontConfig?.googleFont])
 
   const fontFamily = fontConfig?.cssVars?.["--user-font"] || "inherit"
   const ringClass = ringConfig?.ringClass || ""
@@ -93,7 +100,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
           className={`flex items-center gap-3 border border-accent/20 p-4 transition-all duration-300 ${nameplateClass}`}
         >
           {/* Avatar with Ring */}
-          <UserAvatar size={"sm"} className={ringClass}  />
+          <UserAvatar size={"sm"} className={ringClass} />
 
           {/* Message Content */}
           <div className="flex min-w-0 flex-1 flex-col">
@@ -168,7 +175,7 @@ const ItemCard = ({
     </div>
   )
 
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   return (
     <div
@@ -232,7 +239,7 @@ const WardrobePage = () => {
   const { inventory, equipped, isLoading } = useInventory()
   const { equipItem } = useEquipItem()
 
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const [activeTab, setActiveTab] = useState("rings")
   const [previewKey, setPreviewKey] = useState(null)
@@ -261,7 +268,7 @@ const WardrobePage = () => {
       return true
     })
 
-    const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts"
+  const isTabLocked = (tab) => tab !== "rings" 
 
   if (isLoading) {
     return (
@@ -285,7 +292,7 @@ const WardrobePage = () => {
         <span className="text-xs text-slate-400">Changes apply instantly</span>
       </div>
 
-      <div className="mx-auto flex flex-col gap-6 p-4 mt-2 md:flex-row md:items-start">
+      <div className="mx-auto mt-2 flex flex-col gap-6 p-4 md:flex-row md:items-start">
         {/* Left: Live Preview (sticky on desktop) */}
         <div className="w-full md:sticky md:top-20 md:w-80 md:flex-shrink-0">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">

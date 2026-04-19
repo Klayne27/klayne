@@ -4,7 +4,7 @@ export const WARDROBE_CONFIG = {
   // FONTS
   // ══════════════════════════════════════
 
-  // Progress (Level-gated)
+  // --- PROGRESS (Level-Gated) ---
   scholarly_serif: {
     label: "Scholarly Serif",
     category: "fonts",
@@ -29,6 +29,14 @@ export const WARDROBE_CONFIG = {
     googleFont: "Space+Grotesk:wght@300;400;500;600",
     cssVars: { "--user-font": "'Space Grotesk', sans-serif" },
   },
+  raleway: {
+    label: "Raleway",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 14",
+    googleFont: "Raleway:wght@300;400;600",
+    cssVars: { "--user-font": "'Raleway', 'Helvetica Neue', sans-serif" },
+  },
   lora_serif: {
     label: "Lora",
     category: "fonts",
@@ -37,6 +45,22 @@ export const WARDROBE_CONFIG = {
     googleFont: "Lora:ital,wght@0,400;0,600;1,400",
     cssVars: { "--user-font": "'Lora', Georgia, serif" },
   },
+  spectral: {
+    label: "Spectral",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 22",
+    googleFont: "Spectral:ital,wght@0,300;0,400;0,600;1,400",
+    cssVars: { "--user-font": "'Spectral', Georgia, serif" },
+  },
+  rajdhani: {
+    label: "Rajdhani",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 26",
+    googleFont: "Rajdhani:wght@300;400;500;600;700",
+    cssVars: { "--user-font": "'Rajdhani', 'Arial Narrow', sans-serif" },
+  },
   cinzel: {
     label: "Cinzel",
     category: "fonts",
@@ -44,6 +68,14 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 30",
     googleFont: "Cinzel:wght@400;600;700",
     cssVars: { "--user-font": "'Cinzel', serif" },
+  },
+  exo_2: {
+    label: "Exo 2",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 33",
+    googleFont: "Exo+2:ital,wght@0,300;0,400;0,600;1,400",
+    cssVars: { "--user-font": "'Exo 2', 'Helvetica Neue', sans-serif" },
   },
   cormorant_garamond: {
     label: "Cormorant Garamond",
@@ -61,6 +93,22 @@ export const WARDROBE_CONFIG = {
     googleFont: "Bangers",
     cssVars: { "--user-font": "'Bangers', Impact, cursive" },
   },
+  abril_fatface: {
+    label: "Abril Fatface",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 45",
+    googleFont: "Abril+Fatface",
+    cssVars: { "--user-font": "'Abril Fatface', 'Times New Roman', cursive" },
+  },
+  righteous: {
+    label: "Righteous",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 50",
+    googleFont: "Righteous",
+    cssVars: { "--user-font": "'Righteous', 'Impact', cursive" },
+  },
   orbitron: {
     label: "Orbitron",
     category: "fonts",
@@ -69,8 +117,62 @@ export const WARDROBE_CONFIG = {
     googleFont: "Orbitron:wght@400;600;700",
     cssVars: { "--user-font": "'Orbitron', sans-serif" },
   },
-
-  // Progress (Hour-gated)
+  vt323: {
+    label: "VT323",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 60",
+    googleFont: "VT323",
+    cssVars: { "--user-font": "'VT323', 'Courier New', monospace" },
+  },
+  syncopate: {
+    label: "Syncopate",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 65",
+    googleFont: "Syncopate:wght@400;700",
+    cssVars: { "--user-font": "'Syncopate', sans-serif" },
+  },
+  teko: {
+    label: "Teko",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 70",
+    googleFont: "Teko:wght@300;400;500;600;700",
+    cssVars: { "--user-font": "'Teko', 'Arial Narrow', sans-serif" },
+  },
+  monoton: {
+    label: "Retro Circuit",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 75",
+    googleFont: "Monoton",
+    cssVars: { "--user-font": "'Monoton', cursive" },
+  },
+  rock_salt: {
+    label: "Rock Salt",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 80",
+    googleFont: "Rock+Salt",
+    cssVars: { "--user-font": "'Rock Salt', 'Comic Sans MS', cursive" },
+  },
+  unifraktur: {
+    label: "Blackletter Elite",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 90",
+    googleFont: "UnifrakturMaguntia",
+    cssVars: { "--user-font": "'UnifrakturMaguntia', serif" },
+  },
+  bungee_shade: {
+    label: "Titan Shadow",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 100",
+    googleFont: "Bungee+Shade",
+    cssVars: { "--user-font": "'Bungee Shade', cursive" },
+  },
   typewriter_pro: {
     label: "Typewriter Pro",
     category: "fonts",
@@ -78,6 +180,14 @@ export const WARDROBE_CONFIG = {
     unlockHint: "50 total hours",
     googleFont: null,
     cssVars: { "--user-font": "'Courier New', Courier, monospace" },
+  },
+  josefin_slab: {
+    label: "Josefin Slab",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "75 total hours",
+    googleFont: "Josefin+Slab:wght@300;400;600",
+    cssVars: { "--user-font": "'Josefin Slab', 'Times New Roman', serif" },
   },
   playfair_display: {
     label: "Playfair Display",
@@ -111,8 +221,30 @@ export const WARDROBE_CONFIG = {
     googleFont: "Instrument+Serif:ital@0;1",
     cssVars: { "--user-font": "'Instrument Serif', Georgia, serif" },
   },
-
-  // Sprints
+  syne_tactical: {
+    label: "Syne Tactical",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "750 total hours",
+    googleFont: "Syne:wght@400;800",
+    cssVars: { "--user-font": "'Syne', sans-serif" },
+  },
+  fraunces_bold: {
+    label: "Fraunces Soft-Edge",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "1000 total hours",
+    googleFont: "Fraunces:opsz,wght,SOFT@9..144,400..900,100",
+    cssVars: { "--user-font": "'Fraunces', serif" },
+  },
+  bebas_neue: {
+    label: "Bebas Neue",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "15 hrs/week",
+    googleFont: "Bebas+Neue",
+    cssVars: { "--user-font": "'Bebas Neue', Impact, sans-serif" },
+  },
   retro_pixel: {
     label: "Retro Pixel",
     category: "fonts",
@@ -120,6 +252,30 @@ export const WARDROBE_CONFIG = {
     unlockHint: "20 hrs/week",
     googleFont: "Press+Start+2P",
     cssVars: { "--user-font": "'Press Start 2P', monospace" },
+  },
+  megrim: {
+    label: "Cyber Glitch",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "30 hrs/week",
+    googleFont: "Megrim",
+    cssVars: { "--user-font": "'Megrim', cursive" },
+  },
+  fascinate: {
+    label: "Art Deco Flare",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "40 hrs/week",
+    googleFont: "Fascinate+Inline",
+    cssVars: { "--user-font": "'Fascinate Inline', display" },
+  },
+  permanent_marker: {
+    label: "Permanent Marker",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "20 hrs/month",
+    googleFont: "Permanent+Marker",
+    cssVars: { "--user-font": "'Permanent Marker', cursive" },
   },
   modern_minimalist: {
     label: "Modern Minimalist",
@@ -129,12 +285,82 @@ export const WARDROBE_CONFIG = {
     googleFont: null,
     cssVars: { "--user-font": "'Inter', 'Helvetica Neue', sans-serif" },
   },
+  stix_two: {
+    label: "Scientific Elite",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "100 hrs/month",
+    googleFont: "STIX+Two+Text:ital,wght@0,400..700;1,400..700",
+    cssVars: { "--user-font": "'STIX Two Text', serif" },
+  },
+  // --- NEW PROGRESSION FONTS ---
+  fondamento: {
+    label: "Calligrapher",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 20",
+    googleFont: "Fondamento:ital@0;1",
+    cssVars: { "--user-font": "'Fondamento', cursive" },
+  },
+  tourney: {
+    label: "Cyber Athlete",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 48",
+    googleFont: "Tourney:wght@100..900",
+    cssVars: { "--user-font": "'Tourney', display" },
+  },
+  creepster: {
+    label: "Eldritch",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 66",
+    googleFont: "Creepster",
+    cssVars: { "--user-font": "'Creepster', system-ui" },
+  },
+  honk: {
+    label: "Retro Pop",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "Level 85",
+    googleFont: "Honk",
+    cssVars: { "--user-font": "'Honk', system-ui" },
+  },
 
-  // ══════════════════════════════════════
-  // RINGS
-  // ══════════════════════════════════════
+  // --- NEW MILESTONE/SPRINT FONTS ---
+  climate_crisis: {
+    label: "Brutalist",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "75 total hours",
+    googleFont: "Climate+Crisis",
+    cssVars: { "--user-font": "'Climate Crisis', sans-serif" },
+  },
+  major_mono: {
+    label: "Abstract Mono",
+    category: "fonts",
+    rewardType: "progress",
+    unlockHint: "200 total hours",
+    googleFont: "Major+Mono+Display",
+    cssVars: { "--user-font": "'Major Mono Display', monospace" },
+  },
+  nabla: {
+    label: "Isometric Glow",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "25 hrs/week",
+    googleFont: "Nabla",
+    cssVars: { "--user-font": "'Nabla', system-ui" },
+  },
+  rubik_glitch: {
+    label: "System Error",
+    category: "fonts",
+    rewardType: "sprint",
+    unlockHint: "80 hrs/month",
+    googleFont: "Rubik+Glitch",
+    cssVars: { "--user-font": "'Rubik Glitch', display" },
+  },
 
-  // Progress (Level-gated)
   // ══════════════════════════════════════
   // RINGS
   // ══════════════════════════════════════
@@ -147,12 +373,27 @@ export const WARDROBE_CONFIG = {
   //   unlockHint: "Level 3",
   //   ringClass: "slate-outline-ring",
   // },
+
+  medicine_ring: {
+    label: "Medicine",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 5",
+    ringClass: "medicine-prof-ring",
+  },
   ring_bronze: {
     label: "Bronze",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 6",
     ringClass: "ring-2 ring-amber-700 ring-offset-2 ring-offset-base-100 rounded-full",
+  },
+  law_ring: {
+    label: "Law",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 7",
+    ringClass: "law-prof-ring",
   },
   ring_silver: {
     label: "Silver",
@@ -161,12 +402,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 8",
     ringClass: "ring-2 ring-gray-400 ring-offset-2 ring-offset-base-100 rounded-full",
   },
+  engineering_ring: {
+    label: "Engineering",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 9",
+    ringClass: "engineering-prof-ring",
+  },
   ring_gold: {
     label: "Gold",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 10",
     ringClass: "ring-2 ring-yellow-400 ring-offset-2 ring-offset-base-100 rounded-full",
+  },
+  science_ring: {
+    label: "Science",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 11",
+    ringClass: "science-prof-ring",
   },
   ring_ruby: {
     label: "Ruby",
@@ -175,12 +430,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 12",
     ringClass: "ring-2 ring-red-500 ring-offset-2 ring-offset-base-100 rounded-full",
   },
+  arts_ring: {
+    label: "Arts",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 13",
+    ringClass: "arts-prof-ring",
+  },
   ring_sapphire: {
     label: "Sapphire",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 14",
     ringClass: "ring-2 ring-blue-500 ring-offset-2 ring-offset-base-100 rounded-full",
+  },
+  economics_ring: {
+    label: "Economics",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 15",
+    ringClass: "economics-prof-ring",
   },
   ring_emerald: {
     label: "Emerald",
@@ -189,12 +458,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 16",
     ringClass: "ring-2 ring-emerald-500 ring-offset-2 ring-offset-base-100 rounded-full",
   },
+  music_ring: {
+    label: "Music",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 17",
+    ringClass: "music-prof-ring",
+  },
   ring_amethyst: {
     label: "Amethyst",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 18",
     ringClass: "ring-2 ring-purple-500 ring-offset-2 ring-offset-base-100 rounded-full",
+  },
+  dentistry_ring: {
+    label: "Dentistry",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 19",
+    ringClass: "dentistry-prof-ring",
   },
   ring_obsidian: {
     label: "Obsidian",
@@ -203,6 +486,14 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 20",
     ringClass: "ring-2 ring-gray-900 ring-offset-2 ring-offset-base-100 rounded-full",
   },
+
+  sports_ring: {
+    label: "Sports",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 21",
+    ringClass: "sports-prof-ring",
+  },
   ring_ivory: {
     label: "Ivory",
     category: "rings",
@@ -210,12 +501,27 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 22",
     ringClass: "ring-2 ring-stone-200 ring-offset-2 ring-offset-base-100 rounded-full",
   },
+  psychology_ring: {
+    label: "Psychology",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 23",
+    ringClass: "psychology-prof-ring",
+  },
   ring_rose: {
     label: "Rose",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 24",
     ringClass: "ring-2 ring-pink-500 ring-offset-2 ring-offset-base-100 rounded-full",
+  },
+
+  veterinary_ring: {
+    label: "Veterinary",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 25",
+    ringClass: "veterinary-prof-ring",
   },
 
   // TIER 2 RINGS (Levels 28-50)
@@ -478,28 +784,28 @@ export const WARDROBE_CONFIG = {
     label: "Grindstone",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "15 hrs/week",
+    unlockHint: "30 hrs/week",
     ringClass: "grindstone-ring",
   },
   overdrive_ring: {
     label: "Overdrive",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "20 hrs/week",
+    unlockHint: "40 hrs/week",
     ringClass: "overdrive-ring",
   },
   neon_circuit: {
     label: "Neon Circuit",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "25 hrs/week",
+    unlockHint: "60 hrs/week",
     ringClass: "neon-circuit-ring",
   },
   electric_pulse: {
     label: "Electric Pulse",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "30 hrs/week",
+    unlockHint: "70 hrs/week",
     ringClass: "electric-pulse-ring",
   },
 
@@ -508,21 +814,21 @@ export const WARDROBE_CONFIG = {
     label: "Persistence",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "60 hrs/month",
+    unlockHint: "120 hrs/month",
     ringClass: "persistence-ring",
   },
   marathon_ring: {
     label: "Marathon",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "120 hrs/month",
+    unlockHint: "180 hrs/month",
     ringClass: "marathon-ring",
   },
   titan_ring: {
     label: "Titan",
     category: "rings",
     rewardType: "sprint",
-    unlockHint: "200 hrs/month",
+    unlockHint: "240 hrs/month",
     ringClass: "titan-ring",
   },
 
@@ -711,46 +1017,6 @@ export const WARDROBE_CONFIG = {
   ////////////////////////// NEW ADDITIONS UNORGANIZED ////////////////////////////////
 
   // ── NEW FONTS ────────────────────────────────────────────────────
-  raleway: {
-    label: "Raleway",
-    category: "fonts",
-    rewardType: "progress",
-    unlockHint: "Level 14",
-    googleFont: "Raleway:wght@300;400;600",
-    cssVars: { "--user-font": "'Raleway', 'Helvetica Neue', sans-serif" },
-  },
-  spectral: {
-    label: "Spectral",
-    category: "fonts",
-    rewardType: "progress",
-    unlockHint: "Level 22",
-    googleFont: "Spectral:ital,wght@0,300;0,400;0,600;1,400",
-    cssVars: { "--user-font": "'Spectral', Georgia, serif" },
-  },
-  josefin_slab: {
-    label: "Josefin Slab",
-    category: "fonts",
-    rewardType: "progress",
-    unlockHint: "75 total hours",
-    googleFont: "Josefin+Slab:wght@300;400;600",
-    cssVars: { "--user-font": "'Josefin Slab', 'Times New Roman', serif" },
-  },
-  bebas_neue: {
-    label: "Bebas Neue",
-    category: "fonts",
-    rewardType: "sprint",
-    unlockHint: "15 hrs/week",
-    googleFont: "Bebas+Neue",
-    cssVars: { "--user-font": "'Bebas Neue', Impact, sans-serif" },
-  },
-  permanent_marker: {
-    label: "Permanent Marker",
-    category: "fonts",
-    rewardType: "sprint",
-    unlockHint: "20 hrs/month",
-    googleFont: "Permanent+Marker",
-    cssVars: { "--user-font": "'Permanent Marker', cursive" },
-  },
 
   // ── NEW NAMEPLATES ────────────────────────────────────────────────
   silver_thread: {

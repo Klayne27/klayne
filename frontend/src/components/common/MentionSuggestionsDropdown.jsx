@@ -1,5 +1,6 @@
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import LoadingSpinner from "./LoadingSpinner"
+import UserAvatar from "./UserAvatar"
 
 const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
   if (!query) return null
@@ -21,16 +22,8 @@ const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
               onSelect(user.username)
             }}
           >
-            <div className="avatar">
-              <div className="w-8 rounded-full">
-                <img
-                  src={getOptimizedImageUrl(
-                    user.profileImg?.imageUrl || "/avatar-placeholder.png",
-                    "avatar",
-                  )}
-                  alt={user.username}
-                />
-              </div>
+            <div className="pt-2">
+              <UserAvatar user={user} size={"sm"}/>
             </div>
             <div>
               <p

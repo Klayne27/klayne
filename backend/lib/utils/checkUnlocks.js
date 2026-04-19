@@ -164,6 +164,209 @@ const UNLOCK_RULES = [
     items: ["permanent_marker"],
     description: "Study 20 hours in a month",
   },
+  {
+    id: "rajdhani",
+    category: "fonts",
+    trigger: "level",
+    threshold: 26,
+    items: ["rajdhani"],
+    description: "Reach Level 26",
+  },
+  {
+    id: "exo_2",
+    category: "fonts",
+    trigger: "level",
+    threshold: 33,
+    items: ["exo_2"],
+    description: "Reach Level 33",
+  },
+  {
+    id: "abril_fatface",
+    category: "fonts",
+    trigger: "level",
+    threshold: 45,
+    items: ["abril_fatface"],
+    description: "Reach Level 45",
+  },
+  {
+    id: "righteous",
+    category: "fonts",
+    trigger: "level",
+    threshold: 50,
+    items: ["righteous"],
+    description: "Reach Level 50",
+  },
+  {
+    id: "vt323",
+    category: "fonts",
+    trigger: "level",
+    threshold: 60,
+    items: ["vt323"],
+    description: "Reach Level 60",
+  },
+  {
+    id: "teko",
+    category: "fonts",
+    trigger: "level",
+    threshold: 70,
+    items: ["teko"],
+    description: "Reach Level 70",
+  },
+  {
+    id: "rock_salt",
+    category: "fonts",
+    trigger: "level",
+    threshold: 80,
+    items: ["rock_salt"],
+    description: "Reach Level 80",
+  },
+  // --- New Level Unlocks ---
+  {
+    id: "syncopate",
+    category: "fonts",
+    trigger: "level",
+    threshold: 65,
+    items: ["syncopate"],
+    description: "Reach Level 65",
+  },
+  {
+    id: "monoton",
+    category: "fonts",
+    trigger: "level",
+    threshold: 75,
+    items: ["monoton"],
+    description: "Reach Level 75",
+  },
+  {
+    id: "unifraktur",
+    category: "fonts",
+    trigger: "level",
+    threshold: 90,
+    items: ["unifraktur"],
+    description: "Reach Level 90",
+  },
+  {
+    id: "bungee_shade",
+    category: "fonts",
+    trigger: "level",
+    threshold: 100,
+    items: ["bungee_shade"],
+    description: "Reach Level 100",
+  },
+
+  // --- New Milestone Unlocks (Hour Gated) ---
+  {
+    id: "syne_tactical",
+    category: "fonts",
+    trigger: "totalMinutes",
+    threshold: 45000, // 750 Hours
+    items: ["syne_tactical"],
+    description: "Study 750 total hours",
+  },
+  {
+    id: "fraunces_bold",
+    category: "fonts",
+    trigger: "totalMinutes",
+    threshold: 60000, // 1000 Hours
+    items: ["fraunces_bold"],
+    description: "Study 1000 total hours",
+  },
+
+  // --- New Sprint Unlocks ---
+  {
+    id: "megrim",
+    category: "fonts",
+    trigger: "weeklyMinutes",
+    threshold: 1800, // 30 Hours/Week
+    items: ["megrim"],
+    description: "Study 30 hours in a week",
+  },
+  {
+    id: "fascinate",
+    category: "fonts",
+    trigger: "weeklyMinutes",
+    threshold: 2400, // 40 Hours/Week
+    items: ["fascinate"],
+    description: "Study 40 hours in a week",
+  },
+  {
+    id: "stix_two",
+    category: "fonts",
+    trigger: "monthlyMinutes",
+    threshold: 6000, // 100 Hours/Month
+    items: ["stix_two"],
+    description: "Study 100 hours in a month",
+  },
+
+  // --- New Level Unlocks ---
+  {
+    id: "fondamento",
+    category: "fonts",
+    trigger: "level",
+    threshold: 20,
+    items: ["fondamento"],
+    description: "Reach Level 20",
+  },
+  {
+    id: "tourney",
+    category: "fonts",
+    trigger: "level",
+    threshold: 48,
+    items: ["tourney"],
+    description: "Reach Level 48",
+  },
+  {
+    id: "creepster",
+    category: "fonts",
+    trigger: "level",
+    threshold: 66,
+    items: ["creepster"],
+    description: "Reach Level 66",
+  },
+  {
+    id: "honk",
+    category: "fonts",
+    trigger: "level",
+    threshold: 85,
+    items: ["honk"],
+    description: "Reach Level 85",
+  },
+
+  // --- New Milestone Unlocks (Hour Gated) ---
+  {
+    id: "climate_crisis",
+    category: "fonts",
+    trigger: "totalMinutes",
+    threshold: 4500, // 75 Hours
+    items: ["climate_crisis"],
+    description: "Study 75 total hours",
+  },
+  {
+    id: "major_mono",
+    category: "fonts",
+    trigger: "totalMinutes",
+    threshold: 12000, // 200 Hours
+    items: ["major_mono"],
+    description: "Study 200 total hours",
+  },
+
+  // --- New Sprint Unlocks ---
+  {
+    id: "nabla",
+    category: "fonts",
+    trigger: "weeklyMinutes",
+    threshold: 1500, // 25 Hours/Week
+    items: ["nabla"],
+    description: "Study 25 hours in a week",
+  },
+  {
+    id: "rubik_glitch",
+    category: "fonts",
+    trigger: "monthlyMinutes",
+    threshold: 4800, // 80 Hours/Month
+    items: ["rubik_glitch"],
+    description: "Study 80 hours in a month",
+  },
 
   // ════════════════════════════════════════
   // RINGS — Progress Rewards
@@ -550,62 +753,151 @@ const UNLOCK_RULES = [
 
   // ── Weekly Sprints (high intensity, temporary) ──
   {
-    id: "grindstone_15h_wk",
-    category: "rings",
-    trigger: "weeklyMinutes",
-    threshold: 900,
-    items: ["grindstone_ring"],
-    description: "Study 15 hours in a week",
-  },
-  {
-    id: "overdrive_20h_wk",
-    category: "rings",
-    trigger: "weeklyMinutes",
-    threshold: 1200,
-    items: ["overdrive_ring"],
-    description: "Study 20 hours in a week",
-  },
-  {
-    id: "neon_circuit_25h_wk",
-    category: "rings",
-    trigger: "weeklyMinutes",
-    threshold: 1500,
-    items: ["neon_circuit"],
-    description: "Study 25 hours in a week",
-  },
-  {
-    id: "electric_30h_wk",
+    id: "grindstone_30h_wk",
     category: "rings",
     trigger: "weeklyMinutes",
     threshold: 1800,
-    items: ["electric_pulse"],
+    items: ["grindstone_ring"],
     description: "Study 30 hours in a week",
+  },
+  {
+    id: "overdrive_40h_wk",
+    category: "rings",
+    trigger: "weeklyMinutes",
+    threshold: 2400,
+    items: ["overdrive_ring"],
+    description: "Study 40 hours in a week",
+  },
+  {
+    id: "neon_circuit_60h_wk",
+    category: "rings",
+    trigger: "weeklyMinutes",
+    threshold: 3600,
+    items: ["neon_circuit"],
+    description: "Study 60 hours in a week",
+  },
+  {
+    id: "electric_70h_wk",
+    category: "rings",
+    trigger: "weeklyMinutes",
+    threshold: 4200,
+    items: ["electric_pulse"],
+    description: "Study 70 hours in a week",
   },
 
   // ── Monthly Sprints (consistency, temporary) ──
   {
-    id: "persistence_60h_mo",
-    category: "rings",
-    trigger: "monthlyMinutes",
-    threshold: 3600,
-    items: ["persistence_ring"],
-    description: "Study 60 hours in a month",
-  },
-  {
-    id: "marathon_120h_mo",
+    id: "persistence_120h_mo",
     category: "rings",
     trigger: "monthlyMinutes",
     threshold: 7200,
-    items: ["marathon_ring"],
+    items: ["persistence_ring"],
     description: "Study 120 hours in a month",
   },
   {
-    id: "titan_200h_mo",
+    id: "marathon_180h_mo",
     category: "rings",
     trigger: "monthlyMinutes",
-    threshold: 12000,
+    threshold: 10800,
+    items: ["marathon_ring"],
+    description: "Study 180 hours in a month",
+  },
+  {
+    id: "titan_240h_mo",
+    category: "rings",
+    trigger: "monthlyMinutes",
+    threshold: 14400,
     items: ["titan_ring"],
-    description: "Study 200 hours in a month",
+    description: "Study 240 hours in a month",
+  },
+
+  {
+    id: "medicine_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 5,
+    items: ["medicine_ring"],
+    description: "Reach Level 5",
+  },
+  {
+    id: "law_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 7,
+    items: ["law_ring"],
+    description: "Reach Level 7",
+  },
+  {
+    id: "engineering_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 9,
+    items: ["engineering_ring"],
+    description: "Reach Level 9",
+  },
+  {
+    id: "science_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 11,
+    items: ["science_ring"],
+    description: "Reach Level 11",
+  },
+  {
+    id: "arts_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 13,
+    items: ["arts_ring"],
+    description: "Reach Level 13",
+  },
+  {
+    id: "economics_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 15,
+    items: ["economics_ring"],
+    description: "Reach Level 15",
+  },
+  {
+    id: "music_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 17,
+    items: ["music_ring"],
+    description: "Reach Level 17",
+  },
+  {
+    id: "dentistry_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 19,
+    items: ["dentistry_ring"],
+    description: "Reach Level 19",
+  },
+  {
+    id: "sports_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 21,
+    items: ["sports_ring"],
+    description: "Reach Level 21",
+  },
+  {
+    id: "psychology_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 23,
+    items: ["psychology_ring"],
+    description: "Reach Level 23",
+  },
+  {
+    id: "veterinary_ring",
+    category: "rings",
+    trigger: "level",
+    threshold: 25,
+    items: ["veterinary_ring"],
+    description: "Reach Level 25",
   },
 
   // ════════════════════════════════════════
@@ -793,48 +1085,6 @@ const UNLOCK_RULES = [
     description: "Study 30 hours in a week",
   },
   //──────────────────────────────────────────────────── NEW ADDITIONS  UNORGANIZED ────────────────────────────────────────────────────
-
-  // ── NEW FONTS ────────────────────────────────────────────────────
-  {
-    id: "raleway",
-    category: "fonts",
-    trigger: "level",
-    threshold: 14,
-    items: ["raleway"],
-    description: "Reach Level 14",
-  },
-  {
-    id: "spectral",
-    category: "fonts",
-    trigger: "level",
-    threshold: 22,
-    items: ["spectral"],
-    description: "Reach Level 22",
-  },
-  {
-    id: "josefin_slab",
-    category: "fonts",
-    trigger: "totalMinutes",
-    threshold: 4500,
-    items: ["josefin_slab"],
-    description: "Study 75 total hours",
-  },
-  {
-    id: "bebas_neue",
-    category: "fonts",
-    trigger: "weeklyMinutes",
-    threshold: 900,
-    items: ["bebas_neue"],
-    description: "Study 15 hours in a week",
-  },
-  {
-    id: "permanent_marker",
-    category: "fonts",
-    trigger: "monthlyMinutes",
-    threshold: 1200,
-    items: ["permanent_marker"],
-    description: "Study 20 hours in a month",
-  },
 
   // ── NEW RINGS ────────────────────────────────────────────────────
 
