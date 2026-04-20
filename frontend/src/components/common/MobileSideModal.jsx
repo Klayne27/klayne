@@ -14,7 +14,7 @@ import { IoIosTimer } from "react-icons/io"
 import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
-import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import { PiCoatHanger, PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
 
 function MobileSideModal({
   showSideModal,
@@ -298,6 +298,23 @@ function MobileSideModal({
               >
                 <LuListTodo className="mr-4 size-7" strokeWidth={pathname === "/todos" ? 2 : 2} />
                 <span className={`text-xl ${pathname === "/todos" ? "font-bold" : ""}`}>Todos</span>
+              </li>
+              <li
+                onClick={() => {
+                  if (pathname === "/wardrobe") return
+                  navigate("/wardrobe")
+                  setShowSideModal(false)
+                }}
+                className={`flex cursor-pointer items-center px-4 py-2 hover:bg-secondary ${
+                  isTouchDevice && activeButtonId === "modal-wardrobe"
+                    ? "bg-secondary bg-opacity-50 transition duration-150"
+                    : "transition duration-150"
+                }`}
+              >
+                <PiCoatHanger className="mr-4 size-7" />
+                <span className={`text-xl ${pathname === "/wardrobe" ? "font-bold" : ""}`}>
+                  Wardrobe
+                </span>
               </li>
               <li
                 onClick={() => {
