@@ -3,9 +3,14 @@ import User from "../models/user.model.js";
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 
 const resetMonthlyStats = cron.schedule(
-  "0 8 1 * *",
+  "0 0 1 * *", // midnight UTC on the 1st — same race-condition reasoning
   async () => {
-    await performMonthlyReset();
+    try {
+      // ← was missing
+      await performMonthlyReset();
+    } catch (error) {
+      console.error("Monthly Reset Error:", error);
+    }
   },
   { scheduled: false },
 );
@@ -31,7 +36,10 @@ export const performMonthlyReset = async () => {
       .lean();
     const activeUserIds = activeUsers.map((u) => u._id);
 
-    const topUsers = await User.find({ "monthlyStats.studyDuration": { $gt: 0 } })
+    const topUsers = await User.find({
+      "monthlyStats.lastResetMonth": { $ne: currentMonthISO }, // hasn't been reset yet
+      "monthlyStats.studyDuration": { $gt: 0 },
+    })
       .sort({ "monthlyStats.studyDuration": -1 })
       .limit(3)
       .select("_id monthlyStats");
