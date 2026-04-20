@@ -101,7 +101,10 @@ const Posts = ({ feedType, username, onPostsFetched, pinnedPosts = [], isLoading
   }
 
   return (
-    <div className="w-full min-w-0 overflow-hidden ">
+    // <div className="w-full min-w-0 overflow-hidden ">
+        <div className="w-full min-w-0 ">
+
+
       {feedType === "posts" && (
         <div>
           {isLoadingPinnedPosts ? (

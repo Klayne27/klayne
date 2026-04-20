@@ -10,6 +10,7 @@ import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useGetSuggestedUsers } from "../../features/users/usersHooks/useUserQueries"
 import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 import { truncateText } from "../../utils/truncateText"
+import UserAvatar from "./UserAvatar"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
@@ -47,7 +48,7 @@ const SuggestedUsersPanel = () => {
   return (
     <div className="rounded-2xl border border-accent p-4">
       <p className="mb-4 text-xl font-bold">Who to follow</p>
-      <div className="flex flex-col gap-4">
+      <div className="flex flex-col">
         {!suggestedUsers && isLoading && (
           <div className="flex flex-col gap-2.5">
             <RightPanelSkeleton />
@@ -63,40 +64,45 @@ const SuggestedUsersPanel = () => {
             return (
               <Link
                 to={`/profile/${user.username}`}
-                className="flex items-center justify-between gap-4"
+                className="flex items-center justify-between gap-2 " // Added py-1 for vertical breathing room
                 key={user._id}
               >
-                <div className="flex flex-grow items-center gap-2 overflow-hidden">
-                  <div className="avatar">
-                    <div className="w-8 rounded-full">
-                      <img
-                        src={getOptimizedImageUrl(
-                          user.profileImg?.imageUrl || "/avatar-placeholder.png",
-                          "avatar",
-                        )}
-                      />
-                    </div>
+                <div className="flex min-w-0 flex-grow items-center gap-1">
+                  {/* AVATAR WRAPPER: Added padding and removed overflow-hidden */}
+                  <div className="relative flex-shrink-0 p-1 mt-2">
+                    <UserAvatar user={user} size={"sm"} />
                   </div>
-                  <div className="flex flex-col overflow-hidden">
-                    <span className="flex w-full min-w-0 items-center gap-1 font-bold tracking-tight hover:underline">
+
+                  {/* TEXT CONTENT: Moved overflow-hidden here specifically */}
+                  <div className="flex min-w-0 flex-col overflow-hidden">
+                    <span className="flex items-center gap-1 font-bold tracking-tight hover:underline">
                       <span
                         className="truncate"
                         style={user.nameColor ? { color: user.nameColor } : undefined}
                       >
-                        {user.fullName}{" "}
+                        {user.fullName}
                       </span>
-                      {user.isVerified && <img src="/verified2.png" className="size-[17px]" />}
-                      {user.isGoldVerified && (
-                        <img src="/gold-verified2.png" className="size-[17px]" />
+                      {user.isVerified && (
+                        <img src="/verified2.png" className="size-[16px]" alt="verified" />
                       )}
-                      {user.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+                      {user.isGoldVerified && (
+                        <img
+                          src="/gold-verified2.png"
+                          className="size-[16px]"
+                          alt="gold verified"
+                        />
+                      )}
+                      {user.isCha && (
+                        <img src="/cha.png" className="size-[14px] rounded-md" alt="cha" />
+                      )}
                     </span>
                     <span className="truncate text-sm text-slate-500">
                       @{truncateText(user.username, 12)}
                     </span>
                   </div>
                 </div>
-                <div>
+
+                <div className="flex-shrink-0">
                   <FollowButton
                     user={user}
                     currentUserId={currentUser?._id}
@@ -112,11 +118,7 @@ const SuggestedUsersPanel = () => {
           className="flex items-center justify-center gap-1 text-primary"
           disabled={isRefetching || isLoading}
         >
-          {isLoading || isRefetching ? (
-            <div></div>
-          ) : (
-            <BiRefresh className="h-5 w-5" />
-          )}
+          {isLoading || isRefetching ? <div></div> : <BiRefresh className="h-5 w-5" />}
           {isLoading || isRefetching ? "Refreshing..." : "Refresh Suggestions"}
         </button>
       </div>

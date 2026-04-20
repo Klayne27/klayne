@@ -34,7 +34,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* 1. PROFILE CARD FIX */}
+      {/* 1. PROFILE CARD */}
       <div className="flex flex-col">
         <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Profile Look
@@ -43,7 +43,6 @@ const LivePreview = ({ authUser, previewEquipped }) => {
           className="group relative flex flex-col overflow-hidden rounded-2xl border border-accent bg-base-200 shadow-xl"
           style={{ fontFamily }}
         >
-          {/* Banner - Overflow hidden only here */}
           <div className={`relative h-28 w-full shrink-0 overflow-hidden ${overlayClass}`}>
             <img
               src={authUser?.coverImg?.imageUrl || "/cover.png"}
@@ -52,12 +51,10 @@ const LivePreview = ({ authUser, previewEquipped }) => {
             />
           </div>
 
-          {/* Info Section - No overflow hidden, so avatar can pop out */}
           <div className="relative flex flex-col px-4 pb-4 pt-12">
             <div className="absolute right-2 top-3">
               <FollowButton />
             </div>
-            {/* AVATAR FIX: Positioned relative to this unclipped container */}
             <div className="absolute -top-10 left-4 z-20">
               <div className={`rounded-full bg-base-200 p-0.5 shadow-lg ${ringClass}`}>
                 <img
@@ -70,40 +67,40 @@ const LivePreview = ({ authUser, previewEquipped }) => {
 
             <div className="flex flex-col">
               <div className="flex justify-between">
-                <span className="">{authUser?.fullName}</span>
+                <span className="font-bold">{authUser?.fullName}</span>
               </div>
               <span className="text-sm text-slate-500">@{authUser?.username}</span>
-
               <span className="mt-2 text-xs">{authUser?.bio}</span>
-
-              <div className="mt-2 flex gap-2">
-                <div className="flex cursor-pointer items-center gap-1 hover:underline">
-                  <span className="text-sm font-bold">{authUser?.following?.length}</span>{" "}
-                  <span className="text-sm text-slate-500">Following</span>{" "}
-                </div>
-                <div className="flex cursor-pointer items-center gap-1 hover:underline">
-                  <span className="text-sm font-bold">{authUser?.followers?.length}</span>{" "}
-                  <span className="text-sm text-slate-500">Followers</span>{" "}
-                </div>
-              </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* 2. CONVERSATION ITEM PREVIEW (Full Row Nameplate) */}
+      {/* 2. CONVERSATION ITEM PREVIEW (Fixed to match Profile Info logic) */}
       <div className="flex flex-col">
         <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Inbox Preview
         </p>
-        <div
-          className={`flex items-center gap-3 border border-accent/20 p-4 transition-all duration-300 ${nameplateClass}`}
-        >
-          {/* Avatar with Ring */}
-          <UserAvatar size={"sm"} className={ringClass} />
+        {/* Main Container: No overflow-hidden so the ring can pop out */}
+        <div className="relative flex items-center gap-2 p-4">
+          {/* THE NAMEPLATE BACKGROUND: Absolutely positioned and clipped */}
+          <div
+            className={`absolute inset-0 z-0 overflow-hidden border border-accent ${nameplateClass}`}
+          />
 
-          {/* Message Content */}
-          <div className="flex min-w-0 flex-1 flex-col">
+          {/* AVATAR: Higher z-index to sit above the nameplate background */}
+          <div className="relative z-10">
+            <div className={`rounded-full bg-base-200 p-0.5 shadow-md ${ringClass}`}>
+              <img
+                src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
+                className="size-8 rounded-full object-cover"
+                alt="avatar"
+              />
+            </div>
+          </div>
+
+          {/* CONTENT: Higher z-index and flex-1 to push BSThreeDots to the right */}
+          <div className="relative z-10 flex min-w-0 flex-1 flex-col py-1">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-1">
                 <span
@@ -112,23 +109,28 @@ const LivePreview = ({ authUser, previewEquipped }) => {
                 >
                   {authUser?.fullName}
                 </span>
+                {authUser.isVerified && (
+                  <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+                )}
+                {authUser.isGoldVerified && (
+                  <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+                )}
+                {authUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+
                 <span className="min-w-0 truncate text-sm text-gray-400">
                   @{authUser?.username}
                 </span>
                 {authUser?.isVerified && (
                   <img src="/verified2.png" className="size-[17px]" alt="Verified" />
                 )}
-                {authUser?.isGoldVerified && (
-                  <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
-                )}
-                {authUser?.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
                 <span className="shrink-0 text-[10px] text-gray-400">· 27m</span>
               </div>
-              <BsThreeDots />
+              <BsThreeDots className="shrink-0 text-gray-400" />
             </div>
             <p className="truncate text-xs text-gray-400">No new messages...</p>
           </div>
         </div>
+
         <p className="mt-2 px-1 text-[10px] italic text-gray-400">
           * This is how other users see you in their message list.
         </p>
@@ -294,7 +296,7 @@ const WardrobePage = () => {
 
       <div className="mx-auto mt-2 flex flex-col gap-6 p-4 md:flex-row md:items-start">
         {/* Left: Live Preview (sticky on desktop) */}
-        <div className="w-full md:sticky md:top-20 md:w-80 md:flex-shrink-0">
+        <div className="w-full md:sticky md:top-20 md:w-96 md:flex-shrink-0">
           <p className="mb-2 text-xs font-bold uppercase tracking-wider text-slate-400">
             Live Preview
           </p>
@@ -402,7 +404,7 @@ const WardrobePage = () => {
           </div>
 
           {/* Reward type legend */}
-          <div className="flex gap-4 rounded-xl border border-accent bg-base-200/50 px-3 py-2">
+          {/* <div className="flex gap-4 rounded-xl border border-accent bg-base-200/50 px-3 py-2">
             <div className="flex items-center gap-1.5">
               <FaTrophy size={10} className="text-blue-400" />
               <span className="text-xs text-slate-400">
@@ -417,7 +419,7 @@ const WardrobePage = () => {
                 to keep
               </span>
             </div>
-          </div>
+          </div> */}
 
           {/* Item grid */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">

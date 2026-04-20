@@ -35,7 +35,8 @@ const ProfileInfoModal = ({ user, position }) => {
           className="h-full w-full rounded-t-xl object-cover"
           onClick={() => navigate(`/profile/${user.username}`)}
         />
-        <div className="absolute -bottom-8 left-4">
+        <Link to={`/profile/${user?.username}`} className="absolute -bottom-8 left-4">
+      
           {/* <div
             className="w-16 cursor-pointer rounded-full border-2 border-base-200"
             onClick={() => navigate(`/profile/${user.username}`)}
@@ -55,7 +56,7 @@ const ProfileInfoModal = ({ user, position }) => {
             size={"lg2"}
             onClick={() => navigate(`/profile/${user?.username}`)}
           />
-        </div>
+        </Link>
       </div>
 
       <div className="flex flex-col p-4 pt-10">

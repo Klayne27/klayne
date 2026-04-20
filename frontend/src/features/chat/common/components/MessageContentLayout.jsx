@@ -20,7 +20,7 @@ function MessageContentLayout({
       {!isSentByCurrentUser && message.isFirstInGroup && (
         <div className="flex-shrink-0">
           <div>
-            <div>
+            <Link to={`/profile/${message.sender?.username}`}>
               {/* <img
                 alt="User Avatar"
                 src={getOptimizedImageUrl(
@@ -35,7 +35,7 @@ function MessageContentLayout({
                 user={message?.sender}
                 onClick={() => navigate(`/profile/${message?.sender?.username}`)}
               />
-            </div>
+            </Link>
           </div>
         </div>
       )}

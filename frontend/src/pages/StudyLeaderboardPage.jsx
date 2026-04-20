@@ -9,6 +9,7 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { useGetMonthlyLeaderboard, useGetPreviousMonthWinners, useGetPreviousWeekWinners, useGetTotalLeaderboard, useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
+import UserAvatar from "../components/common/UserAvatar.jsx"
 
 const WinnerAvatar = ({ winner, rank, size, ringColor }) => (
   <Link
@@ -402,8 +403,8 @@ function StudyLeaderboardPage() {
 
                 {/* 2. Avatar with Crown */}
                 <Link to={`/profile/${entry?.username}`} className="relative flex-shrink-0">
-                  <div className={`avatar ${globalRank <= 3 ? "p-0.5" : ""}`}>
-                    <div
+                  <div className={` ${globalRank <= 3 ? "p-0.5" : ""}`}>
+                    {/* <div
                       className={`w-10 rounded-full ring-offset-2 ring-offset-base-100 sm:w-12 ${
                         globalRank === 1
                           ? "ring-2 ring-amber-400"
@@ -413,20 +414,21 @@ function StudyLeaderboardPage() {
                               ? "ring-2 ring-yellow-700"
                               : "ring-1 ring-base-300"
                       }`}
-                    >
-                      <img
+                    > */}
+                      {/* <img
                         src={getOptimizedImageUrl(
                           entry?.profileImg?.imageUrl || "/avatar-placeholder.png",
                           "avatar",
                         )}
                         alt={entry.fullName}
                         className="rounded-full"
-                      />
-                    </div>
+                      /> */}
+                      <UserAvatar user={entry} size={"md"} />
+                    {/* </div> */}
                   </div>
                   {globalRank === 1 && (
                     <FaCrown
-                      className="absolute -right-1 -top-5 rotate-[24deg] text-amber-400 drop-shadow-md"
+                      className="absolute -right-1 -top-4 rotate-[24deg] text-amber-400 drop-shadow-md"
                       size={27}
                     />
                   )}
