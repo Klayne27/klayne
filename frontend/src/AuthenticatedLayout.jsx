@@ -7,6 +7,7 @@ import CreatePostModal from "./features/posts/components/CreatePostModal"
 import LoadingSpinner from "./components/common/LoadingSpinner"
 import { PomodoroTimerEngine } from "./features/pomodoro/components/PomodoroTimerEngine"
 import StyleWrapper from "./features/wardrobe/StyleWrapper"
+// import CreateTodoListModal from "./features/todos/components/CreateTodoListModal"
 
 const ImageViewerPage = lazy(() => import("./components/common/ImageViewerPage"))
 const StudyDashboardPage = lazy(() => import("./pages/pomodoro/StudyDashboardPage"))
@@ -40,14 +41,18 @@ const JoinGroupPage = lazy(() => import("./pages/JoinGroupPage"))
 const BoardPage = lazy(() => import("./pages/BoardPage"))
 const WardrobePage = lazy(() => import("./features/wardrobe/WardrobePage"))
 
-
 const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSubscribed }) => {
   const { pathname } = useLocation()
   const isMessagePage = pathname.includes("/messages")
   const isBoardPage = pathname.includes("/board")
   const isPublicChatPage = pathname.includes("/public-chat")
   const isWardrobePage = pathname.includes("/wardrobe")
-  const { showCreatePostModal, setShowCreatePostModal } = useAppStore()
+  const {
+    showCreatePostModal,
+    setShowCreatePostModal,
+    // showCreateTodoListModal,
+    // setShowCreateTodoListModal,
+  } = useAppStore()
 
   const [feedType, setFeedType] = useState("posts")
 
@@ -126,10 +131,13 @@ const AuthenticatedLayout = ({ deferredPrompt, isInstalled, installApp, isPushSu
           !isPublicChatPage &&
           !shouldHideSidePanels &&
           !isBoardPage &&
-          !isWardrobePage && (<RightPanel />)}
+          !isWardrobePage && <RightPanel />}
       </div>
 
       {showCreatePostModal && <CreatePostModal onClose={() => setShowCreatePostModal(false)} />}
+      {/* {showCreateTodoListModal && (
+        <CreateTodoListModal onClose={() => setShowCreateTodoListModal(false)} />
+      )} */}
     </>
   )
 }

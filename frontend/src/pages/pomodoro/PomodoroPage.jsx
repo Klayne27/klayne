@@ -22,6 +22,9 @@ import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/us
 import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
 import { useGetUserTodoLists } from "../../features/todos/todoListHooks/useTodoListQueries"
 import { usePomodoroTimerStore, STORAGE_KEYS } from "../../store/usePomodoroTimerStore"
+import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
+import { useTodoStore } from "../../store/useTodoStore"
+import CreateTodoListModal from "../../features/todos/components/CreateTodoListModal"
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
@@ -63,6 +66,9 @@ const PomodoroPage = () => {
 
   const alarmAudioRef = useRef(null)
 
+    const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
+  
+
   // ── Todos ─────────────────────────────────────────────────────────────────
   const { myTodoLists, myListsLoading } = useGetUserTodoLists()
 
@@ -88,58 +94,58 @@ const PomodoroPage = () => {
   const { completeTodo } = useCompleteTodo()
 
   // ── handleStart ───────────────────────────────────────────────────────────
-const handleStart = useCallback(() => {
-  if (isActive || !settings || timer <= 0 || isGoalReached) return
+  const handleStart = useCallback(() => {
+    if (isActive || !settings || timer <= 0 || isGoalReached) return
 
-  if (!alarmAudioRef.current) {
-    alarmAudioRef.current = new Audio("/alarm.mp3")
-    alarmAudioRef.current.volume = 0.3
-  }
-  alarmAudioRef.current
-    .play()
-    .then(() => {
-      alarmAudioRef.current.pause()
-      alarmAudioRef.current.currentTime = 0
-    })
-    .catch(() => {})
-
-  if (typeof Notification !== "undefined" && Notification.permission === "default") {
-    Notification.requestPermission()
-  }
-
-  const now = Date.now()
-
-  if (engineActions) {
-    engineActions.startTimestampRef.current = now
-    engineActions.durationAtStartRef.current = timer
-    // Fix: commit the settings value (minutes), never the remaining timer seconds
-    if (!isBreak && engineActions.committedSessionDurationRef) {
-      engineActions.committedSessionDurationRef.current = settings.sessionDuration
+    if (!alarmAudioRef.current) {
+      alarmAudioRef.current = new Audio("/alarm.mp3")
+      alarmAudioRef.current.volume = 0.3
     }
-  }
+    alarmAudioRef.current
+      .play()
+      .then(() => {
+        alarmAudioRef.current.pause()
+        alarmAudioRef.current.currentTime = 0
+      })
+      .catch(() => {})
 
-  // Pass settings.sessionDuration so persistStart writes the right value to localStorage
-  persistStart(
-    now,
+    if (typeof Notification !== "undefined" && Notification.permission === "default") {
+      Notification.requestPermission()
+    }
+
+    const now = Date.now()
+
+    if (engineActions) {
+      engineActions.startTimestampRef.current = now
+      engineActions.durationAtStartRef.current = timer
+      // Fix: commit the settings value (minutes), never the remaining timer seconds
+      if (!isBreak && engineActions.committedSessionDurationRef) {
+        engineActions.committedSessionDurationRef.current = settings.sessionDuration
+      }
+    }
+
+    // Pass settings.sessionDuration so persistStart writes the right value to localStorage
+    persistStart(
+      now,
+      timer,
+      isBreak,
+      sessionCount,
+      selectedTaskId,
+      !isBreak ? settings.sessionDuration : null,
+    )
+    setIsActive(true)
+  }, [
+    isActive,
+    settings,
     timer,
+    isGoalReached,
     isBreak,
     sessionCount,
     selectedTaskId,
-    !isBreak ? settings.sessionDuration : null,
-  )
-  setIsActive(true)
-}, [
-  isActive,
-  settings,
-  timer,
-  isGoalReached,
-  isBreak,
-  sessionCount,
-  selectedTaskId,
-  engineActions,
-  persistStart,
-  setIsActive,
-])
+    engineActions,
+    persistStart,
+    setIsActive,
+  ])
 
   // ── handlePause ───────────────────────────────────────────────────────────
   const handlePause = useCallback(() => {
@@ -195,12 +201,12 @@ const handleStart = useCallback(() => {
   }, [isBreak, sessionCount, setIsActive, engineActions])
 
   // ── handleSessionEndManual — forward button ───────────────────────────────
-const handleSessionEndManual = useCallback(() => {
-  if (engineActions?.isEndingSessionRef) {
-    engineActions.isEndingSessionRef.current = false
-  }
-  engineActions?.handleSessionEnd()
-}, [engineActions])
+  const handleSessionEndManual = useCallback(() => {
+    if (engineActions?.isEndingSessionRef) {
+      engineActions.isEndingSessionRef.current = false
+    }
+    engineActions?.handleSessionEnd()
+  }, [engineActions])
 
   // ── Todo completion ───────────────────────────────────────────────────────
   const handleComplete = useCallback(
@@ -295,129 +301,51 @@ const handleSessionEndManual = useCallback(() => {
           />
 
           {/* ── Active task banner ── */}
-          <div className="w-full max-w-md px-4">
+          <div className="w-full max-w-sm">
             {selectedTask ? (
-              <div className="flex flex-col items-center gap-3">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-500 opacity-80">
-                  Currently Focusing
-                </span>
-                <div className="gray-shadow flex w-full items-center justify-between rounded-2xl border-l-4 border-primary bg-base-200/60 p-4 backdrop-blur-sm transition-all">
-                  <div className="flex flex-1 items-center gap-4 overflow-hidden">
-                    <button
-                      onClick={(e) => handleComplete(selectedTask._id, e)}
-                      className={`group flex size-7 shrink-0 items-center justify-center border-2 ${getPriorityColor(selectedTask.priority)}`}
-                      title="Complete Task"
-                    />
-
-                    <div className="min-w-0 flex-1">
-                      <div className="flex items-center gap-2">
-                        <p className="truncate text-[10px] font-bold uppercase text-primary/80">
-                          {selectedTask.listName}
-                        </p>
-                        {selectedTask.dueDate && (
-                          <span className="rounded-md bg-slate-800 px-1.5 py-0.5 text-[9px] font-medium text-slate-300">
-                            📅 {new Date(selectedTask.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                      <h2 className="break-words text-sm font-bold">{selectedTask.title}</h2>
-                      {selectedTask.description && (
-                        <p className="break-words text-xs text-slate-400">
-                          {selectedTask.description}
-                        </p>
-                      )}
-                    </div>
-                  </div>
-
-                  <button
-                    onClick={() => setSelectedTaskId(null)}
-                    className="ml-3 shrink-0 rounded-lg p-1 text-slate-500 transition-colors duration-200 hover:bg-white/10 hover:text-red-500"
-                  >
-                    <IoClose size={20} />
-                  </button>
+              <div
+                className={`ring-current/20 flex items-center gap-3 rounded-2xl border border-white/5 bg-base-200/50 p-4 ring-1 backdrop-blur-sm transition-all duration-300`}
+              >
+                <button
+                  onClick={(e) => handleComplete(selectedTask._id, e)}
+                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all hover:scale-110 ${getPriorityColor(selectedTask.priority)}`}
+                  title="Mark complete"
+                />
+                <div className="min-w-0 flex-1">
+                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
+                    Focusing on
+                  </p>
+                  <p className="truncate text-sm font-bold">{selectedTask.title}</p>
                 </div>
+                <button
+                  onClick={() => setSelectedTaskId(null)}
+                  className="shrink-0 text-slate-500 transition-colors hover:text-red-400"
+                >
+                  <IoClose size={18} />
+                </button>
               </div>
             ) : (
-              <div className="rounded-xl border border-dashed border-slate-700 py-6 text-center">
-                <p className="text-sm font-medium italic text-slate-500">
-                  No task selected. Pick one below!
-                </p>
+              <div className="rounded-2xl border border-dashed border-slate-700/60 py-4 text-center">
+                <p className="text-xs italic text-slate-600">Select a task below to focus on it</p>
               </div>
             )}
           </div>
         </section>
 
-        {/* ── Tasks list section ── */}
-        <section className="mt-4 w-full max-w-md px-4 pb-24">
-          <div className="mb-6 flex flex-col gap-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-lg font-bold text-white">Your Tasks</h3>
-              <span className="rounded-full bg-primary/10 px-3 py-1 text-[10px] font-black uppercase text-primary">
-                {allTodos.length} Total
-              </span>
-            </div>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Search tasks..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="transition-focus w-full rounded-xl border border-slate-800 bg-base-200 px-4 py-3 text-sm focus:border-primary/50 focus:outline-none focus:ring-1 focus:ring-primary/50"
-              />
-            </div>
-          </div>
+        {/* ── Divider ── */}
+        <div className="flex w-full items-center gap-4 px-6 py-2">
+          <div className="h-px flex-1 bg-slate-800" />
+          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
+            Your Tasks
+          </span>
+          <div className="h-px flex-1 bg-slate-800" />
+        </div>
 
-          {myListsLoading ? (
-            <div className="flex justify-center py-10">
-              <LoadingSpinner size="sm" />
-            </div>
-          ) : (
-            <div className="flex flex-col gap-3">
-              {filteredTasks.map((task) => (
-                <div
-                  key={task._id}
-                  onClick={() => setSelectedTaskId(task._id)}
-                  className={`group flex cursor-pointer items-center justify-between rounded-xl p-4 transition-all duration-200 ${
-                    selectedTaskId === task._id
-                      ? "bg-primary/5 shadow-lg shadow-primary/5 ring-2 ring-primary"
-                      : "bg-base-200 hover:bg-secondary"
-                  }`}
-                >
-                  <div className="flex min-w-0 items-center gap-4">
-                    <div className="shrink-0">
-                      <FaFlag className={`${getTextColor(task.priority)} text-base`} />
-                    </div>
-                    <div className="min-w-0">
-                      <h4 className="break-words text-sm font-bold">{task.title}</h4>
-                      <h4 className="break-words text-xs text-slate-500">{task.description}</h4>
-                      <div className="flex items-center gap-2">
-                        <p className="text-[9px] font-bold uppercase tracking-tighter text-slate-600">
-                          {task.listName}
-                        </p>
-                        {task.dueDate && (
-                          <span className="text-[9px] font-medium text-slate-500">
-                            • Due {new Date(task.dueDate).toLocaleDateString()}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  {selectedTaskId === task._id && (
-                    <div className="ml-2 shrink-0 animate-pulse text-[10px] font-black uppercase text-primary">
-                      Active
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {filteredTasks.length === 0 && (
-                <div className="py-12 text-center">
-                  <p className="text-sm text-slate-500">No tasks found matching your search.</p>
-                </div>
-              )}
-            </div>
-          )}
-        </section>
+        {/* ── Quick task panel ── */}
+        <QuickTaskPanel
+          visuallyCompleted={visuallyCompleted}
+          setVisuallyCompleted={setVisuallyCompleted}
+        />
       </main>
 
       {/* ── Modals ── */}
@@ -461,6 +389,9 @@ const handleSessionEndManual = useCallback(() => {
           confirmButtonText="Reset"
           modalTitle="Reset Timer"
         />
+      )}
+      {showCreateTodoListModal && (
+        <CreateTodoListModal onClose={() => setShowCreateTodoListModal(false)} />
       )}
     </>
   )
