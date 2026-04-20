@@ -833,9 +833,9 @@ const Sidebar = ({
               >
                 {/* Avatar: Removed justify-center */}
                 <div className="relative flex shrink-0">
-                  <div className="rounded-full">
-                    <UserAvatar user={authUser} size={"sm"} />
-                  </div>
+                 
+                    <UserAvatar user={authUser} size={"md"} />
+                 
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
                   ) : (
