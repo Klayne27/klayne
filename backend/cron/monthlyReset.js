@@ -36,13 +36,13 @@ export const performMonthlyReset = async () => {
       .lean();
     const activeUserIds = activeUsers.map((u) => u._id);
 
-    const topUsers = await User.find({
-      "monthlyStats.lastResetMonth": { $ne: currentMonthISO }, // hasn't been reset yet
-      "monthlyStats.studyDuration": { $gt: 0 },
-    })
-      .sort({ "monthlyStats.studyDuration": -1 })
-      .limit(3)
-      .select("_id monthlyStats");
+const topUsers = await User.find({
+  "monthlyStats.lastResetMonth": { $in: [lastMonthISO, null] }, // studied last month or never reset
+  "monthlyStats.studyDuration": { $gt: 0 },
+})
+  .sort({ "monthlyStats.studyDuration": -1 })
+  .limit(3)
+  .select("_id monthlyStats");
 
     // ── Bug 2 fix: actually save the winners ──────────────────────────────
     if (topUsers.length > 0) {

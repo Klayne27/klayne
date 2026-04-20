@@ -1,15 +1,8 @@
+import { getMondayOfWeek } from "../cron/weeklyReset.js";
 import MonthlyWinners from "../models/monthlyWinners.model.js";
 import User from "../models/user.model.js";
 import WeeklyWinners from "../models/weeklyWinners.model.js";
 
-const getMondayOfWeek = (date) => {
-  const d = new Date(date);
-  const day = d.getUTCDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  d.setUTCDate(d.getUTCDate() + diff);
-  d.setUTCHours(0, 0, 0, 0);
-  return d.toISOString().split("T")[0];
-};
 
 export const getWeeklyLeaderboard = async (req, res) => {
   try {
