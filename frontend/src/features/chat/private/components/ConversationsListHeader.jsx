@@ -8,6 +8,7 @@ import { HiMiniUserGroup } from "react-icons/hi2"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../../users/usersHooks/useUserMutations"
 import CreateGroupModal from "../../group/components/CreateGroupModal"
+import UserAvatar from "../../../../components/common/UserAvatar"
 
 function ConversationsListHeader() {
   const { authUser } = useAuthUser()
@@ -47,15 +48,8 @@ function ConversationsListHeader() {
               <span className="mb-2 px-4 text-xs text-gray-400">Set Status</span>
               <div className="mb-2 flex items-center gap-2 px-3">
                 <Link to={`/profile/${authUser.username}`}>
-                  <div className={`avatar relative`}>
-                    <div className="w-10 rounded-full">
-                      <img
-                        src={getOptimizedImageUrl(
-                          authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                          "avatar",
-                        )}
-                      />
-                    </div>
+                  <div className={` relative`}>
+                    <UserAvatar user={authUser} size={"sm"} />
                     {isOnline ? (
                       <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
                     ) : (

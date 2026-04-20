@@ -18,7 +18,13 @@ export const performWeeklyReset = async () => {
   lastMondayDate.setUTCDate(lastMondayDate.getUTCDate() - 7);
   const lastMonday = getMondayOfWeek(lastMondayDate);
 
-  const topUsers = await User.find({ "weeklyStats.studyDuration": { $gt: 0 } })
+  // ── FIX: filter by weekStart === lastMonday ─────────────────────────────
+  // Without this, users who already studied Monday morning will have had
+  // their stats auto-reset to 0 by endStudySession before the cron fires.
+  const topUsers = await User.find({
+    "weeklyStats.weekStart": lastMonday, // ← KEY FIX
+    "weeklyStats.studyDuration": { $gt: 0 },
+  })
     .sort({ "weeklyStats.studyDuration": -1 })
     .limit(3)
     .select("_id weeklyStats");
@@ -35,6 +41,8 @@ export const performWeeklyReset = async () => {
       { upsert: true },
     );
     console.log(`Saved ${winnersData.length} winners for week of ${lastMonday}`);
+  } else {
+    console.log(`No activity found for week of ${lastMonday}, skipping winners save`);
   }
 
   const result = await User.updateMany(
@@ -55,7 +63,7 @@ export const performWeeklyReset = async () => {
 };
 
 const resetWeeklyStats = cron.schedule(
-  "0 8 * * 1",
+  "0 0 * * 1", // midnight UTC Monday — runs before any Monday sessions
   async () => {
     try {
       await performWeeklyReset();

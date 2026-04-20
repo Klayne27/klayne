@@ -3,6 +3,7 @@ import FollowButton from "../common/FollowButton"
 import { formatMemberSinceDate } from "../../utils/date"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
+import UserAvatar from "./UserAvatar"
 
 const ProfileInfoModal = ({ user, position }) => {
   const { authUser } = useAuthUser()
@@ -32,9 +33,10 @@ const ProfileInfoModal = ({ user, position }) => {
           src={getOptimizedImageUrl(user?.coverImg?.imageUrl || "/cover.png", "cover")}
           alt="cover"
           className="h-full w-full rounded-t-xl object-cover"
+          onClick={() => navigate(`/profile/${user.username}`)}
         />
-        <div className="avatar absolute -bottom-8 left-4">
-          <div
+        <div className="absolute -bottom-8 left-4">
+          {/* <div
             className="w-16 cursor-pointer rounded-full border-2 border-base-200"
             onClick={() => navigate(`/profile/${user.username}`)}
           >
@@ -46,7 +48,13 @@ const ProfileInfoModal = ({ user, position }) => {
               alt="profile"
               className="rounded-full"
             />
-          </div>
+          </div> */}
+
+          <UserAvatar
+            user={user}
+            size={"lg2"}
+            onClick={() => navigate(`/profile/${user?.username}`)}
+          />
         </div>
       </div>
 

@@ -78,11 +78,11 @@ setInterval(() => {
   publishScheduledPosts(io, onlineUsersMap);
 }, 60 * 1000);
 
-startMonthlyCronJob();
-startWeeklyCronJob();
-
 server.listen(PORT, async () => {
   console.log(`Server is running on port ${PORT}`);
   await connectMongoDB();
   console.log("MongoDB connected.");
+
+  startMonthlyCronJob();
+  startWeeklyCronJob();
 });

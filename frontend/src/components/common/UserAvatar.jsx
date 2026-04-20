@@ -13,11 +13,12 @@ const SIZE_MAP = {
   sm: "h-8 w-8",
   md: "h-10 w-10",
   lg: "h-14 w-14",
+  lg2: "h-16 w-16",
   xl: "h-20 w-20",
   xxl: "h-32 w-32"
 }
 
-const UserAvatar = ({ user, size = "md", className = "" }) => {
+const UserAvatar = ({ user, size = "md", className = "", onClick }) => {
   const sizeClass = SIZE_MAP[size] || SIZE_MAP.md
   const equippedRing = user?.equipped?.ring
   const ringConfig = equippedRing ? WARDROBE_CONFIG[equippedRing] : null
@@ -31,8 +32,9 @@ const UserAvatar = ({ user, size = "md", className = "" }) => {
           "avatar",
         )}
         alt={user?.username || "avatar"}
-        className={`rounded-full object-cover ${sizeClass} ${className}`}
+        className={`rounded-full object-cover ${sizeClass} ${className} cursor-pointer`}
         loading="lazy"
+        onClick={onClick}
       />
     </div>
   )

@@ -1,5 +1,6 @@
-import { Link } from "react-router-dom"
+import { Link, useNavigate } from "react-router-dom"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import UserAvatar from "../../../../components/common/UserAvatar"
 
 function MessageContentLayout({
   isSentByCurrentUser,
@@ -8,6 +9,7 @@ function MessageContentLayout({
   onUsernameClick,
   children,
 }) {
+  const navigate = useNavigate()
   return (
     <div
       className={`relative flex min-w-0 max-w-full items-start gap-2 ${
@@ -19,7 +21,7 @@ function MessageContentLayout({
         <div className="flex-shrink-0">
           <div>
             <div>
-              <img
+              {/* <img
                 alt="User Avatar"
                 src={getOptimizedImageUrl(
                   message?.sender?.profileImg?.imageUrl || "/avatar-placeholder.png",
@@ -27,6 +29,11 @@ function MessageContentLayout({
                 )}
                 className="mt-0.5 size-9 cursor-pointer rounded-full object-cover"
                 onClick={(e) => onUsernameClick(message.sender, e)}
+              /> */}
+              <UserAvatar
+                size={"sm"}
+                user={message?.sender}
+                onClick={() => navigate(`/profile/${message?.sender?.username}`)}
               />
             </div>
           </div>
