@@ -134,7 +134,7 @@
     black 92% 100%
   );
 }
-.rose-quartz-ring::after {
+/* .rose-quartz-ring::after {
   content: '';
   position: absolute;
   top: -50%; left: -50%;
@@ -147,7 +147,7 @@
     transparent 59%
   );
   animation: rose-glint-sweep 6s ease-in-out infinite;
-}
+} */
 
 
 /* ── Scholar's Glow (Level 25) ────────────────────────────────────
@@ -489,7 +489,7 @@
   animation: _spin-cw 4s linear infinite;
   z-index: -1;
 }
-.prism-spin-ring::after {
+/* .prism-spin-ring::after {
   content: '';
   position: absolute;
   top: -50%; left: -50%;
@@ -498,7 +498,7 @@
     75deg, transparent 46%, rgba(255,255,255,0.85) 50%, transparent 54%
   );
   animation: _spin-cw 3s linear infinite;
-}
+} */
 
 
 /* ── Seafoam Wave (Level 45) ──────────────────────────────────────
@@ -619,7 +619,7 @@
     black 89% 100%
   );
 }
-.diamond-edge-ring::after {
+/* .diamond-edge-ring::after {
   content: '';
   position: absolute;
   top: -50%; left: -50%;
@@ -630,7 +630,7 @@
     rgba(165,243,252,0.5) 54%, transparent 59%
   );
   animation: diamond-girdle-glint 5s ease-in-out infinite;
-}
+} */
 /* Level 40 — Lavender Drift (Ethereal Mist & Petal Drift) */
 
 @keyframes lavender-drift-flow {
@@ -1470,7 +1470,7 @@
   animation: _spin-cw 18s linear infinite;
   mask-image: conic-gradient(from 0deg, black 0% 58%, transparent 68% 100%);
 }
-.moonbeam-ring::after {
+/* .moonbeam-ring::after {
   content: '';
   position: absolute;
   top: -50%; left: -50%;
@@ -1480,7 +1480,7 @@
     rgba(226,232,240,0.5) 54%, transparent 59%
   );
   animation: moonbeam-glint 7s ease-in-out infinite;
-}
+} */
 
 
 /* ── Amber Sunset (75h) ───────────────────────────────────────────
@@ -2075,7 +2075,7 @@
 }
 
 /* The Moving Light Glint (Diamond Flash) */
-.frozen-crystal-ring::after {
+/* .frozen-crystal-ring::after {
   content: '';
   position: absolute;
   top: -50%; left: -50%; width: 200%; height: 200%;
@@ -2087,7 +2087,7 @@
   );
   animation: glint-travel 5s ease-in-out infinite;
   pointer-events: none;
-}
+} */
 
 @keyframes rotate-clockwise {
   from { transform: rotate(0deg); }
