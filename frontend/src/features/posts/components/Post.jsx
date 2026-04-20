@@ -41,6 +41,7 @@ import {
   useToggleBookmarks,
 } from "../postsHooks/usePostsMutations.js"
 import { useLightboxStore } from "../../../store/useLightboxStore.js"
+import UserAvatar from "../../../components/common/UserAvatar.jsx"
 
 const Post = ({
   post,
@@ -354,7 +355,7 @@ const Post = ({
 
   return (
     <div
-      className={`min-w-0 ${
+      className={`min-w-0 z-[1001] ${
         showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
       } flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${
         index === 0 && "pt-3"
@@ -421,17 +422,12 @@ const Post = ({
           ) : (
             <Link
               to={`/profile/${originalPostOwner.username}`}
-              className="size-10 flex-shrink-0 overflow-hidden rounded-full hover:opacity-80"
               onClick={(e) => handleInteractiveClick(e)}
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
+              className="flex"
             >
-              <img
-                src={getOptimizedImageUrl(originalPostOwner?.profileImg?.imageUrl, "avatar")}
-                alt={`${originalPostOwner.username}'s profile`}
-                className="h-full w-full object-cover"
-                loading="lazy"
-              />
+              <UserAvatar user={originalPostOwner} size={"md"} />
             </Link>
           )}
           {hasLineBelow && <div className="mt-1 h-full w-0.5 bg-gray-600/50" />}

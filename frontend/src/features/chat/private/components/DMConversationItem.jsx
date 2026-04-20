@@ -17,8 +17,14 @@ import SlideUpMenu from "../../../../components/common/SlideUpMenu"
 import ConfirmationModal from "../../../../components/common/ConfirmationModal"
 
 import useMobileConversationLongPress from "../../../../hooks/customHooks/useMobileConversationLongPress"
-import { useDeleteAllMessagesOnMySide, useDeleteConversation, useToggleConversationVisibility } from "../privateChatHooks/usePrivateChatMutations"
+import {
+  useDeleteAllMessagesOnMySide,
+  useDeleteConversation,
+  useToggleConversationVisibility,
+} from "../privateChatHooks/usePrivateChatMutations"
 import { useBlockUnblockUser } from "../../../users/usersHooks/useUserMutations"
+import UserAvatar from "../../../../components/common/UserAvatar"
+import { getNameplateClass } from "../../../../utils/getNameplateClass"
 
 function DMConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -151,12 +157,14 @@ function DMConversationItem({ conv }) {
     setShowMenu(false)
   }
 
+  const nameplateClass = getNameplateClass(otherUser?.equipped?.nameplate)
+
   if (!otherUser || !otherUser.username) {
     return null
   }
   return (
     <div
-      className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
+      className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${nameplateClass} ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
       onClick={handleSelectConversation}
       onTouchStart={handleTouchStartWithId}
       onTouchEnd={handleTouchEnd}
@@ -164,19 +172,11 @@ function DMConversationItem({ conv }) {
       onTouchCancel={handleTouchCancel}
     >
       <div className="relative p-1">
-        <img
-          src={getOptimizedImageUrl(
-            otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-            "avatar",
-          )}
-          alt={otherUser.username}
-          className="h-8 w-8 rounded-full object-cover"
-          loading="lazy"
-        />
+        <UserAvatar user={otherUser} size={"sm"} />
         {isOnline ? (
-          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+          <span className="absolute bottom-2 right-1 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
         ) : (
-          <span className="absolute bottom-0.5 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+          <span className="absolute bottom-2 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
         )}
       </div>
 
@@ -184,7 +184,7 @@ function DMConversationItem({ conv }) {
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center" style={userSelectStyle}>
             <span
-              className="mr-1 flex-shrink-0 truncate font-bold"
+              className={`mr-1 flex-shrink-0 truncate font-bold`}
               style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
             >
               {otherUser.fullName}
@@ -196,7 +196,7 @@ function DMConversationItem({ conv }) {
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
             {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-            <span className="flex-shrink-1 min-w-0 truncate text-gray-400">
+            <span className="flex-shrink-1 min-w-0 text-sm truncate text-gray-400">
               @{otherUser.username}
             </span>
             <span className="mx-1 text-xs text-gray-400">·</span>

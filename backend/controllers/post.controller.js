@@ -39,7 +39,7 @@ export const getPostThread = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -56,7 +56,7 @@ export const getPostThread = async (req, res) => {
         .populate({
           path: "user",
           select:
-            "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor",
+            "username fullName isCha isVerified isGoldVerified  profileImg badges preferredBadge nameColor equipped",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({ path: "image", select: "imageUrl" })
@@ -99,7 +99,7 @@ export const getPostReplies = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -120,7 +120,7 @@ export const getPostReplies = async (req, res) => {
           .populate({
             path: "user",
             select:
-              "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor",
+              "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
             populate: { path: "profileImg", select: "imageUrl" },
           })
           .populate({ path: "image", select: "imageUrl" })
@@ -274,7 +274,7 @@ export const createReply = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified profileImg badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" });
@@ -348,6 +348,7 @@ export const getAllPosts = async (req, res) => {
       isGoldVerified: 1,
       nameColor: 1,
       preferredBadge: 1,
+      equipped: 1,
     };
 
     const repostedPostProjection = {
@@ -704,6 +705,7 @@ export const getICPosts = async (req, res) => {
       isGoldVerified: 1,
       nameColor: 1,
       preferredBadge: 1,
+      equipped: 1,
     };
 
     const repostedPostProjection = {
@@ -1076,6 +1078,7 @@ export const getLikedPosts = async (req, res) => {
       isGoldVerified: 1,
       nameColor: 1,
       preferredBadge: 1,
+      equipped: 1,
     };
 
     const repostedPostProjection = {
@@ -1331,7 +1334,7 @@ export const getFollowingPosts = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1342,7 +1345,7 @@ export const getFollowingPosts = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
           populate: {
             path: "profileImg coverImg",
             select: "imageUrl publicId",
@@ -1357,7 +1360,7 @@ export const getFollowingPosts = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         },
       })
       .lean();
@@ -1490,7 +1493,7 @@ export const getUserPosts = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1502,7 +1505,7 @@ export const getUserPosts = async (req, res) => {
           {
             path: "user",
             select:
-              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
             populate: { path: "profileImg coverImg", select: "imageUrl publicId" },
           },
           {
@@ -1600,6 +1603,7 @@ export const getUserReplies = async (req, res) => {
       isGoldVerified: 1,
       nameColor: 1,
       preferredBadge: 1,
+      equipped: 1,
     };
 
     const matchConditions = {
@@ -1734,6 +1738,7 @@ export const getUserMedia = async (req, res) => {
       isGoldVerified: 1,
       preferredBadge: 1,
       nameColor: 1,
+      equipped: 1,
     };
 
     const matchConditions = {
@@ -1806,7 +1811,7 @@ export const getPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg badges isCha isVerified isGoldVerified preferredBadge nameColor",
+          "username fullName profileImg badges isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         populate: {
           path: "profileImg coverImg",
           select: "imageUrl publicId",
@@ -1818,7 +1823,7 @@ export const getPost = async (req, res) => {
           {
             path: "user",
             select:
-              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
             populate: {
               path: "profileImg coverImg",
               select: "imageUrl publicId",
@@ -1912,7 +1917,7 @@ export const getBookmarkedPosts = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+          "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -1923,7 +1928,7 @@ export const getBookmarkedPosts = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
           populate: {
             path: "profileImg",
             select: "imageUrl",
@@ -1937,7 +1942,7 @@ export const getBookmarkedPosts = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+            "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
         },
       })
       .populate("image", "imageUrl")
@@ -1982,7 +1987,7 @@ export const getPinnedPosts = async (req, res) => {
           {
             path: "user",
             select:
-              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+              "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
             populate: {
               path: "profileImg",
               select: "imageUrl",
@@ -2000,7 +2005,7 @@ export const getPinnedPosts = async (req, res) => {
               {
                 path: "user",
                 select:
-                  "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor",
+                  "username fullName profileImg badges isAdmin isCha isVerified isGoldVerified preferredBadge nameColor equipped",
                 populate: {
                   path: "profileImg",
                   select: "imageUrl",
@@ -2228,7 +2233,7 @@ export const createPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
         populate: {
           path: "profileImg",
           select: "imageUrl",
@@ -2928,7 +2933,7 @@ export const createVentPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({ path: "image", select: "imageUrl" })
@@ -3041,7 +3046,7 @@ export const getVentPosts = async (req, res) => {
                       nameColor: 1,
                       badges: 1,
                       preferredBadge: 1,
-                      nameColor: 1,
+                      equipped: 1,
                     },
                   },
                 ],
@@ -3124,6 +3129,7 @@ export const getVentPosts = async (req, res) => {
                 nameColor: "$author.nameColor",
                 badges: "$author.badges",
                 preferredBadge: "$author.preferredBadge",
+                equipped: "$author.equipped"
               },
             },
           },
@@ -3169,7 +3175,7 @@ export const editPost = async (req, res) => {
         .populate({
           path: "user",
           select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
           populate: { path: "profileImg", select: "imageUrl" },
         })
         .populate({
@@ -3177,7 +3183,7 @@ export const editPost = async (req, res) => {
           populate: {
             path: "user",
             select:
-              "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+              "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
             populate: { path: "profileImg", select: "imageUrl" },
           },
         });
@@ -3197,7 +3203,7 @@ export const editPost = async (req, res) => {
       .populate({
         path: "user",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
         populate: { path: "profileImg", select: "imageUrl" },
       })
       .populate({
@@ -3205,7 +3211,7 @@ export const editPost = async (req, res) => {
         populate: {
           path: "user",
           select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
           populate: { path: "profileImg", select: "imageUrl" },
         },
       });

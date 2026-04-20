@@ -1,5 +1,5 @@
 import { useRef, useState } from "react"
-import { Link, useNavigate, useParams } from "react-router-dom"
+import { useNavigate, useParams } from "react-router-dom"
 
 import Posts from "../features/posts/components/Posts.jsx"
 import ProfileHeaderSkeleton from "../components/skeletons/ProfileHeaderSkeleton"
@@ -39,6 +39,8 @@ import {
 import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 import { useLightboxStore } from "../store/useLightboxStore.js"
+import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
+import UserAvatar from "../components/common/UserAvatar.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -57,6 +59,13 @@ const formatHeatmapDate = (dateString) => {
     day: "numeric",
   }).format(date)
 }
+
+
+ const getOverlayClass = (wardrobeConfig, equippedOverlayKey) => {
+  if (!equippedOverlayKey || !wardrobeConfig[equippedOverlayKey]) return "";
+  
+  return wardrobeConfig[equippedOverlayKey].overlayClass || "";
+};
 
 const ProfilePage = ({ feedType, setFeedType }) => {
   const openProfileImageModal = useAppStore((state) => state.openProfileImageModal)
@@ -89,6 +98,15 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     useGetConversationBetweenUsers(userProfile?._id)
 
   const openLightbox = useLightboxStore((s) => s.openLightbox)
+
+  const equippedFont = userProfile?.equipped?.font
+  const equippedTheme = userProfile?.equipped?.theme
+
+  // 2. Map them to your config values
+  const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
+  const themeVars = WARDROBE_CONFIG[equippedTheme]?.cssVars || {}
+
+  const activeOverlayClass = getOverlayClass(WARDROBE_CONFIG, userProfile?.equipped?.overlay)
 
   const getDatesInRange = (startDate, endDate) => {
     const dates = []
@@ -269,12 +287,21 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     will also not be able to follow or message you, and you will not see notifications from them.`
   }
 
+  console.log(userProfile?.equipped?.overlay);
+
   return (
     <>
       <ScrollToTop />
-      <div className="template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent">
+      <div
+        className={`template min-h-screen min-w-0 flex-[4_4_0] overflow-hidden border-accent ${WARDROBE_CONFIG[userProfile?.equipped?.fonts] || ""} ${userProfile?.equipped?.theme ? "custom-gradient-bg" : ""}`}
+        style={{
+          ...fontVars,
+          ...themeVars,
+          fontFamily: "var(--user-font, inherit)", // Force the font variable
+        }}
+      >
+        {" "}
         {!hasBlockedYou && (isLoading || isRefetching) && !isError && <ProfileHeaderSkeleton />}
-
         {showFullProfileHeader && userProfile && (
           <>
             <div className="flex items-center gap-2 px-3 py-0.5 md:gap-4 md:px-4 md:py-2">
@@ -301,30 +328,33 @@ const ProfilePage = ({ feedType, setFeedType }) => {
               </div>
             </div>
             <div className="group/cover relative">
-              {/* <Link to={userProfile?.coverImg?._id && `/images/${userProfile?.coverImg?._id}`}> */}
-              <img
-                src={getOptimizedImageUrl(
-                  coverImg || userProfile?.coverImg?.imageUrl || "/cover.png",
-                  "cover",
+              <div className={`group/cover relative overflow-hidden ${activeOverlayClass}`}>
+                {" "}
+                {/* <div className="sakura-layer-3 pointer-events-none absolute inset-0 z-0" /> */}
+                {/* <div className="sakura-mist" /> */}
+                <img
+                  src={getOptimizedImageUrl(
+                    userProfile?.coverImg?.imageUrl || "/cover.png",
+                    "cover",
+                  )}
+                  onClick={() => {
+                    const url = userProfile?.coverImg?.imageUrl || "/cover.png"
+                    openLightbox({ imageUrl: url })
+                  }}
+                  className="h-52 w-full cursor-pointer object-cover"
+                  alt="cover image"
+                  loading="lazy"
+                />
+                {/* Edit button stays inside inner wrapper so it's clipped correctly */}
+                {isMyProfile && (
+                  <div
+                    className="absolute right-2 top-2 z-10 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
+                    onClick={() => coverImgRef.current.click()}
+                  >
+                    <MdEdit className="h-5 w-5" />
+                  </div>
                 )}
-                onClick={() => {
-                  const url = userProfile?.coverImg?.imageUrl || "/cover.png"
-                  openLightbox({ imageUrl: url })
-                }}
-                className={`h-52 w-full cursor-pointer object-cover`}
-                alt="cover image"
-                loading="lazy"
-              />
-              {/* </Link> */}
-              {isMyProfile && (
-                <div
-                  className="absolute right-2 top-2 cursor-pointer rounded-full bg-primary bg-opacity-75 p-2 text-white opacity-0 transition duration-200 group-hover/cover:opacity-100"
-                  onClick={() => coverImgRef.current.click()}
-                >
-                  <MdEdit className="h-5 w-5" />
-                </div>
-              )}
-
+              </div>
               <input
                 type="file"
                 hidden
@@ -339,30 +369,44 @@ const ProfilePage = ({ feedType, setFeedType }) => {
                 ref={profileImgRef}
                 onChange={(e) => handleImgChange(e, "profileImg")}
               />
-              <div className="avatar absolute -bottom-16 left-4">
-                <div className="group/avatar relative w-32 rounded-full border-4 border-base-100">
-                  <img
-                    src={getOptimizedImageUrl(
-                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                      "avatar",
-                    )}
-                    alt="user avatar"
-                    className="cursor-pointer"
-                    onClick={() => {
-                      const url =
-                        profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
-                      openLightbox({ imageUrl: url })
+              <div className="absolute -bottom-16 left-4">
+                <div
+                  className="group/avatar relative cursor-pointer"
+                  onClick={() => {
+                    const url =
+                      profileImg || userProfile?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                    openLightbox({ imageUrl: url })
+                  }}
+                >
+                  {/* 1. Use the component instead of the raw <img> */}
+                  <UserAvatar
+                    user={{
+                      ...userProfile,
+                      // If a local profileImg exists (from a fresh upload),
+                      // we override the nested imageUrl so UserAvatar displays the preview
+                      profileImg: profileImg ? { imageUrl: profileImg } : userProfile?.profileImg,
                     }}
-                    loading="lazy"
+                    size="xxl"
+                    className={`cursor-pointer ${userProfile?.equipped}`}
+                    // 2. Attach the Lightbox click handler here
                   />
+
+                  {/* 3. Keep the edit button overlay */}
                   {isMyProfile && (
-                    <div className="absolute right-3 top-5 cursor-pointer rounded-full bg-primary p-1 text-white opacity-0 duration-200 group-hover/avatar:opacity-100">
-                      <MdEdit className="h-4 w-4" onClick={() => profileImgRef.current.click()} />
+                    <div
+                      className="absolute right-1 top-1 z-10 cursor-pointer rounded-full bg-primary p-1.5 text-white opacity-0 shadow-md duration-200 group-hover/avatar:opacity-100"
+                      onClick={(e) => {
+                        e.stopPropagation()
+                        profileImgRef.current.click()
+                      }}
+                    >
+                      <MdEdit className="h-4 w-4" />
                     </div>
                   )}
                 </div>
               </div>
             </div>
+
             <div className="mt-5 flex justify-end gap-2 px-4">
               {authUser.username === username && (
                 <button
@@ -445,13 +489,11 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             </div>
           </>
         )}
-
         {!isLoading && !isRefetching && displayMessage && (
           <p className="mt-16 flex items-center justify-center text-center text-lg text-slate-400">
             {displayMessage}
           </p>
         )}
-
         {showFullProfileContent && userProfile && (
           <>
             <div className="mt-3 flex flex-col gap-4 px-4">
@@ -730,7 +772,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
             )}
           </>
         )}
-
         {showFullProfileContent && userProfile && !isBlockedByYou && (
           <Posts
             feedType={feedType}

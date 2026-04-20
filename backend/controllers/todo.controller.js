@@ -1,4 +1,4 @@
-import LevelUp from "../models/levelup.model.js";
+// import LevelUp from "../models/levelup.model.js";
 import Todo from "../models/todo.model.js";
 import TodoActivity from "../models/todoActivity.model.js";
 import TodoList from "../models/todoList.model.js";
@@ -244,6 +244,7 @@ export const completeTodo = async (req, res) => {
     //     urgent: 200,
     //   };
 
+<<<<<<< HEAD
     //   let xpToAdd = xpRewards[todo.priority] || 25;
 
     //   const parentTodoList = await TodoList.findById(todo.todoList);
@@ -272,6 +273,36 @@ export const completeTodo = async (req, res) => {
     //   await user.save();
 
     //   // ⭐ Corrected response payload ⭐
+=======
+      // let xpToAdd = xpRewards[todo.priority] || 25;
+
+      // const parentTodoList = await TodoList.findById(todo.todoList);
+      // if (parentTodoList && parentTodoList.isPublic) {
+      //   xpToAdd *= 2;
+      // }
+
+      // user.pomodoroXP += xpToAdd;
+
+      // let levelsGained = [];
+      // let xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
+
+      // while (user.pomodoroXP >= xpNeededForCurrentLevel) {
+      //   user.pomodoroXP -= xpNeededForCurrentLevel;
+      //   user.pomodoroLevel += 1;
+      //   levelsGained.push(user.pomodoroLevel);
+
+      //   await LevelUp.create({
+      //     user: user._id,
+      //     newLevel: user.pomodoroLevel,
+      //   });
+
+      //   xpNeededForCurrentLevel = xpForLevel(user.pomodoroLevel + 1);
+      // }
+
+      // await user.save();
+
+      // ⭐ Corrected response payload ⭐
+>>>>>>> feature/inventory
     //   return res.status(200).json({
     //     todo,
     //     xpResult: {

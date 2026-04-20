@@ -90,7 +90,7 @@ export const performWeeklyReset = async () => {
 };
 
 const resetWeeklyStats = cron.schedule(
-  "0 0 * * 1",
+  "0 0 * * 1", // midnight UTC Monday — runs before any Monday sessions
   async () => {
     try {
       await performWeeklyReset();

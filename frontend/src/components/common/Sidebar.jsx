@@ -1,7 +1,7 @@
 import { useLocation, useNavigate } from "react-router-dom"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { CiMail, CiSearch } from "react-icons/ci"
-import { useState, useRef, useEffect, useCallback } from "react"
+import { useState, useRef, useEffect, useCallback, Suspense } from "react"
 import { useSocket } from "../../context/SocketContext"
 import { useQueryClient } from "@tanstack/react-query"
 import { BiLogOut } from "react-icons/bi"
@@ -16,7 +16,14 @@ import { useTouchHoverEffect } from "../../hooks/customHooks/useTouchHoverEffect
 import { formatCount } from "../../utils/textUtils"
 import MobileSideModal from "./MobileSideModal"
 import { postKeys } from "../../features/posts/postsHooks/postKeys"
-import { TbMailFilled, TbUser, TbUserFilled, TbUserX } from "react-icons/tb"
+import {
+  TbHanger2,
+  TbHanger2Filled,
+  TbMailFilled,
+  TbUser,
+  TbUserFilled,
+  TbUserX,
+} from "react-icons/tb"
 import { GoBell, GoBellFill, GoHome, GoHomeFill } from "react-icons/go"
 import { IoBookmark, IoBookmarkOutline, IoChatbubbles, IoChatbubblesOutline } from "react-icons/io5"
 import { HiOutlinePaintBrush, HiOutlineEllipsisHorizontalCircle } from "react-icons/hi2"
@@ -32,10 +39,17 @@ import {
   useUpdateStatusPreference,
 } from "../../features/users/usersHooks/useUserMutations"
 import { useIsMobile } from "../../hooks/customHooks/useIsMobile"
-import { PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import {
+  PiCoatHanger,
+  PiCoatHangerBold,
+  PiSquaresFourFill,
+  PiSquaresFourLight,
+} from "react-icons/pi"
 import { useTheme } from "../../context/ThemeContext"
 import { getKlayneColor } from "../../utils/getKlayneColor"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
+import WardrobePage from "../../features/wardrobe/WardrobePage"
+import UserAvatar from "./UserAvatar"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -77,6 +91,8 @@ const Sidebar = ({
 
   const [isFollowingModalOpen, setIsFollowingModalOpen] = useState(false)
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
+
+  const [showWardrobe, setShowWardrobe] = useState(false)
 
   const [showMorePopover, setShowMorePopover] = useState(false)
   const moreButtonRef = useRef(null)
@@ -413,7 +429,8 @@ const Sidebar = ({
 
   const iconWrapperStyle =
     "relative flex w-12 items-center justify-center rounded-full  py-2 transition duration-200 group-hover:bg-secondary md:group-hover:bg-transparent"
-  const shouldCollapseSidebar = pathname.includes("/messages") || pathname.includes("/board")
+  const shouldCollapseSidebar =
+    pathname.includes("/messages") || pathname.includes("/board") || pathname.includes("/wardrobe")
 
   if (!shouldRenderMobileSidebar) {
     return null
@@ -753,6 +770,17 @@ const Sidebar = ({
                     <button
                       onClick={(e) => {
                         e.stopPropagation()
+                        navigate("/wardrobe")
+                        setShowMorePopover(false)
+                      }}
+                      className="flex w-full items-center gap-3 px-4 py-3 text-left font-semibold transition hover:bg-secondary"
+                    >
+                      <PiCoatHangerBold className="size-6" />
+                      <span>Wardrobe</span>
+                    </button>
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation()
                         navigate("/themes")
                         setShowMorePopover(false)
                       }}
@@ -804,15 +832,9 @@ const Sidebar = ({
                 onTouchCancel={handleTouchCancel}
               >
                 {/* Avatar: Removed justify-center */}
-                <div className="avatar relative flex shrink-0">
-                  <div className="w-10 rounded-full">
-                    <img
-                      src={getOptimizedImageUrl(
-                        authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                        "avatar",
-                      )}
-                      alt="profile"
-                    />
+                <div className="relative flex shrink-0">
+                  <div className="rounded-full">
+                    <UserAvatar user={authUser} size={"sm"} />
                   </div>
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
