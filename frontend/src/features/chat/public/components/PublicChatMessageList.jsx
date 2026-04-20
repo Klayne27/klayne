@@ -258,7 +258,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
 
         <MessageContentLayout isSentByCurrentUser={isSentByCurrentUser} message={message}>
           {/* Indent messages not first in group */}
-          {!isSentByCurrentUser && !message.isFirstInGroup && <div className="w-9 flex-shrink-0" />}
+          {!isSentByCurrentUser && !message.isFirstInGroup && <div className="w-8 flex-shrink-0" />}
 
           <ShowMessageTimeOnHover
             message={message}

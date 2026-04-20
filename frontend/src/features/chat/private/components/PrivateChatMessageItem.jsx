@@ -273,7 +273,7 @@ const PrivateChatMessageItem = ({
           message={message}
         >
           {/* Indent messages not first in group */}
-          {!isSentByCurrentUser && !message.isFirstInGroup && <div className="mr-1 h-8 w-8"></div>}
+          {!isSentByCurrentUser && !message.isFirstInGroup && <div className="w-7 mr-0.5"></div>}
 
           <ShowMessageTimeOnHover
             message={message}
