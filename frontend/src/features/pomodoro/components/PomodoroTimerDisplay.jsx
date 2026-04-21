@@ -80,7 +80,10 @@ function PomodoroTimerDisplay({
         />
 
         <svg
-          className="h-full w-full -rotate-90 drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]"
+          className="h-full w-full -rotate-90 overflow-visible" // CRITICAL: overflow-visible
+          style={{
+            filter: `drop-shadow(0 0 20px ${timerState.glow})`,
+          }}
           viewBox="0 0 100 100"
         >
           <circle
