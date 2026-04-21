@@ -49,20 +49,29 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
 
   const selectedTask = allTodos.find((t) => t._id === selectedTaskId)
 
-  const handleQuickAdd = useCallback(
-    (e) => {
-      if (e.key !== "Enter" || !quickInput.trim()) return
-      if (!selectedListId) {
-        showAppToast("Select a list first", "error")
-        return
-      }
-      createTodo({ title: quickInput.trim(), todoListId: selectedListId, priority: "low" })
-      setQuickInput("")
-      inputRef.current?.focus()
-    },
-    [quickInput, selectedListId, createTodo],
-  )
+const handleQuickAdd = useCallback(
+  (e) => {
+    // Prevent page refresh on form submission
+    if (e) e.preventDefault()
 
+    if (!quickInput.trim()) return
+
+    if (!selectedListId) {
+      showAppToast("Select a list first", "error")
+      return
+    }
+
+    createTodo({
+      title: quickInput.trim(),
+      todoListId: selectedListId,
+      priority: "low",
+    })
+
+    setQuickInput("")
+    inputRef.current?.focus()
+  },
+  [quickInput, selectedListId, createTodo],
+)
   const handleComplete = useCallback(
     (todoId, e) => {
       e.stopPropagation()
@@ -136,7 +145,11 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
       {/* ── Input & Search Group ── */}
       <div className="flex flex-col gap-3">
         {/* Quick Add */}
-        <div className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5">
+        <form
+          onSubmit={handleQuickAdd}
+          className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5"
+        >
+          {" "}
           <IoAdd
             className="shrink-0 text-slate-500 transition-colors group-focus-within:text-primary"
             size={22}
@@ -144,9 +157,9 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
           <input
             ref={inputRef}
             type="text"
+            enterKeyHint="done" // Changes mobile keyboard "Enter" to "Done" or "Go"
             value={quickInput}
             onChange={(e) => setQuickInput(e.target.value)}
-            onKeyDown={handleQuickAdd}
             placeholder={
               selectedListId
                 ? `Add to ${allLists.find((l) => l._id === selectedListId)?.name}...`
@@ -154,19 +167,20 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
             }
             className="h-12 flex-1 bg-transparent text-sm font-medium placeholder-slate-600 focus:outline-none"
           />
-          <kbd className="hidden rounded bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-600 md:block">
+          <kbd className="hidden rounded bg-accent/30 px-2 py-1 text-[10px] font-bold text-slate-500 md:block">
             ENTER
           </kbd>
-        </div>
+        </form>
 
         {/* Search Bar - Slimmer version */}
-        <div className="relative">
+        <div className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-md transition-[border,background-color,box-shadow] duration-200 focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5">
           <input
             type="text"
             placeholder="Filter tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-accent/50 bg-transparent px-4 py-2 text-[11px] focus:border-primary font-medium text-slate-400 placeholder-slate-700 transition-all focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/5 focus:border-white/10 focus:outline-none"
+            /* Added outline-none and tap-highlight-transparent */
+            className="[WebkitTapHighlightColor:transparent] w-full rounded-xl bg-transparent px-4 py-2 text-[11px] font-medium text-slate-400 placeholder-slate-700 outline-none ring-0 focus:outline-none focus:ring-0"
           />
         </div>
       </div>
@@ -213,9 +227,7 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
                   </button>
 
                   <div className="min-w-0">
-                    <p
-                      className={`truncate text-sm font-bold tracking-tight transition-all `}
-                    >
+                    <p className={`truncate text-sm font-bold tracking-tight transition-all`}>
                       {task.title}
                     </p>
                     <div className="flex items-center gap-2">

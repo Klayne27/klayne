@@ -29,7 +29,7 @@ const NavItem = ({ icon, path, label, badge, navigate }) => {
   return (
     <button
       onClick={() => navigate(path)}
-      className={`group relative flex h-11 w-11 items-center justify-center rounded-xl transition-all duration-300 ${
+      className={`group relative flex size-8 md:size-11 items-center justify-center rounded-xl transition-all duration-300 ${
         isActive
           ? "bg-white/15 text-primary shadow-[inset_0_0_10px_rgba(255,255,255,0.1)] outline outline-1 outline-white/20"
           : "text-slate-500 hover:scale-110 hover:bg-white/10 active:scale-95"
@@ -47,9 +47,9 @@ const NavItem = ({ icon, path, label, badge, navigate }) => {
       </span>
 
       {/* Active Indicator Dot */}
-      {isActive && (
+      {/* {isActive && (
         <div className="absolute -bottom-1.5 h-1 w-1 rounded-full bg-primary shadow-[0_0_8px_#a855f7]" />
-      )}
+      )} */}
     </button>
   )
 }
