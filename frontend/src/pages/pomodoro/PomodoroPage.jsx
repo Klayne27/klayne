@@ -271,7 +271,7 @@ const PomodoroPage = () => {
           {/* Active task banner: Cleaner glass design */}
           <div className="w-full max-w-sm px-6">
             {selectedTask ? (
-              <div className="group flex items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
+              <div className="group flex items-center gap-4 rounded-3xl border border-accent/50 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
                 <button
                   onClick={(e) => handleComplete(selectedTask._id, e)}
                   className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
@@ -297,7 +297,7 @@ const PomodoroPage = () => {
                 </button>
               </div>
             ) : (
-              <div className="rounded-3xl border border-dashed border-white/5 py-4 text-center">
+              <div className="rounded-3xl border border-dashed border-accent/50 py-4 text-center">
                 <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
                   No Task Selected
                 </p>

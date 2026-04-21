@@ -104,7 +104,7 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
             className={`rounded-xl px-4 py-2 text-[11px] font-bold transition-all duration-300 ${
               !selectedListId
                 ? `bg-primary ${shouldTextBeWhite(theme)} scale-105 shadow-lg shadow-primary/20`
-                : "border border-white/5 bg-base-200/50 text-slate-500 hover:bg-base-200 hover:text-slate-300"
+                : "border border-accent/50 bg-base-200/50 text-slate-500 hover:bg-base-200 hover:text-slate-300"
             }`}
           >
             All Tasks
@@ -136,7 +136,7 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
       {/* ── Input & Search Group ── */}
       <div className="flex flex-col gap-3">
         {/* Quick Add */}
-        <div className="group relative flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-white/[0.04] focus-within:ring-4 focus-within:ring-primary/5">
+        <div className="group relative flex items-center gap-3 rounded-2xl border border-accent/50 px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-secondary/20 focus-within:ring-4 focus-within:ring-primary/5">
           <IoAdd
             className="shrink-0 text-slate-500 transition-colors group-focus-within:text-primary"
             size={22}
@@ -166,7 +166,7 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
             placeholder="Filter tasks..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-white/5 bg-transparent px-4 py-2 text-[11px] font-medium text-slate-400 placeholder-slate-700 transition-all focus:border-white/10 focus:outline-none"
+            className="w-full rounded-xl border border-accent/50 bg-transparent px-4 py-2 text-[11px] focus:border-primary font-medium text-slate-400 placeholder-slate-700 transition-all focus-within:border-primary/40 focus-within:ring-4 focus-within:ring-primary/5 focus:border-white/10 focus:outline-none"
           />
         </div>
       </div>
@@ -192,7 +192,7 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
                     ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(var(--p),0.05)]"
                     : isDone
                       ? "border-transparent opacity-40 grayscale"
-                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.05]"
+                      : "border-accent/50 bg-white/[0.02] hover:border-accent/70 hover:bg-secondary/30"
                 }`}
               >
                 {/* Active Indicator Line */}
@@ -205,21 +205,16 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
                     onClick={(e) => !isDone && handleComplete(task._id, e)}
                     className="relative shrink-0"
                   >
-                    {isDone ? (
-                      <IoCheckmarkCircle
-                        size={24}
-                        className="animate-in zoom-in text-primary duration-300"
-                      />
-                    ) : (
+                    {
                       <div
                         className={`h-6 w-6 rounded-full border-2 transition-all group-hover:scale-110 ${getPriorityColor(task.priority)} bg-base-100 shadow-sm`}
                       />
-                    )}
+                    }
                   </button>
 
                   <div className="min-w-0">
                     <p
-                      className={`truncate text-sm font-bold tracking-tight transition-all ${isDone ? "text-slate-500 line-through" : "text-slate-200"}`}
+                      className={`truncate text-sm font-bold tracking-tight transition-all `}
                     >
                       {task.title}
                     </p>
