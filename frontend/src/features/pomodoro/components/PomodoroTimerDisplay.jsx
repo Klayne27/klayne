@@ -19,7 +19,6 @@ function PomodoroTimerDisplay({
 }) {
   const { updateSettings } = useUpdatePomodoroSettings()
   const { settings } = useGetPomodoroSettings()
-  const isMobile = useIsMobile()
 
   const toggleMute = () => {
     updateSettings({ ...settings, isMuted: !settings.isMuted })
@@ -50,7 +49,21 @@ function PomodoroTimerDisplay({
     minute: "2-digit",
   })
 
+  const handleSkipAction = () => {
+    if (isBreak) {
+      setIsActive(false)
+      startNextTimer(true, sessionCount, false)
+      showAppToast("Break skipped!", "info")
+    } else {
+      // Emergency Skip
+      onSessionEnd()
+      showAppToast("Session skipped", "warning")
+    }
+  }
+
   const isUrgent = minutes === 0 && seconds < 10 && !isGoalReached
+  // Determine if skip should be visible (During break OR if timer is 00:00 but stuck)
+  const showSkip = !isGoalReached && (isBreak || (minutes <= 0 && seconds <= 0))
 
   const ringColor = isGoalReached
     ? "stroke-slate-600"
@@ -61,7 +74,6 @@ function PomodoroTimerDisplay({
   return (
     <div className="relative flex flex-col items-center gap-6">
       <div className={`relative h-64 w-64 md:h-80 md:w-80 ${isUrgent ? "animate-pulse" : ""}`}>
-        {/* Subtle background glow localized to the ring */}
         <div
           className="absolute inset-4 rounded-full opacity-20 blur-[60px] transition-colors duration-1000"
           style={{ backgroundColor: timerState.color.replace("text-", "") }}
@@ -71,7 +83,6 @@ function PomodoroTimerDisplay({
           className="h-full w-full -rotate-90 drop-shadow-[0_0_10px_rgba(0,0,0,0.5)]"
           viewBox="0 0 100 100"
         >
-          {/* Main Track */}
           <circle
             cx="50"
             cy="50"
@@ -80,7 +91,6 @@ function PomodoroTimerDisplay({
             strokeWidth="1.5"
             className="stroke-secondary"
           />
-          {/* Progress Ring */}
           <circle
             cx="50"
             cy="50"
@@ -105,21 +115,43 @@ function PomodoroTimerDisplay({
               : `${String(minutes).padStart(2, "0")}:${String(seconds).padStart(2, "0")}`}
           </span>
 
-          <div className="flex flex-col items-center gap-1">
+          <div className="mt-2 flex flex-col items-center gap-3">
+            {/* Finish Time / Mute Toggle */}
             <button
               onClick={toggleMute}
-              className="mt-2 flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.03] px-4 py-1.5 text-[10px] font-bold text-slate-400 hover:bg-white/[0.08] hover:text-white"
+              className="flex items-center gap-2 rounded-full border border-white/5 bg-white/[0.05] px-4 py-1.5 text-[10px] font-black text-slate-400 backdrop-blur-sm transition-all hover:bg-white/[0.1] hover:text-white"
             >
               {settings?.isMuted ? <FaBellSlash size={10} /> : <FaBell size={10} />}
               <span className="uppercase tracking-widest">{finishTime}</span>
             </button>
 
-            <button
-              onClick={() => setShowResetCurrentSessionModal(true)}
-              className="rounded-full p-2 text-slate-700 transition-all hover:rotate-180 hover:text-slate-400"
-            >
-              <RxReset size={16} />
-            </button>
+            {/* Sub-Controls Row */}
+            <div className="flex items-center gap-4">
+              <button
+                onClick={() => setShowResetCurrentSessionModal(true)}
+                className="group flex flex-col items-center gap-1 text-slate-600 transition-all hover:text-slate-400"
+                title="Reset Session"
+              >
+                <RxReset
+                  size={18}
+                  className="transition-transform duration-500 group-hover:rotate-180"
+                />
+                <span className="text-[8px] font-black uppercase tracking-tighter opacity-0 group-hover:opacity-100">
+                  Reset
+                </span>
+              </button>
+
+              {showSkip && (
+                <button
+                  onClick={handleSkipAction}
+                  className="group flex flex-col items-center gap-1 text-primary transition-all hover:scale-110"
+                  title={isBreak ? "Skip Break" : "Emergency Skip"}
+                >
+                  <FaForward size={18} className="animate-pulse" />
+                  <span className="text-[8px] font-black uppercase tracking-tighter">Skip</span>
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

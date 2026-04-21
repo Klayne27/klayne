@@ -29,7 +29,12 @@ import { FaCheckCircle } from "react-icons/fa"
 const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
   if (isGoalReached)
     return { label: "Finished!", color: "text-slate-400", glow: "rgba(100,116,139,0.15)" }
-  if (!isBreak) return { label: "Focus Time", color: "text-primary", glow: "rgba(var(--p),0.18)" }
+ if (!isBreak)
+   return {
+     label: "Focus Time",
+     color: "text-primary",
+     glow: "rgba(25, 132, 255, 0.18)", // Use the Hex-to-RGB conversion here
+   }
   const isLong =
     sessionCount > 0 &&
     settings?.sessionsBeforeLongBreak > 0 &&
