@@ -81,13 +81,13 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
           <div className="flex items-center gap-2">
             <Link
               to="/study-dashboard"
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-400 transition-all hover:bg-white/10 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-400 transition-all hover:bg-secondary/50"
             >
               <IoIosStats size={18} />
             </Link>
             <button
               onClick={() => setShowInfoModal(true)}
-              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-400 transition-all hover:bg-white/10 hover:text-white"
+              className="flex h-9 w-9 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-400 transition-all hover:bg-secondary/50"
             >
               <FaInfoCircle size={17} />
             </button>
