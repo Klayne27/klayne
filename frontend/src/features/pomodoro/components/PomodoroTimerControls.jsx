@@ -1,4 +1,5 @@
-import { FaCog, FaPlay, FaPause, FaRedo } from "react-icons/fa"
+import { FaCog, FaPlay, FaPause } from "react-icons/fa"
+import { RxReset } from "react-icons/rx"
 
 function PomodoroTimerControls({
   onOpenSettingsPage,
@@ -10,31 +11,34 @@ function PomodoroTimerControls({
   onResetTimerClick,
 }) {
   return (
-    <div className="flex w-full items-center justify-center gap-8">
+    <div className="flex items-center justify-center gap-8">
       <button
         onClick={onOpenSettingsPage}
-        className="p-2 text-slate-500 transition-colors hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-        aria-label="Open settings"
-        disabled={isGoalReached}
+        className="group flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-slate-200"
       >
-        <FaCog size={30} />
+        <FaCog size={18} className="transition-transform duration-500 group-hover:rotate-45" />
       </button>
 
       <button
         onClick={isActive ? onPause : onStart}
-        className={`text-6xl transition-colors duration-300 hover:text-primary active:scale-95 disabled:opacity-50 ${isActive ? "text-teal-500" : "text-primary"}`}
-        aria-label={isActive ? "Pause timer" : "Start timer"}
         disabled={timer <= 0 || isGoalReached}
+        className={`relative flex h-20 w-20 items-center justify-center rounded-[2.5rem] shadow-2xl transition-all duration-500 active:scale-90 ${
+          isActive
+            ? "bg-teal-500/10 text-teal-400 ring-1 ring-teal-500/30 hover:bg-teal-500/20"
+            : "bg-primary/10 text-primary ring-1 ring-primary/30 hover:bg-primary/20"
+        }`}
       >
-        {isActive ? <FaPause size={50} /> : <FaPlay size={50} />}
+        {isActive && (
+          <span className="absolute inset-0 animate-ping rounded-[2.5rem] bg-teal-500/10 opacity-40" />
+        )}
+        {isActive ? <FaPause size={28} /> : <FaPlay size={28} className="ml-1.5" />}
       </button>
 
       <button
         onClick={onResetTimerClick}
-        className="p-2 text-slate-500 transition-colors hover:text-primary"
-        aria-label="Reset timer"
+        className="flex h-12 w-12 items-center justify-center rounded-2xl border border-white/5 bg-white/[0.03] text-slate-500 backdrop-blur-md transition-all hover:bg-white/[0.08] hover:text-slate-200"
       >
-        <FaRedo size={28} />
+        <RxReset size={20} />
       </button>
     </div>
   )

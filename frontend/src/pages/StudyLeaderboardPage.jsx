@@ -186,7 +186,7 @@ function StudyLeaderboardPage() {
         <div className="mb-6 flex items-center ">
           <button
             onClick={() => navigate(-1)}
-            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
+            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-secondary"
           >
             <FaArrowLeft className="text-xl" />
           </button>
@@ -319,7 +319,7 @@ function StudyLeaderboardPage() {
       <div className="mb-6 flex items-center">
         <button
           onClick={() => navigate(-1)}
-          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
+          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-secondary"
         >
           <FaArrowLeft className="text-xl" />
         </button>

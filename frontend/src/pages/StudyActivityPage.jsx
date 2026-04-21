@@ -1,23 +1,20 @@
 import { Link, useNavigate } from "react-router-dom"
-import { FaArrowLeft, FaClock } from "react-icons/fa6"
-import { FaFire } from "react-icons/fa"
-
+import { FaArrowLeft, FaClock, FaFire, FaArrowUp } from "react-icons/fa6"
 import LoadingSpinner from "../components/common/LoadingSpinner"
 import { useState } from "react"
-import { FaArrowUp, FaCheckCircle } from "react-icons/fa"
 import { formatTime } from "../utils/date"
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
 import { useGetStudyActivityFeed } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
+import UserAvatar from "../components/common/UserAvatar" // Assuming you have this from earlier
+import { FaCheckCircle } from "react-icons/fa"
+import { shouldTextBeWhite } from "../utils/shouldTextBeWhite.js"
+import { useTheme } from "../context/ThemeContext.jsx"
+import { ActivityFeedSkeleton } from "../components/skeletons/ActivityFeedSkeletons.jsx"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
-  const options = {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  }
-  return date.toLocaleString("en-US", options)
+  return date.toLocaleString("en-US", { month: "short", day: "numeric", year: "numeric" })
 }
 
 const StudyActivityPage = () => {
@@ -25,220 +22,251 @@ const StudyActivityPage = () => {
   const [page, setPage] = useState(1)
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
 
+  const {theme} = useTheme()
+
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
       setPage(newPage)
+      window.scrollTo({ top: 0, behavior: "smooth" })
     }
   }
 
-  const renderPaginationButtons = () => {
-    const buttons = []
-    const maxButtons = 5
-
-    if (totalPages > 1) {
-      buttons.push(
-        <button
-          key={1}
-          className={`btn join-item ${page === 1 ? "btn-active" : ""}`}
-          onClick={() => handlePageChange(1)}
-        >
-          1
-        </button>,
-      )
-    }
-
-    if (page > 3 && totalPages > maxButtons) {
-      buttons.push(
-        <button key="dots-start" className="btn join-item pointer-events-none">
-          ...
-        </button>,
-      )
-    }
-
-    let startPage = Math.max(2, page - 1)
-    let endPage = Math.min(totalPages - 1, page + 1)
-
-    const visibleButtons = endPage - startPage + 1
-    if (visibleButtons < maxButtons - 2) {
-      if (startPage === 2) {
-        endPage = Math.min(totalPages - 1, endPage + (maxButtons - 2 - visibleButtons))
-      } else if (endPage === totalPages - 1) {
-        startPage = Math.max(2, startPage - (maxButtons - 2 - visibleButtons))
-      }
-    }
-
-    for (let i = startPage; i <= endPage; i++) {
-      buttons.push(
-        <button
-          key={i}
-          className={`btn join-item ${page === i ? "btn-active" : ""}`}
-          onClick={() => handlePageChange(i)}
-        >
-          {i}
-        </button>,
-      )
-    }
-
-    if (page < totalPages - 2 && totalPages > maxButtons) {
-      buttons.push(
-        <button key="dots-end" className="btn join-item pointer-events-none">
-          ...
-        </button>,
-      )
-    }
-
-    if (
-      totalPages > 1 &&
-      totalPages !== 1 &&
-      totalPages > maxButtons - 2 &&
-      page < totalPages - Math.floor(maxButtons / 2)
-    ) {
-      buttons.push(
-        <button
-          key={totalPages}
-          className={`btn join-item ${page === totalPages ? "btn-active" : ""}`}
-          onClick={() => handlePageChange(totalPages)}
-        >
-          {totalPages}
-        </button>,
-      )
-    }
-
-    return buttons
-  }
-
-  if (isLoading) {
-    return (
-      <div className="flex h-screen items-center justify-center p-6">
-        <LoadingSpinner />
-      </div>
-    )
-  }
-  if (!activityFeed || activityFeed.length === 0) {
-    return (
-      <div className="container mx-auto max-w-2xl p-6">
-        <div className="mb-4 flex items-center">
-          <button
-            onClick={() => navigate(-1)}
-            className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
-          >
-            <FaArrowLeft className="text-xl" />
-          </button>
-          <h2 className="flex-1 text-center text-2xl font-bold">Study Activity Feed</h2>
-        </div>
-        <div className="mt-8 flex items-center justify-center text-gray-500">
-          No study sessions to show yet.
-        </div>
-      </div>
-    )
-  }
-
+if (isLoading) {
   return (
-    <div className="template container mx-auto max-w-2xl p-4">
-      <div className="mb-6 flex items-center">
+    <div className="min-h-screen pb-20">
+      {/* Skeleton Header */}
+      <div className="sticky top-0 z-30 flex items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
+        <div className="skeleton size-9 rounded-full"></div>
+        <div className="space-y-2">
+          <div className="skeleton h-5 w-32"></div>
+          <div className="skeleton h-2 w-16"></div>
+        </div>
+      </div>
+
+      <div className="container mx-auto max-w-2xl p-4">
+        <div className="space-y-3">
+          {/* Render 6 skeletons to fill the screen */}
+          {[...Array(6)].map((_, i) => (
+            <ActivityFeedSkeleton key={i} />
+          ))}
+        </div>
+
+        {/* Skeleton Pagination */}
+        <div className="mt-10 flex justify-center">
+          <div className="skeleton h-12 w-64 rounded-xl"></div>
+        </div>
+      </div>
+    </div>
+  )
+}
+  return (
+    <div className="mx-auto min-h-screen max-w-2xl pb-20">
+      {/* Sticky Header */}
+      <div className="sticky top-0 z-30 mx-auto flex items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate(-1)}
-          className="mr-4 flex-shrink-0 rounded-full p-2.5 transition duration-200 hover:bg-gray-800 hover:text-white"
+          className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-secondary"
         >
           <FaArrowLeft className="text-xl" />
         </button>
-        <h2 className="flex-1 text-center text-2xl font-bold">Activity Feed</h2>
+        <h2 className="ml-2 flex-1 text-center text-2xl font-bold">Study Activity</h2>
       </div>
-      <div className="space-y-4">
-        {activityFeed.map((activity) => (
-          <div
-            key={activity._id}
-            className="card bg-base-200/70 p-5 shadow-lg transition-transform duration-200"
-          >
-            <div className="flex items-center space-x-4">
-              <Link to={`/profile/${activity.user.username}`} className="avatar">
-                <div className="w-12 rounded-full">
-                  <img
-                    src={getOptimizedImageUrl(
-                      activity.user.profileImg?.imageUrl || "/avatar-placeholder.png",
-                      "avatar",
-                    )}
-                    alt={`${activity.user.username}'s profile`}
-                  />
-                </div>
-              </Link>
-              <div className="flex-1">
-                <Link
-                  to={`/profile/${activity.user.username}`}
-                  className="text-lg font-bold hover:underline"
-                  style={activity.user.nameColor ? { color: activity.user.nameColor } : undefined}
+
+      <div className="container mx-auto max-w-2xl p-4">
+        {!activityFeed || activityFeed.length === 0 ? (
+          <div className="mt-20 text-center text-slate-500">No study sessions recorded yet.</div>
+        ) : (
+          <div className="space-y-3">
+            {activityFeed.map((activity) => {
+              const isLevelUp = !activity.duration
+
+              return (
+                <div
+                  key={activity._id}
+                  className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                    isLevelUp
+                      ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(168,85,247,0.1)]"
+                      : "border-accent/10 bg-base-200/40 hover:bg-base-200/60"
+                  }`}
                 >
-                  {activity.user.fullName}
-                </Link>
-                <div className="text-sm text-gray-500"> Level {activity.user.pomodoroLevel}</div>
+                  <div className="flex items-center p-4">
+                    {/* User Info Section */}
+                    <div className="relative mr-4">
+                      <Link to={`/profile/${activity.user.username}`}>
+                        <UserAvatar user={activity.user} size="md" />
+                      </Link>
+                    </div>
+
+                    <div className="min-w-0 flex-1">
+                      <div className="flex items-center gap-1.5">
+                        <Link
+                          to={`/profile/${activity.user.username}`}
+                          className="truncate font-bold hover:underline"
+                          style={
+                            activity.user.nameColor ? { color: activity.user.nameColor } : undefined
+                          }
+                        >
+                          {activity.user.fullName}
+                        </Link>
+                        {activity.user.preferredBadge && (
+                          <span className="size-4 opacity-80">
+                            {getBadgeIcon(activity.user.preferredBadge)}
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs text-slate-500">
+                        Level {isLevelUp ? activity.newLevel - 1 : activity.user.pomodoroLevel}
+                      </p>
+                    </div>
+
+                    {/* Action Section */}
+                    <div className="text-right">
+                      {isLevelUp ? (
+                        <div className="flex flex-col items-end">
+                          <div className="flex animate-pulse items-center gap-1 font-black text-primary">
+                            <FaArrowUp size={12} />
+                            <span className="text-xs uppercase tracking-tighter">Level Up</span>
+                          </div>
+                          <span className="text-2xl font-black text-primary">
+                            {activity.newLevel}
+                          </span>
+                        </div>
+                      ) : (
+                        <div className="flex flex-col items-end">
+                          <div className="flex items-center gap-1 text-xs font-bold text-success">
+                            <FaCheckCircle size={10} />
+                            <span>SESSION</span>
+                          </div>
+                          <div className="flex items-center gap-1 text-xl font-black">
+                            {activity.duration >= 60 && (
+                              <FaFire className="text-sm text-orange-500" />
+                            )}
+                            <span>{activity.duration}</span>
+                            <span className="text-[10px] font-bold text-slate-500">min</span>
+                          </div>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Footer / Timestamp */}
+                  <div
+                    className={`flex justify-between border-t px-4 py-2 text-[10px] font-medium ${
+                      isLevelUp ? "border-primary/10 bg-primary/5" : "border-accent/5 bg-black/5"
+                    } text-slate-500`}
+                  >
+                    <span>{formatTime(activity?.date || activity?.createdAt)}</span>
+                    <span>{formatDate(activity?.date || activity?.createdAt)}</span>
+                  </div>
+                </div>
+              )
+            })}
+          </div>
+        )}
+
+        {/* Improved Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-10 flex flex-col items-center gap-4">
+            <div className="flex flex-wrap items-center justify-center gap-3">
+              {/* Navigation Group */}
+              <div className="flex items-center gap-1 rounded-2xl border border-accent/10 bg-base-200/50 p-1.5 shadow-xl backdrop-blur-md">
+                {/* Skip to First */}
+                <button
+                  className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                  onClick={() => handlePageChange(1)}
+                  disabled={page === 1}
+                  title="First Page"
+                >
+                  <span className="text-lg">«</span>
+                </button>
+
+                {/* Prev Page */}
+                <button
+                  className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                  onClick={() => handlePageChange(page - 1)}
+                  disabled={page === 1}
+                >
+                  ‹
+                </button>
+
+                {/* Sliding Window Page Numbers */}
+                <div className="flex items-center gap-1 px-1">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1)
+                    .filter((p) => {
+                      if (page <= 2) return p <= 3
+                      if (page >= totalPages - 1) return p >= totalPages - 2
+                      return p >= page - 1 && p <= page + 1
+                    })
+                    .map((p) => (
+                      <button
+                        key={p}
+                        onClick={() => handlePageChange(p)}
+                        className={`h-9 w-9 rounded-xl text-xs font-bold transition-all duration-300 ${
+                          p === page
+                            ? `scale-105 bg-primary text-white shadow-lg shadow-primary/40`
+                            : "text-slate-400 hover:bg-white/10 hover:text-white"
+                        }`}
+                      >
+                        {p}
+                      </button>
+                    ))}
+                </div>
+
+                {/* NEXT & LAST Group */}
+                <button
+                  className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                  onClick={() => handlePageChange(page + 1)}
+                  disabled={page === totalPages}
+                >
+                  ›
+                </button>
+
+                {/* Skip to Last */}
+                <button
+                  className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                  onClick={() => handlePageChange(totalPages)}
+                  disabled={page === totalPages}
+                  title="Last Page"
+                >
+                  <span className="text-lg">»</span>
+                </button>
               </div>
-              {activity.duration ? (
-                // Render Study Session card content
-                <div className="flex flex-col items-end text-right text-sm">
-                  <div className="flex items-center gap-1 font-bold text-success">
-                    <FaCheckCircle /> <span>Completed</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-1 text-slate-500">
-                    {
-                      <>
-                        <p>{activity.duration >= 60 && <FaFire className={`text-orange-500`} />}</p>
-                        <FaClock /> <span>{activity.duration} min</span>
-                      </>
+
+              {/* Jump to Page Input - Positioned in between or adjacent */}
+              <div className="flex items-center gap-2 rounded-2xl border border-accent/10 bg-base-200/50 px-4 py-2 shadow-lg backdrop-blur-md">
+                <label
+                  htmlFor="jump-to"
+                  className="text-[10px] font-black uppercase tracking-tighter text-slate-500"
+                >
+                  Page
+                </label>
+                <input
+                  id="jump-to"
+                  type="number"
+                  min="1"
+                  max={totalPages}
+                  placeholder={page}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      const val = parseInt(e.target.value)
+                      if (val >= 1 && val <= totalPages) {
+                        handlePageChange(val)
+                        e.target.value = ""
+                        e.target.blur()
+                      }
                     }
-                  </div>
-                </div>
-              ) : (
-                // Render Level-Up card content
-                <div className="flex flex-col items-end text-right text-sm">
-                  <div className="flex items-center gap-1 font-bold text-primary">
-                    <FaArrowUp /> <span>Leveled Up!</span>
-                  </div>
-                  <div className="mt-1 flex items-center gap-1 text-slate-500">
-                    Level {activity.newLevel}
-                  </div>
-                </div>
-              )}
+                  }}
+                  className="w-10 bg-transparent text-center text-sm font-black text-primary placeholder:text-slate-600 focus:outline-none"
+                />
+              </div>
             </div>
 
-            <div className="mt-4 border-t border-accent pt-3 text-xs text-gray-400">
-              <span className="flex justify-between font-semibold">
-                <span className="flex">
-                  {activity.user.preferredBadge && (
-                    <div className="ml-1 size-[17px] flex-shrink-0">
-                      {getBadgeIcon(activity.user.preferredBadge)}
-                    </div>
-                  )}
-                </span>
-                {activity.duration ? "Session on: " : "Achieved on: "}
-                {formatTime(activity?.date || activity?.createdAt)} •{" "}
-                {formatDate(activity?.date || activity?.createdAt)}
-              </span>
-            </div>
+            <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500/50">
+              Viewing {page} / {totalPages}
+            </p>
           </div>
-        ))}
+        )}
       </div>
-      {/* Pagination Controls */}
-      {totalPages > 1 && (
-        <div className="mt-6 flex justify-center">
-          <div className="join">
-            <button
-              className="btn join-item"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              «
-            </button>
-            {renderPaginationButtons()}
-            <button
-              className="btn join-item"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-            >
-              »
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   )
 }

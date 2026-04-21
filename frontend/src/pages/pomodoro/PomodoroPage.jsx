@@ -10,13 +10,11 @@ import MilestoneModal from "../../components/common/MilestoneModal"
 import PomodoroInfoModal from "../../features/pomodoro/components/PomodoroInfoModal"
 import ConfirmationModal from "../../components/common/ConfirmationModal"
 import useXpStore from "../../store/useXpStore"
-import LeftDropdown from "../../features/pomodoro/components/LeftDropdown"
-import RightDropdown from "../../features/pomodoro/components/RightDropdown"
+import FloatingNav from "../../features/pomodoro/components/FloatingNav"
 import PomodoroTimerDisplay from "../../features/pomodoro/components/PomodoroTimerDisplay"
 import PomodoroTimerControls from "../../features/pomodoro/components/PomodoroTimerControls"
-import { getPriorityColor, getTextColor } from "../../utils/todoUtils"
+import { getPriorityColor } from "../../utils/todoUtils"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
-import { FaFlag } from "react-icons/fa"
 import { IoClose } from "react-icons/io5"
 import { useGetPomodoroSettings } from "../../features/pomodoro/pomodoroHooks/usePomodoroQueries"
 import { useCompleteTodo } from "../../features/todos/todoHooks/useTodoMutations"
@@ -25,6 +23,21 @@ import { usePomodoroTimerStore, STORAGE_KEYS } from "../../store/usePomodoroTime
 import QuickTaskPanel from "../../features/pomodoro/components/QuickTaskPanel"
 import { useTodoStore } from "../../store/useTodoStore"
 import CreateTodoListModal from "../../features/todos/components/CreateTodoListModal"
+import { FaCheckCircle } from "react-icons/fa"
+
+// Single source of truth for timer state styling
+const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
+  if (isGoalReached)
+    return { label: "Finished!", color: "text-slate-400", glow: "rgba(100,116,139,0.15)" }
+  if (!isBreak) return { label: "Focus Time", color: "text-primary", glow: "rgba(var(--p),0.18)" }
+  const isLong =
+    sessionCount > 0 &&
+    settings?.sessionsBeforeLongBreak > 0 &&
+    sessionCount % settings.sessionsBeforeLongBreak === 0
+  return isLong
+    ? { label: "Long Break", color: "text-indigo-400", glow: "rgba(99,102,241,0.18)" }
+    : { label: "Short Break", color: "text-teal-400", glow: "rgba(45,212,191,0.18)" }
+}
 
 const PomodoroPage = () => {
   const navigate = useNavigate()
@@ -52,51 +65,33 @@ const PomodoroPage = () => {
   const persistPause = usePomodoroTimerStore((s) => s.persistPause)
   const persistReset = usePomodoroTimerStore((s) => s.persistReset)
 
+  const timerState = getTimerState(isGoalReached, isBreak, sessionCount, settings)
+
   // ── Local UI state ────────────────────────────────────────────────────────
   const [visuallyCompleted, setVisuallyCompleted] = useState({})
   const [isSettingsOpen, setIsSettingsOpen] = useState(false)
   const [showShareModal, setShowShareModal] = useState(false)
   const [milestoneLevel, setMilestoneLevel] = useState(null)
   const [showInfoModal, setShowInfoModal] = useState(false)
-  const [isRightDropdownOpen, setIsRightDropdownOpen] = useState(false)
-  const [isLeftDropdownOpen, setIsLeftDropdownOpen] = useState(false)
   const [showResetTimerModal, setShowResetTimerModal] = useState(false)
   const [showResetCurrentSessionModal, setShowResetCurrentSessionModal] = useState(false)
-  const [searchQuery, setSearchQuery] = useState("")
 
   const alarmAudioRef = useRef(null)
+  const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
 
-    const { showCreateTodoListModal, setShowCreateTodoListModal } = useTodoStore()
-  
-
-  // ── Todos ─────────────────────────────────────────────────────────────────
-  const { myTodoLists, myListsLoading } = useGetUserTodoLists()
-
+  const { myTodoLists } = useGetUserTodoLists()
   const allTodos = useMemo(
-    () =>
-      myTodoLists?.pages?.flatMap((page) => page.data.flatMap((todoList) => todoList.todos)) ?? [],
+    () => myTodoLists?.pages?.flatMap((page) => page.data.flatMap((l) => l.todos)) ?? [],
     [myTodoLists],
   )
 
-  const filteredTasks = useMemo(
-    () =>
-      allTodos.filter(
-        (task) =>
-          task.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          task.listName.toLowerCase().includes(searchQuery.toLowerCase()),
-      ),
-    [allTodos, searchQuery],
-  )
-
-  const selectedTask = allTodos.find((task) => task._id === selectedTaskId)
+  const selectedTask = allTodos.find((t) => t._id === selectedTaskId)
   const isVisuallyCompleted = visuallyCompleted[selectedTask?._id] || selectedTask?.completed
-
   const { completeTodo } = useCompleteTodo()
 
-  // ── handleStart ───────────────────────────────────────────────────────────
+  // ── Handlers ──────────────────────────────────────────────────────────────
   const handleStart = useCallback(() => {
     if (isActive || !settings || timer <= 0 || isGoalReached) return
-
     if (!alarmAudioRef.current) {
       alarmAudioRef.current = new Audio("/alarm.mp3")
       alarmAudioRef.current.volume = 0.3
@@ -108,23 +103,17 @@ const PomodoroPage = () => {
         alarmAudioRef.current.currentTime = 0
       })
       .catch(() => {})
-
     if (typeof Notification !== "undefined" && Notification.permission === "default") {
       Notification.requestPermission()
     }
-
     const now = Date.now()
-
     if (engineActions) {
       engineActions.startTimestampRef.current = now
       engineActions.durationAtStartRef.current = timer
-      // Fix: commit the settings value (minutes), never the remaining timer seconds
       if (!isBreak && engineActions.committedSessionDurationRef) {
         engineActions.committedSessionDurationRef.current = settings.sessionDuration
       }
     }
-
-    // Pass settings.sessionDuration so persistStart writes the right value to localStorage
     persistStart(
       now,
       timer,
@@ -147,14 +136,12 @@ const PomodoroPage = () => {
     setIsActive,
   ])
 
-  // ── handlePause ───────────────────────────────────────────────────────────
   const handlePause = useCallback(() => {
     if (!isActive) return
     setIsActive(false)
     persistPause(timer)
   }, [isActive, timer, setIsActive, persistPause])
 
-  // ── handleReset — full reset ──────────────────────────────────────────────
   const handleReset = useCallback(() => {
     if (!settings) return
     setIsActive(false)
@@ -166,33 +153,27 @@ const PomodoroPage = () => {
     persistReset()
   }, [settings, setIsActive, setTimer, setIsBreak, setSessionCount, setIsGoalReached, persistReset])
 
-  // ── handleResetCurrent — reset only the current phase ────────────────────
   const handleResetCurrent = useCallback(() => {
     if (!settings) return
     setIsActive(false)
-
-    const isLongBreak =
+    const isLong =
       isBreak &&
       sessionCount > 0 &&
       settings.sessionsBeforeLongBreak > 0 &&
       sessionCount % settings.sessionsBeforeLongBreak === 0
-
-    const resetDuration = isBreak
-      ? (isLongBreak ? settings.longBreakDuration : settings.shortBreakDuration) * 60
+    const dur = isBreak
+      ? (isLong ? settings.longBreakDuration : settings.shortBreakDuration) * 60
       : settings.sessionDuration * 60
-
-    setTimer(resetDuration)
-    localStorage.setItem(STORAGE_KEYS.PAUSED_TIME, resetDuration)
+    setTimer(dur)
+    localStorage.setItem(STORAGE_KEYS.PAUSED_TIME, dur)
     localStorage.setItem(STORAGE_KEYS.ACTIVE, "false")
     localStorage.removeItem(STORAGE_KEYS.START_TIMESTAMP)
     localStorage.removeItem(STORAGE_KEYS.DURATION_AT_START)
     localStorage.removeItem(STORAGE_KEYS.COMMITTED_DURATION)
-
     showAppToast("Current timer reset!", "success")
     setShowResetCurrentSessionModal(false)
   }, [settings, isBreak, sessionCount, setIsActive, setTimer])
 
-  // ── handleSkipBreak ───────────────────────────────────────────────────────
   const handleSkipBreak = useCallback(() => {
     if (!isBreak) return
     setIsActive(false)
@@ -200,47 +181,29 @@ const PomodoroPage = () => {
     showAppToast("Break skipped!", "info")
   }, [isBreak, sessionCount, setIsActive, engineActions])
 
-  // ── handleSessionEndManual — forward button ───────────────────────────────
   const handleSessionEndManual = useCallback(() => {
-    if (engineActions?.isEndingSessionRef) {
-      engineActions.isEndingSessionRef.current = false
-    }
+    if (engineActions?.isEndingSessionRef) engineActions.isEndingSessionRef.current = false
     engineActions?.handleSessionEnd()
   }, [engineActions])
 
-  // ── Todo completion ───────────────────────────────────────────────────────
   const handleComplete = useCallback(
     (todoId, e) => {
       e.stopPropagation()
       if (!selectedTask || selectedTask.user !== authUser._id || isVisuallyCompleted) return
-
       showAppToast("Todo completed! ✨", "success")
       setVisuallyCompleted((prev) => ({ ...prev, [todoId]: true }))
       completeTodo(todoId)
-
-      const completedIndex = allTodos.findIndex((t) => t._id === todoId)
-      const nextTask = allTodos[completedIndex + 1]
-      setSelectedTaskId(nextTask?._id ?? null)
+      const idx = allTodos.findIndex((t) => t._id === todoId)
+      setSelectedTaskId(allTodos[idx + 1]?._id ?? null)
     },
     [selectedTask, authUser, isVisuallyCompleted, allTodos, completeTodo, setSelectedTaskId],
   )
-
-  // ── Dropdown toggles ──────────────────────────────────────────────────────
-  const toggleRightDropdown = (e) => {
-    e.stopPropagation()
-    setIsRightDropdownOpen((o) => !o)
-  }
-  const toggleLeftDropdown = (e) => {
-    e.stopPropagation()
-    setIsLeftDropdownOpen((o) => !o)
-  }
 
   const handleOpenSettingsPage = () => {
     if (isMobile) navigate("/pomodoro-settings")
     else setIsSettingsOpen(true)
   }
 
-  // ── Loading guard ─────────────────────────────────────────────────────────
   if (isSettingsLoading) {
     return (
       <div className="flex h-screen w-full items-center justify-center">
@@ -251,44 +214,49 @@ const PomodoroPage = () => {
 
   return (
     <>
-      <main className="template container mx-auto flex min-h-screen w-full max-w-2xl animate-fade-in flex-col items-center border-accent bg-base-100 font-sans md:border-x">
+      <main
+        className="template container mx-auto flex min-h-screen w-full max-w-2xl flex-col items-center border-accent bg-base-100 font-sans md:border-x"
+        style={{
+          background: `radial-gradient(circle at 50% 35%, ${timerState.glow} 0%, transparent 45%)`,
+        }}
+      >
         <PomodoroHeader
           showXpGain={showXpGain}
           xpGainedAmount={xpGainedAmount}
           setShowInfoModal={setShowInfoModal}
         />
-        <LeftDropdown
-          onToggleLeftDropdown={toggleLeftDropdown}
-          isLeftDropdownOpen={isLeftDropdownOpen}
-        />
-        <RightDropdown
-          onToggleRightDropdown={toggleRightDropdown}
-          isRightDropdownOpen={isRightDropdownOpen}
-        />
 
-        {/* ── Timer section ── */}
-        <section className="flex min-h-[70dvh] w-full shrink-0 flex-col items-center justify-center gap-6 py-10">
-          {!isMobile && (
+        <FloatingNav />
+
+        {/* ── Timer section: Card removed for a "floating" feel ── */}
+        <section className="flex min-h-[75dvh] w-full shrink-0 flex-col items-center justify-center gap-8 py-10 transition-all duration-1000">
+          {/* State label - more minimalist */}
+          <div className="flex items-center gap-2">
+            <div
+              className={`size-2 rounded-full ${isActive && !isGoalReached ? "animate-ping" : ""} bg-current ${timerState.color}`}
+            />
             <h1
-              className={`text-3xl font-bold tracking-wider ${
-                isBreak ? "text-teal-300" : "text-primary"
-              }`}
+              className={`text-sm font-black uppercase tracking-[0.4em] transition-colors duration-700 ${timerState.color} opacity-80`}
             >
-              {isGoalReached ? "Finished" : isBreak ? "Break Time" : "Focus Time"}
+              {timerState.label}
             </h1>
-          )}
+          </div>
 
-          <PomodoroTimerDisplay
-            isBreak={isBreak}
-            timer={timer}
-            setIsActive={setIsActive}
-            startNextTimer={(...args) => engineActions?.startNextTimer(...args)}
-            sessionCount={sessionCount}
-            setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
-            isGoalReached={isGoalReached}
-            onSessionEnd={handleSessionEndManual}
-            onSkipBreak={handleSkipBreak}
-          />
+          {/* Floating Display - The card is gone, shadow is now a glow behind the SVG */}
+          <div className="relative flex flex-col items-center">
+            <PomodoroTimerDisplay
+              isBreak={isBreak}
+              timer={timer}
+              setIsActive={setIsActive}
+              startNextTimer={(...args) => engineActions?.startNextTimer(...args)}
+              sessionCount={sessionCount}
+              setShowResetCurrentSessionModal={setShowResetCurrentSessionModal}
+              isGoalReached={isGoalReached}
+              onSessionEnd={handleSessionEndManual}
+              onSkipBreak={handleSkipBreak}
+              timerState={timerState}
+            />
+          </div>
 
           <PomodoroTimerControls
             onOpenSettingsPage={handleOpenSettingsPage}
@@ -300,55 +268,60 @@ const PomodoroPage = () => {
             onResetTimerClick={() => setShowResetTimerModal(true)}
           />
 
-          {/* ── Active task banner ── */}
-          <div className="w-full max-w-sm">
+          {/* Active task banner: Cleaner glass design */}
+          <div className="w-full max-w-sm px-6">
             {selectedTask ? (
-              <div
-                className={`ring-current/20 flex items-center gap-3 rounded-2xl border border-white/5 bg-base-200/50 p-4 ring-1 backdrop-blur-sm transition-all duration-300`}
-              >
+              <div className="group flex items-center gap-4 rounded-3xl border border-white/10 bg-white/[0.03] p-2 pr-4 shadow-xl ring-1 ring-white/5 backdrop-blur-md">
                 <button
                   onClick={(e) => handleComplete(selectedTask._id, e)}
-                  className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 transition-all hover:scale-110 ${getPriorityColor(selectedTask.priority)}`}
-                  title="Mark complete"
-                />
+                  className={`flex size-6 shrink-0 items-center justify-center rounded-2xl border-2 shadow-inner transition-all hover:scale-105 ${getPriorityColor(selectedTask.priority)}`}
+                >
+                  {/* <FaCheckCircle
+                    size={14}
+                    className="opacity-0 transition-opacity group-hover:opacity-100"
+                  /> */}
+                </button>
                 <div className="min-w-0 flex-1">
-                  <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500">
-                    Focusing on
+                  <p className="text-[8px] font-black uppercase tracking-widest text-slate-500">
+                    Focusing
                   </p>
-                  <p className="truncate text-sm font-bold">{selectedTask.title}</p>
+                  <p className="break-words text-sm font-bold tracking-tight">
+                    {selectedTask.title}
+                  </p>
                 </div>
                 <button
                   onClick={() => setSelectedTaskId(null)}
-                  className="shrink-0 text-slate-500 transition-colors hover:text-red-400"
+                  className="shrink-0 p-2 text-slate-600 transition-colors hover:text-red-400"
                 >
                   <IoClose size={18} />
                 </button>
               </div>
             ) : (
-              <div className="rounded-2xl border border-dashed border-slate-700/60 py-4 text-center">
-                <p className="text-xs italic text-slate-600">Select a task below to focus on it</p>
+              <div className="rounded-3xl border border-dashed border-white/5 py-4 text-center">
+                <p className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
+                  No Task Selected
+                </p>
               </div>
             )}
           </div>
         </section>
 
-        {/* ── Divider ── */}
-        <div className="flex w-full items-center gap-4 px-6 py-2">
-          <div className="h-px flex-1 bg-slate-800" />
-          <span className="text-[10px] font-bold uppercase tracking-widest text-slate-600">
-            Your Tasks
+        {/* Task List Section */}
+        <div className="mt-4 flex w-full items-center gap-4 px-8 py-4">
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-transparent via-slate-800 to-transparent" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-slate-600">
+            Tasks
           </span>
-          <div className="h-px flex-1 bg-slate-800" />
+          <div className="h-[1px] flex-1 bg-gradient-to-r from-slate-800 via-slate-800 to-transparent" />
         </div>
 
-        {/* ── Quick task panel ── */}
         <QuickTaskPanel
           visuallyCompleted={visuallyCompleted}
           setVisuallyCompleted={setVisuallyCompleted}
         />
       </main>
 
-      {/* ── Modals ── */}
+      {/* Modals */}
       {settings && isSettingsOpen && (
         <PomodoroSettingsModal
           isOpen={isSettingsOpen}
@@ -356,9 +329,7 @@ const PomodoroPage = () => {
           initialSettings={settings}
         />
       )}
-
       {showInfoModal && <PomodoroInfoModal onClose={() => setShowInfoModal(false)} />}
-
       {showShareModal && (
         <MilestoneModal
           level={milestoneLevel}
@@ -366,26 +337,24 @@ const PomodoroPage = () => {
           isOpen={showShareModal}
         />
       )}
-
       {showResetCurrentSessionModal && (
         <ConfirmationModal
           isOpen={showResetCurrentSessionModal}
           onClose={() => setShowResetCurrentSessionModal(false)}
           onConfirm={handleResetCurrent}
           danger={false}
-          message="Are you sure you want to reset the current session's timer?"
+          message="Reset the current phase timer?"
           confirmButtonText="Reset"
           modalTitle="Reset current session"
         />
       )}
-
       {showResetTimerModal && (
         <ConfirmationModal
           isOpen={showResetTimerModal}
           onClose={() => setShowResetTimerModal(false)}
           onConfirm={handleReset}
           danger={false}
-          message="Are you sure you want to reset the timer?"
+          message="Reset the full timer and session count?"
           confirmButtonText="Reset"
           modalTitle="Reset Timer"
         />

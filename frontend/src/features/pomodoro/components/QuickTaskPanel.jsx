@@ -88,54 +88,59 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
   )
 
   return (
-    <>
-      <div className="flex w-full max-w-md flex-col gap-4 px-4 pb-28">
-        {/* List pill selector */}
-        <div className="flex flex-col gap-2">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500">
-            Filter by List
-          </p>
-          {myListsLoading ? (
-            <LoadingSpinner size="sm" />
-          ) : (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => setSelectedListId(null)}
-                className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                  !selectedListId
-                    ? `bg-primary ${shouldTextBeWhite(theme)}`
-                    : "bg-base-200 text-slate-400 hover:bg-base-300"
-                }`}
-              >
-                All
-              </button>
-              {activeLists.map((list) => (
-                <button
-                  key={list._id}
-                  onClick={() => setSelectedListId(list._id === selectedListId ? null : list._id)}
-                  className={`rounded-full px-3 py-1 text-xs font-semibold transition-all ${
-                    selectedListId === list._id
-                      ? `bg-primary ${shouldTextBeWhite(theme)}`
-                      : "bg-base-200 text-slate-400 hover:bg-base-300"
-                  }`}
-                >
-                  {list.name}
-                </button>
-              ))}
-
-              <button
-                onClick={() => setShowCreateTodoListModal(true)}
-                className="rounded-full bg-base-200 px-2 py-1 text-xs font-semibold  transition-all hover:bg-base-300"
-              >
-                +
-              </button>
-            </div>
-          )}
+    <div className="flex w-full max-w-lg flex-col gap-8 px-6 pb-32">
+      {/* ── Header & List Selector ── */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <h3 className="text-[10px] font-black uppercase tracking-widest text-slate-500 opacity-70">
+            Filter by list
+          </h3>
+          {myListsLoading && <div className="skeleton h-4 w-12 rounded-full"></div>}
         </div>
 
-        {/* Quick-add input */}
-        <div className="relative flex items-center gap-2 rounded-xl border border-slate-700 bg-base-200/60 px-4 py-3 backdrop-blur-sm transition-all focus-within:border-primary/50 focus-within:ring-1 focus-within:ring-primary/30">
-          <IoAdd className="shrink-0 text-slate-500" size={18} />
+        <div className="flex flex-wrap gap-2">
+          <button
+            onClick={() => setSelectedListId(null)}
+            className={`rounded-xl px-4 py-2 text-[11px] font-bold transition-all duration-300 ${
+              !selectedListId
+                ? `bg-primary ${shouldTextBeWhite(theme)} scale-105 shadow-lg shadow-primary/20`
+                : "border border-white/5 bg-base-200/50 text-slate-500 hover:bg-base-200 hover:text-slate-300"
+            }`}
+          >
+            All Tasks
+          </button>
+
+          {activeLists.map((list) => (
+            <button
+              key={list._id}
+              onClick={() => setSelectedListId(list._id === selectedListId ? null : list._id)}
+              className={`rounded-xl border px-4 py-2 text-[11px] font-bold transition-all duration-300 ${
+                selectedListId === list._id
+                  ? `border-primary bg-primary ${shouldTextBeWhite(theme)} scale-105 shadow-lg shadow-primary/20`
+                  : "border-white/5 bg-base-200/50 text-slate-500 hover:border-white/10 hover:text-slate-300"
+              }`}
+            >
+              {list.name}
+            </button>
+          ))}
+
+          <button
+            onClick={() => setShowCreateTodoListModal(true)}
+            className="flex h-8 w-8 items-center justify-center rounded-xl border border-white/5 bg-white/5 text-slate-500 transition-all hover:bg-white/10 hover:text-white"
+          >
+            <IoAdd size={18} />
+          </button>
+        </div>
+      </div>
+
+      {/* ── Input & Search Group ── */}
+      <div className="flex flex-col gap-3">
+        {/* Quick Add */}
+        <div className="group relative flex items-center gap-3 rounded-2xl border border-white/5 bg-white/[0.02] px-4 py-1 backdrop-blur-md transition-all focus-within:border-primary/40 focus-within:bg-white/[0.04] focus-within:ring-4 focus-within:ring-primary/5">
+          <IoAdd
+            className="shrink-0 text-slate-500 transition-colors group-focus-within:text-primary"
+            size={22}
+          />
           <input
             ref={inputRef}
             type="text"
@@ -144,86 +149,105 @@ const QuickTaskPanel = ({ visuallyCompleted, setVisuallyCompleted }) => {
             onKeyDown={handleQuickAdd}
             placeholder={
               selectedListId
-                ? `Quick-add to "${allLists.find((l) => l._id === selectedListId)?.name}"…`
-                : "Select a list, then type + Enter to add"
+                ? `Add to ${allLists.find((l) => l._id === selectedListId)?.name}...`
+                : "Select a list to start adding..."
             }
-            className="flex-1 bg-transparent text-sm placeholder-slate-600 focus:outline-none"
-            // disabled={isCreatingTodo}
+            className="h-12 flex-1 bg-transparent text-sm font-medium placeholder-slate-600 focus:outline-none"
           />
-          {/* {isCreatingTodo && <LoadingSpinner size="xs" />} */}
+          <kbd className="hidden rounded bg-white/5 px-2 py-1 text-[10px] font-bold text-slate-600 md:block">
+            ENTER
+          </kbd>
         </div>
 
-        {/* Search */}
-        <input
-          type="text"
-          placeholder="Search tasks…"
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="w-full rounded-xl border border-slate-800 bg-base-200/60 px-4 py-2.5 text-sm placeholder-slate-600 backdrop-blur-sm transition-all focus:border-primary/40 focus:outline-none focus:ring-1 focus:ring-primary/20"
-        />
+        {/* Search Bar - Slimmer version */}
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Filter tasks..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full rounded-xl border border-white/5 bg-transparent px-4 py-2 text-[11px] font-medium text-slate-400 placeholder-slate-700 transition-all focus:border-white/10 focus:outline-none"
+          />
+        </div>
+      </div>
 
-        {/* Task list */}
-        <div className="flex flex-col gap-2">
-          {filteredTodos.length === 0 && (
-            <p className="py-8 text-center text-sm italic text-slate-600">
-              {searchQuery ? "No tasks match your search." : "No tasks yet. Add one above!"}
-            </p>
-          )}
-          {filteredTodos.map((task) => {
+      {/* ── Task Feed ── */}
+      <div className="flex flex-col gap-2.5">
+        {filteredTodos.length === 0 ? (
+          <div className="flex flex-col items-center py-12 opacity-30">
+            <div className="mb-2 h-px w-12 bg-slate-500" />
+            <p className="text-[11px] font-bold uppercase tracking-widest">No Targets Found</p>
+          </div>
+        ) : (
+          filteredTodos.map((task) => {
             const isDone = visuallyCompleted[task._id] || task.completed
+            const isActive = selectedTaskId === task._id && !isDone
+
             return (
               <div
                 key={task._id}
                 onClick={() => !isDone && setSelectedTaskId(task._id)}
-                className={`group flex cursor-pointer items-center justify-between rounded-xl p-3.5 transition-all duration-200 ${
-                  selectedTaskId === task._id
-                    ? "bg-primary/10 ring-2 ring-primary"
+                className={`group relative flex cursor-pointer items-center justify-between rounded-2xl border p-4 transition-all duration-300 ${
+                  isActive
+                    ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(var(--p),0.05)]"
                     : isDone
-                      ? "cursor-default opacity-40"
-                      : "bg-base-200/60 backdrop-blur-sm hover:bg-base-200"
+                      ? "border-transparent opacity-40 grayscale"
+                      : "border-white/5 bg-white/[0.02] hover:border-white/10 hover:bg-white/[0.05]"
                 }`}
               >
-                <div className="flex min-w-0 items-center gap-3">
+                {/* Active Indicator Line */}
+                {isActive && (
+                  <div className="absolute left-0 top-1/4 h-1/2 w-1 rounded-full bg-primary" />
+                )}
+
+                <div className="flex min-w-0 items-center gap-4">
                   <button
                     onClick={(e) => !isDone && handleComplete(task._id, e)}
-                    className={`shrink-0 transition-colors ${isDone ? "text-primary" : "text-slate-600 hover:text-primary"}`}
+                    className="relative shrink-0"
                   >
                     {isDone ? (
-                      <IoCheckmarkCircle size={20} className="text-primary" />
+                      <IoCheckmarkCircle
+                        size={24}
+                        className="animate-in zoom-in text-primary duration-300"
+                      />
                     ) : (
                       <div
-                        className={`h-5 w-5 rounded-full border-2 ${getPriorityColor(task.priority)}`}
+                        className={`h-6 w-6 rounded-full border-2 transition-all group-hover:scale-110 ${getPriorityColor(task.priority)} bg-base-100 shadow-sm`}
                       />
                     )}
                   </button>
+
                   <div className="min-w-0">
-                    <p className={`truncate text-sm font-semibold ${isDone ? "line-through" : ""}`}>
+                    <p
+                      className={`truncate text-sm font-bold tracking-tight transition-all ${isDone ? "text-slate-500 line-through" : "text-slate-200"}`}
+                    >
                       {task.title}
                     </p>
-                    <p className="text-[10px] font-medium uppercase tracking-tight text-slate-500">
-                      {task.listName}
-                    </p>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[9px] font-black uppercase tracking-tighter text-slate-500">
+                        {task.listName}
+                      </span>
+                      {isActive && (
+                        <span className="flex items-center gap-1 text-[9px] font-black uppercase tracking-tighter text-primary">
+                          <span className="h-1 w-1 animate-pulse rounded-full bg-primary" />
+                          Focusing
+                        </span>
+                      )}
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  {selectedTaskId === task._id && !isDone && (
-                    <span className="animate-pulse text-[9px] font-black uppercase tracking-wide text-primary">
-                      Active
-                    </span>
-                  )}
+
+                <div className="flex items-center gap-3">
                   <FaFlag
-                    className={`shrink-0 text-xs ${getTextColor(task.priority)} opacity-60`}
+                    className={`text-[10px] ${getTextColor(task.priority)} opacity-40 transition-opacity group-hover:opacity-100`}
                   />
                 </div>
               </div>
             )
-          })}
-        </div>
+          })
+        )}
       </div>
-      {/* {showCreateTodoListModal && (
-        <CreateTodoListModal onClose={() => setShowCreateTodoListModal(false)} />
-      )} */}
-    </>
+    </div>
   )
 }
 
