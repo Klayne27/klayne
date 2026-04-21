@@ -33,7 +33,7 @@ const getTimerState = (isGoalReached, isBreak, sessionCount, settings) => {
    return {
      label: "Focus Time",
      color: "text-primary",
-     glow: "rgba(25, 132, 255, 0.18)", // Use the Hex-to-RGB conversion here
+    //  glow: "rgba(25, 132, 255, 0.18)", // Use the Hex-to-RGB conversion here
    }
   const isLong =
     sessionCount > 0 &&
