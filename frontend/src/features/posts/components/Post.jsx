@@ -42,6 +42,7 @@ import {
 } from "../postsHooks/usePostsMutations.js"
 import { useLightboxStore } from "../../../store/useLightboxStore.js"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
+import UserFullName from "../../../components/common/UserFullname.jsx"
 
 const Post = ({
   post,
@@ -355,7 +356,7 @@ const Post = ({
 
   return (
     <div
-      className={`min-w-0 z-[1001] ${
+      className={`z-[1001] min-w-0 ${
         showMenu ? "bg-base-100" : "hover:bg-gray-700/30"
       } flex cursor-pointer flex-col gap-0 px-4 transition duration-500 ${
         index === 0 && "pt-3"
@@ -453,8 +454,7 @@ const Post = ({
                   onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
                   onMouseLeave={handleMouseLeave}
                 >
-                  {/* CHANGED: Added flex-shrink-0 so the Full Name never truncates first */}
-                  <span
+                  {/* <span
                     className="flex-shrink-0 hover:underline"
                     style={
                       originalPostOwner.nameColor
@@ -463,7 +463,12 @@ const Post = ({
                     }
                   >
                     {originalPostOwner.fullName}
-                  </span>
+                  </span> */}
+                  <UserFullName
+                    user={originalPostOwner}
+                    className="flex-shrink-0 hover:underline"
+                    style={originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined}
+                  />
 
                   <span className="flex shrink-0 items-center">
                     {originalPostOwner.isVerified && (
@@ -505,7 +510,7 @@ const Post = ({
                 </Link>
               )}
               {pathname.includes("/post/") && post._id === pid ? null : (
-                <div className="text-sm font-normal text-slate-500 flex gap-1 min-w-0">
+                <div className="flex min-w-0 gap-1 text-sm font-normal text-slate-500">
                   <span className="shrink-0">·</span>
                   <span className="shrink-0">{formattedDate}</span>
                 </div>

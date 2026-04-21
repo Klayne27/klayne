@@ -25,6 +25,8 @@ import {
 import { useBlockUnblockUser } from "../../../users/usersHooks/useUserMutations"
 import UserAvatar from "../../../../components/common/UserAvatar"
 import { getNameplateClass } from "../../../../utils/getNameplateClass"
+import { WARDROBE_CONFIG } from "../../../wardrobe/wardrobeConfig"
+import UserFullName from "../../../../components/common/UserFullname"
 
 function DMConversationItem({ conv }) {
   const { authUser: currentUser } = useAuthUser()
@@ -38,6 +40,8 @@ function DMConversationItem({ conv }) {
   const [showDeleteModal, setShowDeleteModal] = useState(false)
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
+
+
 
   const otherUser = conv?.participants?.find((p) => {
     if (!p) return false
@@ -62,6 +66,13 @@ function DMConversationItem({ conv }) {
     handleTouchCancel,
     isMobile,
   } = useMobileConversationLongPress()
+
+      const equippedFont = otherUser?.equipped?.font
+      // const equippedTheme = otherUser?.equipped?.theme
+
+      // 2. Map them to your config values
+      const fontVars = WARDROBE_CONFIG[equippedFont]?.cssVars || {}
+      // const themeVars = WARDROBE_CONFIG[equippedTheme]?.cssVars || {}
 
   const isMenuOpen = activeConversationId === conv._id
   const isSelected = selectedConversation?._id === conv._id
@@ -183,12 +194,22 @@ function DMConversationItem({ conv }) {
       <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
         <div className="flex items-center justify-between">
           <div className="flex min-w-0 items-center" style={userSelectStyle}>
-            <span
+            {/* <span
               className={`mr-1 flex-shrink-0 truncate font-bold`}
               style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
+              style={{
+                ...(otherUser.nameColor ? { color: otherUser.nameColor } : {}),
+                ...fontVars,
+                fontFamily: "var(--user-font, inherit)",
+              }}
             >
               {otherUser.fullName}
-            </span>
+            </span> */}
+            <UserFullName
+              user={otherUser}
+              className={`mr-1 flex-shrink-0 truncate font-bold`}
+              style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
+            />
             {otherUser.isVerified && (
               <img src="/verified2.png" className="size-[17px]" alt="Verified" />
             )}
@@ -196,7 +217,7 @@ function DMConversationItem({ conv }) {
               <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
             )}
             {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-            <span className="flex-shrink-1 min-w-0 text-sm truncate text-gray-400">
+            <span className="flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
               @{otherUser.username}
             </span>
             <span className="mx-1 text-xs text-gray-400">·</span>

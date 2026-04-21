@@ -8,7 +8,7 @@ export const loadGoogleFont = (googleFont) => {
   if (!googleFont || loadedFonts.has(googleFont)) return
   const link = document.createElement("link")
   link.rel = "stylesheet"
-  link.href = `https://fonts.googleapis.com/css2?family=${googleFont}&display=swap`
+  link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(googleFont)}:wght@400;700&display=swap`
   document.head.appendChild(link)
   loadedFonts.add(googleFont)
 }

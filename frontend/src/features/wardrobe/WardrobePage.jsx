@@ -4,7 +4,7 @@ import { WARDROBE_CONFIG, CATEGORY_LABELS } from "./wardrobeConfig"
 import { useEquipItem, useInventory } from "./wardrobeHooks"
 import { getNameplateClass } from "../../utils/getNameplateClass"
 import LoadingSpinner from "../../components/common/LoadingSpinner"
-import { FaArrowLeft, FaCheckCircle, FaLock, FaBolt, FaTrophy } from "react-icons/fa"
+import { FaArrowLeft, FaCheckCircle, FaLock, FaBolt, FaTrophy, FaRunning } from "react-icons/fa"
 import { useNavigate } from "react-router-dom"
 import UserAvatar from "../../components/common/UserAvatar"
 import { BsThreeDots } from "react-icons/bs"
@@ -21,12 +21,6 @@ const LivePreview = ({ authUser, previewEquipped }) => {
   const overlayConfig = WARDROBE_CONFIG[previewEquipped.overlay]
   const fontConfig = WARDROBE_CONFIG[previewEquipped.font]
   const nameplateClass = getNameplateClass(previewEquipped.nameplate)
-
-  useEffect(() => {
-    if (fontConfig?.googleFont) {
-      loadGoogleFont(fontConfig.googleFont)
-    }
-  }, [fontConfig?.googleFont])
 
   const fontFamily = fontConfig?.cssVars?.["--user-font"] || "inherit"
   const ringClass = ringConfig?.ringClass || ""
@@ -150,11 +144,26 @@ const ItemCard = ({
   onEquip,
   onUnequip,
 }) => {
+  // --- ADD THIS: Load font for the card preview ---
+  useEffect(() => {
+    if (config.category === "fonts" && config.googleFont) {
+      loadGoogleFont(config.googleFont)
+    }
+  }, [config.category, config.googleFont])
+
+  // Determine font family for the label
+  const itemFontFamily = config.category === "fonts" ? config.cssVars?.["--user-font"] : "inherit"
+  // ------------------------------------------------
+
   const rewardBadge =
     config.rewardType === "sprint" ? (
       <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-400">
         <FaBolt size={8} />
         Sprint
+      </span>
+    ) : config.rewardType === "marathon" ? (
+      <span className="flex items-center gap-0.5 text-[10px] font-bold text-teal-400">
+        <FaRunning size={10} /> Marathon
       </span>
     ) : (
       <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
@@ -163,14 +172,13 @@ const ItemCard = ({
       </span>
     )
 
-  // Ring swatch
+  // Swatches... (keep existing ring/nameplate logic)
   const swatch = config.ringClass && (
     <div className="mb-1 flex justify-center">
       <div className={`h-8 w-8 rounded-full bg-slate-600 ${config.ringClass}`} />
     </div>
   )
 
-  // Nameplate preview
   const npPreview = config.nameplateClass && (
     <div className="mb-1 flex justify-center">
       <span className={`text-xs ${config.nameplateClass}`}>Username</span>
@@ -192,14 +200,18 @@ const ItemCard = ({
       }`}
       onClick={() => onPreview(itemKey)}
     >
-      {/* Status icons */}
       {isEquipped && <FaCheckCircle className="absolute right-2 top-2 text-green-500" size={12} />}
       {!isOwned && <FaLock className="absolute right-2 top-2 text-slate-500" size={12} />}
 
       {swatch}
       {npPreview}
 
-      <p className="text-xs font-bold leading-tight">{config.label}</p>
+      {/* --- MODIFIED: Apply the dynamic font family to the label --- */}
+      <p className="text-sm font-bold leading-tight" style={{ fontFamily: itemFontFamily }}>
+        {config.label}
+      </p>
+      {/* --------------------------------------------------------- */}
+
       <div className="flex items-center justify-between gap-1">
         {rewardBadge}
         <span className="truncate text-[9px] text-slate-500">{config.unlockHint}</span>
@@ -267,10 +279,11 @@ const WardrobePage = () => {
       if (filterMode === "owned") return (inventory[activeTab] || []).includes(key)
       if (filterMode === "progress") return c.rewardType === "progress"
       if (filterMode === "sprint") return c.rewardType === "sprint"
+      if (filterMode === "marathon") return c.rewardType === "marathon"
       return true
     })
 
-  const isTabLocked = (tab) => tab !== "rings" 
+  const isTabLocked = (tab) => tab === "rings"
 
   if (isLoading) {
     return (
@@ -376,7 +389,7 @@ const WardrobePage = () => {
           {/* Filter strip — clearly distinguishes reward types */}
           <div className="flex items-center gap-2">
             <span className="text-xs text-slate-500">Show:</span>
-            {["all", "owned", "progress", "sprint"].map((mode) => (
+            {["all", "owned", "progress", "sprint", "marathon"].map((mode) => (
               <button
                 key={mode}
                 onClick={() => setFilterMode(mode)}
@@ -394,9 +407,13 @@ const WardrobePage = () => {
                   <span className="flex items-center gap-1">
                     <FaTrophy size={9} /> Progress
                   </span>
-                ) : (
+                ) : mode === "sprint" ? (
                   <span className="flex items-center gap-1">
                     <FaBolt size={9} /> Sprint
+                  </span>
+                ) : (
+                  <span className="flex items-center gap-1">
+                    <FaRunning size={10} /> Marathon
                   </span>
                 )}
               </button>
