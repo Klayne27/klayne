@@ -495,8 +495,8 @@ const Post = ({
                     {post.isAnonymous ? (
                       <span className="truncate">@Anonymous</span>
                     ) : (
-                      <Link
-                        to={`/profile/${originalPostOwner.username}`}
+                      <span
+                        // to={`/profile/${originalPostOwner.username}`}
                         className="min-w-0 truncate hover:underline"
                         onClick={handleInteractiveClick}
                         data-profile-trigger="true"
@@ -504,7 +504,7 @@ const Post = ({
                         onMouseLeave={handleMouseLeave}
                       >
                         @{originalPostOwner.username}
-                      </Link>
+                      </span>
                     )}
                   </span>
                 </Link>

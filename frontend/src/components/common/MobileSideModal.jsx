@@ -15,6 +15,7 @@ import { LuListTodo } from "react-icons/lu"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useUpdateStatusPreference } from "../../features/users/usersHooks/useUserMutations"
 import { PiCoatHanger, PiSquaresFourFill, PiSquaresFourLight } from "react-icons/pi"
+import UserFullName from "./UserFullname"
 
 function MobileSideModal({
   showSideModal,
@@ -148,12 +149,13 @@ function MobileSideModal({
               </button>
             </div>
             <div className="flex flex-col">
-              <p
-                className="min-w-0 truncate text-lg font-bold"
-                style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
-              >
-                {authUser?.fullName}
-              </p>
+   
+                <UserFullName
+                  user={authUser}
+                  className={`min-w-0 truncate text-lg font-bold`}
+                  style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                />
+         
               <p className="min-w-0 truncate text-sm text-slate-500">@{authUser?.username}</p>
             </div>
             <div className="mt-4 flex gap-4 text-sm">
