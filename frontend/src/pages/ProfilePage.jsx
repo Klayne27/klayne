@@ -42,6 +42,7 @@ import { useLightboxStore } from "../store/useLightboxStore.js"
 import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
 import UserAvatar from "../components/common/UserAvatar.jsx"
 import { useEffect } from "react"
+import { loadGoogleFont } from "../features/wardrobe/StyleWrapper.jsx"
 
 const formatStudyTime = (totalMinutes) => {
   const hours = Math.floor(totalMinutes / 60)
@@ -256,24 +257,25 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     setUserPostsCount(count)
   }
 
-  useEffect(() => {
-    if (!equippedFont) return
+useEffect(() => {
+  const fontKey = userProfile?.equipped?.font
+  const config = WARDROBE_CONFIG[fontKey]
+  
+  if (config?.googleFont) {
+    loadGoogleFont(config.googleFont)
+  }
+  
+  // Apply the variable to the profile container or root
+  if (config?.cssVars) {
+    const root = document.documentElement
+    Object.entries(config.cssVars).forEach(([k, v]) => root.style.setProperty(k, v))
+  }
 
-    const font = WARDROBE_CONFIG[equippedFont]?.googleFont
-    if (!font) return
-
-    const linkId = `font-${equippedFont}`
-
-    // prevent duplicate loads
-    if (document.getElementById(linkId)) return
-
-    const link = document.createElement("link")
-    link.id = linkId
-    link.rel = "stylesheet"
-    link.href = `https://fonts.googleapis.com/css2?family=${font}&display=swap`
-
-    document.head.appendChild(link)
-  }, [equippedFont])
+  // Cleanup: Reset the font variable when leaving the profile
+  return () => {
+    document.documentElement.style.removeProperty("--user-font")
+  }
+}, [userProfile?.equipped?.font])
 
   let displayMessage = ""
   let showFullProfileHeader = false

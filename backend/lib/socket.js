@@ -463,7 +463,7 @@ export const createAndSendNotification = async ({
 
     await newNotification.populate({
       path: "from",
-      select: "username fullName",
+      select: "username fullName equipped nameColor isVerified isGoldVerified isCha",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 

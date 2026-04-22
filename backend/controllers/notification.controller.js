@@ -15,7 +15,7 @@ export const getNotifications = async (req, res) => {
       .populate({
         path: "from",
         select:
-          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+          "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor equipped",
         populate: {
           path: "profileImg",
           select: "imageUrl",

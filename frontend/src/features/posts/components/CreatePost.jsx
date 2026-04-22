@@ -36,6 +36,7 @@ import {
 } from "../postsHooks/usePostsMutations"
 import ImagePreviewCloseButton from "../../../components/common/ImagePreviewCloseButton"
 import UserAvatar from "../../../components/common/UserAvatar"
+import UserFullName from "../../../components/common/UserFullname"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -102,7 +103,6 @@ const CreatePost = ({ feedType }) => {
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
   const { markICPostsAsRead } = useMarkICPostsAsRead()
-  
 
   // Determine character limit based on user status
   const characterLimit =
@@ -629,7 +629,7 @@ const CreatePost = ({ feedType }) => {
         ) : (
           <Link to={`/profile/${authUser.username}`}>
             <div className={` ${scheduledAt ? "mt-1" : ""}`}>
-              <div className="w-full flex rounded-full">
+              <div className="flex w-full rounded-full">
                 <UserAvatar user={authUser} size={"md"} />
               </div>
             </div>
@@ -691,12 +691,13 @@ const CreatePost = ({ feedType }) => {
                         </div>
                       </div>
                       <div>
-                        <p
-                          className="font-semibold"
-                          style={user.nameColor ? { color: user.nameColor } : undefined}
-                        >
-                          {user.fullName}
-                        </p>
+                    
+                          <UserFullName
+                            user={user}
+                            className={`font-semibold`}
+                            style={user.nameColor ? { color: user.nameColor } : undefined}
+                          />
+                    
                         <p className="text-sm text-slate-500">@{user.username}</p>
                       </div>
                     </div>

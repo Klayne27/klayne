@@ -69,8 +69,14 @@ function StudyLeaderboardPage() {
 
   const { leaderboard, totalPages, isLoading, currentWeekStart } = currentLeaderboard
 
+  // const handlePageChange = (newPage) => {
+  //   if (newPage >= 1 && newPage <= totalPages) setPage(newPage)
+  // }
   const handlePageChange = (newPage) => {
-    if (newPage >= 1 && newPage <= totalPages) setPage(newPage)
+    if (newPage >= 1 && newPage <= totalPages) {
+      setPage(newPage)
+      window.scrollTo({ top: 0, behavior: "smooth" })
+    }
   }
 
   const handleLeaderboardTypeChange = (type) => {
@@ -504,24 +510,104 @@ function StudyLeaderboardPage() {
       </ul>
 
       {totalPages > 1 && (
-        <div className="mt-6 flex justify-center">
-          <div className="join">
-            <button
-              className="btn join-item"
-              onClick={() => handlePageChange(page - 1)}
-              disabled={page === 1}
-            >
-              «
-            </button>
-            {renderPaginationButtons()}
-            <button
-              className="btn join-item"
-              onClick={() => handlePageChange(page + 1)}
-              disabled={page === totalPages}
-            >
-              »
-            </button>
+        <div className="mt-10 flex flex-col items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3">
+            {/* Navigation Group */}
+            <div className="flex items-center gap-1 rounded-2xl border border-accent/10 bg-base-200/50 p-1.5 shadow-xl backdrop-blur-md">
+              {/* Skip to First */}
+              <button
+                className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                onClick={() => handlePageChange(1)}
+                disabled={page === 1}
+                title="First Page"
+              >
+                <span className="text-lg">«</span>
+              </button>
+
+              {/* Prev Page */}
+              <button
+                className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                onClick={() => handlePageChange(page - 1)}
+                disabled={page === 1}
+              >
+                ‹
+              </button>
+
+              {/* Sliding Window Page Numbers */}
+              <div className="flex items-center gap-1 px-1">
+                {Array.from({ length: totalPages }, (_, i) => i + 1)
+                  .filter((p) => {
+                    if (page <= 2) return p <= 3
+                    if (page >= totalPages - 1) return p >= totalPages - 2
+                    return p >= page - 1 && p <= page + 1
+                  })
+                  .map((p) => (
+                    <button
+                      key={p}
+                      onClick={() => handlePageChange(p)}
+                      className={`h-9 w-9 rounded-xl text-xs font-bold transition-all duration-300 ${
+                        p === page
+                          ? `scale-105 bg-primary text-white shadow-lg shadow-primary/40`
+                          : "text-slate-400 hover:bg-white/10 hover:text-white"
+                      }`}
+                    >
+                      {p}
+                    </button>
+                  ))}
+              </div>
+
+              {/* NEXT & LAST Group */}
+              <button
+                className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                onClick={() => handlePageChange(page + 1)}
+                disabled={page === totalPages}
+              >
+                ›
+              </button>
+
+              {/* Skip to Last */}
+              <button
+                className="btn btn-ghost btn-sm rounded-xl px-2 text-slate-500 disabled:opacity-30"
+                onClick={() => handlePageChange(totalPages)}
+                disabled={page === totalPages}
+                title="Last Page"
+              >
+                <span className="text-lg">»</span>
+              </button>
+            </div>
+
+            {/* Jump to Page Input - Positioned in between or adjacent */}
+            <div className="flex items-center gap-2 rounded-2xl border border-accent/10 bg-base-200/50 px-4 py-2 shadow-lg backdrop-blur-md">
+              <label
+                htmlFor="jump-to"
+                className="text-[10px] font-black uppercase tracking-tighter text-slate-500"
+              >
+                Page
+              </label>
+              <input
+                id="jump-to"
+                type="number"
+                min="1"
+                max={totalPages}
+                placeholder={page}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    const val = parseInt(e.target.value)
+                    if (val >= 1 && val <= totalPages) {
+                      handlePageChange(val)
+                      e.target.value = ""
+                      e.target.blur()
+                    }
+                  }
+                }}
+                className="w-10 bg-transparent text-center text-sm font-black text-primary placeholder:text-slate-600 focus:outline-none"
+              />
+            </div>
           </div>
+
+          <p className="text-[10px] font-bold uppercase tracking-widest text-slate-500/50">
+            Viewing {page} / {totalPages}
+          </p>
         </div>
       )}
     </div>

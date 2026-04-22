@@ -99,7 +99,11 @@ const LivePreview = ({ authUser, previewEquipped }) => {
               <div className="flex min-w-0 items-center gap-1">
                 <span
                   className="min-w-0 flex-shrink-0 truncate font-bold"
-                  style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                  style={{
+                    color: authUser.nameColor || undefined,
+                    // Apply the dynamic font family here
+                    fontFamily: fontConfig?.cssVars?.["--user-font"] || "inherit",
+                  }}
                 >
                   {authUser?.fullName}
                 </span>

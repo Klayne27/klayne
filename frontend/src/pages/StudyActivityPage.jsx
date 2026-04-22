@@ -11,6 +11,7 @@ import { FaCheckCircle } from "react-icons/fa"
 import { shouldTextBeWhite } from "../utils/shouldTextBeWhite.js"
 import { useTheme } from "../context/ThemeContext.jsx"
 import { ActivityFeedSkeleton } from "../components/skeletons/ActivityFeedSkeletons.jsx"
+import UserFullName from "../components/common/UserFullname.jsx"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -35,11 +36,10 @@ if (isLoading) {
   return (
     <div className="min-h-screen pb-20">
       {/* Skeleton Header */}
-      <div className="sticky top-0 z-30 flex items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
+      <div className="sticky top-0 z-30 mx-auto flex max-w-2xl items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <div className="skeleton size-9 rounded-full"></div>
-        <div className="space-y-2">
-          <div className="skeleton h-5 w-32"></div>
-          <div className="skeleton h-2 w-16"></div>
+        <div className="mx-auto">
+          <div className="skeleton h-5 w-40 flex-1 text-center"></div>
         </div>
       </div>
 
@@ -99,14 +99,16 @@ if (isLoading) {
 
                     <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-1.5">
-                        <Link
-                          to={`/profile/${activity.user.username}`}
-                          className="truncate font-bold hover:underline"
-                          style={
-                            activity.user.nameColor ? { color: activity.user.nameColor } : undefined
-                          }
-                        >
-                          {activity.user.fullName}
+                        <Link to={`/profile/${activity.user.username}`}>
+                          <UserFullName
+                            user={activity.user}
+                            className={`truncate font-bold hover:underline`}
+                            style={
+                              activity.user.nameColor
+                                ? { color: activity.user.nameColor }
+                                : undefined
+                            }
+                          />
                         </Link>
                         {activity.user.preferredBadge && (
                           <span className="size-4 opacity-80">

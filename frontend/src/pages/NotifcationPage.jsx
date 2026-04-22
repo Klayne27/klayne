@@ -14,6 +14,7 @@ import {
   useDeleteNotifications,
   useGetNotifications,
 } from "../features/notifications/notificationsHooks/useNotifications"
+import UserFullName from "../components/common/UserFullname"
 
 const NotificationPage = () => {
   const { notifications, isLoading } = useGetNotifications()
@@ -231,7 +232,7 @@ const NotificationPage = () => {
 
                   <div className="flex min-w-0 flex-1 flex-col">
                     <div className="flex min-w-0 items-center gap-[2px]">
-                      <span
+                      {/* <span
                         className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
                         onClick={(e) =>
                           !isAnon ? handleProfileClick(e, notification.from?.username) : null
@@ -243,7 +244,15 @@ const NotificationPage = () => {
                         }
                       >
                         {isAnon ? "Anonymous" : notification.from?.fullName}
-                      </span>
+                      </span> */}
+                      <UserFullName
+                        user={notification.from}
+                        isAnon={isAnon}
+                        className={`min-w-0 truncate font-bold ${!isAnon ? "cursor-pointer hover:underline" : ""}`}
+                        onClick={(e) =>
+                          !isAnon ? handleProfileClick(e, notification.from?.username) : null
+                        }
+                      />
 
                       {/* Only show verification badges if NOT anonymous */}
                       {!isAnon && isVerified && (
@@ -257,7 +266,9 @@ const NotificationPage = () => {
                           alt="Gold Verified"
                         />
                       )}
-                      {!isAnon && isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+                      {!isAnon && isCha && (
+                        <img src="/cha.png" className="size-[15px] rounded-md" />
+                      )}
                     </div>
                     <div className="min-w-0 truncate text-sm">
                       {getNotificationMessage(notification)}

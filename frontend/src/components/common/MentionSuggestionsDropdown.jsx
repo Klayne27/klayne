@@ -1,6 +1,7 @@
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import LoadingSpinner from "./LoadingSpinner"
 import UserAvatar from "./UserAvatar"
+import UserFullName from "./UserFullname"
 
 const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
   if (!query) return null
@@ -23,15 +24,14 @@ const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
             }}
           >
             <div className="pt-2">
-              <UserAvatar user={user} size={"sm"}/>
+              <UserAvatar user={user} size={"sm"} />
             </div>
             <div>
-              <p
-                className="text-sm font-semibold"
-                style={user.nameColor ? { color: user.nameColor } : undefined}
-              >
-                {user.fullName}
-              </p>
+                <UserFullName
+                  user={user}
+                  className={`text-sm font-semibold`}
+                  style={user.nameColor ? { color: user.nameColor } : undefined}
+                />
               <p className="text-xs text-gray-400">@{user.username}</p>
             </div>
           </div>

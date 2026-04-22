@@ -64,7 +64,7 @@ export const getPreviousWeekWinners = async (req, res) => {
       weekStart: lastWeekStart,
     }).populate({
       path: "winners.user",
-      select: "username fullName profileImg",
+      select: "username fullName profileImg nameColor equipped",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 
@@ -74,7 +74,7 @@ export const getPreviousWeekWinners = async (req, res) => {
         .sort({ weekStart: -1 })
         .populate({
           path: "winners.user",
-          select: "username fullName profileImg",
+          select: "username fullName profileImg nameColor equipped",
           populate: { path: "profileImg", select: "imageUrl" },
         });
       return res
@@ -170,7 +170,7 @@ export const getPreviousMonthWinners = async (req, res) => {
       .sort({ month: -1 }) // Sorts YYYY-MM strings: "2024-03" comes before "2024-02"
       .populate({
         path: "winners.user",
-        select: "username fullName profileImg",
+        select: "username fullName profileImg nameColor equipped",
         populate: {
           path: "profileImg",
           select: "imageUrl",
