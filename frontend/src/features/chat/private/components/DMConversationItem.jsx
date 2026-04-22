@@ -233,9 +233,9 @@ function DMConversationItem({ conv }) {
             {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
 
             {lastMessageContent === "No messages yet..." ? (
-              <span className="italic">{lastMessageContent}</span>
+              <span className="pl-[2px] italic">{lastMessageContent}</span>
             ) : (
-              <span>
+              <span className="pl-[2px]">
                 {isLastMessageByOtherUser ? otherUser?.username : "You"}: {truncatedLastMessage}
               </span>
             )}

@@ -127,7 +127,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
               </div>
               <BsThreeDots className="shrink-0 text-gray-400" />
             </div>
-            <p className="truncate text-xs text-gray-400">No new messages...</p>
+            <p className="truncate text-xs text-gray-400">No messages yet...</p>
           </div>
         </div>
 
@@ -289,7 +289,7 @@ const WardrobePage = () => {
       return true
     })
 
-  const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts" && tab !== "nameplates"
+  const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts"
 
   if (isLoading) {
     return (

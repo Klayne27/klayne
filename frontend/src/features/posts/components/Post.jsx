@@ -670,7 +670,7 @@ const Post = ({
           </div>
 
           <div className="flex cursor-pointer flex-col gap-3 overflow-hidden">
-            <span className="word-break-anywhere min-w-0 whitespace-pre-wrap">
+            <span className="word-break-anywhere min-w-0 whitespace-pre-wrap pl-[2px]">
               {renderClickableText(sourcePost.text)}
             </span>
             {sourcePost.mediaType === "image" &&
