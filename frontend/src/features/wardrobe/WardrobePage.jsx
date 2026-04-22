@@ -61,7 +61,9 @@ const LivePreview = ({ authUser, previewEquipped }) => {
 
             <div className="flex flex-col">
               <div className="flex justify-between">
-                <span className="font-bold">{authUser?.fullName}</span>
+                <span className="font-bold" style={{ color: authUser.nameColor || undefined }}>
+                  {authUser?.fullName}
+                </span>
               </div>
               <span className="text-sm text-slate-500">@{authUser?.username}</span>
               <span className="mt-2 text-xs">{authUser?.bio}</span>
