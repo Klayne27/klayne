@@ -48,7 +48,7 @@ const UserFullName = ({ user, isAnon, className, style, ...props }) => {
   }
 
   return (
-    <span className={`ml-0.5 ${className}`} style={finalStyle} {...props}>
+    <span className={`pl-[2px] ${className}`} style={finalStyle} {...props}>
       {isAnon ? "Anonymous" : user?.fullName || "Unknown User"}
     </span>
   )

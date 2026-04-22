@@ -85,7 +85,7 @@ const SuggestedUsersPanel = () => {
                       </span> */}
                       <UserFullName
                         user={user}
-                        className="truncate"
+                        className="truncate pr-[2px]"
                         style={
                           user.nameColor
                             ? { color: user.nameColor }

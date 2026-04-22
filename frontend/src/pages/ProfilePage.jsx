@@ -334,7 +334,7 @@ useEffect(() => {
               </button>
               <div className="flex min-w-0 flex-col">
                 <p
-                  className="min-w-0 truncate text-lg font-bold"
+                  className="min-w-0 truncate text-lg font-bold pl-0.5"
                   style={userProfile?.nameColor ? { color: userProfile?.nameColor } : undefined}
                 >
                   {userProfile?.fullName}
