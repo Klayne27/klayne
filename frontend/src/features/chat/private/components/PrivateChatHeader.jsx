@@ -4,6 +4,7 @@ import { useSocket } from "../../../../context/SocketContext"
 import { RiPushpinFill } from "react-icons/ri"
 import { IoInformationCircleOutline } from "react-icons/io5"
 import { getOptimizedImageUrl } from "../../../../utils/cloudinaryUtils"
+import UserFullName from "../../../../components/common/UserFullname"
 
 function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation }) {
   const navigate = useNavigate()
@@ -58,11 +59,18 @@ function PrivateChatHeader({ otherUser, onOpenPinnedModal, selectedConversation 
            */}
           <div className="flex min-w-0 flex-col overflow-hidden">
             <div className="flex min-w-0 items-center">
-              <h3
-                className="mr-1 min-w-0 truncate text-lg font-bold"
-              >
+              {/* <h3 className="mr-1 min-w-0 truncate text-lg font-bold">
                 {isGroup ? groupName : otherUser?.fullName}
-              </h3>
+              </h3> */}
+              {isGroup ? (
+                <h3 className="mr-1 min-w-0 truncate text-lg font-bold">{groupName}</h3>
+              ) : (
+                <UserFullName
+                  user={otherUser}
+                  className={`mr-1 cursor-pointer font-semibold`}
+                  style={otherUser?.nameColor ? { color: otherUser?.nameColor } : undefined}
+                />
+              )}
               {!isGroup && (
                 <div className="flex flex-shrink-0 items-center gap-1">
                   {otherUser?.isVerified && (

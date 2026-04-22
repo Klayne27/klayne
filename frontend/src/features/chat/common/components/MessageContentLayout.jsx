@@ -33,7 +33,6 @@ function MessageContentLayout({
               <UserAvatar
                 size={"sm"}
                 user={message?.sender}
-                onClick={() => navigate(`/profile/${message?.sender?.username}`)}
               />
             </Link>
           </div>

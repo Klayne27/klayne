@@ -11,6 +11,7 @@ import { useGetSuggestedUsers } from "../../features/users/usersHooks/useUserQue
 import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 import { truncateText } from "../../utils/truncateText"
 import UserAvatar from "./UserAvatar"
+import UserFullName from "./UserFullname"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
@@ -64,24 +65,33 @@ const SuggestedUsersPanel = () => {
             return (
               <Link
                 to={`/profile/${user.username}`}
-                className="flex items-center justify-between gap-2 " // Added py-1 for vertical breathing room
+                className="flex items-center justify-between gap-2" // Added py-1 for vertical breathing room
                 key={user._id}
               >
                 <div className="flex min-w-0 flex-grow items-center gap-1">
                   {/* AVATAR WRAPPER: Added padding and removed overflow-hidden */}
-                  <div className="relative flex-shrink-0 p-1 mt-2">
+                  <div className="relative mt-2 flex-shrink-0 p-1">
                     <UserAvatar user={user} size={"sm"} />
                   </div>
 
                   {/* TEXT CONTENT: Moved overflow-hidden here specifically */}
                   <div className="flex min-w-0 flex-col overflow-hidden">
                     <span className="flex items-center gap-1 font-bold tracking-tight hover:underline">
-                      <span
+                      {/* <span
                         className="truncate"
                         style={user.nameColor ? { color: user.nameColor } : undefined}
                       >
                         {user.fullName}
-                      </span>
+                      </span> */}
+                      <UserFullName
+                        user={user}
+                        className="truncate"
+                        style={
+                          user.nameColor
+                            ? { color: user.nameColor }
+                            : undefined
+                        }
+                      />
                       {user.isVerified && (
                         <img src="/verified2.png" className="size-[16px]" alt="verified" />
                       )}

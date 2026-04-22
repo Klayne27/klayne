@@ -307,7 +307,6 @@ const ProfilePage = ({ feedType, setFeedType }) => {
     will also not be able to follow or message you, and you will not see notifications from them.`
   }
 
-  console.log(userProfile?.equipped?.overlay);
 
   return (
     <>

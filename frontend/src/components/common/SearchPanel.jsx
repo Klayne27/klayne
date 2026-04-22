@@ -4,6 +4,7 @@ import { CiSearch } from "react-icons/ci"
 import { useAuthUser } from "../../features/auth/authHooks/useAuthUser"
 import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import { useSearchUsers } from "../../features/users/usersHooks/useUserMutations"
+import UserFullName from "./UserFullname"
 
 const SearchPanel = () => {
   const [searchQuery, setSearchQuery] = useState("")
@@ -87,12 +88,11 @@ const SearchPanel = () => {
                       </div>
                     </div>
                     <div className="flex flex-col overflow-hidden">
-                      <span
-                        className="min-w-0 truncate font-semibold"
-                        style={user.nameColor ? { color: user.nameColor } : undefined}
-                      >
-                        {user.fullName}
-                      </span>
+                        <UserFullName
+                          user={user}
+                          className={`min-w-0 truncate font-semibold`}
+                          style={user.nameColor ? { color: user.nameColor } : undefined}
+                        />
                       <span className="min-w-0 truncate text-sm text-slate-500">
                         @{user.username}
                       </span>

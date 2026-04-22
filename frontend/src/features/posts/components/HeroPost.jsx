@@ -31,6 +31,7 @@ import {
 } from "../postsHooks/usePostsMutations.js"
 import { CgUnblock } from "react-icons/cg"
 import UserAvatar from "../../../components/common/UserAvatar.jsx"
+import UserFullName from "../../../components/common/UserFullname.jsx"
 
 const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
   const navigate = useNavigate()
@@ -204,7 +205,9 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
               <span
                 className="min-w-0 truncate"
                 style={
-                  !post.isAnonymous && originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
+                  !post.isAnonymous && originalPostOwner.nameColor
+                    ? { color: originalPostOwner.nameColor }
+                    : undefined
                 }
               >
                 {post.isAnonymous ? "Anonymous" : originalPostOwner.fullName}
@@ -243,14 +246,19 @@ const HeroPost = forwardRef(({ post, hasLineAbove = false }, ref) => {
               onMouseEnter={(e) => handleMouseEnter(originalPostOwner, e)}
               onMouseLeave={handleMouseLeave}
             >
-              <span
+              {/* <span
                 className="min-w-0 truncate"
                 style={
                   originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined
                 }
               >
                 {originalPostOwner.fullName}
-              </span>
+              </span> */}
+              <UserFullName
+                user={originalPostOwner}
+                className={`min-w-0 truncate`}
+                style={originalPostOwner.nameColor ? { color: originalPostOwner.nameColor } : undefined}
+              />
               <span className="flex items-center">
                 {originalPostOwner.isVerified && (
                   <img src="/verified2.png" className="size-[17px]" alt="Verified" loading="lazy" />

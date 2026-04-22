@@ -1,3 +1,5 @@
+import { Link } from "react-router-dom"
+import UserFullName from "../../../../components/common/UserFullname"
 import { formatTime } from "../../../../utils/date"
 
 function PrivateChatFirstMessageInGroup({
@@ -16,13 +18,20 @@ function PrivateChatFirstMessageInGroup({
       {message.isFirstInGroup && (
         <div className={`mb-0.5 flex items-center text-sm`}>
           {!isSentByCurrentUser && (
-            <div
-              className={`mr-1 cursor-pointer font-semibold`}
-              onClick={(e) => onUsernameClick(message.sender, e)}
-              style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
-            >
-              {message.senderUsername}
-            </div>
+            // <div
+            //   className={`mr-1 cursor-pointer font-semibold`}
+            //   onClick={(e) => onUsernameClick(message.sender, e)}
+            //   style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
+            // >
+            //   {message.senderUsername}
+            // </div>
+            <Link to={`/profile/${message.sender?.username}`}>
+              <UserFullName
+                user={message.sender}
+                className={`mr-1 cursor-pointer font-semibold`}
+                style={message.sender.nameColor ? { color: message.sender.nameColor } : undefined}
+              />
+            </Link>
           )}
           <span className="mr-5 text-xs text-gray-500">{formatTime(message.createdAt)}</span>
         </div>

@@ -8,8 +8,15 @@ import LoadingSpinner from "../components/common/LoadingSpinner"
 
 import { getBadgeIcon } from "../utils/badgeUtils.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
-import { useGetMonthlyLeaderboard, useGetPreviousMonthWinners, useGetPreviousWeekWinners, useGetTotalLeaderboard, useGetWeeklyLeaderboard } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
+import {
+  useGetMonthlyLeaderboard,
+  useGetPreviousMonthWinners,
+  useGetPreviousWeekWinners,
+  useGetTotalLeaderboard,
+  useGetWeeklyLeaderboard,
+} from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
 import UserAvatar from "../components/common/UserAvatar.jsx"
+import UserFullName from "../components/common/UserFullname.jsx"
 
 const WinnerAvatar = ({ winner, rank, size, ringColor }) => (
   <Link
@@ -183,14 +190,14 @@ function StudyLeaderboardPage() {
   if (!leaderboard || leaderboard.length === 0) {
     return (
       <div className="template container mx-auto max-w-2xl p-4">
-        <div className="mb-6 flex items-center ">
+        <div className="mb-6 flex items-center">
           <button
             onClick={() => navigate(-1)}
             className="mr-2 flex flex-shrink-0 items-center gap-6 rounded-full p-2.5 transition duration-200 hover:bg-secondary"
           >
             <FaArrowLeft className="text-xl" />
           </button>
-          <h2 className="flex-1 text-center text-2xl font-bold ml-2">Study Leaderboard</h2>
+          <h2 className="ml-2 flex-1 text-center text-2xl font-bold">Study Leaderboard</h2>
         </div>
 
         {/* Type tabs — shown even on empty state so user can switch */}
@@ -230,11 +237,12 @@ function StudyLeaderboardPage() {
       if (!winner) return <div className="flex-1 opacity-0" /> // Spacer for missing ranks
       return (
         <div className="min-w-0 flex-1 px-1">
-          <p
-            className="truncate text-[11px] font-bold text-base-content sm:text-xs"
-            style={winner.user?.nameColor ? { color: winner.user?.nameColor } : undefined}
-          >
-            {winner.user?.fullName}
+          <p>
+            <UserFullName
+              user={winner.user}
+              className={`truncate text-[11px] font-bold text-base-content sm:text-xs`}
+              style={winner.user?.nameColor ? { color: winner.user?.nameColor } : undefined}
+            />
           </p>
           <p className="flex items-center justify-center gap-1 text-[10px] font-medium text-primary">
             <FaClock className="text-[9px]" />
@@ -415,7 +423,7 @@ function StudyLeaderboardPage() {
                               : "ring-1 ring-base-300"
                       }`}
                     > */}
-                      {/* <img
+                    {/* <img
                         src={getOptimizedImageUrl(
                           entry?.profileImg?.imageUrl || "/avatar-placeholder.png",
                           "avatar",
@@ -423,7 +431,7 @@ function StudyLeaderboardPage() {
                         alt={entry.fullName}
                         className="rounded-full"
                       /> */}
-                      <UserAvatar user={entry} size={"md"} />
+                    <UserAvatar user={entry} size={"md"} />
                     {/* </div> */}
                   </div>
                   {globalRank === 1 && (
@@ -437,12 +445,12 @@ function StudyLeaderboardPage() {
                 {/* 3. Name and Level */}
                 <div className="flex min-w-0 flex-col overflow-hidden">
                   <div className="flex items-center gap-1.5">
-                    <Link
-                      to={`/profile/${entry.username}`}
-                      className="truncate text-sm font-bold transition-colors hover:text-primary sm:text-base"
-                      style={entry.nameColor ? { color: entry.nameColor } : undefined}
-                    >
-                      {entry.fullName}
+                    <Link to={`/profile/${entry.username}`}>
+                      <UserFullName
+                        user={entry}
+                        className={`truncate text-sm font-bold transition-colors hover:text-primary sm:text-base`}
+                        style={entry.nameColor ? { color: entry.nameColor } : undefined}
+                      />
                     </Link>
                     {entry.preferredBadge && (
                       <span className="size-3.5 flex-shrink-0">

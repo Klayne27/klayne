@@ -50,6 +50,7 @@ import { getKlayneColor } from "../../utils/getKlayneColor"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 import WardrobePage from "../../features/wardrobe/WardrobePage"
 import UserAvatar from "./UserAvatar"
+import UserFullName from "./UserFullname"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -833,9 +834,8 @@ const Sidebar = ({
               >
                 {/* Avatar: Removed justify-center */}
                 <div className="relative flex shrink-0">
-                 
-                    <UserAvatar user={authUser} size={"md"} />
-                 
+                  <UserAvatar user={authUser} size={"md"} />
+
                   {isOnline ? (
                     <span className="absolute bottom-0 right-0 z-50 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
                   ) : (
@@ -847,11 +847,12 @@ const Sidebar = ({
                   <div className="flex min-w-0 flex-1 items-center justify-between">
                     {/* Changed items-center to items-start to align text to the left */}
                     <div className="flex min-w-0 flex-col items-start overflow-hidden">
-                      <p
-                        className="w-full truncate text-start text-sm font-bold"
-                        style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
-                      >
-                        {authUser?.fullName}
+                      <p >
+                        <UserFullName
+                          user={authUser}
+                          className={`w-full truncate text-start text-sm font-bold`}
+                          style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                        />
                       </p>
                       <p className="w-full truncate text-start text-sm text-slate-500">
                         @{authUser?.username}
@@ -905,11 +906,12 @@ const Sidebar = ({
 
                       {/* Name Section - Enforced Truncation */}
                       <div className="mt-4 flex w-full flex-col items-start overflow-hidden px-3">
-                        <span
-                          className="w-full truncate text-sm font-bold text-white"
-                          style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
-                        >
-                          {authUser?.fullName}
+                        <span>
+                          <UserFullName
+                            user={authUser}
+                            className={`w-full truncate text-sm font-bold`}
+                            style={authUser.nameColor ? { color: authUser.nameColor } : undefined}
+                          />
                         </span>
                         <span className="mb-1 w-full truncate text-xs text-gray-500">
                           @{authUser?.username}

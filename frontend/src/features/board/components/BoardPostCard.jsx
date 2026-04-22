@@ -6,6 +6,7 @@ import { useMessagingMetaData } from "../../../hooks/customHooks/useMessagingMet
 import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { useReactToBoardPost } from "../boardHooks/boardMutations"
 import MessageReactions from "../../chat/common/components/MessageReactions"
+import UserFullName from "../../../components/common/UserFullname"
 
 const getMostUsedEmojiData = (reactions) => {
   if (!reactions || reactions.length === 0) return { emoji: null, count: 0 }
@@ -93,12 +94,11 @@ const BoardPostCard = ({ post, isSelected, onClick }) => {
           />
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-1">
-              <p
-                className="text-md truncate font-bold leading-none"
+              <UserFullName
+                user={post.user}
+                className={`text-md truncate font-bold leading-none`}
                 style={post.user?.nameColor ? { color: post.user?.nameColor } : undefined}
-              >
-                {post.user?.fullName}
-              </p>
+              />
               {post.user?.isVerified && (
                 <img src="/verified2.png" className="size-[17px]" alt="Verified" />
               )}

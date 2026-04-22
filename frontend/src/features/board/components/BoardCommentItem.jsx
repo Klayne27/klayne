@@ -19,6 +19,7 @@ import { useIsMobile } from "../../../hooks/customHooks/useIsMobile"
 import SlideUpMenu, { SlideUpMenuContent } from "../../../components/common/SlideUpMenu"
 import ReactionsSlideUpMenuContent from "../../../components/common/ReactionsSlideUpMenuContent"
 import { PiSmiley } from "react-icons/pi"
+import UserFullName from "../../../components/common/UserFullname"
 
 const toMessageShape = (comment) => ({
   ...comment,
@@ -271,12 +272,12 @@ const BoardCommentItem = ({
         <div className="flex w-full flex-col items-start gap-2">
           <div className="min-w-0 flex-1 overflow-hidden">
             <div className="flex items-center gap-1">
-              <Link
-                to={`/profile/${comment.user?.username}`}
-                className="truncate text-sm font-bold hover:underline"
-                style={comment.user?.nameColor ? { color: comment.user?.nameColor } : undefined}
-              >
-                {comment.user?.fullName}
+              <Link to={`/profile/${comment.user?.username}`}>
+                <UserFullName
+                  user={comment.user}
+                  className={`truncate text-sm font-bold hover:underline`}
+                  style={comment.user?.nameColor ? { color: comment.user?.nameColor } : undefined}
+                />
               </Link>
               {comment.user?.isVerified && (
                 <img src="/verified2.png" className="size-[17px]" alt="Verified" />

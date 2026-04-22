@@ -28,7 +28,7 @@ const commentPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   { path: "image", select: "imageUrl" },
@@ -61,7 +61,7 @@ const boardPostPopulate = [
   {
     path: "user",
     select:
-      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor",
+      "username fullName profileImg isCha isVerified isGoldVerified badges preferredBadge nameColor equipped",
     populate: { path: "profileImg", select: "imageUrl" },
   },
   {

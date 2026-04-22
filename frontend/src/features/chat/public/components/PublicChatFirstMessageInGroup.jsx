@@ -3,7 +3,7 @@ import { formatTime } from "../../../../utils/date/index.js"
 import { MdAdminPanelSettings } from "react-icons/md"
 import { FaBan } from "react-icons/fa"
 import { getBadgeIcon } from "../../../../utils/badgeUtils.jsx"
-
+import UserFullName from "../../../../components/common/UserFullname.jsx"
 
 function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderBanned }) {
   const isSenderAdmin = message.sender?.isAdmin
@@ -16,12 +16,19 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
       {message.isFirstInGroup && (
         <div className={`mb-0.5 flex items-center gap-1 text-sm`}>
           {!isSentByCurrentUser && (
-            <Link
-              to={`/profile/${message.sender?.username}`}
-              className={`font-semibold`}
-              style={message.sender?.nameColor ? { color: message.sender?.nameColor } : undefined}
-            >
-              {message.sender?.username}
+            // <Link
+            //   to={`/profile/${message.sender?.username}`}
+            //   className={`font-semibold`}
+            //   style={message.sender?.nameColor ? { color: message.sender?.nameColor } : undefined}
+            // >
+            //   {message.sender?.username}
+            // </Link>
+            <Link to={`/profile/${message.sender?.username}`}>
+              <UserFullName
+                user={message.sender}
+                className="font-semibold"
+                style={message.sender?.nameColor ? { color: message.sender?.nameColor } : undefined}
+              />
             </Link>
           )}
           <span className="flex items-center">
@@ -31,7 +38,9 @@ function PublicChatFirstMessageInGroup({ message, isSentByCurrentUser, isSenderB
             {isSenderGoldVerified && !isSentByCurrentUser && (
               <img src="/gold-verified2.png" className="size-[17px]" />
             )}
-            {isSenderCha && !isSentByCurrentUser && <img src="/cha.png" className="size-[15px] rounded-md" />}
+            {isSenderCha && !isSentByCurrentUser && (
+              <img src="/cha.png" className="size-[15px] rounded-md" />
+            )}
             {isSenderAdmin && !isSentByCurrentUser && (
               <span>
                 <MdAdminPanelSettings size={20} className="mb-[1px] fill-green-500" />

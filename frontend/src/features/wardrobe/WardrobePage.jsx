@@ -283,7 +283,7 @@ const WardrobePage = () => {
       return true
     })
 
-  const isTabLocked = (tab) => tab === "rings"
+  const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts"
 
   if (isLoading) {
     return (

@@ -102,7 +102,7 @@ export const getTotalLeaderboard = async (req, res) => {
       .skip(skipIndex)
       .limit(limit)
       .select(
-        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak equipped",
+        "username fullName totalStudyDuration totalSessionsCompleted profileImg pomodoroLevel badges preferredBadge studyStreak equipped nameColor",
       )
       .populate({
         path: "profileImg",

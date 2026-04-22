@@ -37,6 +37,7 @@ import BoardPostInput from "./BoardPostInput"
 import { PiSmiley } from "react-icons/pi"
 import ImageLightbox from "./ImageLightbox"
 import { useLightboxStore } from "../../../store/useLightboxStore"
+import UserFullName from "../../../components/common/UserFullname"
 
 const formatDateSeparator = (dateStr) => {
   const date = new Date(dateStr)
@@ -365,12 +366,12 @@ const BoardPostDetail = ({ postId, onClose }) => {
               </Link>
               <div>
                 <div className="flex items-center gap-1">
-                  <Link
-                    to={`/profile/${post.user?.username}`}
-                    className="font-bold hover:underline"
-                    style={post.user?.nameColor ? { color: post.user?.nameColor } : undefined}
-                  >
-                    {post.user?.fullName}
+                  <Link to={`/profile/${post.user?.username}`}>
+                    <UserFullName
+                      user={post.user}
+                      className={`font-bold hover:underline`}
+                      style={post.user?.nameColor ? { color: post.user?.nameColor } : undefined}
+                    />
                   </Link>
                   {post.user?.isVerified && (
                     <img src="/verified2.png" className="size-[17px]" alt="Verified" />
