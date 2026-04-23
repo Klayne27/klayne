@@ -176,7 +176,7 @@ function DMConversationItem({ conv }) {
   }
 return (
   <div
-    className={`relative flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 ${isHovered ? nameplateClass : "hover:bg-secondary/60"} ${isSelected ? "border-r-2 border-r-primary" : ""}`}
+    className={`relative flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 ${isHovered && nameplateClass ? nameplateClass : "hover:bg-secondary/60"} ${isSelected ? "border-r-2 border-r-primary" : ""}`}
     onClick={handleSelectConversation}
     onTouchStart={handleTouchStartWithId}
     onTouchEnd={handleTouchEnd}

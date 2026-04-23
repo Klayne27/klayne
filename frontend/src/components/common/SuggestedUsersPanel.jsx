@@ -12,6 +12,7 @@ import { useFollow } from "../../features/users/usersHooks/useUserMutations"
 import { truncateText } from "../../utils/truncateText"
 import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
+import { getNameplateClass } from "../../utils/getNameplateClass"
 
 const SuggestedUsersPanel = () => {
   const showUnfollowModal = useAppStore((state) => state.showUnfollowModal)
@@ -47,8 +48,8 @@ const SuggestedUsersPanel = () => {
   }
 
   return (
-    <div className="rounded-2xl border border-accent p-4">
-      <p className="mb-4 text-xl font-bold">Who to follow</p>
+    <div className="rounded-2xl border border-accent py-4">
+      <p className="mb-4 text-xl font-bold px-4">Who to follow</p>
       <div className="flex flex-col">
         {!suggestedUsers && isLoading && (
           <div className="flex flex-col gap-2.5">
@@ -61,11 +62,11 @@ const SuggestedUsersPanel = () => {
         {suggestedUsers?.length > 0 &&
           suggestedUsers.map((user) => {
             const isFollowing = currentUser?.following?.includes(user._id)
-
+            const nameplateClass = getNameplateClass(user?.equipped.nameplate)
             return (
               <Link
                 to={`/profile/${user.username}`}
-                className="flex items-center justify-between gap-2" // Added py-1 for vertical breathing room
+                className={`${nameplateClass} px-4 flex items-center justify-between gap-2`} // Added py-1 for vertical breathing room
                 key={user._id}
               >
                 <div className="flex min-w-0 flex-grow items-center gap-1">
@@ -86,11 +87,7 @@ const SuggestedUsersPanel = () => {
                       <UserFullName
                         user={user}
                         className="truncate pr-[2px]"
-                        style={
-                          user.nameColor
-                            ? { color: user.nameColor }
-                            : undefined
-                        }
+                        style={user.nameColor ? { color: user.nameColor } : undefined}
                       />
                       {user.isVerified && (
                         <img src="/verified2.png" className="size-[16px]" alt="verified" />

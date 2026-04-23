@@ -12,6 +12,7 @@ import { shouldTextBeWhite } from "../utils/shouldTextBeWhite.js"
 import { useTheme } from "../context/ThemeContext.jsx"
 import { ActivityFeedSkeleton } from "../components/skeletons/ActivityFeedSkeletons.jsx"
 import UserFullName from "../components/common/UserFullname.jsx"
+import { getNameplateClass } from "../utils/getNameplateClass.js"
 
 const formatDate = (dateString) => {
   const date = new Date(dateString)
@@ -23,7 +24,7 @@ const StudyActivityPage = () => {
   const [page, setPage] = useState(1)
   const { activityFeed, isLoading, totalPages } = useGetStudyActivityFeed(page)
 
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const handlePageChange = (newPage) => {
     if (newPage >= 1 && newPage <= totalPages) {
@@ -32,33 +33,33 @@ const StudyActivityPage = () => {
     }
   }
 
-if (isLoading) {
-  return (
-    <div className="min-h-screen pb-20">
-      {/* Skeleton Header */}
-      <div className="sticky top-0 z-30 mx-auto flex max-w-2xl items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
-        <div className="skeleton size-9 rounded-full"></div>
-        <div className="mx-auto">
-          <div className="skeleton h-5 w-40 flex-1 text-center"></div>
-        </div>
-      </div>
-
-      <div className="container mx-auto max-w-2xl p-4">
-        <div className="space-y-3">
-          {/* Render 6 skeletons to fill the screen */}
-          {[...Array(6)].map((_, i) => (
-            <ActivityFeedSkeleton key={i} />
-          ))}
+  if (isLoading) {
+    return (
+      <div className="min-h-screen pb-20">
+        {/* Skeleton Header */}
+        <div className="sticky top-0 z-30 mx-auto flex max-w-2xl items-center gap-4 border-b border-accent/20 bg-base-100/80 px-4 py-3 backdrop-blur-md">
+          <div className="skeleton size-9 rounded-full"></div>
+          <div className="mx-auto">
+            <div className="skeleton h-5 w-40 flex-1 text-center"></div>
+          </div>
         </div>
 
-        {/* Skeleton Pagination */}
-        <div className="mt-10 flex justify-center">
-          <div className="skeleton h-12 w-64 rounded-xl"></div>
+        <div className="container mx-auto max-w-2xl p-4">
+          <div className="space-y-3">
+            {/* Render 6 skeletons to fill the screen */}
+            {[...Array(6)].map((_, i) => (
+              <ActivityFeedSkeleton key={i} />
+            ))}
+          </div>
+
+          {/* Skeleton Pagination */}
+          <div className="mt-10 flex justify-center">
+            <div className="skeleton h-12 w-64 rounded-xl"></div>
+          </div>
         </div>
       </div>
-    </div>
-  )
-}
+    )
+  }
   return (
     <div className="mx-auto min-h-screen max-w-2xl pb-20">
       {/* Sticky Header */}
@@ -79,11 +80,12 @@ if (isLoading) {
           <div className="space-y-3">
             {activityFeed.map((activity) => {
               const isLevelUp = !activity.duration
+              const nameplateClass = getNameplateClass(activity.user?.equipped?.nameplate)
 
               return (
                 <div
                   key={activity._id}
-                  className={`group relative overflow-hidden rounded-2xl border transition-all duration-300 ${
+                  className={`group ${nameplateClass} relative overflow-hidden rounded-2xl border transition-all duration-300 ${
                     isLevelUp
                       ? "border-primary/30 bg-primary/5 shadow-[0_0_20px_rgba(168,85,247,0.1)]"
                       : "border-accent/10 bg-base-200/40 hover:bg-base-200/60"

@@ -51,6 +51,7 @@ import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 import WardrobePage from "../../features/wardrobe/WardrobePage"
 import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
+import { getNameplateClass } from "../../utils/getNameplateClass"
 
 const Sidebar = ({
   onOpenCreatePostModal,
@@ -94,6 +95,7 @@ const Sidebar = ({
   const [isFollowersModalOpen, setIsFollowersModalOpen] = useState(false)
 
   const [showWardrobe, setShowWardrobe] = useState(false)
+  const [isHovered, setIsHovered] = useState(false)
 
   const [showMorePopover, setShowMorePopover] = useState(false)
   const moreButtonRef = useRef(null)
@@ -139,6 +141,8 @@ const Sidebar = ({
   }, [])
 
   const isOnline = authUser.statusPreference === "online"
+    const nameplateClass = getNameplateClass(authUser?.equipped?.nameplate)
+  
 
   const totalNotifications =
     unreadMessageCount +
@@ -819,18 +823,22 @@ const Sidebar = ({
 
           {/* User Profile and Popover (Desktop only) */}
           {authUser && (
-            <div className="relative mb-3 mt-auto hidden w-full items-center justify-start md:flex">
+            <div
+              className={`relative mb-3 mt-auto hidden w-full items-center justify-start  md:flex`}
+            >
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={`mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 duration-300 hover:bg-secondary ${
+                className={` ${isHovered && nameplateClass ? nameplateClass : "hover:bg-secondary/60"} overflow-hidden transition duration-300 mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 ${
                   isTouchDevice && activeButtonId === "user-profile-button"
-                    ? "bg-secondary bg-opacity-50 transition duration-150"
-                    : "transition duration-150"
+                    ? "bg-secondary bg-opacity-50 transition duration-300"
+                    : "transition duration-300"
                 }`}
                 onTouchStart={() => handleTouchStart("user-profile-button")}
                 onTouchEnd={handleTouchEnd}
                 onTouchCancel={handleTouchCancel}
+                onMouseEnter={() => setIsHovered(true)}
+                onMouseLeave={() => setIsHovered(false)}
               >
                 {/* Avatar: Removed justify-center */}
                 <div className="relative flex shrink-0">
@@ -847,7 +855,7 @@ const Sidebar = ({
                   <div className="flex min-w-0 flex-1 items-center justify-between">
                     {/* Changed items-center to items-start to align text to the left */}
                     <div className="flex min-w-0 flex-col items-start overflow-hidden">
-                      <p >
+                      <p>
                         <UserFullName
                           user={authUser}
                           className={`w-full truncate text-start text-sm font-bold`}

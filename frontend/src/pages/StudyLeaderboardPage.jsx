@@ -17,6 +17,7 @@ import {
 } from "../features/pomodoro/pomodoroHooks/usePomodoroQueries.js"
 import UserAvatar from "../components/common/UserAvatar.jsx"
 import UserFullName from "../components/common/UserFullname.jsx"
+import { getNameplateClass } from "../utils/getNameplateClass.js"
 
 const WinnerAvatar = ({ winner, rank, size, ringColor }) => (
   <Link
@@ -59,6 +60,7 @@ function StudyLeaderboardPage() {
 
   const { previousMonthWinners } = useGetPreviousMonthWinners()
   const { previousWeekWinners } = useGetPreviousWeekWinners()
+  
 
   const currentLeaderboard =
     leaderboardType === "total"
@@ -398,11 +400,12 @@ function StudyLeaderboardPage() {
         {leaderboard.map((entry, index) => {
           const globalRank = (page - 1) * 10 + index + 1
           const isMe = currentUser && currentUser._id === entry._id
-
+          const nameplateClass = getNameplateClass(entry?.equipped?.nameplate)
+          
           return (
             <li
               key={entry._id}
-              className={`relative flex items-center justify-between rounded-2xl border p-3 transition-all duration-300 sm:p-4 ${isMe ? "z-10 scale-[1.02] border-primary bg-primary/5 shadow-md" : "border-base-300 bg-base-100 hover:border-gray-400"} `}
+              className={`relative ${nameplateClass} overflow-hidden flex items-center justify-between rounded-2xl border p-3 transition-all duration-300 sm:p-4 ${isMe ? "z-10 scale-[1.02] border-primary bg-primary/5 shadow-md" : "border-base-300 bg-base-100 hover:border-gray-400"} `}
             >
               {/* LEFT SIDE: Rank, Avatar, and Info */}
               <div className="flex min-w-0 flex-1 items-center gap-3">

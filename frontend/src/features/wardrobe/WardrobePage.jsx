@@ -192,7 +192,7 @@ const ItemCard = ({
 
   return (
     <div
-    ref={ref}
+      ref={ref}
       className={`relative flex cursor-pointer select-none flex-col gap-1 overflow-hidden rounded-xl border p-3 transition ${cardNameplateClass} ${
         isPreviewing
           ? "border-primary bg-primary/10"
@@ -216,7 +216,10 @@ const ItemCard = ({
         {swatch}
         {npPreview}
 
-        <p className={`text-sm font-bold leading-tight ${config.category === "nameplates" && "text-neutral-500"}`} style={{ fontFamily: itemFontFamily }}>
+        <p
+          className={`text-sm font-bold leading-tight ${config.category === "nameplates" && "text-neutral-500"}`}
+          style={{ fontFamily: itemFontFamily }}
+        >
           {config.label}
         </p>
 
@@ -229,7 +232,7 @@ const ItemCard = ({
           <div className="mt-1">
             {!isEquipped ? (
               <button
-                className={`w-full rounded-full bg-primary py-0.5 text-xs font-bold ${shouldTextBeWhite(theme)}`}
+                className={`z-[1000] w-full rounded-full bg-primary py-0.5 text-xs font-bold ${shouldTextBeWhite(theme)}`}
                 onClick={(e) => {
                   e.stopPropagation()
                   onEquip(itemKey)
@@ -239,7 +242,7 @@ const ItemCard = ({
               </button>
             ) : (
               <button
-                className="w-full rounded-full border border-red-500/40 bg-base-100 py-0.5 text-xs text-red-400"
+                className="z-[1000] border w-full rounded-full border-red-500/40 bg-base-100 py-0.5 text-xs text-red-400"
                 onClick={(e) => {
                   e.stopPropagation()
                   onUnequip()
