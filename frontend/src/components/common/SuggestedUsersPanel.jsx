@@ -52,7 +52,7 @@ const SuggestedUsersPanel = () => {
       <p className="mb-4 text-xl font-bold px-4">Who to follow</p>
       <div className="flex flex-col">
         {!suggestedUsers && isLoading && (
-          <div className="flex flex-col gap-2.5">
+          <div className="flex flex-col gap-2.5 px-4">
             <RightPanelSkeleton />
             <RightPanelSkeleton />
             <RightPanelSkeleton />
