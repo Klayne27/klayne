@@ -1320,70 +1320,6 @@ const UNLOCK_RULES = [
   // ════════════════════════════════════════
   // NAMEPLATES — Progress Rewards
   // ════════════════════════════════════════
-  {
-    id: "np_golden_ribbon",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 5,
-    items: ["golden_ribbon"],
-    description: "Reach Level 5",
-  },
-  {
-    id: "np_gothic_parchment",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 15,
-    items: ["gothic_parchment"],
-    description: "Reach Level 15",
-  },
-  {
-    id: "np_cyber_hud",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 25,
-    items: ["cyber_hud"],
-    description: "Reach Level 25",
-  },
-  {
-    id: "np_prismatic",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 40,
-    items: ["prismatic"],
-    description: "Reach Level 40",
-  },
-  {
-    id: "np_obsidian_seal",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 60,
-    items: ["obsidian_seal"],
-    description: "Reach Level 60",
-  },
-  {
-    id: "np_celestial_script",
-    category: "nameplates",
-    trigger: "level",
-    threshold: 80,
-    items: ["celestial_script"],
-    description: "Reach Level 80",
-  },
-  {
-    id: "np_scholar_crest",
-    category: "nameplates",
-    trigger: "totalMinutes",
-    threshold: 6000,
-    items: ["scholar_crest"],
-    description: "Study 100 total hours",
-  },
-  {
-    id: "np_inferno_tag",
-    category: "nameplates",
-    trigger: "weeklyMinutes",
-    threshold: 1800,
-    items: ["inferno_tag"],
-    description: "Study 30 hours in a week",
-  },
   // ── NAMEPLATES: Level-gated ───────────────────────────────────────────────
   {
     id: "np_sakura_veil",
@@ -1425,14 +1361,6 @@ const UNLOCK_RULES = [
     items: ["rust_faction"],
     description: "Reach Level 38",
   },
-  // {
-  //   id: "np_angel_protocol",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 45,
-  //   items: ["angel_protocol"],
-  //   description: "Reach Level 45",
-  // },
   {
     id: "np_phantom_garden",
     category: "nameplates",
@@ -1473,14 +1401,6 @@ const UNLOCK_RULES = [
     items: ["neon_kanji"],
     description: "Reach Level 75",
   },
-  // {
-  //   id: "np_abyssal_rift",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 85,
-  //   items: ["abyssal_rift_np"],
-  //   description: "Reach Level 85",
-  // },
 
   // ── NAMEPLATES: Hour-gated ────────────────────────────────────────────────
   {
@@ -1578,14 +1498,7 @@ const UNLOCK_RULES = [
     items: ["frost_weave"],
     description: "Reach Level 7",
   },
-  // {
-  //   id: "np_golden_dusk",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 12,
-  //   items: ["golden_dusk"],
-  //   description: "Reach Level 12",
-  // },
+
   {
     id: "np_rose_ash",
     category: "nameplates",
@@ -1711,15 +1624,6 @@ const UNLOCK_RULES = [
     description: "Study 45 hours in a week",
   },
 
-  // Monthly sprints
-  // {
-  //   id: "np_cyber_lotus",
-  //   category: "nameplates",
-  //   trigger: "monthlyMinutes",
-  //   threshold: 1800,
-  //   items: ["cyber_lotus_np"],
-  //   description: "Study 30 hours in a month",
-  // },
   {
     id: "np_tempest_eye",
     category: "nameplates",
@@ -1785,14 +1689,7 @@ const UNLOCK_RULES = [
     items: ["bioluminescent_np"],
     description: "Reach Level 36",
   },
-  // {
-  //   id: "np_ink_bloom",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 43,
-  //   items: ["ink_bloom_np"],
-  //   description: "Reach Level 43",
-  // },
+
   {
     id: "np_crystal_cave",
     category: "nameplates",
@@ -1878,15 +1775,7 @@ const UNLOCK_RULES = [
     description: "Study 35 hours in a week",
   },
 
-  // Monthly sprints
-  // {
-  //   id: "np_velvet_storm",
-  //   category: "nameplates",
-  //   trigger: "monthlyMinutes",
-  //   threshold: 1200,
-  //   items: ["velvet_storm_np"],
-  //   description: "Study 20 hours in a month",
-  // },
+
   {
     id: "np_midnight_prism",
     category: "nameplates",
@@ -1895,95 +1784,7 @@ const UNLOCK_RULES = [
     items: ["midnight_prism_np"],
     description: "Study 40 hours in a month",
   },
-  // {
-  //   id: "np_phosphene",
-  //   category: "nameplates",
-  //   trigger: "monthlyMinutes",
-  //   threshold: 7500,
-  //   items: ["phosphene_np"],
-  //   description: "Study 125 hours in a month",
-  // },
-  // ── Simple Tier ───────────────────────────────────────────────────────────────
-  // {
-  //   id: "np_mint_haze",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 2,
-  //   items: ["mint_haze_np"],
-  //   description: "Reach Level 2",
-  // },
-  // {
-  //   id: "np_lavender_mist",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 3,
-  //   items: ["lavender_mist_np"],
-  //   description: "Reach Level 3",
-  // },
-  // {
-  //   id: "np_peach_blush",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 4,
-  //   items: ["peach_blush_np"],
-  //   description: "Reach Level 4",
-  // },
-  // {
-  //   id: "np_slate_fog",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 6,
-  //   items: ["slate_fog_np"],
-  //   description: "Reach Level 6",
-  // },
-  // {
-  //   id: "np_cobalt_surge",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 8,
-  //   items: ["cobalt_surge_np"],
-  //   description: "Reach Level 8",
-  // },
-  // {
-  //   id: "np_citrine_ray",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 11,
-  //   items: ["citrine_ray_np"],
-  //   description: "Reach Level 11",
-  // },
-  // {
-  //   id: "np_rose_gold_veil",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 14,
-  //   items: ["rose_gold_veil_np"],
-  //   description: "Reach Level 14",
-  // },
-  // {
-  //   id: "np_viridian_mist",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 16,
-  //   items: ["viridian_mist_np"],
-  //   description: "Reach Level 16",
-  // },
-  // {
-  //   id: "np_amber_warmth",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 18,
-  //   items: ["amber_warmth_np"],
-  //   description: "Reach Level 18",
-  // },
-  // {
-  //   id: "np_steel_sheen",
-  //   category: "nameplates",
-  //   trigger: "level",
-  //   threshold: 21,
-  //   items: ["steel_sheen_np"],
-  //   description: "Reach Level 21",
-  // },
+
 
   // ── Complex Tier ──────────────────────────────────────────────────────────────
   {
@@ -2225,14 +2026,6 @@ const UNLOCK_RULES = [
     threshold: 21000, // 350 hours
     items: ["vibrant_darkgreen_np"],
     description: "Study 350 total hours",
-  },
-  {
-    id: "np_vibrant_maroon",
-    category: "nameplates",
-    trigger: "monthlyMinutes",
-    threshold: 5400, // 90 hours
-    items: ["vibrant_maroon_np"],
-    description: "Study 90 hours in a month",
   },
   //──────────────────────────────────────────────────── NEW ADDITIONS  UNORGANIZED ────────────────────────────────────────────────────
 ];

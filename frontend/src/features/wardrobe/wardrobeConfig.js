@@ -1399,14 +1399,7 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-rust-faction",
     preview: "Industrial amber with scratch-mark texture on right",
   },
-  // angel_protocol: {
-  //   label: "Angel Protocol",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 45",
-  //   nameplateClass: "np-angel-protocol",
-  //   preview: "Warm gold light rays rotate slowly on the right",
-  // },
+
   phantom_garden: {
     label: "Phantom Garden",
     category: "nameplates",
@@ -1552,14 +1545,7 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-frost-weave",
     preview: "Ice crystal lattice with blue-white shimmer",
   },
-  // golden_dusk: {
-  //   label: "Golden Dusk",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 12",
-  //   nameplateClass: "np-golden-dusk",
-  //   preview: "Warm crepuscular rays fanning from the right edge",
-  // },
+
   rose_ash_np: {
     label: "Rose Ash",
     category: "nameplates",
@@ -1584,14 +1570,7 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-midnight-oil",
     preview: "Deep navy with warm amber lamp glow on the right",
   },
-  // iris_bloom_np: {
-  //   label: "Iris Bloom",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 35",
-  //   nameplateClass: "np-iris-bloom",
-  //   preview: "Purple/indigo petal rays from the right edge",
-  // },
+
   lunar_moth_np: {
     label: "Lunar Moth",
     category: "nameplates",
@@ -1685,15 +1664,6 @@ export const WARDROBE_CONFIG = {
     preview: "Deep crimson eclipse with orbital arc rings",
   },
 
-  // Monthly sprints
-  // cyber_lotus_np: {
-  //   label: "Cyber Lotus",
-  //   category: "nameplates",
-  //   rewardType: "sprint",
-  //   unlockHint: "30 hrs/month",
-  //   nameplateClass: "np-cyber-lotus",
-  //   preview: "Magenta/cyan geometric mandala bloom from right",
-  // },
   tempest_eye_np: {
     label: "Tempest Eye",
     category: "nameplates",
@@ -1758,14 +1728,7 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-bioluminescent",
     preview: "Deep-sea dark with teal/blue organic glow orbs",
   },
-  // ink_bloom_np: {
-  //   label: "Ink Bloom",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 43",
-  //   nameplateClass: "np-ink-bloom",
-  //   preview: "Black ink spreading through water on the right",
-  // },
+
   crystal_cave_np: {
     label: "Crystal Cave",
     category: "nameplates",
@@ -1846,14 +1809,7 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-ember-drift",
     preview: "Floating ember sparks rising from the bottom right",
   },
-  // velvet_storm_np: {
-  //   label: "Velvet Storm",
-  //   category: "nameplates",
-  //   rewardType: "sprint",
-  //   unlockHint: "20 hrs/month",
-  //   nameplateClass: "np-velvet-storm",
-  //   preview: "Indigo storm cloud with slow rolling lightning glow",
-  // },
+
   midnight_prism_np: {
     label: "Midnight Prism",
     category: "nameplates",
@@ -1862,95 +1818,6 @@ export const WARDROBE_CONFIG = {
     nameplateClass: "np-midnight-prism",
     preview: "Black base with rainbow diffraction edge on right",
   },
-  // phosphene_np: {
-  //   label: "Phosphene",
-  //   category: "nameplates",
-  //   rewardType: "sprint",
-  //   unlockHint: "125 hrs/month",
-  //   nameplateClass: "np-phosphene",
-  //   preview: "Closed-eye light pressure rings — concentric color halos",
-  // },
-  // ── Simple Tier (10) ─────────────────────────────────────────────────────────
-  // mint_haze_np: {
-  //   label: "Mint Haze",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 2",
-  //   nameplateClass: "np-mint-haze",
-  //   preview: "Soft mint green fog drifting gently rightward",
-  // },
-  // lavender_mist_np: {
-  //   label: "Lavender Mist",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 3",
-  //   nameplateClass: "np-lavender-mist",
-  //   preview: "Dreamy lavender fog layers with purple shimmer",
-  // },
-  // peach_blush_np: {
-  //   label: "Peach Blush",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 4",
-  //   nameplateClass: "np-peach-blush",
-  //   preview: "Warm peach-coral pastels with soft glow on the right",
-  // },
-  // slate_fog_np: {
-  //   label: "Slate Fog",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 6",
-  //   nameplateClass: "np-slate-fog",
-  //   preview: "Cool blue-grey fog with minimal, clean aesthetic",
-  // },
-  // cobalt_surge_np: {
-  //   label: "Cobalt Surge",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 8",
-  //   nameplateClass: "np-cobalt-surge",
-  //   preview: "Strong cobalt blue wave energy radiating right",
-  // },
-  // citrine_ray_np: {
-  //   label: "Citrine Ray",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 11",
-  //   nameplateClass: "np-citrine-ray",
-  //   preview: "Warm golden rays fanning from the right edge",
-  // },
-  // rose_gold_veil_np: {
-  //   label: "Rose Gold Veil",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 14",
-  //   nameplateClass: "np-rose-gold-veil",
-  //   preview: "Blush pink and gold shimmer — luxe and understated",
-  // },
-  // viridian_mist_np: {
-  //   label: "Viridian Mist",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 16",
-  //   nameplateClass: "np-viridian-mist",
-  //   preview: "Deep emerald-green mist with subtle wave texture",
-  // },
-  // amber_warmth_np: {
-  //   label: "Amber Warmth",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 18",
-  //   nameplateClass: "np-amber-warmth",
-  //   preview: "Warm amber candlelight glow on the right side",
-  // },
-  // steel_sheen_np: {
-  //   label: "Steel Sheen",
-  //   category: "nameplates",
-  //   rewardType: "progress",
-  //   unlockHint: "Level 21",
-  //   nameplateClass: "np-steel-sheen",
-  //   preview: "Cool metallic silver with a slow burnished glint sweep",
-  // },
 
   // ── Complex Tier (5) ─────────────────────────────────────────────────────────
   singularity_np: {

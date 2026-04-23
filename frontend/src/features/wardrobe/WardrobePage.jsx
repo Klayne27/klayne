@@ -12,6 +12,7 @@ import FollowButton from "../../components/common/FollowButton"
 import { shouldTextBeWhite } from "../../utils/shouldTextBeWhite"
 import { useTheme } from "../../context/ThemeContext"
 import { loadGoogleFont } from "./StyleWrapper"
+import { useInView } from "react-intersection-observer"
 
 const TABS = ["rings", "fonts", "nameplates", "overlays"]
 
@@ -146,6 +147,12 @@ const ItemCard = ({
     }
   }, [config.category, config.googleFont])
 
+  const { ref, inView } = useInView({
+    threshold: 0.1, // Trigger when 10% of the card is visible
+    triggerOnce: false,
+  })
+  
+
   const itemFontFamily = config.category === "fonts" ? config.cssVars?.["--user-font"] : "inherit"
   const { theme } = useTheme()
 
@@ -180,10 +187,12 @@ const ItemCard = ({
 
   // Determine if we should apply the nameplate class to the whole card
   const isNameplateTab = config.category === "nameplates"
-  const cardNameplateClass = isNameplateTab ? config.nameplateClass : ""
+  // const cardNameplateClass = isNameplateTab ? config.nameplateClass : ""
+  const cardNameplateClass = isNameplateTab && inView ? config.nameplateClass : ""
 
   return (
     <div
+    ref={ref}
       className={`relative flex cursor-pointer select-none flex-col gap-1 overflow-hidden rounded-xl border p-3 transition ${cardNameplateClass} ${
         isPreviewing
           ? "border-primary bg-primary/10"
@@ -207,7 +216,7 @@ const ItemCard = ({
         {swatch}
         {npPreview}
 
-        <p className="text-sm font-bold leading-tight" style={{ fontFamily: itemFontFamily }}>
+        <p className={`text-sm font-bold leading-tight ${config.category === "nameplates" && "text-neutral-500"}`} style={{ fontFamily: itemFontFamily }}>
           {config.label}
         </p>
 
@@ -369,7 +378,7 @@ const WardrobePage = () => {
           </div>
 
           {/* Filter strip — clearly distinguishes reward types */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <span className="text-xs text-slate-500">Show:</span>
             {["all", "owned", "progress", "sprint", "marathon"].map((mode) => (
               <button
