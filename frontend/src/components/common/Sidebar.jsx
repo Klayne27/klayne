@@ -829,7 +829,7 @@ const Sidebar = ({
               <button
                 ref={profileButtonRef}
                 onClick={togglePopover}
-                className={` ${isHovered && nameplateClass ? nameplateClass : "hover:bg-secondary/60"} overflow-hidden transition duration-300 mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 ${
+                className={` hover:bg-secondary/60  transition duration-300 mr-2 flex w-full min-w-0 items-center gap-2 rounded-full px-2 py-2 ${
                   isTouchDevice && activeButtonId === "user-profile-button"
                     ? "bg-secondary bg-opacity-50 transition duration-300"
                     : "transition duration-300"
