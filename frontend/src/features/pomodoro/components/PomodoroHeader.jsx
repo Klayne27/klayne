@@ -111,7 +111,7 @@ const PomodoroHeader = ({ showXpGain, xpGainedAmount, setShowInfoModal }) => {
             </span>
           </div>
           {showXpGain && (
-            <div className="absolute -top-8 right-0 animate-bounce text-[10px] font-black text-primary">
+            <div className="absolute -top-2 right-0 animate-bounce text-[10px] font-black text-primary">
               +{xpGainedAmount} XP
             </div>
           )}

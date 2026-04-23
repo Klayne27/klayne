@@ -41,6 +41,7 @@ function DMConversationItem({ conv }) {
   const [showOneSidedDeleteModal, setShowOneSidedDeleteModal] = useState(false)
   const [showBlockConfirmationModal, setShowBlockConfirmationModal] = useState(false)
 
+  const [isHovered, setIsHovered] = useState(false)
 
 
   const otherUser = conv?.participants?.find((p) => {
@@ -173,28 +174,30 @@ function DMConversationItem({ conv }) {
   if (!otherUser || !otherUser.username) {
     return null
   }
-  return (
-    <div
-      className={`flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 hover:bg-secondary/60 ${nameplateClass} ${isSelected ? "border-r-2 border-r-primary bg-secondary" : ""} `}
-      onClick={handleSelectConversation}
-      onTouchStart={handleTouchStartWithId}
-      onTouchEnd={handleTouchEnd}
-      onTouchMove={handleTouchMove}
-      onTouchCancel={handleTouchCancel}
-    >
-      <div className="relative p-1">
-        <UserAvatar user={otherUser} size={"sm"} />
-        {isOnline ? (
-          <span className="absolute bottom-2 right-1 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
-        ) : (
-          <span className="absolute bottom-2 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
-        )}
-      </div>
+return (
+  <div
+    className={`relative flex cursor-pointer items-center gap-1 p-3 transition-colors duration-300 ${isHovered ? nameplateClass : "hover:bg-secondary/60"} ${isSelected ? "border-r-2 border-r-primary" : ""}`}
+    onClick={handleSelectConversation}
+    onTouchStart={handleTouchStartWithId}
+    onTouchEnd={handleTouchEnd}
+    onTouchMove={handleTouchMove}
+    onTouchCancel={handleTouchCancel}
+    onMouseEnter={() => setIsHovered(true)}
+    onMouseLeave={() => setIsHovered(false)}
+  >
+    <div className="relative p-1">
+      <UserAvatar user={otherUser} size={"sm"} />
+      {isOnline ? (
+        <span className="absolute bottom-2 right-1 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500"></span>
+      ) : (
+        <span className="absolute bottom-2 right-0.5 h-3 w-3 rounded-full border-2 border-base-100 bg-gray-500"></span>
+      )}
+    </div>
 
-      <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
-        <div className="flex items-center justify-between">
-          <div className="flex min-w-0 items-center" style={userSelectStyle}>
-            {/* <span
+    <div className="flex flex-1 flex-col overflow-hidden" style={userSelectStyle}>
+      <div className="flex items-center justify-between">
+        <div className="flex min-w-0 items-center" style={userSelectStyle}>
+          {/* <span
               className={`mr-1 flex-shrink-0 truncate font-bold`}
               style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
               style={{
@@ -205,47 +208,109 @@ function DMConversationItem({ conv }) {
             >
               {otherUser.fullName}
             </span> */}
-            <UserFullName
-              user={otherUser}
-              className={`mr-1 flex-shrink-0 truncate font-bold`}
-              style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
-            />
-            {otherUser.isVerified && (
-              <img src="/verified2.png" className="size-[17px]" alt="Verified" />
-            )}
-            {otherUser.isGoldVerified && (
-              <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
-            )}
-            {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-            <span className="flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
-              @{otherUser.username}
-            </span>
-            <span className="mx-1 text-xs text-gray-400">·</span>
-            <span className="shrink-0 text-xs text-gray-400">{formatPostDate(conv.updatedAt)}</span>
-          </div>
-        </div>
-        <div className="flex items-center justify-start" style={userSelectStyle}>
-          <p
-            className={`truncate text-sm ${
-              isLastMessageUnread ? "font-semibold" : "text-gray-400"
-            }`}
-          >
-            {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
-
-            {lastMessageContent === "No messages yet..." ? (
-              <span className="pl-[2px] italic">{lastMessageContent}</span>
-            ) : (
-              <span className="pl-[2px]">
-                {isLastMessageByOtherUser ? otherUser?.username : "You"}: {truncatedLastMessage}
-              </span>
-            )}
-          </p>
+          <UserFullName
+            user={otherUser}
+            className={`mr-1 flex-shrink-0 truncate font-bold`}
+            style={otherUser.nameColor ? { color: otherUser.nameColor } : undefined}
+          />
+          {otherUser.isVerified && (
+            <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+          )}
+          {otherUser.isGoldVerified && (
+            <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+          )}
+          {otherUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
+          <span className="flex-shrink-1 min-w-0 truncate text-sm text-gray-400">
+            @{otherUser.username}
+          </span>
+          <span className="mx-1 text-xs text-gray-400">·</span>
+          <span className="shrink-0 text-xs text-gray-400">{formatPostDate(conv.updatedAt)}</span>
         </div>
       </div>
-      {!isMobile && (
-        <DropdownMenu icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}>
+      <div className="flex items-center justify-start" style={userSelectStyle}>
+        <p
+          className={`truncate text-sm ${isLastMessageUnread ? "font-semibold" : "text-gray-400"}`}
+        >
+          {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
+
+          {lastMessageContent === "No messages yet..." ? (
+            <span className="pl-[2px] italic">{lastMessageContent}</span>
+          ) : (
+            <span className="pl-[2px]">
+              {isLastMessageByOtherUser ? otherUser?.username : "You"}: {truncatedLastMessage}
+            </span>
+          )}
+        </p>
+      </div>
+    </div>
+    {!isMobile && (
+      <DropdownMenu icon={<BsThreeDots className="text-slate-500 group-hover:text-primary" />}>
+        <button
+          className="template flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+          onClick={(e) => {
+            e.stopPropagation()
+            navigate(`/profile/${otherUser?.username}`)
+          }}
+        >
+          <TbUser />
+          View profile
+        </button>
+        <button
+          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+          onClick={handleToggleHide}
+        >
+          <TbUserMinus />
+          Hide conversation
+        </button>
+        <button
+          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+          onClick={openBlockConfirmationModal}
+        >
+          <MdBlock />
+          Block
+        </button>
+        <button
+          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+          onClick={(e) => {
+            handleCloseMenu()
+            e.stopPropagation()
+            setShowOneSidedDeleteModal(true)
+            setShowMenu(false)
+          }}
+        >
+          <FaBroom />
+          Delete all messages
+        </button>
+        <button
+          className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+          onClick={(e) => {
+            e.stopPropagation()
+            setShowDeleteModal(true)
+            setShowMenu(false)
+          }}
+        >
+          <FaTrashCan />
+          Delete conversation
+        </button>
+      </DropdownMenu>
+    )}
+
+    <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
+      {/* className="flex w-full flex-col gap-5" */}
+      <div className="flex w-full flex-col gap-5 px-4">
+        <div className="flex items-center justify-start gap-2 font-bold">
+          <img
+            src={getOptimizedImageUrl(
+              otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+              "avatar",
+            )}
+            className="size-10 rounded-full"
+          />
+          <span>@{otherUser?.username}</span>
+        </div>
+        <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
           <button
-            className="template flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
             onClick={(e) => {
               e.stopPropagation()
               navigate(`/profile/${otherUser?.username}`)
@@ -254,24 +319,28 @@ function DMConversationItem({ conv }) {
             <TbUser />
             View profile
           </button>
+          <div className="h-[1px] bg-accent"></div>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
             onClick={handleToggleHide}
           >
             <TbUserMinus />
             Hide conversation
           </button>
+        </div>
+        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
             onClick={openBlockConfirmationModal}
           >
             <MdBlock />
             Block
           </button>
+        </div>
+        <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
             onClick={(e) => {
-              handleCloseMenu()
               e.stopPropagation()
               setShowOneSidedDeleteModal(true)
               setShowMenu(false)
@@ -280,8 +349,9 @@ function DMConversationItem({ conv }) {
             <FaBroom />
             Delete all messages
           </button>
+          <div className="h-[1px] bg-accent"></div>
           <button
-            className="flex w-full items-center gap-2 px-4 py-2 text-left font-semibold text-red-500 transition duration-200 hover:bg-gray-700/30"
+            className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
             onClick={(e) => {
               e.stopPropagation()
               setShowDeleteModal(true)
@@ -291,116 +361,47 @@ function DMConversationItem({ conv }) {
             <FaTrashCan />
             Delete conversation
           </button>
-        </DropdownMenu>
-      )}
-
-      <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-        {/* className="flex w-full flex-col gap-5" */}
-        <div className="flex w-full flex-col gap-5 px-4">
-          <div className="flex items-center justify-start gap-2 font-bold">
-            <img
-              src={getOptimizedImageUrl(
-                otherUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
-                "avatar",
-              )}
-              className="size-10 rounded-full"
-            />
-            <span>@{otherUser?.username}</span>
-          </div>
-          <div className="flex flex-col gap-3 rounded-xl bg-secondary p-3">
-            <button
-              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-              onClick={(e) => {
-                e.stopPropagation()
-                navigate(`/profile/${otherUser?.username}`)
-              }}
-            >
-              <TbUser />
-              View profile
-            </button>
-            <div className="h-[1px] bg-accent"></div>
-            <button
-              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-              onClick={handleToggleHide}
-            >
-              <TbUserMinus />
-              Hide conversation
-            </button>
-          </div>
-          <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
-            <button
-              className="flex w-full items-center gap-2 text-left font-semibold transition duration-200"
-              onClick={openBlockConfirmationModal}
-            >
-              <MdBlock />
-              Block
-            </button>
-          </div>
-          <div className="mb-2 flex flex-col gap-3 rounded-xl bg-secondary p-3">
-            <button
-              className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowOneSidedDeleteModal(true)
-                setShowMenu(false)
-              }}
-            >
-              <FaBroom />
-              Delete all messages
-            </button>
-            <div className="h-[1px] bg-accent"></div>
-            <button
-              className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
-              onClick={(e) => {
-                e.stopPropagation()
-                setShowDeleteModal(true)
-                setShowMenu(false)
-              }}
-            >
-              <FaTrashCan />
-              Delete conversation
-            </button>
-          </div>
         </div>
-      </SlideUpMenu>
+      </div>
+    </SlideUpMenu>
 
-      {/* Confirmation Modal for two-sided deletion */}
-      {showDeleteModal && (
-        <ConfirmationModal
-          isOpen={showDeleteModal}
-          modalTitle="Confirm Conversation Deletion"
-          message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants.`}
-          confirmButtonText="Yes, Delete Conversation"
-          onConfirm={handleDelete}
-          onClose={handleCloseDeleteConversationModal}
-          danger={true}
-        />
-      )}
-
-      {/* New Confirmation Modal for one-sided deletion */}
-      {showOneSidedDeleteModal && (
-        <ConfirmationModal
-          isOpen={showOneSidedDeleteModal}
-          modalTitle="Confirm One-Sided Deletion"
-          message={`Are you sure you want to delete all messages in this conversation for yourself? This action is permanent and will not affect ${otherUser.username}.`}
-          confirmButtonText="Yes, Delete Messages"
-          onConfirm={handleDeleteOnMySide}
-          onClose={handleCloseOneSidedDeleteModal}
-          danger={true}
-        />
-      )}
-
+    {/* Confirmation Modal for two-sided deletion */}
+    {showDeleteModal && (
       <ConfirmationModal
-        isOpen={showBlockConfirmationModal}
-        onClose={closeBlockConfirmationModal}
-        onConfirm={handleConfirmblock}
+        isOpen={showDeleteModal}
+        modalTitle="Confirm Conversation Deletion"
+        message={`Are you sure you want to delete this conversation? This action will permanently remove all messages for both participants.`}
+        confirmButtonText="Yes, Delete Conversation"
+        onConfirm={handleDelete}
+        onClose={handleCloseDeleteConversationModal}
         danger={true}
-        message={`They will not be able to see your public posts and will no longer be able to engage with them. @${otherUser?.username} will also not be able to follow or message you, and you will not see notifications from them.`}
-        confirmButtonText={"Block"}
-        modalTitle={`Block @${otherUser?.username}?`}
       />
-    </div>
-  )
+    )}
+
+    {/* New Confirmation Modal for one-sided deletion */}
+    {showOneSidedDeleteModal && (
+      <ConfirmationModal
+        isOpen={showOneSidedDeleteModal}
+        modalTitle="Confirm One-Sided Deletion"
+        message={`Are you sure you want to delete all messages in this conversation for yourself? This action is permanent and will not affect ${otherUser.username}.`}
+        confirmButtonText="Yes, Delete Messages"
+        onConfirm={handleDeleteOnMySide}
+        onClose={handleCloseOneSidedDeleteModal}
+        danger={true}
+      />
+    )}
+
+    <ConfirmationModal
+      isOpen={showBlockConfirmationModal}
+      onClose={closeBlockConfirmationModal}
+      onConfirm={handleConfirmblock}
+      danger={true}
+      message={`They will not be able to see your public posts and will no longer be able to engage with them. @${otherUser?.username} will also not be able to follow or message you, and you will not see notifications from them.`}
+      confirmButtonText={"Block"}
+      modalTitle={`Block @${otherUser?.username}?`}
+    />
+  </div>
+)
 }
 
 export default React.memo(DMConversationItem)

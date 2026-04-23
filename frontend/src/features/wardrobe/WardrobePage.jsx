@@ -28,7 +28,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
 
   return (
     <div className="flex flex-col gap-8">
-      {/* 1. PROFILE CARD */}
+      {/* 1. PROFILE CARD — unchanged */}
       <div className="flex flex-col">
         <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Profile Look
@@ -44,11 +44,7 @@ const LivePreview = ({ authUser, previewEquipped }) => {
               alt="cover"
             />
           </div>
-
           <div className="relative flex flex-col px-4 pb-4 pt-12">
-            <div className="absolute right-2 top-3">
-              <FollowButton />
-            </div>
             <div className="absolute -top-10 left-4 z-20">
               <div className={`rounded-full bg-base-200 p-0.5 shadow-lg ${ringClass}`}>
                 <img
@@ -58,13 +54,10 @@ const LivePreview = ({ authUser, previewEquipped }) => {
                 />
               </div>
             </div>
-
             <div className="flex flex-col">
-              <div className="flex justify-between">
-                <span className="font-bold" style={{ color: authUser.nameColor || undefined }}>
-                  {authUser?.fullName}
-                </span>
-              </div>
+              <span className="font-bold" style={{ color: authUser.nameColor || undefined }}>
+                {authUser?.fullName}
+              </span>
               <span className="text-sm text-slate-500">@{authUser?.username}</span>
               <span className="mt-2 text-xs">{authUser?.bio}</span>
             </div>
@@ -72,20 +65,20 @@ const LivePreview = ({ authUser, previewEquipped }) => {
         </div>
       </div>
 
-      {/* 2. CONVERSATION ITEM PREVIEW (Fixed to match Profile Info logic) */}
+      {/* 2. CONVERSATION ITEM PREVIEW — rewritten to match DMConversationItem exactly */}
       <div className="flex flex-col">
         <p className="mb-2 ml-1 text-[10px] font-bold uppercase tracking-widest text-slate-500">
           Inbox Preview
         </p>
-        {/* Main Container: No overflow-hidden so the ring can pop out */}
-        <div className="relative flex items-center gap-2 p-4">
-          {/* THE NAMEPLATE BACKGROUND: Absolutely positioned and clipped */}
-          <div
-            className={`absolute inset-0 z-0 overflow-hidden border border-accent ${nameplateClass}`}
-          />
 
-          {/* AVATAR: Higher z-index to sit above the nameplate background */}
-          <div className="relative z-10">
+        {/* Outer wrapper mirrors DMConversationItem's outermost div.
+            overflow-hidden clips the ::before at the card edge.
+            rounded-xl only for the preview card aesthetics. */}
+        <div
+          className={`relative flex cursor-default items-center gap-1 overflow-hidden border border-accent p-3 ${nameplateClass}`}
+        >
+          {/* Avatar + ring */}
+          <div className="relative z-10 shrink-0 p-1">
             <div className={`rounded-full bg-base-200 p-0.5 shadow-md ${ringClass}`}>
               <img
                 src={authUser?.profileImg?.imageUrl || "/avatar-placeholder.png"}
@@ -93,41 +86,38 @@ const LivePreview = ({ authUser, previewEquipped }) => {
                 alt="avatar"
               />
             </div>
+            {/* Online dot */}
+            <span className="absolute bottom-2 right-1 h-3 w-3 rounded-full border-2 border-base-100 bg-green-500" />
           </div>
 
-          {/* CONTENT: Higher z-index and flex-1 to push BSThreeDots to the right */}
+          {/* Content */}
           <div className="relative z-10 flex min-w-0 flex-1 flex-col py-1">
             <div className="flex items-center justify-between">
               <div className="flex min-w-0 items-center gap-1">
                 <span
-                  className="min-w-0 flex-shrink-0 truncate font-bold"
+                  className="mr-1 shrink-0 truncate font-bold"
                   style={{
                     color: authUser.nameColor || undefined,
-                    // Apply the dynamic font family here
-                    fontFamily: fontConfig?.cssVars?.["--user-font"] || "inherit",
+                    fontFamily,
                   }}
                 >
                   {authUser?.fullName}
                 </span>
                 {authUser.isVerified && (
-                  <img src="/verified2.png" className="size-[17px]" alt="Verified" />
+                  <img src="/verified2.png" className="size-[15px]" alt="Verified" />
                 )}
                 {authUser.isGoldVerified && (
-                  <img src="/gold-verified2.png" className="size-[17px]" alt="Gold Verified" />
+                  <img src="/gold-verified2.png" className="size-[15px]" alt="Gold" />
                 )}
-                {authUser.isCha && <img src="/cha.png" className="size-[15px] rounded-md" />}
-
                 <span className="min-w-0 truncate text-sm text-gray-400">
                   @{authUser?.username}
                 </span>
-                {authUser?.isVerified && (
-                  <img src="/verified2.png" className="size-[17px]" alt="Verified" />
-                )}
-                <span className="shrink-0 text-[10px] text-gray-400">· 27m</span>
+                <span className="mx-1 shrink-0 text-xs text-gray-400">·</span>
+                <span className="shrink-0 text-xs text-gray-400">just now</span>
               </div>
-              <BsThreeDots className="shrink-0 text-gray-400" />
+              <BsThreeDots className="relative z-10 shrink-0 text-gray-400" />
             </div>
-            <p className="truncate text-xs text-gray-400">No messages yet...</p>
+            <p className="truncate text-sm italic text-gray-400">No messages yet...</p>
           </div>
         </div>
 
@@ -150,22 +140,20 @@ const ItemCard = ({
   onEquip,
   onUnequip,
 }) => {
-  // --- ADD THIS: Load font for the card preview ---
   useEffect(() => {
     if (config.category === "fonts" && config.googleFont) {
       loadGoogleFont(config.googleFont)
     }
   }, [config.category, config.googleFont])
 
-  // Determine font family for the label
   const itemFontFamily = config.category === "fonts" ? config.cssVars?.["--user-font"] : "inherit"
-  // ------------------------------------------------
+  const { theme } = useTheme()
 
+  // Logic for the badge
   const rewardBadge =
     config.rewardType === "sprint" ? (
       <span className="flex items-center gap-0.5 text-[10px] font-bold text-amber-400">
-        <FaBolt size={8} />
-        Sprint
+        <FaBolt size={8} /> Sprint
       </span>
     ) : config.rewardType === "marathon" ? (
       <span className="flex items-center gap-0.5 text-[10px] font-bold text-teal-400">
@@ -173,29 +161,30 @@ const ItemCard = ({
       </span>
     ) : (
       <span className="flex items-center gap-0.5 text-[10px] font-bold text-blue-400">
-        <FaTrophy size={8} />
-        Progress
+        <FaTrophy size={8} /> Progress
       </span>
     )
 
-  // Swatches... (keep existing ring/nameplate logic)
   const swatch = config.ringClass && (
     <div className="mb-1 flex justify-center">
       <div className={`h-8 w-8 rounded-full bg-slate-600 ${config.ringClass}`} />
     </div>
   )
 
-  const npPreview = config.nameplateClass && (
+  // Only show the small preview if it's NOT a full-card nameplate
+  const npPreview = config.nameplateClass && config.category !== "nameplates" && (
     <div className="mb-1 flex justify-center">
       <span className={`text-xs ${config.nameplateClass}`}>Username</span>
     </div>
   )
 
-  const { theme } = useTheme()
+  // Determine if we should apply the nameplate class to the whole card
+  const isNameplateTab = config.category === "nameplates"
+  const cardNameplateClass = isNameplateTab ? config.nameplateClass : ""
 
   return (
     <div
-      className={`relative flex cursor-pointer select-none flex-col gap-1 rounded-xl border p-3 transition ${
+      className={`relative flex cursor-pointer select-none flex-col gap-1 overflow-hidden rounded-xl border p-3 transition ${cardNameplateClass} ${
         isPreviewing
           ? "border-primary bg-primary/10"
           : isEquipped
@@ -206,48 +195,53 @@ const ItemCard = ({
       }`}
       onClick={() => onPreview(itemKey)}
     >
-      {isEquipped && <FaCheckCircle className="absolute right-2 top-2 text-green-500" size={12} />}
-      {!isOwned && <FaLock className="absolute right-2 top-2 text-slate-500" size={12} />}
+      {/* Z-index ensures buttons and icons stay above 
+          any background effects/gradients from the nameplate 
+      */}
+      <div className="relative z-10 flex h-full flex-col gap-1">
+        {isEquipped && (
+          <FaCheckCircle className="absolute right-0 top-0 text-green-500" size={12} />
+        )}
+        {!isOwned && <FaLock className="absolute right-0 top-0 text-slate-500" size={12} />}
 
-      {swatch}
-      {npPreview}
+        {swatch}
+        {npPreview}
 
-      {/* --- MODIFIED: Apply the dynamic font family to the label --- */}
-      <p className="text-sm font-bold leading-tight" style={{ fontFamily: itemFontFamily }}>
-        {config.label}
-      </p>
-      {/* --------------------------------------------------------- */}
+        <p className="text-sm font-bold leading-tight" style={{ fontFamily: itemFontFamily }}>
+          {config.label}
+        </p>
 
-      <div className="flex items-center justify-between gap-1">
-        {rewardBadge}
-        <span className="truncate text-[9px] text-slate-500">{config.unlockHint}</span>
-      </div>
-
-      {isPreviewing && isOwned && (
-        <div className="mt-1">
-          {!isEquipped ? (
-            <button
-              className={`w-full rounded-full bg-primary py-0.5 text-xs font-bold ${shouldTextBeWhite(theme)}`}
-              onClick={(e) => {
-                e.stopPropagation()
-                onEquip(itemKey)
-              }}
-            >
-              Equip
-            </button>
-          ) : (
-            <button
-              className="w-full rounded-full border border-red-500/40 py-0.5 text-xs text-red-400"
-              onClick={(e) => {
-                e.stopPropagation()
-                onUnequip()
-              }}
-            >
-              Unequip
-            </button>
-          )}
+        <div className="flex items-center justify-between gap-1">
+          {rewardBadge}
+          <span className="truncate text-[9px] text-slate-500">{config.unlockHint}</span>
         </div>
-      )}
+
+        {isPreviewing && isOwned && (
+          <div className="mt-1">
+            {!isEquipped ? (
+              <button
+                className={`w-full rounded-full bg-primary py-0.5 text-xs font-bold ${shouldTextBeWhite(theme)}`}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onEquip(itemKey)
+                }}
+              >
+                Equip
+              </button>
+            ) : (
+              <button
+                className="w-full rounded-full border border-red-500/40 bg-base-100 py-0.5 text-xs text-red-400"
+                onClick={(e) => {
+                  e.stopPropagation()
+                  onUnequip()
+                }}
+              >
+                Unequip
+              </button>
+            )}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
@@ -289,8 +283,8 @@ const WardrobePage = () => {
       return true
     })
 
-  const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts"
-
+  const isTabLocked = (tab) => tab !== "rings" && tab !== "fonts" && tab !== "nameplates"
+ 
   if (isLoading) {
     return (
       <div className="flex h-screen items-center justify-center">
@@ -302,7 +296,7 @@ const WardrobePage = () => {
   return (
     <div className="template min-h-screen flex-1 border-r border-accent">
       {/* Header */}
-      <div className="sticky top-0 z-10 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
+      <div className="sticky top-0 z-50 flex items-center gap-3 border-b border-accent bg-base-100/80 px-4 py-3 backdrop-blur-md">
         <button
           onClick={() => navigate(-1)}
           className="rounded-full p-2 transition hover:bg-secondary"
@@ -347,25 +341,7 @@ const WardrobePage = () => {
 
         {/* Right: Selector */}
         <div className="flex min-w-0 flex-1 flex-col gap-4">
-          {/* Category tabs */}
-          {/* <div className="flex gap-1 rounded-xl bg-base-200 p-1">
-            {TABS.map((tab) => (
-              <button
-                key={tab}
-                className={`flex-1 rounded-lg py-1.5 text-xs font-bold transition ${
-                  activeTab === tab
-                    ? "bg-primary text-white"
-                    : "text-slate-400 hover:text-base-content"
-                }`}
-                onClick={() => {
-                  setActiveTab(tab)
-                  setPreviewKey(null)
-                }}
-              >
-                {CATEGORY_LABELS[tab]}
-              </button>
-            ))}
-          </div> */}
+
           <div className="flex gap-1 rounded-xl bg-base-200 p-1">
             {TABS.map((tab) => {
               const locked = isTabLocked(tab)
@@ -426,23 +402,6 @@ const WardrobePage = () => {
             ))}
           </div>
 
-          {/* Reward type legend */}
-          {/* <div className="flex gap-4 rounded-xl border border-accent bg-base-200/50 px-3 py-2">
-            <div className="flex items-center gap-1.5">
-              <FaTrophy size={10} className="text-blue-400" />
-              <span className="text-xs text-slate-400">
-                <strong className="text-blue-400">Progress</strong> — permanent unlocks from
-                level/total hours
-              </span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <FaBolt size={10} className="text-amber-400" />
-              <span className="text-xs text-slate-400">
-                <strong className="text-amber-400">Sprint</strong> — requires weekly/monthly effort
-                to keep
-              </span>
-            </div>
-          </div> */}
 
           {/* Item grid */}
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-4">

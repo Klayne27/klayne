@@ -3,6 +3,7 @@ import { endStudySessionApi, updatePomodoroSettingsApi } from "../../../api/pomo
 import { showAppToast } from "../../../utils/showAppToast"
 import { userKeys } from "../../users/usersHooks/userKeys"
 import { pomodoroKeys } from "./pomodoroKeys"
+import { wardrobeKeys } from "../../wardrobe/wardrobeHooks"
 
 export const useEndStudySession = () => {
   const queryClient = useQueryClient()
@@ -39,6 +40,7 @@ export const useEndStudySession = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: userKeys.auth() })
       queryClient.invalidateQueries({ queryKey: pomodoroKeys.leaderboard })
+      queryClient.invalidateQueries({ queryKey: wardrobeKeys.inventory() })
     },
 
     onError: (error, variables, context) => {
