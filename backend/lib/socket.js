@@ -96,13 +96,24 @@ export async function emitUnreadMessageStatus(userId) {
       (id) => new mongoose.Types.ObjectId(id),
     );
 
+    // FIX 1: Find both DM conversations (participants) AND group conversations (members.user)
     const conversations = await Conversation.find({
-      participants: userIdObj,
-      hiddenFor: { $ne: userIdObj },
-    }).select("participants");
+      $or: [
+        { participants: userIdObj, hiddenFor: { $ne: userIdObj } },
+        { "members.user": userIdObj },
+      ],
+    }).select("participants members isGroup");
 
     const eligibleConversationIds = conversations
       .filter((conv) => {
+        if (conv.isGroup) {
+          // FIX 2: For groups, just verify the user is actually a member — no block check needed
+          return conv.members.some(
+            (m) => (m.user?._id ?? m.user).toString() === userId.toString(),
+          );
+        }
+
+        // DM: original block check still applies
         const otherParticipant = conv.participants.find((p) => p && !p.equals(userIdObj));
         return (
           otherParticipant &&
@@ -111,14 +122,13 @@ export async function emitUnreadMessageStatus(userId) {
       })
       .map((conv) => conv._id);
 
+    // Exclude the conversation the user is currently active in
     const activeConversationId = userActiveChats.get(userId.toString());
     if (activeConversationId) {
       const index = eligibleConversationIds.findIndex(
         (id) => id.toString() === activeConversationId,
       );
-      if (index > -1) {
-        eligibleConversationIds.splice(index, 1);
-      }
+      if (index > -1) eligibleConversationIds.splice(index, 1);
     }
 
     const unreadMessageCount = await Message.countDocuments({
@@ -128,7 +138,6 @@ export async function emitUnreadMessageStatus(userId) {
     });
 
     const recipientSocketIds = getReceiverSocketIds(userId);
-
     if (recipientSocketIds.length > 0) {
       io.to(recipientSocketIds).emit("unreadMessageStatus", { unreadMessageCount });
     }
@@ -816,23 +825,25 @@ io.on("connection", async (socket) => {
           populate: { path: "profileImg", select: "imageUrl" },
         });
 
+      // In the markMessagesAsSeen socket handler, replace the participants emit block:
       if (updatedConversation) {
-        // Emit to all participants
-        updatedConversation.participants.forEach((participant) => {
-          const participantSocketIds = getReceiverSocketIds(participant._id.toString());
-          if (participantSocketIds.length > 0) {
-            io.to(participantSocketIds).emit("conversationUpdated", updatedConversation);
+        // Build a unified list of all member IDs regardless of DM vs group
+        const allMemberIds = updatedConversation.isGroup
+          ? updatedConversation.members.map((m) => (m.user?._id ?? m.user).toString())
+          : updatedConversation.participants.map((p) => p._id.toString());
+          
+
+        allMemberIds.forEach((memberId) => {
+          const memberSocketIds = getReceiverSocketIds(memberId);
+          if (memberSocketIds.length > 0) {
+            io.to(memberSocketIds).emit("conversationUpdated", updatedConversation);
           }
         });
 
-        // Emit messagesSeen event to the sender only
-        // const otherParticipantId = updatedConversation.participants.find(
-        //   (pId) => pId._id.toString() !== readerId.toString(),
-        // );
-
+        // messagesSeen only makes sense for DMs (tick indicators)
         if (!updatedConversation.isGroup) {
           const otherParticipantId = updatedConversation.participants.find(
-            (pId) => pId._id.toString() !== readerId.toString(),
+            (p) => p._id.toString() !== readerId.toString(),
           );
           if (otherParticipantId) {
             const senderSocketIds = getReceiverSocketIds(
