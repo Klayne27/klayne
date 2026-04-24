@@ -633,7 +633,6 @@ io.on("connection", async (socket) => {
     io.emit("getOnlineUsers", getOnlineUserIds());
   });
 
-  // --- END PUBLIC CHAT TYPING EVENTS --
   socket.on("joinConversation", (conversationId) => {
     if (conversationId) {
       // Basic validation

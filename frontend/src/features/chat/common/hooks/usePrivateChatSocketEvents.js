@@ -245,13 +245,13 @@ export const usePrivateChatSocketEvents = (
       socket.off("messageDeleted", handleMessageDeleted)
       socket.off("messagesSeen", handleMessagesSeen)
       socket.off("groupMessagesSeen", handleGroupMessagesSeen)
-
       socket.off("typing_update", handleTypingUpdate)
-
       socket.off("messageEdited", handleMessageEdited)
       socket.off("conversationUpdated", handleConversationUpdated)
       socket.off("messageReacted", handleMessageReacted)
       socket.off("pinnedMessage", handlePinnedMessage)
+
+      setIsTypingOtherUser([])
     }
   }, [
     socket,
@@ -264,5 +264,6 @@ export const usePrivateChatSocketEvents = (
     handleConversationUpdated,
     handleMessageReacted,
     handlePinnedMessage,
+    setIsTypingOtherUser,
   ])
 }
