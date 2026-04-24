@@ -257,7 +257,7 @@ export const getSuggestedUsers = async (req, res) => {
           isGoldVerified: 1,
           badges: 1,
           preferredBadge: 1,
-          nameColor:1 ,
+          nameColor: 1,
           equipped: 1,
         },
       },
@@ -641,6 +641,12 @@ export const adminDeleteUserAccount = async (req, res) => {
     const userToDelete = await User.findById(userIdToDelete);
     if (!userToDelete) {
       return res.status(404).json({ error: "User not found." });
+    }
+
+    if (userToDelete.isAdmin) {
+      return res.status(403).json({
+        error: "Admin accounts cannot be deleted.",
+      });
     }
 
     if (userIdToDelete === req.user._id.toString()) {
