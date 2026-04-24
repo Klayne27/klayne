@@ -96,7 +96,6 @@ export async function emitUnreadMessageStatus(userId) {
       (id) => new mongoose.Types.ObjectId(id),
     );
 
-    // FIX 1: Find both DM conversations (participants) AND group conversations (members.user)
     const conversations = await Conversation.find({
       $or: [
         { participants: userIdObj, hiddenFor: { $ne: userIdObj } },
@@ -104,38 +103,55 @@ export async function emitUnreadMessageStatus(userId) {
       ],
     }).select("participants members isGroup");
 
-    const eligibleConversationIds = conversations
-      .filter((conv) => {
-        if (conv.isGroup) {
-          // FIX 2: For groups, just verify the user is actually a member — no block check needed
-          return conv.members.some(
-            (m) => (m.user?._id ?? m.user).toString() === userId.toString(),
-          );
-        }
+    const dmConversationIds = [];
+    const groupConversationIds = [];
 
-        // DM: original block check still applies
+    conversations.forEach((conv) => {
+      if (conv.isGroup) {
+        const isMember = conv.members.some(
+          (m) => (m.user?._id ?? m.user).toString() === userId.toString(),
+        );
+        if (isMember) groupConversationIds.push(conv._id);
+      } else {
         const otherParticipant = conv.participants.find((p) => p && !p.equals(userIdObj));
-        return (
+        if (
           otherParticipant &&
           !blockedUserObjectIds.some((blockedId) => blockedId.equals(otherParticipant))
-        );
-      })
-      .map((conv) => conv._id);
-
-    // Exclude the conversation the user is currently active in
-    const activeConversationId = userActiveChats.get(userId.toString());
-    if (activeConversationId) {
-      const index = eligibleConversationIds.findIndex(
-        (id) => id.toString() === activeConversationId,
-      );
-      if (index > -1) eligibleConversationIds.splice(index, 1);
-    }
-
-    const unreadMessageCount = await Message.countDocuments({
-      conversationId: { $in: eligibleConversationIds },
-      sender: { $ne: userIdObj },
-      seen: false,
+        ) {
+          dmConversationIds.push(conv._id);
+        }
+      }
     });
+
+    // Exclude the active conversation from the count
+    const activeConversationId = userActiveChats.get(userId.toString());
+    const filterActive = (ids) =>
+      activeConversationId
+        ? ids.filter((id) => id.toString() !== activeConversationId)
+        : ids;
+
+    const eligibleDmIds = filterActive(dmConversationIds);
+    const eligibleGroupIds = filterActive(groupConversationIds);
+
+    // DMs: original boolean seen=false count
+    const dmUnread = eligibleDmIds.length
+      ? await Message.countDocuments({
+          conversationId: { $in: eligibleDmIds },
+          sender: { $ne: userIdObj },
+          seen: false,
+        })
+      : 0;
+
+    // Groups: per-user — count messages not yet in the user's seenBy array
+    const groupUnread = eligibleGroupIds.length
+      ? await Message.countDocuments({
+          conversationId: { $in: eligibleGroupIds },
+          sender: { $ne: userIdObj },
+          seenBy: { $nin: [userIdObj] }, // user hasn't read it yet
+        })
+      : 0;
+
+    const unreadMessageCount = dmUnread + groupUnread;
 
     const recipientSocketIds = getReceiverSocketIds(userId);
     if (recipientSocketIds.length > 0) {
@@ -757,47 +773,127 @@ io.on("connection", async (socket) => {
     emitUnreadMessageStatus(userId);
   });
 
-  socket.on("markMessagesAsSeen", async ({ conversationId }) => {
-    try {
-      const readerId = socket.userId;
-      const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
-      const readerObjectId = new mongoose.Types.ObjectId(readerId);
+socket.on("markMessagesAsSeen", async ({ conversationId }) => {
+  try {
+    const readerId = socket.userId;
+    const conversationObjectId = new mongoose.Types.ObjectId(conversationId);
+    const readerObjectId = new mongoose.Types.ObjectId(readerId);
 
-      // First, check if there are actually unseen messages to avoid unnecessary updates
+    const conversation = await Conversation.findById(conversationObjectId)
+      .select("isGroup participants members")
+      .lean();
+
+    if (!conversation) return;
+
+    if (conversation.isGroup) {
+      const unseenCount = await Message.countDocuments({
+        conversationId: conversationObjectId,
+        sender: { $ne: readerObjectId },
+        seenBy: { $nin: [readerObjectId] },
+      });
+
+      if (unseenCount === 0) return;
+
+      await Message.updateMany(
+        {
+          conversationId: conversationObjectId,
+          sender: { $ne: readerObjectId },
+          seenBy: { $nin: [readerObjectId] },
+        },
+        { $addToSet: { seenBy: readerObjectId } },
+      );
+
+      await Conversation.updateOne(
+        {
+          _id: conversationObjectId,
+          "lastMessage.sender": { $ne: readerObjectId },
+          "lastMessage.seenBy": { $nin: [readerObjectId] },
+        },
+        { $addToSet: { "lastMessage.seenBy": readerObjectId } },
+        { timestamps: false },
+      );
+
+      await emitUnreadMessageStatus(readerId);
+
+      const lastSeenMessage = await Message.findOne({
+        conversationId: conversationObjectId,
+        sender: { $ne: readerObjectId },
+        seenBy: readerObjectId,
+      })
+        .sort({ createdAt: -1 })
+        .select("_id")
+        .lean();
+
+      const readerUser = await User.findById(readerObjectId)
+        .select("username fullName profileImg")
+        .populate("profileImg", "imageUrl")
+        .lean();
+
+      // Emit to everyone currently viewing this conversation
+      io.to(conversationId.toString()).emit("groupMessagesSeen", {
+        conversationId,
+        readerId: readerObjectId.toString(),
+        readerUser,
+        lastSeenMessageId: lastSeenMessage?._id?.toString() ?? null,
+      });
+
+      // Fetch and broadcast the updated conversation to all online members
+      const updatedConversation = await Conversation.findById(conversationObjectId)
+        .populate({
+          path: "members.user",
+          select: "username fullName profileImg",
+          populate: { path: "profileImg", select: "imageUrl" },
+        })
+        .populate({ path: "avatar", select: "imageUrl" })
+        .populate({ path: "lastMessage.sender", select: "username fullName" });
+
+      if (updatedConversation) {
+        const allMemberIds = updatedConversation.members.map((m) =>
+          (m.user?._id ?? m.user).toString(),
+        );
+        allMemberIds.forEach((memberId) => {
+          const memberSocketIds = getReceiverSocketIds(memberId);
+          if (memberSocketIds.length > 0) {
+            io.to(memberSocketIds).emit("conversationUpdated", updatedConversation);
+          }
+        });
+      }
+    } else {
+      // ── DM: original boolean path (unchanged) ────────────────────────────
       const unseenMessagesCount = await Message.countDocuments({
         conversationId: conversationObjectId,
         sender: { $ne: readerObjectId },
         seen: false,
       });
 
-      if (unseenMessagesCount === 0) {
-        return; // No unseen messages, no need to proceed
-      }
+      if (unseenMessagesCount === 0) return;
 
-      // Use a transaction to ensure consistency
       const session = await mongoose.startSession();
-
       try {
         await session.withTransaction(async () => {
-          // Update all individual messages as seen
           await Message.updateMany(
             {
               conversationId: conversationObjectId,
               sender: { $ne: readerObjectId },
               seen: false,
             },
-            { $set: { seen: true } },
+            {
+              $set: { seen: true },
+              $addToSet: { seenBy: readerObjectId }, // keep seenBy in sync for DMs too
+            },
             { session },
           );
 
-          // Update the conversation's lastMessage.seen only if it was sent by the other user
           await Conversation.updateOne(
             {
               _id: conversationObjectId,
               "lastMessage.sender": { $ne: readerObjectId },
               "lastMessage.seen": false,
             },
-            { $set: { "lastMessage.seen": true } },
+            {
+              $set: { "lastMessage.seen": true },
+              $addToSet: { "lastMessage.seenBy": readerObjectId },
+            },
             { timestamps: false, session },
           );
         });
@@ -805,64 +901,85 @@ io.on("connection", async (socket) => {
         await session.endSession();
       }
 
-      // Fetch the updated conversation once after the transaction
+      const lastSeenMessage = await Message.findOne({
+        conversationId: conversationObjectId,
+        sender: { $ne: readerObjectId },
+        seenBy: readerObjectId,
+      })
+        .sort({ createdAt: -1 })
+        .select("_id")
+        .lean();
+
+      const readerUser = await User.findById(readerObjectId)
+        .select("username fullName profileImg")
+        .populate("profileImg", "imageUrl")
+        .lean();
+
+      // Broadcast to ALL members (including the reader, so their own UI updates)
+      // const allMemberIds = conversation.members.map((m) =>
+      //   (m.user?._id ?? m.user).toString(),
+      // );
+      // allMemberIds.forEach((memberId) => {
+      //   const sockets = getReceiverSocketIds(memberId);
+      //   if (sockets.length > 0) {
+      //     io.to(sockets).emit("groupMessagesSeen", {
+      //       conversationId,
+      //       readerId: readerObjectId.toString(),
+      //       readerUser,
+      //       lastSeenMessageId: lastSeenMessage?._id?.toString() ?? null,
+      //     });
+      //   }
+      // });
+
+      io.to(conversationId.toString()).emit("groupMessagesSeen", {
+        conversationId,
+        readerId: readerObjectId.toString(),
+        readerUser,
+        lastSeenMessageId: lastSeenMessage?._id?.toString() ?? null,
+      });
+
       const updatedConversation = await Conversation.findById(conversationObjectId)
         .populate({
           path: "participants",
           select:
-            "username fullName isCha isVerified isGoldVerified  badges preferredBadge nameColor",
+            "username fullName isCha isVerified isGoldVerified badges preferredBadge nameColor",
           populate: { path: "profileImg", select: "imageUrl" },
         })
-        .populate({
-          path: "members.user", // Ensure members are also populated for group context
-          select: "username fullName profileImg",
-          populate: { path: "profileImg", select: "imageUrl" },
-        })
-        .populate({ path: "avatar", select: "imageUrl" }) // <--- ADD THIS LINE
+        .populate({ path: "avatar", select: "imageUrl" })
         .populate({
           path: "lastMessage.sender",
           select: "username fullName",
           populate: { path: "profileImg", select: "imageUrl" },
         });
 
-      // In the markMessagesAsSeen socket handler, replace the participants emit block:
       if (updatedConversation) {
-        // Build a unified list of all member IDs regardless of DM vs group
-        const allMemberIds = updatedConversation.isGroup
-          ? updatedConversation.members.map((m) => (m.user?._id ?? m.user).toString())
-          : updatedConversation.participants.map((p) => p._id.toString());
-          
-
-        allMemberIds.forEach((memberId) => {
-          const memberSocketIds = getReceiverSocketIds(memberId);
-          if (memberSocketIds.length > 0) {
-            io.to(memberSocketIds).emit("conversationUpdated", updatedConversation);
+        updatedConversation.participants.forEach((participant) => {
+          const participantSocketIds = getReceiverSocketIds(participant._id.toString());
+          if (participantSocketIds.length > 0) {
+            io.to(participantSocketIds).emit("conversationUpdated", updatedConversation);
           }
         });
 
-        // messagesSeen only makes sense for DMs (tick indicators)
-        if (!updatedConversation.isGroup) {
-          const otherParticipantId = updatedConversation.participants.find(
-            (p) => p._id.toString() !== readerId.toString(),
-          );
-          if (otherParticipantId) {
-            const senderSocketIds = getReceiverSocketIds(
-              otherParticipantId._id.toString(),
-            );
-            if (senderSocketIds.length > 0) {
-              io.to(senderSocketIds).emit("messagesSeen", {
-                conversationId,
-                readerId,
-                messageCount: unseenMessagesCount,
-              });
-            }
+        // DM tick indicator
+        const otherParticipant = updatedConversation.participants.find(
+          (p) => p._id.toString() !== readerId,
+        );
+        if (otherParticipant) {
+          const senderSocketIds = getReceiverSocketIds(otherParticipant._id.toString());
+          if (senderSocketIds.length > 0) {
+            io.to(senderSocketIds).emit("messagesSeen", {
+              conversationId,
+              readerId,
+              messageCount: unseenMessagesCount,
+            });
           }
         }
       }
-    } catch (error) {
-      console.error("Error marking messages as seen (socket):", error);
     }
-  });
+  } catch (error) {
+    console.error("Error marking messages as seen (socket):", error);
+  }
+});
 
   socket.on("userEnteredPublicChat", async () => {
     if (!socket.userId) return; // Ensure userId is set

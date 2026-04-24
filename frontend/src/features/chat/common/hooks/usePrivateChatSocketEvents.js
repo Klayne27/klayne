@@ -49,6 +49,35 @@ export const usePrivateChatSocketEvents = (
     [conversationId, queryClient, currentUserId],
   )
 
+  const handleGroupMessagesSeen = useCallback(
+    ({ conversationId: seenConvId, readerId, readerUser, lastSeenMessageId }) => {
+      if (seenConvId.toString() !== conversationId?.toString()) return
+      if (!lastSeenMessageId) return
+
+      queryClient.setQueryData(messageKeys.privateMessages(conversationId), (oldData) => {
+        if (!oldData) return oldData
+
+        const updatedPages = oldData.pages.map((page) =>
+          page.map((msg) => {
+            if (msg._id !== lastSeenMessageId) return msg
+
+            // Avoid duplicate entries
+            const alreadySeen = msg.seenBy?.some((u) => (u._id ?? u).toString() === readerId)
+            if (alreadySeen) return msg
+
+            return {
+              ...msg,
+              seenBy: [...(msg.seenBy || []), readerUser],
+            }
+          }),
+        )
+
+        return { ...oldData, pages: updatedPages }
+      })
+    },
+    [conversationId, queryClient],
+  )
+
   const handleMessageDeleted = useCallback(
     ({ messageId, conversationId: deletedConversationId }) => {
       if (deletedConversationId.toString() === conversationId?.toString()) {
@@ -201,6 +230,8 @@ export const usePrivateChatSocketEvents = (
 
     socket.on("messageDeleted", handleMessageDeleted)
     socket.on("messagesSeen", handleMessagesSeen)
+    socket.on("groupMessagesSeen", handleGroupMessagesSeen)
+
     socket.on("typing_update", handleTypingUpdate)
 
     socket.on("messageEdited", handleMessageEdited)
@@ -213,6 +244,8 @@ export const usePrivateChatSocketEvents = (
       socket.emit("userActiveInChat", { conversationId: null })
       socket.off("messageDeleted", handleMessageDeleted)
       socket.off("messagesSeen", handleMessagesSeen)
+      socket.off("groupMessagesSeen", handleGroupMessagesSeen)
+
       socket.off("typing_update", handleTypingUpdate)
 
       socket.off("messageEdited", handleMessageEdited)
@@ -225,6 +258,7 @@ export const usePrivateChatSocketEvents = (
     conversationId,
     handleMessageDeleted,
     handleMessagesSeen,
+    handleGroupMessagesSeen,
     handleTypingUpdate,
     handleMessageEdited,
     handleConversationUpdated,

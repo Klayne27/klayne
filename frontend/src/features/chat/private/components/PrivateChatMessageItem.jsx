@@ -39,6 +39,7 @@ const PrivateChatMessageItem = ({
   onReactionAdded,
   messageListRef,
   onUsernameClick,
+  seenByUsers = [],
 }) => {
   const {
     selectedConversation,
@@ -246,6 +247,7 @@ const PrivateChatMessageItem = ({
           onReplyClick={handleReplyClick}
           onOpenMoreActionsModal={handleOpenMoreActionsModal}
         />
+
         {showMoreActionsModal && (
           <MoreMessageActionsModal
             message={message}
@@ -266,6 +268,7 @@ const PrivateChatMessageItem = ({
             isAuthUserAdminOrOwner={isAuthUserAdminOrOwner}
           />
         )}
+
         <MessageContentLayout
           isSentByCurrentUser={isSentByCurrentUser}
           messageContentStyle={messageContentStyle}
@@ -338,8 +341,39 @@ const PrivateChatMessageItem = ({
                 onReactionClick={handleReactionClick}
               />
             )}
+            {selectedConversation?.isGroup && seenByUsers.length > 0 && (
+              <div className={`flex gap-0.5 justify-self-end`}>
+                {seenByUsers
+                  .filter((u) => (u._id ?? u).toString() !== currentUser._id.toString())
+                  .slice(0, 6) // cap at 6 avatars before showing +N
+                  .map((user) => {
+                    const imgUrl = user?.profileImg?.imageUrl || "/avatar-placeholder.png"
+                    return (
+                      <div className="mt-1">
+                      <img
+                        key={(user._id ?? user).toString()}
+                        src={imgUrl}
+                        alt={user?.username ?? ""}
+                        title={`Seen by @${user?.username ?? ""}`}
+                        className="h-4 w-4 rounded-full object-cover ring-1 ring-base-100"
+                        />
+                        </div>
+                    )
+                  })}
+                {seenByUsers.filter((u) => (u._id ?? u).toString() !== currentUser._id.toString())
+                  .length > 6 && (
+                  <span className="text-[10px] leading-4 text-slate-500">
+                    +
+                    {seenByUsers.filter(
+                      (u) => (u._id ?? u).toString() !== currentUser._id.toString(),
+                    ).length - 6}
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         </MessageContentLayout>
+
         {
           <SlideUpMenu isOpen={showSlideUpReactionsMenu} onClose={handleCloseSlideUpReactionsMenu}>
             <SlideUpMenuContent

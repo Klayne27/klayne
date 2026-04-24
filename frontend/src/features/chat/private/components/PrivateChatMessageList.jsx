@@ -9,6 +9,8 @@ import { useState } from "react"
 import ProfileInfoModal from "../../../../components/common/ProfileInfoModal"
 import { useChatViewStore } from "../../../../store/useChatViewStore"
 import { useGetUserProfile } from "../../../users/usersHooks/useUserQueries"
+import { usePrivateChatStore } from "../../../../store/usePrivateChatStore"
+import { useMemo } from "react"
 
 const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   {
@@ -26,6 +28,8 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
 ) {
   const { authUser: currentUser } = useAuthUser()
   const processedMessages = useProcessedMessage(messagesToRender, pinnedMessagesInfo)
+  const selectedConversation = usePrivateChatStore((s) => s.selectedConversation)
+
   const { setMessageIdToJumpTo } = useChatViewStore()
 
   const [modalState, setModalState] = useState({
@@ -63,6 +67,34 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
   const handleCloseModal = () => {
     setModalState({ isOpen: false, username: null, position: { top: 0, left: 0 } })
   }
+
+  const seenIndicators = useMemo(() => {
+    if (!selectedConversation?.isGroup) return {}
+
+    // Walk messages newest-first; once we've assigned a user to a message, skip them
+    const assignedUsers = new Set()
+    const result = {}
+
+    const reversed = [...processedMessages].reverse()
+    for (const msg of reversed) {
+      if (!msg.seenBy?.length || msg.isSystemMessage) continue
+
+      for (const user of msg.seenBy) {
+        const uid = (user._id ?? user).toString()
+        // Skip the sender of this message and already-assigned users
+          //  if ((uid === (msg.sender?._id ?? msg.sender)?.toString())) continue
+
+
+        if (assignedUsers.has(uid)) continue
+
+        assignedUsers.add(uid)
+        if (!result[msg._id]) result[msg._id] = []
+        result[msg._id].push(user)
+      }
+    }
+
+    return result
+  }, [processedMessages, selectedConversation?.isGroup])
 
   return (
     <div ref={ref} className="relative flex flex-1 flex-col overflow-y-auto p-4 pt-20">
@@ -117,6 +149,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
               messageListRef={messageListRef}
               onUsernameClick={handleUsernameClick}
               isTypingOtherUser={isTypingOtherUser}
+              seenByUsers={seenIndicators[message._id] ?? []} // NEW
             />
           )
         })}

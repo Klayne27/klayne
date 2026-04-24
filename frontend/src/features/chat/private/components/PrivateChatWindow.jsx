@@ -67,15 +67,35 @@ const PrivateChatWindow = () => {
   const handleOpenPinnedModal = () => setIsPinnedModalOpen(true)
   const handleClosePinnedModal = () => setIsPinnedModalOpen(false)
 
+  // Effect 1: fires when the user OPENS a conversation
+  // Always emits — server is idempotent (returns early if unseenCount === 0)
   useEffect(() => {
-    const hasUnreadMessages = messages?.some(
-      (msg) => msg.sender?._id !== currentUser?._id && !msg.seen,
-    )
+    if (!socket || !conversationId || isLoadingMessages || !currentUser?._id) return
+    socket.emit("markMessagesAsSeen", { conversationId })
+  }, [conversationId, isLoadingMessages, socket, currentUser?._id])
+  // NOTE: intentionally excludes `messages` — this fires on open, not on every message change
 
-    if (socket && conversationId && !isLoadingMessages && hasUnreadMessages) {
+  // Effect 2: fires when NEW messages arrive while already in the chat
+  useEffect(() => {
+    if (!socket || !conversationId || isLoadingMessages || !messages?.length || !currentUser?._id)
+      return
+
+    const isGroup = selectedConversation?.isGroup
+    const hasUnread = messages.some((msg) => {
+      const senderId = (msg.sender?._id ?? msg.sender)?.toString()
+      if (senderId === currentUser._id.toString()) return false
+      // if (isGroup) {
+      //   return !(msg.seenBy ?? []).some(
+      //     (id) => (id?._id ?? id)?.toString() === currentUser._id.toString(),
+      //   )
+      // }
+      return !msg.seen
+    })
+
+    if (hasUnread) {
       socket.emit("markMessagesAsSeen", { conversationId })
     }
-  }, [messages, conversationId, isLoadingMessages, socket, currentUser?._id]) // Dependencies for the effect
+  }, [messages]) // only watches messages — for real-time updates while open
 
   useEffect(() => {
     if (!messageIdToJumpTo || isFetchingNextPage) return
@@ -141,7 +161,7 @@ const PrivateChatWindow = () => {
           </p>
         </div>
       )}
-      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden ">
+      <div className="mx-auto flex w-full max-w-3xl flex-1 flex-col overflow-hidden">
         {isLoadingMessages ? (
           <div className="flex h-full items-center justify-center">
             <LoadingSpinner size="md" />

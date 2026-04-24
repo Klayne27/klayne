@@ -32,7 +32,6 @@ function GroupConversationItem({ conv }) {
 
   const {
     activeConversationId,
-    // setActiveConversationId,
     handleCloseMenu,
     handleTouchStart,
     handleTouchEnd,
@@ -42,18 +41,25 @@ function GroupConversationItem({ conv }) {
   } = useMobileConversationLongPress()
 
   const isMenuOpen = activeConversationId === conv._id
-
   const isSelected = selectedConversation?._id === conv._id
 
   const myMember = conv.members?.find(
     (m) => (m.user?._id || m.user)?.toString() === currentUser._id.toString(),
   )
   const isOwner = myMember?.role === "owner"
-  const isAdmin = myMember?.role === "admin" || isOwner
 
+  // ── FIXED: use seenBy array instead of boolean ─────────────────────────────
+  // A group message is unread for the current user when:
+  //   1. They didn't send it (so we're not flagging their own messages)
+  //   2. Their ID is NOT in lastMessage.seenBy
+  const lastMessageSenderId = conv.lastMessage?.sender?._id?.toString()
   const isLastMessageUnread =
-    conv.lastMessage?.sender?._id.toString() !== currentUser._id.toString() &&
-    !conv.lastMessage?.seen
+    !!conv.lastMessage &&
+    lastMessageSenderId !== currentUser._id.toString() &&
+    !(conv.lastMessage?.seenBy ?? []).some(
+      (id) => (id?._id ?? id)?.toString() === currentUser._id.toString(),
+    )
+  // ──────────────────────────────────────────────────────────────────────────
 
   let lastMessageContent = "No messages yet..."
   if (conv.lastMessage?.img) {
@@ -83,10 +89,10 @@ function GroupConversationItem({ conv }) {
     setAudioBlob(null)
   }
 
-   const handleTouchStartWithId = (e) => {
-     e.convId = conv._id // Pass the conversation ID to the long press hook
-     handleTouchStart(e)
-   }
+  const handleTouchStartWithId = (e) => {
+    e.convId = conv._id
+    handleTouchStart(e)
+  }
 
   return (
     <>
@@ -101,14 +107,13 @@ function GroupConversationItem({ conv }) {
         onTouchCancel={handleTouchCancel}
       >
         {/* Avatar */}
-        <div className="relative shrink-0 p-1 ">
+        <div className="relative shrink-0 p-1">
           <img
             src={getOptimizedImageUrl(conv.avatar?.imageUrl || "/avatar-placeholder.png", "avatar")}
             alt={conv.name}
             className="h-8 w-8 rounded-full object-cover"
           />
-          {/* Group icon badge */}
-          <span className="absolute bottom-0 right-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-base-100 bg-primary text-[8px] ">
+          <span className="absolute bottom-0 right-0.5 flex h-3 w-3 items-center justify-center rounded-full border border-base-100 bg-primary text-[8px]">
             G
           </span>
         </div>
@@ -124,7 +129,6 @@ function GroupConversationItem({ conv }) {
               className={`truncate text-sm ${isLastMessageUnread ? "font-semibold" : "text-gray-400"}`}
             >
               {isLastMessageUnread && <span className="mr-1 text-blue-500">●</span>}
-
               {lastMessageContent === "No messages yet..." ? (
                 <span className="italic">{lastMessageContent}</span>
               ) : (
@@ -176,7 +180,6 @@ function GroupConversationItem({ conv }) {
         )}
 
         <SlideUpMenu isOpen={isMenuOpen} onClose={handleCloseMenu}>
-          {/* className="flex w-full flex-col gap-5" */}
           <div className="flex w-full flex-col gap-5 px-4">
             <div className="flex items-center justify-start gap-2 font-bold">
               <img
@@ -199,10 +202,10 @@ function GroupConversationItem({ conv }) {
                 <TbUser />
                 Group settings
               </button>
-              <div className="h-[1px] bg-accent"></div>
+              <div className="h-[1px] bg-accent" />
               {!isOwner && (
                 <button
-                  className="flex w-full items-center gap-2 text-red-500 text-left font-semibold transition duration-200"
+                  className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowLeaveModal(true)
@@ -214,7 +217,7 @@ function GroupConversationItem({ conv }) {
               )}
               {isOwner && (
                 <button
-                  className="flex w-full items-center gap-2 text-left text-red-500 font-semibold transition duration-200"
+                  className="flex w-full items-center gap-2 text-left font-semibold text-red-500 transition duration-200"
                   onClick={(e) => {
                     e.stopPropagation()
                     setShowDeleteModal(true)
@@ -243,7 +246,6 @@ function GroupConversationItem({ conv }) {
           danger
         />
       )}
-
       {showDeleteModal && (
         <ConfirmationModal
           isOpen={showDeleteModal}

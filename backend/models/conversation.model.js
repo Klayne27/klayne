@@ -20,7 +20,16 @@ const conversationSchema = new mongoose.Schema(
         default: [],
       },
       sender: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
+
+      // `seen` stays for DM tick-indicator backward compat.
       seen: { type: Boolean, default: false },
+
+      // `seenBy` is the authoritative per-user list for groups (and DMs going forward).
+      seenBy: {
+        type: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
+        default: [],
+      },
+
       isEdited: { type: Boolean, default: false },
       messageId: {
         type: mongoose.Schema.Types.ObjectId,
@@ -85,4 +94,3 @@ conversationSchema.index({ inviteCode: 1 });
 
 const Conversation = mongoose.model("Conversation", conversationSchema);
 export default Conversation;
-
