@@ -140,7 +140,7 @@ const PublicChatWindow = () => {
                   key={message._id}
                   message={message} // Pass the fully processed message object
                   currentUser={currentUser}
-                  onLoadImage={handleLoadImage} // Renamed to `onLoadImage` for consistency
+                  onLoadImage={handleLoadImage} 
                   publicChatInputRef={publicChatInputRef}
                   onReactionAdded={handleReactionAdded}
                   messageListRef={messageListRef}

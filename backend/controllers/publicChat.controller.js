@@ -99,7 +99,7 @@ export const sendPublicMessage = async (req, res) => {
     }
 
     // --- RESTRICTION: ONLY VERIFIED CAN SEND IMAGES ---
-    if (imgBase64 && !isVerified) {
+    if (imgBase64 && (!isVerified && !isGoldVerified)) {
       return res.status(403).json({
         error: "Only verified users can send images.",
       });

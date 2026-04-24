@@ -35,7 +35,7 @@ const PrivateChatMessageItem = ({
   privateChatInputRef,
   currentUser,
   isTypingOtherUser,
-  handleLoadImage,
+  onLoadImage,
   onReactionAdded,
   messageListRef,
   onUsernameClick,
@@ -308,7 +308,7 @@ const PrivateChatMessageItem = ({
                 messageText={message.text}
                 isSentByCurrentUser={isSentByCurrentUser}
                 bubbleClasses={bubbleClasses}
-                onLoadImage={handleLoadImage}
+                onLoadImage={onLoadImage}
                 // onImageClick={handleImageClick}
                 messageContentStyle={messageContentStyle}
                 onJumpToOriginalMessage={handleJumpToOriginalMessage}

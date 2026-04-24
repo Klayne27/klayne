@@ -36,7 +36,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
   message,
   currentUser,
   publicChatInputRef,
-  handleLoadImage,
+  onLoadImage,
   messageListRef,
   onReactionAdded,
 }) {
@@ -291,7 +291,7 @@ const PublicChatMessageList = React.memo(function PublicChatMessageList({
               message={message}
               isSentByCurrentUser={isSentByCurrentUser}
               bubbleClasses={bubbleClasses}
-              onLoadImage={handleLoadImage}
+              onLoadImage={onLoadImage}
               // onImageClick={handleImageClick}
               messageContentStyle={messageContentStyle}
               isReplyToMessageDeleted={isReplyToMessageDeleted}

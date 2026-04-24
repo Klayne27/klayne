@@ -96,13 +96,16 @@ const MessageBubble = ({
               />
             )}
             {message.image?._id && (
-              <div className="mb-2 h-auto w-[200px] cursor-pointer overflow-hidden rounded-lg border border-gray-600 shadow-md">
+              <div
+                className={`mb-2 inline-flex max-w-full ${isSentByCurrentUser ? "justify-end" : "justify-start"}`}
+              >
                 <img
-                  onClick={() => openLightbox({ imageUrl: message.image.imageUrl })}
                   src={getOptimizedImageUrl(message.image.imageUrl, "post")}
-                  alt="Chat image"
-                  className="h-full w-full object-cover"
-                  // onClick={onImageClick}
+                  onClick={() => openLightbox({ imageUrl: message.image.imageUrl })}
+                  alt="Chat attachment"
+                  className="block h-auto max-h-80 max-w-full cursor-pointer rounded-2xl border border-gray-600 object-contain shadow-sm"
+                  onLoad={onLoadImage}
+                  loading="lazy"
                 />
               </div>
             )}

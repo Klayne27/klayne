@@ -677,7 +677,6 @@ const Post = ({
               sourcePost?.image?.imageUrl &&
               sourcePost.image?._id && (
                 <div className="inline-flex max-w-full justify-center">
-                  {/* <Link to={`/images/${sourcePost.image?._id}`}> */}
                   <img
                     src={getOptimizedImageUrl(sourcePost.image.imageUrl, "post")}
                     onClick={() => openLightbox({ imageUrl: sourcePost.image.imageUrl })}
@@ -685,7 +684,6 @@ const Post = ({
                     alt="post image"
                     loading="lazy"
                   />
-                  {/* </Link> */}
                 </div>
               )}
             {sourcePost.mediaType === "video" && sourcePost.video && (

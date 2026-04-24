@@ -157,24 +157,6 @@ export const useMessageScroll = ({
   }, [handleScroll])
 
   useLayoutEffect(() => {
-    if (shouldPerformInitialScroll) {
-      const listEl = messageListRef.current
-      if (!listEl) return
-
-      const savedPosition = sessionStorage.getItem("chatScrollPosition")
-
-      if (savedPosition !== null) {
-        listEl.scrollTop = parseInt(savedPosition, 10)
-        sessionStorage.removeItem("chatScrollPosition")
-
-        hasRestoredScroll.current = true
-      } else {
-        scrollToBottom()
-      }
-    }
-  }, [shouldPerformInitialScroll, scrollToBottom, messageListRef])
-
-  useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl) return
     if (!isFetchingNextPage && scrollStateBeforeFetch.current.scrollHeight > 0) {
@@ -216,24 +198,6 @@ export const useMessageScroll = ({
       setShouldPerformInitialScroll(false)
     }
   }, [isLoadingMessages, waitForImagesToLoad])
-
-  useEffect(() => {
-    if (isTypingOtherUser) {
-      const listEl = messageListRef.current
-      if (listEl) {
-        const scrollThreshold = 100
-        const isUserAtBottom =
-          listEl.scrollHeight - listEl.scrollTop <= listEl.clientHeight + scrollThreshold
-
-        if (isUserAtBottom) {
-          const timeoutId = setTimeout(() => {
-            scrollToBottom()
-          }, 1)
-          return () => clearTimeout(timeoutId)
-        }
-      }
-    }
-  }, [isTypingOtherUser, scrollToBottom, messageListRef])
 
   return {
     handleLoadImage,

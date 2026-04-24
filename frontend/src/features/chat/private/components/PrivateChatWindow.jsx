@@ -177,7 +177,7 @@ const PrivateChatWindow = () => {
             isLoadingInitialMessages={isLoadingMessages && !isFetchingNextPage}
             isFetchingOlderMessages={isFetchingNextPage}
             hasNextPage={hasNextPage}
-            handleLoadImage={handleLoadImage}
+            onLoadImage={handleLoadImage}
             onReactionAdded={handleReactionAdded}
             messageListRef={messageListRef}
             onOpenPinnedModal={handleOpenPinnedModal}

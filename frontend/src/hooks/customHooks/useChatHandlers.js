@@ -66,12 +66,7 @@ export const useChatHandlers = ({
     setShowMoreActionsModal(false)
   }
 
-  // const handleImageClick = () => {
-  //   if (messageListRef?.current) {
-  //     sessionStorage.setItem("chatScrollPosition", messageListRef.current.scrollTop)
-  //   }
-  //   navigate(`/images/${message.image?._id}`)
-  // }
+
 
   const handleCloseMoreActionsModal = useCallback(() => {
     setShowMoreActionsModal(false)

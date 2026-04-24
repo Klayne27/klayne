@@ -17,7 +17,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
     isNewChat,
     messagesToRender,
     privateChatInputRef,
-    handleLoadImage,
+    onLoadImage,
     onReactionAdded,
     messageListRef,
     onOpenPinnedModal,
@@ -144,7 +144,7 @@ const PriveChatMessageList = forwardRef(function PriveChatMessageList(
               message={message}
               currentUser={currentUser}
               privateChatInputRef={privateChatInputRef}
-              handleLoadImage={handleLoadImage}
+              onLoadImage={onLoadImage}
               onReactionAdded={onReactionAdded}
               messageListRef={messageListRef}
               onUsernameClick={handleUsernameClick}
