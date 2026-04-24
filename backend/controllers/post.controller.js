@@ -2483,9 +2483,17 @@ export const repostPost = async (req, res) => {
       }
 
       if (onlineUsersMap && io) {
-        for (const [onlineUserId, socketIdsSet] of onlineUsersMap.entries()) {
+        for (const [onlineUserId] of onlineUsersMap.entries()) {
           if (onlineUserId.toString() !== userId.toString()) {
-            await emitNewPostCount(onlineUserId);
+            if (isOriginalIC) {
+              await emitNewICPostCount(onlineUserId);
+              await emitNewICUnreadDot(onlineUserId);
+            } else if (isOriginalVent) {
+              await emitNewVentPostCount(onlineUserId);
+              await emitNewVentUnreadDot(onlineUserId);
+            } else {
+              await emitNewPostCount(onlineUserId);
+            }
           }
         }
       }

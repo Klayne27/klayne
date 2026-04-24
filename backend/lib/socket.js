@@ -153,7 +153,7 @@ export async function emitNewPostCount(userId) {
       publishedAt: { $gt: lastReadTimestamp },
       isVent: { $ne: true },
       isIC: { $ne: true },
-      // parentPost is intentionally NOT filtered out — replies count too
+      parentPost: null, // ← replies excluded; reposts have parentPost: null so they count
     });
 
     recipientSocketIds.forEach((socketId) => {
@@ -180,7 +180,7 @@ export async function emitNewICPostCount(userId) {
       publishedAt: { $gt: lastReadTimestamp },
       isIC: true,
       isVent: { $ne: true },
-      // replies included intentionally
+      parentPost: null, // ← same fix
     });
 
     recipientSocketIds.forEach((socketId) => {
@@ -199,7 +199,6 @@ export async function emitNewVentPostCount(userId) {
     const user = await User.findById(userIdObj)
       .select("lastReadVentFeedTimestamp")
       .lean();
-
     if (!user) {
       console.warn(`User ${userId} not found for emitNewVentPostCount.`);
       return;
@@ -208,10 +207,11 @@ export async function emitNewVentPostCount(userId) {
     const lastReadTimestamp = user.lastReadVentFeedTimestamp || new Date(0);
 
     const newVentPostCount = await Post.countDocuments({
-      user: { $ne: userIdObj }, // Do not count the user's own posts
+      user: { $ne: userIdObj },
       isScheduled: false,
       publishedAt: { $gt: lastReadTimestamp },
-      isVent: true, // Only count vent posts
+      isVent: true,
+      parentPost: null, // ← same fix
     });
 
     recipientSocketIds.forEach((socketId) => {
