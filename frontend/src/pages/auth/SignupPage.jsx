@@ -48,7 +48,7 @@ const SignUpPage = () => {
             <input
               type="email"
               className="grow"
-              placeholder="Email (Doesn't have to be a real email)"
+              placeholder="Email"
               name="email"
               onChange={handleInputChange}
               value={formData.email}
