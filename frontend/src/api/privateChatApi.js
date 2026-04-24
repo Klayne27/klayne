@@ -19,7 +19,7 @@ export const getConversationBetweenUsersApi = async (otherUserId) => {
   return data
 }
 
-export const getMessagesApi = async (conversationId, page = 1, limit = 40) => {
+export const getMessagesApi = async (conversationId, page = 1, limit = 20) => {
   if (!conversationId) return []
 
   const res = await fetch(`${BASE_URL}/conversations/${conversationId}?page=${page}&limit=${limit}`)

@@ -4,7 +4,7 @@ import { getPublicMessagesApi } from "../../../../api/publicChatApi"
 import { messageKeys } from "../../common/hooks/messageKeys"
 
 export const useGetPublicMessages = () => {
-  const MESSAGE_LIMIT = 40
+  const MESSAGE_LIMIT = 20
 
   const {
     data,

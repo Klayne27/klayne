@@ -21,7 +21,7 @@ export const useGetMessages = (conversationId) => {
     queryFn: ({ pageParam = 1 }) => getMessagesApi(conversationId, pageParam),
 
     getNextPageParam: (lastPage, allPages) => {
-      const limit = 40
+      const limit = 20
       if (lastPage.length < limit) {
         return undefined
       }

@@ -24,7 +24,7 @@ const isBanned = async (userId) => {
 export const getPublicMessages = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 40;
+    const limit = parseInt(req.query.limit) || 20;
     const skip = (page - 1) * limit;
 
     const messages = await PublicChatMessage.find()
