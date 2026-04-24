@@ -139,7 +139,7 @@ export const toggleBookmarkApi = async (postId) => {
 }
 
 export const voteOnPollApi = async ({ postId, optionId }) => {
-  const res = await fetch(`${BASE_URL}/${postId}/vote`, {
+  const res = await fetch(`${BASE_URL}/vote/${postId}`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
