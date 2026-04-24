@@ -84,11 +84,11 @@ const PrivateChatWindow = () => {
     const hasUnread = messages.some((msg) => {
       const senderId = (msg.sender?._id ?? msg.sender)?.toString()
       if (senderId === currentUser._id.toString()) return false
-      // if (isGroup) {
-      //   return !(msg.seenBy ?? []).some(
-      //     (id) => (id?._id ?? id)?.toString() === currentUser._id.toString(),
-      //   )
-      // }
+      if (isGroup) {
+        return !(msg.seenBy ?? []).some(
+          (id) => (id?._id ?? id)?.toString() === currentUser._id.toString(),
+        )
+      }
       return !msg.seen
     })
 
