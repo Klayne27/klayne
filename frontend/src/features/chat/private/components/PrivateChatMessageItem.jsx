@@ -195,8 +195,6 @@ const PrivateChatMessageItem = ({
     setShowMoreActionsModal(false)
   }
 
-  console.log('seenby users', seenByUsers);
-
   // if (isTypingOtherUser) {
   //   return (
   //     <div className="message-item-container ml-10 flex justify-start rounded-lg p-1">
