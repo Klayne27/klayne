@@ -130,7 +130,7 @@ function MoreMessageActionsModal({
             <IoCopy size={18} className="text-slate-400" />
           </button>
         )}
-        {!pathname.includes("/public-chat") ||
+        {!pathname.includes("/public-chat") &&
           (!isBoard && (
             <button
               onClick={onPinMessage}

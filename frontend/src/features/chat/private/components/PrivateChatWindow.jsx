@@ -68,7 +68,6 @@ const PrivateChatWindow = () => {
   const handleClosePinnedModal = () => setIsPinnedModalOpen(false)
 
   // Effect 1: fires when the user OPENS a conversation
-  // Always emits — server is idempotent (returns early if unseenCount === 0)
   useEffect(() => {
     if (!socket || !conversationId || isLoadingMessages || !currentUser?._id) return
     socket.emit("markMessagesAsSeen", { conversationId })
@@ -95,7 +94,7 @@ const PrivateChatWindow = () => {
     if (hasUnread) {
       socket.emit("markMessagesAsSeen", { conversationId })
     }
-  }, [messages]) // only watches messages — for real-time updates while open
+  }, [messages])
 
   useEffect(() => {
     if (!messageIdToJumpTo || isFetchingNextPage) return
