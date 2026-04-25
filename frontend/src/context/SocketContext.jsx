@@ -132,8 +132,8 @@ export const SocketContextProvider = ({ children }) => {
         })
       })
 
-      newSocket.on("unreadPublicChatStatus", ({ hasUnreadPublicChat, unreadPublicChatCount }) => {
-        setHasUnreadPublicChat(hasUnreadPublicChat)
+      newSocket.on("unreadPublicChatStatus", ({ unreadPublicChatCount }) => {
+        setHasUnreadPublicChat(unreadPublicChatCount > 0)
         setUnreadPublicChatCount(unreadPublicChatCount)
       })
 
@@ -249,6 +249,7 @@ export const SocketContextProvider = ({ children }) => {
         setHasNewVentPosts,
 
         newBoardPostCount,
+        setNewBoardPostCount,
         showNewBoardPostsButton,
         setShowNewBoardPostsButton,
 

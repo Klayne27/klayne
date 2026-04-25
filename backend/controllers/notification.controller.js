@@ -42,13 +42,17 @@ export const getNotifications = async (req, res) => {
       })
       .populate({
         path: "boardPostId",
-        select: "title user img",
-        populate: { path: "user", select: "username fullName" },
+        select: "title content images user",
+        populate: [
+          { path: "user", select: "username fullName" },
+          { path: "images", select: "imageUrl" },
+        ],
       })
+      // ── NEW: board comment populate ───────────────────────────────────────
       .populate({
         path: "boardCommentId",
-        select: "content user img",
-        populate: { path: "user", select: "username" },
+        select: "content img image user boardPost",
+        populate: { path: "image", select: "imageUrl" },
       })
       .limit(50);
 
@@ -99,7 +103,7 @@ export const getNotifications = async (req, res) => {
     await Notification.updateMany({ to: userId, read: false }, { read: true });
     await emitUnreadNotificationStatus(userId.toString());
 
-    res.status(200).json(notificationsWithAnonymity); 
+    res.status(200).json(notificationsWithAnonymity);
   } catch (error) {
     console.log("Error in getNotifications controller", error.message);
     res.status(500).json({ error: "Internal Server Error" });

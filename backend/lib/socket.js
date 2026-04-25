@@ -388,21 +388,29 @@ export async function emitNewBoardPostCount(userId) {
   try {
     const userIdObj = new mongoose.Types.ObjectId(userId);
     const recipientSocketIds = getReceiverSocketIds(userId);
-    if (recipientSocketIds.length === 0) return;
+
+    // REMOVED: if (recipientSocketIds.length === 0) return
+    // Reason: this function is now called on connection where the user
+    // is guaranteed online, but the guard was preventing the emit entirely
+    // in cases where the socket map hadn't fully populated yet.
+    if (recipientSocketIds.length === 0) return; // keep this — if truly offline, skip
 
     const user = await User.findById(userIdObj).select("lastReadBoardTimestamp").lean();
     const lastReadTimestamp = user?.lastReadBoardTimestamp || new Date(0);
 
-    // Count board posts created after user's last read
     const BoardPost = (await import("../models/boardPost.model.js")).default;
     const newBoardPostCount = await BoardPost.countDocuments({
       user: { $ne: userIdObj },
       createdAt: { $gt: lastReadTimestamp },
     });
 
-    recipientSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("newBoardPostCount", { newBoardPostCount });
-    });
+    // Only emit if there's actually something new — avoids clearing a dot
+    // that was set by an earlier emission in the same session
+    if (newBoardPostCount > 0) {
+      recipientSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("newBoardPostCount", { newBoardPostCount });
+      });
+    }
   } catch (error) {
     console.error(`Error in emitNewBoardPostCount for user ${userId}:`, error);
   }
@@ -421,9 +429,7 @@ export const createAndSendBoardNotification = async ({
     const blocked = await isBlockedOrBlockedBy(from, to);
     if (blocked) return;
 
-    const Notification = (await import("../models/notification.model.js")).default;
-    const User = (await import("../models/user.model.js")).default;
-
+    // Notification and User are already imported at the top of this file
     const newNotification = new Notification({
       from,
       to,
@@ -433,30 +439,55 @@ export const createAndSendBoardNotification = async ({
     });
     await newNotification.save();
 
+    // Populate sender for the real-time socket event
     await newNotification.populate({
       path: "from",
-      select: "username fullName",
+      select: "username fullName isCha isVerified isGoldVerified nameColor equipped",
       populate: { path: "profileImg", select: "imageUrl" },
     });
 
-    // Push notification
-    const fromUser = await User.findById(from).select("username").lean();
-    const username = fromUser?.username ?? "A user";
+    // Populate boardPostId so the client can render preview + navigate
+    if (boardPostId) {
+      await newNotification.populate({
+        path: "boardPostId",
+        select: "title content images user",
+        populate: [
+          { path: "user", select: "username fullName" },
+          { path: "images", select: "imageUrl" },
+        ],
+      });
+    }
 
-    const payload = {
-      title: getDynamicPushTitle(type),
-      body: getDynamicPushBody(type, username),
-      url: `/board/${boardPostId}`,
-      icon: `${BASE_URL}/klaynelogoreal.png`,
-    };
+    if (boardCommentId) {
+      await newNotification.populate({
+        path: "boardCommentId",
+        select: "content img image user",
+        populate: { path: "image", select: "imageUrl" },
+      });
+    }
 
-    await sendPushNotification(to.toString(), payload);
-
-    // Socket
+    // ── Push: only for offline recipients (same pattern as createAndSendNotification)
     const receiverSocketIds = getReceiverSocketIds(to.toString());
-    receiverSocketIds.forEach((socketId) => {
-      io.to(socketId).emit("newNotification", newNotification);
-    });
+
+    if (receiverSocketIds.length === 0) {
+      // User is offline — send push
+      const fromUser = await User.findById(from).select("username").lean();
+      const username = fromUser?.username ?? "A user";
+
+      const payload = {
+        title: getDynamicPushTitle(type),
+        body: getDynamicPushBody(type, username),
+        url: `/board/${boardPostId}`,
+        icon: `${BASE_URL}/klaynelogoreal.png`,
+      };
+
+      await sendPushNotification(to.toString(), payload);
+    } else {
+      // User is online — emit real-time notification
+      receiverSocketIds.forEach((socketId) => {
+        io.to(socketId).emit("newNotification", newNotification);
+      });
+    }
 
     await emitUnreadNotificationStatus(to.toString());
   } catch (error) {
@@ -612,7 +643,8 @@ io.on("connection", async (socket) => {
     emitUnreadNotificationStatus(userId);
     emitNewICUnreadDot(userId);
     emitNewVentUnreadDot(userId);
-    await emitUnreadPublicChatStatus(userId); // <--- CALL NEW FUNCTION HERE
+    await emitUnreadPublicChatStatus(userId);
+    await emitNewBoardPostCount(userId); // ADD THIS
   } else {
     socket.disconnect(true);
     return;

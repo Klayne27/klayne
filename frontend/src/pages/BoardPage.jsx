@@ -21,15 +21,17 @@ const BoardPage = () => {
   const [showCreateModal, setShowCreateModal] = useState(false)
   const isMobile = useIsMobile()
   const observerTarget = useRef(null)
-  const { setShowNewBoardPostsButton } = useSocket()
+  const { setShowNewBoardPostsButton, setNewBoardPostCount } = useSocket()
 
   const { theme } = useTheme()
 
   useEffect(() => {
     setShowNewBoardPostsButton(false)
-    // Also update lastReadBoardTimestamp
-    fetch("/api/board/mark-as-read", { method: "POST", credentials: "include" })
-  }, [setShowNewBoardPostsButton])
+    setNewBoardPostCount(0) // ADD — clear the number badge too, not just the button
+    fetch("/api/board/mark-as-read", { method: "POST", credentials: "include" }).catch((err) =>
+      console.error("Failed to mark board as read:", err),
+    )
+  }, [setShowNewBoardPostsButton, setNewBoardPostCount])
 
   const [leftWidth, setLeftWidth] = useState(400)
   const [isResizing, setIsResizing] = useState(false)
