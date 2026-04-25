@@ -23,6 +23,8 @@ import EmojiPickerPopover from "../components/common/EmojiPickerPopover"
 import { PiSmiley } from "react-icons/pi"
 import { shouldTextBeWhite } from "../utils/shouldTextBeWhite"
 import { useTheme } from "../context/ThemeContext"
+import MentionSuggestionsDropdown from "../components/common/MentionSuggestionsDropdown"
+import { useMentionSuggestions } from "../hooks/customHooks/useMentionSuggestions"
 
 const PostPage = () => {
   const { pid } = useParams()
@@ -40,13 +42,13 @@ const PostPage = () => {
   const emojiButtonRef = useRef(null)
 
   const [showButton, setShowButton] = useState(false)
-  const [mentionSearchTerm, setMentionSearchTerm] = useState("")
-  const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300)
-  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
-  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
+  // const [mentionSearchTerm, setMentionSearchTerm] = useState("")
+  // const debouncedMentionSearchTerm = useDebounce(mentionSearchTerm, 300)
+  // const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
+  // const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
 
   const isMobile = useIsMobile()
-  const {theme} = useTheme()
+  const { theme } = useTheme()
 
   const { post, isLoading, refetch: refetchPost } = useGetPost(pid)
   const { ancestors, isLoading: isLoadingThread } = useGetPostThread(pid)
@@ -61,6 +63,22 @@ const PostPage = () => {
   } = useGetReplies(pid)
 
   const { createReply, isCreatingReply } = useCreateReply(pid)
+
+  const {
+    debouncedMentionSearchTerm,
+    showMentionSuggestions,
+    suggestedUsers,
+    isLoadingSuggestedUsers,
+    focusedMentionIndex,
+    handleMentionTextChange,
+    handleMentionKeyDown,
+    handleSelectMention,
+    closeMentionSuggestions,
+  } = useMentionSuggestions({
+    textInput: replyInput,
+    setTextInput: setReplyInput,
+    inputRef: replyInputRef,
+  })
 
   const {
     showEmojiPickerPopover,
@@ -159,49 +177,14 @@ const PostPage = () => {
     if (replyFileInputRef.current) replyFileInputRef.current.value = ""
   }
 
-  const handleReplyTextChange = (e) => {
-    const newText = e.target.value
-    setReplyInput(newText)
-    const lastAtIndex = newText.lastIndexOf("@")
-    if (lastAtIndex !== -1) {
-      const potential = newText.substring(lastAtIndex + 1)
-      if (potential.length > 0 && !/\s/.test(potential)) {
-        setMentionSearchTerm(potential)
-        setShowMentionSuggestions(true)
-      } else {
-        setMentionSearchTerm("")
-        setShowMentionSuggestions(false)
-      }
-    } else {
-      setMentionSearchTerm("")
-      setShowMentionSuggestions(false)
-    }
-  }
-
-  const handleSelectMention = useCallback(
-    (username) => {
-      const text = replyInput
-      const lastAt = text.lastIndexOf("@")
-      if (lastAt === -1) return
-      const fromAt = text.substring(lastAt)
-      const match = fromAt.match(/^@([a-zA-Z0-9_]*)/)
-      const partialLen = match?.[1]?.length ?? 0
-      const newText =
-        text.substring(0, lastAt) + `@${username} ` + text.substring(lastAt + 1 + partialLen)
-      setReplyInput(newText)
-      setMentionSearchTerm("")
-      setShowMentionSuggestions(false)
-      setTimeout(() => {
-        const input = replyInputRef.current
-        if (input) {
-          const pos = lastAt + username.length + 2
-          input.setSelectionRange(pos, pos)
-          input.focus()
-        }
-      }, 0)
+  const handleReplyTextChange = useCallback(
+    (e) => {
+      setReplyInput(e.target.value)
+      handleMentionTextChange(e)
     },
-    [replyInput],
+    [handleMentionTextChange],
   )
+
 
   // Auto-default to anonymous when navigating to an anonymous post:
   // Auto-default: anonymous posts stay anonymous, vent posts let the user choose
@@ -224,15 +207,13 @@ const PostPage = () => {
         text: replyInput,
         isAnonymous: isAnonymousReply, // ADD
       }
-
       const submit = async (finalPayload) => {
         await createReply(finalPayload)
         setReplyInput("")
         setReplyPreviewImage(null)
         setReplySelectedFile(null)
         if (replyFileInputRef.current) replyFileInputRef.current.value = ""
-        setMentionSearchTerm("")
-        setShowMentionSuggestions(false)
+        closeMentionSuggestions() // replaces the two manual clears
       }
 
       if (replySelectedFile) {
@@ -250,44 +231,27 @@ const PostPage = () => {
     [replyInput, replySelectedFile, isCreatingReply, createReply, isAnonymousReply], // ADD isAnonymousReply
   )
 
-  const handleKeyDown = useCallback(
-    (e) => {
-      if (e.key === "Enter") {
-        if (showMentionSuggestions && suggestedUsers.length > 0) {
-          e.preventDefault()
-          handleSelectMention(suggestedUsers[0].username)
-        } else if (isMobile) {
-          e.preventDefault()
-          const input = replyInputRef.current
-          if (!input) return
-          const { selectionStart: s, selectionEnd: end } = input
-          setReplyInput(replyInput.substring(0, s) + "\n" + replyInput.substring(end))
-          setTimeout(() => input.setSelectionRange(s + 1, s + 1), 0)
-        } else if (e.shiftKey) {
-          e.preventDefault()
-          const input = replyInputRef.current
-          if (!input) return
-          const { selectionStart: s, selectionEnd: end } = input
-          setReplyInput(replyInput.substring(0, s) + "\n" + replyInput.substring(end))
-          setTimeout(() => input.setSelectionRange(s + 1, s + 1), 0)
-        } else {
-          if (!isCreatingReply) {
-            e.preventDefault()
-            handleSubmitReply(e)
-          }
-        }
+const handleKeyDown = useCallback(
+  (e) => {
+    handleMentionKeyDown(e)
+    if (e.defaultPrevented) return // mention consumed Enter
+
+    if (e.key === "Enter") {
+      if (isMobile || e.shiftKey) {
+        e.preventDefault()
+        const input = replyInputRef.current
+        if (!input) return
+        const { selectionStart: s, selectionEnd: end } = input
+        setReplyInput((prev) => prev.substring(0, s) + "\n" + prev.substring(end))
+        setTimeout(() => input.setSelectionRange(s + 1, s + 1), 0)
+      } else if (!isCreatingReply) {
+        e.preventDefault()
+        handleSubmitReply(e)
       }
-    },
-    [
-      isMobile,
-      replyInput,
-      showMentionSuggestions,
-      suggestedUsers,
-      handleSelectMention,
-      isCreatingReply,
-      handleSubmitReply,
-    ],
-  )
+    }
+  },
+  [handleMentionKeyDown, isMobile, isCreatingReply, handleSubmitReply],
+)
 
   if (isLoading && !post) {
     return (
@@ -396,10 +360,9 @@ const PostPage = () => {
                       ref={emojiButtonRef}
                       type="button"
                       onClick={handleOpenEmojiPickerPopover}
-                      className="flex-shrink-0  rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
+                      className="flex-shrink-0 rounded-full p-1 text-primary transition duration-200 hover:text-primary/80"
                     >
                       <PiSmiley size={22} />
-
                     </button>
 
                     {/* Anonymous toggle — only shown when parent post is anonymous */}
@@ -427,46 +390,18 @@ const PostPage = () => {
                 </div>
               )}
 
-              {showMentionSuggestions && debouncedMentionSearchTerm.length > 0 && (
-                <div className="absolute left-0 right-0 top-full z-10 mt-1 max-h-60 overflow-y-auto rounded-lg border border-accent bg-base-200 shadow-lg">
-                  {isLoadingSuggestedUsers ? (
-                    <div className="p-2 text-center">
-                      <LoadingSpinner size="sm" />
-                    </div>
-                  ) : suggestedUsers.length > 0 ? (
-                    suggestedUsers.map((user) => (
-                      <div
-                        key={user._id}
-                        className="flex cursor-pointer items-center gap-2 p-2 hover:bg-secondary"
-                        onClick={() => handleSelectMention(user.username)}
-                      >
-                        <div className="avatar">
-                          <div className="w-8 rounded-full">
-                            <img
-                              src={getOptimizedImageUrl(
-                                user.profileImg?.imageUrl || "/avatar-placeholder.png",
-                                "avatar",
-                              )}
-                              alt={user.username}
-                            />
-                          </div>
-                        </div>
-                        <div>
-                          <p
-                            className="text-sm font-semibold"
-                            style={user.nameColor ? { color: user.nameColor } : undefined}
-                          >
-                            {user.fullName}
-                          </p>
-                          <p className="text-xs text-gray-400">@{user.username}</p>
-                        </div>
-                      </div>
-                    ))
-                  ) : (
-                    <p className="p-2 text-gray-400">No users found.</p>
-                  )}
-                </div>
-              )}
+              <div className="relative">
+                {showMentionSuggestions && (
+                  <MentionSuggestionsDropdown
+                    users={suggestedUsers}
+                    isLoading={isLoadingSuggestedUsers}
+                    query={debouncedMentionSearchTerm}
+                    onSelect={handleSelectMention}
+                    focusedIndex={focusedMentionIndex}
+                    direction="down" // ← opens downward below the reply input area
+                  />
+                )}
+              </div>
             </div>
           </div>
 

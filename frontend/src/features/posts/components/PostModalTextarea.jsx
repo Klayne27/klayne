@@ -4,6 +4,7 @@ import { useAuthUser } from "../../auth/authHooks/useAuthUser"
 import { TbCalendarClock } from "react-icons/tb"
 import { MentionSuggestions } from "./MentionSuggestions"
 import { getOptimizedImageUrl } from "../../../utils/cloudinaryUtils"
+import MentionSuggestionsDropdown from "../../../components/common/MentionSuggestionsDropdown"
 
 export const PostModalTextarea = ({
   input,
@@ -18,14 +19,18 @@ export const PostModalTextarea = ({
   showMentionSuggestions,
   suggestedUsers,
   isLoadingSuggestedUsers,
-  suggestionBoxRef,
+  focusedMentionIndex, // NEW
   onMentionSelect,
+  onMentionKeyDown, // NEW
   onScheduleClick,
 }) => {
   const { authUser } = useAuthUser()
   const isMobile = useIsMobile()
 
   const handleKeyDown = (e) => {
+    onMentionKeyDown?.(e) // runs first
+    if (e.defaultPrevented) return // mention consumed the key
+
     if (isMobile) return
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault()
@@ -53,7 +58,12 @@ export const PostModalTextarea = ({
         <Link to={`/profile/${authUser.username}`}>
           <div className={`avatar ${scheduledAt ? "mt-1" : ""}`}>
             <div className="w-10 rounded-full">
-              <img src={getOptimizedImageUrl(authUser?.profileImg?.imageUrl || "/avatar-placeholder.png", "avatar")} />
+              <img
+                src={getOptimizedImageUrl(
+                  authUser?.profileImg?.imageUrl || "/avatar-placeholder.png",
+                  "avatar",
+                )}
+              />
             </div>
           </div>
         </Link>
@@ -92,15 +102,21 @@ export const PostModalTextarea = ({
             rows={4}
           />
 
-          <MentionSuggestions
-            show={showMentionSuggestions}
-            suggestions={suggestedUsers}
-            isLoading={isLoadingSuggestedUsers}
-            showPollInputs={showPollInputs}
-            inputRef={inputRef}
-            suggestionBoxRef={suggestionBoxRef}
-            onSelect={onMentionSelect}
-          />
+          {showMentionSuggestions && !showPollInputs && (
+            <div
+              className="absolute z-50 w-full"
+              style={{ top: inputRef.current?.scrollHeight || 0, left: 0 }}
+            >
+              <MentionSuggestionsDropdown
+                users={suggestedUsers}
+                isLoading={isLoadingSuggestedUsers}
+                query={input}
+                onSelect={onMentionSelect}
+                focusedIndex={focusedMentionIndex}
+                direction="down" // ← opens downward below the reply input area
+              />
+            </div>
+          )}
         </div>
       </div>
     </div>

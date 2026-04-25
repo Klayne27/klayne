@@ -279,9 +279,9 @@ const PostModal = ({
             showMentionSuggestions={postModal.showMentionSuggestions}
             suggestedUsers={postModal.suggestedUsers}
             isLoadingSuggestedUsers={postModal.isLoadingSuggestedUsers}
-            suggestionBoxRef={postModal.suggestionBoxRef}
-            onMentionSelect={postModal.handleMentionSelect}
             onScheduleClick={scheduleModal.openScheduleModal}
+            focusedMentionIndex={postModal.focusedMentionIndex}
+            onMentionKeyDown={postModal.handleMentionKeyDown}
           />
 
           <MediaPreview

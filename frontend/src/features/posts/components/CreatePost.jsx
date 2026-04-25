@@ -610,6 +610,7 @@ const CreatePost = ({ feedType }) => {
                   query={debouncedMentionSearchTerm}
                   onSelect={handleSelectMention}
                   focusedIndex={focusedMentionIndex}
+                  direction="down" // ← opens downward below the reply input area
                 />
               </div>
             )}
@@ -864,19 +865,15 @@ const CreatePost = ({ feedType }) => {
                 }
               >
                 {/* --- MODIFIED: Update button text logic --- */}
-                {feedType === "venting" ? (
-                  isCreatingVentPost ? (
-                    <LoadingSpinner size="xs" />
-                  ) : (
-                    "Post"
-                  )
-                ) : isPending ? (
-                  <LoadingSpinner size="xs" />
-                ) : scheduledAt ? (
-                  "Schedule"
-                ) : (
-                  "Post"
-                )}
+                {feedType === "venting"
+                  ? isCreatingVentPost
+                    ? "Posting..."
+                    : "Post"
+                  : isPending
+                    ? "Posting..."
+                    : scheduledAt
+                      ? "Schedule"
+                      : "Post"}
               </button>
             </div>
           </div>

@@ -1,13 +1,30 @@
-import { getOptimizedImageUrl } from "../../utils/cloudinaryUtils"
 import LoadingSpinner from "./LoadingSpinner"
 import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
 
-const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect, focusedIndex = 0 }) => {
+/**
+ * direction="up"   → opens above the trigger (default — correct for chat inputs)
+ * direction="down" → opens below the trigger (correct for post / reply textareas)
+ */
+const MentionSuggestionsDropdown = ({
+  users,
+  isLoading,
+  query,
+  onSelect,
+  focusedIndex = 0,
+  direction = "up",
+}) => {
   if (!query) return null
 
+  const positionClass =
+    direction === "down"
+      ? "top-full mt-1" // below the relative parent
+      : "bottom-full mb-1" // above the relative parent (chat default)
+
   return (
-    <div className="absolute bottom-full left-0 right-0 z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-accent bg-base-100 shadow-lg">
+    <div
+      className={`absolute ${positionClass} left-0 right-0 z-50 max-h-52 overflow-y-auto rounded-xl border border-accent bg-base-100 shadow-lg`}
+    >
       {isLoading ? (
         <div className="flex justify-center p-3">
           <LoadingSpinner size="sm" />
@@ -43,6 +60,5 @@ const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect, focused
     </div>
   )
 }
-
 
 export default MentionSuggestionsDropdown

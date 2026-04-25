@@ -6,19 +6,14 @@ import { usePasteHandler } from "./usePasteHandler"
 import { showAppToast } from "../../utils/showAppToast"
 import { MAX_FILE_SIZE_MB } from "../../constants/numberConstants"
 import { useSearchUsers } from "../../features/users/usersHooks/useUserMutations"
+import { useMentionSuggestions } from "./useMentionSuggestions"
 
 export const usePostModal = () => {
   const {
     input,
     selectedFile,
     previewImage,
-    mentionQuery,
-    mentionStartIndex,
-    showMentionSuggestions,
     setInput,
-    setMentionQuery,
-    setMentionStartIndex,
-    setShowMentionSuggestions,
     setSelectedFile,
     setPreviewImage,
     clearConflictingStates,
@@ -28,8 +23,21 @@ export const usePostModal = () => {
   const fileInputRef = useRef(null)
   const suggestionBoxRef = useRef(null)
 
-  const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300)
-  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
+const {
+  debouncedMentionSearchTerm,
+  showMentionSuggestions,
+  suggestedUsers,
+  isLoadingSuggestedUsers,
+  focusedMentionIndex,
+  handleMentionTextChange,
+  handleMentionKeyDown,
+  handleSelectMention,
+  closeMentionSuggestions,
+} = useMentionSuggestions({
+  textInput: input,
+  setTextInput: setInput,
+  inputRef,
+})
 
   const adjustTextareaHeight = useCallback(() => {
     if (inputRef.current) {
@@ -51,79 +59,15 @@ export const usePostModal = () => {
     fileInputRef,
   })
 
-  const handleTextChange = useCallback(
-    (e) => {
-      const newText = e.target.value
-      setInput(newText)
+const handleTextChange = useCallback(
+  (e) => {
+    const newText = e.target.value
+    setInput(newText)
+    handleMentionTextChange(e)
+  },
+  [setInput, handleMentionTextChange],
+)
 
-      const cursorPosition = e.target.selectionStart
-      const textBeforeCursor = newText.substring(0, cursorPosition)
-      const lastAtIndex = textBeforeCursor.lastIndexOf("@")
-
-      if (
-        lastAtIndex !== -1 &&
-        (lastAtIndex === 0 || /\s/.test(textBeforeCursor[lastAtIndex - 1]))
-      ) {
-        const possibleMention = textBeforeCursor.substring(lastAtIndex)
-        const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u)
-
-        if (mentionMatch) {
-          setMentionQuery(mentionMatch[1])
-          setMentionStartIndex(lastAtIndex)
-          setShowMentionSuggestions(true)
-          return
-        }
-      }
-
-      setMentionQuery("")
-      setMentionStartIndex(-1)
-      setShowMentionSuggestions(false)
-    },
-    [setInput, setMentionQuery, setMentionStartIndex, setShowMentionSuggestions],
-  )
-
-  const handleMentionSelect = useCallback(
-    (username) => {
-      const currentText = input
-      const startReplaceIndex = mentionStartIndex
-
-      const textFromAt = currentText.substring(mentionStartIndex)
-      const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u)
-      let partialMentionLength = 0
-      if (match && match[1]) {
-        partialMentionLength = match[1].length
-      }
-
-      const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength
-      const newText =
-        currentText.substring(0, startReplaceIndex) +
-        `@${username} ` +
-        currentText.substring(endReplaceIndex)
-
-      setInput(newText)
-      setMentionQuery("")
-      setMentionStartIndex(-1)
-      setShowMentionSuggestions(false)
-
-      const newCursorPosition = startReplaceIndex + `@${username} `.length
-      setTimeout(() => {
-        if (inputRef.current) {
-          inputRef.current.focus()
-          inputRef.current.setSelectionRange(newCursorPosition, newCursorPosition)
-          adjustTextareaHeight()
-        }
-      }, 0)
-    },
-    [
-      input,
-      mentionStartIndex,
-      setInput,
-      setMentionQuery,
-      setMentionStartIndex,
-      setShowMentionSuggestions,
-      adjustTextareaHeight,
-    ],
-  )
 
   const handleFileChange = useCallback(
     (e) => {
@@ -162,26 +106,25 @@ export const usePostModal = () => {
     if (fileInputRef.current) fileInputRef.current.value = null
   }, [setSelectedFile, setPreviewImage])
 
-  return {
-    // State
-    input,
-    selectedFile,
-    previewImage,
-    showMentionSuggestions,
-    suggestedUsers,
-    isLoadingSuggestedUsers,
-
-    // Refs
-    inputRef,
-    fileInputRef,
-    suggestionBoxRef,
-
-    // Handlers
-    handleTextChange,
-    handleMentionSelect,
-    handleFileChange,
-    handlePaste,
-    removeFile,
-    adjustTextareaHeight,
-  }
+return {
+  input,
+  selectedFile,
+  previewImage,
+  showMentionSuggestions,
+  suggestedUsers,
+  isLoadingSuggestedUsers,
+  focusedMentionIndex, // NEW
+  handleMentionTextChange, // NEW
+  handleMentionKeyDown, // NEW
+  handleSelectMention, // now from hook
+  closeMentionSuggestions, // NEW
+  inputRef,
+  fileInputRef,
+  suggestionBoxRef,
+  handleTextChange,
+  handleFileChange,
+  handlePaste,
+  removeFile,
+  adjustTextareaHeight,
+}
 }
