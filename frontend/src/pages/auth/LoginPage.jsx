@@ -48,7 +48,7 @@ const LoginPage = () => {
   }
 
   return (
-    <div className="flex min-h-screen flex-col lg:flex-row">
+    <div className="flex min-h-screen flex-col lg:flex-row overflow-x-hidden">
       {/* ── LEFT: Hero Panel ──────────────────────────────────────────── */}
       <div className="relative flex flex-col justify-between overflow-hidden bg-base-200 p-8 lg:w-[50%] lg:p-14">
         {/* Subtle background decoration */}
