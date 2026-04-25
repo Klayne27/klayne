@@ -118,6 +118,8 @@ function PrivateChatInput({
     handleMentionTextChange,
     handleSelectMention,
     closeMentionSuggestions,
+    handleMentionKeyDown,
+    focusedMentionIndex,
   } = useMentionSuggestions({
     textInput,
     setTextInput,
@@ -130,6 +132,16 @@ function PrivateChatInput({
       handleMentionTextChange(e) // new — tracks @ mentions
     },
     [handleTextInputChange, handleMentionTextChange],
+  )
+
+  const combinedKeyDown = useCallback(
+    (e) => {
+      handleMentionKeyDown(e) // runs first — if mention is open, Enter is consumed here
+      if (!e.defaultPrevented) {
+        handleKeyDown(e) // only runs if mention didn't consume the event
+      }
+    },
+    [handleMentionKeyDown, handleKeyDown],
   )
 
   const {
@@ -221,12 +233,13 @@ function PrivateChatInput({
             isLoading={isLoadingSuggestedUsers}
             query={debouncedMentionSearchTerm}
             onSelect={handleSelectMention}
+            focusedIndex={focusedMentionIndex} // NEW
           />
         )}
         <textarea
           value={textInput}
           onChange={combinedTextChange}
-          onKeyDown={handleKeyDown}
+          onKeyDown={combinedKeyDown}
           onPaste={handlePaste}
           onFocus={(e) => e.stopPropagation()}
           placeholder={

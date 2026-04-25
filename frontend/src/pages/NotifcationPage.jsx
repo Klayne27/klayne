@@ -33,6 +33,7 @@ const NotificationPage = () => {
         notification.type === "replyLike" ||
         notification.type === "replyRepost" ||
         notification.type === "replyReply" ||
+        notification.type === "replyMention" ||
         notification.type === "boardComment" ||
         notification.type === "boardReply") &&
       notification.from?._id.toString() === authUser?._id.toString()
@@ -94,6 +95,8 @@ const NotificationPage = () => {
         return <FaRetweet className="h-6 w-6 text-green-500" />
       case "replyReply":
         return <FaReply className="h-6 w-6 text-sky-400" />
+      case "replyMention":
+        return <FaAt className="h-6 w-6 text-purple-500" />
       case "boardComment":
         return <IoChatbubbleSharp className="h-6 w-6 text-teal-400" />
       case "boardReply":
@@ -128,6 +131,8 @@ const NotificationPage = () => {
         return `${prefix}${displayUsername} reposted your reply.`
       case "replyReply":
         return `${prefix}${displayUsername} replied to your reply.`
+      case "replyMention":
+        return `${prefix}${displayUsername} mentioned you in a reply.`
       case "boardComment":
         return `@${displayUsername} commented on your board post.`
       case "boardReply":

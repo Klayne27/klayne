@@ -1,6 +1,6 @@
 export const userKeys = {
   all: ["users"],
-  
+
   profiles: () => [...userKeys.all, "profile"],
   profile: (username) => [...userKeys.profiles(), username],
 
@@ -10,4 +10,5 @@ export const userKeys = {
   lists: () => [...userKeys.all, "list"],
   followList: (type, userId) => [...userKeys.lists(), type, userId],
   suggestedList: () => [...userKeys.lists(), "suggestedUsers"],
+  stats: (username) => [...userKeys.all, "stats", username],
 }

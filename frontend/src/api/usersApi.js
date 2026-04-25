@@ -216,3 +216,10 @@ export const updateNameColorApi = async (nameColor) => {
   if (!res.ok) throw new Error(data.error || "Failed to update name color")
   return data
 }
+
+export const getUserStatsApi = async (username) => {
+  const res = await fetch(`/api/users/stats/${username}`)
+  const data = await res.json()
+  if (!res.ok) throw new Error(data.error || "Failed to fetch user stats")
+  return data
+}

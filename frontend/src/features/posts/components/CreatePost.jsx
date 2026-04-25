@@ -37,6 +37,8 @@ import {
 import ImagePreviewCloseButton from "../../../components/common/ImagePreviewCloseButton"
 import UserAvatar from "../../../components/common/UserAvatar"
 import UserFullName from "../../../components/common/UserFullname"
+import { useMentionSuggestions } from "../../../hooks/customHooks/useMentionSuggestions"
+import MentionSuggestionsDropdown from "../../../components/common/MentionSuggestionsDropdown"
 
 const CHARACTER_LIMIT_STANDARD = 400
 const CHARACTER_LIMIT_VERIFIED = 800
@@ -77,18 +79,18 @@ const CreatePost = ({ feedType }) => {
   const [postToEdit, setPostToEdit] = useState(null)
 
   // State for mention feature
-  const [mentionQuery, setMentionQuery] = useState("")
-  const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
-  const [mentionStartIndex, setMentionStartIndex] = useState(-1)
+  // const [mentionQuery, setMentionQuery] = useState("")
+  // const [showMentionSuggestions, setShowMentionSuggestions] = useState(false)
+  // const [mentionStartIndex, setMentionStartIndex] = useState(-1)
 
-  const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300)
+  // const debouncedMentionSearchTerm = useDebounce(mentionQuery, 300)
 
   // Refs
   const postFileInputRef = useRef(null)
   const emojiPickerRef = useRef(null)
   const emojiButtonRef = useRef(null)
   const postInputRef = useRef(null)
-  const suggestionBoxRef = useRef(null)
+  // const suggestionBoxRef = useRef(null)
 
   // Hooks
   const { authUser } = useAuthUser()
@@ -99,10 +101,26 @@ const CreatePost = ({ feedType }) => {
   const isMobile = useIsMobile()
 
   // Fetch mention suggestions using react-query
-  const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
+  // const { suggestedUsers, isLoadingSuggestedUsers } = useSearchUsers(debouncedMentionSearchTerm)
   const { markFeedAsRead } = useMarkPostsAsRead()
   const { markVentFeedAsRead } = useMarkVentPostsAsRead()
   const { markICPostsAsRead } = useMarkICPostsAsRead()
+
+  const {
+    debouncedMentionSearchTerm,
+    showMentionSuggestions,
+    suggestedUsers,
+    isLoadingSuggestedUsers,
+    focusedMentionIndex,
+    handleMentionTextChange,
+    handleMentionKeyDown,
+    handleSelectMention,
+    closeMentionSuggestions,
+  } = useMentionSuggestions({
+    textInput: postInput,
+    setTextInput: setPostInput,
+    inputRef: postInputRef,
+  })
 
   // Determine character limit based on user status
   const characterLimit =
@@ -131,25 +149,6 @@ const CreatePost = ({ feedType }) => {
     }
   }, [showEmojiPicker])
 
-  // Effect to close mention suggestions on click outside
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (
-        showMentionSuggestions &&
-        suggestionBoxRef.current &&
-        !suggestionBoxRef.current.contains(event.target) &&
-        postInputRef.current &&
-        !postInputRef.current.contains(event.target)
-      ) {
-        setShowMentionSuggestions(false)
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside)
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside)
-    }
-  }, [showMentionSuggestions])
-
   // Effect to manage textarea height dynamically
   useEffect(() => {
     if (postInputRef.current) {
@@ -168,16 +167,10 @@ const CreatePost = ({ feedType }) => {
     setPollChoices([{ text: "" }, { text: "" }])
     setScheduledAt(null)
     setShowEmojiPicker(false)
-    setMentionQuery("")
-    setShowMentionSuggestions(false)
-    setMentionStartIndex(-1)
-    if (postFileInputRef.current) {
-      postFileInputRef.current.value = null
-    }
-    if (postInputRef.current) {
-      postInputRef.current.style.height = "auto"
-    }
-  }, [])
+    closeMentionSuggestions() // replaces the three manual mention resets
+    if (postFileInputRef.current) postFileInputRef.current.value = null
+    if (postInputRef.current) postInputRef.current.style.height = "auto"
+  }, [closeMentionSuggestions])
 
   const handleNewPostsButtonClick = useCallback(() => {
     window.scrollTo({
@@ -227,75 +220,19 @@ const CreatePost = ({ feedType }) => {
     handleCloseEmojiPickerPopover,
   } = useEmojiPickerPopover()
 
-  const handleTextChange = useCallback((e) => {
-    const newText = e.target.value
-    setPostInput(newText)
-
-    if (postInputRef.current) {
-      postInputRef.current.style.height = "auto"
-      postInputRef.current.style.height = postInputRef.current.scrollHeight + "px"
-    }
-
-    const cursorPosition = e.target.selectionStart
-    const textBeforeCursor = newText.substring(0, cursorPosition)
-    const lastAtIndex = textBeforeCursor.lastIndexOf("@")
-
-    // Logic for mention suggestions
-    if (
-      lastAtIndex !== -1 &&
-      (lastAtIndex === 0 || /\s/.test(textBeforeCursor[lastAtIndex - 1])) // Ensures '@' is preceded by whitespace or start of string
-    ) {
-      const possibleMention = textBeforeCursor.substring(lastAtIndex)
-      const mentionMatch = possibleMention.match(/^@([\p{L}\p{N}_]*)$/u)
-
-      if (mentionMatch) {
-        setMentionQuery(mentionMatch[1])
-        setMentionStartIndex(lastAtIndex)
-        setShowMentionSuggestions(true)
-        return
-      }
-    }
-
-    setMentionQuery("")
-    setMentionStartIndex(-1)
-    setShowMentionSuggestions(false)
-  }, [])
-
-  const handleMentionSelect = useCallback(
-    (username) => {
-      const currentText = postInput
-      const startReplaceIndex = mentionStartIndex
-
-      const textFromAt = currentText.substring(mentionStartIndex)
-      const match = textFromAt.match(/^@([\p{L}\p{N}_]*)/u)
-      let partialMentionLength = 0
-      if (match && match[1]) {
-        partialMentionLength = match[1].length
-      }
-
-      const endReplaceIndex = mentionStartIndex + 1 + partialMentionLength
-
-      const newText =
-        currentText.substring(0, startReplaceIndex) +
-        `@${username} ` +
-        currentText.substring(endReplaceIndex)
-
+  const handleTextChange = useCallback(
+    (e) => {
+      const newText = e.target.value
       setPostInput(newText)
-      setMentionQuery("")
-      setMentionStartIndex(-1)
-      setShowMentionSuggestions(false)
 
-      const newCursorPosition = startReplaceIndex + `@${username} `.length
-      setTimeout(() => {
-        if (postInputRef.current) {
-          postInputRef.current.focus()
-          postInputRef.current.setSelectionRange(newCursorPosition, newCursorPosition)
-          postInputRef.current.style.height = "auto"
-          postInputRef.current.style.height = postInputRef.current.scrollHeight + "px"
-        }
-      }, 0)
+      if (postInputRef.current) {
+        postInputRef.current.style.height = "auto"
+        postInputRef.current.style.height = postInputRef.current.scrollHeight + "px"
+      }
+
+      handleMentionTextChange(e) // delegates all mention state to the hook
     },
-    [postInput, mentionStartIndex],
+    [handleMentionTextChange],
   )
 
   const handleSubmit = useCallback(
@@ -423,7 +360,8 @@ const CreatePost = ({ feedType }) => {
       // Reset conflicting states
       setShowPollInputs(false)
       setPollChoices([{ text: "" }, { text: "" }])
-      setShowMentionSuggestions(false)
+      // setShowMentionSuggestions(false)
+      closeMentionSuggestions()
       setScheduledAt(null)
     } else {
       setPostSelectedFile(null)
@@ -436,17 +374,19 @@ const CreatePost = ({ feedType }) => {
     postInputRef.current.focus()
   }, [])
 
-  const handleKeyDown = (e) => {
-    if (isMobile) {
-      return
-    }
-    if (e.key === "Enter") {
-      if (!e.shiftKey) {
+  const handleKeyDown = useCallback(
+    (e) => {
+      handleMentionKeyDown(e)
+      if (e.defaultPrevented) return // mention consumed the key
+
+      if (isMobile) return
+      if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault()
         handleSubmit(e)
       }
-    }
-  }
+    },
+    [handleMentionKeyDown, isMobile, handleSubmit],
+  )
 
   const handleAddPollChoice = useCallback(() => {
     if (pollChoices.length < MAX_POLL_CHOICES) {
@@ -492,9 +432,7 @@ const CreatePost = ({ feedType }) => {
       if (postFileInputRef.current) postFileInputRef.current.value = null
       setScheduledAt(null)
       setPollChoices([{ text: "" }, { text: "" }])
-      setMentionQuery("")
-      setShowMentionSuggestions(false)
-      setMentionStartIndex(-1)
+      closeMentionSuggestions()
     }
   }, [showPollInputs])
 
@@ -661,48 +599,18 @@ const CreatePost = ({ feedType }) => {
               rows={2}
               style={{ minHeight: "28px" }}
             />
-            {/* Mention Suggestions Popover */}
-            {showMentionSuggestions && suggestedUsers?.length > 0 && !showPollInputs && (
+            {showMentionSuggestions && !showPollInputs && (
               <div
-                ref={suggestionBoxRef}
-                className="absolute z-50 max-h-60 w-full overflow-y-auto rounded-md border border-accent bg-base-100 shadow-lg"
+                className="absolute z-50 w-full"
                 style={{ top: postInputRef.current?.scrollHeight || 0, left: 0 }}
               >
-                {isLoadingSuggestedUsers ? (
-                  <p className="p-2 text-slate-400">Loading suggestions...</p>
-                ) : suggestedUsers.length === 0 ? (
-                  <p className="p-2 text-slate-500">No users found.</p>
-                ) : (
-                  suggestedUsers.map((user) => (
-                    <div
-                      key={user._id}
-                      className="flex cursor-pointer items-center gap-2 p-2 hover:bg-secondary"
-                      onClick={() => handleMentionSelect(user.username)}
-                    >
-                      <div className="avatar">
-                        <div className="w-8 rounded-full">
-                          <img
-                            src={getOptimizedImageUrl(
-                              user.profileImg?.imageUrl || "/avatar-placeholder.png",
-                              "avatar",
-                            )}
-                            alt="profile"
-                          />
-                        </div>
-                      </div>
-                      <div>
-                    
-                          <UserFullName
-                            user={user}
-                            className={`font-semibold`}
-                            style={user.nameColor ? { color: user.nameColor } : undefined}
-                          />
-                    
-                        <p className="text-sm text-slate-500">@{user.username}</p>
-                      </div>
-                    </div>
-                  ))
-                )}
+                <MentionSuggestionsDropdown
+                  users={suggestedUsers}
+                  isLoading={isLoadingSuggestedUsers}
+                  query={debouncedMentionSearchTerm}
+                  onSelect={handleSelectMention}
+                  focusedIndex={focusedMentionIndex}
+                />
               </div>
             )}
           </div>

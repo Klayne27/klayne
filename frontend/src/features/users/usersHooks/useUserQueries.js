@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { getSuggestedUsersApi, getUserProfileApi, getUsersApi } from "../../../api/usersApi"
+import { getSuggestedUsersApi, getUserProfileApi, getUsersApi, getUserStatsApi } from "../../../api/usersApi"
 import { userKeys } from "./userKeys"
 
 export const useGetUserProfile = (username) => {
@@ -89,3 +89,17 @@ export const useGetFollowList = (userId, type) => {
   return { users, isLoading, error, isError, refetch, isRefetching };
 };
 
+export const useGetUserStats = (username) => {
+  const { data, isLoading } = useQuery({
+    queryKey: userKeys.stats(username),
+    queryFn: () => getUserStatsApi(username),
+    enabled: !!username,
+    staleTime: 5 * 60 * 1000,
+  })
+
+  return {
+    totalLikes: data?.totalLikes ?? 0,
+    totalReposts: data?.totalReposts ?? 0,
+    isLoadingStats: isLoading,
+  }
+}

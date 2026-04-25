@@ -158,6 +158,8 @@ export const getDynamicPushTitle = (type) => {
       return "New Repost";
     case "replyReply":
       return "New Reply";
+    case "replyMention":
+      return "New Mention";
     case "boardComment":
       return "New Board Comment"; // ADD
     case "boardReply":
@@ -185,6 +187,8 @@ export const getDynamicPushBody = (type, username) => {
       return `@${username} reposted your reply.`;
     case "replyReply":
       return `@${username} replied to your reply.`;
+    case "replyMention":
+      return `@${username} mentioned you in a reply.`;
     case "boardComment":
       return `@${username} commented on your board post.`; // ADD
     case "boardReply":

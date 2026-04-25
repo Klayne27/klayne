@@ -954,3 +954,35 @@ export const updateNameColor = async (req, res) => {
     res.status(500).json({ error: "Internal server error" });
   }
 };
+
+export const getUserStats = async (req, res) => {
+  try {
+    const { username } = req.params;
+
+    const user = await User.findOne({ username }).select("_id").lean();
+    if (!user) return res.status(404).json({ error: "User not found." });
+
+    const result = await Post.aggregate([
+      {
+        $match: {
+          user: user._id,
+          isVent: { $ne: true },
+          repostedFrom: null, // original posts only — not reposts of others
+        },
+      },
+      {
+        $group: {
+          _id: null,
+          totalLikes: { $sum: { $size: "$likes" } },
+          totalReposts: { $sum: "$repostsCount" },
+        },
+      },
+    ]);
+
+    const stats = result[0] ?? { totalLikes: 0, totalReposts: 0 };
+    res.status(200).json(stats);
+  } catch (error) {
+    console.error("Error in getUserStats:", error);
+    res.status(500).json({ error: "Internal server error" });
+  }
+};

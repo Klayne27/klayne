@@ -3,35 +3,36 @@ import LoadingSpinner from "./LoadingSpinner"
 import UserAvatar from "./UserAvatar"
 import UserFullName from "./UserFullname"
 
-const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
+const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect, focusedIndex = 0 }) => {
   if (!query) return null
 
   return (
-    <div className="absolute bottom-full left-0 right-0 z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-accent bg-base-200 shadow-lg">
+    <div className="absolute bottom-full left-0 right-0 z-20 mb-1 max-h-52 overflow-y-auto rounded-xl border border-accent bg-base-100 shadow-lg">
       {isLoading ? (
         <div className="flex justify-center p-3">
           <LoadingSpinner size="sm" />
         </div>
       ) : users.length > 0 ? (
-        users.map((user) => (
+        users.map((user, index) => (
           <div
             key={user._id}
-            className="flex cursor-pointer items-center gap-2 p-2 hover:bg-secondary"
+            className={`flex cursor-pointer items-center gap-2 p-2 ${
+              index === focusedIndex ? "bg-secondary" : "hover:bg-secondary"
+            }`}
             onMouseDown={(e) => {
-              // onMouseDown instead of onClick so it fires before textarea blur
               e.preventDefault()
               onSelect(user.username)
             }}
           >
             <div className="pt-2">
-              <UserAvatar user={user} size={"sm"} />
+              <UserAvatar user={user} size="sm" />
             </div>
             <div>
-                <UserFullName
-                  user={user}
-                  className={`text-sm font-semibold`}
-                  style={user.nameColor ? { color: user.nameColor } : undefined}
-                />
+              <UserFullName
+                user={user}
+                className="text-sm font-semibold"
+                style={user.nameColor ? { color: user.nameColor } : undefined}
+              />
               <p className="text-xs text-gray-400">@{user.username}</p>
             </div>
           </div>
@@ -42,5 +43,6 @@ const MentionSuggestionsDropdown = ({ users, isLoading, query, onSelect }) => {
     </div>
   )
 }
+
 
 export default MentionSuggestionsDropdown

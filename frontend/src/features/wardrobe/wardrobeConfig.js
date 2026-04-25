@@ -938,13 +938,28 @@ export const WARDROBE_CONFIG = {
     ringClass: "veterinary-prof-ring",
   },
 
-  // TIER 2 RINGS (Levels 28-50)
+  // TIER 2 RINGS (Levels 27-50)
+
+  leviathan: {
+    label: "Leviathan",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 27",
+    ringClass: "leviathan-ring",
+  },
   neon_halo_ring: {
     label: "Neon Halo",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 28",
     ringClass: "neon-halo-ring",
+  },
+  glacier: {
+    label: "Glacier",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 29",
+    ringClass: "glacier-ring",
   },
   jade_glow: {
     label: "Jade Glow",
@@ -953,12 +968,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 30",
     ringClass: "jade-glow-ring",
   },
+  bioluminescence: {
+    label: "Bioluminescence",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 31",
+    ringClass: "bioluminescence-ring",
+  },
   frozen_crystal: {
     label: "Frozen Crystal",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 32",
     ringClass: "frozen-crystal-ring",
+  },
+  holographic_foil: {
+    label: "Holographic Foil",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 33",
+    ringClass: "holographic-foil-ring",
   },
   rose_quartz: {
     label: "Rose Quartz",
@@ -967,12 +996,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 34",
     ringClass: "rose-quartz-ring",
   },
+  sapphire_lattice: {
+    label: "Sapphire Lattice",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 35",
+    ringClass: "sapphire-lattice-ring",
+  },
   scholars_glow: {
     label: "Scholar's Glow",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 36",
     ringClass: "scholars-glow-ring",
+  },
+  gravity_wave: {
+    label: "Gravity Wave",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 37",
+    ringClass: "gravity-wave-ring",
   },
   copper_coil: {
     label: "Copper Coil",
@@ -981,12 +1024,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 38",
     ringClass: "copper-coil-ring",
   },
+  amber_fossil: {
+    label: "Amber Fossil",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 39",
+    ringClass: "amber-fossil-ring",
+  },
   lavender_drift: {
     label: "Lavender Drift",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 40",
     ringClass: "lavender-drift-ring",
+  },
+  bismuth_crystal: {
+    label: "Bismuth Crystal",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 41",
+    ringClass: "bismuth-crystal-ring",
   },
   blood_moon: {
     label: "Blood Moon",
@@ -995,12 +1052,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 42",
     ringClass: "blood-moon-ring",
   },
+  absinthe: {
+    label: "Absinthe",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 43",
+    ringClass: "absinthe-ring",
+  },
   twilight_band: {
     label: "Twilight Band",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 44",
     ringClass: "twilight-band-ring",
+  },
+  petal_storm: {
+    label: "Petal Storm",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 45",
+    ringClass: "petal-storm-ring",
   },
   ivy_league: {
     label: "Ivy League",
@@ -1009,6 +1080,13 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 46",
     ringClass: "ivy-league-ring",
   },
+  chromatic_aberration: {
+    label: "Chromatic Aberration",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 47",
+    ringClass: "chromatic-aberration-ring",
+  },
   spectral_shift: {
     label: "Spectral Shift",
     category: "rings",
@@ -1016,12 +1094,34 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 48",
     ringClass: "spectral-shift-ring",
   },
+
+  midnight_sovereign: {
+    label: "Midnight Sovereign",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 49",
+    ringClass: "midnight-sovereign-ring",
+  },
   thunder_strike: {
     label: "Thunder Strike",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 50",
     ringClass: "thunder-strike-ring",
+  },
+  malachite: {
+    label: "Malachite",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 51",
+    ringClass: "malachite-ring",
+  },
+  radium_dial: {
+    label: "Radium Dial",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 53",
+    ringClass: "radium-dial-ring",
   },
 
   // TIER 3 RINGS (Levels 55-63)
@@ -1032,12 +1132,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 55",
     ringClass: "prism-spin-ring",
   },
+  neurotoxin: {
+    label: "Neurotoxin",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 56",
+    ringClass: "neurotoxin-ring",
+  },
   seafoam_wave: {
     label: "Seafoam Wave",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 57",
     ringClass: "seafoam-wave-ring",
+  },
+  mirage: {
+    label: "Mirage",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 58",
+    ringClass: "mirage-ring",
   },
   diamond_edge: {
     label: "Diamond Edge",
@@ -1046,6 +1160,13 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 59",
     ringClass: "diamond-edge-ring",
   },
+  wildfire: {
+    label: "Wildfire",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 60",
+    ringClass: "wildfire-ring",
+  },
   void_static: {
     label: "Void Static",
     category: "rings",
@@ -1053,12 +1174,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 61",
     ringClass: "void-static-ring",
   },
+  voltage: {
+    label: "Voltage",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 62",
+    ringClass: "voltage-ring",
+  },
   cosmic_dust: {
     label: "Cosmic Dust",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 63",
     ringClass: "cosmic-dust-ring",
+  },
+  burning_ice: {
+    label: "Burning Ice",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 64",
+    ringClass: "burning-ice-ring",
   },
 
   // TIER 4 RINGS (Levels 65-75)
@@ -1069,12 +1204,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 65",
     ringClass: "zen-blossom-ring",
   },
+  opal: {
+    label: "Opal",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 66",
+    ringClass: "opal-ring",
+  },
   abyssal: {
     label: "Abyssal",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 67",
     ringClass: "abyssal-ring",
+  },
+  necromancer: {
+    label: "Necromancer",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 68",
+    ringClass: "necromancer-ring",
   },
   eternal_flame: {
     label: "Eternal Flame",
@@ -1083,12 +1232,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 69",
     ringClass: "eternal-flame-ring",
   },
+  thunderhead: {
+    label: "Thunderhead",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 70",
+    ringClass: "thunderhead-ring",
+  },
   celestial_orbit: {
     label: "Celestial Orbit",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 71",
     ringClass: "celestial-orbit-ring",
+  },
+  obsidian_fracture: {
+    label: "Obsidian Fracture",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 72",
+    ringClass: "obsidian-fracture-ring",
   },
   phantom_drift: {
     label: "Phantom Drift",
@@ -1097,12 +1260,27 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 73",
     ringClass: "phantom-drift-ring",
   },
+  chrono: {
+    label: "Chrono",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 74",
+    ringClass: "chrono-ring",
+  },
   void_smoke: {
     label: "Void Smoke",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 75",
     ringClass: "void-smoke-ring",
+  },
+
+  sunstone: {
+    label: "Sunstone",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 76",
+    ringClass: "sunstone-ring",
   },
 
   // TIER 5 RINGS (Levels 77-83)
@@ -1113,12 +1291,26 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 77",
     ringClass: "magma-flow-ring",
   },
+  phosphor: {
+    label: "Phosphor",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 78",
+    ringClass: "phosphor-ring",
+  },
   cyber_neon_pulse: {
     label: "Cyber Neon Pulse",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 79",
     ringClass: "cyber-neon-pulse-ring",
+  },
+  glitch_art: {
+    label: "Glitch Art",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 80",
+    ringClass: "glitch-art-ring",
   },
   quantum_flux: {
     label: "Quantum Flux",
@@ -1127,12 +1319,33 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 81",
     ringClass: "quantum-flux-ring",
   },
+  neon_flamingo: {
+    label: "Neon Flamingo",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 82",
+    ringClass: "neon-flamingo-ring",
+  },
   crimson_tide: {
     label: "Crimson Tide",
     category: "rings",
     rewardType: "progress",
     unlockHint: "Level 83",
     ringClass: "crimson-tide-ring",
+  },
+  astral_crown: {
+    label: "Astral Crown",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 84",
+    ringClass: "astral-crown-ring",
+  },
+  digital_fracture: {
+    label: "Digital Fracture",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 85",
+    ringClass: "digital-fracture-ring",
   },
 
   // TOTAL HOUR RINGS

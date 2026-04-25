@@ -24,6 +24,7 @@ const notificationSchema = new mongoose.Schema(
         "replyLike",
         "replyRepost",
         "replyReply",
+        "replyMention",
         "boardComment", // someone commented on your board post
         "boardReply", // someone replied to your board comment
       ],
@@ -44,6 +45,7 @@ const notificationSchema = new mongoose.Schema(
           "replyLike",
           "replyRepost",
           "replyReply",
+          "replyMention",
         ].includes(this.type);
       },
     },

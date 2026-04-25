@@ -2681,3 +2681,1412 @@
   border-radius: 9999px;
   filter: drop-shadow(0 0 3px rgba(45, 212, 191, 0.6));
 }
+
+/* ══════════════════════════════════════════════════════════════════
+   20 NEW RINGS — Levels 27, 29, 31, 33, 35, 37, 39, 41, 43, 45,
+                  47, 49, 51, 53, 56, 58, 60, 62, 64, 66
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ── L27 — Bismuth Crystal ────────────────────────────────────────
+   METAPHOR: Bismuth's stepped hopper crystals — each surface
+   reflects a different oxide colour. A conic-gradient ring
+   sweeps through the full iridescent spectrum while hue-rotate
+   shifts the entire thing, producing a metallic rainbow crawl.
+───────────────────────────────────────────────────────────────── */
+@keyframes bismuth-iridescence {
+  from { filter: hue-rotate(0deg)   brightness(1.05); }
+  to   { filter: hue-rotate(360deg) brightness(1.05); }
+}
+.bismuth-crystal-ring {
+  border-radius: 9999px;
+  border: 0px solid transparent;
+  animation: bismuth-iridescence 4s linear infinite;
+}
+.bismuth-crystal-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    #ff6b6b, #ffd93d, #6bcb77, #4d96ff,
+    #c77dff, #ff6b6b
+  );
+  mask-image: radial-gradient(circle, transparent 46%, black 50%, black 56%, transparent 60%);
+  z-index: -1;
+}
+.bismuth-crystal-ring::after {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    transparent 0%, rgba(255,215,0,0.4) 15%,
+    transparent 30%, rgba(147,112,219,0.4) 55%,
+    transparent 70%, rgba(64,224,208,0.4) 85%,
+    transparent 100%
+  );
+  mask-image: radial-gradient(circle, transparent 52%, black 56%, black 60%, transparent 64%);
+  animation: _spin-ccw 6s linear infinite;
+}
+
+
+/* ── L29 — Wildfire ───────────────────────────────────────────────
+   METAPHOR: A crown fire spreading laterally through a canopy —
+   fast, asymmetric, directional. Box-shadow offsets rotate to
+   simulate the head of the fire advancing around the perimeter.
+───────────────────────────────────────────────────────────────── */
+@keyframes wildfire-head {
+  0%   { box-shadow:  0 -8px 18px 5px #f97316,  4px  0px 10px 2px #dc2626,  0 4px 6px 1px #78350f; }
+  25%  { box-shadow:  8px 0px 18px 5px #f97316,  0px  4px 10px 2px #dc2626, -4px 0px 6px 1px #78350f; }
+  50%  { box-shadow:  0  8px 18px 5px #f97316, -4px  0px 10px 2px #dc2626,  0 -4px 6px 1px #78350f; }
+  75%  { box-shadow: -8px 0px 18px 5px #f97316,  0px -4px 10px 2px #dc2626,  4px 0px 6px 1px #78350f; }
+  100% { box-shadow:  0 -8px 18px 5px #f97316,  4px  0px 10px 2px #dc2626,  0 4px 6px 1px #78350f; }
+}
+.wildfire-ring {
+  border-radius: 9999px;
+  border: 0px solid #f97316;
+  animation: wildfire-head 1.2s linear infinite;
+}
+.wildfire-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    from 0deg, #7c2d12 0%, #ea580c 20%, #fde68a 35%,
+    transparent 45%, transparent 55%,
+    #fde68a 65%, #ea580c 80%, #7c2d12 100%
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 56%, transparent 60%);
+  animation: _spin-cw 1.2s linear infinite;
+}
+.wildfire-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at 50% 30%, rgba(253,186,116,0.22) 0%, transparent 60%);
+  animation: _spin-cw 0.6s linear infinite;
+}
+
+
+/* ── L31 — Bioluminescence ────────────────────────────────────────
+   METAPHOR: Deep-sea creatures firing off light pulses in the dark.
+   Individual dots blink on and off at irregular intervals using
+   multiple staggered box-shadow keyframes at different compass
+   points — never two lit simultaneously.
+───────────────────────────────────────────────────────────────── */
+@keyframes bio-pulse-a {
+  0%, 15%, 100% { box-shadow: 0 0 3px 1px #0d9488, 0 0 8px 2px #14b8a6; }
+  5%             { box-shadow: 0 0 12px 5px #5eead4, 0 0 24px 8px #2dd4bf; }
+}
+@keyframes bio-pulse-b {
+  0%, 40%, 100% { box-shadow: none; }
+  28%            { box-shadow: 0 0 14px 5px #67e8f9, 0 0 28px 9px #22d3ee; }
+}
+@keyframes bio-pulse-c {
+  0%, 70%, 100% { box-shadow: none; }
+  58%            { box-shadow: 0 0 12px 4px #4ade80, 0 0 22px 7px #22c55e; }
+}
+@keyframes bio-dot-orbit {
+  from { transform: rotate(0deg)   translateX(calc(50% + 4px)); }
+  to   { transform: rotate(360deg) translateX(calc(50% + 4px)); }
+}
+.bioluminescence-ring {
+  border-radius: 9999px;
+  border: 0px solid #0d9488;
+  animation: bio-pulse-a 2.4s ease-in-out infinite;
+}
+.bioluminescence-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(94,234,212,0.4);
+  animation: _spin-cw 20s linear infinite, bio-pulse-c 3.1s ease-in-out infinite;
+}
+.bioluminescence-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 9999px;
+  background: #a7f3d0;
+  box-shadow: 0 0 6px 3px #34d399;
+  animation: bio-dot-orbit 3.7s linear infinite, bio-pulse-b 3.7s ease-in-out infinite;
+}
+
+
+/* ── L33 — Obsidian Fracture ──────────────────────────────────────
+   METAPHOR: Volcanic glass under stress — dark surface criss-crossed
+   by glowing magma cracks that periodically flare then cool. The
+   ring is near-black with lava bleeding through fracture planes.
+───────────────────────────────────────────────────────────────── */
+@keyframes fracture-bleed {
+  0%, 100% {
+    box-shadow: 0 0 4px 1px #1c1917, 0 0 10px 3px #292524, inset 0 0 12px 5px rgba(0,0,0,0.8);
+    border-color: #292524;
+  }
+  45% {
+    box-shadow: 0 0 14px 5px #ea580c, 0 0 28px 9px #b45309, 0 0 40px 10px rgba(234,88,12,0.3),
+                inset 0 0 16px 6px rgba(239,68,68,0.4);
+    border-color: #f97316;
+  }
+  48% {
+    box-shadow: 0 0 3px 1px #1c1917, inset 0 0 12px 5px rgba(0,0,0,0.8);
+    border-color: #292524;
+  }
+  52% {
+    box-shadow: 0 0 10px 4px #dc2626, 0 0 22px 7px #b91c1c, inset 0 0 14px 6px rgba(220,38,38,0.35);
+    border-color: #ef4444;
+  }
+}
+.obsidian-fracture-ring {
+  border-radius: 9999px;
+  border: 0px solid #292524;
+  animation: fracture-bleed 5s steps(1, end) infinite;
+}
+.obsidian-fracture-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(
+    rgba(234,88,12,0.15) 0deg 2deg, transparent 2deg 14deg
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 55%, transparent 59%);
+  animation: _spin-cw 8s linear infinite;
+}
+.obsidian-fracture-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at 40% 45%, rgba(234,88,12,0.12) 0%, transparent 50%);
+}
+
+
+/* ── L35 — Sunstone ───────────────────────────────────────────────
+   METAPHOR: Oregon sunstone — a feldspar with copper platelets that
+   flash aventurescence (glitter) at different angles. A slow-
+   rotating conical gradient produces the metallic schiller; brief
+   white-gold flares are individual platelet catches.
+───────────────────────────────────────────────────────────────── */
+@keyframes sunstone-schiller {
+  0%   { box-shadow: 0 0 6px 2px #f59e0b, 0 0 14px 4px #d97706, inset 0 0 8px 3px rgba(245,158,11,0.3); }
+  33%  { box-shadow: 0 0 10px 4px #fbbf24, 0 0 22px 7px #f59e0b, 0 0 30px 8px rgba(255,215,0,0.2),
+                     inset 0 0 14px 6px rgba(251,191,36,0.4); }
+  66%  { box-shadow: 0 0 7px 2px #d97706, 0 0 16px 5px #b45309, inset 0 0 10px 4px rgba(217,119,6,0.35); }
+  100% { box-shadow: 0 0 6px 2px #f59e0b, 0 0 14px 4px #d97706, inset 0 0 8px 3px rgba(245,158,11,0.3); }
+}
+/* @keyframes aventurescence-flash {
+  0%, 90%, 100%  { opacity: 0; }
+  12%  { opacity: 1; transform: rotate(72deg)  scale(1.1); }
+  35%  { opacity: 0; transform: rotate(72deg)  scale(1);   }
+  55%  { opacity: 0.7; transform: rotate(198deg) scale(1.05); }
+  70%  { opacity: 0; transform: rotate(198deg) scale(1);   }
+} */
+.sunstone-ring {
+  border-radius: 9999px;
+  border: 0px solid #f59e0b;
+  animation: sunstone-schiller 4s ease-in-out infinite;
+}
+.sunstone-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    rgba(253,224,71,0.5) 0%, rgba(251,191,36,0.2) 20%,
+    rgba(217,119,6,0.5) 40%, rgba(253,224,71,0.2) 60%,
+    rgba(251,191,36,0.5) 80%, rgba(253,224,71,0.5) 100%
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 55%, transparent 59%);
+  animation: _spin-cw 7s linear infinite;
+}
+.sunstone-ring::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  /* background: linear-gradient(55deg, transparent 46%, rgba(255,255,240,0.95) 50%, rgba(253,224,71,0.5) 53%, transparent 57%); */
+  /* animation: aventurescence-flash 5s ease-in-out infinite; */
+}
+
+
+/* ── L37 — Mirage ─────────────────────────────────────────────────
+   METAPHOR: Desert heat haze — light bent by thermals over scorched
+   ground. Border-radius warps in slow, liquidy cycles; the colours
+   are dusty sand and washed-out sky reflecting in the shimmer.
+───────────────────────────────────────────────────────────────── */
+@keyframes heat-haze-warp {
+  0%   { border-radius: 50%; box-shadow: 0 -5px 16px 4px rgba(251,191,36,0.4), 0 0 8px 2px rgba(253,224,71,0.3); border-color: #fbbf24; }
+  20%  { border-radius: 53% 47% 50% 50% / 47% 53% 50% 50%; box-shadow: 0 -8px 24px 7px rgba(253,224,71,0.5), 0 0 6px 1px rgba(217,119,6,0.3); }
+  40%  { border-radius: 50% 50% 55% 45% / 50% 50% 45% 55%; box-shadow: 0 -3px 12px 3px rgba(203,213,225,0.5), 0 0 10px 3px rgba(147,197,253,0.4); border-color: #bae6fd; }
+  60%  { border-radius: 48% 52% 50% 50% / 52% 48% 50% 50%; box-shadow: 0 -6px 20px 5px rgba(251,191,36,0.45), 0 0 8px 2px rgba(253,224,71,0.3); border-color: #fde68a; }
+  80%  { border-radius: 52% 48% 47% 53% / 48% 52% 53% 47%; box-shadow: 0 -10px 28px 8px rgba(203,213,225,0.55), 0 0 5px 1px rgba(186,230,253,0.5); border-color: #e0f2fe; }
+  100% { border-radius: 50%; box-shadow: 0 -5px 16px 4px rgba(251,191,36,0.4), 0 0 8px 2px rgba(253,224,71,0.3); border-color: #fbbf24; }
+}
+.mirage-ring {
+  border-radius: 9999px;
+  border: 0px solid #fbbf24;
+  animation: heat-haze-warp 6s ease-in-out infinite;
+}
+.mirage-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(203,213,225,0.35);
+  animation: _spin-cw 14s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 45%, transparent 55% 100%);
+}
+.mirage-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom, rgba(203,213,225,0.22) 0%, rgba(251,191,36,0.16) 60%, transparent 100%);
+  animation: heat-haze-warp 4s ease-in-out infinite reverse;
+}
+
+
+/* ── L39 — Gravity Wave ───────────────────────────────────────────
+   METAPHOR: LIGO-detected spacetime ripples — concentric rings
+   expanding outward from a merger event. Two outer pseudo-elements
+   pulse at offset timing like the two wavefronts of a gravitational
+   wave interferogram.
+───────────────────────────────────────────────────────────────── */
+@keyframes gwave-core {
+  0%, 100% { box-shadow: 0 0 4px 1px #6366f1, 0 0 10px 3px #4f46e5, inset 0 0 8px 3px rgba(99,102,241,0.35); }
+  50%       { box-shadow: 0 0 10px 4px #818cf8, 0 0 22px 7px #6366f1, 0 0 34px 8px rgba(199,210,254,0.22),
+                          inset 0 0 14px 6px rgba(129,140,248,0.45); }
+}
+@keyframes gwave-ring-expand {
+  0%        { transform: scale(1);   opacity: 0.6; }
+  100%      { transform: scale(1.9); opacity: 0;   }
+}
+@keyframes gwave-ring-expand-b {
+  0%        { transform: scale(1);   opacity: 0.4; }
+  100%      { transform: scale(2.3); opacity: 0;   }
+}
+.gravity-wave-ring {
+  border-radius: 9999px;
+  border: 0px solid #6366f1;
+  animation: gwave-core 3s ease-in-out infinite;
+}
+.gravity-wave-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(129,140,248,0.6);
+  animation: gwave-ring-expand 3s ease-out infinite;
+}
+.gravity-wave-ring::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1px solid rgba(199,210,254,0.5);
+  animation: gwave-ring-expand-b 3s ease-out infinite 1.5s;
+}
+
+
+/* ── L41 — Chromatic Aberration ───────────────────────────────────
+   METAPHOR: A cheap lens failing to converge RGB channels —
+   red, green, and blue halos offset from the true image. Three
+   separate pseudo-element rings are displaced slightly from each
+   other and the main ring, rotating at slightly different speeds.
+───────────────────────────────────────────────────────────────── */
+@keyframes ca-rgb-flicker {
+  0%, 100% { filter: none; }
+  50%       { filter: brightness(1.05) contrast(1.1); }
+}
+@keyframes ca-channel-r {
+  from { transform: translate(3px, -2px) rotate(0deg); }
+  to   { transform: translate(3px, -2px) rotate(360deg); }
+}
+@keyframes ca-channel-b {
+  from { transform: translate(-3px, 2px) rotate(0deg); }
+  to   { transform: translate(-3px, 2px) rotate(-360deg); }
+}
+.chromatic-aberration-ring {
+  border-radius: 9999px;
+  border: 0px solid rgba(0,255,128,0.7);
+  box-shadow: 0 0 8px 2px rgba(0,255,128,0.4), inset 0 0 8px 2px rgba(0,255,128,0.2);
+  animation: ca-rgb-flicker 2s ease-in-out infinite;
+}
+.chromatic-aberration-ring::before {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(255,30,30,0.6);
+  box-shadow: 0 0 6px 2px rgba(255,30,30,0.35);
+  animation: ca-channel-r 8s linear infinite;
+}
+.chromatic-aberration-ring::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(30,100,255,0.6);
+  box-shadow: 0 0 6px 2px rgba(30,100,255,0.35);
+  animation: ca-channel-b 11s linear infinite;
+}
+
+/* --- Digital Fracture Ring --- */
+.digital-fracture-ring {
+  position: relative;
+  border: 2px solid rgba(0, 255, 255, 0.3);
+  box-shadow: 0 0 15px rgba(0, 255, 255, 0.2);
+  animation: df-glitch-base 4s steps(1) infinite;
+}
+
+/* The Horizontal Scanline Pulse */
+.digital-fracture-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: linear-gradient(
+    transparent 45%, 
+    rgba(255, 255, 255, 0.8) 50%, 
+    rgba(0, 255, 255, 0.5) 51%, 
+    transparent 55%
+  );
+  background-size: 100% 200%;
+  animation: df-scanline 3s linear infinite;
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* The "Ghost Shards" that break off */
+.digital-fracture-ring::after {
+  content: '';
+  position: absolute;
+  inset: -2px;
+  border-radius: 9999px;
+  border: 2px solid rgba(255, 0, 255, 0.6);
+  clip-path: inset(0 0 70% 0); /* Only shows a top slice */
+  animation: df-ghost-shards 2.5s ease-in-out infinite;
+  filter: blur(1px);
+}
+
+/* --- Animations --- */
+
+@keyframes df-scanline {
+  0% { background-position: 0% 100%; opacity: 0; }
+  10% { opacity: 1; }
+  90% { opacity: 1; }
+  100% { background-position: 0% 0%; opacity: 0; }
+}
+
+@keyframes df-glitch-base {
+  0%, 90%, 100% { transform: translate(0); filter: hue-rotate(0deg); }
+  92% { transform: translate(2px, -1px); filter: hue-rotate(90deg) brightness(1.2); }
+  94% { transform: translate(-3px, 1px); }
+  96% { transform: translate(1px, 2px); filter: hue-rotate(-90deg); }
+}
+
+@keyframes df-ghost-shards {
+  0%, 100% { transform: scale(1) translate(0); opacity: 0; }
+  20% { opacity: 0.8; transform: scale(1.1) translate(-4px, 2px); }
+  40% { transform: scale(1.05) translate(4px, -2px); clip-path: inset(60% 0 0 0); }
+  60% { opacity: 0.4; transform: scale(1.15) translate(-2px, -4px); }
+}
+
+/* ── L43 — Thunderhead ────────────────────────────────────────────
+   METAPHOR: A cumulonimbus cloud building to discharge — the ring
+   is dark and roiling; a lightning bolt jumps occasionally as a
+   brief full-intensity strobe on the border + box-shadow, while
+   the background clouds slowly churn.
+───────────────────────────────────────────────────────────────── */
+@keyframes thunderhead-build {
+  0%, 100% { box-shadow: 0 0 8px 3px #374151, 0 0 18px 6px #1f2937, inset 0 0 12px 5px rgba(17,24,39,0.7); border-color: #4b5563; }
+  70%       { box-shadow: 0 0 12px 5px #475569, 0 0 26px 9px #334155, inset 0 0 16px 7px rgba(30,41,59,0.6); border-color: #64748b; }
+  82%       { box-shadow: 0 0 28px 12px #e2e8f0, 0 0 52px 18px #f1f5f9, inset 0 0 20px 9px rgba(248,250,252,0.6); border-color: #f8fafc; }
+  84%       { box-shadow: 0 0 6px 2px #1e293b, inset 0 0 10px 4px rgba(15,23,42,0.8); border-color: #334155; }
+  86%       { box-shadow: 0 0 22px 10px #fef3c7, 0 0 44px 16px #fbbf24, inset 0 0 18px 8px rgba(251,191,36,0.5); border-color: #fef9c3; }
+  88%       { box-shadow: 0 0 8px 3px #374151, 0 0 18px 6px #1f2937, inset 0 0 12px 5px rgba(17,24,39,0.7); border-color: #4b5563; }
+}
+.thunderhead-ring {
+  border-radius: 9999px;
+  border: 0px solid #4b5563;
+  animation: thunderhead-build 6s steps(1, end) infinite;
+}
+.thunderhead-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1.5px dashed #334155;
+  animation: _spin-cw 20s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 55%, transparent 65% 100%);
+}
+.thunderhead-ring::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at 45% 40%, rgba(100,116,139,0.2) 0%, transparent 60%);
+}
+
+
+/* ── L45 — Absinthe ───────────────────────────────────────────────
+   METAPHOR: The "green fairy" — absinthe's characteristic
+   louche effect when water hits the spirit. Milky lime-green
+   clouds billow and swirl; the ring borders shift between
+   deep emerald and opalescent white-green.
+───────────────────────────────────────────────────────────────── */
+@keyframes absinthe-louche {
+  0%, 100% { box-shadow: 0 0 6px 2px #4d7c0f, 0 0 14px 4px #3f6212, inset 0 0 10px 4px rgba(77,124,15,0.4); border-color: #65a30d; }
+  40%       { box-shadow: 0 0 12px 5px #a3e635, 0 0 26px 9px #84cc16, 0 0 36px 9px rgba(163,230,53,0.25),
+                          inset 0 0 18px 7px rgba(217,249,157,0.5); border-color: #d9f99d; }
+  70%       { box-shadow: 0 0 8px 3px #65a30d, 0 0 18px 6px #4d7c0f, inset 0 0 12px 5px rgba(101,163,13,0.4); border-color: #84cc16; }
+}
+.absinthe-ring {
+  border-radius: 9999px;
+  border: 0px solid #65a30d;
+  animation: absinthe-louche 5s ease-in-out infinite;
+}
+.absinthe-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(163,230,53,0.5);
+  animation: _spin-cw 12s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 60%, transparent 70% 100%);
+}
+.absinthe-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at 50% 50%, rgba(217,249,157,0.28) 0%, rgba(101,163,13,0.1) 50%, transparent 72%);
+  animation: _spin-cw 8s ease-in-out infinite;
+}
+
+
+/* ── L47 — Holographic Foil ───────────────────────────────────────
+   METAPHOR: The security hologram on a credit card — rainbow
+   spectral shift that is angle-dependent. A wide conic gradient
+   sweeps continuously; the mask keeps it as a thin ring only.
+───────────────────────────────────────────────────────────────── */
+@keyframes holo-shift {
+  from { filter: hue-rotate(0deg) brightness(1.15) saturate(1.4); }
+  to   { filter: hue-rotate(360deg) brightness(1.15) saturate(1.4); }
+}
+.holographic-foil-ring {
+  border-radius: 9999px;
+  border: 0px solid transparent;
+}
+.holographic-foil-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    #ff0080, #ff8c00, #ffd700, #00ff80,
+    #00c8ff, #8000ff, #ff0080
+  );
+  mask-image: radial-gradient(circle, transparent 46%, black 50%, black 56%, transparent 60%);
+  animation: holo-shift 2s linear infinite;
+  z-index: -1;
+}
+.holographic-foil-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    transparent 0%, rgba(255,255,255,0.25) 25%,
+    transparent 50%, rgba(255,255,255,0.2) 75%, transparent 100%
+  );
+  mask-image: radial-gradient(circle, transparent 52%, black 56%, black 60%, transparent 64%);
+  animation: _spin-ccw 3s linear infinite;
+}
+
+
+/* ── L49 — Voltage ────────────────────────────────────────────────
+   METAPHOR: High-voltage direct current — green phosphorescent
+   plasma discharge (think old oscilloscope screens). Distinctly
+   different from electric_pulse (yellow lightning) — this is
+   steady, sustained, scientific.
+───────────────────────────────────────────────────────────────── */
+@keyframes voltage-sustain {
+  0%, 100% { box-shadow: 0 0 6px 2px #16a34a, 0 0 14px 4px #15803d, inset 0 0 8px 3px rgba(22,163,74,0.35); border-color: #22c55e; }
+  50%       { box-shadow: 0 0 14px 6px #4ade80, 0 0 30px 10px #22c55e, 0 0 44px 11px rgba(74,222,128,0.3),
+                          inset 0 0 18px 7px rgba(134,239,172,0.5); border-color: #86efac; }
+}
+@keyframes voltage-scan {
+  from { transform: rotate(0deg)   translateX(calc(50% + 3px)); }
+  to   { transform: rotate(360deg) translateX(calc(50% + 3px)); }
+}
+.voltage-ring {
+  border-radius: 9999px;
+  border: 0px solid #22c55e;
+  animation: voltage-sustain 1.4s ease-in-out infinite;
+}
+.voltage-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(74,222,128,0.5);
+  animation: _spin-cw 2s steps(12, end) infinite;
+}
+.voltage-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 9999px;
+  background: #bbf7d0;
+  box-shadow: 0 0 6px 4px #4ade80, 0 0 12px 6px rgba(74,222,128,0.5);
+  animation: voltage-scan 0.7s linear infinite;
+}
+
+
+/* ── L51 — Necromancer ────────────────────────────────────────────
+   METAPHOR: Dark ritual energy — sickly purple-green necromantic
+   magic. The colours occupy the uncanny valley between healthy
+   green and bruised purple; the ring pulses like a heartbeat
+   that is slightly too slow to be alive.
+───────────────────────────────────────────────────────────────── */
+@keyframes necro-pulse {
+  0%, 100% {
+    box-shadow: 0 0 6px 2px #4a044e, 0 0 14px 4px #581c87, inset 0 0 10px 4px rgba(74,4,78,0.5);
+    border-color: #7e22ce; filter: hue-rotate(0deg);
+  }
+  45% {
+    box-shadow: 0 0 14px 6px #16a34a, 0 0 28px 9px #15803d, 0 0 40px 10px rgba(22,163,74,0.3),
+                inset 0 0 18px 7px rgba(74,222,128,0.35);
+    border-color: #4ade80; filter: hue-rotate(130deg);
+  }
+  50% {
+    box-shadow: 0 0 4px 1px #4a044e, inset 0 0 8px 3px rgba(74,4,78,0.5);
+    border-color: #581c87; filter: hue-rotate(0deg);
+  }
+}
+.necromancer-ring {
+  border-radius: 9999px;
+  border: 0px solid #7e22ce;
+  animation: necro-pulse 4s ease-in-out infinite;
+}
+.necromancer-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px dotted rgba(134,239,172,0.35);
+  animation: _spin-ccw 15s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 30%, transparent 40% 60%, black 70% 100%);
+}
+.necromancer-ring::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(126,34,206,0.3);
+  animation: _spin-cw 22s linear infinite;
+}
+
+
+/* ── L53 — Glacier ────────────────────────────────────────────────
+   METAPHOR: A glacier's terminal face — slow-moving, ancient,
+   crushing. Deep turquoise meltwater crevasses, near-white
+   compressed ice above. Movement is glacially slow.
+───────────────────────────────────────────────────────────────── */
+@keyframes glacier-creep {
+  0%, 100% {
+    box-shadow: 0 0 8px 3px #0e7490, 0 0 18px 6px #0891b2, inset 0 0 14px 7px rgba(14,116,144,0.55);
+    border-color: #22d3ee;
+  }
+  50% {
+    box-shadow: 0 0 14px 6px #a5f3fc, 0 0 28px 10px #67e8f9, 0 0 42px 11px rgba(165,243,252,0.2),
+                inset 0 0 22px 9px rgba(224,242,254,0.5);
+    border-color: #e0f2fe;
+  }
+}
+.glacier-ring {
+  border-radius: 9999px;
+  border: 0px solid #22d3ee;
+  animation: glacier-creep 8s ease-in-out infinite;
+}
+.glacier-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 2px double rgba(165,243,252,0.5);
+  animation: _spin-cw 60s linear infinite;
+  mask-image: conic-gradient(
+    from 0deg,
+    black 0% 20%, transparent 25% 40%,
+    black 45% 65%, transparent 70% 85%, black 90% 100%
+  );
+}
+.glacier-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: radial-gradient(ellipse at 50% 35%, rgba(224,242,254,0.35) 0%, rgba(14,116,144,0.12) 55%, transparent 75%);
+}
+
+
+/* ── L56 — Radium Dial ────────────────────────────────────────────
+   METAPHOR: 1920s radium-painted watch dials — the eerie green
+   glow of radioactive luminescence that never fully switches off.
+   A slight flicker simulates the decay randomness.
+───────────────────────────────────────────────────────────────── */
+@keyframes radium-decay {
+  0%   { box-shadow: 0 0 8px 3px #365314, 0 0 18px 5px #3f6212, inset 0 0 10px 4px rgba(54,83,20,0.5); opacity: 1; }
+  15%  { box-shadow: 0 0 12px 5px #4d7c0f, 0 0 26px 9px #84cc16, 0 0 38px 10px rgba(132,204,22,0.3),
+                     inset 0 0 16px 6px rgba(163,230,53,0.45); opacity: 0.95; }
+  17%  { opacity: 0.7; }
+  19%  { opacity: 1; }
+  60%  { box-shadow: 0 0 10px 4px #3f6212, 0 0 22px 7px #4d7c0f, inset 0 0 14px 6px rgba(77,124,15,0.45); opacity: 0.9; }
+  100% { box-shadow: 0 0 8px 3px #365314, 0 0 18px 5px #3f6212, inset 0 0 10px 4px rgba(54,83,20,0.5); opacity: 1; }
+}
+.radium-dial-ring {
+  border-radius: 9999px;
+  border: 0px solid #4d7c0f;
+  animation: radium-decay 3.7s ease-in-out infinite;
+}
+.radium-dial-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(132,204,22,0.45);
+  animation: _spin-cw 40s linear infinite;
+  mask-image: conic-gradient(
+    from 0deg,
+    black 0% 5%, transparent 9% 18%, black 22% 28%, transparent 33% 48%,
+    black 53% 60%, transparent 65% 80%, black 85% 92%, transparent 96% 100%
+  );
+}
+.radium-dial-ring::after {
+  content: '';
+  position: absolute;
+  inset: 3px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(163,230,53,0.12) 0%, transparent 65%);
+}
+
+
+/* ── L58 — Chrono ─────────────────────────────────────────────────
+   METAPHOR: A precision mechanical chronograph. The outer ::before
+   is a minute track of tick marks (repeating-conic); the ::after
+   dot is a sweep second hand rotating at exactly 60s per revolution
+   — but sped up for visibility.
+───────────────────────────────────────────────────────────────── */
+@keyframes chrono-face-glow {
+  0%, 100% { box-shadow: 0 0 4px 1px #94a3b8, 0 0 10px 3px #64748b, inset 0 0 8px 3px rgba(100,116,139,0.3); }
+  50%       { box-shadow: 0 0 8px 3px #cbd5e1, 0 0 18px 6px #94a3b8, inset 0 0 12px 5px rgba(203,213,225,0.35); }
+}
+@keyframes sweep-hand {
+  from { transform: rotate(0deg)   translateX(calc(50% + 4px)); }
+  to   { transform: rotate(360deg) translateX(calc(50% + 4px)); }
+}
+.chrono-ring {
+  border-radius: 9999px;
+  border: 0px solid #94a3b8;
+  animation: chrono-face-glow 3s ease-in-out infinite;
+}
+.chrono-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(
+    rgba(203,213,225,0.55) 0deg 2deg, transparent 2deg 30deg
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 55%, transparent 59%);
+}
+.chrono-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 4px; height: 4px;
+  margin: -2px 0 0 -2px;
+  border-radius: 9999px;
+  background: #e2e8f0;
+  box-shadow: 0 0 4px 2px rgba(203,213,225,0.8);
+  animation: sweep-hand 4s linear infinite;
+}
+
+
+/* ── L60 — Burning Ice ────────────────────────────────────────────
+   METAPHOR: Cryogenic fire — the paradox of icy-blue flames.
+   Blue-white box-shadows animate with flame-flicker timing;
+   border-radius warps upward like a flame tongue but in arctic
+   blue rather than orange.
+───────────────────────────────────────────────────────────────── */
+@keyframes cryo-flame {
+  0%, 100% {
+    box-shadow: 0 -4px 14px 3px #7dd3fc, 0 0 8px 2px #0ea5e9, inset 0 0 10px 4px rgba(125,211,252,0.4);
+    border-radius: 50%; border-color: #7dd3fc;
+  }
+  25% {
+    box-shadow: 0 -10px 24px 7px #e0f2fe, 0 0 14px 5px #38bdf8, 0 0 28px 7px rgba(224,242,254,0.35),
+                inset 0 0 18px 7px rgba(240,249,255,0.55);
+    border-radius: 48% 52% 50% 50% / 42% 58% 50% 50%;
+    border-color: #f0f9ff;
+  }
+  50% {
+    box-shadow: 0 -2px 10px 2px #0891b2, 0 0 6px 1px #0e7490, inset 0 0 12px 5px rgba(8,145,178,0.45);
+    border-radius: 52% 48% 48% 52% / 58% 42% 50% 50%;
+    border-color: #38bdf8;
+  }
+  75% {
+    box-shadow: 0 -12px 28px 8px #bae6fd, 0 0 16px 6px #7dd3fc, inset 0 0 20px 8px rgba(186,230,253,0.5);
+    border-radius: 50% 50% 46% 54% / 46% 54% 52% 48%;
+    border-color: #e0f2fe;
+  }
+}
+.burning-ice-ring {
+  border-radius: 9999px;
+  border: 0px solid #7dd3fc;
+  animation: cryo-flame 1.6s ease-in-out infinite;
+}
+.burning-ice-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(224,242,254,0.5);
+  animation: _spin-cw 6s linear infinite;
+  mask-image: conic-gradient(from 180deg, black 0% 35%, transparent 45% 65%, black 75% 100%);
+}
+.burning-ice-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(to bottom, rgba(224,242,254,0.28) 0%, transparent 55%);
+  animation: _spin-cw 3.2s ease-in-out infinite;
+}
+
+
+/* ── L62 — Glitch Art ─────────────────────────────────────────────
+   METAPHOR: Intentional data corruption as aesthetic — glitch art's
+   random slice offsets and colour-channel separation. Three rapid
+   strobe colours cycle at mismatched speeds to create a visual
+   interference pattern that is never quite predictable.
+───────────────────────────────────────────────────────────────── */
+@keyframes glitch-art-rg {
+  0%, 92%, 100% { box-shadow: 0 0 6px 2px #e11d48, 0 0 14px 4px #be123c; border-color: #f43f5e; }
+  10% { box-shadow: 0 0 14px 6px #22d3ee, 0 0 28px 9px #06b6d4; border-color: #22d3ee; }
+  20% { box-shadow: 0 0 8px 3px #a855f7, 0 0 18px 6px #9333ea; border-color: #c084fc; }
+  30% { box-shadow: 0 0 14px 6px #fde047, 0 0 26px 9px #eab308; border-color: #fef08a; }
+  40% { box-shadow: 0 0 6px 2px #e11d48, 0 0 14px 4px #be123c; border-color: #f43f5e; }
+  50% { box-shadow: 0 0 16px 7px #4ade80, 0 0 30px 10px #22c55e; border-color: #86efac; }
+  60% { box-shadow: 0 0 8px 3px #fb923c, 0 0 20px 7px #f97316; border-color: #fed7aa; }
+  70% { box-shadow: 0 0 12px 5px #818cf8, 0 0 24px 8px #6366f1; border-color: #c7d2fe; }
+  80% { box-shadow: 0 0 14px 6px #22d3ee, 0 0 28px 9px #06b6d4; border-color: #a5f3fc; }
+}
+.glitch-art-ring {
+  border-radius: 9999px;
+  border: 0px solid #f43f5e;
+  animation: glitch-art-rg 0.7s steps(1, end) infinite;
+}
+.glitch-art-ring::before {
+  content: '';
+  position: absolute;
+  inset: -3px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(34,211,238,0.5);
+  animation: _spin-cw 0.3s steps(4, end) infinite;
+}
+.glitch-art-ring::after {
+  content: '';
+  position: absolute;
+  inset: 2px;
+  border-radius: 9999px;
+  background: linear-gradient(90deg, rgba(244,63,94,0.12) 0%, rgba(34,211,238,0.12) 50%, rgba(168,85,247,0.12) 100%);
+  animation: _spin-cw 0.5s steps(6, end) infinite;
+}
+
+
+/* ── L64 — Malachite ──────────────────────────────────────────────
+   METAPHOR: Cut malachite — banded green with alternating light and
+   dark zones. A repeating-conic on ::before creates concentric
+   band arcs; a slow hue shift deepens the mineral richness.
+───────────────────────────────────────────────────────────────── */
+@keyframes malachite-depth {
+  0%, 100% { box-shadow: 0 0 6px 2px #14532d, 0 0 14px 4px #166534, inset 0 0 12px 5px rgba(20,83,45,0.6); border-color: #16a34a; }
+  50%       { box-shadow: 0 0 10px 4px #4ade80, 0 0 22px 7px #22c55e, inset 0 0 16px 6px rgba(74,222,128,0.45); border-color: #86efac; }
+}
+.malachite-ring {
+  border-radius: 9999px;
+  border: 0px solid #16a34a;
+  animation: malachite-depth 5s ease-in-out infinite;
+}
+.malachite-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(
+    rgba(74,222,128,0.35) 0deg 3deg, rgba(20,83,45,0.5) 3deg 9deg,
+    rgba(134,239,172,0.25) 9deg 12deg, rgba(20,83,45,0.5) 12deg 18deg
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 56%, transparent 60%);
+  animation: _spin-cw 25s linear infinite;
+}
+.malachite-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(74,222,128,0.25);
+  animation: _spin-ccw 40s linear infinite;
+}
+
+
+/* ── L66 — Amber Fossil ───────────────────────────────────────────
+   METAPHOR: Baltic amber with an air bubble trapped inside — warm,
+   ancient, slightly viscous. The inner radial gradient is the
+   trapped bubble; the outer warm gold ring is the resin.
+───────────────────────────────────────────────────────────────── */
+@keyframes amber-warm-pulse {
+  0%, 100% { box-shadow: 0 0 6px 2px #92400e, 0 0 14px 4px #78350f, inset 0 0 10px 4px rgba(146,64,14,0.5); border-color: #d97706; }
+  50%       { box-shadow: 0 0 12px 5px #f59e0b, 0 0 26px 9px #d97706, 0 0 36px 9px rgba(245,158,11,0.25),
+                          inset 0 0 18px 7px rgba(251,191,36,0.5); border-color: #fbbf24; }
+}
+@keyframes bubble-drift {
+  0%   { transform: translate(0px, 1px);  }
+  33%  { transform: translate(2px, -2px); }
+  66%  { transform: translate(-1px, 2px); }
+  100% { transform: translate(0px, 1px);  }
+}
+.amber-fossil-ring {
+  border-radius: 9999px;
+  border: 0px solid #d97706;
+  animation: amber-warm-pulse 6s ease-in-out infinite;
+}
+.amber-fossil-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(251,191,36,0.4);
+  animation: _spin-cw 18s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 70%, transparent 80% 100%);
+}
+.amber-fossil-ring::after {
+  content: '';
+  position: absolute;
+  top: 32%; left: 38%;
+  width: 8px; height: 8px;
+  border-radius: 9999px;
+  background: radial-gradient(circle, rgba(254,243,199,0.9) 0%, rgba(253,224,71,0.5) 50%, transparent 100%);
+  box-shadow: 0 0 4px 2px rgba(254,243,199,0.5);
+  animation: bubble-drift 7s ease-in-out infinite;
+}
+
+/* ══════════════════════════════════════════════════════════════════
+   9 GAP-FILLING RINGS — Levels 68, 70, 72, 74, 76, 78, 80, 82, 84
+   ══════════════════════════════════════════════════════════════════ */
+
+
+/* ── L68 — Petal Storm (PINK) ─────────────────────────────────────
+   METAPHOR: A cyclone carrying detached petals — pink, fast, and
+   asymmetric. Unlike Zen Blossom (slow, meditative), this is a
+   violent pink vortex. A conic-gradient band spins at high speed;
+   offset X/Y shadows rotate to simulate centrifugal force.
+───────────────────────────────────────────────────────────────── */
+@keyframes petal-vortex-shadow {
+  0%   { box-shadow:  0 -10px 20px 5px #f472b6,  5px  0px  8px 2px #db2777, inset 0 0 14px 5px rgba(244,114,182,0.5); }
+  25%  { box-shadow:  10px 0px 20px 5px #f472b6,  0px  5px  8px 2px #db2777, inset 0 0 14px 5px rgba(244,114,182,0.5); }
+  50%  { box-shadow:  0  10px 20px 5px #ec4899, -5px  0px  8px 2px #be185d, inset 0 0 14px 5px rgba(236,72,153,0.5); }
+  75%  { box-shadow: -10px 0px 20px 5px #f472b6,  0px -5px  8px 2px #db2777, inset 0 0 14px 5px rgba(244,114,182,0.5); }
+  100% { box-shadow:  0 -10px 20px 5px #f472b6,  5px  0px  8px 2px #db2777, inset 0 0 14px 5px rgba(244,114,182,0.5); }
+}
+.petal-storm-ring {
+  border-radius: 9999px;
+  border: 0px solid #f472b6;
+  animation: petal-vortex-shadow 1s linear infinite;
+}
+.petal-storm-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    #fce7f3 0%, #f9a8d4 12%, transparent 20%,
+    transparent 40%, #fbcfe8 52%, #f472b6 62%,
+    transparent 70%, transparent 88%,
+    #fce7f3 100%
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 56%, transparent 60%);
+  animation: _spin-cw 0.8s linear infinite;
+}
+.petal-storm-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(249,168,212,0.4);
+  animation: _spin-ccw 1.2s linear infinite;
+}
+
+
+/* ── L70 — Leviathan (NAVY BLUE) ─────────────────────────────────
+   METAPHOR: The mythic deep-sea serpent — crushing, vast, cold.
+   Near-black navy with bioluminescent blue-white pressure ridges
+   that pulse slowly. Heavy inset shadows simulate total depth.
+   Two masked outer arcs are the creature's coiling silhouette.
+───────────────────────────────────────────────────────────────── */
+@keyframes leviathan-depth {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 3px #0f172a, 0 0 18px 6px #0f172a,
+      0 0 30px 8px rgba(30,58,138,0.3),
+      inset 0 0 20px 9px rgba(8,24,60,0.9);
+    border-color: #1e3a5f;
+  }
+  40% {
+    box-shadow:
+      0 0 14px 6px #1e40af, 0 0 28px 10px #1d4ed8,
+      0 0 46px 12px rgba(59,130,246,0.22),
+      inset 0 0 26px 11px rgba(30,64,175,0.6);
+    border-color: #3b82f6;
+  }
+  42% {
+    box-shadow: 0 0 4px 1px #0f172a, inset 0 0 18px 8px rgba(8,24,60,0.9);
+    border-color: #1e3a5f;
+  }
+  45% {
+    box-shadow:
+      0 0 10px 4px #1e40af, 0 0 22px 7px #1d4ed8,
+      inset 0 0 22px 9px rgba(30,64,175,0.5);
+    border-color: #60a5fa;
+  }
+}
+.leviathan-ring {
+  border-radius: 9999px;
+  border: 0px solid #1e3a5f;
+  animation: leviathan-depth 7s ease-in-out infinite;
+}
+.leviathan-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 2px solid rgba(30,64,175,0.45);
+  animation: _spin-cw 30s linear infinite;
+  mask-image: conic-gradient(
+    from 0deg,
+    black 0% 22%, transparent 30% 50%,
+    black 58% 72%, transparent 80% 100%
+  );
+}
+.leviathan-ring::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(96,165,250,0.2);
+  animation: _spin-ccw 45s linear infinite;
+}
+
+
+/* ── L72 — Phosphor ───────────────────────────────────────────────
+   METAPHOR: White phosphorus igniting in air — a chemical burn so
+   bright it is almost white, with trailing green-yellow smoke.
+   Rapidly oscillates between blinding white and toxic yellow-green.
+───────────────────────────────────────────────────────────────── */
+@keyframes phosphor-ignite {
+  0%, 100% {
+    box-shadow:
+      0 0 10px 4px #f7fee7, 0 0 22px 8px #ecfccb, 0 0 36px 10px rgba(163,230,53,0.35),
+      inset 0 0 16px 6px rgba(247,254,231,0.6);
+    border-color: #f7fee7;
+  }
+  30% {
+    box-shadow:
+      0 0 20px 9px #ffffff, 0 0 42px 16px #fefce8, 0 0 64px 20px rgba(255,255,255,0.4),
+      inset 0 0 26px 11px rgba(255,255,255,0.8);
+    border-color: #ffffff;
+  }
+  60% {
+    box-shadow:
+      0 0 12px 5px #84cc16, 0 0 26px 9px #65a30d, 0 0 42px 11px rgba(101,163,13,0.3),
+      inset 0 0 18px 7px rgba(132,204,22,0.4);
+    border-color: #a3e635;
+  }
+  62% {
+    box-shadow: 0 0 4px 1px #f7fee7, inset 0 0 10px 4px rgba(247,254,231,0.4);
+    border-color: #ecfccb;
+  }
+}
+.phosphor-ring {
+  border-radius: 9999px;
+  border: 0px solid #f7fee7;
+  animation: phosphor-ignite 2.8s ease-in-out infinite;
+}
+.phosphor-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(247,254,231,0.6);
+  animation: _spin-cw 2s linear infinite;
+}
+.phosphor-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(163,230,53,0.3);
+  animation: _spin-ccw 3.5s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 40%, transparent 50% 100%);
+}
+
+
+/* ── L74 — Sapphire Lattice (BLUE) ───────────────────────────────
+   METAPHOR: A faceted sapphire's internal reflections — precise,
+   geometric, aristocratic. Unlike deep_ocean_ring (deep & moody),
+   this is bright, prismatic, structured. A repeating-conic creates
+   angular facet lines; a glint sweeps like light on a cut face.
+───────────────────────────────────────────────────────────────── */
+@keyframes sapphire-facet-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 8px 3px #1d4ed8, 0 0 20px 7px #1e40af,
+      inset 0 0 14px 5px rgba(29,78,216,0.5);
+    filter: brightness(1) saturate(1.2);
+  }
+  33% {
+    box-shadow:
+      0 0 16px 7px #60a5fa, 0 0 34px 12px #3b82f6,
+      0 0 52px 14px rgba(147,197,253,0.28),
+      inset 0 0 22px 9px rgba(96,165,250,0.55);
+    filter: brightness(1.15) saturate(1.4);
+  }
+  66% {
+    box-shadow:
+      0 0 10px 4px #1e3a8a, 0 0 22px 8px #1e40af,
+      inset 0 0 16px 6px rgba(30,58,138,0.55);
+    filter: brightness(0.9) saturate(1.1);
+  }
+}
+/* @keyframes sapphire-glint {
+  0%   { transform: rotate(0deg);   opacity: 0; }
+  8%   { opacity: 1; }
+  20%  { opacity: 0; }
+  100% { transform: rotate(360deg); opacity: 0; }
+} */
+.sapphire-lattice-ring {
+  border-radius: 9999px;
+  border: 0px solid #1d4ed8;
+  animation: sapphire-facet-glow 4s ease-in-out infinite;
+}
+.sapphire-lattice-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: repeating-conic-gradient(
+    rgba(96,165,250,0.45) 0deg 3deg, rgba(30,64,175,0.3) 3deg 9deg,
+    rgba(147,197,253,0.35) 9deg 12deg, rgba(30,64,175,0.3) 12deg 18deg
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 56%, transparent 60%);
+  animation: _spin-cw 18s linear infinite;
+}
+.sapphire-lattice-ring::after {
+  content: '';
+  position: absolute;
+  top: -50%; left: -50%;
+  width: 200%; height: 200%;
+  /* background: linear-gradient(
+    42deg, transparent 45%,
+    rgba(255,255,255,0.96) 50%,
+    rgba(147,197,253,0.55) 54%,
+    transparent 58%
+  ); */
+  /* animation: sapphire-glint 5s ease-in-out infinite; */
+}
+
+
+/* ── L76 — Neurotoxin ─────────────────────────────────────────────
+   METAPHOR: A synthetic venom — vivid cyan-purple bioluminescent
+   poison. Unsettling because it is beautiful. Rapid hue cycling
+   between teal and electric violet; step animations simulate
+   chemical instability.
+───────────────────────────────────────────────────────────────── */
+@keyframes neurotoxin-cycle {
+  0%   { box-shadow: 0 0 8px 3px #0d9488, 0 0 18px 6px #0f766e, inset 0 0 12px 5px rgba(13,148,136,0.5); border-color: #14b8a6; }
+  20%  { box-shadow: 0 0 12px 5px #7c3aed, 0 0 26px 9px #6d28d9, inset 0 0 16px 6px rgba(124,58,237,0.5); border-color: #a78bfa; }
+  25%  { box-shadow: 0 0 4px 1px #0d9488; border-color: #14b8a6; }
+  40%  { box-shadow: 0 0 16px 7px #2dd4bf, 0 0 32px 11px #0d9488, inset 0 0 20px 8px rgba(45,212,191,0.55); border-color: #5eead4; }
+  60%  { box-shadow: 0 0 10px 4px #8b5cf6, 0 0 22px 7px #7c3aed, inset 0 0 14px 5px rgba(139,92,246,0.5); border-color: #c4b5fd; }
+  62%  { box-shadow: 0 0 3px 1px #0d9488; border-color: #14b8a6; }
+  80%  { box-shadow: 0 0 14px 6px #0d9488, 0 0 28px 10px #0f766e, inset 0 0 18px 7px rgba(13,148,136,0.55); border-color: #2dd4bf; }
+  100% { box-shadow: 0 0 8px 3px #0d9488, 0 0 18px 6px #0f766e, inset 0 0 12px 5px rgba(13,148,136,0.5); border-color: #14b8a6; }
+}
+@keyframes neurotoxin-drop {
+  from { transform: rotate(0deg)   translateX(calc(50% + 4px)); }
+  to   { transform: rotate(360deg) translateX(calc(50% + 4px)); }
+}
+.neurotoxin-ring {
+  border-radius: 9999px;
+  border: 0px solid #14b8a6;
+  animation: neurotoxin-cycle 3s steps(1, end) infinite;
+}
+.neurotoxin-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1.5px dashed rgba(45,212,191,0.4);
+  animation: _spin-cw 6s linear infinite;
+  mask-image: conic-gradient(from 0deg, black 0% 50%, transparent 60% 100%);
+}
+.neurotoxin-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 9999px;
+  background: #99f6e4;
+  box-shadow: 0 0 6px 3px #14b8a6;
+  animation: neurotoxin-drop 2.1s linear infinite;
+}
+
+
+/* ── L78 — Neon Flamingo (HOT PINK) ──────────────────────────────
+   METAPHOR: A Las Vegas neon sign in the shape of a flamingo —
+   pink, commercial, relentlessly bright. Unlike petal-storm (rosy,
+   organic), this is synthetic, hot, and buzzing. A tube-flicker
+   animation mimics neon gas discharge instability.
+───────────────────────────────────────────────────────────────── */
+@keyframes flamingo-tube-glow {
+  0%, 100% {
+    box-shadow:
+      0 0 10px 4px #ec4899, 0 0 22px 8px #db2777,
+      0 0 38px 11px rgba(236,72,153,0.45),
+      inset 0 0 14px 5px rgba(236,72,153,0.55);
+    border-color: #f9a8d4;
+  }
+  45% {
+    box-shadow:
+      0 0 22px 10px #ff85c0, 0 0 46px 18px #f472b6,
+      0 0 68px 22px rgba(244,114,182,0.5),
+      inset 0 0 26px 11px rgba(255,133,192,0.65);
+    border-color: #ffffff;
+  }
+  47% {
+    box-shadow: 0 0 4px 1px #831843, inset 0 0 8px 3px rgba(131,24,67,0.4);
+    border-color: #9d174d;
+  }
+  49% {
+    box-shadow:
+      0 0 16px 7px #ec4899, 0 0 34px 12px #db2777,
+      inset 0 0 18px 7px rgba(236,72,153,0.6);
+    border-color: #fbcfe8;
+  }
+}
+.neon-flamingo-ring {
+  border-radius: 9999px;
+  border: 0px solid #ec4899;
+  animation: flamingo-tube-glow 2s ease-in-out infinite;
+}
+.neon-flamingo-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  border: 2px solid rgba(244,114,182,0.55);
+  filter: blur(2px);
+  animation: flamingo-tube-glow 2s ease-in-out infinite;
+}
+.neon-flamingo-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  border: 1px dashed rgba(249,168,212,0.3);
+  animation: _spin-cw 10s linear infinite;
+}
+
+
+/* ── L80 — Midnight Sovereign (NAVY BLUE) ────────────────────────
+   METAPHOR: The night sky over open ocean — a sovereign darkness
+   with faint constellation arcs. Deeper and stiller than Leviathan;
+   this is about cold authority rather than creature terror.
+   Restrained animation, deep inset, silver star-clusters on the rim.
+───────────────────────────────────────────────────────────────── */
+@keyframes sovereign-night {
+  0%, 100% {
+    box-shadow:
+      0 0 6px 2px #0f1b2d, 0 0 16px 5px #0a1628,
+      0 0 30px 8px rgba(30,58,138,0.25),
+      inset 0 0 22px 10px rgba(5,10,30,0.92);
+    border-color: #1e3a5f;
+  }
+  50% {
+    box-shadow:
+      0 0 12px 5px #1e3a8a, 0 0 28px 10px #1e40af,
+      0 0 48px 14px rgba(30,64,175,0.2),
+      inset 0 0 28px 12px rgba(15,24,60,0.88);
+    border-color: #2d5699;
+  }
+}
+.midnight-sovereign-ring {
+  border-radius: 9999px;
+  border: 0px solid #1e3a5f;
+  animation: sovereign-night 9s ease-in-out infinite;
+}
+.midnight-sovereign-ring::before {
+  content: '';
+  position: absolute;
+  inset: -5px;
+  border-radius: 9999px;
+  border: 1px dotted rgba(148,163,184,0.3);
+  animation: _spin-cw 90s linear infinite;
+  mask-image: conic-gradient(
+    from 0deg,
+    black 0% 4%, transparent 7% 14%, black 17% 21%,
+    transparent 25% 38%, black 42% 46%, transparent 50% 64%,
+    black 68% 73%, transparent 77% 90%, black 94% 100%
+  );
+}
+.midnight-sovereign-ring::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(30,58,138,0.22);
+  animation: _spin-ccw 55s linear infinite;
+}
+
+
+/* ── L82 — Opal ───────────────────────────────────────────────────
+   METAPHOR: Precious opal's play-of-colour — flashes of fire red,
+   teal, gold, and violet that appear and vanish as the viewing
+   angle shifts. A very slow hue-rotate on the conic produces the
+   angle-shift illusion; opacity pulses are the "fire" sparking.
+───────────────────────────────────────────────────────────────── */
+@keyframes opal-play-of-color {
+  0%   { filter: hue-rotate(0deg)   brightness(1)    saturate(1.3); opacity: 0.9; }
+  20%  { filter: hue-rotate(60deg)  brightness(1.15) saturate(1.5); opacity: 1;   }
+  35%  { filter: hue-rotate(120deg) brightness(0.95) saturate(1.2); opacity: 0.85;}
+  55%  { filter: hue-rotate(220deg) brightness(1.2)  saturate(1.6); opacity: 1;   }
+  75%  { filter: hue-rotate(300deg) brightness(0.9)  saturate(1.1); opacity: 0.9; }
+  100% { filter: hue-rotate(360deg) brightness(1)    saturate(1.3); opacity: 0.9; }
+}
+@keyframes opal-body-glow {
+  0%, 100% { box-shadow: 0 0 8px 3px #e879f9, 0 0 18px 6px #c026d3, inset 0 0 12px 5px rgba(232,121,249,0.35); }
+  33%       { box-shadow: 0 0 10px 4px #2dd4bf, 0 0 22px 7px #0d9488, inset 0 0 14px 6px rgba(45,212,191,0.35); }
+  66%       { box-shadow: 0 0 10px 4px #fb923c, 0 0 22px 7px #f97316, inset 0 0 14px 6px rgba(251,146,60,0.35); }
+}
+.opal-ring {
+  border-radius: 9999px;
+  border: 0px solid transparent;
+  animation: opal-body-glow 6s ease-in-out infinite;
+}
+.opal-ring::before {
+  content: '';
+  position: absolute;
+  inset: -4px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    #f43f5e 0%, #fb923c 12%, #fde047 22%,
+    #4ade80 35%, #22d3ee 48%, #818cf8 60%,
+    #e879f9 72%, #f43f5e 100%
+  );
+  mask-image: radial-gradient(circle, transparent 47%, black 51%, black 56%, transparent 60%);
+  animation: opal-play-of-color 7s ease-in-out infinite, _spin-cw 14s linear infinite;
+  z-index: -1;
+}
+.opal-ring::after {
+  content: '';
+  position: absolute;
+  inset: -8px;
+  border-radius: 9999px;
+  background: conic-gradient(
+    transparent 0%, rgba(255,255,255,0.3) 18%,
+    transparent 36%, rgba(255,255,255,0.2) 54%,
+    transparent 72%, rgba(255,255,255,0.25) 90%, transparent 100%
+  );
+  mask-image: radial-gradient(circle, transparent 53%, black 57%, black 61%, transparent 65%);
+  animation: _spin-ccw 5s linear infinite, opal-play-of-color 7s ease-in-out infinite;
+}
+
+
+/* ── L84 — Astral Crown ───────────────────────────────────────────
+   METAPHOR: A stellar crown — the last ring before elite tier.
+   Gold-white corona with three concentric orbital arcs at different
+   inclinations, like a planet's ring system seen at an oblique
+   angle. Commands presence without shouting.
+───────────────────────────────────────────────────────────────── */
+@keyframes astral-crown-pulse {
+  0%, 100% {
+    box-shadow:
+      0 0 10px 4px #d97706, 0 0 24px 8px #b45309,
+      0 0 40px 11px rgba(217,119,6,0.35),
+      inset 0 0 16px 7px rgba(251,191,36,0.4);
+    border-color: #fbbf24;
+  }
+  35% {
+    box-shadow:
+      0 0 20px 9px #fef9c3, 0 0 42px 16px #fde047,
+      0 0 68px 20px rgba(254,249,195,0.3),
+      inset 0 0 26px 11px rgba(254,249,195,0.55);
+    border-color: #fef9c3;
+  }
+  70% {
+    box-shadow:
+      0 0 12px 5px #f59e0b, 0 0 28px 10px #d97706,
+      0 0 46px 13px rgba(245,158,11,0.28),
+      inset 0 0 18px 8px rgba(245,158,11,0.45);
+    border-color: #fbbf24;
+  }
+}
+@keyframes crown-arc-inner {
+  from { transform: rotate(0deg)   scaleY(0.3); }
+  to   { transform: rotate(360deg) scaleY(0.3); }
+}
+@keyframes crown-arc-mid {
+  from { transform: rotate(60deg)  scaleX(0.6) scaleY(0.18); }
+  to   { transform: rotate(420deg) scaleX(0.6) scaleY(0.18); }
+}
+@keyframes crown-star-orbit {
+  from { transform: rotate(0deg)   translateX(calc(50% + 7px)); }
+  to   { transform: rotate(-360deg) translateX(calc(50% + 7px)); }
+}
+.astral-crown-ring {
+  border-radius: 9999px;
+  border: 0px solid #fbbf24;
+  animation: astral-crown-pulse 4s ease-in-out infinite;
+}
+.astral-crown-ring::before {
+  content: '';
+  position: absolute;
+  inset: -7px;
+  border-radius: 9999px;
+  border: 1.5px solid rgba(253,224,71,0.55);
+  animation: crown-arc-inner 7s linear infinite;
+}
+.astral-crown-ring::after {
+  content: '';
+  position: absolute;
+  top: 50%; left: 50%;
+  width: 5px; height: 5px;
+  margin: -2.5px 0 0 -2.5px;
+  border-radius: 9999px;
+  background: #fef3c7;
+  box-shadow: 0 0 6px 4px #fbbf24, 0 0 12px 6px rgba(251,191,36,0.5);
+  animation: crown-star-orbit 3s linear infinite;
+}

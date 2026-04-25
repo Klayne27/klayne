@@ -675,55 +675,106 @@ export const useUpdatePost = () => {
     mutationFn: editPostApi,
 
     onMutate: async ({ postId, postData }) => {
-      await queryClient.cancelQueries({ queryKey: postKeys.details(postId) })
+      // Cancel any in-flight refetches that could overwrite optimistic data
+      await queryClient.cancelQueries({ queryKey: postKeys.all })
 
-      const previousPost = queryClient.getQueryData(postKeys.details(postId))
+      const snapshots = []
 
-      if (previousPost) {
+      // ── 1. Single post detail ──────────────────────────────────────────────
+      const previousDetail = queryClient.getQueryData(postKeys.details(postId))
+      if (previousDetail) {
+        snapshots.push({ key: postKeys.details(postId), data: previousDetail })
         queryClient.setQueryData(postKeys.details(postId), (old) => ({
           ...old,
           ...postData,
+          isEdited: true,
         }))
       }
 
+      // ── 2. All paginated feed/list queries (forYou, ic, user posts, etc.) ──
       queryClient.setQueriesData({ queryKey: postKeys.all }, (oldData) => {
+        if (!oldData) return oldData
+
+        // Paginated infinite query shape
         if (oldData.pages) {
           return {
             ...oldData,
             pages: oldData.pages.map((page) => ({
               ...page,
-              posts: page.posts
-                ? page.posts.map((post) => (post._id === postId ? { ...post, ...postData } : post))
-                : [],
+              // Feed posts
+              ...(page.posts && {
+                posts: page.posts.map((post) =>
+                  post._id === postId ? { ...post, ...postData, isEdited: true } : post,
+                ),
+              }),
+              // Reply lists — patch both the reply and its nested firstChildReply
+              ...(page.replies && {
+                replies: page.replies.map((reply) => {
+                  const patchedReply =
+                    reply._id === postId ? { ...reply, ...postData, isEdited: true } : reply
+
+                  const patchedFirstChild =
+                    patchedReply.firstChildReply?._id === postId
+                      ? {
+                          ...patchedReply.firstChildReply,
+                          ...postData,
+                          isEdited: true,
+                        }
+                      : patchedReply.firstChildReply
+
+                  return { ...patchedReply, firstChildReply: patchedFirstChild }
+                }),
+              }),
             })),
           }
         }
 
+        // Flat array shape (rare, but some queries return plain arrays)
         if (Array.isArray(oldData)) {
-          return oldData.map((post) => (post._id === postId ? { ...post, ...postData } : post))
+          return oldData.map((post) =>
+            post._id === postId ? { ...post, ...postData, isEdited: true } : post,
+          )
+        }
+
+        // Thread query shape: { post, ancestors }
+        if (oldData.post || oldData.ancestors) {
+          return {
+            ...oldData,
+            post:
+              oldData.post?._id === postId
+                ? { ...oldData.post, ...postData, isEdited: true }
+                : oldData.post,
+            ancestors: oldData.ancestors?.map((a) =>
+              a._id === postId ? { ...a, ...postData, isEdited: true } : a,
+            ),
+          }
         }
 
         return oldData
       })
 
-      return { previousPost }
+      return { snapshots }
     },
 
     onError: (err, variables, context) => {
-      if (context?.previousPost) {
-        queryClient.setQueryData(postKeys.details(variables.postId), context.previousPost)
-      }
+      // Roll back every snapshot we took
+      context?.snapshots?.forEach(({ key, data }) => {
+        queryClient.setQueryData(key, data)
+      })
       showAppToast(err.message || "Failed to edit post. Please try again.", "error")
     },
 
-    onSettled: (data, error, variables) => {
-      // queryClient.invalidateQueries({ queryKey: postKeys.details(variables.postId) })
-      // queryClient.invalidateQueries({ queryKey: ["posts", "list"] })
-      // queryClient.invalidateQueries({ queryKey: ["posts", "user"] })
+    onSuccess: (updatedPost) => {
+      // Overwrite the detail cache with the server-confirmed version
+      if (updatedPost?._id) {
+        queryClient.setQueryData(postKeys.details(updatedPost._id), updatedPost)
+      }
+      showAppToast("Post edited successfully", "success")
     },
 
-    onSuccess: () => {
-      showAppToast("Post edited successfully", "success")
+    onSettled: (_data, _error, variables) => {
+      // Light invalidation — stale-while-revalidate handles the rest
+      queryClient.invalidateQueries({ queryKey: postKeys.details(variables.postId) })
     },
   })
 

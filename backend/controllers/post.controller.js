@@ -268,6 +268,21 @@ export const createReply = async (req, res) => {
         isAnonymousInteraction: finalIsAnonymous, // ← was isOwnerReplyingAnonymously
       });
     }
+ 
+    // Notify mentioned users (excluding the reply author and the parent owner who already got a reply notif)
+    const mentionNotificationPromises = mentionedUsersIds
+      .filter((mentionedId) => mentionedId.toString() !== userId.toString())
+      .map((mentionedId) =>
+        createAndSendNotification({
+          from: userId,
+          to: mentionedId,
+          type: "replyMention",
+          postId: newReply._id,
+          isAnonymousInteraction: finalIsAnonymous,
+        }),
+      );
+
+    await Promise.all(mentionNotificationPromises);
     
 
     const populatedReply = await Post.findById(newReply._id)

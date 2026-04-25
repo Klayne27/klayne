@@ -36,7 +36,7 @@ import {
   useFollow,
   useUpdateUserProfile,
 } from "../features/users/usersHooks/useUserMutations.js"
-import { useGetUserProfile } from "../features/users/usersHooks/useUserQueries.js"
+import { useGetUserProfile, useGetUserStats } from "../features/users/usersHooks/useUserQueries.js"
 import { useGetPinnedPosts } from "../features/posts/postsHooks/usePostsQueries.js"
 import { useLightboxStore } from "../store/useLightboxStore.js"
 import { WARDROBE_CONFIG } from "../features/wardrobe/wardrobeConfig.js"
@@ -92,6 +92,8 @@ const ProfilePage = ({ feedType, setFeedType }) => {
 
   const { blockUnblockUser, isBlocking } = useBlockUnblockUser()
   const { adminDeleteUser, isPending: isDeletingUser } = useAdminDeleteUser()
+  const { totalLikes, totalReposts } = useGetUserStats(username)
+
 
   const { userProfile, isLoading, isRefetching, isError, error, isBlockedByYou, hasBlockedYou } =
     useGetUserProfile(username)
@@ -334,7 +336,7 @@ useEffect(() => {
               </button>
               <div className="flex min-w-0 flex-col">
                 <p
-                  className="min-w-0 truncate text-lg font-bold pl-0.5"
+                  className="min-w-0 truncate pl-0.5 text-lg font-bold"
                   style={userProfile?.nameColor ? { color: userProfile?.nameColor } : undefined}
                 >
                   {userProfile?.fullName}
@@ -599,19 +601,31 @@ useEffect(() => {
               )}
               <div className="flex gap-4">
                 {" "}
-                <div
-                  className="flex cursor-pointer items-center gap-1 hover:underline"
-                  onClick={() => openFollowListModal("following")}
-                >
-                  <span className="text-sm font-bold">{userProfile?.following?.length}</span>{" "}
-                  <span className="text-sm text-slate-500">Following</span>{" "}
-                </div>
-                <div
-                  className="flex cursor-pointer items-center gap-1 hover:underline"
-                  onClick={() => openFollowListModal("followers")}
-                >
-                  <span className="text-sm font-bold">{userProfile?.followers?.length}</span>{" "}
-                  <span className="text-sm text-slate-500">Followers</span>{" "}
+                <div className="flex gap-4">
+                  <div
+                    className="flex cursor-pointer items-center gap-1 hover:underline"
+                    onClick={() => openFollowListModal("following")}
+                  >
+                    <span className="text-sm font-bold">{userProfile?.following?.length}</span>
+                    <span className="text-sm text-slate-500">Following</span>
+                  </div>
+                  <div
+                    className="flex cursor-pointer items-center gap-1 hover:underline"
+                    onClick={() => openFollowListModal("followers")}
+                  >
+                    <span className="text-sm font-bold">{userProfile?.followers?.length}</span>
+                    <span className="text-sm text-slate-500">Followers</span>
+                  </div>
+
+                  {/* NEW */}
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold">{totalLikes.toLocaleString()}</span>
+                    <span className="text-sm text-slate-500">Likes</span>
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <span className="text-sm font-bold">{totalReposts.toLocaleString()}</span>
+                    <span className="text-sm text-slate-500">Reposts</span>
+                  </div>
                 </div>
               </div>
 
@@ -762,7 +776,7 @@ useEffect(() => {
                 )}
               </div>
               {/* Likes Tab */}
-              {!userProfile.isLikedFeedPrivate && (
+              {(
                 <div
                   className={`relative flex flex-1 cursor-pointer justify-center p-3 transition duration-150 ${!isTouchDevice ? "hover:bg-secondary" : ""} ${
                     isTouchDevice && activeButtonId === "likes" ? "bg-secondary bg-opacity-50" : ""

@@ -10,6 +10,7 @@ import {
   getFollowingUsers,
   getSuggestedUsers,
   getUserProfile,
+  getUserStats,
   getVacationModeStatus,
   searchUsers,
   toggleLikedFeedPrivacy,
@@ -35,6 +36,7 @@ router.post("/follow/:userId", followUnfollowUser);
 router.get("/followers/:userId", getFollowers);
 router.get("/following/:userId", getFollowingUsers);
 router.post("/block/:userToBlockId", blockUnblockUser);
+router.get("/stats/:username", getUserStats);
 
 // --- SETTINGS & PRIVACY ---
 router.get("/vacation-mode", getVacationModeStatus);

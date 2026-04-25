@@ -121,6 +121,8 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
     isLoadingSuggestedUsers,
     handleMentionTextChange,
     handleSelectMention,
+    focusedMentionIndex, // NEW
+    handleMentionKeyDown, // NEW
   } = useMentionSuggestions({
     textInput,
     setTextInput,
@@ -133,6 +135,16 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
       handleMentionTextChange(e)
     },
     [handleTextInputChange, handleMentionTextChange],
+  )
+
+  const combinedKeyDown = useCallback(
+    (e) => {
+      handleMentionKeyDown(e) // runs first — if mention is open, Enter is consumed here
+      if (!e.defaultPrevented) {
+        handleKeyDown(e) // only runs if mention didn't consume the event
+      }
+    },
+    [handleMentionKeyDown, handleKeyDown],
   )
 
   const publicHandleSubmit = async (e) => {
@@ -247,13 +259,14 @@ const PublicChatInput = ({ publicChatInputRef, socket, onSenderMessageSent, typi
             isLoading={isLoadingSuggestedUsers}
             query={debouncedMentionSearchTerm}
             onSelect={handleSelectMention}
+            focusedIndex={focusedMentionIndex} // NEW
           />
         )}
 
         <textarea
           value={textInput}
           onChange={combinedTextChange}
-          onKeyDown={handleKeyDown}
+          onKeyDown={combinedKeyDown} // changed
           onPaste={handlePaste}
           placeholder={
             isEditingMode
