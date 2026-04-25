@@ -939,7 +939,13 @@ export const WARDROBE_CONFIG = {
   },
 
   // TIER 2 RINGS (Levels 27-50)
-
+  foxfire: {
+    label: "Foxfire",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 26",
+    ringClass: "foxfire-ring",
+  },
   leviathan: {
     label: "Leviathan",
     category: "rings",
@@ -1116,6 +1122,13 @@ export const WARDROBE_CONFIG = {
     unlockHint: "Level 51",
     ringClass: "malachite-ring",
   },
+  perihelion: {
+    label: "Perihelion",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 52",
+    ringClass: "perihelion-ring",
+  },
   radium_dial: {
     label: "Radium Dial",
     category: "rings",
@@ -1124,7 +1137,14 @@ export const WARDROBE_CONFIG = {
     ringClass: "radium-dial-ring",
   },
 
-  // TIER 3 RINGS (Levels 55-63)
+  // TIER 3 RINGS (Levels 54-63)
+  tanzanite: {
+    label: "Tanzanite",
+    category: "rings",
+    rewardType: "progress",
+    unlockHint: "Level 54",
+    ringClass: "tanzanite-ring",
+  },
   prism_spin: {
     label: "Prism",
     category: "rings",

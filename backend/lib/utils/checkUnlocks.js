@@ -1439,6 +1439,30 @@ const UNLOCK_RULES = [
     items: ["digital_fracture"],
     description: "Reach Level 85",
   },
+  {
+    id: "foxfire",
+    category: "rings",
+    trigger: "level",
+    threshold: 26,
+    items: ["foxfire"],
+    description: "Reach Level 26",
+  },
+  {
+    id: "perihelion",
+    category: "rings",
+    trigger: "level",
+    threshold: 52,
+    items: ["perihelion"],
+    description: "Reach Level 52",
+  },
+  {
+    id: "tanzanite",
+    category: "rings",
+    trigger: "level",
+    threshold: 54,
+    items: ["tanzanite"],
+    description: "Reach Level 54",
+  },
 
   // ════════════════════════════════════════
   // OVERLAYS — Progress Rewards
