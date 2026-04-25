@@ -18,7 +18,7 @@ import FollowButton from "../components/common/FollowButton"
 import { showAppToast } from "../utils/showAppToast"
 import { useAppStore } from "../store/useAppStore"
 import { useTouchHoverEffect } from "../hooks/customHooks/useTouchHoverEffect"
-import { formatProfileLink, getFullProfileLink } from "../utils/textUtils"
+import { formatCount, formatProfileLink, getFullProfileLink } from "../utils/textUtils"
 import { RiLockFill } from "react-icons/ri"
 import PostModal from "../features/posts/components/PostModal.jsx"
 import { getOptimizedImageUrl } from "../utils/cloudinaryUtils.js"
@@ -606,24 +606,24 @@ useEffect(() => {
                     className="flex cursor-pointer items-center gap-1 hover:underline"
                     onClick={() => openFollowListModal("following")}
                   >
-                    <span className="text-sm font-bold">{userProfile?.following?.length}</span>
+                    <span className="text-sm font-bold">{formatCount(userProfile?.following?.length)}</span>
                     <span className="text-sm text-slate-500">Following</span>
                   </div>
                   <div
                     className="flex cursor-pointer items-center gap-1 hover:underline"
                     onClick={() => openFollowListModal("followers")}
                   >
-                    <span className="text-sm font-bold">{userProfile?.followers?.length}</span>
+                    <span className="text-sm font-bold">{formatCount(userProfile?.followers?.length)}</span>
                     <span className="text-sm text-slate-500">Followers</span>
                   </div>
 
                   {/* NEW */}
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">{totalLikes.toLocaleString()}</span>
+                    <span className="text-sm font-bold">{formatCount(totalLikes.toLocaleString())}</span>
                     <span className="text-sm text-slate-500">Likes</span>
                   </div>
                   <div className="flex items-center gap-1">
-                    <span className="text-sm font-bold">{totalReposts.toLocaleString()}</span>
+                    <span className="text-sm font-bold">{formatCount(totalReposts.toLocaleString())}</span>
                     <span className="text-sm text-slate-500">Reposts</span>
                   </div>
                 </div>
@@ -642,7 +642,7 @@ useEffect(() => {
                     <div className="flex flex-col items-end">
                       <span className="text-xs text-slate-500">Total Sessions</span>
                       <span className="text-sm font-bold">
-                        {userProfile?.totalSessionsCompleted || 0}
+                        {formatCount(userProfile?.totalSessionsCompleted) || 0}
                       </span>
                     </div>
                     <div className="flex flex-col items-end">
