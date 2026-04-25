@@ -18,11 +18,8 @@ export const useMessageScroll = ({
   const isUserScrollingUp = useRef(null)
   const prevLastMessageId = useRef(messages?.length > 0 ? messages[messages.length - 1]._id : null)
 
-  const hasRestoredScroll = useRef(false)
-
   const [shouldScrollOnSenderMessage, setShouldScrollOnSenderMessage] = useState(false)
   const [isInitialLoadComplete, setIsInitialLoadComplete] = useState(false)
-  const [shouldPerformInitialScroll, setShouldPerformInitialScroll] = useState(false)
 
   const scrollToBottom = useCallback(() => {
     if (messageListRef.current) {
@@ -38,14 +35,10 @@ export const useMessageScroll = ({
 
   const waitForImagesToLoad = useCallback(() => {
     const listEl = messageListRef.current
-    if (!listEl) {
-      return Promise.resolve()
-    }
+    if (!listEl) return Promise.resolve()
 
     const images = listEl.querySelectorAll("img")
-    if (images.length === 0) {
-      return Promise.resolve()
-    }
+    if (images.length === 0) return Promise.resolve()
 
     const promises = Array.from(images).map(
       (img) =>
@@ -54,13 +47,8 @@ export const useMessageScroll = ({
             resolve()
             return
           }
-
-          const handleLoadOrError = () => {
-            resolve()
-          }
-
-          img.addEventListener("load", handleLoadOrError, { once: true })
-          img.addEventListener("error", handleLoadOrError, { once: true })
+          img.addEventListener("load", resolve, { once: true })
+          img.addEventListener("error", resolve, { once: true })
         }),
     )
 
@@ -87,7 +75,6 @@ export const useMessageScroll = ({
     (reactedMessageId) => {
       const listEl = messageListRef.current
       if (!listEl) return
-
       if (reactedMessageId === lastMessageId) {
         setTimeout(() => {
           scrollToBottom()
@@ -103,6 +90,21 @@ export const useMessageScroll = ({
     setShowNewMessageButton(false)
   }, [scrollToBottom, setShowNewMessageButton])
 
+  // ─── Main scroll-to-bottom effect ─────────────────────────────────────────
+  //
+  // THE FIX: Previously scrollToBottom() was only called inside
+  // waitForImagesToLoad().then(...), meaning the chat sat at scrollTop=0
+  // (visually stuck at the top) until every image finished loading over the
+  // network. For slow/uncached images this was clearly visible.
+  //
+  // Now we call scrollToBottom() immediately (synchronously inside
+  // useLayoutEffect, before the browser paints), so the user always lands at
+  // the bottom. We then call it a second time once images have loaded, in case
+  // their height increased scrollHeight beyond where we already scrolled to.
+  //
+  // The re-check `!isUserScrollingUp.current` inside .then() prevents the
+  // second call from yanking the user back to the bottom if they deliberately
+  // scrolled up while images were loading.
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl || isLoadingMessages) return
@@ -112,8 +114,14 @@ export const useMessageScroll = ({
       !isUserScrollingUp.current &&
       !scrollStateBeforeFetch.current.scrollHeight
     ) {
+      // Scroll immediately – user never sees the top of the chat.
+      scrollToBottom()
+
+      // Re-scroll once images finish loading in case they grew scrollHeight.
       waitForImagesToLoad().then(() => {
-        scrollToBottom()
+        if (!isUserScrollingUp.current) {
+          scrollToBottom()
+        }
         setShouldScrollOnSenderMessage(false)
       })
     }
@@ -126,6 +134,7 @@ export const useMessageScroll = ({
     waitForImagesToLoad,
   ])
 
+  // ─── Scroll event handler ──────────────────────────────────────────────────
   const handleScroll = useCallback(() => {
     const listEl = messageListRef.current
     if (!listEl) return
@@ -156,6 +165,7 @@ export const useMessageScroll = ({
     }
   }, [handleScroll])
 
+  // ─── Restore scroll position after older messages are prepended ───────────
   useLayoutEffect(() => {
     const listEl = messageListRef.current
     if (!listEl) return
@@ -169,6 +179,7 @@ export const useMessageScroll = ({
     }
   }, [isFetchingNextPage, messages])
 
+  // ─── Show "New Message" button when a new message arrives while scrolled up
   useEffect(() => {
     if (messages.length === 0) {
       prevLastMessageId.current = null
@@ -187,17 +198,17 @@ export const useMessageScroll = ({
     prevLastMessageId.current = newLastMessage._id
   }, [messages, currentUser?._id, isUserScrollingUp, setShowNewMessageButton])
 
+  // ─── Track initial load completion ────────────────────────────────────────
   useEffect(() => {
     if (!isLoadingMessages) {
       waitForImagesToLoad().then(() => {
         setIsInitialLoadComplete(true)
-        setShouldPerformInitialScroll(true)
       })
     } else {
       setIsInitialLoadComplete(false)
-      setShouldPerformInitialScroll(false)
     }
   }, [isLoadingMessages, waitForImagesToLoad])
+
 
   return {
     handleLoadImage,
